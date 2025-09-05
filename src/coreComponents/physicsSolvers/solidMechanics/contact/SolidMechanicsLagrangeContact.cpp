@@ -318,12 +318,14 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
         arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
         arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
-        arrayView1d< real64 > const & normalTractionTolerance =
-          subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
-        arrayView1d< real64 > const & normalDisplacementTolerance =
-          subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
-        arrayView1d< real64 > const & slidingTolerance =
-          subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
+        FixedToManyElementRelation const & faceElementToElems = subRegion.getToCellRelation();
+        array2d< localIndex > const & faceElemToElemRegion = faceElementToElems.m_toElementRegion;
+        array2d< localIndex > const & faceElemToElemSubRegion = faceElementToElems.m_toElementSubRegion;
+        array2d< localIndex > const & faceElemToElemIndex = faceElementToElems.m_toElementIndex;
+
+        arrayView1d< real64 > const & normalTractionTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
+        arrayView1d< real64 > const & normalDisplacementTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
+        arrayView1d< real64 > const & slidingTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
 
         RAJA::ReduceMin< ReducePolicy< parallelHostPolicy >, real64 > minSubRegionNormalTractionTolerance( 1e10 );
         RAJA::ReduceMax< ReducePolicy< parallelHostPolicy >, real64 > maxSubRegionNormalTractionTolerance( -1e10 );
@@ -346,12 +348,22 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
             real64 averageConstrainedModulus = 0.0;
             real64 averageBoxSize0 = 0.0;
 
+              // printf( "    faceElemToElementMap[%d]  = ( %d, %d, %d ), ( %d, %d, %d )\n", kfe, 
+              //                                                                         faceElemToElemRegion[kfe][0], faceElemToElemSubRegion[kfe][0], faceElemToElemIndex[kfe][0],
+              //                                                                         faceElemToElemRegion[kfe][1], faceElemToElemSubRegion[kfe][1], faceElemToElemIndex[kfe][1] );
+
+
+              // printf( "    faceToElementMap[%d/%d]  = ( %d, %d, %d ), ( %d, %d, %d ) / ( %d, %d, %d ), ( %d, %d, %d )\n", elemsToFaces[kfe][0], elemsToFaces[kfe][1],
+              //                                                                         faceToElemRegion[elemsToFaces[kfe][0]][0], faceToElemSubRegion[elemsToFaces[kfe][0]][0], faceToElemIndex[elemsToFaces[kfe][0]][0],
+              //                                                                         faceToElemRegion[elemsToFaces[kfe][0]][1], faceToElemSubRegion[elemsToFaces[kfe][0]][1], faceToElemIndex[elemsToFaces[kfe][0]][1],
+              //                                                                         faceToElemRegion[elemsToFaces[kfe][1]][0], faceToElemSubRegion[elemsToFaces[kfe][1]][0], faceToElemIndex[elemsToFaces[kfe][1]][0],
+              //                                                                         faceToElemRegion[elemsToFaces[kfe][1]][1], faceToElemSubRegion[elemsToFaces[kfe][1]][1], faceToElemIndex[elemsToFaces[kfe][1]][1] );
+
             for( localIndex i = 0; i < 2; ++i )
             {
-              localIndex const faceIndex = elemsToFaces[kfe][i];
-              localIndex const er = faceToElemRegion[faceIndex][0];
-              localIndex const esr = faceToElemSubRegion[faceIndex][0];
-              localIndex const ei = faceToElemIndex[faceIndex][0];
+              localIndex const er = faceElemToElemRegion[kfe][i];
+              localIndex const esr = faceElemToElemSubRegion[kfe][i];
+              localIndex const ei = faceElemToElemIndex[kfe][i];
 
               real64 const volume = elemVolume[er][esr][ei];
 
