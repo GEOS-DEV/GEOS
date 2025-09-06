@@ -107,6 +107,7 @@ public:
     static constexpr char const * capPressureNamesString() { return "capillary_pressure"; }
     static constexpr char const * relPermNamesString() { return "relative_permeability"; }
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
+    static constexpr char const * dependentPhaseIndexString() { return "dependentPhaseIndex"; }
   };
 
   void initializePreSubGroups() override;
@@ -157,6 +158,7 @@ private:
   integer m_numPhases;
   bool m_hasCapPressure;
   integer m_useTotalMassEquation;
+  integer m_dependentPhaseIndex; // 0 or 1, indicates which phase saturation is dependent (s_dep = 1 - s_ind)
   // time stepping targets (simplified defaults)
   real64 m_targetRelativePresChange;
   real64 m_targetPhaseVolFracChange;
