@@ -295,6 +295,7 @@ void ImmiscibleMultiphaseFlowMFD::assembleAccumulationTerm( DomainPartition & do
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
       CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+      // this assumes a two-phase system where phase 0 is independent and phase 1 is dependent
       integer const indep = 1 - m_dependentPhaseIndex;
       AccumulationMFDKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                indep,

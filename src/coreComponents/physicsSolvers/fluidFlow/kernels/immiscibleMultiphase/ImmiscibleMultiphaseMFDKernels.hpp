@@ -489,7 +489,10 @@ public:
     forAll< POLICY >( n, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( k.elemGhostRank( ei ) >= 0 ) return;
-      typename KERNEL_TYPE::StackVariables s; k.setup( ei, s ); k.computeAccumulation( ei, s ); k.complete( ei, s );
+      typename KERNEL_TYPE::StackVariables s;
+      k.setup( ei, s );
+      k.computeAccumulation( ei, s );
+      k.complete( ei, s );
     } );
   }
 
