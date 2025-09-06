@@ -277,7 +277,7 @@ void ImmiscibleMultiphaseFlowMFD::setupDofs( DomainPartition const & domain, Dof
   // face pressure
   dofManager.addField( flow::facePressure::key(), FieldLocation::Face, 1, getMeshTargets() );
   // ensure symmetric sparsity between element and face blocks
-  dofManager.addCoupling( viewKeyStruct::elemDofFieldString(), flow::facePressure::key(), DofManager::Connector::Elem );
+  dofManager.addCoupling( viewKeyStruct::elemDofFieldString(), flow::facePressure::key(), DofManager::Connector::Face );
   dofManager.addCoupling( flow::facePressure::key(), flow::facePressure::key(), DofManager::Connector::Elem );
   dofManager.addCoupling( flow::facePressure::key(), viewKeyStruct::elemDofFieldString(), DofManager::Connector::Elem );
 }
