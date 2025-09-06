@@ -590,9 +590,9 @@ void FaceManager::depopulateUpMaps( std::set< localIndex > const & receivedFaces
         }
       }
     }
-    if( ( m_toElements.m_toElementRegion[receivedFaceIdx][0] == -1 || 
-          m_toElements.m_toElementSubRegion[receivedFaceIdx][0] == -1 || 
-          m_toElements.m_toElementIndex[receivedFaceIdx][0] == -1 ) && 
+    if( ( m_toElements.m_toElementRegion[receivedFaceIdx][0] == -1 ||
+          m_toElements.m_toElementSubRegion[receivedFaceIdx][0] == -1 ||
+          m_toElements.m_toElementIndex[receivedFaceIdx][0] == -1 ) &&
         ( m_toElements.m_toElementRegion[receivedFaceIdx][1] != -1 &&
           m_toElements.m_toElementSubRegion[receivedFaceIdx][1] != -1 &&
           m_toElements.m_toElementIndex[receivedFaceIdx][1] != -1 ) )
