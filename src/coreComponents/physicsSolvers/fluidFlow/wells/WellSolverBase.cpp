@@ -158,7 +158,7 @@ void WellSolverBase::initializePostSubGroups()
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
-      validateWellConstraints( 0, 0, subRegion );
+      validateWellConstraints( 0, 0, subRegion, elemManager );
     } );
   } );
 }
