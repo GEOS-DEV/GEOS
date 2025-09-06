@@ -655,6 +655,39 @@ void ImmiscibleMultiphaseFlowMFD::updateFluidModel( ObjectManagerBase & group ) 
   } );
 }
 
+void ImmiscibleMultiphaseFlowMFD::updateRelPermModel( ObjectManagerBase & group ) const
+{
+  if( !group.hasWrapper( viewKeyStruct::relPermNamesString() ) ) return;
+  string const & name = group.getReference< string >( viewKeyStruct::relPermNamesString() );
+  RelativePermeabilityBase & relperm = getConstitutiveModel< RelativePermeabilityBase >( group, name );
+  auto phaseVol = group.getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
+  constitutive::constitutiveUpdatePassThru( relperm, [&]( auto & casted )
+  {
+    auto wrapper = casted.createKernelWrapper();
+    RelativePermeabilityUpdateKernel::launch< parallelDevicePolicy<> >( group.size(), wrapper, phaseVol );
+  } );
+}
+
+void ImmiscibleMultiphaseFlowMFD::updatePhaseMobility( ObjectManagerBase & group ) const
+{
+  // Phase mobility may be computed elsewhere or by another kernel; keep as no-op placeholder for now.
+  GEOS_UNUSED_VAR( group );
+}
+
+void ImmiscibleMultiphaseFlowMFD::updateCapPressureModel( ObjectManagerBase & group ) const
+{
+  if( !m_hasCapPressure ) return;
+  if( !group.hasWrapper( viewKeyStruct::capPressureNamesString() ) ) return;
+  string const & name = group.getReference< string >( viewKeyStruct::capPressureNamesString() );
+  CapillaryPressureBase & cap = getConstitutiveModel< CapillaryPressureBase >( group, name );
+  auto phaseVol = group.getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
+  constitutive::constitutiveUpdatePassThru( cap, [&]( auto & casted )
+  {
+    auto wrapper = casted.createKernelWrapper();
+    CapillaryPressureUpdateKernel::launch< parallelDevicePolicy<> >( group.size(), wrapper, phaseVol );
+  } );
+}
+
 // --- Multiphase helper updates ---
 
 void ImmiscibleMultiphaseFlowMFD::updatePhaseMass( ElementSubRegionBase & subRegion ) const
