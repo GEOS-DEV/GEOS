@@ -98,6 +98,9 @@ public:
                             real64 const dt,
                             DomainPartition & domain ) override;
 
+  // state update hook (override base to avoid error)
+  virtual void updateState( DomainPartition & domain ) override;
+
   // multiphase specific public hooks
   integer numFluidPhases() const { return m_numPhases; }
 

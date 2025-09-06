@@ -729,6 +729,20 @@ void ImmiscibleMultiphaseFlowMFD::updateFluidState( ElementSubRegionBase & subRe
   updateCapPressureModel( subRegion );
 }
 
+void ImmiscibleMultiphaseFlowMFD::updateState( DomainPartition & domain )
+{
+  // Mirror ImmiscibleMultiphaseFlow::updateState: update rock, enforce saturation constraint, then update fluid-related state.
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const, auto & subRegion )
+    {
+      updatePorosityAndPermeability( subRegion );
+      updateVolumeConstraint( subRegion );
+      updateFluidState( subRegion );
+    } );
+  } );
+}
+
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, ImmiscibleMultiphaseFlowMFD, string const &, Group * const )
 
 } // namespace geos
