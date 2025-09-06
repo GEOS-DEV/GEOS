@@ -610,7 +610,7 @@ void ImmiscibleMultiphaseFlowMFD::applySystemSolution( DofManager const & dofMan
   dofManager.addVectorToField( localSolution, viewKeyStruct::elemDofFieldString(), flow::pressure::key(), scalingFactor, pressureMask );
   // Manually add saturation increment to the configured independent phase component
   integer const indep = 1 - m_dependentPhaseIndex;
-  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString );
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const, ElementSubRegionBase & subRegion )
