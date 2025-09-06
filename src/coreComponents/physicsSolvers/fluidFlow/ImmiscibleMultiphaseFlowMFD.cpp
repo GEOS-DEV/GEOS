@@ -409,7 +409,7 @@ void ImmiscibleMultiphaseFlowMFD::assembleFluxTermsHybrid( real64 const dt,
                                                                                      permeability,
                                                                                      m_regionFilter.toViewConst(),
                                                                                      dt,
-                                                                                     /*assembleCellEq=*/false,
+                                                                                     /*assembleCellEq=*/true,
                                                                                      localMatrix,
                                                                                      localRhs );
     } );

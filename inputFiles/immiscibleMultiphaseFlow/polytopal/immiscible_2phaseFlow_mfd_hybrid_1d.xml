@@ -7,7 +7,7 @@
       discretization="immiscibleHybridMimetic"
       targetRegions="{ Domain }"
       logLevel="2"
-      dependentPhaseIndex="1">
+      dependentPhaseIndex="0">
       <NonlinearSolverParameters newtonTol="1e-6" newtonMaxIter="8"/>
       <LinearSolverParameters directParallel="0"/>
     </ImmiscibleMultiphaseFlowMFD>
@@ -48,7 +48,7 @@
   <Functions>
     <!-- Constant property tables (single entry) -->
     <TableFunction name="densityWater"   coordinates="{ 0 }" values="{ 1000 }"/>
-    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 1000 }"/>
+    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 1.0 }"/>
     <TableFunction name="viscosityWater" coordinates="{ 0 }" values="{ 1.0e-3 }"/>
     <TableFunction name="viscosityGas"   coordinates="{ 0 }" values="{ 1.0e-3 }"/>
   </Functions>
