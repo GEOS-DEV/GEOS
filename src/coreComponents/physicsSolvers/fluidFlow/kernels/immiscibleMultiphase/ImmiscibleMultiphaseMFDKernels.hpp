@@ -368,7 +368,7 @@ public:
                                                     faceDofKey, nodeManager, faceManager,
                                                     subRegion, dofNumberAccessor, fluid, permeability,
                                                     regionFilter, dt, assembleCellEq, localMatrix, localRhs );
-        launchElementBasedAssemblyKernel< POLICY, NF, IPType >( subRegion.size, k );
+        launchElementBasedAssemblyKernel< POLICY, NF, IPType >( subRegion.size(), k );
       } );
     } );
   }
