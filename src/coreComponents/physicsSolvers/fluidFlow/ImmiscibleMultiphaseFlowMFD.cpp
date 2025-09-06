@@ -79,6 +79,13 @@ ImmiscibleMultiphaseFlowMFD::ImmiscibleMultiphaseFlowMFD( const string & name,
   this->registerWrapper( "targetPhaseVolFractionChangeInTimeStep", &m_targetPhaseVolFracChange )
       .setSizedFromParent( 0 ).setInputFlag( InputFlags::OPTIONAL ).setApplyDefaultValue( 0.2 );
 
+  // expose dependent phase index (0-based) to XML; for two-phase, 0=phase 0, 1=phase 1
+  this->registerWrapper( viewKeyStruct::dependentPhaseIndexString(), &m_dependentPhaseIndex )
+      .setSizedFromParent( 0 )
+      .setInputFlag( InputFlags::OPTIONAL )
+      .setApplyDefaultValue( 1 )
+      .setDescription( "Index of the dependent phase saturation (0-based). For two-phase, 0 or 1; s_dep = 1 - s_ind." );
+
   // number of dofs per cell = num phases (pressure + (numPhases-1) saturations OR total+components)
   m_numDofPerCell = m_numPhases;
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::immiscibleMultiphaseFVM; // placeholder
@@ -278,7 +285,7 @@ void ImmiscibleMultiphaseFlowMFD::assembleAccumulationTerm( DomainPartition & do
                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                             arrayView1d< real64 > const & localRhs ) const
 {
-  // reuse immiscible multiphase accumulation kernel factory
+  // assemble MFD-specific accumulation: total mass and independent-phase mass
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel const & mesh, string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const, ElementSubRegionBase const & subRegion )
@@ -288,15 +295,15 @@ void ImmiscibleMultiphaseFlowMFD::assembleAccumulationTerm( DomainPartition & do
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
       CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-      AccumulationKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                                                            dofManager.rankOffset(),
-                                                                            m_useTotalMassEquation,
-                                                                            dofKey,
-                                                                            subRegion,
-                                                                            fluid,
-                                                                            solid,
-                                                                            localMatrix,
-                                                                            localRhs );
+      integer const indep = 1 - m_dependentPhaseIndex;
+      AccumulationMFDKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                                               indep,
+                                                                               dofKey,
+                                                                               subRegion,
+                                                                               fluid,
+                                                                               solid,
+                                                                               localMatrix,
+                                                                               localRhs );
     } );
   } );
 }
@@ -589,8 +596,32 @@ void ImmiscibleMultiphaseFlowMFD::applySystemSolution( DofManager const & dofMan
   GEOS_UNUSED_VAR( dt );
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
   dofManager.addVectorToField( localSolution, viewKeyStruct::elemDofFieldString(), flow::pressure::key(), scalingFactor, pressureMask );
-  dofManager.addVectorToField( localSolution, viewKeyStruct::elemDofFieldString(), immiscibleMultiphaseFlow::phaseVolumeFraction::key(), scalingFactor, ~pressureMask );
+  // Manually add saturation increment to the configured independent phase component
+  integer const indep = 1 - m_dependentPhaseIndex;
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const, ElementSubRegionBase & subRegion )
+    {
+      if( !subRegion.hasWrapper( dofKey ) ) return;
+      arrayView1d< globalIndex const > dof = subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< integer const > ghost = subRegion.ghostRank();
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > sat = subRegion.getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
+      globalIndex const rankOffset = dofManager.rankOffset();
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghost[ei] >= 0 ) return;
+        globalIndex const base = dof[ei] - rankOffset;
+        // saturation dof is component 1 of elem dofs
+        sat[ei][indep] += scalingFactor * localSolution[base + 1];
+      } );
+      // enforce dependent phase relation s_dep = 1 - s_ind
+      updateVolumeConstraint( subRegion );
+    } );
+  } );
+  // update face pressures
   dofManager.addVectorToField( localSolution, flow::facePressure::key(), flow::facePressure::key(), scalingFactor );
+  // synchronize
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
   {
     FieldIdentifiers f; f.addElementFields( { flow::pressure::key(), immiscibleMultiphaseFlow::phaseVolumeFraction::key() }, regionNames );
@@ -654,9 +685,13 @@ void ImmiscibleMultiphaseFlowMFD::updatePhaseMass( ElementSubRegionBase & subReg
 void ImmiscibleMultiphaseFlowMFD::updateVolumeConstraint( ElementSubRegionBase & subRegion ) const
 {
   auto phaseVol = subRegion.getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
+  // Enforce sum of saturations = 1 by computing the dependent component from the independent one.
+  // For two-phase: if dependentPhaseIndex == 1, s1 = 1 - s0 (default). If 0, s0 = 1 - s1.
+  integer const dep = ( m_dependentPhaseIndex == 0 ? 0 : 1 );
+  integer const ind = 1 - dep;
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
-    phaseVol[ei][1] = 1.0 - phaseVol[ei][0];
+    phaseVol[ei][dep] = 1.0 - phaseVol[ei][ind];
   } );
 }
 
