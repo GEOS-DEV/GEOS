@@ -698,11 +698,124 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
     /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly
     /// communicated
+
+    // if( MpiWrapper::commRank()==6 || MpiWrapper::commRank()==0 )
+    // {
+    //   FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
+    //   arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion;
+    //   arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion;
+    //   arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
+
+    //   arrayView1d< globalIndex const > const & faceLocalToGlobalMap = faceManager.localToGlobalMap();
+    //   arrayView1d< globalIndex const > const & elementLocalToGlobalMap = elementManager.getRegion(0).getSubRegion(0).localToGlobalMap();
+
+    //   printf( "pre sync \n");
+    //   if( MpiWrapper::commRank()==6 )
+    //   {
+    //     printf( "rank = %d\n", MpiWrapper::commRank() );
+    //     if( faceToElemRegion.size(0) > 8889 )
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)/%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) / ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) )\n", 
+    //               3082, faceLocalToGlobalMap[3082], 8889, faceLocalToGlobalMap[8889],
+    //               faceToElemRegion[3082][0], faceToElemSubRegion[3082][0], faceToElemIndex[3082][0], faceToElemIndex[3082][0] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[3082][0]],
+    //               faceToElemRegion[3082][1], faceToElemSubRegion[3082][1], faceToElemIndex[3082][1], faceToElemIndex[3082][1] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[3082][1]],
+    //               faceToElemRegion[8889][0], faceToElemSubRegion[8889][0], faceToElemIndex[8889][0], faceToElemIndex[8889][0] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[8889][0]],
+    //               faceToElemRegion[8889][1], faceToElemSubRegion[8889][1], faceToElemIndex[8889][1], faceToElemIndex[8889][1] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[8889][1]] );
+    //     }
+    //     else
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) \n", 
+    //               3082, faceLocalToGlobalMap[3082],
+    //               faceToElemRegion[3082][0], faceToElemSubRegion[3082][0], faceToElemIndex[3082][0], faceToElemIndex[3082][0] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[3082][0]],
+    //               faceToElemRegion[3082][1], faceToElemSubRegion[3082][1], faceToElemIndex[3082][1], faceToElemIndex[3082][1] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[3082][1]] );
+    //     }
+    //   }
+    //   if( MpiWrapper::commRank()==0 )
+    //   {
+    //     printf( "rank = %d\n", MpiWrapper::commRank() );
+    //     if( faceToElemRegion.size(0) > 9653 )
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)/%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) / ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) )\n", 
+    //               9268, faceLocalToGlobalMap[9268], 9653, faceLocalToGlobalMap[9653],
+    //               faceToElemRegion[9268][0], faceToElemSubRegion[9268][0], faceToElemIndex[9268][0], faceToElemIndex[9268][0] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[9268][0]],
+    //               faceToElemRegion[9268][1], faceToElemSubRegion[9268][1], faceToElemIndex[9268][1], faceToElemIndex[9268][1] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[9268][1]],
+    //               faceToElemRegion[9653][0], faceToElemSubRegion[9653][0], faceToElemIndex[9653][0], faceToElemIndex[9653][0] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[9653][0]],
+    //               faceToElemRegion[9653][1], faceToElemSubRegion[9653][1], faceToElemIndex[9653][1], faceToElemIndex[9653][1] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[9653][1]] );
+
+    //     }
+    //     else
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) \n", 
+    //               9268, faceLocalToGlobalMap[9268],
+    //               faceToElemRegion[9268][0], faceToElemSubRegion[9268][0], faceToElemIndex[9268][0], faceToElemIndex[9268][0] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[9268][0]],
+    //               faceToElemRegion[9268][1], faceToElemSubRegion[9268][1], faceToElemIndex[9268][1], faceToElemIndex[9268][1] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[9268][1]] );
+    //     }
+    //   }
+      
+    // }
+
+
     parallelTopologyChange::synchronizeTopologyChange( &mesh,
                                                        neighbors,
                                                        modifiedObjects,
                                                        receivedObjects,
                                                        m_mpiCommOrder );
+
+
+    // if( MpiWrapper::commRank()==6 || MpiWrapper::commRank()==0 )
+    // {
+    //   FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
+    //   arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion;
+    //   arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion;
+    //   arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
+
+    //   arrayView1d< globalIndex const > const & faceLocalToGlobalMap = faceManager.localToGlobalMap();
+    //   arrayView1d< globalIndex const > const & elementLocalToGlobalMap = elementManager.getRegion(0).getSubRegion(0).localToGlobalMap();
+
+    //   printf( "post sync \n");
+    //   if( MpiWrapper::commRank()==6 )
+    //   {
+    //     printf( "rank = %d\n", MpiWrapper::commRank() );
+    //     if( faceToElemRegion.size(0) > 8889 )
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)/%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) / ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) )\n", 
+    //               3082, faceLocalToGlobalMap[3082], 8889, faceLocalToGlobalMap[8889],
+    //               faceToElemRegion[3082][0], faceToElemSubRegion[3082][0], faceToElemIndex[3082][0], faceToElemIndex[3082][0] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[3082][0]],
+    //               faceToElemRegion[3082][1], faceToElemSubRegion[3082][1], faceToElemIndex[3082][1], faceToElemIndex[3082][1] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[3082][1]],
+    //               faceToElemRegion[8889][0], faceToElemSubRegion[8889][0], faceToElemIndex[8889][0], faceToElemIndex[8889][0] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[8889][0]],
+    //               faceToElemRegion[8889][1], faceToElemSubRegion[8889][1], faceToElemIndex[8889][1], faceToElemIndex[8889][1] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[8889][1]] );
+    //     }
+    //     else
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) \n", 
+    //               3082, faceLocalToGlobalMap[3082],
+    //               faceToElemRegion[3082][0], faceToElemSubRegion[3082][0], faceToElemIndex[3082][0], faceToElemIndex[3082][0] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[3082][0]],
+    //               faceToElemRegion[3082][1], faceToElemSubRegion[3082][1], faceToElemIndex[3082][1], faceToElemIndex[3082][1] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[3082][1]] );
+    //     }
+    //   }
+    //   if( MpiWrapper::commRank()==0 )
+    //   {
+    //     printf( "rank = %d\n", MpiWrapper::commRank() );
+    //     if( faceToElemRegion.size(0) > 9653 )
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)/%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) / ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) )\n", 
+    //               9268, faceLocalToGlobalMap[9268], 9653, faceLocalToGlobalMap[9653],
+    //               faceToElemRegion[9268][0], faceToElemSubRegion[9268][0], faceToElemIndex[9268][0], faceToElemIndex[9268][0] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[9268][0]],
+    //               faceToElemRegion[9268][1], faceToElemSubRegion[9268][1], faceToElemIndex[9268][1], faceToElemIndex[9268][1] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[9268][1]],
+    //               faceToElemRegion[9653][0], faceToElemSubRegion[9653][0], faceToElemIndex[9653][0], faceToElemIndex[9653][0] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[9653][0]],
+    //               faceToElemRegion[9653][1], faceToElemSubRegion[9653][1], faceToElemIndex[9653][1], faceToElemIndex[9653][1] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[9653][1]] );
+
+    //     }
+    //     else
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) \n", 
+    //               9268, faceLocalToGlobalMap[9268],
+    //               faceToElemRegion[9268][0], faceToElemSubRegion[9268][0], faceToElemIndex[9268][0], faceToElemIndex[9268][0] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[9268][0]],
+    //               faceToElemRegion[9268][1], faceToElemSubRegion[9268][1], faceToElemIndex[9268][1], faceToElemIndex[9268][1] == -1? -1 : elementLocalToGlobalMap[faceToElemIndex[9268][1]] );
+    //     }
+    //   }
+
+    // }
 
     synchronizeTipSets( faceManager,
                         edgeManager,
@@ -753,6 +866,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
       }
     } );
+    MpiWrapper::barrier();
   }
 
 

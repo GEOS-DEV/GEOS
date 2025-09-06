@@ -590,6 +590,23 @@ void FaceManager::depopulateUpMaps( std::set< localIndex > const & receivedFaces
         }
       }
     }
+    if( ( m_toElements.m_toElementRegion[receivedFaceIdx][0] == -1 || 
+          m_toElements.m_toElementSubRegion[receivedFaceIdx][0] == -1 || 
+          m_toElements.m_toElementIndex[receivedFaceIdx][0] == -1 ) && 
+        ( m_toElements.m_toElementRegion[receivedFaceIdx][1] != -1 &&
+          m_toElements.m_toElementSubRegion[receivedFaceIdx][1] != -1 &&
+          m_toElements.m_toElementIndex[receivedFaceIdx][1] != -1 ) )
+    {
+      // Shift the second element to the first position if the first position is empty
+      m_toElements.m_toElementRegion[receivedFaceIdx][0] = m_toElements.m_toElementRegion[receivedFaceIdx][1];
+      m_toElements.m_toElementSubRegion[receivedFaceIdx][0] = m_toElements.m_toElementSubRegion[receivedFaceIdx][1];
+      m_toElements.m_toElementIndex[receivedFaceIdx][0] = m_toElements.m_toElementIndex[receivedFaceIdx][1];
+
+      m_toElements.m_toElementRegion[receivedFaceIdx][1] = -1;
+      m_toElements.m_toElementSubRegion[receivedFaceIdx][1] = -1;
+      m_toElements.m_toElementIndex[receivedFaceIdx][1] = -1;
+    }
+
   }
 }
 

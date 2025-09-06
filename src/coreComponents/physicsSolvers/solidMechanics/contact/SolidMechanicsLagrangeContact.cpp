@@ -289,6 +289,7 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
     arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion;
     arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion;
     arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
+//    arrayView1d< globalIndex const > const & faceLocalToGlobal = faceManager.localToGlobalMap();
 
     // Get the volume for all elements
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
@@ -317,6 +318,7 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
         arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
         arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
         arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
+//        arrayView1d< globalIndex const > const & faceElementLocalToGlobal = subRegion.localToGlobalMap();
 
         FixedToManyElementRelation const & faceElementToElems = subRegion.getToCellRelation();
         array2d< localIndex > const & faceElemToElemRegion = faceElementToElems.m_toElementRegion;
@@ -334,6 +336,21 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
         RAJA::ReduceMin< ReducePolicy< parallelHostPolicy >, real64 > minSubRegionSlidingTolerance( 1e10 );
         RAJA::ReduceMax< ReducePolicy< parallelHostPolicy >, real64 > maxSubRegionSlidingTolerance( -1e10 );
 
+
+            // if( MpiWrapper::commRank()==0 )
+            // {
+            //   printf( "rank %d\n", MpiWrapper::commRank() );
+            //   printf( "    faceElemToElementMap[%d(%lld)]  = ( %d, %d, %d ), ( %d, %d, %d )\n", 30, faceElementLocalToGlobal[30],
+            //                                                                           faceElemToElemRegion[30][0], faceElemToElemSubRegion[30][0], faceElemToElemIndex[30][0],
+            //                                                                           faceElemToElemRegion[30][1], faceElemToElemSubRegion[30][1], faceElemToElemIndex[30][1] );
+            //   printf( "    faceToElementMap[%d/%d]  = ( %d, %d, %d ), ( %d, %d, %d ) / ( %d, %d, %d ), ( %d, %d, %d )\n", elemsToFaces[30][0], elemsToFaces[30][1],
+            //                                                                           faceToElemRegion[elemsToFaces[30][0]][0], faceToElemSubRegion[elemsToFaces[30][0]][0], faceToElemIndex[elemsToFaces[30][0]][0],
+            //                                                                           faceToElemRegion[elemsToFaces[30][0]][1], faceToElemSubRegion[elemsToFaces[30][0]][1], faceToElemIndex[elemsToFaces[30][0]][1],
+            //                                                                           faceToElemRegion[elemsToFaces[30][1]][0], faceToElemSubRegion[elemsToFaces[30][1]][0], faceToElemIndex[elemsToFaces[30][1]][0],
+            //                                                                           faceToElemRegion[elemsToFaces[30][1]][1], faceToElemSubRegion[elemsToFaces[30][1]][1], faceToElemIndex[elemsToFaces[30][1]][1] );
+            // }
+
+
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
@@ -348,16 +365,22 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
             real64 averageConstrainedModulus = 0.0;
             real64 averageBoxSize0 = 0.0;
 
-              // printf( "    faceElemToElementMap[%d]  = ( %d, %d, %d ), ( %d, %d, %d )\n", kfe, 
-              //                                                                         faceElemToElemRegion[kfe][0], faceElemToElemSubRegion[kfe][0], faceElemToElemIndex[kfe][0],
-              //                                                                         faceElemToElemRegion[kfe][1], faceElemToElemSubRegion[kfe][1], faceElemToElemIndex[kfe][1] );
 
 
-              // printf( "    faceToElementMap[%d/%d]  = ( %d, %d, %d ), ( %d, %d, %d ) / ( %d, %d, %d ), ( %d, %d, %d )\n", elemsToFaces[kfe][0], elemsToFaces[kfe][1],
-              //                                                                         faceToElemRegion[elemsToFaces[kfe][0]][0], faceToElemSubRegion[elemsToFaces[kfe][0]][0], faceToElemIndex[elemsToFaces[kfe][0]][0],
-              //                                                                         faceToElemRegion[elemsToFaces[kfe][0]][1], faceToElemSubRegion[elemsToFaces[kfe][0]][1], faceToElemIndex[elemsToFaces[kfe][0]][1],
-              //                                                                         faceToElemRegion[elemsToFaces[kfe][1]][0], faceToElemSubRegion[elemsToFaces[kfe][1]][0], faceToElemIndex[elemsToFaces[kfe][1]][0],
-              //                                                                         faceToElemRegion[elemsToFaces[kfe][1]][1], faceToElemSubRegion[elemsToFaces[kfe][1]][1], faceToElemIndex[elemsToFaces[kfe][1]][1] );
+            // if( faceToElemRegion[elemsToFaces[kfe][0]][0]==-1 )
+            // {
+            //   printf( "rank %d\n", MpiWrapper::commRank() );
+            //   printf( "    faceElemToElementMap[%d(%lld)]  = ( %d, %d, %d ), ( %d, %d, %d )\n", kfe, faceElementLocalToGlobal[kfe],
+            //                                                                           faceElemToElemRegion[kfe][0], faceElemToElemSubRegion[kfe][0], faceElemToElemIndex[kfe][0],
+            //                                                                           faceElemToElemRegion[kfe][1], faceElemToElemSubRegion[kfe][1], faceElemToElemIndex[kfe][1] );
+
+
+            //   printf( "    faceToElementMap[%d/%d]  = ( %d, %d, %d ), ( %d, %d, %d ) / ( %d, %d, %d ), ( %d, %d, %d )\n", elemsToFaces[kfe][0], elemsToFaces[kfe][1],
+            //                                                                           faceToElemRegion[elemsToFaces[kfe][0]][0], faceToElemSubRegion[elemsToFaces[kfe][0]][0], faceToElemIndex[elemsToFaces[kfe][0]][0],
+            //                                                                           faceToElemRegion[elemsToFaces[kfe][0]][1], faceToElemSubRegion[elemsToFaces[kfe][0]][1], faceToElemIndex[elemsToFaces[kfe][0]][1],
+            //                                                                           faceToElemRegion[elemsToFaces[kfe][1]][0], faceToElemSubRegion[elemsToFaces[kfe][1]][0], faceToElemIndex[elemsToFaces[kfe][1]][0],
+            //                                                                           faceToElemRegion[elemsToFaces[kfe][1]][1], faceToElemSubRegion[elemsToFaces[kfe][1]][1], faceToElemIndex[elemsToFaces[kfe][1]][1] );
+            // }
 
             for( localIndex i = 0; i < 2; ++i )
             {
