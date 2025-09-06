@@ -512,9 +512,12 @@ void ImmiscibleMultiphaseFlowMFD::applySourceFluxBC( real64 const time,
       array1d< globalIndex > tmpDof( target.size() ); array1d< real64 > tmpRhs( target.size() );
       fs.computeRhsContribution< FieldSpecificationAdd, parallelDevicePolicy<> >( target.toViewConst(), time+dt, dt, sr, dof, dofManager.rankOffset(), localMatrix, tmpDof.toView(), tmpRhs.toView(), [] GEOS_HOST_DEVICE ( localIndex const ){ return 0.0; } );
       real64 scale = setSizes[nameToId.at( fs.getName() )]; integer phaseId = fs.getComponent();
+      integer const indep = 1 - m_dependentPhaseIndex;
       auto rhs = localRhs; globalIndex rankOffset = dofManager.rankOffset();
       forAll< parallelDevicePolicy<> >( target.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-      { localIndex const ei=target[a]; if( ghost[ei] >=0 ) return; globalIndex const base = dof[ei]-rankOffset; real64 val = tmpRhs[a]/scale; rhs[base] += val; if( phaseId <  m_numPhases-1 ) rhs[base+phaseId+1]+=val; } );
+      { localIndex const ei=target[a]; if( ghost[ei] >=0 ) return; globalIndex const base = dof[ei]-rankOffset; real64 val = tmpRhs[a]/scale; // total mass equation
+        rhs[base] += val; // independent phase equation only if phase matches independent
+        if( phaseId == indep ) rhs[base+1] += val; } );
     } );
   } );
 }
