@@ -355,17 +355,19 @@ void ImmiscibleMultiphaseFlowMFD::assembleSystem( real64 const time_n,
                                                   arrayView1d< real64 > const & localRhs )
 {
   GEOS_UNUSED_VAR( time_n );
-  // Ensure fluid properties reflect current pressure before assembling
+  // Ensure fluid and transport properties reflect current state before assembling
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const, ElementSubRegionBase & subRegion )
     {
       updateFluidModel( subRegion );
+      updateRelPermModel( subRegion );
+      updatePhaseMobility( subRegion );
     } );
   } );
   assembleAccumulationTerm( domain, dofManager, localMatrix, localRhs );
   assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs ); // TPFA transport + pressure (will later separate)
-  assembleFluxTermsHybrid( dt, domain, dofManager, localMatrix, localRhs ); // face constraints only (cell eq disabled)
+  assembleFluxTermsHybrid( dt, domain, dofManager, localMatrix, localRhs ); // hybrid flux + face constraints
 }
 
 void ImmiscibleMultiphaseFlowMFD::assembleFluxTermsHybrid( real64 const dt,
@@ -672,8 +674,21 @@ void ImmiscibleMultiphaseFlowMFD::updateRelPermModel( ObjectManagerBase & group 
 
 void ImmiscibleMultiphaseFlowMFD::updatePhaseMobility( ObjectManagerBase & group ) const
 {
-  // Phase mobility may be computed elsewhere or by another kernel; keep as no-op placeholder for now.
-  GEOS_UNUSED_VAR( group );
+  // Compute phase mobilities and their derivatives using relperm and fluid models
+  if( !group.hasWrapper( viewKeyStruct::relPermNamesString() ) ) return;
+  string const & relpermName = group.getReference< string >( viewKeyStruct::relPermNamesString() );
+  string const & fluidName = group.getReference< string >( viewKeyStruct::fluidNamesString() );
+  RelativePermeabilityBase & relperm = getConstitutiveModel< RelativePermeabilityBase >( group, relpermName );
+  TwoPhaseImmiscibleFluid & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( group, fluidName );
+  constitutive::constitutiveUpdatePassThru( relperm, [&]( auto & castedRelperm )
+  {
+    GEOS_UNUSED_VAR( castedRelperm );
+    // Use existing kernel to populate phaseMobility and dPhaseMobility on the group
+    immiscibleMultiphaseKernels::PhaseMobilityKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                                                                        group,
+                                                                                                        fluid,
+                                                                                                        relperm );
+  } );
 }
 
 void ImmiscibleMultiphaseFlowMFD::updateCapPressureModel( ObjectManagerBase & group ) const
