@@ -135,9 +135,6 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
   // for all the local perforations on this well
   for( localIndex iperf = 0; iperf < size(); ++iperf )
   {
-    // All perforations default to open
-    m_localPerfStatus[iperf] = PerforationStatus::OPEN;
-
     // if the well transmissibility has been read from the XML
     // then skip the computation of the well transmissibility carried out below
     if( m_wellTransmissibility[iperf] >= 0 )
