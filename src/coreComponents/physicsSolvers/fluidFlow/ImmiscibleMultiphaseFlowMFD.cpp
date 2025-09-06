@@ -353,6 +353,14 @@ void ImmiscibleMultiphaseFlowMFD::assembleSystem( real64 const time_n,
                                                   arrayView1d< real64 > const & localRhs )
 {
   GEOS_UNUSED_VAR( time_n );
+  // Ensure fluid properties reflect current pressure before assembling
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const, ElementSubRegionBase & subRegion )
+    {
+      updateFluidModel( subRegion );
+    } );
+  } );
   assembleAccumulationTerm( domain, dofManager, localMatrix, localRhs );
   assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs ); // TPFA transport + pressure (will later separate)
   assembleFluxTermsHybrid( dt, domain, dofManager, localMatrix, localRhs ); // face constraints only (cell eq disabled)
@@ -602,7 +610,7 @@ void ImmiscibleMultiphaseFlowMFD::applySystemSolution( DofManager const & dofMan
   dofManager.addVectorToField( localSolution, viewKeyStruct::elemDofFieldString(), flow::pressure::key(), scalingFactor, pressureMask );
   // Manually add saturation increment to the configured independent phase component
   integer const indep = 1 - m_dependentPhaseIndex;
-  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const, ElementSubRegionBase & subRegion )
@@ -634,39 +642,20 @@ void ImmiscibleMultiphaseFlowMFD::applySystemSolution( DofManager const & dofMan
   } );
 }
 
-// --- Multiphase helper updates ---
-
 void ImmiscibleMultiphaseFlowMFD::updateFluidModel( ObjectManagerBase & group ) const
 {
-  auto pres = group.getField< flow::pressure >(); GEOS_UNUSED_VAR( pres );
-  // For now rely on TwoPhaseImmiscibleFluid automatic update via createKernelWrapper if needed elsewhere.
+  // Update fluid constitutive state (densities/viscosities) from current pressure
+  arrayView1d< real64 const > const pres = group.getField< flow::pressure >();
+  TwoPhaseImmiscibleFluid & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( group, group.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+  {
+    using FluidType = TYPEOFREF( castedFluid );
+    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    FluidUpdateKernel::launch< parallelDevicePolicy<> >( group.size(), fluidWrapper, pres );
+  } );
 }
 
-void ImmiscibleMultiphaseFlowMFD::updateRelPermModel( ObjectManagerBase & group ) const
-{
-  if( !group.hasWrapper( viewKeyStruct::relPermNamesString() ) ) return;
-  string const & name = group.getReference< string >( viewKeyStruct::relPermNamesString() );
-  RelativePermeabilityBase & relperm = getConstitutiveModel< RelativePermeabilityBase >( group, name );
-  auto phaseVol = group.getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
-  constitutive::constitutiveUpdatePassThru( relperm, [&]( auto & casted )
-  { auto wrapper = casted.createKernelWrapper(); RelativePermeabilityUpdateKernel::launch< parallelDevicePolicy<> >( group.size(), wrapper, phaseVol ); } );
-}
-
-void ImmiscibleMultiphaseFlowMFD::updateCapPressureModel( ObjectManagerBase & group ) const
-{
-  if( !m_hasCapPressure ) return; if( !group.hasWrapper( viewKeyStruct::capPressureNamesString() ) ) return;
-  string const & name = group.getReference< string >( viewKeyStruct::capPressureNamesString() );
-  CapillaryPressureBase & cap = getConstitutiveModel< CapillaryPressureBase >( group, name );
-  auto phaseVol = group.getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
-  constitutive::constitutiveUpdatePassThru( cap, [&]( auto & casted )
-  { auto wrapper = casted.createKernelWrapper(); CapillaryPressureUpdateKernel::launch< parallelDevicePolicy<> >( group.size(), wrapper, phaseVol ); } );
-}
-
-void ImmiscibleMultiphaseFlowMFD::updatePhaseMobility( ObjectManagerBase & group ) const
-{
-  // simplified: phaseMobility already set externally (could derive from relperm*density/viscosity). Placeholder.
-  GEOS_UNUSED_VAR( group );
-}
+// --- Multiphase helper updates ---
 
 void ImmiscibleMultiphaseFlowMFD::updatePhaseMass( ElementSubRegionBase & subRegion ) const
 {
@@ -689,8 +678,6 @@ void ImmiscibleMultiphaseFlowMFD::updatePhaseMass( ElementSubRegionBase & subReg
 void ImmiscibleMultiphaseFlowMFD::updateVolumeConstraint( ElementSubRegionBase & subRegion ) const
 {
   auto phaseVol = subRegion.getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
-  // Enforce sum of saturations = 1 by computing the dependent component from the independent one.
-  // For two-phase: if dependentPhaseIndex == 1, s1 = 1 - s0 (default). If 0, s0 = 1 - s1.
   integer const dep = ( m_dependentPhaseIndex == 0 ? 0 : 1 );
   integer const ind = 1 - dep;
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
@@ -702,6 +689,7 @@ void ImmiscibleMultiphaseFlowMFD::updateVolumeConstraint( ElementSubRegionBase &
 void ImmiscibleMultiphaseFlowMFD::updateFluidState( ElementSubRegionBase & subRegion ) const
 {
   updateFluidModel( subRegion );
+  updateVolumeConstraint( subRegion );
   updatePhaseMass( subRegion );
   updateRelPermModel( subRegion );
   updatePhaseMobility( subRegion );
