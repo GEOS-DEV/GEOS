@@ -165,6 +165,7 @@ public:
                               constitutive::TwoPhaseImmiscibleFluid const & fluid,
                               constitutive::PermeabilityBase const & permeability,
                               SortedArrayView< localIndex const > const & regionFilter,
+                              integer const indepPhaseIndex,
                               real64 const & dt,
                               bool const assembleCellEq,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -172,28 +173,15 @@ public:
     : m_rankOffset( rankOffset ), m_er( er ), m_esr( esr ), m_lengthTolerance( lengthTolerance ), m_dt( dt ),
       m_elemGhostRank( subRegion.ghostRank() ),
       m_elemDofNumber( elemDofNumberAccessor.toNestedViewConst() ),
-      m_faceGhostRank( faceManager.ghostRank() ),
-      m_faceDofNumber( faceManager.getReference< array1d< globalIndex > >( faceDofKey ) ),
-      m_elemToFaces( subRegion.faceList().toViewConst() ),
-      m_elemCenter( subRegion.getElementCenter() ),
-      m_elemVolume( subRegion.getElementVolume() ),
-      m_elemGravCoef( subRegion.getField< fields::flow::gravityCoefficient >() ),
-      m_faceToNodes( faceManager.nodeList().toViewConst() ),
-      m_faceGravCoef( faceManager.getField< fields::flow::gravityCoefficient >() ),
-      m_regionFilter( regionFilter ),
-      m_nodePosition( nodeManager.referencePosition() ),
-      m_elemRegionList( faceManager.elementRegionList() ),
-      m_elemSubRegionList( faceManager.elementSubRegionList() ),
-      m_elemList( faceManager.elementList() ),
-      m_elemPerm( permeability.permeability() ),
-      m_transMultiplier( faceManager.getField< fields::flow::transMultiplier >() ),
-      m_elemPres( subRegion.getField< fields::flow::pressure >() ),
-      m_facePres( faceManager.getField< fields::flow::facePressure >() ),
-      m_phaseDens( fluid.phaseDensity() ),
-      m_dPhaseDens( fluid.dPhaseDensity() ),
-      m_phaseMob( subRegion.getField< fields::immiscibleMultiphaseFlow::phaseMobility >() ),
-      m_dPhaseMob( subRegion.getField< fields::immiscibleMultiphaseFlow::dPhaseMobility >() ),
-      m_assembleCellEquation( assembleCellEq ),
+      m_faceGhostRank( faceManager.ghostRank() ), m_faceDofNumber( faceManager.getReference< array1d< globalIndex > >( faceDofKey ) ),
+      m_elemToFaces( subRegion.faceList().toViewConst() ), m_elemCenter( subRegion.getElementCenter() ), m_elemVolume( subRegion.getElementVolume() ), m_elemGravCoef( subRegion.getField< fields::flow::gravityCoefficient >() ),
+      m_faceToNodes( faceManager.nodeList().toViewConst() ), m_faceGravCoef( faceManager.getField< fields::flow::gravityCoefficient >() ), m_regionFilter( regionFilter ),
+      m_nodePosition( nodeManager.referencePosition() ), m_elemRegionList( faceManager.elementRegionList() ), m_elemSubRegionList( faceManager.elementSubRegionList() ), m_elemList( faceManager.elementList() ),
+      m_elemPerm( permeability.permeability() ), m_transMultiplier( faceManager.getField< fields::flow::transMultiplier >() ),
+      m_elemPres( subRegion.getField< fields::flow::pressure >() ), m_facePres( faceManager.getField< fields::flow::facePressure >() ),
+      m_phaseDens( fluid.phaseDensity() ), m_dPhaseDens( fluid.dPhaseDensity() ),
+      m_phaseMob( subRegion.getField< fields::immiscibleMultiphaseFlow::phaseMobility >() ), m_dPhaseMob( subRegion.getField< fields::immiscibleMultiphaseFlow::dPhaseMobility >() ),
+      m_assembleCellEquation( assembleCellEq ), m_indep( indepPhaseIndex ),
       m_localMatrix( localMatrix ), m_localRhs( localRhs )
   {}
 
@@ -205,15 +193,30 @@ public:
     real64 dOneSidedVolFlux_dPres[NUM_FACE]{}; // derivative wrt element pressure
     real64 dOneSidedVolFlux_dFacePres[NUM_FACE][NUM_FACE]{}; // derivative wrt face pressures
     real64 divMassFluxes = 0; // accumulation for cell eqn
-    real64 dDivMassFluxes_dElemVars[NUM_FACE+1]{}; // [0] elem pressure, rest upwind neighbor pressures
+    // Derivatives wrt cell DOFs: [pressure, s_indep]
+    real64 dDivMassFluxes_dP = 0.0;
+    real64 dDivMassFluxes_dS = 0.0;
+    // Derivatives wrt face pressures
     real64 dDivMassFluxes_dFaceVars[NUM_FACE]{};
-    localIndex cellRow = 0; localIndex faceRow[NUM_FACE]{}; globalIndex elemCols[NUM_FACE+1]{}; globalIndex faceCols[NUM_FACE]{};
+    // Row/col bookkeeping
+    localIndex cellRow = 0;
+    localIndex faceRow[NUM_FACE]{};
+    globalIndex elemCols[2]{}; // [P, S_indep]
+    globalIndex faceCols[NUM_FACE]{};
   };
 
   GEOS_HOST_DEVICE void setup( localIndex const ei, StackVariables & s ) const
   {
-    s.cellRow = m_elemDofNumber[m_er][m_esr][ei] - m_rankOffset; s.elemCols[0] = m_elemDofNumber[m_er][m_esr][ei];
-    for( integer f=0; f<NUM_FACE; ++f ) { localIndex lf = m_elemToFaces[ei][f]; s.faceRow[f] = m_faceDofNumber[lf]-m_rankOffset; s.faceCols[f]=m_faceDofNumber[lf]; }
+    s.cellRow = m_elemDofNumber[m_er][m_esr][ei] - m_rankOffset;
+    // Element columns: pressure and saturation of independent phase are consecutive
+    s.elemCols[0] = m_elemDofNumber[m_er][m_esr][ei];
+    s.elemCols[1] = s.elemCols[0] + 1;
+    for( integer f=0; f<NUM_FACE; ++f )
+    {
+      localIndex const lf = m_elemToFaces[ei][f];
+      s.faceRow[f] = m_faceDofNumber[lf] - m_rankOffset;
+      s.faceCols[f] = m_faceDofNumber[lf];
+    }
   }
 
   GEOS_HOST_DEVICE void computeGradient( localIndex const ei, StackVariables & s ) const
@@ -272,21 +275,27 @@ public:
       // total mobility (sum phases) evaluated at the current element (no upwinding)
       real64 mobTot = 0.0;
       real64 dMobTot_dP = 0.0;
+      real64 dMobTot_dS = 0.0; // derivative wrt saturation of independent phase
       for( integer ip=0; ip<2; ++ip ) // currently 2 phases
       {
         mobTot += m_phaseMob[ei][ip];
         dMobTot_dP += m_dPhaseMob[ei][ip][DerivMob::dP];
+        // derivative wrt s_indep lives at Deriv::dS + indep
+        dMobTot_dS += m_dPhaseMob[ei][ip][DerivMob::dS + m_indep];
       }
+      real64 const F = s.oneSidedVolFlux[i];
+      real64 const dF_dP = s.dOneSidedVolFlux_dPres[i];
       real64 const dt_mobTot = m_dt * mobTot;
-      s.divMassFluxes += dt_mobTot * s.oneSidedVolFlux[i];
-      s.dDivMassFluxes_dElemVars[0] += m_dt * mobTot * s.dOneSidedVolFlux_dPres[i];
-      s.dDivMassFluxes_dElemVars[i+1] = m_dt * dMobTot_dP * s.oneSidedVolFlux[i];
+      // residual
+      s.divMassFluxes += dt_mobTot * F;
+      // jacobians wrt element DOFs
+      s.dDivMassFluxes_dP += m_dt * ( mobTot * dF_dP + dMobTot_dP * F );
+      s.dDivMassFluxes_dS += m_dt * ( dMobTot_dS * F );
+      // wrt face pressures
       for( integer j=0; j<NUM_FACE; ++j )
       {
         s.dDivMassFluxes_dFaceVars[j] += dt_mobTot * s.dOneSidedVolFlux_dFacePres[i][j];
       }
-      // derivative wrt mobility now also goes to the current element dof
-      s.elemCols[i+1] = m_elemDofNumber[m_er][m_esr][ei];
     }
   }
 
@@ -305,8 +314,10 @@ public:
   {
     if( m_elemGhostRank[ei] < 0 )
     {
+      // Scatter to the pressure-row of the cell block
       m_localRhs[s.cellRow] += s.divMassFluxes;
-      m_localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( s.cellRow, &s.elemCols[0], &s.dDivMassFluxes_dElemVars[0], NUM_FACE+1 );
+      real64 jacElem[2] = { s.dDivMassFluxes_dP, s.dDivMassFluxes_dS };
+      m_localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( s.cellRow, &s.elemCols[0], &jacElem[0], 2 );
       m_localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( s.cellRow, &s.faceCols[0], &s.dDivMassFluxes_dFaceVars[0], NUM_FACE );
     }
     // face constraints unchanged
@@ -333,6 +344,7 @@ private:
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const m_phaseDens; arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const m_dPhaseDens;
   arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const m_phaseMob; arrayView3d< real64 const, immiscibleFlow::USD_PHASE_DS > const m_dPhaseMob;
   bool const m_assembleCellEquation;
+  integer const m_indep;
   CRSMatrixView< real64, globalIndex const > const m_localMatrix; arrayView1d< real64 > const m_localRhs;
 };
 
@@ -370,6 +382,7 @@ public:
                                constitutive::TwoPhaseImmiscibleFluid const & fluid,
                                constitutive::PermeabilityBase const & permeability,
                                SortedArrayView< localIndex const > const & regionFilter,
+                               integer const indepPhaseIndex,
                                real64 const & dt,
                                bool const assembleCellEq,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -386,7 +399,7 @@ public:
         ElementBasedAssemblyKernel< NF, IPType > k( rankOffset, er, esr, lengthTolerance,
                                                     faceDofKey, nodeManager, faceManager,
                                                     subRegion, dofNumberAccessor, fluid, permeability,
-                                                    regionFilter, dt, assembleCellEq, localMatrix, localRhs );
+                                                    regionFilter, indepPhaseIndex, dt, assembleCellEq, localMatrix, localRhs );
         launchElementBasedAssemblyKernel< POLICY, NF, IPType >( subRegion.size(), k );
       } );
     } );

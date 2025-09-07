@@ -388,6 +388,8 @@ void ImmiscibleMultiphaseFlowMFD::assembleFluxTermsHybrid( real64 const dt,
   string const faceDofKey = dofManager.getKey( flow::facePressure::key() );
   string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   real64 const lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * m_areaRelTol;
+  // For two-phase: independent saturation index (0 or 1)
+  integer const indep = 1 - m_dependentPhaseIndex;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel const & mesh, string_array const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
@@ -412,6 +414,7 @@ void ImmiscibleMultiphaseFlowMFD::assembleFluxTermsHybrid( real64 const dt,
                                                                                      fluid,
                                                                                      permeability,
                                                                                      m_regionFilter.toViewConst(),
+                                                                                     indep,
                                                                                      dt,
                                                                                      /*assembleCellEq=*/true,
                                                                                      localMatrix,
