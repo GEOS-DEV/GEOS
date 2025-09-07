@@ -271,14 +271,27 @@ void ImmiscibleMultiphaseFlowMFD::resetStateToBeginningOfStep( DomainPartition &
 
 void ImmiscibleMultiphaseFlowMFD::setupDofs( DomainPartition const & domain, DofManager & dofManager ) const
 {
+  // cell unknowns: pressure + (numPhases-1) independent saturations
   dofManager.addField( viewKeyStruct::elemDofFieldString(), FieldLocation::Elem, m_numDofPerCell, getMeshTargets() );
+  // lagrange multiplier pressure
+  dofManager.addField( flow::facePressure::key(), FieldLocation::Face, 1, getMeshTargets() );
+  
   // couple element unknowns through flux approximation (face connectivity)
   dofManager.addCoupling( viewKeyStruct::elemDofFieldString(), viewKeyStruct::elemDofFieldString(), DofManager::Connector::Face );
-  // face pressure
-  dofManager.addField( flow::facePressure::key(), FieldLocation::Face, 1, getMeshTargets() );
-  // mirror SinglePhaseHybridFVM: build face-face and symmetric face<->elem sparsity via Elem connectors
+
+  // couple face unknowns through weak gradient  (Element connectivity)
   dofManager.addCoupling( flow::facePressure::key(), flow::facePressure::key(), DofManager::Connector::Elem );
+  
+  // symmetric face<->elem sparsity via Elem connectors
   dofManager.addCoupling( flow::facePressure::key(), viewKeyStruct::elemDofFieldString(), DofManager::Connector::Elem );
+//  // also add explicit elem->face coupling (redundant with symmetric, but harmless and robust)
+//  dofManager.addCoupling( viewKeyStruct::elemDofFieldString(), flow::facePressure::key(), DofManager::Connector::Elem );
+  
+//  // Only pressure equation (component 0) should be globally coupled; saturation (component 1) remains local
+//  if( m_numDofPerCell > 1 )
+//  {
+//    dofManager.disableGlobalCouplingForEquation( viewKeyStruct::elemDofFieldString(), 1 );
+//  }
 }
 
 void ImmiscibleMultiphaseFlowMFD::assembleAccumulationTerm( DomainPartition & domain,
