@@ -153,6 +153,7 @@ class ElementBasedAssemblyKernel
 public:
   using DerivMob = immiscibleFlow::DerivativeOffset; // for mobility derivatives
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
+  using SatAccessor = ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >;
   ElementBasedAssemblyKernel( globalIndex const rankOffset,
                               localIndex const er,
                               localIndex const esr,
@@ -162,6 +163,7 @@ public:
                               FaceManager const & faceManager,
                               CellElementSubRegion const & subRegion,
                               DofNumberAccessor const & elemDofNumberAccessor,
+                              SatAccessor const & phaseVolFracAccessor,
                               constitutive::TwoPhaseImmiscibleFluid const & fluid,
                               constitutive::PermeabilityBase const & permeability,
                               SortedArrayView< localIndex const > const & regionFilter,
@@ -173,6 +175,7 @@ public:
     : m_rankOffset( rankOffset ), m_er( er ), m_esr( esr ), m_lengthTolerance( lengthTolerance ), m_dt( dt ),
       m_elemGhostRank( subRegion.ghostRank() ),
       m_elemDofNumber( elemDofNumberAccessor.toNestedViewConst() ),
+      m_phaseVolFracAll( phaseVolFracAccessor.toNestedViewConst() ),
       m_faceGhostRank( faceManager.ghostRank() ), m_faceDofNumber( faceManager.getReference< array1d< globalIndex > >( faceDofKey ) ),
       m_elemToFaces( subRegion.faceList().toViewConst() ), m_elemCenter( subRegion.getElementCenter() ), m_elemVolume( subRegion.getElementVolume() ), m_elemGravCoef( subRegion.getField< fields::flow::gravityCoefficient >() ),
       m_faceToNodes( faceManager.nodeList().toViewConst() ), m_faceGravCoef( faceManager.getField< fields::flow::gravityCoefficient >() ), m_regionFilter( regionFilter ),
@@ -189,16 +192,25 @@ public:
   {
     GEOS_HOST_DEVICE StackVariables(): transMatrix( NUM_FACE, NUM_FACE ) {}
     stackArray2d< real64, NUM_FACE * NUM_FACE > transMatrix;
-    real64 MassFlux[NUM_FACE]{}; // total volumetric flux (no mobility)
-    real64 dMassFlux_dPres[NUM_FACE]{}; // derivative wrt element pressure
-    real64 dMassFlux_dS[NUM_FACE]{}; // derivative wrt element saturation (indep phase)
-    real64 dMassFlux_dFacePres[NUM_FACE][NUM_FACE]{}; // derivative wrt face pressures
-    real64 divMassFluxes = 0; // accumulation for cell eqn
-    // Derivatives wrt cell DOFs: [pressure, s_indep]
+    // Mass fluxes (one-sided per face i)
+    real64 MassFlux[NUM_FACE]{};
+    real64 dMassFlux_dPres[NUM_FACE]{};
+    real64 dMassFlux_dS[NUM_FACE]{};
+    real64 dMassFlux_dFacePres[NUM_FACE][NUM_FACE]{};
+    // Pressure equation: divergence of total mass flux
+    real64 divMassFluxes = 0;
     real64 dDivMassFluxes_dP = 0.0;
     real64 dDivMassFluxes_dS = 0.0;
-    // Derivatives wrt face pressures
     real64 dDivMassFluxes_dFaceVars[NUM_FACE]{};
+    // Saturation equation: divergence of upwinded transported saturation with mass flux
+    real64 divSatFluxes = 0.0;
+    real64 dDivSatFluxes_dP = 0.0;
+    real64 dDivSatFluxes_dS = 0.0;
+    real64 dDivSatFluxes_dFaceVars[NUM_FACE]{};
+    // Neighbor saturation couplings (via upwind when inflow)
+    localIndex numNeiCols = 0;
+    globalIndex neiCols[NUM_FACE]{};
+    real64 neiVals[NUM_FACE]{};
     // Row/col bookkeeping
     localIndex cellRow = 0;
     localIndex faceRow[NUM_FACE]{};
@@ -290,7 +302,7 @@ public:
         real64 const dPotDif_dFaceP = -1.0;
 
         // Overall mass flux and derivatives
-        real64 const T_ij = m_dt * s.transMatrix[i][j];
+        real64 const T_ij = s.transMatrix[i][j];
         s.MassFlux[i] += Lambda * T_ij * potDif;
         s.dMassFlux_dPres[i] += T_ij * ( Lambda * dPotDif_dP + dLambda_dP * potDif );
         s.dMassFlux_dS[i] += T_ij * ( Lambda * dPotDif_dS + dLambda_dS * potDif );
@@ -308,16 +320,75 @@ public:
       real64 const F = s.MassFlux[i];
       real64 const dF_dP = s.dMassFlux_dPres[i];
       real64 const dF_dS = s.dMassFlux_dS[i];
-      
       // residual
-      s.divMassFluxes += F;
+      s.divMassFluxes += m_dt * F;
       // jacobians wrt element DOFs
-      s.dDivMassFluxes_dP += dF_dP;
-      s.dDivMassFluxes_dS += dF_dS;
+      s.dDivMassFluxes_dP += m_dt * dF_dP;
+      s.dDivMassFluxes_dS += m_dt * dF_dS;
       // wrt face pressures
-      for( integer j=0; j<NUM_FACE; ++j )
+      for( integer j=0; j<NUM_FACE; ++j ) s.dDivMassFluxes_dFaceVars[j] += m_dt * s.dMassFlux_dFacePres[i][j];
+    }
+  }
+
+  GEOS_HOST_DEVICE
+  void computeSaturationTransport( localIndex const ei, StackVariables & s ) const
+  {
+    // local saturation of independent phase
+    real64 const s_ind_local = m_phaseVolFracAll[m_er][m_esr][ei][m_indep];
+    for( integer i=0; i<NUM_FACE; ++i )
+    {
+      // Determine neighbor across face i
+      localIndex const lf = m_elemToFaces[ei][i];
+      // face-adjacent elements
+      localIndex const er0 = m_elemRegionList[lf][0];
+      localIndex const esr0 = m_elemSubRegionList[lf][0];
+      localIndex const ei0 = m_elemList[lf][0];
+      localIndex const er1 = m_elemRegionList[lf][1];
+      localIndex const esr1 = m_elemSubRegionList[lf][1];
+      localIndex const ei1 = m_elemList[lf][1];
+
+      // identify neighbor indices
+      bool const side0IsSelf = (er0 == m_er && esr0 == m_esr && ei0 == ei);
+      bool const side1IsSelf = (er1 == m_er && esr1 == m_esr && ei1 == ei);
+      localIndex ner = -1, nesr = -1, nei = -1;
+      if( side0IsSelf && er1 >= 0 ) { ner = er1; nesr = esr1; nei = ei1; }
+      else if( side1IsSelf && er0 >= 0 ) { ner = er0; nesr = esr0; nei = ei0; }
+      // mass flux and derivatives for this one-sided face i
+      real64 const F = s.MassFlux[i];
+      real64 const dF_dP = s.dMassFlux_dPres[i];
+      real64 const dF_dS = s.dMassFlux_dS[i];
+      // choose upwind saturation
+      real64 s_up = s_ind_local;
+      globalIndex neighborSCol = 0;
+      bool useNeighbor = false;
+      if( F < 0.0 && ner >= 0 )
       {
-        s.dDivMassFluxes_dFaceVars[j] += s.dMassFlux_dFacePres[i][j];
+        s_up = m_phaseVolFracAll[ner][nesr][nei][m_indep];
+        neighborSCol = m_elemDofNumber[ner][nesr][nei] + 1; // saturation DOF
+        useNeighbor = true;
+      }
+      // residual contribution and local Jacobians
+      s.divSatFluxes += m_dt * F * s_up;
+      s.dDivSatFluxes_dP += m_dt * ( dF_dP * s_up );
+      // d/dS local includes dF/dS*s_up always + F*1 if upwind is local
+      s.dDivSatFluxes_dS += m_dt * ( dF_dS * s_up + ( (F >= 0.0) ? F : 0.0 ) );
+      // face pressure derivatives
+      for( integer j=0; j<NUM_FACE; ++j ) s.dDivSatFluxes_dFaceVars[j] += m_dt * ( s.dMassFlux_dFacePres[i][j] * s_up );
+      // neighbor coupling if using neighbor upwind
+      if( useNeighbor )
+      {
+        // add dt * F to neighbor saturation column; combine if repeated
+        bool found = false;
+        for( localIndex k=0; k<s.numNeiCols; ++k )
+        {
+          if( s.neiCols[k] == neighborSCol ) { s.neiVals[k] += m_dt * F; found = true; break; }
+        }
+        if( !found && s.numNeiCols < NUM_FACE )
+        {
+          s.neiCols[s.numNeiCols] = neighborSCol;
+          s.neiVals[s.numNeiCols] = m_dt * F;
+          s.numNeiCols++;
+        }
       }
     }
   }
@@ -327,13 +398,11 @@ public:
   void compute( localIndex const ei, StackVariables & s, FUNC && ) const
   {
     if( m_elemGhostRank[ei] < 0 ){
-      
       real64 const perm[3] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
       IP::template compute< NUM_FACE >( m_nodePosition, m_transMultiplier, m_faceToNodes, m_elemToFaces[ei], m_elemCenter[ei], m_elemVolume[ei], perm, m_lengthTolerance, s.transMatrix );
       computeOverallMassFlux( ei, s );
-//      computeGradient( ei, s );
-//      computeFluxDivergence( ei, s );
-      computeOverallMassFluxDivergence(ei,s);
+      computeOverallMassFluxDivergence( ei, s );
+      computeSaturationTransport( ei, s );
     }
   }
 
@@ -342,42 +411,35 @@ public:
   {
     if( m_elemGhostRank[ei] < 0 )
     {
-      // Scatter to the pressure equation
-      globalIndex const pressure_eq = s.cellRow;
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[pressure_eq], s.divMassFluxes );
-      real64 jacElem[2] = { s.dDivMassFluxes_dP, s.dDivMassFluxes_dS };
-      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( pressure_eq, &s.elemCols[0], &jacElem[0], 2 );
-      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( pressure_eq, &s.faceCols[0], &s.dDivMassFluxes_dFaceVars[0], NUM_FACE );
-      
-      // Scatter to the saturation equation
-      globalIndex const saturation_eq = s.cellRow + 1;
+      // Pressure equation row (cell pressure)
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[s.cellRow], s.divMassFluxes );
+      real64 jacElemP[2] = { s.dDivMassFluxes_dP, s.dDivMassFluxes_dS };
+      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.cellRow, &s.elemCols[0], &jacElemP[0], 2 );
+      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.cellRow, &s.faceCols[0], &s.dDivMassFluxes_dFaceVars[0], NUM_FACE );
+      // Saturation equation row (cell saturation)
+      localIndex const satRow = s.cellRow + 1;
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[satRow], s.divSatFluxes );
+      real64 jacElemS[2] = { s.dDivSatFluxes_dP, s.dDivSatFluxes_dS };
+      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( satRow, &s.elemCols[0], &jacElemS[0], 2 );
+      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( satRow, &s.faceCols[0], &s.dDivSatFluxes_dFaceVars[0], NUM_FACE );
+      if( s.numNeiCols > 0 ) m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( satRow, &s.neiCols[0], &s.neiVals[0], s.numNeiCols );
     }
-    // face constraints unchanged
-    globalIndex const pressure_Col = s.elemCols[0];
-    globalIndex const saturation_Col = s.elemCols[1];
+    // face constraints unchanged: enforce hybrid face-pressure constraints using mass flux
+    globalIndex const elemCol = s.elemCols[0];
     for( integer i=0; i<NUM_FACE; ++i )
     {
       if( m_faceGhostRank[m_elemToFaces[ei][i]] < 0 )
       {
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[s.faceRow[i]], s.MassFlux[i] );
-        m_localMatrix.addToRow< parallelDeviceAtomic >( s.faceRow[i], &pressure_Col, &s.dMassFlux_dPres[i], 1 );
-        m_localMatrix.addToRow< parallelDeviceAtomic >( s.faceRow[i], &saturation_Col, &s.dMassFlux_dS[i], 1 );
+        m_localMatrix.addToRow< parallelDeviceAtomic >( s.faceRow[i], &elemCol, &s.dMassFlux_dPres[i], 1 );
         m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.faceRow[i], &s.faceCols[0], s.dMassFlux_dFacePres[i], NUM_FACE );
       }
     }
-//    localIndex const nnz = m_localMatrix.numNonZeros( s.cellRow );
-//    auto vals = m_localMatrix.getEntries( s.cellRow );
-//    auto cols = m_localMatrix.getColumns(s.cellRow);
-//    for( localIndex i = 0; i < nnz; ++i )
-//    {
-//      std::cout << "(" << cols[i] << ", " << vals[i] << ") ";
-//    }
-//    int aka = 0;
-    
   }
 private:
   globalIndex const m_rankOffset; localIndex const m_er; localIndex const m_esr; real64 const m_lengthTolerance; real64 const m_dt;
   arrayView1d< integer const > const m_elemGhostRank; ElementRegionManager::ElementViewConst< arrayView1d< globalIndex const > > const m_elemDofNumber;
+  ElementRegionManager::ElementViewConst< arrayView2d< real64 const > > const m_phaseVolFracAll;
   arrayView1d< integer const > const m_faceGhostRank; arrayView1d< globalIndex const > const m_faceDofNumber;
   arrayView2d< localIndex const > const m_elemToFaces; arrayView2d< real64 const > const m_elemCenter; arrayView1d< real64 const > const m_elemVolume; arrayView1d< real64 const > const m_elemGravCoef;
   ArrayOfArraysView< localIndex const > const m_faceToNodes; arrayView1d< real64 const > const m_faceGravCoef; SortedArrayView< localIndex const > const m_regionFilter;
@@ -436,12 +498,14 @@ public:
       using IPType = TYPEOFREF( ip );
       internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NF )
       {
-        // persistent accessor for element dof numbers
+        // persistent accessors
         auto dofNumberAccessor = elemManager.constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
         dofNumberAccessor.setName( solverName + "/accessors/" + elemDofKey );
+        auto satAccessor = elemManager.constructArrayViewAccessor< real64, 2 >( fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() );
+        satAccessor.setName( solverName + "/accessors/" + fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() );
         ElementBasedAssemblyKernel< NF, IPType > k( rankOffset, er, esr, lengthTolerance,
                                                     faceDofKey, nodeManager, faceManager,
-                                                    subRegion, dofNumberAccessor, fluid, permeability,
+                                                    subRegion, dofNumberAccessor, satAccessor, fluid, permeability,
                                                     regionFilter, indepPhaseIndex, dt, assembleCellEq, localMatrix, localRhs );
         launchElementBasedAssemblyKernel< POLICY, NF, IPType >( subRegion.size(), k );
       } );
