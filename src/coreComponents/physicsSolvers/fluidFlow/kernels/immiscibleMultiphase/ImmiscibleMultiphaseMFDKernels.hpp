@@ -226,17 +226,39 @@ public:
         real64 const fPres = m_facePres[m_elemToFaces[ei][j]];
         real64 const ccGravCoef = m_elemGravCoef[ei];
         real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
-        real64 const dens0 = m_phaseDens[ei][0][0]; // effective density (phase 0)
-        real64 const dDens0_dP = m_dPhaseDens[ei][0][0][0]; // assume first derivative entry is dP
+        // Mixture density: rho_mix = (sum_i rho_i * lambda_i) / (sum_i lambda_i)
+        // and derivative wrt pressure via quotient rule
+        real64 sumLambda = 0.0;
+        real64 dSumLambda_dP = 0.0;
+        real64 sumRhoLambda = 0.0;
+        real64 dSumRhoLambda_dP = 0.0;
+        // two-phase for now
+        for( integer ip=0; ip<2; ++ip )
+        {
+          real64 const rho = m_phaseDens[ei][0][ip];
+          real64 const drho_dP = m_dPhaseDens[ei][0][ip][DerivMob::dP];
+          real64 const lambda = m_phaseMob[ei][ip];
+          real64 const dlambda_dP = m_dPhaseMob[ei][ip][DerivMob::dP];
+          sumLambda += lambda;
+          dSumLambda_dP += dlambda_dP;
+          sumRhoLambda += rho * lambda;
+          dSumRhoLambda_dP += drho_dP * lambda + rho * dlambda_dP;
+        }
+        // this can be eliminated as totall mobility is always > 0
+        real64 const eps = 1e-30;
+        real64 const denom = (fabs( sumLambda ) > eps) ? sumLambda : (sumLambda >= 0.0 ? eps : -eps);
+        real64 const densMix = sumRhoLambda / denom;
+        real64 const dDensMix_dP = ( dSumRhoLambda_dP * denom - sumRhoLambda * dSumLambda_dP ) / ( denom * denom );
+        // potential difference terms
         real64 const presDif = ccPres - fPres;
         real64 const gravCoefDif = ccGravCoef - fGravCoef;
-        real64 const gravTerm = dens0 * gravCoefDif;
-        real64 const dGravTerm_dP = dDens0_dP * gravCoefDif;
+        real64 const gravTerm = densMix * gravCoefDif;
+        real64 const dGravTerm_dP = dDensMix_dP * gravCoefDif;
         real64 const potDif = presDif - gravTerm;
         real64 const dPotDif_dP = 1.0 - dGravTerm_dP;
         real64 const dPotDif_dFaceP = -1.0;
         real64 const T_ij = s.transMatrix[i][j];
-        s.oneSidedVolFlux[i] +=  T_ij * potDif;
+        s.oneSidedVolFlux[i] += T_ij * potDif;
         s.dOneSidedVolFlux_dPres[i] += T_ij * dPotDif_dP;
         s.dOneSidedVolFlux_dFacePres[i][j] += T_ij * dPotDif_dFaceP;
       }
