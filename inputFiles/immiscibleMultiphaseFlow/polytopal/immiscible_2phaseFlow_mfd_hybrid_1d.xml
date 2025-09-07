@@ -33,9 +33,15 @@
       xMax="{ 2.01, 1.01, 1.01 }"/>
   </Geometry>
 
-  <Events maxTime="2e3">
-    <PeriodicEvent name="outputs" timeFrequency="200" target="/Outputs/vtkOutput"/>
-    <PeriodicEvent name="solverApps" forceDt="100" target="/Solvers/FlowSolverMFD"/>
+  <Events maxTime="1">
+    <PeriodicEvent 
+      name="outputs" 
+      timeFrequency="1" 
+      target="/Outputs/vtkOutput"/>
+    <PeriodicEvent 
+      name="solverApps" 
+      forceDt="1" 
+      target="/Solvers/FlowSolverMFD"/>
   </Events>
 
   <NumericalMethods>

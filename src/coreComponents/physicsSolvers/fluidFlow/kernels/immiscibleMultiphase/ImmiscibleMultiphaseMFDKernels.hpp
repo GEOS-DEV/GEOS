@@ -235,9 +235,10 @@ public:
         real64 const potDif = presDif - gravTerm;
         real64 const dPotDif_dP = 1.0 - dGravTerm_dP;
         real64 const dPotDif_dFaceP = -1.0;
-        s.oneSidedVolFlux[i] += s.transMatrix[i][j] * potDif;
-        s.dOneSidedVolFlux_dPres[i] += s.transMatrix[i][j] * dPotDif_dP;
-        s.dOneSidedVolFlux_dFacePres[i][j] += s.transMatrix[i][j] * dPotDif_dFaceP;
+        real64 const T_ij = s.transMatrix[i][j];
+        s.oneSidedVolFlux[i] +=  T_ij * potDif;
+        s.dOneSidedVolFlux_dPres[i] += T_ij * dPotDif_dP;
+        s.dOneSidedVolFlux_dFacePres[i][j] += T_ij * dPotDif_dFaceP;
       }
     }
   }
