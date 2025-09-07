@@ -331,6 +331,15 @@ public:
         m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.faceRow[i], &s.faceCols[0], s.dOneSidedVolFlux_dFacePres[i], NUM_FACE );
       }
     }
+//    localIndex const nnz = m_localMatrix.numNonZeros( s.cellRow );
+//    auto vals = m_localMatrix.getEntries( s.cellRow );
+//    auto cols = m_localMatrix.getColumns(s.cellRow);
+//    for( localIndex i = 0; i < nnz; ++i )
+//    {
+//      std::cout << "(" << cols[i] << ", " << vals[i] << ") ";
+//    }
+//    int aka = 0;
+    
   }
 private:
   globalIndex const m_rankOffset; localIndex const m_er; localIndex const m_esr; real64 const m_lengthTolerance; real64 const m_dt;
