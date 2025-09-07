@@ -192,6 +192,10 @@ public:
     real64 oneSidedVolFlux[NUM_FACE]{}; // total volumetric flux (no mobility)
     real64 dOneSidedVolFlux_dPres[NUM_FACE]{}; // derivative wrt element pressure
     real64 dOneSidedVolFlux_dFacePres[NUM_FACE][NUM_FACE]{}; // derivative wrt face pressures
+    real64 oneSidedMassFlux[NUM_FACE]{}; // total volumetric flux (no mobility)
+    real64 dOneSidedMassFlux_dPres[NUM_FACE]{}; // derivative wrt element pressure
+    real64 dOneSidedMassFlux_dS[NUM_FACE]{}; // derivative wrt element saturation (indep phase)
+    real64 dOneSidedMassFlux_dFacePres[NUM_FACE][NUM_FACE]{}; // derivative wrt face pressures
     real64 divMassFluxes = 0; // accumulation for cell eqn
     // Derivatives wrt cell DOFs: [pressure, s_indep]
     real64 dDivMassFluxes_dP = 0.0;
@@ -220,6 +224,55 @@ public:
   }
 
   GEOS_HOST_DEVICE void computeGradient( localIndex const ei, StackVariables & s ) const
+  {
+    for( integer i=0; i<NUM_FACE; ++i )
+    {
+      for( integer j=0; j<NUM_FACE; ++j )
+      {
+        real64 const ccPres = m_elemPres[ei];
+        real64 const fPres = m_facePres[m_elemToFaces[ei][j]];
+        real64 const ccGravCoef = m_elemGravCoef[ei];
+        real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
+        // Mixture density: rho_mix = (sum_i rho_i * lambda_i) / (sum_i lambda_i)
+        // and derivative wrt pressure via quotient rule
+        real64 sumLambda = 0.0;
+        real64 dSumLambda_dP = 0.0;
+        real64 sumRhoLambda = 0.0;
+        real64 dSumRhoLambda_dP = 0.0;
+        // two-phase for now
+        for( integer ip=0; ip<2; ++ip )
+        {
+          real64 const rho = m_phaseDens[ei][0][ip];
+          real64 const drho_dP = m_dPhaseDens[ei][0][ip][DerivMob::dP];
+          real64 const lambda = m_phaseMob[ei][ip];
+          real64 const dlambda_dP = m_dPhaseMob[ei][ip][DerivMob::dP];
+          sumLambda += lambda;
+          dSumLambda_dP += dlambda_dP;
+          sumRhoLambda += rho * lambda;
+          dSumRhoLambda_dP += drho_dP * lambda + rho * dlambda_dP;
+        }
+        // this can be eliminated as totall mobility is always > 0
+        real64 const eps = 1e-30;
+        real64 const denom = (fabs( sumLambda ) > eps) ? sumLambda : (sumLambda >= 0.0 ? eps : -eps);
+        real64 const densMix = sumRhoLambda / denom;
+        real64 const dDensMix_dP = ( dSumRhoLambda_dP * denom - sumRhoLambda * dSumLambda_dP ) / ( denom * denom );
+        // potential difference terms
+        real64 const presDif = ccPres - fPres;
+        real64 const gravCoefDif = ccGravCoef - fGravCoef;
+        real64 const gravTerm = densMix * gravCoefDif;
+        real64 const dGravTerm_dP = dDensMix_dP * gravCoefDif;
+        real64 const potDif = presDif - gravTerm;
+        real64 const dPotDif_dP = 1.0 - dGravTerm_dP;
+        real64 const dPotDif_dFaceP = -1.0;
+        real64 const T_ij = s.transMatrix[i][j];
+        s.oneSidedVolFlux[i] += T_ij * potDif;
+        s.dOneSidedVolFlux_dPres[i] += T_ij * dPotDif_dP;
+        s.dOneSidedVolFlux_dFacePres[i][j] += T_ij * dPotDif_dFaceP;
+      }
+    }
+  }
+  
+  GEOS_HOST_DEVICE void computeOverallMassFlux( localIndex const ei, StackVariables & s ) const
   {
     for( integer i=0; i<NUM_FACE; ++i )
     {
@@ -300,7 +353,8 @@ public:
   }
 
   template< typename FUNC = NoOpFunc >
-  GEOS_HOST_DEVICE void compute( localIndex const ei, StackVariables & s, FUNC && ) const
+  GEOS_HOST_DEVICE
+  void compute( localIndex const ei, StackVariables & s, FUNC && ) const
   {
     real64 const perm[3] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
     IP::template compute< NUM_FACE >( m_nodePosition, m_transMultiplier, m_faceToNodes, m_elemToFaces[ei], m_elemCenter[ei], m_elemVolume[ei], perm, m_lengthTolerance, s.transMatrix );
@@ -310,7 +364,8 @@ public:
     }
   }
 
-  GEOS_HOST_DEVICE void complete( localIndex const ei, StackVariables & s ) const
+  GEOS_HOST_DEVICE v
+  void complete( localIndex const ei, StackVariables & s ) const
   {
     if( m_elemGhostRank[ei] < 0 )
     {
