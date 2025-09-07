@@ -398,10 +398,15 @@ public:
   void compute( localIndex const ei, StackVariables & s, FUNC && ) const
   {
     if( m_elemGhostRank[ei] < 0 ){
+      
       real64 const perm[3] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
+      
+      // pressure equation
       IP::template compute< NUM_FACE >( m_nodePosition, m_transMultiplier, m_faceToNodes, m_elemToFaces[ei], m_elemCenter[ei], m_elemVolume[ei], perm, m_lengthTolerance, s.transMatrix );
       computeOverallMassFlux( ei, s );
       computeOverallMassFluxDivergence( ei, s );
+      
+      // saturation equation
       computeSaturationTransport( ei, s );
     }
   }
@@ -412,10 +417,12 @@ public:
     if( m_elemGhostRank[ei] < 0 )
     {
       // Pressure equation row (cell pressure)
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[s.cellRow], s.divMassFluxes );
+      localIndex const pressRow = s.cellRow + 1;
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[pressRow], s.divMassFluxes );
       real64 jacElemP[2] = { s.dDivMassFluxes_dP, s.dDivMassFluxes_dS };
-      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.cellRow, &s.elemCols[0], &jacElemP[0], 2 );
-      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.cellRow, &s.faceCols[0], &s.dDivMassFluxes_dFaceVars[0], NUM_FACE );
+      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( pressRow, &s.elemCols[0], &jacElemP[0], 2 );
+      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( pressRow, &s.faceCols[0], &s.dDivMassFluxes_dFaceVars[0], NUM_FACE );
+      
       // Saturation equation row (cell saturation)
       localIndex const satRow = s.cellRow + 1;
       RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[satRow], s.divSatFluxes );
