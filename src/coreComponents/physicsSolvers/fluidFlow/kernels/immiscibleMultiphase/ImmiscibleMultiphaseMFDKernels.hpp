@@ -315,10 +315,10 @@ public:
     if( m_elemGhostRank[ei] < 0 )
     {
       // Scatter to the pressure-row of the cell block
-      m_localRhs[s.cellRow] += s.divMassFluxes;
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[s.cellRow], s.divMassFluxes );
       real64 jacElem[2] = { s.dDivMassFluxes_dP, s.dDivMassFluxes_dS };
-      m_localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( s.cellRow, &s.elemCols[0], &jacElem[0], 2 );
-      m_localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( s.cellRow, &s.faceCols[0], &s.dDivMassFluxes_dFaceVars[0], NUM_FACE );
+      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.cellRow, &s.elemCols[0], &jacElem[0], 2 );
+      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.cellRow, &s.faceCols[0], &s.dDivMassFluxes_dFaceVars[0], NUM_FACE );
     }
     // face constraints unchanged
     globalIndex const elemCol = s.elemCols[0];
