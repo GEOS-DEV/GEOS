@@ -185,7 +185,9 @@ void ImmiscibleMultiphaseFlowMFD::initializePostInitialConditionsPreSubGroups()
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const, auto & subRegion )
     {
-      // Ensure dependent saturation constraint and compute mass from PV, rho, s
+      // Ensure rock and fluid states are up-to-date before computing masses
+      updatePorosityAndPermeability( subRegion );
+      updateVolumeConstraint( subRegion );
       updateFluidState( subRegion );
       // Copy current state into _n state so accumulation uses consistent initial masses
       auto const phaseVol = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();

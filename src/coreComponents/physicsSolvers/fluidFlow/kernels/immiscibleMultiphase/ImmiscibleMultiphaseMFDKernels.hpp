@@ -290,7 +290,7 @@ public:
         real64 const dPotDif_dFaceP = -1.0;
 
         // One-sided mass flux and derivatives
-        real64 const T_ij = s.transMatrix[i][j];
+        real64 const T_ij = m_dt * s.transMatrix[i][j];
         s.MassFlux[i] += Lambda * T_ij * potDif;
         s.dMassFlux_dPres[i] += T_ij * ( Lambda * dPotDif_dP + dLambda_dP * potDif );
         s.dMassFlux_dS[i] += T_ij * ( Lambda * dPotDif_dS + dLambda_dS * potDif );
@@ -310,14 +310,14 @@ public:
       real64 const dF_dS = s.dMassFlux_dS[i];
       
       // residual
-      s.divMassFluxes += m_dt * F;
+      s.divMassFluxes += F;
       // jacobians wrt element DOFs
-      s.dDivMassFluxes_dP += m_dt * dF_dP;
-      s.dDivMassFluxes_dS += m_dt * dF_dS;
+      s.dDivMassFluxes_dP += dF_dP;
+      s.dDivMassFluxes_dS += dF_dS;
       // wrt face pressures
       for( integer j=0; j<NUM_FACE; ++j )
       {
-        s.dDivMassFluxes_dFaceVars[j] += m_dt * s.dMassFlux_dFacePres[i][j];
+        s.dDivMassFluxes_dFaceVars[j] += s.dMassFlux_dFacePres[i][j];
       }
     }
   }
@@ -518,8 +518,14 @@ public:
     real64 const drho_dep_dP = m_dPhaseDens[ei][0][dep][Deriv::dP];
 
     // Previous masses
-    real64 const mass_n_ind = m_phaseMass_n[ei][m_indep];
-    real64 const mass_n_dep = m_phaseMass_n[ei][dep];
+    real64 mass_n_ind = m_phaseMass_n[ei][m_indep];
+    real64 mass_n_dep = m_phaseMass_n[ei][dep];
+    // Fallback for first step: if both are zero, assume uninitialized and compute from current state
+    if( mass_n_ind == 0.0 && mass_n_dep == 0.0 )
+    {
+      mass_n_ind = s.PV * rho_ind * s_ind;
+      mass_n_dep = s.PV * rho_dep * s_dep;
+    }
 
     // Equation 0: total mass
     real64 const mass_tot = s.PV * ( rho_ind * s_ind + rho_dep * s_dep );
