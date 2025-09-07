@@ -269,20 +269,13 @@ public:
   {
     for( integer i=0; i<NUM_FACE; ++i )
     {
-      localIndex local[3] = { m_er, m_esr, ei };
-      localIndex neighbor[3] = { m_er, m_esr, ei };
-      bool const hasNeigh = hybridFVMKernels::CellConnectivity::isNeighborFound( local, i, m_elemRegionList, m_elemSubRegionList, m_elemList, m_regionFilter, m_elemToFaces[ei], neighbor );
-      // upwind choose element producing positive flux direction
-      bool const useLocal = ( s.oneSidedVolFlux[i] >= 0 ) || !hasNeigh;
-      localIndex const erU = useLocal ? local[0] : neighbor[0];
-      localIndex const esrU = useLocal ? local[1] : neighbor[1];
-      localIndex const eiU = useLocal ? local[2] : neighbor[2];
-      // total mobility (sum phases) at upwind element
-      real64 mobTot = 0.0; real64 dMobTot_dP = 0.0;
+      // total mobility (sum phases) evaluated at the current element (no upwinding)
+      real64 mobTot = 0.0;
+      real64 dMobTot_dP = 0.0;
       for( integer ip=0; ip<2; ++ip ) // currently 2 phases
       {
-        mobTot += m_phaseMob[eiU][ip];
-        dMobTot_dP += m_dPhaseMob[eiU][ip][DerivMob::dP];
+        mobTot += m_phaseMob[ei][ip];
+        dMobTot_dP += m_dPhaseMob[ei][ip][DerivMob::dP];
       }
       real64 const dt_mobTot = m_dt * mobTot;
       s.divMassFluxes += dt_mobTot * s.oneSidedVolFlux[i];
@@ -292,7 +285,8 @@ public:
       {
         s.dDivMassFluxes_dFaceVars[j] += dt_mobTot * s.dOneSidedVolFlux_dFacePres[i][j];
       }
-      s.elemCols[i+1] = m_elemDofNumber[erU][esrU][eiU];
+      // derivative wrt mobility now also goes to the current element dof
+      s.elemCols[i+1] = m_elemDofNumber[m_er][m_esr][ei];
     }
   }
 
@@ -302,7 +296,9 @@ public:
     real64 const perm[3] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
     IP::template compute< NUM_FACE >( m_nodePosition, m_transMultiplier, m_faceToNodes, m_elemToFaces[ei], m_elemCenter[ei], m_elemVolume[ei], perm, m_lengthTolerance, s.transMatrix );
     computeGradient( ei, s );
-    if( m_elemGhostRank[ei] < 0 ) computeFluxDivergence( ei, s );
+    if( m_elemGhostRank[ei] < 0 ){
+      computeFluxDivergence( ei, s );
+    }
   }
 
   GEOS_HOST_DEVICE void complete( localIndex const ei, StackVariables & s ) const
