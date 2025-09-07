@@ -17,10 +17,10 @@
     <!-- 1D line extruded to thin 1x1 cross section -->
     <InternalMesh name="mesh1"
                   elementTypes="{ C3D8 }"
-                  xCoords="{ 0, 2 }"
+                  xCoords="{ 0, 3 }"
                   yCoords="{ 0, 1 }"
                   zCoords="{ 0, 1 }"
-                  nx="{ 2 }" ny="{ 1 }" nz="{ 1 }"
+                  nx="{ 3 }" ny="{ 1 }" nz="{ 1 }"
                   cellBlockNames="{ block1 }"/>
   </Mesh>
 
@@ -29,8 +29,8 @@
       xMin="{ -0.01, -0.01, -0.01 }" 
       xMax="{ 1.01, 1.01, 1.01 }"/>
     <Box name="sink"   
-      xMin="{ 0.99, -0.01, -0.01 }" 
-      xMax="{ 2.01, 1.01, 1.01 }"/>
+      xMin="{ 1.99, -0.01, -0.01 }" 
+      xMax="{ 3.01, 1.01, 1.01 }"/>
   </Geometry>
 
   <Events maxTime="1">
