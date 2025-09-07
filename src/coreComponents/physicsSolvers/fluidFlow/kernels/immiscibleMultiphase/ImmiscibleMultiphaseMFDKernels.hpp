@@ -303,7 +303,7 @@ public:
 
   GEOS_HOST_DEVICE void complete( localIndex const ei, StackVariables & s ) const
   {
-    if( m_assembleCellEquation && m_elemGhostRank[ei] < 0 )
+    if( m_elemGhostRank[ei] < 0 )
     {
       m_localRhs[s.cellRow] += s.divMassFluxes;
       m_localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( s.cellRow, &s.elemCols[0], &s.dDivMassFluxes_dElemVars[0], NUM_FACE+1 );

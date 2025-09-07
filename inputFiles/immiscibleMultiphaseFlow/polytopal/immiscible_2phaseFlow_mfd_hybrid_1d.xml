@@ -57,8 +57,8 @@
 
   <Functions>
     <!-- Constant property tables (single entry) -->
-    <TableFunction name="densityWater"   coordinates="{ 0 }" values="{ 1000 }"/>
-    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 1.0 }"/>
+    <TableFunction name="densityWater"   coordinates="{ 0 }" values="{ 1000.0 }"/>
+    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 1000.0 }"/>
     <TableFunction name="viscosityWater" coordinates="{ 0 }" values="{ 1.0e-3 }"/>
     <TableFunction name="viscosityGas"   coordinates="{ 0 }" values="{ 1.0e-3 }"/>
   </Functions>
@@ -78,7 +78,7 @@
 
     <NullModel name="nullSolid"/>
 
-    <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.05" referencePressure="0" compressibility="1.0e-9"/>
+    <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.1" referencePressure="0" compressibility="0.0"/>
 
     <ConstantPermeability name="rockPerm" permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
 
