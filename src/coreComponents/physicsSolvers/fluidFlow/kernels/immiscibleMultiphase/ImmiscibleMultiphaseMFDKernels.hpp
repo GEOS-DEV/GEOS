@@ -274,49 +274,79 @@ public:
   
   GEOS_HOST_DEVICE void computeOverallMassFlux( localIndex const ei, StackVariables & s ) const
   {
+    using Deriv = DerivMob; // alias for readability
     for( integer i=0; i<NUM_FACE; ++i )
     {
       for( integer j=0; j<NUM_FACE; ++j )
       {
+        // Local pressure and gravity terms (cell-centered and face values associated to j)
         real64 const ccPres = m_elemPres[ei];
         real64 const fPres = m_facePres[m_elemToFaces[ei][j]];
         real64 const ccGravCoef = m_elemGravCoef[ei];
         real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
-        // Mixture density: rho_mix = (sum_i rho_i * lambda_i) / (sum_i lambda_i)
-        // and derivative wrt pressure via quotient rule
+
+        // Total mobility and its derivatives at element ei
+        real64 Lambda = 0.0;
+        real64 dLambda_dP = 0.0;
+        real64 dLambda_dS = 0.0; // derivative w.r.t. independent saturation
+
+        // Mixture density rho_mix = (sum_i rho_i * lambda_i) / (sum_i lambda_i)
+        // Keep pressure and saturation derivatives since lambda depends on both
         real64 sumLambda = 0.0;
         real64 dSumLambda_dP = 0.0;
+        real64 dSumLambda_dS = 0.0;
         real64 sumRhoLambda = 0.0;
         real64 dSumRhoLambda_dP = 0.0;
+        real64 dSumRhoLambda_dS = 0.0;
+
         // two-phase for now
         for( integer ip=0; ip<2; ++ip )
         {
           real64 const rho = m_phaseDens[ei][0][ip];
-          real64 const drho_dP = m_dPhaseDens[ei][0][ip][DerivMob::dP];
+          real64 const drho_dP = m_dPhaseDens[ei][0][ip][Deriv::dP];
           real64 const lambda = m_phaseMob[ei][ip];
-          real64 const dlambda_dP = m_dPhaseMob[ei][ip][DerivMob::dP];
+          real64 const dlambda_dP = m_dPhaseMob[ei][ip][Deriv::dP];
+          real64 const dlambda_dS = m_dPhaseMob[ei][ip][Deriv::dS + m_indep];
+
+          // accumulate mobility and its derivs
+          Lambda += lambda;
+          dLambda_dP += dlambda_dP;
+          dLambda_dS += dlambda_dS;
+
+          // terms for mixture density and its derivs
           sumLambda += lambda;
           dSumLambda_dP += dlambda_dP;
+          dSumLambda_dS += dlambda_dS;
+
           sumRhoLambda += rho * lambda;
           dSumRhoLambda_dP += drho_dP * lambda + rho * dlambda_dP;
+          dSumRhoLambda_dS += /* drho/dS ~ 0 */ rho * dlambda_dS;
         }
-        // this can be eliminated as totall mobility is always > 0
+
+        // Safe denominator (total mobility is expected > 0, but guard for robustness)
         real64 const eps = 1e-30;
         real64 const denom = (fabs( sumLambda ) > eps) ? sumLambda : (sumLambda >= 0.0 ? eps : -eps);
         real64 const densMix = sumRhoLambda / denom;
         real64 const dDensMix_dP = ( dSumRhoLambda_dP * denom - sumRhoLambda * dSumLambda_dP ) / ( denom * denom );
-        // potential difference terms
+        real64 const dDensMix_dS = ( dSumRhoLambda_dS * denom - sumRhoLambda * dSumLambda_dS ) / ( denom * denom );
+
+        // Potential difference and its derivatives
         real64 const presDif = ccPres - fPres;
         real64 const gravCoefDif = ccGravCoef - fGravCoef;
         real64 const gravTerm = densMix * gravCoefDif;
         real64 const dGravTerm_dP = dDensMix_dP * gravCoefDif;
+        real64 const dGravTerm_dS = dDensMix_dS * gravCoefDif;
         real64 const potDif = presDif - gravTerm;
         real64 const dPotDif_dP = 1.0 - dGravTerm_dP;
+        real64 const dPotDif_dS = - dGravTerm_dS;
         real64 const dPotDif_dFaceP = -1.0;
+
+        // One-sided mass flux and derivatives
         real64 const T_ij = s.transMatrix[i][j];
-        s.oneSidedVolFlux[i] += T_ij * potDif;
-        s.dOneSidedVolFlux_dPres[i] += T_ij * dPotDif_dP;
-        s.dOneSidedVolFlux_dFacePres[i][j] += T_ij * dPotDif_dFaceP;
+        s.oneSidedMassFlux[i] += Lambda * T_ij * potDif;
+        s.dOneSidedMassFlux_dPres[i] += T_ij * ( Lambda * dPotDif_dP + dLambda_dP * potDif );
+        s.dOneSidedMassFlux_dS[i] += T_ij * ( Lambda * dPotDif_dS + dLambda_dS * potDif );
+        s.dOneSidedMassFlux_dFacePres[i][j] += T_ij * ( Lambda * dPotDif_dFaceP ); // = - T_ij * Lambda
       }
     }
   }
