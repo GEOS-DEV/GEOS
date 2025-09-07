@@ -189,13 +189,10 @@ public:
   {
     GEOS_HOST_DEVICE StackVariables(): transMatrix( NUM_FACE, NUM_FACE ) {}
     stackArray2d< real64, NUM_FACE * NUM_FACE > transMatrix;
-    real64 oneSidedVolFlux[NUM_FACE]{}; // total volumetric flux (no mobility)
-    real64 dOneSidedVolFlux_dPres[NUM_FACE]{}; // derivative wrt element pressure
-    real64 dOneSidedVolFlux_dFacePres[NUM_FACE][NUM_FACE]{}; // derivative wrt face pressures
-    real64 oneSidedMassFlux[NUM_FACE]{}; // total volumetric flux (no mobility)
-    real64 dOneSidedMassFlux_dPres[NUM_FACE]{}; // derivative wrt element pressure
-    real64 dOneSidedMassFlux_dS[NUM_FACE]{}; // derivative wrt element saturation (indep phase)
-    real64 dOneSidedMassFlux_dFacePres[NUM_FACE][NUM_FACE]{}; // derivative wrt face pressures
+    real64 MassFlux[NUM_FACE]{}; // total volumetric flux (no mobility)
+    real64 dMassFlux_dPres[NUM_FACE]{}; // derivative wrt element pressure
+    real64 dMassFlux_dS[NUM_FACE]{}; // derivative wrt element saturation (indep phase)
+    real64 dMassFlux_dFacePres[NUM_FACE][NUM_FACE]{}; // derivative wrt face pressures
     real64 divMassFluxes = 0; // accumulation for cell eqn
     // Derivatives wrt cell DOFs: [pressure, s_indep]
     real64 dDivMassFluxes_dP = 0.0;
@@ -294,10 +291,10 @@ public:
 
         // One-sided mass flux and derivatives
         real64 const T_ij = s.transMatrix[i][j];
-        s.oneSidedMassFlux[i] += Lambda * T_ij * potDif;
-        s.dOneSidedMassFlux_dPres[i] += T_ij * ( Lambda * dPotDif_dP + dLambda_dP * potDif );
-        s.dOneSidedMassFlux_dS[i] += T_ij * ( Lambda * dPotDif_dS + dLambda_dS * potDif );
-        s.dOneSidedMassFlux_dFacePres[i][j] += T_ij * ( Lambda * dPotDif_dFaceP ); // = - T_ij * Lambda
+        s.MassFlux[i] += Lambda * T_ij * potDif;
+        s.dMassFlux_dPres[i] += T_ij * ( Lambda * dPotDif_dP + dLambda_dP * potDif );
+        s.dMassFlux_dS[i] += T_ij * ( Lambda * dPotDif_dS + dLambda_dS * potDif );
+        s.dMassFlux_dFacePres[i][j] += T_ij * ( Lambda * dPotDif_dFaceP ); // = - T_ij * Lambda
       }
     }
   }
@@ -308,9 +305,9 @@ public:
   {
     for( integer i=0; i<NUM_FACE; ++i )
     {
-      real64 const F = s.oneSidedMassFlux[i];
-      real64 const dF_dP = s.dOneSidedMassFlux_dPres[i];
-      real64 const dF_dS = s.dOneSidedMassFlux_dS[i];
+      real64 const F = s.MassFlux[i];
+      real64 const dF_dP = s.dMassFlux_dPres[i];
+      real64 const dF_dS = s.dMassFlux_dS[i];
       
       // residual
       s.divMassFluxes += m_dt * F;
@@ -320,7 +317,7 @@ public:
       // wrt face pressures
       for( integer j=0; j<NUM_FACE; ++j )
       {
-        s.dDivMassFluxes_dFaceVars[j] += m_dt * s.dOneSidedMassFlux_dFacePres[i][j];
+        s.dDivMassFluxes_dFaceVars[j] += m_dt * s.dMassFlux_dFacePres[i][j];
       }
     }
   }
@@ -357,9 +354,9 @@ public:
     {
       if( m_faceGhostRank[m_elemToFaces[ei][i]] < 0 )
       {
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[s.faceRow[i]], s.oneSidedMassFlux[i] );
-        m_localMatrix.addToRow< parallelDeviceAtomic >( s.faceRow[i], &elemCol, &s.dOneSidedMassFlux_dPres[i], 1 );
-        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.faceRow[i], &s.faceCols[0], s.dOneSidedMassFlux_dFacePres[i], NUM_FACE );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[s.faceRow[i]], s.MassFlux[i] );
+        m_localMatrix.addToRow< parallelDeviceAtomic >( s.faceRow[i], &elemCol, &s.dMassFlux_dPres[i], 1 );
+        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.faceRow[i], &s.faceCols[0], s.dMassFlux_dFacePres[i], NUM_FACE );
       }
     }
 //    localIndex const nnz = m_localMatrix.numNonZeros( s.cellRow );

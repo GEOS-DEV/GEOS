@@ -180,6 +180,22 @@ void ImmiscibleMultiphaseFlowMFD::initializePostInitialConditionsPreSubGroups()
     FieldIdentifiers f; f.addElementFields( { flow::pressure::key(), immiscibleMultiphaseFlow::phaseVolumeFraction::key() }, regionNames );
     CommunicationTools::getInstance().synchronizeFields( f, mesh, domain.getNeighbors(), false );
   } );
+  // After initial fields are synchronized, compute initial phase mass and set previous state (_n)
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const, auto & subRegion )
+    {
+      // Ensure dependent saturation constraint and compute mass from PV, rho, s
+      updateFluidState( subRegion );
+      // Copy current state into _n state so accumulation uses consistent initial masses
+      auto const phaseVol = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
+      auto phaseVol_n = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction_n >();
+      phaseVol_n.template setValues< parallelDevicePolicy<> >( phaseVol );
+      auto const phaseMass = subRegion.template getField< immiscibleMultiphaseFlow::phaseMass >();
+      auto phaseMass_n = subRegion.template getField< immiscibleMultiphaseFlow::phaseMass_n >();
+      phaseMass_n.template setValues< parallelDevicePolicy<> >( phaseMass );
+    } );
+  } );
   // build region filter
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
   {
