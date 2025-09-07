@@ -254,7 +254,7 @@ public:
           real64 const drho_dP = m_dPhaseDens[ei][0][ip][Deriv::dP];
           real64 const lambda = m_phaseMob[ei][ip];
           real64 const dlambda_dP = m_dPhaseMob[ei][ip][Deriv::dP];
-          real64 const dlambda_dS = m_dPhaseMob[ei][ip][Deriv::dS + m_indep];
+          real64 const dlambda_dS = m_dPhaseMob[ei][ip][Deriv::dS];
 
           // accumulate mobility and its derivs
           Lambda += lambda;
@@ -289,7 +289,7 @@ public:
         real64 const dPotDif_dS = - dGravTerm_dS;
         real64 const dPotDif_dFaceP = -1.0;
 
-        // One-sided mass flux and derivatives
+        // Overall mass flux and derivatives
         real64 const T_ij = m_dt * s.transMatrix[i][j];
         s.MassFlux[i] += Lambda * T_ij * potDif;
         s.dMassFlux_dPres[i] += T_ij * ( Lambda * dPotDif_dP + dLambda_dP * potDif );
@@ -342,20 +342,26 @@ public:
   {
     if( m_elemGhostRank[ei] < 0 )
     {
-      // Scatter to the pressure-row of the cell block
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[s.cellRow], s.divMassFluxes );
+      // Scatter to the pressure equation
+      globalIndex const pressure_eq = s.cellRow;
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[pressure_eq], s.divMassFluxes );
       real64 jacElem[2] = { s.dDivMassFluxes_dP, s.dDivMassFluxes_dS };
-      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.cellRow, &s.elemCols[0], &jacElem[0], 2 );
-      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.cellRow, &s.faceCols[0], &s.dDivMassFluxes_dFaceVars[0], NUM_FACE );
+      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( pressure_eq, &s.elemCols[0], &jacElem[0], 2 );
+      m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( pressure_eq, &s.faceCols[0], &s.dDivMassFluxes_dFaceVars[0], NUM_FACE );
+      
+      // Scatter to the saturation equation
+      globalIndex const saturation_eq = s.cellRow + 1;
     }
     // face constraints unchanged
-    globalIndex const elemCol = s.elemCols[0];
+    globalIndex const pressure_Col = s.elemCols[0];
+    globalIndex const saturation_Col = s.elemCols[1];
     for( integer i=0; i<NUM_FACE; ++i )
     {
       if( m_faceGhostRank[m_elemToFaces[ei][i]] < 0 )
       {
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[s.faceRow[i]], s.MassFlux[i] );
-        m_localMatrix.addToRow< parallelDeviceAtomic >( s.faceRow[i], &elemCol, &s.dMassFlux_dPres[i], 1 );
+        m_localMatrix.addToRow< parallelDeviceAtomic >( s.faceRow[i], &pressure_Col, &s.dMassFlux_dPres[i], 1 );
+        m_localMatrix.addToRow< parallelDeviceAtomic >( s.faceRow[i], &saturation_Col, &s.dMassFlux_dS[i], 1 );
         m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.faceRow[i], &s.faceCols[0], s.dMassFlux_dFacePres[i], NUM_FACE );
       }
     }
