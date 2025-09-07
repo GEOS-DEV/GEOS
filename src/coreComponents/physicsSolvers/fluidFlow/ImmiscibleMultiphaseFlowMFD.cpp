@@ -276,8 +276,7 @@ void ImmiscibleMultiphaseFlowMFD::setupDofs( DomainPartition const & domain, Dof
   dofManager.addCoupling( viewKeyStruct::elemDofFieldString(), viewKeyStruct::elemDofFieldString(), DofManager::Connector::Face );
   // face pressure
   dofManager.addField( flow::facePressure::key(), FieldLocation::Face, 1, getMeshTargets() );
-  // ensure symmetric sparsity between element and face blocks using element connectors
-  dofManager.addCoupling( viewKeyStruct::elemDofFieldString(), flow::facePressure::key(), DofManager::Connector::Elem );
+  // mirror SinglePhaseHybridFVM: build face-face and symmetric face<->elem sparsity via Elem connectors
   dofManager.addCoupling( flow::facePressure::key(), flow::facePressure::key(), DofManager::Connector::Elem );
   dofManager.addCoupling( flow::facePressure::key(), viewKeyStruct::elemDofFieldString(), DofManager::Connector::Elem );
 }
@@ -400,6 +399,37 @@ void ImmiscibleMultiphaseFlowMFD::assembleFluxTermsHybrid( real64 const dt,
       TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
       string const & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
       PermeabilityBase const & permeability = getConstitutiveModel< PermeabilityBase >( subRegion, permName );
+
+      // Debug-time sanity: verify sparsity contains face columns in an owned cell row
+      #ifdef GEOS_DEBUG
+      {
+        arrayView1d< globalIndex const > const elemDof = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
+        arrayView1d< integer const > const ghost = subRegion.ghostRank();
+        arrayView2d< localIndex const > const elemToFaces = subRegion.faceList();
+        arrayView1d< globalIndex const > const faceDof = faceManager.getReference< array1d< globalIndex > >( faceDofKey );
+        globalIndex const rankOffset = dofManager.rankOffset();
+        // find first owned element, if any
+        localIndex ei0 = -1;
+        for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+        { if( ghost[ei] < 0 ) { ei0 = ei; break; } }
+        if( ei0 >= 0 )
+        {
+          localIndex const localRow = elemDof[ei0] - rankOffset; // pressure row
+          auto cols = localMatrix.getColumns( localRow );
+          // check all adjacent face columns exist
+          for( integer f = 0; f < elemToFaces.size(1); ++f )
+          {
+            localIndex const lf = elemToFaces( ei0, f );
+            globalIndex const fc = faceDof[lf];
+            bool found = false;
+            for( localIndex j = 0; j < cols.size(); ++j )
+            { if( cols[j] == fc ) { found = true; break; } }
+            GEOS_ERROR_IF( !found, GEOS_FMT( "ImmiscibleMultiphaseFlowMFD: missing face col {} in row {} (elem {}), sparsity not aligned with hybrid assembly.", fc, localRow, ei0 ) );
+          }
+        }
+      }
+      #endif
+
       ElementBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                      er, esr,
                                                                                      lengthTolerance,
