@@ -222,55 +222,6 @@ public:
       s.faceCols[f] = m_faceDofNumber[lf];
     }
   }
-
-  GEOS_HOST_DEVICE void computeGradient( localIndex const ei, StackVariables & s ) const
-  {
-    for( integer i=0; i<NUM_FACE; ++i )
-    {
-      for( integer j=0; j<NUM_FACE; ++j )
-      {
-        real64 const ccPres = m_elemPres[ei];
-        real64 const fPres = m_facePres[m_elemToFaces[ei][j]];
-        real64 const ccGravCoef = m_elemGravCoef[ei];
-        real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
-        // Mixture density: rho_mix = (sum_i rho_i * lambda_i) / (sum_i lambda_i)
-        // and derivative wrt pressure via quotient rule
-        real64 sumLambda = 0.0;
-        real64 dSumLambda_dP = 0.0;
-        real64 sumRhoLambda = 0.0;
-        real64 dSumRhoLambda_dP = 0.0;
-        // two-phase for now
-        for( integer ip=0; ip<2; ++ip )
-        {
-          real64 const rho = m_phaseDens[ei][0][ip];
-          real64 const drho_dP = m_dPhaseDens[ei][0][ip][DerivMob::dP];
-          real64 const lambda = m_phaseMob[ei][ip];
-          real64 const dlambda_dP = m_dPhaseMob[ei][ip][DerivMob::dP];
-          sumLambda += lambda;
-          dSumLambda_dP += dlambda_dP;
-          sumRhoLambda += rho * lambda;
-          dSumRhoLambda_dP += drho_dP * lambda + rho * dlambda_dP;
-        }
-        // this can be eliminated as totall mobility is always > 0
-        real64 const eps = 1e-30;
-        real64 const denom = (fabs( sumLambda ) > eps) ? sumLambda : (sumLambda >= 0.0 ? eps : -eps);
-        real64 const densMix = sumRhoLambda / denom;
-        real64 const dDensMix_dP = ( dSumRhoLambda_dP * denom - sumRhoLambda * dSumLambda_dP ) / ( denom * denom );
-        // potential difference terms
-        real64 const presDif = ccPres - fPres;
-        real64 const gravCoefDif = ccGravCoef - fGravCoef;
-        real64 const gravTerm = densMix * gravCoefDif;
-        real64 const dGravTerm_dP = dDensMix_dP * gravCoefDif;
-        real64 const potDif = presDif - gravTerm;
-        real64 const dPotDif_dP = 1.0 - dGravTerm_dP;
-        real64 const dPotDif_dFaceP = -1.0;
-        real64 const T_ij = s.transMatrix[i][j];
-        s.oneSidedVolFlux[i] += T_ij * potDif;
-        s.dOneSidedVolFlux_dPres[i] += T_ij * dPotDif_dP;
-        s.dOneSidedVolFlux_dFacePres[i][j] += T_ij * dPotDif_dFaceP;
-      }
-    }
-  }
   
   GEOS_HOST_DEVICE void computeOverallMassFlux( localIndex const ei, StackVariables & s ) const
   {
@@ -351,33 +302,25 @@ public:
     }
   }
 
-  GEOS_HOST_DEVICE void computeFluxDivergence( localIndex const ei, StackVariables & s ) const
+  
+  GEOS_HOST_DEVICE
+  void computeOverallMassFluxDivergence( localIndex const ei, StackVariables & s ) const
   {
     for( integer i=0; i<NUM_FACE; ++i )
     {
-      // total mobility (sum phases) evaluated at the current element (no upwinding)
-      real64 mobTot = 0.0;
-      real64 dMobTot_dP = 0.0;
-      real64 dMobTot_dS = 0.0; // derivative wrt saturation of independent phase
-      for( integer ip=0; ip<2; ++ip ) // currently 2 phases
-      {
-        mobTot += m_phaseMob[ei][ip];
-        dMobTot_dP += m_dPhaseMob[ei][ip][DerivMob::dP];
-        // derivative wrt s_indep lives at Deriv::dS + indep
-        dMobTot_dS += m_dPhaseMob[ei][ip][DerivMob::dS + m_indep];
-      }
-      real64 const F = s.oneSidedVolFlux[i];
-      real64 const dF_dP = s.dOneSidedVolFlux_dPres[i];
-      real64 const dt_mobTot = m_dt * mobTot;
+      real64 const F = s.oneSidedMassFlux[i];
+      real64 const dF_dP = s.dOneSidedMassFlux_dPres[i];
+      real64 const dF_dS = s.dOneSidedMassFlux_dS[i];
+      
       // residual
-      s.divMassFluxes += dt_mobTot * F;
+      s.divMassFluxes += m_dt * F;
       // jacobians wrt element DOFs
-      s.dDivMassFluxes_dP += m_dt * ( mobTot * dF_dP + dMobTot_dP * F );
-      s.dDivMassFluxes_dS += m_dt * ( dMobTot_dS * F );
+      s.dDivMassFluxes_dP += m_dt * dF_dP;
+      s.dDivMassFluxes_dS += m_dt * dF_dS;
       // wrt face pressures
       for( integer j=0; j<NUM_FACE; ++j )
       {
-        s.dDivMassFluxes_dFaceVars[j] += dt_mobTot * s.dOneSidedVolFlux_dFacePres[i][j];
+        s.dDivMassFluxes_dFaceVars[j] += m_dt * s.dOneSidedMassFlux_dFacePres[i][j];
       }
     }
   }
@@ -386,15 +329,18 @@ public:
   GEOS_HOST_DEVICE
   void compute( localIndex const ei, StackVariables & s, FUNC && ) const
   {
-    real64 const perm[3] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
-    IP::template compute< NUM_FACE >( m_nodePosition, m_transMultiplier, m_faceToNodes, m_elemToFaces[ei], m_elemCenter[ei], m_elemVolume[ei], perm, m_lengthTolerance, s.transMatrix );
-    computeGradient( ei, s );
     if( m_elemGhostRank[ei] < 0 ){
-      computeFluxDivergence( ei, s );
+      
+      real64 const perm[3] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
+      IP::template compute< NUM_FACE >( m_nodePosition, m_transMultiplier, m_faceToNodes, m_elemToFaces[ei], m_elemCenter[ei], m_elemVolume[ei], perm, m_lengthTolerance, s.transMatrix );
+      computeOverallMassFlux( ei, s );
+//      computeGradient( ei, s );
+//      computeFluxDivergence( ei, s );
+      computeOverallMassFluxDivergence(ei,s);
     }
   }
 
-  GEOS_HOST_DEVICE v
+  GEOS_HOST_DEVICE
   void complete( localIndex const ei, StackVariables & s ) const
   {
     if( m_elemGhostRank[ei] < 0 )
@@ -411,9 +357,9 @@ public:
     {
       if( m_faceGhostRank[m_elemToFaces[ei][i]] < 0 )
       {
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[s.faceRow[i]], s.oneSidedVolFlux[i] );
-        m_localMatrix.addToRow< parallelDeviceAtomic >( s.faceRow[i], &elemCol, &s.dOneSidedVolFlux_dPres[i], 1 );
-        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.faceRow[i], &s.faceCols[0], s.dOneSidedVolFlux_dFacePres[i], NUM_FACE );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[s.faceRow[i]], s.oneSidedMassFlux[i] );
+        m_localMatrix.addToRow< parallelDeviceAtomic >( s.faceRow[i], &elemCol, &s.dOneSidedMassFlux_dPres[i], 1 );
+        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.faceRow[i], &s.faceCols[0], s.dOneSidedMassFlux_dFacePres[i], NUM_FACE );
       }
     }
 //    localIndex const nnz = m_localMatrix.numNonZeros( s.cellRow );
