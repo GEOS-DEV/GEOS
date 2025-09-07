@@ -154,6 +154,8 @@ public:
   using DerivMob = immiscibleFlow::DerivativeOffset; // for mobility derivatives
   using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
   using SatAccessor = ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > >;
+  using PhaseMobAccessor = ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > >;
+  using DPhaseMobAccessor = ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, immiscibleFlow::USD_PHASE_DS > >;
   ElementBasedAssemblyKernel( globalIndex const rankOffset,
                               localIndex const er,
                               localIndex const esr,
@@ -171,7 +173,9 @@ public:
                               real64 const & dt,
                               bool const assembleCellEq,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                              arrayView1d< real64 > const & localRhs )
+                              arrayView1d< real64 > const & localRhs,
+                              PhaseMobAccessor const & phaseMobAccessor,
+                              DPhaseMobAccessor const & dPhaseMobAccessor )
     : m_rankOffset( rankOffset ), m_er( er ), m_esr( esr ), m_lengthTolerance( lengthTolerance ), m_dt( dt ),
       m_elemGhostRank( subRegion.ghostRank() ),
       m_elemDofNumber( elemDofNumberAccessor.toNestedViewConst() ),
@@ -183,7 +187,7 @@ public:
       m_elemPerm( permeability.permeability() ), m_transMultiplier( faceManager.getField< fields::flow::transMultiplier >() ),
       m_elemPres( subRegion.getField< fields::flow::pressure >() ), m_facePres( faceManager.getField< fields::flow::facePressure >() ),
       m_phaseDens( fluid.phaseDensity() ), m_dPhaseDens( fluid.dPhaseDensity() ),
-      m_phaseMob( subRegion.getField< fields::immiscibleMultiphaseFlow::phaseMobility >() ), m_dPhaseMob( subRegion.getField< fields::immiscibleMultiphaseFlow::dPhaseMobility >() ),
+      m_phaseMobAll( phaseMobAccessor.toNestedViewConst() ), m_dPhaseMobAll( dPhaseMobAccessor.toNestedViewConst() ),
       m_assembleCellEquation( assembleCellEq ), m_indep( indepPhaseIndex ),
       m_localMatrix( localMatrix ), m_localRhs( localRhs )
   {}
@@ -264,9 +268,9 @@ public:
         {
           real64 const rho = m_phaseDens[ei][0][ip];
           real64 const drho_dP = m_dPhaseDens[ei][0][ip][Deriv::dP];
-          real64 const lambda = m_phaseMob[ei][ip];
-          real64 const dlambda_dP = m_dPhaseMob[ei][ip][Deriv::dP];
-          real64 const dlambda_dS = m_dPhaseMob[ei][ip][Deriv::dS];
+          real64 const lambda = m_phaseMobAll[m_er][m_esr][ei][ip];
+          real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dP];
+          real64 const dlambda_dS = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
 
           // accumulate mobility and its derivs
           Lambda += lambda;
@@ -333,8 +337,41 @@ public:
   GEOS_HOST_DEVICE
   void computeSaturationTransport( localIndex const ei, StackVariables & s ) const
   {
-    // local saturation of independent phase
-    real64 const s_ind_local = m_phaseVolFracAll[m_er][m_esr][ei][m_indep];
+    // local fractional flow components for independent phase
+    auto fracFlow = [this] GEOS_HOST_DEVICE ( localIndex const er,
+                                              localIndex const esr,
+                                              localIndex const ei_local,
+                                              integer const indep,
+                                              real64 & f,
+                                              real64 & df_dP,
+                                              real64 & df_dS )
+    {
+      using Deriv = DerivMob;
+      // two-phase: independent ip = indep, dependent ip = 1 - indep
+      integer const dep = 1 - indep;
+      real64 const lam_ind = m_phaseMobAll[er][esr][ei_local][indep];
+      real64 const lam_dep = m_phaseMobAll[er][esr][ei_local][dep];
+      real64 const dlam_ind_dP = m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dP];
+      real64 const dlam_dep_dP = m_dPhaseMobAll[er][esr][ei_local][dep][Deriv::dP];
+      real64 const dlam_ind_dS = m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dS];
+      real64 const dlam_dep_dS = m_dPhaseMobAll[er][esr][ei_local][dep][Deriv::dS];
+
+      real64 const Lambda = lam_ind + lam_dep;
+      real64 const eps = 1e-30;
+      real64 const denom = (fabs( Lambda ) > eps) ? Lambda : (Lambda >= 0.0 ? eps : -eps);
+
+      f = lam_ind / denom;
+      // df/dx = (dlam_ind*Lambda - lam_ind*dLambda) / Lambda^2
+      real64 const dLambda_dP = dlam_ind_dP + dlam_dep_dP;
+      real64 const dLambda_dS = dlam_ind_dS + dlam_dep_dS;
+      df_dP = ( dlam_ind_dP * denom - lam_ind * dLambda_dP ) / ( denom * denom );
+      df_dS = ( dlam_ind_dS * denom - lam_ind * dLambda_dS ) / ( denom * denom );
+    };
+
+    // Precompute local f and derivatives
+    real64 f_loc = 0.0, df_loc_dP = 0.0, df_loc_dS = 0.0;
+    fracFlow( m_er, m_esr, ei, m_indep, f_loc, df_loc_dP, df_loc_dS );
+
     for( integer i=0; i<NUM_FACE; ++i )
     {
       // Determine neighbor across face i
@@ -353,40 +390,52 @@ public:
       localIndex ner = -1, nesr = -1, nei = -1;
       if( side0IsSelf && er1 >= 0 ) { ner = er1; nesr = esr1; nei = ei1; }
       else if( side1IsSelf && er0 >= 0 ) { ner = er0; nesr = esr0; nei = ei0; }
-      // mass flux and derivatives for this one-sided face i
+
+      // mass flux and derivatives for this one-sided face i (from cell to face)
       real64 const F = s.MassFlux[i];
       real64 const dF_dP = s.dMassFlux_dPres[i];
       real64 const dF_dS = s.dMassFlux_dS[i];
-      // choose upwind saturation
-      real64 s_up = s_ind_local;
+
+      // Upwind selection for fractional flow
+      bool const useNeighbor = (F < 0.0) && (ner >= 0);
+      real64 f_up = f_loc;
+      real64 df_up_dP_local = df_loc_dP; // only used if upwind is local
+      real64 df_up_dS_local = df_loc_dS; // only used if upwind is local
+      // neighbor derivative (wrt neighbor saturation) used if neighbor is upwind
+      real64 df_nei_dS = 0.0;
       globalIndex neighborSCol = 0;
-      bool useNeighbor = false;
-      if( F < 0.0 && ner >= 0 )
-      {
-        s_up = m_phaseVolFracAll[ner][nesr][nei][m_indep];
-        neighborSCol = m_elemDofNumber[ner][nesr][nei] + 1; // saturation DOF
-        useNeighbor = true;
-      }
-      // residual contribution and local Jacobians
-      s.divSatFluxes += m_dt * F * s_up;
-      s.dDivSatFluxes_dP += m_dt * ( dF_dP * s_up );
-      // d/dS local includes dF/dS*s_up always + F*1 if upwind is local
-      s.dDivSatFluxes_dS += m_dt * ( dF_dS * s_up + ( (F >= 0.0) ? F : 0.0 ) );
-      // face pressure derivatives
-      for( integer j=0; j<NUM_FACE; ++j ) s.dDivSatFluxes_dFaceVars[j] += m_dt * ( s.dMassFlux_dFacePres[i][j] * s_up );
-      // neighbor coupling if using neighbor upwind
+
       if( useNeighbor )
       {
-        // add dt * F to neighbor saturation column; combine if repeated
+        // fractional flow at neighbor
+        real64 f_nei = 0.0, df_nei_dP = 0.0; // df_nei_dP not coupled here
+        fracFlow( ner, nesr, nei, m_indep, f_nei, df_nei_dP, df_nei_dS );
+        f_up = f_nei;
+        neighborSCol = m_elemDofNumber[ner][nesr][nei] + 1; // saturation column of neighbor
+      }
+
+      // residual contribution and local Jacobians
+      s.divSatFluxes += m_dt * F * f_up;
+      // d/dP (local): dF/dP * f_up + F * df_up/dP (only if upwind local)
+      s.dDivSatFluxes_dP += m_dt * ( dF_dP * f_up + ( useNeighbor ? 0.0 : F * df_up_dP_local ) );
+      // d/dS (local): dF/dS * f_up + F * df_up/dS (only if upwind local)
+      s.dDivSatFluxes_dS += m_dt * ( dF_dS * f_up + ( useNeighbor ? 0.0 : F * df_up_dS_local ) );
+      // face pressure derivatives: only via F
+      for( integer j=0; j<NUM_FACE; ++j ) s.dDivSatFluxes_dFaceVars[j] += m_dt * ( s.dMassFlux_dFacePres[i][j] * f_up );
+
+      // neighbor coupling if using neighbor upwind: add dt * F * df_nei/dS to neighbor saturation column
+      if( useNeighbor )
+      {
+        real64 const val = m_dt * F * df_nei_dS;
         bool found = false;
         for( localIndex k=0; k<s.numNeiCols; ++k )
         {
-          if( s.neiCols[k] == neighborSCol ) { s.neiVals[k] += m_dt * F; found = true; break; }
+          if( s.neiCols[k] == neighborSCol ) { s.neiVals[k] += val; found = true; break; }
         }
         if( !found && s.numNeiCols < NUM_FACE )
         {
           s.neiCols[s.numNeiCols] = neighborSCol;
-          s.neiVals[s.numNeiCols] = m_dt * F;
+          s.neiVals[s.numNeiCols] = val;
           s.numNeiCols++;
         }
       }
@@ -416,14 +465,14 @@ public:
   {
     if( m_elemGhostRank[ei] < 0 )
     {
-      // Pressure equation row (cell pressure)
-      localIndex const pressRow = s.cellRow + 1;
+      // Pressure equation row (cell pressure -> row 0 of cell block)
+      localIndex const pressRow = s.cellRow;
       RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[pressRow], s.divMassFluxes );
       real64 jacElemP[2] = { s.dDivMassFluxes_dP, s.dDivMassFluxes_dS };
       m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( pressRow, &s.elemCols[0], &jacElemP[0], 2 );
       m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( pressRow, &s.faceCols[0], &s.dDivMassFluxes_dFaceVars[0], NUM_FACE );
       
-      // Saturation equation row (cell saturation)
+      // Saturation equation row (cell saturation -> row 1 of cell block)
       localIndex const satRow = s.cellRow + 1;
       RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[satRow], s.divSatFluxes );
       real64 jacElemS[2] = { s.dDivSatFluxes_dP, s.dDivSatFluxes_dS };
@@ -454,7 +503,8 @@ private:
   arrayView3d< real64 const > const m_elemPerm; arrayView1d< real64 const > const m_transMultiplier;
   arrayView1d< real64 const > const m_elemPres; arrayView1d< real64 const > const m_facePres;
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const m_phaseDens; arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const m_dPhaseDens;
-  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const m_phaseMob; arrayView3d< real64 const, immiscibleFlow::USD_PHASE_DS > const m_dPhaseMob;
+  ElementRegionManager::ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_phaseMobAll;
+  ElementRegionManager::ElementViewConst< arrayView3d< real64 const, immiscibleFlow::USD_PHASE_DS > > const m_dPhaseMobAll;
   bool const m_assembleCellEquation;
   integer const m_indep;
   CRSMatrixView< real64, globalIndex const > const m_localMatrix; arrayView1d< real64 > const m_localRhs;
@@ -510,10 +560,15 @@ public:
         dofNumberAccessor.setName( solverName + "/accessors/" + elemDofKey );
         auto satAccessor = elemManager.constructArrayViewAccessor< real64, 2 >( fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() );
         satAccessor.setName( solverName + "/accessors/" + fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() );
+        auto mobAccessor = elemManager.constructArrayViewAccessor< real64, 2 >( fields::immiscibleMultiphaseFlow::phaseMobility::key() );
+        mobAccessor.setName( solverName + "/accessors/" + fields::immiscibleMultiphaseFlow::phaseMobility::key() );
+        auto dMobAccessor = elemManager.constructArrayViewAccessor< real64, 3 >( fields::immiscibleMultiphaseFlow::dPhaseMobility::key() );
+        dMobAccessor.setName( solverName + "/accessors/" + fields::immiscibleMultiphaseFlow::dPhaseMobility::key() );
         ElementBasedAssemblyKernel< NF, IPType > k( rankOffset, er, esr, lengthTolerance,
                                                     faceDofKey, nodeManager, faceManager,
                                                     subRegion, dofNumberAccessor, satAccessor, fluid, permeability,
-                                                    regionFilter, indepPhaseIndex, dt, assembleCellEq, localMatrix, localRhs );
+                                                    regionFilter, indepPhaseIndex, dt, assembleCellEq, localMatrix, localRhs,
+                                                    mobAccessor, dMobAccessor );
         launchElementBasedAssemblyKernel< POLICY, NF, IPType >( subRegion.size(), k );
       } );
     } );
