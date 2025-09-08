@@ -365,15 +365,13 @@ public:
       real64 const dlam_dep_dS = sgnS * m_dPhaseMobAll[er][esr][ei_local][dep][Deriv::dS];
 
       real64 const Lambda = lam_ind + lam_dep;
-      real64 const eps = 1e-30;
-      real64 const denom = (fabs( Lambda ) > eps) ? Lambda : (Lambda >= 0.0 ? eps : -eps);
 
-      f = lam_ind / denom;
+      f = lam_ind / Lambda;
       // df/dx = (dlam_ind*Lambda - lam_ind*dLambda) / Lambda^2
       real64 const dLambda_dP = dlam_ind_dP + dlam_dep_dP;
       real64 const dLambda_dS = dlam_ind_dS + dlam_dep_dS;
-      df_dP = ( dlam_ind_dP * denom - lam_ind * dLambda_dP ) / ( denom * denom );
-      df_dS = ( dlam_ind_dS * denom - lam_ind * dLambda_dS ) / ( denom * denom );
+      df_dP = ( dlam_ind_dP * Lambda - lam_ind * dLambda_dP ) / ( Lambda * Lambda );
+      df_dS = ( dlam_ind_dS * Lambda - lam_ind * dLambda_dS ) / ( Lambda * Lambda );
       df_dS = sgnS * 1.0;
     };
 
