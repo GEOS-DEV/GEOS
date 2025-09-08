@@ -7,7 +7,7 @@
  box region to a right low‑pressure box region.
 ------------------------------------------------------------------- -->
 <Problem>
-  <Solvers gravityVector="{ 0.0, 0.0, -9.81 }">
+  <Solvers gravityVector="{ 0.0, 0.0, 0.0 }">
     <ImmiscibleMultiphaseFlowMFD
       name="FlowSolverMFD"
       discretization="immiscibleHybridMimetic"
