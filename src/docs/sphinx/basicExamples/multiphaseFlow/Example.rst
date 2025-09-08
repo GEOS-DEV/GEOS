@@ -279,7 +279,7 @@ GEOS reports source flux statistics to help monitor the overall mass balance and
 This functionality is implemented through a ``SourceFluxStatistics`` **Task** that reports statistics at regular intervals via :ref:`Events <Events_tag_dead_oil_bottom_layers_spe10>` to:
 
   - a CSV file (comma-separated values) that reports all fluxes and regions details and sum, when specifying ``writeCSV="1"``.
-  - console log output, when specifying ``logLevel="2"``.
+  - console log output, when specifying ``logLevel="1"`` (value ``1`` stands for a sum of all fluxes, ``2`` adds per-flux detail and ``3`` adds per-region detail).
 
 The group of target **SourceFlux** is defined in ``fluxNames`` by specifying their names, or by using ``*`` to report all source fluxes.
 The task requires a ``flowSolverName`` referring to the solver used for flow calculations.
