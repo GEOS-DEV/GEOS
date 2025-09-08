@@ -396,37 +396,33 @@ public:
       real64 const dF_dP = s.dMassFlux_dPres[i];
       real64 const dF_dS = s.dMassFlux_dS[i];
 
-      // Upwind selection for fractional flow
-      bool const useNeighbor = (F < 0.0) && (ner >= 0);
-      real64 f_up = f_loc;
-      real64 df_up_dP_local = df_loc_dP; // only used if upwind is local
-      real64 df_up_dS_local = df_loc_dS; // only used if upwind is local
-      // neighbor derivative (wrt neighbor saturation) used if neighbor is upwind
+      // Arithmetic average of fractional flow between local and neighbor (if any)
+      real64 f_nei = f_loc;
+      real64 df_nei_dP = 0.0;
       real64 df_nei_dS = 0.0;
       globalIndex neighborSCol = 0;
-
-      if( useNeighbor )
+      bool const hasNeighbor = (ner >= 0);
+      if( hasNeighbor )
       {
-        // fractional flow at neighbor
-        real64 f_nei = 0.0, df_nei_dP = 0.0; // df_nei_dP not coupled here
         fracFlow( ner, nesr, nei, m_indep, f_nei, df_nei_dP, df_nei_dS );
-        f_up = f_nei;
         neighborSCol = m_elemDofNumber[ner][nesr][nei] + 1; // saturation column of neighbor
       }
 
-      // residual contribution and local Jacobians
-      s.divSatFluxes += m_dt * F * f_up;
-      // d/dP (local): dF/dP * f_up + F * df_up/dP (only if upwind local)
-      s.dDivSatFluxes_dP += m_dt * ( dF_dP * f_up + ( useNeighbor ? 0.0 : F * df_up_dP_local ) );
-      // d/dS (local): dF/dS * f_up + F * df_up/dS (only if upwind local)
-      s.dDivSatFluxes_dS += m_dt * ( dF_dS * f_up + ( useNeighbor ? 0.0 : F * df_up_dS_local ) );
-      // face pressure derivatives: only via F
-      for( integer j=0; j<NUM_FACE; ++j ) s.dDivSatFluxes_dFaceVars[j] += m_dt * ( s.dMassFlux_dFacePres[i][j] * f_up );
+      real64 const f_int = 0.5 * ( f_loc + f_nei );
 
-      // neighbor coupling if using neighbor upwind: add dt * F * df_nei/dS to neighbor saturation column
-      if( useNeighbor )
+      // residual contribution and local Jacobians
+      s.divSatFluxes += m_dt * F * f_int;
+      // d/dP (local): dF/dP * f_int + F * 0.5 * df_loc/dP
+      s.dDivSatFluxes_dP += m_dt * ( dF_dP * f_int + F * 0.5 * df_loc_dP );
+      // d/dS (local): dF/dS * f_int + F * 0.5 * df_loc/dS
+      s.dDivSatFluxes_dS += m_dt * ( dF_dS * f_int + F * 0.5 * df_loc_dS );
+      // face pressure derivatives: only via F
+      for( integer j=0; j<NUM_FACE; ++j ) s.dDivSatFluxes_dFaceVars[j] += m_dt * ( s.dMassFlux_dFacePres[i][j] * f_int );
+
+      // neighbor saturation coupling via averaged fractional flow derivative
+      if( hasNeighbor )
       {
-        real64 const val = m_dt * F * df_nei_dS;
+        real64 const val = m_dt * F * 0.5 * df_nei_dS;
         bool found = false;
         for( localIndex k=0; k<s.numNeiCols; ++k )
         {
