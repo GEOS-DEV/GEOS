@@ -35,7 +35,7 @@
     <Box name="sink"   xMin="{ 98.99, -0.01, -0.01 }" xMax="{ 100.01, 1.01, 1.01 }"/>
   </Geometry>
 
-  <Events maxTime="86400">
+  <Events maxTime="864000">
     <PeriodicEvent name="outputs" timeFrequency="86400" target="/Outputs/vtkOutput"/>
     <PeriodicEvent name="solverApps" forceDt="86400" target="/Solvers/FlowSolverMFD"/>
   </Events>
@@ -115,6 +115,19 @@
     <FieldSpecification name="sinkPressure" objectPath="ElementRegions/Domain/block1"
       fieldName="pressure" scale="1.0e7" setNames="{ sink }"/>
   </FieldSpecifications>
+
+    <!-- Phase source/sink: inject independent phase (component=1), produce dependent phase (component=0) -->
+    <SourceFlux name="independentPhaseSource"
+      objectPath="ElementRegions/Domain/block1"
+      setNames="{ source }"
+      component="0"
+      scale="-7.0e-5"/>
+
+<!--     <SourceFlux name="dependentPhaseSink"
+      objectPath="ElementRegions/Domain/block1"
+      setNames="{ sink }"
+      component="1"
+      scale="-7.0e-5"/>   -->
 
   <Outputs>
     <VTK name="vtkOutput"/>
