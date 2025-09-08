@@ -130,7 +130,7 @@ public:
     {
       {
         dataRepository::Group const & setGroup = object.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
-         std::cout << "setGroup "<<setGroup.getName() << std::endl;
+        std::cout << "setGroup "<<setGroup.getName() << std::endl;
         string_array setNames = this->getSetNames();
         for( auto & setName : setNames )
         {
