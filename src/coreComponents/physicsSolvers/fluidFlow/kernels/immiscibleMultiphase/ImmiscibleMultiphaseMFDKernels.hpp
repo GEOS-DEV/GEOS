@@ -252,7 +252,7 @@ public:
         // Total mobility and its derivatives at element ei
         real64 Lambda = 0.0;
         real64 dLambda_dP = 0.0;
-        real64 dLambda_dS = 0.0; // derivative w.r.t. independent saturation
+        real64 dLambda_dS = 0.0; // derivative w.r.t. independent saturation (apply sign map below)
 
         // Mixture density rho_mix = (sum_i rho_i * lambda_i) / (sum_i lambda_i)
         // Keep pressure and saturation derivatives since lambda depends on both
@@ -270,22 +270,28 @@ public:
           real64 const drho_dP = m_dPhaseDens[ei][0][ip][Deriv::dP];
           real64 const lambda = m_phaseMobAll[m_er][m_esr][ei][ip];
           real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dP];
-          real64 const dlambda_dS = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
+          real64 const dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
 
           // accumulate mobility and its derivs
           Lambda += lambda;
           dLambda_dP += dlambda_dP;
-          dLambda_dS += dlambda_dS;
+          dLambda_dS += dlambda_dS_raw; // adjust sign after loop if indep != 0
 
           // terms for mixture density and its derivs
           sumLambda += lambda;
           dSumLambda_dP += dlambda_dP;
-          dSumLambda_dS += dlambda_dS;
+          dSumLambda_dS += dlambda_dS_raw; // adjust sign after loop if indep != 0
 
           sumRhoLambda += rho * lambda;
           dSumRhoLambda_dP += drho_dP * lambda + rho * dlambda_dP;
-          dSumRhoLambda_dS += /* drho/dS ~ 0 */ rho * dlambda_dS;
+          dSumRhoLambda_dS += /* drho/dS ~ 0 */ rho * dlambda_dS_raw; // adjust sign after loop if indep != 0
         }
+
+        // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
+        real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
+        dLambda_dS *= sgnS;
+        dSumLambda_dS *= sgnS;
+        dSumRhoLambda_dS *= sgnS;
 
         // Safe denominator (total mobility is expected > 0, but guard for robustness)
         real64 const eps = 1e-30;
@@ -353,8 +359,10 @@ public:
       real64 const lam_dep = m_phaseMobAll[er][esr][ei_local][dep];
       real64 const dlam_ind_dP = m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dP];
       real64 const dlam_dep_dP = m_dPhaseMobAll[er][esr][ei_local][dep][Deriv::dP];
-      real64 const dlam_ind_dS = m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dS];
-      real64 const dlam_dep_dS = m_dPhaseMobAll[er][esr][ei_local][dep][Deriv::dS];
+      // Stored d/dS is w.r.t phase-0 saturation; map to configured independent saturation
+      real64 const sgnS = ( indep == 0 ? 1.0 : -1.0 );
+      real64 const dlam_ind_dS = sgnS * m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dS];
+      real64 const dlam_dep_dS = sgnS * m_dPhaseMobAll[er][esr][ei_local][dep][Deriv::dS];
 
       real64 const Lambda = lam_ind + lam_dep;
       real64 const eps = 1e-30;
