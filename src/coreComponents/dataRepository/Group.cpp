@@ -408,6 +408,7 @@ void Group::initializePostInitialConditions()
 
   for( auto const & groupName : initOrder )
   {
+    std::cout << "groupName: "<< groupeName << std::endl;
     getGroup( groupName ).initializePostInitialConditions();
   }
 

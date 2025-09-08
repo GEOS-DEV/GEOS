@@ -213,8 +213,7 @@ void SurfaceGenerator::postInputInitialization()
     std::cout << "postInputInitialization "<< nodeManager.getName() << std::endl;
     nodeManager.sets().forWrappers< SortedArray< localIndex > >( [&] ( auto & wrapper )
     {
-      std::cout << wrapper.getName() << std::endl;
-      std::cout << wrapper.size()<< std::endl;
+      std::cout << wrapper.getName() << ": "<< wrapper.size()<< std::endl;
     } );
 
   } );
@@ -296,8 +295,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
     std::cout << "registerDataOnMesh "<< nodeManager.getName() << std::endl;
     nodeManager.sets().forWrappers< SortedArray< localIndex > >( [&] ( auto & wrapper )
     {
-      std::cout << wrapper.getName() << std::endl;
-      std::cout << wrapper.size()<< std::endl;
+      std::cout << wrapper.getName() << ": "<< wrapper.size()<< std::endl;
     } );
 
   } );
@@ -438,8 +436,7 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
     std::cout << "initializePostInitialConditionsPreSubGroups "<< nodeManager.getName() << std::endl;
     nodeManager.sets().forWrappers< SortedArray< localIndex > >( [&] ( auto & wrapper )
     {
-      std::cout << wrapper.getName() << std::endl;
-      std::cout << wrapper.size()<< std::endl;
+      std::cout << wrapper.getName() << ": "<< wrapper.size()<< std::endl;
     } );
 
 
