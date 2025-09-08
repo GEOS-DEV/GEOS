@@ -250,7 +250,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
           {
             std::ostringstream message;
             message << GEOS_FMT( "{}: this FieldSpecification targets (an) empty set(s)\n"
-                                 "The box {} does not select any region.\n"
+                                 "The box {}  does not select any region.\n"
                                  "If the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`.\n",
                                  fs.getDataContext(), object.getDataContext(),
                                  mapEntry.first, fs.getObjectPath());
