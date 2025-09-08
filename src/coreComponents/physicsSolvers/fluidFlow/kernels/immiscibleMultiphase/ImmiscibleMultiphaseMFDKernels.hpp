@@ -13,7 +13,6 @@
  * This initial implementation mirrors the single-phase HybridFVM structure and reuses
  * a summed (upwind) total mobility with an effective density (currently phase 0 only).
  *
- * TODO: extend to proper phase-weighted density and face-based upwinding per phase.
  */
 
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_IMMISCIBLEMULTIPHASE_MFDKERNELS_HPP
