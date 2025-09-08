@@ -473,7 +473,9 @@ public:
       real64 jacElemS[2] = { s.dDivSatFluxes_dP, s.dDivSatFluxes_dS };
       m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( satRow, &s.elemCols[0], &jacElemS[0], 2 );
       m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( satRow, &s.faceCols[0], &s.dDivSatFluxes_dFaceVars[0], NUM_FACE );
-      if( s.numNeiCols > 0 ) m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( satRow, &s.neiCols[0], &s.neiVals[0], s.numNeiCols );
+      if( s.numNeiCols > 0 ){
+        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( satRow, &s.neiCols[0], &s.neiVals[0], s.numNeiCols );
+      }
     }
     // face constraints unchanged: enforce hybrid face-pressure constraints using mass flux
     globalIndex const elemCol = s.elemCols[0];
