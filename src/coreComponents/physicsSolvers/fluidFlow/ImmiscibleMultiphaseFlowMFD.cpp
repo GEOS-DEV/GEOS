@@ -131,7 +131,7 @@ void ImmiscibleMultiphaseFlowMFD::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< immiscibleMultiphaseFlow::phaseMobility >( getName() )
               .reference().resizeDimension< 1 >( m_numPhases );
       subRegion.registerField< immiscibleMultiphaseFlow::dPhaseMobility >( getName() )
-              .reference().resizeDimension< 1, 2 >( m_numPhases, m_numPhases );
+              .reference().resizeDimension< 1, 2 >( m_numPhases, 2 );
       // pressure gradient diagnostic
       if( !subRegion.hasWrapper( flow::pressureGradient::key() ) )
       {
