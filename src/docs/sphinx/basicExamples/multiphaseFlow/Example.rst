@@ -271,15 +271,18 @@ injection rate of component 1 (water) to mimic a rate-controlled well.
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS_END -->
 
 
+.. _Stats_tag_dead_oil_bottom_layers_spe10:
 
----------------------
+------------------------
 Source fluxes statistics
----------------------
+------------------------
 
 In order to output aggregated source flux statistics for monitoring mass balance and flow rates for a given group of ``SourceFlux``.
 This functionality is implemented through a ``SourceFluxStatistics`` **Task** which then output the statistics at regular intervals via **Events** to:
+
   - a CSV, for all fluxes and regions details and sum, through ``writeCSV="1"``.
   - log format, with user defined level of detail, through ``logLevel="2"`` (which gives each flux stats and ).
+
 The group of target **SourceFlux** is define in ``fluxNames``, specifying their names, or just ``*`` to all fluxes.
 The task requires a ``flowSolverName`` which refers to the solver used for flow calculations (e.g., ``SinglePhaseFlow``).
 
