@@ -189,6 +189,7 @@ void ImmiscibleMultiphaseFlowMFD::initializePostInitialConditionsPreSubGroups()
       updatePorosityAndPermeability( subRegion );
       updateVolumeConstraint( subRegion );
       updateFluidState( subRegion );
+      updatePhaseMobility(subRegion);
       // Copy current state into _n state so accumulation uses consistent initial masses
       auto const phaseVol = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
       auto phaseVol_n = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction_n >();
@@ -802,6 +803,7 @@ void ImmiscibleMultiphaseFlowMFD::updateFluidState( ElementSubRegionBase & subRe
   updateFluidModel( subRegion );
   updateVolumeConstraint( subRegion );
   updatePhaseMass( subRegion );
+  
   updateRelPermModel( subRegion );
   updatePhaseMobility( subRegion );
   updateCapPressureModel( subRegion );
