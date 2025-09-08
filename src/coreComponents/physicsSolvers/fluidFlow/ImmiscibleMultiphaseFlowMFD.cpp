@@ -145,6 +145,9 @@ void ImmiscibleMultiphaseFlowMFD::registerDataOnMesh( Group & meshBodies )
         string & capName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
         capName = getConstitutiveName< CapillaryPressureBase >( subRegion );
       }
+      // register scalar aliases for independent/dependent saturation for clearer VTK
+      subRegion.registerField< immiscibleMultiphaseFlow::phaseVolumeFraction_independent >( getName() );
+      subRegion.registerField< immiscibleMultiphaseFlow::phaseVolumeFraction_dependent >( getName() );
     } );
 
     // face fields (previous time level face pressure)
@@ -792,9 +795,18 @@ void ImmiscibleMultiphaseFlowMFD::updateVolumeConstraint( ElementSubRegionBase &
   auto phaseVol = subRegion.getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
   integer const dep = m_dependentPhaseIndex; // 0 or 1
   integer const ind = 1 - dep;
+  // also update alias scalar fields if present
+  bool const hasAliasInd = subRegion.hasWrapper( immiscibleMultiphaseFlow::phaseVolumeFraction_independent::key() );
+  bool const hasAliasDep = subRegion.hasWrapper( immiscibleMultiphaseFlow::phaseVolumeFraction_dependent::key() );
+  arrayView1d< real64 > aliasInd;
+  arrayView1d< real64 > aliasDep;
+  if( hasAliasInd ) aliasInd = subRegion.getField< immiscibleMultiphaseFlow::phaseVolumeFraction_independent >();
+  if( hasAliasDep ) aliasDep = subRegion.getField< immiscibleMultiphaseFlow::phaseVolumeFraction_dependent >();
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
     phaseVol[ei][dep] = 1.0 - phaseVol[ei][ind];
+    if( hasAliasInd ) aliasInd[ei] = phaseVol[ei][ind];
+    if( hasAliasDep ) aliasDep[ei] = phaseVol[ei][dep];
   } );
 }
 
