@@ -90,7 +90,6 @@
 
     <ConstantPermeability name="rockPerm" permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
 
-    <!-- Replace Brooks-Corey with table-based linear relative permeability -->
     <TableRelativePermeability
       name="relperm"
       phaseNames="{ gas, water }"
