@@ -248,6 +248,12 @@ public:
   integer useSurfaceConditions() const { return m_useSurfaceConditions; }
 
   /**
+   * @brief Getter for the reservoir region associated with reservoir volume constraint
+   * @return name of reservoir region
+   */
+  string referenceReservoirRegion() const { return m_referenceReservoirRegion; }
+
+  /**
    * @brief Getter for the surface pressure when m_useSurfaceConditions == 1
    * @return the surface pressure
    */
@@ -297,6 +303,30 @@ public:
   void setNextDtFromTables( real64 const & currentTime, real64 & nextDt );
 
   /**
+   * @brief Getter for the reservoir average pressure when m_useSurfaceConditions == 0
+   * @return the pressure
+   */
+  real64 getRegionAveragePressure() const { return m_regionAveragePressure; }
+
+  /**
+   * @brief Set the reservoir average pressure when m_useSurfaceConditions == 0
+   * @param[in] regionAveragePressure value for pressure
+   */
+  void setRegionAveragePressure( real64 regionAveragePressure ) { m_regionAveragePressure = regionAveragePressure; }
+
+  /**
+   * @brief Getter for the reservoir average temperature when m_useSurfaceConditions == 0
+   * @return the temperature
+   */
+  real64 getRegionAverageTemperature() const { return m_regionAverageTemperature; }
+
+  /**
+   * @brief Set the reservoir average temperature when m_useSurfaceConditions == 0
+   * @param[in] regionAverageTemperature value for temperature
+   */
+  void setRegionAverageTemperature( real64 regionAverageTemperature ) { m_regionAverageTemperature = regionAverageTemperature; }
+
+  /**
    * @brief Set well status from time and internal action, eg. all perfs closed
    * @param[in] currentTime the current time
    * @param[in] status
@@ -340,6 +370,8 @@ public:
     static constexpr char const * injectionTemperatureString() { return "injectionTemperature"; }
     /// String key for checking the rates at surface conditions
     static constexpr char const * useSurfaceConditionsString() { return "useSurfaceConditions"; }
+    /// String key for reference reservoir region
+    static constexpr char const * referenceReservoirRegionString() { return "referenceReservoirRegion"; }
     /// String key for the surface pressure
     static constexpr char const * surfacePressureString() { return "surfacePressure"; }
     /// String key for the surface temperature
@@ -414,6 +446,9 @@ private:
   /// Flag to decide whether rates are controlled at rates or surface conditions
   integer m_useSurfaceConditions;
 
+  /// Reservoir region associated with reservoir volume constraint
+  string m_referenceReservoirRegion;
+
   /// Surface pressure
   real64 m_surfacePres;
 
@@ -464,6 +499,13 @@ private:
 
   /// Well status
   WellControls::Status m_wellStatus;
+
+
+  /// Region average pressure used in volume rate constraint calculations
+  real64 m_regionAveragePressure;
+
+  /// Region average temperature used in volume rate constraint calculations
+  real64 m_regionAverageTemperature;
 
 };
 

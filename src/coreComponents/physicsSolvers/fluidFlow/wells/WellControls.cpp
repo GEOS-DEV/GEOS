@@ -50,7 +50,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetPhaseRateTable( nullptr ),
   m_targetBHPTable( nullptr ),
   m_statusTable( nullptr ),
-  m_wellStatus( WellControls::Status::OPEN )
+  m_wellStatus( WellControls::Status::OPEN ),
+  m_regionAveragePressure( -1 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -118,7 +119,16 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to specify whether rates are checked at surface or reservoir conditions.\n"
-                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions" );
+                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions.\n"
+                    "See note on referenceReservoirRegion for reservoir condition options" );
+
+  registerWrapper( viewKeyStruct::referenceReservoirRegionString(), &m_referenceReservoirRegion ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setDefaultValue( "" ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of reservoir region used for obtaining average region pressure used in volume rate constraint calculations.\n"
+                    "Frequency of pressure update is set in Single/CompositionalMultiPhaseStatistics definition.\n"
+                    "Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint properties" );
 
   registerWrapper( viewKeyStruct::surfacePressureString(), &m_surfacePres ).
     setDefaultValue( 0 ).
