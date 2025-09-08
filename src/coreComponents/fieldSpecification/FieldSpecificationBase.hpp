@@ -551,6 +551,9 @@ public:
     return *(m_meshObjectPaths.get());
   }
 
+/**
+ * @return The flag that determine if the error is transformed to a warning
+ */
   integer getErrorAsWarning() const
   {
     return m_errorAsWarning;

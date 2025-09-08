@@ -204,6 +204,21 @@ void SurfaceGenerator::postInputInitialization()
                  getWrapperDataContext( viewKeyStruct::mpiCommOrderString() ) <<
                  ": option can be either 0 (false) or 1 (true)" );
 
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );                 //this->getGroupByPath<DomainPartition>("/Problem/domain");
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & meshLevel,
+                                                                string_array const & )
+  {
+    NodeManager & nodeManager = meshLevel.getNodeManager();
+    std::cout << "postInputInitialization "<< nodeManager.getName() << std::endl;
+    nodeManager.sets().forWrappers< SortedArray< localIndex > >( [&] ( auto & wrapper )
+    {
+      std::cout << wrapper.getName() << std::endl;
+      std::cout << wrapper.size()<< std::endl;
+    } );
+
+  } );
+
 }
 
 SurfaceGenerator::~SurfaceGenerator()
