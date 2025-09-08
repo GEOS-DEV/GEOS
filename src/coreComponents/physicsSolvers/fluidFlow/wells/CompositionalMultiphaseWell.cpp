@@ -1922,8 +1922,12 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition &
       arrayView1d< real64 const > const & connRate_n =
         subRegion.getField< well::mixtureConnectionRate_n >();
       connRate.setValues< parallelDevicePolicy<> >( connRate_n );
+      WellControls & wellControls = getWellControls( subRegion );
 
-      updateSubRegionState( subRegion );
+      if( wellControls.isWellOpen( )  )
+      {
+        updateSubRegionState( subRegion );
+      }
     } );
   } );
 }
