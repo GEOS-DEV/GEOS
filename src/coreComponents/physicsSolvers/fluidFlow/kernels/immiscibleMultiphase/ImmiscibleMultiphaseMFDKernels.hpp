@@ -392,14 +392,13 @@ public:
       localIndex const ei1 = m_elemList[lf][1];
 
       // identify neighbor indices
-      bool const side0IsSelf = (er0 == m_er && esr0 == m_esr && ei0 == ei);
-      bool const side1IsSelf = (er1 == m_er && esr1 == m_esr && ei1 == ei);
       localIndex ner = -1, nesr = -1, nei = -1;
-      if( side0IsSelf && er1 >= 0 ) { ner = er1; nesr = esr1; nei = ei1; }
-      else if( side1IsSelf && er0 >= 0 ) { ner = er0; nesr = esr0; nei = ei0; }
+      if( er0 == m_er && esr0 == m_esr && ei0 == ei ) { ner = er1; nesr = esr1; nei = ei1; }
+      else if( er1 == m_er && esr1 == m_esr && ei1 == ei ) { ner = er0; nesr = esr0; nei = ei0; }
 
       // mass flux and derivatives for this one-sided face i (from cell to face)
       real64 const F = s.MassFlux[i];
+      std::cout << "F: " << F << std::endl;
       real64 const dF_dP = s.dMassFlux_dPres[i];
       real64 const dF_dS = s.dMassFlux_dS[i];
 
@@ -430,9 +429,19 @@ public:
       // neighbor Jacobian contributions on neighbor columns when applicable
       if( hasNeighbor )
       {
+        
         // Neighbor global dof indices: pressure and saturation of independent phase
         globalIndex const neiP = m_elemDofNumber[ner][nesr][nei];
         globalIndex const neiS = neiP + 1;
+        
+        if (F < 0.0){
+          std::cout << "Adding neighbor contribution from elem " << nei << " region " << ner << " subregion " << nesr << " to elem " << ei << " region " << m_er << " subregion " << m_esr << std::endl;
+          std::cout << "neiP: " << neiP << std::endl;
+          std::cout << "neiS: " << neiS << std::endl;
+          std::cout << "vals P: " << m_dt * F * ( 1.0 - beta ) * df_nei_dP << std::endl;
+          std::cout << "vals S: " << m_dt * F * ( 1.0 - beta ) * df_nei_dS << std::endl;
+        }
+        
         // Always append entries (values are be zero if beta == 1)
         s.neiCols[s.numNeiCols] = neiP;
         s.neiVals[s.numNeiCols] += m_dt * F * ( 1.0 - beta ) * df_nei_dP;
