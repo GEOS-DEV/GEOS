@@ -35,9 +35,9 @@
     <Box name="sink"   xMin="{ 1.99, -0.01, -0.01 }" xMax="{ 3.01, 1.01, 1.01 }"/>
   </Geometry>
 
-  <Events maxTime="2e3">
-    <PeriodicEvent name="outputs" timeFrequency="200" target="/Outputs/vtkOutput"/>
-    <PeriodicEvent name="solverApps" forceDt="100" target="/Solvers/FlowSolverMFD"/>
+  <Events maxTime="86400">
+    <PeriodicEvent name="outputs" timeFrequency="86400" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent name="solverApps" forceDt="86400" target="/Solvers/FlowSolverMFD"/>
   </Events>
 
   <NumericalMethods>
@@ -101,7 +101,7 @@
       objectPath="ElementRegions/Domain/block1" fieldName="rockPorosity_referencePorosity" scale="0.05"/>
 
     <FieldSpecification name="initialPressure" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="pressure" scale="3e6"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="pressure" scale="1.0e7"/>
 
     <!-- Initial saturations (phaseVolumeFraction component index: 0=water, 1=gas) -->
     <FieldSpecification name="initSatWater" initialCondition="1" setNames="{ all }"
@@ -111,9 +111,9 @@
 
     <!-- Pressure BC regions -->
     <FieldSpecification name="sourcePressure" objectPath="ElementRegions/Domain/block1"
-      fieldName="pressure" scale="4e6" setNames="{ source }"/>
+      fieldName="pressure" scale="1.0e7" setNames="{ source }"/>
     <FieldSpecification name="sinkPressure" objectPath="ElementRegions/Domain/block1"
-      fieldName="pressure" scale="2e6" setNames="{ sink }"/>
+      fieldName="pressure" scale="2.0e7" setNames="{ sink }"/>
   </FieldSpecifications>
 
   <Outputs>
