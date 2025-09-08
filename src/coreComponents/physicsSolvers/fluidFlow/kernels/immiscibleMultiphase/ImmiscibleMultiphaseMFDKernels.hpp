@@ -213,8 +213,8 @@ public:
     real64 dDivSatFluxes_dFaceVars[NUM_FACE]{};
     // Neighbor saturation couplings (via upwind when inflow)
     localIndex numNeiCols = 0;
-    globalIndex neiCols[NUM_FACE]{};
-    real64 neiVals[NUM_FACE]{};
+    globalIndex neiCols[2*NUM_FACE]{}; // allow both P and S per neighbor face
+    real64 neiVals[2*NUM_FACE]{};
     // Row/col bookkeeping
     localIndex cellRow = 0;
     localIndex faceRow[NUM_FACE]{};
@@ -412,9 +412,8 @@ public:
       bool const hasNeighbor = (ner >= 0);
       if( hasNeighbor )
       {
-        // compute neighbor fractional flow; derivative temps are unused in Jacobian after update
+        // compute neighbor fractional flow and its derivatives
         fracFlow( ner, nesr, nei, m_indep, f_nei, df_nei_dP, df_nei_dS );
-        (void)df_nei_dP; (void)df_nei_dS;
       }
 
       // Upwind convex combination: beta = 1 if F >= 0 (use local), else 0 (use neighbor)
@@ -430,10 +429,20 @@ public:
       // face pressure derivatives: only via F
       for( integer j=0; j<NUM_FACE; ++j ) s.dDivSatFluxes_dFaceVars[j] += m_dt * ( s.dMassFlux_dFacePres[i][j] * f_int );
 
-      // neighbor saturation coupling removed per updated upwind fractional flow derivative handling
-      // Previously: added m_dt * F * (1 - beta) * df_nei_dS to neighbor saturation column when inflow (F < 0).
-      // Now: Jacobian only accounts for local derivatives since beta is binary and selection is handled locally.
-      // if( hasNeighbor ) { ... }
+      // neighbor Jacobian contributions on neighbor columns when applicable
+      if( hasNeighbor )
+      {
+        // Neighbor global dof indices: pressure and saturation of independent phase
+        globalIndex const neiP = m_elemDofNumber[ner][nesr][nei];
+        globalIndex const neiS = neiP + 1;
+        // Always append entries (values are be zero if beta == 1)
+        s.neiCols[s.numNeiCols] = neiP;
+        s.neiVals[s.numNeiCols] += m_dt * F * ( 1.0 - beta ) * df_nei_dP;
+        ++s.numNeiCols;
+        s.neiCols[s.numNeiCols] = neiS;
+        s.neiVals[s.numNeiCols] += m_dt * F * ( 1.0 - beta ) * df_nei_dS;
+        ++s.numNeiCols;
+      }
     }
   }
 
