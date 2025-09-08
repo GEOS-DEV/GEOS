@@ -30,6 +30,9 @@
       name="timeHistoryOutput"
       sources="{/Tasks/slipVelocityCollection, /Tasks/slipCollection, /Tasks/shearTractionCollection, /Tasks/stateCollection}"
       filename="BP7_QD_A" />  
+
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 
   
