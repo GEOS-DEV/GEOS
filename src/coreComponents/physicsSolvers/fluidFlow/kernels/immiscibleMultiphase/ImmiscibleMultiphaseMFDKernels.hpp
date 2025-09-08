@@ -398,7 +398,6 @@ public:
 
       // mass flux and derivatives for this one-sided face i (from cell to face)
       real64 const F = s.MassFlux[i];
-      std::cout << "F: " << F << std::endl;
       real64 const dF_dP = s.dMassFlux_dPres[i];
       real64 const dF_dS = s.dMassFlux_dS[i];
 
@@ -433,14 +432,6 @@ public:
         // Neighbor global dof indices: pressure and saturation of independent phase
         globalIndex const neiP = m_elemDofNumber[ner][nesr][nei];
         globalIndex const neiS = neiP + 1;
-        
-        if (F < 0.0){
-          std::cout << "Adding neighbor contribution from elem " << nei << " region " << ner << " subregion " << nesr << " to elem " << ei << " region " << m_er << " subregion " << m_esr << std::endl;
-          std::cout << "neiP: " << neiP << std::endl;
-          std::cout << "neiS: " << neiS << std::endl;
-          std::cout << "vals P: " << m_dt * F * ( 1.0 - beta ) * df_nei_dP << std::endl;
-          std::cout << "vals S: " << m_dt * F * ( 1.0 - beta ) * df_nei_dS << std::endl;
-        }
         
         // Always append entries (values are be zero if beta == 1)
         s.neiCols[s.numNeiCols] = neiP;
