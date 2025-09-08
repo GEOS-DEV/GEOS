@@ -117,6 +117,22 @@ DECLARE_FIELD( phaseCFLNumber,
                LEVEL_0,
                NO_WRITE,
                "Phase CFL number" );
+
+DECLARE_FIELD( phaseVolumeFraction_independent,
+               "phaseVolumeFraction_independent",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Independent phase volume fraction (scalar alias of the configured independent component)" );
+
+DECLARE_FIELD( phaseVolumeFraction_dependent,
+               "phaseVolumeFraction_dependent",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Dependent phase volume fraction (scalar alias of the configured dependent component)" );
 }
 }
 
