@@ -785,7 +785,7 @@ void ImmiscibleMultiphaseFlowMFD::updatePhaseMass( ElementSubRegionBase & subReg
 void ImmiscibleMultiphaseFlowMFD::updateVolumeConstraint( ElementSubRegionBase & subRegion ) const
 {
   auto phaseVol = subRegion.getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
-  integer const dep = ( m_dependentPhaseIndex == 0 ? 0 : 1 );
+  integer const dep = m_dependentPhaseIndex; // 0 or 1
   integer const ind = 1 - dep;
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
