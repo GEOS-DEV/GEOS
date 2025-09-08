@@ -2114,7 +2114,7 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
         MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
         fluid.saveConvergedState();
 
-      validateWellConstraints( time_n, dt, subRegion, elemManager );
+        validateWellConstraints( time_n, dt, subRegion, elemManager );
 
         updateSubRegionState( subRegion );
       }
