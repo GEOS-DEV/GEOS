@@ -250,6 +250,8 @@ void ImmiscibleMultiphaseFlowMFD::implicitStepComplete( real64 const & time,
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const, ElementSubRegionBase & subRegion )
     {
+      // Enforce s_dep = 1 - s_ind before any output is written
+      updateVolumeConstraint( subRegion );
       // update converged saturation for relperm hysteresis if model supports it
       auto phaseVol = subRegion.getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
       GEOS_UNUSED_VAR( phaseVol );
