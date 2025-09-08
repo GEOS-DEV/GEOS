@@ -130,9 +130,11 @@ public:
     {
       {
         dataRepository::Group const & setGroup = object.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
+         std::cout << "setGroup "<<setGroup.getName() << std::endl;
         string_array setNames = this->getSetNames();
         for( auto & setName : setNames )
         {
+          std::cout << "setName "<<setName << std::endl;
           if( setGroup.hasWrapper( setName ) )
           {
             SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );

@@ -27,6 +27,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
+#include "mesh/ObjectManagerBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
@@ -202,6 +203,7 @@ void SurfaceGenerator::postInputInitialization()
   GEOS_ERROR_IF( binaryOptions.count( m_mpiCommOrder ) == 0,
                  getWrapperDataContext( viewKeyStruct::mpiCommOrderString() ) <<
                  ": option can be either 0 (false) or 1 (true)" );
+
 }
 
 SurfaceGenerator::~SurfaceGenerator()
@@ -275,6 +277,14 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
     // TODO: handle this automatically in registerField()
     faceManager.getField< surfaceGeneration::K_IC >().resizeDimension< 1 >( 3 );
+
+    std::cout << "registerDataOnMesh "<< nodeManager.getName() << std::endl;
+    nodeManager.sets().forWrappers< SortedArray< localIndex > >( [&] ( auto & wrapper )
+    {
+      std::cout << wrapper.getName() << std::endl;
+      std::cout << wrapper.size()<< std::endl;
+    } );
+
   } );
 
 
@@ -408,6 +418,16 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
         }
       }
     }
+
+    NodeManager & nodeManager = meshLevel.getNodeManager();
+    std::cout << "initializePostInitialConditionsPreSubGroups "<< nodeManager.getName() << std::endl;
+    nodeManager.sets().forWrappers< SortedArray< localIndex > >( [&] ( auto & wrapper )
+    {
+      std::cout << wrapper.getName() << std::endl;
+      std::cout << wrapper.size()<< std::endl;
+    } );
+
+
   } );
 }
 

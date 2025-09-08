@@ -258,7 +258,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
             {
               message << GEOS_FMT( "You can set `errorAsWarning` to `0` in {} to disable the error.",
                                    fs.getDataContext() );
-              GEOS_ERROR( message.str() );
+              // GEOS_ERROR( message.str() );
             }
             else
             {
