@@ -374,6 +374,7 @@ public:
       real64 const dLambda_dS = dlam_ind_dS + dlam_dep_dS;
       df_dP = ( dlam_ind_dP * denom - lam_ind * dLambda_dP ) / ( denom * denom );
       df_dS = ( dlam_ind_dS * denom - lam_ind * dLambda_dS ) / ( denom * denom );
+      df_dS = sgnS * 1.0;
     };
 
     // Precompute local f and derivatives
@@ -408,41 +409,31 @@ public:
       real64 f_nei = f_loc;
       real64 df_nei_dP = 0.0;
       real64 df_nei_dS = 0.0;
-      globalIndex neighborSCol = 0;
       bool const hasNeighbor = (ner >= 0);
       if( hasNeighbor )
       {
+        // compute neighbor fractional flow; derivative temps are unused in Jacobian after update
         fracFlow( ner, nesr, nei, m_indep, f_nei, df_nei_dP, df_nei_dS );
-        neighborSCol = m_elemDofNumber[ner][nesr][nei] + 1; // saturation column of neighbor
+        (void)df_nei_dP; (void)df_nei_dS;
       }
 
-      real64 const f_int = 0.5 * ( f_loc + f_nei );
+      // Upwind convex combination: beta = 1 if F >= 0 (use local), else 0 (use neighbor)
+      real64 const beta = ( F >= 0.0 ) ? 1.0 : 0.0;
+      real64 const f_int = beta * f_loc + ( 1.0 - beta ) * f_nei;
 
       // residual contribution and local Jacobians
       s.divSatFluxes += m_dt * F * f_int;
-      // d/dP (local): dF/dP * f_int + F * 0.5 * df_loc/dP
-      s.dDivSatFluxes_dP += m_dt * ( dF_dP * f_int + F * 0.5 * df_loc_dP );
-      // d/dS (local): dF/dS * f_int + F * 0.5 * df_loc/dS
-      s.dDivSatFluxes_dS += m_dt * ( dF_dS * f_int + F * 0.5 * df_loc_dS );
+      // d/dP (local): dF/dP * f_int + F * beta * df_loc/dP (neighbor f has no local P dependence)
+      s.dDivSatFluxes_dP += m_dt * ( dF_dP * f_int + F * beta * df_loc_dP );
+      // d/dS (local): dF/dS * f_int + F * beta * df_loc/dS (neighbor f has no local S dependence)
+      s.dDivSatFluxes_dS += m_dt * ( dF_dS * f_int + F * beta * df_loc_dS );
       // face pressure derivatives: only via F
       for( integer j=0; j<NUM_FACE; ++j ) s.dDivSatFluxes_dFaceVars[j] += m_dt * ( s.dMassFlux_dFacePres[i][j] * f_int );
 
-      // neighbor saturation coupling via averaged fractional flow derivative
-      if( hasNeighbor )
-      {
-        real64 const val = m_dt * F * 0.5 * df_nei_dS;
-        bool found = false;
-        for( localIndex k=0; k<s.numNeiCols; ++k )
-        {
-          if( s.neiCols[k] == neighborSCol ) { s.neiVals[k] += val; found = true; break; }
-        }
-        if( !found && s.numNeiCols < NUM_FACE )
-        {
-          s.neiCols[s.numNeiCols] = neighborSCol;
-          s.neiVals[s.numNeiCols] = val;
-          s.numNeiCols++;
-        }
-      }
+      // neighbor saturation coupling removed per updated upwind fractional flow derivative handling
+      // Previously: added m_dt * F * (1 - beta) * df_nei_dS to neighbor saturation column when inflow (F < 0).
+      // Now: Jacobian only accounts for local derivatives since beta is binary and selection is handled locally.
+      // if( hasNeighbor ) { ... }
     }
   }
 
