@@ -383,6 +383,8 @@ void ImmiscibleMultiphaseFlowMFD::assembleSystem( real64 const time_n,
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const, ElementSubRegionBase & subRegion )
     {
+      // Enforce saturation complementarity before any property updates
+      updateVolumeConstraint( subRegion );
       updateFluidModel( subRegion );
       updateRelPermModel( subRegion );
       updatePhaseMobility( subRegion );
