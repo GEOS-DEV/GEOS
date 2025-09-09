@@ -278,6 +278,7 @@ public:
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
+   * @param newtonIter the current newton iteration
    * @param domain the domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param localMatrix the system matrix
@@ -296,6 +297,7 @@ public:
   lineSearch( real64 const & time_n,
               real64 const & dt,
               integer const cycleNumber,
+              integer const newtonIter,
               DomainPartition & domain,
               DofManager const & dofManager,
               CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -309,6 +311,7 @@ public:
    * @param time_n time at the beginning of the step
    * @param dt the prescribed timestep
    * @param cycleNumber the current cycle number
+   * @param newtonIter the current newton iteration
    * @param domain the domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param localMatrix the system matrix
@@ -324,6 +327,7 @@ public:
   lineSearchWithParabolicInterpolation ( real64 const & time_n,
                                          real64 const & dt,
                                          integer const cycleNumber,
+                                         integer const newtonIter,
                                          DomainPartition & domain,
                                          DofManager const & dofManager,
                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -479,6 +483,19 @@ public:
                        integer const cycleNumber,
                        integer const nonlinearIteration,
                        ParallelVector const & solution ) const;
+
+  /**
+   * @brief Update the convergence information and write then into a CSV file
+   * @param time_n the time at the beginning of the step
+   * @param dt the desired timestep
+   * @param cycleNumber event cycle number
+   * @param iteration current iteration
+   */
+  virtual void
+  updateAndWriteConvergenceStep( real64 const & time_n,
+                                 real64 const & dt,
+                                 integer const cycleNumber,
+                                 integer const iteration );
 
   /**
    * @brief calculate the norm of the global system residual
@@ -705,6 +722,9 @@ public:
     /// @return string for the allowNonConvergedLinearSolverSolution wrapper
     static constexpr char const * allowNonConvergedLinearSolverSolutionString() { return "allowNonConvergedLinearSolverSolution"; }
 
+    /// @return string for the writeStatistics wrapper
+    static constexpr char const * writeStatisticsCSVString() { return "writeStatistics"; }
+
     /// @return string for the numTimestepsSinceLastDtCut wrapper
     static constexpr char const * numTimestepsSinceLastDtCutString() { return "numTimestepsSinceLastDtCut"; }
   };
@@ -816,6 +836,11 @@ public:
    */
   localIndex targetRegionIndex( string const & regionName ) const;
 
+  /**
+   * @brief return the list of target regions
+   * @return the array of region names
+   */
+  string_array const & getTargetRegionNames() const {return m_targetRegionNames;}
 
 
   /**
@@ -887,6 +912,22 @@ public:
   virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
 
   /**
+   * @return An IterationsStatistics for the "root" solver.
+   * Otherwise return an empty IterationsStatistics
+   */
+  IterationsStatistics & getIterationStats()
+  {
+    return m_solverStatistics.m_iterationsStats;
+  }
+  /**
+   * @return A ConvergenceStatistics for all sub-solvers
+   */
+  ConvergenceStatistics & getConvergenceStats()
+  {
+    return m_solverStatistics.m_convergenceStats;
+  }
+
+  /**
    * @brief accessor for the solver statistics.
    * @return reference to m_solverStatistics
    */
@@ -915,6 +956,8 @@ public:
     return m_meshTargets;
   }
 protected:
+
+  virtual void postInputInitialization() override;
 
   /**
    * @brief Eisenstat-Walker adaptive tolerance
@@ -1063,16 +1106,23 @@ protected:
   /// Local system matrix and rhs
   CRSMatrix< real64, globalIndex > m_localMatrix;
 
+  /// Custom linear solver for the "native" solver type
+  std::unique_ptr< LinearSolverBase< LAInterface > > m_linearSolver;
+
   /// Custom preconditioner for the "native" iterative solver
   std::unique_ptr< PreconditionerBase< LAInterface > > m_precond;
 
   /// flag for debug output of matrix, rhs, and solution
   integer m_writeLinearSystem;
 
+  /// When set to 1 output to log iterations information
+  /// When set to 2 additionnaly output csv files containing iterations & convergence information
+  integer m_writeStatisticsCSV;
+
   /// Linear solver parameters
   LinearSolverParametersInput m_linearSolverParameters;
 
-  /// Result of the last linear solve
+  /// Result of the last linear solver
   LinearSolverResult m_linearSolverResult;
 
   /// Nonlinear solver parameters
