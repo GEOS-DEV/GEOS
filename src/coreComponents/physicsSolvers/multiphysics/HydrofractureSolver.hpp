@@ -224,7 +224,7 @@ private:
 
   virtual real64 fullyCoupledSolverStep( real64 const & time_n,
                                          real64 const & dt,
-                                         int const cycleNumber,
+                                         integer const cycleNumber,
                                          DomainPartition & domain ) override final;
 
   void checkRockOnlyMatrix( dataRepository::Group & meshBodies );

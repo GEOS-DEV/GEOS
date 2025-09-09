@@ -296,10 +296,12 @@ private:
    * @param time_n the time at the beginning of the time step
    * @param dt the time step dt
    * @param subRegion the well subRegion
+   * @param elemManager the element manager
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion ) override;
+                                        WellElementSubRegion const & subRegion,
+                                        ElementRegionManager const & elemManager ) override;
 
 };
 
