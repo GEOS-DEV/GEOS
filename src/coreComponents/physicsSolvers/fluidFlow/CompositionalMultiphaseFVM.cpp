@@ -575,6 +575,10 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
     GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence,
                                GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
                                          globalResidualNorm[0], globalResidualNorm[1], globalResidualNorm[2] ));
+
+    getConvergenceStats().setResidualValue( "Rmass", globalResidualNorm[0] );
+    getConvergenceStats().setResidualValue( "Rvol", globalResidualNorm[1] );
+    getConvergenceStats().setResidualValue( "Renergy", globalResidualNorm[2] );
   }
   else
   {
@@ -590,8 +594,10 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
-    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )",
-                                                               globalResidualNorm[0], globalResidualNorm[1] ) );
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )",
+                                                                globalResidualNorm[0], globalResidualNorm[1] ) );
+    getConvergenceStats().setResidualValue( "Rmass", globalResidualNorm[0] );
+    getConvergenceStats().setResidualValue( "Rvol", globalResidualNorm[1] );
   }
 
   return residualNorm;

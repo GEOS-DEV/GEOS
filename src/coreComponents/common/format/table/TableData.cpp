@@ -94,6 +94,11 @@ stdVector< stdVector< TableData::CellData > > const & TableData::getTableDataRow
   return m_rows;
 }
 
+stdVector< stdVector< TableData::CellData > > & TableData::getTableDataRows()
+{
+  return m_rows;
+}
+
 void TableData2D::collectTableValues( arrayView1d< real64 const > dim0AxisCoordinates,
                                       arrayView1d< real64 const > dim1AxisCoordinates,
                                       arrayView1d< real64 const > values,
