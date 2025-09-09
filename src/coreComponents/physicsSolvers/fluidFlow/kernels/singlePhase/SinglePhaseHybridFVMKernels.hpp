@@ -796,12 +796,14 @@ public:
       if( !onBoundary && isInTarget )
       {
         massNormalizer += m_density_n[er][esr][ei][0] * m_porosity_n[er][esr][ei][0] * m_volume[er][esr][ei];
-        multiplier += m_density_n[er][esr][ei][0];
         elemCounter++;
       }
     }
-    massNormalizer /= elemCounter; // average mass in the adjacent cells at the previous converged time step
-    multiplier *= m_dt / elemCounter / m_defaultViscosity;  // average dt * mobility at the previous converged time step
+    // average mass in the adjacent cells at the previous converged time step
+    massNormalizer /= elemCounter;
+
+    // LM face residuals are mass fluxes; for a dt-independent norm, use a unit multiplier
+    multiplier = 1.0;
   }
 
   GEOS_HOST_DEVICE
