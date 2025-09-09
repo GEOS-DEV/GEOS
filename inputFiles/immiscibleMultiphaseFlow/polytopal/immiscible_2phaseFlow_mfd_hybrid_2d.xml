@@ -13,7 +13,7 @@
       discretization="immiscibleHybridMimetic"
       targetRegions="{ Domain }"
       logLevel="2"
-      dependentPhaseIndex="1">
+      dependentPhaseIndex="0">
       <NonlinearSolverParameters newtonTol="1e-1" newtonMaxIter="8"/>
       <LinearSolverParameters directParallel="0"/>
     </ImmiscibleMultiphaseFlowMFD>

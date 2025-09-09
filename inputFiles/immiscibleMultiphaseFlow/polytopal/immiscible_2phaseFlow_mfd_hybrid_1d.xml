@@ -117,17 +117,17 @@
   </FieldSpecifications>
 
     <!-- Phase source/sink: inject independent phase (component=1), produce dependent phase (component=0) -->
-    <SourceFlux name="independentPhaseSource"
+<!--     <SourceFlux name="independentPhaseSource"
       objectPath="ElementRegions/Domain/block1"
       setNames="{ source }"
       component="0"
-      scale="-7.0e-5"/>
+      scale="-7.0e-5"/> -->
 
 <!--     <SourceFlux name="dependentPhaseSink"
       objectPath="ElementRegions/Domain/block1"
       setNames="{ sink }"
-      component="1"
-      scale="-7.0e-5"/>   -->
+      component="0"
+      scale="7.0e-5"/>   -->
 
   <Outputs>
     <VTK name="vtkOutput"/>
