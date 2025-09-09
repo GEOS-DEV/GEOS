@@ -248,19 +248,14 @@ public:
         real64 const ccGravCoef = m_elemGravCoef[ei];
         real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
 
-        // Total mobility and its derivatives at element ei
-        real64 Lambda = 0.0;
-        real64 dLambda_dP = 0.0;
-        real64 dLambda_dS = 0.0; // derivative w.r.t. independent saturation (apply sign map below)
-
         // Mixture density rho_mix = (sum_i rho_i * lambda_i) / (sum_i lambda_i)
         // Keep pressure and saturation derivatives since lambda depends on both
         real64 sumLambda = 0.0;
         real64 dSumLambda_dP = 0.0;
         real64 dSumLambda_dS = 0.0;
-        real64 sumRhoLambda = 0.0;
+        real64 sumRhoLambda = 0.0;   // == massLambda (before sign mapping)
         real64 dSumRhoLambda_dP = 0.0;
-        real64 dSumRhoLambda_dS = 0.0;
+        real64 dSumRhoLambda_dS = 0.0; // derivative w.r.t. independent saturation (apply sign map below)
 
         // two-phase for now
         for( integer ip=0; ip<2; ++ip )
@@ -271,16 +266,12 @@ public:
           real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dP];
           real64 const dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
 
-          // accumulate mobility and its derivs
-          Lambda += lambda;
-          dLambda_dP += dlambda_dP;
-          dLambda_dS += dlambda_dS_raw; // adjust sign after loop if indep != 0
-
-          // terms for mixture density and its derivs
+          // accumulate total mobility derivatives for rho_mix denominator
           sumLambda += lambda;
           dSumLambda_dP += dlambda_dP;
           dSumLambda_dS += dlambda_dS_raw; // adjust sign after loop if indep != 0
 
+          // accumulate mass-weighted mobility and its derivatives
           sumRhoLambda += rho * lambda;
           dSumRhoLambda_dP += drho_dP * lambda + rho * dlambda_dP;
           dSumRhoLambda_dS += /* drho/dS ~ 0 */ rho * dlambda_dS_raw; // adjust sign after loop if indep != 0
@@ -288,7 +279,6 @@ public:
 
         // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
         real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
-        dLambda_dS *= sgnS;
         dSumLambda_dS *= sgnS;
         dSumRhoLambda_dS *= sgnS;
 
@@ -310,12 +300,16 @@ public:
         real64 const dPotDif_dS = - dGravTerm_dS;
         real64 const dPotDif_dFaceP = -1.0;
 
-        // Overall mass flux and derivatives
+        // Overall mass flux and derivatives: use mass-weighted mobility (massLambda)
+        real64 const massLambda = sumRhoLambda;
+        real64 const dMassLambda_dP = dSumRhoLambda_dP;
+        real64 const dMassLambda_dS = dSumRhoLambda_dS;
+
         real64 const T_ij = s.transMatrix[i][j];
-        s.MassFlux[i] += Lambda * T_ij * potDif;
-        s.dMassFlux_dPres[i] += T_ij * ( Lambda * dPotDif_dP + dLambda_dP * potDif );
-        s.dMassFlux_dS[i] += T_ij * ( Lambda * dPotDif_dS + dLambda_dS * potDif );
-        s.dMassFlux_dFacePres[i][j] += T_ij * ( Lambda * dPotDif_dFaceP ); // = - T_ij * Lambda
+        s.MassFlux[i] += massLambda * T_ij * potDif;
+        s.dMassFlux_dPres[i] += T_ij * ( massLambda * dPotDif_dP + dMassLambda_dP * potDif );
+        s.dMassFlux_dS[i] += T_ij * ( massLambda * dPotDif_dS + dMassLambda_dS * potDif );
+        s.dMassFlux_dFacePres[i][j] += T_ij * ( massLambda * dPotDif_dFaceP ); // = - T_ij * massLambda
       }
     }
   }
