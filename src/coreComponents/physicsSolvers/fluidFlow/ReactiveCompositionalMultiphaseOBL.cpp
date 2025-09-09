@@ -345,7 +345,9 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const &
 
   real64 const residual = m_useDARTSL2Norm ? MpiWrapper::max( localResidualNorm ) : std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( Rflow ) = ( {:4.2e} )", residual ) );
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( Rflow ) = ( {:4.2e} )", residual ) );
+
+  getConvergenceStats().setResidualValue( "Rflow", residual );
 
   return residual;
 }
