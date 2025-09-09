@@ -49,7 +49,9 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetTotalRateTable( nullptr ),
   m_targetPhaseRateTable( nullptr ),
   m_targetBHPTable( nullptr ),
-  m_statusTable( nullptr )
+  m_statusTable( nullptr ),
+  m_wellStatus( WellControls::Status::OPEN ),
+  m_regionAveragePressure( -1 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -117,7 +119,16 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to specify whether rates are checked at surface or reservoir conditions.\n"
-                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions" );
+                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions.\n"
+                    "See note on referenceReservoirRegion for reservoir condition options" );
+
+  registerWrapper( viewKeyStruct::referenceReservoirRegionString(), &m_referenceReservoirRegion ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setDefaultValue( "" ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of reservoir region used for obtaining average region pressure used in volume rate constraint calculations.\n"
+                    "Frequency of pressure update is set in Single/CompositionalMultiPhaseStatistics definition.\n"
+                    "Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint properties" );
 
   registerWrapper( viewKeyStruct::surfacePressureString(), &m_surfacePres ).
     setDefaultValue( 0 ).
@@ -466,30 +477,40 @@ void WellControls::postInputInitialization()
                                    << m_statusTable->getName() << " should be TableFunction::InterpolationType::Lower",
                    InputError );
   }
+
 }
 
-bool WellControls::isWellOpen( real64 const & currentTime ) const
+void WellControls::setWellStatus( real64 const & currentTime, WellControls::Status status )
 {
-  bool isOpen = true;
-  if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) )
-      && isZero( getTargetMassRate( currentTime ) ))
+  m_wellStatus = status;
+  if( m_wellStatus == WellControls::Status::OPEN )
   {
-    isOpen = false;
+
+    if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) )
+        && isZero( getTargetMassRate( currentTime ) ) )
+    {
+      m_wellStatus =  WellControls::Status::CLOSED;
+    }
+    if( m_statusTable->evaluate( &currentTime ) < LvArray::NumericLimits< real64 >::epsilon )
+    {
+      m_wellStatus =  WellControls::Status::CLOSED;
+    }
   }
-  if( m_statusTable->evaluate( &currentTime ) < LvArray::NumericLimits< real64 >::epsilon )
-  {
-    isOpen = false;
-  }
-  return isOpen;
 }
 
-void WellControls::setNextDtFromTables( real64 const currentTime, real64 & nextDt )
+bool WellControls::isWellOpen() const
 {
-  setNextDtFromTable( m_targetBHPTable, currentTime, nextDt );
-  setNextDtFromTable( m_targetMassRateTable, currentTime, nextDt );
-  setNextDtFromTable( m_targetPhaseRateTable, currentTime, nextDt );
-  setNextDtFromTable( m_targetTotalRateTable, currentTime, nextDt );
-  setNextDtFromTable( m_statusTable, currentTime, nextDt );
+  return getWellStatus() == WellControls::Status::OPEN;
+}
+
+
+void WellControls::setNextDtFromTables( real64 const & currentTime, real64 & nextDt )
+{
+  WellControls::setNextDtFromTable( m_targetBHPTable, currentTime, nextDt );
+  WellControls::setNextDtFromTable( m_targetMassRateTable, currentTime, nextDt );
+  WellControls::setNextDtFromTable( m_targetPhaseRateTable, currentTime, nextDt );
+  WellControls::setNextDtFromTable( m_targetTotalRateTable, currentTime, nextDt );
+  WellControls::setNextDtFromTable( m_statusTable, currentTime, nextDt );
 }
 
 void WellControls::setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt )

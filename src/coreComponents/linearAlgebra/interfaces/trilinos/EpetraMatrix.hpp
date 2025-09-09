@@ -108,6 +108,10 @@ public:
   using MatrixBase::residual;
   using MatrixBase::setDofManager;
   using MatrixBase::dofManager;
+  using MatrixBase::extract;
+  using MatrixBase::extractLocal;
+  using MatrixBase::multiplyPtAP;
+  using MatrixBase::multiplyP1tAP2;
 
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,
@@ -270,6 +274,11 @@ public:
                              bool const excludeDiag ) override;
 
   /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::maxRowLengthLocal
+   */
+  virtual localIndex maxRowLengthLocal() const override;
+
+  /**
    * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::maxRowLength
    */
   virtual localIndex maxRowLength() const override;
@@ -278,11 +287,19 @@ public:
 
   virtual void getRowLengths( arrayView1d< localIndex > const & lengths ) const override;
 
+  virtual void getRowLocalLengths( arrayView1d< localIndex > const & lengths ) const override;
+
   virtual void getRowCopy( globalIndex globalRow,
                            arraySlice1d< globalIndex > const & colIndices,
                            arraySlice1d< real64 > const & values ) const override;
 
   virtual void extractDiagonal( EpetraVector & dst ) const override;
+
+  virtual void extract( CRSMatrixView< real64, globalIndex > const & localMat ) const override;
+
+  virtual void extract( CRSMatrixView< real64, globalIndex const > const & localMat ) const override;
+
+  virtual void extractLocal( CRSMatrixView< real64, localIndex > const & localMat ) const override;
 
   virtual void getRowSums( EpetraVector & dst,
                            RowSumType const rowSumType ) const override;

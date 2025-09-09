@@ -39,13 +39,7 @@ namespace logInfo
 struct EventExecution
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Informations on events execution"; }
-};
-
-struct SubEventExecution
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Informations on sub events execution"; }
+  static constexpr std::string_view getDescription() { return "Informations on events and subevents execution"; }
 };
 
 /// @endcond
