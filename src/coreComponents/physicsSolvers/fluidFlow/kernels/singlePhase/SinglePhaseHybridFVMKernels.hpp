@@ -293,6 +293,7 @@ public:
     m_elemGravCoef( subRegion.getField< fields::flow::gravityCoefficient >() ),
     m_faceToNodes( faceManager.nodeList().toViewConst() ),
     m_faceGravCoef( faceManager.getField< fields::flow::gravityCoefficient >() ),
+    m_faceArea( faceManager.faceArea() ),
     m_regionFilter( regionFilter ),
     m_nodePosition( nodeManager.referencePosition() ),
     m_elemRegionList( faceManager.elementRegionList() ),
@@ -545,19 +546,28 @@ public:
     
       if( m_faceGhostRank[m_elemToFaces[ei][iFaceLoc]] < 0 )
       {
+        real64 const area = m_faceArea[m_elemToFaces[ei][iFaceLoc]];
+        real64 const invArea = 1.0 / area;
+
         // residual (LM face constraint): use mass flux without dt scaling
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[stack.faceCenteredEqnRowIndex[iFaceLoc]], stack.massFlux[iFaceLoc] );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[stack.faceCenteredEqnRowIndex[iFaceLoc]], invArea * stack.massFlux[iFaceLoc] );
 
         // jacobian -- derivative wrt local cell centered pressure term (no dt scaling)
+        real64 dMassFlux_dPres_scaled = invArea * stack.dmassFlux_dPres[iFaceLoc];
         m_localMatrix.addToRow< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
                                                         &dofColIndexElemPres,
-                                                        &stack.dmassFlux_dPres[iFaceLoc],
+                                                        &dMassFlux_dPres_scaled,
                                                         1 );
 
         // jacobian -- derivatives wrt face pressure terms (no dt scaling)
+        real64 dMassFlux_dFacePres_scaled[NUM_FACE];
+        for( integer j = 0; j < NUM_FACE; ++j )
+        {
+          dMassFlux_dFacePres_scaled[j] = invArea * stack.dmassFlux_dFacePres[iFaceLoc][j];
+        }
         m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
                                                                             &stack.faceDofColIndices[0],
-                                                                            stack.dmassFlux_dFacePres[iFaceLoc],
+                                                                            dMassFlux_dFacePres_scaled,
                                                                             NUM_FACE );
       }
     }
@@ -615,6 +625,7 @@ protected:
   arrayView1d< real64 const > const m_elemGravCoef;
   ArrayOfArraysView< localIndex const > const m_faceToNodes;
   arrayView1d< real64 const > const m_faceGravCoef;
+  arrayView1d< real64 const > const m_faceArea;
 
   SortedArrayView< localIndex const > const m_regionFilter;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodePosition;
