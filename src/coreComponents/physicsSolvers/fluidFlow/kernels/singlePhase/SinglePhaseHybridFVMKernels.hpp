@@ -548,13 +548,13 @@ public:
         // residual (LM face constraint): use mass flux without dt scaling
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[stack.faceCenteredEqnRowIndex[iFaceLoc]], stack.massFlux[iFaceLoc] );
 
-        // jacobian -- derivative wrt local cell centered pressure term (no dt)
+        // jacobian -- derivative wrt local cell centered pressure term (no dt scaling)
         m_localMatrix.addToRow< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
                                                         &dofColIndexElemPres,
                                                         &stack.dmassFlux_dPres[iFaceLoc],
                                                         1 );
 
-        // jacobian -- derivatives wrt face pressure terms (no dt)
+        // jacobian -- derivatives wrt face pressure terms (no dt scaling)
         m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
                                                                             &stack.faceDofColIndices[0],
                                                                             stack.dmassFlux_dFacePres[iFaceLoc],
@@ -802,7 +802,7 @@ public:
     // average mass in the adjacent cells at the previous converged time step
     massNormalizer /= elemCounter;
 
-    // LM face residuals are mass fluxes; for a dt-independent norm, use a unit multiplier
+    // LM face residuals are mass fluxes; choose a dt-invariant multiplier
     multiplier = 1.0;
   }
 
