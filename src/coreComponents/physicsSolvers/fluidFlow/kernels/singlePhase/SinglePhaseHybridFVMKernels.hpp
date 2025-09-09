@@ -206,7 +206,7 @@ public:
     internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NUM_FACES )
     {
       AveragePressureGradientKernel< NUM_FACES > kernel( subRegion, faceManager );
-      AveragePressureGradientKernel< NUM_FACES >::template launch< POLICY >( subRegion.size, kernel );
+      AveragePressureGradientKernel< NUM_FACES >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 };
@@ -706,7 +706,7 @@ public:
         kernel( rankOffset, er, esr, lengthTolerance, faceDofKey, nodeManager, faceManager,
                 subRegion, dofNumberAccessor, flowAccessors, fluid, permeability,
                 regionFilter, dt, localMatrix, localRhs );
-        ElementBasedAssemblyKernel< NUM_FACES, IP >::template launch< POLICY >( subRegion.size, kernel );
+        ElementBasedAssemblyKernel< NUM_FACES, IP >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     } );
   }
