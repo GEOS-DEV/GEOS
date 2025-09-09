@@ -709,8 +709,8 @@ void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
   arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
     dataGroup.getField< flow::globalCompFraction >();
 
-  std::cout << "Inside CompositionalMultiphaseBase::updateFluidModel: ";
-  std::cout << "pres[0]" << pres[0] << std::endl;
+  // std::cout << "Inside CompositionalMultiphaseBase::updateFluidModel: ";
+  // std::cout << "pres[0]" << pres[0] << std::endl;
 
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
@@ -1033,11 +1033,11 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       updateCapPressureModel( subRegion );
 
       auto phaseMinVolumeFraction = capPressure.phaseMinVolumeFraction();
-      std::cout << "phaseMinVolumeFraction.size() = " << phaseMinVolumeFraction.size() << std::endl;
-      for ( localIndex i = 0; i < phaseMinVolumeFraction.size(); ++i )
-      {
-        std::cout << "phaseMinVolumeFraction[" << i << "] = " << phaseMinVolumeFraction << std::endl;
-      }
+      // std::cout << "phaseMinVolumeFraction.size() = " << phaseMinVolumeFraction.size() << std::endl;
+      // for ( localIndex i = 0; i < phaseMinVolumeFraction.size(); ++i )
+      // {
+      //   std::cout << "phaseMinVolumeFraction[" << i << "] = " << phaseMinVolumeFraction << std::endl;
+      // }
     }
 
     // If the diffusion and/or dispersion is/are supported, initialize the two models
@@ -1181,6 +1181,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       real64 const datumElevation = fs.getDatumElevation();
       real64 const datumPressure = fs.getDatumPressure();
       string const initPhaseName = fs.getInitPhaseName();   // will go away when GOC/WOC are implemented
+
+      // std::cout << "initPhaseName = " << initPhaseName << std::endl;
+
       // array1d< real64 > const & phaseContacts = fs.getPhaseContacts();
       arrayView1d< real64 const > const phaseContacts = fs.getPhaseContacts();
 
@@ -1189,7 +1192,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       real64 const maxElevation = LvArray::math::max( globalMaxElevation[equilIndex], datumElevation );
       real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
 
-      std::cout << "minElevation, maxElevation = " << minElevation << ", " << maxElevation << std::endl;
+      // std::cout << "minElevation, maxElevation = " << minElevation << ", " << maxElevation << std::endl;
 
       // localIndex const customPoints = phaseContacts.size() + 1; // custom points are the datum and phase contacts
       // localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 + customPoints : 1;
@@ -1284,21 +1287,21 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
     // }
 
       auto const phaseOrder = capPressure.phaseOrder();
-      std::cout << "phaseOrder.size() = " << phaseOrder.size() << std::endl;
-      for ( localIndex i = 0; i < phaseOrder.size(); ++i )
-      {
-        std::cout << "phaseOrder[" << i << "] = " << phaseOrder[i] << std::endl;
-      }
+      // std::cout << "phaseOrder.size() = " << phaseOrder.size() << std::endl;
+      // for ( localIndex i = 0; i < phaseOrder.size(); ++i )
+      // {
+      //   std::cout << "phaseOrder[" << i << "] = " << phaseOrder[i] << std::endl;
+      // }
 
       integer const ipGas = phaseOrder[CapillaryPressureBase::PhaseType::GAS];
       integer const ipWater = phaseOrder[CapillaryPressureBase::PhaseType::WATER];
       integer const ipOil = phaseOrder[CapillaryPressureBase::PhaseType::OIL];
 
       arrayView1d< real64 const > const phaseMinVolumeFraction = capPressure.phaseMinVolumeFraction();
-      for ( localIndex i = 0; i < phaseMinVolumeFraction.size(); ++i )
-      {
-        std::cout << "phaseMinVolumeFraction[" << i << "] = " << phaseMinVolumeFraction[i] << std::endl;
-      }
+      // for ( localIndex i = 0; i < phaseMinVolumeFraction.size(); ++i )
+      // {
+      //   std::cout << "phaseMinVolumeFraction[" << i << "] = " << phaseMinVolumeFraction[i] << std::endl;
+      // }
 
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
@@ -1423,7 +1426,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       array2d< real64, compflow::LAYOUT_PHASE > targetPhaseVolumeFraction;
       targetPhaseVolumeFraction.resize( targetSet.size(), numPhases );
       real64 const initialPhaseVolumeFractionGuess = 1.0 / real64( numPhases );
-      std::cout << "initialPhaseVolumeFractionGuess = " << initialPhaseVolumeFractionGuess << std::endl;
+      // std::cout << "initialPhaseVolumeFractionGuess = " << initialPhaseVolumeFractionGuess << std::endl;
       for ( localIndex i = 0; i < targetSet.size(); ++i )
       {
         for ( localIndex ip = 0; ip < numPhases; ++ip )
@@ -1507,11 +1510,11 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                       ( elevation > phaseContacts[1] && elevation <= phaseContacts[0] ) ? ipOil : ipGas;
           }
           pres[k] = phasePressureTableWrappers[ip_pres].compute( &elevation );
-          if (k == 0)
-          {
-            std::cout << "Inside CompositionalMultiphaseBase::hydrostaticEquil: ";
-            std::cout << "ip_pres = " << ip_pres << ", pres[ip_pres][0] = " << pres[0] << std::endl;
-          }
+          // if (k == 0)
+          // {
+          //   std::cout << "Inside CompositionalMultiphaseBase::hydrostaticEquil: ";
+          //   std::cout << "ip_pres = " << ip_pres << ", pres[ip_pres][0] = " << pres[0] << std::endl;
+          // }
 
           minPressure.min( pres[k] );
           temp[k] = tempTableWrapper.compute( &elevation );
@@ -1553,16 +1556,16 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
             }
             unCorrCompFractions[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
           }
-          if ( k == 0 )
-          {
-            std::cout << "k = " << k << ", elevation = " << elevation << ", success = " << success[k] << ", target pc = "
-            << targetPhaseCapPressure[k][0] << ", solved sat = " << targetPhaseVolumeFraction[k] << "unCorrComp = " << unCorrCompFractions[k] << 
-            ", corrComp = " << compFrac[k] << std::endl;
-            std::cout << "gas_dens = " << phaseDensTableWrappers[ipGas].compute( &elevation )
-                      << ", water_dens = " << phaseDensTableWrappers[ipWater].compute( &elevation ) 
-                      << ", p_gas = " << phasePressureTableWrappers[ipGas].compute( &elevation )
-                      << ", p_water = " << phasePressureTableWrappers[ipWater].compute( &elevation ) << std::endl;
-          }
+          // if ( k == 0 )
+          // {
+          //   std::cout << "k = " << k << ", elevation = " << elevation << ", success = " << success[k] << ", target pc = "
+          //   << targetPhaseCapPressure[k][0] << ", solved sat = " << targetPhaseVolumeFraction[k] << "unCorrComp = " << unCorrCompFractions[k] << 
+          //   ", corrComp = " << compFrac[k] << std::endl;
+          //   std::cout << "gas_dens = " << phaseDensTableWrappers[ipGas].compute( &elevation )
+          //             << ", water_dens = " << phaseDensTableWrappers[ipWater].compute( &elevation ) 
+          //             << ", p_gas = " << phasePressureTableWrappers[ipGas].compute( &elevation )
+          //             << ", p_water = " << phasePressureTableWrappers[ipWater].compute( &elevation ) << std::endl;
+          // }
 
         } );
       } );
@@ -1638,8 +1641,8 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       //                                                                 tmpPhaseInternalEnergy[0][0],
       //                                                                 tmpPhaseCompFrac[0][0],
       //                                                                 tmpTotalDens );
-      //     // if ( k == 0 )
-      //     // {
+      //     if ( k == 0 )
+      //     {
       //       real64 const recomputedSw = ( tmpPhaseFrac[0][0][1] / tmpPhaseDens[0][0][1] ) / 
       //         ( tmpPhaseFrac[0][0][0] / tmpPhaseDens[0][0][0] + tmpPhaseFrac[0][0][1] / tmpPhaseDens[0][0][1] );
       //       std::cout << "Phase fraction = " << tmpPhaseFrac[0][0] << std::endl;
@@ -1649,13 +1652,14 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       //                 << " " << phaseCompFracTableWrappers[0][1].compute(&elevation) << ", "
       //                 << phaseCompFracTableWrappers[1][0].compute(&elevation) << " "
       //                 << phaseCompFracTableWrappers[1][1].compute(&elevation) << "}" << std::endl;
-      //       std::cout << "Phase fraction = " << unCorrPhaseFrac[0][0] << std::endl;
+      //       std::cout << "Uncorrected Phase fraction = " << unCorrPhaseFrac[0][0] 
+      //                 << "Corrected Phase fraction = " << tmpPhaseFrac[0][0] << std::endl;
       //       std::cout << "After CompCorr: dens_gas = " << tmpPhaseDens[0][0][0] 
       //                 << ", water_dens = " << tmpPhaseDens[0][0][1]
       //                 << ", phase zs = " << tmpPhaseCompFrac[0][0] 
       //                 << ", recomputed Sw = " << recomputedSw << std::endl;
 
-      //     // }
+      //     }
 
       //   } );
 
