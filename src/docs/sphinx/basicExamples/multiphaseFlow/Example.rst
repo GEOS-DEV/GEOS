@@ -272,7 +272,7 @@ injection rate of component 1 (water) to mimic a rate-controlled well.
 .. _Stats_tag_dead_oil_bottom_layers_spe10:
 
 ------------------------
-Source fluxes statistics
+Source flux statistics
 ------------------------
 
 GEOS reports source flux statistics to help monitor the overall mass balance and flow rates of a group of wells defined using ``SourceFlux``.
