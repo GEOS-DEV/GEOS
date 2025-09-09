@@ -90,6 +90,7 @@ public:
     m_perfRate( perforationData->getField< fields::well::perforationRate >() ),
     m_dPerfRate( perforationData->getField< fields::well::dPerforationRate >() ),
     m_perfWellElemIndex( perforationData->getField< fields::perforation::wellElementIndex >() ),
+    m_perfStatus( perforationData->getField< fields::perforation::perforationStatus >() ),
     m_wellElemDofNumber( subRegion.getReference< array1d< globalIndex > >( wellDofKey ) ),
     m_resElemDofNumber( resDofNumber ),
     m_resElementRegion( perforationData->getField< fields::perforation::reservoirElementRegion >() ),
@@ -116,70 +117,73 @@ public:
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
 
-    // local working variables and arrays
-
-    stackArray1d< localIndex, 2 > eqnRowIndices( 2 );
-    stackArray1d< globalIndex, 2*resNumDOF > dofColIndices( 2 * resNumDOF );
-
-    stackArray1d< real64, 2 > localPerf( 2 );
-    stackArray2d< real64, 2 * resNumDOF * 2 > localPerfJacobian( 2, 2 * resNumDOF );
-
-
-    // get the reservoir (sub)region and element indices
-    localIndex const er = m_resElementRegion[iperf];
-    localIndex const esr = m_resElementSubRegion[iperf];
-    localIndex const ei = m_resElementIndex[iperf];
-
-    // get the well element index for this perforation
-    localIndex const iwelem = m_perfWellElemIndex[iperf];
-    globalIndex const wellElemOffset = m_wellElemDofNumber[iwelem];
-    globalIndex const resOffset = m_resElemDofNumber[er][esr][ei];
-
-    // row index on reservoir side
-    eqnRowIndices[TAG::RES] = m_resElemDofNumber[er][esr][ei] - m_rankOffset;
-    // column index on reservoir side
-    dofColIndices[TAG::RES] = resOffset;
-
-    // row index on well side
-    eqnRowIndices[TAG::WELL] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + ROFFSET::MASSBAL;
-    // column index on well side
-    dofColIndices[TAG::WELL * resNumDOF] = wellElemOffset + WJ_COFFSET::dP;
-
-    if constexpr ( IS_THERMAL )
+    if( m_perfStatus[iperf ] )
     {
-      dofColIndices[TAG::RES * resNumDOF + 1 ] = resOffset +  1;
-      dofColIndices[TAG::WELL * resNumDOF + 1 ] = wellElemOffset + WJ_COFFSET::dT;
-    }
-    // populate local flux vector and derivatives
-    localPerf[TAG::RES] = m_dt * m_perfRate[iperf];
-    localPerf[TAG::WELL] = -localPerf[TAG::RES];
 
-    for( integer ke = 0; ke < 2; ++ke )
-    {
-      localIndex localDofIndexPres = ke * resNumDOF;
-      localPerfJacobian[TAG::RES][localDofIndexPres] = m_dt * m_dPerfRate[iperf][ke][CP_Deriv::dP];
-      localPerfJacobian[TAG::WELL][localDofIndexPres] = -localPerfJacobian[TAG::RES][localDofIndexPres];
+      // local working variables and arrays
+
+      stackArray1d< localIndex, 2 > eqnRowIndices( 2 );
+      stackArray1d< globalIndex, 2*resNumDOF > dofColIndices( 2 * resNumDOF );
+
+      stackArray1d< real64, 2 > localPerf( 2 );
+      stackArray2d< real64, 2 * resNumDOF * 2 > localPerfJacobian( 2, 2 * resNumDOF );
+
+
+      // get the reservoir (sub)region and element indices
+      localIndex const er = m_resElementRegion[iperf];
+      localIndex const esr = m_resElementSubRegion[iperf];
+      localIndex const ei = m_resElementIndex[iperf];
+
+      // get the well element index for this perforation
+      localIndex const iwelem = m_perfWellElemIndex[iperf];
+      globalIndex const wellElemOffset = m_wellElemDofNumber[iwelem];
+      globalIndex const resOffset = m_resElemDofNumber[er][esr][ei];
+
+      // row index on reservoir side
+      eqnRowIndices[TAG::RES] = m_resElemDofNumber[er][esr][ei] - m_rankOffset;
+      // column index on reservoir side
+      dofColIndices[TAG::RES] = resOffset;
+
+      // row index on well side
+      eqnRowIndices[TAG::WELL] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + ROFFSET::MASSBAL;
+      // column index on well side
+      dofColIndices[TAG::WELL * resNumDOF] = wellElemOffset + WJ_COFFSET::dP;
+
       if constexpr ( IS_THERMAL )
       {
-        localIndex localDofIndexTemp  = localDofIndexPres + 1;
-        localPerfJacobian[TAG::RES ][localDofIndexTemp] = m_dt *  m_dPerfRate[iperf][ke][CP_Deriv::dT];
-        localPerfJacobian[TAG::WELL ][localDofIndexTemp] = -m_dt *  m_dPerfRate[iperf][ke][CP_Deriv::dT];
+        dofColIndices[TAG::RES * resNumDOF + 1 ] = resOffset +  1;
+        dofColIndices[TAG::WELL * resNumDOF + 1 ] = wellElemOffset + WJ_COFFSET::dT;
       }
-    }
+      // populate local flux vector and derivatives
+      localPerf[TAG::RES] = m_dt * m_perfRate[iperf];
+      localPerf[TAG::WELL] = -localPerf[TAG::RES];
 
-    for( integer i = 0; i < localPerf.size(); ++i )
-    {
-      if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+      for( integer ke = 0; ke < 2; ++ke )
       {
-        m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                                            dofColIndices.data(),
-                                                                            localPerfJacobian[i].dataIfContiguous(),
-                                                                            2* resNumDOF );
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
+        localIndex localDofIndexPres = ke * resNumDOF;
+        localPerfJacobian[TAG::RES][localDofIndexPres] = m_dt * m_dPerfRate[iperf][ke][CP_Deriv::dP];
+        localPerfJacobian[TAG::WELL][localDofIndexPres] = -localPerfJacobian[TAG::RES][localDofIndexPres];
+        if constexpr ( IS_THERMAL )
+        {
+          localIndex localDofIndexTemp  = localDofIndexPres + 1;
+          localPerfJacobian[TAG::RES ][localDofIndexTemp] = m_dt *  m_dPerfRate[iperf][ke][CP_Deriv::dT];
+          localPerfJacobian[TAG::WELL ][localDofIndexTemp] = -m_dt *  m_dPerfRate[iperf][ke][CP_Deriv::dT];
+        }
       }
-    }
-    compFluxKernelOp( resOffset, wellElemOffset, dofColIndices, iwelem );
 
+      for( integer i = 0; i < localPerf.size(); ++i )
+      {
+        if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < m_localMatrix.numRows() )
+        {
+          m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
+                                                                              dofColIndices.data(),
+                                                                              localPerfJacobian[i].dataIfContiguous(),
+                                                                              2* resNumDOF );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[eqnRowIndices[i]], localPerf[i] );
+        }
+      }
+      compFluxKernelOp( resOffset, wellElemOffset, dofColIndices, iwelem );
+    }
   }
 
 
@@ -214,6 +218,7 @@ protected:
   arrayView1d< real64 const > const m_perfRate;
   arrayView3d< real64 const > const m_dPerfRate;
   arrayView1d< localIndex const > const m_perfWellElemIndex;
+  arrayView1d< integer const > const m_perfStatus;
 
   // Element region, subregion, index
   arrayView1d< globalIndex const > const m_wellElemDofNumber;

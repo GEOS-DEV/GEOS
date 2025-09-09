@@ -836,6 +836,11 @@ public:
    */
   localIndex targetRegionIndex( string const & regionName ) const;
 
+  /**
+   * @brief return the list of target regions
+   * @return the array of region names
+   */
+  string_array const & getTargetRegionNames() const {return m_targetRegionNames;}
 
 
   /**
@@ -1100,6 +1105,9 @@ protected:
 
   /// Local system matrix and rhs
   CRSMatrix< real64, globalIndex > m_localMatrix;
+
+  /// Custom linear solver for the "native" solver type
+  std::unique_ptr< LinearSolverBase< LAInterface > > m_linearSolver;
 
   /// Custom preconditioner for the "native" iterative solver
   std::unique_ptr< PreconditionerBase< LAInterface > > m_precond;

@@ -223,6 +223,8 @@ addCouplingSparsityPattern( DomainPartition const & domain,
       // This will fill J_WR, and J_RW
       forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
       {
+
+
         stackArray1d< globalIndex, maxNumDof > eqnRowIndicesRes( resNDOF );
         stackArray1d< globalIndex, maxNumDof > eqnRowIndicesWell( wellNDOF );
         stackArray1d< globalIndex, maxNumDof > dofColIndicesRes( resNDOF );
@@ -282,6 +284,8 @@ assembleCouplingTerms( real64 const time_n,
                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                        arrayView1d< real64 > const & localRhs )
 {
+  GEOS_UNUSED_VAR( time_n );
+
   using namespace compositionalMultiphaseUtilities;
 
   GEOS_THROW_IF( !Base::m_isWellTransmissibilityComputed,
@@ -323,7 +327,7 @@ assembleCouplingTerms( real64 const time_n,
         ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
         getLogLevel() >= 1; // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
 
-      if( !wellControls.isWellOpen( time_n ) )
+      if( !wellControls.isWellOpen() )
       {
         return;
       }

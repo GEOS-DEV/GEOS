@@ -134,6 +134,7 @@ public:
     m_resElementIndex( perforationData->getField< fields::perforation::reservoirElementIndex >()),
     m_compPerfRate( perforationData->getField< fields::well::compPerforationRate >()),
     m_dCompPerfRate( perforationData->getField< fields::well::dCompPerforationRate >()),
+    m_perfStatus( perforationData->getField< fields::perforation::perforationStatus >()),
     m_disableReservoirToWellFlow( disableReservoirToWellFlow )
   {}
 
@@ -143,6 +144,23 @@ public:
   void
   computeFlux( localIndex const iperf, FUNC && fluxKernelOp= NoOpFunc {} ) const
   {
+    using CP_Deriv = constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
+
+    if( !m_perfStatus[iperf] )
+    {
+      for( integer ic = 0; ic < NC; ++ic )
+      {
+        m_compPerfRate[iperf][ic] = 0.0;
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+          {
+            m_dCompPerfRate[iperf][ke][ic][jc] = 0.0;
+          }
+        }
+      }
+      return;
+    }
     // get the index of the reservoir elem
     localIndex const er  = m_resElementRegion[iperf];
     localIndex const esr = m_resElementSubRegion[iperf];
@@ -152,7 +170,7 @@ public:
     localIndex const iwelem = m_perfWellElemIndex[iperf];
 
     using Deriv = constitutive::multifluid::DerivativeOffset;
-    using CP_Deriv = constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
+
 
     // local working variables and arrays
     real64 pres[2]{};
@@ -483,9 +501,7 @@ public:
     GEOS_MARK_FUNCTION;
     forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
     {
-
       kernelComponent.computeFlux( iperf );
-
     } );
   }
 
@@ -520,7 +536,7 @@ protected:
   arrayView4d< real64 > const m_dCompPerfRate;
   arrayView3d< real64 > const m_dCompPerfRate_dPres;
   arrayView4d< real64 > const m_dCompPerfRate_dComp;
-
+  arrayView1d< integer > const m_perfStatus;
   bool const m_disableReservoirToWellFlow;
 
 
@@ -774,7 +790,6 @@ public:
     forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
     {
       kernelComponent.computeFlux( iperf );
-
     } );
   }
 
