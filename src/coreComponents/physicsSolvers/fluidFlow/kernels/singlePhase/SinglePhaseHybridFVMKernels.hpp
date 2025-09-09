@@ -206,7 +206,7 @@ public:
     internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NUM_FACES )
     {
       AveragePressureGradientKernel< NUM_FACES > kernel( subRegion, faceManager );
-      AveragePressureGradientKernel< NUM_FACES >::template launch< POLICY >( subRegion.size(), kernel );
+      AveragePressureGradientKernel< NUM_FACES >::template launch< POLICY >( subRegion.size, kernel );
     } );
   }
 };
@@ -402,20 +402,20 @@ public:
         real64 const potDif = presDif - gravTerm;
         real64 const dPotDif_dPres = dPresDif_dPres - dGravTerm_dPres;
         real64 const dPotDif_dFacePres = dPresDif_dFacePres;
-        real64 const m_dt_T_ij = m_dt * stack.transMatrix[iFaceLoc][jFaceLoc];
+        real64 const T_ij = stack.transMatrix[iFaceLoc][jFaceLoc];
 
         // massic factor: rho * lambda
         real64 const massMobility = ccDens * localMobility;
         real64 const dmassMobility_dPres = dCcDens_dPres * localMobility + ccDens * dLocalMobility_dPres;
 
         // T * rho * lambda * (\nabla p - rho * g * \nabla d)
-        stack.massFlux[iFaceLoc] += m_dt_T_ij * massMobility * potDif;
+        stack.massFlux[iFaceLoc] += T_ij * massMobility * potDif;
 
         // derivatives w.r.t. element-centered pressure
-        stack.dmassFlux_dPres[iFaceLoc] += m_dt_T_ij * ( dmassMobility_dPres * potDif + massMobility * dPotDif_dPres );
+        stack.dmassFlux_dPres[iFaceLoc] += T_ij * ( dmassMobility_dPres * potDif + massMobility * dPotDif_dPres );
 
         // derivatives w.r.t. face-centered pressures
-        stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc] += m_dt_T_ij * massMobility * dPotDif_dFacePres;
+        stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc] += T_ij * massMobility * dPotDif_dFacePres;
       }
     }
   }
@@ -438,12 +438,12 @@ public:
     for( integer iFaceLoc = 0; iFaceLoc < NUM_FACE; ++iFaceLoc )
     {
       // accumulate the mass flux divergence and its derivatives using the actual mass flux
-      stack.divMassFluxes += stack.massFlux[iFaceLoc];
-      stack.dDivMassFluxes_dElemVars[0] += stack.dmassFlux_dPres[iFaceLoc];
+      stack.divMassFluxes += m_dt * stack.massFlux[iFaceLoc];
+      stack.dDivMassFluxes_dElemVars[0] += m_dt * stack.dmassFlux_dPres[iFaceLoc];
 
       for( integer jFaceLoc = 0; jFaceLoc < NUM_FACE; ++jFaceLoc )
       {
-        stack.dDivMassFluxes_dFaceVars[jFaceLoc] += stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc];
+        stack.dDivMassFluxes_dFaceVars[jFaceLoc] += m_dt * stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc];
       }
 
       // collect the relevant dof numbers (always local)
@@ -545,16 +545,16 @@ public:
     
       if( m_faceGhostRank[m_elemToFaces[ei][iFaceLoc]] < 0 )
       {
-        // residual
+        // residual (LM face constraint): use mass flux without dt scaling
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[stack.faceCenteredEqnRowIndex[iFaceLoc]], stack.massFlux[iFaceLoc] );
 
-        // jacobian -- derivative wrt local cell centered pressure term
+        // jacobian -- derivative wrt local cell centered pressure term (no dt)
         m_localMatrix.addToRow< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
                                                         &dofColIndexElemPres,
                                                         &stack.dmassFlux_dPres[iFaceLoc],
                                                         1 );
 
-        // jacobian -- derivatives wrt face pressure terms
+        // jacobian -- derivatives wrt face pressure terms (no dt)
         m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
                                                                             &stack.faceDofColIndices[0],
                                                                             stack.dmassFlux_dFacePres[iFaceLoc],
@@ -706,7 +706,7 @@ public:
         kernel( rankOffset, er, esr, lengthTolerance, faceDofKey, nodeManager, faceManager,
                 subRegion, dofNumberAccessor, flowAccessors, fluid, permeability,
                 regionFilter, dt, localMatrix, localRhs );
-        ElementBasedAssemblyKernel< NUM_FACES, IP >::template launch< POLICY >( subRegion.size(), kernel );
+        ElementBasedAssemblyKernel< NUM_FACES, IP >::template launch< POLICY >( subRegion.size, kernel );
       } );
     } );
   }
