@@ -38,9 +38,9 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
                         string const & resElemDofName,
                         string const & wellElemDofName )
 {
-  solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                        MeshLevel const & meshLevel,
-                                                                        string_array const & regionNames )
+  solver->forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
+                                                                         MeshLevel const & meshLevel,
+                                                                         string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
@@ -79,6 +79,7 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
       // Loop over perforations and increase row lengths for reservoir and well elements accordingly
       forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
       {
+
         // get the reservoir (sub)region and element indices
         localIndex const er = resElementRegion[iperf];
         localIndex const esr = resElementSubRegion[iperf];
@@ -108,6 +109,7 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
             rowLengths[localRow + idof] += resNumDof;
           }
         }
+
       } );
     } );
   } );
