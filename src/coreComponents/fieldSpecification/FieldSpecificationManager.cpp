@@ -187,7 +187,14 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                        fmt::join( missingSetNames, ", " ),
                                        FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
       if( !registeredSets.empty())
+      {
         errorMessageBuilder << GEOS_FMT( "Available set(s) are: {}", stringutilities::join( registeredSets, ", " ));
+      }
+      else
+      {
+        errorMessageBuilder << GEOS_FMT( "No set are available for the targeted `{}`",
+                                         FieldSpecificationBase::viewKeyStruct::objectPathString());
+      }
 
       GEOS_THROW( errorMessageBuilder.str(), InputError );
     }
