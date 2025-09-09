@@ -1273,17 +1273,13 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       // initialized porosity
       CoupledSolidBase const & porousSolid =
         getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
-      arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
 
       // initialized permeability
       PermeabilityBase const & permeabilityMaterial =
         getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
-      arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
 
       CapillaryPressureBase & capPressure =
         getConstitutiveModel< CapillaryPressureBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() ) );
-      capPressure.initializeRockState( porosity, permeability );   // this needs to happen before calling updateCapPressureModel
-      updateCapPressureModel( subRegion );
     // }
 
       auto const phaseOrder = capPressure.phaseOrder();
@@ -1448,10 +1444,49 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
       RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
-      // primary phase pressure index
-      // integer ip_pres = ipOil >= 0 ? ipOil : ipGas;
-      // ip_pres = ip_pres >= 0 ? ip_pres : ipWater; // add code below to throw error if ip_pres = -1
-      // std::cout << "ip_pres = " << ip_pres << std::endl;
+      // Assign pressure and temperature to cells
+      forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
+                                                           elemCenter,
+                                                           ipGas,
+                                                           ipOil,
+                                                           ipWater,
+                                                           numPhases,
+                                                           pres,
+                                                           temp,
+                                                           minPressure,
+                                                           phasePressureTableWrappers,
+                                                           tempTableWrapper,
+                                                           phaseContacts] GEOS_HOST_DEVICE ( localIndex const i )
+      {
+        localIndex const k = targetSet[i];
+        real64 const elevation = elemCenter[k][2];
+
+        integer ip_pres = -1;
+        if ( numPhases == 2 && ipGas >= 0 && ipWater >= 0 )
+        {
+          ip_pres = ( elevation < phaseContacts[0] ) ? ipWater : ipGas;
+        }
+        else if ( numPhases == 3 && ipGas >= 0 && ipOil >= 0 && ipWater >= 0 )
+        {
+          ip_pres = ( elevation <= phaseContacts[1] ) ? ipWater :
+                    ( elevation > phaseContacts[1] && elevation <= phaseContacts[0] ) ? ipOil : ipGas;
+        }
+        pres[k] = phasePressureTableWrappers[ip_pres].compute( &elevation );
+        temp[k] = tempTableWrapper.compute( &elevation );
+        minPressure.min( pres[k] );
+      });
+
+      // Initialise porosity and permeability for capillary pressure computaion
+      CellElementSubRegion * cellElemSubRegion = dynamicCast< CellElementSubRegion * >( &subRegion );
+      if (cellElemSubRegion != nullptr)
+      {
+        updatePorosityAndPermeability( *cellElemSubRegion );
+      }
+      // This needs to happen before calling updateCapPressureModel
+      arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
+      arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
+      capPressure.initializeRockState( porosity, permeability );   
+      updateCapPressureModel( subRegion );
 
       constitutiveUpdatePassThru( capPressure, [&] ( auto & castCapPressure )
       {
@@ -1474,13 +1509,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                              ipOil,
                                                              ipWater,
                                                             //  ip_pres,
-                                                             pres,
-                                                             minPressure,
-                                                             temp,
                                                             //  gasPresTableWrapper,
                                                             //  waterPresTableWrapper,
                                                              phasePressureTableWrappers,
-                                                             tempTableWrapper,
                                                              capPressureWrapper,
                                                              targetPhaseVolumeFraction,
                                                              jFuncMultiplier,
@@ -1498,26 +1529,6 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         {
           localIndex const k = targetSet[i];
           real64 const elevation = elemCenter[k][2];
-
-          integer ip_pres = -1;
-          if ( numPhases == 2 && ipGas >= 0 && ipWater >= 0 )
-          {
-            ip_pres = ( elevation < phaseContacts[0] ) ? ipWater : ipGas;
-          }
-          else if ( numPhases == 3 && ipGas >= 0 && ipOil >= 0 && ipWater >= 0 )
-          {
-            ip_pres = ( elevation <= phaseContacts[1] ) ? ipWater :
-                      ( elevation > phaseContacts[1] && elevation <= phaseContacts[0] ) ? ipOil : ipGas;
-          }
-          pres[k] = phasePressureTableWrappers[ip_pres].compute( &elevation );
-          // if (k == 0)
-          // {
-          //   std::cout << "Inside CompositionalMultiphaseBase::hydrostaticEquil: ";
-          //   std::cout << "ip_pres = " << ip_pres << ", pres[ip_pres][0] = " << pres[0] << std::endl;
-          // }
-
-          minPressure.min( pres[k] );
-          temp[k] = tempTableWrapper.compute( &elevation );
 
           if ( numPhases == 2 && ipGas >= 0 && ipWater >= 0 )
           {
