@@ -296,6 +296,10 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
     nodeManager.sets().forWrappers< SortedArray< localIndex > >( [&] ( auto & wrapper )
     {
       std::cout << wrapper.getName() << ": "<< wrapper.size()<< std::endl;
+      if( wrapper.size() == 0 )
+      {
+        GEOS_ERROR( "Select nothing " );
+      }
     } );
 
   } );
