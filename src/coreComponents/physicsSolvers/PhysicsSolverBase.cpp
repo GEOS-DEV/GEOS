@@ -102,6 +102,12 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ );
 
+  registerWrapper( viewKeyStruct::writeStatisticsCSVString(), &m_writeStatisticsCSV ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "When set to 1, output iterations information to a csv\nWhen set to 2 output convergence information to a csv" );
+
   addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::Fields >();
   addLogLevel< logInfo::LinearSolver >();
@@ -116,6 +122,18 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 
   m_localMatrix.setName( this->getName() + "/localMatrix" );
   m_matrix.setDofManager( &m_dofManager );
+}
+
+void PhysicsSolverBase::postInputInitialization()
+{
+
+  m_solverStatistics.setOutputFilesName( getName() );
+  m_solverStatistics.makeDir( m_writeStatisticsCSV >= 2 );
+
+  getIterationStats().setTableName( getName() );
+  getIterationStats().setLogOutputState( m_writeStatisticsCSV >= 1 );
+  getIterationStats().setCSVOutputState( m_writeStatisticsCSV >= 2 );
+  getConvergenceStats().setCSVOutputState( m_writeStatisticsCSV >= 2 );
 }
 
 PhysicsSolverBase::~PhysicsSolverBase() = default;
@@ -228,11 +246,10 @@ bool PhysicsSolverBase::registerCallback( void * func, const std::type_info & fu
 
 real64 PhysicsSolverBase::solverStep( real64 const & time_n,
                                       real64 const & dt,
-                                      const integer cycleNumber,
+                                      integer const cycleNumber,
                                       DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
   // Only build the sparsity pattern if the mesh has changed
   Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
 
@@ -280,8 +297,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
   for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
     // reset number of nonlinear and linear iterations
-    m_solverStatistics.initializeTimeStepStatistics();
-
+    getIterationStats().resetCurrentTimeStepStatistics();
     real64 const dtAccepted = solverStep( time_n + (dt - dtRemaining),
                                           nextDt,
                                           cycleNumber,
@@ -290,8 +306,8 @@ bool PhysicsSolverBase::execute( real64 const time_n,
     numOfSubSteps++;
     subStepDts[subStep] = dtAccepted;
 
-    // increment the cumulative number of nonlinear and linear iterations
-    m_solverStatistics.saveTimeStepStatistics();
+    getIterationStats().iterateTimeStepStatistics();
+    getIterationStats().writeIterationStatsToTable();
 
     /*
      * Let us check convergence history of previous solve:
@@ -548,17 +564,13 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
       m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
     }
 
-    // Output the linear system matrix/rhs for debugging purposes
     debugOutputSystem( time_n, cycleNumber, 0, m_matrix, m_rhs );
 
-    // Solve the linear system
     solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
   }
 
-  // Increment the solver statistics for reporting purposes
-  m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
+  getIterationStats().updateNonlinearIteration( m_linearSolverResult.numIterations );
 
-  // Output the linear system solution for debugging purposes
   debugOutputSolution( 0.0, 0, 0, m_solution );
 
   {
@@ -585,7 +597,8 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
 
 bool PhysicsSolverBase::lineSearch( real64 const & time_n,
                                     real64 const & dt,
-                                    integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                    integer const cycleNumber,
+                                    integer const newtonIter,
                                     DomainPartition & domain,
                                     DofManager const & dofManager,
                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -644,6 +657,8 @@ bool PhysicsSolverBase::lineSearch( real64 const & time_n,
 
     // get residual norm
     residualNorm = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
+    updateAndWriteConvergenceStep( time_n, dt, cycleNumber, newtonIter );
+
     GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
                            GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
 
@@ -662,7 +677,8 @@ bool PhysicsSolverBase::lineSearch( real64 const & time_n,
 
 bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
                                                               real64 const & dt,
-                                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                                              integer const cycleNumber,
+                                                              integer const newtonIter,
                                                               DomainPartition & domain,
                                                               DofManager const & dofManager,
                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -741,12 +757,12 @@ bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & tim
       GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
                              GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale ) );
     }
-
     // get residual norm
     residualNormT = calculateResidualNorm( time_n, dt, domain, dofManager, rhs.values() );
-    GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
-                           GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNormT ) );
+    updateAndWriteConvergenceStep( time_n, dt, cycleNumber, newtonIter );
 
+    GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
+                           GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNormT ) );
 
     ffm = ffT;
     ffT = residualNormT*residualNormT;
@@ -847,7 +863,7 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
         else
         {
           // increment the solver statistics for reporting purposes
-          m_solverStatistics.logOuterLoopIteration();
+          getIterationStats().incrementConfigIteration();
           GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
                                  "---------- Configuration did not converge. Testing new configuration. ----------" );
         }
@@ -887,7 +903,8 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
       GEOS_LOG_LEVEL_RANK_0 ( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
 
       // notify the solver statistics counter that this is a time step cut
-      m_solverStatistics.logTimeStepCut();
+      getIterationStats().updateTimeStepCut();
+      getIterationStats().writeIterationStatsToTable();
     }
   } // end of outer loop (dt chopping strategy)
 
@@ -981,8 +998,11 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
-      GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
+
+      GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                              GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
+      getConvergenceStats().setResidualValue( "R", residualNorm );
+      updateAndWriteConvergenceStep( time_n, stepDt, cycleNumber, newtonIter );
     }
 
     // if the residual norm is less than the Newton tolerance we denote that we have
@@ -1018,6 +1038,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
         lineSearchSuccess = lineSearch( time_n,
                                         stepDt,
                                         cycleNumber,
+                                        newtonIter,
                                         domain,
                                         m_dofManager,
                                         m_localMatrix.toViewConstSizes(),
@@ -1031,6 +1052,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
         lineSearchSuccess = lineSearchWithParabolicInterpolation( time_n,
                                                                   stepDt,
                                                                   cycleNumber,
+                                                                  newtonIter,
                                                                   domain,
                                                                   m_dofManager,
                                                                   m_localMatrix.toViewConstSizes(),
@@ -1083,7 +1105,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
       // Increment the solver statistics for reporting purposes
-      m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
+      getIterationStats().updateNonlinearIteration( m_linearSolverResult.numIterations );
 
       // Output the linear system solution for debugging purposes
       debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
@@ -1306,6 +1328,13 @@ void PhysicsSolverBase::debugOutputSolution( real64 const & time,
                        m_writeLinearSystem >= 2 );
 }
 
+void PhysicsSolverBase::updateAndWriteConvergenceStep( real64 const & time_n, real64 const & dt,
+                                                       integer const cycleNumber, integer const iteration )
+{
+  getConvergenceStats().updateSolverStep( time_n, dt, cycleNumber, iteration );
+  getConvergenceStats().writeConvergenceStatsToTable();
+}
+
 real64
 PhysicsSolverBase::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time ),
                                           real64 const & GEOS_UNUSED_PARAM( dt ),
@@ -1328,6 +1357,9 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
   solution.zero();
 
   LinearSolverParameters const & params = m_linearSolverParameters.get();
+  const bool isDirectSolver = (params.solverType == LinearSolverParameters::SolverType::direct);
+  const bool isSetupNeeded = !(isDirectSolver && params.direct.reuseFactorization);
+
   matrix.setDofManager( &dofManager );
 
   // Apply physics-based scaling to the linear system if enabled
@@ -1341,18 +1373,25 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
     // Assume the solution is zeroed out, thus no need to scale it
   }
 
-  if( params.solverType == LinearSolverParameters::SolverType::direct || !m_precond )
+  if( isDirectSolver || !m_precond )
   {
-    std::unique_ptr< LinearSolverBase< LAInterface > > solver = LAInterface::createSolver( params );
+    if( !m_linearSolver )
+    {
+      m_linearSolver = LAInterface::createSolver( params );
+    }
+
+    if( isSetupNeeded )
     {
       Timer timer_setup( m_timers["linear solver setup"] );
-      solver->setup( matrix );
+      m_linearSolver->setup( matrix );
     }
+
     {
       Timer timer_setup( m_timers["linear solver solve"] );
-      solver->solve( rhs, solution );
+      m_linearSolver->solve( rhs, solution );
     }
-    m_linearSolverResult = solver->result();
+
+    m_linearSolverResult = m_linearSolver->result();
   }
   else
   {
@@ -1367,6 +1406,8 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
     }
     m_linearSolverResult = solver->result();
   }
+
+  getIterationStats().accumulateSolverLinearTime( m_linearSolverResult.setupTime, m_linearSolverResult.solveTime );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "        Linear solve: ( iter, res ) = ( {:3}, {:4.2e} )",
@@ -1459,7 +1500,9 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  m_solverStatistics.outputStatistics();
+  getIterationStats().outputStatistics();
+  getIterationStats().closeFile();
+  getConvergenceStats().closeFile();
 
   for( auto & timer : m_timers )
   {
