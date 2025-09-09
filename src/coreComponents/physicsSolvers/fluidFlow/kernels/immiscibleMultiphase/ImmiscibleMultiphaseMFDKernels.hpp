@@ -324,6 +324,7 @@ public:
   GEOS_HOST_DEVICE
   void computeOverallMassFluxDivergence( localIndex const ei, StackVariables & s ) const
   {
+    GEOS_UNUSED_VAR( ei );
     for( integer i=0; i<NUM_FACE; ++i )
     {
       real64 const F = s.MassFlux[i];

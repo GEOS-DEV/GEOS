@@ -46,11 +46,11 @@ using namespace immiscibleMultiphaseKernels;
 using namespace constitutive;
 using namespace isothermalCompositionalMultiphaseBaseKernels; // for relperm / capillary update kernels
 
-namespace
-{
-char const bcLogMessage[] =
-  "ImmiscibleMultiphaseFlowMFD {}: at time {}s, the <{}> boundary condition '{}' is applied to set '{}' in subRegion '{}'. Total target elements (incl. ghosts) = {}";
-}
+//namespace
+//{
+//char const bcLogMessage[] =
+//  "ImmiscibleMultiphaseFlowMFD {}: at time {}s, the <{}> boundary condition '{}' is applied to set '{}' in subRegion '{}'. Total target elements (incl. ghosts) = {}";
+//}
 
 ImmiscibleMultiphaseFlowMFD::ImmiscibleMultiphaseFlowMFD( const string & name,
                                                           Group * const parent )
@@ -214,6 +214,9 @@ void ImmiscibleMultiphaseFlowMFD::implicitStepSetup( real64 const & time_n,
                                                      real64 const & dt,
                                                      DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( dt );
+  GEOS_UNUSED_VAR( domain );
   // save converged state, update porosity/permeability, update fluid state
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
   {
@@ -295,6 +298,7 @@ void ImmiscibleMultiphaseFlowMFD::resetStateToBeginningOfStep( DomainPartition &
 
 void ImmiscibleMultiphaseFlowMFD::setupDofs( DomainPartition const & domain, DofManager & dofManager ) const
 {
+  GEOS_UNUSED_VAR( domain );
   // cell unknowns: pressure + (numPhases-1) independent saturations
   dofManager.addField( viewKeyStruct::elemDofFieldString(), FieldLocation::Elem, m_numDofPerCell, getMeshTargets() );
   
