@@ -22,14 +22,12 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
-#include "mesh/ObjectManagerBase.hpp"
-#include "mesh/MeshManager.hpp"
-#include "mesh/generators/VTKMeshGenerator.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
@@ -205,21 +203,6 @@ void SurfaceGenerator::postInputInitialization()
   GEOS_ERROR_IF( binaryOptions.count( m_mpiCommOrder ) == 0,
                  getWrapperDataContext( viewKeyStruct::mpiCommOrderString() ) <<
                  ": option can be either 0 (false) or 1 (true)" );
-
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );                 //this->getGroupByPath<DomainPartition>("/Problem/domain");
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & meshLevel,
-                                                                string_array const & )
-  {
-    NodeManager & nodeManager = meshLevel.getNodeManager();
-    std::cout << "postInputInitialization "<< nodeManager.getName() << std::endl;
-    nodeManager.sets().forWrappers< SortedArray< localIndex > >( [&] ( auto & wrapper )
-    {
-      std::cout << wrapper.getName() << ": "<< wrapper.size()<< std::endl;
-    } );
-
-  } );
-
 }
 
 SurfaceGenerator::~SurfaceGenerator()
@@ -294,38 +277,13 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
     // TODO: handle this automatically in registerField()
     faceManager.getField< surfaceGeneration::K_IC >().resizeDimension< 1 >( 3 );
 
-    std::cout << "registerDataOnMesh "<< nodeManager.getName() << std::endl;
-
     Group & problemManager = this->getGroupByPath( "/Problem" );
-    MeshManager & meshManager = problemManager.getGroup< MeshManager >( "Mesh" );
-    bool useExternalSet = false;
-    meshManager.forSubGroups( [&]( Group & subGroup )
+    FieldSpecificationManager & fsm =  problemManager.getGroup< FieldSpecificationManager >( "FieldSpecifications" );
+    fsm.forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase & fs )
     {
-      if( dynamic_cast< VTKMeshGenerator * >(&subGroup) != nullptr )
-      {
-        useExternalSet = true;
-      }
+      fs.getWrapper< integer >( FieldSpecificationBase::viewKeyStruct::emptySetErrorModeString())
+        .setDefaultValue( FieldSpecificationBase::setErrorMode::SurfaceGeneratorWarning );
     } );
-
-    auto checkSetsObjManager = [&]<typename T>(T obj/*, type qqch ici*/)
-    {
-      obj.sets().forWrappers< SortedArray< localIndex > >( [&] ( auto & wrapper )
-      {
-        std::cout << wrapper.getName() << ": "<< wrapper.size()<< std::endl;
-        if( wrapper.size() == 0 )
-        {
-          if( wrapper.getName() == ObjectManagerBase::viewKeyStruct::externalSetString() && useExternalSet )
-          {
-            GEOS_ERROR( "Select nothing" );
-          }
-          else
-          {}
-        }
-      } );
-    }
-
-    checkSetsObjManager( nodeManager );
-
   } );
 
 
@@ -459,15 +417,6 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
         }
       }
     }
-
-    NodeManager & nodeManager = meshLevel.getNodeManager();
-    std::cout << "initializePostInitialConditionsPreSubGroups "<< nodeManager.getName() << std::endl;
-    nodeManager.sets().forWrappers< SortedArray< localIndex > >( [&] ( auto & wrapper )
-    {
-      std::cout << wrapper.getName() << ": "<< wrapper.size()<< std::endl;
-    } );
-
-
   } );
 }
 

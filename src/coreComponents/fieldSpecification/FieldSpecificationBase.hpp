@@ -108,6 +108,8 @@ public:
   /// deleted move assignement
   FieldSpecificationBase & operator=( FieldSpecificationBase && ) = delete;
 
+  enum setErrorMode : integer { Silent = 0, Error = 1, SurfaceGeneratorWarning = 2 };
+
   /**
    * @brief Apply this field specification to the discretization
    *
@@ -393,7 +395,7 @@ public:
     /// @return The key for endTime
     constexpr static char const * endTimeString() { return "endTime"; }
     /// @return The key errorAsWarning
-    constexpr static char const * errorAsWarningString() { return "errorAsWarning"; }
+    constexpr static char const * emptySetErrorModeString() { return "errorAsWarning"; }
   };
 
   /**
@@ -554,7 +556,7 @@ public:
  */
   integer getErrorAsWarning() const
   {
-    return m_errorAsWarning;
+    return m_emptySetErrorMode;
   }
 
 
@@ -602,7 +604,7 @@ private:
   string m_bcApplicationFunctionName;
 
   /// Value indicating whether we converts an error into a warning
-  integer m_errorAsWarning;
+  integer m_emptySetErrorMode;
 };
 
 

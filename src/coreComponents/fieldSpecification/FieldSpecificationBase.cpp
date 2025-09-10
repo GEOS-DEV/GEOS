@@ -82,10 +82,14 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Time at which the boundary condition will stop being applied." );
 
-  registerWrapper( viewKeyStruct::errorAsWarningString(), &m_errorAsWarning ).
-    setApplyDefaultValue( 1 ).
+  registerWrapper( viewKeyStruct::emptySetErrorModeString(), &m_emptySetErrorMode ).
+    setApplyDefaultValue( setErrorMode::Error ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Converts an error into a warning" );
+    setDescription( "Set the log state when we a “set” does not target any region\n"
+                    "When set to 0, no output\n"
+                    "When set to 1, output an error\n"
+                    "When set to 2, output a throw\n" );
+
 }
 
 

@@ -250,19 +250,21 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
           {
             std::ostringstream message;
             message << GEOS_FMT( "{}: this FieldSpecification targets (an) empty set(s)\n"
-                                 "The box {}  does not select any region.\n"
-                                 "If the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`.\n",
-                                 fs.getDataContext(), object.getDataContext(),
-                                 mapEntry.first, fs.getObjectPath());
-            if( fs.getErrorAsWarning() )
+                                 "The box {}  does not select any region.\n",
+                                 fs.getDataContext(), object.getDataContext());
+            Wrapper< integer > const & wrapper = fs.getWrapper< integer >( FieldSpecificationBase::viewKeyStruct::emptySetErrorModeString());
+            switch( wrapper.getDefaultValue() )
             {
-              message << GEOS_FMT( "You can set `errorAsWarning` to `0` in {} to disable the error.",
-                                   fs.getDataContext() );
-              GEOS_ERROR( message.str() );
-            }
-            else
-            {
-              GEOS_WARNING( message.str() );
+              case  FieldSpecificationBase::setErrorMode::Silent:
+                break;
+              case  FieldSpecificationBase::setErrorMode::Error:
+                GEOS_ERROR( message.str()  );
+                break;
+              case  FieldSpecificationBase::setErrorMode::SurfaceGeneratorWarning:
+                message << GEOS_FMT( "As the simulation includes a SurfaceGenerator, the set may be modified later",
+                                     fs.getDataContext() );
+                GEOS_WARNING( message.str() );
+                break;
             }
           }
         } );
