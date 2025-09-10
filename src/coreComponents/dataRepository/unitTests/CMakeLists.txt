@@ -5,9 +5,10 @@ set( dataRepository_tests
      testPacking.cpp
      testWrapper.cpp
      testXmlWrapper.cpp
-     testBufferOps.cpp )
+     testBufferOps.cpp
+     testObjectCatalog.cpp )
 
-set( dependencyList ${parallelDeps} gtest dataRepository )
+set( dependencyList ${parallelDeps} gtest dataRepository mainInterface )
 
 if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )
