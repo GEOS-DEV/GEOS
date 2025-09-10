@@ -761,7 +761,7 @@ public:
    * @brief set the timestamp of the system setup
    * @param[in] timestamp the new timestamp of system setup
    */
-  void setSystemSetupTimestamp( Timestamp timestamp ) { m_systemSetupTimestamp = timestamp; }
+  void setSystemSetupTimestamp( Timestamp timestamp );
 
   /**
    * @brief return the value of the gravity vector specified in PhysicsSolverManager
