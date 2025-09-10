@@ -387,7 +387,7 @@ void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
   logpart.end();
 
   if( isLogLevelActive< logInfo::SolverExecutionDetails >( getLogLevel()))
-    m_solverStatistics.outputStatistics();
+    getIterationStats().outputStatistics();
 }
 
 real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTime ),
