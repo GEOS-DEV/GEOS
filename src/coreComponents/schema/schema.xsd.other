@@ -3558,8 +3558,8 @@
 		<xsd:attribute name="topWellElementIndex" type="integer" />
 		<!--wellControlsName => (no description available)-->
 		<xsd:attribute name="wellControlsName" type="groupNameRef" />
-		<!--wellLocalElementGlobaleIndex => (no description available)-->
-		<xsd:attribute name="wellLocalElementGlobaleIndex" type="globalIndex_array" />
+		<!--wellLocalElementGlobalIndex => (no description available)-->
+		<xsd:attribute name="wellLocalElementGlobalIndex" type="globalIndex_array" />
 		<!--wellLocalElementStatus => (no description available)-->
 		<xsd:attribute name="wellLocalElementStatus" type="integer_array" />
 	</xsd:complexType>
@@ -3589,7 +3589,7 @@
 		<xsd:attribute name="numPerforationsGlobal" type="globalIndex" />
 		<!--perforationName => Perforation name-->
 		<xsd:attribute name="perforationName" type="string_array" />
-		<!--perforationStatus => Table of time vs perforation open/close status -->
+		<!--perforationStatus => Table of time vs perforation open/close status-->
 		<xsd:attribute name="perforationStatus" type="integer_array" />
 		<!--perforationStatusTableName => Perforation status table name-->
 		<xsd:attribute name="perforationStatusTableName" type="string_array" />

@@ -321,7 +321,7 @@ TEST( testIncorrectFieldSpecification, testSetNames )
 
 TEST( testIncorrectFieldSpecification, testWrongFieldNames )
 {
-  static constexpr auto expectedMsg1 =  "Available fieldname in ElementRegions/Channel1 are:";
+  static constexpr auto expectedMsg1 =  "Available fields in ElementRegions/Channel1 are:";
   static constexpr auto expectedMsg2 =  "{ channelPerm_dPerm_dPressure, channelPerm_permeability, deltaPressure, elementCenter, elementVolume, "
                                         "ghostRank, localToGlobalMap, mass, pressure, rockPorosity_initialPorosity, rockPorosity_porosity, "
                                         "rockPorosity_referencePorosity, temperature, water_dDensity, water_dEnthalpy, water_dInternalEnergy, "

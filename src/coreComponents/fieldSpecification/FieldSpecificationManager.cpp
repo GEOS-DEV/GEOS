@@ -186,15 +186,11 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                        fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::objectPathString() ),
                                        fmt::join( missingSetNames, ", " ),
                                        FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
-      if( !registeredSets.empty())
-      {
-        errorMessageBuilder << GEOS_FMT( "Available set(s) are: {}", stringutilities::join( registeredSets, ", " ));
-      }
-      else
-      {
-        errorMessageBuilder << GEOS_FMT( "No set are available for the targeted `{}`",
-                                         FieldSpecificationBase::viewKeyStruct::objectPathString());
-      }
+      errorMessageBuilder << ( !registeredSets.empty() ?
+                               GEOS_FMT( "Available set(s) are: {}",
+                                         stringutilities::join( registeredSets, ", " ) ) :
+                               GEOS_FMT( "No set are available for the targeted `{}`",
+                                         FieldSpecificationBase::viewKeyStruct::objectPathString() ) );
 
       GEOS_THROW( errorMessageBuilder.str(), InputError );
     }
@@ -230,8 +226,11 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       } );
 
       if( !registeredFields.empty())
-        errorMessageBuilder << GEOS_FMT( "Available fieldname in {} are:\n{{ {} }}", fs.getObjectPath(),
-                                         stringutilities::join( registeredFields, ", " ));
+        errorMessageBuilder << ( !registeredFields.empty() ?
+                                 GEOS_FMT( "Available fields in {} are:\n{{ {} }}", fs.getObjectPath(),
+                                           stringutilities::join( registeredFields, ", " )) :
+                                 GEOS_FMT( "No available field in {}.",
+                                           fs.getObjectPath() ) );
 
       GEOS_THROW( errorMessageBuilder.str(), InputError );
     }
