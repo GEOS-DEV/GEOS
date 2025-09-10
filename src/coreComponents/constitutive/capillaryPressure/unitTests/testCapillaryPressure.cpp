@@ -14,7 +14,7 @@
  */
 
 // Source includes
-#include "constitutiveTestHelpers.hpp"
+#include "constitutive/relativePermeability/unitTests/constitutiveTestHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"

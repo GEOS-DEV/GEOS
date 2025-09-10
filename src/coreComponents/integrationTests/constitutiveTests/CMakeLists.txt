@@ -1,6 +1,5 @@
 # Specify list of tests
 set( gtest_geosx_tests
-     testCapillaryPressure.cpp
      testRelPermHysteresis.cpp )
 
 set( gtest_triaxial_xmls
