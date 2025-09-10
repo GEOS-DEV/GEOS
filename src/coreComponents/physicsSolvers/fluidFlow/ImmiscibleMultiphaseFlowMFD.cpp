@@ -266,14 +266,14 @@ void ImmiscibleMultiphaseFlowMFD::resetStateToBeginningOfStep( DomainPartition &
   {
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const, auto & subRegion )
     {
-      auto pres = subRegion.template getField< flow::pressure >();
-      auto pres_n = subRegion.template getField< flow::pressure_n >();
+      arrayView1d< real64 > pres = subRegion.template getField< flow::pressure >();
+      arrayView1d< real64 const > const pres_n = subRegion.template getField< flow::pressure_n >();
       pres.template setValues< parallelDevicePolicy<> >( pres_n );
-      auto phaseVol = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
-      auto phaseVol_n = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction_n >();
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > phaseVol = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
+      arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVol_n = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction_n >();
       phaseVol.template setValues< parallelDevicePolicy<> >( phaseVol_n );
-      auto phaseMass = subRegion.template getField< immiscibleMultiphaseFlow::phaseMass >();
-      auto phaseMass_n = subRegion.template getField< immiscibleMultiphaseFlow::phaseMass_n >();
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > phaseMass = subRegion.template getField< immiscibleMultiphaseFlow::phaseMass >();
+      arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseMass_n = subRegion.template getField< immiscibleMultiphaseFlow::phaseMass_n >();
       phaseMass.template setValues< parallelDevicePolicy<> >( phaseMass_n );
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
