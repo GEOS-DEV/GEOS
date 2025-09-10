@@ -163,8 +163,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & d
     pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
   }
 
-  dofManager.printFieldInfo();
-
   // Add the nonzeros from coupling
   addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
 
