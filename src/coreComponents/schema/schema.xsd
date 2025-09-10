@@ -1719,6 +1719,10 @@ Information output from lower logLevels is added with the desired log level
 	<xsd:complexType name="PerforationType">
 		<!--distanceFromHead => Linear distance from well head to the perforation-->
 		<xsd:attribute name="distanceFromHead" type="real64" use="required" />
+		<!--perfStatusTable => Table defining perforation status as a function of time. The name must correspond to a TableFunction in the Functions section.-->
+		<xsd:attribute name="perfStatusTable" type="real64_array2d" default="{{0}}" />
+		<!--perfStatusTableName => Name of table function defining perforation status as a function of time. If none specified, a table function with be created internally and assigned the same name as the perforation.-->
+		<xsd:attribute name="perfStatusTableName" type="groupNameRef" default="" />
 		<!--skinFactor => Perforation skin factor-->
 		<xsd:attribute name="skinFactor" type="real64" default="0" />
 		<!--targetRegion => Target region to connect the perforation-->
