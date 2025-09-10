@@ -6,6 +6,50 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3285 (2025-09-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3285-13414-69e5962.tar.gz>
+=====================
+Add hydrofrac verification cases for leak-off.
+
+PR #3587 (2025-09-08) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3587-13389-99ac8e4.tar.gz>
+=====================
+Perforation status option. Updates for schema changes and well quantities not being compute if well is closed
+
+PR #3788 (2025-09-07) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3788-13372-e0a1d67.tar.gz>
+=====================
+Updating txt files for class09_pb3_hystRelperm.
+
+PR #3621 (2025-09-05) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3621-13365-2c193d7.tar.gz>
+=====================
+Reservoir volume well constraint option.
+
+PR #3629 (2025-09-02) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3680-13304-f49e13a.tar.gz>
+=====================
+Logic for deciding whether to setup linear solver, new flag `reuseFactorization`.
+
+PR #3629 (2025-08-29) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3629-13262-9e92109.tar.gz>
+=====================
+Add solver statistics wrapper.
+
+PR #3627 (2025-08-29) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3672-13218-b729958.tar.gz>
+=====================
+Some fields were not being syncronized as part of the parallel topology change. This PR syncs them and produces a new baseline as a result.
+
+PR #3755 (2025-08-25) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3755-13107-9203370.tar.gz>
+=====================
+LogInfo cleanup.
+
+PR #3783 (2025-08-25) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3783-13079-916d2a0.tar.gz>
+=====================
+Update bug in single phase flash handling.
+
+PR #3224 (2025-08-22) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3224-13023-0334b63.tar.gz>
+=====================
+Add Taper boundary conditions inside second-order wave solvers.
+
+PR #3781 (2025-08-20) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3781-12988-f27ea4b.tar.gz>
+=====================
+Remove unused from subregions.
+
 PR #2207 (2025-08-19) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr2207-12962-f0dbaad.tar.gz>
 =====================
 Factoring hysteresis model out of `TableRelativePermeabilityHysteresis`.
@@ -16,11 +60,11 @@ Change default value of amgNumFunctions from 1 to 3 for solid mechanics solvers.
 
 PR #3682 (2025-08-08) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3682-12632-86ad358.tar.gz>
 =====================
-Add physics-based scaling option. 
+Add physics-based scaling option.
 
 PR #3662 (2025-08-07) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3662-12617-6b694b1.tar.gz>
 =====================
-Change to single phase handling of flash for compositional fluid model. 
+Change to single phase handling of flash for compositional fluid model.
 
 PR #3622 (2025-08-07) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3622-12602-d1632ed.tar.gz>
 =====================
@@ -36,11 +80,11 @@ Fix initial composition for `2ph_cap_1d_ihu`.
 
 PR #3556 (2025-07-31) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3556-12451-d672aab.tar.gz>
 =====================
-Enable BartonBandis model add new smoke tests. 
+Enable BartonBandis model add new smoke tests.
 
 PR #3568 (2025-07-31) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3568-12439-ac82cb0.tar.gz>
 =====================
-Baselines updated due to set reference state for temperature and add new smoke tests. 
+Baselines updated due to set reference state for temperature and add new smoke tests.
 
 PR #3740 (2025-07-25) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3740-12360-2177cb4.tar.gz>
 =====================
