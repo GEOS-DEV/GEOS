@@ -10,6 +10,10 @@ PR #3810 (2025-09-07) <https://storage.googleapis.com/geosx/integratedTests/base
 =====================
 Add error as warning option in FieldSpecication
 
+PR #3285 (2025-09-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3285-13414-69e5962.tar.gz>
+=====================
+Add hydrofrac verification cases for leak-off.
+
 PR #3587 (2025-09-08) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3587-13389-99ac8e4.tar.gz>
 =====================
 Perforation status option. Updates for schema changes and well quantities not being compute if well is closed
