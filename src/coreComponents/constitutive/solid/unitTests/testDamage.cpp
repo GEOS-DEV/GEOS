@@ -20,6 +20,9 @@
 #include "constitutive/solid/DamageSpectral.hpp"
 #include "constitutive/solid/SolidUtilities.hpp"
 
+// Force inclusion of the .cpp file to ensure catalog registration
+#include "constitutive/solid/DamageSpectral.cpp"
+
 #include "dataRepository/xmlWrapper.hpp"
 
 using namespace geos;
