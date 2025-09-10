@@ -126,7 +126,6 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 
 void PhysicsSolverBase::postInputInitialization()
 {
-
   m_solverStatistics.setOutputFilesName( getName() );
   m_solverStatistics.makeDir( m_writeStatisticsCSV >= 2 );
 

@@ -919,10 +919,18 @@ public:
   {
     return m_solverStatistics.m_iterationsStats;
   }
+  IterationsStatistics const & getIterationStats() const
+  {
+    return m_solverStatistics.m_iterationsStats;
+  }
   /**
    * @return A ConvergenceStatistics for all sub-solvers
    */
   ConvergenceStatistics & getConvergenceStats()
+  {
+    return m_solverStatistics.m_convergenceStats;
+  }
+  ConvergenceStatistics const & getConvergenceStats() const
   {
     return m_solverStatistics.m_convergenceStats;
   }
