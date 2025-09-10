@@ -565,6 +565,15 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
       fluid.setMassFlag( m_useMass );
+
+      // setup fluid separator
+      WellControls & wellControls = getWellControls( subRegion );
+      string const fluidSeparatorName = wellControls.getName() + "Separator";
+      std::unique_ptr< constitutive::ConstitutiveBase >  fluidSeparatorPtr  = fluid.deliverClone( fluidSeparatorName, &fluid );
+      fluidSeparatorPtr->allocateConstitutiveData( wellControls, 1 );
+      fluidSeparatorPtr->resize( 1 );
+      wellControls.setFluidSeparator( std::move( fluidSeparatorPtr ));
+
     } );
   } );
 }
@@ -667,6 +676,8 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   integer const numPhase = m_numPhases;
   localIndex const iwelemRef = subRegion.getTopWellElementIndex();
 
+  WellControls & wellControls = getWellControls( subRegion );
+
   // subRegion data
 
   arrayView1d< real64 const > const & pres = subRegion.getField< well::pressure >();
@@ -677,22 +688,21 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens = subRegion.getField< well::dGlobalCompFraction_dGlobalCompDensity >();
 
   // fluid data
+  constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
+  // fluidSeparator.initializeState();
 
-  string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-  integer const isThermal = fluid.isThermal();
-  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseFrac = fluid.phaseFraction();
-  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseFrac = fluid.dPhaseFraction();
+  integer isThermal = fluidSeparator.isThermal();
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseFrac = fluidSeparator.phaseFraction();
+  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseFrac = fluidSeparator.dPhaseFraction();
 
-  arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > const & totalDens = fluid.totalDensity();
-  arrayView3d< real64 const, constitutive::multifluid::USD_FLUID_DC > const & dTotalDens = fluid.dTotalDensity();
+  arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > const & totalDens = fluidSeparator.totalDensity();
+  arrayView3d< real64 const, constitutive::multifluid::USD_FLUID_DC > const & dTotalDens = fluidSeparator.dTotalDensity();
 
-  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseDens = fluid.phaseDensity();
-  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseDens = fluid.dPhaseDensity();
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseDens = fluidSeparator.phaseDensity();
+  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseDens = fluidSeparator.dPhaseDensity();
 
   // control data
 
-  WellControls & wellControls = getWellControls( subRegion );
   string const wellControlsName = wellControls.getName();
   bool const logSurfaceCondition = isLogLevelActive< logInfo::BoundaryConditions >( wellControls.getLogLevel());
   string const massUnit = m_useMass ? "kg" : "mol";
@@ -738,9 +748,10 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   real64 & massDensity =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::massDensityString() );
-  constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+  constitutive::constitutiveUpdatePassThru( fluidSeparator, [&] ( auto & castedFluidSeparator )
   {
-    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    // typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    typename TYPEOFREF( castedFluidSeparator ) ::KernelWrapper fluidSeparatorWrapper = castedFluidSeparator.createKernelWrapper();
     geos::internal::kernelLaunchSelectorCompThermSwitch( numComp, isThermal, [&] ( auto NC, auto ISTHERMAL )
     {
       integer constexpr NUM_COMP = NC();
@@ -749,7 +760,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
       // bring everything back to host, capture the scalars by reference
       forAll< serialPolicy >( 1, [&numComp,
                                   &numPhase,
-                                  fluidWrapper,
+                                  fluidSeparatorWrapper,
                                   pres,
                                   temp,
                                   compFrac,
@@ -787,7 +798,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         if( useSurfaceConditions )
         {
           // we need to compute the surface density
-          fluidWrapper.update( iwelemRef, 0, flashPressure, flashTemperature, compFrac[iwelemRef] );
+          fluidSeparatorWrapper.update( iwelemRef, 0, flashPressure, flashTemperature, compFrac[iwelemRef] );
           if( logSurfaceCondition )
           {
             GEOS_LOG_RANK( GEOS_FMT( "{}: surface density computed with P_surface = {} Pa and T_surface = {} K",
@@ -800,7 +811,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         }
         else
         {
-          fluidWrapper.update( iwelemRef, 0, flashPressure, flashTemperature, compFrac[iwelemRef] );
+          fluidSeparatorWrapper.update( iwelemRef, 0, flashPressure, flashTemperature, compFrac[iwelemRef] );
         }
 
         // Step 2: update the total volume rate
