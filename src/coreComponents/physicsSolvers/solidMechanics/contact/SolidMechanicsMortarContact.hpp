@@ -45,13 +45,10 @@
 
 #define BOUNDING_BOX_EXPANSION 0.025
 
-#define MORTAR_FE_TYPES \
-  finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre6, \
-  finiteElement::H1_TriangleFace_Lagrange1_Gauss6
-
 
 #include "physicsSolvers/solidMechanics/contact/ContactSolverBase.hpp"
-#include "finiteElement/FiniteElementDispatch.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
+//#include "finiteElement/FiniteElementDispatch.hpp"
 
 namespace geos
 {
@@ -61,7 +58,7 @@ class TreeNodeMortar;
 enum class ElementShape { Triangle, Quadrilateral };
 enum class MortarSide { Slave, Master };
 
-using feTriangleCell = finiteElement::H1_TriangleFace_Lagrange1_Gauss6;
+using feTriangleCell = finiteElement::H1_TriangleFace_Lagrange1_Gauss4;
 
 struct MortarSurface
 {
@@ -283,21 +280,41 @@ private:
 
    std::map< MortarSide, std::map< ElementShape, array1d< localIndex > > > m_faceTypeToElementList;
 
+   // holds pointers to master and slave MeshLevel and SurfaceElementRegion
    std::map< MortarSide, MortarSurface > m_mortarSide;
+
+   // given a certain mortar pair of shapes, holds the id of the element connected by each mortar
+   // subtriangle and the corresponding jacobian determinant. The kernel will use these lists
+   std::map< std::pair< ElementShape, ElementShape >, array2d< localIndex> > m_triCells;
+   std::map< std::pair< ElementShape, ElementShape >, array1d< real64 > >   m_triCellsDet;
+
+   // hold local coordinates of gauss points of each triangle subcell on each mortar side
+   std::map< MortarSide, std::map< std::pair< ElementShape, ElementShape >, array2d< real64 > > > m_gpLocalCoords;
+
+  // coordinates of gauss points ready to go
+  constexpr static localIndex nGPtri = feTriangleCell::numQuadraturePoints;
+  constexpr static real64 qCoords[nGPtri][2] = {
+    { 0.333333333333333, 0.333333333333333 },
+    { 0.600000000000000, 0.200000000000000 },
+    { 0.200000000000000, 0.600000000000000 },
+    { 0.200000000000000, 0.200000000000000 }
+  };
+
+
 
 
   // map id of slave elements to id of connected master elements
-  ArrayOfArrays< localIndex > m_connectivityMapSlave;  
+  //ArrayOfArrays< localIndex > m_connectivityMapSlave;  
 
   // map id of master elements to id of connected master elements
-  ArrayOfArrays< localIndex > m_connectivityMapMaster;  
+  //ArrayOfArrays< localIndex > m_connectivityMapMaster;  
 
-  void addCouplingNumNonzeros( DofManager & dofManager,
-                               arrayView1d< localIndex > const & rowLengths ) const;
+  //void addCouplingNumNonzeros( DofManager & dofManager,
+  //                            arrayView1d< localIndex > const & rowLengths ) const;
 
  
-  void addCouplingSparsityPattern( DofManager const & dofManager,
-                                   SparsityPatternView< globalIndex > const & pattern ) const;
+  //void addCouplingSparsityPattern( DofManager const & dofManager,
+  //                                 SparsityPatternView< globalIndex > const & pattern ) const;
 
   /// Finite element type to face element index map
   FaceTypeMap m_faceTypesToFaceElementsMaster;
@@ -308,12 +325,14 @@ private:
   string m_masterName;
 
   /// Finite element type to finite element object map
-  std::map< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
+  //std::map< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
 
   std::map< ElementShape, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToMortarFiniteElements;
 
   /// Map gauss point list to master basis functions values
   std::map< string, ArrayOfArrays< real64 > > m_gpToMasterBasis; 
+
+  
 
   /// Map gauss point list to corresponding master element id 
   std::map< string, array2d< localIndex > > m_gpToMasterId; 
@@ -331,10 +350,49 @@ private:
   };
 
   ///
-  void computeMortarInterpolation();
+  //void computeMortarInterpolation();
 
   template< ElementShape slaveShape, ElementShape masterShape >
   void computeMortarInterpolationNew();
+
+  template< ElementShape slaveShape, ElementShape masterShape >
+  void processMortarPair( localIndex const slaveFaceId, 
+                          localIndex const masterFaceId,
+                          arraySlice1d< localIndex const > const & nodesSlave,
+                          arraySlice1d< localIndex const > const & nodesMaster, 
+                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & coordsSlave,
+                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & coordsMaster );
+
+
+  template< MortarSide side >                         
+  void projectPointInPlane( real64 const (& coord3d)[3],
+                            real64 const (& normal)[3],
+                            real64 const (& origin)[3],
+                            real64 (& proj2d)[2]);
+
+  template< localIndex sizePoly, localIndex sizeClipper>
+  void polygonClipping( array2d<real64> & poly, array2d<real64> & clipPoly);
+
+  void intersect(real64 x1, real64 y1,real64 x2, real64 y2,
+                 real64 x3, real64 y3,real64 x4, real64 y4,
+                 real64 & xInt, real64 & yInt);
+
+  void clip( array2d<real64> & poly,
+             real64 xc1, real64 yc1, real64 xc2, real64 yc2);
+
+  template< ElementShape shape >
+  void projectGP( real64 const (& coordsTri)[3][2],
+                  arrayView2d<real64 const> const & coordsElem,
+                  real64 (& xi)[nGPtri][2]);
+
+  template<ElementShape shape>
+  bool checkInFE(real64 xi0, real64 xi1);
+
+  template<localIndex numNodeElement>
+  void calcGradN( real64 const (& xi)[2], real64 (& dN)[2][numNodeElement] );
+
+  template<localIndex numNodes>
+  void permuteN(real64 (& N)[numNodes]);
 
   void getLocalInterpolationPoints( localIndex nInt, string const & finiteElementName, array2d< real64 > & localCoordsMaster );
 
@@ -348,15 +406,17 @@ private:
   
   /// Tandem traversal contact search 
   void contactSearch(std::unique_ptr<TreeNodeMortar> const & nodeMaster,
-                     std::unique_ptr<TreeNodeMortar> const & nodeSlave);
+                     std::unique_ptr<TreeNodeMortar> const & nodeSlave,
+                     ArrayOfArrays<localIndex> & connectivityMap);
 
   /// Check intersection between two bounding boxes using polytops primitives                   
   bool checkIntersection(std::unique_ptr<TreeNodeMortar> const & nodeMaster,
                          std::unique_ptr<TreeNodeMortar> const & nodeSlave);
 
-  void getConnectivityMap();
-
   
+  // compute connectivityMap and return total number of connections
+  localIndex getConnectivityMap( ElementShape slaveShape, ElementShape masterShape, ArrayOfArrays<localIndex> & connectivityMap);
+
   template<ElementShape S>
   decltype(auto) getFE() 
   {
@@ -396,13 +456,15 @@ class TreeNodeMortar
     localIndex leafId;  
     
     // populate a tree node (use recursion)
-    void createNode(MeshLevel const & mesh, 
-                    FaceElementSubRegion const & surf, 
-                    array1d<localIndex> & surfList);
+    void createNode( MeshLevel const & mesh, 
+                     FaceElementSubRegion const & surf, 
+                     arrayView1d<localIndex> & surfId, 
+                     array1d<localIndex> & surfList );
 
 
     
   };
+  
 
 }; /* namespace geos */
 
