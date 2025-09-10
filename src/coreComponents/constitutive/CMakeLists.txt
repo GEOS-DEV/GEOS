@@ -384,5 +384,6 @@ install( TARGETS constitutive LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
+  add_subdirectory( relativePermeability/unitTests )
   add_subdirectory( solid/unitTests )
 endif( )
