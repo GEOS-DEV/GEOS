@@ -28,6 +28,8 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "mesh/MeshManager.hpp"
+#include "mesh/generators/VTKMeshGenerator.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
@@ -293,14 +295,36 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
     faceManager.getField< surfaceGeneration::K_IC >().resizeDimension< 1 >( 3 );
 
     std::cout << "registerDataOnMesh "<< nodeManager.getName() << std::endl;
-    nodeManager.sets().forWrappers< SortedArray< localIndex > >( [&] ( auto & wrapper )
+
+    Group & problemManager = this->getGroupByPath( "/Problem" );
+    MeshManager & meshManager = problemManager.getGroup< MeshManager >( "Mesh" );
+    bool useExternalSet = false;
+    meshManager.forSubGroups( [&]( Group & subGroup )
     {
-      std::cout << wrapper.getName() << ": "<< wrapper.size()<< std::endl;
-      if( wrapper.size() == 0 )
+      if( dynamic_cast< VTKMeshGenerator * >(&subGroup) != nullptr )
       {
-        GEOS_ERROR( "Select nothing " );
+        useExternalSet = true;
       }
     } );
+
+    auto checkSetsObjManager = [&]<typename T>(T obj/*, type qqch ici*/)
+    {
+      obj.sets().forWrappers< SortedArray< localIndex > >( [&] ( auto & wrapper )
+      {
+        std::cout << wrapper.getName() << ": "<< wrapper.size()<< std::endl;
+        if( wrapper.size() == 0 )
+        {
+          if( wrapper.getName() == ObjectManagerBase::viewKeyStruct::externalSetString() && useExternalSet )
+          {
+            GEOS_ERROR( "Select nothing" );
+          }
+          else
+          {}
+        }
+      } );
+    }
+
+    checkSetsObjManager( nodeManager );
 
   } );
 
