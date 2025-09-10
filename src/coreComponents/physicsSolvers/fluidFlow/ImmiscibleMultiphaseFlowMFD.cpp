@@ -190,11 +190,11 @@ void ImmiscibleMultiphaseFlowMFD::initializePostInitialConditionsPreSubGroups()
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
       // Copy current state into _n state so accumulation uses consistent initial masses
-      auto const phaseVol = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
-      auto phaseVol_n = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction_n >();
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseVol = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > phaseVol_n = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction_n >();
       phaseVol_n.template setValues< parallelDevicePolicy<> >( phaseVol );
-      auto const phaseMass = subRegion.template getField< immiscibleMultiphaseFlow::phaseMass >();
-      auto phaseMass_n = subRegion.template getField< immiscibleMultiphaseFlow::phaseMass_n >();
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseMass = subRegion.template getField< immiscibleMultiphaseFlow::phaseMass >();
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > phaseMass_n = subRegion.template getField< immiscibleMultiphaseFlow::phaseMass_n >();
       phaseMass_n.template setValues< parallelDevicePolicy<> >( phaseMass );
     } );
   } );
@@ -214,29 +214,6 @@ void ImmiscibleMultiphaseFlowMFD::implicitStepSetup( real64 const & time_n,
   GEOS_UNUSED_VAR( dt );
   GEOS_UNUSED_VAR( domain );
 
-  // Debug helper: print phaseMass_n contents (limited to first 20 elements per subregion)
-  auto printPhaseMassN = [this] ( auto & subRegion, char const * header )
-  {
-    auto const phaseMass_n_view = subRegion.template getField< immiscibleMultiphaseFlow::phaseMass_n >();
-    localIndex const nEl = subRegion.size();
-    GEOS_LOG_RANK_0( GEOS_FMT( "[{}] phaseMass_n: elements={}, phases={}", header, nEl, m_numPhases ) );
-    localIndex const maxPrint = 20;
-    for( localIndex ei = 0; ei < nEl; ++ei )
-    {
-      std::string line = GEOS_FMT( "  ei={}:", ei );
-      for( integer ip = 0; ip < m_numPhases; ++ip )
-      {
-        line += GEOS_FMT( " [{}]={}", ip, phaseMass_n_view[ei][ip] );
-      }
-      GEOS_LOG_RANK_0( line );
-      if( ei + 1 == maxPrint && nEl > maxPrint )
-      {
-        GEOS_LOG_RANK_0( GEOS_FMT( "  ... truncated (printed {}, total {})", maxPrint, nEl ) );
-        break;
-      }
-    }
-  };
-
   // save converged state, update porosity/permeability, update fluid state
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
   {
@@ -247,18 +224,14 @@ void ImmiscibleMultiphaseFlowMFD::implicitStepSetup( real64 const & time_n,
       arrayView1d< real64 const > const pres = subRegion.template getField< flow::pressure >();
       pres_n.template setValues< parallelDevicePolicy<> >( pres );
       updatePorosityAndPermeability( subRegion );
-      updateVolumeConstraint( subRegion );
       updateFluidState( subRegion );
-      // copy phase fields to _n
-      auto const phaseVol = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
-      auto phaseVol_n = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction_n >();
+      // Copy current state into _n state so accumulation uses consistent initial masses
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseVol = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > phaseVol_n = subRegion.template getField< immiscibleMultiphaseFlow::phaseVolumeFraction_n >();
       phaseVol_n.template setValues< parallelDevicePolicy<> >( phaseVol );
-      auto const phaseMass = subRegion.template getField< immiscibleMultiphaseFlow::phaseMass >();
-      auto phaseMass_n = subRegion.template getField< immiscibleMultiphaseFlow::phaseMass_n >();
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseMass = subRegion.template getField< immiscibleMultiphaseFlow::phaseMass >();
+      arrayView2d< real64, immiscibleFlow::USD_PHASE > phaseMass_n = subRegion.template getField< immiscibleMultiphaseFlow::phaseMass_n >();
       phaseMass_n.template setValues< parallelDevicePolicy<> >( phaseMass );
-
-      // Print the updated phaseMass_n for this subregion
-      printPhaseMassN( subRegion, "implicitStepSetup" );
     } );
   } );
   // face previous
@@ -275,6 +248,8 @@ void ImmiscibleMultiphaseFlowMFD::implicitStepComplete( real64 const & time,
                                                         real64 const & dt,
                                                         DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( time );
+  GEOS_UNUSED_VAR( dt );
   // save converged solid + relperm + capillary states
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
   {
@@ -282,10 +257,6 @@ void ImmiscibleMultiphaseFlowMFD::implicitStepComplete( real64 const & time,
     {
       // Enforce s_dep = 1 - s_ind before any output is written
       updateVolumeConstraint( subRegion );
-      // update converged saturation for relperm hysteresis if model supports it
-      auto phaseVol = subRegion.getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
-      GEOS_UNUSED_VAR( phaseVol );
-      GEOS_UNUSED_VAR( time ); GEOS_UNUSED_VAR( dt );
     } );
   } );
 }
@@ -801,23 +772,22 @@ void ImmiscibleMultiphaseFlowMFD::updateCapPressureModel( ObjectManagerBase & gr
 
 void ImmiscibleMultiphaseFlowMFD::updatePhaseMass( ElementSubRegionBase & subRegion ) const
 {
+  GEOS_MARK_FUNCTION;
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   TwoPhaseImmiscibleFluid const & fluid = getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
   CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-  auto vol = subRegion.getElementVolume();
-  auto por = solid.getPorosity();
-  auto phaseVol = subRegion.getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
-  auto dens = fluid.phaseDensity();
-  auto phaseMass = subRegion.getField< immiscibleMultiphaseFlow::phaseMass >();
+  arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+  arrayView2d< real64 const > const porosity = solid.getPorosity();
+  arrayView2d< real64 const, immiscibleFlow::USD_PHASE > const phaseVolFrac = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseVolumeFraction >();
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const phaseDens = fluid.phaseDensity();
+  arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseMass = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseMass >();
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
-    real64 pv = vol[ei]*por[ei][0];
-    for( integer ip=0; ip<2; ++ip ){
-      real64 rho =  dens[ei][0][ip];
-      real64 s = phaseVol[ei][ip];
-      phaseMass[ei][ip] = pv *  s * rho;
-      int aka = 0;
+    real64 const poreVolume = volume[ei] * porosity[ei][0];
+    for( integer ip=0; ip<2; ++ip )
+    {
+      phaseMass[ei][ip] = poreVolume * phaseVolFrac[ei][ip] * phaseDens[ei][0][ip];
     }
   } );
 }

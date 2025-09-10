@@ -652,12 +652,6 @@ public:
     // Previous masses
     real64 mass_n_ind = m_phaseMass_n[ei][m_indep];
     real64 mass_n_dep = m_phaseMass_n[ei][dep];
-    // Fallback for first step: if both are zero, assume uninitialized and compute from current state
-    if( mass_n_ind == 0.0 && mass_n_dep == 0.0 )
-    {
-      mass_n_ind = s.PV * rho_ind * s_ind;
-      mass_n_dep = s.PV * rho_dep * s_dep;
-    }
 
     // Equation 0: total mass
     real64 const mass_tot = s.PV * ( rho_ind * s_ind + rho_dep * s_dep );
