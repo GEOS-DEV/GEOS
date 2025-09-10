@@ -255,8 +255,7 @@ void ImmiscibleMultiphaseFlowMFD::implicitStepComplete( real64 const & time,
   {
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const, ElementSubRegionBase & subRegion )
     {
-      // Enforce s_dep = 1 - s_ind before any output is written
-      updateVolumeConstraint( subRegion );
+      updateFluidState(subRegion);
     } );
   } );
 }
@@ -388,10 +387,7 @@ void ImmiscibleMultiphaseFlowMFD::assembleSystem( real64 const time_n,
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const, ElementSubRegionBase & subRegion )
     {
       // Enforce saturation complementarity before any property updates
-      updateVolumeConstraint( subRegion );
-      updateFluidModel( subRegion );
-      updateRelPermModel( subRegion );
-      updatePhaseMobility( subRegion );
+      updateFluidState(subRegion);
     } );
   } );
   assembleAccumulationTerm( domain, dofManager, localMatrix, localRhs );
