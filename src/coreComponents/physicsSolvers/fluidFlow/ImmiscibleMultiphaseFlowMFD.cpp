@@ -238,8 +238,8 @@ void ImmiscibleMultiphaseFlowMFD::implicitStepSetup( real64 const & time_n,
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & )
   {
     FaceManager & fm = mesh.getFaceManager();
-    auto faceP = fm.getField< flow::facePressure >();
-    auto faceP_n = fm.getField< flow::facePressure_n >();
+    arrayView1d< real64 const > const faceP = fm.getField< flow::facePressure >();
+    arrayView1d< real64 > faceP_n = fm.getField< flow::facePressure_n >();
     faceP_n.setValues< parallelDevicePolicy<> >( faceP );
   } );
 }
@@ -283,8 +283,8 @@ void ImmiscibleMultiphaseFlowMFD::resetStateToBeginningOfStep( DomainPartition &
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & )
   {
     FaceManager & fm = mesh.getFaceManager();
-    auto faceP = fm.getField< flow::facePressure >();
-    auto faceP_n = fm.getField< flow::facePressure_n >();
+    arrayView1d< real64 > faceP = fm.getField< flow::facePressure >();
+    arrayView1d< real64 const > const faceP_n = fm.getField< flow::facePressure_n >();
     faceP.setValues< parallelDevicePolicy<> >( faceP_n );
   } );
 }
