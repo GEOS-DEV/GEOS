@@ -231,7 +231,7 @@ real64 CoulombFrictionUpdates::computeLimitTangentialTractionNorm( real64 const 
                                                                    real64 & dLimitTangentialTractionNorm_dTraction ) const
 {
   dLimitTangentialTractionNorm_dTraction = -m_frictionCoefficient;
-  return ( m_cohesion + LvArray::math::abs( normalTraction ) * m_frictionCoefficient );
+  return ( m_cohesion - normalTraction * m_frictionCoefficient );
 }
 
 
@@ -462,14 +462,13 @@ inline void CoulombFrictionUpdates::updateTraction( arraySlice1d< real64 const >
     dNormTTdgT[ 1 ] = tractionTrial[ 2 ] * tractionTrial[ 2 ];
     dNormTTdgT[ 2 ] = tractionTrial[ 1 ] * tractionTrial[ 2 ];
 
-    LvArray::tensorOps::scale< 3 >( dNormTTdgT, 1. / std::pow( tractionTrialNorm, 2 ) );
-
     real64 dTdgT[ 3 ];
-    dTdgT[ 0 ] = (1.0 - dNormTTdgT[0]);
-    dTdgT[ 1 ] = (1.0 - dNormTTdgT[1]);
+    dTdgT[ 0 ] = (tractionTrialNorm * tractionTrialNorm - dNormTTdgT[0]);
+    dTdgT[ 1 ] = (tractionTrialNorm * tractionTrialNorm - dNormTTdgT[1]);
     dTdgT[ 2 ] = -dNormTTdgT[2];
 
-    LvArray::tensorOps::scale< 3 >( dTdgT, 1. / tractionTrialNorm );
+    LvArray::tensorOps::scale< 3 >( dNormTTdgT, 1. / std::pow( tractionTrialNorm, 2 ) );
+    LvArray::tensorOps::scale< 3 >( dTdgT, 1. / std::pow( tractionTrialNorm, 3 )  );
 
     // Compute dTdDispJump
     dTraction_dDispJump[1][1] = -penalty[1] * (
