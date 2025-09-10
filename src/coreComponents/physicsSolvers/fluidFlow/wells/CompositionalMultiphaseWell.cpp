@@ -680,7 +680,6 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-  fluid.initializeState();
   integer const isThermal = fluid.isThermal();
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseFrac = fluid.phaseFraction();
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseFrac = fluid.dPhaseFraction();
@@ -903,8 +902,6 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
-  fluid.initializeState();
-
   constitutive::constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
   {
     using FluidType = TYPEOFREF( castedFluid );
@@ -918,6 +915,7 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
                             temp,
                             compFrac );
   } );
+
 }
 
 real64 CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegion & subRegion ) const
