@@ -6,7 +6,8 @@ set( dataRepository_tests
      testWrapper.cpp
      testXmlWrapper.cpp
      testBufferOps.cpp
-     testObjectCatalog.cpp )
+     testObjectCatalog.cpp
+     testWrapperHelpers.cpp )
 
 set( dependencyList ${parallelDeps} gtest dataRepository mainInterface )
 
