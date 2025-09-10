@@ -285,11 +285,11 @@ private:
 
    // given a certain mortar pair of shapes, holds the id of the element connected by each mortar
    // subtriangle and the corresponding jacobian determinant. The kernel will use these lists
-   std::map< std::pair< ElementShape, ElementShape >, array2d< localIndex> > m_triCells;
-   std::map< std::pair< ElementShape, ElementShape >, array1d< real64 > >   m_triCellsDet;
+   std::map< std::pair< ElementShape, ElementShape >, arrayView2d< localIndex > > m_triCells;
+   std::map< std::pair< ElementShape, ElementShape >, arrayView1d< real64 > >   m_triCellsDet;
 
    // hold local coordinates of gauss points of each triangle subcell on each mortar side
-   std::map< MortarSide, std::map< std::pair< ElementShape, ElementShape >, array2d< real64 > > > m_gpLocalCoords;
+   std::map< MortarSide, std::map< std::pair< ElementShape, ElementShape >, arrayView3d< real64 > > > m_gpLocalCoords;
 
   // coordinates of gauss points ready to go
   constexpr static localIndex nGPtri = feTriangleCell::numQuadraturePoints;
@@ -349,20 +349,26 @@ private:
 
   };
 
-  ///
-  //void computeMortarInterpolation();
+
+  void computeMortarInterpolation ( 
+    std::map< std::pair< ElementShape, ElementShape >, ArrayOfArrays < localIndex > > connectivityMap);
 
   template< ElementShape slaveShape, ElementShape masterShape >
-  void computeMortarInterpolationNew();
+  void computeMortarInterpolation( ArrayOfArrays<localIndex> const & connectivityMap );
 
   template< ElementShape slaveShape, ElementShape masterShape >
-  void processMortarPair( localIndex const slaveFaceId, 
-                          localIndex const masterFaceId,
-                          arraySlice1d< localIndex const > const & nodesSlave,
-                          arraySlice1d< localIndex const > const & nodesMaster, 
-                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & coordsSlave,
-                          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & coordsMaster );
-
+  localIndex processMortarPair( localIndex const slaveFaceId, 
+                                localIndex const masterFaceId,
+                                arraySlice1d< localIndex const > const & nodesSlave,
+                                arraySlice1d< localIndex const > const & nodesMaster, 
+                                arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & coordsSlave,
+                                arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & coordsMaster,
+                                arrayView2d< localIndex > & cellPairs,
+                                arrayView1d< real64 > & subTriDeterminants,
+                                arrayView3d< real64 > & localCoordsSlave,
+                                arrayView3d< real64 > & localCoordsMaster,
+                                localIndex const & kPair );
+      
 
   template< MortarSide side >                         
   void projectPointInPlane( real64 const (& coord3d)[3],
@@ -403,19 +409,22 @@ private:
   void computeRBFweights( arrayView2d<real64> M, arrayView2d<real64> Nm, arrayView2d<real64> wRBF, localIndex nIntPts, localIndex numNodeperElement );
 
   real64 computeRBFmatrix( arrayView2d<real64> realCoordsInterpolation, arrayView2d<real64> RBFmatrix, localIndex nIntPts);
-  
+
+  void getConnectivityMap( std::map< std::pair< ElementShape, ElementShape >, ArrayOfArrays < localIndex > > & connectivityMap );
+
+  void getMortarConnections( ElementShape slaveShape, ElementShape masterShape, ArrayOfArrays<localIndex> & connections);
+
   /// Tandem traversal contact search 
   void contactSearch(std::unique_ptr<TreeNodeMortar> const & nodeMaster,
                      std::unique_ptr<TreeNodeMortar> const & nodeSlave,
-                     ArrayOfArrays<localIndex> & connectivityMap);
+                     ArrayOfArrays<localIndex> & connections);
 
-  /// Check intersection between two bounding boxes using polytops primitives                   
+  /// Check intersection between two bounding boxes using polytops primitives
   bool checkIntersection(std::unique_ptr<TreeNodeMortar> const & nodeMaster,
                          std::unique_ptr<TreeNodeMortar> const & nodeSlave);
 
   
-  // compute connectivityMap and return total number of connections
-  localIndex getConnectivityMap( ElementShape slaveShape, ElementShape masterShape, ArrayOfArrays<localIndex> & connectivityMap);
+
 
   template<ElementShape S>
   decltype(auto) getFE() 
@@ -425,6 +434,7 @@ private:
     if constexpr (S == ElementShape::Triangle) 
     {
         using femType = finiteElement::H1_TriangleFace_Lagrange1_Gauss6;
+        
         return *static_cast<femType*>(femTypePtr.get()); 
     } 
     else if constexpr (S == ElementShape::Quadrilateral) 

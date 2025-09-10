@@ -224,6 +224,16 @@ void SolidMechanicsMortarContact::setupSystem( DomainPartition & domain,
   // create list of bubbles for the slave side
   this->createBubbleCellList();
 
+  std::map< std::pair< ElementShape, ElementShape >, ArrayOfArrays < localIndex > > connectivityMap;
+
+  // perform rough screen to find potential connections between master and slave faces
+  getConnectivityMap( connectivityMap );
+
+  // preprocess mortar integration data
+  computeMortarInterpolation( connectivityMap );
+
+  // setup dofs for the problem
+
   
   // dofManager.setDomain( domain );
   // setupDofs( domain, dofManager, meshSlaveName);
@@ -279,10 +289,10 @@ void SolidMechanicsMortarContact::setupSystem( DomainPartition & domain,
   */
 
   // perform mortar interpolation with compile time knowledge of element types on each side
-  computeMortarInterpolationNew<ElementShape::Triangle, ElementShape::Triangle>();
-  computeMortarInterpolationNew<ElementShape::Triangle, ElementShape::Quadrilateral>();
-  computeMortarInterpolationNew<ElementShape::Quadrilateral, ElementShape::Triangle>();
-  computeMortarInterpolationNew<ElementShape::Quadrilateral, ElementShape::Quadrilateral>();
+  // computeMortarInterpolationNew<ElementShape::Triangle, ElementShape::Triangle>();
+  // computeMortarInterpolationNew<ElementShape::Triangle, ElementShape::Quadrilateral>();
+  // computeMortarInterpolationNew<ElementShape::Quadrilateral, ElementShape::Triangle>();
+  // computeMortarInterpolationNew<ElementShape::Quadrilateral, ElementShape::Quadrilateral>();
 
   //computeRotationMatrices( domain );
   
@@ -983,81 +993,92 @@ void SolidMechanicsMortarContact::createBubbleCellList( ) const
 
 }
 
-  void SolidMechanicsMortarContact::setMortarSurfaces( DomainPartition & domain)
+void SolidMechanicsMortarContact::setMortarSurfaces( DomainPartition & domain)
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
+                                                              MeshLevel & mesh,
+                                                              string_array const & )
   {
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
-                                                                MeshLevel & mesh,
-                                                                string_array const & )
+    // // naive way to assign master and slave mesh levels
+    // if (meshName == "meshMaster"){
+    //   this->m_meshMaster = &mesh;
+    // }
+    // if (meshName == "meshSlave"){
+    //   this->m_meshSlave = &mesh;
+    //   meshSlaveName = meshName;
+    // }
+    GEOS_UNUSED_VAR(meshName);
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    elemManager.forElementRegions< SurfaceElementRegion >([&,this](const SurfaceElementRegion & region )
     {
-      // // naive way to assign master and slave mesh levels
-      // if (meshName == "meshMaster"){
-      //   this->m_meshMaster = &mesh;
-      // }
-
-      // if (meshName == "meshSlave"){
-      //   this->m_meshSlave = &mesh;
-      //   meshSlaveName = meshName;
-      // }
-      GEOS_UNUSED_VAR(meshName);
-
-      ElementRegionManager const & elemManager = mesh.getElemManager();
-
-      elemManager.forElementRegions< SurfaceElementRegion >([&,this](const SurfaceElementRegion & region )
+      // TO DO: assign different subregions for triangles and quadrilaterals?
+      // assign surface to master or slave depending on object path (again, naive)
+      string surfacePath = region.getPath();
+      std::cout << surfacePath << std::endl;
+      // check if region is master or slave and populate member maps
+      if (surfacePath.find(m_slaveName) != std::string::npos)
       {
-        // TO DO: assign different subregions for triangles and quadrilaterals?
+        MortarSurface surfaceSlave;
+        surfaceSlave.mesh = &mesh;
+        surfaceSlave.surface = &region;
+        m_mortarSide[MortarSide::Slave] = surfaceSlave;
+      }
+      else if (surfacePath.find(m_masterName) != std::string::npos)
+      {
+        MortarSurface surfaceMaster;
+        surfaceMaster.mesh = &mesh;
+        surfaceMaster.surface = &region;
+        m_mortarSide[MortarSide::Master] = surfaceMaster;
+      }
+    });
+  } );
+  // debug log surfaces path
+  string pathMaster;
+  string pathMeshMaster;
+  pathMaster = m_mortarSide[MortarSide::Master].surface->getPath();
+  pathMeshMaster = m_mortarSide[MortarSide::Master].mesh->getPath();
+  std::cout << "Path of master surface: " << pathMaster << std::endl;
+  std::cout << "Path of master mesh level: " << pathMeshMaster << std::endl; 
+  string pathSlave;
+  string pathMeshSlave;
+  pathSlave = m_mortarSide[MortarSide::Slave].surface->getPath();
+  pathMeshSlave = m_mortarSide[MortarSide::Slave].mesh->getPath();
+  std::cout << "Path of slave surface: " << pathSlave << std::endl;
+  std::cout << "Path of slave mesh level: " << pathMeshSlave << std::endl;
+}
 
-        // assign surface to master or slave depending on object path (again, naive)
-        string surfacePath = region.getPath();
-        std::cout << surfacePath << std::endl;
+void SolidMechanicsMortarContact::computeMortarInterpolation ( 
+  std::map< std::pair< ElementShape, ElementShape >, ArrayOfArrays < localIndex > > connectivityMap)
+{
+  computeMortarInterpolation< ElementShape::Triangle, ElementShape::Triangle>( 
+    connectivityMap[{ElementShape::Triangle, ElementShape::Triangle}]);
 
-        // check if region is master or slave and populate member maps
-        if (surfacePath.find(m_slaveName) != std::string::npos)
-        {
-          MortarSurface surfaceSlave;
-          surfaceSlave.mesh = &mesh;
-          surfaceSlave.surface = &region;
-          m_mortarSide[MortarSide::Slave] = surfaceSlave;
-        }
-        else if (surfacePath.find(m_masterName) != std::string::npos)
-        {
-          MortarSurface surfaceMaster;
-          surfaceMaster.mesh = &mesh;
-          surfaceMaster.surface = &region;
-          m_mortarSide[MortarSide::Master] = surfaceMaster;
-        }
-      });
+  computeMortarInterpolation< ElementShape::Triangle, ElementShape::Quadrilateral>( 
+    connectivityMap[{ElementShape::Triangle, ElementShape::Quadrilateral}]);
 
-    } );
+  computeMortarInterpolation< ElementShape::Quadrilateral, ElementShape::Triangle>( 
+    connectivityMap[{ElementShape::Quadrilateral, ElementShape::Triangle}]);
 
-    // debug log surfaces path
-    string pathMaster;
-    string pathMeshMaster;
-    pathMaster = m_mortarSide[MortarSide::Master].surface->getPath();
-    pathMeshMaster = m_mortarSide[MortarSide::Master].mesh->getPath();
-    std::cout << "Path of master surface: " << pathMaster << std::endl;
-    std::cout << "Path of master mesh level: " << pathMeshMaster << std::endl; 
-
-    string pathSlave;
-    string pathMeshSlave;
-    pathSlave = m_mortarSide[MortarSide::Slave].surface->getPath();
-    pathMeshSlave = m_mortarSide[MortarSide::Slave].mesh->getPath();
-    std::cout << "Path of slave surface: " << pathSlave << std::endl;
-    std::cout << "Path of slave mesh level: " << pathMeshSlave << std::endl;
-  }
+  computeMortarInterpolation< ElementShape::Quadrilateral, ElementShape::Quadrilateral>( 
+    connectivityMap[{ElementShape::Quadrilateral, ElementShape::Quadrilateral}]);
+}
 
 template< ElementShape slaveShape, ElementShape masterShape >
-void SolidMechanicsMortarContact::computeMortarInterpolationNew()
+void SolidMechanicsMortarContact::computeMortarInterpolation( ArrayOfArrays<localIndex> const & connections )
 {
 
   arrayView1d< localIndex const> faceListMaster = m_faceTypeToElementList.at(MortarSide::Master).at(masterShape).toViewConst();
   arrayView1d< localIndex const> faceListSlave = m_faceTypeToElementList.at(MortarSide::Slave).at(slaveShape).toViewConst();
 
-  ArrayOfArrays<localIndex> connectivityMap;
-  localIndex numbConnections = getConnectivityMap(slaveShape, masterShape, connectivityMap);
-
+  localIndex numbConnections;
+  numbConnections = 0;
+  for (localIndex i = 0; i < connections.size(); ++i)
+  {
+    numbConnections += connections.sizeOfArray(i);
+  }
   std::cout << "Found " << numbConnections << " connections." << std::endl;
 
-  // preallocate maps holding mortar integration data
+  // allocate mortar quantities
   auto const & slaveFE = getFE< slaveShape >();
   auto const & masterFE = getFE< masterShape >();
   localIndex constexpr nNodeMaster = masterFE.numNodes;
@@ -1065,14 +1086,20 @@ void SolidMechanicsMortarContact::computeMortarInterpolationNew()
   // maximum number of expected subtriangles for each mortar pair
   localIndex constexpr maxSubTri = nNodeMaster + nNodeSlave - 2;
   localIndex  nSubTriangles = maxSubTri * numbConnections;
-  localIndex nGPtot = nSubTriangles * feTriangleCell::numQuadraturePoints;
-  m_triCells[{slaveShape, masterShape}] = array2d<localIndex>(nSubTriangles,2);
-  m_triCellsDet[{slaveShape, masterShape}] = array1d<real64>(nSubTriangles);
-  m_gpLocalCoords[MortarSide::Slave][{slaveShape, masterShape}] = array2d<real64>(nGPtot, 2);
-  m_gpLocalCoords[MortarSide::Master][{slaveShape, masterShape}] = array2d<real64>(nGPtot, 2);
 
-  GEOS_UNUSED_VAR(maxSubTri);
-  if ( numbConnections==0 ) return;
+  array1d<real64> numbTrianglesInPairs(numbConnections);
+  array2d<localIndex> cellPairs(nSubTriangles,2);
+  array1d<real64> subTriDeterminants(nSubTriangles);
+  array3d<real64> localCoordsSlave(nSubTriangles, nGPtri, 2);
+  array3d<real64> localCoordsMaster(nSubTriangles, nGPtri, 2);
+  // get views
+  arrayView1d<real64> numbTrianglesInPairs_v = numbTrianglesInPairs.toView();
+  arrayView2d<localIndex> cellPairs_v = cellPairs.toView();
+  arrayView1d<real64> subTriDeterminants_v = subTriDeterminants.toView();
+  arrayView3d<real64> localCoordsSlave_v = localCoordsSlave.toView();
+  arrayView3d<real64> localCoordsMaster_v = localCoordsMaster.toView();
+
+  if ( numbConnections==0 ) return; // consider still populating empty mortar maps if numbConnections is zero
 
   // get mesh manager objects for both sides
   MeshLevel & meshMaster = *m_mortarSide.at(MortarSide::Master).mesh;
@@ -1091,12 +1118,16 @@ void SolidMechanicsMortarContact::computeMortarInterpolationNew()
   ArrayOfArraysView< localIndex const > const & faceToNodeMapSlave = faceManagerSlave.nodeList().toViewConst();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const coordsSlave =  nodeManagerSlave.referencePosition();
 
+  localIndex k = 0;
+  localIndex totTri = 0;
+
   for (localIndex im = 0; im < faceListMaster.size(); ++im)
   {
     localIndex masterFaceId = faceListMaster[im];
-    for (localIndex is = 0; is < connectivityMap.sizeOfArray(im); ++is)
+
+    for (localIndex is = 0; is < connections.sizeOfArray(im); ++is)
     {
-      localIndex slaveFaceId = faceListSlave[connectivityMap(im, is)];
+      localIndex slaveFaceId = faceListSlave[connections(im, is)];
 
       localIndex kfeM = elemsToFacesMaster[masterFaceId][0];
       localIndex kfeS = elemsToFacesSlave[slaveFaceId][0];
@@ -1104,18 +1135,90 @@ void SolidMechanicsMortarContact::computeMortarInterpolationNew()
       arraySlice1d< localIndex const > nodesMaster = faceToNodeMapMaster[kfeM];
       arraySlice1d< localIndex const > nodesSlave = faceToNodeMapSlave[kfeS];
 
-      processMortarPair < slaveShape, masterShape > ( slaveFaceId, 
-                                                      masterFaceId,
-                                                      nodesSlave,
-                                                      nodesMaster,
-                                                      coordsSlave,
-                                                      coordsMaster
-                                                      );
+      localIndex nTriPair = processMortarPair < slaveShape, masterShape > ( slaveFaceId, 
+                                                                            masterFaceId,
+                                                                            nodesSlave,
+                                                                            nodesMaster,
+                                                                            coordsSlave,
+                                                                            coordsMaster,
+                                                                            cellPairs_v,
+                                                                            subTriDeterminants_v,
+                                                                            localCoordsSlave_v,
+                                                                            localCoordsMaster_v,
+                                                                            k
+                                                                          );
+
+      numbTrianglesInPairs[k] = nTriPair;
+      totTri += nTriPair;
+      ++k;
     }
   }
 
+  // allocate and populate member maps with segment based preprocessed info
+  array2d<localIndex> triCellsList(totTri,2);
+  array1d<real64> triCellsDetList(totTri);
+  array3d<real64> gpLocalCoordsSlave(totTri, nGPtri, 2);
+  array3d<real64> gpLocalCoordsMaster(totTri, nGPtri, 2);
+
+  localIndex kp = 0;
+  for (localIndex i=0; i<numbConnections; ++i)
+  {
+    for (localIndex j=0; j<numbTrianglesInPairs[i]; ++j)
+    {
+      triCellsList(kp,0) = cellPairs_v(i*maxSubTri+j,0);
+      triCellsList(kp,1) = cellPairs_v(i*maxSubTri+j,1);
+      triCellsDetList(kp) = subTriDeterminants_v(i*maxSubTri+j);
+      for (localIndex q=0; q < nGPtri; ++q)
+      {
+        gpLocalCoordsSlave(kp,q,0) = localCoordsSlave_v(i*maxSubTri+j,q,0);
+        gpLocalCoordsSlave(kp,q,1) = localCoordsSlave_v(i*maxSubTri+j,q,1);
+        gpLocalCoordsMaster(kp,q,0) = localCoordsMaster_v(i*maxSubTri+j,q,0);
+        gpLocalCoordsMaster(kp,q,1) = localCoordsMaster_v(i*maxSubTri+j,q,1);
+      }
+      ++kp;
+    }
   }
 
+  // Log the segment based information
+  std::cout << "======================================================================================================================" << std::endl;
+  std::cout << "                                     SEGMENT BASED MORTAR PREPROCESSING                                               " << std::endl;
+  std::cout << "======================================================================================================================" << std::endl;
+  std::cout << std::setw(10) << "Tri ID"
+            << std::setw(15) << "Slave Face"
+            << std::setw(15) << "Master Face"
+            << std::setw(20) << "Determinant" << std::endl;
+  std::cout << "----------------------------------------------------------------------------------------------------------------------" << std::endl;
+
+  for (localIndex i = 0; i < totTri; ++i)
+  {
+    std::cout << std::setw(10) << i
+              << std::setw(15) << triCellsList(i, 0)
+              << std::setw(15) << triCellsList(i, 1)
+              << std::setw(20) << std::scientific << triCellsDetList(i) << std::endl;
+
+    std::cout << "  GP Coords Slave: ";
+    for (localIndex q = 0; q < nGPtri; ++q)
+    {
+      std::cout << "(" << std::fixed << std::setprecision(4) << gpLocalCoordsSlave(i, q, 0) << ", "
+                << std::fixed << std::setprecision(4) << gpLocalCoordsSlave(i, q, 1) << ") ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "  GP Coords Master: ";
+    for (localIndex q = 0; q < nGPtri; ++q)
+    {
+      std::cout << "(" << std::fixed << std::setprecision(4) << gpLocalCoordsMaster(i, q, 0) << ", "
+                << std::fixed << std::setprecision(4) << gpLocalCoordsMaster(i, q, 1) << ") ";
+    }
+    std::cout << std::endl;
+    std::cout << "----------------------------------------------------------------------------------------------------------------------" << std::endl;
+  }
+
+  m_triCells[{slaveShape, masterShape}] = triCellsList.toView();
+  m_triCellsDet[{slaveShape, masterShape}] = triCellsDetList.toView();
+  m_gpLocalCoords[MortarSide::Slave][{slaveShape, masterShape}] = gpLocalCoordsSlave.toView();
+  m_gpLocalCoords[MortarSide::Master][{slaveShape, masterShape}] = gpLocalCoordsMaster.toView();
+}
 // void SolidMechanicsMortarContact::computeMortarInterpolation()
 // {
 //   FaceManager const & faceManagerMaster = m_meshMaster->getFaceManager();
@@ -1297,12 +1400,17 @@ void SolidMechanicsMortarContact::computeMortarInterpolationNew()
 // } 
 
 template<ElementShape slaveShape, ElementShape masterShape>
-void SolidMechanicsMortarContact::processMortarPair( localIndex const slaveFaceId, 
-                                                     localIndex const masterFaceId,
-                                                     arraySlice1d<localIndex const> const & nodesSlave,
-                                                     arraySlice1d<localIndex const> const & nodesMaster,
-                                                     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & coordsSlave,
-                                                     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & coordsMaster )
+localIndex SolidMechanicsMortarContact::processMortarPair( localIndex const slaveFaceId, 
+                                                           localIndex const masterFaceId,
+                                                           arraySlice1d<localIndex const> const & nodesSlave,
+                                                           arraySlice1d<localIndex const> const & nodesMaster,
+                                                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & coordsSlave,
+                                                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & coordsMaster,
+                                                           arrayView2d<localIndex> & cellPairs,
+                                                           arrayView1d<real64> & subTriDeterminants,
+                                                           arrayView3d<real64> & localCoordsSlave,
+                                                           arrayView3d<real64> & localCoordsMaster,
+                                                           localIndex const & kPair)
 {
   
   std::cout << "Processing mortar pair slave/master: " << slaveFaceId << " - " << masterFaceId << std::endl;
@@ -1325,7 +1433,7 @@ void SolidMechanicsMortarContact::processMortarPair( localIndex const slaveFaceI
   // 1. find auxiliary plane on the slave element (computational geometry)
   real64 planeCentroid[3];
   real64 planeNormal[3];
-  std::cout << "Computing auxiliary plane..." << std::endl;
+
   real64 area = computationalGeometry::centroid_3DPolygon( nodesSlave,
                                                            coordsSlave,
                                                            planeCentroid,
@@ -1340,9 +1448,7 @@ void SolidMechanicsMortarContact::processMortarPair( localIndex const slaveFaceI
   for (localIndex i=0; i<numNodeSlave; ++i)
   {
     // find the 3D intersection point
-    std::cout << "Coordinates of slave  node: " << nodesSlave[i] << std::endl;
     real64 coord3d[3] = {coordsSlave(nodesSlave[i],0), coordsSlave(nodesSlave[i],1), coordsSlave(nodesSlave[i],2)};
-    std::cout << "(" << coord3d[0] << ", " << coord3d[1] << ", " << coord3d[2] << ")" << std::endl;
     real64 projected2d[2];
     projectPointInPlane< MortarSide::Slave >(coord3d, planeNormal, planeCentroid, projected2d);
     projSlave[i][0] = projected2d[0];
@@ -1352,39 +1458,36 @@ void SolidMechanicsMortarContact::processMortarPair( localIndex const slaveFaceI
   for (localIndex i=0; i<numNodeMaster; ++i)
   {
     // find the 3D intersection point
-    std::cout << "Coordinates of master node: " << nodesMaster[i] << std::endl;
     real64 coord3d[3] = {coordsMaster(nodesMaster[i],0), coordsMaster(nodesMaster[i],1), coordsMaster(nodesMaster[i],2)};
-    std::cout << "(" << coord3d[0] << ", " << coord3d[1] << ", " << coord3d[2] << ")" << std::endl;
     real64 projected2d[2];
     projectPointInPlane< MortarSide::Master >(coord3d, planeNormal, planeCentroid, projected2d);
     projMaster[i][0] = projected2d[0];
     projMaster[i][1] = projected2d[1];
   }
 
-  std::cout << "Coordinates of projected slave element:" << std::endl;
-  for ( localIndex i=0; i<projSlave.size(0); ++i)
-  {
-   std::cout << "(" << projSlave(i,0) << ", " << projSlave(i,1) << ")" << std::endl;
-  }
-  std::cout << "Coordinates of projected master element:" << std::endl;
-  for ( localIndex i=0; i<projMaster.size(0); ++i)
-  {
-   std::cout << "(" << projMaster(i,0) << ", " << projMaster(i,1) << ")" << std::endl;
-  }
+  // std::cout << "Coordinates of projected slave element:" << std::endl;
+  // for ( localIndex i=0; i<projSlave.size(0); ++i)
+  // {
+  //  std::cout << "(" << projSlave(i,0) << ", " << projSlave(i,1) << ")" << std::endl;
+  // }
+  // std::cout << "Coordinates of projected master element:" << std::endl;
+  // for ( localIndex i=0; i<projMaster.size(0); ++i)
+  // {
+  //  std::cout << "(" << projMaster(i,0) << ", " << projMaster(i,1) << ")" << std::endl;
+  // }
 
   // 3. intersect slave and master element and return the resulting intersecting polygon
   array2d<real64> clippedPoly(numNodeSlave,2);
   LvArray::tensorOps::copy<numNodeSlave,2>(clippedPoly, projSlave);
-  std::cout << "Clipping..." << std::endl;
   polygonClipping<numNodeSlave,numNodeMaster>(clippedPoly, projMaster);
 
   localIndex clipSize = clippedPoly.size(0);
-  std::cout << "Found intersection with " << clipSize << " edges." << std::endl;
+  //std::cout << "Found intersection with " << clipSize << " edges." << std::endl;
   arrayView2d<real64 const> const clipPoly = clippedPoly.toViewConst();
 
 
   // 4. project gauss point for each local triangle into master and slave side
-  for (localIndex i = 1; i < clipSize - 2; ++i)
+  for (localIndex i = 1; i < clipSize - 1; ++i)
   {
     real64 coordsTri[3][2];
     // get coordinates of sub-triangle
@@ -1395,42 +1498,52 @@ void SolidMechanicsMortarContact::processMortarPair( localIndex const slaveFaceI
     coordsTri[2][0] = clipPoly(i+1, 0);
     coordsTri[2][1] = clipPoly(i+1, 1);
 
+    real64 const subTriDeterminant = (coordsTri[1][0] - coordsTri[0][0]) * (coordsTri[2][1] - coordsTri[0][1]) -
+                                     (coordsTri[2][0] - coordsTri[0][0]) * (coordsTri[1][1] - coordsTri[0][1]);
+
+    if ( subTriDeterminant < 1e-10)
+    {
+      GEOS_ERROR("Found degenerate triangle");
+    }
+
     real64 xiSlave[nGPtri][2] = {{}};  
     real64 xiMaster[nGPtri][2] = {{}};  
 
     projectGP< slaveShape >(coordsTri, projSlave.toViewConst(), xiSlave);
-    std::cout << "Projected coordinates on slave element" << std::endl;
-    for (localIndex j = 0; j < nGPtri; ++j)
-    {
-      std::cout << "(" << xiSlave[j][0] << ", " << xiSlave[j][1] << ")" << std::endl;
-    }
+    //std::cout << "Projected coordinates on slave element" << std::endl;
+    // for (localIndex j = 0; j < nGPtri; ++j)
+    // {
+    //   std::cout << "(" << xiSlave[j][0] << ", " << xiSlave[j][1] << ")" << std::endl;
+    // }
 
-    std::cout << std::endl;
     projectGP< masterShape >(coordsTri, projMaster.toViewConst(), xiMaster);
-    std::cout << "Projected coordinates on master element" << std::endl;
-    for (localIndex j=0; j<nGPtri; ++j)
-    {
-      std::cout << "(" << xiMaster[j][0] << ", " << xiMaster[j][1] << ")" << std::endl;
-    }
+    // std::cout << "Projected coordinates on master element" << std::endl;
+    // for (localIndex j=0; j<nGPtri; ++j)
+    // {
+    //   std::cout << "(" << xiMaster[j][0] << ", " << xiMaster[j][1] << ")" << std::endl;
+    // }
 
     // populate output lists
-    std::cout << std::endl;
-    std::cout << std::endl;
+    localIndex maxTri = numNodeSlave+numNodeMaster-2;
+    cellPairs(kPair*maxTri+i-1, 0) = slaveFaceId;
+    cellPairs(kPair*maxTri+i-1, 1) = masterFaceId;
 
+    subTriDeterminants[kPair*maxTri+i-1] = subTriDeterminant;
+
+    for (localIndex j = 0; j < nGPtri; ++j)
+    {
+      localCoordsSlave(kPair*maxTri+i-1, j, 0) = xiSlave[j][0];
+      localCoordsSlave(kPair*maxTri+i-1, j, 1) = xiSlave[j][1];
+
+      localCoordsMaster(kPair*maxTri+i-1, j, 0) = xiMaster[j][0];
+      localCoordsMaster(kPair*maxTri+i-1, j, 1) = xiMaster[j][1];
+    }
+
+    std::cout << std::endl;
 
   }
 
-  //GEOS_UNUSED_VAR(projMaster);
-  //GEOS_UNUSED_VAR(projSlave);
-
-
-  
-
-  // 3. find clip polygon (Sutherland–Hodgman algorithm)
-  // 4. subtriangulation (simple fan method)
-  // 5. loop over the subtriangles and locate the gauss points
-  // 6. find the local coordinates of the gauss points on slave and master side
-  // 7. populate lists
+  return clipSize - 2; // return number of triangles for the mortar pair
 
 }
 
@@ -1536,8 +1649,6 @@ void SolidMechanicsMortarContact::projectGP( real64 const (& coordsTri)[3][2],
 
   constexpr localIndex numNodes = (shape == ElementShape::Triangle) ? 3 : 4;
 
-  std::cout << "Number of nodes: " << numNodes << std::endl;
-
   auto const & FE = getFE< shape >();
 
   // newton params
@@ -1555,29 +1666,17 @@ void SolidMechanicsMortarContact::projectGP( real64 const (& coordsTri)[3][2],
     real64 coordGP[2];
     LvArray::tensorOps::Ri_eq_AjiBj<2, 3>(coordGP, coordsTri, Ntri);  
 
-    std::cout << "Coordinate of gp: ( " << coordGP[0] << " , " << coordGP[1] << ")" << std::endl;
+    //std::cout << "Coordinate of gp: ( " << coordGP[0] << " , " << coordGP[1] << ")" << std::endl;
  
     real64 Nq[numNodes];
     FE.calcN(xiProj, Nq);
     permuteN<numNodes>(Nq);
 
-    // for (localIndex node_idx = 0; node_idx < numNodes; ++node_idx)
-    // {
-    //   std::cout << "Nq[" << node_idx << "]: " << Nq[node_idx] << " ";
-    // }
-    //std::cout << std::endl;
     real64 rhs[2] = {0.0, 0.0};
     LvArray::tensorOps::Ri_eq_AjiBj<2, numNodes>(rhs, coordsElem, Nq);
     LvArray::tensorOps::subtract<2>(rhs, coordGP);
-
-    //std::cout << "Initial rhs norm: " << LvArray::tensorOps::l2Norm<2>(rhs) << std::endl;
  
     localIndex iter = 0;
-
-    // for (localIndex node_idx = 0; node_idx < numNodes; ++node_idx)
-    // {
-    //   std::cout << "coordsElem(" << node_idx << ", 0): " << coordsElem(node_idx, 0) << ", coordsElem(" << node_idx << ", 1): " << coordsElem(node_idx, 1) << std::endl;
-    // }
  
     while (LvArray::tensorOps::l2Norm<2>(rhs) > tol && iter < itMax)
     {
@@ -1585,30 +1684,14 @@ void SolidMechanicsMortarContact::projectGP( real64 const (& coordsTri)[3][2],
       real64 dN[2][numNodes]= {{}};
       calcGradN< numNodes >(xiProj, dN);
 
-      // for (localIndex j = 0; j < numNodes; ++j)
-      // {
-      //   std::cout << "dN[0][" << j << "]: " << dN[0][j] << " ";
-      // }
-      // std::cout << std::endl;
-      // for (localIndex j = 0; j < numNodes; ++j)
-      // {
-      //   std::cout << "dN[1][" << j << "]: " << dN[1][j] << " ";
-      // }
-      // std::cout << std::endl;
-
       real64 Jt[2][2] = {{}};
       real64 J[2][2] = {{}};
       LvArray::tensorOps::Rij_eq_AikBkj<2, 2, numNodes>(Jt, dN, coordsElem);
       LvArray::tensorOps::transpose<2,2>(J,Jt);
 
-      // std::cout << "rhs: " << rhs[0] << ", " << rhs[1] << std::endl;
-      // std::cout << "J11: " << J[0][0] << " , J12: "  << J[0][1] << std::endl;
-      // std::cout << "J21: " << J[1][0] << " , J22: " << J[1][1] << std::endl;
       real64 dxi[2];
 
       bool success = denseLinearAlgebra::details::solveTwoByTwoSystem( J, rhs, dxi);
-
-      std::cout << "dx = " << dxi[0] << " , " << dxi[1] << std::endl;  
 
       if (success)
       {
@@ -1623,14 +1706,10 @@ void SolidMechanicsMortarContact::projectGP( real64 const (& coordsTri)[3][2],
       FE.calcN(xiProj, Nq);
       permuteN<numNodes>(Nq);
 
-      // for (localIndex node_idx = 0; node_idx < numNodes; ++node_idx)
-      // {
-      //   std::cout << "Nq[" << node_idx << "]: " << Nq[node_idx] << " ";
-      // }
-      std::cout << std::endl;
+      //std::cout << std::endl;
       LvArray::tensorOps::Ri_eq_AjiBj<2, numNodes>(rhs, coordsElem, Nq);
       LvArray::tensorOps::subtract<2>(rhs, coordGP);
-      std::cout << "rhs: " << rhs[0] << ", " << rhs[1] << std::endl;
+      //std::cout << "rhs: " << rhs[0] << ", " << rhs[1] << std::endl;
     }
 
     if ( iter == itMax)
@@ -1640,15 +1719,12 @@ void SolidMechanicsMortarContact::projectGP( real64 const (& coordsTri)[3][2],
 
     if ( !checkInFE< shape >(xiProj[0], xiProj[1]))
     {
-      std::cout << "Iterations performed: " << iter << std::endl;
-      std::cout << "Projected coordinates: (" << xiProj[0] << ", " << xiProj[1] << ")" << std::endl;
       GEOS_ERROR("Projected GP is outside the reference element");
     }
 
     xi[i][0] = xiProj[0];
     xi[i][1] = xiProj[1];
 
-    std::cout << "Projected coordinates: (" << xiProj[0] << ", " << xiProj[1] << ")" << std::endl;
   }
 }         
 
@@ -1685,7 +1761,7 @@ void SolidMechanicsMortarContact::clip( array2d<real64> & poly,
   localIndex clippedSize = 0;
 
   localIndex polySize = poly.size(0);
-  std::cout << "Clipping polygon with " << polySize << " points." << std::endl;
+  //std::cout << "Clipping polygon with " << polySize << " points." << std::endl;
 
   for (localIndex i = 0; i < polySize; ++i)
   {
@@ -1702,7 +1778,7 @@ void SolidMechanicsMortarContact::clip( array2d<real64> & poly,
     real64 xInt = 0.0;
     real64 yInt = 0.0;
 
-    std::cout << i_pos << ", " << k_pos << std::endl;
+    //std::cout << i_pos << ", " << k_pos << std::endl;
 
     // case 1: both points inside
     if (i_pos >= 0 &&  k_pos >= 0)
@@ -1730,6 +1806,7 @@ void SolidMechanicsMortarContact::clip( array2d<real64> & poly,
     else if (i_pos >= 0 && k_pos < 0)
     {
       // add intersection point
+      intersect(x1, y1, x2, y2, xc1, yc1, xc2, yc2, xInt, yInt);
       clippedPoly[clippedSize][0] = xInt;
       clippedPoly[clippedSize][1] = yInt;
       ++clippedSize;      
@@ -1989,10 +2066,25 @@ void SolidMechanicsMortarContact::computeRBFweights( arrayView2d<real64> M, arra
 //   }
 // }
 
+void SolidMechanicsMortarContact::getConnectivityMap( std::map< std::pair< ElementShape, ElementShape >, ArrayOfArrays < localIndex > > & connectivityMap )
+{
+  ElementShape shapes[2] = { ElementShape::Triangle, ElementShape::Quadrilateral };
+  for (auto slaveShape : shapes)
+  {
+    for (auto masterShape : shapes)
+    {
+      // loop over all master-slave element shape pairs
+      ArrayOfArrays<localIndex> connections;
+      getMortarConnections(slaveShape, masterShape, connections);
+      connectivityMap[{slaveShape, masterShape}] = connections;
+    }
+  }  
+}
 
-localIndex SolidMechanicsMortarContact::getConnectivityMap( ElementShape slaveShape, 
-                                                            ElementShape masterShape, 
-                                                            ArrayOfArrays<localIndex> & connectivityMap )
+
+void SolidMechanicsMortarContact::getMortarConnections( ElementShape slaveShape, 
+                                                      ElementShape masterShape, 
+                                                      ArrayOfArrays<localIndex> & connections )
 {
 
   // using smart pointers for the trees
@@ -2005,7 +2097,7 @@ localIndex SolidMechanicsMortarContact::getConnectivityMap( ElementShape slaveSh
 
   if (surfMaster.size() == 0 || surfSlave.size() == 0)
   {
-    return 0;
+    return;
   }
 
   
@@ -2034,54 +2126,54 @@ localIndex SolidMechanicsMortarContact::getConnectivityMap( ElementShape slaveSh
                           surfRootSlave);
 
   // initialize connectivity map
-  connectivityMap.resize(surfRootMaster.size());
+  connections.resize(surfRootMaster.size());
 
   // perform contact search and populate connectivity map
-  contactSearch(treeSlave, treeMaster, connectivityMap);
+  contactSearch(treeSlave, treeMaster, connections);
 
-  localIndex numConnections = 0;
+  //localIndex numConnections = 0;
 
   for (localIndex i=0; i<surfRootMaster.size(); ++i)
   {
-    localIndex N = connectivityMap.sizeOfArray(i);
-    numConnections += connectivityMap.sizeOfArray(i);
+    localIndex N = connections.sizeOfArray(i);
+    //numConnections += connectivityMap.sizeOfArray(i);
 
     std::cout << "MASTER ELEMENT: " << i << std::endl;
     std::cout << "SLAVE ELEMENT:"; 
     for (localIndex j=0; j<N; ++j)
     {  
-      std::cout << " " << connectivityMap[i][j];
+      std::cout << " " << connections[i][j];
     }
     std::cout << std::endl;
     std::cout << "__________________________________________" << std::endl;
   }
 
-  return numConnections;
+ // return numConnections;
 
 }
 
 void SolidMechanicsMortarContact::contactSearch(std::unique_ptr<TreeNodeMortar> const & nodeSlave, 
                                                 std::unique_ptr<TreeNodeMortar> const & nodeMaster, 
-                                                ArrayOfArrays<localIndex> & connectivityMap)
+                                                ArrayOfArrays<localIndex> & connections)
 {
   if (!checkIntersection(nodeSlave,nodeMaster)) return;
   
   if ((nodeSlave->isLeaf) && (nodeMaster->isLeaf))
   {
     //std::cout << "found intersection between slave " << nodeSlave->leafId << " and master " << nodeMaster->leafId << std::endl;
-    connectivityMap.emplaceBack(nodeMaster->leafId,nodeSlave->leafId);
+    connections.emplaceBack(nodeMaster->leafId,nodeSlave->leafId);
     return;
   }
 
   if (!nodeSlave->isLeaf)
   {
-    contactSearch(nodeSlave->left, nodeMaster, connectivityMap);
-    contactSearch(nodeSlave->right, nodeMaster, connectivityMap);
+    contactSearch(nodeSlave->left, nodeMaster, connections);
+    contactSearch(nodeSlave->right, nodeMaster, connections);
   }
   else
   {
-    contactSearch(nodeSlave, nodeMaster->left, connectivityMap);
-    contactSearch(nodeSlave, nodeMaster->right, connectivityMap);
+    contactSearch(nodeSlave, nodeMaster->left, connections);
+    contactSearch(nodeSlave, nodeMaster->right, connections);
   }
 }
 
