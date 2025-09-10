@@ -142,6 +142,14 @@ public:
    */
   WellControls const & getWellControls( WellElementSubRegion const & subRegion ) const;
 
+
+  /**
+   * @brief Open and close perfs based on user defined perf status table
+   * @param time_n evaluation time
+   * @param domain  the domain
+   */
+  void setPerforationStatus( real64 const & time_n, DomainPartition & domain );
+
   /**
    * @defgroup Solver Interface Functions
    *
