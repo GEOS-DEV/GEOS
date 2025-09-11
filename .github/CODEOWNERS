@@ -11,7 +11,7 @@
 
 /BASELINE_NOTES.md
 /.integrated_tests.yaml
-/inputFiles                                           @rrsettgast @paveltomin @CusiniM @cssherman  @jhuang2601
+/inputFiles                                           @rrsettgast @paveltomin @CusiniM @cssherman  @jhuang2601 @OmarDuran
 /inputFiles/compositionalMultiphaseFlow                           @paveltomin          @dkachuma @tjb-ltk @rasimHZ
 /inputFiles/compositionalMultiphaseWell                           @paveltomin @CusiniM @tjb-ltk @dkachuma @rasimHZ
 /inputFiles/efemFractureMechanics                                 @paveltomin @CusiniM @matteofrigo5 @Guotong-Ren
@@ -60,30 +60,30 @@
 /src/coreComponents/constitutive/unitTests            @rrsettgast @paveltomin @CusiniM @dkachuma
 /src/coreComponents/constitutiveDrivers               @rrsettgast @paveltomin @CusiniM @dkachuma @jhuang2601
 /src/coreComponents/dataRepository                    @rrsettgast @paveltomin          @wrtobin @corbett5 @MelReyCG 
-/src/coreComponents/denseLinearAlgebra                @rrsettgast @paveltomin @CusiniM @castelletto1 
-/src/coreComponents/discretizationMethods             @rrsettgast @paveltomin @CusiniM @castelletto1
+/src/coreComponents/denseLinearAlgebra                @rrsettgast @paveltomin @CusiniM @castelletto1 @OmarDuran
+/src/coreComponents/discretizationMethods             @rrsettgast @paveltomin @CusiniM @castelletto1 @OmarDuran
 /src/coreComponents/events                            @rrsettgast @paveltomin          @corbett5 @cssherman @MelReyCG
-/src/coreComponents/fieldSpecification                @rrsettgast @paveltomin @CusiniM @corbett5 @cssherman @MelReyCG
-/src/coreComponents/fileIO                            @rrsettgast @paveltomin          @wrtobin @MelReyCG
-/src/coreComponents/finiteElement                     @rrsettgast @paveltomin          @castelletto1 @andrea-borio @CusiniM @matteofrigo5
-/src/coreComponents/finiteVolume                      @rrsettgast @paveltomin          @castelletto1 @CusiniM
+/src/coreComponents/fieldSpecification                @rrsettgast @paveltomin @CusiniM @corbett5 @cssherman @MelReyCG @OmarDuran
+/src/coreComponents/fileIO                            @rrsettgast @paveltomin          @wrtobin @MelReyCG @OmarDuran
+/src/coreComponents/finiteElement                     @rrsettgast @paveltomin          @castelletto1 @andrea-borio @CusiniM @matteofrigo5 @OmarDuran
+/src/coreComponents/finiteVolume                      @rrsettgast @paveltomin          @castelletto1 @CusiniM @OmarDuran
 /src/coreComponents/functions                         @rrsettgast @paveltomin          @cssherman @wrtobin @MelReyCG
 /src/coreComponents/linearAlgebra                     @rrsettgast @paveltomin @CusiniM @castelletto1 @victorapm   
 /src/coreComponents/mainInterface                     @rrsettgast @paveltomin          @corbett5 @wrtobin 
-/src/coreComponents/math                              @rrsettgast @paveltomin          @corbett5 @wrtobin 
+/src/coreComponents/math                              @rrsettgast @paveltomin          @corbett5 @wrtobin @OmarDuran
 /src/coreComponents/mesh                              @rrsettgast @paveltomin @CusiniM  @wrtobin
-/src/coreComponents/physicsSolvers                    @rrsettgast @paveltomin @CusiniM
+/src/coreComponents/physicsSolvers                    @rrsettgast @paveltomin @CusiniM @OmarDuran
 /src/coreComponents/physicsSolvers/contact            @rrsettgast @paveltomin @CusiniM @matteofrigo5 @Guotong-Ren
-/src/coreComponents/physicsSolvers/fluidFlow          @rrsettgast @paveltomin @CusiniM @tjb-ltk @dkachuma @rasimHZ
+/src/coreComponents/physicsSolvers/fluidFlow          @rrsettgast @paveltomin @CusiniM @tjb-ltk @dkachuma @rasimHZ @OmarDuran
 /src/coreComponents/physicsSolvers/inducedSeismicity  @rrsettgast @paveltomin @CusiniM @matteofrigo5 @castelletto1 @jhuang2601 @kimtaeho07 @frankfeifan
 /src/coreComponents/physicsSolvers/multiphysics       @rrsettgast @paveltomin @CusiniM @castelletto1 @frankfeifan @jhuang2601 @Guotong-Ren
 /src/coreComponents/physicsSolvers/python                                              @cssherman @corbett5 @alexbenedicto 
 /src/coreComponents/physicsSolvers/simplePDE          @rrsettgast @paveltomin @CusiniM @castelletto1   @frankfeifan
 /src/coreComponents/physicsSolvers/solidMechanics     @rrsettgast @paveltomin @CusiniM @castelletto1 @jhuang2601 @Guotong-Ren @matteofrigo5
-/src/coreComponents/physicsSolvers/surfaceGeneration  @rrsettgast             @CusiniM @jhuang2601
+/src/coreComponents/physicsSolvers/surfaceGeneration  @rrsettgast             @CusiniM @jhuang2601 @OmarDuran
 /src/coreComponents/physicsSolvers/wavePropagation                                     @sframba @acitrain
 /src/coreComponents/schema                            @rrsettgast @paveltomin @CusiniM @herve-gross @castelletto1 @jhuang2601 @dkachuma @OmarDuran
-/src/coreComponents/unitTests                         @rrsettgast @paveltomin @CusiniM @corbett5 @wrtobin @MelReyCG @dkachuma
+/src/coreComponents/integrationTests                  @rrsettgast @paveltomin @CusiniM @corbett5 @wrtobin @MelReyCG @dkachuma @OmarDuran
 /src/docs                                             @rrsettgast @paveltomin @CusiniM @herve-gross @castelletto1 @jhuang2601 @dkachuma @OmarDuran
 
 # Here is a list of GEOS-DEV members as of 2024-07-02
@@ -145,6 +145,7 @@
 # MichaelSekachev    Michael Sekachev
 # mndiaye24          Mamadou N'diaye
 # npillardou         Nicolas Pillardou
+# OmarDuran          Omar Duran
 # ol-n-ga   
 # oseikuffuor1       Daniel Osei-Kuffuor
 # ouassimkh   
