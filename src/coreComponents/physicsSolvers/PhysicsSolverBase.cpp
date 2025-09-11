@@ -126,7 +126,6 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 
 void PhysicsSolverBase::postInputInitialization()
 {
-
   m_solverStatistics.setOutputFilesName( getName() );
   m_solverStatistics.makeDir( m_writeStatisticsCSV >= 2 );
 
@@ -381,6 +380,9 @@ void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
 
   logpart.addEndDescription( "- substep dts ", logMessage.str() );
   logpart.end();
+
+  if( isLogLevelActive< logInfo::SolverExecutionDetails >( getLogLevel()))
+    getIterationStats().outputStatistics();
 }
 
 real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTime ),
@@ -1501,7 +1503,10 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  getIterationStats().outputStatistics();
+  if( !isLogLevelActive< logInfo::SolverExecutionDetails >( getLogLevel() ) ) // to avoid double-printing
+  {
+    getIterationStats().outputStatistics();
+  }
   getIterationStats().closeFile();
   getConvergenceStats().closeFile();
 
