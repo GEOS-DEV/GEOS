@@ -126,5 +126,6 @@ install( TARGETS fileIO LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 # Add unitTests subdirectory
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( timeHistory/unitTests )
+  add_subdirectory( Outputs/unitTests )
 endif()
 
