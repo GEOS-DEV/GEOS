@@ -123,5 +123,8 @@ target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 install( TARGETS fileIO LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
-
+# Add unitTests subdirectory
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( timeHistory/unitTests )
+endif()
 
