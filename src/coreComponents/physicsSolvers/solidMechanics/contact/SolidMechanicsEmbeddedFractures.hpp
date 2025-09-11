@@ -87,7 +87,7 @@ public:
 
   real64 calculateFractureResidualNorm( DomainPartition const & domain,
                                         DofManager const & dofManager,
-                                        arrayView1d< real64 const > const & localRhs ) const;
+                                        arrayView1d< real64 const > const & localRhs );
 
   virtual void
   applySystemSolution( DofManager const & dofManager,

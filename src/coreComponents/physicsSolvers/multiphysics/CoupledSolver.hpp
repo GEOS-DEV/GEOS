@@ -57,9 +57,7 @@ public:
     this->getWrapper< string >( PhysicsSolverBase::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
 
-    addLogLevel< logInfo::Convergence >();
     addLogLevel< logInfo::Coupling >();
-    addLogLevel< logInfo::TimeStep >();
   }
 
   /// deleted copy constructor
@@ -248,6 +246,19 @@ public:
   }
 
 
+  virtual void
+  updateAndWriteConvergenceStep( real64 const & time_n, real64 const & dt,
+                                 integer const cycleNumber, integer const iteration ) override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      if( m_writeStatisticsCSV >= 2 )
+      {
+        solver->updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iteration );
+      }
+    } );
+  }
+
   virtual real64
   calculateResidualNorm( real64 const & time_n,
                          real64 const & dt,
@@ -420,7 +431,7 @@ protected:
    */
   virtual real64 sequentiallyCoupledSolverStep( real64 const & time_n,
                                                 real64 const & dt,
-                                                int const cycleNumber,
+                                                integer const cycleNumber,
                                                 DomainPartition & domain )
   {
     GEOS_MARK_FUNCTION;
@@ -462,7 +473,7 @@ protected:
       forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
       {
         solver->resetStateToBeginningOfStep( domain );
-        solver->getSolverStatistics().initializeTimeStepStatistics();     // initialize counters for subsolvers
+        solver->getIterationStats().resetCurrentTimeStepStatistics(); // initialize counters for subsolvers
       } );
       resetStateToBeginningOfStep( domain );
 
@@ -472,8 +483,7 @@ protected:
       for( iter = 0; iter < solverParams.m_maxIterNewton; iter++ )
       {
         // Increment the solver statistics for reporting purposes
-        // Pass a "0" as argument (0 linear iteration) to skip the output of linear iteration stats at the end
-        m_solverStatistics.logNonlinearIteration( 0 );
+        getIterationStats().incrementConfigIteration();
 
         startSequentialIteration( iter, domain );
 
@@ -502,9 +512,9 @@ protected:
             m_numTimestepsSinceLastDtCut = 0;
           }
         } );
-
         // Check convergence of the outer loop
-        isConverged = checkSequentialConvergence( iter,
+        isConverged = checkSequentialConvergence( cycleNumber,
+                                                  iter,
                                                   time_n,
                                                   stepDt,
                                                   domain );
@@ -527,7 +537,7 @@ protected:
         // Save time step statistics for the subsolvers
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
-          solver->getSolverStatistics().saveTimeStepStatistics();
+          solver->getIterationStats().iterateTimeStepStatistics();
         } );
         // get out of the time loop
         break;
@@ -540,10 +550,10 @@ protected:
         GEOS_LOG_LEVEL_RANK_0( logInfo::TimeStep, GEOS_FMT( "New dt = {}", stepDt ) );
 
         // notify the solver statistics counter that this is a time step cut
-        m_solverStatistics.logTimeStepCut();
+        getIterationStats().updateTimeStepCut();
         forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
         {
-          solver->getSolverStatistics().logTimeStepCut();
+          solver->getIterationStats().updateTimeStepCut();
         } );
       }
     }
@@ -579,7 +589,8 @@ protected:
     GEOS_UNUSED_VAR( domain, solverType );
   }
 
-  virtual bool checkSequentialConvergence( int const & iter,
+  virtual bool checkSequentialConvergence( integer const cycleNumber,
+                                           integer const iter,
                                            real64 const & time_n,
                                            real64 const & dt,
                                            DomainPartition & domain )
@@ -634,8 +645,11 @@ protected:
 
         // finally, we perform the convergence check on the multiphysics residual
         residualNorm = sqrt( residualNorm );
-        GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
+        GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
                                GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
+        getConvergenceStats().setResidualValue( "R", residualNorm );
+        updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iter );
+
         isConverged = ( residualNorm < params.m_newtonTol );
 
       }
@@ -673,6 +687,8 @@ protected:
   postInputInitialization() override
   {
     setSubSolvers();
+
+    PhysicsSolverBase::postInputInitialization();
 
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;

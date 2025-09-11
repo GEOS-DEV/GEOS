@@ -40,12 +40,9 @@ using namespace fields;
 SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
                                                                                       Group * const parent ):
   SinglePhasePoromechanics( name, parent )
-{
-  Base::template addLogLevel< logInfo::LinearSolverConfiguration >();
-}
+{ }
 
-SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFractures()
-{}
+SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFractures() = default;
 
 void SinglePhasePoromechanicsEmbeddedFractures::setMGRStrategy()
 {
@@ -58,7 +55,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::setMGRStrategy()
   linearSolverParameters.dofsPerNode = 3;
 
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsEmbeddedFractures;
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "{}: MGR strategy set to {}", getName(),
                                    EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
@@ -165,8 +162,6 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupSystem( DomainPartition & d
     globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
     pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
   }
-
-  dofManager.printFieldInfo();
 
   // Add the nonzeros from coupling
   addCouplingSparsityPattern( domain, dofManager, pattern.toView() );

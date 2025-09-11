@@ -190,9 +190,9 @@ public:
       flowSolver()->enableJumpStabilization();
     }
 
-    this->template forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                                     MeshLevel & mesh,
-                                                                     string_array const & regionNames )
+    this->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                            MeshLevel & mesh,
+                                                            string_array const & regionNames )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -249,7 +249,8 @@ public:
     this->setupCoupling( domain, dofManager );
   }
 
-  virtual bool checkSequentialConvergence( int const & iter,
+  virtual bool checkSequentialConvergence( integer const cycleNumber,
+                                           integer const iter,
                                            real64 const & time_n,
                                            real64 const & dt,
                                            DomainPartition & domain ) override
@@ -259,8 +260,7 @@ public:
     auto const subcycling_orig = subcycling;
     if( m_performStressInitialization )
       subcycling = 1;
-
-    bool isConverged = Base::checkSequentialConvergence( iter, time_n, dt, domain );
+    bool isConverged = Base::checkSequentialConvergence( cycleNumber, iter, time_n, dt, domain );
 
     // restore original
     subcycling = subcycling_orig;
@@ -444,9 +444,9 @@ protected:
                                               array1d< real64 > & averageMeanTotalStressIncrement )
   {
     averageMeanTotalStressIncrement.resize( 0 );
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                                MeshLevel & mesh,
-                                                                                string_array const & regionNames )
+    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                       MeshLevel & mesh,
+                                                                       string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )
@@ -470,9 +470,9 @@ protected:
                                                         array1d< real64 > & averageMeanTotalStressIncrement )
   {
     integer i = 0;
-    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                                MeshLevel & mesh,
-                                                                                string_array const & regionNames )
+    this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                       MeshLevel & mesh,
+                                                                       string_array const & regionNames )
     {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             auto & subRegion )
