@@ -87,14 +87,16 @@ public:
    */
   string getCatalogName() const override {return catalogName(); }
 
-  using FaceTypeMap = std::map< string, std::map< string, array1d< localIndex > > >;
+  //using FaceTypeMap = std::map< string, std::map< string, array1d< localIndex > > >;
+
+  using connectivityMapType = std::map< std::pair< ElementShape, ElementShape >, ArrayOfArrays < localIndex > >;
 
  
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
   void setupDofs( DomainPartition const & domain,
-                          DofManager & dofManager,
-                          string const & meshSlaveName ) const;
+                  DofManager & dofManager,
+                  string const & meshSlaveName ) const;
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -133,9 +135,9 @@ public:
   void updateState( DomainPartition & domain ) override final;
 
 
-  FaceTypeMap createFaceTypeList( MeshLevel const & mesh, 
-                                  FaceElementSubRegion const & surface,
-                                  string name);
+  // FaceTypeMap createFaceTypeList( MeshLevel const & mesh, 
+  //                                 FaceElementSubRegion const & surface,
+  //                                 string name);
 
   void createFaceTypeListMortar( MortarSide side );
 
@@ -148,7 +150,7 @@ public:
   void createBubbleCellList( ) const;
 
 
-  void setMortarSurfaces( DomainPartition & domain);
+  string setMortarSurfaces( DomainPartition & domain);
 
   
   // call templated lambda with compile time knowledge of the element shapes on the master and the slave side
@@ -277,19 +279,15 @@ private:
   FaceElementSubRegion const* m_surfaceMaster = nullptr;     
   FaceElementSubRegion const* m_surfaceSlave = nullptr;
 
-
-   std::map< MortarSide, std::map< ElementShape, array1d< localIndex > > > m_faceTypeToElementList;
-
-   // holds pointers to master and slave MeshLevel and SurfaceElementRegion
-   std::map< MortarSide, MortarSurface > m_mortarSide;
-
-   // given a certain mortar pair of shapes, holds the id of the element connected by each mortar
-   // subtriangle and the corresponding jacobian determinant. The kernel will use these lists
-   std::map< std::pair< ElementShape, ElementShape >, arrayView2d< localIndex > > m_triCells;
-   std::map< std::pair< ElementShape, ElementShape >, arrayView1d< real64 > >   m_triCellsDet;
-
-   // hold local coordinates of gauss points of each triangle subcell on each mortar side
-   std::map< MortarSide, std::map< std::pair< ElementShape, ElementShape >, arrayView3d< real64 > > > m_gpLocalCoords;
+  std::map< MortarSide, std::map< ElementShape, array1d< localIndex > > > m_faceTypeToElementList;
+  // holds pointers to master and slave MeshLevel and SurfaceElementRegion
+  std::map< MortarSide, MortarSurface > m_mortarSide;
+  // given a certain mortar pair of shapes, holds the id of the element connected by each mortar
+  // subtriangle and the corresponding jacobian determinant. The kernel will use these lists
+  std::map< std::pair< ElementShape, ElementShape >, arrayView2d< localIndex > > m_triCells;
+  std::map< std::pair< ElementShape, ElementShape >, arrayView1d< real64 > >   m_triCellsDet;
+  // hold local coordinates of gauss points of each triangle subcell on each mortar side
+  std::map< MortarSide, std::map< std::pair< ElementShape, ElementShape >, arrayView3d< real64 > > > m_gpLocalCoords;
 
   // coordinates of gauss points ready to go
   constexpr static localIndex nGPtri = feTriangleCell::numQuadraturePoints;
@@ -309,36 +307,40 @@ private:
   // map id of master elements to id of connected master elements
   //ArrayOfArrays< localIndex > m_connectivityMapMaster;  
 
-  //void addCouplingNumNonzeros( DofManager & dofManager,
-  //                            arrayView1d< localIndex > const & rowLengths ) const;
+  void addBubbleCouplingNumNonzeros( DofManager & dofManager,
+                                     arrayView1d< localIndex > const & rowLengths ) const;
 
- 
-  //void addCouplingSparsityPattern( DofManager const & dofManager,
-  //                                 SparsityPatternView< globalIndex > const & pattern ) const;
+  void addMortarCouplingNumNonzeros( DofManager & dofManager,
+                                     ElementShape const & slaveShape,
+                                     ElementShape const & masterShape,
+                                     connectivityMapType const & connectivityMap,
+                                     arrayView1d< localIndex > const & rowLengths ) const;
 
-  /// Finite element type to face element index map
-  FaceTypeMap m_faceTypesToFaceElementsMaster;
-  FaceTypeMap m_faceTypesToFaceElementsSlave;
+  void addBubbleCouplingSparsityPattern( DofManager const & dofManager,
+                                         SparsityPatternView< globalIndex > const & pattern ) const;
+
+  void addMortarCouplingSparsityPattern( DofManager & dofManager,
+                                         ElementShape const & slaveShape,
+                                         ElementShape const & masterShape,
+                                         connectivityMapType const & connectivityMap,
+                                         SparsityPatternView< globalIndex > const & pattern ) const;
+
 
   string m_slaveName;
-
   string m_masterName;
-
-  /// Finite element type to finite element object map
-  //std::map< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
 
   std::map< ElementShape, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToMortarFiniteElements;
 
   /// Map gauss point list to master basis functions values
-  std::map< string, ArrayOfArrays< real64 > > m_gpToMasterBasis; 
+  //std::map< string, ArrayOfArrays< real64 > > m_gpToMasterBasis; 
 
   
 
   /// Map gauss point list to corresponding master element id 
-  std::map< string, array2d< localIndex > > m_gpToMasterId; 
+  //std::map< string, array2d< localIndex > > m_gpToMasterId; 
 
   /// List of all existing pairs of slave-master elements (derived from m_gpToMasterId)
-  std::map< string, array2d< localIndex > > m_mortarPairs;
+  //std::map< string, array2d< localIndex > > m_mortarPairs;
 
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {
@@ -350,11 +352,10 @@ private:
   };
 
 
-  void computeMortarInterpolation ( 
-    std::map< std::pair< ElementShape, ElementShape >, ArrayOfArrays < localIndex > > connectivityMap);
+  void computeMortarInterpolation ( connectivityMapType & connectivityMap);
 
   template< ElementShape slaveShape, ElementShape masterShape >
-  void computeMortarInterpolation( ArrayOfArrays<localIndex> const & connectivityMap );
+  void computeMortarInterpolation( ArrayOfArrays<localIndex> const & connections );
 
   template< ElementShape slaveShape, ElementShape masterShape >
   localIndex processMortarPair( localIndex const slaveFaceId, 
@@ -410,7 +411,7 @@ private:
 
   real64 computeRBFmatrix( arrayView2d<real64> realCoordsInterpolation, arrayView2d<real64> RBFmatrix, localIndex nIntPts);
 
-  void getConnectivityMap( std::map< std::pair< ElementShape, ElementShape >, ArrayOfArrays < localIndex > > & connectivityMap );
+  void getConnectivityMap( connectivityMapType & connectivityMap );
 
   void getMortarConnections( ElementShape slaveShape, ElementShape masterShape, ArrayOfArrays<localIndex> & connections);
 
@@ -424,8 +425,6 @@ private:
                          std::unique_ptr<TreeNodeMortar> const & nodeSlave);
 
   
-
-
   template<ElementShape S>
   decltype(auto) getFE() 
   {
