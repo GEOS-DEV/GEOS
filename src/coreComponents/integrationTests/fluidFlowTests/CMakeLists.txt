@@ -2,7 +2,6 @@
 set( gtest_geosx_tests
      testThermalCompMultiphaseFlow.cpp
      testThermalSinglePhaseFlow.cpp
-     testFlowStatistics.cpp
      testTransmissibility.cpp
      testImmiscibleMultiphaseFlow.cpp )
 

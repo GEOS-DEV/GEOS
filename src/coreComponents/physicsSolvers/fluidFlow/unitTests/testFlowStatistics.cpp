@@ -13,8 +13,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
-#include "unitTests/testingUtilities/TestingTasks.hpp"
+#include "integrationTests/fluidFlowTests/testCompFlowUtils.hpp"
+#include "integrationTests/testingUtilities/TestingTasks.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
