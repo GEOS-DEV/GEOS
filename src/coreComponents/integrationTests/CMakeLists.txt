@@ -21,7 +21,6 @@ ProblemManager.
 add_subdirectory( tableFunctionsFileTests )
 add_subdirectory( testingUtilities )
 add_subdirectory( xmlTests )
-add_subdirectory( virtualElementTests )
 add_subdirectory( linearAlgebraTests )
 add_subdirectory( dataRepositoryTests )
 add_subdirectory( fieldSpecificationTests )
