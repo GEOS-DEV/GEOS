@@ -257,10 +257,6 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
   {
     setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
     setSystemSetupTimestamp( meshModificationTimestamp );
-
-    std::ostringstream oss;
-    m_dofManager.printFieldInfo( oss );
-    GEOS_LOG_LEVEL( logInfo::Fields, oss.str())
   }
 
   {
@@ -1203,6 +1199,15 @@ void PhysicsSolverBase::setupSystem( DomainPartition & domain,
 
   solution.setName( this->getName() + "/solution" );
   solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+}
+
+void PhysicsSolverBase::setSystemSetupTimestamp( Timestamp timestamp )
+{
+  m_systemSetupTimestamp = timestamp;
+
+  std::ostringstream oss;
+  m_dofManager.printFieldInfo( oss );
+  GEOS_LOG_LEVEL( logInfo::Fields, oss.str());
 }
 
 std::unique_ptr< PreconditionerBase< LAInterface > >
