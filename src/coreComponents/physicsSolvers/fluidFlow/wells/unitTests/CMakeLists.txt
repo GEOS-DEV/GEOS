@@ -3,7 +3,7 @@
 set( gtest_geosx_tests
      testWellEnums.cpp )
 
-set( dependencyList gtest fluidFlowSolvers physicsSolvers ${parallelDeps} )
+set( dependencyList gtest physicsSolvers ${parallelDeps} )
 
 foreach(test ${gtest_geosx_tests})
   get_filename_component( test_name ${test} NAME_WE )
