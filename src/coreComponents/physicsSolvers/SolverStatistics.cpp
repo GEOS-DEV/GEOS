@@ -196,7 +196,6 @@ void IterationsStatistics::outputStatistics() const
     iterationDataLog.addRow( "Discarded linear iterations", m_numDiscardedLinearIterations );
 
   GEOS_LOG_RANK_0( statsFormatter.toString( iterationDataLog ));
-  GEOS_LOG_RANK_0( "" ); // blank line for readability
 }
 
 ConvergenceStatistics::ConvergenceStatistics():
