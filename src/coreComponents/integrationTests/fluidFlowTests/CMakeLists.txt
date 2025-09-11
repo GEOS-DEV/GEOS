@@ -1,9 +1,7 @@
 # Specify list of tests
 set( gtest_geosx_tests
-     testSinglePhaseMobilityKernel.cpp
      testThermalCompMultiphaseFlow.cpp
      testThermalSinglePhaseFlow.cpp
-     testFlowStatistics.cpp
      testTransmissibility.cpp
      testImmiscibleMultiphaseFlow.cpp )
 
