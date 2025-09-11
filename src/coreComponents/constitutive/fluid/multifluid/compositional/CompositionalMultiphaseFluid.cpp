@@ -216,7 +216,7 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::resizeFields
   m_kValues.resize( size, numPts, numFluidPhases()-1, numFluidComponents() );
 
   // Zero k-Values to force re-initialisation
-  m_kValues.zero();  
+  m_kValues.zero();
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
