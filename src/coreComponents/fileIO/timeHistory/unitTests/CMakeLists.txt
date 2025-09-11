@@ -2,7 +2,7 @@
 set( gtest_geosx_tests
      testHDFFile.cpp )
 
-set( dependencyList ${parallelDeps} fileIO HDF5::HDF5 gtest )
+set( dependencyList ${parallelDeps} fileIO mainInterface HDF5::HDF5 gtest )
 
 # Add gtest C++ based tests
 foreach(test ${gtest_geosx_tests})
