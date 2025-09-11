@@ -1,8 +1,9 @@
 # Specify list of tests
 set( gtest_geosx_tests
-     testHDFFile.cpp )
+     testHDFFile.cpp
+     testHDFParallelFile.cpp )
 
-set( dependencyList ${parallelDeps} fileIO mainInterface HDF5::HDF5 gtest )
+set( dependencyList ${parallelDeps} fileIO HDF5::HDF5 gtest )
 
 # Add gtest C++ based tests
 foreach(test ${gtest_geosx_tests})
@@ -12,7 +13,13 @@ foreach(test ${gtest_geosx_tests})
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                         DEPENDS_ON ${dependencyList} )
 
-    geos_add_test( NAME ${test_name}
-                   COMMAND ${test_name} )
-
+    # Run parallel test with 2 ranks if MPI enabled
+    if( ENABLE_MPI AND test_name STREQUAL "testHDFParallelFile" )
+        geos_add_test( NAME ${test_name}
+                       COMMAND ${test_name}
+                       NUM_MPI_TASKS 2 )
+    else()
+        geos_add_test( NAME ${test_name}
+                       COMMAND ${test_name} )
+    endif()
 endforeach()
