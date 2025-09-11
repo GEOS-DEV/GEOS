@@ -26,9 +26,9 @@ namespace geos
 namespace graph
 {
 
-std::pair< std::vector< camp::idx_t >, std::vector< camp::idx_t > >
-scatterGraphData( const std::vector< camp::idx_t > & xadj,
-                  const std::vector< camp::idx_t > & adjncy,
+std::pair< std::vector< size_t >, std::vector< size_t > >
+scatterGraphData( const std::vector< size_t > & xadj,
+                  const std::vector< size_t > & adjncy,
                   MPI_Comm comm )
 {
   int const rank = MpiWrapper::commRank( comm );
@@ -64,13 +64,13 @@ scatterGraphData( const std::vector< camp::idx_t > & xadj,
     }
   }
 
-  std::vector< camp::idx_t > localXadj( 2 ); // Each rank will have two elements in localXadj: xadj[i] and xadj[i+1]
+  std::vector< size_t > localXadj( 2 ); // Each rank will have two elements in localXadj: xadj[i] and xadj[i+1]
   MpiWrapper::scatter( xadjToScatter.data(), 2, localXadj.data(), 2, 0, comm );
 
   int localSize;
   MpiWrapper::scatter( sendCounts.data(), 1, &localSize, 1, 0, comm );
 
-  std::vector< camp::idx_t > localAdjncy( localSize );
+  std::vector< size_t > localAdjncy( localSize );
   MpiWrapper::scatterv( adjncy.data(), sendCounts.data(), displacements.data(),
                         localAdjncy.data(), localSize, 0, comm );
 
@@ -78,9 +78,9 @@ scatterGraphData( const std::vector< camp::idx_t > & xadj,
 }
 
 
-std::pair< std::vector< camp::idx_t >, std::vector< camp::idx_t > >
-gatherGraphData( const std::vector< camp::idx_t > & localXadj,
-                 const std::vector< camp::idx_t > & localAdjncy,
+std::pair< std::vector< size_t >, std::vector< size_t > >
+gatherGraphData( const std::vector< size_t > & localXadj,
+                 const std::vector< size_t > & localAdjncy,
                  MPI_Comm comm )
 {
   int const rank = MpiWrapper::commRank( comm );
@@ -105,7 +105,7 @@ gatherGraphData( const std::vector< camp::idx_t > & localXadj,
   }
 
   // Resize the xadj vector on rank 0 to hold the gathered data
-  std::vector< camp::idx_t > xadj;
+  std::vector< size_t > xadj;
   if( rank == 0 )
   {
     int totalSize = std::accumulate( recvCounts.begin(), recvCounts.end(), 0 );
@@ -133,7 +133,7 @@ gatherGraphData( const std::vector< camp::idx_t > & localXadj,
   }
 
   // Resize the adjncy vector on rank 0 to hold the gathered data
-  std::vector< camp::idx_t > adjncy;
+  std::vector< size_t > adjncy;
   if( rank == 0 )
   {
     int totalSize = std::accumulate( recvCounts.begin(), recvCounts.end(), 0 );
@@ -150,7 +150,7 @@ gatherGraphData( const std::vector< camp::idx_t > & localXadj,
 }
 
 
-std::vector< camp::idx_t > createXadjFromAdjncy( const std::vector< camp::idx_t > & localAdjncy, MPI_Comm comm )
+std::vector< size_t > createXadjFromAdjncy( const std::vector< size_t > & localAdjncy, MPI_Comm comm )
 {
   int const size = MpiWrapper::commSize( comm );
 
@@ -160,11 +160,11 @@ std::vector< camp::idx_t > createXadjFromAdjncy( const std::vector< camp::idx_t 
   MpiWrapper::allgather( &localAdjncySize, 1, adjncyCounts.data(), 1, comm );
 
   // Calculate xadj
-  std::vector< camp::idx_t > xadj( size + 1, 0 );
+  std::vector< size_t > xadj( size + 1, 0 );
   std::partial_sum( adjncyCounts.begin(), adjncyCounts.end(), xadj.begin() + 1 );
 
   // Prepare data to scatter
-  std::vector< camp::idx_t > xadjToScatter( 2 * size );
+  std::vector< size_t > xadjToScatter( 2 * size );
   for( int i = 0; i < size; ++i )
   {
     xadjToScatter[2 * i] = xadj[i];
@@ -172,14 +172,14 @@ std::vector< camp::idx_t > createXadjFromAdjncy( const std::vector< camp::idx_t 
   }
 
   // Scatter the xadj data
-  std::vector< camp::idx_t > localXadj( 2 );
+  std::vector< size_t > localXadj( 2 );
   MpiWrapper::scatter( xadjToScatter.data(), 2, localXadj.data(), 2, 0, comm );
 
   return localXadj;
 }
 
 
-std::vector< int > createVertexGlobalID( const std::vector< camp::idx_t > & localXadj, MPI_Comm comm )
+std::vector< int > createVertexGlobalID( const std::vector< size_t > & localXadj, MPI_Comm comm )
 {
   int const rank = MpiWrapper::commRank( comm );
   int const size = MpiWrapper::commSize( comm );

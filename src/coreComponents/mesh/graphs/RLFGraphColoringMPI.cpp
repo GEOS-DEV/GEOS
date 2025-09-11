@@ -35,16 +35,16 @@ RLFGraphColoringMPI::~RLFGraphColoringMPI()
 {}
 
 
-int RLFGraphColoringMPI::colorGraph( const std::vector< camp::idx_t > & localAdjncy )
+int RLFGraphColoringMPI::colorGraph( const std::vector< size_t > & localAdjncy )
 {
-  std::vector< camp::idx_t > localXadj = createXadjFromAdjncy( localAdjncy, m_comm );
+  std::vector< size_t > localXadj = createXadjFromAdjncy( localAdjncy, m_comm );
   std::vector< int > localColors = RLFGraphColoringMPI::colorGraph( localXadj, localAdjncy );
   return localColors[0];
 }
 
 
-std::vector< int > RLFGraphColoringMPI::colorGraph( const std::vector< camp::idx_t > & localXadj,
-                                                    const std::vector< camp::idx_t > & localAdjncy )
+std::vector< int > RLFGraphColoringMPI::colorGraph( const std::vector< size_t > & localXadj,
+                                                    const std::vector< size_t > & localAdjncy )
 {
   int const rank = MpiWrapper::commRank( m_comm );
   int const size = MpiWrapper::commSize( m_comm );
@@ -99,7 +99,7 @@ size_t RLFGraphColoringMPI::getNumberOfColors( const std::vector< int > & colors
 }
 
 
-bool RLFGraphColoringMPI::isColoringValid( const std::vector< camp::idx_t > & adjncy, const int color ) const
+bool RLFGraphColoringMPI::isColoringValid( const std::vector< size_t > & adjncy, const int color ) const
 {
   return GraphColoringBase::isColoringValid( adjncy, color, m_comm );
 }

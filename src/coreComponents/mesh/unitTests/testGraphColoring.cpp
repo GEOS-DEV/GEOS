@@ -34,7 +34,7 @@ TEST( GraphColoringTest, CountPositiveDistinctColors )
 
 TEST( GraphColoringTest, CartesianDecomposition3D6 )
 {
-  idx_t const nx = 3, ny = 4, nz = 3;
+  size_t const nx = 3, ny = 4, nz = 3;
   auto [xadj, adjncy] = generateGraphCartPartitionning3D6( nx, ny, nz );
   geos::graph::RLFGraphColoring graphColoring;
   std::vector< int > colors = graphColoring.colorGraph( xadj, adjncy );
@@ -46,7 +46,7 @@ TEST( GraphColoringTest, CartesianDecomposition3D6 )
 
 TEST( GraphColoringTest, CartesianDecomposition3D26 )
 {
-  idx_t const nx = 3, ny = 4, nz = 3;
+  size_t const nx = 3, ny = 4, nz = 3;
   auto [xadj, adjncy] = generateGraphCartPartitionning3D26( nx, ny, nz );
   geos::graph::RLFGraphColoring graphColoring;
   std::vector< int > colors = graphColoring.colorGraph( xadj, adjncy );
@@ -73,8 +73,8 @@ TEST( GraphColoringTest, RandomGraphs )
 TEST( GraphColoringTest, InvalidColoring )
 {
   // Create a simple graph with 4 nodes and 3 edges
-  std::vector< idx_t > xadj = {0, 1, 2, 3, 3};
-  std::vector< idx_t > adjncy = {1, 0, 2, 1};
+  std::vector< size_t > xadj = {0, 1, 2, 3, 3};
+  std::vector< size_t > adjncy = {1, 0, 2, 1};
 
   // Intentionally create an invalid coloring where two adjacent nodes have the same color
   std::vector< int > colors = {0, 0, 1, 1};

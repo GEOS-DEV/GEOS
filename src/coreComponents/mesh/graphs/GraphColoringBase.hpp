@@ -54,14 +54,14 @@ public:
    * @param adjncy Adjacency list containing neighbors of each node.
    * @return A vector of colors assigned to each node.
    */
-  virtual std::vector< int > colorGraph( const std::vector< camp::idx_t > & xadj, const std::vector< camp::idx_t > & adjncy ) = 0;
+  virtual std::vector< int > colorGraph( const std::vector< size_t > & xadj, const std::vector< size_t > & adjncy ) = 0;
 
   /**
    * @brief Pure virtual method to color a graph assuming one node per rank.
    * @param adjncy Adjacency list containing neighbors of each node.
    * @return Color of the node.
    */
-  virtual int  colorGraph( const std::vector< camp::idx_t > & adjncy ) = 0;
+  virtual int  colorGraph( const std::vector< size_t > & adjncy ) = 0;
 
 
   /**
@@ -81,7 +81,7 @@ public:
  * @param coloring A vector where the index represents the node and the value represents the assigned color.*
  * @return True if the coloring is valid, false otherwise.
  */
-  static bool isColoringValid( const std::vector< camp::idx_t > & xadj, const std::vector< camp::idx_t > & adjncy, const std::vector< int > & coloring );
+  static bool isColoringValid( const std::vector< size_t > & xadj, const std::vector< size_t > & adjncy, const std::vector< int > & coloring );
 
   /**
    * @brief Checks the validity of the graph coloring assuming one node per rank.
@@ -92,7 +92,7 @@ public:
    *
    * @return True if the coloring is valid, false otherwise.
    */
-  static bool isColoringValid( const std::vector< camp::idx_t > & adjncy, const int color, MPI_Comm comm );
+  static bool isColoringValid( const std::vector< size_t > & adjncy, const int color, MPI_Comm comm );
 
 /**
  * @brief Counts the number of distinct colors.

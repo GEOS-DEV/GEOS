@@ -47,7 +47,7 @@ protected:
 };
 
 
-void runColoringTest( GraphColoringBase & graphColoring, const std::vector< camp::idx_t > & xadj, const std::vector< camp::idx_t > & adjncy, int expectedNumberOfColors )
+void runColoringTest( GraphColoringBase & graphColoring, const std::vector< size_t > & xadj, const std::vector< size_t > & adjncy, int expectedNumberOfColors )
 {
   auto [localXadj, localAdjncy] = scatterGraphData( xadj, adjncy, MPI_COMM_GEOS );
   int color = graphColoring.colorGraph( localAdjncy );
@@ -67,12 +67,12 @@ TEST_F( GraphColoringTest, CartesianDecomposition3D6 )
 #endif
   RLFGraphColoringMPI rlfColoringMPI;
 
-  std::vector< camp::idx_t > xadj;
-  std::vector< camp::idx_t > adjncy;
+  std::vector< size_t > xadj;
+  std::vector< size_t > adjncy;
 
   if( rank == 0 )
   {
-    idx_t const nx = 4, ny = 2, nz = 1;
+    size_t const nx = 4, ny = 2, nz = 1;
     std::tie( xadj, adjncy ) = generateGraphCartPartitionning3D6( nx, ny, nz );
   }
 
@@ -90,12 +90,12 @@ TEST_F( GraphColoringTest, CartesianDecomposition3D26 )
 #endif
   RLFGraphColoringMPI rlfColoringMPI;
 
-  std::vector< camp::idx_t > xadj;
-  std::vector< camp::idx_t > adjncy;
+  std::vector< size_t > xadj;
+  std::vector< size_t > adjncy;
 
   if( rank == 0 )
   {
-    idx_t const nx = 2, ny = 2, nz = 2;
+    size_t const nx = 2, ny = 2, nz = 2;
     std::tie( xadj, adjncy ) = generateGraphCartPartitionning3D26( nx, ny, nz );
   }
 
@@ -116,8 +116,8 @@ TEST_F( GraphColoringTest, RandomGraphs )
   size_t const iterations = 10;
   for( size_t i = 0; i < iterations; ++i )
   {
-    std::vector< camp::idx_t > xadj;
-    std::vector< camp::idx_t > adjncy;
+    std::vector< size_t > xadj;
+    std::vector< size_t > adjncy;
 
     if( rank == 0 )
     {

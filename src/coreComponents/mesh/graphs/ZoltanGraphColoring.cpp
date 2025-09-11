@@ -58,16 +58,16 @@ ZoltanGraphColoring::~ZoltanGraphColoring()
 }
 
 
-int ZoltanGraphColoring::colorGraph( const std::vector< camp::idx_t > & localAdjncy )
+int ZoltanGraphColoring::colorGraph( const std::vector< size_t > & localAdjncy )
 {
-  std::vector< camp::idx_t > localXadj = createXadjFromAdjncy( localAdjncy, m_comm );
+  std::vector< size_t > localXadj = createXadjFromAdjncy( localAdjncy, m_comm );
   std::vector< int > colors = colorGraph( localXadj, localAdjncy );
   return colors[0];
 }
 
 
-std::vector< int > ZoltanGraphColoring::colorGraph( const std::vector< camp::idx_t > & xadj,
-                                                    const std::vector< camp::idx_t > & adjncy )
+std::vector< int > ZoltanGraphColoring::colorGraph( const std::vector< size_t > & xadj,
+                                                    const std::vector< size_t > & adjncy )
 {
   int const rank = MpiWrapper::commRank( m_comm );
 
@@ -204,7 +204,7 @@ size_t ZoltanGraphColoring::getNumberOfColors( const std::vector< int > & colors
 }
 
 
-bool ZoltanGraphColoring::isColoringValid( const std::vector< camp::idx_t > & adjncy, const int color ) const
+bool ZoltanGraphColoring::isColoringValid( const std::vector< size_t > & adjncy, const int color ) const
 {
   return GraphColoringBase::isColoringValid( adjncy, color, m_comm );
 }

@@ -30,8 +30,6 @@ namespace geos
 namespace graph
 {
 
-using camp::idx_t;
-
 /**
  * @brief Distributes graph data and returns local adjacency lists for each rank.
  *
@@ -44,9 +42,9 @@ using camp::idx_t;
  * @param comm The MPI communicator (default is MPI_COMM_GEOS).
  * @return A pair of vectors containing the local adjacency list offsets and neighbors for each rank.
  */
-std::pair< std::vector< camp::idx_t >, std::vector< camp::idx_t > >
-scatterGraphData( const std::vector< camp::idx_t > & xadj,
-                  const std::vector< camp::idx_t > & adjncy,
+std::pair< std::vector< size_t >, std::vector< size_t > >
+scatterGraphData( const std::vector< size_t > & xadj,
+                  const std::vector< size_t > & adjncy,
                   MPI_Comm comm = MPI_COMM_GEOS );
 
 
@@ -62,9 +60,9 @@ scatterGraphData( const std::vector< camp::idx_t > & xadj,
  * @return A pair of vectors: global xadj and adjncy.
  */
 
-std::pair< std::vector< camp::idx_t >, std::vector< camp::idx_t > >
-gatherGraphData( const std::vector< camp::idx_t > & localXadj,
-                 const std::vector< camp::idx_t > & localAdjncy,
+std::pair< std::vector< size_t >, std::vector< size_t > >
+gatherGraphData( const std::vector< size_t > & localXadj,
+                 const std::vector< size_t > & localAdjncy,
                  MPI_Comm comm= MPI_COMM_GEOS );
 
 
@@ -78,7 +76,7 @@ gatherGraphData( const std::vector< camp::idx_t > & localXadj,
  * @param comm The MPI communicator.
  * @return The xadj array.
  */
-std::vector< camp::idx_t > createXadjFromAdjncy( const std::vector< camp::idx_t > & localAdjncy, MPI_Comm comm );
+std::vector< size_t > createXadjFromAdjncy( const std::vector< size_t > & localAdjncy, MPI_Comm comm );
 
 
 /**
@@ -90,7 +88,7 @@ std::vector< camp::idx_t > createXadjFromAdjncy( const std::vector< camp::idx_t 
  * @param comm MPI communicator.
  * @return A vector of global vertex IDs.
  */
-std::vector< int > createVertexGlobalID( const std::vector< camp::idx_t > & localXadj, MPI_Comm comm );
+std::vector< int > createVertexGlobalID( const std::vector< size_t > & localXadj, MPI_Comm comm );
 
 } // namespace geos
 } // namespace graph

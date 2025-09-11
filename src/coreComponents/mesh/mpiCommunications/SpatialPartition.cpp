@@ -118,9 +118,12 @@ int SpatialPartition::getColor()
   else
   {
     // External partitioner such as ParMetis or PTScotch (for VTK external mesh)
-    std::vector< camp::idx_t > adjncy;
+    std::vector< size_t > adjncy;
     adjncy.reserve( m_metisNeighborList.size());
-    std::copy( m_metisNeighborList.begin(), m_metisNeighborList.end(), std::back_inserter( adjncy ));
+    for( const auto & idx : m_metisNeighborList )
+    {
+      adjncy.push_back( static_cast< size_t >(idx));
+    }
 #ifdef GEOS_USE_TRILINOS
     geos::graph::ZoltanGraphColoring coloring;
 #else
