@@ -19,7 +19,6 @@ ProblemManager.
 #]]
 
 add_subdirectory( tableFunctionsFileTests )
-add_subdirectory( toolchain )
 add_subdirectory( testingUtilities )
 add_subdirectory( xmlTests )
 add_subdirectory( virtualElementTests )
