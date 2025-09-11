@@ -187,11 +187,13 @@ void IterationsStatistics::outputStatistics() const
   if( m_numSuccessfulConfigIterations > 0 ) // only print when solver did any configuration iterations
     iterationDataLog.addRow( "Successful configuration iterations", m_numSuccessfulConfigIterations );
   iterationDataLog.addRow( "Successful nonlinear iterations", m_numSuccessfulNonlinearIterations );
-  iterationDataLog.addRow( "Successful linear iterations", m_numSuccessfulLinearIterations );
+  if( m_numSuccessfulLinearIterations > 0 ) // only print when solver did any linear iterations
+    iterationDataLog.addRow( "Successful linear iterations", m_numSuccessfulLinearIterations );
   if( m_numSuccessfulConfigIterations > 0 ) // only print when solver did any configuration iterations
     iterationDataLog.addRow( "Discarded configuration iterations", m_numDiscardedConfigIterations );
   iterationDataLog.addRow( "Discarded nonlinear iterations", m_numDiscardedNonlinearIterations );
-  iterationDataLog.addRow( "Discarded linear iterations", m_numDiscardedLinearIterations );
+  if( m_numSuccessfulLinearIterations > 0 ) // only print when solver did any linear iterations
+    iterationDataLog.addRow( "Discarded linear iterations", m_numDiscardedLinearIterations );
 
   GEOS_LOG_RANK_0( statsFormatter.toString( iterationDataLog ));
   GEOS_LOG_RANK_0( "" ); // blank line for readability
