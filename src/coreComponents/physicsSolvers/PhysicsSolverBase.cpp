@@ -127,11 +127,11 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 void PhysicsSolverBase::postInputInitialization()
 {
   m_solverStatistics.setOutputFilesName( getName() );
-  m_solverStatistics.makeDir( m_writeStatisticsCSV >= 2 );
+  m_solverStatistics.makeDir( m_writeStatisticsCSV >= 1 );
 
   getIterationStats().setTableName( getName() );
-  getIterationStats().setLogOutputState( m_writeStatisticsCSV >= 1 );
-  getIterationStats().setCSVOutputState( m_writeStatisticsCSV >= 2 );
+  getIterationStats().setLogOutputState( true );
+  getIterationStats().setCSVOutputState( m_writeStatisticsCSV >= 1 );
   getConvergenceStats().setCSVOutputState( m_writeStatisticsCSV >= 2 );
 }
 
