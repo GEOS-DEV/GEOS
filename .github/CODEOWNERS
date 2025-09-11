@@ -71,7 +71,7 @@
 /src/coreComponents/linearAlgebra                     @rrsettgast @paveltomin @CusiniM @castelletto1 @victorapm   
 /src/coreComponents/mainInterface                     @rrsettgast @paveltomin          @corbett5 @wrtobin 
 /src/coreComponents/math                              @rrsettgast @paveltomin          @corbett5 @wrtobin @OmarDuran
-/src/coreComponents/mesh                              @rrsettgast @paveltomin @CusiniM  @wrtobin
+/src/coreComponents/mesh                              @rrsettgast @paveltomin @CusiniM  @wrtobin @OmarDuran
 /src/coreComponents/physicsSolvers                    @rrsettgast @paveltomin @CusiniM @OmarDuran
 /src/coreComponents/physicsSolvers/contact            @rrsettgast @paveltomin @CusiniM @matteofrigo5 @Guotong-Ren
 /src/coreComponents/physicsSolvers/fluidFlow          @rrsettgast @paveltomin @CusiniM @tjb-ltk @dkachuma @rasimHZ @OmarDuran
