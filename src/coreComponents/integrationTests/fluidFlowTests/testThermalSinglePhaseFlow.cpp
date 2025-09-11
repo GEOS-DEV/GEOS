@@ -22,7 +22,7 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-#include "unitTests/fluidFlowTests/testSingleFlowUtils.hpp"
+#include "integrationTests/fluidFlowTests/testSingleFlowUtils.hpp"
 
 using namespace geos;
 using namespace geos::dataRepository;

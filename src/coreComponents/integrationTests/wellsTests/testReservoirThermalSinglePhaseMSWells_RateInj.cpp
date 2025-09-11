@@ -14,7 +14,7 @@
  */
 
 
-#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
+#include "integrationTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 #include "common/DataTypes.hpp"
 #include "mainInterface/initialization.hpp"

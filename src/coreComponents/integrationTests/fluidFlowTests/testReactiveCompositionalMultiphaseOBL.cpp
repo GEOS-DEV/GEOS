@@ -20,7 +20,7 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBL.hpp"
-#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
+#include "integrationTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 
 using namespace geos;

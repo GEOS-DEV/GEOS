@@ -17,7 +17,7 @@
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "codingUtilities/UnitTestUtilities.hpp"
-#include "unitTests/fluidFlowTests/testSingleFlowUtils.hpp"
+#include "integrationTests/fluidFlowTests/testSingleFlowUtils.hpp"
 #include "physicsSolvers/fluidFlow/StencilDataCollection.hpp"
 #include "mainInterface/ProblemManager.hpp"
 

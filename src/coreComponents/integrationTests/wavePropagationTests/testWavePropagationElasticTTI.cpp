@@ -14,7 +14,7 @@
  */
 
 // using some utility classes from the following unit test
-#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
+#include "integrationTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 #include "common/DataTypes.hpp"
 #include "mainInterface/initialization.hpp"

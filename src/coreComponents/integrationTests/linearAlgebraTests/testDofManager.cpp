@@ -27,7 +27,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mainInterface/GeosxState.hpp"
-#include "unitTests/linearAlgebraTests/testDofManagerUtils.hpp"
+#include "integrationTests/linearAlgebraTests/testDofManagerUtils.hpp"
 
 #include "gtest/gtest.h"
 
