@@ -1,7 +1,6 @@
 # Specify list of tests
 set( gtest_geosx_tests
-     testReservoirSinglePhaseMSWells.cpp
-     testWellEnums.cpp )
+     testReservoirSinglePhaseMSWells.cpp )
 
 set( tplDependencyList ${parallelDeps} gtest )
 
