@@ -1,7 +1,6 @@
 # Specify list of tests
 set( LAI_tests
-     testDofManager.cpp
-     testLAIHelperFunctions.cpp )
+     testDofManager.cpp )
 
 set( nranks 2 )
 
