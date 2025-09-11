@@ -65,7 +65,7 @@ SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & nam
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the stabilization to use in the lagrangian contact solver" );
 
-  registerWrapper( viewKeyStruct::stabilizationScalingCoefficientString(), &m_stabilitzationScalingCoefficient ).
+  registerWrapper( viewKeyStruct::stabilizationScalingCoefficientString(), &m_stabilizationScalingCoefficient ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0 ).
     setDescription( "It be used to increase the scale of the stabilization entries. A value < 1.0 results in larger entries in the stabilization matrix." );
@@ -74,6 +74,11 @@ SolidMechanicsLagrangeContact::SolidMechanicsLagrangeContact( const string & nam
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to enable local acceleration for yield (to accelerate configuration loop convergence)." );
+
+  registerWrapper( viewKeyStruct::localYieldAccelerationBufferString(), &m_localYieldAccelerationBuffer ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0.1 ).
+    setDescription( "Buffer parameter for local yield acceleration." );
 }
 
 void SolidMechanicsLagrangeContact::postInputInitialization()
@@ -1952,7 +1957,7 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
             // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
             for( localIndex j = 0; j < 3; ++j )
             {
-              stiffDiagApprox[ kf ][ i ][ j ] = m_stabilitzationScalingCoefficient * E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+              stiffDiagApprox[ kf ][ i ][ j ] = m_stabilizationScalingCoefficient * E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 2.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
             }
           }
         }
@@ -2369,7 +2374,8 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
   // and total area of fracture elements
   totalArea = MpiWrapper::sum( totalArea );
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "  {}: changed area {} out of {}", getName(), changedArea, totalArea ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics,
+                         GEOS_FMT( "  {}: changed area {} out of {} ({}%)", getName(), changedArea, totalArea, (changedArea / totalArea * 100.0) ) );
 
   // Assume converged if changed area is below certain fraction of total area
   return changedArea <= m_nonlinearSolverParameters.m_configurationTolerance * totalArea;
@@ -2406,9 +2412,9 @@ void SolidMechanicsLagrangeContact::tryLocalYieldAcceleration( FaceElementSubReg
   else
   {
     // only apply acceleration if within a fraction of the limitTau
-    real64 const acceleration_buffer = (limitTau - currentTau) / limitTau;
+    real64 const accelerationBuffer = (limitTau - currentTau) / limitTau;
 
-    if( acceleration_buffer > 0.1 / (configurationLoopIter - 1) )
+    if( accelerationBuffer > m_localYieldAccelerationBuffer / (configurationLoopIter - 1) )
     {
       // do not apply acceleration, just update previous values
       x0[kfe] = x1_tilde[kfe];
