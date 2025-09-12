@@ -13,7 +13,7 @@
       discretization="immiscibleHybridMimetic"
       targetRegions="{ Domain }"
       logLevel="2"
-      dependentPhaseIndex="0">
+      dependentPhaseIndex="1">
       <NonlinearSolverParameters newtonTol="1.0e-2" newtonMaxIter="3"/>
       <LinearSolverParameters directParallel="0"/>
     </ImmiscibleMultiphaseFlowMFD>
@@ -45,9 +45,9 @@
       xMax="{ 3.01, 1.01, 1.01 }"/>
   </Geometry>
 
-  <Events maxTime="86400">
-    <PeriodicEvent name="outputs" timeFrequency="86400" target="/Outputs/vtkOutput"/>
-    <PeriodicEvent name="solverApps" forceDt="86400" target="/Solvers/FlowSolverMFD"/>
+  <Events maxTime="1">
+    <PeriodicEvent name="outputs" timeFrequency="1" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent name="solverApps" forceDt="1" target="/Solvers/FlowSolverMFD"/>
   </Events>
 
   <NumericalMethods>
@@ -94,7 +94,7 @@
 
     <NullModel name="nullSolid"/>
 
-    <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.05" referencePressure="0" compressibility="1.0e-9"/>
+    <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.0" referencePressure="0" compressibility="0.0"/>
 
     <ConstantPermeability name="rockPerm" permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }"/>
 
