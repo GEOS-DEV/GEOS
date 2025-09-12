@@ -14,7 +14,7 @@
       targetRegions="{ Domain }"
       logLevel="2"
       dependentPhaseIndex="0">
-      <NonlinearSolverParameters newtonTol="1.0e-2" newtonMaxIter="20"/>
+      <NonlinearSolverParameters newtonTol="1.0e-2" newtonMaxIter="3"/>
       <LinearSolverParameters directParallel="0"/>
     </ImmiscibleMultiphaseFlowMFD>
   </Solvers>
@@ -36,6 +36,12 @@
       xMax="{ 1.01, 1.01, 1.01 }"/>
     <Box name="sink"   
       xMin="{ 1.99, -0.01, -0.01 }" 
+      xMax="{ 3.01, 1.01, 1.01 }"/>
+    <Box name="west_BC"   
+      xMin="{ -0.01, -0.01, -0.01 }" 
+      xMax="{ +0.01, 1.01, 1.01 }"/>      
+    <Box name="east_BC" 
+      xMin="{ 2.99, -0.01, -0.01 }" 
       xMax="{ 3.01, 1.01, 1.01 }"/>
   </Geometry>
 
@@ -109,15 +115,15 @@
 
     <!-- Initial saturations (phaseVolumeFraction component index: 0=water, 1=gas) -->
     <FieldSpecification name="initSatWater" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="0.999"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="0.5"/>
     <FieldSpecification name="initSatGas" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.001"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.5"/>
 
     <!-- Pressure BC regions -->
-    <FieldSpecification name="sourcePressure" objectPath="ElementRegions/Domain/block1"
-      fieldName="pressure" scale="2.0e7" setNames="{ source }"/>
-    <FieldSpecification name="sinkPressure" objectPath="ElementRegions/Domain/block1"
-      fieldName="pressure" scale="1.0e7" setNames="{ sink }"/>
+    <FieldSpecification name="westPressure" objectPath="faceManager"
+      fieldName="bcPressure" scale="2.0e7" setNames="{ west_BC }"/>
+    <FieldSpecification name="eastPressure" objectPath="faceManager"
+      fieldName="bcPressure" scale="1.0e7" setNames="{ east_BC }"/>
   </FieldSpecifications>
 
     <!-- Phase source/sink: inject independent phase (component=1), produce dependent phase (component=0) -->

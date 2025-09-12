@@ -51,6 +51,11 @@ using namespace isothermalCompositionalMultiphaseBaseKernels; // for relperm / c
 //char const bcLogMessage[] =
 //  "ImmiscibleMultiphaseFlowMFD {}: at time {}s, the <{}> boundary condition '{}' is applied to set '{}' in subRegion '{}'. Total target elements (incl. ghosts) = {}";
 //}
+namespace
+{
+char const faceBcLogMessage[] =
+  "ImmiscibleMultiphaseFlowMFD {}: at time {}s, the <{}> boundary condition '{}' is applied to face set '{}' in '{}'. Total target faces (incl. ghosts) = {}";
+}
 
 ImmiscibleMultiphaseFlowMFD::ImmiscibleMultiphaseFlowMFD( const string & name,
                                                           Group * const parent )
@@ -153,6 +158,11 @@ void ImmiscibleMultiphaseFlowMFD::registerDataOnMesh( Group & meshBodies )
     if( !faceManager.hasWrapper( flow::facePressure_n::key() ) )
     {
       faceManager.registerField< flow::facePressure_n >( getName() );
+    }
+    // register face bcPressure field for enforcing Dirichlet BCs (mirrors SinglePhaseHybridFVM pattern)
+    if( !faceManager.hasWrapper( flow::bcPressure::key() ) )
+    {
+      faceManager.registerField< flow::bcPressure >( getName() );
     }
   } );
 }
@@ -534,28 +544,79 @@ void ImmiscibleMultiphaseFlowMFD::applyDirichletBC( real64 const time_n,
                                                     arrayView1d< real64 > const & localRhs ) const
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-  {
-    GEOS_ERROR_IF( !validateDirichletBC( domain, time_n + dt ), getName() + ": inconsistent Dirichlet BCs" );
-  }
+//  if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+//  {
+//    GEOS_ERROR_IF( !validateDirichletBC( domain, time_n + dt ), getName() + ": inconsistent Dirichlet BCs" );
+//  }
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & )
   {
-    fsManager.apply< ElementSubRegionBase >( time_n + dt, mesh, flow::pressure::key(), [&]( FieldSpecificationBase const & fs, string const & setName, SortedArrayView< localIndex const > const & target, ElementSubRegionBase & sr, string const & )
+//    // ---- Element (cell) pressure Dirichlet BCs ----
+//    fsManager.apply< ElementSubRegionBase >( time_n + dt, mesh, flow::pressure::key(), [&]( FieldSpecificationBase const & fs, string const & setName, SortedArrayView< localIndex const > const & target, ElementSubRegionBase & sr, string const & )
+//    {
+//      GEOS_UNUSED_VAR( fs, setName );
+//      // populate bcPressure from pressure specification
+//      fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( target, time_n + dt, sr, flow::bcPressure::key() );
+//      arrayView1d< real64 const > bcPres = sr.getField< flow::bcPressure >();
+//      arrayView1d< real64 const > pres = sr.getField< flow::pressure >();
+//      string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+//      arrayView1d< globalIndex const > dof = sr.getReference< array1d< globalIndex > >( dofKey );
+//      arrayView1d< integer const > ghost = sr.ghostRank();
+//      globalIndex rankOffset = dofManager.rankOffset();
+//      auto lm = localMatrix; auto rhs = localRhs; // capture views
+//      forAll< parallelDevicePolicy<> >( target.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+//      {
+//        localIndex const ei = target[a];
+//        if( ghost[ei] >= 0 ) return;
+//        globalIndex const g = dof[ei];
+//        localIndex const row = g - rankOffset;
+//        real64 rhsVal;
+//        FieldSpecificationEqual::SpecifyFieldValue( g, rankOffset, lm, rhsVal, bcPres[ei], pres[ei] );
+//        rhs[row] = rhsVal;
+//      } );
+//    } );
+
+    // ---- Face pressure Dirichlet BCs (hybrid face dofs) ----
+    string const faceDofKey = dofManager.getKey( flow::facePressure::key() );
+    FaceManager & faceManager = mesh.getFaceManager();
+    arrayView1d< real64 const > presFace = faceManager.getField< flow::facePressure >();
+    arrayView1d< real64 const > presFaceBC = faceManager.getField< flow::bcPressure >();
+    arrayView1d< globalIndex const > faceDofNumber = faceManager.getReference< array1d< globalIndex > >( faceDofKey );
+    arrayView1d< integer const > faceGhostRank = faceManager.ghostRank();
+    globalIndex const rankOffset = dofManager.rankOffset();
+
+    fsManager.apply< FaceManager >( time_n + dt, mesh, flow::bcPressure::key(), [&]( FieldSpecificationBase const & fs, string const & setName, SortedArrayView< localIndex const > const & targetSet, FaceManager & targetGroup, string const & )
     {
-      GEOS_UNUSED_VAR( fs, setName );
-      // apply to bcPressure then enforce
-      fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( target, time_n + dt, sr, flow::bcPressure::key() );
-      arrayView1d< real64 const > bcPres = sr.getField< flow::bcPressure >();
-      arrayView1d< real64 const > pres = sr.getField< flow::pressure >();
-      string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-      arrayView1d< globalIndex const > dof = sr.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< integer const > ghost = sr.ghostRank();
-      globalIndex rankOffset = dofManager.rankOffset();
-      auto lm = localMatrix; auto rhs = localRhs; // capture copies
-      forAll< parallelDevicePolicy<> >( target.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      // logging first Newton iteration
+      if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
-        localIndex const ei = target[a]; if( ghost[ei] >= 0 ) return; globalIndex const g = dof[ei]; localIndex const row = g - rankOffset; real64 rhsVal; FieldSpecificationEqual::SpecifyFieldValue( g, rankOffset, lm, rhsVal, bcPres[ei], pres[ei] ); rhs[row] = rhsVal; }
-      );
+        globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( targetSet.size() );
+//        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
+//                                        GEOS_FMT( faceBcLogMessage,
+//                                                  this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+//                                                  setName, targetGroup.getName(), numTargetFaces ),
+//                                        fs );
+      }
+      // populate face bcPressure from pressure specification
+      fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
+                                                                            time_n + dt,
+                                                                            targetGroup,
+                                                                            flow::bcPressure::key() );
+      // enforce on system rows
+      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      {
+        localIndex const kf = targetSet[a];
+        if( faceGhostRank[kf] >= 0 ) return;
+        globalIndex const dofIndex = faceDofNumber[kf];
+        localIndex const localRow = dofIndex - rankOffset;
+        real64 rhsValue;
+        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
+                                                    rankOffset,
+                                                    localMatrix,
+                                                    rhsValue,
+                                                    presFaceBC[kf],
+                                                    presFace[kf] );
+        localRhs[localRow] = rhsValue;
+      } );
     } );
   } );
 }
@@ -603,22 +664,7 @@ void ImmiscibleMultiphaseFlowMFD::applyBoundaryConditions( real64 const time_n,
 {
   applyDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
   applySourceFluxBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  string const faceDofKey = dofManager.getKey( flow::facePressure::key() );
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & )
-  {
-    FaceManager & fm = mesh.getFaceManager();
-    auto faceP = fm.getField< flow::facePressure >();
-    auto faceDof = fm.getReference< array1d< globalIndex > >( faceDofKey );
-    auto ghost = fm.ghostRank();
-    fsManager.apply< FaceManager >( time_n+dt, mesh, flow::pressure::key(), [&]( FieldSpecificationBase const & fs, string const &, SortedArrayView< localIndex const > const & target, FaceManager & group, string const & )
-    {
-      fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( target, time_n+dt, group, flow::facePressure::key() );
-      globalIndex rankOffset = dofManager.rankOffset(); auto lm = localMatrix; auto rhs = localRhs;
-      forAll< parallelDevicePolicy<> >( target.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-      { localIndex const fi = target[a]; if( ghost[fi] >=0 ) return; globalIndex const g = faceDof[fi]; localIndex const row = g - rankOffset; real64 rhsVal; FieldSpecificationEqual::SpecifyFieldValue( g, rankOffset, lm, rhsVal, faceP[fi], faceP[fi] ); rhs[row] = rhsVal; });
-    } );
-  } );
+  // face Dirichlet BCs now handled inside applyDirichletBC; removed duplicate enforcement here
 }
 
 real64 ImmiscibleMultiphaseFlowMFD::calculateResidualNorm( real64 const & time_n,

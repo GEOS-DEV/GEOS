@@ -340,7 +340,9 @@ public:
       s.dDivMassFluxes_dP += m_dt * dF_dP;
       s.dDivMassFluxes_dS += m_dt * dF_dS;
       // wrt face pressures
-      for( integer j=0; j<NUM_FACE; ++j ) s.dDivMassFluxes_dFaceVars[j] += m_dt * s.dMassFlux_dFacePres[i][j];
+      for( integer j=0; j<NUM_FACE; ++j ){
+        s.dDivMassFluxes_dFaceVars[j] += m_dt * s.dMassFlux_dFacePres[i][j];
+      }
     }
   }
 
