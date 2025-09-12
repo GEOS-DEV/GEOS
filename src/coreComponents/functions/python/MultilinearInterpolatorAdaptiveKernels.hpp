@@ -21,6 +21,7 @@
 #define GEOS_FUNCTIONS_MULTILINEARINTERPOLATORADAPTIVEKERNELS_HPP_
 
 #include "functions/MultilinearInterpolatorBaseKernels.hpp"
+#include "functions/python/PythonFunction.hpp"
 
 namespace geos
 {

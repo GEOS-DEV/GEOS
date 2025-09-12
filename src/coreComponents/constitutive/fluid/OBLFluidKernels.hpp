@@ -19,6 +19,8 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_OBLFLUIDKERNELS_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_OBLFLUIDKERNELS_HPP_
 
+#include "mesh/ObjectManagerBase.hpp"
+#include "constitutive/fluid/OBLFluid.hpp"
 #include "functions/MultilinearInterpolatorStaticKernels.hpp"
 #if defined(GEOS_USE_PYGEOSX)
   #include "functions/python/MultilinearInterpolatorAdaptiveKernels.hpp"
