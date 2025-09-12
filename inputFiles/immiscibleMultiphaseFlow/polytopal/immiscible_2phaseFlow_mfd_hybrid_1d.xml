@@ -14,7 +14,7 @@
       targetRegions="{ Domain }"
       logLevel="2"
       dependentPhaseIndex="0">
-      <NonlinearSolverParameters newtonTol="1e0" newtonMaxIter="8"/>
+      <NonlinearSolverParameters newtonTol="1.0e-2" newtonMaxIter="20"/>
       <LinearSolverParameters directParallel="0"/>
     </ImmiscibleMultiphaseFlowMFD>
   </Solvers>
@@ -39,9 +39,9 @@
       xMax="{ 3.01, 1.01, 1.01 }"/>
   </Geometry>
 
-  <Events maxTime="1">
-    <PeriodicEvent name="outputs" timeFrequency="1" target="/Outputs/vtkOutput"/>
-    <PeriodicEvent name="solverApps" forceDt="1" target="/Solvers/FlowSolverMFD"/>
+  <Events maxTime="86400">
+    <PeriodicEvent name="outputs" timeFrequency="86400" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent name="solverApps" forceDt="86400" target="/Solvers/FlowSolverMFD"/>
   </Events>
 
   <NumericalMethods>
@@ -66,13 +66,11 @@
     <TableFunction
       name="waterRelativePermeabilityTable"
       coordinates="{ 0.0, 1.0 }"
-      values="{ 0.0, 1.0 }"
-      interpolation="linear"/>
+      values="{ 0.0, 1.0 }"/>
     <TableFunction
       name="gasRelativePermeabilityTable"
       coordinates="{ 0.0, 1.0 }"
-      values="{ 0.0, 1.0 }"
-      interpolation="linear"/>
+      values="{ 0.0, 1.0 }"/>
   </Functions>
 
   <Constitutive>
@@ -92,11 +90,11 @@
 
     <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.05" referencePressure="0" compressibility="1.0e-9"/>
 
-    <ConstantPermeability name="rockPerm" permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+    <ConstantPermeability name="rockPerm" permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }"/>
 
     <TableRelativePermeability
       name="relperm"
-      phaseNames="{ gas, water }"
+      phaseNames="{ water, gas }"
       wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable, gasRelativePermeabilityTable }"/>
   </Constitutive>
 
@@ -111,9 +109,9 @@
 
     <!-- Initial saturations (phaseVolumeFraction component index: 0=water, 1=gas) -->
     <FieldSpecification name="initSatWater" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="1"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="0.999"/>
     <FieldSpecification name="initSatGas" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.001"/>
 
     <!-- Pressure BC regions -->
     <FieldSpecification name="sourcePressure" objectPath="ElementRegions/Domain/block1"

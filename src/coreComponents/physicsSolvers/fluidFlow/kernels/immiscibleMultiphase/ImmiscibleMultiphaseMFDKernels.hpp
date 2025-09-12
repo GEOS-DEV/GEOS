@@ -25,7 +25,6 @@
 #include "constitutive/fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
-// +++ added for accumulation (porosity access)
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/QuasiTPFAInnerProduct.hpp"
@@ -239,15 +238,11 @@ public:
   {
     using Deriv = DerivMob; // alias for readability
     
-    // Mixture density rho_mix = (sum_i rho_i * lambda_i) / (sum_i lambda_i)
     // Keep pressure and saturation derivatives since lambda depends on both
-    real64 sumLambda = 0.0;
-    real64 dSumLambda_dP = 0.0;
-    real64 dSumLambda_dS = 0.0;
-    real64 sumRhoLambda = 0.0;   // == massLambda (before sign mapping)
-    real64 dSumRhoLambda_dP = 0.0;
-    real64 dSumRhoLambda_dS = 0.0; // derivative w.r.t. independent saturation (apply sign map below)
-
+    real64 Lambda = 0.0;   // == massLambda (before sign mapping)
+    real64 dLambda_dP = 0.0;
+    real64 dLambda_dS = 0.0; // derivative w.r.t. independent saturation (apply sign map below)
+    
     // two-phase for now
     for( integer ip=0; ip<2; ++ip )
     {
@@ -255,17 +250,48 @@ public:
       real64 const drho_dP = m_dPhaseDens[ei][0][ip][Deriv::dP];
       real64 const lambda = m_phaseMobAll[m_er][m_esr][ei][ip];
       real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dP];
-      real64 const dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
+      real64 dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
 
+      // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
+      real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
+      real64 const dlambda_dS = sgnS * dlambda_dS_raw;
+      
       // accumulate total mobility derivatives for rho_mix denominator
-      sumLambda += lambda;
-      dSumLambda_dP += dlambda_dP;
-      dSumLambda_dS += dlambda_dS_raw; // adjust sign after loop if indep != 0
+      Lambda += rho * lambda;
+      dLambda_dP += drho_dP * lambda + rho * dlambda_dP;
+      dLambda_dS += rho * dlambda_dS;
+    }
+    
+    // Mixture density rho_hat = (sum_i rho_i * (lambda_i / (sum_i lambda_i))
+    real64 rho_hat = 0.0;
+    real64 drho_hat_dP = 0.0;
+    real64 drho_hat_dS = 0.0;
+    for( integer ip=0; ip<2; ++ip )
+    {
+      real64 const rho = m_phaseDens[ei][0][ip];
+      real64 const drho_dP = m_dPhaseDens[ei][0][ip][Deriv::dP];
+      real64 const drho_dS = 0.0;
+      real64 const lambda = m_phaseMobAll[m_er][m_esr][ei][ip];
+      real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dP];
+      real64 dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
 
-      // accumulate mass-weighted mobility and its derivatives
-      sumRhoLambda += rho * lambda;
-      dSumRhoLambda_dP += drho_dP * lambda + rho * dlambda_dP;
-      dSumRhoLambda_dS += /* drho/dS ~ 0 */ rho * dlambda_dS_raw; // adjust sign after loop if indep != 0
+      // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
+      real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
+      real64 const dlambda_dS = sgnS * dlambda_dS_raw;
+
+      rho_hat += rho * (rho * lambda / Lambda);
+      // numerator for d(rho_hat)/dP
+      real64 const num_dP = Lambda * ( 2.0 * rho * lambda * drho_dP
+                                + rho * rho * dlambda_dP )
+                      - rho * rho * lambda * dLambda_dP;
+
+      // numerator for d(rho_hat)/dS
+      real64 const num_dS = Lambda * ( 2.0 * rho * lambda * drho_dS
+                                + rho * rho * dlambda_dS )
+                      - rho * rho * lambda * dLambda_dS;
+      
+      drho_hat_dP += num_dP / (Lambda * Lambda);
+      drho_hat_dS += num_dS / (Lambda * Lambda);
     }
     
     for( integer i=0; i<NUM_FACE; ++i )
@@ -278,39 +304,22 @@ public:
         real64 const ccGravCoef = m_elemGravCoef[ei];
         real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
 
-        // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
-        real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
-        dSumLambda_dS *= sgnS;
-        dSumRhoLambda_dS *= sgnS;
-
-        // Safe denominator (total mobility is expected > 0, but guard for robustness)
-        real64 const eps = 1e-30;
-        real64 const denom = (fabs( sumLambda ) > eps) ? sumLambda : (sumLambda >= 0.0 ? eps : -eps);
-        real64 const densMix = sumRhoLambda / denom;
-        real64 const dDensMix_dP = ( dSumRhoLambda_dP * denom - sumRhoLambda * dSumLambda_dP ) / ( denom * denom );
-        real64 const dDensMix_dS = ( dSumRhoLambda_dS * denom - sumRhoLambda * dSumLambda_dS ) / ( denom * denom );
-
         // Potential difference and its derivatives
         real64 const presDif = ccPres - fPres;
         real64 const gravCoefDif = ccGravCoef - fGravCoef;
-        real64 const gravTerm = densMix * gravCoefDif;
-        real64 const dGravTerm_dP = dDensMix_dP * gravCoefDif;
-        real64 const dGravTerm_dS = dDensMix_dS * gravCoefDif;
+        real64 const gravTerm = rho_hat * gravCoefDif;
+        real64 const dGravTerm_dP = drho_hat_dP * gravCoefDif;
+        real64 const dGravTerm_dS = drho_hat_dS * gravCoefDif;
         real64 const potDif = presDif - gravTerm;
         real64 const dPotDif_dP = 1.0 - dGravTerm_dP;
         real64 const dPotDif_dS = - dGravTerm_dS;
         real64 const dPotDif_dFaceP = -1.0;
 
-        // Overall mass flux and derivatives: use mass-weighted mobility (massLambda)
-        real64 const massLambda = sumRhoLambda;
-        real64 const dMassLambda_dP = dSumRhoLambda_dP;
-        real64 const dMassLambda_dS = dSumRhoLambda_dS;
-
         real64 const T_ij = s.transMatrix[i][j];
-        s.MassFlux[i] += massLambda * T_ij * potDif;
-        s.dMassFlux_dPres[i] += T_ij * ( massLambda * dPotDif_dP + dMassLambda_dP * potDif );
-        s.dMassFlux_dS[i] += T_ij * ( massLambda * dPotDif_dS + dMassLambda_dS * potDif );
-        s.dMassFlux_dFacePres[i][j] += T_ij * ( massLambda * dPotDif_dFaceP ); // = - T_ij * massLambda
+        s.MassFlux[i] += Lambda * T_ij * potDif;
+        s.dMassFlux_dPres[i] += T_ij * ( Lambda * dPotDif_dP + dLambda_dP * potDif );
+        s.dMassFlux_dS[i] += T_ij * ( Lambda * dPotDif_dS + dLambda_dS * potDif );
+        s.dMassFlux_dFacePres[i][j] += T_ij * ( Lambda * dPotDif_dFaceP );
       }
     }
   }
@@ -348,27 +357,59 @@ public:
                                               real64 & df_dS )
     {
       using Deriv = DerivMob;
-      // two-phase: independent ip = indep, dependent ip = 1 - indep
       integer const dep = 1 - indep;
-      real64 const lam_ind = m_phaseMobAll[er][esr][ei_local][indep];
-      real64 const lam_dep = m_phaseMobAll[er][esr][ei_local][dep];
-      real64 const dlam_ind_dP = m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dP];
-      real64 const dlam_dep_dP = m_dPhaseMobAll[er][esr][ei_local][dep][Deriv::dP];
-      // Stored d/dS is w.r.t phase-0 saturation; map to configured independent saturation
-      real64 const sgnS = ( indep == 0 ? 1.0 : -1.0 );
-      real64 const dlam_ind_dS = sgnS * m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dS];
-      real64 const dlam_dep_dS = sgnS * m_dPhaseMobAll[er][esr][ei_local][dep][Deriv::dS];
+      
+      
+      // Keep pressure and saturation derivatives since lambda depends on both
+      real64 Lambda = 0.0;   // == massLambda (before sign mapping)
+      real64 dLambda_dP = 0.0;
+      real64 dLambda_dS = 0.0; // derivative w.r.t. independent saturation (apply sign map below)
+      
+      // two-phase for now
+      for( integer ip=0; ip<2; ++ip )
+      {
+        real64 const rho = m_phaseDens[ei_local][0][ip];
+        real64 const drho_dP = m_dPhaseDens[ei_local][0][ip][Deriv::dP];
+        real64 const lambda = m_phaseMobAll[m_er][m_esr][ei_local][ip];
+        real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei_local][ip][Deriv::dP];
+        real64 dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei_local][ip][Deriv::dS];
 
-      real64 const Lambda = lam_ind + lam_dep;
-      // Safe denominator (total mobility is expected > 0, but guard for robustness)
-      real64 const eps = 1e-30;
-      real64 const denom = (fabs( Lambda ) > eps) ? Lambda : (Lambda >= 0.0 ? eps : -eps);
-      f = lam_ind / denom;
-      // df/dx = (dlam_ind*Lambda - lam_ind*dLambda) / Lambda^2
-      real64 const dLambda_dP = dlam_ind_dP + dlam_dep_dP;
-      real64 const dLambda_dS = dlam_ind_dS + dlam_dep_dS;
-      df_dP = ( dlam_ind_dP * denom - lam_ind * dLambda_dP ) / ( denom * denom );
-      df_dS = ( dlam_ind_dS * denom - lam_ind * dLambda_dS ) / ( denom * denom );
+        // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
+        real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
+        real64 const dlambda_dS = sgnS * dlambda_dS_raw;
+        
+        // accumulate total mobility derivatives for rho_mix denominator
+        Lambda += rho * lambda;
+        dLambda_dP += drho_dP * lambda + rho * dlambda_dP;
+        dLambda_dS += rho * dlambda_dS;
+      }
+      
+      // Phase mobilities
+      real64 const lambda = m_phaseMobAll[er][esr][ei_local][indep];
+      real64 const dlambda_dP = m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dP];
+      // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
+      real64 const sgnS = ( indep == 0 ? 1.0 : -1.0 );
+      real64 const dlambda_dS = sgnS * m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dS];
+
+      // Phase densities (q=0 point) and pressure derivatives
+      real64 const rho = m_phaseDens[ei_local][0][indep];
+      real64 const drho_dP = m_dPhaseDens[ei_local][0][indep][Deriv::dP];
+      real64 const drho_dS = 0;
+
+
+      // df/dP
+      real64 const num_dP = Lambda * (lambda * drho_dP + rho * dlambda_dP)
+                    - rho * lambda * dLambda_dP;
+      // df/dS
+      real64 const num_dS = Lambda * (lambda * drho_dS + rho * dlambda_dS)
+                    - rho * lambda * dLambda_dS;
+
+      // Fractional flow (mass based)
+      f = rho * lambda/ Lambda;
+      df_dP = num_dP / (Lambda * Lambda);
+      df_dS = num_dS / (Lambda * Lambda);
+      // (Existing behavior retained: override df_dS mapping to independent saturation sign)
+      int aka = 0;
     };
 
     // Precompute local f and derivatives
@@ -412,6 +453,7 @@ public:
       real64 const beta = ( F >= 0.0 ) ? 1.0 : 0.0;
       real64 const f_int = beta * f_loc + ( 1.0 - beta ) * f_nei;
 
+      std::cout << "F: " << F << std::endl;
       // residual contribution and local Jacobians
       s.divSatFluxes += m_dt * F * f_int;
       // d/dP (local): dF/dP * f_int + F * beta * df_loc/dP (neighbor f has no local P dependence)
@@ -419,7 +461,9 @@ public:
       // d/dS (local): dF/dS * f_int + F * beta * df_loc/dS (neighbor f has no local S dependence)
       s.dDivSatFluxes_dS += m_dt * ( dF_dS * f_int + F * beta * df_loc_dS );
       // face pressure derivatives: only via F
-      for( integer j=0; j<NUM_FACE; ++j ) s.dDivSatFluxes_dFaceVars[j] += m_dt * ( s.dMassFlux_dFacePres[i][j] * f_int );
+      for( integer j=0; j<NUM_FACE; ++j ){
+        s.dDivSatFluxes_dFaceVars[j] += m_dt * ( s.dMassFlux_dFacePres[i][j] * f_int );
+      }
 
       // neighbor Jacobian contributions on neighbor columns when applicable
       if( hasNeighbor )
@@ -481,13 +525,15 @@ public:
       }
     }
     // face constraints unchanged: enforce hybrid face-pressure constraints using mass flux
-    globalIndex const elemCol = s.elemCols[0];
+    globalIndex const elemCol_p = s.elemCols[0];
+    globalIndex const elemCol_s = s.elemCols[0] + 1;
     for( integer i=0; i<NUM_FACE; ++i )
     {
       if( m_faceGhostRank[m_elemToFaces[ei][i]] < 0 )
       {
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[s.faceRow[i]], s.MassFlux[i] );
-        m_localMatrix.addToRow< parallelDeviceAtomic >( s.faceRow[i], &elemCol, &s.dMassFlux_dPres[i], 1 );
+        m_localMatrix.addToRow< parallelDeviceAtomic >( s.faceRow[i], &elemCol_p, &s.dMassFlux_dPres[i], 1 );
+        m_localMatrix.addToRow< parallelDeviceAtomic >( s.faceRow[i], &elemCol_s, &s.dMassFlux_dS[i], 1 );
         m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( s.faceRow[i], &s.faceCols[0], s.dMassFlux_dFacePres[i], NUM_FACE );
       }
     }

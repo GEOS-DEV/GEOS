@@ -689,9 +689,8 @@ void ImmiscibleMultiphaseFlowMFD::applySystemSolution( DofManager const & dofMan
         globalIndex const base = dof[ei] - rankOffset;
         // saturation dof is component 1 of elem dofs
         sat[ei][indep] += scalingFactor * localSolution[base + 1];
+        sat[ei][m_dependentPhaseIndex] += 1.0 - sat[ei][indep];
       } );
-      // enforce dependent phase relation s_dep = 1 - s_ind
-      updateVolumeConstraint( subRegion );
     } );
   } );
   // update face pressures
@@ -723,7 +722,7 @@ void ImmiscibleMultiphaseFlowMFD::updateRelPermModel( ObjectManagerBase & group 
   if( !group.hasWrapper( viewKeyStruct::relPermNamesString() ) ) return;
   string const & name = group.getReference< string >( viewKeyStruct::relPermNamesString() );
   RelativePermeabilityBase & relperm = getConstitutiveModel< RelativePermeabilityBase >( group, name );
-  auto phaseVol = group.getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
+  arrayView2d< real64, immiscibleFlow::USD_PHASE > const phaseVol = group.getField< immiscibleMultiphaseFlow::phaseVolumeFraction >();
   constitutive::constitutiveUpdatePassThru( relperm, [&]( auto & casted )
   {
     auto wrapper = casted.createKernelWrapper();
