@@ -1,0 +1,39 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Included>
+    <File
+      name="./Pressurization_QD_base.xml"/>
+  </Included>
+
+  <Constitutive>
+    <ElasticIsotropic
+     name="rock"
+     defaultDensity="2670"
+     defaultBulkModulus="50e9"
+     defaultShearModulus="30e9"/>
+
+    <RateAndStateFrictionAgingLaw
+      name="frictionLaw"
+      defaultA="0.002"
+      defaultB="0.004"
+      defaultDc="1e-4"  
+      defaultReferenceVelocity="1.0e-6"
+      defaultReferenceFrictionCoefficient="0.6"/>  
+  </Constitutive>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="pressurized_QD_A"/>
+
+    <TimeHistory
+      name="timeHistoryOutput"
+      sources="{/Tasks/slipVelocityCollection, /Tasks/slipCollection, /Tasks/shearTractionCollection, /Tasks/stateCollection}"
+      filename="pressurized_QD_A" />  
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  
+</Problem>

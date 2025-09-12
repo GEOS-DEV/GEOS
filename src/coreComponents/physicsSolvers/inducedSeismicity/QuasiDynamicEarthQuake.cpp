@@ -98,10 +98,13 @@ real64 QuasiDynamicEarthQuake< RSSOLVER_TYPE >::updateStresses( real64 const & t
       arrayView2d< real64 const > const backgroundShearStress = subRegion.getField< rateAndState::backgroundShearStress >();
       arrayView2d< real64 const > const perturbation = subRegion.getField< rateAndState::shearStressPerturbation >();
       arrayView1d< real64 const > const backgroundNormalStress = subRegion.getField< rateAndState::backgroundNormalStress >();
+      arrayView1d< real64 const > const normalStressPerturbationRate = subRegion.getField< rateAndState::normalStressPerturbationRate >();
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const k )
       {
-        normalTraction[k] = backgroundNormalStress[k] - traction[k][0]; // compressive traction is negative in geos
+        real64 const normalStressPerturbation = normalStressPerturbationRate[k] * ( time_n + dt );
+        
+        normalTraction[k] = backgroundNormalStress[k] - traction[k][0] - normalStressPerturbation; // compressive traction is negative in geos
         for( int i = 0; i < 2; ++i )
         {
           shearTraction( k, i ) = backgroundShearStress( k, i ) + perturbation( k, i ) + traction( k, i+1 );

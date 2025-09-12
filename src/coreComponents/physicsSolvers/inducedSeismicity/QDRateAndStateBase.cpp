@@ -91,6 +91,7 @@ void QDRateAndStateBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< rateAndState::shearStressPerturbation >( getName() ).
         setDimLabels( 1, labels2Comp ).reference().resizeDimension< 1 >( 2 );
       subRegion.registerField< rateAndState::backgroundNormalStress >( getName() );
+      subRegion.registerField< rateAndState::normalStressPerturbationRate >( getName() );
 
       subRegion.registerField< rateAndState::backSlipRate >( getName() ).
         setDimLabels( 1, labels2Comp ).reference().resizeDimension< 1 >( 2 );

@@ -136,6 +136,14 @@ DECLARE_FIELD( shearStressPerturbation,
                WRITE_AND_READ,
                "Perturbation to the shear stress" );
 
+DECLARE_FIELD( normalStressPerturbationRate,
+               "normalStressPerturbationRate",
+               array1d< real64 >,
+               0.0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Perturbation rate to the normal stress" );
+
 DECLARE_FIELD( rungeKuttaStageRates,
                "rungeKuttaStageRates",
                array3d< real64 >,
