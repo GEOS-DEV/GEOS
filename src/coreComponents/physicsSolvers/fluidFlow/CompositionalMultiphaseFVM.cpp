@@ -28,7 +28,6 @@
 #include "dataRepository/Group.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
@@ -123,10 +122,6 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Target CFL condition `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
                     " when computing the next timestep." );
-
-  addLogLevel< logInfo::Convergence >();
-  addLogLevel< logInfo::Solution >();
-  addLogLevel< logInfo::TimeStep >();
 }
 
 void CompositionalMultiphaseFVM::postInputInitialization()
@@ -580,6 +575,10 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
     GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence,
                                GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
                                          globalResidualNorm[0], globalResidualNorm[1], globalResidualNorm[2] ));
+
+    getConvergenceStats().setResidualValue( "Rmass", globalResidualNorm[0] );
+    getConvergenceStats().setResidualValue( "Rvol", globalResidualNorm[1] );
+    getConvergenceStats().setResidualValue( "Renergy", globalResidualNorm[2] );
   }
   else
   {
@@ -595,8 +594,10 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
-    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )",
-                                                               globalResidualNorm[0], globalResidualNorm[1] ) );
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )",
+                                                                globalResidualNorm[0], globalResidualNorm[1] ) );
+    getConvergenceStats().setResidualValue( "Rmass", globalResidualNorm[0] );
+    getConvergenceStats().setResidualValue( "Rvol", globalResidualNorm[1] );
   }
 
   return residualNorm;
@@ -1434,7 +1435,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( faceBcLogMessage,
                                                   getName(), time+dt, bc.getCatalogName(), bc.getName(),
                                                   setName, faceManager.getName(), bc.getScale(), numTargetFaces ),

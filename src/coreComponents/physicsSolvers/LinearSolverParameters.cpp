@@ -157,6 +157,11 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Whether to use a parallel solver (instead of a serial one)" );
 
+  registerWrapper( viewKeyStruct::reuseFactorizationString(), &m_parameters.direct.reuseFactorization ).
+    setApplyDefaultValue( m_parameters.direct.reuseFactorization ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Whether to reuse the LU factorization (experimental)" );
+
   registerWrapper( viewKeyStruct::krylovMaxIterString(), &m_parameters.krylov.maxIterations ).
     setApplyDefaultValue( m_parameters.krylov.maxIterations ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -315,7 +320,6 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
   registerInputBlock< BlockParametersInput >( this, groupKeyStruct::blockString(), m_parameters.block );
 
   addLogLevel< logInfo::LinearSolver >();
-  addLogLevel< logInfo::LinearSolverConfiguration >();
 }
 
 void LinearSolverParametersInput::postInputInitialization()
@@ -376,10 +380,8 @@ void LinearSolverParametersInput::postInputInitialization()
 
   // TODO input validation for other AMG parameters ?
 
-  if( getLogLevel() > 0 )
-  {
+  if( isLogLevelActive< logInfo::LinearSolver >( getLogLevel() ) )
     print();
-  }
 }
 
 Group * LinearSolverParametersInput::createChild( string const & childKey,

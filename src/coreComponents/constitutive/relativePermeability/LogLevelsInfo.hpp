@@ -15,11 +15,11 @@
 
 /**
  * @file LogLevelsInfo.hpp
- * This file contains common log level informations for the field specification
+ * This file contains common log level informations for relative permeability
  */
 
-#ifndef GEOS_FIELDSPECIFICATION_LOGLEVELSNFO_HPP_
-#define GEOS_FIELDSPECIFICATION_LOGLEVELSNFO_HPP_
+#ifndef GEOS_CONSTITUTIVE_RELATIVEPERMEABILITY_LOGLEVELSINFO_HPP
+#define GEOS_CONSTITUTIVE_RELATIVEPERMEABILITY_LOGLEVELSINFO_HPP
 
 #include "common/DataTypes.hpp"
 
@@ -28,32 +28,18 @@ namespace geos
 
 namespace logInfo
 {
-
 /**
  * @name Common LogLevels info structures. They must comply with the `is_log_level_info` trait.
  */
 ///@{
 
+struct Init
+{
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Information on relative permeability models initialization"; }
+};
+
 /// @cond DO_NOT_DOCUMENT
-
-struct BoundaryCondition
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Boundary condition information"; }
-};
-
-struct FaceBoundaryCondition
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Face boundary condition information"; }
-};
-
-struct SourceFluxFailure
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Indicate a source flux failure"; }
-};
-
 /// @endcond
 ///@}
 
@@ -61,4 +47,4 @@ struct SourceFluxFailure
 
 }
 
-#endif // GEOS_FIELDSPECIFICATION_LOGLEVELSNFO_HPP_
+#endif // GEOS_CONSTITUTIVE_FLUID_RELATIVEPERMEABILITY_LOGLEVELSINFO_HPP
