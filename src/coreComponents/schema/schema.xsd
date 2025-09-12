@@ -1723,6 +1723,14 @@ Information output from lower logLevels is added with the desired log level
 	<xsd:complexType name="PerforationType">
 		<!--distanceFromHead => Linear distance from well head to the perforation-->
 		<xsd:attribute name="distanceFromHead" type="real64" use="required" />
+		<!--perfStatusTable => Table defining perforation status as a function of time. The name must correspond to a TableFunction in the Functions section.-->
+		<xsd:attribute name="perfStatusTable" type="real64_array2d" default="{{0}}" />
+		<!--perfStatusTableName => Name of table function defining perforation status as a function of time:
+- The first row sets the perforation time coordinates,
+- The following row is the perforation status ( 0.0 for closed, 1.0 for opened) for each time coordinate.
+If none specified, a table function with be created internally and assigned the name formed by well and perforation names, separated by '_'.
+A table that opens the perforation at t=100, and closes it at t=200 could be `{{ 0, 100, 200 },{ 0.0, 1.0, 0.0 }}`-->
+		<xsd:attribute name="perfStatusTableName" type="groupNameRef" default="" />
 		<!--skinFactor => Perforation skin factor-->
 		<xsd:attribute name="skinFactor" type="real64" default="0" />
 		<!--targetRegion => Target region to connect the perforation-->
@@ -2026,6 +2034,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="preconditionerType" type="geos_LinearSolverParameters_PreconditionerType" default="iluk" />
 		<!--relaxationWeight => Relaxation weight (omega) for stationary iterations-->
 		<xsd:attribute name="relaxationWeight" type="real64" default="0.666667" />
+		<!--reuseFactorization => Whether to reuse the LU factorization (experimental)-->
+		<xsd:attribute name="reuseFactorization" type="integer" default="0" />
 		<!--solverType => Linear solver type. Available options are: ``direct``, ``cg``, ``gmres``, ``fgmres``, ``bicgstab``, ``richardson``, ``preconditioner``-->
 		<xsd:attribute name="solverType" type="geos_LinearSolverParameters_SolverType" default="direct" />
 		<!--stopIfError => Whether to stop the simulation if the linear solver reports an error-->
@@ -3286,6 +3296,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--referenceElevation => Reference elevation where BHP control is enforced [m]-->
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
+		<!--referenceReservoirRegion => Name of reservoir region used for obtaining average region pressure used in volume rate constraint calculations.
+Frequency of pressure update is set in Single/CompositionalMultiPhaseStatistics definition.
+Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint properties-->
+		<xsd:attribute name="referenceReservoirRegion" type="groupNameRef" default="" />
 		<!--statusTableName => Name of the well status table when the status of the well is a time dependent function. 
 If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut.-->
 		<xsd:attribute name="statusTableName" type="groupNameRef" default="" />
@@ -3316,7 +3330,8 @@ If the status function evaluates to a positive value at the current time, the we
 * injector-->
 		<xsd:attribute name="type" type="geos_WellControls_Type" use="required" />
 		<!--useSurfaceConditions => Flag to specify whether rates are checked at surface or reservoir conditions.
-Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
+Equal to 1 for surface conditions, and to 0 for reservoir conditions.
+See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="useSurfaceConditions" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
