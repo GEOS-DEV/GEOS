@@ -13,8 +13,10 @@
       discretization="immiscibleHybridMimetic"
       targetRegions="{ Domain }"
       logLevel="2"
-      dependentPhaseIndex="0">
-      <NonlinearSolverParameters newtonTol="1e-1" newtonMaxIter="8"/>
+      dependentPhaseIndex="1">
+      <NonlinearSolverParameters 
+        newtonTol="1e-4" newtonMaxIter="15"
+        maxAllowedResidualNorm="1.0e20"/>
       <LinearSolverParameters directParallel="0"/>
     </ImmiscibleMultiphaseFlowMFD>
   </Solvers>
@@ -33,11 +35,14 @@
   <Geometry>
     <Box name="source" xMin="{ -0.01, -0.01, -0.01 }" xMax="{ 1.01, 1.01, 1.01 }"/>
     <Box name="sink"   xMin="{ 98.99, 98.99, -0.01 }" xMax="{ 100.01, 100.01, 1.01 }"/>
+    <Box name="bc_D"   
+      xMin="{ 98.99, 99.99, -0.01 }" 
+      xMax="{ 100.01, 100.01, 1.01 }"/>
   </Geometry>
 
-  <Events maxTime="864000">
-    <PeriodicEvent name="outputs" timeFrequency="86400" target="/Outputs/vtkOutput"/>
-    <PeriodicEvent name="solverApps" forceDt="86400" target="/Solvers/FlowSolverMFD"/>
+  <Events maxTime="86400000">
+    <PeriodicEvent name="outputs" timeFrequency="864000" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent name="solverApps" forceDt="864000" target="/Solvers/FlowSolverMFD"/>
   </Events>
 
   <NumericalMethods>
@@ -54,9 +59,9 @@
   <Functions>
     <!-- Constant property tables (single entry) -->
     <TableFunction name="densityWater"   coordinates="{ 0 }" values="{ 1000.0 }"/>
-    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 1000.0 }"/>
+    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 100.0 }"/>
     <TableFunction name="viscosityWater" coordinates="{ 0 }" values="{ 1.0e-3 }"/>
-    <TableFunction name="viscosityGas"   coordinates="{ 0 }" values="{ 1.0e-3 }"/>
+    <TableFunction name="viscosityGas"   coordinates="{ 0 }" values="{ 1.0e-5 }"/>
 
     <!-- Linear relative permeability tables -->
     <TableFunction
@@ -86,9 +91,9 @@
 
     <NullModel name="nullSolid"/>
 
-    <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.05" referencePressure="0" compressibility="1.0e-9"/>
+    <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.05" referencePressure="0" compressibility="0.0"/>
 
-    <ConstantPermeability name="rockPerm" permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+    <ConstantPermeability name="rockPerm" permeabilityComponents="{ 2.0e-14, 2.0e-14, 2.0e-14 }"/>
 
     <TableRelativePermeability
       name="relperm"
@@ -105,29 +110,32 @@
 
     <!-- Initial saturations (phaseVolumeFraction component index: 0=water, 1=gas) -->
     <FieldSpecification name="initSatWater" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="1"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="0.999"/>
     <FieldSpecification name="initSatGas" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.001"/>
 
     <!-- Pressure BC regions -->
     <FieldSpecification name="sourcePressure" objectPath="ElementRegions/Domain/block1"
       fieldName="pressure" scale="2.0e7" setNames="{ source }"/>
-    <FieldSpecification name="sinkPressure" objectPath="ElementRegions/Domain/block1"
-      fieldName="pressure" scale="1.0e7" setNames="{ sink }"/>
-  </FieldSpecifications>
+    <FieldSpecification name="sinkPressure" objectPath="faceManager"
+      fieldName="bcPressure" scale="1.0e7" setNames="{ bc_D }"/>
 
     <!-- Phase source/sink: inject independent phase (component=1), produce dependent phase (component=0) -->
     <SourceFlux name="independentPhaseSource"
       objectPath="ElementRegions/Domain/block1"
       setNames="{ source }"
-      component="0"
-      scale="-7.0e-5"/>
+      component="1"
+      scale="-1.0e-4"/>
 
-<!--     <SourceFlux name="dependentPhaseSink"
+    <SourceFlux name="dependentPhaseSink"
       objectPath="ElementRegions/Domain/block1"
       setNames="{ sink }"
-      component="1"
-      scale="-7.0e-5"/>   -->
+      component="0"
+      scale="1.0e-4"/>  
+
+  </FieldSpecifications>
+
+
 
   <Outputs>
     <VTK name="vtkOutput"/>

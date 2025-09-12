@@ -171,6 +171,13 @@
 | 1         | Independent saturation (explicit phase) |
 
 Dependent phase saturation is computed:  
-`S_dep = 1 - S_indep` -->
+`S_dep = 1 - S_indep` 
+
+
+| `<SourceFlux component="...">` | Affects Pressure (DOF 0) | Affects Saturation (DOF 1) | Notes |
+|--------------------------------|--------------------------|----------------------------|-------|
+| `0`                            | Yes                      | Yes                        | Independent phase (default `independentPhaseIndex = 0`) |
+| `1`                            | Yes                      | No                         | Dependent phase (`S_dep = 1 - S_indep`) |
+-->
 
 

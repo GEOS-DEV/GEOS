@@ -634,9 +634,7 @@ void ImmiscibleMultiphaseFlowMFD::applySourceFluxBC( real64 const time,
       integer const phaseId = fs.getComponent();
       auto rhs = localRhs; // capture by value for device lambda
 
-      // ---------------------------------------------------------------------------------
-      // Step 1: Apply source contributions to pressure (total mass) equation row
-      // ---------------------------------------------------------------------------------
+      // Apply source contributions to pressure (total mass) equation
       forAll< parallelDevicePolicy<> >( target.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         localIndex const ei = target[a];
@@ -646,10 +644,7 @@ void ImmiscibleMultiphaseFlowMFD::applySourceFluxBC( real64 const time,
         rhs[base] += val;                              // total mass / pressure equation
       } );
 
-      // ---------------------------------------------------------------------------------
-      // Step 2: Apply source contributions to independent saturation equation (if phase matches)
-      // Only inject into saturation equation if this source targets the independent phase
-      // ---------------------------------------------------------------------------------
+      // Apply source contributions to independent saturation equation (if phase matches)
       if( phaseId == indep )
       {
         forAll< parallelDevicePolicy<> >( target.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
