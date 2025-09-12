@@ -1063,7 +1063,7 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
       // setup internal constraints if needed
       if( wellControls.hasMinimumWHPConstraint())
       {
-        //wellControls.createMinBHPConstraintForWHP();
+        wellControls.createMinBHPConstraintForWHP();
         wellControls.createMaxLiquidConstraintForWHP();
       }
     } );
@@ -4278,6 +4278,7 @@ void CompositionalMultiphaseWell::solveConstraint< MinimumWHPConstraint >( real6
 
         // name of internal constraint for WHP solve
         std::shared_ptr< LiquidProductionConstraint > liqConstraint=  wellControls.getMaxLiquidConstraintForWHP();
+        std::shared_ptr< MinimumBHPConstraint > bhpConstraint=  wellControls.getMinimumBHPConstraint();
 
         // sets. tjb cleanup
         wellControls.setCurrentConstraint( liqConstraint.get() );
@@ -4319,7 +4320,7 @@ void CompositionalMultiphaseWell::solveConstraint< MinimumWHPConstraint >( real6
           of << bhp0 << "," << tableBHP0 << "," << currentWHP << "," << liqRate0 << "," << currentPhaseVolRate[0] << "," << currentPhaseVolRate[1] << " ," << currentPhaseVolRate[2] << std::endl;
         }
         of.close();
-        liqConstraint->setConstraintValue( liquidRates[numRates-1] );
+        liqConstraint->setConstraintValue( liquidRates[0] );
         solveNonlinearSystem( time_n,
                               dt,
                               cycleNumber,
@@ -4337,29 +4338,28 @@ void CompositionalMultiphaseWell::solveConstraint< MinimumWHPConstraint >( real6
         std::cout << " Solve at liquid rate " << liqRate1 << " whp  " << constraintWHP << " bhp " << bhp1 << " table bhp " << tableBHP1<< " phase rates " << currentPhaseVolRate <<
           " total vol " << currentTotalVolRate << " bhp res " << bhp1-tableBHP1 << std::endl;
 
+        wellControls.setCurrentConstraint( bhpConstraint.get() );
+        wellControls.setControl( static_cast< WellControls::Control >(bhpConstraint->getControl()) );     // tjb old
+        wellControl = wellControls.getControl();
+        MpiWrapper::broadcast( wellControl, owner );
+        wellControls.setControl( wellControl );
 
-        integer const maxIters=20;
+        integer const maxIters=100;
         real64 const tol = 1e-6;
         integer iter = 0;
-        while( iter < maxIters && std::abs( tableBHP1 - bhp1 ) > tol )
+
+        of.open( "fls.csv" );
+        of << " error,wellbhp,tablebhp,whp,orate,grate,wrate "  << std::endl;
+        while( iter < maxIters && std::abs( tableBHP1 - bhp1 )/bhp1 > tol )
         {
           // update whp
-          real64 m = (liqRate1-liqRate0)/(bhp1-bhp0);
+          //bhp1 = 0.5 *(tableBHP1+bhp1);
+          //bhp1 = tableBHP1;
+          bhp1=bhp1+0.25*(tableBHP1-bhp1);
 
 
-          real64 dy0 = tableBHP0 - bhp0;
-          real64 dy1 =  bhp1 - tableBHP1;
-          real64 dx  = liqRate1 - liqRate0;
-          real64 x0  = liqRate0;
-          liqRate0 = liqRate1;
-          bhp0 = bhp1;
-          tableBHP0 = tableBHP1;
-          //
-          liqRate1 -= m*  (tableBHP1-bhp1);
-          liqRate1 = x0;
-          liqRate1 +=   dy1*dx/(dy1+dy0);
 
-          liqConstraint->setConstraintValue( liqRate1 );
+          bhpConstraint->setConstraintValue( bhp1 );
           solveNonlinearSystem( time_n,
                                 dt,
                                 cycleNumber,
@@ -4371,17 +4371,19 @@ void CompositionalMultiphaseWell::solveConstraint< MinimumWHPConstraint >( real6
           bhp1 = currentBHP;
           m_flowTable.calculateBHP( currentPhaseVolRate, currentWHP, tableBHP1,
                                     flowTableSolveState );
+          of << std::abs( bhp1-tableBHP1 ) << ","<<bhp1 << "," << tableBHP1<< ","<< currentWHP <<  "," << currentPhaseVolRate[0] << "," << currentPhaseVolRate[1] << " ," <<
+            currentPhaseVolRate[2] << std::endl;
           std::cout << " Solve at liquid rate " << liqRate1 << " whp  " << constraintWHP << " bhp " << bhp1 << " table bhp " << tableBHP1 << " phase rates " << currentPhaseVolRate <<
             " total vol " << currentTotalVolRate << " bhp res " << bhp1-tableBHP1 << std::endl;
 
 
           ++iter;
         }
-
+        of.close();
         // Use liquid constraint to find intersection of IPR and VLP
 
-        wellControls.setControl( static_cast< WellControls::Control >(liqConstraint->getControl()) );   // tjb old
-        wellControls.setCurrentConstraint( liqConstraint.get());
+        wellControls.setControl( static_cast< WellControls::Control >(bhpConstraint->getControl()) );   // tjb old
+        wellControls.setCurrentConstraint( bhpConstraint.get());
       }
 
       // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened

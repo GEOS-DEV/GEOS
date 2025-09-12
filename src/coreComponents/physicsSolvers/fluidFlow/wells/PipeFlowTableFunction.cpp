@@ -190,7 +190,7 @@ void PipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRates, 
   //  totalVolumeRate += phaseRates[i];
 //  }
   std::cout << bhp << " " << phaseRates << " " << whp << std::endl;
- 
+
   real64 wct = phaseRates[2]/totalLiquedRate;
   real64 gor = m_gfr[0]; //phaseRates[1]/phaseRates[0];
   real64 liq = (phaseRates[0] + phaseRates[1] );  // liquid rate

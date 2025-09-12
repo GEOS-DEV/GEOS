@@ -144,7 +144,7 @@ void testfindIPR_VFPIntersection(   )
       {
         break;
       }
-            of   << std::abs( wellbhp1-tableBHP1 ) << ","<< wellbhp1 << "," << tableBHP1<< ","<< whpMin <<  "," << phaseRates1[0] << "," << phaseRates1[1] << " ," << phaseRates1[2] <<
+      of << std::abs( wellbhp1-tableBHP1 ) << ","<< wellbhp1 << "," << tableBHP1<< ","<< whpMin <<  "," << phaseRates1[0] << "," << phaseRates1[1] << " ," << phaseRates1[2] <<
         std::endl;
       std::cout << std::abs( wellbhp1-tableBHP1 ) << ","<<wellbhp1 << "," << tableBHP1<< ","<< whpMin <<  "," << phaseRates1[0] << "," << phaseRates1[1] << " ," <<
         phaseRates1[2] << std::endl;

@@ -461,7 +461,9 @@ public:
    * @brief Getters for constraints
    */
   std::shared_ptr< MinimumWHPConstraint > getMinWHPConstraint() { return m_minWHPConstraint; };
+
   std::shared_ptr< LiquidProductionConstraint > getMaxLiquidConstraintForWHP() { return m_maxLiquidConstraintForWHP; };
+  std::shared_ptr< MinimumBHPConstraint > getMinimumBHPConstraint() { return m_minBHPConstraintForWHP; };
 protected:
 
   virtual void postInputInitialization() override;
