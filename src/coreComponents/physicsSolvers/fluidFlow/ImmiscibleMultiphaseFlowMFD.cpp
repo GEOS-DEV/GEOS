@@ -585,26 +585,82 @@ void ImmiscibleMultiphaseFlowMFD::applySourceFluxBC( real64 const time,
   GEOS_UNUSED_VAR( localMatrix );
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-  std::map< string, localIndex > nameToId; localIndex count=0; fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&]( SourceFluxBoundaryCondition const & bc ){ nameToId[bc.getName()] = count++; } );
-  if( count==0 ) return;
+
+  // Collect all SourceFlux BC names -> id
+  std::map< string, localIndex > nameToId; localIndex count = 0;
+  fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&]( SourceFluxBoundaryCondition const & bc )
+  { nameToId[ bc.getName() ] = count++; } );
+  if( count == 0 ) return;
+
+  // Pre-compute scaling factors (set size normalizers) for each source BC
   array1d< globalIndex > setSizes( count );
   computeSourceFluxSizeScalingFactor( time, dt, domain, nameToId, setSizes.toView() );
+
+  // independent saturation component index (0 or 1) for two-phase system
+  integer const indep = 1 - m_dependentPhaseIndex;
+  globalIndex const rankOffset = dofManager.rankOffset();
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & )
   {
-    fsManager.apply< ElementSubRegionBase, SourceFluxBoundaryCondition >( time+dt, mesh, SourceFluxBoundaryCondition::catalogName(), [&]( SourceFluxBoundaryCondition const & fs, string const &, SortedArrayView< localIndex const > const & target, ElementSubRegionBase & sr, string const & )
+    fsManager.apply< ElementSubRegionBase, SourceFluxBoundaryCondition >( time + dt, mesh, SourceFluxBoundaryCondition::catalogName(),
+      [&]( SourceFluxBoundaryCondition const & fs, string const &, SortedArrayView< localIndex const > const & target, ElementSubRegionBase & sr, string const & )
     {
-      if( target.size()==0 || !sr.hasWrapper( dofKey ) ) return;
-      auto dof = sr.getReference< array1d< globalIndex > >( dofKey );
-      auto ghost = sr.ghostRank();
-      array1d< globalIndex > tmpDof( target.size() ); array1d< real64 > tmpRhs( target.size() );
-      fs.computeRhsContribution< FieldSpecificationAdd, parallelDevicePolicy<> >( target.toViewConst(), time+dt, dt, sr, dof, dofManager.rankOffset(), localMatrix, tmpDof.toView(), tmpRhs.toView(), [] GEOS_HOST_DEVICE ( localIndex const ){ return 0.0; } );
-      real64 scale = setSizes[nameToId.at( fs.getName() )]; integer phaseId = fs.getComponent();
-      integer const indep = 1 - m_dependentPhaseIndex;
-      auto rhs = localRhs; globalIndex rankOffset = dofManager.rankOffset();
+      if( target.size() == 0 || !sr.hasWrapper( dofKey ) ) return;
+
+      // Accessors
+      arrayView1d< globalIndex const > const dof = sr.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< integer const > const ghost = sr.ghostRank();
+
+      // Temporary buffers for rhs contribution computation (per-target element)
+      array1d< globalIndex > tmpDof( target.size() );
+      array1d< real64 > tmpRhs( target.size() );
+
+      // Compute raw rhs contributions (unscaled) for this BC on its target set
+      fs.computeRhsContribution< FieldSpecificationAdd, parallelDevicePolicy<> >( target.toViewConst(),
+                                                                                  time + dt,
+                                                                                  dt,
+                                                                                  sr,
+                                                                                  dof,
+                                                                                  rankOffset,
+                                                                                  localMatrix,
+                                                                                  tmpDof.toView(),
+                                                                                  tmpRhs.toView(),
+                                                                                  [] GEOS_HOST_DEVICE ( localIndex const ){ return 0.0; } );
+
+      // Normalization factor for this BC (total number of target dofs across sets)
+      real64 const scale = setSizes[ nameToId.at( fs.getName() ) ];
+      if( scale <= 0 ) return; // safety
+
+      integer const phaseId = fs.getComponent();
+      auto rhs = localRhs; // capture by value for device lambda
+
+      // ---------------------------------------------------------------------------------
+      // Step 1: Apply source contributions to pressure (total mass) equation row
+      // ---------------------------------------------------------------------------------
       forAll< parallelDevicePolicy<> >( target.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-      { localIndex const ei=target[a]; if( ghost[ei] >=0 ) return; globalIndex const base = dof[ei]-rankOffset; real64 val = tmpRhs[a]/scale; // total mass equation
-        rhs[base] += val; // independent phase equation only if phase matches independent
-        if( phaseId == indep ) rhs[base+1] += val; } );
+      {
+        localIndex const ei = target[a];
+        if( ghost[ei] >= 0 ) return; // skip ghosts
+        globalIndex const base = dof[ei] - rankOffset; // pressure row
+        real64 const val = tmpRhs[a] / scale;          // scaled source term
+        rhs[base] += val;                              // total mass / pressure equation
+      } );
+
+      // ---------------------------------------------------------------------------------
+      // Step 2: Apply source contributions to independent saturation equation (if phase matches)
+      // Only inject into saturation equation if this source targets the independent phase
+      // ---------------------------------------------------------------------------------
+      if( phaseId == indep )
+      {
+        forAll< parallelDevicePolicy<> >( target.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+        {
+          localIndex const ei = target[a];
+          if( ghost[ei] >= 0 ) return;
+          globalIndex const base = dof[ei] - rankOffset; // pressure row base
+          real64 const val = tmpRhs[a] / scale;
+          rhs[base + 1] += val; // saturation row (only one independent saturation dof)
+        } );
+      }
     } );
   } );
 }
@@ -618,7 +674,6 @@ void ImmiscibleMultiphaseFlowMFD::applyBoundaryConditions( real64 const time_n,
 {
   applyDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
   applySourceFluxBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
-  // face Dirichlet BCs now handled inside applyDirichletBC; removed duplicate enforcement here
 }
 
 real64 ImmiscibleMultiphaseFlowMFD::calculateResidualNorm( real64 const & time_n,

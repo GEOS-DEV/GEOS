@@ -120,11 +120,30 @@
       objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.25"/>
 
     <!-- Pressure BC regions -->
-    <FieldSpecification name="westPressure" objectPath="faceManager"
-      fieldName="bcPressure" scale="2.0e7" setNames="{ west_BC }"/>
+<!--     <FieldSpecification name="westPressure" objectPath="faceManager"
+      fieldName="bcPressure" scale="2.0e7" setNames="{ west_BC }"/> -->
     <FieldSpecification name="eastPressure" objectPath="faceManager"
       fieldName="bcPressure" scale="1.0e7" setNames="{ east_BC }"/>
   </FieldSpecifications>
+
+  <FieldSpecifications>
+  <!-- Pressure only -->
+  <SourceFlux
+    name="producer_pressure_only"
+    objectPath="ElementRegions/Domain"
+    component="0"
+    scale="1.0e-5"
+    setNames="{ sink }"/>
+
+  <!-- Pressure + saturation -->
+  <SourceFlux
+    name="injector_pressure_and_sat"
+    objectPath="ElementRegions/Domain"
+    component="0"
+    scale="-1.0e-5"
+    setNames="{ source }"/>
+
+</FieldSpecifications>
 
     <!-- Phase source/sink: inject independent phase (component=1), produce dependent phase (component=0) -->
 <!--     <SourceFlux name="independentPhaseSource"
@@ -143,3 +162,15 @@
     <VTK name="vtkOutput"/>
   </Outputs>
 </Problem>
+
+
+<!-- ## DOF Layout (per cell)
+| DOF Index | Meaning                                |
+|-----------|-----------------------------------------|
+| 0         | Pressure (total mass / global balance)  |
+| 1         | Independent saturation (explicit phase) |
+
+Dependent phase saturation is computed:  
+`S_dep = 1 - S_indep` -->
+
+
