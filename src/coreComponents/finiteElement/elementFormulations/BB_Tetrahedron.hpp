@@ -666,7 +666,6 @@ public:
   }
 
 
-
   /**
    * @brief Helper function for loop over barycentric coordinates
    * @tparam FUNC the callback function
@@ -719,7 +718,6 @@ public:
       } );
     } );
   }
-
 
   /**
    * @brief Helper function for loop over tet basis functions that have one index in a given set of indices.
@@ -1068,26 +1066,6 @@ public:
   computeMassTerm( real64 const (&X)[4][3],
                    FUNC && func )
   {
-    // real64 detJ = LvArray::math::abs( jacobianDeterminant( X ));
-    // basisLoop( [&func, &detJ] ( auto const cc1, auto const ii1, auto const jj1, auto const kk1, auto const ll1 )
-    // {
-    //   constexpr int c1 = cc1;
-    //   constexpr int i1 = ii1;
-    //   constexpr int j1 = jj1;
-    //   constexpr int k1 = kk1;
-    //   constexpr int l1 = ll1;
-    //   //Needed for compilors that do not support constexpr lambdas
-    //   GEOS_UNUSED_VAR( c1, i1, j1, k1, l1 );
-    //   basisLoop( [&func, &detJ] ( auto const c2, auto const ii2, auto const jj2, auto const kk2, auto const ll2 )
-    //   {
-    //     constexpr int i2 = decltype(ii2)::value;
-    //     constexpr int j2 = decltype(jj2)::value;
-    //     constexpr int k2 = decltype(kk2)::value;
-    //     constexpr int l2 = decltype(ll2)::value;
-    //     constexpr real64 val = computeSuperpositionIntegral( i1, j1, k1, l1, i2, j2, k2, l2 );
-    //     func( c1, c2, val * detJ );
-    //   } );
-    // } );
     real64 detJ = LvArray::math::abs( jacobianDeterminant( X ));
     basisLoop( [&func, &detJ] ( auto cc1, auto ii1, auto jj1, auto kk1, auto ll1 )
     {
