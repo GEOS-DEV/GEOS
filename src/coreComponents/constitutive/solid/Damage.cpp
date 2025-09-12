@@ -37,7 +37,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_extDrivingForce(),
   m_lengthScale(),
   m_defaultCriticalFractureEnergy(),
-  m_criticalStrainEnergy(),
+  m_defaultCriticalStrainEnergy(),
   m_degradationLowerLimit( 0.0 ),
   m_extDrivingForceFlag( 0 ),
   m_defaultTensileStrength(),
@@ -45,6 +45,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   m_defaultDeltaCoefficient(),
   m_biotCoefficient(),
   m_criticalFractureEnergy(),
+  m_criticalStrainEnergy(),
   m_tensileStrength(),
   m_compressStrength(),
   m_deltaCoefficient()
@@ -92,9 +93,14 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Critical fracture energy" );
 
-  this->registerWrapper( viewKeyStruct::criticalStrainEnergyString(), &m_criticalStrainEnergy ).
+  this->registerWrapper( viewKeyStruct::defaultCriticalStrainEnergyString(), &m_defaultCriticalStrainEnergy ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Critical stress in a 1d tension test" );
+    setDescription( "Default critical strain energy in a 1d tension test" );
+
+  this->registerWrapper( viewKeyStruct::criticalStrainEnergyString(), &m_criticalStrainEnergy ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Critical strain energy in a 1d tension test" );
 
   this->registerWrapper( viewKeyStruct::degradationLowerLimitString(), &m_degradationLowerLimit ).
     setApplyDefaultValue( 0.0 ).
@@ -165,6 +171,9 @@ void Damage< BASE >::postInputInitialization()
   this->template getWrapper< array1d< real64 > >( viewKeyStruct::criticalFractureEnergyString() ).
     setApplyDefaultValue( m_defaultCriticalFractureEnergy );
 
+  this->template getWrapper< array1d< real64 > >( viewKeyStruct::criticalStrainEnergyString() ).
+    setApplyDefaultValue( m_defaultCriticalStrainEnergy );
+
   this->template getWrapper< array1d< real64 > >( viewKeyStruct::tensileStrengthString() ).
     setApplyDefaultValue( m_defaultTensileStrength );
 
@@ -187,6 +196,7 @@ void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
   m_extDrivingForce.resize( 0, numConstitutivePointsPerParentIndex );
   m_biotCoefficient.resize( parent.size() );
   m_criticalFractureEnergy.resize( parent.size() );
+  m_criticalStrainEnergy.resize( parent.size() );
   m_tensileStrength.resize( parent.size() );
   m_compressStrength.resize( parent.size() );
   m_deltaCoefficient.resize( parent.size() );

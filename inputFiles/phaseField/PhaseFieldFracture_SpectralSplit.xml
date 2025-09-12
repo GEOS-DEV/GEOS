@@ -127,7 +127,7 @@
       defaultShearModulus="8.077e4"
       lengthScale="0.25"
       defaultCriticalFractureEnergy="54.0"
-      criticalStrainEnergy="14.88"/>
+      defaultCriticalStrainEnergy="14.88"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -138,6 +138,14 @@
        objectPath="ElementRegions/Region1"
        fieldName="shale_criticalFractureEnergy"
        scale="54.0"/>
+
+    <FieldSpecification
+       name="psi_c"
+       initialCondition="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/Region1"
+       fieldName="shale_criticalStrainEnergy"
+       scale="14.88"/>
        
     <FieldSpecification
       name="shearLoad"

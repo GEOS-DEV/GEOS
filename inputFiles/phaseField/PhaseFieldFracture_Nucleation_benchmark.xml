@@ -57,7 +57,7 @@
       defaultShearModulus="4.3363e3"
       lengthScale="0.2"
       defaultCriticalFractureEnergy="9.1e-2"
-      criticalStrainEnergy="0"
+      defaultCriticalStrainEnergy="0"
       extDrivingForceFlag="1"
       defaultTensileStrength="27.0"
       defaultCompressiveStrength="77.0"
