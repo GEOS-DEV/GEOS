@@ -489,52 +489,6 @@ void ImmiscibleMultiphaseFlowMFD::assembleFluxTermsHybrid( real64 const dt,
   } );
 }
 
-bool ImmiscibleMultiphaseFlowMFD::validateDirichletBC( DomainPartition & domain, real64 const time ) const
-{
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  bool ok = true;
-  constexpr integer MAX_NP = 2;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & )
-  {
-    // map: region -> subRegion -> set -> component mask
-    map< string, map< string, map< string, ComponentMask< MAX_NP > > > > bcStatus;
-    // pressure specs
-    fsManager.apply< ElementSubRegionBase >( time, mesh, flow::pressure::key(), [&]( FieldSpecificationBase const &, string const & setName, SortedArrayView< localIndex const > const &, ElementSubRegionBase & sr, string const & )
-    {
-      string const regionName = sr.getParent().getParent().getName();
-      string const subRegionName = sr.getName();
-      auto & setMap = bcStatus[regionName][subRegionName];
-      if( setMap.count( setName ) > 0 )
-      {
-        ok = false; // duplicate pressure BC on same set
-      }
-      setMap[setName].setNumComp( m_numPhases );
-    } );
-    // phase volume fraction specs
-    fsManager.apply< ElementSubRegionBase >( time, mesh, immiscibleMultiphaseFlow::phaseVolumeFraction::key(), [&]( FieldSpecificationBase const & fs, string const & setName, SortedArrayView< localIndex const > const &, ElementSubRegionBase & sr, string const & )
-    {
-      string const regionName = sr.getParent().getParent().getName();
-      string const subRegionName = sr.getName();
-      integer const comp = fs.getComponent();
-      auto & setMap = bcStatus[regionName][subRegionName];
-      if( setMap.count( setName ) == 0 )
-      {
-        ok = false; // saturation BC without pressure BC on same set
-      }
-      if( comp < 0 || comp >= m_numPhases )
-      {
-        ok = false; return;
-      }
-      ComponentMask< MAX_NP > & mask = setMap[setName];
-      if( mask[comp] )
-      {
-        ok = false; // duplicate component specification
-      }
-      mask.set( comp );
-    } );
-  } );
-  return ok;
-}
 
 void ImmiscibleMultiphaseFlowMFD::applyDirichletBC( real64 const time_n,
                                                     real64 const dt,

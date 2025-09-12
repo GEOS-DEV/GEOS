@@ -14,7 +14,7 @@
       targetRegions="{ Domain }"
       logLevel="2"
       dependentPhaseIndex="1">
-      <NonlinearSolverParameters newtonTol="1.0e-2" newtonMaxIter="3"/>
+      <NonlinearSolverParameters newtonTol="1.0e-5" newtonMaxIter="3"/>
       <LinearSolverParameters directParallel="0"/>
     </ImmiscibleMultiphaseFlowMFD>
   </Solvers>
@@ -45,9 +45,9 @@
       xMax="{ 3.01, 1.01, 1.01 }"/>
   </Geometry>
 
-  <Events maxTime="1">
-    <PeriodicEvent name="outputs" timeFrequency="1" target="/Outputs/vtkOutput"/>
-    <PeriodicEvent name="solverApps" forceDt="1" target="/Solvers/FlowSolverMFD"/>
+  <Events maxTime="8640000">
+    <PeriodicEvent name="outputs" timeFrequency="864000" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent name="solverApps" forceDt="864000" target="/Solvers/FlowSolverMFD"/>
   </Events>
 
   <NumericalMethods>
@@ -94,7 +94,7 @@
 
     <NullModel name="nullSolid"/>
 
-    <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.0" referencePressure="0" compressibility="0.0"/>
+    <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.1" referencePressure="0" compressibility="0.0"/>
 
     <ConstantPermeability name="rockPerm" permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }"/>
 
@@ -115,9 +115,9 @@
 
     <!-- Initial saturations (phaseVolumeFraction component index: 0=water, 1=gas) -->
     <FieldSpecification name="initSatWater" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="0.5"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="0.75"/>
     <FieldSpecification name="initSatGas" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.5"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.25"/>
 
     <!-- Pressure BC regions -->
     <FieldSpecification name="westPressure" objectPath="faceManager"

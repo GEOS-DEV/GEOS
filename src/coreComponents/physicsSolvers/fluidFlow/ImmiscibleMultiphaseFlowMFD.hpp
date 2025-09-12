@@ -128,7 +128,6 @@ private:
   void updateRelPermModel( ObjectManagerBase & dataGroup ) const;
   void updateCapPressureModel( ObjectManagerBase & dataGroup ) const;
   void updateFluidModel( ObjectManagerBase & dataGroup ) const;
-  bool validateDirichletBC( DomainPartition & domain, real64 const time ) const;
   void applyDirichletBC( real64 const time_n,
                          real64 const dt,
                          DofManager const & dofManager,
