@@ -171,29 +171,28 @@ void IterationsStatistics::writeIterationStatsToTable()
   resetSolverLinearTime();
 }
 
-void IterationsStatistics::outputStatistics()
+void IterationsStatistics::outputStatistics() const
 {
   // no statistics to output when no time steps have been recorded
   if( m_numTimeSteps == 0 || !m_logOutput )
     return;
 
-  {
-    TableLayout iterationLogLayout ( GEOS_FMT( "{}", m_tableIterationName ), {"Statistics", "Value"} );
+  TableLayout iterationLogLayout ( GEOS_FMT( "{}", m_tableIterationName ), {"Statistics", "Value"} );
 
-    TableTextFormatter const statsFormatter( iterationLogLayout );
+  TableTextFormatter const statsFormatter( iterationLogLayout );
 
-    TableData iterationDataLog;
-    iterationDataLog.addRow( "Time steps", m_numTimeSteps );
-    iterationDataLog.addRow( "Time step cuts", m_numTimeStepCuts );
-    iterationDataLog.addRow( "Successful configuration iterations", m_numSuccessfulConfigIterations );
-    iterationDataLog.addRow( "Successful nonlinear iterations", m_numSuccessfulNonlinearIterations );
-    iterationDataLog.addRow( "Successful linear iterations", m_numSuccessfulLinearIterations );
-    iterationDataLog.addRow( "Discarded configuration iterations", m_numDiscardedConfigIterations );
-    iterationDataLog.addRow( "Discarded nonlinear iterations", m_numDiscardedNonlinearIterations );
-    iterationDataLog.addRow( "Discarded linear iterations", m_numDiscardedLinearIterations );
+  TableData iterationDataLog;
+  iterationDataLog.addRow( "Time steps", m_numTimeSteps );
+  iterationDataLog.addRow( "Time step cuts", m_numTimeStepCuts );
+  iterationDataLog.addRow( "Successful configuration iterations", m_numSuccessfulConfigIterations );
+  iterationDataLog.addRow( "Successful nonlinear iterations", m_numSuccessfulNonlinearIterations );
+  iterationDataLog.addRow( "Successful linear iterations", m_numSuccessfulLinearIterations );
+  iterationDataLog.addRow( "Discarded configuration iterations", m_numDiscardedConfigIterations );
+  iterationDataLog.addRow( "Discarded nonlinear iterations", m_numDiscardedNonlinearIterations );
+  iterationDataLog.addRow( "Discarded linear iterations", m_numDiscardedLinearIterations );
 
-    GEOS_LOG_RANK_0( statsFormatter.toString( iterationDataLog ));
-  }
+  GEOS_LOG_RANK_0( statsFormatter.toString( iterationDataLog ));
+  GEOS_LOG_RANK_0( "" ); // blank line for readability
 }
 
 ConvergenceStatistics::ConvergenceStatistics():

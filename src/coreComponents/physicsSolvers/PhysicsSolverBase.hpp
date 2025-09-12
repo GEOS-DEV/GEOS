@@ -761,7 +761,7 @@ public:
    * @brief set the timestamp of the system setup
    * @param[in] timestamp the new timestamp of system setup
    */
-  void setSystemSetupTimestamp( Timestamp timestamp ) { m_systemSetupTimestamp = timestamp; }
+  void setSystemSetupTimestamp( Timestamp timestamp );
 
   /**
    * @brief return the value of the gravity vector specified in PhysicsSolverManager
@@ -920,9 +920,25 @@ public:
     return m_solverStatistics.m_iterationsStats;
   }
   /**
+   * @return An IterationsStatistics for the "root" solver.
+   * Otherwise return an empty IterationsStatistics
+   * (const version)
+   */
+  IterationsStatistics const & getIterationStats() const
+  {
+    return m_solverStatistics.m_iterationsStats;
+  }
+  /**
    * @return A ConvergenceStatistics for all sub-solvers
    */
   ConvergenceStatistics & getConvergenceStats()
+  {
+    return m_solverStatistics.m_convergenceStats;
+  }
+  /**
+   * @return A ConvergenceStatistics for all sub-solvers (const version)
+   */
+  ConvergenceStatistics const & getConvergenceStats() const
   {
     return m_solverStatistics.m_convergenceStats;
   }

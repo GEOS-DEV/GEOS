@@ -106,8 +106,17 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateCons
 
   MultiFluidBase::allocateConstitutiveData( parent, numPts );
 
-  // Zero k-Values to force initialisation with Wilson k-Values
+  // Zero k-Values to force re-initialisation
   m_kValues.zero();
+}
+
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::initializeState() const
+{
+  // Zero k-Values to force re-initialisation
+  m_kValues.zero();
+
+  MultiFluidBase::initializeState();
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
