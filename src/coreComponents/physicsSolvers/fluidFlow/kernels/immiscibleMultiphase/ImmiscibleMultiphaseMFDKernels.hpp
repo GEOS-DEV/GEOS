@@ -315,7 +315,7 @@ public:
         real64 const dPotDif_dS = - dGravTerm_dS;
         real64 const dPotDif_dFaceP = -1.0;
 
-        real64 const T_ij = s.transMatrix[i][j];
+        real64 const T_ij = m_dt * s.transMatrix[i][j];
         s.MassFlux[i] += Lambda * T_ij * potDif;
         s.dMassFlux_dPres[i] += T_ij * ( Lambda * dPotDif_dP + dLambda_dP * potDif );
         s.dMassFlux_dS[i] += T_ij * ( Lambda * dPotDif_dS + dLambda_dS * potDif );
@@ -335,15 +335,18 @@ public:
       real64 const dF_dP = s.dMassFlux_dPres[i];
       real64 const dF_dS = s.dMassFlux_dS[i];
       // residual
-      s.divMassFluxes += m_dt * F;
+      
+//      std::cout << "F: " << F << std::endl;
+      s.divMassFluxes += F;
       // jacobians wrt element DOFs
-      s.dDivMassFluxes_dP += m_dt * dF_dP;
-      s.dDivMassFluxes_dS += m_dt * dF_dS;
+      s.dDivMassFluxes_dP += dF_dP;
+      s.dDivMassFluxes_dS += dF_dS;
       // wrt face pressures
       for( integer j=0; j<NUM_FACE; ++j ){
-        s.dDivMassFluxes_dFaceVars[j] += m_dt * s.dMassFlux_dFacePres[i][j];
+        s.dDivMassFluxes_dFaceVars[j] += s.dMassFlux_dFacePres[i][j];
       }
     }
+    int aka = 0;
   }
 
   GEOS_HOST_DEVICE
@@ -455,16 +458,15 @@ public:
       real64 const beta = ( F >= 0.0 ) ? 1.0 : 0.0;
       real64 const f_int = beta * f_loc + ( 1.0 - beta ) * f_nei;
 
-      std::cout << "F: " << F << std::endl;
       // residual contribution and local Jacobians
-      s.divSatFluxes += m_dt * F * f_int;
+      s.divSatFluxes += F * f_int;
       // d/dP (local): dF/dP * f_int + F * beta * df_loc/dP (neighbor f has no local P dependence)
-      s.dDivSatFluxes_dP += m_dt * ( dF_dP * f_int + F * beta * df_loc_dP );
+      s.dDivSatFluxes_dP += ( dF_dP * f_int + F * beta * df_loc_dP );
       // d/dS (local): dF/dS * f_int + F * beta * df_loc/dS (neighbor f has no local S dependence)
-      s.dDivSatFluxes_dS += m_dt * ( dF_dS * f_int + F * beta * df_loc_dS );
+      s.dDivSatFluxes_dS += ( dF_dS * f_int + F * beta * df_loc_dS );
       // face pressure derivatives: only via F
       for( integer j=0; j<NUM_FACE; ++j ){
-        s.dDivSatFluxes_dFaceVars[j] += m_dt * ( s.dMassFlux_dFacePres[i][j] * f_int );
+        s.dDivSatFluxes_dFaceVars[j] += ( s.dMassFlux_dFacePres[i][j] * f_int );
       }
 
       // neighbor Jacobian contributions on neighbor columns when applicable
@@ -477,10 +479,10 @@ public:
         
         // Always append entries (values are be zero if beta == 1)
         s.neiCols[s.numNeiCols] = neiP;
-        s.neiVals[s.numNeiCols] += m_dt * F * ( 1.0 - beta ) * df_nei_dP;
+        s.neiVals[s.numNeiCols] += F * ( 1.0 - beta ) * df_nei_dP;
         ++s.numNeiCols;
         s.neiCols[s.numNeiCols] = neiS;
-        s.neiVals[s.numNeiCols] += m_dt * F * ( 1.0 - beta ) * df_nei_dS;
+        s.neiVals[s.numNeiCols] += F * ( 1.0 - beta ) * df_nei_dS;
         ++s.numNeiCols;
       }
     }
