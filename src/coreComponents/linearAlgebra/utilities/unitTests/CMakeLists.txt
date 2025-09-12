@@ -7,7 +7,7 @@ set( parallel_tests
 
 set( nranks 2 )
 
-set( dependencyList gtest mainInterface linearAlgebra ${parallelDeps} )
+set( dependencyList mainInterface gtest ${parallelDeps} )
 
 foreach(test ${parallel_tests})
   get_filename_component( test_name ${test} NAME_WE )

@@ -6,7 +6,7 @@ Builds unit test for fluid flow solver statistics
 set( fluidFlow_gtest_tests
      testFlowStatistics.cpp )
 
-set( dependencyList ${parallelDeps} fluidFlowSolvers testingUtilities mainInterface gtest )
+set( dependencyList mainInterface testingUtilities gtest ${parallelDeps} )
 
 foreach( test_source ${fluidFlow_gtest_tests} )
   get_filename_component( test_name ${test_source} NAME_WE )

@@ -3,7 +3,7 @@
 set( testSources
      testConformingVirtualElementOrder1.cpp )
 
-set( dependencyList gtest mainInterface finiteElement ${parallelDeps} )
+set( dependencyList mainInterface gtest ${parallelDeps} )
 
 foreach(test ${testSources})
   get_filename_component( test_name ${test} NAME_WE )

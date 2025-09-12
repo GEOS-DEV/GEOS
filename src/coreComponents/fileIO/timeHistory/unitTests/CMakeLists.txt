@@ -3,8 +3,7 @@ set( gtest_geosx_tests
      testHDFFile.cpp
      testHDFParallelFile.cpp )
 
-# Added mainInterface to link list for basicSetup and basicCleanup symbols
-set( dependencyList ${parallelDeps} mainInterface fileIO HDF5::HDF5 gtest )
+set( dependencyList mainInterface gtest ${parallelDeps} HDF5::HDF5 )
 
 # Add gtest C++ based tests
 foreach(test ${gtest_geosx_tests})

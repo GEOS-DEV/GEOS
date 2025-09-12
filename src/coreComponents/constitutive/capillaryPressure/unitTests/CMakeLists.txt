@@ -2,8 +2,7 @@
 set( gtest_cappres_tests
      testCapillaryPressure.cpp )
 
-# Base dependency list (mirrors relativePermeability tests plus functions usage)
-set( dependencyList gtest blas lapack constitutive mainInterface ${parallelDeps} )
+set( dependencyList mainInterface gtest blas lapack ${parallelDeps} )
 
 if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )

@@ -1,10 +1,8 @@
-# CMake configuration for mimeticInnerProducts unit tests
-# The test testMimeticInnerProducts.cpp was moved here from integrationTests/finiteVolumeTests
 
 set( gtest_geosx_tests
      testMimeticInnerProducts.cpp )
 
-set( dependencyList gtest finiteVolume mesh mainInterface codingUtilities ${parallelDeps} )
+set( dependencyList mainInterface gtest ${parallelDeps} )
 
 foreach(test ${gtest_geosx_tests})
   get_filename_component( test_name ${test} NAME_WE )

@@ -3,7 +3,7 @@
 set( gtest_geosx_tests
      testSinglePhaseMobilityKernel.cpp )
 
-set( dependencyList gtest physicsSolvers mainInterface codingUtilities ${parallelDeps} )
+set( dependencyList mainInterface gtest ${parallelDeps} )
 
 if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )

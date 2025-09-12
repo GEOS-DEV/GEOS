@@ -9,7 +9,7 @@ set( dataRepository_tests
      testObjectCatalog.cpp
      testWrapperHelpers.cpp )
 
-set( dependencyList ${parallelDeps} gtest dataRepository mainInterface )
+set( dependencyList mainInterface gtest ${parallelDeps} )
 
 if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )
