@@ -61,7 +61,7 @@
     <TableFunction name="densityWater"   coordinates="{ 0 }" values="{ 1000.0 }"/>
     <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 100.0 }"/>
     <TableFunction name="viscosityWater" coordinates="{ 0 }" values="{ 1.0e-3 }"/>
-    <TableFunction name="viscosityGas"   coordinates="{ 0 }" values="{ 1.0e-5 }"/>
+    <TableFunction name="viscosityGas"   coordinates="{ 0 }" values="{ 1.0e-4 }"/>
 
     <!-- Linear relative permeability tables -->
     <TableFunction
@@ -77,11 +77,17 @@
   </Functions>
 
   <Constitutive>
-    <TwoPhaseImmiscibleFluid
+<!--     <TwoPhaseImmiscibleFluid
       name="fluid"
       phaseNames="{ water, gas }"
       densityTableNames="{ densityWater, densityGas }"
-      viscosityTableNames="{ viscosityWater, viscosityGas }"/>
+      viscosityTableNames="{ viscosityWater, viscosityGas }"/> -->
+
+    <TwoPhaseImmiscibleFluid
+      name="fluid"
+      phaseNames="{ gas, water }"
+      densityTableNames="{ densityGas, densityWater }"
+      viscosityTableNames="{ viscosityGas, viscosityWater }"/>      
 
     <CompressibleSolidConstantPermeability
       name="rock"
@@ -106,7 +112,9 @@
       objectPath="ElementRegions/Domain/block1" fieldName="rockPorosity_referencePorosity" scale="0.05"/>
 
     <FieldSpecification name="initialPressure" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="pressure" scale="1.0e7"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="pressure" scale="1.5e7"/>
+    <FieldSpecification name="initialfacePressure" initialCondition="1" setNames="{ all }"
+      objectPath="faceManager" fieldName="facePressure" scale="1.5e7"/>         
 
     <!-- Initial saturations (phaseVolumeFraction component index: 0=water, 1=gas) -->
     <FieldSpecification name="initSatWater" initialCondition="1" setNames="{ all }"
@@ -125,13 +133,13 @@
       objectPath="ElementRegions/Domain/block1"
       setNames="{ source }"
       component="1"
-      scale="-1.0e-4"/>
+      scale="-1.0e-5"/>
 
     <SourceFlux name="dependentPhaseSink"
       objectPath="ElementRegions/Domain/block1"
       setNames="{ sink }"
       component="0"
-      scale="1.0e-4"/>  
+      scale="1.0e-5"/>  
 
   </FieldSpecifications>
 

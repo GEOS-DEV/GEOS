@@ -220,7 +220,8 @@ public:
     globalIndex faceCols[NUM_FACE]{};
   };
 
-  GEOS_HOST_DEVICE void setup( localIndex const ei, StackVariables & s ) const
+  GEOS_HOST_DEVICE
+  void setup( localIndex const ei, StackVariables & s ) const
   {
     s.cellRow = m_elemDofNumber[m_er][m_esr][ei] - m_rankOffset;
     // Element columns: pressure and saturation of independent phase are consecutive
@@ -234,7 +235,8 @@ public:
     }
   }
   
-  GEOS_HOST_DEVICE void computeOverallMassFlux( localIndex const ei, StackVariables & s ) const
+  GEOS_HOST_DEVICE
+  void computeOverallMassFlux( localIndex const ei, StackVariables & s ) const
   {
     using Deriv = DerivMob; // alias for readability
     
@@ -334,9 +336,8 @@ public:
       real64 const F = s.MassFlux[i];
       real64 const dF_dP = s.dMassFlux_dPres[i];
       real64 const dF_dS = s.dMassFlux_dS[i];
-      // residual
       
-//      std::cout << "F: " << F << std::endl;
+      // residual
       s.divMassFluxes += F;
       // jacobians wrt element DOFs
       s.dDivMassFluxes_dP += dF_dP;
@@ -413,8 +414,6 @@ public:
       f = rho * lambda/ Lambda;
       df_dP = num_dP / (Lambda * Lambda);
       df_dS = num_dS / (Lambda * Lambda);
-      // (Existing behavior retained: override df_dS mapping to independent saturation sign)
-      int aka = 0;
     };
 
     // Precompute local f and derivatives
@@ -464,7 +463,7 @@ public:
       s.dDivSatFluxes_dP += ( dF_dP * f_int + F * beta * df_loc_dP );
       // d/dS (local): dF/dS * f_int + F * beta * df_loc/dS (neighbor f has no local S dependence)
       s.dDivSatFluxes_dS += ( dF_dS * f_int + F * beta * df_loc_dS );
-      // face pressure derivatives: only via F
+      // face pressure derivatives
       for( integer j=0; j<NUM_FACE; ++j ){
         s.dDivSatFluxes_dFaceVars[j] += ( s.dMassFlux_dFacePres[i][j] * f_int );
       }
@@ -488,9 +487,8 @@ public:
     }
   }
 
-  template< typename FUNC = NoOpFunc >
   GEOS_HOST_DEVICE
-  void compute( localIndex const ei, StackVariables & s, FUNC && ) const
+  void compute( localIndex const ei, StackVariables & s) const
   {
     if( m_elemGhostRank[ei] < 0 ){
       
@@ -570,7 +568,7 @@ GEOS_HOST_DEVICE inline void launchElementBasedAssemblyKernel( localIndex const 
   {
     typename ElementBasedAssemblyKernel< NF, IPType >::StackVariables s;
     k.setup( ei, s );
-    k.compute( ei, s, NoOpFunc{} );
+    k.compute( ei, s );
     k.complete( ei, s );
   } );
 }

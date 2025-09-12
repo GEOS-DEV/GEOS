@@ -225,3 +225,7 @@ install( TARGETS fluidFlowSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/li
 if( externalComponentDeps )
   target_include_directories( fluidFlowSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
 endif()
+
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( kernels/immiscibleMultiphase/unitTest )
+endif()

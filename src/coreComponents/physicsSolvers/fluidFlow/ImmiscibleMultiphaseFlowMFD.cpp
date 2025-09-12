@@ -436,36 +436,6 @@ void ImmiscibleMultiphaseFlowMFD::assembleFluxTermsHybrid( real64 const dt,
       string const & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
       PermeabilityBase const & permeability = getConstitutiveModel< PermeabilityBase >( subRegion, permName );
 
-      // Debug-time sanity: verify sparsity contains face columns in an owned cell row
-      #ifdef GEOS_DEBUG
-      {
-        arrayView1d< globalIndex const > const elemDof = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
-        arrayView1d< integer const > const ghost = subRegion.ghostRank();
-        arrayView2d< localIndex const > const elemToFaces = subRegion.faceList();
-        arrayView1d< globalIndex const > const faceDof = faceManager.getReference< array1d< globalIndex > >( faceDofKey );
-        globalIndex const rankOffset = dofManager.rankOffset();
-        // find first owned element, if any
-        localIndex ei0 = -1;
-        for( localIndex ei = 0; ei < subRegion.size(); ++ei )
-        { if( ghost[ei] < 0 ) { ei0 = ei; break; } }
-        if( ei0 >= 0 )
-        {
-          localIndex const localRow = elemDof[ei0] - rankOffset; // pressure row
-          auto cols = localMatrix.getColumns( localRow );
-          // check all adjacent face columns exist
-          for( integer f = 0; f < elemToFaces.size(1); ++f )
-          {
-            localIndex const lf = elemToFaces( ei0, f );
-            globalIndex const fc = faceDof[lf];
-            bool found = false;
-            for( localIndex j = 0; j < cols.size(); ++j )
-            { if( cols[j] == fc ) { found = true; break; } }
-            GEOS_ERROR_IF( !found, GEOS_FMT( "ImmiscibleMultiphaseFlowMFD: missing face col {} in row {} (elem {}), sparsity not aligned with hybrid assembly.", fc, localRow, ei0 ) );
-          }
-        }
-      }
-      #endif
-
       ElementBasedAssemblyKernelFactory::createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
                                                                                      er, esr,
                                                                                      lengthTolerance,
