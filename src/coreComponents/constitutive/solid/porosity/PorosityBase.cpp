@@ -41,7 +41,7 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
 {
   registerWrapper( viewKeyStruct::defaultReferencePorosityString(), &m_defaultReferencePorosity ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Default value of the reference porosity" );
+    setDescription( "The default porosity value of the rock at the referencePressure" );
 
   registerField( fields::porosity::porosity{}, &m_newPorosity );
 

@@ -38,7 +38,7 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( string const &
   registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Minimum volume fraction value for each phase" );
+    setDescription( "Minimum volume fraction value for each phase (expressed as a percentage) used to compute the relative permeability " );
 
   registerWrapper( viewKeyStruct::phaseRelPermExponentString(), &m_phaseRelPermExponent ).
     setApplyDefaultValue( 1.0 ).
@@ -49,7 +49,7 @@ BrooksCoreyRelativePermeability::BrooksCoreyRelativePermeability( string const &
   registerWrapper( viewKeyStruct::phaseRelPermMaxValueString(), &m_phaseRelPermMaxValue ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Maximum relative permeability value for each phase" );
+    setDescription( "Ratio between a phase's permeability and the maximum permeability of the rock, for each phase." );
 
   registerWrapper( viewKeyStruct::volFracScaleString(), &m_volFracScale ).
     setApplyDefaultValue( 1.0 ).

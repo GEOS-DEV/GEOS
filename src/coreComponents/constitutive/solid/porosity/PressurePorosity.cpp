@@ -34,11 +34,11 @@ PressurePorosity::PressurePorosity( string const & name, Group * const parent ):
 {
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Reference pressure for solid compressibility" );
+    setDescription( "Reference pressure for solid compressibility[Pa]" );
 
   registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Solid compressibility" );
+    setDescription( "Solid compressibility [Pa^-1]" );
 }
 
 void PressurePorosity::allocateConstitutiveData( dataRepository::Group & parent,

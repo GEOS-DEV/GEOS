@@ -42,6 +42,19 @@ The user can parameterize the construction of the table by specifying the salini
 
 Note that the pressures are in Pascal, temperatures are in Kelvin, and the salinity is a molality (moles of NaCl per kg of brine). 
 The temperature must be between 283.15 and 623.15 Kelvin.
+
+p_min: The minimum pressure value [Pa] for which the density table is defined. It sets the lower boundary of the pressure range.
+
+p_max: The maximum pressure value [Pa] for the density table. It sets the upper boundary of the pressure range.
+
+Δp (Delta p): The increment in pressure [Pa] between successive values in the pressure axis of the table. It defines the resolution of the pressure dimension.
+
+T_min: The minimum temperature value [K] for the density table. This sets the lower boundary of the temperature range.
+
+T_max: The maximum temperature value [K] for the density table. It sets the upper boundary of the temperature range.
+
+ΔT (Delta T): The increment in temperature [K] between successive values in the temperature axis of the table. It defines the resolution of the temperature dimension.
+
 The table is populated using the model of Duan and Sun (2003).
 Specifically, we solve the following nonlinear CO2 equation of state (equation (A1) in Duan and Sun, 2003) for each pair :math:`(p,T)` to obtain the reduced volume, :math:`V_r`.
 
