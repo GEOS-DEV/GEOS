@@ -1,27 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
-    <SinglePhaseReactiveTransport
-      name="SinglePhaseReactiveFlow"
-      discretization="singlePhaseTPFA"
-      targetRegions="{ MediumA, MediumB, Source }"
-      writeLinearSystem="0"
-      immobilePrimarySpeciesIndices="{ 4 }"
-      logLevel="2">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-4"
-        maxTimeStepCuts="8"
-        maxSubSteps="40"
-        newtonMaxIter="40"
-        logLevel="2"
-        maxAllowedResidualNorm="1e100"/>
-      <LinearSolverParameters
-        directParallel="1"/>
-    </SinglePhaseReactiveTransport>
-  </Solvers>
-
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
@@ -36,7 +15,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Source"
       fieldName="rockPorosityA_referencePorosity"
-      scale="0.25"/>
+      scale="1.0"/>
 
     <FieldSpecification
       name="PorosityMediumA"
@@ -46,6 +25,14 @@
       fieldName="rockPorosityA_referencePorosity"
       scale="0.25"/>
 
+    <!-- <FieldSpecification
+      name="PorositySink"
+      initialCondition="1"
+      setNames="{ sink }"
+      objectPath="ElementRegions/MediumA"
+      fieldName="rockPorosityA_referencePorosity"
+      scale="1.0"/> -->
+
     <FieldSpecification
       name="PorosityMediumB"
       initialCondition="1"
@@ -53,6 +40,14 @@
       objectPath="ElementRegions/MediumB"
       fieldName="rockPorosityB_referencePorosity"
       scale="0.5"/>
+    
+    <!-- <FieldSpecification
+      name="DiffusivitySink"
+      initialCondition="1"
+      setNames="{ sink }"
+      objectPath="ElementRegions/MediumA"
+      fieldName="diffusionA_diffusivity"
+      scale="1e8"/> -->
 
     <FieldSpecification
       name="initialPressureSource"
@@ -60,7 +55,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Source"
       fieldName="pressure"
-      scale="1561055"/>
+      scale="1e6"/>
 
     <FieldSpecification
       name="initialPressureMediumA"
@@ -94,27 +89,42 @@
 
   <Tasks>
     <PackCollection
+      name="logPrimarySpeciesSourceCollection"
+      objectPath="ElementRegions/Source/cb-0_0_0"
+      fieldName="logPrimarySpeciesConcentration"/>
+
+    <PackCollection
       name="logPrimarySpeciesMediumACollection1"
       objectPath="ElementRegions/MediumA/cb-1_0_0"
       fieldName="logPrimarySpeciesConcentration"/>
 
     <PackCollection
       name="logPrimarySpeciesMediumACollection2"
-      objectPath="ElementRegions/MediumA/cb-3_0_0"
+      objectPath="ElementRegions/MediumA/cb-2_0_0"
       fieldName="logPrimarySpeciesConcentration"/>
-
+    
     <PackCollection
       name="logPrimarySpeciesMediumACollection3"
       objectPath="ElementRegions/MediumA/cb-4_0_0"
       fieldName="logPrimarySpeciesConcentration"/>
 
     <PackCollection
+      name="logPrimarySpeciesMediumACollection4"
+      objectPath="ElementRegions/MediumA/cb-5_0_0"
+      fieldName="logPrimarySpeciesConcentration"/>
+
+    <PackCollection
       name="logPrimarySpeciesMediumBCollection"
-      objectPath="ElementRegions/MediumB/cb-2_0_0"
+      objectPath="ElementRegions/MediumB/cb-3_0_0"
       fieldName="logPrimarySpeciesConcentration"/>
   </Tasks>
 
   <Outputs>
+    <TimeHistory
+      name="logPrimarySpeciesSourceHistoryOutput"
+      sources="{ /Tasks/logPrimarySpeciesSourceCollection }"
+      filename="logPrimarySpeciesSourceHistory"/>
+
     <TimeHistory
       name="logPrimarySpeciesMediumAHistoryOutput1"
       sources="{ /Tasks/logPrimarySpeciesMediumACollection1 }"
@@ -131,11 +141,19 @@
       filename="logPrimarySpeciesMediumAHistory3"/>
 
     <TimeHistory
+      name="logPrimarySpeciesMediumAHistoryOutput4"
+      sources="{ /Tasks/logPrimarySpeciesMediumACollection4 }"
+      filename="logPrimarySpeciesMediumAHistory4"/>
+
+    <TimeHistory
       name="logPrimarySpeciesMediumBHistoryOutput"
       sources="{ /Tasks/logPrimarySpeciesMediumBCollection }"
       filename="logPrimarySpeciesMediumBHistory"/>
 
     <VTK
       name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 </Problem>

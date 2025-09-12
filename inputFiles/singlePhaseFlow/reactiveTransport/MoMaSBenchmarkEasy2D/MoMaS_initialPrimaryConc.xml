@@ -10,7 +10,7 @@
       objectPath="ElementRegions/MediumA"
       fieldName="water_initialPrimarySpeciesConcentration"
       component="0"
-      scale="1e-3"/>
+      scale="1e-8"/>
 
     <FieldSpecification
       name="initialPrimary_X2_mediuma"
@@ -56,7 +56,7 @@
       objectPath="ElementRegions/MediumB"
       fieldName="water_initialPrimarySpeciesConcentration"
       component="0"
-      scale="1e-3"/>
+      scale="1e-8"/>
 
     <FieldSpecification
       name="initialPrimary_X2_mediumb"
