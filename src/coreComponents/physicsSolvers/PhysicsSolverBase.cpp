@@ -106,7 +106,7 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "When set to 1, output iterations information to a csv\nWhen set to 2 output convergence information to a csv" );
+    setDescription( "When set to 1, output iterations information to a csv\nWhen set to 2 also output convergence information to a csv" );
 
   addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::Fields >();
@@ -127,11 +127,11 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 void PhysicsSolverBase::postInputInitialization()
 {
   m_solverStatistics.setOutputFilesName( getName() );
-  m_solverStatistics.makeDir( m_writeStatisticsCSV >= 2 );
+  m_solverStatistics.makeDir( m_writeStatisticsCSV >= 1 );
 
   getIterationStats().setTableName( getName() );
-  getIterationStats().setLogOutputState( m_writeStatisticsCSV >= 1 );
-  getIterationStats().setCSVOutputState( m_writeStatisticsCSV >= 2 );
+  getIterationStats().setLogOutputState( true );
+  getIterationStats().setCSVOutputState( m_writeStatisticsCSV >= 1 );
   getConvergenceStats().setCSVOutputState( m_writeStatisticsCSV >= 2 );
 }
 
