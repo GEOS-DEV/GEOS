@@ -1,0 +1,92 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./MoMaS_base.xml" />
+    <File name="./MoMaS_advective_base.xml" />
+    <File name="./MoMaS_initialAggregate.xml" />
+    <File name="./MoMaS_logConc.xml" />
+    <File name="./MoMaS_initialPrimaryConc.xml" />
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1e-4, 0, 0.1, 1, 1.1, 2.1, 3.1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1, 10, 90, 40, 100, 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb-0_0_0, cb-1_0_0, cb-2_0_0, cb-3_0_0, cb-4_0_0, cb-5_0_0 }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="sink"
+      xMin="{ 2.0999, -0.01, -0.01 }"
+      xMax="{ 3.101, 1.01, 1.01 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="1">
+    <PeriodicEvent
+      name="outputs"
+      cycleFrequency="10"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="logPrimarySpeciesSourceHistoryCollection"
+      cycleFrequency="5"
+      target="/Tasks/logPrimarySpeciesSourceCollection"/>
+    <PeriodicEvent
+      name="logPrimarySpeciesMediumAHistoryCollection1"
+      cycleFrequency="5"
+      target="/Tasks/logPrimarySpeciesMediumACollection1"/>
+    <PeriodicEvent
+      name="logPrimarySpeciesMediumAHistoryCollection2"
+      cycleFrequency="5"
+      target="/Tasks/logPrimarySpeciesMediumACollection2"/>
+    <PeriodicEvent
+      name="logPrimarySpeciesMediumAHistoryCollection3"
+      cycleFrequency="5"
+      target="/Tasks/logPrimarySpeciesMediumACollection3"/>
+    <PeriodicEvent
+      name="logPrimarySpeciesSourceTimeHistoryOutput"
+      cycleFrequency="5"
+      target="/Outputs/logPrimarySpeciesSourceHistoryOutput"/>
+    <PeriodicEvent
+      name="logPrimarySpeciesMediumATimeHistoryOutput1"
+      cycleFrequency="5"
+      target="/Outputs/logPrimarySpeciesMediumAHistoryOutput1"/>
+    <PeriodicEvent
+      name="logPrimarySpeciesMediumATimeHistoryOutput2"
+      cycleFrequency="5"
+      target="/Outputs/logPrimarySpeciesMediumAHistoryOutput2"/>
+    <PeriodicEvent
+      name="logPrimarySpeciesMediumATimeHistoryOutput3"
+      cycleFrequency="5"
+      target="/Outputs/logPrimarySpeciesMediumAHistoryOutput3"/>
+
+    <PeriodicEvent
+      name="logPrimarySpeciesMediumBHistoryCollection"
+      cycleFrequency="5"
+      target="/Tasks/logPrimarySpeciesMediumBCollection"/>
+    <PeriodicEvent
+      name="logPrimarySpeciesMediumBTimeHistoryOutput"
+      cycleFrequency="5"
+      target="/Outputs/logPrimarySpeciesMediumBHistoryOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      maxEventDt="1e-4"
+      target="/Solvers/SinglePhaseReactiveFlow"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="10000"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+</Problem>

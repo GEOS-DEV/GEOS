@@ -51,7 +51,8 @@ enum class ChemicalSystemType : integer
   carbonate,
   carbonateAllEquilibrium,
   ultramafic,
-  momas
+  momasEasy,
+  momasMedium
 };
 
 template< typename BASE >
@@ -225,11 +226,12 @@ protected:
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::ultramaficSystemType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::carbonateSystemType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::carbonateSystemAllEquilibriumType >,
-    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MomMasBenchmark::simpleSystemType > >
+    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MoMasBenchmark::mediumCaseType >,
+    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MoMasBenchmark::easyCaseType > >
   createReactionKernelWrapper() const
   {
     using namespace hpcReact::geochemistry;
-    using namespace hpcReact::MomMasBenchmark;
+    using namespace hpcReact::MoMasBenchmark;
     using namespace hpcReact::bulkGeneric;
     switch( m_chemicalSystemType )
     {
@@ -276,20 +278,34 @@ protected:
                                                                            m_numSecondarySpecies,
                                                                            m_numKineticReactions,
                                                                            carbonateSystemAllEquilibrium );
+      case ChemicalSystemType::momasMedium:
+        return ReactionKernelWrapper< mediumCaseType >( m_primarySpeciesAggregateConcentration,
+                                                        m_primarySpeciesMobileAggregateConcentration,
+                                                        m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                        m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                        m_initialPrimarySpeciesConcentration,
+                                                        m_secondarySpeciesConcentration,
+                                                        m_kineticReactionRates,
+                                                        m_aggregateSpeciesRates,
+                                                        m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                                                        m_numPrimarySpecies,
+                                                        m_numSecondarySpecies,
+                                                        m_numKineticReactions,
+                                                        mediumCaseParams );
       default:
-        return ReactionKernelWrapper< simpleSystemType >( m_primarySpeciesAggregateConcentration,
-                                                          m_primarySpeciesMobileAggregateConcentration,
-                                                          m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                          m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                          m_initialPrimarySpeciesConcentration,
-                                                          m_secondarySpeciesConcentration,
-                                                          m_kineticReactionRates,
-                                                          m_aggregateSpeciesRates,
-                                                          m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
-                                                          m_numPrimarySpecies,
-                                                          m_numSecondarySpecies,
-                                                          m_numKineticReactions,
-                                                          simpleSystemParams );
+        return ReactionKernelWrapper< easyCaseType >( m_primarySpeciesAggregateConcentration,
+                                                      m_primarySpeciesMobileAggregateConcentration,
+                                                      m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                      m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                      m_initialPrimarySpeciesConcentration,
+                                                      m_secondarySpeciesConcentration,
+                                                      m_kineticReactionRates,
+                                                      m_aggregateSpeciesRates,
+                                                      m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                                                      m_numPrimarySpecies,
+                                                      m_numSecondarySpecies,
+                                                      m_numKineticReactions,
+                                                      easyCaseParams );
     }
   }
 
@@ -474,7 +490,8 @@ ENUM_STRINGS( ChemicalSystemType,
               "carbonate",
               "carbonateAllEquilibrium",
               "ultramafic",
-              "momas" );
+              "momasEasy",
+              "momasMedium" );
 
 } // namespace reactivefluid
 
