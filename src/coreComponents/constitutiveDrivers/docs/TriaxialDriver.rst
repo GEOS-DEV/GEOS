@@ -115,7 +115,7 @@ The last two columns of the output file contain information about the convergenc
 We generally spend a lot of time vetting the material model implementations (#4).  When you first encounter a problem, it is therefore good to explore the other three scenarios first.  If you find something unusual in the model implementation or are just really stuck, please submit an issue on our issue tracker so we can help resolve any bugs.
 
 Integration Testing
-------------
+-------------------
 
 The development team also uses the Triaxial Driver to perform unit testing on the various material models within GEOS.  The optional argument ``baseline`` can be used to point to a previous output file that has been validated  (e.g. against analytical or experimental benchmarks).  If such a file is specified, the driver will perform a loading run and then compare the new results against the baseline.  In this way, any regressions in the material models can be quickly identified.
 
