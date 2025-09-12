@@ -126,7 +126,6 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 
 void PhysicsSolverBase::postInputInitialization()
 {
-
   m_solverStatistics.setOutputFilesName( getName() );
   m_solverStatistics.makeDir( m_writeStatisticsCSV >= 2 );
 
@@ -257,10 +256,6 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
   {
     setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
     setSystemSetupTimestamp( meshModificationTimestamp );
-
-    std::ostringstream oss;
-    m_dofManager.printFieldInfo( oss );
-    GEOS_LOG_LEVEL( logInfo::Fields, oss.str())
   }
 
   {
@@ -385,6 +380,9 @@ void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
 
   logpart.addEndDescription( "- substep dts ", logMessage.str() );
   logpart.end();
+
+  if( isLogLevelActive< logInfo::SolverExecutionDetails >( getLogLevel()))
+    getIterationStats().outputStatistics();
 }
 
 real64 PhysicsSolverBase::setNextDt( real64 const & GEOS_UNUSED_PARAM( currentTime ),
@@ -1205,6 +1203,15 @@ void PhysicsSolverBase::setupSystem( DomainPartition & domain,
   solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
 }
 
+void PhysicsSolverBase::setSystemSetupTimestamp( Timestamp timestamp )
+{
+  m_systemSetupTimestamp = timestamp;
+
+  std::ostringstream oss;
+  m_dofManager.printFieldInfo( oss );
+  GEOS_LOG_LEVEL( logInfo::Fields, oss.str());
+}
+
 std::unique_ptr< PreconditionerBase< LAInterface > >
 PhysicsSolverBase::createPreconditioner( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
 {
@@ -1495,7 +1502,10 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  real64 const GEOS_UNUSED_PARAM( eventProgress ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  getIterationStats().outputStatistics();
+  if( !isLogLevelActive< logInfo::SolverExecutionDetails >( getLogLevel() ) ) // to avoid double-printing
+  {
+    getIterationStats().outputStatistics();
+  }
   getIterationStats().closeFile();
   getConvergenceStats().closeFile();
 
