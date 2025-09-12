@@ -24,7 +24,7 @@ Here, we will walk through an example file included in the source tree at
 
 .. code-block:: sh
 
-   src/coreComponents/unitTests/constitutiveTests/testPVT_docExample.xml
+   src/coreComponents/integrationTests/constitutiveTests/testPVT_docExample.xml
 
 The first thing to note is that the XML file structure is identical to a standard GEOS input deck.  
 In fact, once the constitutive block is calibrated, one could start adding solver and discretization blocks to the same file to create a proper field simulation.  
