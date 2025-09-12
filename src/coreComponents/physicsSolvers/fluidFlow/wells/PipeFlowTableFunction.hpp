@@ -135,8 +135,10 @@ public:
 
   void writeTable() const;
 
-protected:
   virtual void postInputInitialization() override;
+
+protected:
+
   /**
    * @brief Initialize the table function after setting table coordinates and values
    */

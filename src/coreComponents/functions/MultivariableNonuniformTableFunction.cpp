@@ -219,7 +219,7 @@ void MultivariableNonuniformTableFunction::initializeFunction()
   for( int dim = 0; dim < m_numDims; dim++ )
   {
     numTablePoints *= m_axisPoints[dim];
-    numTableHypercubes *= m_axisPoints[dim] - 1;
+    numTableHypercubes *= std::max( 1, m_axisPoints[dim] - 1 );
   }
 
 

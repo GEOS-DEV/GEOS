@@ -848,7 +848,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
 
     // do line search in case residual has increased
 
-    if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
+    if( false && m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
         && residualNorm > lastResidual * m_nonlinearSolverParameters.m_lineSearchResidualFactor
         && newtonIter >= m_nonlinearSolverParameters.m_lineSearchStartingIteration )
     {

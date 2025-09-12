@@ -13,7 +13,8 @@ if( ENABLE_PVTPackage )
           testIsothermalReservoirCompositionalMultiphaseMSWells.cpp 
           testIsothermalReservoirCompositionalMultiphaseSSWells.cpp 
           testThermalReservoirCompositionalMultiphaseSSWells.cpp 
-          testThermalReservoirCompositionalMultiphaseMSWells.cpp )
+          testThermalReservoirCompositionalMultiphaseMSWells.cpp
+          testVFPTable.cpp )
 endif()
 
 geos_decorate_link_dependencies( LIST decoratedDependencies

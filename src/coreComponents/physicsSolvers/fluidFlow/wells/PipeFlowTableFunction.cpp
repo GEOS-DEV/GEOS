@@ -182,18 +182,18 @@ void PipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRates, 
                                                                    getHypercubeData()
                                                                    );
 
-  solveStat = 0;                                                                     // Assume success
+  solveStat = 0;                                                                  // Assume success
   // liq(oil)=0 vap = 1 wat = 2
-  //real64 totalVolumeRate = 0.0;
+  real64 totalLiquedRate = (phaseRates[0] + phaseRates[2]);
   //for( int i = 0; i < phaseRates.size(); ++i )
   //{
   //  totalVolumeRate += phaseRates[i];
 //  }
   std::cout << bhp << " " << phaseRates << " " << whp << std::endl;
-  integer m_sign=-1;
-  real64 wct = 0; // phaseRates[2]/totalVolumeRate*m_sign;
-  real64 gor = phaseRates[1]/phaseRates[0];
-  real64 liq = (phaseRates[0] /* + phaseRates[1]*/)*m_sign;  // liquid rate
+ 
+  real64 wct = phaseRates[2]/totalLiquedRate;
+  real64 gor = m_gfr[0]; //phaseRates[1]/phaseRates[0];
+  real64 liq = (phaseRates[0] + phaseRates[1] );  // liquid rate
   array1d< real64 > table_coords( 4 );
   table_coords[0]=whp;  // liquid rate
   table_coords[1]=gor; // well head pressure

@@ -520,7 +520,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
 
   // Find target phase index for phase rate constraint // tjb move
   //if ( !wellControls.getConstraintSwitch())
-  //{ 
+  //{
   for( integer ip = 0; ip < fluid.numFluidPhases(); ++ip )
   {
     if( fluid.phaseNames()[ip] == wellControls.getTargetPhaseName() )
@@ -3556,8 +3556,8 @@ void CompositionalMultiphaseWell::chopNegativeDensities( DomainPartition & domai
 
       arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens =
         subRegion.getField< fields::well::globalCompDensity >();
-      arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens_n =
-        subRegion.getField< fields::well::globalCompDensity_n >();
+      //arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens_n =
+      //  subRegion.getField< fields::well::globalCompDensity_n >();
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
       {
         if( wellElemGhostRank[iwelem] < 0 )
@@ -4265,7 +4265,9 @@ void CompositionalMultiphaseWell::solveConstraint< MinimumWHPConstraint >( real6
 
       MpiWrapper::broadcast( currentWHP,
                              owner );
-
+      std::cout << wellControls.getName() << " Solve WHP constraint at current bhp " << currentBHP << " whp " << currentWHP << " minwhp " << constraintWHP << " phase rates " << currentPhaseVolRate <<
+        " total vol " << currentTotalVolRate <<
+        std::endl;
       if( currentWHP < constraintWHP )
       {
 
@@ -4276,7 +4278,7 @@ void CompositionalMultiphaseWell::solveConstraint< MinimumWHPConstraint >( real6
 
         // name of internal constraint for WHP solve
         std::shared_ptr< LiquidProductionConstraint > liqConstraint=  wellControls.getMaxLiquidConstraintForWHP();
-        
+
         // sets. tjb cleanup
         wellControls.setCurrentConstraint( liqConstraint.get() );
         wellControls.setControl( static_cast< WellControls::Control >(liqConstraint->getControl()) );     // tjb old
@@ -4285,7 +4287,7 @@ void CompositionalMultiphaseWell::solveConstraint< MinimumWHPConstraint >( real6
         wellControls.setControl( wellControl );
         std::ofstream of;
         of.open( "fl.csv" );
-        of << "liq ,bhp ,tablebhp"<< std::endl;
+        of << "bhp , tablebhp, whp, liq , p0, p1,p2 "<< std::endl;
         // Liquid constraint is used to find intersection of IPR and VLP
         const array1d< real64 > & liquidRates = m_flowTable.getRates();
         std::cout << liquidRates << std::endl;
@@ -4295,7 +4297,7 @@ void CompositionalMultiphaseWell::solveConstraint< MinimumWHPConstraint >( real6
         real64 tableBHP0;
 
         liqRate0= liquidRates[0];
-        for( integer i=0; i < 1; ++i) // numRates; ++i )
+        for( integer i=0; i <  numRates; ++i )
         {
           of << liquidRates[i] << ",";
           liqRate0 = liquidRates[i];
@@ -4314,7 +4316,7 @@ void CompositionalMultiphaseWell::solveConstraint< MinimumWHPConstraint >( real6
                                     flowTableSolveState );
           std::cout << " Solve at liquid rate " << liqRate0 << " whp " << constraintWHP << " bhp " << bhp0 << " table bhp " << tableBHP0<< " phase rates " << currentPhaseVolRate <<
             " total vol " << currentTotalVolRate << std::endl;
-          of << bhp0 << "," << tableBHP0 << std::endl;
+          of << bhp0 << "," << tableBHP0 << "," << currentWHP << "," << liqRate0 << "," << currentPhaseVolRate[0] << "," << currentPhaseVolRate[1] << " ," << currentPhaseVolRate[2] << std::endl;
         }
         of.close();
         liqConstraint->setConstraintValue( liquidRates[numRates-1] );
@@ -4343,8 +4345,8 @@ void CompositionalMultiphaseWell::solveConstraint< MinimumWHPConstraint >( real6
         {
           // update whp
           real64 m = (liqRate1-liqRate0)/(bhp1-bhp0);
-          
-         
+
+
           real64 dy0 = tableBHP0 - bhp0;
           real64 dy1 =  bhp1 - tableBHP1;
           real64 dx  = liqRate1 - liqRate0;
