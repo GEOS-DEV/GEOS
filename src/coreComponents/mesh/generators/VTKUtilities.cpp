@@ -822,8 +822,8 @@ redistributeByKdTree( vtkDataSet & mesh )
   
   if( globalOutputCells != globalInputCells )
   {
-    GEOS_LOG_RANK_0( "WARNING: VTK KdTree redistribution lost " << (globalInputCells - globalOutputCells) 
-                      << " elements. Falling back to block redistribution." );
+    GEOS_WARNING( "VTK KdTree redistribution lost " << (globalInputCells - globalOutputCells) 
+                      << " elements! Falling back to block redistribution." );
     return scatterByBlock( mesh );
   }
   
