@@ -920,9 +920,25 @@ public:
     return m_solverStatistics.m_iterationsStats;
   }
   /**
+   * @return An IterationsStatistics for the "root" solver.
+   * Otherwise return an empty IterationsStatistics
+   * (const version)
+   */
+  IterationsStatistics const & getIterationStats() const
+  {
+    return m_solverStatistics.m_iterationsStats;
+  }
+  /**
    * @return A ConvergenceStatistics for all sub-solvers
    */
   ConvergenceStatistics & getConvergenceStats()
+  {
+    return m_solverStatistics.m_convergenceStats;
+  }
+  /**
+   * @return A ConvergenceStatistics for all sub-solvers (const version)
+   */
+  ConvergenceStatistics const & getConvergenceStats() const
   {
     return m_solverStatistics.m_convergenceStats;
   }
