@@ -13,6 +13,13 @@
       forceDt="1.25e6"
       target="/Outputs/vtkOutput"/>
 
+    <PeriodicEvent
+      name="restart"
+      beginTime="0.0"
+      endTime="1.25e6"
+      forceDt="1.25e6"
+      target="/Outputs/restartOutput"/>
+
     <SoloEvent 
       name="SinglePhasePoroelasticityPreEquilibrationStep" 
       targetTime="-1e11" 
