@@ -152,6 +152,24 @@ walsh_quarter_no_chombo = {
     "check_step": 5
 }
 
+kgd_toughness_leakoff_dominated = {
+    "name": "kgdToughness_Leakoff_Dominated_smoke",
+    "description":
+    "First KGD verification case for leakoff",
+    "partitions": ((1, 1, 1), (2, 3, 1)),
+    "restart_step": 10,
+    "check_step": 16
+}
+
+kgd_toughness_storage_dominated = {
+    "name": "kgdToughness_Storage_Dominated_smoke",
+    "description":
+    "Second KGD verification case for leakoff",
+    "partitions": ((1, 1, 1), (2, 3, 1)),
+    "restart_step": 10,
+    "check_step": 16
+}
+
 decks = (kgd_viscosity_dominated, kgd_viscosity_dominated_poroelastic,
          kgd_toughness_dominated, kgd_toughness_dominated_poroelastic,
          kgd_validation, kgd_edge_based_C3D6, kgd_node_based_C3D6,
@@ -159,7 +177,8 @@ decks = (kgd_viscosity_dominated, kgd_viscosity_dominated_poroelastic,
          penny_shaped_toughness_dominated_poroelastic,
          penny_shaped_viscosity_dominated,
          penny_shaped_viscosity_dominated_poroelastic, pkn_viscosity_dominated,
-         pkn_viscosity_dominated_poroelastic, sneddon, walsh_quarter_no_chombo)
+         pkn_viscosity_dominated_poroelastic, sneddon, walsh_quarter_no_chombo,
+         kgd_toughness_leakoff_dominated, kgd_toughness_storage_dominated)
 
 # Check parameters
 restartcheck_params = RestartcheckParameters(atol=2.0E-4, rtol=1.0E-7)

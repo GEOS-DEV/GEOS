@@ -171,29 +171,31 @@ void IterationsStatistics::writeIterationStatsToTable()
   resetSolverLinearTime();
 }
 
-void IterationsStatistics::outputStatistics()
+void IterationsStatistics::outputStatistics() const
 {
   // no statistics to output when no time steps have been recorded
   if( m_numTimeSteps == 0 || !m_logOutput )
     return;
 
-  {
-    TableLayout iterationLogLayout ( GEOS_FMT( "{}", m_tableIterationName ), {"Statistics", "Value"} );
+  TableLayout iterationLogLayout ( GEOS_FMT( "{}", m_tableIterationName ), {"Statistics", "Value"} );
 
-    TableTextFormatter const statsFormatter( iterationLogLayout );
+  TableTextFormatter const statsFormatter( iterationLogLayout );
 
-    TableData iterationDataLog;
-    iterationDataLog.addRow( "Time steps", m_numTimeSteps );
-    iterationDataLog.addRow( "Time step cuts", m_numTimeStepCuts );
+  TableData iterationDataLog;
+  iterationDataLog.addRow( "Time steps", m_numTimeSteps );
+  iterationDataLog.addRow( "Time step cuts", m_numTimeStepCuts );
+  if( m_numSuccessfulConfigIterations > 0 ) // only print when solver did any configuration iterations
     iterationDataLog.addRow( "Successful configuration iterations", m_numSuccessfulConfigIterations );
-    iterationDataLog.addRow( "Successful nonlinear iterations", m_numSuccessfulNonlinearIterations );
+  iterationDataLog.addRow( "Successful nonlinear iterations", m_numSuccessfulNonlinearIterations );
+  if( m_numSuccessfulLinearIterations > 0 ) // only print when solver did any linear iterations
     iterationDataLog.addRow( "Successful linear iterations", m_numSuccessfulLinearIterations );
+  if( m_numSuccessfulConfigIterations > 0 ) // only print when solver did any configuration iterations
     iterationDataLog.addRow( "Discarded configuration iterations", m_numDiscardedConfigIterations );
-    iterationDataLog.addRow( "Discarded nonlinear iterations", m_numDiscardedNonlinearIterations );
+  iterationDataLog.addRow( "Discarded nonlinear iterations", m_numDiscardedNonlinearIterations );
+  if( m_numSuccessfulLinearIterations > 0 ) // only print when solver did any linear iterations
     iterationDataLog.addRow( "Discarded linear iterations", m_numDiscardedLinearIterations );
 
-    GEOS_LOG_RANK_0( statsFormatter.toString( iterationDataLog ));
-  }
+  GEOS_LOG_RANK_0( statsFormatter.toString( iterationDataLog ));
 }
 
 ConvergenceStatistics::ConvergenceStatistics():
