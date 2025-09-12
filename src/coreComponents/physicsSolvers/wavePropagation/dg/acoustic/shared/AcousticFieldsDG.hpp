@@ -115,7 +115,6 @@ DECLARE_FIELD( MassPlusDampingInvIndex,
                WRITE_AND_READ,
                "Index in the list of the pre-computed mass+damping inverses, or -1 if not a boundary element" );
 
-
 }
 
 }
