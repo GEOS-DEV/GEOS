@@ -4,7 +4,7 @@ set( gtest_outputs_tests
      testMemoryStats.cpp )
 
 # Link against mainInterface to resolve basicSetup and ProblemManager symbols
-set( dependencyList ${parallelDeps} mainInterface fileIO gtest )
+set( dependencyList mainInterface gtest ${parallelDeps} )
 
 foreach(test ${gtest_outputs_tests})
   get_filename_component( test_name ${test} NAME_WE )
