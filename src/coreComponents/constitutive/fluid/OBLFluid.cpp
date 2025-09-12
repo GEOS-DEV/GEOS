@@ -1,0 +1,131 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file OBLFluid.cpp
+ */
+
+#include "OBLFluid.hpp"
+#include "functions/FunctionManager.hpp"
+#include "dataRepository/InputFlags.hpp"
+#include "dataRepository/RestartFlags.hpp"
+
+namespace geos
+{
+
+using namespace dataRepository;
+
+namespace constitutive
+{
+
+MultivariableTableFunction const *
+makeOBLOperatorsTable( string const & OBLOperatorsTableFile,
+                       string const & OBLFluidName,
+                       FunctionManager & functionManager )
+{
+  string const tableName = OBLFluidName + "OBL_table";
+  if( functionManager.hasGroup< MultivariableTableFunction >( tableName ) )
+  {
+    return functionManager.getGroupPointer< MultivariableTableFunction >( tableName );
+  }
+  else
+  {
+    MultivariableTableFunction * const table = dynamicCast< MultivariableTableFunction * >( functionManager.createChild( "MultivariableTableFunction", tableName ) );
+    table->initializeFunctionFromFile ( OBLOperatorsTableFile );
+    return table;
+  }
+}
+
+#if defined(GEOS_USE_PYGEOSX)
+template< typename INDEX_T = __uint128_t >
+PythonFunction< INDEX_T > *
+makePythonFunction( string const & OBLFluidName, FunctionManager & functionManager )
+{
+  string const pythonFunctionName = OBLFluidName + "PythonFunction";
+  if( functionManager.hasGroup< PythonFunction< INDEX_T > >( pythonFunctionName ))
+  {
+    return functionManager.getGroupPointer< PythonFunction< INDEX_T > >( pythonFunctionName );
+  }
+  else
+  {
+    PythonFunction< INDEX_T > * function = dynamicCast< PythonFunction< INDEX_T > * >( functionManager.createChild( "PythonFunction", pythonFunctionName ));
+    return function;
+  }
+}
+#endif
+
+OBLFluid::OBLFluid( string const & name, Group * const parent )
+  : ConstitutiveBase( name, parent ),
+  m_OBLOperatorsTable( nullptr )
+#if defined(GEOS_USE_PYGEOSX)
+  , m_pythonFunction( nullptr )
+#endif
+{
+  this->registerWrapper( viewKeyStruct::interpolatorModeString(), &m_interpolatorModeString ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "OBL interpolator mode: static or adaptive" );
+
+  this->registerWrapper( viewKeyStruct::interpolatorTypeString(), &m_interpolatorTypeString ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "OBL interpolator type: multilinear or linear" );
+
+  this->registerWrapper( viewKeyStruct::oblOperatorsTableFileString(), &m_OBLOperatorsTableFile ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "File containing OBL operator values for static mode interpolation" );
+}
+
+void OBLFluid::postInputInitialization()
+{
+  ConstitutiveBase::postInputInitialization();
+
+  // set interpolator mode
+  GEOS_THROW_IF( m_interpolatorModeString.empty(),
+                 GEOS_FMT( "{}: Interpolator mode string is empty",
+                           getFullName() ),
+                 InputError );
+  m_interpolatorMode = EnumStrings< OBLInterpolatorMode >::fromString( m_interpolatorModeString );
+
+  // currently only multilinear interpolation is supported
+  m_interpolatorType = OBLInterpolatorType::Multilinear;
+
+  // set table file
+  GEOS_THROW_IF( m_OBLOperatorsTableFile.empty() &&
+                 m_interpolatorMode == OBLInterpolatorMode::Static,
+                 GEOS_FMT( "{}: Invalid operator table file",
+                           getFullName() ),
+                 InputError );
+
+
+  if( m_interpolatorMode == OBLInterpolatorMode::Static )
+  {
+    m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, getName(), FunctionManager::getInstance());
+  }
+  else if( m_interpolatorMode == OBLInterpolatorMode::Adaptive )
+  {
+#if defined(GEOS_USE_PYGEOSX)
+    m_pythonFunction = makePythonFunction< longIndex >( getName(), FunctionManager::getInstance());
+#else
+    GEOS_THROW( GEOS_FMT( "{}: adaptive interpolators require Python support, rebuild with ENABLE_PYGEOSX ON", getFullName() ), InputError );
+#endif
+  }
+
+  // raise intialization flag
+  m_isInitialized = true;
+}
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, OBLFluid, string const &, Group * const )
+
+} // namespace constitutive
+
+} // namespace geos

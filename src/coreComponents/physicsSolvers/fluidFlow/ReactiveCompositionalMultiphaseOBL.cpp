@@ -20,6 +20,7 @@
 #include "ReactiveCompositionalMultiphaseOBL.hpp"
 
 #include "constitutive/solid/CoupledSolidBase.hpp"
+#include "constitutive/fluid/OBLFluid.hpp"
 #include "dataRepository/Group.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -44,26 +45,6 @@ using namespace constitutive;
 using namespace fields;
 using namespace reactiveCompositionalMultiphaseOBLKernels;
 
-namespace
-{
-
-MultivariableTableFunction const * makeOBLOperatorsTable( string const & OBLOperatorsTableFile,
-                                                          FunctionManager & functionManager )
-{
-  string const tableName = "OBL_operators_table";
-  if( functionManager.hasGroup< MultivariableTableFunction >( tableName ) )
-  {
-    return functionManager.getGroupPointer< MultivariableTableFunction >( tableName );
-  }
-  else
-  {
-    MultivariableTableFunction * const table = dynamicCast< MultivariableTableFunction * >( functionManager.createChild( "MultivariableTableFunction", tableName ) );
-    table->initializeFunctionFromFile ( OBLOperatorsTableFile );
-    return table;
-  }
-}
-}
-
 ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const string & name,
                                                                         Group * const parent )
   :
@@ -78,6 +59,11 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Number of components" );
 
+  this->registerWrapper( viewKeyStruct::numSolidComponentsString(), &m_numSolidComponents ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Number of solid components" );
+
   this->registerWrapper( viewKeyStruct::numPhasesString(), &m_numPhases ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Number of phases" );
@@ -85,11 +71,6 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
   this->registerWrapper( viewKeyStruct::enableEnergyBalanceString(), &m_enableEnergyBalance ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Enable energy balance calculation and temperature degree of freedom" );
-
-  this->registerWrapper( viewKeyStruct::OBLOperatorsTableFileString(), &m_OBLOperatorsTableFile ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "File containing OBL operator values" );
 
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
     setApplyDefaultValue( 1.0 ).
@@ -187,6 +168,15 @@ void ReactiveCompositionalMultiphaseOBL::postInputInitialization()
   // need to override to skip the check for fluidModel, which is enabled in FlowSolverBase
   PhysicsSolverBase::postInputInitialization();
 
+  GEOS_THROW_IF_GT_MSG( m_numSolidComponents, m_numComponents,
+                        GEOS_FMT( "{}: The number of solid component is set to {}, while it must not be greater than the total number of components {}",
+                                  getWrapperDataContext( viewKeyStruct::numSolidComponentsString() ), m_numSolidComponents, m_numComponents ),
+                        InputError );
+  GEOS_THROW_IF_LT_MSG( m_numSolidComponents, 0,
+                        GEOS_FMT( "{}: The number of solid component is set to {}, while it must non-negative",
+                                  getWrapperDataContext( viewKeyStruct::numSolidComponentsString() ), m_numSolidComponents ),
+                        InputError );
+
   GEOS_THROW_IF_GT_MSG( m_maxCompFracChange, 1.0,
                         GEOS_FMT( "{}: The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0",
                                   getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ), m_maxCompFracChange ),
@@ -196,30 +186,11 @@ void ReactiveCompositionalMultiphaseOBL::postInputInitialization()
                                   getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ), m_maxCompFracChange ),
                         InputError );
 
-  m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, FunctionManager::getInstance());
-
   // Equations: [NC] Molar mass balance, ([1] energy balance if enabled)
   // Primary variables: [1] pressure, [NC-1] global component fractions, ([1] temperature)
   m_numDofPerCell = m_numComponents + m_enableEnergyBalance;
 
   m_numOBLOperators = COMPUTE_NUM_OPS( m_numPhases, m_numComponents, m_enableEnergyBalance );
-
-  GEOS_THROW_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->numDims(),
-                        GEOS_FMT( "The number of degrees of freedom per cell used in the solver (at {}) has a value of {}, "
-                                  "whereas it as a value of {} in the operator table (at {}).",
-                                  getWrapperDataContext( viewKeyStruct::elemDofFieldString() ),
-                                  m_numDofPerCell, m_OBLOperatorsTable->numDims(),
-                                  m_OBLOperatorsTableFile ),
-                        InputError );
-
-  GEOS_THROW_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->numOps(),
-                        GEOS_FMT( "The number of operators per cell used in the solver (at {}) has a value of {}, "
-                                  "whereas it as a value of {} in the operator table (at {}).",
-                                  getWrapperDataContext( viewKeyStruct::elemDofFieldString() ),
-                                  m_numDofPerCell, m_OBLOperatorsTable->numDims(),
-                                  m_OBLOperatorsTableFile ),
-                        InputError );
-
 }
 
 void ReactiveCompositionalMultiphaseOBL::registerDataOnMesh( Group & meshBodies )
@@ -1228,6 +1199,7 @@ void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariables( DomainPartition &
 {
   real64 const eps = LvArray::NumericLimits< real64 >::epsilon;
   integer const numComp = m_numComponents;
+  integer const numSolidComp = m_numSolidComponents;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -1248,7 +1220,7 @@ void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariables( DomainPartition &
 
         // Step 1: chop the component fractions between 0 and 1
         real64 sum = 0.0;
-        for( integer ic = 0; ic < numComp-1; ++ic )
+        for( integer ic = numSolidComp; ic < numComp-1; ++ic )
         {
           if( compFrac[ei][ic] > 1.0-eps )
           {
@@ -1275,7 +1247,7 @@ void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariables( DomainPartition &
         // Step 3: rescale the component fractions so they sum to 1, if needed
         if( isScalingRequired )
         {
-          for( integer ic = 0; ic < numComp-1; ++ic )
+          for( integer ic = numSolidComp; ic < numComp-1; ++ic )
           {
             compFrac[ei][ic] /= sum;
           }
@@ -1336,12 +1308,26 @@ void ReactiveCompositionalMultiphaseOBL::updateOBLOperators( ObjectManagerBase &
 {
   GEOS_MARK_FUNCTION;
 
-  OBLOperatorsKernelFactory::
-    createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                               m_numComponents,
-                                               m_enableEnergyBalance,
-                                               dataGroup,
-                                               *m_OBLOperatorsTable );
+  auto const constitutiveModels = dataGroup.getGroupPointer( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
+
+  if( constitutiveModels )
+  {
+    for( auto & subGroup : constitutiveModels->getSubGroups() )
+    {
+      if( typeid(*subGroup.second) == typeid(constitutive::OBLFluid) )
+      {
+        auto * oblFluid = dynamic_cast< constitutive::OBLFluid * >( subGroup.second );
+        oblFluid->initialize();
+
+        OBLOperatorsKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                     m_numComponents,
+                                                     m_enableEnergyBalance,
+                                                     dataGroup,
+                                                     oblFluid );
+      }
+    }
+  }
 
 }
 

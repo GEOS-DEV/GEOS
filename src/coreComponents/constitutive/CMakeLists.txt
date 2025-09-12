@@ -53,6 +53,8 @@ set( constitutive_headers
      dispersion/DispersionFields.hpp
      dispersion/DispersionSelector.hpp
      dispersion/LinearIsotropicDispersion.hpp
+     fluid/OBLFluid.hpp
+     fluid/OBLFluidKernels.hpp   
      fluid/multifluid/Layouts.hpp
      fluid/multifluid/LogLevelsInfo.hpp
      fluid/multifluid/MultiFluidSelector.hpp
@@ -242,6 +244,7 @@ set( constitutive_sources
      diffusion/DiffusionBase.cpp
      dispersion/DispersionBase.cpp
      dispersion/LinearIsotropicDispersion.cpp
+     fluid/OBLFluid.cpp
      fluid/multifluid/MultiFluidBase.cpp
      fluid/multifluid/constant/InvariantImmiscibleFluid.cpp
      fluid/multifluid/blackOil/BlackOilFluidBase.cpp

@@ -25,8 +25,8 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
-#include "functions/MultivariableTableFunction.hpp"
-#include "functions/MultivariableTableFunctionKernels.hpp"
+#include "functions/MultilinearInterpolatorStaticKernels.hpp"
+#include "constitutive/fluid/OBLFluidKernels.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
@@ -42,251 +42,10 @@ namespace geos
 namespace reactiveCompositionalMultiphaseOBLKernels
 {
 
+using namespace oblFluidKernels;
+
 static constexpr real64 minValueForDivision = 1e-10;
 
-
-// The number of operators in use depends on:
-// 1. Number of phases
-// 2. Number of components
-// 3. Features required in simulation (now its only one - Energy balance)
-// This number needs to be used in solver and in kernels (as a template parameter)
-// IMHO, this number is too big ( order of 10-100) to be treated via a kernelLaunchSelectorSwitch construct
-// Hence, a way to define it once and for all is needed.
-// Could be constexpr member of solver, but passing constexpr lambdas require -std=c++17 if I`m not mistaken
-
-constexpr integer COMPUTE_NUM_OPS ( integer const NP, integer const NC, bool ENERGY )
-{
-  auto DOF = NC + ENERGY;
-  return DOF /*accumulation*/ +
-         DOF * NP /*flux*/ +
-         NP /*up_constant*/ +
-         DOF * NP /*gradient*/ +
-         DOF /*kinetic rate*/ +
-         2 /*rock internal energy and conduction*/ +
-         2 * NP /*gravity and capillarity*/ +
-         1 /*rock porosity*/ +
-         1;
-}
-
-
-/******************************** Kernel launch machinery ********************************/
-namespace internal
-{
-
-template< bool ENABLE_ENERGY, integer NUM_PHASES, typename T, typename LAMBDA >
-void kernelLaunchSelectorCompSwitch( T numComps, LAMBDA && lambda )
-{
-  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
-
-  switch( numComps )
-  {
-    case 1:
-    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 1 >(), std::integral_constant< bool, ENABLE_ENERGY >() ); return; }
-    case 2:
-    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 2 >(), std::integral_constant< bool, ENABLE_ENERGY >() ); return; }
-    case 3:
-    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 3 >(), std::integral_constant< bool, ENABLE_ENERGY >() ); return; }
-    case 4:
-    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 4 >(), std::integral_constant< bool, ENABLE_ENERGY >() ); return; }
-    case 5:
-    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 5 >(), std::integral_constant< bool, ENABLE_ENERGY >()); return; }
-    default:
-    { GEOS_ERROR( "Unsupported number of components: " << numComps ); }
-  }
-}
-
-template< bool ENABLE_ENERGY, typename T, typename LAMBDA >
-void kernelLaunchSelectorPhaseSwitch( T numPhases, T numComps, LAMBDA && lambda )
-{
-  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorPhaseSwitch: type should be integral" );
-
-  switch( numPhases )
-  {
-    case 1:
-    { kernelLaunchSelectorCompSwitch< ENABLE_ENERGY, 1 >( numComps, lambda ); return; }
-    case 2:
-    { kernelLaunchSelectorCompSwitch< ENABLE_ENERGY, 2 >( numComps, lambda ); return; }
-    case 3:
-    { kernelLaunchSelectorCompSwitch< ENABLE_ENERGY, 3 >( numComps, lambda ); return; }
-    default:
-    { GEOS_ERROR( "Unsupported number of phases: " << numPhases ); }
-  }
-}
-
-template< typename T, typename LAMBDA >
-void kernelLaunchSelectorEnergySwitch( T numPhases, T numComps, bool enableEnergyBalance, LAMBDA && lambda )
-{
-  if( enableEnergyBalance )
-  {
-    kernelLaunchSelectorPhaseSwitch< true >( numPhases, numComps, lambda );
-  }
-  else
-  {
-    kernelLaunchSelectorPhaseSwitch< false >( numPhases, numComps, lambda );
-  }
-}
-
-} // namespace internal
-
-
-/******************************** OBLOperatorsKernel ********************************/
-
-/**
- * @class OBLOperatorsKernel
- * @tparam NUM_PHASES number of phases
- * @tparam NUM_COMPS number of components
- * @tparam ENABLE_ENERGY flag if energy balance equation is assembled
- * @brief Compute OBL Operators and derivatives
- */
-template< integer NUM_PHASES, integer NUM_COMPS, bool ENABLE_ENERGY >
-class OBLOperatorsKernel
-{
-public:
-  /// Compile time value for the energy balance switch
-  static constexpr integer enableEnergyBalance = ENABLE_ENERGY;
-  /// Compile time value for the number of components
-  static constexpr integer numComps = NUM_COMPS;
-
-  /// Compile time value for the number of dimensions
-  static constexpr integer numDofs = numComps + enableEnergyBalance;
-  // /// Compile time value for the number of operators
-  static constexpr integer numOps = COMPUTE_NUM_OPS( NUM_PHASES, NUM_COMPS, ENABLE_ENERGY );
-
-  static constexpr real64 barToPascalMult = 1e5;
-  static constexpr real64 pascalToBarMult = 1.0 / 1e5;
-
-  /**
-   * @brief Performs the kernel launch
-   * @tparam POLICY the policy used in the RAJA kernels
-   * @tparam KERNEL_TYPE the kernel type
-   * @param[in] numElems the number of elements
-   * @param[inout] kernelComponent the kernel component providing access to the compute function
-   */
-  template< typename POLICY, typename KERNEL_TYPE >
-  static void
-  launch( localIndex const numElems,
-          KERNEL_TYPE const & kernelComponent )
-  {
-    forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
-    {
-      kernelComponent.compute( ei );
-    } );
-  }
-
-  /**
-   * @brief Constructor
-   * @param[in] subRegion the element subregion
-   * @param[in] OBLOperatorsTable the OBL table function kernel
-   */
-  OBLOperatorsKernel( ObjectManagerBase & subRegion,
-                      MultivariableTableFunctionStaticKernel< numDofs, numOps > OBLOperatorsTable )
-    :
-    m_OBLOperatorsTable( OBLOperatorsTable ),
-    m_pressure( subRegion.getField< fields::flow::pressure >() ),
-    m_compFrac( subRegion.getField< fields::flow::globalCompFraction >() ),
-    m_temperature( subRegion.getField< fields::flow::temperature >() ),
-    m_OBLOperatorValues ( subRegion.getField< fields::flow::OBLOperatorValues >()),
-    m_OBLOperatorDerivatives ( subRegion.getField< fields::flow::OBLOperatorDerivatives >())
-  {}
-
-  /**
-   * @brief Compute the operator values and derivatives for an element
-   * @param[in] ei the element index
-   */
-  GEOS_HOST_DEVICE
-  inline
-  void compute( localIndex const ei ) const
-  {
-    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compFrac = m_compFrac[ei];
-    arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & OBLVals = m_OBLOperatorValues[ei];
-    arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & OBLDers = m_OBLOperatorDerivatives[ei];
-    real64 state[numDofs];
-
-    // we need to convert pressure from Pa (internal unit in GEOSX) to bar (internal unit in DARTS)
-    state[0] = m_pressure[ei] * pascalToBarMult;
-
-    // the last component fraction is not used to define the state
-    for( integer i = 1; i < numComps; ++i )
-    {
-      state[i] = compFrac[i - 1];
-    }
-
-    if( enableEnergyBalance )
-    {
-      state[numDofs - 1] = m_temperature[ei];
-    }
-
-    m_OBLOperatorsTable.compute( state, OBLVals, OBLDers );
-
-    // we do not perform derivatives unit conversion here:
-    // instead we postpone it till all the derivatives are fully formed, and only then apply the factor only once in 'complete' function
-    // scaling the whole system might be even better solution (every pressure column needs to be multiplied by pascalToBarMult)
-  }
-
-private:
-
-  // inputs
-  MultivariableTableFunctionStaticKernel< numDofs, numOps > m_OBLOperatorsTable;
-
-  // Views on primary variables and their updates
-  arrayView1d< real64 const > m_pressure;
-  arrayView2d< real64 const, compflow::USD_COMP > m_compFrac;
-  arrayView1d< real64 const > m_temperature;
-
-  // outputs
-
-  // Views on OBL operator values and derivatives
-  arrayView2d< real64, compflow::USD_OBL_VAL > m_OBLOperatorValues;
-  arrayView3d< real64, compflow::USD_OBL_DER > m_OBLOperatorDerivatives;
-};
-
-/**
- * @class OBLOperatorsKernelFactory
- */
-class OBLOperatorsKernelFactory
-{
-public:
-
-  /**
-   * @brief Create a new kernel and launch
-   * @tparam POLICY the policy used in the RAJA kernel
-   * @param[in] numPhases the number of phases
-   * @param[in] numComponents the number of components
-   * @param[in] enableEnergyBalance flag if energy balance equation is assembled
-   * @param[in] subRegion the element subregion
-   * @param[in] function the OBL table function
-   */
-  template< typename POLICY >
-  static void
-  createAndLaunch( integer const numPhases,
-                   integer const numComponents,
-                   bool const enableEnergyBalance,
-                   ObjectManagerBase & subRegion,
-                   MultivariableTableFunction const & function )
-  {
-    internal::kernelLaunchSelectorEnergySwitch( numPhases, numComponents, enableEnergyBalance, [&] ( auto NP, auto NC, auto E )
-    {
-      integer constexpr ENABLE_ENERGY = E();
-      integer constexpr NUM_PHASES = NP();
-      integer constexpr NUM_COMPS = NC();
-      integer constexpr NUM_DIMS = ENABLE_ENERGY + NUM_COMPS;
-      integer constexpr NUM_OPS  = COMPUTE_NUM_OPS( NUM_PHASES, NUM_COMPS, ENABLE_ENERGY );
-
-      OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >
-      kernel( subRegion,
-              MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS >( function.getAxisMinimums(),
-                                                                           function.getAxisMaximums(),
-                                                                           function.getAxisPoints(),
-                                                                           function.getAxisSteps(),
-                                                                           function.getAxisStepInvs(),
-                                                                           function.getAxisHypercubeMults(),
-                                                                           function.getHypercubeData()
-                                                                           ) );
-      OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >::template launch< POLICY >( subRegion.size(), kernel );
-    } );
-  }
-
-};
 
 /******************************** ElementBasedAssemblyKernel ********************************/
 
@@ -318,8 +77,8 @@ public:
   static constexpr integer ACC_OP = 0;
   // kinetic reaction
   static constexpr integer KIN_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases;
-  // rock internal energy
-  static constexpr integer RE_INTER_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs;
+  // temperature
+  static constexpr integer TEMP_OP = KIN_OP + numDofs + 2 * numPhases + 1 + numPhases;
 
   static constexpr real64 secondsToDaysMult = 1.0 / (60 * 60 * 24);
   static constexpr real64 pascalToBarMult = 1.0 / 1e5;
@@ -443,11 +202,11 @@ public:
     // + rock energy
     if( enableEnergyBalance )
     {
-      stack.localResidual[numDofs-1] += m_referenceRockVolume[ei] * (OBLVals[RE_INTER_OP] - OBLVals_n[RE_INTER_OP]) * m_rockVolumetricHeatCapacity[ei];
+      stack.localResidual[numDofs-1] += m_referenceRockVolume[ei] * (OBLVals[TEMP_OP] - OBLVals_n[TEMP_OP]) * m_rockVolumetricHeatCapacity[ei];
 
       for( integer v = 0; v < numDofs; ++v )
       {
-        stack.localJacobian[numDofs-1][v] += m_referenceRockVolume[ei] * OBLDers[RE_INTER_OP][v] * m_rockVolumetricHeatCapacity[ei];
+        stack.localJacobian[numDofs-1][v] += m_referenceRockVolume[ei] * OBLDers[TEMP_OP][v] * m_rockVolumetricHeatCapacity[ei];
       }   // end of fill offdiagonal part + contribute to diagonal
     }
   }
@@ -571,7 +330,7 @@ public:
     CRSMatrixView< real64, globalIndex const > const & localMatrix,
     arrayView1d< real64 > const & localRhs )
   {
-    internal::kernelLaunchSelectorEnergySwitch( numPhases, numComps, enableEnergyBalance, [&] ( auto NP, auto NC, auto E )
+    oblFluidKernels::internal::kernelLaunchSelectorEnergySwitch( numPhases, numComps, enableEnergyBalance, [&] ( auto NP, auto NC, auto E )
     {
       integer constexpr ENABLE_ENERGY = E();
       integer constexpr NUM_PHASES = NP();
@@ -621,6 +380,9 @@ public:
 
   static constexpr real64 transUnitMult = 8639693349945.239;
   static constexpr real64 transDUnitMult = 0.00852671467191601;
+
+  // tolerance of phase existence check in the calculation of diffusion flux
+  static constexpr real64 phaseExistenceTolerance = 1.e-6;
 
   /**
    * @brief The type for element-based data. Consists entirely of ArrayView's.
@@ -758,18 +520,16 @@ public:
   static constexpr integer FLUX_OP = numDofs;
   // diffusion
   static constexpr integer UPSAT_OP = numDofs + numDofs * numPhases;
+  // diffusion
   static constexpr integer GRAD_OP = numDofs + numDofs * numPhases + numPhases;
-
-  // temperature
-  static constexpr integer RE_TEMP_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 1;
-  // rock conduction
-  static constexpr integer ROCK_COND_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 2;
   // gravity (density)
-  static constexpr integer GRAV_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3;
+  static constexpr integer GRAV_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs;
   // capillary pressure
-  static constexpr integer PC_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3 + numPhases;
+  static constexpr integer PC_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + numPhases;
   // porosity
-  static constexpr integer PORO_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3 + 2 * numPhases;
+  static constexpr integer PORO_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 2 * numPhases;
+  // temperature
+  static constexpr integer TEMP_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3 * numPhases + 1;
 
   /// Maximum number of elements at the face
   static constexpr localIndex maxNumElems = STENCILWRAPPER::maxNumPointsInFlux;
@@ -935,6 +695,7 @@ public:
 
     real64 transMult = 1;
     real64 transMultD = 0;
+    real64 phasePresenceMult = 1.0;
     if( m_transMultExp > 0 )
     {
       // Calculate transmissibility multiplier:
@@ -1005,36 +766,35 @@ public:
 
     }     // end of loop over number of phases for convective operator with gravity and capillarity
 
-    // [3] Additional diffusion code here:   (phi_p * S_p) * (rho_p * D_cp * Delta_x_cp)  or (phi_p * S_p) * (kappa_p * Delta_T)
-
-    real64 const poroAverage = (m_referencePorosity[erI][esrI][eiI] + m_referencePorosity[erJ][esrJ][eiJ]) * 0.5;     // diffusion term
-                                                                                                                      // depends on total
-    // porosity!
-
-
-    // Add diffusion term to the residual:
+    // [3] Diffusion code here
+    // TODO: make sure this works only for matrix-matrix connections, avoiding wells
     for( integer c = 0; c < numDofs; ++c )
     {
       for( integer p = 0; p < numPhases; ++p )
       {
-        real64 phaseCompGrad = OBLValsJ[GRAD_OP + c * numPhases + p] - OBLValsI[GRAD_OP + c * numPhases + p];
+        // mass concentration gradient
+        real64 phaseCompGrad = OBLValsJ[GRAD_OP + p * numDofs + c] - OBLValsI[GRAD_OP + p * numDofs + c];
 
-        arraySlice1d< real64 const, compflow::USD_OBL_VAL - 1 > const & OBLValsUp = (phaseCompGrad < 0) ? OBLValsI : OBLValsJ;
-        arraySlice2d< real64 const, compflow::USD_OBL_DER - 1 > const & OBLDersUp = (phaseCompGrad < 0) ? OBLDersI : OBLDersJ;
-        integer const upOffset = (phaseCompGrad < 0) ? 0 : numDofs;
+        // phase existence check
+        if( OBLValsI[UPSAT_OP + p] * OBLValsJ[UPSAT_OP + p] > phaseExistenceTolerance )
+          phasePresenceMult = 1.0;
+        else
+          phasePresenceMult = 0.0;
 
-        // use upstream quantity from cell i for compressibility and saturation (mass or energy):
-        real64 phaseGammaDDiff = m_dt * transD * poroAverage * OBLValsUp[UPSAT_OP + p];
+        // use arithmetic mean for multiplier
+        real64 phaseGammaDDiff = m_dt * phasePresenceMult * transD * (m_referencePorosity[erI][esrI][eiI] * OBLValsI[UPSAT_OP + p] +
+                                                                      m_referencePorosity[erJ][esrJ][eiJ] * OBLValsJ[UPSAT_OP + p]) * 0.5;
 
         stack.localFlux[c] -= phaseGammaDDiff * phaseCompGrad;         // diffusion term
 
         // Add diffusion terms to Jacobian:
         for( integer v = 0; v < numDofs; ++v )
         {
-          stack.localFluxJacobian[c][v] += phaseGammaDDiff * OBLDersI[GRAD_OP + c * numPhases + p][v];
-          stack.localFluxJacobian[c][numDofs + v] -= phaseGammaDDiff * OBLDersJ[GRAD_OP + c * numPhases + p][v];
+          stack.localFluxJacobian[c][v] += phaseGammaDDiff * OBLDersI[GRAD_OP + p * numDofs + c][v];
+          stack.localFluxJacobian[c][numDofs + v] -= phaseGammaDDiff * OBLDersJ[GRAD_OP + p * numDofs + c][v];
 
-          stack.localFluxJacobian[c][v + upOffset] -= phaseCompGrad * m_dt * transD * poroAverage * OBLDersUp[UPSAT_OP + p][v];
+          stack.localFluxJacobian[c][v] -= phaseCompGrad * m_dt * phasePresenceMult * transD * m_referencePorosity[erI][esrI][eiI] * OBLDersI[UPSAT_OP + p][v] * 0.5;
+          stack.localFluxJacobian[c][numDofs + v] -= phaseCompGrad * m_dt * phasePresenceMult * transD * m_referencePorosity[erJ][esrJ][eiJ] * OBLDersJ[UPSAT_OP + p][v] * 0.5;
         }
 
       }
@@ -1043,31 +803,16 @@ public:
     // [4] add rock conduction
     if( enableEnergyBalance )
     {
-      real64 const tDiff = OBLValsJ[RE_TEMP_OP] - OBLValsI[RE_TEMP_OP];
-      real64 const gammaTDiff = transD * m_dt * tDiff;
-
-      arraySlice1d< real64 const, compflow::USD_OBL_VAL - 1 > const & OBLValsUp = (tDiff < 0) ? OBLValsI : OBLValsJ;
-      arraySlice2d< real64 const, compflow::USD_OBL_DER - 1 > const & OBLDersUp = (tDiff < 0) ? OBLDersI : OBLDersJ;
-      integer const upOffset = (tDiff < 0) ? 0 : numDofs;
-      localIndex const erUp = (tDiff < 0) ? erI : erJ;
-      localIndex const esrUp = (tDiff < 0) ? esrI : esrJ;
-      localIndex const eiUp = (tDiff < 0) ? eiI : eiJ;
-
-      real64 const poroUp = m_referencePorosity[erUp][esrUp][eiUp];
-      real64 const rockCondUp = m_rockThermalConductivity[erUp][esrUp][eiUp];
+      real64 const tDiff = OBLValsJ[TEMP_OP] - OBLValsI[TEMP_OP];
+      real64 const gammaTi = transD * m_dt * (1 - m_referencePorosity[erI][esrI][eiI]) * m_rockThermalConductivity[erI][esrI][eiI];
+      real64 const gammaTj = transD * m_dt * (1 - m_referencePorosity[erJ][esrJ][eiJ]) * m_rockThermalConductivity[erJ][esrJ][eiJ];
 
       // rock heat transfers flows from cell i to j
-      stack.localFlux[numComps] -= gammaTDiff * OBLValsUp[ROCK_COND_OP] * (1 - poroUp) * rockCondUp;
+      stack.localFlux[numComps] -= tDiff * (gammaTi + gammaTj) / 2;
       for( integer v = 0; v < numDofs; ++v )
       {
-        stack.localFluxJacobian[numComps][v + upOffset] -= gammaTDiff * OBLDersUp[ROCK_COND_OP][v] * (1 - poroUp) * rockCondUp;
-        // the last variable - T
-        if( v == numDofs - 1 )
-        {
-          real64 const tFlux = transD * m_dt * OBLValsUp[ROCK_COND_OP] * (1 - poroUp) * rockCondUp;
-          stack.localFluxJacobian[numComps][v] += tFlux;
-          stack.localFluxJacobian[numComps][numDofs + v] -= tFlux;
-        }
+        stack.localFluxJacobian[numComps][v] += OBLDersI[TEMP_OP][v] * (gammaTi + gammaTj) / 2;
+        stack.localFluxJacobian[numComps][numDofs + v] -= OBLDersJ[TEMP_OP][v] * (gammaTi + gammaTj) / 2;
       }
     }
   }
@@ -1208,7 +953,7 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    internal::kernelLaunchSelectorEnergySwitch( numPhases, numComps, enableEnergyBalance, [&] ( auto NP, auto NC, auto E )
+    oblFluidKernels::internal::kernelLaunchSelectorEnergySwitch( numPhases, numComps, enableEnergyBalance, [&] ( auto NP, auto NC, auto E )
     {
       integer constexpr ENABLE_ENERGY = E();
       integer constexpr NUM_PHASES = NP();
