@@ -36,10 +36,11 @@ namespace logInfo
 
 /// @cond DO_NOT_DOCUMENT
 
-struct Configuration
+
+struct BoundaryConditions
 {
-  static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "Solver runtime settings"; }
+  static constexpr int getMinLogLevel() { return 1; }
+  static constexpr std::string_view getDescription() { return "Boundary conditions information (incl. source flux)"; }
 };
 
 struct Convergence
@@ -64,12 +65,6 @@ struct LinearSolver
 {
   static constexpr int getMinLogLevel() { return 1; }
   static constexpr std::string_view getDescription() { return "Linear solver information"; }
-};
-
-struct LinearSolverConfiguration
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Print linear solver configuration"; }
 };
 
 struct LineSearch
@@ -99,7 +94,7 @@ struct Solution
 struct SolverInitialization
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Information on solver Initialization"; }
+  static constexpr std::string_view getDescription() { return "Information on solver initialization"; }
 };
 
 struct SolverExecution
@@ -110,7 +105,7 @@ struct SolverExecution
 struct SolverExecutionDetails
 {
   static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "More precise information on solver execution"; }
+  static constexpr std::string_view getDescription() { return "More precise information on solver execution, including iterations statistics after every cycle"; }
 };
 
 struct SolverSteps
