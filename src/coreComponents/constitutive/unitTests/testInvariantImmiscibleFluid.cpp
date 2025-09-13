@@ -200,7 +200,7 @@ public:
       composition[1] = 0.3;
       composition[2] = 0.3;
       CompSlice compositionSlice = composition.toSliceConst();
-      fluid.saveConvergedState();
+      fluid.initializeState();
 
       // Create a test point
       localIndex k = 0;
