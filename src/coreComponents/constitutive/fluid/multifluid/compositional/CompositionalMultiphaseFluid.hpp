@@ -84,6 +84,8 @@ public:
     GEOS_UNUSED_VAR( pressure, temperature );
   }
 
+  virtual void initializeState() const override;
+
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
