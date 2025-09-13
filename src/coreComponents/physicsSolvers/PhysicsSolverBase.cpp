@@ -846,8 +846,10 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
     // Configuration loop
     for( configurationLoopIter = 0; configurationLoopIter < maxConfigurationIter; ++configurationLoopIter )
     {
-
-      outputConfigurationStatistics( domain );
+      if( isLogLevelActive< logInfo::NonlinearSolver >( getLogLevel() ) )
+      {
+        outputConfigurationStatistics( domain );
+      }
 
       bool const isNewtonConverged = solveNonlinearSystem( time_n,
                                                            stepDt,
@@ -856,7 +858,7 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
 
       if( isNewtonConverged )
       {
-        isConfigurationLoopConverged = updateConfiguration( domain );
+        isConfigurationLoopConverged = updateConfiguration( domain, configurationLoopIter );
 
         if( isConfigurationLoopConverged )
         {
@@ -1463,7 +1465,8 @@ void PhysicsSolverBase::updateState( DomainPartition & GEOS_UNUSED_PARAM( domain
   GEOS_ERROR( "PhysicsSolverBase::updateState called!. Should be overridden." );
 }
 
-bool PhysicsSolverBase::updateConfiguration( DomainPartition & GEOS_UNUSED_PARAM( domain ) )
+bool PhysicsSolverBase::updateConfiguration( DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                             integer const GEOS_UNUSED_PARAM( configurationLoopIter ) )
 {
   return true;
 }
