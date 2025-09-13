@@ -999,7 +999,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
 
     string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
     MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-    fluid.saveConvergedState();
+    fluid.initializeState();
 
     // Update the phase mobility
     // Note:
