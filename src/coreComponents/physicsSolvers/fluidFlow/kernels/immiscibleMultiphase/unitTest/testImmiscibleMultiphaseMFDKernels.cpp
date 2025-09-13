@@ -91,7 +91,7 @@ void buildProblemOnce()
        viscosityTableNames="{ viscosityWater, viscosityGas }"/>
     <NullModel name="nullSolid"/>
     <PressurePorosity name="poro" defaultReferencePorosity="0.2" referencePressure="0" compressibility="0"/>
-    <ConstantPermeability name="perm" permeabilityComponents="{1,1,1}"/>
+    <ConstantPermeability name="perm" permeabilityComponents="{1,2,3}"/>
     <CompressibleSolidConstantPermeability name="rock" solidModelName="nullSolid" porosityModelName="poro" permeabilityModelName="perm"/>
     <TableRelativePermeability name="relperm" phaseNames="{ water, gas }"
       wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable, gasRelativePermeabilityTable }"/>
@@ -151,8 +151,9 @@ void setMobility( CellElementSubRegion & subRegion, integer indepPhase )
   auto & mob = subRegion.getField< fields::immiscibleMultiphaseFlow::phaseMobility >();
   auto & dMob = subRegion.getField< fields::immiscibleMultiphaseFlow::dPhaseMobility >();
   localIndex const ei = 0;
-  // Lambda_w = 1.0, Lambda_g = 2.5
-  mob[ei][0] = (1.0/3.0)*1.0e3; mob[ei][1] = (2.0/3.0)*1.0e3;
+  real64 const s_dep = 1.0/3.0;
+  real64 const s_indep = 2.0/3.0;
+  mob[ei][0] = s_dep*1.0e3; mob[ei][1] = s_indep*1.0e3;
   // Derivatives: d(lambda)/dP = 0, d(lambda)/dS(indep) for testing sign mapping
   dMob[ei][0][Deriv::dP] = 0.0; dMob[ei][0][Deriv::dS] = 1.0e3;      // dependent phase
   dMob[ei][1][Deriv::dP] = 0.0; dMob[ei][1][Deriv::dS] = -1.0e3;    // independent phase
