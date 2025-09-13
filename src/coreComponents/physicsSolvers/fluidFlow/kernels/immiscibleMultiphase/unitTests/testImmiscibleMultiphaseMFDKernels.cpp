@@ -33,9 +33,6 @@
 
 #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlowFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseMFDKernels.hpp"
-#include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
-
-// Use SortedArray which includes SortedArrayView
 #include "LvArray/src/SortedArray.hpp"
 
 using namespace geos;
