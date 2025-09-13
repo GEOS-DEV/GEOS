@@ -1604,7 +1604,7 @@ bool PhysicsSolverBase::detectOscillations() const
   if( m_solutionHistory.size() < oscillationCheckDepth )
     return false; // not enough history to check oscillations
 
-  RAJA::ReduceSum< parallelDeviceReduce, localIndex > oscillationCount = 0;
+  RAJA::ReduceSum< parallelDeviceReduce, localIndex > oscillationCount( 0 );
 
   auto const solutionHistory = m_solutionHistory.toViewConst();
   localIndex const numDofs = m_solutionHistory[0].size();
