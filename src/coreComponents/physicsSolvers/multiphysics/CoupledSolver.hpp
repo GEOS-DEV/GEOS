@@ -363,12 +363,13 @@ public:
     return isConverged;
   }
 
-  virtual bool updateConfiguration( DomainPartition & domain ) override
+  virtual bool updateConfiguration( DomainPartition & domain,
+                                    integer const configurationLoopIter ) override
   {
     bool result = true;
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      result &= solver->updateConfiguration( domain );
+      result &= solver->updateConfiguration( domain, configurationLoopIter );
     } );
     return result;
   }
@@ -706,7 +707,9 @@ protected:
     }
 
     if( m_nonlinearSolverParameters.m_nonlinearAccelerationType != NonlinearSolverParameters::NonlinearAccelerationType::None )
+    {
       validateNonlinearAcceleration();
+    }
   }
 
   virtual void validateNonlinearAcceleration()

@@ -337,7 +337,7 @@ public:
   integer m_maxNumConfigurationAttempts;
 
   /// Configuration tolerance
-  double m_configurationTolerance;
+  real64 m_configurationTolerance;
 
   /// Type of coupling
   CouplingType m_couplingType;
