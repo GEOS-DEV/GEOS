@@ -57,6 +57,11 @@ void SingleFluidBase::postInputInitialization()
     setDefaultValue( defaultDensity() );
 }
 
+void SingleFluidBase::initializeState() const
+{
+  saveConvergedState();
+}
+
 void SingleFluidBase::saveConvergedState() const
 {
   localIndex const numElem = m_density.value.size( 0 );
