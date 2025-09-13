@@ -580,7 +580,7 @@ void SinglePhaseBase::initializeFluidState( MeshLevel & mesh, string_array const
     updateFluidState( subRegion );
 
     // 2. save the initial density (for use in the single-phase poromechanics solver to compute the deltaBodyForce)
-    fluid.saveConvergedState();
+    fluid.initializeState();
   } );
 }
 
