@@ -482,7 +482,7 @@ protected:
       for( iter = 0; iter < solverParams.m_maxIterNewton; iter++ )
       {
         // Increment the solver statistics for reporting purposes
-        getIterationStats().incrementConfigIteration();
+        getIterationStats().updateNonlinearIteration( 0 );
 
         startSequentialIteration( iter, domain );
 
