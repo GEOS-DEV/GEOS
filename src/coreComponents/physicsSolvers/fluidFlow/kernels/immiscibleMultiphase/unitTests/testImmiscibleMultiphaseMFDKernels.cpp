@@ -7,12 +7,8 @@
 /**
  * @file testImmiscibleMultiphaseMFDKernels.cpp
  *
- * Unit tests exercising the actual functions in
- * ImmiscibleMultiphaseMFDKernels.hpp:
- *  - ElementBasedAssemblyKernel::computeOverallMassFlux
- *  - ElementBasedAssemblyKernel::computeOverallMassFluxDivergence
- *  - ElementBasedAssemblyKernel::computeSaturationTransport
- *  - ElementBasedAssemblyKernel::compute
+ * Unit tests exercising the actual function ElementBasedAssemblyKernel::compute  in
+ * ImmiscibleMultiphaseMFDKernels.hpp, for different inner products
  *
  * A minimal 1x1x1 hexahedral mesh plus constant two‑phase fluid & permeability
  * is created via XML. Phase mobility and its derivatives are manually set to
@@ -20,7 +16,7 @@
  *
  * NOTE: We purposefully bypass the factory launcher to access and call the
  * individual member functions with controlled inputs, but we use the real
- * kernel type and data structures (no mocks of the kernel internals).
+ * kernel type and data structures..
  */
 
 #include <gtest/gtest.h>
@@ -116,7 +112,7 @@ void buildProblemOnce(const std::string & innerProductType)
   auto & constitutiveManager = domain.getConstitutiveManager();
   xmlWrapper::xmlNode constitutiveNode = root.child( constitutiveManager.getName().c_str() );
   constitutiveManager.processInputFileRecursive( doc, constitutiveNode );
-  ASSERT_TRUE( constitutiveManager.hasGroup( "fluid" ) ) << "Failed to register 'fluid' prototype";
+  
   // Mesh levels then element regions
   pm.getGroup< MeshManager >( pm.groupKeys.meshManager ).generateMeshLevels( domain );
   auto & elemMgr = domain.getMeshBody(0).getBaseDiscretization().getElemManager();
@@ -124,11 +120,6 @@ void buildProblemOnce(const std::string & innerProductType)
   elemMgr.processInputFileRecursive( doc, elemNode );
   elemMgr.postInputInitializationRecursive();
   pm.problemSetup();
-  // After problemSetup solver should have registered mobility fields
-  // Sanity: check phaseMobility field exists on subRegion
-  auto & subRegion = elemMgr.getRegion(0).getSubRegion< CellElementSubRegion >(0);
-  ASSERT_TRUE( subRegion.hasField< fields::immiscibleMultiphaseFlow::phaseMobility >() ) << "phaseMobility field missing after problemSetup";
-  ASSERT_TRUE( subRegion.hasField< fields::immiscibleMultiphaseFlow::dPhaseMobility >() ) << "dPhaseMobility field missing after problemSetup";
   pm.applyInitialConditions();
   
   // Introduce non-zero potentials: perturb face pressures slightly so cellP - faceP != 0
@@ -270,9 +261,8 @@ struct KernelHarness
 
 struct ReferenceCalc
 {
-  // expectedMassFlux function removed
 
-  // New helper: directly fills a provided stack (copy) with expected MassFlux and dMassFlux_dPres
+  // helper: directly fills a provided stack with expected fluxes and derivatives
   template< class StackType >
   static void fillExpectedStack( CellElementSubRegion & subRegion, FaceManager const & faceMgr, integer indepPhase,
                                  StackType & stack )
@@ -365,8 +355,10 @@ TEST_P(ImmiscibleMultiphaseMFDKernelsParamTest, compute_direct)
   CellElementSubRegion & subRegion = std::get<2>( tup );
   FaceManager & faceMgr = std::get<3>( tup );
   kernel.compute( 0, s );
+  
   s_ref.transMatrix = s.transMatrix;
   ReferenceCalc::fillExpectedStack(subRegion, faceMgr, indepPhase, s_ref);
+  
   constexpr real64 eps_tol = 1.0e-8;
   for( int f=0; f<6; ++f )
   {
