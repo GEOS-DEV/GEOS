@@ -27,7 +27,6 @@ set( fluidFlowSolvers_headers
      CompositionalMultiphaseHybridFVM.hpp
      CompositionalMultiphaseUtilities.hpp
      ImmiscibleMultiphaseFlow.hpp
-     ImmiscibleMultiphaseFlowMFD.hpp
      ImmiscibleMultiphaseFlowFields.hpp
      LogLevelsInfo.hpp
      ReactiveCompositionalMultiphaseOBL.hpp
@@ -111,7 +110,6 @@ set( fluidFlowSolvers_headers
      kernels/compositional/ThermalSolutionCheckKernel.hpp
      kernels/compositional/ThermalSolutionScalingKernel.hpp
      kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp
-     kernels/immiscibleMultiphase/ImmiscibleMultiphaseMFDKernels.hpp
      wells/CompositionalMultiphaseWell.hpp
      wells/CompositionalMultiphaseWellFields.hpp
      wells/SinglePhaseWell.hpp
@@ -134,7 +132,6 @@ set( fluidFlowSolvers_sources
      CompositionalMultiphaseStatistics.cpp
      CompositionalMultiphaseHybridFVM.cpp
      ImmiscibleMultiphaseFlow.cpp
-     ImmiscibleMultiphaseFlowMFD.cpp
      ReactiveCompositionalMultiphaseOBL.cpp
      FlowSolverBase.cpp
      SinglePhaseBase.cpp
@@ -227,5 +224,7 @@ if( externalComponentDeps )
 endif()
 
 if( GEOS_ENABLE_TESTS )
-  add_subdirectory( kernels/immiscibleMultiphase/unitTest )
+  add_subdirectory( unitTests )
+  add_subdirectory( kernels/singlePhase/unitTests )
+  add_subdirectory( wells/unitTests )
 endif()
