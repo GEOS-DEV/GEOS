@@ -68,7 +68,7 @@ public:
 
       discretization.resize( 1 );   // one element
       fluid.allocateConstitutiveData( discretization, 1 );   // one quadrature point
-      fluid.saveConvergedState();
+      fluid.initializeState();
     } );
   }
 
