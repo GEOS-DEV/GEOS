@@ -971,6 +971,13 @@ public:
   {
     return m_meshTargets;
   }
+
+  /**
+   * @brief Detect oscillations in the solution
+   * @return true if oscillations are detected, false otherwise
+   */
+  bool detectOscillations() const;
+
 protected:
 
   virtual void postInputInitialization() override;
@@ -1085,12 +1092,6 @@ protected:
   {
     return getConstitutiveModel< CONSTITUTIVE_TYPE >( subRegion, getConstitutiveName< CONSTITUTIVE_TYPE >( subRegion ) );
   }
-
-  /**
-   * @brief Detect oscillations in the solution
-   * @return true if oscillations are detected, false otherwise
-   */
-  bool detectOscillations() const;
 
   /// Courant–Friedrichs–Lewy factor for the timestep
   real64 m_cflFactor;
