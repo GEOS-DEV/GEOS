@@ -43,13 +43,10 @@ using namespace geos::immiscibleMultiphaseMFDKernels;
 
 namespace {
 
-// Helper: build a minimal problem with one hex element and two‑phase fluid.
-void buildProblemOnce(const std::string & innerProductType)
+std::string generateXmlInputImmiscibleMFD(const std::string & innerProductType)
 {
-  static bool built=false; if( built ) return;
-  static char prog[] = "immiscibleMFDTest"; static char * argvLocal[] = { prog, nullptr }; int argcLocal = 1;
-  static GeosxState state( basicSetup( argcLocal, argvLocal, false ) );
-  std::string xml = R"XML(
+  std::ostringstream oss;
+  oss << R"xml(
 <Problem>
   <Solvers gravityVector="{ 0,0,0 }">
     <ImmiscibleMultiphaseFlowMFD name="immiscibleHybridMimetic"
@@ -65,7 +62,7 @@ void buildProblemOnce(const std::string & innerProductType)
   </Events>
   <NumericalMethods>
     <FiniteVolume>
-      <HybridMimeticDiscretization name="immiscibleHybridMimetic" innerProductType=\"" + innerProductType + "\"/>
+      <HybridMimeticDiscretization name="immiscibleHybridMimetic" innerProductType=")xml" << innerProductType << R"xml("/>
     </FiniteVolume>
   </NumericalMethods>
   <Mesh>
@@ -102,7 +99,17 @@ void buildProblemOnce(const std::string & innerProductType)
     <FieldSpecification name="sat1" initialCondition="1" setNames="{all}" objectPath="ElementRegions/Region/blk" fieldName="phaseVolumeFraction" component="1" scale="0.4"/>
   </FieldSpecifications>
 </Problem>
-)XML";
+)xml";
+  return oss.str();
+}
+
+// Helper: build a minimal problem with one hex element and two‑phase fluid.
+void buildProblemOnce(const std::string & innerProductType)
+{
+  static bool built=false; if( built ) return;
+  static char prog[] = "immiscibleMFDTest"; static char * argvLocal[] = { prog, nullptr }; int argcLocal = 1;
+  static GeosxState state( basicSetup( argcLocal, argvLocal, false ) );
+  std::string xml = generateXmlInputImmiscibleMFD(innerProductType);
   xmlWrapper::xmlDocument doc; ASSERT_TRUE( doc.loadString( xml ) );
   xmlWrapper::xmlNode root = doc.getChild( dataRepository::keys::ProblemManager );
   ProblemManager & pm = getGlobalState().getProblemManager();
@@ -112,7 +119,7 @@ void buildProblemOnce(const std::string & innerProductType)
   auto & constitutiveManager = domain.getConstitutiveManager();
   xmlWrapper::xmlNode constitutiveNode = root.child( constitutiveManager.getName().c_str() );
   constitutiveManager.processInputFileRecursive( doc, constitutiveNode );
-  
+  ASSERT_TRUE( constitutiveManager.hasGroup( "fluid" ) ) << "Failed to register 'fluid' prototype";
   // Mesh levels then element regions
   pm.getGroup< MeshManager >( pm.groupKeys.meshManager ).generateMeshLevels( domain );
   auto & elemMgr = domain.getMeshBody(0).getBaseDiscretization().getElemManager();
@@ -120,6 +127,11 @@ void buildProblemOnce(const std::string & innerProductType)
   elemMgr.processInputFileRecursive( doc, elemNode );
   elemMgr.postInputInitializationRecursive();
   pm.problemSetup();
+  // After problemSetup solver should have registered mobility fields
+  // Sanity: check phaseMobility field exists on subRegion
+  auto & subRegion = elemMgr.getRegion(0).getSubRegion< CellElementSubRegion >(0);
+  ASSERT_TRUE( subRegion.hasField< fields::immiscibleMultiphaseFlow::phaseMobility >() ) << "phaseMobility field missing after problemSetup";
+  ASSERT_TRUE( subRegion.hasField< fields::immiscibleMultiphaseFlow::dPhaseMobility >() ) << "dPhaseMobility field missing after problemSetup";
   pm.applyInitialConditions();
   
   // Introduce non-zero potentials: perturb face pressures slightly so cellP - faceP != 0
