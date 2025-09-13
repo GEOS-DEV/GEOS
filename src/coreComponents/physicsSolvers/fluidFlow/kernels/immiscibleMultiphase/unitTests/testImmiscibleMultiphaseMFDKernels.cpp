@@ -23,7 +23,7 @@
  * kernel type and data structures (no mocks of the kernel internals).
  */
 
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -48,12 +48,12 @@ using namespace geos::immiscibleMultiphaseMFDKernels;
 namespace {
 
 // Helper: build a minimal problem with one hex element and two‑phase fluid.
-void buildProblemOnce()
+void buildProblemOnce(const std::string & innerProductType)
 {
   static bool built=false; if( built ) return;
   static char prog[] = "immiscibleMFDTest"; static char * argvLocal[] = { prog, nullptr }; int argcLocal = 1;
   static GeosxState state( basicSetup( argcLocal, argvLocal, false ) );
-  string const xml = R"XML(
+  std::string xml = R"XML(
 <Problem>
   <Solvers gravityVector="{ 0,0,0 }">
     <ImmiscibleMultiphaseFlowMFD name="immiscibleHybridMimetic"
@@ -69,7 +69,7 @@ void buildProblemOnce()
   </Events>
   <NumericalMethods>
     <FiniteVolume>
-      <HybridMimeticDiscretization name="immiscibleHybridMimetic" innerProductType="TPFA"/>
+      <HybridMimeticDiscretization name="immiscibleHybridMimetic" innerProductType=\"" + innerProductType + "\"/>
     </FiniteVolume>
   </NumericalMethods>
   <Mesh>
@@ -164,9 +164,9 @@ struct KernelHarness
 {
   using KType = ElementBasedAssemblyKernel< 6, mimeticInnerProduct::TPFAInnerProduct >;
   using StackVariables = KType::StackVariables;
-  static auto build( integer indepPhase, real64 dt )
+  static auto build( integer indepPhase, real64 dt, const std::string & innerProductType )
   {
-    buildProblemOnce();
+    buildProblemOnce(innerProductType);
     ProblemManager & pm = getGlobalState().getProblemManager();
     DomainPartition & domain = pm.getDomainPartition();
     auto & mesh = domain.getMeshBody(0).getBaseDiscretization();
@@ -353,26 +353,21 @@ struct ReferenceCalc
 } // end anonymous namespace
 
 // ---------------- TEST -----------------
-constexpr real64 eps_tol = 1.0e-8;
-
-TEST( ImmiscibleMultiphaseMFDKernels, compute_direct )
+class ImmiscibleMultiphaseMFDKernelsParamTest : public ::testing::TestWithParam<std::string> {};
+TEST_P(ImmiscibleMultiphaseMFDKernelsParamTest, compute_direct)
 {
   integer indepPhase = 0; real64 dt=1.0;
-  // Explicit types instead of auto
-  std::tuple<KernelHarness::KType, KernelHarness::KType::StackVariables, CellElementSubRegion &, FaceManager &> tup = KernelHarness::build( indepPhase, dt );
+  std::string innerProductType = GetParam();
+  auto tup = KernelHarness::build(indepPhase, dt, innerProductType);
   KernelHarness::KType & kernel = std::get<0>( tup );
   KernelHarness::KType::StackVariables s = std::get<1>( tup );
   KernelHarness::KType::StackVariables s_ref = std::get<1>( tup );
   CellElementSubRegion & subRegion = std::get<2>( tup );
   FaceManager & faceMgr = std::get<3>( tup );
-  
-  // compute internally evaluates the inner product filling the matrix T (s.transmissibility)
   kernel.compute( 0, s );
-  // set the same transmissibility to compute the reference data
   s_ref.transMatrix = s.transMatrix;
   ReferenceCalc::fillExpectedStack(subRegion, faceMgr, indepPhase, s_ref);
-
-  // Compare all relevant attributes between s and s_ref
+  constexpr real64 eps_tol = 1.0e-8;
   for( int f=0; f<6; ++f )
   {
     EXPECT_NEAR( s.MassFlux[f], s_ref.MassFlux[f], eps_tol );
@@ -392,3 +387,8 @@ TEST( ImmiscibleMultiphaseMFDKernels, compute_direct )
   EXPECT_NEAR( s.dDivSatFluxes_dP, s_ref.dDivSatFluxes_dP, eps_tol );
   EXPECT_NEAR( s.dDivSatFluxes_dS, s_ref.dDivSatFluxes_dS, eps_tol );
 }
+INSTANTIATE_TEST_SUITE_P(
+  InnerProductTypeTests,
+  ImmiscibleMultiphaseMFDKernelsParamTest,
+  ::testing::Values("TPFA", "quasiTPFA", "quasiRT", "simple", "beiraoDaVeigaLipnikovManzini")
+);
