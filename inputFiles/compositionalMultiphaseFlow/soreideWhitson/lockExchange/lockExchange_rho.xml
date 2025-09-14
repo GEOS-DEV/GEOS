@@ -20,11 +20,9 @@
                                        oscillationScalingFactor="0.9"
                                        oscillationCheckDepth="2"/>
 			<LinearSolverParameters directParallel="0"/>
-
 		</CompositionalMultiphaseFVM>
 	</Solvers>
 	<Included>
 		<File name="lockExchange_base.xml"/>
 	</Included>
-
 </Problem>
