@@ -15,7 +15,10 @@
       logLevel="2"
       dependentPhaseIndex="1">
       <NonlinearSolverParameters 
-        newtonTol="1e-4" newtonMaxIter="15"
+        newtonTol="1e-4" 
+        newtonMaxIter="15"
+        lineSearchAction="None"
+        maxTimeStepCuts="10"
         maxAllowedResidualNorm="1.0e20"/>
       <LinearSolverParameters directParallel="0"/>
     </ImmiscibleMultiphaseFlowMFD>
@@ -40,9 +43,9 @@
       xMax="{ 100.01, 100.01, 1.01 }"/>
   </Geometry>
 
-  <Events maxTime="86400000">
-    <PeriodicEvent name="outputs" timeFrequency="864000" target="/Outputs/vtkOutput"/>
-    <PeriodicEvent name="solverApps" forceDt="864000" target="/Solvers/FlowSolverMFD"/>
+  <Events maxTime="8640000">
+    <PeriodicEvent name="outputs" timeFrequency="86400" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent name="solverApps" forceDt="86400" target="/Solvers/FlowSolverMFD"/>
   </Events>
 
   <NumericalMethods>
@@ -77,11 +80,6 @@
   </Functions>
 
   <Constitutive>
-<!--     <TwoPhaseImmiscibleFluid
-      name="fluid"
-      phaseNames="{ water, gas }"
-      densityTableNames="{ densityWater, densityGas }"
-      viscosityTableNames="{ viscosityWater, viscosityGas }"/> -->
 
     <TwoPhaseImmiscibleFluid
       name="fluid"

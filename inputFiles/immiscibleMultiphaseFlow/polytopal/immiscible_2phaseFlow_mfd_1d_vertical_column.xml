@@ -7,14 +7,19 @@
  box region to a right low‑pressure box region.
 ------------------------------------------------------------------- -->
 <Problem>
-  <Solvers gravityVector="{ 0.0, 0.0, -10.0 }">
+  <Solvers gravityVector="{ 0.0, 0.0, 0.0 }">
     <ImmiscibleMultiphaseFlowMFD
       name="FlowSolverMFD"
       discretization="immiscibleHybridMimetic"
       targetRegions="{ Domain }"
       logLevel="2"
       dependentPhaseIndex="1">
-      <NonlinearSolverParameters newtonTol="6.0e-4" newtonMaxIter="8"/>
+      <NonlinearSolverParameters 
+        newtonTol="1e-4" 
+        newtonMaxIter="15"
+        lineSearchAction="None"
+        maxTimeStepCuts="10"
+        maxAllowedResidualNorm="1.0e20"/>
       <LinearSolverParameters directParallel="0"/>
     </ImmiscibleMultiphaseFlowMFD>
   </Solvers>
@@ -55,7 +60,7 @@
   <Functions>
     <!-- Constant property tables (single entry) -->
     <TableFunction name="densityWater"   coordinates="{ 0 }" values="{ 1000.0 }"/>
-    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 750.0 }"/>
+    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 1000.0 }"/>
     <TableFunction name="viscosityWater" coordinates="{ 0 }" values="{ 1.0e-3 }"/>
     <TableFunction name="viscosityGas"   coordinates="{ 0 }" values="{ 1.0e-3 }"/>
 

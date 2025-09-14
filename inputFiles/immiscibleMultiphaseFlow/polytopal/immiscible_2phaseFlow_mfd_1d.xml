@@ -14,7 +14,15 @@
       targetRegions="{ Domain }"
       logLevel="2"
       dependentPhaseIndex="1">
-      <NonlinearSolverParameters newtonTol="1.0e-5" newtonMaxIter="3"/>
+      <NonlinearSolverParameters 
+        newtonTol="1e-4" 
+        newtonMaxIter="15"
+        lineSearchAction="None"
+        maxTimeStepCuts="10"
+        maxSubSteps="100"
+        timeStepIncreaseIterLimit="0.5"
+        timeStepDecreaseIterLimit="0.6"
+        maxAllowedResidualNorm="1.0e20"/>
       <LinearSolverParameters directParallel="0"/>
     </ImmiscibleMultiphaseFlowMFD>
   </Solvers>
@@ -23,10 +31,10 @@
     <!-- 1D line extruded to thin 1x1 cross section -->
     <InternalMesh name="mesh1"
                   elementTypes="{ C3D8 }"
-                  xCoords="{ 0, 3 }"
+                  xCoords="{ 0, 100 }"
                   yCoords="{ 0, 1 }"
                   zCoords="{ 0, 1 }"
-                  nx="{ 3 }" ny="{ 1 }" nz="{ 1 }"
+                  nx="{ 100 }" ny="{ 1 }" nz="{ 1 }"
                   cellBlockNames="{ block1 }"/>
   </Mesh>
 
@@ -35,19 +43,19 @@
       xMin="{ -0.01, -0.01, -0.01 }" 
       xMax="{ 1.01, 1.01, 1.01 }"/>
     <Box name="sink"   
-      xMin="{ 1.99, -0.01, -0.01 }" 
-      xMax="{ 3.01, 1.01, 1.01 }"/>
+      xMin="{ 98.99, -0.01, -0.01 }" 
+      xMax="{ 100.01, 1.01, 1.01 }"/>
     <Box name="west_BC"   
       xMin="{ -0.01, -0.01, -0.01 }" 
       xMax="{ +0.01, 1.01, 1.01 }"/>      
     <Box name="east_BC" 
-      xMin="{ 2.99, -0.01, -0.01 }" 
-      xMax="{ 3.01, 1.01, 1.01 }"/>
+      xMin="{ 99.99, -0.01, -0.01 }" 
+      xMax="{ 100.01, 1.01, 1.01 }"/>
   </Geometry>
 
-  <Events maxTime="8640000">
-    <PeriodicEvent name="outputs" timeFrequency="864000" target="/Outputs/vtkOutput"/>
-    <PeriodicEvent name="solverApps" forceDt="864000" target="/Solvers/FlowSolverMFD"/>
+  <Events maxTime="259200000">
+    <PeriodicEvent name="outputs" timeFrequency="86400" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent name="solverApps" forceDt="86400" target="/Solvers/FlowSolverMFD"/>
   </Events>
 
   <NumericalMethods>
@@ -64,9 +72,9 @@
   <Functions>
     <!-- Constant property tables (single entry) -->
     <TableFunction name="densityWater"   coordinates="{ 0 }" values="{ 1000.0 }"/>
-    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 1000.0 }"/>
+    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 100.0 }"/>
     <TableFunction name="viscosityWater" coordinates="{ 0 }" values="{ 1.0e-3 }"/>
-    <TableFunction name="viscosityGas"   coordinates="{ 0 }" values="{ 1.0e-3 }"/>
+    <TableFunction name="viscosityGas"   coordinates="{ 0 }" values="{ 1.0e-5 }"/>
 
     <!-- Linear relative permeability tables -->
     <TableFunction
@@ -115,48 +123,28 @@
 
     <!-- Initial saturations (phaseVolumeFraction component index: 0=water, 1=gas) -->
     <FieldSpecification name="initSatWater" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="0.75"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="0.95"/>
     <FieldSpecification name="initSatGas" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.25"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.05"/>
 
     <!-- Pressure BC regions -->
-<!--     <FieldSpecification name="westPressure" objectPath="faceManager"
-      fieldName="bcPressure" scale="2.0e7" setNames="{ west_BC }"/> -->
     <FieldSpecification name="eastPressure" objectPath="faceManager"
       fieldName="bcPressure" scale="1.0e7" setNames="{ east_BC }"/>
   </FieldSpecifications>
 
   <FieldSpecifications>
   <!-- Pressure only -->
-  <SourceFlux
-    name="producer_pressure_only"
-    objectPath="ElementRegions/Domain"
-    component="0"
-    scale="1.0e-5"
-    setNames="{ sink }"/>
 
   <!-- Pressure + saturation -->
   <SourceFlux
     name="injector_pressure_and_sat"
     objectPath="ElementRegions/Domain"
-    component="0"
-    scale="-1.0e-5"
+    component="1"
+    scale="-5.0e-5"
     setNames="{ source }"/>
 
 </FieldSpecifications>
 
-    <!-- Phase source/sink: inject independent phase (component=1), produce dependent phase (component=0) -->
-<!--     <SourceFlux name="independentPhaseSource"
-      objectPath="ElementRegions/Domain/block1"
-      setNames="{ source }"
-      component="0"
-      scale="-7.0e-5"/> -->
-
-<!--     <SourceFlux name="dependentPhaseSink"
-      objectPath="ElementRegions/Domain/block1"
-      setNames="{ sink }"
-      component="0"
-      scale="7.0e-5"/>   -->
 
   <Outputs>
     <VTK name="vtkOutput"/>
@@ -178,6 +166,11 @@ Dependent phase saturation is computed:
 |--------------------------------|--------------------------|----------------------------|-------|
 | `0`                            | Yes                      | Yes                        | Independent phase (default `independentPhaseIndex = 0`) |
 | `1`                            | Yes                      | No                         | Dependent phase (`S_dep = 1 - S_indep`) |
+
+| `<SourceFlux component="...">` | Affects Pressure (DOF 0) | Affects Saturation (DOF 1) | Notes |
+|--------------------------------|--------------------------|----------------------------|-------|
+| `0`                            | Yes                      | No                         | Independent phase (`independentPhaseIndex = 1`) |
+| `1`                            | Yes                      | Yes                        | Dependent phase (`S_dep = 1 - S_indep`) |
 -->
 
 
