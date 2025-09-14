@@ -75,22 +75,24 @@ void PressurePermeability::allocateConstitutiveData( Group & parent,
   m_referencePermeability.resize( 0, 1, 3 ); // 0 to resize and assign default value later
 
   PermeabilityBase::allocateConstitutiveData( parent, numPts );
+
+  integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
+
+  for( localIndex ei = 0; ei < parent.size(); ++ei )
+  {
+    for( localIndex q = 0; q < numQuad; ++q )
+    {
+      m_referencePermeability[ei][q][0] = m_referencePermeabilityComponents[0];
+      m_referencePermeability[ei][q][1] = m_referencePermeabilityComponents[1];
+      m_referencePermeability[ei][q][2] = m_referencePermeabilityComponents[2];
+    }
+  }
 }
 
 void PressurePermeability::initializeState() const
 {
   localIndex const numE = m_permeability.size( 0 );
   integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
-
-  for( localIndex ei = 0; ei < numE; ++ei )
-  {
-    for( localIndex q = 0; q < numQuad; ++q )
-    {
-      m_referencePermeability[ei][q][0] =  m_referencePermeabilityComponents[0];
-      m_referencePermeability[ei][q][1] =  m_referencePermeabilityComponents[1];
-      m_referencePermeability[ei][q][2] =  m_referencePermeabilityComponents[2];
-    }
-  }
 
   auto permView = m_permeability.toView();
   real64 const permComponents[3] = { m_referencePermeabilityComponents[0],
