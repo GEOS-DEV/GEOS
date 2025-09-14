@@ -562,10 +562,7 @@ public:
   SolidBase( string const & name,
              Group * const parent );
 
-  /**
-   * Destructor
-   */
-  virtual ~SolidBase() override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
@@ -584,14 +581,6 @@ public:
                                                                                                                    // coefficient
                                                                                                                    // key
   };
-
-  /**
-   * @brief Allocate constitutive arrays
-   * @param parent Object's parent group (element subregion)
-   * @param numConstitutivePointsPerParentIndex Number of quadrature points per element
-   */
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;
