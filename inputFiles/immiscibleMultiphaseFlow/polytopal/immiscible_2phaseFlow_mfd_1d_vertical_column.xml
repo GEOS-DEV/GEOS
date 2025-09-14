@@ -36,7 +36,7 @@
       xMax="{ 1.0001, 1.0001, 10.0001 }"/>
   </Geometry>
 
-  <Events maxTime="172800">
+  <Events maxTime="345600">
     <PeriodicEvent name="outputs" timeFrequency="864" target="/Outputs/vtkOutput"/>
     <PeriodicEvent name="solverApps" forceDt="864" target="/Solvers/FlowSolverMFD"/>
   </Events>
@@ -55,7 +55,7 @@
   <Functions>
     <!-- Constant property tables (single entry) -->
     <TableFunction name="densityWater"   coordinates="{ 0 }" values="{ 1000.0 }"/>
-    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 900.0 }"/>
+    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 750.0 }"/>
     <TableFunction name="viscosityWater" coordinates="{ 0 }" values="{ 1.0e-3 }"/>
     <TableFunction name="viscosityGas"   coordinates="{ 0 }" values="{ 1.0e-3 }"/>
 
