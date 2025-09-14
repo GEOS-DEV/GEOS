@@ -616,7 +616,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
   else
   {
     string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-    real64 scalingFactor = 1.0;
+    real64 scalingFactor = CompositionalMultiphaseBase::scalingForSystemSolution( domain, dofManager, localSolution );
     real64 minPresScalingFactor = 1.0, minCompDensScalingFactor = 1.0, minTempScalingFactor = 1.0;
 
     stdVector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaPresMaxLoc;

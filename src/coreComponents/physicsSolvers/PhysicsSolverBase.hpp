@@ -973,6 +973,13 @@ public:
   {
     return m_meshTargets;
   }
+
+  /**
+   * @brief Detect oscillations in the solution
+   * @return true if oscillations are detected, false otherwise
+   */
+  bool detectOscillations() const;
+
 protected:
 
   virtual void postInputInitialization() override;
@@ -1157,6 +1164,9 @@ protected:
 
   /// Timers for the aggregate profiling of the solver
   std::map< std::string, std::chrono::system_clock::duration > m_timers;
+
+  /// History of the solution vector, used for oscillation detection
+  ArrayOfArrays< real64 > m_solutionHistory;
 
 private:
   /// List of names of regions the solver will be applied to
