@@ -13,18 +13,18 @@
 			                           maxTimeStepCuts="100"
 			                           maxSubSteps="1000"
 			                           newtonMaxIter="10"
-                                                   minTimeStepIncreaseInterval="0"
+                                       minTimeStepIncreaseInterval="0"
 			                           logLevel="1"
-                                                   oscillationScaling="1"
-                                                   oscillationFraction="0.1"
-                                                   oscillationScalingFactor="0.9"
-                                                   oscillationCheckDepth="2"/>
-			<LinearSolverParameters solverType="gmres"
-			                        preconditionerType="mgr"/>
+                                       oscillationScaling="1"
+                                       oscillationFraction="0.1"
+                                       oscillationScalingFactor="0.9"
+                                       oscillationCheckDepth="2"/>
+			<LinearSolverParameters directParallel="0" />
 
 		</CompositionalMultiphaseFVM>
 	</Solvers>
 	<Included>
 		<File name="lockExchange_base.xml"/>
 	</Included>
+
 </Problem>
