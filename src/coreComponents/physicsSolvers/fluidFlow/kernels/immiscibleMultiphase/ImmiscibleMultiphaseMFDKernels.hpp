@@ -204,6 +204,10 @@ public:
     real64 dDivMassFluxes_dP = 0.0;
     real64 dDivMassFluxes_dS = 0.0;
     real64 dDivMassFluxes_dFaceVars[NUM_FACE]{};
+    // Buoyancy driven fluxes (one-sided per face i)
+    real64 BuoyantFlux[NUM_FACE]{};
+    real64 dBuoyantFlux_dPres[NUM_FACE]{};
+    real64 dBuoyantFlux_dS[NUM_FACE]{};
     // Saturation equation: divergence of upwinded transported saturation with mass flux
     real64 divSatFluxes = 0.0;
     real64 dDivSatFluxes_dP = 0.0;
@@ -232,6 +236,66 @@ public:
       localIndex const lf = m_elemToFaces[ei][f];
       s.faceRow[f] = m_faceDofNumber[lf] - m_rankOffset;
       s.faceCols[f] = m_faceDofNumber[lf];
+    }
+  }
+  
+  GEOS_HOST_DEVICE
+  void computeBuoyancyDrivenFlux( localIndex const ei, StackVariables & s ) const
+  {
+    using Deriv = DerivMob; // alias for readability
+    
+    // Keep pressure and saturation derivatives since lambda depends on both
+    real64 Lambda = 0.0;   // == massLambda (before sign mapping)
+    real64 dLambda_dP = 0.0;
+    real64 dLambda_dS = 0.0; // derivative w.r.t. independent saturation (apply sign map below)
+    
+    // two-phase for now
+    for( integer ip=0; ip<2; ++ip )
+    {
+      real64 const rho = m_phaseDens[ei][0][ip];
+      real64 const drho_dP = m_dPhaseDens[ei][0][ip][Deriv::dP];
+      real64 const lambda = m_phaseMobAll[m_er][m_esr][ei][ip];
+      real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dP];
+      real64 dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
+
+      // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
+      real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
+      real64 const dlambda_dS = sgnS * dlambda_dS_raw;
+      
+      // accumulate total mobility derivatives for rho_mix denominator
+      Lambda += rho * lambda;
+      dLambda_dP += drho_dP * lambda + rho * dlambda_dP;
+      dLambda_dS += rho * dlambda_dS;
+    }
+    
+    // Compute delta_rho and its pressure derivative
+    integer const dep = 1 - m_indep;
+    real64 const rho_dep = m_phaseDens[ei][0][dep];
+    real64 const rho_indep = m_phaseDens[ei][0][m_indep];
+    real64 const drho_dep_dP = m_dPhaseDens[ei][0][dep][Deriv::dP];
+    real64 const drho_indep_dP = m_dPhaseDens[ei][0][m_indep][Deriv::dP];
+
+    real64 const delta_rho = rho_dep - rho_indep;
+    real64 const ddelta_rho_dP = drho_dep_dP - drho_indep_dP;
+    
+    for( integer i=0; i<NUM_FACE; ++i )
+    {
+      for( integer j=0; j<NUM_FACE; ++j )
+      {
+        // Local gravity terms (cell-centered and face values associated to j)
+        real64 const ccGravCoef = m_elemGravCoef[ei];
+        real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
+
+        // Potential difference and its derivatives
+        real64 const gravCoefDif = ccGravCoef - fGravCoef;
+        real64 const gravTerm = delta_rho * gravCoefDif;
+        real64 const dGravTerm_dP = ddelta_rho_dP * gravCoefDif;
+
+        real64 const T_ij = m_dt * s.transMatrix[i][j];
+        s.BuoyantFlux[i] += Lambda * T_ij * gravTerm;
+        s.dBuoyantFlux_dPres[i] += T_ij * ( Lambda * dGravTerm_dP + dLambda_dP * gravTerm );
+        s.dBuoyantFlux_dS[i] += T_ij * (dLambda_dS * gravTerm );
+      }
     }
   }
   
@@ -347,7 +411,6 @@ public:
         s.dDivMassFluxes_dFaceVars[j] += s.dMassFlux_dFacePres[i][j];
       }
     }
-    int aka = 0;
   }
 
   GEOS_HOST_DEVICE
@@ -441,6 +504,11 @@ public:
       real64 const F = s.MassFlux[i];
       real64 const dF_dP = s.dMassFlux_dPres[i];
       real64 const dF_dS = s.dMassFlux_dS[i];
+      
+      // buoyant flux and derivatives for this one-sided face i (from cell to face)
+      real64 const B = s.BuoyantFlux[i];
+      real64 const dB_dP = s.dBuoyantFlux_dPres[i];
+      real64 const dB_dS = s.dBuoyantFlux_dS[i];
 
       // Arithmetic average of fractional flow between local and neighbor (if any)
       real64 f_nei = f_loc;
@@ -481,8 +549,38 @@ public:
         s.neiVals[s.numNeiCols] += F * ( 1.0 - beta ) * df_nei_dP;
         ++s.numNeiCols;
         s.neiCols[s.numNeiCols] = neiS;
-        s.neiVals[s.numNeiCols] += F * ( 1.0 - beta ) * df_nei_dS;
+        s.neiVals[s.numNeiCols+1] += F * ( 1.0 - beta ) * df_nei_dS;
         ++s.numNeiCols;
+        
+        // perfom buoyancy contributions on internal facets only
+        
+        // Precompute local f and derivatives
+        real64 f_dep_loc = 0.0, df_dep_loc_dP = 0.0, df_dep_loc_dS = 0.0;
+        real64 f_dep_nei = 0.0, df_dep_nei_dP = 0.0, df_dep_nei_dS = 0.0;
+        fracFlow( m_er, m_esr, ei, 1-m_indep, f_dep_loc, df_dep_loc_dP, df_dep_loc_dS );
+        fracFlow( ner, nesr, nei, 1-m_indep, f_dep_nei, df_dep_nei_dP, df_dep_nei_dS );
+        
+        // Upwind convex combination: beta = 1 if F >= 0 (use local), else 0 (use neighbor)
+        real64 const beta_g = ( B >= 0.0 ) ? 1.0 : 0.0;
+        
+        real64 const f_indep = beta_g * f_loc + ( 1.0 - beta_g ) * f_nei;
+        real64 const df_indep_dP = beta_g * df_loc_dP + ( 1.0 - beta_g ) * df_nei_dP;
+        real64 const df_indep_dS = beta_g * df_loc_dS + ( 1.0 - beta_g ) * df_nei_dS;
+        
+        real64 const f_dep = ( 1.0 - beta_g ) * f_dep_loc + beta_g * f_dep_nei;
+        real64 const df_dep_dP = ( 1.0 - beta_g ) * df_dep_loc_dP + beta_g * df_dep_nei_dP;
+        real64 const df_dep_dS = ( 1.0 - beta_g ) * df_dep_loc_dS + beta_g * df_dep_nei_dS;
+
+        // residual contribution and local Jacobians
+        s.divSatFluxes += f_indep * f_dep * B;
+        // d/dP (local): df_indep_dP * f_dep * B + f_indep * df_dep_dP * B + f_indep * f_dep * dB_dP
+        s.dDivSatFluxes_dP += ( df_indep_dP * f_dep * B + f_indep * df_dep_dP * B + f_indep * f_dep * dB_dP );
+        // d/dS (local): df_indep_dS * f_dep * B + f_indep * df_dep_dS * B + f_indep * f_dep * dB_dS
+        s.dDivSatFluxes_dS += ( df_indep_dS * f_dep * B + f_indep * df_dep_dS * B + f_indep * f_dep * dB_dS );
+        
+        s.neiVals[s.numNeiCols] += df_indep_dP * f_dep * B + f_indep * df_dep_dP * B + f_indep * f_dep * dB_dP;
+        s.neiVals[s.numNeiCols+1] += df_indep_dS * f_dep * B + f_indep * df_dep_dS * B + f_indep * f_dep * dB_dS;
+        
       }
     }
   }
@@ -500,6 +598,7 @@ public:
       computeOverallMassFluxDivergence( ei, s );
       
       // saturation equation
+      computeBuoyancyDrivenFlux(ei, s);
       computeSaturationTransport( ei, s );
     }
   }
