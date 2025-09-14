@@ -6,9 +6,13 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3745 (2025-09-14) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3349-13555-41d98d4.tar.gz>
+=====================
+Oscillation detection and scaling option.
+
 PR #3349 (2025-09-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3349-13555-41d98d4.tar.gz>
 =====================
-Configuration loop acceleration for SolidMechanicsLagrangeContact.
+Configuration loop acceleration for `SolidMechanicsLagrangeContact`.
 
 PR #3812 (2025-09-11) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3812-13496-8dc0bc6.tar.gz>
 =====================
