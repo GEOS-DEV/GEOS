@@ -41,11 +41,14 @@ public:
   using exec_policy = serialPolicy;
 
   ReactiveMultiFluid( string const & name,
-                      Group * const parent );
+                      dataRepository::Group * const parent );
 
   virtual std::unique_ptr< ConstitutiveBase >
   deliverClone( string const & name,
-                Group * const parent ) const override;
+                dataRepository::Group * const parent ) const override;
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   virtual bool isThermal() const override;
 
@@ -175,8 +178,6 @@ protected:
   virtual void postInputInitialization() override;
 
   void createChemicalReactions();
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// Reaction related terms
   integer m_numPrimarySpecies;
