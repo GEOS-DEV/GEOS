@@ -19,7 +19,7 @@
                                        oscillationFraction="0.1"
                                        oscillationScalingFactor="0.9"
                                        oscillationCheckDepth="2"/>
-			<LinearSolverParameters directParallel="0" />
+			<LinearSolverParameters directParallel="0"/>
 
 		</CompositionalMultiphaseFVM>
 	</Solvers>
