@@ -165,11 +165,11 @@ void TableRelativePermeabilityHysteresis::postInputInitialization()
                            getFullName() ),
                  InputError );
 
-  m_phaseHasHysteresis.resize( 2 );
+  m_phaseMinVolumeFraction.resize( numPhases );
+  m_phaseHasHysteresis.resize( numPhases );
 
   //initialize STONE-II only used var to avoid discrepancies in baselines
   m_waterOilMaxRelPerm = 1.;
-
 
   if( numPhases == 2 )
   {
@@ -270,7 +270,9 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateWettingRelPer
   real64 drainagePhaseRelPermMinEndPoint = -1;
   real64 drainagePhaseRelPermMaxEndPoint = -1;
 
-  string const tableName = ( numPhases == 2 ) ?   m_drainageWettingNonWettingRelPermTableNames[0] : m_drainageWettingIntermediateRelPermTableNames[0];
+  string const tableName = ( numPhases == 2 ) ?
+                           m_drainageWettingNonWettingRelPermTableNames[0] : m_drainageWettingIntermediateRelPermTableNames[0];
+
   checkExistenceAndValidateRelPermTable( tableName, // input
                                          drainagePhaseMinVolFraction, // output
                                          drainagePhaseMaxVolFraction,
@@ -285,7 +287,6 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateWettingRelPer
 
   if( m_phaseHasHysteresis[IPT::WETTING] )
   {
-
     checkExistenceAndValidateRelPermTable( m_imbibitionWettingRelPermTableName, // input
                                            imbibitionPhaseMinVolFraction, // output
                                            imbibitionPhaseMaxVolFraction,
@@ -315,7 +316,6 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateWettingRelPer
                              getFullName(),
                              drainagePhaseRelPermMaxEndPoint, imbibitionPhaseRelPermMaxEndPoint ),
                    InputError );
-
   }
 
   m_wettingCurve.setPoints( drainagePhaseMinVolFraction, drainagePhaseRelPermMinEndPoint,   // same as imbibition min
