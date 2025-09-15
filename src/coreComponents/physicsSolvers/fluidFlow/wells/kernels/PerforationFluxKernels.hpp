@@ -97,7 +97,8 @@ public:
   PerforationFluxKernel ( PerforationData * const perforationData,
                           ElementSubRegionBase const & subRegion,
                           FieldAccessorT const & fieldAccessors,
-                          bool const disableReservoirToWellFlow ):
+                          bool const isInjector,
+                          bool const isCrossflowEnabled ):
     m_resPres( fieldAccessors.get( fields::flow::pressure {} )),
     m_resPhaseVolFrac( fieldAccessors.get( fields::flow::phaseVolumeFraction {} )),
     m_dResPhaseVolFrac( fieldAccessors.get( fields::flow::dPhaseVolumeFraction {} )),
@@ -125,7 +126,9 @@ public:
     m_resElementIndex( perforationData->getField< fields::perforation::reservoirElementIndex >()),
     m_compPerfRate( perforationData->getField< fields::well::compPerforationRate >()),
     m_dCompPerfRate( perforationData->getField< fields::well::dCompPerforationRate >()),
-    m_disableReservoirToWellFlow( disableReservoirToWellFlow )
+    m_perfStatus( perforationData->getField< fields::perforation::perforationStatus >()),
+    m_isInjector( isInjector ),
+    m_isCrossflowEnabled( isCrossflowEnabled )
   {}
 
   template< typename FUNC = NoOpFunc >
@@ -134,6 +137,23 @@ public:
   void
   computeFlux( localIndex const iperf, FUNC && fluxKernelOp= NoOpFunc {} ) const
   {
+    using CP_Deriv = constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
+
+    if( !m_perfStatus[iperf] )
+    {
+      for( integer ic = 0; ic < NC; ++ic )
+      {
+        m_compPerfRate[iperf][ic] = 0.0;
+        for( integer ke = 0; ke < 2; ++ke )
+        {
+          for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+          {
+            m_dCompPerfRate[iperf][ke][ic][jc] = 0.0;
+          }
+        }
+      }
+      return;
+    }
     // get the index of the reservoir elem
     localIndex const er  = m_resElementRegion[iperf];
     localIndex const esr = m_resElementSubRegion[iperf];
@@ -143,7 +163,7 @@ public:
     localIndex const iwelem = m_perfWellElemIndex[iperf];
 
     using Deriv = constitutive::multifluid::DerivativeOffset;
-    using CP_Deriv = constitutive::multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
+
 
     // local working variables and arrays
     real64 pres[2]{};
@@ -230,7 +250,7 @@ public:
         // skip the rest of the calculation if the phase is absent
         // or if crossflow is disabled for injectors
         bool const phaseExists = (m_resPhaseVolFrac[er][esr][ei][ip] > 0);
-        if( !phaseExists || m_disableReservoirToWellFlow )
+        if( !phaseExists || (m_isInjector && !m_isCrossflowEnabled) )
         {
           continue;
         }
@@ -352,8 +372,9 @@ public:
       {
 
         // skip the rest of the calculation if the phase is absent
+        // or if crossflow is disabled for non-injectors aka producers
         bool const phaseExists = (m_resPhaseVolFrac[er][esr][ei][ip] > 0);
-        if( !phaseExists )
+        if( !phaseExists || (!m_isInjector && !m_isCrossflowEnabled) )
         {
           continue;
         }
@@ -474,9 +495,7 @@ public:
     GEOS_MARK_FUNCTION;
     forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
     {
-
       kernelComponent.computeFlux( iperf );
-
     } );
   }
 
@@ -511,9 +530,10 @@ protected:
   arrayView4d< real64 > const m_dCompPerfRate;
   arrayView3d< real64 > const m_dCompPerfRate_dPres;
   arrayView4d< real64 > const m_dCompPerfRate_dComp;
+  arrayView1d< integer > const m_perfStatus;
 
-  bool const m_disableReservoirToWellFlow;
-
+  bool const m_isInjector;
+  bool const m_isCrossflowEnabled;
 
 };
 
@@ -528,14 +548,13 @@ public:
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
    * @param[in] numComps the number of fluid components
-   * @param[in] dt time step size
-   * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] useTotalMassEquation flag specifying whether to replace one component bal eqn with total mass eqn
-   * @param[in] dofKey string to get the element degrees of freedom numbers
-   * @param[in] wellControls object holding well control/constraint information
+   * @param[in] numPhases the number of phases
+   * @param[in] flowSolverName the name of the flow solver
+   * @param[in] perforationData the perforation data
    * @param[in] subregion well subregion
-   * @param[inout] localMatrix the local CRS matrix
-   * @param[inout] localRhs the local right-hand side vector
+   * @param[in] elemManager element region manager
+   * @param[in] isInjector flag indicating whether the well is an injector
+   * @param[in] isCrossflowEnabled flag indicating whether crossflow is enabled
    */
   template< typename POLICY >
   static void
@@ -545,7 +564,8 @@ public:
                    PerforationData * const perforationData,
                    ElementSubRegionBase const & subRegion,
                    ElementRegionManager & elemManager,
-                   integer const disableReservoirToWellFlow )
+                   bool const isInjector,
+                   bool const isCrossflowEnabled )
   {
     geos::internal::kernelLaunchSelectorCompPhaseSwitch( numComp, numPhases, [&]( auto NC, auto NP )
     {
@@ -556,7 +576,8 @@ public:
       using kernelType = PerforationFluxKernel< NUM_COMP, NUM_PHASE, IS_THERMAL >;
       typename kernelType::template FieldAccessors<> fieldAccessors( elemManager, flowSolverName );
 
-      kernelType kernel( perforationData, subRegion, fieldAccessors, disableReservoirToWellFlow );
+      kernelType kernel( perforationData, subRegion, fieldAccessors,
+                         isInjector, isCrossflowEnabled );
       kernelType::template launch< POLICY >( perforationData->size(), kernel );
     } );
   }
@@ -585,6 +606,7 @@ public:
   using Base::m_dResCompFrac_dCompDens;
   using Base::m_dWellElemCompFrac_dCompDens;
 
+  /// Compile time value for the number of components
   static constexpr integer numComp = NC;
 
   /// Compile time value for the number of phases
@@ -605,17 +627,18 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  PerforationFluxKernel ( PerforationData * const perforationData,
-                          ElementSubRegionBase const & subRegion,
-                          MultiFluidBase const & fluid,
-                          FieldAccessors const & fieldAccessors,
-                          bool const disableReservoirToWellFlow )
+  PerforationFluxKernel( PerforationData * const perforationData,
+                         ElementSubRegionBase const & subRegion,
+                         MultiFluidBase const & fluid,
+                         FieldAccessors const & fieldAccessors,
+                         bool const isInjector,
+                         bool const isCrossflowEnabled )
     : Base( perforationData,
             subRegion,
             fieldAccessors,
-            disableReservoirToWellFlow ),
+            isInjector,
+            isCrossflowEnabled ),
     m_wellElemPhaseFrac( fluid.phaseFraction() ),
-    m_dPhaseFrac( fluid.dPhaseFraction() ),
     m_wellElemPhaseEnthalpy( fluid.phaseEnthalpy()),
     m_dWellElemPhaseEnthalpy( fluid.dPhaseEnthalpy()),
     m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >()),
@@ -623,7 +646,6 @@ public:
     m_temp( fieldAccessors.get( fields::flow::temperature {} ) ),
     m_resPhaseEnthalpy( fieldAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
     m_dResPhaseEnthalpy( fieldAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) )
-
   {}
 
   template< typename FUNC = NoOpFunc >
@@ -684,32 +706,32 @@ public:
           bool const phaseExists = m_wellElemPhaseFrac[iwelem][0][iphase] > 0.0;
           if( !phaseExists )
             continue;
-          double pflux = m_wellElemPhaseFrac[iwelem][0][iphase]*flux;
+          real64 const phaseFlux = m_wellElemPhaseFrac[iwelem][0][iphase] * flux;
           real64 const wellelem_enthalpy = m_wellElemPhaseEnthalpy[iwelem][0][iphase];
-          m_energyPerfFlux[iperf] += pflux * wellelem_enthalpy;
+          m_energyPerfFlux[iperf] += phaseFlux * wellelem_enthalpy;
 
           // energy equation derivatives WRT res P & T
           m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] += dFlux[TAG::RES][CP_Deriv::dP] * wellelem_enthalpy;
           m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dT] += dFlux[TAG::RES][CP_Deriv::dT] * wellelem_enthalpy;
 
           m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP] += dFlux[TAG::WELL][CP_Deriv::dP] * wellelem_enthalpy
-                                                               +  pflux * m_dWellElemPhaseEnthalpy[iwelem][0][iphase][Deriv::dP]
-                                                               +  pflux * wellelem_enthalpy *  m_dPhaseFrac[iwelem][0][iphase][Deriv::dP];
+                                                               + phaseFlux * m_dWellElemPhaseEnthalpy[iwelem][0][iphase][Deriv::dP]
+                                                               + phaseFlux * wellelem_enthalpy * m_dWellElemPhaseFrac[iwelem][0][iphase][Deriv::dP];
           m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT] += dFlux[TAG::WELL][CP_Deriv::dT] * wellelem_enthalpy
-                                                               +  pflux * m_dWellElemPhaseEnthalpy[iwelem][0][iphase][Deriv::dT]
-                                                               +   pflux * wellelem_enthalpy *  m_dPhaseFrac[iwelem][0][iphase][Deriv::dT];
+                                                               + phaseFlux * m_dWellElemPhaseEnthalpy[iwelem][0][iphase][Deriv::dT]
+                                                               + phaseFlux * wellelem_enthalpy * m_dWellElemPhaseFrac[iwelem][0][iphase][Deriv::dT];
 
           //energy e
           real64 dPVF_dC[numComp]{};
           applyChainRule( NC,
                           m_dWellElemCompFrac_dCompDens[iwelem],
-                          m_dPhaseFrac[iwelem][0][iphase],
+                          m_dWellElemPhaseFrac[iwelem][0][iphase],
                           dPVF_dC,
                           Deriv::dC );
           for( integer ic=0; ic<NC; ic++ )
           {
-            m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dC+ic]  += wellelem_enthalpy *  dFlux[TAG::WELL][CP_Deriv::dC+ic] * m_wellElemPhaseFrac[iwelem][0][iphase];
-            m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dC+ic]  += wellelem_enthalpy * pflux * dPVF_dC[ ic];
+            m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dC+ic]  += wellelem_enthalpy * dFlux[TAG::WELL][CP_Deriv::dC+ic] * m_wellElemPhaseFrac[iwelem][0][iphase];
+            m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dC+ic]  += wellelem_enthalpy * phaseFlux * dPVF_dC[ic];
           }
           // energy equation enthalpy derivatives WRT well dens
           real64 dProp_dC[numComp]{};
@@ -721,7 +743,7 @@ public:
 
           for( integer jc = 0; jc < NC; ++jc )
           {
-            m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dC+jc] += pflux * dProp_dC[jc];
+            m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dC+jc] += phaseFlux * dProp_dC[jc];
           }
         }
 
@@ -748,7 +770,6 @@ public:
     forAll< POLICY >( numElements, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
     {
       kernelComponent.computeFlux( iperf );
-
     } );
   }
 
@@ -757,7 +778,7 @@ protected:
   /// Views on well element properties
   /// Element phase fraction
   arrayView3d< real64 const, multifluid::USD_PHASE > const m_wellElemPhaseFrac;
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const m_dPhaseFrac;
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const m_dWellElemPhaseFrac;
   arrayView3d< real64 const, multifluid::USD_PHASE > const m_wellElemPhaseEnthalpy;
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > const m_dWellElemPhaseEnthalpy;
 
@@ -786,14 +807,14 @@ public:
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
    * @param[in] numComps the number of fluid components
-   * @param[in] dt time step size
-   * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] useTotalMassEquation flag specifying whether to replace one component bal eqn with total mass eqn
-   * @param[in] dofKey string to get the element degrees of freedom numbers
-   * @param[in] wellControls object holding well control/constraint information
+   * @param[in] numPhases the number of phases
+   * @param[in] flowSolverName the name of the flow solver
+   * @param[in] perforationData the perforation data
    * @param[in] subregion well subregion
-   * @param[inout] localMatrix the local CRS matrix
-   * @param[inout] localRhs the local right-hand side vector
+   * @param[in] fluid the multifluid object
+   * @param[in] elemManager element region manager
+   * @param[in] isInjector flag indicating whether the well is an injector
+   * @param[in] isCrossflowEnabled flag indicating whether crossflow is enabled
    */
   template< typename POLICY >
   static void
@@ -804,7 +825,8 @@ public:
                    ElementSubRegionBase const & subRegion,
                    MultiFluidBase const & fluid,
                    ElementRegionManager & elemManager,
-                   integer const disableReservoirToWellFlow )
+                   bool const isInjector,
+                   bool const isCrossflowEnabled )
   {
     geos::internal::kernelLaunchSelectorCompPhaseSwitch( numComp, numPhases, [&]( auto NC, auto NP )
     {
@@ -815,7 +837,8 @@ public:
       using kernelType = PerforationFluxKernel< NUM_COMP, NUM_PHASE, IS_THERMAL >;
       typename kernelType::FieldAccessors fieldAccessors( elemManager, flowSolverName );
 
-      kernelType kernel( perforationData, subRegion, fluid, fieldAccessors, disableReservoirToWellFlow );
+      kernelType kernel( perforationData, subRegion, fluid, fieldAccessors,
+                         isInjector, isCrossflowEnabled );
       kernelType::template launch< POLICY >( perforationData->size(), kernel );
     } );
   }

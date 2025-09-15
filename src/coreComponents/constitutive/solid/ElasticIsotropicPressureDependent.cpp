@@ -26,15 +26,7 @@ namespace constitutive
 {
 
 ElasticIsotropicPressureDependent::ElasticIsotropicPressureDependent( string const & name, Group * const parent ):
-  SolidBase( name, parent ),
-  m_defaultRefPressure(),
-  m_defaultRefStrainVol(),
-  m_defaultRecompressionIndex(),
-  m_defaultShearModulus(),
-  m_refPressure(),
-  m_refStrainVol(),
-  m_recompressionIndex(),
-  m_shearModulus()
+  SolidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultRefPressureString(), &m_defaultRefPressure ).
     setApplyDefaultValue( -1.0 ).
@@ -72,10 +64,6 @@ ElasticIsotropicPressureDependent::ElasticIsotropicPressureDependent( string con
     setApplyDefaultValue( -1 ).
     setDescription( "Elastic Shear Modulus" );
 }
-
-
-ElasticIsotropicPressureDependent::~ElasticIsotropicPressureDependent()
-{}
 
 
 void ElasticIsotropicPressureDependent::postInputInitialization()

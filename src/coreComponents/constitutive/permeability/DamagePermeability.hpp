@@ -70,12 +70,6 @@ public:
 
   DamagePermeability( string const & name, Group * const parent );
 
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   static string catalogName() { return "DamagePermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -101,10 +95,6 @@ public:
     static constexpr char const * bulkPermeabilityString() { return "bulkPermeability"; }
     static constexpr char const * damageDependenceConstantString() { return "damageDependenceConstant"; }
   };
-
-protected:
-
-  virtual void postInputInitialization() override;
 
 private:
 

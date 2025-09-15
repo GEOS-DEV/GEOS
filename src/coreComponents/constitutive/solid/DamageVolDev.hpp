@@ -188,10 +188,9 @@ public:
   using Damage< BASE >::m_biotCoefficient;
 
   DamageVolDev( string const & name, dataRepository::Group * const parent );
-  virtual ~DamageVolDev() override;
 
 
-  static string catalogName() { return string( "DamageVolDev" ) + BASE::m_catalogNameString; }
+  static string catalogName() { return string( "DamageVolDev" ) + BASE::catalogName(); }
   virtual string getCatalogName() const override { return catalogName(); }
 
 

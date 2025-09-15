@@ -42,13 +42,17 @@
       name="solverApplications"
       maxEventDt="5e5"
       target="/Solvers/compflow"/>
-    
+
+    <PeriodicEvent name="sourceFluxStatsEvent"
+      timeFrequency="5e5"
+      target="/Tasks/fluxesStats" />
+
     <PeriodicEvent
       name="restarts"
       timeFrequency="1e6"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
-    
+
   </Events>
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS_END -->  
 
@@ -250,6 +254,16 @@
     
   </Functions>
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FUNCTIONS_END -->    
+
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_TASKS -->    
+  <Tasks>
+    <SourceFluxStatistics name="fluxesStats"
+      flowSolverName="compflow"
+      fluxNames="{*}"
+      logLevel="2"
+      writeCSV="1" />
+  </Tasks>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_TASKS_END -->      
 
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUTS -->    
   <Outputs>

@@ -40,25 +40,18 @@ ExponentialDecayPermeability::ExponentialDecayPermeability( string const & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( " initial permeability of the fracture." );
 
-  registerField( fields::permeability::dPerm_dTraction{}, &m_dPerm_dTraction );
-  registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+  registerField< fields::permeability::dPerm_dTraction >( &m_dPerm_dTraction );
+  registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
 }
 
-std::unique_ptr< ConstitutiveBase >
-ExponentialDecayPermeability::deliverClone( string const & name,
-                                            Group * const parent ) const
+void ExponentialDecayPermeability::allocateConstitutiveData( Group & parent,
+                                                             localIndex const numPts )
 {
-  return ConstitutiveBase::deliverClone( name, parent );
-}
-
-void ExponentialDecayPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                             localIndex const numConstitutivePointsPerParentIndex )
-{
-// NOTE: enforcing 1 quadrature point
+  // NOTE: enforcing 1 quadrature point
   m_dPerm_dTraction.resize( 0, 1, 3, 3 );
   m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
 
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ExponentialDecayPermeability, string const &, Group * const )
