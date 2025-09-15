@@ -1007,8 +1007,8 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
     }
   }
 
-  GEOS_LOG_RANK_0_IF( donorRanks.size() < recipientRanks.size(),
-                      "\nWarning! We strongly encourage the use of partitionRefinement > 5 for this number of MPI ranks \n" );
+  GEOS_WARNING_IF( donorRanks.size() < recipientRanks.size(),
+                   "We strongly encourage the use of partitionRefinement > 5 for this number of MPI ranks" );
 
   vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( mesh, numProcs, newParts.toViewConst() );
   return vtk::redistribute( *splitMesh, MPI_COMM_GEOS );
