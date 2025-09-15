@@ -38,9 +38,6 @@ BartonBandis::BartonBandis( string const & name, Group * const parent ):
     setDescription( " Reference normal stress." );
 }
 
-BartonBandis::~BartonBandis()
-{}
-
 void BartonBandis::postInputInitialization()
 {
   GEOS_THROW_IF( m_referenceNormalStress <= 0.0,

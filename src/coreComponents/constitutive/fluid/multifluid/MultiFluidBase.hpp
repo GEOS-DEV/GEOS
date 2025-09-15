@@ -39,7 +39,7 @@ public:
                   Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   // *** MultiFluid-specific interface
 
@@ -650,8 +650,6 @@ private:
 
 private:
 
-
-
   /**
    * @brief Called internally to set array dim labels.
    */
@@ -659,17 +657,10 @@ private:
 
 protected:
 
-  /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  virtual void resizeFields( localIndex const size, localIndex const numPts );
-
   virtual void postInputInitialization() override;
 
   // flag indicating whether input/output component fractions are treated as mass fractions
-  int m_useMass;
+  integer m_useMass;
 
   /// Enable an error when checkTableParameters() is called and the input pressure or temperature of the PVT tables is out of range
   integer m_checkPVTTablesRanges;

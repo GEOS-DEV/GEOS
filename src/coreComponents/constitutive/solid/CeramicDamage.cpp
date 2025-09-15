@@ -26,14 +26,7 @@ namespace constitutive
 {
 
 CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_damage(),
-  m_jacobian(),
-  m_lengthScale(),
-  m_tensileStrength(),
-  m_compressiveStrength(),
-  m_maximumStrength(),
-  m_crackSpeed()
+  ElasticIsotropic( name, parent )
 {
   // register default values
   registerWrapper( viewKeyStruct::tensileStrengthString(), &m_tensileStrength ).
@@ -70,17 +63,12 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
 }
 
 
-CeramicDamage::~CeramicDamage()
-{}
-
-
-void CeramicDamage::allocateConstitutiveData( dataRepository::Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+void CeramicDamage::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_damage.resize( 0, numPts );
+  m_jacobian.resize( 0, numPts );
 
-  m_damage.resize( 0, numConstitutivePointsPerParentIndex );
-  m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
+  ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 }
 
 
@@ -92,12 +80,6 @@ void CeramicDamage::postInputInitialization()
   GEOS_THROW_IF( m_compressiveStrength < m_tensileStrength, "Compressive strength must be greater than tensile strength.", InputError );
   GEOS_THROW_IF( m_maximumStrength < m_compressiveStrength, "Maximum theoretical strength must be greater than compressive strength.", InputError );
   GEOS_THROW_IF( m_crackSpeed < 0.0, "Crack speed must be a positive number.", InputError );
-}
-
-
-void CeramicDamage::saveConvergedState() const
-{
-  SolidBase::saveConvergedState();
 }
 
 
