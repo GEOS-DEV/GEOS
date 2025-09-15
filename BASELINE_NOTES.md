@@ -6,6 +6,38 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3745 (2025-09-14) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3745-13577-97fabfe.tar.gz>
+=====================
+Oscillation detection and scaling option.
+
+PR #3776 (2025-09-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3776-13560-88bd98b.tar.gz>
+=====================
+Constitutive cleanup: rebaseline due to technical diffs, no real results changes.
+
+PR #3349 (2025-09-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3349-13555-41d98d4.tar.gz>
+=====================
+Configuration loop acceleration for `SolidMechanicsLagrangeContact`.
+
+PR #3812 (2025-09-11) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3812-13496-8dc0bc6.tar.gz>
+=====================
+Add reset of k-values for compositional fluid model. Improves the convergence of models at the start.
+
+PR #3285 (2025-09-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3285-13414-69e5962.tar.gz>
+=====================
+Add hydrofrac verification cases for leak-off.
+
+PR #3587 (2025-09-08) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3587-13389-99ac8e4.tar.gz>
+=====================
+Perforation status option. Updates for schema changes and well quantities not being compute if well is closed
+
+PR #3788 (2025-09-07) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3788-13372-e0a1d67.tar.gz>
+=====================
+Updating txt files for class09_pb3_hystRelperm.
+
+PR #3621 (2025-09-05) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3621-13365-2c193d7.tar.gz>
+=====================
+Reservoir volume well constraint option.
+
 PR #3629 (2025-09-02) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3680-13304-f49e13a.tar.gz>
 =====================
 Logic for deciding whether to setup linear solver, new flag `reuseFactorization`.

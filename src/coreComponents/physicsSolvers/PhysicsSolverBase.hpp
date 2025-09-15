@@ -596,9 +596,11 @@ public:
   /**
    * @brief updates the configuration (if needed) based on the state after a converged Newton loop.
    * @param domain the domain containing the mesh and fields
+   * @param configurationLoopIter current configuration iteration number
    * @return a bool that states whether the configuration used to solve the nonlinear loop is still valid or not.
    */
-  virtual bool updateConfiguration( DomainPartition & domain );
+  virtual bool updateConfiguration( DomainPartition & domain,
+                                    integer configurationLoopIter );
 
   /**
    * @brief
@@ -761,7 +763,7 @@ public:
    * @brief set the timestamp of the system setup
    * @param[in] timestamp the new timestamp of system setup
    */
-  void setSystemSetupTimestamp( Timestamp timestamp ) { m_systemSetupTimestamp = timestamp; }
+  void setSystemSetupTimestamp( Timestamp timestamp );
 
   /**
    * @brief return the value of the gravity vector specified in PhysicsSolverManager
@@ -836,6 +838,11 @@ public:
    */
   localIndex targetRegionIndex( string const & regionName ) const;
 
+  /**
+   * @brief return the list of target regions
+   * @return the array of region names
+   */
+  string_array const & getTargetRegionNames() const {return m_targetRegionNames;}
 
 
   /**
@@ -915,9 +922,25 @@ public:
     return m_solverStatistics.m_iterationsStats;
   }
   /**
+   * @return An IterationsStatistics for the "root" solver.
+   * Otherwise return an empty IterationsStatistics
+   * (const version)
+   */
+  IterationsStatistics const & getIterationStats() const
+  {
+    return m_solverStatistics.m_iterationsStats;
+  }
+  /**
    * @return A ConvergenceStatistics for all sub-solvers
    */
   ConvergenceStatistics & getConvergenceStats()
+  {
+    return m_solverStatistics.m_convergenceStats;
+  }
+  /**
+   * @return A ConvergenceStatistics for all sub-solvers (const version)
+   */
+  ConvergenceStatistics const & getConvergenceStats() const
   {
     return m_solverStatistics.m_convergenceStats;
   }
@@ -950,6 +973,13 @@ public:
   {
     return m_meshTargets;
   }
+
+  /**
+   * @brief Detect oscillations in the solution
+   * @return true if oscillations are detected, false otherwise
+   */
+  bool detectOscillations() const;
+
 protected:
 
   virtual void postInputInitialization() override;
@@ -1134,6 +1164,9 @@ protected:
 
   /// Timers for the aggregate profiling of the solver
   std::map< std::string, std::chrono::system_clock::duration > m_timers;
+
+  /// History of the solution vector, used for oscillation detection
+  ArrayOfArrays< real64 > m_solutionHistory;
 
 private:
   /// List of names of regions the solver will be applied to
