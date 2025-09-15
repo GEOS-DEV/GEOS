@@ -43,9 +43,9 @@
       xMax="{ 1.0001, 1.0001, 10.0001 }"/>               
   </Geometry>
 
-  <Events maxTime="3456000">
-    <PeriodicEvent name="outputs" timeFrequency="8640" target="/Outputs/vtkOutput"/>
-    <PeriodicEvent name="solverApps" forceDt="8640" target="/Solvers/FlowSolverMFD"/>
+  <Events maxTime="34560000">
+    <PeriodicEvent name="outputs" timeFrequency="86400" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent name="solverApps" forceDt="86400" target="/Solvers/FlowSolverMFD"/>
   </Events>
 
   <NumericalMethods>
@@ -113,9 +113,9 @@
 
     <!-- Initial saturations (phaseVolumeFraction component index: 0=water, 1=gas) -->
     <FieldSpecification name="initSatWater" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="0.3333333333"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="0.5"/>
     <FieldSpecification name="initSatGas" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.6666666667"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.5"/>
 
     <!-- Pressure BC regions -->
     <FieldSpecification name="topPressure" objectPath="faceManager"

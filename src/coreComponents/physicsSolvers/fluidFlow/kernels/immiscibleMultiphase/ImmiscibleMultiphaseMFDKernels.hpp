@@ -249,23 +249,23 @@ public:
     real64 dLambda_dP = 0.0;
     real64 dLambda_dS = 0.0; // derivative w.r.t. independent saturation (apply sign map below)
     
-    // two-phase for now
-    for( integer ip=0; ip<2; ++ip )
-    {
-      // this mobility are mass mobilities (rho * kr / mu).
-      real64 const lambda = m_phaseMobAll[m_er][m_esr][ei][ip];
-      real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dP];
-      real64 dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
-
-      // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
-      real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
-      real64 const dlambda_dS = sgnS * dlambda_dS_raw;
-      
-      // accumulate total mobility derivatives for rho_mix denominator
-      Lambda += lambda;
-      dLambda_dP += dlambda_dP;
-      dLambda_dS += dlambda_dS;
-    }
+//    // two-phase for now
+//    for( integer ip=0; ip<2; ++ip )
+//    {
+//      // this mobility are mass mobilities (rho * kr / mu).
+//      real64 const lambda = m_phaseMobAll[m_er][m_esr][ei][ip];
+//      real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dP];
+//      real64 dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
+//
+//      // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
+//      real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
+//      real64 const dlambda_dS = sgnS * dlambda_dS_raw;
+//      
+//      // accumulate total mobility derivatives for rho_mix denominator
+//      Lambda += lambda;
+//      dLambda_dP += dlambda_dP;
+//      dLambda_dS += dlambda_dS;
+//    }
     
     // Compute delta_rho and its pressure derivative
     integer const dep = 1 - m_indep;
@@ -289,11 +289,12 @@ public:
         real64 const gravCoefDif = ccGravCoef - fGravCoef;
         real64 const gravTerm = delta_rho * gravCoefDif;
         real64 const dGravTerm_dP = ddelta_rho_dP * gravCoefDif;
+        real64 const dGravTerm_dS = 0.0;
 
-        real64 const T_ij = m_dt * s.transMatrix[i][j];
-        s.BuoyantFlux[i] += Lambda * T_ij * gravTerm;
-        s.dBuoyantFlux_dPres[i] += T_ij * ( Lambda * dGravTerm_dP + dLambda_dP * gravTerm );
-        s.dBuoyantFlux_dS[i] += T_ij * (dLambda_dS * gravTerm );
+        real64 const T_ij = s.transMatrix[i][j];
+        s.BuoyantFlux[i] += T_ij * gravTerm;
+        s.dBuoyantFlux_dPres[i] += T_ij * (dGravTerm_dP);
+        s.dBuoyantFlux_dS[i] += T_ij * (dGravTerm_dS);
       }
     }
   }
@@ -371,7 +372,7 @@ public:
         real64 const dPotDif_dS = - dGravTerm_dS;
         real64 const dPotDif_dFaceP = -1.0;
 
-        real64 const T_ij = m_dt * s.transMatrix[i][j];
+        real64 const T_ij = s.transMatrix[i][j];
         s.MassFlux[i] += Lambda * T_ij * potDif;
         s.dMassFlux_dPres[i] += T_ij * ( Lambda * dPotDif_dP + dLambda_dP * potDif );
         s.dMassFlux_dS[i] += T_ij * ( Lambda * dPotDif_dS + dLambda_dS * potDif );
@@ -392,13 +393,13 @@ public:
       real64 const dF_dS = s.dMassFlux_dS[i];
       
       // residual
-      s.divMassFluxes += F;
+      s.divMassFluxes += m_dt * F;
       // jacobians wrt element DOFs
-      s.dDivMassFluxes_dP += dF_dP;
-      s.dDivMassFluxes_dS += dF_dS;
+      s.dDivMassFluxes_dP += m_dt * dF_dP;
+      s.dDivMassFluxes_dS += m_dt * dF_dS;
       // wrt face pressures
       for( integer j=0; j<NUM_FACE; ++j ){
-        s.dDivMassFluxes_dFaceVars[j] += s.dMassFlux_dFacePres[i][j];
+        s.dDivMassFluxes_dFaceVars[j] += m_dt * s.dMassFlux_dFacePres[i][j];
       }
     }
   }
@@ -453,6 +454,26 @@ public:
       df_dP = (dlambda_dP * Lambda - lambda * dLambda_dP) / (Lambda * Lambda);
       df_dS = (dlambda_dS * Lambda - lambda * dLambda_dS) / (Lambda * Lambda);
     };
+    
+    // local fractional flow components for independent phase
+    auto lambdaMob = [this] GEOS_HOST_DEVICE ( localIndex const er,
+                                              localIndex const esr,
+                                              localIndex const ei_local,
+                                              integer const indep,
+                                              real64 & lambda,
+                                              real64 & dlambda_dP,
+                                              real64 & dlambda_dS )
+    {
+      using Deriv = DerivMob;
+      integer const dep = 1 - indep;
+    
+      lambda = m_phaseMobAll[m_er][m_esr][ei_local][indep];
+      dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei_local][indep][Deriv::dP];
+      real64 const dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei_local][indep][Deriv::dS];
+      // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
+      real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
+      dlambda_dS = sgnS * dlambda_dS_raw;
+    };
 
     // Precompute local f and derivatives
     real64 f_loc = 0.0, df_loc_dP = 0.0, df_loc_dS = 0.0;
@@ -461,6 +482,12 @@ public:
     // Precompute local f and derivatives
     real64 f_dep_loc = 0.0, df_dep_loc_dP = 0.0, df_dep_loc_dS = 0.0;
     fracFlow( m_er, m_esr, ei, 1-m_indep, f_dep_loc, df_dep_loc_dP, df_dep_loc_dS );
+    
+    real64 l_loc = 0.0, dl_loc_dP = 0.0, dl_loc_dS = 0.0;
+    lambdaMob( m_er, m_esr, ei, m_indep, l_loc, dl_loc_dP, dl_loc_dS );
+    
+    real64 l_dep_loc = 0.0, dl_dep_loc_dP = 0.0, dl_dep_loc_dS = 0.0;
+    lambdaMob( m_er, m_esr, ei, 1-m_indep, l_dep_loc, dl_dep_loc_dP, dl_dep_loc_dS );
 
     for( integer i=0; i<NUM_FACE; ++i )
     {
@@ -488,7 +515,7 @@ public:
       real64 const B = s.BuoyantFlux[i];
       real64 const dB_dP = s.dBuoyantFlux_dPres[i];
       real64 const dB_dS = s.dBuoyantFlux_dS[i];
-//
+
 //      if (true){
 //        if (i == 0){
 //          std::cout << "ei: " << ei << std::endl;
@@ -508,12 +535,23 @@ public:
       real64 df_dep_nei_dP = df_dep_loc_dP;
       real64 df_dep_nei_dS = df_dep_loc_dS;
       
+      real64 l_nei = l_loc;
+      real64 dl_nei_dP = dl_loc_dP;
+      real64 dl_nei_dS = dl_loc_dS;
+      
+      real64 l_dep_nei = l_dep_loc;
+      real64 dl_dep_nei_dP = dl_dep_loc_dP;
+      real64 dl_dep_nei_dS = dl_dep_loc_dS;
+      
       bool const hasNeighbor = (ner >= 0);
       if( hasNeighbor )
       {
         // compute neighbor fractional flow and its derivatives
         fracFlow( ner, nesr, nei, m_indep, f_nei, df_nei_dP, df_nei_dS );
         fracFlow( ner, nesr, nei, 1-m_indep, f_dep_nei, df_dep_nei_dP, df_dep_nei_dS );
+        
+        lambdaMob( ner, nesr, nei, m_indep, l_nei, dl_nei_dP, dl_nei_dS );
+        lambdaMob( ner, nesr, nei, 1-m_indep, l_dep_nei, dl_dep_nei_dP, dl_dep_nei_dS );
       }
 
       // Upwind convex combination: beta = 1 if F >= 0 (use local), else 0 (use neighbor)
@@ -521,16 +559,16 @@ public:
       real64 const f_int = beta_v * f_loc + ( 1.0 - beta_v ) * f_nei;
 
       // residual contribution and local Jacobians
-      s.divSatFluxes += F * f_int;
+      s.divSatFluxes += m_dt * F * f_int;
       // d/dP (local): dF/dP * f_int + F * beta_v * df_loc/dP (neighbor f has no local P dependence)
-      s.dDivSatFluxes_dP += dF_dP * f_int + F * beta_v * df_loc_dP;
+      s.dDivSatFluxes_dP += m_dt * (dF_dP * f_int + F * beta_v * df_loc_dP);
       // d/dS (local): dF/dS * f_int + F * beta_v * df_loc/dS (neighbor f has no local S dependence)
-      s.dDivSatFluxes_dS += dF_dS * f_int + F * beta_v * df_loc_dS;
+      s.dDivSatFluxes_dS += m_dt * (dF_dS * f_int + F * beta_v * df_loc_dS);
       // face pressure derivatives
       for( integer j=0; j<NUM_FACE; ++j ){
-        s.dDivSatFluxes_dFaceVars[j] += ( s.dMassFlux_dFacePres[i][j] * f_int );
+        s.dDivSatFluxes_dFaceVars[j] += m_dt * ( s.dMassFlux_dFacePres[i][j] * f_int );
       }
-      
+            
       // neighbor Jacobian contributions on neighbor columns when applicable
       if( hasNeighbor )
       {
@@ -539,26 +577,29 @@ public:
         real64 const beta_g = ( B >= 0.0 ) ? 1.0 : 0.0;
         real64 const f_indep = beta_g * f_loc + ( 1.0 - beta_g ) * f_nei;
         real64 const f_dep = ( 1.0 - beta_g ) * f_dep_loc + beta_g * f_dep_nei;
+        
+        real64 const l_loc_int = beta_g * l_loc + ( 1.0 - beta_g ) * l_nei;
+        real64 const l_dep_int = ( 1.0 - beta_g ) * l_dep_loc + beta_g * l_dep_nei;
+        real64 const l_int = l_loc_int + l_dep_int;
 
         // residual contribution and local Jacobians
-        s.divSatFluxes += f_indep * f_dep * B;
+        s.divSatFluxes += m_dt * f_indep * f_dep * l_int * B;
         // d/dP (local): df_indep_dP * f_dep * B + f_indep * df_dep_dP * B + f_indep * f_dep * dB_dP
-        s.dDivSatFluxes_dP += ( beta_g * df_loc_dP * f_dep * B + f_indep * ( 1.0 - beta_g ) * df_dep_loc_dP * B + f_indep * f_dep * dB_dP );
+        s.dDivSatFluxes_dP += m_dt * ( beta_g * df_loc_dP * f_dep * l_int * B + f_indep * ( 1.0 - beta_g ) * df_dep_loc_dP * l_int * B + f_indep * f_dep * l_int * dB_dP );
         // d/dS (local): df_indep_dS * f_dep * B + f_indep * df_dep_dS * B + f_indep * f_dep * dB_dS
-        s.dDivSatFluxes_dS += ( beta_g * df_loc_dS * f_dep * B + f_indep * ( 1.0 - beta_g ) * df_dep_loc_dS * B + f_indep * f_dep * dB_dS );
-        
+        s.dDivSatFluxes_dS += m_dt * ( beta_g * df_loc_dS * f_dep * l_int * B + f_indep * ( 1.0 - beta_g ) * df_dep_loc_dS * l_int * B + f_indep * f_dep * l_int * dB_dS );
         
         // Neighbor global dof indices: pressure and saturation of independent phase
         globalIndex const neiP = m_elemDofNumber[ner][nesr][nei];
         globalIndex const neiS = neiP + 1;
         
         s.neiCols[s.numNeiCols] = neiP;
-        s.neiVals[s.numNeiCols] += F * ( 1.0 - beta_v ) * df_nei_dP;
-        s.neiVals[s.numNeiCols] += ( 1.0 - beta_g ) * df_nei_dP * f_dep * B + f_indep * beta_g * df_dep_nei_dP * B;
+        s.neiVals[s.numNeiCols] += m_dt * F * ( 1.0 - beta_v ) * df_nei_dP;
+        s.neiVals[s.numNeiCols] += m_dt * ( 1.0 - beta_g ) * df_nei_dP * f_dep * B + f_indep * beta_g * df_dep_nei_dP * B;
         s.numNeiCols += 1;
         s.neiCols[s.numNeiCols] = neiS;
-        s.neiVals[s.numNeiCols] += F * ( 1.0 - beta_v ) * df_nei_dS;
-        s.neiVals[s.numNeiCols] += ( 1.0 - beta_g ) * df_nei_dS * f_dep * B + f_indep * beta_g * df_dep_nei_dS * B;
+        s.neiVals[s.numNeiCols] += m_dt * F * ( 1.0 - beta_v ) * df_nei_dS;
+        s.neiVals[s.numNeiCols] += m_dt * ( 1.0 - beta_g ) * df_nei_dS * f_dep * B + f_indep * beta_g * df_dep_nei_dS * B;
         s.numNeiCols += 1;
       }
     }
