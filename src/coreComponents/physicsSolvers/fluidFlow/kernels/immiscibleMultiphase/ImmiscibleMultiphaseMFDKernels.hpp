@@ -548,20 +548,15 @@ public:
         
         // Precompute local f and derivatives
         real64 f_dep_loc = 0.0, df_dep_loc_dP = 0.0, df_dep_loc_dS = 0.0;
-        real64 f_dep_nei = 0.0, df_dep_nei_dP = 0.0, df_dep_nei_dS = 0.0;
         fracFlow( m_er, m_esr, ei, 1-m_indep, f_dep_loc, df_dep_loc_dP, df_dep_loc_dS );
+        
+        real64 f_dep_nei = 0.0, df_dep_nei_dP = 0.0, df_dep_nei_dS = 0.0;
         fracFlow( ner, nesr, nei, 1-m_indep, f_dep_nei, df_dep_nei_dP, df_dep_nei_dS );
         
         // Upwind convex combination: beta = 1 if F >= 0 (use local), else 0 (use neighbor)
         real64 const beta_g = ( B >= 0.0 ) ? 1.0 : 0.0;
-        
         real64 const f_indep = beta_g * f_loc + ( 1.0 - beta_g ) * f_nei;
-        real64 const df_indep_dP = beta_g * df_loc_dP + ( 1.0 - beta_g ) * df_nei_dP;
-        real64 const df_indep_dS = beta_g * df_loc_dS + ( 1.0 - beta_g ) * df_nei_dS;
-        
         real64 const f_dep = ( 1.0 - beta_g ) * f_dep_loc + beta_g * f_dep_nei;
-        real64 const df_dep_dP = ( 1.0 - beta_g ) * df_dep_loc_dP + beta_g * df_dep_nei_dP;
-        real64 const df_dep_dS = ( 1.0 - beta_g ) * df_dep_loc_dS + beta_g * df_dep_nei_dS;
 
         // residual contribution and local Jacobians
         s.divSatFluxes += f_indep * f_dep * B;
