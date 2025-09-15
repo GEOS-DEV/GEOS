@@ -31,6 +31,7 @@ SimpleGeometricObjectBase::SimpleGeometricObjectBase( string const & name,
   setInputFlags( dataRepository::InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::epsilonString(), &m_epsilon ).
+    setApplyDefaultValue( 1e-9 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Tolerance for coordinate checks" );
 }
@@ -39,17 +40,6 @@ SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObject
 {
   static SimpleGeometricObjectBase::CatalogInterface::CatalogType catalog;
   return catalog;
-}
-
-void SimpleGeometricObjectBase::postInputInitialization()
-{
-  // determine m_epsilon
-  m_epsilon = std::numeric_limits< real64 >::max();
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  domain.forMeshBodies( [&]( MeshBody const & meshBody )
-  {
-    m_epsilon = std::min( m_epsilon, 5 * std::numeric_limits< real64 >::epsilon() * meshBody.getGlobalLengthScale() );
-  } );
 }
 
 } /// namespace geos
