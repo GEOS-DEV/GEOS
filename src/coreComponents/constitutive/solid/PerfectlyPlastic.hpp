@@ -23,7 +23,7 @@
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
 #include "PropertyConversions.hpp"
-#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geos
@@ -78,7 +78,7 @@ public:
   PerfectlyPlasticUpdates & operator=( PerfectlyPlasticUpdates && ) =  delete;
 
   /// Use the uncompressed version of the stiffness bilinear form
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic;
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
@@ -249,28 +249,14 @@ public:
   PerfectlyPlastic( string const & name, Group * const parent );
 
   /**
-   * Default Destructor
-   */
-  virtual ~PerfectlyPlastic() override;
-
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
-  virtual void saveConvergedState() const override;
-
-  /**
    * @name Static Factory Catalog members and functions
    */
   ///@{
 
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "PerfectlyPlastic";
-
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static string catalogName() { return m_catalogNameString; }
+  static string catalogName() { return "PerfectlyPlastic"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 

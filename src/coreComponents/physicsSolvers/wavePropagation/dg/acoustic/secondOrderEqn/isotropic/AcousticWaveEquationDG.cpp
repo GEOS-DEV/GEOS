@@ -160,7 +160,6 @@ real32 AcousticWaveEquationDG::getGlobalMinWavespeed( MeshLevel & mesh, string_a
   return globalMinWavespeed;
 }
 
-
 void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh,
                                                               string_array const & regionNames )
 {

@@ -46,13 +46,6 @@ SinglePhaseThermalConductivity::SinglePhaseThermalConductivity( string const & n
     setDescription( "The reference temperature at which the conductivity components are equal to the default values" );
 }
 
-std::unique_ptr< ConstitutiveBase >
-SinglePhaseThermalConductivity::deliverClone( string const & name,
-                                              Group * const parent ) const
-{
-  return SinglePhaseThermalConductivityBase::deliverClone( name, parent );
-}
-
 void SinglePhaseThermalConductivity::initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity ) const
 {
   arrayView3d< real64 > dEffectiveConductivity_dT = m_dEffectiveConductivity_dT.toView();
@@ -108,12 +101,6 @@ void SinglePhaseThermalConductivity::updateFromTemperature( arrayView1d< real64 
       dEffectiveConductivity_dT[ei][q][2] = thermalConductivityGradientComponents[2];
     }
   } );
-}
-
-void SinglePhaseThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                               localIndex const numConstitutivePointsPerParentIndex )
-{
-  SinglePhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 void SinglePhaseThermalConductivity::postInputInitialization()
