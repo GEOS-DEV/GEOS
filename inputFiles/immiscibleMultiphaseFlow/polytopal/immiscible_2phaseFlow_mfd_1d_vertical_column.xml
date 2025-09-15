@@ -15,11 +15,11 @@
       logLevel="2"
       dependentPhaseIndex="1">
       <NonlinearSolverParameters 
-        newtonTol="1e-8"
+        newtonTol="1e-4"
         lineSearchAction="None"
-        maxTimeStepCuts="50"
-        maxSubSteps="50"
-        newtonMaxIter="50"/>
+        maxTimeStepCuts="100"
+        maxSubSteps="100"
+        newtonMaxIter="100"/>
       <LinearSolverParameters 
         directParallel="0"
         reuseFactorization="0"/>
@@ -33,7 +33,7 @@
                   xCoords="{ 0, 1 }"
                   yCoords="{ 0, 1 }"
                   zCoords="{ 0, 10 }"
-                  nx="{ 1 }" ny="{ 1 }" nz="{ 100 }"
+                  nx="{ 1 }" ny="{ 1 }" nz="{ 500 }"
                   cellBlockNames="{ block1 }"/>
   </Mesh>
 
@@ -104,7 +104,7 @@
 
   <FieldSpecifications>
     <FieldSpecification name="Porosity" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="rockPorosity_referencePorosity" scale="0.05"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="rockPorosity_referencePorosity" scale="0.25"/>
 
     <FieldSpecification name="initialPressure" initialCondition="1" setNames="{ all }"
       objectPath="ElementRegions/Domain/block1" fieldName="pressure" scale="1.0e7"/>

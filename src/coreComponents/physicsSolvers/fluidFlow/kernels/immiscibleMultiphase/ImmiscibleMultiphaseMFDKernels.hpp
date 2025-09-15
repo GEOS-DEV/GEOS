@@ -578,16 +578,57 @@ public:
         real64 const f_indep = beta_g * f_loc + ( 1.0 - beta_g ) * f_nei;
         real64 const f_dep = ( 1.0 - beta_g ) * f_dep_loc + beta_g * f_dep_nei;
         
-        real64 const l_loc_int = beta_g * l_loc + ( 1.0 - beta_g ) * l_nei;
-        real64 const l_dep_int = ( 1.0 - beta_g ) * l_dep_loc + beta_g * l_dep_nei;
-        real64 const l_int = l_loc_int + l_dep_int;
+        real64 const l_indep = beta_g * l_loc + ( 1.0 - beta_g ) * l_nei;
+        real64 const l_dep = ( 1.0 - beta_g ) * l_dep_loc + beta_g * l_dep_nei;
+        
+        // derivatives of convex combinations local
+        real64 const df_indep_dP_loc = beta_g * df_loc_dP;
+        real64 const df_indep_dS_loc = beta_g * df_loc_dS;
+        real64 const df_dep_dP_loc = ( 1.0 - beta_g ) * df_dep_loc_dP;
+        real64 const df_dep_dS_loc = ( 1.0 - beta_g ) * df_dep_loc_dS;
+        real64 const dl_indep_dP_loc = beta_g * dl_loc_dP;
+        real64 const dl_indep_dS_loc = beta_g * dl_loc_dS;
+        real64 const dl_dep_dP_loc = ( 1.0 - beta_g ) * dl_dep_loc_dP;
+        real64 const dl_dep_dS_loc = ( 1.0 - beta_g ) * dl_dep_loc_dS;
+        
+        // derivatives of convex combinations neighbor
+        real64 const df_indep_dP_nei = ( 1.0 - beta_g ) * df_nei_dP;
+        real64 const df_indep_dS_nei = ( 1.0 - beta_g ) * df_nei_dS;
+        real64 const df_dep_dP_nei = beta_g * df_dep_nei_dP;
+        real64 const df_dep_dS_nei = beta_g * df_dep_nei_dS;
+        real64 const dl_indep_dP_nei = ( 1.0 - beta_g ) * dl_nei_dP;
+        real64 const dl_indep_dS_nei = ( 1.0 - beta_g ) * dl_nei_dS;
+        real64 const dl_dep_dP_nei = beta_g * dl_dep_nei_dP;
+        real64 const dl_dep_dS_nei = beta_g * dl_dep_nei_dS;
+        
+        real64 const db_flux_dP_loc = (
+                (df_indep_dP_loc * f_dep + f_indep * df_dep_dP_loc) * (l_indep + l_dep) * B
+              + f_indep * f_dep * (dl_indep_dP_loc + dl_dep_dP_loc) * B
+              + f_indep * f_dep * (l_indep + l_dep) * dB_dP
+            );
+
+        real64 const db_flux_dS_loc = (
+                (df_indep_dS_loc * f_dep + f_indep * df_dep_dS_loc) * (l_indep + l_dep) * B
+              + f_indep * f_dep * (dl_indep_dS_loc + dl_dep_dS_loc) * B
+              + f_indep * f_dep * (l_indep + l_dep) * dB_dS
+            );
+
+        
+        real64 const db_flux_dP_nei = (
+                (df_indep_dP_nei * f_dep + f_indep * df_dep_dP_nei) * (l_indep + l_dep) * B
+              + f_indep * f_dep * (dl_indep_dP_nei + dl_dep_dP_nei) * B
+            );
+
+        real64 const db_flux_dS_nei = (
+                (df_indep_dS_nei * f_dep + f_indep * df_dep_dS_nei) * (l_indep + l_dep) * B
+              + f_indep * f_dep * (dl_indep_dS_nei + dl_dep_dS_nei) * B
+            );
+        
 
         // residual contribution and local Jacobians
-        s.divSatFluxes += m_dt * f_indep * f_dep * l_int * B;
-        // d/dP (local): df_indep_dP * f_dep * B + f_indep * df_dep_dP * B + f_indep * f_dep * dB_dP
-        s.dDivSatFluxes_dP += m_dt * ( beta_g * df_loc_dP * f_dep * l_int * B + f_indep * ( 1.0 - beta_g ) * df_dep_loc_dP * l_int * B + f_indep * f_dep * l_int * dB_dP );
-        // d/dS (local): df_indep_dS * f_dep * B + f_indep * df_dep_dS * B + f_indep * f_dep * dB_dS
-        s.dDivSatFluxes_dS += m_dt * ( beta_g * df_loc_dS * f_dep * l_int * B + f_indep * ( 1.0 - beta_g ) * df_dep_loc_dS * l_int * B + f_indep * f_dep * l_int * dB_dS );
+        s.divSatFluxes += m_dt * f_indep * f_dep *  (l_indep + l_dep) * B;
+        s.dDivSatFluxes_dP += m_dt * db_flux_dP_loc;
+        s.dDivSatFluxes_dS += m_dt * db_flux_dS_loc;
         
         // Neighbor global dof indices: pressure and saturation of independent phase
         globalIndex const neiP = m_elemDofNumber[ner][nesr][nei];
@@ -595,11 +636,11 @@ public:
         
         s.neiCols[s.numNeiCols] = neiP;
         s.neiVals[s.numNeiCols] += m_dt * F * ( 1.0 - beta_v ) * df_nei_dP;
-        s.neiVals[s.numNeiCols] += m_dt * ( 1.0 - beta_g ) * df_nei_dP * f_dep * B + f_indep * beta_g * df_dep_nei_dP * B;
+        s.neiVals[s.numNeiCols] += m_dt * db_flux_dP_nei;
         s.numNeiCols += 1;
         s.neiCols[s.numNeiCols] = neiS;
         s.neiVals[s.numNeiCols] += m_dt * F * ( 1.0 - beta_v ) * df_nei_dS;
-        s.neiVals[s.numNeiCols] += m_dt * ( 1.0 - beta_g ) * df_nei_dS * f_dep * B + f_indep * beta_g * df_dep_nei_dS * B;
+        s.neiVals[s.numNeiCols] += m_dt * db_flux_dS_nei;
         s.numNeiCols += 1;
       }
     }
