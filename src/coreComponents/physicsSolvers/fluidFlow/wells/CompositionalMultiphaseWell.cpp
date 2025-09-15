@@ -551,7 +551,31 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
 void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
 {
   WellSolverBase::initializePostInitialConditionsPreSubGroups();
+  createSeparator();
+}
 
+void CompositionalMultiphaseWell::postRestartInitialization()
+{
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    // loop over the wells
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          WellElementSubRegion & subRegion )
+    {
+      // setup fluid separator
+      WellControls & wellControls = getWellControls( subRegion );
+      constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
+      fluidSeparator.allocateConstitutiveData( wellControls, 1 );
+      fluidSeparator.resize( 1 );
+    } );
+  } );
+}
+
+void CompositionalMultiphaseWell::createSeparator()
+{
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -564,8 +588,6 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
     {
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-      fluid.setMassFlag( m_useMass );
-
       // setup fluid separator
       WellControls & wellControls = getWellControls( subRegion );
       string const fluidSeparatorName = wellControls.getName() + "Separator";
@@ -577,7 +599,6 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 }
-
 void CompositionalMultiphaseWell::updateGlobalComponentFraction( WellElementSubRegion & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
