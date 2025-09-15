@@ -177,7 +177,7 @@ public:
                     real64 const & currentDt,
                     DomainPartition & domain ) override;
 
-  virtual void enableJumpStabilization() { m_isJumpStabilized = true; }
+  virtual void enableJumpStabilization() override { m_isJumpStabilized = true; }
 
   struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
   {
