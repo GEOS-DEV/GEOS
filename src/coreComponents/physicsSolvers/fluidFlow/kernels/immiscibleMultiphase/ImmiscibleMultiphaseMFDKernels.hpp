@@ -288,8 +288,8 @@ public:
 
         // Potential difference and its derivatives
         real64 const gravCoefDif = ccGravCoef - fGravCoef;
-        real64 const gravTerm = delta_rho * gravCoefDif;
-        real64 const dGravTerm_dP = ddelta_rho_dP * gravCoefDif;
+        real64 const gravTerm = 0.0 * delta_rho * gravCoefDif;
+        real64 const dGravTerm_dP = 0.0 * ddelta_rho_dP * gravCoefDif;
 
         real64 const T_ij = m_dt * s.transMatrix[i][j];
         s.BuoyantFlux[i] += Lambda * T_ij * gravTerm;
@@ -482,6 +482,10 @@ public:
     // Precompute local f and derivatives
     real64 f_loc = 0.0, df_loc_dP = 0.0, df_loc_dS = 0.0;
     fracFlow( m_er, m_esr, ei, m_indep, f_loc, df_loc_dP, df_loc_dS );
+    
+    // Precompute local f and derivatives
+    real64 f_dep_loc = 0.0, df_dep_loc_dP = 0.0, df_dep_loc_dS = 0.0;
+    fracFlow( m_er, m_esr, ei, 1-m_indep, f_dep_loc, df_dep_loc_dP, df_dep_loc_dS );
 
     for( integer i=0; i<NUM_FACE; ++i )
     {
@@ -514,44 +518,39 @@ public:
       real64 f_nei = f_loc;
       real64 df_nei_dP = df_loc_dP;
       real64 df_nei_dS = df_loc_dS;
+      
+      real64 f_dep_nei = f_dep_loc;
+      real64 df_dep_nei_dP = df_dep_loc_dP;
+      real64 df_dep_nei_dS = df_dep_loc_dS;
+      
       bool const hasNeighbor = (ner >= 0);
       if( hasNeighbor )
       {
         // compute neighbor fractional flow and its derivatives
         fracFlow( ner, nesr, nei, m_indep, f_nei, df_nei_dP, df_nei_dS );
+        fracFlow( ner, nesr, nei, 1-m_indep, f_dep_nei, df_dep_nei_dP, df_dep_nei_dS );
       }
 
       // Upwind convex combination: beta = 1 if F >= 0 (use local), else 0 (use neighbor)
-      real64 const beta = ( F >= 0.0 ) ? 1.0 : 0.0;
-      real64 const f_int = beta * f_loc + ( 1.0 - beta ) * f_nei;
+      real64 const beta_v = ( F >= 0.0 ) ? 1.0 : 0.0;
+      real64 const f_int = beta_v * f_loc + ( 1.0 - beta_v ) * f_nei;
 
       // residual contribution and local Jacobians
       s.divSatFluxes += F * f_int;
-      // d/dP (local): dF/dP * f_int + F * beta * df_loc/dP (neighbor f has no local P dependence)
-      s.dDivSatFluxes_dP += dF_dP * f_int + F * beta * df_loc_dP;
-      // d/dS (local): dF/dS * f_int + F * beta * df_loc/dS (neighbor f has no local S dependence)
-      s.dDivSatFluxes_dS += dF_dS * f_int + F * beta * df_loc_dS;
+      // d/dP (local): dF/dP * f_int + F * beta_v * df_loc/dP (neighbor f has no local P dependence)
+      s.dDivSatFluxes_dP += dF_dP * f_int + F * beta_v * df_loc_dP;
+      // d/dS (local): dF/dS * f_int + F * beta_v * df_loc/dS (neighbor f has no local S dependence)
+      s.dDivSatFluxes_dS += dF_dS * f_int + F * beta_v * df_loc_dS;
       // face pressure derivatives
       for( integer j=0; j<NUM_FACE; ++j ){
         s.dDivSatFluxes_dFaceVars[j] += ( s.dMassFlux_dFacePres[i][j] * f_int );
       }
-
+      
       // neighbor Jacobian contributions on neighbor columns when applicable
       if( hasNeighbor )
       {
         
-        // Neighbor global dof indices: pressure and saturation of independent phase
-        globalIndex const neiP = m_elemDofNumber[ner][nesr][nei];
-        globalIndex const neiS = neiP + 1;
         
-        // perfom buoyancy contributions on internal facets only
-        
-        // Precompute local f and derivatives
-        real64 f_dep_loc = 0.0, df_dep_loc_dP = 0.0, df_dep_loc_dS = 0.0;
-        fracFlow( m_er, m_esr, ei, 1-m_indep, f_dep_loc, df_dep_loc_dP, df_dep_loc_dS );
-        
-        real64 f_dep_nei = 0.0, df_dep_nei_dP = 0.0, df_dep_nei_dS = 0.0;
-        fracFlow( ner, nesr, nei, 1-m_indep, f_dep_nei, df_dep_nei_dP, df_dep_nei_dS );
         
         // Upwind convex combination: beta = 1 if F >= 0 (use local), else 0 (use neighbor)
         real64 const beta_g = ( B >= 0.0 ) ? 1.0 : 0.0;
@@ -565,12 +564,17 @@ public:
         // d/dS (local): df_indep_dS * f_dep * B + f_indep * df_dep_dS * B + f_indep * f_dep * dB_dS
         s.dDivSatFluxes_dS += ( beta_g * df_loc_dS * f_dep * B + f_indep * ( 1.0 - beta_g ) * df_dep_loc_dS * B + f_indep * f_dep * dB_dS );
         
+        
+        // Neighbor global dof indices: pressure and saturation of independent phase
+        globalIndex const neiP = m_elemDofNumber[ner][nesr][nei];
+        globalIndex const neiS = neiP + 1;
+        
         s.neiCols[s.numNeiCols] = neiP;
-        s.neiVals[s.numNeiCols] += F * ( 1.0 - beta ) * df_nei_dP;
+        s.neiVals[s.numNeiCols] += F * ( 1.0 - beta_v ) * df_nei_dP;
         s.neiVals[s.numNeiCols] += ( 1.0 - beta_g ) * df_nei_dP * f_dep * B + f_indep * beta_g * df_dep_nei_dP * B;
         s.numNeiCols += 1;
         s.neiCols[s.numNeiCols] = neiS;
-        s.neiVals[s.numNeiCols] += F * ( 1.0 - beta ) * df_nei_dS;
+        s.neiVals[s.numNeiCols] += F * ( 1.0 - beta_v ) * df_nei_dS;
         s.neiVals[s.numNeiCols] += ( 1.0 - beta_g ) * df_nei_dS * f_dep * B + f_indep * beta_g * df_dep_nei_dS * B;
         s.numNeiCols += 1;
       }
