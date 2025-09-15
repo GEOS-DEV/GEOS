@@ -238,7 +238,8 @@ public:
     this->setupCoupling( domain, dofManager );
   }
 
-  virtual bool checkSequentialConvergence( int const & iter,
+  virtual bool checkSequentialConvergence( integer const cycleNumber,
+                                           integer const iter,
                                            real64 const & time_n,
                                            real64 const & dt,
                                            DomainPartition & domain ) override
@@ -248,8 +249,7 @@ public:
     auto const subcycling_orig = subcycling;
     if( m_performStressInitialization )
       subcycling = 1;
-
-    bool isConverged = Base::checkSequentialConvergence( iter, time_n, dt, domain );
+    bool isConverged = Base::checkSequentialConvergence( cycleNumber, iter, time_n, dt, domain );
 
     // restore original
     subcycling = subcycling_orig;

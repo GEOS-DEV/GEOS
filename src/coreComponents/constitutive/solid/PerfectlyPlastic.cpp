@@ -26,9 +26,7 @@ namespace constitutive
 {
 
 PerfectlyPlastic::PerfectlyPlastic( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_defaultYieldStress(),
-  m_yieldStress()
+  ElasticIsotropic( name, parent )
 {
   // register default values
   registerWrapper( viewKeyStruct::defaultYieldStressString(), &m_defaultYieldStress ).
@@ -43,17 +41,6 @@ PerfectlyPlastic::PerfectlyPlastic( string const & name, Group * const parent ):
 }
 
 
-PerfectlyPlastic::~PerfectlyPlastic()
-{}
-
-
-void PerfectlyPlastic::allocateConstitutiveData( dataRepository::Group & parent,
-                                                 localIndex const numConstitutivePointsPerParentIndex )
-{
-  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-}
-
-
 void PerfectlyPlastic::postInputInitialization()
 {
   ElasticIsotropic::postInputInitialization();
@@ -61,12 +48,6 @@ void PerfectlyPlastic::postInputInitialization()
   GEOS_THROW_IF( m_defaultYieldStress < 0.0, "Negative yield stress detected", InputError );
 
   this->getWrapper< array1d< real64 > >( viewKeyStruct::yieldStressString() ).setApplyDefaultValue( m_defaultYieldStress );
-}
-
-
-void PerfectlyPlastic::saveConvergedState() const
-{
-  SolidBase::saveConvergedState();
 }
 
 
