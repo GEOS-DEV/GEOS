@@ -3,7 +3,8 @@ set( mesh_tests
      testMeshObjectPath.cpp
      testComputationalGeometry.cpp
      testGeometricObjects.cpp
-     testGraphColoring.cpp )
+     testGraphColoring.cpp
+     testMeshEnums.cpp )
      
 
 set( mesh_tests_mpi
@@ -61,4 +62,3 @@ set( nranks 8 )
     endif ()
   endforeach()
 endif()
-

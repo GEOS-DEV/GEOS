@@ -37,8 +37,8 @@ MultiPhaseThermalConductivityBase::MultiPhaseThermalConductivityBase( string con
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of fluid phases" );
 
-  registerField( fields::thermalconductivity::effectiveConductivity{}, &m_effectiveConductivity );
-  registerField( fields::thermalconductivity::dEffectiveConductivity_dPhaseVolFraction{}, &m_dEffectiveConductivity_dPhaseVolFrac );
+  registerField< fields::thermalconductivity::effectiveConductivity >( &m_effectiveConductivity );
+  registerField< fields::thermalconductivity::dEffectiveConductivity_dPhaseVolFraction >( &m_dEffectiveConductivity_dPhaseVolFrac );
 }
 
 void MultiPhaseThermalConductivityBase::postInputInitialization()
@@ -52,20 +52,16 @@ void MultiPhaseThermalConductivityBase::postInputInitialization()
   GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
                         InputError );
-
-  m_effectiveConductivity.resize( 0, 0, 3 );
-  m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, 0, 3, numPhases );
 }
 
-void MultiPhaseThermalConductivityBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                  localIndex const numConstitutivePointsPerParentIndex )
+void MultiPhaseThermalConductivityBase::allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts )
 {
   // NOTE: enforcing 1 quadrature point
   integer const numPhases = numFluidPhases();
   m_effectiveConductivity.resize( 0, 1, 3 );
   m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, 1, 3, numPhases );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 } // namespace constitutive

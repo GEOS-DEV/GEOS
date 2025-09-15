@@ -25,7 +25,7 @@
 #include "DamageSpectralUtilities.hpp"
 #include "PropertyConversions.hpp"
 #include "SolidBase.hpp"
-#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 
 #define QUADRATIC_DISSIPATION 0
 
@@ -61,7 +61,7 @@ public:
                                   std::forward< PARAMS >( baseParams )... )
   {}
 
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // could maybe optimize, but general for now
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic;
 
   using DamageUpdates< UPDATE_BASE >::smallStrainUpdate;
   using DamageUpdates< UPDATE_BASE >::saveConvergedState;
@@ -314,10 +314,9 @@ public:
   using Damage< BASE >::m_biotCoefficient;
 
   DamageSpectral( string const & name, dataRepository::Group * const parent );
-  virtual ~DamageSpectral() override;
 
 
-  static string catalogName() { return string( "DamageSpectral" ) + BASE::m_catalogNameString; }
+  static string catalogName() { return string( "DamageSpectral" ) + BASE::catalogName(); }
   virtual string getCatalogName() const override { return catalogName(); }
 
 
