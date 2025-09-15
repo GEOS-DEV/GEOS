@@ -30,7 +30,9 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "Name of sets that boundary condition is applied to." );
+    setDescription( "Names of sets that boundary condition is applied to."
+                    "A set can contains heterogeneous elements in the mesh (volumnes, nodes, faces, edges)."
+                    "A set can be defined by a `Geometry` component, or can be targeted with externalSet in cases of external mesh" );
 
   registerWrapper( viewKeyStruct::objectPathString(), &m_objectPath ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -40,12 +42,14 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
   registerWrapper( viewKeyStruct::fieldNameString(), &m_fieldName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of field that boundary condition is applied to." );
+    setDescription( "Name of field that boundary condition is applied to."
+                    "A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)" );
 
   registerWrapper( viewKeyStruct::componentString(), &m_component ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Component of field (if tensor) to apply boundary condition to." );
+    setDescription( "Component of field (if tensor) to apply boundary condition to."
+                    "The component must use the order in which the phaseNames have been defined in the Constitutive Element." );
 
   registerWrapper( viewKeyStruct::directionString(), &m_direction ).
     setApplyDefaultValue( {0, 0, 0} ).
@@ -65,7 +69,7 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
   registerWrapper( viewKeyStruct::scaleString(), &m_scale ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Scale factor for value of the boundary condition." );
+    setDescription( "Apply a scaling factor for the value of the boundary condition." );
 
   registerWrapper( viewKeyStruct::initialConditionString(), &m_initialCondition ).
     setApplyDefaultValue( 0 ).
