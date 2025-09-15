@@ -150,7 +150,7 @@ set( fluidFlowSolvers_sources
      wells/SinglePhaseWell.cpp
      wells/kernels/SinglePhaseWellKernels.cpp
      wells/WellControls.cpp
-     wells/WellSolverBase.cpp 
+     wells/WellSolverBase.cpp
      proppantTransport/ProppantTransport.cpp
      proppantTransport/ProppantTransportKernels.cpp )
 
@@ -221,4 +221,10 @@ install( TARGETS fluidFlowSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/li
 
 if( externalComponentDeps )
   target_include_directories( fluidFlowSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
+endif()
+
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+  add_subdirectory( kernels/singlePhase/unitTests )
+  add_subdirectory( wells/unitTests )
 endif()

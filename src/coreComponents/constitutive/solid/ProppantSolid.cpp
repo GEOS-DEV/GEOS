@@ -36,10 +36,6 @@ ProppantSolid< PORO_TYPE, PERM_TYPE >::ProppantSolid( string const & name, Group
   CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >( name, parent )
 {}
 
-template< typename PORO_TYPE,
-          typename PERM_TYPE >
-ProppantSolid< PORO_TYPE, PERM_TYPE >::~ProppantSolid() = default;
-
 typedef ProppantSolid< ProppantPorosity, ProppantPermeability > ProppantSolidModel;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ProppantSolidModel, string const &, Group * const )

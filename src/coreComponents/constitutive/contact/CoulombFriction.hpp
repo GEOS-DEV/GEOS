@@ -164,11 +164,6 @@ public:
    */
   CoulombFriction( string const & name, Group * const parent );
 
-  /**
-   * Default Destructor
-   */
-  virtual ~CoulombFriction() override;
-
   static string catalogName() { return "Coulomb"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -176,7 +171,7 @@ public:
   ///@}
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override final;
+                                         localIndex const numPts ) override final;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = CoulombFrictionUpdates;
@@ -186,6 +181,24 @@ public:
    * @return the wrapper
    */
   KernelWrapper createKernelUpdates() const;
+
+  /**
+   * @struct Set of "char const *" and keys for data specified in this class.
+   */
+  struct viewKeyStruct : public FrictionBase::viewKeyStruct
+  {
+    /// string/key for shear stiffness
+    static constexpr char const * shearStiffnessString() { return "shearStiffness"; }
+
+    /// string/key for cohesion
+    static constexpr char const * cohesionString() { return "cohesion"; }
+
+    /// string/key for friction coefficient
+    static constexpr char const * frictionCoefficientString() { return "frictionCoefficient"; }
+
+    /// string/key for the elastic slip
+    static constexpr char const * elasticSlipString() { return "elasticSlip"; }
+  };
 
 protected:
 
@@ -204,24 +217,6 @@ private:
 
   /// Elastic slip
   array2d< real64 > m_elasticSlip;
-
-/**
- * @struct Set of "char const *" and keys for data specified in this class.
- */
-  struct viewKeyStruct : public FrictionBase::viewKeyStruct
-  {
-    /// string/key for shear stiffness
-    static constexpr char const * shearStiffnessString() { return "shearStiffness"; }
-
-    /// string/key for cohesion
-    static constexpr char const * cohesionString() { return "cohesion"; }
-
-    /// string/key for friction coefficient
-    static constexpr char const * frictionCoefficientString() { return "frictionCoefficient"; }
-
-    /// string/key for the elastic slip
-    static constexpr char const * elasticSlipString() { return "elasticSlip"; }
-  };
 
 };
 

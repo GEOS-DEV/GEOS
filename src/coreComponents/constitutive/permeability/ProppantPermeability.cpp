@@ -31,11 +31,7 @@ namespace constitutive
 
 
 ProppantPermeability::ProppantPermeability( string const & name, Group * const parent ):
-  PermeabilityBase( name, parent ),
-  m_permeabilityMultiplier(),
-  m_proppantDiameter(),
-  m_maxProppantConcentration(),
-  m_proppantPackPermeability()
+  PermeabilityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::maxProppantConcentrationString(), &m_maxProppantConcentration ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -49,16 +45,9 @@ ProppantPermeability::ProppantPermeability( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::proppantPackPermeabilityString(), &m_proppantPackPermeability );
 
-  registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
-  registerField( fields::permeability::permeabilityMultiplier{}, &m_permeabilityMultiplier );
+  registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
+  registerField< fields::permeability::permeabilityMultiplier >( &m_permeabilityMultiplier );
 
-}
-
-std::unique_ptr< ConstitutiveBase >
-ProppantPermeability::deliverClone( string const & name,
-                                    Group * const parent ) const
-{
-  return ConstitutiveBase::deliverClone( name, parent );
 }
 
 void ProppantPermeability::postInputInitialization()
@@ -69,13 +58,14 @@ void ProppantPermeability::postInputInitialization()
                                 / ( m_maxProppantConcentration * m_maxProppantConcentration );
 }
 
-void ProppantPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                     localIndex const numConstitutivePointsPerParentIndex )
+void ProppantPermeability::allocateConstitutiveData( Group & parent,
+                                                     localIndex const numPts )
 {
   // NOTE: enforcing 1 quadrature point
   m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
   m_permeabilityMultiplier.resize( 0, 1, 3 );
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
 }
 
 
