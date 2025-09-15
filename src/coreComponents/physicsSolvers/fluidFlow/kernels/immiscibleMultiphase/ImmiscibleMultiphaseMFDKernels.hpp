@@ -448,19 +448,6 @@ public:
       real64 const sgnS = ( indep == 0 ? 1.0 : -1.0 );
       real64 const dlambda_dS = sgnS * m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dS];
 
-      // Phase densities (q=0 point) and pressure derivatives
-      real64 const rho = m_phaseDens[ei_local][0][indep];
-      real64 const drho_dP = m_dPhaseDens[ei_local][0][indep][Deriv::dP];
-      real64 const drho_dS = 0;
-
-
-      // df/dP
-      real64 const num_dP = Lambda * (lambda * drho_dP + rho * dlambda_dP)
-                    - rho * lambda * dLambda_dP;
-      // df/dS
-      real64 const num_dS = Lambda * (lambda * drho_dS + rho * dlambda_dS)
-                    - rho * lambda * dLambda_dS;
-
       // Fractional flow (mass based)
       f = lambda/ Lambda;
       df_dP = (dlambda_dP * Lambda - lambda * dLambda_dP) / (Lambda * Lambda);
@@ -501,16 +488,16 @@ public:
       real64 const B = s.BuoyantFlux[i];
       real64 const dB_dP = s.dBuoyantFlux_dPres[i];
       real64 const dB_dS = s.dBuoyantFlux_dS[i];
-
-      if (true){
-        if (i == 0){
-          std::cout << "ei: " << ei << std::endl;
-        }
-        std::cout << "(F, B): (" << F << ", " << B << ")" << std::endl;
-        if (i == 5){
-          std::cout << std::endl;
-        }
-      }
+//
+//      if (true){
+//        if (i == 0){
+//          std::cout << "ei: " << ei << std::endl;
+//        }
+//        std::cout << "(F, B): (" << F << ", " << B << ")" << std::endl;
+//        if (i == 5){
+//          std::cout << std::endl;
+//        }
+//      }
       
       // Arithmetic average of fractional flow between local and neighbor (if any)
       real64 f_nei = f_loc;

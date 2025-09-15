@@ -15,13 +15,11 @@
       logLevel="2"
       dependentPhaseIndex="1">
       <NonlinearSolverParameters 
-        newtonTol="1e-6" 
-        newtonMaxIter="15"
+        newtonTol="1e-8"
         lineSearchAction="None"
-        maxTimeStepCuts="10"
-        maxSubSteps="100"
-        timeStepIncreaseIterLimit="0.5"
-        timeStepDecreaseIterLimit="0.6"/>
+        maxTimeStepCuts="50"
+        maxSubSteps="50"
+        newtonMaxIter="50"/>
       <LinearSolverParameters 
         directParallel="0"
         reuseFactorization="0"/>
@@ -42,18 +40,18 @@
   <Geometry>      
     <Box name="top_BC" 
       xMin="{ -0.0001, -0.0001, 9.9999 }" 
-      xMax="{ 1.0001, 1.0001, 10.0001 }"/>
+      xMax="{ 1.0001, 1.0001, 10.0001 }"/>               
   </Geometry>
 
-  <Events maxTime="345600">
-    <PeriodicEvent name="outputs" timeFrequency="864" target="/Outputs/vtkOutput"/>
-    <PeriodicEvent name="solverApps" forceDt="864" target="/Solvers/FlowSolverMFD"/>
+  <Events maxTime="3456000">
+    <PeriodicEvent name="outputs" timeFrequency="8640" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent name="solverApps" forceDt="8640" target="/Solvers/FlowSolverMFD"/>
   </Events>
 
   <NumericalMethods>
     <FiniteVolume>
       <!-- Hybrid mimetic discretization; choose innerProductType (tpfa, quasiTPFA, quasiRT, simple) -->
-      <HybridMimeticDiscretization name="immiscibleHybridMimetic" innerProductType="TPFA"/>
+      <HybridMimeticDiscretization name="immiscibleHybridMimetic" innerProductType="quasiTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -64,7 +62,7 @@
   <Functions>
     <!-- Constant property tables (single entry) -->
     <TableFunction name="densityWater"   coordinates="{ 0 }" values="{ 1000.0 }"/>
-    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 750.0 }"/>
+    <TableFunction name="densityGas"     coordinates="{ 0 }" values="{ 500.0 }"/>
     <TableFunction name="viscosityWater" coordinates="{ 0 }" values="{ 1.0e-3 }"/>
     <TableFunction name="viscosityGas"   coordinates="{ 0 }" values="{ 1.0e-3 }"/>
 
@@ -94,9 +92,9 @@
 
     <NullModel name="nullSolid"/>
 
-    <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.1" referencePressure="0" compressibility="0.0"/>
+    <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.25" referencePressure="0" compressibility="0.0"/>
 
-    <ConstantPermeability name="rockPerm" permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>
+    <ConstantPermeability name="rockPerm" permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
 
     <TableRelativePermeability
       name="relperm"
@@ -115,13 +113,13 @@
 
     <!-- Initial saturations (phaseVolumeFraction component index: 0=water, 1=gas) -->
     <FieldSpecification name="initSatWater" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="0.5"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="0.3333333333"/>
     <FieldSpecification name="initSatGas" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.5"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.6666666667"/>
 
     <!-- Pressure BC regions -->
-    <FieldSpecification name="eastPressure" objectPath="faceManager"
-      fieldName="bcPressure" scale="1.0e7" setNames="{ top_BC }"/>
+    <FieldSpecification name="topPressure" objectPath="faceManager"
+      fieldName="bcPressure" scale="1.0e7" setNames="{ top_BC }"/>            
 
   </FieldSpecifications>
 
