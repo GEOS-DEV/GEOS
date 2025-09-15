@@ -30,9 +30,9 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "Names of sets that boundary condition is applied to."
-                    "A set can contains heterogeneous elements in the mesh (volumnes, nodes, faces, edges)."
-                    "A set can be defined by a `Geometry` component, or can be targeted with externalSet in cases of external mesh" );
+    setDescription( "Name of sets that boundary condition is applied to."
+                    "A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges)."
+                    "A set can contain by a 'Geometry' component, or correspond to imported sets in case of an external mesh" );
 
   registerWrapper( viewKeyStruct::objectPathString(), &m_objectPath ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
