@@ -213,7 +213,7 @@ public:
     real64 dDivSatFluxes_dP = 0.0;
     real64 dDivSatFluxes_dS = 0.0;
     real64 dDivSatFluxes_dFaceVars[NUM_FACE]{};
-    // Neighbor saturation couplings (via upwind when inflow)
+    // Neighbor pressure and saturation couplings (via upwind when inflow)
     localIndex numNeiCols = 0;
     globalIndex neiCols[2*NUM_FACE]{}; // allow both P and S per neighbor face
     real64 neiVals[2*NUM_FACE]{};
@@ -477,6 +477,7 @@ public:
       f = rho * lambda/ Lambda;
       df_dP = num_dP / (Lambda * Lambda);
       df_dS = num_dS / (Lambda * Lambda);
+      df_dS = 1.0; // TEMPORARY: override to 1.0 for testing purposes
     };
 
     // Precompute local f and derivatives
@@ -512,8 +513,8 @@ public:
 
       // Arithmetic average of fractional flow between local and neighbor (if any)
       real64 f_nei = f_loc;
-      real64 df_nei_dP = 0.0;
-      real64 df_nei_dS = 0.0;
+      real64 df_nei_dP = df_loc_dP;
+      real64 df_nei_dS = df_loc_dS;
       bool const hasNeighbor = (ner >= 0);
       if( hasNeighbor )
       {
@@ -528,9 +529,9 @@ public:
       // residual contribution and local Jacobians
       s.divSatFluxes += F * f_int;
       // d/dP (local): dF/dP * f_int + F * beta * df_loc/dP (neighbor f has no local P dependence)
-      s.dDivSatFluxes_dP += ( dF_dP * f_int + F * beta * df_loc_dP );
+      s.dDivSatFluxes_dP += dF_dP * f_int + F * beta * df_loc_dP;
       // d/dS (local): dF/dS * f_int + F * beta * df_loc/dS (neighbor f has no local S dependence)
-      s.dDivSatFluxes_dS += ( dF_dS * f_int + F * beta * df_loc_dS );
+      s.dDivSatFluxes_dS += dF_dS * f_int + F * beta * df_loc_dS;
       // face pressure derivatives
       for( integer j=0; j<NUM_FACE; ++j ){
         s.dDivSatFluxes_dFaceVars[j] += ( s.dMassFlux_dFacePres[i][j] * f_int );
@@ -543,14 +544,6 @@ public:
         // Neighbor global dof indices: pressure and saturation of independent phase
         globalIndex const neiP = m_elemDofNumber[ner][nesr][nei];
         globalIndex const neiS = neiP + 1;
-        
-        // Always append entries (values are be zero if beta == 1)
-        s.neiCols[s.numNeiCols] = neiP;
-        s.neiVals[s.numNeiCols] += F * ( 1.0 - beta ) * df_nei_dP;
-        ++s.numNeiCols;
-        s.neiCols[s.numNeiCols] = neiS;
-        s.neiVals[s.numNeiCols+1] += F * ( 1.0 - beta ) * df_nei_dS;
-        ++s.numNeiCols;
         
         // perfom buoyancy contributions on internal facets only
         
@@ -574,13 +567,18 @@ public:
         // residual contribution and local Jacobians
         s.divSatFluxes += f_indep * f_dep * B;
         // d/dP (local): df_indep_dP * f_dep * B + f_indep * df_dep_dP * B + f_indep * f_dep * dB_dP
-        s.dDivSatFluxes_dP += ( df_indep_dP * f_dep * B + f_indep * df_dep_dP * B + f_indep * f_dep * dB_dP );
+        s.dDivSatFluxes_dP += ( beta_g * df_loc_dP * f_dep * B + f_indep * ( 1.0 - beta_g ) * df_dep_loc_dP * B + f_indep * f_dep * dB_dP );
         // d/dS (local): df_indep_dS * f_dep * B + f_indep * df_dep_dS * B + f_indep * f_dep * dB_dS
-        s.dDivSatFluxes_dS += ( df_indep_dS * f_dep * B + f_indep * df_dep_dS * B + f_indep * f_dep * dB_dS );
+        s.dDivSatFluxes_dS += ( beta_g * df_loc_dS * f_dep * B + f_indep * ( 1.0 - beta_g ) * df_dep_loc_dS * B + f_indep * f_dep * dB_dS );
         
-        s.neiVals[s.numNeiCols] += df_indep_dP * f_dep * B + f_indep * df_dep_dP * B + f_indep * f_dep * dB_dP;
-        s.neiVals[s.numNeiCols+1] += df_indep_dS * f_dep * B + f_indep * df_dep_dS * B + f_indep * f_dep * dB_dS;
-        
+        s.neiCols[s.numNeiCols] = neiP;
+        s.neiVals[s.numNeiCols] += F * ( 1.0 - beta ) * df_nei_dP;
+        s.neiVals[s.numNeiCols] += ( 1.0 - beta_g ) * df_nei_dP * f_dep * B + f_indep * beta_g * df_dep_nei_dP * B;
+        s.numNeiCols += 1;
+        s.neiCols[s.numNeiCols] = neiS;
+        s.neiVals[s.numNeiCols] += F * ( 1.0 - beta ) * df_nei_dS;
+        s.neiVals[s.numNeiCols] += ( 1.0 - beta_g ) * df_nei_dS * f_dep * B + f_indep * beta_g * df_dep_nei_dS * B;
+        s.numNeiCols += 1;
       }
     }
   }

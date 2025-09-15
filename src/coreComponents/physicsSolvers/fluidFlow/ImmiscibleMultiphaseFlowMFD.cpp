@@ -401,8 +401,7 @@ void ImmiscibleMultiphaseFlowMFD::assembleSystem( real64 const time_n,
     } );
   } );
   assembleAccumulationTerm( domain, dofManager, localMatrix, localRhs );
-  assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs ); // TPFA transport + pressure (will later separate)
-  assembleFluxTermsHybrid( dt, domain, dofManager, localMatrix, localRhs ); // hybrid flux + face constraints
+  assembleFluxTermsHybrid( dt, domain, dofManager, localMatrix, localRhs );
 }
 
 void ImmiscibleMultiphaseFlowMFD::assembleFluxTermsHybrid( real64 const dt,
@@ -413,11 +412,6 @@ void ImmiscibleMultiphaseFlowMFD::assembleFluxTermsHybrid( real64 const dt,
 {
   NumericalMethodsManager const & nm = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = nm.getFiniteVolumeManager();
-  // Skip if the discretization name corresponds to a FluxApproximation (i.e. not hybrid)
-  if( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ) )
-  {
-    return;
-  }
   HybridMimeticDiscretization const & hm = fvManager.getHybridMimeticDiscretization( m_discretizationName );
   mimeticInnerProduct::MimeticInnerProductBase const & ip = hm.getReference< mimeticInnerProduct::MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString() );
   string const faceDofKey = dofManager.getKey( flow::facePressure::key() );
