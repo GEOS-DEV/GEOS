@@ -288,8 +288,8 @@ public:
 
         // Potential difference and its derivatives
         real64 const gravCoefDif = ccGravCoef - fGravCoef;
-        real64 const gravTerm = 0.0 * delta_rho * gravCoefDif;
-        real64 const dGravTerm_dP = 0.0 * ddelta_rho_dP * gravCoefDif;
+        real64 const gravTerm = delta_rho * gravCoefDif;
+        real64 const dGravTerm_dP = ddelta_rho_dP * gravCoefDif;
 
         real64 const T_ij = m_dt * s.transMatrix[i][j];
         s.BuoyantFlux[i] += Lambda * T_ij * gravTerm;
@@ -549,8 +549,6 @@ public:
       // neighbor Jacobian contributions on neighbor columns when applicable
       if( hasNeighbor )
       {
-        
-        
         
         // Upwind convex combination: beta = 1 if F >= 0 (use local), else 0 (use neighbor)
         real64 const beta_g = ( B >= 0.0 ) ? 1.0 : 0.0;
