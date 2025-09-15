@@ -477,7 +477,6 @@ public:
       f = rho * lambda/ Lambda;
       df_dP = num_dP / (Lambda * Lambda);
       df_dS = num_dS / (Lambda * Lambda);
-      df_dS = 1.0; // TEMPORARY: override to 1.0 for testing purposes
     };
 
     // Precompute local f and derivatives
