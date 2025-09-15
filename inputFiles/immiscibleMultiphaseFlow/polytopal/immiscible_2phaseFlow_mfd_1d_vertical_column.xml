@@ -19,7 +19,7 @@
         lineSearchAction="None"
         maxTimeStepCuts="100"
         maxSubSteps="100"
-        newtonMaxIter="100"/>
+        newtonMaxIter="20"/>
       <LinearSolverParameters 
         directParallel="0"
         reuseFactorization="0"/>
