@@ -252,8 +252,7 @@ public:
     // two-phase for now
     for( integer ip=0; ip<2; ++ip )
     {
-      real64 const rho = m_phaseDens[ei][0][ip];
-      real64 const drho_dP = m_dPhaseDens[ei][0][ip][Deriv::dP];
+      // this mobility are mass mobilities (rho * kr / mu).
       real64 const lambda = m_phaseMobAll[m_er][m_esr][ei][ip];
       real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dP];
       real64 dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
@@ -263,9 +262,9 @@ public:
       real64 const dlambda_dS = sgnS * dlambda_dS_raw;
       
       // accumulate total mobility derivatives for rho_mix denominator
-      Lambda += rho * lambda;
-      dLambda_dP += drho_dP * lambda + rho * dlambda_dP;
-      dLambda_dS += rho * dlambda_dS;
+      Lambda += lambda;
+      dLambda_dP += dlambda_dP;
+      dLambda_dS += dlambda_dS;
     }
     
     // Compute delta_rho and its pressure derivative
@@ -312,8 +311,7 @@ public:
     // two-phase for now
     for( integer ip=0; ip<2; ++ip )
     {
-      real64 const rho = m_phaseDens[ei][0][ip];
-      real64 const drho_dP = m_dPhaseDens[ei][0][ip][Deriv::dP];
+      // this mobility are mass mobilities (rho * kr / mu).
       real64 const lambda = m_phaseMobAll[m_er][m_esr][ei][ip];
       real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dP];
       real64 dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
@@ -323,9 +321,9 @@ public:
       real64 const dlambda_dS = sgnS * dlambda_dS_raw;
       
       // accumulate total mobility derivatives for rho_mix denominator
-      Lambda += rho * lambda;
-      dLambda_dP += drho_dP * lambda + rho * dlambda_dP;
-      dLambda_dS += rho * dlambda_dS;
+      Lambda += lambda;
+      dLambda_dP += dlambda_dP;
+      dLambda_dS += dlambda_dS;
     }
     
     // Mixture density rho_hat = (sum_i rho_i * (lambda_i / (sum_i lambda_i))
@@ -345,19 +343,11 @@ public:
       real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
       real64 const dlambda_dS = sgnS * dlambda_dS_raw;
 
-      rho_hat += rho * (rho * lambda / Lambda);
-      // numerator for d(rho_hat)/dP
-      real64 const num_dP = Lambda * ( 2.0 * rho * lambda * drho_dP
-                                + rho * rho * dlambda_dP )
-                      - rho * rho * lambda * dLambda_dP;
-
-      // numerator for d(rho_hat)/dS
-      real64 const num_dS = Lambda * ( 2.0 * rho * lambda * drho_dS
-                                + rho * rho * dlambda_dS )
-                      - rho * rho * lambda * dLambda_dS;
-      
-      drho_hat_dP += num_dP / (Lambda * Lambda);
-      drho_hat_dS += num_dS / (Lambda * Lambda);
+      rho_hat += rho * (lambda / Lambda);
+      drho_hat_dP += (drho_dP * lambda * Lambda +
+                      rho * (dlambda_dP * Lambda - lambda * dLambda_dP)) / (Lambda * Lambda);
+      drho_hat_dS += (drho_dS * lambda * Lambda +
+                      rho * (dlambda_dS * Lambda - lambda * dLambda_dS)) / (Lambda * Lambda);
     }
     
     for( integer i=0; i<NUM_FACE; ++i )
@@ -437,8 +427,6 @@ public:
       // two-phase for now
       for( integer ip=0; ip<2; ++ip )
       {
-        real64 const rho = m_phaseDens[ei_local][0][ip];
-        real64 const drho_dP = m_dPhaseDens[ei_local][0][ip][Deriv::dP];
         real64 const lambda = m_phaseMobAll[m_er][m_esr][ei_local][ip];
         real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei_local][ip][Deriv::dP];
         real64 dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei_local][ip][Deriv::dS];
@@ -448,9 +436,9 @@ public:
         real64 const dlambda_dS = sgnS * dlambda_dS_raw;
         
         // accumulate total mobility derivatives for rho_mix denominator
-        Lambda += rho * lambda;
-        dLambda_dP += drho_dP * lambda + rho * dlambda_dP;
-        dLambda_dS += rho * dlambda_dS;
+        Lambda += lambda;
+        dLambda_dP += dlambda_dP;
+        dLambda_dS += dlambda_dS;
       }
       
       // Phase mobilities
@@ -474,9 +462,9 @@ public:
                     - rho * lambda * dLambda_dS;
 
       // Fractional flow (mass based)
-      f = rho * lambda/ Lambda;
-      df_dP = num_dP / (Lambda * Lambda);
-      df_dS = num_dS / (Lambda * Lambda);
+      f = lambda/ Lambda;
+      df_dP = (dlambda_dP * Lambda - lambda * dLambda_dP) / (Lambda * Lambda);
+      df_dS = (dlambda_dS * Lambda - lambda * dLambda_dS) / (Lambda * Lambda);
     };
 
     // Precompute local f and derivatives
@@ -514,6 +502,16 @@ public:
       real64 const dB_dP = s.dBuoyantFlux_dPres[i];
       real64 const dB_dS = s.dBuoyantFlux_dS[i];
 
+      if (true){
+        if (i == 0){
+          std::cout << "ei: " << ei << std::endl;
+        }
+        std::cout << "(F, B): (" << F << ", " << B << ")" << std::endl;
+        if (i == 5){
+          std::cout << std::endl;
+        }
+      }
+      
       // Arithmetic average of fractional flow between local and neighbor (if any)
       real64 f_nei = f_loc;
       real64 df_nei_dP = df_loc_dP;
