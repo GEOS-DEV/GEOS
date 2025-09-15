@@ -29,8 +29,7 @@ namespace constitutive
 
 
 CarmanKozenyPermeability::CarmanKozenyPermeability( string const & name, Group * const parent ):
-  PermeabilityBase( name, parent ),
-  m_anisotropy{ 1.0, 1.0, 1.0 }
+  PermeabilityBase( name, parent )
 {
   registerWrapper( viewKeyStruct::particleDiameterString(), &m_particleDiameter ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -42,7 +41,7 @@ CarmanKozenyPermeability::CarmanKozenyPermeability( string const & name, Group *
 
   registerWrapper( viewKeyStruct::anisotropyString(), &m_anisotropy ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( m_anisotropy ).
+    setApplyDefaultValue( { 1.0, 1.0, 1.0 } ).
     setDescription( "Anisotropy factors for three permeability components." );
 
   registerWrapper( viewKeyStruct::dPerm_dPorosityString(), &m_dPerm_dPorosity );
@@ -55,12 +54,13 @@ CarmanKozenyPermeability::deliverClone( string const & name,
   return PermeabilityBase::deliverClone( name, parent );
 }
 
-void CarmanKozenyPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                         localIndex const numConstitutivePointsPerParentIndex )
+void CarmanKozenyPermeability::allocateConstitutiveData( Group & parent,
+                                                         localIndex const numPts )
 {
   // NOTE: enforcing 1 quadrature point
   m_dPerm_dPorosity.resize( 0, 1, 3 );
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
 }
 
 void CarmanKozenyPermeability::initializeState() const

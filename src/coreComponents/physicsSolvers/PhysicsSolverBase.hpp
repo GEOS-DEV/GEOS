@@ -596,9 +596,11 @@ public:
   /**
    * @brief updates the configuration (if needed) based on the state after a converged Newton loop.
    * @param domain the domain containing the mesh and fields
+   * @param configurationLoopIter current configuration iteration number
    * @return a bool that states whether the configuration used to solve the nonlinear loop is still valid or not.
    */
-  virtual bool updateConfiguration( DomainPartition & domain );
+  virtual bool updateConfiguration( DomainPartition & domain,
+                                    integer configurationLoopIter );
 
   /**
    * @brief
@@ -971,6 +973,13 @@ public:
   {
     return m_meshTargets;
   }
+
+  /**
+   * @brief Detect oscillations in the solution
+   * @return true if oscillations are detected, false otherwise
+   */
+  bool detectOscillations() const;
+
 protected:
 
   virtual void postInputInitialization() override;
@@ -1155,6 +1164,9 @@ protected:
 
   /// Timers for the aggregate profiling of the solver
   std::map< std::string, std::chrono::system_clock::duration > m_timers;
+
+  /// History of the solution vector, used for oscillation detection
+  ArrayOfArrays< real64 > m_solutionHistory;
 
 private:
   /// List of names of regions the solver will be applied to

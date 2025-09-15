@@ -222,7 +222,10 @@ public:
    * @param name name of the group
    * @param parent pointer to parent group
    */
-  SingleFluidBase( string const & name, Group * const parent );
+  SingleFluidBase( string const & name, dataRepository::Group * const parent );
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   /**
    * @brief Initialize the model
@@ -230,11 +233,6 @@ public:
   void initializeState() const;
 
   virtual void saveConvergedState() const override;
-
-  // *** ConstitutiveBase interface
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** SingleFluid-specific interface
 

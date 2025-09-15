@@ -46,10 +46,6 @@ PorousSolid< SOLID_TYPE, PERM_TYPE >::PorousSolid( string const & name, Group * 
 
 template< typename SOLID_TYPE,
           typename PERM_TYPE >
-PorousSolid< SOLID_TYPE, PERM_TYPE >::~PorousSolid() = default;
-
-template< typename SOLID_TYPE,
-          typename PERM_TYPE >
 void PorousSolid< SOLID_TYPE, PERM_TYPE >::initializeState() const
 {
   CoupledSolid< SOLID_TYPE, BiotPorosity, PERM_TYPE >::initializeState();

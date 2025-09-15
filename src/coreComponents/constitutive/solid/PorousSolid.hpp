@@ -346,9 +346,6 @@ public:
    */
   PorousSolid( string const & name, dataRepository::Group * const parent );
 
-  /// Destructor
-  virtual ~PorousSolid() override;
-
   /**
    * @brief Catalog name
    * @return Static catalog string
