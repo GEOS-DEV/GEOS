@@ -132,40 +132,40 @@
  */
 #define GEOS_LOG_RANK_VAR( var ) GEOS_LOG_RANK( #var " = " << var )
 
-/**
- * @brief Conditionally raise a hard error and terminate the program.
- * @param EXP an expression that will be evaluated as a predicate
- * @param MSG a message to log (any expression that can be stream inserted)
- */
-#define GEOS_ERROR_IF_IMPL( EXP, MSG ) \
-  do \
-  { \
-    if( EXP ) \
-    { \
-      std::ostringstream __msgoss; \
-      __msgoss << MSG; \
-      std::string message =  __msgoss.str(); \
-      std::ostringstream __oss; \
-      __oss << "***** ERROR\n"; \
-      __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
-      std::string stackHistory = LvArray::system::stackTrace( true ); \
-      __oss << stackHistory; \
-      std::cout << __oss.str() << std::endl; \
-      if( g_errorLogger.isOutputFileEnabled() ) \
-      { \
-        ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
-                                         message, \
-                                         __FILE__, \
-                                         __LINE__ ); \
-        msgStruct.setRank( ::geos::logger::internal::rank ); \
-        msgStruct.addCallStackInfo( stackHistory ); \
-        g_errorLogger.flushErrorMsg( msgStruct ); \
-      } \
-      LvArray::system::callErrorHandler(); \
-    } \
-  } while( false )
+// /**
+//  * @brief Conditionally raise a hard error and terminate the program.
+//  * @param EXP an expression that will be evaluated as a predicate
+//  * @param MSG a message to log (any expression that can be stream inserted)
+//  */
+// #define GEOS_ERROR_IF_IMPL( EXP, MSG ) \|
+//   do \|
+//   { \|
+//     if( EXP ) \|
+//     { \|
+//       std::ostringstream __msgoss; \|
+//       __msgoss << MSG; \|
+//       std::string message =  __msgoss.str(); \|
+//       std::ostringstream __oss; \|
+//       __oss << "***** ERROR\n"; \|
+//       __oss << "***** LOCATION: " LOCATION "\n"; \|
+//       __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \|
+//       __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \|
+//       std::string stackHistory = LvArray::system::stackTrace( true ); \|
+//       __oss << stackHistory; \|
+//       std::cout << __oss.str() << std::endl; \|
+//       if( g_errorLogger.isOutputFileEnabled() ) \|
+//       { \|
+//         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \|
+//                                          message, \|
+//                                          __FILE__, \|
+//                                          __LINE__ ); \|
+//         msgStruct.setRank( ::geos::logger::internal::rank ); \|
+//         msgStruct.addCallStackInfo( stackHistory ); \|
+//         g_errorLogger.flushErrorMsg( msgStruct ); \|
+//       } \|
+//       LvArray::system::callErrorHandler(); \|
+//     } \|
+//   } while( false )
 
 /**
  * @brief Conditionally raise a hard error and terminate the program.
@@ -204,16 +204,54 @@
     } \
   } while( false )
 
+// /**
+//  * @brief Conditionally raise a hard error and terminate the program.
+//  * @param EXP an expression that will be evaluated as a predicate
+//  * @param msg a message to log (any expression that can be stream inserted)
+//  */
+// #if defined(GEOS_DEVICE_COMPILE)
+// #define GEOS_ERROR_IF( EXP, msg ) GEOS_ERROR_IF_IMPL( EXP, msg )
+// #else
+// #define GEOS_ERROR_IF( EXP, msg ) GEOS_ERROR_IF_IMPL( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
+// #endif
+
 /**
  * @brief Conditionally raise a hard error and terminate the program.
- * @param EXP an expression that will be evaluated as a predicate
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param EXP An expression that will be evaluated as a predicate
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
-#if defined(GEOS_DEVICE_COMPILE)
-#define GEOS_ERROR_IF( EXP, msg ) GEOS_ERROR_IF_IMPL( EXP, msg )
-#else
-#define GEOS_ERROR_IF( EXP, msg ) GEOS_ERROR_IF_IMPL( EXP, "***** Rank " << ::geos::logger::internal::rankString << ": " << msg )
-#endif
+#define GEOS_ERROR_IF( EXP, ... ) \
+  do \
+  { \
+    if( EXP ) \
+    { \
+      std::ostringstream __msgoss; \
+      __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
+      std::string message =  __msgoss.str(); \
+      std::ostringstream __oss; \
+      __oss << "***** ERROR\n"; \
+      __oss << "***** LOCATION: " LOCATION "\n"; \
+      __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
+      std::string stackHistory = LvArray::system::stackTrace( true ); \
+      __oss << stackHistory; \
+      std::cout << __oss.str() << std::endl; \
+      if( g_errorLogger.isOutputFileEnabled() ) \
+      { \
+        ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
+                                         message, \
+                                         __FILE__, \
+                                         __LINE__ ); \
+        msgStruct.setRank( ::geos::logger::internal::rank ); \
+        msgStruct.addCallStackInfo( stackHistory ); \
+        msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS(__VA_ARGS__) ); \
+        g_errorLogger.flushErrorMsg( msgStruct ); \
+      } \
+      LvArray::system::callErrorHandler(); \
+    } \
+  } while( false )
 
 /**
  * @brief Raise a hard error and terminate the program.
@@ -407,11 +445,11 @@
  * @param msg The message to diplay.
  */
 #define GEOS_ERROR_IF_OP_MSG( lhs, OP, NOP, rhs, msg ) \
-  GEOS_ERROR_IF_IMPL( lhs OP rhs, \
-                      msg << "\n" << \
-                      "Expected " << #lhs << " " << #NOP << " " << #rhs << "\n" << \
-                      "  " << #lhs << " = " << lhs << "\n" << \
-                      "  " << #rhs << " = " << rhs << "\n" )
+  GEOS_ERROR_IF( lhs OP rhs, \
+                 msg << "\n" << \
+                 "Expected " << #lhs << " " << #NOP << " " << #rhs << "\n" << \
+                 "  " << #lhs << " = " << lhs << "\n" << \
+                 "  " << #rhs << " = " << rhs << "\n" )
 
 /**
  * @brief Raise a hard error if two values are equal.
@@ -736,7 +774,7 @@
  *       guaranteed. In fact it is only guaranteed to abort the current kernel.
  */
 #if !defined(NDEBUG)
-#define GEOS_ASSERT_MSG_IF( EXP, MSG ) GEOS_ERROR_IF_IMPL( !(EXP), MSG )
+#define GEOS_ASSERT_MSG_IF( EXP, MSG ) GEOS_ERROR_IF( !(EXP), MSG )
 #else
 #define GEOS_ASSERT_MSG_IF( EXP, MSG ) ((void) 0)
 #endif
@@ -865,6 +903,16 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  */
 #define GEOS_ASSERT_GE( lhs, rhs ) GEOS_ASSERT_GE_MSG( lhs, rhs, "" )
+
+/**
+ * @name Logger utility macros
+ */
+///@{
+#define GEOS_ERROR_IMPL_ADD_CONTEXT_0( ... )
+#define GEOS_ERROR_IMPL_ADD_CONTEXT_1( ... ) addContextInfo( __VA_ARGS__ )
+#define GEOS_ERROR_IMPL_ADD_CONTEXT_DISPATCH( N ) GEOS_ERROR_IMPL_ADD_CONTEXT_ ## N
+#define GEOS_ERROR_IMPL_ADD_CONTEXT_IMPL( N, ... ) GEOS_ERROR_IMPL_ADD_CONTEXT_DISPATCH( N )(__VA_ARGS__)
+///@}
 
 namespace geos
 {

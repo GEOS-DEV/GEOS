@@ -70,17 +70,17 @@ std::string readFile( std::optional< size_t > startLine = std::nullopt,
 // separated file bits, which allow us to ignore the absolute path of the workspace ("file:" attribute).
 // note: "line:" attribute of "sourceLocation:" need to be manually updated if test code changes (to
 //       verify they are correctly reported)
-static constexpr std::array< std::string_view, 5 > expectedFileBits = {
-  R"(errors: 
+static constexpr std::array< std::string_view, 12 > expectedFileBits = {
+  R"(errors:)",
 
-  - type: Warning
+  R"(- type: Warning
     rank: 0
     message: >-
       Conflicting pressure boundary conditions
     sourceLocation:
       file: )",
   R"(src/coreComponents/dataRepository/unitTests/testErrorHandling.cpp
-      line: 204
+      line: 233
     sourceCallStack:
       - frame0:  void testing::internal::HandleExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) 
       - frame1:  testing::Test::Run() 
@@ -90,16 +90,16 @@ static constexpr std::array< std::string_view, 5 > expectedFileBits = {
       - frame5:  testing::UnitTest::Run() 
       - frame6:  main 
       - frame7:  __libc_start_main 
-      - frame8:  _start 
+      - frame8:  _start)",
 
-  - type: Warning
+  R"(- type: Warning
     rank: 0
     message: >-
       Pressure value is too small.
     sourceLocation:
       file: )",
   R"(src/coreComponents/dataRepository/unitTests/testErrorHandling.cpp
-      line: 206
+      line: 235
     sourceCallStack:
       - frame0:  void testing::internal::HandleExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) 
       - frame1:  testing::Test::Run() 
@@ -109,9 +109,9 @@ static constexpr std::array< std::string_view, 5 > expectedFileBits = {
       - frame5:  testing::UnitTest::Run() 
       - frame6:  main 
       - frame7:  __libc_start_main 
-      - frame8:  _start 
+      - frame8:  _start)",
 
-  - type: Warning
+  R"(- type: Warning
     rank: 0
     message: >-
       Base Test Class (file.xml, l.23): option should be between 1e-06 and 0.001. A value of 1e-06 will be used.
@@ -125,7 +125,7 @@ static constexpr std::array< std::string_view, 5 > expectedFileBits = {
     sourceLocation:
       file: )",
   R"(src/coreComponents/dataRepository/unitTests/testErrorHandling.cpp
-      line: 207
+      line: 236
     sourceCallStack:
       - frame0:  void testing::internal::HandleExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) 
       - frame1:  testing::Test::Run() 
@@ -135,9 +135,9 @@ static constexpr std::array< std::string_view, 5 > expectedFileBits = {
       - frame5:  testing::UnitTest::Run() 
       - frame6:  main 
       - frame7:  __libc_start_main 
-      - frame8:  _start 
+      - frame8:  _start)",
 
-  - type: Exception
+  R"(- type: Exception
     rank: 0
     message: >-
       Table input error.
@@ -155,7 +155,7 @@ static constexpr std::array< std::string_view, 5 > expectedFileBits = {
     sourceLocation:
       file: )",
   R"(src/coreComponents/dataRepository/unitTests/testErrorHandling.cpp
-      line: 215
+      line: 244
     sourceCallStack:
       - frame0:  void testing::internal::HandleExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) 
       - frame1:  testing::Test::Run() 
@@ -165,8 +165,37 @@ static constexpr std::array< std::string_view, 5 > expectedFileBits = {
       - frame5:  testing::UnitTest::Run() 
       - frame6:  main 
       - frame7:  __libc_start_main 
-      - frame8:  _start 
-)" };
+      - frame8:  _start)",
+
+  R"(- type: Error
+    rank: 0
+    message: >-
+      Base Test Class (file.xml, l.23): option should be between 1e-06 and 0.001. A value of 1e-06 will be used.
+    contexts:
+      - priority: 2
+        inputFile: /path/to/file.xml
+        inputLine: 64
+      - priority: 0
+        inputFile: /path/to/file.xml
+        inputLine: 23
+      - priority: 0
+        inputFile: /path/to/file.xml
+        inputLine: 32
+    sourceLocation:
+      file: )",
+  R"(src/coreComponents/dataRepository/unitTests/testErrorHandling.cpp
+      line: 259
+    sourceCallStack:
+      - frame0:  void testing::internal::HandleExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) 
+      - frame1:  testing::Test::Run() 
+      - frame2:  testing::TestInfo::Run() 
+      - frame3:  testing::TestSuite::Run() 
+      - frame4:  testing::internal::UnitTestImpl::RunAllTests() 
+      - frame5:  testing::UnitTest::Run() 
+      - frame6:  main 
+      - frame7:  __libc_start_main 
+      - frame8:  _start)"
+};
 
 static constexpr std::string_view exceptionFormat =
   R"(    message: >-
@@ -226,38 +255,38 @@ TEST( ErrorHandling, testYamlFileOutputFormat )
         .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
     }
     g_errorLogger.flushErrorMsg( g_errorLogger.currentErrorMsg() );
+
+    EXPECT_EXIT( GEOS_ERROR_IF( testValue == 5,
+                                GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
+                                          context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision ),
+                                context,
+                                additionalContext,
+                                importantAdditionalContext.getContextInfo().setPriority( 2 ) ),
+                 ::testing::ExitedWithCode( 1 ),
+                 ".*" );
   }
 
 
-  { // read back yaml file and check its formatting
+  { // read back yaml file and check its content
     std::string fileContent = readFile();
+    bool testFailed = false;
 
     for( size_t i = 0; i < expectedFileBits.size(); ++i )
     {
-      auto it = fileContent.find( expectedFileBits[i] );
-      EXPECT_NE( it, std::string::npos ) << "Expected bit not found (no." << i << "):\n"
-                                         << "-----------------------\n"
-                                         << expectedFileBits[i] << '\n'
-                                         << "-----------------------\n";
+      bool const foundFileBit = fileContent.find( expectedFileBits[i] ) != string::npos;
+      EXPECT_TRUE( foundFileBit ) << "Expected bit not found (no." << i << "):\n"
+                                  << "-----------------------\n"
+                                  << expectedFileBits[i] << '\n'
+                                  << "-----------------------\n";
+      testFailed |= !foundFileBit;
     }
+    EXPECT_FALSE( testFailed ) << "Generated error file content:\n"
+                               << "-----------------------\n"
+                               << fileContent << '\n'
+                               << "-----------------------\n";
 
     removeFile();
   }
-}
-
-TEST( ErrorHandling, testErrorBehaviour )
-{
-  // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
-  ErrorLogger g_errorLogger;
-
-  DataFileContext const context = DataFileContext( "Base Test Class", "/path/to/file.xml", 23 );
-
-  EXPECT_EXIT( GEOS_ERROR_CTX_IF( testValue == 5,
-                                  GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.PID  {}",
-                                            context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision, getpid() ),
-                                  context ),
-               ::testing::ExitedWithCode( 1 ),
-               ".*" );
 }
 
 int main( int ac, char * av[] )
