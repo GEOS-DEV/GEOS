@@ -223,11 +223,6 @@ public:
   FrictionBase( string const & name,
                 Group * const parent );
 
-  /**
-   * @brief default destructor
-   */
-  virtual ~FrictionBase() override;
-
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = FrictionBaseUpdates;
 
