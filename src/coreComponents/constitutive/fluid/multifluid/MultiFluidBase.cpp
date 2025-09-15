@@ -204,6 +204,12 @@ void MultiFluidBase::postInputInitialization()
   setLabels();
 }
 
+void MultiFluidBase::initializeState() const
+{
+  // initialize the "old" variables
+  saveConvergedState();
+}
+
 void MultiFluidBase::saveConvergedState() const
 {
   localIndex const numElem = m_phaseMassDensity.value.size( 0 );

@@ -135,6 +135,11 @@ void Damage< BASE >::allocateConstitutiveData( Group & parent, localIndex const 
   m_strainEnergyDensity.resize( 0, numPts );
   m_volStrain.resize( 0, numPts );
   m_extDrivingForce.resize( 0, numPts );
+  m_biotCoefficient.resize( parent.size() );
+  m_criticalFractureEnergy.resize( parent.size() );
+  m_tensileStrength.resize( parent.size() );
+  m_compressStrength.resize( parent.size() );
+  m_deltaCoefficient.resize( parent.size() );
 
   BASE::allocateConstitutiveData( parent, numPts );
 }

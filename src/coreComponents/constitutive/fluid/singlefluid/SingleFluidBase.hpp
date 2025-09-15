@@ -227,6 +227,11 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numPts ) override;
 
+  /**
+   * @brief Initialize the model
+   */
+  void initializeState() const;
+
   virtual void saveConvergedState() const override;
 
   // *** SingleFluid-specific interface

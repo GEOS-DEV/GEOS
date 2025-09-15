@@ -87,6 +87,8 @@ public:
     GEOS_UNUSED_VAR( pressure, temperature );
   }
 
+  virtual void initializeState() const override;
+
   virtual integer getWaterPhaseIndex() const override final;
 
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
