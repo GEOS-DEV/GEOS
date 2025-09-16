@@ -592,7 +592,7 @@ void CompositionalMultiphaseWell::createSeparator()
       // setup fluid separator
       WellControls & wellControls = getWellControls( subRegion );
       string const fluidSeparatorName = wellControls.getName() + "Separator";
-      std::unique_ptr< constitutive::ConstitutiveBase >  fluidSeparatorPtr  = fluid.deliverClone( fluidSeparatorName, &fluid );
+      std::unique_ptr< constitutive::ConstitutiveBase >  fluidSeparatorPtr  = fluid.deliverClone( fluidSeparatorName, &wellControls );
       fluidSeparatorPtr->allocateConstitutiveData( wellControls, 1 );
       fluidSeparatorPtr->resize( 1 );
       wellControls.setFluidSeparator( std::move( fluidSeparatorPtr ));
