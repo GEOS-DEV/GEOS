@@ -15,20 +15,18 @@
       logLevel="2"
       dependentPhaseIndex="1">
       <NonlinearSolverParameters 
-        newtonTol="1e-4" 
-        newtonMaxIter="15"
+        newtonTol="1e-5"
         lineSearchAction="None"
-        maxTimeStepCuts="10"
-        maxSubSteps="100"
-        timeStepIncreaseIterLimit="0.5"
-        timeStepDecreaseIterLimit="0.6"
-        maxAllowedResidualNorm="1.0e20"/>
-      <LinearSolverParameters directParallel="0"/>
+        maxTimeStepCuts="50"
+        maxSubSteps="50"
+        newtonMaxIter="50"/>
+      <LinearSolverParameters 
+        directParallel="0"
+        reuseFactorization="0"/>
     </ImmiscibleMultiphaseFlowMFD>
   </Solvers>
 
   <Mesh>
-    <!-- 1D line extruded to thin 1x1 cross section -->
     <InternalMesh name="mesh1"
                   elementTypes="{ C3D8 }"
                   xCoords="{ 0, 100 }"
@@ -53,9 +51,9 @@
       xMax="{ 100.01, 1.01, 1.01 }"/>
   </Geometry>
 
-  <Events maxTime="259200000">
-    <PeriodicEvent name="outputs" timeFrequency="86400" target="/Outputs/vtkOutput"/>
-    <PeriodicEvent name="solverApps" forceDt="86400" target="/Solvers/FlowSolverMFD"/>
+  <Events maxTime="518400000">
+    <PeriodicEvent name="outputs" timeFrequency="864000" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent name="solverApps" forceDt="864000" target="/Solvers/FlowSolverMFD"/>
   </Events>
 
   <NumericalMethods>
@@ -102,7 +100,7 @@
 
     <NullModel name="nullSolid"/>
 
-    <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.1" referencePressure="0" compressibility="0.0"/>
+    <PressurePorosity name="rockPorosity" defaultReferencePorosity="0.25" referencePressure="0" compressibility="0.0"/>
 
     <ConstantPermeability name="rockPerm" permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-14 }"/>
 
@@ -114,7 +112,7 @@
 
   <FieldSpecifications>
     <FieldSpecification name="Porosity" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="rockPorosity_referencePorosity" scale="0.05"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="rockPorosity_referencePorosity" scale="0.25"/>
 
     <FieldSpecification name="initialPressure" initialCondition="1" setNames="{ all }"
       objectPath="ElementRegions/Domain/block1" fieldName="pressure" scale="1.0e7"/>
