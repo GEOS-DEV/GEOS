@@ -63,7 +63,7 @@ using feTriangleCell = finiteElement::H1_TriangleFace_Lagrange1_Gauss4;
 struct MortarSurface
 {
   MeshLevel* mesh = nullptr;
-  const SurfaceElementRegion* surface = nullptr;
+  SurfaceElementRegion* surface = nullptr;
 };
 
 class SolidMechanicsMortarContact : public ContactSolverBase
@@ -94,9 +94,10 @@ public:
  
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
+  void registerMortarDataOnMesh( );
+
   void setupDofs( DomainPartition const & domain,
-                  DofManager & dofManager,
-                  string const & meshSlaveName ) const;
+                  DofManager & dofManager) const;
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -134,162 +135,36 @@ public:
 
   void updateState( DomainPartition & domain ) override final;
 
-
-  // FaceTypeMap createFaceTypeList( MeshLevel const & mesh, 
-  //                                 FaceElementSubRegion const & surface,
-  //                                 string name);
-
   void createFaceTypeListMortar( MortarSide side );
 
   
 
-  // bubbles only on the slave side
-  // void createBubbleCellList( MeshLevel & meshSlave,
-  //                            FaceElementSubRegion const & surfRegion) const;
-
   void createBubbleCellList( ) const;
 
 
-  string setMortarSurfaces( DomainPartition & domain);
+  void setMortarSurfaces( DomainPartition & domain);
 
   
-  // call templated lambda with compile time knowledge of the element shapes on the master and the slave side
-  // template<typename FUNC>
-  // void forMortarSurfaces(FUNC&& func) const
-  // {
-  //   std::map<ElementShape, array1d<localIndex>> const&
-  //   faceTypesToFaceElementsSlave = m_faceTypeToElementList.at(MortarSide::Slave);
-
-  //   std::map<ElementShape, array1d<localIndex>> const&
-  //       faceTypesToFaceElementsMaster = m_faceTypeToElementList.at(MortarSide::Master);
-
-  //   for (const auto& [slaveShape, slaveElementList] : faceTypesToFaceElementsSlave) {
-  //       GEOS_UNUSED_VAR(slaveElementList);
-
-  //       for (const auto& [masterShape, masterElementList] : faceTypesToFaceElementsMaster) 
-  //       {
-  //         GEOS_UNUSED_VAR(masterElementList);
-
-  //         switch (slaveShape) 
-  //         {
-  //         case ElementShape::Triangle:
-  //           switch (masterShape) 
-  //           {
-  //           case ElementShape::Triangle:
-  //             func.template operator()<ElementShape::Triangle, ElementShape::Triangle>();
-  //             break;
-  //           case ElementShape::Quadrilateral:
-  //             func.template operator()<ElementShape::Triangle, ElementShape::Quadrilateral>();
-  //             break;
-  //           }
-  //           break;
-  //         case ElementShape::Quadrilateral:
-  //           switch (masterShape) 
-  //           {
-  //           case ElementShape::Triangle:
-  //             func.template operator()<ElementShape::Quadrilateral, ElementShape::Triangle>();
-  //             break;
-  //           case ElementShape::Quadrilateral:
-  //             func.template operator()<ElementShape::Quadrilateral, ElementShape::Quadrilateral>();
-  //             break;
-  //           }
-  //           break;
-  //         }
-  //       }
-  //   }
-  // }
-
-  // template< typename LAMBDA >
-  // void forMortarSurfacesOld( LAMBDA && lambda ) const
-  // {
-
-  //   std::map< ElementShape, array1d< localIndex > > const &
-  //   faceTypesToFaceElementsSlave = m_faceTypeToElementList.at( MortarSide::Slave );
-
-  //   std::map< ElementShape, array1d< localIndex > > const &
-  //   faceTypesToFaceElementsMaster = m_faceTypeToElementList.at( MortarSide::Master );
-
-  //   for( const auto & [slaveShape, slaveElementList] : faceTypesToFaceElementsSlave )
-  //   {
-  //     GEOS_UNUSED_VAR( slaveElementList );
-  //     for(const auto & [masterShape, masterElementList] : faceTypesToFaceElementsMaster )
-  //     {
-  //       GEOS_UNUSED_VAR( masterElementList );
-  //       finiteElement::FiniteElementBase const & slaveFE = *(m_faceTypeToMortarFiniteElements.at( slaveShape ));
-  //       finiteElement::FiniteElementBase const & masterFE = *(m_faceTypeToMortarFiniteElements.at( masterShape ));
-
-  //       dispatchMortar< MORTAR_FE_TYPES >(  slaveFE, masterFE, 
-  //       [&](const auto& finiteElementSlave, const auto& finiteElementMaster)
-  //       {
-  //         lambda(finiteElementSlave, finiteElementMaster, slaveShape, masterShape);
-  //       });
-  //     }
-  //   }
-  // }
-
-
-  // template< typename LAMBDA >
-  // void forMortarSurfaces( LAMBDA && lambda ) const
-  // {
-
-  //   std::map< string, array1d< localIndex > > const &
-  //   faceTypesToFaceElementsSlave = m_faceTypesToElementList.at( MortarSide::Slave );
-
-  //   std::map< string, array1d< localIndex > > const &
-  //   faceTypesToFaceElementsMaster = m_faceTypesToElementList.at( MortarSide::Master );
-
-  //   for( const auto & [slaveShape, slaveElementList] : faceTypesToFaceElementsSlave )
-  //   {
-  //     for(const auto & [masterShape, masterElementList] : faceTypesToFaceElementsMaster )
-  //     {
-  //       arrayView1d< localIndex const > const slaveElemList = slaveElementList.toViewConst();
-  //       arrayView1d< localIndex const > const masterElemList = masterElementList.toViewConst();
-
-  //       finiteElement::FiniteElementBase const & slaveFE = *(m_faceTypeToFiniteElements.at( slaveShape ));
-  //       finiteElement::FiniteElementBase const & masterFE = *(m_faceTypeToFiniteElements.at( masterShape ));
-
-  //       lambda(slaveShape, masterShape, slaveElemList, masterElemList);
-  //     }
-  //   }
-  // }
-
-
-  // template< typename FETypes, typename LAMBDA >
-  // void dispatchMortar( const finiteElement::FiniteElementBase & slaveFE, const finiteElement::FiniteElementBase & masterFE, LAMBDA&& lambda )
-  // {
-  //   geos::finiteElement::FiniteElementDispatchHandler< FETypes >::dispatch2D( slaveFE,
-  //   [&]( const auto & finiteElementSlave )
-  //   {
-  //     geos::finiteElement::FiniteElementDispatchHandler< FETypes >::dispatch2D( masterFE,
-  //     [&]( const auto & finiteElementMaster )
-  //     {
-  //       lambda(finiteElementSlave, finiteElementMaster);
-  //     } );
-  //   } );
-  // } 
-
 
 private:
 
-  // Struct to hold the pointers for a single contact surface
-
-  // store pointers to relevant mesh objects of master and slave side
-  MeshLevel * m_meshSlave = nullptr;
-  MeshLevel * m_meshMaster = nullptr;
-  FaceElementSubRegion const* m_surfaceMaster = nullptr;     
-  FaceElementSubRegion const* m_surfaceSlave = nullptr;
+  string m_meshSlaveName;
 
   std::map< MortarSide, std::map< ElementShape, array1d< localIndex > > > m_faceTypeToElementList;
+
   // holds pointers to master and slave MeshLevel and SurfaceElementRegion
   std::map< MortarSide, MortarSurface > m_mortarSide;
-  // given a certain mortar pair of shapes, holds the id of the element connected by each mortar
-  // subtriangle and the corresponding jacobian determinant. The kernel will use these lists
-  std::map< std::pair< ElementShape, ElementShape >, arrayView2d< localIndex > > m_triCells;
-  std::map< std::pair< ElementShape, ElementShape >, arrayView1d< real64 > >   m_triCellsDet;
-  // hold local coordinates of gauss points of each triangle subcell on each mortar side
-  std::map< MortarSide, std::map< std::pair< ElementShape, ElementShape >, arrayView3d< real64 > > > m_gpLocalCoords;
 
-  // coordinates of gauss points ready to go
+  // list of pairs of slave/master element ids for each mortar subtriangle
+  std::map< MortarSide, std::map< std::pair< ElementShape, ElementShape >, array1d< localIndex > > > m_triCells;
+
+  // list of determinant of each mortar subtriangle
+  std::map< std::pair< ElementShape, ElementShape >, array1d< real64 > >  m_triCellsDet;
+
+  // list local coordinates of gauss points of subtriangles on each mortar side
+  std::map< MortarSide, std::map< std::pair< ElementShape, ElementShape >, array3d< real64 > > > m_gpLocalCoords;
+
+  // coordinates of triangle gauss points ready to go (they are private in the triangle class)
   constexpr static localIndex nGPtri = feTriangleCell::numQuadraturePoints;
   constexpr static real64 qCoords[nGPtri][2] = {
     { 0.333333333333333, 0.333333333333333 },
@@ -297,15 +172,6 @@ private:
     { 0.200000000000000, 0.600000000000000 },
     { 0.200000000000000, 0.200000000000000 }
   };
-
-
-
-
-  // map id of slave elements to id of connected master elements
-  //ArrayOfArrays< localIndex > m_connectivityMapSlave;  
-
-  // map id of master elements to id of connected master elements
-  //ArrayOfArrays< localIndex > m_connectivityMapMaster;  
 
   void addBubbleCouplingNumNonzeros( DofManager & dofManager,
                                      arrayView1d< localIndex > const & rowLengths ) const;
@@ -325,22 +191,31 @@ private:
                                          connectivityMapType const & connectivityMap,
                                          SparsityPatternView< globalIndex > const & pattern ) const;
 
+void assembleBubbles( real64 const dt,
+                      DomainPartition & domain,
+                      DofManager const & dofManager,
+                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                      arrayView1d< real64 > const & localRhs );
+
+  void assembleMortar( real64 const dt,
+                       DofManager const & dofManager,
+                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                       arrayView1d< real64 > const & localRhs );
+
+  template< ElementShape shpS, ElementShape shpM >
+  void assembleMortar( real64 const dt,
+                       DofManager const & dofManager,
+                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                       arrayView1d< real64 > const & localRhs );
+
+  void computeRotationMatrices( );
+
+
 
   string m_slaveName;
   string m_masterName;
 
   std::map< ElementShape, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToMortarFiniteElements;
-
-  /// Map gauss point list to master basis functions values
-  //std::map< string, ArrayOfArrays< real64 > > m_gpToMasterBasis; 
-
-  
-
-  /// Map gauss point list to corresponding master element id 
-  //std::map< string, array2d< localIndex > > m_gpToMasterId; 
-
-  /// List of all existing pairs of slave-master elements (derived from m_gpToMasterId)
-  //std::map< string, array2d< localIndex > > m_mortarPairs;
 
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {
@@ -350,7 +225,6 @@ private:
     constexpr static char const * slaveString() { return "slave"; }
 
   };
-
 
   void computeMortarInterpolation ( connectivityMapType & connectivityMap);
 
@@ -401,30 +275,20 @@ private:
   template<localIndex numNodes>
   void permuteN(real64 (& N)[numNodes]);
 
-  void getLocalInterpolationPoints( localIndex nInt, string const & finiteElementName, array2d< real64 > & localCoordsMaster );
-
-  real64 computeRBF( real64 const d, real64 const radius );
-
-  real64 computeRBF( real64 const (&pt1)[3], real64 const (&pt2)[3], real64 const radius );
-
-  void computeRBFweights( arrayView2d<real64> M, arrayView2d<real64> Nm, arrayView2d<real64> wRBF, localIndex nIntPts, localIndex numNodeperElement );
-
-  real64 computeRBFmatrix( arrayView2d<real64> realCoordsInterpolation, arrayView2d<real64> RBFmatrix, localIndex nIntPts);
-
   void getConnectivityMap( connectivityMapType & connectivityMap );
 
   void getMortarConnections( ElementShape slaveShape, ElementShape masterShape, ArrayOfArrays<localIndex> & connections);
 
-  /// Tandem traversal contact search 
+  // Tandem traversal contact search between master and slave nodes
   void contactSearch(std::unique_ptr<TreeNodeMortar> const & nodeMaster,
                      std::unique_ptr<TreeNodeMortar> const & nodeSlave,
                      ArrayOfArrays<localIndex> & connections);
 
-  /// Check intersection between two bounding boxes using polytops primitives
+  // Check intersection between two bounding boxes using polytops primitives
   bool checkIntersection(std::unique_ptr<TreeNodeMortar> const & nodeMaster,
                          std::unique_ptr<TreeNodeMortar> const & nodeSlave);
 
-  
+  // retrieve finite element type from templated element shape
   template<ElementShape S>
   decltype(auto) getFE() 
   {
@@ -470,8 +334,6 @@ class TreeNodeMortar
                      arrayView1d<localIndex> & surfId, 
                      array1d<localIndex> & surfList );
 
-
-    
   };
   
 

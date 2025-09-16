@@ -46,6 +46,7 @@ set( solidMechanicsSolvers_headers
      contact/SolidMechanicsLagrangeContactBubbleStab.hpp
      contact/SolidMechanicsAugmentedLagrangianContact.hpp
      contact/SolidMechanicsMortarContact.hpp
+     contact/kernels/SolidMechanicsMortarContactKernels.hpp
      contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp
      contact/kernels/SolidMechanicsDisplacementJumpUpdateKernels.hpp
      contact/kernels/SolidMechanicsEFEMKernelsBase.hpp
