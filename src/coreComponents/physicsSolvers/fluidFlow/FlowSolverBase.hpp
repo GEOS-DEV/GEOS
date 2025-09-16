@@ -271,7 +271,7 @@ protected:
   /// enable the fixed stress poromechanics update of porosity
   bool m_isFixedStressPoromechanicsUpdate;
 
-  /// enable pressure jump stabilzation for fixed-stress poromechanics
+  /// enable pressure jump stabilization for fixed-stress poromechanics
   bool m_isJumpStabilized;
 
   /// flag if negative pressure is allowed
