@@ -639,6 +639,7 @@ public:
             isInjector,
             isCrossflowEnabled ),
     m_wellElemPhaseFrac( fluid.phaseFraction() ),
+    m_dWellElemPhaseFrac( fluid.dPhaseFraction() ),
     m_wellElemPhaseEnthalpy( fluid.phaseEnthalpy()),
     m_dWellElemPhaseEnthalpy( fluid.dPhaseEnthalpy()),
     m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >()),
