@@ -569,7 +569,7 @@ public:
 
 };
 
-} // namespace kernels::
+} // namespace kernels::fluidFlow::singlePhase::proppant
 
 } // namespace geos
 

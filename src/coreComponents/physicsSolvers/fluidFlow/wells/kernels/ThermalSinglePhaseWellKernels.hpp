@@ -33,16 +33,7 @@
 namespace geos
 {
 
-namespace kernels
-{
-
-namespace wells
-{
-
-namespace singlePhase
-{
-
-namespace thermal
+namespace kernels::wells::singlePhase::thermal
 {
 
 /******************************** ElementBasedAssemblyKernel ********************************/
@@ -708,13 +699,7 @@ public:
 
 };
 
-} // end namespace thermal
-
-} // end namespace singlePhase
-
-} // end namespace wells
-
-} // end namespace kernels
+} // end namespace kernels::wells::singlePhase::thermal
 
 } // end namespace geos
 

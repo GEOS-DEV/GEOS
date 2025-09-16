@@ -27,13 +27,7 @@
 namespace geos
 {
 
-namespace kernels
-{
-
-namespace wells
-{
-
-namespace singlePhase
+namespace kernels::wells::singlePhase
 {
 
 /******************************** ControlEquationHelper ********************************/
@@ -633,10 +627,6 @@ RateInitializationKernel::
   } );
 }
 
-} // end namespace singlePhase
-
-} // end namespace wells
-
-} // end namespace kernels
+} // end namespace kernels::wells::singlePhase
 
 } // end namespace geos

@@ -26,16 +26,7 @@
 namespace geos
 {
 
-namespace kernels
-{
-
-namespace wells
-{
-
-namespace compositional
-{
-
-namespace thermal
+namespace kernels::wells::compositional::thermal
 {
 
 using namespace constitutive;
@@ -1116,13 +1107,7 @@ public:
   }
 };
 
-} // end namespace thermal
-
-} // end namespace compositional
-
-} // end namespace wells
-
-} // end namespace kernels
+} // end namespace kernels::wells::compositional::thermal
 
 } // end namespace geos
 
