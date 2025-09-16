@@ -322,13 +322,15 @@ TEST( testIncorrectFieldSpecification, testSetNames )
 TEST( testIncorrectFieldSpecification, testWrongFieldNames )
 {
   static constexpr auto expectedMsg1 =  "Available fields in ElementRegions/Channel1 are:";
-  static constexpr auto expectedMsg2 =  "{ dEnthalpy, dFluidDensity, dFluidInternalEnergy, dPerm_dPressure, dViscosity, deltaPressure, elementCenter, elementVolume, enthalpy, fluidDensity, fluidInternalEnergy, ghostRank, initialPorosity, localToGlobalMap, mass, permeability, porosity, pressure, referencePorosity, temperature, viscosity }";
+  static constexpr auto expectedMsg2 =
+    "{ dEnthalpy, dFluidDensity, dFluidInternalEnergy, dPerm_dPressure, dViscosity, deltaPressure, elementCenter, elementVolume, enthalpy, fluidDensity, fluidInternalEnergy, ghostRank, initialPorosity, localToGlobalMap, mass, permeability, porosity, pressure, referencePorosity, temperature, viscosity }";
   setupAndPlayWrongFieldSpecification( xmlWrongFieldNames, expectedMsg1, expectedMsg2 );
 }
 
 TEST( testIncorrectFieldSpecification, testFieldSpecification )
 {
-  static constexpr auto tokens =  "dEnthalpy, dFluidDensity, dFluidInternalEnergy, dPerm_dPressure, dViscosity, deltaPressure, elementCenter, elementVolume, enthalpy, fluidDensity, fluidInternalEnergy, ghostRank, initialPorosity, localToGlobalMap, mass, permeability, porosity, pressure, referencePorosity, temperature, viscosity";
+  static constexpr auto tokens =
+    "dEnthalpy, dFluidDensity, dFluidInternalEnergy, dPerm_dPressure, dViscosity, deltaPressure, elementCenter, elementVolume, enthalpy, fluidDensity, fluidInternalEnergy, ghostRank, initialPorosity, localToGlobalMap, mass, permeability, porosity, pressure, referencePorosity, temperature, viscosity";
   std::vector< string > const splitToken = splitStringByDelimiter( tokens, "," );
   for( auto const & token : splitToken )
   {
