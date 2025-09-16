@@ -14,13 +14,13 @@
       targetRegions="{ Domain }"
       logLevel="2"
       dependentPhaseIndex="1">
-      <NonlinearSolverParameters 
+      <NonlinearSolverParameters
         newtonTol="1e-6"
         lineSearchAction="None"
         maxTimeStepCuts="100"
         maxSubSteps="100"
         newtonMaxIter="10"/>
-      <LinearSolverParameters 
+      <LinearSolverParameters
         directParallel="0"
         reuseFactorization="0"/>
     </ImmiscibleMultiphaseFlowMFD>
@@ -37,10 +37,10 @@
                   cellBlockNames="{ block1 }"/>
   </Mesh>
 
-  <Geometry>      
-    <Box name="top_BC" 
-      xMin="{ -0.0001, -0.0001, 9.9999 }" 
-      xMax="{ 1.0001, 1.0001, 10.0001 }"/>               
+  <Geometry>
+    <Box name="top_BC"
+      xMin="{ -0.0001, -0.0001, 9.9999 }"
+      xMax="{ 1.0001, 1.0001, 10.0001 }"/>
   </Geometry>
 
   <Events maxTime="17280000">
@@ -75,6 +75,20 @@
       name="gasRelativePermeabilityTable"
       coordinates="{ 0.0, 1.0 }"
       values="{ 0.0, 1.0 }"/>
+
+    <!-- Initial saturation tables using voxel files -->
+    <TableFunction
+      name="initSatWaterTable"
+      inputVarNames="{elementCenter}"
+      coordinateFiles="{xlin.geos,ylin.geos,zlin.geos}"
+      voxelFile="initSatWater.geos"
+      interpolation="linear" />
+    <TableFunction
+      name="initSatGasTable"
+      inputVarNames="{elementCenter}"
+      coordinateFiles="{xlin.geos,ylin.geos,zlin.geos}"
+      voxelFile="initSatGas.geos"
+      interpolation="linear" />
   </Functions>
 
   <Constitutive>
@@ -109,18 +123,18 @@
     <FieldSpecification name="initialPressure" initialCondition="1" setNames="{ all }"
       objectPath="ElementRegions/Domain/block1" fieldName="pressure" scale="1.0e7"/>
     <FieldSpecification name="initialfacePressure" initialCondition="1" setNames="{ all }"
-      objectPath="faceManager" fieldName="facePressure" scale="1.0e7"/>      
+      objectPath="faceManager" fieldName="facePressure" scale="1.0e7"/>
 
     <!-- Initial saturations (phaseVolumeFraction component index: 0=water, 1=gas) -->
-    <FieldSpecification name="initSatWater" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="0.5"/>
-      
-    <FieldSpecification name="initSatGas" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.5"/>
+    <FieldSpecification name="initSatWater" initialCondition="1" functionName="initSatWaterTable" setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="1.0"/>
+
+    <FieldSpecification name="initSatGas" initialCondition="1" functionName="initSatGasTable" setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="1.0"/>
 
     <!-- Pressure BC regions -->
     <FieldSpecification name="topPressure" objectPath="faceManager"
-      fieldName="bcPressure" scale="1.0e7" setNames="{ top_BC }"/>            
+      fieldName="bcPressure" scale="1.0e7" setNames="{ top_BC }"/>
 
   </FieldSpecifications>
 
@@ -128,5 +142,3 @@
     <VTK name="vtkOutput"/>
   </Outputs>
 </Problem>
-
-
