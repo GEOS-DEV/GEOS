@@ -46,8 +46,6 @@ ThickPlane::ThickPlane( const string & name, Group * const parent ):
 
 void ThickPlane::postInputInitialization()
 {
-  SimpleGeometricObjectBase::postInputInitialization();
-
   m_thickness *= 0.5; // actually store the half-thickness
   GEOS_ERROR_IF( m_thickness <= 0,
                  getDataContext() << ": The plane appears to have zero or negative thickness" );

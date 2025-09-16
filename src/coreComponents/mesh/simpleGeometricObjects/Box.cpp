@@ -57,8 +57,6 @@ Box::Box( const string & name, Group * const parent ):
 
 void Box::postInputInitialization()
 {
-  SimpleGeometricObjectBase::postInputInitialization();
-
   LvArray::tensorOps::copy< 3 >( m_boxCenter, m_min );
   LvArray::tensorOps::add< 3 >( m_boxCenter, m_max );
   LvArray::tensorOps::scale< 3 >( m_boxCenter, 0.5 );
