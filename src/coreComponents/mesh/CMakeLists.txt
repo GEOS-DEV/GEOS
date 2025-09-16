@@ -29,6 +29,7 @@ set( mesh_headers
      CellElementRegion.hpp
      CellElementRegionSelector.hpp
      CellElementSubRegion.hpp
+     CellElementSubRegionVariable.hpp
      DomainPartition.hpp
      EdgeManager.hpp
      ElementRegionBase.hpp
@@ -126,6 +127,7 @@ set( mesh_sources
      CellElementRegion.cpp
      CellElementRegionSelector.cpp
      CellElementSubRegion.cpp
+     CellElementSubRegionVariable.cpp
      DomainPartition.cpp
      EdgeManager.cpp
      ElementRegionBase.cpp
