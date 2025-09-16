@@ -32,7 +32,7 @@
       logLevel="5"  
       partitionRefinement="0"
       useGlobalIds="0"
-      file="polyhedral_extruded_layers_rot_coarse_regular.vtk"/>
+      file="polyhedral_extruded_layers_rot_coarse.vtk"/>
   </Mesh>
 
   <Geometry>      
@@ -49,7 +49,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <!-- Hybrid mimetic discretization; choose innerProductType (TPFA, quasiTPFA, quasiRT, simple) -->
-      <HybridMimeticDiscretization name="immiscibleHybridMimetic" innerProductType="TPFA"/>
+      <HybridMimeticDiscretization name="immiscibleHybridMimetic" innerProductType="simple"/>
     </FiniteVolume>
   </NumericalMethods>
 

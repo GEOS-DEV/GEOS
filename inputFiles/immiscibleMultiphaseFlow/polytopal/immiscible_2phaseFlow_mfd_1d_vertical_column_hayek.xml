@@ -8,22 +8,22 @@
 ------------------------------------------------------------------- -->
 <Problem>
   <Solvers gravityVector="{ 0.0, 0.0, -10.0 }">
-    <ImmiscibleMultiphaseFlow
-      name="FlowSolver"
-      discretization="TPFA"
+    <ImmiscibleMultiphaseFlowMFD
+      name="FlowSolverMFD"
+      discretization="immiscibleHybridMimetic"
       targetRegions="{ Domain }"
       logLevel="2"
-      temperature="300">
+      dependentPhaseIndex="1">
       <NonlinearSolverParameters 
-        newtonTol="1e-4"
+        newtonTol="1e-6"
         lineSearchAction="None"
-        maxTimeStepCuts="50"
-        maxSubSteps="50"
-        newtonMaxIter="50"/>
+        maxTimeStepCuts="100"
+        maxSubSteps="100"
+        newtonMaxIter="10"/>
       <LinearSolverParameters 
         directParallel="0"
         reuseFactorization="0"/>
-    </ImmiscibleMultiphaseFlow>
+    </ImmiscibleMultiphaseFlowMFD>
   </Solvers>
 
   <Mesh>
@@ -33,34 +33,25 @@
                   xCoords="{ 0, 1 }"
                   yCoords="{ 0, 1 }"
                   zCoords="{ 0, 10 }"
-                  nx="{ 1 }" ny="{ 1 }" nz="{ 10 }"
+                  nx="{ 1 }" ny="{ 1 }" nz="{ 200 }"
                   cellBlockNames="{ block1 }"/>
   </Mesh>
 
   <Geometry>      
     <Box name="top_BC" 
       xMin="{ -0.0001, -0.0001, 9.9999 }" 
-      xMax="{ 1.0001, 1.0001, 10.0001 }"/>   
-    <Box name="top_box" 
-      xMin="{ -0.0001, -0.0001, 8.9999 }" 
-      xMax="{ 1.0001, 1.0001, 10.0001 }"/>
-    <Box name="top_box_xzy0" 
-      xMin="{ -0.0001, -0.0001, 8.9999 }" 
-      xMax="{ 1.0001, -0.0001, 10.0001 }"/>
-    <Box name="top_box_xzy1" 
-      xMin="{ -0.0001, 0.9999, 8.9999 }" 
-      xMax="{ 1.0001, 1.0001, 10.0001 }"/>   
+      xMax="{ 1.0001, 1.0001, 10.0001 }"/>               
   </Geometry>
 
-  <Events maxTime="3456000">
+  <Events maxTime="17280000">
     <PeriodicEvent name="outputs" timeFrequency="86400" target="/Outputs/vtkOutput"/>
-    <PeriodicEvent name="solverApps" forceDt="86400" target="/Solvers/FlowSolver"/>
+    <PeriodicEvent name="solverApps" forceDt="86400" target="/Solvers/FlowSolverMFD"/>
   </Events>
 
   <NumericalMethods>
     <FiniteVolume>
-      <TwoPointFluxApproximation
-        name="TPFA"/>
+      <!-- Hybrid mimetic discretization; choose innerProductType (tpfa, quasiTPFA, quasiRT, simple) -->
+      <HybridMimeticDiscretization name="immiscibleHybridMimetic" innerProductType="TPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -113,7 +104,7 @@
 
   <FieldSpecifications>
     <FieldSpecification name="Porosity" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain/block1" fieldName="rockPorosity_referencePorosity" scale="0.05"/>
+      objectPath="ElementRegions/Domain/block1" fieldName="rockPorosity_referencePorosity" scale="0.25"/>
 
     <FieldSpecification name="initialPressure" initialCondition="1" setNames="{ all }"
       objectPath="ElementRegions/Domain/block1" fieldName="pressure" scale="1.0e7"/>
@@ -123,18 +114,13 @@
     <!-- Initial saturations (phaseVolumeFraction component index: 0=water, 1=gas) -->
     <FieldSpecification name="initSatWater" initialCondition="1" setNames="{ all }"
       objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="0" scale="0.5"/>
+      
     <FieldSpecification name="initSatGas" initialCondition="1" setNames="{ all }"
       objectPath="ElementRegions/Domain/block1" fieldName="phaseVolumeFraction" component="1" scale="0.5"/>
 
     <!-- Pressure BC regions -->
-    <FieldSpecification name="topPressure" objectPath="ElementRegions/Domain/block1"
-      fieldName="pressure" scale="1.0e7" setNames="{ top_box }"/>
-
-    <FieldSpecification name="xzy0TopPressure" objectPath="ElementRegions/Domain/block1"
-      fieldName="pressure" scale="1.0e7" setNames="{ top_box_xzy0 }"/> 
-
-    <FieldSpecification name="xzy1TopPressure" objectPath="ElementRegions/Domain/block1"
-      fieldName="pressure" scale="1.0e7" setNames="{ top_box_xzy1 }"/>            
+    <FieldSpecification name="topPressure" objectPath="faceManager"
+      fieldName="bcPressure" scale="1.0e7" setNames="{ top_BC }"/>            
 
   </FieldSpecifications>
 

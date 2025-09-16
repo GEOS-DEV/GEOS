@@ -15,11 +15,11 @@
       logLevel="2"
       dependentPhaseIndex="1">
       <NonlinearSolverParameters 
-        newtonTol="1e-4"
+        newtonTol="1e-6"
         lineSearchAction="None"
         maxTimeStepCuts="100"
         maxSubSteps="100"
-        newtonMaxIter="20"/>
+        newtonMaxIter="10"/>
       <LinearSolverParameters 
         directParallel="0"
         reuseFactorization="0"/>
@@ -33,7 +33,7 @@
                   xCoords="{ 0, 1 }"
                   yCoords="{ 0, 1 }"
                   zCoords="{ 0, 10 }"
-                  nx="{ 1 }" ny="{ 1 }" nz="{ 500 }"
+                  nx="{ 1 }" ny="{ 1 }" nz="{ 200 }"
                   cellBlockNames="{ block1 }"/>
   </Mesh>
 
@@ -43,7 +43,7 @@
       xMax="{ 1.0001, 1.0001, 10.0001 }"/>               
   </Geometry>
 
-  <Events maxTime="34560000">
+  <Events maxTime="17280000">
     <PeriodicEvent name="outputs" timeFrequency="86400" target="/Outputs/vtkOutput"/>
     <PeriodicEvent name="solverApps" forceDt="86400" target="/Solvers/FlowSolverMFD"/>
   </Events>
@@ -51,7 +51,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <!-- Hybrid mimetic discretization; choose innerProductType (tpfa, quasiTPFA, quasiRT, simple) -->
-      <HybridMimeticDiscretization name="immiscibleHybridMimetic" innerProductType="quasiTPFA"/>
+      <HybridMimeticDiscretization name="immiscibleHybridMimetic" innerProductType="TPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
