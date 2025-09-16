@@ -242,6 +242,30 @@ DECLARE_FIELD( AuxiliaryVar4PML,
                NOPLOT,
                WRITE_AND_READ,
                "PML scalar auxiliary variable 4." );
+
+DECLARE_FIELD( Node_X,
+               "node_x",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Node X." );
+
+DECLARE_FIELD( Node_Y,
+               "node_y",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Node Y." );
+
+DECLARE_FIELD( Node_Z,
+               "node_z",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Node Z." );
 }
 
 }

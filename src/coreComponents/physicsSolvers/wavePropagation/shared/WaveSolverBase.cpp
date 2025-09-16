@@ -253,6 +253,12 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setDescription( "Names of the table functions, one for each source, that are used to define the source wavelets. If a list is given, it overrides the Ricker wavelet definitions."
                     "The default value is an empty list, which means that a Ricker wavelet is used everywhere." );
 
+  registerWrapper( viewKeyStruct::radiusIsoAroundSourceString(), &m_radiusIsoAroundSource ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 200 ).
+    setDescription( "Radius to define an isotropic region around the source" );
+
+
   addLogLevel< logInfo::DASType >();
 }
 

@@ -125,6 +125,8 @@ public:
     static constexpr char const * slsAnelasticityCoefficientsString() { return "slsAnelasticityCoefficients"; }
 
     static constexpr char const * sourceWaveletTableNames() { return "sourceWaveletTableNames"; }
+
+    static constexpr char const * radiusIsoAroundSourceString() { return "radiusIsoAroundSource"; }
   };
 
   /**
@@ -441,6 +443,9 @@ protected:
 
   /// Wrappers of table functions for source wavelet (time dependency)
   array1d< TableFunction::KernelWrapper > m_sourceWaveletTableWrappers;
+
+  /// Radius around source for isotropic zone
+  real64 m_radiusIsoAroundSource = 10.0;
 
   struct parametersPML
   {

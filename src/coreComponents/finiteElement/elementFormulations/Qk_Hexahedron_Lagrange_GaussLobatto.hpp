@@ -607,6 +607,16 @@ public:
                                     real64 const (&X)[4][3] );
 
   /**
+   * @brief computes the volume of a Hexahedra
+   * @param q The quadrature point index
+   * @param X Array containing the coordinates of the mesh support points.
+   * @return The diagonal mass term associated to q
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static real64 computeVolumeHexahedra( real64 const (&X)[8][3] );
+
+  /**
    * @brief computes the matrix B, defined as J^{-T}J^{-1}/det(J), where J is the Jacobian matrix,
    *   at the given Gauss-Lobatto point.
    * @param qa The 1d quadrature point index in xi0 direction (0,1)
@@ -674,6 +684,66 @@ public:
                                       real64 const (&X)[8][3],
                                       FUNC && func );
 
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void computeMissingxyVolumeTerm( localIndex const q,
+                                          real64 const (&X)[8][3],
+                                          FUNC && func );
+
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void computeRotatedMissingxyVolumeTerm( localIndex const q,
+                                                 real64 const theta,
+                                                 real64 const phi,
+                                                 real64 const (&X)[8][3],
+                                                 FUNC && func );
+
+
+
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void computeInterp( localIndex const q,
+                             FUNC && func );
+
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void computeMissingzVolumeTerm_precompDzF( localIndex const q,
+                                                    real64 const (&X)[8][3],
+                                                    FUNC && func );
+
+
+
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void computeMissingzVolumeTerm( localIndex const q,
+                                         real64 const (&X)[8][3],
+                                         FUNC && func );
+
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void computeRotatedMissingzVolumeTerm( localIndex const q,
+                                                real64 const theta,
+                                                real64 const phi,
+                                                real64 const (&X)[8][3],
+                                                FUNC && func );
+
+
+
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void computeMissingzFluxTerm( localIndex const q3D,
+                                       localIndex const q2D,
+                                       real64 const (&X3D)[8][3],
+                                       real64 const (&X2D)[4][3],
+                                       real64 const (&N)[3],
+                                       FUNC && func );
   /**
    * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_z J^{-1}/det(J), where
    * J is the Jacobian matrix, and A_z is a zero matrix except on A_z(3,3) = 1.
@@ -708,6 +778,104 @@ public:
                                      real64 const (&X)[8][3],
                                      FUNC && func );
 
+
+/**
+ * @brief computes the matrix B for a rotated quasi-stiffness (e.g. for pseudo-acoustic tti), defined as J^{-T}R^T A_xy R J^{-1}/det(J),
+ * where J is the Jacobian matrix, A_xy is a zero matrix except on A_xy(1,1) = 1 and A_xy(2,2) = 1 and R a rotation matrix.
+ * @param qa The 1d quadrature point index in xi0 direction (0,1)
+ * @param qb The 1d quadrature point index in xi1 direction (0,1)
+ * @param qc The 1d quadrature point index in xi2 direction (0,1)
+ * @param theta Tilt angle
+ * @param phi Azimuth of the tilt
+ * @param X Array containing the coordinates of the support points.
+ * @param J Array to store the Jacobian
+ * @param B Array to store the matrix B, in Voigt notation
+ */
+  GEOS_HOST_DEVICE
+  static void computeRotatedBxyMatrix( int const qa,
+                                       int const qb,
+                                       int const qc,
+                                       real64 const theta,
+                                       real64 const phi,
+                                       real64 const (&X)[8][3],
+                                       real64 ( &J )[3][3],
+                                       real64 ( &B )[6] );
+
+  /**
+   * @brief computes the non-zero contributions of the d.o.f. indexed by q to the rotated partial-stiffness matrix R, i.e., the
+   * superposition matrix of first derivatives in x and y of the shape functions. Warning, the matrix B is obtained by
+   * computeRotatedBxyMatrix instead of usual one.
+   * @param q The quadrature point index
+   * @param theta Tilt angle
+   * @param phi Azimuth of the tilt
+   * @param X Array containing the coordinates of the support points.
+   * @param func Callback function accepting three parameters: i, j and R_ij
+   */
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  static void computeRotatedStiffnessxyTerm( localIndex const q,
+                                             real64 const theta,
+                                             real64 const phi,
+                                             real64 const (&X)[8][3],
+                                             FUNC && func );
+
+  /**
+   * @brief computes the matrix B in the case of rotated quasi-stiffness (e.g. for pseudo-acoustic tti), defined as J^{-T}R^T A_z R
+   * J^{-1}/det(J), where J is the Jacobian matrix, A_z is a zero matrix except on A_z(3,3) = 1 and R is the rotation matrix.
+   * @param qa The 1d quadrature point index in xi0 direction (0,1)
+   * @param qb The 1d quadrature point index in xi1 direction (0,1)
+   * @param qc The 1d quadrature point index in xi2 direction (0,1)
+   * @param theta Tilt angle
+   * @param phi Azimuth of the tilt
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to store the Jacobian
+   * @param B Array to store the matrix B, in Voigt notation
+   */
+  GEOS_HOST_DEVICE
+  static void computeRotatedBzMatrix( int const qa,
+                                      int const qb,
+                                      int const qc,
+                                      real64 const theta,
+                                      real64 const phi,
+                                      real64 const (&X)[8][3],
+                                      real64 ( &J )[3][3],
+                                      real64 ( &B )[6] );
+
+  /**
+   * @brief computes the non-zero contributions of the d.o.f. indexed by q to the rotated partial-stiffness matrix R, i.e., the
+   * superposition matrix of first derivatives in z only of the shape functions. Warning, the matrix B is obtained by computeRotatedBzMatrix
+   * instead of usual one.
+   * @param q The quadrature point index
+   * @param theta Tilt angle
+   * @param phi Azimuth of the tilt
+   * @param X Array containing the coordinates of the support points.
+   * @param func Callback function accepting three parameters: i, j and R_ij
+   */
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  static void
+  computeRotatedStiffnesszTerm( localIndex const q,
+                                real64 const theta,
+                                real64 const phi,
+                                real64 const (&X)[8][3],
+                                FUNC && func );
+
+
+
+  /**
+   * @brief computes the transport of the rotation matrix for the tilt and azimuth angle respectively theta and phi.
+   * @param Rt Array of the transpose of the rotation matrix
+   * @param theta Tilt angle
+   * @param phi Azimuth of the tilt
+   */
+  GEOS_HOST_DEVICE
+  static void
+    computeTransposeRotationMatrix( real64 ( &Rt )[3][3],
+                                    real64 const theta,
+                                    real64 const phi );
+
+
+
 /**
  * @brief Computes the "Grad(Phi)*B*Grad(Phi)" coefficient of the stiffness term. The matrix B must be provided and Phi denotes a basis
  * function.
@@ -726,6 +894,40 @@ public:
                           int const qc,
                           real64 const (&B)[6],
                           FUNC && func );
+
+
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void
+  computeGradPhiBGradzF_precompDzF( int const qa,
+                                    int const qb,
+                                    int const qc,
+                                    real64 const (&AzJmT)[3][3],
+                                    FUNC && func );
+
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void
+  computeGradPhiBGradF( int const qa,
+                        int const qb,
+                        int const qc,
+                        real64 const (&B)[6],
+                        FUNC && func );
+
+  template< typename FUNC >
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void
+  computeFluxGradPhiBGradzF( int const q3Da,
+                             int const q3Db,
+                             int const q3Dc,
+                             int const qa,
+                             int const qb,
+                             real64 const (&N)[3],
+                             real64 const (&AzJmT)[3][3],
+                             FUNC && func );
 
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
@@ -1214,6 +1416,28 @@ computeMassTerm( localIndex const q,
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeTransposeRotationMatrix( real64 (& Rt)[3][3],
+                                real64 const theta,
+                                real64 const phi
+                                )
+{
+  Rt[0][0] = cos( phi )*cos( theta );
+  Rt[1][0] = sin( phi )*cos( theta );
+  Rt[2][0] = -sin( theta );
+  Rt[0][1] = -sin( phi );
+  Rt[1][1] = cos( phi );
+  Rt[2][1] = 0;
+  Rt[0][2] = cos( phi )*sin( theta );
+  Rt[1][2] = sin( phi )*sin( theta );
+  Rt[2][2] = cos( theta );
+}
+
+
+template< typename GL_BASIS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 real64
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeDampingTerm( localIndex const q,
@@ -1313,6 +1537,403 @@ computeBxyMatrix( int const qa,
   B[5] = detJ*(Jinv[0][0]*Jinv[1][0] + Jinv[0][1]*Jinv[1][1]);
 }
 
+
+template< typename GL_BASIS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeRotatedBzMatrix( int const qa,
+                        int const qb,
+                        int const qc,
+                        real64 const theta,
+                        real64 const phi,
+                        real64 const (&X)[8][3],
+                        real64 (& J)[3][3],
+                        real64 (& B)[6] )
+{
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  real64 Jinv[3][3] = {{0}};
+  LvArray::tensorOps::invert< 3 >( Jinv, J );
+  real64 S[6] = {0};
+  real64 Az[6] = {0};
+  Az[2] = detJ;
+  real64 Rt[3][3];
+  computeTransposeRotationMatrix( Rt, theta, phi );
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( S, Rt, Az ); // S = R^T.Axy.R
+  // B=det(J)*J^{-1}*R^T*Az*R*J^{-T}, using Voigt notation for B
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( B, Jinv, S );
+}
+
+template< typename GL_BASIS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeRotatedBxyMatrix( int const qa,
+                         int const qb,
+                         int const qc,
+                         real64 const theta,
+                         real64 const phi,
+                         real64 const (&X)[8][3],
+                         real64 (& J)[3][3],
+                         real64 (& B)[6] )
+{
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  real64 Jinv[3][3] = {{0}};
+  LvArray::tensorOps::invert< 3 >( Jinv, J );
+  real64 S[6] = {0};
+  real64 Axy[6] = {0};
+  Axy[0] = detJ;
+  Axy[1] = detJ;
+  real64 Rt[3][3];
+  computeTransposeRotationMatrix( Rt, theta, phi );
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( S, Rt, Axy ); // S = R^T.Axy.R
+  // B=det(J)*J^{-1}*R^T*Axy*R*J^{-T}, using Voigt notation for B
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( B, Jinv, S );
+}
+
+
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeMissingzVolumeTerm_precompDzF( localIndex const q,
+                                      real64 const (&X)[8][3],
+                                      FUNC && func )
+{
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  real64 J[3][3] = {{0}};
+  jacobianTransformation( qa, qb, qc, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  LvArray::tensorOps::transpose< 3 >( J ); // J <- J^T
+  LvArray::tensorOps::invert< 3 >( J ); // J <- J^-T
+  real64 AzInvJT[3][3] = {{0}}; // = det(J) * Az * J^-T
+  // compute Az * J{-T)
+  AzInvJT[2][0] = detJ * J[2][0];
+  AzInvJT[2][1] = detJ * J[2][1];
+  AzInvJT[2][2] = detJ * J[2][2];
+
+  computeGradPhiBGradzF_precompDzF( qa, qb, qc, AzInvJT, func );
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeGradPhiBGradzF_precompDzF( int const qa,
+                                  int const qb,
+                                  int const qc,
+                                  real64 const (&AzInvJT)[3][3],
+                                  FUNC && func )
+{
+  const real64 w = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc );
+
+  // Old (functionning) version assuming:
+  //  * delta and epsilon are Q1
+  //  * the derivative dz(delta) is precomputed and given as input to GEOS.
+  for( int j=0; j<num1dNodes; j++ )
+  {
+    const int i = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, qc ); // i = control point q  =abc
+
+    const int jbc = GL_BASIS::TensorProduct3D::linearIndex( j, qb, qc );
+    const int ajc = GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc );
+    const int abj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
+    const real64 gja = basisGradientAt( j, qa );
+    const real64 gjb = basisGradientAt( j, qb );
+    const real64 gjc = basisGradientAt( j, qc );
+    // diagonal terms
+    const real64 w2 = w * gjc;
+    func( i, abj, w2 * AzInvJT[2][2] );  // to be multiply by "dz(f)/rho" in the element K (supposedly constant)
+    //Of diagonal terms
+    const real64 w4 = w * gja;
+    func( i, jbc, w4 * AzInvJT[2][0] );
+    const real64 w3 = w * gjb;
+    func( i, ajc, w3 * AzInvJT[2][1] );
+  }
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeMissingzVolumeTerm( localIndex const q,
+                           real64 const (&X)[8][3],
+                           FUNC && func )
+{
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  real64 B[6] = {0};
+  real64 J[3][3] = {{0}};
+  computeBzMatrix( qa, qb, qc, X, J, B );
+  computeGradPhiBGradPhi( qa, qb, qc, B, func );
+  //computeGradPhiBGradF( qa, qb, qc, B, func );
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeRotatedMissingzVolumeTerm( localIndex const q,
+                                  real64 const theta,
+                                  real64 const phi,
+                                  real64 const (&X)[8][3],
+                                  FUNC && func )
+{
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  real64 B[6] = {0};
+  real64 J[3][3] = {{0}};
+  computeRotatedBzMatrix( qa, qb, qc, theta, phi, X, J, B );
+  computeGradPhiBGradPhi( qa, qb, qc, B, func );
+}
+
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeMissingxyVolumeTerm( localIndex const q,
+                            real64 const (&X)[8][3],
+                            FUNC && func )
+{
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  real64 B[6] = {0};
+  real64 J[3][3] = {{0}};
+  computeBxyMatrix( qa, qb, qc, X, J, B );
+  computeGradPhiBGradPhi( qa, qb, qc, B, func );
+  //computeGradPhiBGradF( qa, qb, qc, B, func );
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeRotatedMissingxyVolumeTerm( localIndex const q,
+                                   real64 const theta,
+                                   real64 const phi,
+                                   real64 const (&X)[8][3],
+                                   FUNC && func )
+{
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  real64 B[6] = {0};
+  real64 J[3][3] = {{0}};
+  computeRotatedBxyMatrix( qa, qb, qc, theta, phi, X, J, B );
+  computeGradPhiBGradPhi( qa, qb, qc, B, func );
+}
+
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeInterp( localIndex const q,
+               FUNC && func )
+{
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+
+  real64 xa = GL_BASIS::parentSupportCoord( qa );
+  real64 xb = GL_BASIS::parentSupportCoord( qb );
+  real64 xc = GL_BASIS::parentSupportCoord( qc );
+
+
+  for( localIndex k=0; k < LagrangeBasis1::TensorProduct3D::numSupportPoints; k++ )
+  {
+    localIndex ik = meshIndexToLinearIndex3D( k );         // indices in Q_r
+    localIndex k1, k2, k3;         // 1D indices: k1=0 or 1
+    GL_BASIS::TensorProduct3D::multiIndex( k, k1, k2, k3 );         // split k into each dimension
+    real64 phik1, phik2, phik3 = 0;
+    phik1 = LagrangeBasis1::value( k1, xa );
+    phik2 = LagrangeBasis1::value( k2, xb );
+    phik3 = LagrangeBasis1::value( k3, xc );
+
+
+    func( phik1*phik2*phik3 );
+
+  }
+}
+
+
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeGradPhiBGradF( int const qa,
+                      int const qb,
+                      int const qc,
+                      real64 const (&B)[6],
+                      FUNC && func )
+{
+  const real64 w = GL_BASIS::weight( qa )*GL_BASIS::weight( qb )*GL_BASIS::weight( qc );
+
+  // New version assuming:
+  //  * both delta and epsilon are Q1.
+  //  * no precomputation required, all terms computed on the fly.
+
+  // 1D Coord of the nodes
+  real64 xa = GL_BASIS::parentSupportCoord( qa );
+  real64 xb = GL_BASIS::parentSupportCoord( qb );
+  real64 xc = GL_BASIS::parentSupportCoord( qc );
+
+  for( int j=0; j<num1dNodes; j++ )
+  {
+    const int jbc = GL_BASIS::TensorProduct3D::linearIndex( j, qb, qc );
+    const int ajc = GL_BASIS::TensorProduct3D::linearIndex( qa, j, qc );
+    const int abj = GL_BASIS::TensorProduct3D::linearIndex( qa, qb, j );
+    const real64 gja = basisGradientAt( j, qa );
+    const real64 gjb = basisGradientAt( j, qb );
+    const real64 gjc = basisGradientAt( j, qc );
+
+    for( localIndex k=0; k < LagrangeBasis1::TensorProduct3D::numSupportPoints; k++ )
+    {
+      localIndex ik = meshIndexToLinearIndex3D( k ); // indices in Q_r
+      localIndex k1, k2, k3; // 1D indices: k1=0 or 1
+      //GL_BASIS::TensorProduct3D::multiIndex( k, k1, k2, k3 ); // split k into each dimension
+      LagrangeBasis1::TensorProduct3D::multiIndex( k, k1, k2, k3 ); // split k into each dimension
+
+      real64 dphik1, dphik2, dphik3, phik1, phik2, phik3 = 0;
+      dphik1 = LagrangeBasis1::gradientAt( k1, 0 ); // Second argument useless
+      dphik2 = LagrangeBasis1::gradientAt( k2, 0 ); // Second argument useless
+      dphik3 = LagrangeBasis1::gradientAt( k3, 0 ); // Second argument useless
+
+      phik1 = LagrangeBasis1::value( k1, xa );
+      phik2 = LagrangeBasis1::value( k2, xb );
+      phik3 = LagrangeBasis1::value( k3, xc );
+
+      // diagonal terms
+      const real64 w0 = w * gja * dphik1 * phik2 * phik3;
+      func( ik, jbc, w0 * B[0] );
+      const real64 w1 = w * gjb * phik1 * dphik2 * phik3;
+      func( ik, ajc, w1 * B[1] );
+      const real64 w2 = w * gjc * phik1 * phik2 * dphik3;
+      func( ik, abj, w2 * B[2] );
+      // off-diagonal terms
+      const real64 w3 = w * gjb * dphik1 * phik2 * phik3;
+      func( ik, ajc, w3 * B[5] );
+      const real64 w4 = w * gjc * dphik1 * phik2 * phik3;
+      func( ik, abj, w4 * B[4] );
+      const real64 w5 = w * gja * phik1 * dphik2 * phik3;
+      func( ik, jbc, w5 * B[5] );
+      const real64 w6 = w * gjc * phik1 * dphik2 * phik3;
+      func( ik, abj, w6 * B[3] );
+      const real64 w7 = w * gja * phik1 * phik2 * dphik3;
+      func( ik, jbc, w7 * B[4] );
+      const real64 w8 = w * gjb * phik1 * phik2 * dphik3;
+      func( ik, ajc, w8 * B[3] );
+    }
+  }
+}
+
+
+
+// With the "BIS" : compute the flux term instead (new version)
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeMissingzFluxTerm( localIndex const q3D,
+                         localIndex const q2D,
+                         real64 const (&X3D)[8][3],
+                         real64 const (&X2D)[4][3],
+                         real64 const (&N)[3],
+                         FUNC && func )
+{
+  //Get local numbering in ref element
+  int q3Da, q3Db, q3Dc;
+  GL_BASIS::TensorProduct3D::multiIndex( q3D, q3Da, q3Db, q3Dc );
+  //Get local numbering in parametrized surface
+  int q2Da, q2Db;
+  GL_BASIS::TensorProduct2D::multiIndex( q2D, q2Da, q2Db );
+  // 2D Jacobian transformation
+  real64 J2D[3][2] = {{0}};
+  jacobianTransformation2d( q2Da, q2Db, X2D, J2D );
+  // compute J^T.J, using Voigt notation
+  real64 JtJ2D[3] = {0}; // J^T.J (Voigt notation)
+  JtJ2D[0] = J2D[0][0]*J2D[0][0]+J2D[1][0]*J2D[1][0]+J2D[2][0]*J2D[2][0];
+  JtJ2D[1] = J2D[0][1]*J2D[0][1]+J2D[1][1]*J2D[1][1]+J2D[2][1]*J2D[2][1];
+  JtJ2D[2] = J2D[0][0]*J2D[0][1]+J2D[1][0]*J2D[1][1]+J2D[2][0]*J2D[2][1];
+  real64 det2D= LvArray::tensorOps::symDeterminant< 2 >( JtJ2D );
+  real64 const sqrtDetJ2D = sqrt( LvArray::math::abs( det2D ) );
+  //Get 3D jacobian to compute the Trace of the Gradient properly
+  real64 J3D[3][3] = {{0}};
+  jacobianTransformation( q3Da, q3Db, q3Dc, X3D, J3D );
+  LvArray::tensorOps::transpose< 3 >( J3D ); // J3D <- Jacobian^T
+  LvArray::tensorOps::invert< 3 >( J3D ); // J3D <- Jacobian^{-T}
+  real64 Az[3][3] = {{0}};
+  Az[2][2] = sqrtDetJ2D;
+  real64 AzJmT[3][3] = {{0}};
+  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( AzJmT, Az, J3D ); // AzJmT <- sqrtDetJ2D*Az * J^{-T}
+  real64 AzN[3]; // Normal vector
+  AzN[0] = 0;
+  AzN[1] = 0;
+  AzN[2] = N[2];
+  computeFluxGradPhiBGradzF( q3Da, q3Db, q3Dc, q2Da, q2Db, AzN, AzJmT, func );
+}
+
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeFluxGradPhiBGradzF( int const q3Da,
+                           int const q3Db,
+                           int const q3Dc,
+                           int const q2Da,
+                           int const q2Db,
+                           real64 const (&AzN)[3],
+                           real64 const (&AzJmT)[3][3],
+                           FUNC && func )
+{
+  const real64 w = GL_BASIS::weight( q2Da )*GL_BASIS::weight( q2Db );
+  for( int j=0; j<num1dNodes; j++ )
+  {
+    const int i = GL_BASIS::TensorProduct3D::linearIndex( q3Da, q3Db, q3Dc );
+    const int jbc = GL_BASIS::TensorProduct3D::linearIndex( j, q3Db, q3Dc );
+    const int ajc = GL_BASIS::TensorProduct3D::linearIndex( q3Da, j, q3Dc );
+    const int abj = GL_BASIS::TensorProduct3D::linearIndex( q3Da, q3Db, j );
+    const real64 gja = basisGradientAt( j, q3Da );
+    const real64 gjb = basisGradientAt( j, q3Db );
+    const real64 gjc = basisGradientAt( j, q3Dc );
+    //Warning, points associated to jbc, ajc and abj MUST be on the surface
+    const real64 w1 = w * gja* (AzJmT[0][0]*AzN[0] + AzJmT[1][0]*AzN[1] + AzJmT[2][0]*AzN[2]);
+    func( i, jbc, w1 );
+    const real64 w2 = w * gjb* (AzJmT[0][1]*AzN[0] + AzJmT[1][1]*AzN[1] + AzJmT[2][1]*AzN[2]);
+    func( i, ajc, w2 );
+    const real64 w3 = w * gjc* (AzJmT[0][2]*AzN[0] + AzJmT[1][2]*AzN[1] + AzJmT[2][2]*AzN[2]);
+    func( i, abj, w3 );
+  }
+}
+
+
+
 template< typename GL_BASIS >
 template< typename FUNC >
 GEOS_HOST_DEVICE
@@ -1396,6 +2017,46 @@ computeStiffnesszTerm( localIndex const q,
   real64 B[6] = {0};
   real64 J[3][3] = {{0}};
   computeBzMatrix( qa, qb, qc, X, J, B ); // The only change!
+  computeGradPhiBGradPhi( qa, qb, qc, B, func );
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeRotatedStiffnessxyTerm( localIndex const q,
+                               real64 const theta,
+                               real64 const phi,
+                               real64 const (&X)[8][3],
+                               FUNC && func )
+{
+  real64 B[6] = {0};
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  computeRotatedBxyMatrix( qa, qb, qc, theta, phi, X, J, B );
+  computeGradPhiBGradPhi( qa, qb, qc, B, func );
+}
+
+template< typename GL_BASIS >
+template< typename FUNC >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void
+Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+computeRotatedStiffnesszTerm( localIndex const q,
+                              real64 const theta,
+                              real64 const phi,
+                              real64 const (&X)[8][3],
+                              FUNC && func )
+{
+  real64 B[6] = {0};
+  real64 J[3][3] = {{0}};
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  computeRotatedBzMatrix( qa, qb, qc, theta, phi, X, J, B );
   computeGradPhiBGradPhi( qa, qb, qc, B, func );
 }
 
