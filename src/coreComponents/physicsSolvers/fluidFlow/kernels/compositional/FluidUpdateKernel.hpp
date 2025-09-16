@@ -26,7 +26,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional
+namespace fluidFlow::kernels::compositional
 {
 
 /******************************** FluidUpdateKernel ********************************/
@@ -69,7 +69,7 @@ struct FluidUpdateKernel
   }
 };
 
-} // namespace kernels::fluidFlow::compositional
+} // namespace fluidFlow::kernels::compositional
 
 } // namespace geos
 

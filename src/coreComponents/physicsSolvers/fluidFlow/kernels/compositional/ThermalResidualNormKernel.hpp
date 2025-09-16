@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::thermal
+namespace fluidFlow::kernels::compositional::thermal
 {
 
 /******************************** ResidualNormKernel ********************************/
@@ -232,7 +232,7 @@ public:
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::thermal
+} // namespace fluidFlow::kernels::compositional::thermal
 
 } // namespace geos
 

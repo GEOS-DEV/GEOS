@@ -26,7 +26,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::singlePhase::fvm::isothermal
+namespace fluidFlow::kernels::singlePhase::fvm::isothermal
 {
 
 /**
@@ -217,7 +217,7 @@ public:
         localIndex const subRegionIndex[2] = {m_sesri( iconn, k[0] ), m_sesri( iconn, k[1] )};
         localIndex const elementIndex[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
-        kernels::fluidFlow::singlePhase::fvm::computeSinglePhaseFlux( regionIndex,
+        fluidFlow::kernels::singlePhase::fvm::computeSinglePhaseFlux( regionIndex,
                                                                       subRegionIndex,
                                                                       elementIndex,
                                                                       trans,
@@ -378,7 +378,7 @@ public:
   }
 };
 
-} // namespace kernels::fluidFlow::singlePhase::fvm::isothermal
+} // namespace fluidFlow::kernels::singlePhase::fvm::isothermal
 
 } // namespace geos
 

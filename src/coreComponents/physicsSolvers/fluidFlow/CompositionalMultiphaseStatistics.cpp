@@ -301,7 +301,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
     array1d< real64 > subRegionRelpermPhaseMass( numPhases );
     array2d< real64 > subRegionComponentMass( numPhases, numComps );
 
-    kernels::fluidFlow::compositional::
+    fluidFlow::kernels::compositional::
       StatisticsKernel::
       launch< parallelDevicePolicy<> >( subRegion.size(),
                                         numComps,

@@ -29,7 +29,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional
+namespace fluidFlow::kernels::compositional
 {
 
 /******************************** StatisticsKernel ********************************/
@@ -186,7 +186,7 @@ struct StatisticsKernel
   }
 };
 
-} // namespace kernels::fluidFlow::compositional
+} // namespace fluidFlow::kernels::compositional
 
 } // namespace geos
 

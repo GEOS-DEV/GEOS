@@ -35,7 +35,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional
+namespace fluidFlow::kernels::compositional
 {
 
 static constexpr real64 minDensForDivision = 1e-10;
@@ -480,7 +480,7 @@ public:
   createAndLaunch( integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
-                   BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags,
+                   BitFlags< fluidFlow::kernels::compositional::KernelFlags > kernelFlags,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
                    constitutive::MultiFluidBase const & fluid,
@@ -503,7 +503,7 @@ public:
 
 } // namespace isothermal
 
-} // namespace kernels::fluidFlow::compositional
+} // namespace fluidFlow::kernels::compositional
 
 } // namespace geos
 

@@ -36,7 +36,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm
+namespace fluidFlow::kernels::compositional::fvm
 {
 
 /******************************** AquiferBCKernel ********************************/
@@ -124,7 +124,7 @@ struct AquiferBCKernel
 
 };
 
-} // namespace kernels::fluidFlow::compositional::fvm
+} // namespace fluidFlow::kernels::compositional::fvm
 
 } // namespace geos
 

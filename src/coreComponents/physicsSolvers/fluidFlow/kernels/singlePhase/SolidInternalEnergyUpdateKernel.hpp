@@ -26,7 +26,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::singlePhase::thermal
+namespace fluidFlow::kernels::singlePhase::thermal
 {
 
 /******************************** SolidInternalEnergyUpdateKernel ********************************/
@@ -47,7 +47,7 @@ struct SolidInternalEnergyUpdateKernel
   }
 };
 
-} // namespace kernels::fluidFlow::singlePhase::thermal
+} // namespace fluidFlow::kernels::singlePhase::thermal
 
 } // namespace geos
 

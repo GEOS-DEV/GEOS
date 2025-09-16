@@ -42,7 +42,7 @@
 namespace geos
 {
 
-namespace kernels::wells::compositional
+namespace wells::kernels::compositional
 {
 
 //struct NoOpStruct
@@ -605,11 +605,11 @@ namespace thermal
 /******************************** PerforationFluxKernel ********************************/
 
 template< integer NC, integer NP, integer IS_THERMAL >
-class PerforationFluxKernel : public kernels::wells::compositional::isothermal::PerforationFluxKernel< NC, NP, IS_THERMAL >
+class PerforationFluxKernel : public wells::kernels::compositional::isothermal::PerforationFluxKernel< NC, NP, IS_THERMAL >
 {
 public:
 
-  using Base = kernels::wells::compositional::isothermal::PerforationFluxKernel< NC, NP, IS_THERMAL >;
+  using Base = wells::kernels::compositional::isothermal::PerforationFluxKernel< NC, NP, IS_THERMAL >;
   using Base::m_resPhaseCompFrac;
   using Base::m_dResCompFrac_dCompDens;
   using Base::m_dWellElemCompFrac_dCompDens;
@@ -878,7 +878,7 @@ public:
 
 } // end namespace thermal
 
-} // end namespace kernels::wells::PerforationFluxKernels
+} // end namespace wells::kernels::PerforationFluxKernels
 
 } // end namespace geos
 

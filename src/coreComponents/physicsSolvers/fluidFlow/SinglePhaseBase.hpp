@@ -379,7 +379,7 @@ void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
-  using namespace kernels::fluidFlow::singlePhase;
+  using namespace fluidFlow::kernels::singlePhase;
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 

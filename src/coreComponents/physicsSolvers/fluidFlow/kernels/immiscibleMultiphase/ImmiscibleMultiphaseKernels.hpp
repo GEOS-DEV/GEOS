@@ -47,7 +47,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::immiscible
+namespace fluidFlow::kernels::immiscible
 {
 
 //using namespace constitutive;
@@ -1087,7 +1087,7 @@ public:
                    arrayView1d< real64 > const & localRhs )
   {
 
-    kernels::fluidFlow::immiscible::kernelLaunchSelectorPhaseSwitch( numPhases, [&] ( auto NP )
+    fluidFlow::kernels::immiscible::kernelLaunchSelectorPhaseSwitch( numPhases, [&] ( auto NP )
     {
       integer constexpr NUM_EQN = NP();
       integer constexpr NUM_DOF = NP();
@@ -1430,7 +1430,7 @@ public:
 
 };
 
-} // namespace kernels::fluidFlow::immiscible
+} // namespace fluidFlow::kernels::immiscible
 
 } // namespace geos
 

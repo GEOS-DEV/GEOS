@@ -46,15 +46,15 @@ public:
   static constexpr integer resNumDOF  = 1+IS_THERMAL;
 
   // Well jacobian column and row indicies
-  using WJ_COFFSET = kernels::wells::singlePhase::ColOffset_WellJac< IS_THERMAL >;
-  using WJ_ROFFSET = kernels::wells::singlePhase::RowOffset_WellJac< IS_THERMAL >;
+  using WJ_COFFSET = wells::kernels::singlePhase::ColOffset_WellJac< IS_THERMAL >;
+  using WJ_ROFFSET = wells::kernels::singlePhase::RowOffset_WellJac< IS_THERMAL >;
 
-  using ROFFSET = kernels::wells::singlePhase::RowOffset;
-  using COFFSET = kernels::wells::singlePhase::ColOffset;
+  using ROFFSET = wells::kernels::singlePhase::RowOffset;
+  using COFFSET = wells::kernels::singlePhase::ColOffset;
 
   using CP_Deriv = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
 
-  using TAG = kernels::wells::singlePhase::SubRegionTag;
+  using TAG = wells::kernels::singlePhase::SubRegionTag;
 
   /// Compute time value for the number of degrees of freedom
   static constexpr integer numDof = WJ_COFFSET::nDer;
@@ -288,15 +288,15 @@ public:
   static constexpr integer resNumDOF  =  1+IS_THERMAL;
 
   // Well jacobian column and row indicies
-  using WJ_COFFSET = kernels::wells::singlePhase::ColOffset_WellJac< IS_THERMAL >;
-  using WJ_ROFFSET = kernels::wells::singlePhase::RowOffset_WellJac< IS_THERMAL >;
+  using WJ_COFFSET = wells::kernels::singlePhase::ColOffset_WellJac< IS_THERMAL >;
+  using WJ_ROFFSET = wells::kernels::singlePhase::RowOffset_WellJac< IS_THERMAL >;
 
-  //using ROFFSET = kernels::wells::singlePhase::RowOffset;
-  //using COFFSET = kernels::wells::singlePhase::ColOffset;
+  //using ROFFSET = wells::kernels::singlePhase::RowOffset;
+  //using COFFSET = wells::kernels::singlePhase::ColOffset;
 
   using CP_Deriv = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
 
-  using TAG = kernels::wells::singlePhase::SubRegionTag;
+  using TAG = wells::kernels::singlePhase::SubRegionTag;
 
   using Base::m_dt;
   using Base::m_localRhs;

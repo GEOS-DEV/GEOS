@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::singlePhase::thermal
+namespace fluidFlow::kernels::singlePhase::thermal
 {
 
 /******************************** AccumulationKernel ********************************/
@@ -36,12 +36,12 @@ namespace kernels::fluidFlow::singlePhase::thermal
  */
 template< typename SUBREGION_TYPE, integer NUM_DOF >
 class AccumulationKernel :
-  public kernels::fluidFlow::singlePhase::isothermal::AccumulationKernel< SUBREGION_TYPE, NUM_DOF >
+  public fluidFlow::kernels::singlePhase::isothermal::AccumulationKernel< SUBREGION_TYPE, NUM_DOF >
 {
 
 public:
 
-  using Base = kernels::fluidFlow::singlePhase::isothermal::AccumulationKernel< SUBREGION_TYPE, NUM_DOF >;
+  using Base = fluidFlow::kernels::singlePhase::isothermal::AccumulationKernel< SUBREGION_TYPE, NUM_DOF >;
   using Base::numDof;
   using Base::numEqn;
   using Base::m_rankOffset;
@@ -232,7 +232,7 @@ public:
 
 };
 
-} // namespace kernels::fluidFlow::singlePhase::thermal
+} // namespace fluidFlow::kernels::singlePhase::thermal
 
 } // namespace geos
 

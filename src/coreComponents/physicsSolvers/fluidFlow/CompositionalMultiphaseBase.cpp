@@ -75,8 +75,8 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_allowCompDensChopping( 1 ),
   m_useTotalMassEquation( 1 ),
   m_useSimpleAccumulation( 1 ),
-  m_minCompDens( kernels::fluidFlow::compositional::minDensForDivision ),
-  m_minCompFrac( kernels::fluidFlow::compositional::minCompFracForDivision )
+  m_minCompDens( fluidFlow::kernels::compositional::minDensForDivision ),
+  m_minCompFrac( fluidFlow::kernels::compositional::minCompFracForDivision )
 {
 //START_SPHINX_INCLUDE_00
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
@@ -169,13 +169,13 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   this->registerWrapper( viewKeyStruct::minCompDensString(), &m_minCompDens ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( kernels::fluidFlow::compositional::minDensForDivision ).
+    setApplyDefaultValue( fluidFlow::kernels::compositional::minDensForDivision ).
     setDescription( "Minimum allowed global component density" );
 
   this->registerWrapper( viewKeyStruct::minCompFracString(), &m_minCompFrac ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( kernels::fluidFlow::compositional::minCompFracForDivision ).
+    setApplyDefaultValue( fluidFlow::kernels::compositional::minCompFracForDivision ).
     setDescription( "Minimum allowed global component fraction" );
 
   this->registerWrapper( viewKeyStruct::maxSequentialCompDensChangeString(), &m_maxSequentialCompDensChange ).
@@ -652,7 +652,7 @@ void CompositionalMultiphaseBase::updateGlobalComponentFraction( ObjectManagerBa
 {
   GEOS_MARK_FUNCTION;
 
-  kernels::fluidFlow::compositional::
+  fluidFlow::kernels::compositional::
     GlobalComponentFractionKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                dataGroup );
@@ -663,7 +663,7 @@ real64 CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::compositional;
+  using namespace fluidFlow::kernels::compositional;
 
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, fluidName );
@@ -716,7 +716,7 @@ void CompositionalMultiphaseBase::updateFluidModel( ObjectManagerBase & dataGrou
     using ExecPolicy = typename FluidType::exec_policy;
     typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-    kernels::fluidFlow::compositional::
+    fluidFlow::kernels::compositional::
       FluidUpdateKernel::
       launch< ExecPolicy >( dataGroup.size(),
                             fluidWrapper,
@@ -740,7 +740,7 @@ void CompositionalMultiphaseBase::updateRelPermModel( ObjectManagerBase & dataGr
   {
     typename TYPEOFREF( castedRelPerm ) ::KernelWrapper relPermWrapper = castedRelPerm.createKernelWrapper();
 
-    kernels::fluidFlow::compositional::
+    fluidFlow::kernels::compositional::
       RelativePermeabilityUpdateKernel::
       launch< parallelDevicePolicy<> >( dataGroup.size(),
                                         relPermWrapper,
@@ -764,7 +764,7 @@ void CompositionalMultiphaseBase::updateCapPressureModel( ObjectManagerBase & da
     {
       typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
 
-      kernels::fluidFlow::compositional::
+      fluidFlow::kernels::compositional::
         CapillaryPressureUpdateKernel::
         launch< parallelDevicePolicy<> >( dataGroup.size(),
                                           capPresWrapper,
@@ -856,7 +856,7 @@ void CompositionalMultiphaseBase::updateSolidInternalEnergyModel( ObjectManagerB
 
   // TODO: this should go somewhere, handle the case of flow in fracture, etc
 
-  kernels::fluidFlow::compositional::thermal::
+  fluidFlow::kernels::compositional::thermal::
     SolidInternalEnergyUpdateKernel::
     launch< parallelDevicePolicy<> >( dataGroup.size(),
                                       solidInternalEnergyWrapper,
@@ -1081,7 +1081,7 @@ void CompositionalMultiphaseBase::initializeThermalState( MeshLevel & mesh, stri
 
 void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 {
-  using namespace kernels::fluidFlow::compositional;
+  using namespace fluidFlow::kernels::compositional;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager & functionManager = FunctionManager::getInstance();
@@ -1440,7 +1440,7 @@ void CompositionalMultiphaseBase::assembleLocalTerms( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::compositional;
+  using namespace fluidFlow::kernels::compositional;
 
   BitFlags< KernelFlags > kernelFlags;
   if( m_useTotalMassEquation )
@@ -1893,7 +1893,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
         using ExecPolicy = typename FluidType::exec_policy;
         typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-        kernels::fluidFlow::compositional::
+        fluidFlow::kernels::compositional::
           FluidUpdateKernel::
           launch< ExecPolicy >( targetSet,
                                 fluidWrapper,
@@ -2165,7 +2165,7 @@ void CompositionalMultiphaseBase::chopNegativeCompFractions( DomainPartition & d
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::compositional;
+  using namespace fluidFlow::kernels::compositional;
 
   integer const numComp = m_numComponents;
   real64 const minCompFrac = m_minCompFrac;
@@ -2539,7 +2539,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
       arrayView1d< real64 const > const initPres = subRegion.getField< flow::initialPressure >();
       arrayView1d< real64 > const deltaPres = subRegion.getField< flow::deltaPressure >();
-      kernels::fluidFlow::compositional::
+      fluidFlow::kernels::compositional::
         StatisticsKernel::
         saveDeltaPressure< parallelDevicePolicy<> >( subRegion.size(), pres, initPres, deltaPres );
 

@@ -34,7 +34,7 @@ using namespace geos;
 using namespace geos::dataRepository;
 using namespace geos::constitutive;
 using namespace geos::testing;
-using namespace geos::kernels::wells::compositional;
+using namespace geos::wells::kernels::compositional;
 
 CommandLineOptions g_commandLineOptions;
 void writeTableToFile( string const & filename, char const * str )

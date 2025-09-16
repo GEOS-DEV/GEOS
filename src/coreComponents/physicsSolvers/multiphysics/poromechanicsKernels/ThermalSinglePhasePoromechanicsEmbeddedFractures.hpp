@@ -43,7 +43,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using SinglePhaseFVMAbstractBase = ::geos::kernels::fluidFlow::singlePhase::fvm::FluxComputeKernelBase;
+  using SinglePhaseFVMAbstractBase = ::geos::fluidFlow::kernels::singlePhase::fvm::FluxComputeKernelBase;
   using DofNumberAccessor = SinglePhaseFVMAbstractBase::DofNumberAccessor;
   using SinglePhaseFlowAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFluidAccessors;
@@ -59,7 +59,7 @@ public:
   using SinglePhaseFVMAbstractBase::m_dens;
   using SinglePhaseFVMAbstractBase::m_dDens;
 
-  using SinglePhaseFVMBase = ::geos::kernels::fluidFlow::singlePhase::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
+  using SinglePhaseFVMBase = ::geos::fluidFlow::kernels::singlePhase::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
   using SinglePhaseFVMBase::numEqn;
   using SinglePhaseFVMBase::maxNumElems;
   using SinglePhaseFVMBase::maxNumConns;
@@ -221,7 +221,7 @@ public:
       real64 trans[2] = {stack.transmissibility[0][0], stack.transmissibility[0][1]};
       real64 dMassFlux_dT[2]{};
 
-      kernels::fluidFlow::singlePhase::fvm::computeEnthalpyFlux( seri,
+      fluidFlow::kernels::singlePhase::fvm::computeEnthalpyFlux( seri,
                                                                  sesri,
                                                                  sei,
                                                                  trans,
@@ -289,7 +289,7 @@ public:
         localIndex const sei[2]   = {m_sei( iconn, k[0] ), m_sei( iconn, k[1] )};
 
         // Step 2: compute temperature difference at the interface
-        kernels::fluidFlow::singlePhase::fvm::computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
+        fluidFlow::kernels::singlePhase::fvm::computeConductiveFlux( seri, sesri, sei, m_temp, thermalTrans, stack.energyFlux, stack.dEnergyFlux_dT );
 
         // add energyFlux and its derivatives to localFlux and localFluxJacobian
         stack.localFlux[k[0]*numEqn + numEqn - 1] += m_dt * stack.energyFlux;

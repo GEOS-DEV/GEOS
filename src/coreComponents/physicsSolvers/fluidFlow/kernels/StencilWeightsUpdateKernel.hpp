@@ -27,7 +27,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow
+namespace fluidFlow::kernels
 {
 
 template< typename VIEWTYPE >
@@ -72,7 +72,7 @@ struct stencilWeightsUpdateKernel
   }
 };
 
-} // namespace kernels::fluidFlow
+} // namespace fluidFlow::kernels
 
 } // namespace geos
 

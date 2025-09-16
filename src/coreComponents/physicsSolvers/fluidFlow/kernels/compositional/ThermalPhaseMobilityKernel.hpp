@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::thermal
+namespace fluidFlow::kernels::compositional::thermal
 {
 
 /******************************** PhaseMobilityKernel ********************************/
@@ -38,11 +38,11 @@ namespace kernels::fluidFlow::compositional::thermal
  */
 template< integer NUM_COMP, integer NUM_PHASE >
 class PhaseMobilityKernel :
-  public kernels::fluidFlow::compositional::isothermal::PhaseMobilityKernel< NUM_COMP, NUM_PHASE >
+  public fluidFlow::kernels::compositional::isothermal::PhaseMobilityKernel< NUM_COMP, NUM_PHASE >
 {
 public:
 
-  using Base = kernels::fluidFlow::compositional::isothermal::PhaseMobilityKernel< NUM_COMP, NUM_PHASE >;
+  using Base = fluidFlow::kernels::compositional::isothermal::PhaseMobilityKernel< NUM_COMP, NUM_PHASE >;
   using Base::numPhase;
   using Base::m_dPhaseVolFrac;
   using Base::m_dPhaseMob;
@@ -124,7 +124,7 @@ public:
                    constitutive::MultiFluidBase const & fluid,
                    constitutive::RelativePermeabilityBase const & relperm )
   {
-    using namespace kernels::fluidFlow::compositional::internal;
+    using namespace fluidFlow::kernels::compositional::internal;
 
     if( numPhase == 2 )
     {
@@ -147,7 +147,7 @@ public:
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::thermal
+} // namespace fluidFlow::kernels::compositional::thermal
 
 } // namespace geos
 

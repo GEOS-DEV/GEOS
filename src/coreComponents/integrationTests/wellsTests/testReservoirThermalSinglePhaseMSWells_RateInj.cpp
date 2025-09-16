@@ -37,7 +37,7 @@ using namespace geos;
 using namespace geos::dataRepository;
 using namespace geos::constitutive;
 using namespace geos::testing;
-using namespace geos::kernels::wells::singlePhase;
+using namespace geos::wells::kernels::singlePhase;
 
 CommandLineOptions g_commandLineOptions;
 

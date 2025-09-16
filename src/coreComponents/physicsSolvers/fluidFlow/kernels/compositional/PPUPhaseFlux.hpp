@@ -31,7 +31,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm
+namespace fluidFlow::kernels::compositional::fvm
 {
 
 struct PPUPhaseFlux
@@ -158,7 +158,7 @@ struct PPUPhaseFlux
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::fvm
+} // namespace fluidFlow::kernels::compositional::fvm
 
 } // namespace geos
 

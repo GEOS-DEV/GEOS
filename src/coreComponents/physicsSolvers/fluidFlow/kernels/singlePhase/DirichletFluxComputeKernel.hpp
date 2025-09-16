@@ -33,7 +33,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::singlePhase::fvm::isothermal
+namespace fluidFlow::kernels::singlePhase::fvm::isothermal
 {
 
 /******************************** DirichletFluxComputeKernel ********************************/
@@ -49,7 +49,7 @@ class DirichletFluxComputeKernel : public FluxComputeKernel< NUM_EQN, NUM_DOF,
 {
 public:
   using Deriv = constitutive::singlefluid::DerivativeOffset;
-  using AbstractBase = kernels::fluidFlow::singlePhase::fvm::FluxComputeKernelBase;
+  using AbstractBase = fluidFlow::kernels::singlePhase::fvm::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using PermeabilityAccessors = AbstractBase::PermeabilityAccessors;
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
@@ -69,7 +69,7 @@ public:
   using AbstractBase::m_localMatrix;
   using AbstractBase::m_localRhs;
 
-  using Base = kernels::fluidFlow::singlePhase::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF,
+  using Base = fluidFlow::kernels::singlePhase::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF,
                                                                                     BoundaryStencilWrapper >;
   using Base::numDof;
   using Base::numEqn;
@@ -197,7 +197,7 @@ public:
     constitutive::SingleFluidBaseUpdate::computeValues( m_fluidWrapper, m_facePres[kf], faceDens, faceVisc );
 
     mobility[Order::ELEM] = m_mob[er][esr][ei];
-    kernels::fluidFlow::singlePhase::MobilityKernel::compute( faceDens, faceVisc, mobility[Order::FACE] );
+    fluidFlow::kernels::singlePhase::MobilityKernel::compute( faceDens, faceVisc, mobility[Order::FACE] );
 
     dMobility_dP[Order::ELEM] = m_dMob[er][esr][ei][Deriv::dP];
     dMobility_dP[Order::FACE] = 0.0;
@@ -355,7 +355,7 @@ public:
 
 };
 
-} // namespace kernels::fluidFlow::singlePhase::fvm::isothermal
+} // namespace fluidFlow::kernels::singlePhase::fvm::isothermal
 
 } // namespace geos
 

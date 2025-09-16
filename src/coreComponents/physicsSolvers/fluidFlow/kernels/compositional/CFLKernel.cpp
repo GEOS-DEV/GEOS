@@ -26,7 +26,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm
+namespace fluidFlow::kernels::compositional::fvm
 {
 
 using namespace constitutive;
@@ -453,6 +453,6 @@ INST_CFLKernel( 5, 3 );
 
 #undef INST_CFLKernel
 
-} // namespace kernels::fluidFlow::compositional::fvm
+} // namespace fluidFlow::kernels::compositional::fvm
 
 } // namespace geos

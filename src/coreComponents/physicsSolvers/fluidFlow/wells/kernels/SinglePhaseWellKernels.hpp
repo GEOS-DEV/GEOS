@@ -37,7 +37,7 @@
 namespace geos
 {
 
-namespace kernels::wells::singlePhase
+namespace wells::kernels::singlePhase
 {
 
 // tag to access well and reservoir elements in perforation rates computation
@@ -114,8 +114,8 @@ struct RowOffset_WellJac< 1 >
 struct ControlEquationHelper
 {
 
-  using ROFFSET = kernels::wells::singlePhase::RowOffset;
-  using COFFSET = kernels::wells::singlePhase::ColOffset;
+  using ROFFSET = wells::kernels::singlePhase::RowOffset;
+  using COFFSET = wells::kernels::singlePhase::ColOffset;
 
   // add an epsilon to the checks to avoid control changes due to tiny pressure/rate updates
   static constexpr real64 EPS = 1e-15;
@@ -157,9 +157,9 @@ struct ControlEquationHelper
 struct FluxKernel
 {
 
-  using ROFFSET = kernels::wells::singlePhase::RowOffset;
-  using COFFSET = kernels::wells::singlePhase::ColOffset;
-  using TAG = kernels::wells::singlePhase::ElemTag;
+  using ROFFSET = wells::kernels::singlePhase::RowOffset;
+  using COFFSET = wells::kernels::singlePhase::ColOffset;
+  using TAG = wells::kernels::singlePhase::ElemTag;
 
   template< integer IS_THERMAL >
   static void
@@ -180,9 +180,9 @@ struct FluxKernel
 struct PressureRelationKernel
 {
 
-  using ROFFSET = kernels::wells::singlePhase::RowOffset;
-  using COFFSET = kernels::wells::singlePhase::ColOffset;
-  using TAG = kernels::wells::singlePhase::ElemTag;
+  using ROFFSET = wells::kernels::singlePhase::RowOffset;
+  using COFFSET = wells::kernels::singlePhase::ColOffset;
+  using TAG = wells::kernels::singlePhase::ElemTag;
 
   template< integer IS_THERMAL >
   static localIndex
@@ -209,7 +209,7 @@ struct PressureRelationKernel
 struct PerforationKernel
 {
 
-  using TAG = kernels::wells::singlePhase::SubRegionTag;
+  using TAG = wells::kernels::singlePhase::SubRegionTag;
 
   using SinglePhaseFlowAccessors =
     StencilAccessors< fields::flow::pressure >;
@@ -283,8 +283,8 @@ struct PerforationKernel
 struct AccumulationKernel
 {
 
-  using ROFFSET = kernels::wells::singlePhase::RowOffset;
-  using COFFSET = kernels::wells::singlePhase::ColOffset;
+  using ROFFSET = wells::kernels::singlePhase::RowOffset;
+  using COFFSET = wells::kernels::singlePhase::ColOffset;
 
   static void
   launch( localIndex const size,
@@ -314,8 +314,8 @@ public:
 
   // Well jacobian column and row indicies
   using FLUID_PROP_COFFSET = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
-  using WJ_COFFSET = kernels::wells::singlePhase::ColOffset_WellJac< IS_THERMAL >;
-  using WJ_ROFFSET = kernels::wells::singlePhase::RowOffset_WellJac< IS_THERMAL >;
+  using WJ_COFFSET = wells::kernels::singlePhase::ColOffset_WellJac< IS_THERMAL >;
+  using WJ_ROFFSET = wells::kernels::singlePhase::RowOffset_WellJac< IS_THERMAL >;
 
   /// Number of Dof's set in this kernal   - no dQ in accum
   static constexpr integer numDof = 1 + IS_THERMAL;  // tjb review
@@ -543,13 +543,13 @@ class FaceBasedAssemblyKernel
 {
 public:
 
-  using COFFSET = kernels::wells::singlePhase::ColOffset;
-  using ROFFSET = kernels::wells::singlePhase::RowOffset;
-  using TAG = kernels::wells::singlePhase::ElemTag;
+  using COFFSET = wells::kernels::singlePhase::ColOffset;
+  using ROFFSET = wells::kernels::singlePhase::RowOffset;
+  using TAG = wells::kernels::singlePhase::ElemTag;
 
   using FLUID_PROP_COFFSET = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
-  using WJ_COFFSET = kernels::wells::singlePhase::ColOffset_WellJac< IS_THERMAL >;
-  using WJ_ROFFSET = kernels::wells::singlePhase::RowOffset_WellJac< IS_THERMAL >;
+  using WJ_COFFSET = wells::kernels::singlePhase::ColOffset_WellJac< IS_THERMAL >;
+  using WJ_ROFFSET = wells::kernels::singlePhase::RowOffset_WellJac< IS_THERMAL >;
 
   using CP_Deriv = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
 
@@ -825,7 +825,7 @@ public:
     for( localIndex idof = 0; idof < 2; ++idof )
     {
       real64 normalizer = 0.0;
-      if( idof == kernels::wells::singlePhase::RowOffset::CONTROL )
+      if( idof == wells::kernels::singlePhase::RowOffset::CONTROL )
       {
         // for the top well element, normalize using the current control
         if( m_isLocallyOwned && iwelem == m_iwelemControl )
@@ -948,7 +948,7 @@ public:
 
 };
 
-} // end namespace kernels::wells::singlePhase
+} // end namespace wells::kernels::singlePhase
 
 } // end namespace geos
 

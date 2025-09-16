@@ -27,7 +27,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::isothermal
+namespace fluidFlow::kernels::compositional::isothermal
 {
 
 /******************************** SolutionScalingKernel ********************************/
@@ -37,11 +37,11 @@ namespace kernels::fluidFlow::compositional::isothermal
  * @brief Define the kernel for scaling the Newton update
  */
 class SolutionScalingKernel :
-  public kernels::fluidFlow::compositional::SolutionScalingAndCheckingKernelBase< real64 >
+  public fluidFlow::kernels::compositional::SolutionScalingAndCheckingKernelBase< real64 >
 {
 public:
 
-  using Base = kernels::fluidFlow::compositional::SolutionScalingAndCheckingKernelBase< real64 >;
+  using Base = fluidFlow::kernels::compositional::SolutionScalingAndCheckingKernelBase< real64 >;
   using Base::m_rankOffset;
   using Base::m_numComp;
   using Base::m_dofNumber;
@@ -392,7 +392,7 @@ public:
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::isothermal
+} // namespace fluidFlow::kernels::compositional::isothermal
 
 } // namespace geos
 

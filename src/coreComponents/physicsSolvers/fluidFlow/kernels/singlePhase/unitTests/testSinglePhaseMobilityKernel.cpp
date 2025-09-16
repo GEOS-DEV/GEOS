@@ -21,7 +21,7 @@
 #include <gtest/gtest.h>
 
 using namespace geos;
-using namespace geos::kernels::fluidFlow::singlePhase;
+using namespace geos::fluidFlow::kernels::singlePhase;
 
 // Sphinx start after test mobility
 

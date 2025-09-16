@@ -30,7 +30,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm::zformulation
+namespace fluidFlow::kernels::compositional::fvm::zformulation
 {
 
 struct PotGrad
@@ -209,7 +209,7 @@ struct PotGrad
 
 };
 
-} // namespace kernels::fluidFlow::compositional::fvm::zformulation
+} // namespace fluidFlow::kernels::compositional::fvm::zformulation
 
 } // namespace geos
 

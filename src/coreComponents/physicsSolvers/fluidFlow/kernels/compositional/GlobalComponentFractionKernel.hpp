@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional
+namespace fluidFlow::kernels::compositional
 {
 
 /******************************** GlobalComponentFractionKernel ********************************/
@@ -136,7 +136,7 @@ public:
 
 };
 
-} // namespace kernels::fluidFlow::compositional
+} // namespace fluidFlow::kernels::compositional
 
 } // namespace geos
 

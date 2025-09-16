@@ -598,7 +598,7 @@ void CompositionalMultiphaseBase::accumulationAssemblyLaunch( DofManager const &
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-  using namespace kernels::fluidFlow::compositional;
+  using namespace fluidFlow::kernels::compositional;
 
   BitFlags< KernelFlags > kernelFlags;
   if( m_useTotalMassEquation )

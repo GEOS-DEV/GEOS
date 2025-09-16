@@ -137,7 +137,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::singlePhase;
+  using namespace fluidFlow::kernels::singlePhase;
 
   integer constexpr numNorm = 2; // mass balance and energy balance
   array1d< real64 > localResidualNorm;
@@ -312,7 +312,7 @@ void SinglePhaseFVM<>::assembleFluxTerms( real64 const dt,
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::singlePhase::fvm;
+  using namespace fluidFlow::kernels::singlePhase::fvm;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -380,7 +380,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::singlePhase::fvm;
+  using namespace fluidFlow::kernels::singlePhase::fvm;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -405,7 +405,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
       typename FluxComputeKernelBase::SlurryFluidAccessors fluidAccessors( elemManager, getName() );
       typename FluxComputeKernelBase::ProppantPermeabilityAccessors permAccessors( elemManager, getName() );
 
-      kernels::fluidFlow::singlePhase::proppant::
+      fluidFlow::kernels::singlePhase::proppant::
         FaceElementFluxKernel::launch( stencilWrapper,
                                        dt,
                                        dofManager.rankOffset(),
@@ -439,7 +439,7 @@ void SinglePhaseFVM< BASE >::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PAR
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::singlePhase::fvm;
+  using namespace fluidFlow::kernels::singlePhase::fvm;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -527,7 +527,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSE
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::singlePhase::fvm;
+  using namespace fluidFlow::kernels::singlePhase::fvm;
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -646,7 +646,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::singlePhase::fvm;
+  using namespace fluidFlow::kernels::singlePhase::fvm;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -857,7 +857,7 @@ void SinglePhaseFVM<>::applyAquiferBC( real64 const time,
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::singlePhase::fvm;
+  using namespace fluidFlow::kernels::singlePhase::fvm;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 

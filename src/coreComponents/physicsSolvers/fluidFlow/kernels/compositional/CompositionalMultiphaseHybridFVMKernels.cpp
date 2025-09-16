@@ -30,7 +30,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::hybridFVM
+namespace fluidFlow::kernels::compositional::hybridFVM
 {
 
 using namespace constitutive;
@@ -680,7 +680,7 @@ AssemblerKernelHelper::
     // 1) Find if there is a neighbor, and if there is, grab the indices of the neighbor element
 
     localIndex neighborIds[ 3 ] = { localIds[0], localIds[1], localIds[2] };
-    kernels::fluidFlow::hybridFVM::CellConnectivity::isNeighborFound( localIds,
+    fluidFlow::kernels::hybridFVM::CellConnectivity::isNeighborFound( localIds,
                                                                       ifaceLoc,
                                                                       elemRegionList,
                                                                       elemSubRegionList,
@@ -1254,7 +1254,7 @@ FluxKernel::
                                                           transMatrixGrav );
 
     // perform flux assembly in this element
-    kernels::fluidFlow::compositional::hybridFVM::AssemblerKernel::compute< NF, NC, NP >( er, esr, ei,
+    fluidFlow::kernels::compositional::hybridFVM::AssemblerKernel::compute< NF, NC, NP >( er, esr, ei,
                                                                                           regionFilter,
                                                                                           elemRegionList,
                                                                                           elemSubRegionList,
@@ -1288,6 +1288,6 @@ FluxKernel::
   } );
 }
 
-} // namespace kernels::fluidFlow::compositional::hybridFVM
+} // namespace fluidFlow::kernels::compositional::hybridFVM
 
 } // namespace geos

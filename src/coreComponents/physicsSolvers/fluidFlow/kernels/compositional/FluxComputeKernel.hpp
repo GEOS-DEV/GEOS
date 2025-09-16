@@ -41,7 +41,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm::isothermal
+namespace fluidFlow::kernels::compositional::fvm::isothermal
 {
 
 /**
@@ -545,7 +545,7 @@ public:
                    integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
-                   BitFlags< kernels::fluidFlow::compositional::fvm::KernelFlags > kernelFlags,
+                   BitFlags< fluidFlow::kernels::compositional::fvm::KernelFlags > kernelFlags,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -553,7 +553,7 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    kernels::fluidFlow::compositional::internal::
+    fluidFlow::kernels::compositional::internal::
       kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
@@ -577,7 +577,7 @@ public:
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::fvm::isothermal
+} // namespace fluidFlow::kernels::compositional::fvm::isothermal
 
 } // namespace geos
 

@@ -159,7 +159,7 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
     real64 subRegionTotalPoreVol = 0.0;
     real64 subRegionTotalMass = 0.0;
 
-    kernels::fluidFlow::singlePhase::StatisticsKernel::
+    fluidFlow::kernels::singlePhase::StatisticsKernel::
       launch( subRegion.size(),
               elemGhostRank,
               volume,

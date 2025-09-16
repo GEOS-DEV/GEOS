@@ -33,7 +33,7 @@
 namespace geos
 {
 
-namespace kernels::wells::singlePhase::thermal
+namespace wells::kernels::singlePhase::thermal
 {
 
 /******************************** ElementBasedAssemblyKernel ********************************/
@@ -44,16 +44,16 @@ namespace kernels::wells::singlePhase::thermal
  * @brief Define the interface for the assembly kernel in charge of accumulation and energy balance
  */
 template< integer IS_THERMAL >
-class ElementBasedAssemblyKernel : public kernels::wells::singlePhase::ElementBasedAssemblyKernel< IS_THERMAL >
+class ElementBasedAssemblyKernel : public wells::kernels::singlePhase::ElementBasedAssemblyKernel< IS_THERMAL >
 {
 public:
 
   // Well jacobian column and row indicies
   using FLUID_PROP_COFFSET = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
-  using WJ_COFFSET = kernels::wells::singlePhase::ColOffset_WellJac< IS_THERMAL >;
-  using WJ_ROFFSET = kernels::wells::singlePhase::RowOffset_WellJac< IS_THERMAL >;
+  using WJ_COFFSET = wells::kernels::singlePhase::ColOffset_WellJac< IS_THERMAL >;
+  using WJ_ROFFSET = wells::kernels::singlePhase::RowOffset_WellJac< IS_THERMAL >;
 
-  using Base = kernels::wells::singlePhase::ElementBasedAssemblyKernel< IS_THERMAL >;
+  using Base = wells::kernels::singlePhase::ElementBasedAssemblyKernel< IS_THERMAL >;
   using Base::m_rankOffset;
   using Base::m_dofNumber;
   using Base::m_elemGhostRank;
@@ -228,18 +228,18 @@ public:
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer IS_THERMAL >
-class FaceBasedAssemblyKernel : public kernels::wells::singlePhase::FaceBasedAssemblyKernel< IS_THERMAL >
+class FaceBasedAssemblyKernel : public wells::kernels::singlePhase::FaceBasedAssemblyKernel< IS_THERMAL >
 {
 public:
 
-  using Base  = kernels::wells::singlePhase::FaceBasedAssemblyKernel< IS_THERMAL >;
+  using Base  = wells::kernels::singlePhase::FaceBasedAssemblyKernel< IS_THERMAL >;
 
   // Well jacobian column and row indicies
 
   using FLUID_PROP_COFFSET = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
-  using WJ_COFFSET = kernels::wells::singlePhase::ColOffset_WellJac< IS_THERMAL >;
-  using WJ_ROFFSET = kernels::wells::singlePhase::RowOffset_WellJac< IS_THERMAL >;
-  using TAG = kernels::wells::singlePhase::ElemTag;
+  using WJ_COFFSET = wells::kernels::singlePhase::ColOffset_WellJac< IS_THERMAL >;
+  using WJ_ROFFSET = wells::kernels::singlePhase::RowOffset_WellJac< IS_THERMAL >;
+  using TAG = wells::kernels::singlePhase::ElemTag;
 
 
   using Base::m_isProducer;
@@ -492,7 +492,7 @@ class ResidualNormKernel : public physicsSolverBaseKernels::ResidualNormKernelBa
 public:
 
 
-  using WJ_ROFFSET = kernels::wells::singlePhase::RowOffset_WellJac< 1 >;
+  using WJ_ROFFSET = wells::kernels::singlePhase::RowOffset_WellJac< 1 >;
 
   using Base = physicsSolverBaseKernels::ResidualNormKernelBase< 2 >;
   using Base::m_minNormalizer;
@@ -699,7 +699,7 @@ public:
 
 };
 
-} // end namespace kernels::wells::singlePhase::thermal
+} // end namespace wells::kernels::singlePhase::thermal
 
 } // end namespace geos
 

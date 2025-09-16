@@ -24,10 +24,10 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::singlePhase::proppant
+namespace fluidFlow::kernels::singlePhase::proppant
 {
 
-using namespace kernels::fluidFlow::singlePhase::fvm;
+using namespace fluidFlow::kernels::singlePhase::fvm;
 
 
 void FaceElementFluxKernel::
@@ -181,7 +181,7 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
       localIndex const subRegionIndex[2] = {sesri[k[0]], sesri[k[1]]};
       localIndex const elementIndex[2]   = {sei[k[0]], sei[k[1]]};
 
-      kernels::fluidFlow::singlePhase::fvm::computeSinglePhaseFlux( regionIndex,
+      fluidFlow::kernels::singlePhase::fvm::computeSinglePhaseFlux( regionIndex,
                                                                     subRegionIndex,
                                                                     elementIndex,
                                                                     trans,
@@ -223,6 +223,6 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
 }
 
 
-} // namespace kernels::fluidFlow::singlePhase::proppant
+} // namespace fluidFlow::kernels::singlePhase::proppant
 
 } // namespace geos

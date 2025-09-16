@@ -51,7 +51,7 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace kernels::wells::singlePhase;
+using namespace wells::kernels::singlePhase;
 
 SinglePhaseWell::SinglePhaseWell( const string & name,
                                   Group * const parent ):
@@ -324,7 +324,7 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
     geos::internal::kernelLaunchSelectorThermalSwitch( isThermal(), [&] ( auto ISTHERMAL )
     {
       integer constexpr IS_THERMAL = ISTHERMAL();
-      using COFFSET_WJ = kernels::wells::singlePhase::ColOffset_WellJac< IS_THERMAL >;
+      using COFFSET_WJ = wells::kernels::singlePhase::ColOffset_WellJac< IS_THERMAL >;
       // bring everything back to host, capture the scalars by reference
       forAll< serialPolicy >( 1, [fluidWrapper,
                                   pres,
@@ -397,7 +397,7 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    kernels::fluidFlow::singlePhase::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
+    fluidFlow::kernels::singlePhase::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
   } );
 }
 
@@ -766,7 +766,7 @@ void SinglePhaseWell::assembleAccumulationTerms( real64 const & time_n,
   GEOS_UNUSED_VAR( time_n );
   GEOS_UNUSED_VAR( dt );
 
-  using namespace kernels::wells::singlePhase;
+  using namespace wells::kernels::singlePhase;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
@@ -830,7 +830,7 @@ void SinglePhaseWell::computePerforationRates( real64 const & time_n,
   GEOS_UNUSED_VAR( time_n );
   GEOS_UNUSED_VAR( dt );
 
-  using namespace kernels::wells::singlePhase;
+  using namespace wells::kernels::singlePhase;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -1039,7 +1039,7 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition & domain,
         subRegion.getField< well::pressure >();
 
       auto const statistics =
-        kernels::fluidFlow::singlePhase::SolutionCheckKernel::
+        fluidFlow::kernels::singlePhase::SolutionCheckKernel::
           launch< parallelDevicePolicy<> >( localSolution, rankOffset, dofNumber, ghostRank, pres, scalingFactor );
 
       numNegativePressures += statistics.first;

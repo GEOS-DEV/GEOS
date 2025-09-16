@@ -27,7 +27,7 @@
 namespace geos
 {
 
-namespace kernels::wells::singlePhase
+namespace wells::kernels::singlePhase
 {
 
 /******************************** ControlEquationHelper ********************************/
@@ -103,8 +103,8 @@ ControlEquationHelper::
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs )
 {
-  using ROFFSET_WJ = kernels::wells::singlePhase::RowOffset_WellJac< IS_THERMAL >;
-  using COFFSET_WJ = kernels::wells::singlePhase::ColOffset_WellJac< IS_THERMAL >;
+  using ROFFSET_WJ = wells::kernels::singlePhase::RowOffset_WellJac< IS_THERMAL >;
+  using COFFSET_WJ = wells::kernels::singlePhase::ColOffset_WellJac< IS_THERMAL >;
   using Deriv = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
 
   localIndex const eqnRowIndex = dofNumber + ROFFSET_WJ::CONTROL - rankOffset;
@@ -302,7 +302,7 @@ PressureRelationKernel::
           arrayView1d< real64 > const & localRhs )
 {
   using Deriv = constitutive::singlefluid::DerivativeOffset;
-  using COFFSET_WJ = kernels::wells::singlePhase::ColOffset_WellJac< IS_THERMAL >;
+  using COFFSET_WJ = wells::kernels::singlePhase::ColOffset_WellJac< IS_THERMAL >;
   // static well control data
   bool const isProducer = wellControls.isProducer();
   WellControls::Control const currentControl = wellControls.getControl();
@@ -627,6 +627,6 @@ RateInitializationKernel::
   } );
 }
 
-} // end namespace kernels::wells::singlePhase
+} // end namespace wells::kernels::singlePhase
 
 } // end namespace geos

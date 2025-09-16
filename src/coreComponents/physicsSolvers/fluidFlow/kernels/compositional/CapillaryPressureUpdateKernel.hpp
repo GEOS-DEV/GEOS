@@ -26,7 +26,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional
+namespace fluidFlow::kernels::compositional
 {
 
 /******************************** CapillaryPressureUpdateKernel ********************************/
@@ -65,7 +65,7 @@ struct CapillaryPressureUpdateKernel
   }
 };
 
-} // namespace kernels::fluidFlow::compositional
+} // namespace fluidFlow::kernels::compositional
 
 } // namespace geos
 

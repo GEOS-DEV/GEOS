@@ -293,9 +293,9 @@ assembleCouplingTerms( real64 const time_n,
                            this->getCatalogName(), this->getName() ),
                  std::runtime_error );
 
-  BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags;
+  BitFlags< fluidFlow::kernels::compositional::KernelFlags > kernelFlags;
   if( Base::wellSolver()->useTotalMassEquation() )
-    kernelFlags.set( kernels::fluidFlow::compositional::KernelFlags::TotalMassEquation );
+    kernelFlags.set( fluidFlow::kernels::compositional::KernelFlags::TotalMassEquation );
 
   this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
                                                                                  MeshLevel const & mesh,

@@ -48,7 +48,7 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace kernels::fluidFlow::singlePhase::proppant;
+using namespace fluidFlow::kernels::singlePhase::proppant;
 
 ProppantTransport::ProppantTransport( const string & name,
                                       Group * const parent ):

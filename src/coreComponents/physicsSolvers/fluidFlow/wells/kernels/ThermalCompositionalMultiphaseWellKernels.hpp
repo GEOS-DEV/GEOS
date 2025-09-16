@@ -26,7 +26,7 @@
 namespace geos
 {
 
-namespace kernels::wells::compositional::thermal
+namespace wells::kernels::compositional::thermal
 {
 
 using namespace constitutive;
@@ -40,10 +40,10 @@ using namespace constitutive;
  * @brief Define the interface for the property kernel in charge of computing the total mass density
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class TotalMassDensityKernel : public kernels::wells::compositional::TotalMassDensityKernel< NUM_COMP, NUM_PHASE >
+class TotalMassDensityKernel : public wells::kernels::compositional::TotalMassDensityKernel< NUM_COMP, NUM_PHASE >
 {
 public:
-  using Base = kernels::wells::compositional::TotalMassDensityKernel< NUM_COMP, NUM_PHASE >;
+  using Base = wells::kernels::compositional::TotalMassDensityKernel< NUM_COMP, NUM_PHASE >;
   using Base::m_dCompFrac_dCompDens;
   using Base::m_dPhaseMassDens;
   using Base::m_dPhaseVolFrac;
@@ -114,7 +114,7 @@ public:
                    ObjectManagerBase & subRegion,
                    MultiFluidBase const & fluid )
   {
-    using namespace kernels::fluidFlow::compositional::internal;
+    using namespace fluidFlow::kernels::compositional::internal;
 
     if( numPhase == 2 )
     {
@@ -151,7 +151,7 @@ public:
   static constexpr integer numComp = NUM_COMP;
 
 
-  using WJ_ROFFSET = kernels::wells::compositional::RowOffset_WellJac< NUM_COMP, 1 >;
+  using WJ_ROFFSET = wells::kernels::compositional::RowOffset_WellJac< NUM_COMP, 1 >;
 
   using Base = physicsSolverBaseKernels::ResidualNormKernelBase< 2 >;
   using Base::m_minNormalizer;
@@ -411,7 +411,7 @@ public:
                    real64 const minNormalizer,
                    real64 (& residualNorm)[2] )
   {
-    kernels::fluidFlow::compositional::internal::kernelLaunchSelectorCompSwitch ( numComp, [&]( auto NC )
+    fluidFlow::kernels::compositional::internal::kernelLaunchSelectorCompSwitch ( numComp, [&]( auto NC )
     {
 
       integer constexpr NUM_COMP = NC();
@@ -436,10 +436,10 @@ public:
  * @brief Define the interface for the assembly kernel in charge of thermal accumulation and volume balance
  */
 template< localIndex NUM_COMP >
-class ElementBasedAssemblyKernel : public kernels::wells::compositional::ElementBasedAssemblyKernel< NUM_COMP, 1 >
+class ElementBasedAssemblyKernel : public wells::kernels::compositional::ElementBasedAssemblyKernel< NUM_COMP, 1 >
 {
 public:
-  using Base = kernels::wells::compositional::ElementBasedAssemblyKernel< NUM_COMP, 1 >;
+  using Base = wells::kernels::compositional::ElementBasedAssemblyKernel< NUM_COMP, 1 >;
   using Base::m_dCompFrac_dCompDens;
   using Base::m_dofNumber;
   using Base::m_dPhaseCompFrac;
@@ -485,7 +485,7 @@ public:
                               MultiFluidBase const & fluid,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
-                              BitFlags< kernels::fluidFlow::compositional::KernelFlags > const kernelFlags )
+                              BitFlags< fluidFlow::kernels::compositional::KernelFlags > const kernelFlags )
     : Base( numPhases, isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags ),
     m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n()),
     m_phaseInternalEnergy( fluid.phaseInternalEnergy()),
@@ -640,14 +640,14 @@ public:
                    localIndex const numPhases,
                    integer const isProducer,
                    globalIndex const rankOffset,
-                   BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags,
+                   BitFlags< fluidFlow::kernels::compositional::KernelFlags > kernelFlags,
                    string const dofKey,
                    WellElementSubRegion const & subRegion,
                    MultiFluidBase const & fluid,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    kernels::fluidFlow::compositional::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
+    fluidFlow::kernels::compositional::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       localIndex constexpr NUM_COMP = NC();
 
@@ -667,19 +667,19 @@ public:
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer NC >
-class FaceBasedAssemblyKernel : public kernels::wells::compositional::FaceBasedAssemblyKernel< NC, 1 >
+class FaceBasedAssemblyKernel : public wells::kernels::compositional::FaceBasedAssemblyKernel< NC, 1 >
 {
 public:
   static constexpr integer IS_THERMAL = 1;
-  using Base  = kernels::wells::compositional::FaceBasedAssemblyKernel< NC, IS_THERMAL >;
+  using Base  = wells::kernels::compositional::FaceBasedAssemblyKernel< NC, IS_THERMAL >;
 
   // Well jacobian column and row indicies
-  using WJ_COFFSET = kernels::wells::compositional::ColOffset_WellJac< NC, IS_THERMAL >;
-  using WJ_ROFFSET = kernels::wells::compositional::RowOffset_WellJac< NC, IS_THERMAL >;
+  using WJ_COFFSET = wells::kernels::compositional::ColOffset_WellJac< NC, IS_THERMAL >;
+  using WJ_ROFFSET = wells::kernels::compositional::RowOffset_WellJac< NC, IS_THERMAL >;
 
   using CP_Deriv = multifluid::DerivativeOffsetC< NC, IS_THERMAL >;
 
-  using TAG = kernels::wells::compositional::ElemTag;
+  using TAG = wells::kernels::compositional::ElemTag;
 
 
   using Base::m_isProducer;
@@ -722,7 +722,7 @@ public:
                            MultiFluidBase const & fluid,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs,
-                           BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags )
+                           BitFlags< fluidFlow::kernels::compositional::KernelFlags > kernelFlags )
     : Base( dt
             , rankOffset
             , wellDofKey
@@ -1088,7 +1088,7 @@ public:
   createAndLaunch( integer const numComps,
                    real64 const dt,
                    globalIndex const rankOffset,
-                   BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags,
+                   BitFlags< fluidFlow::kernels::compositional::KernelFlags > kernelFlags,
                    string const dofKey,
                    WellControls const & wellControls,
                    WellElementSubRegion const & subRegion,
@@ -1096,7 +1096,7 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    kernels::fluidFlow::compositional::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
+    fluidFlow::kernels::compositional::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
 
@@ -1107,7 +1107,7 @@ public:
   }
 };
 
-} // end namespace kernels::wells::compositional::thermal
+} // end namespace wells::kernels::compositional::thermal
 
 } // end namespace geos
 

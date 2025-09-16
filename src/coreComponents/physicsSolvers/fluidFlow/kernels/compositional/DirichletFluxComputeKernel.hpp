@@ -38,7 +38,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm::isothermal
+namespace fluidFlow::kernels::compositional::fvm::isothermal
 {
 
 /******************************** DirichletFluxComputeKernel ********************************/
@@ -66,7 +66,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = kernels::fluidFlow::compositional::fvm::FluxComputeKernelBase;
+  using AbstractBase = fluidFlow::kernels::compositional::fvm::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
@@ -509,7 +509,7 @@ public:
   createAndLaunch( integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
-                   BitFlags< kernels::fluidFlow::compositional::fvm::KernelFlags > kernelFlags,
+                   BitFlags< fluidFlow::kernels::compositional::fvm::KernelFlags > kernelFlags,
                    string const & dofKey,
                    string const & solverName,
                    FaceManager const & faceManager,
@@ -546,7 +546,7 @@ public:
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::fvm::isothermal
+} // namespace fluidFlow::kernels::compositional::fvm::isothermal
 
 } // namespace geos
 

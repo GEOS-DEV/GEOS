@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::zformulation
+namespace fluidFlow::kernels::compositional::zformulation
 {
 
 /******************************** PhaseVolumeFractionKernel ********************************/
@@ -222,7 +222,7 @@ public:
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::zformulation
+} // namespace fluidFlow::kernels::compositional::zformulation
 
 } // namespace geos
 

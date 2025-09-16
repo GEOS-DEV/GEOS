@@ -26,7 +26,7 @@
 namespace geos
 {
 
-namespace kernels::wells::compositional
+namespace wells::kernels::compositional
 {
 
 using namespace constitutive;
@@ -153,7 +153,7 @@ ControlEquationHelper::
            arrayView1d< real64 > const & localRhs )
 {
 
-  using COFFSET_WJ = kernels::wells::compositional::ColOffset_WellJac< NC, IS_THERMAL >;
+  using COFFSET_WJ = wells::kernels::compositional::ColOffset_WellJac< NC, IS_THERMAL >;
   using Deriv = multifluid::DerivativeOffset;
 
   localIndex const eqnRowIndex      = dofNumber + ROFFSET::CONTROL - rankOffset;
@@ -316,7 +316,7 @@ PressureRelationKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
-  using COFFSET_WJ = kernels::wells::compositional::ColOffset_WellJac< NC, IS_THERMAL >;
+  using COFFSET_WJ = wells::kernels::compositional::ColOffset_WellJac< NC, IS_THERMAL >;
   // static well control data
   bool const isProducer = wellControls.isProducer();
   WellControls::Control const currentControl = wellControls.getControl();
@@ -771,6 +771,6 @@ RateInitializationKernel::
   } );
 }
 
-} // end namespace kernels::wells::compositional
+} // end namespace wells::kernels::compositional
 
 } // end namespace geos

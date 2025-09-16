@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::thermal
+namespace fluidFlow::kernels::compositional::thermal
 {
 
 /******************************** SolutionScalingKernel ********************************/
@@ -34,11 +34,11 @@ namespace kernels::fluidFlow::compositional::thermal
  * @class SolutionScalingKernel
  * @brief Define the kernel for scaling the Newton update
  */
-class SolutionScalingKernel : public kernels::fluidFlow::compositional::isothermal::SolutionScalingKernel
+class SolutionScalingKernel : public fluidFlow::kernels::compositional::isothermal::SolutionScalingKernel
 {
 public:
 
-  using Base = kernels::fluidFlow::compositional::isothermal::SolutionScalingKernel;
+  using Base = fluidFlow::kernels::compositional::isothermal::SolutionScalingKernel;
   using Base::m_numComp;
   using Base::m_localSolution;
 
@@ -118,7 +118,7 @@ public:
   void computeScalingFactor( localIndex const ei,
                              StackVariables & stack ) const
   {
-    real64 constexpr eps = kernels::fluidFlow::compositional::minDensForDivision;
+    real64 constexpr eps = fluidFlow::kernels::compositional::minDensForDivision;
     Base::computeScalingFactor( ei, stack, [&] ()
     {
       // compute the change in temperature
@@ -217,7 +217,7 @@ public:
 
 };
 
-} // namespace kernels::fluidFlow::compositional::thermal
+} // namespace fluidFlow::kernels::compositional::thermal
 
 } // namespace geos
 

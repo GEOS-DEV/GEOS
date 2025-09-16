@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::singlePhase::fvm::stabilization
+namespace fluidFlow::kernels::singlePhase::fvm::stabilization
 {
 
 /******************************** FluxComputeKernel ********************************/
@@ -38,14 +38,14 @@ namespace kernels::fluidFlow::singlePhase::fvm::stabilization
  */
 template< integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER >
 class FluxComputeKernel :
-  public kernels::fluidFlow::singlePhase::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >
+  public fluidFlow::kernels::singlePhase::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = kernels::fluidFlow::singlePhase::fvm::FluxComputeKernelBase;
+  using AbstractBase = fluidFlow::kernels::singlePhase::fvm::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
@@ -67,7 +67,7 @@ public:
   using AbstractBase::m_gravCoef;
   using AbstractBase::m_pres;
 
-  using Base = kernels::fluidFlow::singlePhase::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
+  using Base = fluidFlow::kernels::singlePhase::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
   using Base::numDof;
   using Base::numEqn;
   using Base::maxNumElems;
@@ -301,7 +301,7 @@ public:
   }
 };
 
-} // namespace kernels::fluidFlow::singlePhase::fvm::stabilization
+} // namespace fluidFlow::kernels::singlePhase::fvm::stabilization
 
 } // namespace geos
 

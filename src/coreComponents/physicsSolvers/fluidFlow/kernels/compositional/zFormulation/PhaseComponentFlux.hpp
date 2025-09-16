@@ -29,7 +29,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm::zformulation
+namespace fluidFlow::kernels::compositional::fvm::zformulation
 {
 
 struct PhaseComponentFlux
@@ -112,7 +112,7 @@ struct PhaseComponentFlux
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::fvm::zformulation
+} // namespace fluidFlow::kernels::compositional::fvm::zformulation
 
 } // namespace geos
 

@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::zformulation
+namespace fluidFlow::kernels::compositional::zformulation
 {
 
 /******************************** PhaseMobilityKernel ********************************/
@@ -38,11 +38,11 @@ namespace kernels::fluidFlow::compositional::zformulation
  */
 template< integer NUM_COMP, integer NUM_PHASE >
 class PhaseMobilityKernel :
-  public kernels::fluidFlow::compositional::PropertyKernelBase< NUM_COMP >
+  public fluidFlow::kernels::compositional::PropertyKernelBase< NUM_COMP >
 {
 public:
 
-  using Base = kernels::fluidFlow::compositional::PropertyKernelBase< NUM_COMP >;
+  using Base = fluidFlow::kernels::compositional::PropertyKernelBase< NUM_COMP >;
   using Base::numComp;
 
   /// Compile time value for the number of phases
@@ -212,7 +212,7 @@ public:
                    constitutive::MultiFluidBase const & fluid,
                    constitutive::RelativePermeabilityBase const & relperm )
   {
-    using namespace kernels::fluidFlow::compositional::internal;
+    using namespace fluidFlow::kernels::compositional::internal;
 
     if( numPhase == 2 )
     {
@@ -235,7 +235,7 @@ public:
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::zformulation
+} // namespace fluidFlow::kernels::compositional::zformulation
 
 } // namespace geos
 

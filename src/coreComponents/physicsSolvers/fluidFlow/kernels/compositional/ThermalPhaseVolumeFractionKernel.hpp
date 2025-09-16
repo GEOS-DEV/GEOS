@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::thermal
+namespace fluidFlow::kernels::compositional::thermal
 {
 
 /******************************** PhaseVolumeFractionKernel ********************************/
@@ -38,11 +38,11 @@ namespace kernels::fluidFlow::compositional::thermal
  */
 template< integer NUM_COMP, integer NUM_PHASE >
 class PhaseVolumeFractionKernel :
-  public kernels::fluidFlow::compositional::isothermal::PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE >
+  public fluidFlow::kernels::compositional::isothermal::PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE >
 {
 public:
 
-  using Base = kernels::fluidFlow::compositional::isothermal::PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE >;
+  using Base = fluidFlow::kernels::compositional::isothermal::PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE >;
   using Base::m_dPhaseDens;
   using Base::m_dPhaseFrac;
   using Base::m_dPhaseVolFrac;
@@ -108,7 +108,7 @@ public:
                    ObjectManagerBase & subRegion,
                    constitutive::MultiFluidBase const & fluid )
   {
-    using namespace kernels::fluidFlow::compositional::internal;
+    using namespace fluidFlow::kernels::compositional::internal;
 
     real64 maxDeltaPhaseVolFrac = 0.0;
     if( numPhase == 2 )
@@ -133,7 +133,7 @@ public:
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::thermal
+} // namespace fluidFlow::kernels::compositional::thermal
 
 } // namespace geos
 

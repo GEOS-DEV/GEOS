@@ -40,7 +40,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm::zformulation
+namespace fluidFlow::kernels::compositional::fvm::zformulation
 {
 
 /**
@@ -51,7 +51,7 @@ namespace kernels::fluidFlow::compositional::fvm::zformulation
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
-class FluxComputeKernel : public kernels::fluidFlow::compositional::fvm::FluxComputeKernelBase
+class FluxComputeKernel : public fluidFlow::kernels::compositional::fvm::FluxComputeKernelBase
 {
 public:
 
@@ -469,7 +469,7 @@ public:
                    integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
-                   BitFlags< kernels::fluidFlow::compositional::fvm::KernelFlags > kernelFlags,
+                   BitFlags< fluidFlow::kernels::compositional::fvm::KernelFlags > kernelFlags,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -477,7 +477,7 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    kernels::fluidFlow::compositional::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
+    fluidFlow::kernels::compositional::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC() + 1;
@@ -500,7 +500,7 @@ public:
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::fvm::isothermal
+} // namespace fluidFlow::kernels::compositional::fvm::isothermal
 
 } // namespace geos
 

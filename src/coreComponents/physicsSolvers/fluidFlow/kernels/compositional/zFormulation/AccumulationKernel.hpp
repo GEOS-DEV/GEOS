@@ -35,7 +35,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::zformulation
+namespace fluidFlow::kernels::compositional::zformulation
 {
 
 /******************************** AccumulationKernel ********************************/
@@ -379,7 +379,7 @@ public:
   createAndLaunch( integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
-                   BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags,
+                   BitFlags< fluidFlow::kernels::compositional::KernelFlags > kernelFlags,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
                    constitutive::MultiFluidBase const & fluid,
@@ -400,7 +400,7 @@ public:
 
 };
 
-} // namespace kernels::fluidFlow::compositional::zformulation
+} // namespace fluidFlow::kernels::compositional::zformulation
 
 } // namespace geos
 

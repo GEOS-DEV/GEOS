@@ -38,7 +38,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm
+namespace fluidFlow::kernels::compositional::fvm
 {
 
 enum class KernelFlags
@@ -251,7 +251,7 @@ static void calculateMeanDensity( localIndex const ip,
 
 }
 
-} // namespace kernels::fluidFlow::compositional::fvm
+} // namespace fluidFlow::kernels::compositional::fvm
 
 } // namespace geos
 

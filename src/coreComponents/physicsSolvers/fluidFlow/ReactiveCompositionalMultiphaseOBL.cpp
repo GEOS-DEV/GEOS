@@ -42,7 +42,7 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace kernels::fluidFlow::obl;
+using namespace fluidFlow::kernels::obl;
 
 namespace
 {

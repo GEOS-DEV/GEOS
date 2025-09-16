@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::thermal
+namespace fluidFlow::kernels::compositional::thermal
 {
 
 /******************************** AccumulationKernel ********************************/
@@ -38,11 +38,11 @@ namespace kernels::fluidFlow::compositional::thermal
  */
 template< localIndex NUM_COMP, localIndex NUM_DOF >
 class AccumulationKernel :
-  public kernels::fluidFlow::compositional::isothermal::AccumulationKernel< NUM_COMP, NUM_DOF >
+  public fluidFlow::kernels::compositional::isothermal::AccumulationKernel< NUM_COMP, NUM_DOF >
 {
 public:
 
-  using Base = kernels::fluidFlow::compositional::isothermal::AccumulationKernel< NUM_COMP, NUM_DOF >;
+  using Base = fluidFlow::kernels::compositional::isothermal::AccumulationKernel< NUM_COMP, NUM_DOF >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -63,7 +63,7 @@ public:
   using Base::m_localMatrix;
   using Base::m_localRhs;
 
-  using KernelFlags = kernels::fluidFlow::compositional::KernelFlags;
+  using KernelFlags = fluidFlow::kernels::compositional::KernelFlags;
 
   /**
    * @brief Constructor
@@ -314,7 +314,7 @@ public:
   createAndLaunch( localIndex const numComps,
                    localIndex const numPhases,
                    globalIndex const rankOffset,
-                   BitFlags< kernels::fluidFlow::compositional::KernelFlags > kernelFlags,
+                   BitFlags< fluidFlow::kernels::compositional::KernelFlags > kernelFlags,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
                    constitutive::MultiFluidBase const & fluid,
@@ -322,7 +322,7 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    kernels::fluidFlow::compositional::internal::
+    fluidFlow::kernels::compositional::internal::
       kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
     {
       localIndex constexpr NUM_COMP = NC();
@@ -336,7 +336,7 @@ public:
 
 };
 
-} // namespace kernels::fluidFlow::compositional::thermal
+} // namespace fluidFlow::kernels::compositional::thermal
 
 } // namespace geos
 

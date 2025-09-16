@@ -45,7 +45,7 @@
 namespace geos
 {
 
-namespace kernels::wells::singlePhase
+namespace wells::kernels::singlePhase
 {
 
 //struct NoOpStruct
@@ -343,11 +343,11 @@ namespace thermal
 
 template< integer IS_THERMAL >
 class PerforationFluxKernel :
-  public kernels::wells::singlePhase::isothermal::PerforationFluxKernel< IS_THERMAL >
+  public wells::kernels::singlePhase::isothermal::PerforationFluxKernel< IS_THERMAL >
 {
 public:
 
-  using Base = kernels::wells::singlePhase::isothermal::PerforationFluxKernel< IS_THERMAL >;
+  using Base = wells::kernels::singlePhase::isothermal::PerforationFluxKernel< IS_THERMAL >;
   using SinglePhaseFlowAccessors = typename Base::SinglePhaseFlowAccessors;
   using SingleFluidAccessors = typename Base::SingleFluidAccessors;
 
@@ -533,7 +533,7 @@ public:
 
 } // end namespace thermal
 
-} // end namespace kernels::wells::compositional
+} // end namespace wells::kernels::compositional
 
 } // end namespace geos
 

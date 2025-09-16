@@ -25,7 +25,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::thermal
+namespace fluidFlow::kernels::compositional::thermal
 {
 
 /******************************** SolutionCheckKernel ********************************/
@@ -34,11 +34,11 @@ namespace kernels::fluidFlow::compositional::thermal
  * @class SolutionCheckKernel
  * @brief Define the kernel for checking the updated solution
  */
-class SolutionCheckKernel : public kernels::fluidFlow::compositional::isothermal::SolutionCheckKernel
+class SolutionCheckKernel : public fluidFlow::kernels::compositional::isothermal::SolutionCheckKernel
 {
 public:
 
-  using Base = kernels::fluidFlow::compositional::isothermal::SolutionCheckKernel;
+  using Base = fluidFlow::kernels::compositional::isothermal::SolutionCheckKernel;
   using Base::m_numComp;
   using Base::m_localSolution;
   using Base::m_scalingFactor;
@@ -173,7 +173,7 @@ public:
 
 };
 
-} // namespace kernels::fluidFlow::compositional::thermal
+} // namespace fluidFlow::kernels::compositional::thermal
 
 } // namespace geos
 

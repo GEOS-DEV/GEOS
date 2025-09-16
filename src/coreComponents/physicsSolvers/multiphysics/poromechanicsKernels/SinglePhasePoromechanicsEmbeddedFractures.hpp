@@ -32,7 +32,7 @@ namespace singlePhasePoromechanicsEmbeddedFracturesKernels
 
 template< integer NUM_EQN, integer NUM_DOF >
 class ConnectorBasedAssemblyKernel :
-  public ::geos::kernels::fluidFlow::singlePhase::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
+  public ::geos::fluidFlow::kernels::singlePhase::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
 {
 public:
 
@@ -45,7 +45,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = ::geos::kernels::fluidFlow::singlePhase::fvm::FluxComputeKernelBase;
+  using AbstractBase = ::geos::fluidFlow::kernels::singlePhase::fvm::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using SinglePhaseFlowAccessors = AbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = AbstractBase::SinglePhaseFluidAccessors;
@@ -64,7 +64,7 @@ public:
   using AbstractBase::m_dens;
   using AbstractBase::m_dDens;
 
-  using Base = ::geos::kernels::fluidFlow::singlePhase::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
+  using Base = ::geos::fluidFlow::kernels::singlePhase::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
   using Base::numDof;
   using Base::numEqn;
   using Base::maxNumElems;
@@ -182,7 +182,7 @@ public:
     real64 mobility = 0.0;
     real64 potGrad = 0.0;
 
-    kernels::fluidFlow::singlePhase::fvm::computeSinglePhaseFlux( regionIndex,
+    fluidFlow::kernels::singlePhase::fvm::computeSinglePhaseFlux( regionIndex,
                                                                   subRegionIndex,
                                                                   elementIndex,
                                                                   trans,

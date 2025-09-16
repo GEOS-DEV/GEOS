@@ -257,7 +257,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::compositional::fvm;
+  using namespace fluidFlow::kernels::compositional::fvm;
 
   BitFlags< KernelFlags > kernelFlags;
   if( m_hasCapPressure )
@@ -428,7 +428,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::compositional;
+  using namespace fluidFlow::kernels::compositional;
 
   integer constexpr numNorm = 3; // mass/volume balance and energy balance
   array1d< real64 > localResidualNorm;
@@ -575,7 +575,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::compositional;
+  using namespace fluidFlow::kernels::compositional;
 
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
@@ -732,7 +732,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolutionZFormulation( DomainP
       //arrayView1d< real64 > temperatureScalingFactor = subRegion.getField< flow::temperatureScalingFactor >();
       arrayView1d< real64 > compFracScalingFactor = subRegion.getField< flow::globalCompFractionScalingFactor >();
 
-      auto const subRegionData = kernels::fluidFlow::compositional::zformulation::
+      auto const subRegionData = fluidFlow::kernels::compositional::zformulation::
                                    SolutionScalingKernelFactory::
                                    createAndLaunch< parallelDevicePolicy<> >( m_maxRelativePresChange,
                                                                               m_maxAbsolutePresChange,
@@ -801,7 +801,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::compositional;
+  using namespace fluidFlow::kernels::compositional;
 
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
@@ -1028,7 +1028,7 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( ObjectManagerBase & dataGr
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::compositional;
+  using namespace fluidFlow::kernels::compositional;
 
   // note that the phase mobility computed here also includes phase density
   string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -1225,7 +1225,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::compositional::fvm;
+  using namespace fluidFlow::kernels::compositional::fvm;
 
   // Only validate BC at the beginning of Newton loop
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
@@ -1364,7 +1364,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::compositional;
+  using namespace fluidFlow::kernels::compositional;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -1464,7 +1464,7 @@ void CompositionalMultiphaseFVM::assembleHydrofracFluxTerms( real64 const GEOS_U
 
   string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-  using namespace kernels::fluidFlow::compositional::fvm;
+  using namespace fluidFlow::kernels::compositional::fvm;
 
   BitFlags< KernelFlags > kernelFlags;
   if( m_hasCapPressure )
@@ -1559,7 +1559,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::compositional;
+  using namespace fluidFlow::kernels::compositional;
 
   integer const numPhases = numFluidPhases();
   integer const numComps = numFluidComponents();

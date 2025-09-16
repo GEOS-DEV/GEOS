@@ -29,7 +29,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm::thermal
+namespace fluidFlow::kernels::compositional::fvm::thermal
 {
 
 /******************************** DirichletFluxComputeKernel ********************************/
@@ -43,7 +43,7 @@ namespace kernels::fluidFlow::compositional::fvm::thermal
  */
 template< integer NUM_COMP, integer NUM_DOF, typename FLUIDWRAPPER >
 class DirichletFluxComputeKernel :
-  public kernels::fluidFlow::compositional::fvm::isothermal::DirichletFluxComputeKernel< NUM_COMP, NUM_DOF, FLUIDWRAPPER >
+  public fluidFlow::kernels::compositional::fvm::isothermal::DirichletFluxComputeKernel< NUM_COMP, NUM_DOF, FLUIDWRAPPER >
 {
 public:
 
@@ -56,7 +56,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = kernels::fluidFlow::compositional::fvm::FluxComputeKernelBase;
+  using AbstractBase = fluidFlow::kernels::compositional::fvm::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
@@ -73,7 +73,7 @@ public:
   using AbstractBase::m_dCompFrac_dCompDens;
 
   using Base =
-    kernels::fluidFlow::compositional::fvm::isothermal::DirichletFluxComputeKernel< NUM_COMP, NUM_DOF, FLUIDWRAPPER >;
+    fluidFlow::kernels::compositional::fvm::isothermal::DirichletFluxComputeKernel< NUM_COMP, NUM_DOF, FLUIDWRAPPER >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -87,7 +87,7 @@ public:
   using Base::m_faceTemp;
   using Base::m_faceGravCoef;
 
-  using KernelFlags = kernels::fluidFlow::compositional::fvm::KernelFlags;
+  using KernelFlags = fluidFlow::kernels::compositional::fvm::KernelFlags;
 
   using ThermalCompFlowAccessors =
     StencilAccessors< fields::flow::temperature >;
@@ -431,7 +431,7 @@ public:
   createAndLaunch( integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
-                   BitFlags< kernels::fluidFlow::compositional::fvm::KernelFlags > kernelFlags,
+                   BitFlags< fluidFlow::kernels::compositional::fvm::KernelFlags > kernelFlags,
                    string const & dofKey,
                    string const & solverName,
                    FaceManager const & faceManager,
@@ -472,7 +472,7 @@ public:
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::fvm::thermal
+} // namespace fluidFlow::kernels::compositional::fvm::thermal
 
 } // namespace geos
 

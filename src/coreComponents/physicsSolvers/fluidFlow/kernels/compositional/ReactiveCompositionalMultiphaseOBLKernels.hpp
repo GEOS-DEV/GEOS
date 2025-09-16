@@ -39,7 +39,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::obl
+namespace fluidFlow::kernels::obl
 {
 
 static constexpr real64 minValueForDivision = 1e-10;
@@ -1372,7 +1372,7 @@ struct SolutionCheckKernel
 };
 
 
-} // namespace kernels::fluidFlow::obl
+} // namespace fluidFlow::kernels::obl
 
 } // namespace geos
 

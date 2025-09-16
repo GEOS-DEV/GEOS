@@ -28,7 +28,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::compositional::fvm::stabilization
+namespace fluidFlow::kernels::compositional::fvm::stabilization
 {
 
 /******************************** FluxComputeKernel ********************************/
@@ -42,7 +42,7 @@ namespace kernels::fluidFlow::compositional::fvm::stabilization
  */
 template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
 class FluxComputeKernel :
-  public kernels::fluidFlow::compositional::fvm::isothermal::FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
+  public fluidFlow::kernels::compositional::fvm::isothermal::FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
@@ -55,7 +55,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = kernels::fluidFlow::compositional::fvm::FluxComputeKernelBase;
+  using AbstractBase = fluidFlow::kernels::compositional::fvm::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
@@ -86,7 +86,7 @@ public:
   using AbstractBase::m_dCompFrac_dCompDens;
   using AbstractBase::m_pres;
 
-  using Base = kernels::fluidFlow::compositional::fvm::isothermal::FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+  using Base = fluidFlow::kernels::compositional::fvm::isothermal::FluxComputeKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -101,7 +101,7 @@ public:
   using Base::m_sesri;
   using Base::m_sei;
 
-  using KernelFlags = kernels::fluidFlow::compositional::fvm::KernelFlags;
+  using KernelFlags = fluidFlow::kernels::compositional::fvm::KernelFlags;
 
   /**
    * @brief Constructor for the kernel interface
@@ -331,7 +331,7 @@ public:
                    integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
-                   BitFlags< kernels::fluidFlow::compositional::fvm::KernelFlags > kernelFlags,
+                   BitFlags< fluidFlow::kernels::compositional::fvm::KernelFlags > kernelFlags,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -339,7 +339,7 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    kernels::fluidFlow::compositional::internal::
+    fluidFlow::kernels::compositional::internal::
       kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
@@ -367,7 +367,7 @@ public:
   }
 };
 
-} // namespace kernels::fluidFlow::compositional::fvm::stabilization
+} // namespace fluidFlow::kernels::compositional::fvm::stabilization
 
 } // namespace geos
 

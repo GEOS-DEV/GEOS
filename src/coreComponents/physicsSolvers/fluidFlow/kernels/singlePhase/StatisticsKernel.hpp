@@ -26,7 +26,7 @@
 namespace geos
 {
 
-namespace kernels::fluidFlow::singlePhase
+namespace fluidFlow::kernels::singlePhase
 {
 
 /******************************** StatisticsKernel ********************************/
@@ -126,7 +126,7 @@ struct StatisticsKernel
   }
 };
 
-} // namespace kernels::fluidFlow::singlePhase
+} // namespace fluidFlow::kernels::singlePhase
 
 } // namespace geos
 

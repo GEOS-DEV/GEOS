@@ -25,7 +25,7 @@ namespace geos
 {
 using namespace fields;
 
-namespace kernels::fluidFlow::compositional::fvm
+namespace fluidFlow::kernels::compositional::fvm
 {
 
 /******************************** FluxComputeKernelBase ********************************/
@@ -56,6 +56,6 @@ FluxComputeKernelBase::FluxComputeKernelBase( integer const numPhases,
   m_kernelFlags( kernelFlags )
 {}
 
-} // namespace kernels::fluidFlow::compositional::fvm
+} // namespace fluidFlow::kernels::compositional::fvm
 
 } // namespace geos

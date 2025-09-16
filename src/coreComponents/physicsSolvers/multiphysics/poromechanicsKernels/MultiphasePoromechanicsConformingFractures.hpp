@@ -31,7 +31,7 @@ namespace multiphasePoromechanicsConformingFracturesKernels
 
 template< integer NUM_EQN, integer NUM_DOF >
 class FluxComputeKernel :
-  public kernels::fluidFlow::compositional::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
+  public fluidFlow::kernels::compositional::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >
 {
 public:
 
@@ -44,7 +44,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = kernels::fluidFlow::compositional::fvm::FluxComputeKernelBase;
+  using AbstractBase = fluidFlow::kernels::compositional::fvm::FluxComputeKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
@@ -59,7 +59,7 @@ public:
   using AbstractBase::m_pres;
 
   using Base =
-    kernels::fluidFlow::compositional::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
+    fluidFlow::kernels::compositional::fvm::isothermal::FluxComputeKernel< NUM_EQN, NUM_DOF, SurfaceElementStencilWrapper >;
   using Base::numDof;
   using Base::numEqn;
   using Base::maxNumElems;
@@ -88,7 +88,7 @@ public:
   using Base::m_phaseCapPressure;
   using Base::m_dPhaseCapPressure_dPhaseVolFrac;
 
-  using KernelFlags = kernels::fluidFlow::compositional::fvm::KernelFlags;
+  using KernelFlags = fluidFlow::kernels::compositional::fvm::KernelFlags;
 
   FluxComputeKernel( integer const numPhases,
                      globalIndex const rankOffset,
@@ -102,7 +102,7 @@ public:
                      real64 const dt,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs,
-                     BitFlags< kernels::fluidFlow::compositional::fvm::KernelFlags > kernelFlags,
+                     BitFlags< fluidFlow::kernels::compositional::fvm::KernelFlags > kernelFlags,
                      CRSMatrixView< real64, localIndex const > const & dR_dAper )
     : Base( numPhases,
             rankOffset,
@@ -185,7 +185,7 @@ public:
                     StackVariables & stack,
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
-    using namespace kernels::fluidFlow::compositional::fvm;
+    using namespace fluidFlow::kernels::compositional::fvm;
 
     m_stencilWrapper.computeWeights( iconn,
                                      m_permeability,
@@ -377,7 +377,7 @@ public:
                    integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
-                   BitFlags< kernels::fluidFlow::compositional::fvm::KernelFlags > kernelFlags,
+                   BitFlags< fluidFlow::kernels::compositional::fvm::KernelFlags > kernelFlags,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    SurfaceElementStencilWrapper const & stencilWrapper,
@@ -386,7 +386,7 @@ public:
                    arrayView1d< real64 > const & localRhs,
                    CRSMatrixView< real64, localIndex const > const & dR_dAper )
   {
-    kernels::fluidFlow::compositional::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
+    fluidFlow::kernels::compositional::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC() + 1;

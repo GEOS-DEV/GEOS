@@ -45,8 +45,8 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace kernels::fluidFlow::compositional;
-using namespace kernels::fluidFlow::compositional::hybridFVM;
+using namespace fluidFlow::kernels::compositional;
+using namespace fluidFlow::kernels::compositional::hybridFVM;
 using namespace mimeticInnerProduct;
 
 CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::string & name,
@@ -205,7 +205,7 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, string_
     // scheme
     // This one-sided gravity term is currently always treated with TPFA, as in MRST.
     // In the future, I will change that (here and in the FluxKernel) to have a consistent inner product for the gravity term as well
-    kernels::fluidFlow::compositional::hybridFVM::
+    fluidFlow::kernels::compositional::hybridFVM::
       simpleKernelLaunchSelector< PrecomputeKernel,
                                   mimeticInnerProduct::TPFAInnerProduct >( subRegion.numFacesPerElement(),
                                                                            subRegion.size(),
@@ -425,7 +425,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::compositional;
+  using namespace fluidFlow::kernels::compositional;
 
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
@@ -506,7 +506,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & do
 {
   GEOS_MARK_FUNCTION;
 
-  using namespace kernels::fluidFlow::compositional::isothermal;
+  using namespace fluidFlow::kernels::compositional::isothermal;
 
   string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   integer localCheck = 1;
@@ -632,7 +632,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 
       // step 1.1: compute the norm in the subRegion
 
-      kernels::fluidFlow::compositional::isothermal::ResidualNormKernelFactory::
+      fluidFlow::kernels::compositional::isothermal::ResidualNormKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( normType,
                                                    numFluidComponents(),
                                                    rankOffset,
@@ -672,7 +672,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
 
     // step 2.1: compute the norm for the local faces
 
-    kernels::fluidFlow::compositional::hybridFVM::
+    fluidFlow::kernels::compositional::hybridFVM::
       ResidualNormKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( normType,
                                                  rankOffset,
@@ -815,7 +815,7 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( ObjectManagerBase & 
     getConstitutiveModel< RelativePermeabilityBase >( dataGroup,
                                                       dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() ) );
 
-  kernels::fluidFlow::compositional::hybridFVM::
+  fluidFlow::kernels::compositional::hybridFVM::
     PhaseMobilityKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                m_numPhases,
