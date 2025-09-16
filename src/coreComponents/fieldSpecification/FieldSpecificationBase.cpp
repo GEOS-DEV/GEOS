@@ -30,9 +30,9 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "Name of sets that boundary condition is applied to."
-                    "A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges)."
-                    "A set can contain by a 'Geometry' component, or correspond to imported sets in case of an external mesh" );
+    setDescription( "Name of sets that the boundary condition is applied to.\n"
+                    "A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).\n"
+                    "A set can be created by a 'Geometry' component, or correspond to imported sets in case of an external mesh" );
 
   registerWrapper( viewKeyStruct::objectPathString(), &m_objectPath ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -42,13 +42,13 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
   registerWrapper( viewKeyStruct::fieldNameString(), &m_fieldName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of field that boundary condition is applied to."
+    setDescription( "Name of field that boundary condition is applied to.\n"
                     "A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)" );
 
   registerWrapper( viewKeyStruct::componentString(), &m_component ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Component of field (if tensor) to apply boundary condition to."
+    setDescription( "Component of field (if tensor) to apply boundary condition to.\n"
                     "The component must use the order in which the phaseNames have been defined in the Constitutive Element." );
 
   registerWrapper( viewKeyStruct::directionString(), &m_direction ).

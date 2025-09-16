@@ -48,7 +48,7 @@ The user can parameterize the construction of the table by specifying the salini
 - **T_min**: The minimum temperature value [K] for the density table. This sets the lower boundary of the temperature range.
 - **T_max**: The maximum temperature value [K] for the density table. It sets the upper boundary of the temperature range.
 - **ΔT (Delta T)**: The increment in temperature [K] between successive values in the temperature axis of the table. It defines the resolution of the temperature dimension.
-- **Salinity**: alinity is expressed in molality (moles of NaCl per kg of brine).
+- **Salinity**: Salinity is expressed in molality (moles of NaCl per kg of brine).
 
 The temperature must be between 283.15 and 623.15 Kelvin.
 The table is populated using the model of Duan and Sun (2003).

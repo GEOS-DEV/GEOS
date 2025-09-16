@@ -72,7 +72,7 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "The Bottom Hole Pressure [Pa] being targeted during the injection." );
+    setDescription( "The target bottom-hole pressure [Pa] for the well." );
 
   registerWrapper( viewKeyStruct::targetTotalRateString(), &m_targetTotalRate ).
     setDefaultValue( 0.0 ).

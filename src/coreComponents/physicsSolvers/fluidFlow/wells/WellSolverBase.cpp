@@ -56,8 +56,7 @@ WellSolverBase::WellSolverBase( string const & name,
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "When set to 1, write the rates into a CSV file"
-                    "Set to 0 by default" );
+    setDescription( "When set to 1, write the rates into a CSV file");
 
   this->registerWrapper( viewKeyStruct::timeStepFromTablesFlagString(), &m_timeStepFromTables ).
     setApplyDefaultValue( 0 ).

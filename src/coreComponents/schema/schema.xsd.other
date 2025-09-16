@@ -302,11 +302,11 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="AquiferType">
-		<!--component => Component of field (if tensor) to apply boundary condition to.-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
 		<xsd:attribute name="component" type="integer" />
 		<!--cumulativeFlux => (no description available)-->
 		<xsd:attribute name="cumulativeFlux" type="real64" />
-		<!--fieldName => Name of field that boundary condition is applied to.-->
+		<!--fieldName => Name of field that boundary condition is applied to.A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" />
@@ -314,29 +314,29 @@
 	<xsd:complexType name="DirichletType" />
 	<xsd:complexType name="FieldSpecificationType" />
 	<xsd:complexType name="HydrostaticEquilibriumType">
-		<!--component => Component of field (if tensor) to apply boundary condition to.-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
 		<xsd:attribute name="component" type="integer" />
-		<!--fieldName => Name of field that boundary condition is applied to.-->
+		<!--fieldName => Name of field that boundary condition is applied to.A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" />
-		<!--setNames => Name of sets that boundary condition is applied to.-->
+		<!--setNames => Name of sets that boundary condition is applied to.A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).A set can contain by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" />
 	</xsd:complexType>
 	<xsd:complexType name="PMLType">
-		<!--fieldName => Name of field that boundary condition is applied to.-->
+		<!--fieldName => Name of field that boundary condition is applied to.A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
 		<xsd:attribute name="initialCondition" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="SourceFluxType">
-		<!--fieldName => Name of field that boundary condition is applied to.-->
+		<!--fieldName => Name of field that boundary condition is applied to.A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" />
 	</xsd:complexType>
 	<xsd:complexType name="TractionType">
-		<!--component => Component of field (if tensor) to apply boundary condition to.-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
 		<xsd:attribute name="component" type="integer" />
-		<!--fieldName => Name of field that boundary condition is applied to.-->
+		<!--fieldName => Name of field that boundary condition is applied to.A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" />
 	</xsd:complexType>
 	<xsd:complexType name="FunctionsType">
@@ -1587,7 +1587,7 @@
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
 		<!--dPorosity_dTemperature => Derivative of rock porosity with respect to temperature-->
 		<xsd:attribute name="dPorosity_dTemperature" type="real64_array2d" />
-		<!--grainBulkModulus => Grain Bulk modulus.-->
+		<!--grainBulkModulus => Grain bulk modulus-->
 		<xsd:attribute name="grainBulkModulus" type="real64_array" />
 		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
@@ -2614,8 +2614,6 @@
 		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="real64_array4d" />
 		<!--jFuncMultiplier => Multiplier for the Leverett J-function-->
 		<xsd:attribute name="jFuncMultiplier" type="real64_array2d" />
-		<!--jFunctionWrappers => (no description available)-->
-		<xsd:attribute name="jFunctionWrappers" type="LvArray_Array_lt_geos_TableFunction_KernelWrapper_cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--phaseCapPressure => Phase capillary pressure-->
 		<xsd:attribute name="phaseCapPressure" type="real64_array3d" />
 		<!--phaseOrder => (no description available)-->
