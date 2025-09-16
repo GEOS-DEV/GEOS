@@ -588,6 +588,7 @@ void CompositionalMultiphaseWell::createSeparator()
     {
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
+      fluid.setMassFlag( m_useMass );
       // setup fluid separator
       WellControls & wellControls = getWellControls( subRegion );
       string const fluidSeparatorName = wellControls.getName() + "Separator";
@@ -595,7 +596,6 @@ void CompositionalMultiphaseWell::createSeparator()
       fluidSeparatorPtr->allocateConstitutiveData( wellControls, 1 );
       fluidSeparatorPtr->resize( 1 );
       wellControls.setFluidSeparator( std::move( fluidSeparatorPtr ));
-
     } );
   } );
 }
@@ -710,8 +710,6 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   // fluid data
   constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
-  // fluidSeparator.initializeState();
-
   integer isThermal = fluidSeparator.isThermal();
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const & phaseFrac = fluidSeparator.phaseFraction();
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseFrac = fluidSeparator.dPhaseFraction();
@@ -834,7 +832,6 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         {
           fluidSeparatorWrapper.update( iwelemRef, 0, flashPressure, flashTemperature, compFrac[iwelemRef] );
         }
-
         // Step 2: update the total volume rate
 
         real64 const currentTotalRate = connRate[iwelemRef];
