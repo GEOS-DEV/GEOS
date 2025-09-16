@@ -104,7 +104,8 @@ public:
     m_rhs( inputRhs ),
     m_dt( inputDt )
   {
-    FiniteElementBase::initialize< FE_TYPE >( nodeManager,
+    
+    FE_TYPE::fillMeshData( nodeManager,
                                               edgeManager,
                                               faceManager,
                                               elementSubRegion,
@@ -184,7 +185,7 @@ public:
               StackVariables & stack ) const
   {
     m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
-    localIndex numTestSupportPoints = m_finiteElementSpace.getNumSupportPoints( stack.feStack );
+    localIndex numTestSupportPoints = FE_TYPE::getNumSupportPoints( stack.feStack );
     localIndex numTrialSupportPoints = numTestSupportPoints;
     stack.numRows = numTestSupportPoints * numDofPerTestSupportPoint;
     stack.numCols = numTrialSupportPoints * numDofPerTrialSupportPoint;

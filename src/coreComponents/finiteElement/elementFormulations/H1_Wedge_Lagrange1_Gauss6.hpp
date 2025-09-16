@@ -52,37 +52,29 @@ namespace finiteElement
  *             0       2          |/____ r
  *
  */
-class H1_Wedge_Lagrange1_Gauss6 final : public FiniteElementBase
+class H1_Wedge_Lagrange1_Gauss6_impl : public FiniteElementBase_impl<6, 5, 6>
 {
 public:
 
   /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
 
-  /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = 6;
 
-  /// The number of faces/support points per element.
-  constexpr static localIndex numFaces = 5;
+  /// struct to hold stack variables.
+  struct StackVariables {};
 
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
+  /// MeshData struct to hold mesh data.
+  template< typename SUBREGION_TYPE >
+  struct MeshData {};
 
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = 6;
 
-  /// The number of sampling points per element.
-  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
+  GEOS_HOST_DEVICE H1_Wedge_Lagrange1_Gauss6_impl() = default;
+  GEOS_HOST_DEVICE ~H1_Wedge_Lagrange1_Gauss6_impl() = default;
+  GEOS_HOST_DEVICE H1_Wedge_Lagrange1_Gauss6_impl( H1_Wedge_Lagrange1_Gauss6_impl const & ) = default;
+  GEOS_HOST_DEVICE H1_Wedge_Lagrange1_Gauss6_impl & operator=( H1_Wedge_Lagrange1_Gauss6_impl const & ) = default;
+  GEOS_HOST_DEVICE H1_Wedge_Lagrange1_Gauss6_impl( H1_Wedge_Lagrange1_Gauss6_impl && ) = default;
+  GEOS_HOST_DEVICE H1_Wedge_Lagrange1_Gauss6_impl & operator=( H1_Wedge_Lagrange1_Gauss6_impl && ) = default;
 
-  GEOS_HOST_DEVICE
-  virtual ~H1_Wedge_Lagrange1_Gauss6() override
-  {}
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
-  {
-    return numQuadraturePoints;
-  }
 
   /**
    * @brief Get the number of quadrature points.
@@ -94,18 +86,6 @@ public:
   {
     GEOS_UNUSED_VAR( stack );
     return numQuadraturePoints;
-  }
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override
-  {
-    return numNodes;
-  }
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override
-  {
-    return maxSupportPoints;
   }
 
   /**
@@ -466,7 +446,7 @@ private:
 GEOS_HOST_DEVICE
 inline
 void
-H1_Wedge_Lagrange1_Gauss6::
+H1_Wedge_Lagrange1_Gauss6_impl::
   jacobianTransformation( int const q,
                           real64 const (&X)[numNodes][3],
                           real64 ( & J )[3][3] )
@@ -504,7 +484,7 @@ H1_Wedge_Lagrange1_Gauss6::
 GEOS_HOST_DEVICE
 inline
 void
-H1_Wedge_Lagrange1_Gauss6::
+H1_Wedge_Lagrange1_Gauss6_impl::
   applyJacobianTransformationToShapeFunctionsDerivatives( int const q,
                                                           real64 const ( &invJ )[3][3],
                                                           real64 (& gradN)[numNodes][3] )
@@ -543,7 +523,7 @@ H1_Wedge_Lagrange1_Gauss6::
 GEOS_HOST_DEVICE
 inline
 void
-H1_Wedge_Lagrange1_Gauss6::calcN( real64 const (&coords)[3],
+H1_Wedge_Lagrange1_Gauss6_impl::calcN( real64 const (&coords)[3],
                                   real64 (& N)[numNodes] )
 {
   real64 const r  = coords[0];
@@ -563,7 +543,7 @@ H1_Wedge_Lagrange1_Gauss6::calcN( real64 const (&coords)[3],
 GEOS_HOST_DEVICE
 inline
 void
-H1_Wedge_Lagrange1_Gauss6::
+H1_Wedge_Lagrange1_Gauss6_impl::
   calcN( localIndex const q,
          real64 (& N)[numNodes] )
 {
@@ -576,7 +556,7 @@ H1_Wedge_Lagrange1_Gauss6::
 
 GEOS_HOST_DEVICE
 inline
-void H1_Wedge_Lagrange1_Gauss6::
+void H1_Wedge_Lagrange1_Gauss6_impl::
   calcN( localIndex const q,
          StackVariables const & GEOS_UNUSED_PARAM( stack ),
          real64 ( & N )[numNodes] )
@@ -589,7 +569,7 @@ void H1_Wedge_Lagrange1_Gauss6::
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Wedge_Lagrange1_Gauss6::
+H1_Wedge_Lagrange1_Gauss6_impl::
   calcGradN( localIndex const q,
              real64 const (&X)[numNodes][3],
              real64 (& gradN)[numNodes][3] )
@@ -607,7 +587,7 @@ H1_Wedge_Lagrange1_Gauss6::
 
 GEOS_HOST_DEVICE
 inline
-real64 H1_Wedge_Lagrange1_Gauss6::
+real64 H1_Wedge_Lagrange1_Gauss6_impl::
   calcGradN( localIndex const q,
              real64 const (&X)[numNodes][3],
              StackVariables const & GEOS_UNUSED_PARAM( stack ),
@@ -619,7 +599,7 @@ real64 H1_Wedge_Lagrange1_Gauss6::
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Wedge_Lagrange1_Gauss6::calcGradFaceBubbleN( localIndex const q,
+H1_Wedge_Lagrange1_Gauss6_impl::calcGradFaceBubbleN( localIndex const q,
                                                 real64 const (&X)[numNodes][3],
                                                 real64 (& gradN)[numFaces][3] )
 {
@@ -671,7 +651,7 @@ H1_Wedge_Lagrange1_Gauss6::calcGradFaceBubbleN( localIndex const q,
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Wedge_Lagrange1_Gauss6::
+H1_Wedge_Lagrange1_Gauss6_impl::
   transformedQuadratureWeight( localIndex const q,
                                real64 const (&X)[numNodes][3] )
 {
@@ -682,7 +662,51 @@ H1_Wedge_Lagrange1_Gauss6::
   return LvArray::tensorOps::determinant< 3 >( J ) * weight;
 }
 
-/// @endcond
+
+#ifndef __CUDA_ARCH__
+
+class H1_Wedge_Lagrange1_Gauss6 final : public H1_Wedge_Lagrange1_Gauss6_impl,
+                                        public FiniteElementBase
+{
+
+public:
+
+
+  H1_Wedge_Lagrange1_Gauss6_impl * getImpl()
+  {
+    return static_cast<H1_Wedge_Lagrange1_Gauss6_impl *>(this);
+  }
+
+  const H1_Wedge_Lagrange1_Gauss6_impl * getImpl() const
+  {
+    return static_cast<const H1_Wedge_Lagrange1_Gauss6_impl *>(this);
+  }
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getNumQuadraturePoints() const override
+  {
+    return numQuadraturePoints;
+  }
+
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getNumSupportPoints() const override
+  {
+    return numNodes;
+  }
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override
+  {
+    return maxSupportPoints;
+  }
+
+
+
+};
+
+#endif // __CUDA_ARCH__
+
 
 }
 }

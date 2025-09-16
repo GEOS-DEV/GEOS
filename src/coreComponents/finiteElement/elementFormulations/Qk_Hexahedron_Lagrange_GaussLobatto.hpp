@@ -63,6 +63,25 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = numNodes;
 
+  /// struct to hold stack variables.
+  struct StackVariables {};
+
+  /// MeshData struct to hold mesh data.
+  template< typename SUBREGION_TYPE >
+  struct MeshData {};
+
+
+  Qk_Hexahedron_Lagrange_GaussLobatto * getImpl()
+  {
+    return static_cast<Qk_Hexahedron_Lagrange_GaussLobatto *>(this);
+  }
+
+  const Qk_Hexahedron_Lagrange_GaussLobatto * getImpl() const
+  {
+    return static_cast<const Qk_Hexahedron_Lagrange_GaussLobatto *>(this);
+  }
+
+
   /**
    * @brief The linear index associated to the given one-dimensional indices in the three directions
    * @param qa The index in the first direction

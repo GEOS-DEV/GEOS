@@ -36,64 +36,162 @@ namespace finiteElement
 
 
 /**
- * @brief Base class for FEM element implementations.
+ * @brief An helper struct to determine the function space.
+ * @tparam N The number of components per support point (i.e., 1 if
+ *   scalar variable, 3 if vector variable)
  */
-class FiniteElementBase
+template< int N >
+struct FunctionSpaceHelper
+{};
+
+/// @cond Doxygen_Suppress
+
+//*************************************************************************************************
+//***** Definitions *******************************************************************************
+//*************************************************************************************************
+
+template<>
+struct FunctionSpaceHelper< 1 >
+{
+  GEOS_HOST_DEVICE
+  constexpr static PDEUtilities::FunctionSpace getFunctionSpace()
+  {
+    return PDEUtilities::FunctionSpace::H1;
+  }
+};
+
+template<>
+struct FunctionSpaceHelper< 3 >
+{
+  GEOS_HOST_DEVICE
+  constexpr static PDEUtilities::FunctionSpace getFunctionSpace()
+  {
+    return PDEUtilities::FunctionSpace::H1vector;
+  }
+};
+
+template< int N >
+GEOS_HOST_DEVICE
+constexpr PDEUtilities::FunctionSpace getFunctionSpace()
+{
+  return FunctionSpaceHelper< N >::getFunctionSpace();
+}
+
+
+/// @endcond
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+template< int NUM_SUPPORT_POINTS,
+          int NUM_FACES,
+          int NUM_QUADRATURE_POINTS >
+class FiniteElementBase_impl
 {
 public:
 
-  /// Default Constructor
-  FiniteElementBase() = default;
+  constexpr static localIndex numNodes = NUM_SUPPORT_POINTS;
 
+  constexpr static localIndex numSupportPoints = NUM_SUPPORT_POINTS;
+
+  constexpr static localIndex maxSupportPoints = numSupportPoints;
+
+  constexpr static localIndex numFaces = NUM_FACES;
+
+  constexpr static localIndex numQuadraturePoints = NUM_QUADRATURE_POINTS;
 
   /// Number of sampling points.
   constexpr static int numSamplingPointsPerDirection = 10;
 
-  /**
-   * @brief Copy Constructor
-   * @param source The object to copy.
-   */
-  FiniteElementBase( FiniteElementBase const & source ) = default;
+  /// The number of sampling points per element.
+  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
-  /// Default Move constructor
-  FiniteElementBase( FiniteElementBase && ) = default;
 
-  /**
-   * @brief Deleted copy assignment operator
-   * @return deleted
-   */
-  FiniteElementBase & operator=( FiniteElementBase const & ) = delete;
+  GEOS_HOST_DEVICE FiniteElementBase_impl() = default;
+  GEOS_HOST_DEVICE ~FiniteElementBase_impl() = default;
+  GEOS_HOST_DEVICE FiniteElementBase_impl( FiniteElementBase_impl const & ) = default;
+  GEOS_HOST_DEVICE FiniteElementBase_impl & operator=( FiniteElementBase_impl const & ) = default;
+  GEOS_HOST_DEVICE FiniteElementBase_impl( FiniteElementBase_impl && ) = default;
+  GEOS_HOST_DEVICE FiniteElementBase_impl & operator=( FiniteElementBase_impl && ) = default;
 
-  /**
-   * @brief Deleted move assignment operator
-   * @return deleted
-   */
-  FiniteElementBase & operator=( FiniteElementBase && ) = delete;
+  GEOS_HOST_DEVICE
+  static localIndex getNumQuadraturePoints()
+  {
+    return numQuadraturePoints;
+  }
 
   /**
-   * @brief Destructor
+   * @brief Get the number of quadrature points.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @return The number of quadrature points.
    */
   GEOS_HOST_DEVICE
-  virtual ~FiniteElementBase()
-  {}
+  template< typename STACK_VARIABLES_TYPE >
+  static localIndex getNumQuadraturePoints( STACK_VARIABLES_TYPE const & stack )
+  {
+    GEOS_UNUSED_VAR( stack );
+    return numQuadraturePoints;
+  }
+
+  GEOS_HOST_DEVICE
+  static localIndex getNumSupportPoints()
+  {
+    return numNodes;
+  }
 
   /**
-   * @struct StackVariables
-   * @brief Kernel variables allocated on the stack.
+   * @brief Get the number of support points.
+   * @param stack Object that holds stack variables.
+   * @return The number of support points.
+   */
+  GEOS_HOST_DEVICE
+  template< typename STACK_VARIABLES_TYPE >
+  static localIndex getNumSupportPoints( STACK_VARIABLES_TYPE const & stack )
+  {
+    GEOS_UNUSED_VAR( stack );
+    return numNodes;
+  }
+
+  GEOS_HOST_DEVICE
+  static localIndex getMaxSupportPoints()
+  {
+    return maxSupportPoints;
+  }
+
+  /**
+   * @brief Get the Sampling Point Coord In the Parent Space
    *
-   * Contains variables that will be allocated on the stack. Used only by Virtual Element classes to
-   * hold the computed projections of basis functions
+   * @param linearIndex linear index of the sampling point
+   * @param samplingPointCoord coordinates of the sampling point
    */
-  struct StackVariables
-  {};
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static void getSamplingPointCoordInParentSpace( int const & linearIndex,
+                                                  real64 (& samplingPointCoord)[3] )
+  {
+    GEOS_UNUSED_VAR( linearIndex, samplingPointCoord );
+    GEOS_ERROR( " Element type not supported." );
+  }
 
-  /**
-   * @struct MeshData
-   * @brief Variables used to initialize the class.
-   */
-  template< typename SUBREGION_TYPE >
-  struct MeshData
-  {};
+
+
+
+
+
+
 
 
   /**
@@ -104,12 +202,13 @@ public:
    * @param cellSubRegion The cell sub-region for which the element has to be initialized.
    * @param meshData MeshData struct to be filled.
    */
-  template< typename SUBREGION_TYPE >
+  template< typename SUBREGION_TYPE,
+            typename MESH_DATA_TYPE > 
   static void fillMeshData( NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
                             SUBREGION_TYPE const & cellSubRegion,
-                            MeshData< SUBREGION_TYPE > & meshData )
+                            MESH_DATA_TYPE & meshData )
   {
     GEOS_UNUSED_VAR( nodeManager,
                      edgeManager,
@@ -128,12 +227,14 @@ public:
    * @param cellSubRegion The cell sub-region for which the element has to be initialized.
    * @param meshData The struct to be filled according to the @p LEAF class needs.
    */
-  template< typename LEAF, typename SUBREGION_TYPE >
+  template< typename LEAF, 
+            typename SUBREGION_TYPE,
+            typename MESH_DATA_TYPE > 
   static void initialize( NodeManager const & nodeManager,
                           EdgeManager const & edgeManager,
                           FaceManager const & faceManager,
                           SUBREGION_TYPE const & cellSubRegion,
-                          typename LEAF::template MeshData< SUBREGION_TYPE > & meshData
+                          MESH_DATA_TYPE & meshData
                           )
   {
     LEAF::template fillMeshData< SUBREGION_TYPE >( nodeManager,
@@ -150,18 +251,20 @@ public:
    * @param meshData MeshData struct filled by @ref fillMeshData.
    * @param stack Object that holds stack variables.
    */
-  template< typename SUBREGION_TYPE >
+  template< typename MESH_DATA_TYPE,
+            typename STACK_VARIABLES_TYPE >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void setupStack( localIndex const & cellIndex,
-                          MeshData< SUBREGION_TYPE > const & meshData,
-                          StackVariables & stack )
+                          MESH_DATA_TYPE const & meshData,
+                          STACK_VARIABLES_TYPE & stack )
   {
     GEOS_UNUSED_VAR( cellIndex,
                      meshData,
                      stack );
 
   }
+
 
   /**
    * @brief Abstract setup method, possibly computing cell-dependent properties.
@@ -171,37 +274,18 @@ public:
    * @param meshData A MeshData object previously filled.
    * @param stack Object that holds stack variables.
    */
-  template< typename LEAF, typename SUBREGION_TYPE >
+  template< typename LEAF, 
+            typename MESH_DATA_TYPE >
   GEOS_HOST_DEVICE
   void setup( localIndex const & cellIndex,
-              typename LEAF::template MeshData< SUBREGION_TYPE > const & meshData,
+              MESH_DATA_TYPE const & meshData,
               typename LEAF::StackVariables & stack ) const
   {
     LEAF::setupStack( cellIndex, meshData, stack );
   }
 
-  /**
-   * @brief Virtual getter for the number of quadrature points per element.
-   * @return The number of quadrature points per element.
-   */
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const = 0;
 
-  /**
-   * @brief Virtual getter for the number of support points per element.
-   * @return The number of support points per element.
-   */
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const = 0;
 
-  /**
-   * @brief An helper struct to determine the function space.
-   * @tparam N The number of components per support point (i.e., 1 if
-   *   scalar variable, 3 if vector variable)
-   */
-  template< int N >
-  struct FunctionSpaceHelper
-  {};
 
   /**
    * @brief Getter for the function space.
@@ -212,15 +296,6 @@ public:
   template< int N >
   GEOS_HOST_DEVICE
   constexpr static PDEUtilities::FunctionSpace getFunctionSpace();
-
-  /**
-   * @brief Get the maximum number of support points for this element.
-   * @details This should be used to know the size of pre-allocated objects whose size depend on the
-   * number of support points.
-   * @return The number of maximum support points for this element.
-   */
-  GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const = 0;
 
 
 
@@ -234,19 +309,23 @@ public:
    * @param matrix The matrix that needs to be stabilized.
    * @param scaleFactor Scaling of the stabilization matrix.
    */
-  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS, bool UPPER >
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, 
+            localIndex MAXSUPPORTPOINTS,
+            bool UPPER,
+            typename STACK_VARIABLES_TYPE >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static void addGradGradStabilization( StackVariables const & stack,
-                                        real64 ( & matrix )
-                                        [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT]
-                                        [MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT],
+  static void addGradGradStabilization( STACK_VARIABLES_TYPE const & stack,
+                                        real64 ( & matrix )[MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT][MAXSUPPORTPOINTS * NUMDOFSPERTRIALSUPPORTPOINT],
                                         real64 const & scaleFactor )
   {
     GEOS_UNUSED_VAR( stack,
                      matrix,
                      scaleFactor );
   }
+
+
+
 
 
   /**
@@ -261,9 +340,7 @@ public:
   template< typename LEAF, localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER = false >
   GEOS_HOST_DEVICE
   void addGradGradStabilizationMatrix( typename LEAF::StackVariables const & stack,
-                                       real64 ( & matrix )
-                                       [LEAF::maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT]
-                                       [LEAF::maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT],
+                                       real64 ( & matrix )[LEAF::maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT][LEAF::maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT],
                                        real64 const scaleFactor = 1.0 ) const
   {
     LEAF::template addGradGradStabilization< NUMDOFSPERTRIALSUPPORTPOINT,
@@ -286,10 +363,12 @@ public:
    * @p NUMDOFSPERTRIALSUPPORTPOINT.
    * @param scaleFactor Scaling of the stabilization matrix.
    */
-  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, localIndex MAXSUPPORTPOINTS >
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, 
+            localIndex MAXSUPPORTPOINTS,
+            typename STACK_VARIABLES_TYPE >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  static void addEvaluatedGradGradStabilization( StackVariables const & stack,
+  static void addEvaluatedGradGradStabilization( STACK_VARIABLES_TYPE const & stack,
                                                  real64 const ( &dofs )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
                                                  real64 ( & targetVector )[MAXSUPPORTPOINTS][NUMDOFSPERTRIALSUPPORTPOINT],
                                                  real64 const scaleFactor )
@@ -332,46 +411,82 @@ public:
   }
 
 
-
-
-
 };
 
-/// @cond Doxygen_Suppress
 
-//*************************************************************************************************
-//***** Definitions *******************************************************************************
-//*************************************************************************************************
 
-template<>
-struct FiniteElementBase::FunctionSpaceHelper< 1 >
+
+
+
+
+#ifndef __CUDA_ARCH__
+
+/**
+ * @brief Base class for FEM element implementations.
+ */
+class FiniteElementBase
 {
+public:
+
+  /// Default Constructor
+  FiniteElementBase() = default;
+
+  /**
+   * @brief Destructor
+   */
   GEOS_HOST_DEVICE
-  constexpr static PDEUtilities::FunctionSpace getFunctionSpace()
-  {
-    return PDEUtilities::FunctionSpace::H1;
-  }
-};
+  virtual ~FiniteElementBase() = default;
 
-template<>
-struct FiniteElementBase::FunctionSpaceHelper< 3 >
-{
+  /**
+   * @brief Copy Constructor
+   * @param source The object to copy.
+   */
+  FiniteElementBase( FiniteElementBase const & source ) = default;
+
+  /// Default Move constructor
+  FiniteElementBase( FiniteElementBase && ) = default;
+
+  /**
+   * @brief Deleted copy assignment operator
+   * @return deleted
+   */
+  FiniteElementBase & operator=( FiniteElementBase const & ) = delete;
+
+  /**
+   * @brief Deleted move assignment operator
+   * @return deleted
+   */
+  FiniteElementBase & operator=( FiniteElementBase && ) = delete;
+
+  /**
+   * @brief Virtual getter for the number of quadrature points per element.
+   * @return The number of quadrature points per element.
+   */
   GEOS_HOST_DEVICE
-  constexpr static PDEUtilities::FunctionSpace getFunctionSpace()
-  {
-    return PDEUtilities::FunctionSpace::H1vector;
-  }
+  virtual localIndex getNumQuadraturePoints() const = 0;
+
+  /**
+   * @brief Virtual getter for the number of support points per element.
+   * @return The number of support points per element.
+   */
+  GEOS_HOST_DEVICE
+  virtual localIndex getNumSupportPoints() const = 0;
+
+
+  /**
+   * @brief Get the maximum number of support points for this element.
+   * @details This should be used to know the size of pre-allocated objects whose size depend on the
+   * number of support points.
+   * @return The number of maximum support points for this element.
+   */
+  GEOS_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const = 0;
+
 };
 
-template< int N >
-GEOS_HOST_DEVICE
-constexpr PDEUtilities::FunctionSpace FiniteElementBase::getFunctionSpace()
-{
-  return FunctionSpaceHelper< N >::getFunctionSpace();
-}
 
+#endif // __CUDA_ARCH__
 
-/// @endcond
 
 
 } // namespace geos::finiteElement

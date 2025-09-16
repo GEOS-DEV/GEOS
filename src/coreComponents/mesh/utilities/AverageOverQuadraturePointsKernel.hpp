@@ -57,7 +57,7 @@ public:
     m_X( nodeManager.referencePosition() ),
     m_elementVolume( elementSubRegion.getElementVolume() )
   {
-    finiteElement::FiniteElementBase::
+    FE_TYPE:: template
       initialize< FE_TYPE >( nodeManager,
                              edgeManager,
                              faceManager,

@@ -47,9 +47,17 @@ namespace finiteElement
  *
  */
 template< typename NUM_Q_POINTS >
-class H1_Tetrahedron_Lagrange1_Gauss final : public FiniteElementBase
+class H1_Tetrahedron_Lagrange1_Gauss_impl : public FiniteElementBase_impl< 4, 4, NUM_Q_POINTS::value >
 {
 public:
+  using BASE = FiniteElementBase_impl< 4, 4, NUM_Q_POINTS::value >;
+  constexpr static localIndex numNodes = BASE::numNodes;
+  constexpr static localIndex numSupportPoints = BASE::numSupportPoints;
+  constexpr static localIndex maxSupportPoints = BASE::maxSupportPoints;
+  constexpr static localIndex numFaces = BASE::numFaces;
+  constexpr static localIndex numQuadraturePoints = BASE::numQuadraturePoints;
+  constexpr static int numSamplingPointsPerDirection = 10;
+  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
   /// Check that the number of quadrature points is valid.
   static_assert( ( NUM_Q_POINTS::value == 1 ||
@@ -60,27 +68,25 @@ public:
   /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
 
-  /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = 4;
 
-  /// The number of faces/support points per element.
-  constexpr static localIndex numFaces = 4;
+  /// struct to hold stack variables.
+  struct StackVariables {};
 
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
+  /// MeshData struct to hold mesh data.
+  template< typename SUBREGION_TYPE >
+  struct MeshData {};
 
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = NUM_Q_POINTS::value;
+  GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl() = default;
+  GEOS_HOST_DEVICE ~H1_Tetrahedron_Lagrange1_Gauss_impl() = default;
+  GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl( H1_Tetrahedron_Lagrange1_Gauss_impl const & ) = default;
+  GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl & operator=( H1_Tetrahedron_Lagrange1_Gauss_impl const & ) = default;
+  GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl( H1_Tetrahedron_Lagrange1_Gauss_impl && ) = default;
+  GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl & operator=( H1_Tetrahedron_Lagrange1_Gauss_impl && ) = default;
 
-  /// The number of sampling points per element.
-  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
-  GEOS_HOST_DEVICE
-  virtual ~H1_Tetrahedron_Lagrange1_Gauss() override
-  {}
 
   GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
+  static localIndex getNumQuadraturePoints()
   {
     return numQuadraturePoints;
   }
@@ -99,13 +105,13 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override
+  static localIndex getNumSupportPoints()
   {
     return numNodes;
   }
 
   GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override
+  static localIndex getMaxSupportPoints()
   {
     return maxSupportPoints;
   }
@@ -516,7 +522,7 @@ template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 determinantJacobianTransformation( real64 const (&X)[numNodes][3] )
 {
   return ( X[1][0] - X[0][0] )*( ( X[2][1] - X[0][1] )*( X[3][2] - X[0][2] ) - ( X[3][1] - X[0][1] )*( X[2][2] - X[0][2] ) )
@@ -530,7 +536,7 @@ template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
 void
-H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 calcN( real64 const (&coords)[3],
        real64 (& N)[numNodes] )
 {
@@ -550,7 +556,7 @@ template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
 void
-H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 calcN( localIndex const q,
        real64 (& N)[numNodes] )
 {
@@ -564,7 +570,7 @@ calcN( localIndex const q,
 template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
-void H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::
+void H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 calcN( localIndex const q,
        StackVariables const & GEOS_UNUSED_PARAM( stack ),
        real64 ( & N )[numNodes] )
@@ -578,7 +584,7 @@ template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 calcGradN( localIndex const q,
            real64 const (&X)[numNodes][3],
            real64 (& gradN)[numNodes][3] )
@@ -617,7 +623,7 @@ calcGradN( localIndex const q,
 template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
-real64 H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::
+real64 H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 calcGradN( localIndex const q,
            real64 const (&X)[numNodes][3],
            StackVariables const & GEOS_UNUSED_PARAM( stack ),
@@ -630,7 +636,7 @@ template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::calcGradFaceBubbleN( localIndex const q,
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::calcGradFaceBubbleN( localIndex const q,
                                                                      real64 const (&X)[numNodes][3],
                                                                      real64 (& gradN)[numFaces][3] )
 {
@@ -691,7 +697,7 @@ template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Tetrahedron_Lagrange1_Gauss< NUM_Q_POINTS >::
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 transformedQuadratureWeight( localIndex const q,
                              real64 const (&X)[numNodes][3] )
 {
@@ -703,7 +709,61 @@ transformedQuadratureWeight( localIndex const q,
 
 /// @endcond
 
-/// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss class for the 1-point Gaussian quadrature rule.
+
+
+
+
+#ifndef __CUDA_ARCH__
+
+template< typename NUM_Q_POINTS >
+class H1_Tetrahedron_Lagrange1_Gauss final : public H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >,
+                                             public FiniteElementBase
+{
+public:
+
+  /// The type of basis used for this element
+  using BASIS = LagrangeBasis1;
+
+
+  H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > * getImpl()
+  {
+    return static_cast<H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > *>(this);
+  }
+
+  const H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > * getImpl() const
+  {
+    return static_cast<const H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > *>(this);
+  }
+
+  GEOS_HOST_DEVICE
+  virtual ~H1_Tetrahedron_Lagrange1_Gauss() override final = default;
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getNumQuadraturePoints() const override final
+  {
+    return H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::numQuadraturePoints;
+  }
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getNumSupportPoints() const override final
+  {
+    return H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::numNodes;
+  }
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override final
+  {
+    return H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::maxSupportPoints;
+  }
+
+
+};
+#endif // __CUDA_ARCH__
+
+
+
+
+/// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss_impl class for the 1-point Gaussian quadrature rule.
 using H1_Tetrahedron_Lagrange1_Gauss1 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 1 > >;
 /// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss class for the 5-point Gaussian quadrature rule.
 using H1_Tetrahedron_Lagrange1_Gauss5 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 5 > >;

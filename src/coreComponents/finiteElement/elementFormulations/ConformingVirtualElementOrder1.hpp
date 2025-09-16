@@ -36,7 +36,7 @@ namespace finiteElement
  * @tparam MAXFACENODES The maximum number of nodes per face that the class expects.
  */
 template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
-class ConformingVirtualElementOrder1 final : public FiniteElementBase
+class ConformingVirtualElementOrder1 final : public FiniteElementBase_impl<MAXCELLNODES,MAXCELLNODES,1>, public FiniteElementBase
 {
 public:
   /// Type of MeshData::nodesCoords.
@@ -69,7 +69,7 @@ public:
    * stabilization matrix. Arrays are pre-allocated using @p MAXCELLNODES.
    * @sa setupStack.
    */
-  struct StackVariables : public FiniteElementBase::StackVariables
+  struct StackVariables
   {
 
     /// The number of support points.
@@ -93,7 +93,7 @@ public:
    * @tparam SUBREGION_TYPE The type of mesh sub-region.
    */
   template< typename SUBREGION_TYPE >
-  struct MeshData : public FiniteElementBase::MeshData< SUBREGION_TYPE >
+  struct MeshData
   {
     /// View to the array containing nodes coordinates.
     InputNodeCoords nodesCoords;
@@ -118,6 +118,18 @@ public:
     /// View to the array of cell volumes.
     arrayView1d< real64 const > cellVolumes;
   };
+
+
+
+  ConformingVirtualElementOrder1 * getImpl()
+  {
+    return static_cast<ConformingVirtualElementOrder1 *>(this);
+  }
+
+  const ConformingVirtualElementOrder1 * getImpl() const
+  {
+    return static_cast<const ConformingVirtualElementOrder1 *>(this);
+  }
 
   GEOS_HOST_DEVICE
   inline

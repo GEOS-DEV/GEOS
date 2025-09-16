@@ -14,7 +14,7 @@
  */
 
 /**
- * @file H1_Hexahedron_Lagrange1_GaussLegendre2.hpp
+ * @file H1_Hexahedron_Lagrange1_GaussLegendre2_impl.hpp
  */
 
 #ifndef GEOS_FINITEELEMENT_ELEMENTFORMULATIONS_TRILINEARHEXAHEDRON_HPP_
@@ -71,30 +71,28 @@ namespace finiteElement
  *
  */
 
-class H1_Hexahedron_Lagrange1_GaussLegendre2 final : public FiniteElementBase
+class H1_Hexahedron_Lagrange1_GaussLegendre2_impl : public FiniteElementBase_impl< 8, 6, 8 >
 {
 public:
-  /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = LagrangeBasis1::TensorProduct3D::numSupportPoints;
 
-  /// The number of faces/support points for bubble functions per element.
-  constexpr static localIndex numFaces = LagrangeBasis1::TensorProduct3D::numSupportFaces;
+  /// struct to hold stack variables.
+  struct StackVariables {};
 
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
+  /// MeshData struct to hold mesh data.
+  template< typename SUBREGION_TYPE >
+  struct MeshData {};
 
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = 8;
 
-  /// The number of sampling points per element
-  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
+  GEOS_HOST_DEVICE H1_Hexahedron_Lagrange1_GaussLegendre2_impl() = default;
+  GEOS_HOST_DEVICE ~H1_Hexahedron_Lagrange1_GaussLegendre2_impl() = default;
+  GEOS_HOST_DEVICE H1_Hexahedron_Lagrange1_GaussLegendre2_impl( H1_Hexahedron_Lagrange1_GaussLegendre2_impl const & ) = default;
+  GEOS_HOST_DEVICE H1_Hexahedron_Lagrange1_GaussLegendre2_impl & operator=( H1_Hexahedron_Lagrange1_GaussLegendre2_impl const & ) = default;
+  GEOS_HOST_DEVICE H1_Hexahedron_Lagrange1_GaussLegendre2_impl( H1_Hexahedron_Lagrange1_GaussLegendre2_impl && ) = default;
+  GEOS_HOST_DEVICE H1_Hexahedron_Lagrange1_GaussLegendre2_impl & operator=( H1_Hexahedron_Lagrange1_GaussLegendre2_impl && ) = default;
 
-  GEOS_HOST_DEVICE
-  virtual ~H1_Hexahedron_Lagrange1_GaussLegendre2() override
-  {}
 
   GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
+  static localIndex getNumQuadraturePoints()
   {
     return numQuadraturePoints;
   }
@@ -112,13 +110,13 @@ public:
   }
 
   GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override
+  static localIndex getNumSupportPoints()
   {
     return numNodes;
   }
 
   GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override
+  static localIndex getMaxSupportPoints()
   {
     return maxSupportPoints;
   }
@@ -500,7 +498,7 @@ private:
 
 template< typename FUNC, typename ... PARAMS >
 GEOS_HOST_DEVICE inline void
-H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
+H1_Hexahedron_Lagrange1_GaussLegendre2_impl::supportLoop( int const qa,
                                                      int const qb,
                                                      int const qc,
                                                      FUNC && func,
@@ -595,7 +593,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::supportLoop( int const qa,
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
+H1_Hexahedron_Lagrange1_GaussLegendre2_impl::calcGradN( localIndex const q,
                                                    real64 const (&X)[numNodes][3],
                                                    real64 (& gradN)[numNodes][3] )
 {
@@ -616,7 +614,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( localIndex const q,
 
 GEOS_HOST_DEVICE
 inline
-real64 H1_Hexahedron_Lagrange1_GaussLegendre2::
+real64 H1_Hexahedron_Lagrange1_GaussLegendre2_impl::
   calcGradN( localIndex const q,
              real64 const (&X)[numNodes][3],
              StackVariables const & GEOS_UNUSED_PARAM( stack ),
@@ -628,7 +626,7 @@ real64 H1_Hexahedron_Lagrange1_GaussLegendre2::
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradFaceBubbleN( localIndex const q,
+H1_Hexahedron_Lagrange1_GaussLegendre2_impl::calcGradFaceBubbleN( localIndex const q,
                                                              real64 const (&X)[numNodes][3],
                                                              real64 (& gradN)[numFaces][3] )
 {
@@ -669,7 +667,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradFaceBubbleN( localIndex const q,
 GEOS_HOST_DEVICE
 inline
 void
-H1_Hexahedron_Lagrange1_GaussLegendre2::
+H1_Hexahedron_Lagrange1_GaussLegendre2_impl::
   jacobianTransformation( int const qa,
                           int const qb,
                           int const qc,
@@ -708,7 +706,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
 GEOS_HOST_DEVICE
 inline
 void
-H1_Hexahedron_Lagrange1_GaussLegendre2::
+H1_Hexahedron_Lagrange1_GaussLegendre2_impl::
   applyTransformationToParentGradients( int const qa,
                                         int const qb,
                                         int const qc,
@@ -741,7 +739,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
 GEOS_HOST_DEVICE
 inline
 real64
-H1_Hexahedron_Lagrange1_GaussLegendre2::
+H1_Hexahedron_Lagrange1_GaussLegendre2_impl::
   transformedQuadratureWeight( localIndex const q,
                                real64 const (&X)[numNodes][3] )
 {
@@ -759,7 +757,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2::
 
 GEOS_HOST_DEVICE
 inline
-void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
+void H1_Hexahedron_Lagrange1_GaussLegendre2_impl::symmetricGradient( int const q,
                                                                 real64 const (&invJ)[3][3],
                                                                 real64 const (&var)[numNodes][3],
                                                                 real64 (& grad)[6] )
@@ -794,7 +792,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::symmetricGradient( int const q,
 
 GEOS_HOST_DEVICE
 inline
-void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const q,
+void H1_Hexahedron_Lagrange1_GaussLegendre2_impl::plusGradNajAij( int const q,
                                                              real64 const (&invJ)[3][3],
                                                              real64 const (&var)[6],
                                                              real64 (& R)[numNodes][3] )
@@ -829,7 +827,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::plusGradNajAij( int const q,
 
 GEOS_HOST_DEVICE
 inline
-void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const q,
+void H1_Hexahedron_Lagrange1_GaussLegendre2_impl::gradient( int const q,
                                                        real64 const (&invJ)[3][3],
                                                        real64 const (&var)[numNodes][3],
                                                        real64 (& grad)[3][3] )
@@ -863,6 +861,70 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2::gradient( int const q,
 #if __GNUC__
 #pragma GCC diagnostic pop
 #endif
+
+
+
+#ifndef __CUDA_ARCH__
+
+class H1_Hexahedron_Lagrange1_GaussLegendre2 final : public H1_Hexahedron_Lagrange1_GaussLegendre2_impl,
+                                          public FiniteElementBase
+{
+public:
+
+  /// The type of basis used for this element
+  using BASIS = LagrangeBasis1;
+
+  /// The number of nodes/support points per element.
+  constexpr static localIndex numNodes = H1_Hexahedron_Lagrange1_GaussLegendre2_impl::numNodes;
+
+  /// The number of faces/support points per element.
+  constexpr static localIndex numFaces = H1_Hexahedron_Lagrange1_GaussLegendre2_impl::numFaces;
+
+  /// The maximum number of support points per element.
+  constexpr static localIndex maxSupportPoints = numNodes;
+
+  /// The number of quadrature points per element.
+  constexpr static localIndex numQuadraturePoints = H1_Hexahedron_Lagrange1_GaussLegendre2_impl::numQuadraturePoints;
+
+  /// The number of sampling points per element.
+  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
+
+  H1_Hexahedron_Lagrange1_GaussLegendre2_impl * getImpl()
+  {
+    return static_cast<H1_Hexahedron_Lagrange1_GaussLegendre2_impl *>(this);
+  }
+
+  const H1_Hexahedron_Lagrange1_GaussLegendre2_impl * getImpl() const
+  {
+    return static_cast<const H1_Hexahedron_Lagrange1_GaussLegendre2_impl *>(this);
+  }
+
+  GEOS_HOST_DEVICE
+  virtual ~H1_Hexahedron_Lagrange1_GaussLegendre2() override final = default;
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getNumQuadraturePoints() const override final
+  {
+    return numQuadraturePoints;
+  }
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getNumSupportPoints() const override final
+  {
+    return numNodes;
+  }
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override final
+  {
+    return maxSupportPoints;
+  }
+
+
+};
+#endif // __CUDA_ARCH__
+
+
 
 #undef PARENT_GRADIENT_METHOD
 }

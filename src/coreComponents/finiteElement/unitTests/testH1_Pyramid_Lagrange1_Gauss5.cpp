@@ -17,7 +17,7 @@
  * @file H1_Pyramid_Lagrange1_Gauss5.hpp
  */
 
-#include <finiteElement/elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp>
+#include "../elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 #include "gtest/gtest.h"

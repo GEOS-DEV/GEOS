@@ -73,6 +73,13 @@ public:
   virtual ~H1_TriangleFace_Lagrange1_Gauss() override
   {}
 
+  /// struct to hold stack variables.
+  struct StackVariables {};
+
+  /// MeshData struct to hold mesh data.
+  template< typename SUBREGION_TYPE >
+struct MeshData {};
+
   GEOS_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override
   {

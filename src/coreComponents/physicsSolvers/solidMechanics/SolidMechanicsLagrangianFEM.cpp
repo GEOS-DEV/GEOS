@@ -385,7 +385,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
           using SUBREGION_TYPE = TYPEOFREF( elementSubRegion );
 
           typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData;
-          finiteElement::FiniteElementBase::initialize< FE_TYPE, SUBREGION_TYPE >( nodes,
+          FE_TYPE::template initialize< FE_TYPE, SUBREGION_TYPE >( nodes,
                                                                                    edgeManager,
                                                                                    faceManager,
                                                                                    elementSubRegion,

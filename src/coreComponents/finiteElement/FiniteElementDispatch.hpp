@@ -153,7 +153,7 @@ struct FiniteElementDispatchHandler< FE_TYPE, FE_TYPES... >
   dispatch3D( FiniteElementBase const & input,
               LAMBDA && lambda )
   {
-    if( auto const * const ptr = dynamic_cast< FE_TYPE const * >(&input) )
+    if( auto const * const ptr = dynamic_cast< FE_TYPE const * >(&input)->getImpl() )
     {
       lambda( *ptr );
     }
@@ -168,7 +168,7 @@ struct FiniteElementDispatchHandler< FE_TYPE, FE_TYPES... >
   dispatch3D( FiniteElementBase & input,
               LAMBDA && lambda )
   {
-    if( auto * const ptr = dynamic_cast< FE_TYPE * >(&input) )
+    if( auto * const ptr = dynamic_cast< FE_TYPE * >(&input)->getImpl() )
     {
       lambda( *ptr );
     }
@@ -183,7 +183,7 @@ struct FiniteElementDispatchHandler< FE_TYPE, FE_TYPES... >
   dispatch2D( FiniteElementBase const & input,
               LAMBDA && lambda )
   {
-    if( auto const * const ptr = dynamic_cast< FE_TYPE const * >(&input) )
+    if( auto const * const ptr = dynamic_cast< FE_TYPE const * >(&input)->getImpl() )
     {
       lambda( *ptr );
     }
@@ -201,19 +201,19 @@ void
 dispatchlowOrder3D( FiniteElementBase const & input,
                     LAMBDA && lambda )
 {
-  if( auto const * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2 const * >(&input) )
+  if( auto const * const ptr1 = dynamic_cast< H1_Hexahedron_Lagrange1_GaussLegendre2 const * >(&input)->getImpl() )
   {
     lambda( *ptr1 );
   }
-  else if( auto const * const ptr2 = dynamic_cast< H1_Wedge_Lagrange1_Gauss6 const * >(&input) )
+  else if( auto const * const ptr2 = dynamic_cast< H1_Wedge_Lagrange1_Gauss6 const * >(&input)->getImpl() )
   {
     lambda( *ptr2 );
   }
-  else if( auto const * const ptr3 = dynamic_cast< H1_Tetrahedron_Lagrange1_Gauss1 const * >(&input) )
+  else if( auto const * const ptr3 = dynamic_cast< H1_Tetrahedron_Lagrange1_Gauss1 const * >(&input)->getImpl() )
   {
     lambda( *ptr3 );
   }
-  else if( auto const * const ptr4 = dynamic_cast< H1_Pyramid_Lagrange1_Gauss5 const * >(&input) )
+  else if( auto const * const ptr4 = dynamic_cast< H1_Pyramid_Lagrange1_Gauss5 const * >(&input)->getImpl() )
   {
     lambda( *ptr4 );
   }
