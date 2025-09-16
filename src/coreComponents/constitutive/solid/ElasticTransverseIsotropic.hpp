@@ -380,22 +380,14 @@ public:
   ElasticTransverseIsotropic( string const & name, Group * const parent );
 
   /**
-   * Destructor
-   */
-  virtual ~ElasticTransverseIsotropic() override;
-
-  /**
    * @name Static Factory Catalog members and functions
    */
   ///@{
 
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "ElasticTransverseIsotropic";
-
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static string catalogName() { return m_catalogNameString; }
+  static string catalogName() { return "ElasticTransverseIsotropic"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
   ///@}

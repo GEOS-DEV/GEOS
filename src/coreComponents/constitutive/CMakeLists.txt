@@ -60,7 +60,7 @@ set( constitutive_headers
      fluid/multifluid/MultiFluidConstants.hpp
      fluid/multifluid/MultiFluidUtils.hpp
      fluid/multifluid/MultiFluidFields.hpp
-     fluid/multifluid/constant/InvariantImmiscibleFluid.hpp     
+     fluid/multifluid/constant/InvariantImmiscibleFluid.hpp
      fluid/multifluid/blackOil/BlackOilFluidBase.hpp
      fluid/multifluid/blackOil/BlackOilFluid.hpp
      fluid/multifluid/blackOil/DeadOilFluid.hpp
@@ -190,14 +190,14 @@ set( constitutive_headers
      solid/ElasticOrthotropic.hpp
      solid/InvariantDecompositions.hpp
      solid/PorousDamageSolid.hpp
-     solid/PerfectlyPlastic.hpp     
+     solid/PerfectlyPlastic.hpp
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
      solid/SolidUtilities.hpp
      solid/SolidInternalEnergy.hpp
      solid/SolidModelDiscretizationOps.hpp
-     solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
+     solid/SolidModelDiscretizationOpsFullyAnisotropic.hpp
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
      solid/SolidModelDiscretizationOpsOrthotropic.hpp
@@ -384,4 +384,7 @@ install( TARGETS constitutive LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
+  add_subdirectory( relativePermeability/unitTests )
+  add_subdirectory( capillaryPressure/unitTests )
+  add_subdirectory( solid/unitTests )
 endif( )
