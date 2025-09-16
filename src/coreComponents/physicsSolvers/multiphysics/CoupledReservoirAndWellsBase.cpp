@@ -154,7 +154,6 @@ bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
 
   localIndex const hasBadPerforations = MpiWrapper::max( badPerforation.first.empty() ? 0 : 1 );
 
-  std::cout << "badPerforation "<< LvArray::system::demangle( typeid(decltype(badPerforation.second)::value_type).name()) << std::endl;
   GEOS_THROW_IF( !badPerforation.first.empty(),
                  GEOS_FMT( "{}: The well {} has a connection to the region {} which is not targeted by the flow solver",
                            wellSolver->getDataContext(), badPerforation.first, badPerforation.second ),
