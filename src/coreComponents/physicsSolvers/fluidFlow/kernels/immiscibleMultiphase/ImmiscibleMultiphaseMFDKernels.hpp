@@ -244,29 +244,6 @@ public:
   {
     using Deriv = DerivMob; // alias for readability
     
-    // Keep pressure and saturation derivatives since lambda depends on both
-    real64 Lambda = 0.0;   // == massLambda (before sign mapping)
-    real64 dLambda_dP = 0.0;
-    real64 dLambda_dS = 0.0; // derivative w.r.t. independent saturation (apply sign map below)
-    
-//    // two-phase for now
-//    for( integer ip=0; ip<2; ++ip )
-//    {
-//      // this mobility are mass mobilities (rho * kr / mu).
-//      real64 const lambda = m_phaseMobAll[m_er][m_esr][ei][ip];
-//      real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dP];
-//      real64 dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
-//
-//      // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
-//      real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
-//      real64 const dlambda_dS = sgnS * dlambda_dS_raw;
-//
-//      // accumulate total mobility derivatives for rho_mix denominator
-//      Lambda += lambda;
-//      dLambda_dP += dlambda_dP;
-//      dLambda_dS += dlambda_dS;
-//    }
-    
     // Compute delta_rho and its pressure derivative
     integer const dep = 1 - m_indep;
     real64 const rho_dep = m_phaseDens[ei][0][dep];
@@ -417,8 +394,6 @@ public:
                                               real64 & df_dS )
     {
       using Deriv = DerivMob;
-      integer const dep = 1 - indep;
-      
       
       // Keep pressure and saturation derivatives since lambda depends on both
       real64 Lambda = 0.0;   // == massLambda (before sign mapping)
@@ -428,9 +403,9 @@ public:
       // two-phase for now
       for( integer ip=0; ip<2; ++ip )
       {
-        real64 const lambda = m_phaseMobAll[m_er][m_esr][ei_local][ip];
-        real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei_local][ip][Deriv::dP];
-        real64 dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei_local][ip][Deriv::dS];
+        real64 const lambda = m_phaseMobAll[er][esr][ei_local][ip];
+        real64 const dlambda_dP = m_dPhaseMobAll[er][esr][ei_local][ip][Deriv::dP];
+        real64 dlambda_dS_raw = m_dPhaseMobAll[er][esr][ei_local][ip][Deriv::dS];
 
         // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
         real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
@@ -464,12 +439,10 @@ public:
                                               real64 & dlambda_dP,
                                               real64 & dlambda_dS )
     {
-      using Deriv = DerivMob;
-      integer const dep = 1 - indep;
-    
-      lambda = m_phaseMobAll[m_er][m_esr][ei_local][indep];
-      dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei_local][indep][Deriv::dP];
-      real64 const dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei_local][indep][Deriv::dS];
+      using Deriv = DerivMob;    
+      lambda = m_phaseMobAll[er][esr][ei_local][indep];
+      dlambda_dP = m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dP];
+      real64 const dlambda_dS_raw = m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dS];
       // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
       real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
       dlambda_dS = sgnS * dlambda_dS_raw;
@@ -546,8 +519,7 @@ public:
       bool const hasNeighbor = (ner >= 0);
       if( hasNeighbor )
       {
-        
-        std::cout << "ei: " << ei << ", i: " << i << std::endl;
+      
         // compute neighbor fractional flow and its derivatives
         fracFlow( ner, nesr, nei, m_indep, f_nei, df_nei_dP, df_nei_dS );
         fracFlow( ner, nesr, nei, 1-m_indep, f_dep_nei, df_dep_nei_dP, df_dep_nei_dS );

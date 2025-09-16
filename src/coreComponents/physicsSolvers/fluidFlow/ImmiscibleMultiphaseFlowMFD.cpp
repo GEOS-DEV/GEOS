@@ -46,16 +46,6 @@ using namespace immiscibleMultiphaseKernels;
 using namespace constitutive;
 using namespace isothermalCompositionalMultiphaseBaseKernels; // for relperm / capillary update kernels
 
-//namespace
-//{
-//char const bcLogMessage[] =
-//  "ImmiscibleMultiphaseFlowMFD {}: at time {}s, the <{}> boundary condition '{}' is applied to set '{}' in subRegion '{}'. Total target elements (incl. ghosts) = {}";
-//}
-namespace
-{
-char const faceBcLogMessage[] =
-  "ImmiscibleMultiphaseFlowMFD {}: at time {}s, the <{}> boundary condition '{}' is applied to face set '{}' in '{}'. Total target faces (incl. ghosts) = {}";
-}
 
 ImmiscibleMultiphaseFlowMFD::ImmiscibleMultiphaseFlowMFD( const string & name,
                                                           Group * const parent )
@@ -107,20 +97,11 @@ void ImmiscibleMultiphaseFlowMFD::registerDataOnMesh( Group & meshBodies )
 {
   FlowSolverBase::registerDataOnMesh( meshBodies );
 
-  // detect capillary pressure presence & register fields
+  
   forDiscretizationOnMeshTargets( meshBodies, [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
   {
-    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const, ElementSubRegionBase & subRegion )
-    {
-      string const capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
-      if( !capPresName.empty() ) m_hasCapPressure = true;
-    } );
-  } );
-
-  forDiscretizationOnMeshTargets( meshBodies, [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
-  {
-    // element fields
-    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const, ElementSubRegionBase & subRegion )
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions( regionNames, [&]( localIndex const, ElementSubRegionBase & subRegion )
     {
       // primary & secondary fields (phase volume fraction, mass, mobility)
       subRegion.registerField< immiscibleMultiphaseFlow::phaseVolumeFraction >( getName() )
@@ -137,11 +118,7 @@ void ImmiscibleMultiphaseFlowMFD::registerDataOnMesh( Group & meshBodies )
               .reference().resizeDimension< 1 >( m_numPhases );
       subRegion.registerField< immiscibleMultiphaseFlow::dPhaseMobility >( getName() )
               .reference().resizeDimension< 1, 2 >( m_numPhases, 2 );
-      // pressure gradient diagnostic
-      if( !subRegion.hasWrapper( flow::pressureGradient::key() ) )
-      {
-        subRegion.registerField< flow::pressureGradient >( getName() ).reference().resizeDimension< 1 >( 3 );
-      }
+
       if( m_hasCapPressure )
       {
         subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() )
@@ -150,9 +127,8 @@ void ImmiscibleMultiphaseFlowMFD::registerDataOnMesh( Group & meshBodies )
         string & capName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
         capName = getConstitutiveName< CapillaryPressureBase >( subRegion );
       }
-      // Removed alias scalar registrations for independent/dependent saturation
     } );
-
+    
     // face fields (previous time level face pressure)
     FaceManager & faceManager = mesh.getFaceManager();
     if( !faceManager.hasWrapper( flow::facePressure_n::key() ) )
@@ -504,16 +480,7 @@ void ImmiscibleMultiphaseFlowMFD::applyDirichletBC( real64 const time_n,
 
     fsManager.apply< FaceManager >( time_n + dt, mesh, flow::bcPressure::key(), [&]( FieldSpecificationBase const & fs, string const & setName, SortedArrayView< localIndex const > const & targetSet, FaceManager & targetGroup, string const & )
     {
-      // logging first Newton iteration
-      if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-      {
-        globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( targetSet.size() );
-//        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
-//                                        GEOS_FMT( faceBcLogMessage,
-//                                                  this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-//                                                  setName, targetGroup.getName(), numTargetFaces ),
-//                                        fs );
-      }
+      GEOS_UNUSED_VAR( setName );
       // populate face bcPressure from pressure specification
       fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                             time_n + dt,
