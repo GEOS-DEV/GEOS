@@ -74,7 +74,7 @@ def main():
 	defaultHardeningRate = xmlData[9]
 	
 	# Get stress, time and element center from GEOSX results
-	stress_field_name = 'rock_stress'
+	stress_field_name = 'stress'
 	hf_stress = h5py.File('stressHistory_rock.hdf5', 'r')
 	time = np.asarray( hf_stress.get(stress_field_name + ' Time') )
 	center = np.asarray( hf_stress.get(stress_field_name + ' elementCenter') )

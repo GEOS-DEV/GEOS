@@ -47,7 +47,7 @@ def getCompressiveStressFromXML(xmlFilePath):
 
     found_stress = False
     for elem in param:
-        if elem.get("fieldName") == "rock_stress" and elem.get("component") == "1":
+        if elem.get("fieldName") == "stress" and elem.get("component") == "1":
             stress = float(elem.get("scale")) * (-1)
             found_stress = True
         if found_stress: break

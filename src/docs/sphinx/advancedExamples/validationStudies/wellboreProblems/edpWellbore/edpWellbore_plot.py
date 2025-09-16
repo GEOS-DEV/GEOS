@@ -96,7 +96,7 @@ def main():
     assert cohesion == 0.0, "Zero cohesion is considered by the reference solutions, please set the cohesion to 0.0" 
 
     # Get stress, time and element center from GEOSX results
-    stress_field_name = 'rock_stress'
+    stress_field_name = 'stress'
     hf_stress = h5py.File(outputDir + '/stressHistory_rock.hdf5', 'r')
     time = np.asarray( hf_stress.get(stress_field_name + ' Time') )
     center = np.asarray( hf_stress.get(stress_field_name + ' elementCenter') )

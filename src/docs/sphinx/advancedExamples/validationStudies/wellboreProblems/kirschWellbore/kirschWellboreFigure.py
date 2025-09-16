@@ -137,13 +137,13 @@ def main():
     # Read HDF5
     # Global Coordinate of Element Center
     hf = h5py.File(hdf5File1Path, 'r')
-    xl_elm = hf.get('rock_stress elementCenter')
+    xl_elm = hf.get('stress elementCenter')
     xl_elm = np.asarray(xl_elm)
     xcord_elm = xl_elm[0, :, 0]
     ycord_elm = xl_elm[0, :, 1]
     zcord_elm = xl_elm[0, :, 2]
     # Load Stress Components
-    sigma = hf.get('rock_stress')
+    sigma = hf.get('stress')
     sigma = np.asarray(sigma)
     sigma_Cart = np.zeros([len(sigma[0, :, 0]), 6])
     for i in range(0, len(sigma[0, :, 0])):

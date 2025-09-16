@@ -89,13 +89,13 @@ def getParametersFromXML(xmlFilePath):
     for fsParam in fsParams:
         if ((fsParam.get('fieldName') == "pressure") & (fsParam.get('initialCondition') == "1")):
             p0 = float(fsParam.get('scale'))
-        if ((fsParam.get('fieldName') == "rock_stress") & (fsParam.get('initialCondition') == "1") &
+        if ((fsParam.get('fieldName') == "stress") & (fsParam.get('initialCondition') == "1") &
             (fsParam.get('component') == "0")):
             ShmaxEffective = float(fsParam.get('scale'))
-        if ((fsParam.get('fieldName') == "rock_stress") & (fsParam.get('initialCondition') == "1") &
+        if ((fsParam.get('fieldName') == "stress") & (fsParam.get('initialCondition') == "1") &
             (fsParam.get('component') == "1")):
             ShminEffective = float(fsParam.get('scale'))
-        if ((fsParam.get('fieldName') == "rock_stress") & (fsParam.get('initialCondition') == "1") &
+        if ((fsParam.get('fieldName') == "stress") & (fsParam.get('initialCondition') == "1") &
             (fsParam.get('component') == "2")):
             SvEffective = float(fsParam.get('scale'))
         if ((fsParam.get('fieldName') == "pressure") & (fsParam.get('initialCondition') != "1")):
