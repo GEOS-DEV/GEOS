@@ -751,7 +751,6 @@ RelativePermeabilityBase & makeTableRelPermHysteresisTwoPhase( string const & na
   auto & imbibitionGasTableName = relPerm.getReference< string >( keys::imbibitionNonWettingRelPermTableNameString() );
   imbibitionGasTableName = "imbibitionGas_swg";
 
-  relPerm.allocateConstitutiveData( parent, 1 );
   relPerm.postInputInitializationRecursive();
   relPerm.initialize(); // to test all the checks
   return relPerm;
