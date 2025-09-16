@@ -260,7 +260,7 @@ public:
 //      // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
 //      real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
 //      real64 const dlambda_dS = sgnS * dlambda_dS_raw;
-//      
+//
 //      // accumulate total mobility derivatives for rho_mix denominator
 //      Lambda += lambda;
 //      dLambda_dP += dlambda_dP;
@@ -546,6 +546,8 @@ public:
       bool const hasNeighbor = (ner >= 0);
       if( hasNeighbor )
       {
+        
+        std::cout << "ei: " << ei << ", i: " << i << std::endl;
         // compute neighbor fractional flow and its derivatives
         fracFlow( ner, nesr, nei, m_indep, f_nei, df_nei_dP, df_nei_dS );
         fracFlow( ner, nesr, nei, 1-m_indep, f_dep_nei, df_dep_nei_dP, df_dep_nei_dS );
@@ -764,13 +766,13 @@ public:
       internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NF )
       {
         // persistent accessors
-        auto dofNumberAccessor = elemManager.constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
+        ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor = elemManager.constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
         dofNumberAccessor.setName( solverName + "/accessors/" + elemDofKey );
-        auto satAccessor = elemManager.constructArrayViewAccessor< real64, 2 >( fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() );
+        ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > satAccessor = elemManager.constructArrayViewAccessor< real64, 2 >( fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() );
         satAccessor.setName( solverName + "/accessors/" + fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() );
-        auto mobAccessor = elemManager.constructArrayViewAccessor< real64, 2 >( fields::immiscibleMultiphaseFlow::phaseMobility::key() );
+        ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > mobAccessor = elemManager.constructArrayViewAccessor< real64, 2 >( fields::immiscibleMultiphaseFlow::phaseMobility::key() );
         mobAccessor.setName( solverName + "/accessors/" + fields::immiscibleMultiphaseFlow::phaseMobility::key() );
-        auto dMobAccessor = elemManager.constructArrayViewAccessor< real64, 3 >( fields::immiscibleMultiphaseFlow::dPhaseMobility::key() );
+        ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dMobAccessor = elemManager.constructArrayViewAccessor< real64, 3 >( fields::immiscibleMultiphaseFlow::dPhaseMobility::key() );
         dMobAccessor.setName( solverName + "/accessors/" + fields::immiscibleMultiphaseFlow::dPhaseMobility::key() );
         ElementBasedAssemblyKernel< NF, IPType > k( rankOffset, er, esr, lengthTolerance,
                                                     faceDofKey, nodeManager, faceManager,
