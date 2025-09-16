@@ -28,11 +28,7 @@ namespace constitutive
 {
 
 SolidBase::SolidBase( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_newStress( 0, 0, 6 ),
-  m_oldStress( 0, 0, 6 ),
-  m_density(),
-  m_thermalExpansionCoefficient()
+  ConstitutiveBase( name, parent )
 {
   string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
 
@@ -66,10 +62,6 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
 }
 
 
-SolidBase::~SolidBase()
-{}
-
-
 void SolidBase::postInputInitialization()
 {
   this->getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).
@@ -80,14 +72,14 @@ void SolidBase::postInputInitialization()
 }
 
 
-void SolidBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                          localIndex const numConstitutivePointsPerParentIndex )
+void SolidBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  m_density.resize( 0, numConstitutivePointsPerParentIndex );
-  m_newStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
-  m_oldStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
+  // 0 to resize and assign default value later
+  m_density.resize( 0, numPts );
+  m_newStress.resize( 0, numPts, 6 );
+  m_oldStress.resize( 0, numPts, 6 );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 
