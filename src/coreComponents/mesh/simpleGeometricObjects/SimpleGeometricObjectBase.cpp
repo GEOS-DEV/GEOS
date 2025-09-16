@@ -31,7 +31,7 @@ SimpleGeometricObjectBase::SimpleGeometricObjectBase( string const & name,
   setInputFlags( dataRepository::InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::epsilonString(), &m_epsilon ).
-    setApplyDefaultValue( 0.001 ). // 1 mm
+    setApplyDefaultValue( 1e-6 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Tolerance for coordinate checks" );
 }
