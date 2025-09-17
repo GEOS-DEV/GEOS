@@ -4212,8 +4212,8 @@ void CompositionalMultiphaseWell::selectLimitingConstraint( real64 const & time_
   }
 }
 
-template<>
-void CompositionalMultiphaseWell::solveConstraint< MinimumWHPConstraint >( real64 const & time_n,
+ 
+void CompositionalMultiphaseWell::solveWHPConstraint( real64 const & time_n,
                                                                            real64 const & dt,
                                                                            integer const cycleNumber,
                                                                            integer const coupledIterationNumber,
@@ -4504,7 +4504,7 @@ bool CompositionalMultiphaseWell::evaluateProductionConstraints( real64 const & 
                                                                                           subRegion,
                                                                                           dofManager );
 
-  this->template solveConstraint< MinimumWHPConstraint >( time_n,
+  this->template solveConstraint< geos::MinimumWHPConstraint >( time_n,
                                                           dt,
                                                           cycleNumber,
                                                           coupledIterationNumber,

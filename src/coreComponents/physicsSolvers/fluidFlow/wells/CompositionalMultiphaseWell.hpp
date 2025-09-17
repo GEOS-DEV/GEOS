@@ -536,8 +536,8 @@ private:
                         DofManager const & dofManager );
 
 
-  template<>
-  void solveConstraint< MinimumWHPConstraint >( real64 const & time_n,
+ 
+  void solveWHPConstraint( real64 const & time_n,
                                                 real64 const & stepDt,
                                                 integer const cycleNumber,
                                                 integer const coupledIterationNumber,
