@@ -111,8 +111,6 @@ public:
                        array1d< real64 > const & componentMolarWeight,
                        TableFunction::OutputOptions const pvtOutputOpts );
 
-  virtual ~EzrokhiBrineDensity() override = default;
-
   static string catalogName() { return "EzrokhiBrineDensity"; }
 
   virtual string getCatalogName() const override final { return catalogName(); }

@@ -312,6 +312,7 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  virtual void postRestartInitialization() override final;
   /*
    * @brief Utility function that checks the consistency of the constitutive models
    * @param[in] domain the domain partition
@@ -346,6 +347,11 @@ protected:
                                         real64 const & dt,
                                         WellElementSubRegion const & subRegion,
                                         ElementRegionManager const & elemManager ) override;
+
+  /**
+   * @brief Create well separator
+   */
+  void createSeparator();
 
   void printRates( real64 const & time_n,
                    real64 const & dt,

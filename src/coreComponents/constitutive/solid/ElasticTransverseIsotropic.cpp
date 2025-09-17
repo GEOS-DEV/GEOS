@@ -27,17 +27,7 @@ namespace constitutive
 {
 
 ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Group * const parent ):
-  SolidBase( name, parent ),
-  m_defaultYoungModulusTransverse(),
-  m_defaultYoungModulusAxial(),
-  m_defaultPoissonRatioTransverse(),
-  m_defaultPoissonRatioAxialTransverse(),
-  m_defaultShearModulusAxialTransverse(),
-  m_c11(),
-  m_c13(),
-  m_c33(),
-  m_c44(),
-  m_c66()
+  SolidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultYoungModulusTransverseString(), &m_defaultYoungModulusTransverse ).
     setApplyDefaultValue( -1 ).
@@ -109,9 +99,6 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
     setApplyDefaultValue( -1 ).
     setDescription( "Elastic Stiffness Field C66" );
 }
-
-ElasticTransverseIsotropic::~ElasticTransverseIsotropic()
-{}
 
 void ElasticTransverseIsotropic::postInputInitialization()
 {
