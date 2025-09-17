@@ -107,13 +107,10 @@ class PermeabilityBase : public ConstitutiveBase
 {
 public:
 
-  PermeabilityBase( string const & name, Group * const parent );
-
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
+  PermeabilityBase( string const & name, dataRepository::Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   /**
    * @brief Const/non-mutable accessor for permeability.

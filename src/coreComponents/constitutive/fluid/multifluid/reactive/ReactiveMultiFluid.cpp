@@ -37,10 +37,10 @@ ReactiveMultiFluid::
   m_numSecondarySpecies = 11;
   m_numKineticReactions = 2;
 
-  registerField( fields::reactivefluid::primarySpeciesConcentration{}, &m_primarySpeciesConcentration );
-  registerField( fields::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
-  registerField( fields::reactivefluid::primarySpeciesTotalConcentration{}, &m_primarySpeciesTotalConcentration );
-  registerField( fields::reactivefluid::kineticReactionRates{}, &m_kineticReactionRates );
+  registerField< fields::reactivefluid::primarySpeciesConcentration >( &m_primarySpeciesConcentration );
+  registerField< fields::reactivefluid::secondarySpeciesConcentration >( &m_secondarySpeciesConcentration );
+  registerField< fields::reactivefluid::primarySpeciesTotalConcentration >( &m_primarySpeciesTotalConcentration );
+  registerField< fields::reactivefluid::kineticReactionRates >( &m_kineticReactionRates );
 }
 
 bool ReactiveMultiFluid::isThermal() const
@@ -71,18 +71,19 @@ void ReactiveMultiFluid::postInputInitialization()
   createChemicalReactions();
 }
 
-void ReactiveMultiFluid::resizeFields( localIndex const size, localIndex const numPts )
+void ReactiveMultiFluid::allocateConstitutiveData( Group & parent,
+                                                   localIndex const numPts )
 {
-  MultiFluidBase::resizeFields( size, numPts );
-
   integer const numPrimarySpecies = this->numPrimarySpecies();
   integer const numSecondarySpecies = this->numSecondarySpecies();
   integer const numKineticReactions = this->numKineticReactions();
 
-  m_primarySpeciesConcentration.resize( size, numPrimarySpecies );
-  m_secondarySpeciesConcentration.resize( size, numSecondarySpecies );
-  m_primarySpeciesTotalConcentration.resize( size, numPrimarySpecies );
-  m_kineticReactionRates.resize( size, numKineticReactions );
+  m_primarySpeciesConcentration.resize( 0, numPrimarySpecies );
+  m_secondarySpeciesConcentration.resize( 0, numSecondarySpecies );
+  m_primarySpeciesTotalConcentration.resize( 0, numPrimarySpecies );
+  m_kineticReactionRates.resize( 0, numKineticReactions );
+
+  MultiFluidBase::allocateConstitutiveData( parent, numPts );
 }
 
 void ReactiveMultiFluid::createChemicalReactions()
