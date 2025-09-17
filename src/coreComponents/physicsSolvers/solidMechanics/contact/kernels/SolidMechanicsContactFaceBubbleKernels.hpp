@@ -402,7 +402,6 @@ public:
                                                                               localAbu[i],
                                                                               numNodesPerElem*3 );
 
-      std::cout << "Filling bubble dofs in input matrix" << std::endl;
     }
 
     return maxForce;

@@ -205,21 +205,21 @@ public:
 
     //std::cout <<  "Size of rotation matrix " << kernelComponent.m_rotationMatrix.size() << std::endl;
     //std::cout << "Size of determinants array" << kernelComponent.m_subTriangleDeterminants.size() << std::endl;
-    std::cout << "Number of traction dofs: " << kernelComponent.m_tDofNumber.size() << std::endl;
+    //std::cout << "Number of traction dofs: " << kernelComponent.m_tDofNumber.size() << std::endl;
     //std::cout << "Rank offset: " << kernelComponent.m_dofRankOffset << std::endl;
 
-    std::cout << "Displacement dofs:" << std::endl;
-    for (localIndex i=0; i<kernelComponent.m_dofNumber.size(); i++)
-    {
-      std::cout << "m_dofNumber[" << i << "] = " << kernelComponent.m_dofNumber[i] << std::endl;
-    }
+    // std::cout << "Displacement dofs:" << std::endl;
+    // for (localIndex i=0; i<kernelComponent.m_dofNumber.size(); i++)
+    // {
+    //   std::cout << "m_dofNumber[" << i << "] = " << kernelComponent.m_dofNumber[i] << std::endl;
+    // }
 
     // Loop over all existing triangular integration subcells
     forAll< POLICY >( kernelComponent.m_faceElementList1.size(),
                       [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
 
-      std::cout << "Launching kernel for pair (" << kernelComponent.m_faceElementList1[k] << ", " << kernelComponent.m_faceElementList2[k] << ")" << std::endl;
+      //std::cout << "Launching kernel for pair (" << kernelComponent.m_faceElementList1[k] << ", " << kernelComponent.m_faceElementList2[k] << ")" << std::endl;
 
       typename KERNEL_TYPE::StackVariables stack;
 
@@ -260,7 +260,7 @@ public:
     for( localIndex a=0; a<numNodesPerElem; ++a )
     {
       localIndex const knu = m_faceToNodes( kfu, a );
-      std::cout << "Displacement dofs for face " << kfu << ", node " << knu << std::endl;
+      // std::cout << "Displacement dofs for face " << kfu << ", node " << knu << std::endl;
 
       for( int i=0; i<3; ++i )
       {
@@ -284,7 +284,7 @@ public:
       stack.tColIndices[i] = m_tDofNumber[kt] + i;
     }
 
-    std::cout << kt << " - " << m_tDofNumber[kt] << std::endl;
+    //std::cout << kt << " - " << m_tDofNumber[kt] << std::endl;
 
     for (int i=0; i<numQuadraturePointsPerElem; ++i)
     {
@@ -317,7 +317,7 @@ public:
 
 
 
-    std::cout << "DetJ = " << stack.det[q] << std::endl;
+    //std::cout << "DetJ = " << stack.det[q] << std::endl;
 
     // accumulate local stack matrix
     for( int a=0; a < numNodesPerElem; ++a )  
@@ -376,20 +376,20 @@ public:
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.tEqnRowIndices[ i ] );
 
-      std::cout << "Filling Atu in location row:" << dof;
-      std::cout << ", columns: ";
-      for (localIndex j=0; j<numUdofs; ++j)
-      {
-        std::cout << stack.dispColIndices[j] << " ";
-      }
-      std::cout << std::endl;
+      // std::cout << "Filling Atu in location row:" << dof;
+      // std::cout << ", columns: ";
+      // for (localIndex j=0; j<numUdofs; ++j)
+      // {
+      //   std::cout << stack.dispColIndices[j] << " ";
+      // }
+      // std::cout << std::endl;
 
-      std::cout << "with values:";
-      for (localIndex j=0; j<numUdofs; ++j)
-      {
-        std::cout << stack.localAtu[i][j] << " ";
-      }
-      std::cout << std::endl;
+      // std::cout << "with values:";
+      // for (localIndex j=0; j<numUdofs; ++j)
+      // {
+      //   std::cout << stack.localAtu[i][j] << " ";
+      // }
+      // std::cout << std::endl;
 
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 
@@ -408,13 +408,13 @@ public:
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.dispEqnRowIndices[ i ] );
 
-      std::cout << "Filling Aut in location row:" << dof;
-      std::cout << ", columns: ";
-      for (localIndex j=0; j<numTdofs; ++j)
-      {
-        std::cout << stack.tColIndices[j] << " ";
-      }
-      std::cout << std::endl;
+      // std::cout << "Filling Aut in location row:" << dof;
+      // std::cout << ", columns: ";
+      // for (localIndex j=0; j<numTdofs; ++j)
+      // {
+      //   std::cout << stack.tColIndices[j] << " ";
+      // }
+      // std::cout << std::endl;
 
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
 

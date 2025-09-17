@@ -127,6 +127,10 @@ public:
                                         DofManager const & dofManager,
                                         arrayView1d< real64 const > const & localRhs ) override;
 
+  real64 calculateContactResidualNorm( DomainPartition const & domain,
+                                       DofManager const & dofManager,
+                                       arrayView1d< real64 const > const & localRhs );
+
   virtual void applySystemSolution( DofManager const & dofManager,
                                     arrayView1d< real64 const > const & localSolution,
                                     real64 const scalingFactor,
@@ -173,6 +177,7 @@ private:
     { 0.200000000000000, 0.200000000000000 }
   };
 
+
   void addBubbleCouplingNumNonzeros( DofManager & dofManager,
                                      arrayView1d< localIndex > const & rowLengths ) const;
 
@@ -188,14 +193,18 @@ private:
   void addMortarCouplingSparsityPattern( DofManager & dofManager,
                                          ElementShape const & slaveShape,
                                          ElementShape const & masterShape,
-                                         connectivityMapType const & connectivityMap,
                                          SparsityPatternView< globalIndex > const & pattern ) const;
 
-void assembleBubbles( real64 const dt,
-                      DomainPartition & domain,
-                      DofManager const & dofManager,
-                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                      arrayView1d< real64 > const & localRhs );
+  void assembleBubbles( real64 const dt,
+                        DomainPartition & domain,
+                        DofManager const & dofManager,
+                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                        arrayView1d< real64 > const & localRhs );
+  
+  template< ElementShape shape>
+  void assembleMortarBubbles( DofManager const & dofManager,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs );
 
   void assembleMortar( real64 const dt,
                        DofManager const & dofManager,

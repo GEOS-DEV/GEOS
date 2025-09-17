@@ -47,8 +47,8 @@ SolidMechanicsMortarContact::SolidMechanicsMortarContact( const string & name,
   ContactSolverBase( name, parent )
 {
 
-  m_faceTypeToMortarFiniteElements[ElementShape::Quadrilateral] = std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre6 >();
-  m_faceTypeToMortarFiniteElements[ElementShape::Triangle] = std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss6 >();
+  m_faceTypeToMortarFiniteElements[ElementShape::Quadrilateral] = std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
+  m_faceTypeToMortarFiniteElements[ElementShape::Triangle] = std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss4 >();
 
   registerWrapper( viewKeyStruct::masterString(), &m_masterName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -238,17 +238,16 @@ void SolidMechanicsMortarContact::setupSystem( DomainPartition & domain,
   // Add the nonzeros from coupling
   this->addBubbleCouplingSparsityPattern( dofManager, pattern.toView() );
 
-  // for (auto slaveShape : shapes)
-  // {
-  //   for (auto masterShape : shapes)
-  //   {
-  //     this->addMortarCouplingSparsityPattern( dofManager, 
-  //                                             slaveShape,
-  //                                             masterShape,
-  //                                             connectivityMap,
-  //                                             pattern.toView() );
-  //   }
-  // }
+  for (auto slaveShape : shapes)
+  {
+    for (auto masterShape : shapes)
+    {
+      this->addMortarCouplingSparsityPattern( dofManager, 
+                                              slaveShape,
+                                              masterShape,
+                                              pattern.toView() );
+    }
+  }
 
   // // Finally, steal the pattern into a CRS matrix
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
@@ -315,7 +314,7 @@ void SolidMechanicsMortarContact::assembleSystem( real64 const time,
   parallel_matrix_1.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
   parallel_matrix_1.write("matrix_postMech.mtx");
 
-  GEOS_ERROR("Interrupt");
+  //GEOS_ERROR("Interrupt");
 
   assembleBubbles( dt, domain, dofManager, localMatrix, localRhs );
 
@@ -386,11 +385,161 @@ void SolidMechanicsMortarContact::assembleBubbles( real64 const dt,
                                                    kernelFactory );
 
     GEOS_UNUSED_VAR( maxTraction );
+
+
     }
 
   } );
 
+  // assembling interface bubble contribution: Abt, Atb, inactive Abb
+  assembleMortarBubbles<ElementShape::Triangle>( dofManager, localMatrix, localRhs );
+  assembleMortarBubbles<ElementShape::Quadrilateral>( dofManager, localMatrix, localRhs );
+
 }
+
+
+template< ElementShape shape>
+void SolidMechanicsMortarContact::assembleMortarBubbles( DofManager const & dofManager,
+                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                         arrayView1d< real64 > const & localRhs )
+  {
+
+    arrayView1d< localIndex const > elementList = m_faceTypeToElementList.at( MortarSide::Slave ).at( shape );
+    
+    if (elementList.size() == 0) return;
+    
+    auto const & feType = getFE< shape >();
+    localIndex constexpr numQuadraturePoints = feType.numQuadraturePoints;
+    localIndex constexpr numNodesPerElem = feType.numNodes;
+
+    MeshLevel & mesh = *m_mortarSide.at( MortarSide::Slave ).mesh;
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
+    FaceElementSubRegion const & surfRegion = m_mortarSide.at(MortarSide::Slave).surface->getUniqueSubRegion< FaceElementSubRegion >();
+    arrayView2d< localIndex const > const elemsToFaces = surfRegion.faceList().toViewConst();
+
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const coords =  nodeManager.referencePosition();
+    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+
+  
+    globalIndex const rankOffset = dofManager.rankOffset();
+    string const bubbleDofKey = dofManager.getKey( contact::totalBubbleDisplacement::key() );
+    string const tractionDofKey = dofManager.getKey( contact::traction::key() );
+
+    arrayView2d< real64 const > const traction = surfRegion.getField< fields::contact::traction >().toViewConst();
+    arrayView2d< real64 const > const bubbleDisplacement = faceManager.getField< fields::contact::totalBubbleDisplacement >().toViewConst();
+    arrayView3d< real64 const > const rotationMatrix = surfRegion.getField< fields::contact::rotationMatrix >().toViewConst();
+
+    arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
+    arrayView1d< globalIndex const > const tractionDofNumber = surfRegion.getReference< globalIndex_array >( tractionDofKey );
+
+    forAll< parallelHostPolicy >( elementList.size(), [=] ( localIndex const kk )
+    {
+      localIndex const k = elementList[kk];
+      localIndex const kf0 = elemsToFaces[k][0];
+      localIndex const kf1 = elemsToFaces[k][1];
+
+      globalIndex bDof1[3], bDof2[3], tDof[3]; 
+      real64 bLoc[3], tLoc[3];
+      for (localIndex i=0; i<3; ++i)
+      {
+        bDof1[i] = bubbleDofNumber[kf0]+i;
+        bDof2[i] = bubbleDofNumber[kf1]+i;
+        tDof[i] = tractionDofNumber[k]+i;
+        bLoc[i] = bubbleDisplacement[kf0][i];
+        tLoc[i] = traction[k][i];
+      }
+
+      real64 X[numNodesPerElem][3];
+      for (localIndex a=0; a<numNodesPerElem; ++a)
+      {
+        localIndex const nodeIndex = faceToNodeMap[kf0][a];
+        X[a][0] = coords[nodeIndex][0];
+        X[a][1] = coords[nodeIndex][1];
+        X[a][2] = coords[nodeIndex][2];
+      }
+
+      // compute the scalar abt contribution
+      real64 abt = 0.0;
+      real64 N[1];
+      for (localIndex q = 0; q < numQuadraturePoints; ++q)
+      {
+         feType.calcBubbleN(q, N);
+         real64 detJ = feType.transformedQuadratureWeight(q, X);
+         abt += N[0] * detJ;
+      }
+
+      real64 R[3][3];
+      real64 RtAbt[3][3];
+      real64 localAbt[3][3] = {{ }};
+      real64 localAtb[3][3] = {{ }};
+      real64 rhsB[3], rhsT[3];
+
+      for( int j=0; j<3; ++j )
+      {
+        localAtb[j][j] = abt;
+        for( int i=0; i<3; ++i )
+        {
+          R[ i ][ j ] = rotationMatrix( k, i, j );
+        }
+      }
+
+      LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( RtAbt, R, localAtb );
+      LvArray::tensorOps::copy< 3, 3 >( localAtb, RtAbt );
+      LvArray::tensorOps::transpose< 3, 3 >(localAbt, localAtb);
+      LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( rhsB, localAbt, tLoc );
+      LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( rhsT, localAtb, bLoc );
+
+      // assemble matrix and rhs contribution of Abt
+      for( localIndex i = 0; i < 3; ++i )
+      {
+        localIndex const localRow = LvArray::integerConversion< localIndex >( bDof1[i] - rankOffset );
+        if( localRow >= 0 && localRow < localMatrix.numRows() )
+        {
+          localMatrix.addToRow< parallelHostAtomic >( localRow,
+                                                      tDof,
+                                                      localAbt[i],
+                                                      3 );
+          RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow], rhsB[i] );
+        }
+      }
+
+      // assemble matrix and rhs contribution of Atb
+      for( localIndex i = 0; i < 3; ++i )
+      {
+        localIndex const localRow = LvArray::integerConversion< localIndex >( tDof[i] - rankOffset );
+        if( localRow >= 0 && localRow < localMatrix.numRows() )
+        {
+          localMatrix.addToRow< parallelHostAtomic >( localRow,
+                                                      bDof1,
+                                                      localAtb[i],
+                                                      3 );
+          RAJA::atomicAdd( parallelHostAtomic{}, &localRhs[localRow], rhsT[i] );
+        }
+      }
+
+      real64 diagVal[1];
+      globalIndex colDof[1];
+      diagVal[0] = 1.0;
+
+      // assemble diagonal contribution of inactive bubbles (dirichlet bcs)
+      for( localIndex i = 0; i < 3; ++i )
+      {
+        localIndex const localRow = LvArray::integerConversion< localIndex >( bDof2[i] - rankOffset );
+        if( localRow >= 0 && localRow < localMatrix.numRows() )
+        {
+          colDof[0] = bDof2[i];
+          localMatrix.addToRow< parallelHostAtomic >( localRow,
+                                                      colDof,
+                                                      diagVal,
+                                                      1 );
+        }
+      }
+
+
+    });
+
+  }
 
 
 void SolidMechanicsMortarContact::assembleMortar( real64 const dt,
@@ -511,41 +660,134 @@ void SolidMechanicsMortarContact::assembleMortar( real64 const dt,
 
 
 void SolidMechanicsMortarContact::implicitStepComplete( real64 const & time_n,
-                                                                     real64 const & dt,
-                                                                     DomainPartition & domain )
+                                                        real64 const & dt,
+                                                        DomainPartition & domain )
 {
 
   SolidMechanicsLagrangianFEM::implicitStepComplete( time_n, dt, domain );
 
+  FaceElementSubRegion & subRegion = 
+    m_mortarSide.at( MortarSide::Slave ).surface->getUniqueSubRegion< FaceElementSubRegion >();
+
+  arrayView2d< real64 > const deltaTraction  = subRegion.getField< contact::deltaTraction >();
+  // arrayView2d< real64 > const deltaDispJump    = subRegion.getField< contact::deltaDispJump >();
+  // arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
+  // arrayView2d< real64 > const oldDispJump    = subRegion.getField< contact::oldDispJump >()
+
+  forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+  {
+    //LvArray::tensorOps::fill< 3 >( deltaDispJump[kfe], 0.0 );
+    LvArray::tensorOps::fill< 3 >( deltaTraction[kfe], 0.0 );
+    //LvArray::tensorOps::copy< 3 >( oldDispJump[kfe], dispJump[kfe] );
+  } );
+
 }
 
 real64 SolidMechanicsMortarContact::calculateResidualNorm( real64 const & time,
-                                                                        real64 const & dt,
-                                                                        DomainPartition const & domain,
-                                                                        DofManager const & dofManager,
-                                                                        arrayView1d< real64 const > const & localRhs )
+                                                           real64 const & dt,
+                                                           DomainPartition const & domain,
+                                                           DofManager const & dofManager,
+                                                           arrayView1d< real64 const > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+
+  real64 const solidResidual = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
+
+  real64 const contactResidual = calculateContactResidualNorm( domain, dofManager, localRhs );
+
+  return sqrt( solidResidual * solidResidual + contactResidual * contactResidual );
+}
+
+real64 SolidMechanicsMortarContact::calculateContactResidualNorm( DomainPartition const & domain,
+                                                                  DofManager const & dofManager,
+                                                                  arrayView1d< real64 const > const & localRhs )
 {
 
-  GEOS_MARK_FUNCTION;
-  real64 const solidResidualNorm = SolidMechanicsLagrangianFEM::calculateResidualNorm( time, dt, domain, dofManager, localRhs );
+  GEOS_UNUSED_VAR( domain );
 
-  return solidResidualNorm;
+  string const & dofKey = dofManager.getKey( contact::traction::key() );
+  globalIndex const rankOffset = dofManager.rankOffset();
 
+  real64 stickResidual = 0.0;
+
+   FaceElementSubRegion const & subRegion = 
+    m_mortarSide.at( MortarSide::Slave ).surface->getUniqueSubRegion< FaceElementSubRegion >();
+
+  arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+  arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+  arrayView1d< real64 const > const & area = subRegion.getElementArea();
+  RAJA::ReduceSum< parallelHostReduce, real64 > stickSum( 0.0 );
+  forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const k )
+  {
+    if( ghostRank[k] < 0 )
+    {
+      localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
+      for( localIndex dim = 0; dim < 3; ++dim )
+      {
+        real64 const norm = localRhs[localRow + dim] / area[k];
+        stickSum += norm * norm;
+      }
+    }
+  } );
+  stickResidual += stickSum.get();
+
+  stickResidual = MpiWrapper::sum( stickResidual );
+  stickResidual = sqrt( stickResidual );
+
+  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  {
+    std::cout << GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual );
+  }
+
+  return sqrt( stickResidual * stickResidual );
 }
 
 void SolidMechanicsMortarContact::applySystemSolution( DofManager const & dofManager,
-                                                                    arrayView1d< real64 const > const & localSolution,
-                                                                    real64 const scalingFactor,
-                                                                    real64 const dt,
-                                                                    DomainPartition & domain )
+                                                       arrayView1d< real64 const > const & localSolution,
+                                                       real64 const scalingFactor,
+                                                       real64 const dt,
+                                                       DomainPartition & domain )
 {
-
   GEOS_MARK_FUNCTION;
-  SolidMechanicsLagrangianFEM::applySystemSolution( dofManager,
-                                                    localSolution,
-                                                    scalingFactor,
-                                                    dt,
-                                                    domain );
+
+  SolidMechanicsLagrangianFEM::applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
+
+  dofManager.addVectorToField( localSolution,
+                               contact::traction::key(),
+                               contact::deltaTraction::key(),
+                               scalingFactor );
+
+  dofManager.addVectorToField( localSolution,
+                               contact::traction::key(),
+                               contact::traction::key(),
+                               scalingFactor );
+
+  dofManager.addVectorToField( localSolution,
+                               contact::totalBubbleDisplacement::key(),
+                               contact::totalBubbleDisplacement::key(),
+                               scalingFactor );
+
+  dofManager.addVectorToField( localSolution,
+                               contact::totalBubbleDisplacement::key(),
+                               contact::incrementalBubbleDisplacement::key(),
+                               scalingFactor );
+
+  MeshLevel & mesh = *m_mortarSide.at( MortarSide::Slave ).mesh;
+
+  FieldIdentifiers fieldsToBeSync;
+
+  fieldsToBeSync.addFields( FieldLocation::Face,
+                            { contact::incrementalBubbleDisplacement::key(),
+                              contact::totalBubbleDisplacement::key() } );
+  fieldsToBeSync.addElementFields( { contact::traction::key(),
+                                     contact::deltaTraction::key(),
+                                     contact::dispJump::key() },
+                                   { getUniqueFractureRegionName() } );
+
+  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                       mesh,
+                                                       domain.getNeighbors(),
+                                                       true );
 
 }
 
@@ -620,7 +862,8 @@ void SolidMechanicsMortarContact::addMortarCouplingNumNonzeros( DofManager & dof
                                                                 arrayView1d< localIndex > const & rowLengths ) const
 {
 
-  FaceElementSubRegion const & surfRegionSlave = m_mortarSide.at( MortarSide::Slave ).surface->getUniqueSubRegion< FaceElementSubRegion >();
+  FaceElementSubRegion const & surfRegionSlave = 
+    m_mortarSide.at( MortarSide::Slave ).surface->getUniqueSubRegion< FaceElementSubRegion >();
 
   MeshLevel & meshMaster = *m_mortarSide.at( MortarSide::Master ).mesh;
   FaceElementSubRegion const & surfRegionMaster = 
@@ -650,12 +893,17 @@ void SolidMechanicsMortarContact::addMortarCouplingNumNonzeros( DofManager & dof
   // add coupling between tractions and master displacements
   for( localIndex im=0; im<masterElementList.size(); ++im )
   {
-    localIndex numDispDof = 0;
+    localIndex numDispDof;
 
     localIndex const kMaster = masterElementList[im];
     localIndex const kfaceMaster = elemsToFacesMaster[kMaster][0];
     localIndex const numNodesPerFace = faceToNodeMapMaster.sizeOfArray( kfaceMaster );
 
+    numDispDof = 3*numNodesPerFace;
+
+    localIndex const nSlave = connections.sizeOfArray(im);
+
+  
     for( localIndex a=0; a<numNodesPerFace; ++a )
     {
       const localIndex & node = faceToNodeMapMaster( kfaceMaster, a );
@@ -665,22 +913,17 @@ void SolidMechanicsMortarContact::addMortarCouplingNumNonzeros( DofManager & dof
       {
         for( int d=0; d<3; ++d )
         {
-          rowLengths[localDispRow + d] += 3;
+          rowLengths[localDispRow + d] += 3 * nSlave;
         }
       }
     }
 
-    numDispDof = 3*numNodesPerFace;
-
-    localIndex const nSlave = connections.sizeOfArray(im);
-
     // loop over connected slave elements
     for (localIndex is=0; is<nSlave; ++is)
     {
+
       localIndex kSlave = slaveElementList(connections(im,is));
-
       localIndex const localRow = LvArray::integerConversion< localIndex >( tractionDofNumber[kSlave] - rankOffset );
-
       if( localRow >= 0 && localRow < rowLengths.size() )
       {
         for( localIndex i=0; i<3; ++i )
@@ -703,12 +946,22 @@ void SolidMechanicsMortarContact::addBubbleCouplingSparsityPattern( DofManager c
   NodeManager const & nodeManagerSlave = mesh.getNodeManager();
   FaceManager const & faceManagerSlave = mesh.getFaceManager();
 
+  FaceElementSubRegion const & surfRegionSlave = m_mortarSide.at( MortarSide::Slave ).surface->getUniqueSubRegion< FaceElementSubRegion >();
+  arrayView2d< localIndex const > const elemsToFace = surfRegionSlave.faceList().toViewConst();
+
+
   globalIndex const rankOffset = dofManager.rankOffset();
 
   string const bubbleDofKey = dofManager.getKey( contact::totalBubbleDisplacement::key() );
   string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
   arrayView1d< globalIndex const > const bubbleDofNumber = faceManagerSlave.getReference< globalIndex_array >( bubbleDofKey );
   arrayView1d< globalIndex const > const dispDofNumber =  nodeManagerSlave.getReference< globalIndex_array >( dispDofKey );
+
+  // for (localIndex i=0; i<elemsToFace.size(0); ++i)
+  // {
+  //   localIndex f = elemsToFace[i][1];
+  //   std::cout << "Bubble dof " << i << " : " << bubbleDofNumber[f] << std::endl;
+  // }
 
   static constexpr int maxNumDispDof = 3 * 8;
 
@@ -721,6 +974,7 @@ void SolidMechanicsMortarContact::addBubbleCouplingSparsityPattern( DofManager c
     {
       localIndex const cellIndex = bubbleElemsList[bi];
       localIndex const k = faceElemsList[bi][0];
+
       // working arrays
       stackArray1d< globalIndex, maxNumDispDof > eqnRowIndicesDisp ( numDispDof );
       stackArray1d< globalIndex, 3 > eqnRowIndicesBubble( 3 );
@@ -771,7 +1025,6 @@ void SolidMechanicsMortarContact::addBubbleCouplingSparsityPattern( DofManager c
 void SolidMechanicsMortarContact::addMortarCouplingSparsityPattern( DofManager & dofManager,
                                                                     ElementShape const & slaveShape,
                                                                     ElementShape const & masterShape,
-                                                                    connectivityMapType const & connectivityMap,
                                                                     SparsityPatternView< globalIndex > const & pattern ) const
 {
 
@@ -784,14 +1037,22 @@ void SolidMechanicsMortarContact::addMortarCouplingSparsityPattern( DofManager &
   ArrayOfArraysView< localIndex const > const faceToNodeMapMaster = faceManagerMaster.nodeList().toViewConst();
   arrayView2d< localIndex const > const elemsToFacesMaster = surfRegionMaster.faceList().toViewConst();
 
-  ArrayOfArraysView< localIndex const > const connections = connectivityMap.at({slaveShape, masterShape}).toViewConst();
-  arrayView1d< localIndex const > const masterElementList = m_faceTypeToElementList.at(MortarSide::Master).at(masterShape).toViewConst();
-  arrayView1d< localIndex const > const slaveElementList = m_faceTypeToElementList.at(MortarSide::Slave).at(slaveShape).toViewConst();
+  //ArrayOfArraysView< localIndex const > const connections = connectivityMap.at({slaveShape, masterShape}).toViewConst();
+  //arrayView1d< localIndex const > const masterElementList = m_faceTypeToElementList.at(MortarSide::Master).at(masterShape).toViewConst();
+  //arrayView1d< localIndex const > const slaveElementList = m_faceTypeToElementList.at(MortarSide::Slave).at(slaveShape).toViewConst();
 
-  if (slaveElementList.size() == 0 || masterElementList.size() == 0)
+  if (m_triCellsDet.find(std::make_pair(slaveShape, masterShape)) == m_triCellsDet.end())
   {
+    // no connections for the given element shapes
     return;
   }
+
+  arrayView1d< localIndex const > const masterElementList = 
+    m_triCells.at(MortarSide::Master).at(std::make_pair(slaveShape, masterShape)).toViewConst();
+
+  arrayView1d< localIndex const > const slaveElementList = 
+    m_triCells.at(MortarSide::Slave).at(std::make_pair(slaveShape, masterShape)).toViewConst();
+
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -803,65 +1064,59 @@ void SolidMechanicsMortarContact::addMortarCouplingSparsityPattern( DofManager &
   // populate sparsity pattern for coupling between tractions and master elements
   static constexpr int maxNumDispFaceDof = 3 * 4;
 
-  for( localIndex im=0; im<masterElementList.size(); ++im )
+  for( localIndex k=0; k<masterElementList.size(); ++k )
   {
-    localIndex const nSlave = connections.sizeOfArray(im);
-    localIndex kElMaster = masterElementList[im];
+    localIndex kElMaster = masterElementList[k];
+    localIndex kElSlave = slaveElementList[k];
 
-    for (int is=0; is<nSlave; ++is)
+    localIndex const kfaceMaster = elemsToFacesMaster[kElMaster][0];
+    localIndex const numNodesPerFace = faceToNodeMapMaster.sizeOfArray( kfaceMaster );
+    localIndex const numDispDof = 3*numNodesPerFace;
+    // working arrays
+    stackArray1d< globalIndex, maxNumDispFaceDof > eqnRowIndicesDisp ( numDispDof );
+    stackArray1d< globalIndex, 3 > eqnRowIndicesTraction( 3 );
+    stackArray1d< globalIndex, maxNumDispFaceDof > dofColIndicesDisp( numDispDof );
+    stackArray1d< globalIndex, 3 > dofColIndicesTraction( 3 );
+    for( localIndex idof = 0; idof < 3; ++idof )
     {
-      localIndex kElSlave = slaveElementList[connections(im,is)];
-      localIndex const kfaceMaster = elemsToFacesMaster[kElMaster][0];
-      localIndex const numNodesPerFace = faceToNodeMapMaster.sizeOfArray( kfaceMaster );
-      localIndex const numDispDof = 3*numNodesPerFace;
-
-      // working arrays
-      stackArray1d< globalIndex, maxNumDispFaceDof > eqnRowIndicesDisp ( numDispDof );
-      stackArray1d< globalIndex, 3 > eqnRowIndicesTraction( 3 );
-      stackArray1d< globalIndex, maxNumDispFaceDof > dofColIndicesDisp( numDispDof );
-      stackArray1d< globalIndex, 3 > dofColIndicesTraction( 3 );
-
+      eqnRowIndicesTraction[idof] = tractionDofNumber[kElSlave] + idof - rankOffset;
+      dofColIndicesTraction[idof] = tractionDofNumber[kElSlave] + idof;
+    }
+    for( localIndex a=0; a<numNodesPerFace; ++a )
+    {
+      const localIndex & node = faceToNodeMapMaster( kfaceMaster, a );
+      //std::cout << "Displacement dofs for face " << kfaceMaster << ", node " << node << std::endl;
       for( localIndex idof = 0; idof < 3; ++idof )
       {
-        eqnRowIndicesTraction[idof] = tractionDofNumber[kElSlave] + idof - rankOffset;
-        dofColIndicesTraction[idof] = tractionDofNumber[kElSlave] + idof;
+        eqnRowIndicesDisp[3*a + idof] = dispMasterDofNumber[node] + idof - rankOffset;
+        dofColIndicesDisp[3*a + idof] = dispMasterDofNumber[node] + idof;
       }
+    }
 
-      for( localIndex a=0; a<numNodesPerFace; ++a )
+    for( localIndex i = 0; i < eqnRowIndicesDisp.size(); ++i )
+    {
+      if( eqnRowIndicesDisp[i] >= 0 && eqnRowIndicesDisp[i] < pattern.numRows() )
       {
-        const localIndex & node = faceToNodeMapMaster( kfaceMaster, a );
-        std::cout << "Displacement dofs for face " << kfaceMaster << ", node " << node << std::endl;
-        for( localIndex idof = 0; idof < 3; ++idof )
+        for( localIndex j = 0; j < dofColIndicesTraction.size(); ++j )
         {
-          eqnRowIndicesDisp[3*a + idof] = dispMasterDofNumber[node] + idof - rankOffset;
-          dofColIndicesDisp[3*a + idof] = dispMasterDofNumber[node] + idof;
+          pattern.insertNonZero( eqnRowIndicesDisp[i], dofColIndicesTraction[j] );
+          //std::cout << "Displacement: " << eqnRowIndicesDisp[i] << " Traction: " << dofColIndicesTraction[j] << std::endl;
         }
       }
-
-      for( localIndex i = 0; i < eqnRowIndicesDisp.size(); ++i )
+    }
+    for( localIndex i = 0; i < eqnRowIndicesTraction.size(); ++i )
+    {
+      if( eqnRowIndicesTraction[i] >= 0 && eqnRowIndicesTraction[i] < pattern.numRows() )
       {
-        if( eqnRowIndicesDisp[i] >= 0 && eqnRowIndicesDisp[i] < pattern.numRows() )
+        for( localIndex j=0; j < dofColIndicesDisp.size(); ++j )
         {
-          for( localIndex j = 0; j < dofColIndicesTraction.size(); ++j )
-          {
-            pattern.insertNonZero( eqnRowIndicesDisp[i], dofColIndicesTraction[j] );
-            //std::cout << "Displacement: " << eqnRowIndicesDisp[i] << " Traction: " << dofColIndicesTraction[j] << std::endl;
-          }
-        }
-      }
-      for( localIndex i = 0; i < eqnRowIndicesTraction.size(); ++i )
-      {
-        if( eqnRowIndicesTraction[i] >= 0 && eqnRowIndicesTraction[i] < pattern.numRows() )
-        {
-          for( localIndex j=0; j < dofColIndicesDisp.size(); ++j )
-          {
-            pattern.insertNonZero( eqnRowIndicesTraction[i], dofColIndicesDisp[j] );
-            //std::cout << "Traction: " << eqnRowIndicesTraction[i] << " Displacement: " << dofColIndicesDisp[j] << std::endl;
-          }
+          pattern.insertNonZero( eqnRowIndicesTraction[i], dofColIndicesDisp[j] );
+          //std::cout << "Traction: " << eqnRowIndicesTraction[i] << " Displacement: " << dofColIndicesDisp[j] << std::endl;
         }
       }
     }
   }
+  
 
 }
 
