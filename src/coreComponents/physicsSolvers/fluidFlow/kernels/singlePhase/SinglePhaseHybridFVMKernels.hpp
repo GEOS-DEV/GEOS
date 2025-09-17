@@ -541,25 +541,19 @@ public:
         real64 const area = m_faceArea[m_elemToFaces[ei][iFaceLoc]];
         real64 const invArea = 1.0 / area;
 
-        // residual (LM face constraint): use mass flux without dt scaling
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[stack.faceCenteredEqnRowIndex[iFaceLoc]], invArea * stack.massFlux[iFaceLoc] );
+        // residual (LM face constraint) continuity of mass flux
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[stack.faceCenteredEqnRowIndex[iFaceLoc]], stack.massFlux[iFaceLoc] );
 
-        // jacobian -- derivative wrt local cell centered pressure term (no dt scaling)
-        real64 dMassFlux_dPres_scaled = invArea * stack.dmassFlux_dPres[iFaceLoc];
+        // jacobian -- derivative wrt local cell centered pressure
         m_localMatrix.addToRow< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
                                                         &dofColIndexElemPres,
-                                                        &dMassFlux_dPres_scaled,
+                                                        &stack.dmassFlux_dPres[iFaceLoc],
                                                         1 );
 
-        // jacobian -- derivatives wrt face pressure terms (no dt scaling)
-        real64 dMassFlux_dFacePres_scaled[NUM_FACE];
-        for( integer j = 0; j < NUM_FACE; ++j )
-        {
-          dMassFlux_dFacePres_scaled[j] = invArea * stack.dmassFlux_dFacePres[iFaceLoc][j];
-        }
+        // jacobian -- derivatives wrt face pressure terms
         m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
                                                                             &stack.faceDofColIndices[0],
-                                                                            dMassFlux_dFacePres_scaled,
+                                                                            stack.dmassFlux_dFacePres[iFaceLoc],
                                                                             NUM_FACE );
       }
     }

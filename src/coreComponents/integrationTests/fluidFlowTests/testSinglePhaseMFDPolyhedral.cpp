@@ -48,6 +48,22 @@
 // - MFD reproduces machine-precision correct solutions on star-shaped meshes
 // - MFD reproduces TPFA results when innerProductType="TPFA"
 
+
+//# Notes on estimated condition Number Estimates for Methods and Meshes
+//
+//| Method / Mesh | polyhedral_voronoi_complex.vtk | polyhedral_voronoi_lattice.vtk | polyhedral_voronoi_regular.vtk |
+//|---|---:|---:|---:|
+//| MFD — TPFA | 3.0077238.e5 | 9.6678605.e2 | 2.5071172.e5 |
+//| MFD — QuasiTPFA | 6.6168582.e5 | 6.966971.e2 | 2.5071172.e2 |
+//| MFD — QuasiRT | 7.2227334.e5 | 1.2007323.e3 | 3.18867.e2 |
+//| MFD — Simple | 3.1486776.e6 | 8.7419486.e2 | 3.18867.e2 |
+//| MFD — BdVLM | 8.7411124.e6 | 6.1777283.e2 | 2.5071172.e2 |
+//| FV — TPFA | 2.5071422.e3 | 1.6605592.e2 | 3.7053199.e1 |
+//
+// Note: For the MFD method, the condition number estimate is computed on a system expressed only in terms of Lagrange multipliers.
+// With the current construction of the method (i.e., without upwinding in the elliptic components), the cell pressure block is
+// diagonal and can therefore always be eliminated.
+
 using namespace geos;
 using namespace geos::dataRepository;
 using namespace geos::testing;
@@ -56,10 +72,9 @@ CommandLineOptions g_commandLineOptions;
 
 // Pressure L2 error tolerance
 static constexpr real64 PRESSURE_L2_TOLERANCE = 1.0e-10;
-static constexpr real64 to_MPA = 1.0e-6;
 
 // Maximum time step for events / solver steps (in seconds)
-static constexpr real64 MAX_TIME_STEP = 86400.0; // 1 day
+static constexpr real64 MAX_TIME_STEP = 1.0; // 1 day
 
 static constexpr auto TPFA      = "TPFA";
 static constexpr auto QuasiTPFA = "quasiTPFA";
@@ -95,7 +110,8 @@ std::string generateXmlInputTPFA( std::string const & meshFile )
 
     <Constitutive>
       <CompressibleSinglePhaseFluid name="fluid"
-        defaultDensity="1000" defaultViscosity="0.001"
+        defaultDensity="1.0" defaultViscosity="1.0"
+        referenceDensity="1.0" referenceViscosity="1.0"
         referencePressure="0.0" compressibility="0.0" viscosibility="0.0"/>
       <CompressibleSolidConstantPermeability name="rock"
         solidModelName="nullSolid" porosityModelName="rockPorosity" permeabilityModelName="rockPerm"/>
@@ -103,16 +119,16 @@ std::string generateXmlInputTPFA( std::string const & meshFile )
       <PressurePorosity name="rockPorosity"
         defaultReferencePorosity="0.1" referencePressure="0.0" compressibility="0.0"/>
       <ConstantPermeability name="rockPerm"
-        permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
+        permeabilityComponents="{ 1.0, 1.0, 1.0 }"/>
     </Constitutive>
 
     <FieldSpecifications>
       <FieldSpecification name="initialPressure" initialCondition="1"
-        setNames="{ all }" objectPath="ElementRegions/Domain" fieldName="pressure" scale="1.0e7"/>  
+        setNames="{ all }" objectPath="ElementRegions/Domain" fieldName="pressure" scale="1.0"/>  
       <FieldSpecification name="west_pressure"
-        setNames="{ westBC }" objectPath="faceManager" fieldName="pressure" scale="2.0e7"/>
+        setNames="{ westBC }" objectPath="faceManager" fieldName="pressure" scale="2.0"/>
       <FieldSpecification name="east_pressure"
-        setNames="{ eastBC }" objectPath="faceManager" fieldName="pressure" scale="1.0e7"/>      
+        setNames="{ eastBC }" objectPath="faceManager" fieldName="pressure" scale="1.0"/>      
     </FieldSpecifications>
 
     <NumericalMethods>
@@ -124,7 +140,7 @@ std::string generateXmlInputTPFA( std::string const & meshFile )
     <Solvers>
       <SinglePhaseFVM name="SinglePhaseFlow" logLevel="1"
         discretization="singlePhaseTPFA" targetRegions="{ Domain }">
-        <NonlinearSolverParameters newtonTol="1.0e-5" newtonMaxIter="2"/>
+        <NonlinearSolverParameters newtonTol="1.0e-8" newtonMaxIter="2"/>
         <LinearSolverParameters directParallel="0"/>
       </SinglePhaseFVM>
     </Solvers>
@@ -157,68 +173,68 @@ protected:
   std::string testBinaryDir;
 };
 
-//INSTANTIATE_TEST_SUITE_P(
-//  MeshFiles,
-//  TPFAIntegrationTest,
-//  ::testing::Values(
-//    "polyhedral_voronoi_complex.vtk",
-//    "polyhedral_voronoi_lattice.vtk",
-//    "polyhedral_voronoi_regular.vtk"
-//    )
-//  );
-//
-//TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
-//{
-//  ProblemManager & problemManager = state.getProblemManager();
-//  DomainPartition & domain = problemManager.getDomainPartition();
-//
-//  // Retrieve the solver using the PhysicsSolverManager
-//  SinglePhaseFVM< SinglePhaseBase > & solver =
-//    dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >( problemManager.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ) );
-//
-//  // Run the simulation to compute the numerical pressure
-//  solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
-//  solver.implicitStepSetup( 0.0, MAX_TIME_STEP, domain );
-//  solver.solverStep( 0.0, MAX_TIME_STEP, 0, domain );
-//  solver.implicitStepComplete( 0.0, MAX_TIME_STEP, domain );
-//
-//  // Access the mesh and subregion
-//  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
-//  CellElementSubRegion & subRegion = mesh.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
-//
-//  // Retrieve pressure field and cell centers
-//  arrayView2d< real64 const > centers = subRegion.getElementCenter();
-//  arrayView1d< real64 const > volumes = subRegion.getElementVolume();
-//  arrayView1d< real64 const > const p_h = subRegion.getField< fields::flow::pressure >();
-//
-//  // Compute exact pressure and L2 error
-//  real64 l2Error = 0.0;
-//  real64 totalVolume = 0.0;
-//  for( localIndex i = 0; i < subRegion.size(); ++i )
-//  {
-//    real64 x = centers[i][0];
-//    real64 volume = volumes[i];
-//    real64 pNumeric = p_h[i] * to_MPA; // Convert pressure to MPa
-//    real64 pExact = 20.0 * (1.0 - x) + 10.0 * x;
-//    l2Error += (pNumeric - pExact) * (pNumeric - pExact) * volume;
-//    totalVolume += volume;
-//  }
-//
-//  l2Error = std::sqrt( l2Error / totalVolume );
-//
-//  std::string meshFile = GetParam();
-//  if( meshFile == "polyhedral_voronoi_regular.vtk" )
-//  {
-//    // Assert that the L2 error is within machine precision
-//    EXPECT_NEAR( l2Error, 0.0, PRESSURE_L2_TOLERANCE );
-//  }
-//  else
-//  {
-//    // Assert that the L2 error is not exact
-//    EXPECT_GT( l2Error, PRESSURE_L2_TOLERANCE );
-//  }
-//
-//}
+INSTANTIATE_TEST_SUITE_P(
+  MeshFiles,
+  TPFAIntegrationTest,
+  ::testing::Values(
+    "polyhedral_voronoi_complex.vtk",
+    "polyhedral_voronoi_lattice.vtk",
+    "polyhedral_voronoi_regular.vtk"
+    )
+  );
+
+TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
+{
+  ProblemManager & problemManager = state.getProblemManager();
+  DomainPartition & domain = problemManager.getDomainPartition();
+
+  // Retrieve the solver using the PhysicsSolverManager
+  SinglePhaseFVM< SinglePhaseBase > & solver =
+    dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >( problemManager.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ) );
+
+  // Run the simulation to compute the numerical pressure
+  solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
+  solver.implicitStepSetup( 0.0, MAX_TIME_STEP, domain );
+  solver.solverStep( 0.0, MAX_TIME_STEP, 0, domain );
+  solver.implicitStepComplete( 0.0, MAX_TIME_STEP, domain );
+
+  // Access the mesh and subregion
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
+  CellElementSubRegion & subRegion = mesh.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
+
+  // Retrieve pressure field and cell centers
+  arrayView2d< real64 const > centers = subRegion.getElementCenter();
+  arrayView1d< real64 const > volumes = subRegion.getElementVolume();
+  arrayView1d< real64 const > const p_h = subRegion.getField< fields::flow::pressure >();
+
+  // Compute exact pressure and L2 error
+  real64 l2Error = 0.0;
+  real64 totalVolume = 0.0;
+  for( localIndex i = 0; i < subRegion.size(); ++i )
+  {
+    real64 x = centers[i][0];
+    real64 volume = volumes[i];
+    real64 pNumeric = p_h[i];
+    real64 pExact = 2.0 * (1.0 - x) + 1.0 * x;
+    l2Error += (pNumeric - pExact) * (pNumeric - pExact) * volume;
+    totalVolume += volume;
+  }
+
+  l2Error = std::sqrt( l2Error / totalVolume );
+
+  std::string meshFile = GetParam();
+  if( meshFile == "polyhedral_voronoi_regular.vtk" )
+  {
+    // Assert that the L2 error is within machine precision
+    EXPECT_NEAR( l2Error, 0.0, PRESSURE_L2_TOLERANCE );
+  }
+  else
+  {
+    // Assert that the L2 error is not exact
+    EXPECT_GT( l2Error, PRESSURE_L2_TOLERANCE );
+  }
+
+}
 
 std::string generateXmlInputMFD( std::string const & innerProductType,
                                  std::string const & meshFile )
@@ -250,7 +266,8 @@ std::string generateXmlInputMFD( std::string const & innerProductType,
 
   <Constitutive>
     <CompressibleSinglePhaseFluid name="fluid"
-      defaultDensity="1000" defaultViscosity="0.001"
+      defaultDensity="1.0" defaultViscosity="1.0"
+      referenceDensity="1.0" referenceViscosity="1.0"
       referencePressure="0.0" compressibility="0.0" viscosibility="0.0"/>
 
     <CompressibleSolidConstantPermeability name="rock"
@@ -262,18 +279,18 @@ std::string generateXmlInputMFD( std::string const & innerProductType,
       defaultReferencePorosity="0.1" referencePressure="0.0" compressibility="0.0"/>
 
     <ConstantPermeability name="rockPerm"
-      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
+      permeabilityComponents="{ 1.0, 1.0, 1.0 }"/>
   </Constitutive>
 
   <FieldSpecifications>
     <FieldSpecification name="initialPressure" initialCondition="1"
-      setNames="{ all }" objectPath="ElementRegions/Domain" fieldName="pressure" scale="1.0e7"/>
+      setNames="{ all }" objectPath="ElementRegions/Domain" fieldName="pressure" scale="1.0"/>
     <FieldSpecification name="initialFacePressure" initialCondition="1"
-      setNames="{ all }" objectPath="faceManager" fieldName="facePressure" scale="1.0e7"/>          
+      setNames="{ all }" objectPath="faceManager" fieldName="facePressure" scale="1.0"/>          
     <FieldSpecification name="west_pressure"
-      setNames="{ westBC }" objectPath="faceManager" fieldName="bcPressure" scale="2.0e7"/>
+      setNames="{ westBC }" objectPath="faceManager" fieldName="bcPressure" scale="2.0"/>
     <FieldSpecification name="east_pressure"
-      setNames="{ eastBC }" objectPath="faceManager" fieldName="bcPressure" scale="1.0e7"/>      
+      setNames="{ eastBC }" objectPath="faceManager" fieldName="bcPressure" scale="1.0"/>      
   </FieldSpecifications>
 
   <NumericalMethods>
@@ -289,7 +306,7 @@ std::string generateXmlInputMFD( std::string const & innerProductType,
   <Solvers>
     <SinglePhaseHybridFVM name="SinglePhaseFlow" logLevel="1"
       discretization="singlePhaseMFD" targetRegions="{ Domain }">
-      <NonlinearSolverParameters newtonTol="1.0e-5" newtonMaxIter="2"/>
+      <NonlinearSolverParameters newtonTol="1.0e-8" newtonMaxIter="2"/>
       <LinearSolverParameters directParallel="0"/>
     </SinglePhaseHybridFVM>
   </Solvers>
@@ -329,7 +346,7 @@ INSTANTIATE_TEST_SUITE_P(
   InnerProductAndMeshes,
   MFDIntegrationTest,
   ::testing::Combine(
-    ::testing::Values( QuasiTPFA, QuasiRT, Simple, BdVLM ),
+    ::testing::Values( TPFA, QuasiTPFA, QuasiRT, Simple, BdVLM ),
     ::testing::Values(
       "polyhedral_voronoi_complex.vtk",
       "polyhedral_voronoi_lattice.vtk",
@@ -369,8 +386,8 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
   {
     real64 x = centers[i][0];
     real64 volume = volumes[i];
-    real64 pNumeric = p_h[i] * to_MPA; // Convert pressure to MPa
-    real64 pExact = 20.0 * (1.0 - x) + 10.0 * x;
+    real64 pNumeric = p_h[i];
+    real64 pExact = 2.0 * (1.0 - x) + 1.0 * x;
     l2Error += (pNumeric - pExact) * (pNumeric - pExact) * volume;
     totalVolume += volume;
   }
@@ -491,7 +508,7 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
   {
     real64 p_num_tpfa = p_tpfa[i];
     real64 p_num_mfd  = p_mfd[i];
-    real64 p_diff     = (p_num_tpfa - p_num_mfd) * to_MPA; // Convert pressure to MPa
+    real64 p_diff     = (p_num_tpfa - p_num_mfd);
     EXPECT_NEAR( p_diff, 0.0, PRESSURE_L2_TOLERANCE ) << "Mismatch at cell " << i;
   }
 }
