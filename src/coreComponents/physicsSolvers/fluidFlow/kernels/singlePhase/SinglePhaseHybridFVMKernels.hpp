@@ -369,8 +369,8 @@ public:
                         StackVariables & stack ) const
   {
     // local (cell-centered) mobility and its derivative w.r.t. pressure
-    real64 const localMobility = m_mob[m_er][m_esr][ei];
-    real64 const dLocalMobility_dPres = m_dMob[m_er][m_esr][ei][DerivOffset::dP];
+    real64 const massMobility = m_mob[m_er][m_esr][ei];
+    real64 const dmassMobility_dPres = m_dMob[m_er][m_esr][ei][DerivOffset::dP];
 
     for( integer iFaceLoc = 0; iFaceLoc < NUM_FACE; ++iFaceLoc )
     {
@@ -378,7 +378,7 @@ public:
       // we compute the contribution of face jFaceLoc to the one sided total mass flux at face iFaceLoc
       for( integer jFaceLoc = 0; jFaceLoc < NUM_FACE; ++jFaceLoc )
       {
-        // 1) compute the potential diff between the cell center and the face center
+        // Compute the potential diff between the cell center and the face center
         real64 const ccPres = m_elemPres[ei];
         real64 const fPres = m_facePres[m_elemToFaces[ei][jFaceLoc]];
 
@@ -405,18 +405,14 @@ public:
         real64 const dPotDif_dFacePres = dPresDif_dFacePres;
         real64 const T_ij = stack.transMatrix[iFaceLoc][jFaceLoc];
 
-        // massic factor: rho * lambda
-        real64 const massMobility = ccDens * localMobility;
-        real64 const dmassMobility_dPres = dCcDens_dPres * localMobility + ccDens * dLocalMobility_dPres;
-
-        // T * rho * lambda * (\nabla p - rho * g * \nabla d)
-        stack.massFlux[iFaceLoc] += T_ij * massMobility * potDif;
+        // T * lambda * (\nabla p - rho * g * \nabla d)
+        stack.massFlux[iFaceLoc] += m_dt * T_ij * massMobility * potDif;
 
         // derivatives w.r.t. element-centered pressure
-        stack.dmassFlux_dPres[iFaceLoc] += T_ij * ( dmassMobility_dPres * potDif + massMobility * dPotDif_dPres );
+        stack.dmassFlux_dPres[iFaceLoc] += m_dt * T_ij * ( dmassMobility_dPres * potDif + massMobility * dPotDif_dPres );
 
         // derivatives w.r.t. face-centered pressures
-        stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc] += T_ij * massMobility * dPotDif_dFacePres;
+        stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc] += m_dt * T_ij * massMobility * dPotDif_dFacePres;
       }
     }
   }
@@ -439,12 +435,12 @@ public:
     for( integer iFaceLoc = 0; iFaceLoc < NUM_FACE; ++iFaceLoc )
     {
       // accumulate the mass flux divergence and its derivatives using the actual mass flux
-      stack.divMassFluxes += m_dt * stack.massFlux[iFaceLoc];
-      stack.dDivMassFluxes_dElemVars[0] += m_dt * stack.dmassFlux_dPres[iFaceLoc];
+      stack.divMassFluxes += stack.massFlux[iFaceLoc];
+      stack.dDivMassFluxes_dElemVars[0] += stack.dmassFlux_dPres[iFaceLoc];
 
       for( integer jFaceLoc = 0; jFaceLoc < NUM_FACE; ++jFaceLoc )
       {
-        stack.dDivMassFluxes_dFaceVars[jFaceLoc] += m_dt * stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc];
+        stack.dDivMassFluxes_dFaceVars[jFaceLoc] += stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc];
       }
 
       // collect the relevant dof numbers (always local)
@@ -470,7 +466,6 @@ public:
     real64 const perm[ 3 ] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
 
     // recompute the local transmissibility matrix at each iteration
-    // we can decide later to precompute transMatrix if needed
     IP::template compute< NUM_FACE >( m_nodePosition,
                                       m_transMultiplier,
                                       m_faceToNodes,
@@ -481,14 +476,11 @@ public:
                                       m_lengthTolerance,
                                       stack.transMatrix );
 
-    // compute the one-sided mass fluxes and their derivatives
-    computeMassFlux( ei, stack );
-
-    // at this point, we know the local flow direction in the element
-    // so we can upwind the transport coefficients (mobilities) at the one sided faces
     if( m_elemGhostRank[ei] < 0 )
     {
-
+      // compute the one-sided mass fluxes and their derivatives
+      computeMassFlux( ei, stack );
+      
       /*
        * perform assembly in this element in two steps:
        * 1) mass conservation equations

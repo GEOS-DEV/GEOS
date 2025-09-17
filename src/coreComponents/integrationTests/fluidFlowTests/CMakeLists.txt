@@ -4,7 +4,7 @@ set( gtest_geosx_tests
      testThermalSinglePhaseFlow.cpp
      testTransmissibility.cpp
      testImmiscibleMultiphaseFlow.cpp
-     testSinglePhaseMFDDiscretization.cpp )
+     testSinglePhaseMFDPolyhedral.cpp )
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
@@ -31,6 +31,32 @@ foreach(test ${gtest_geosx_tests})
 
   geos_add_test( NAME ${test_name}
                  COMMAND ${test_name} )
+
+ set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
+
+    # Add TEST_BINARY_DIR as a compile definition
+    target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
+
+    # --- Copy mesh file to test binary dir ---
+    add_custom_command(
+        TARGET ${test_name} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_CURRENT_SOURCE_DIR}/polyhedral_voronoi_regular.vtk
+                $<TARGET_FILE_DIR:${test_name}>
+    )
+    add_custom_command(
+        TARGET ${test_name} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_CURRENT_SOURCE_DIR}/polyhedral_voronoi_lattice.vtk
+                $<TARGET_FILE_DIR:${test_name}>
+    )
+    add_custom_command(
+        TARGET ${test_name} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_CURRENT_SOURCE_DIR}/polyhedral_voronoi_complex.vtk
+                $<TARGET_FILE_DIR:${test_name}>
+    )
+                     
 endforeach()
 
 # For some reason, BLT is not setting CUDA language for these source files
