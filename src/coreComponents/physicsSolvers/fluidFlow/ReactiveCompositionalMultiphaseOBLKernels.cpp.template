@@ -8,7 +8,7 @@ using FluxComputeKernelPolicy = @FluxComputeKernelPolicy@;
 
 namespace geos
 {
-namespace kernels::fluidFlow::obl
+namespace fluidFlow::kernels::obl
 {
   @EXTERN@ template class @NAME@ < @NDIM@, @NCOMP@, @ENABLE_ENERGY@, @STENCIL@::KernelWrapper >;
   @EXTERN@ template void @NAME@ < @NDIM@, @NCOMP@, @ENABLE_ENERGY@, @STENCIL@::KernelWrapper >::launch< @NAME@Policy,
