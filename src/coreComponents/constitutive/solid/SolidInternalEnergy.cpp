@@ -28,13 +28,7 @@ namespace constitutive
 {
 
 SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_internalEnergy(),
-  m_dInternalEnergy_dTemperature(),
-  m_referenceVolumetricHeatCapacity(),
-  m_dVolumetricHeatCapacity_dTemperature(),
-  m_referenceTemperature(),
-  m_referenceInternalEnergy()
+  ConstitutiveBase( name, parent )
 {
   registerWrapper( viewKeyStruct::internalEnergyString(), &m_internalEnergy ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
@@ -67,14 +61,14 @@ SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const par
     setDescription( "Internal energy at the reference temperature [J/kg]" );
 }
 
-void SolidInternalEnergy::allocateConstitutiveData( Group & parent,
-                                                    localIndex const numConstitutivePointsPerParentIndex )
+void SolidInternalEnergy::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
+  // 0 to resize and assign default value later
   m_internalEnergy.resize( 0, 1 );
   m_dInternalEnergy_dTemperature.resize( 0, 1 );
   m_internalEnergy_n.resize( 0, 1 );
 
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 void SolidInternalEnergy::saveConvergedState() const

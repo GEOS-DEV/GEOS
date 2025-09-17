@@ -65,7 +65,7 @@ CompositionalMultiphaseFluid( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Table of binary interaction coefficients" );
 
-  registerField( fields::multifluid::kValues{}, &m_kValues );
+  registerField< fields::multifluid::kValues >( &m_kValues );
 
   // Link parameters specific to each model
   m_parameters->registerParameters( this );
@@ -109,10 +109,11 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::initializeSt
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                                              localIndex const numConstitutivePointsPerParentIndex )
+void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  MultiFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_kValues.resize( 0, numPts, numFluidPhases()-1, numFluidComponents() );
+
+  MultiFluidBase::allocateConstitutiveData( parent, numPts );
 
   // Zero k-Values to force re-initialisation
   m_kValues.zero();
@@ -206,17 +207,6 @@ void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::initializePo
 
   // Create the fluid models
   createModels();
-}
-
-template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
-void CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::resizeFields( localIndex const size, localIndex const numPts )
-{
-  MultiFluidBase::resizeFields( size, numPts );
-
-  m_kValues.resize( size, numPts, numFluidPhases()-1, numFluidComponents() );
-
-  // Zero k-Values to force re-initialisation
-  m_kValues.zero();
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >

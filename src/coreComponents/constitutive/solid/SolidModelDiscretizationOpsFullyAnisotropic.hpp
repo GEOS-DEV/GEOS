@@ -14,7 +14,7 @@
  */
 
 /**
- * @file SolidModelDiscretizationOpsFullyAnisotroipic.hpp
+ * @file SolidModelDiscretizationOpsFullyAnisotropic.hpp
  */
 
 #ifndef GEOS_CONSTITUTIVE_SOLID_SOLIDMODELDISCRETIAZTIONOPSFULLYANISOTROPIC_HPP_
@@ -28,8 +28,7 @@ namespace constitutive
 {
 
 
-struct SolidModelDiscretizationOpsFullyAnisotroipic : public SolidModelDiscretizationOps // TODO: spelling error,
-                                                                                         // convert to "General" anyway
+struct SolidModelDiscretizationOpsFullyAnisotropic : public SolidModelDiscretizationOps
 {
   template< int NUM_SUPPORT_POINTS,
             typename BASIS_GRADIENT >
@@ -75,9 +74,9 @@ template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
 inline
-void SolidModelDiscretizationOpsFullyAnisotroipic::BTDB( BASIS_GRADIENT const & gradN,
-                                                         real64 const & detJxW,
-                                                         real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
+void SolidModelDiscretizationOpsFullyAnisotropic::BTDB( BASIS_GRADIENT const & gradN,
+                                                        real64 const & detJxW,
+                                                        real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -134,9 +133,9 @@ template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
 inline
-void SolidModelDiscretizationOpsFullyAnisotroipic::upperBTDB( BASIS_GRADIENT const & gradN,
-                                                              real64 const & detJxW,
-                                                              real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
+void SolidModelDiscretizationOpsFullyAnisotropic::upperBTDB( BASIS_GRADIENT const & gradN,
+                                                             real64 const & detJxW,
+                                                             real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -193,9 +192,9 @@ template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
 inline
-void SolidModelDiscretizationOpsFullyAnisotroipic::diagBTDB( BASIS_GRADIENT const & gradN,
-                                                             real64 const & detJxW,
-                                                             real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS *3] )
+void SolidModelDiscretizationOpsFullyAnisotropic::diagBTDB( BASIS_GRADIENT const & gradN,
+                                                            real64 const & detJxW,
+                                                            real64 (& diagElementStiffness)[NUM_SUPPORT_POINTS *3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -223,9 +222,9 @@ template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOS_HOST_DEVICE
 inline
-void SolidModelDiscretizationOpsFullyAnisotroipic::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
-                                                                   real64 const & detJxW,
-                                                                   real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] )
+void SolidModelDiscretizationOpsFullyAnisotropic::diagRowSumBTDB( BASIS_GRADIENT const & gradN,
+                                                                  real64 const & detJxW,
+                                                                  real64 ( & diagSumElementStiffness )[NUM_SUPPORT_POINTS*3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
