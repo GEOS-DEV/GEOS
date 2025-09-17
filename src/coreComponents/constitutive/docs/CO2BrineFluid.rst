@@ -10,39 +10,43 @@ Summary
 
 The CO2-brine model implemented in GEOS includes two components (CO2 and H2O) that are transported by one or two fluid phases (the brine phase and the CO2 phase).
 We refer to the brine phase with the subscript :math:`\ell` and to the CO2 phase with the subscript :math:`g` (although the CO2 phase can be in supercritical, liquid, or gas state).
-The water component is only present in the brine phase, while the CO2 component can be present in the CO2 phase as well as in the brine phase.
+Both the water component and the CO2 component can be present in the CO2 phase as well as in the brine phase depending on the solubility model selected.
 Thus, considering the molar phase component fractions, :math:`y_{c,p}` (i.e., the fraction of the molar mass of phase :math:`p` represented by component :math:`c`) the following partition matrix determines the component distribution within the two phases:
 
 .. math::
     \begin{bmatrix}
     y_{H2O,\ell} & y_{CO2,\ell} \\
-         0 & 1            \\
+    y_{H2O,g}    & y_{CO2,g}    \\
     \end{bmatrix}
 
 The update of the fluid properties is done in two steps:
 
-1) The phase fractions (:math:`\nu_p`) and phase component fractions (:math:`y_{c,p}`) are computed as a function of pressure (:math:`p`), temperature (:math:`T`), component fractions (:math:`z_c`), and a constant salinity.
+1. The phase fractions (:math:`\nu_p`) and phase component fractions (:math:`y_{c,p}`) are computed as a function of pressure (:math:`p`), temperature (:math:`T`), overall component fractions (:math:`z_c`), and a constant salinity.
 
-2) The phase densities (:math:`\rho_p`) and phase viscosities (:math:`\mu_p`) are computed as a function of pressure, temperature, the updated phase component fractions, and a constant salinity.
+2. Computation of the phase properties as functions of pressure, temperature, the updated phase component fractions, at a constant salinity.
 
-Once the phase fractions, phase component fractions, phase densities, phase viscosities--and their derivatives with respect to pressure, temperature, and component fractions--have been computed, the :ref:`CompositionalMultiphaseFlow` proceeds to the assembly of the accumulation and flux terms.
-Note that the current implementation of the flow solver is isothermal and that the derivatives with respect to temperature are therefore discarded.
+  a. Phase densities (:math:`\rho_p`) 
+  b. Phase viscosities (:math:`\mu_p`) 
+  c. Phase enthalpies (:math:`H_p`) for thermal models.
+
+Once the phase fractions, phase component fractions, phase densities, phase viscosities, phase enthalpies--and their derivatives with respect to pressure, temperature, and component fractions--have been computed, the :ref:`CompositionalMultiphaseFlow` proceeds to the assembly of the accumulation and flux terms.
+
+.. note::
+   The fluid model will always calculate the derivatives with respect to temperature irrespective of whether the flow solver is thermal or not. For isothermal simulations, the derivatives are ignored.
 
 The models that are used in steps 1) and 2) are reviewed in more details below.
 
 Step 1: Computation of the phase fractions and phase component fractions (flash)
 ================================================================================
 
-At initialization, GEOS performs a preprocessing step to construct a two-dimensional table storing the values of CO2 solubility in brine as a function of pressure, temperature, and a constant salinity.
-The user can parameterize the construction of the table by specifying the salinity and by defining the pressure (:math:`p`) and temperature (:math:`T`) axis of the table in the form:
+At initialization, GEOS performs a preprocessing step to construct a two-dimensional table storing the values of CO2 solubility in brine and water solubility in the CO2 phase as functions of pressure, temperature, and a constant salinity. Solubility is calculated and provided as moles of the component dissolved or vaporized per mass of the phase. For CO2 this will be moles of CO2 dissolved per kg of brine and for water this will be moles of H2O vapourised in the CO2 phase per kg of CO2.
 
-+------------+---------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
-| FlashModel | CO2Solubility | :math:`p_{min}` | :math:`p_{max}` | :math:`\Delta p` | :math:`T_{min}` | :math:`T_{max}` | :math:`\Delta T` | Salinity | 
-+------------+---------------+-----------------+-----------------+------------------+-----------------+-----------------+------------------+----------+
+There are 3 alternatives to providing solubility data for the phase partition calculation.
 
-Note that the pressures are in Pascal, temperatures are in Kelvin, and the salinity is a molality (moles of NaCl per kg of brine). 
-The temperature must be between 283.15 and 623.15 Kelvin.
-The table is populated using the model of Duan and Sun (2003).
+Duan and Sun (2003) model
+-------------------------
+When the solubility model of Duan and Sun (2003) is selected the solubility of CO2 in brine is calculated while the vaporization of H2O into the gas phase is ignored (zero solubility of H2O in gas). Solubility values are tabulated for the selected pressure and temperature points using the Duan and Sun (2003) model calculates CO2 solubility by combining a thermodynamic framework for the liquid phase with an accurate equation of state for the vapor phase, enabling precise predictions across wide ranges of temperature, pressure, and salinity.
+
 Specifically, we solve the following nonlinear CO2 equation of state (equation (A1) in Duan and Sun, 2003) for each pair :math:`(p,T)` to obtain the reduced volume, :math:`V_r`.
 
 .. math::
@@ -63,7 +67,79 @@ where :math:`\Phi_{CO2}` is the chemical potential of the CO2 component, :math:`
 The mole fraction of CO2 in the vapor phase, :math:`y_{CO2}`, is computed with equation (4) of Duan and Sun (2003).
 Note that the first, third, fourth, and fifth terms in the equation written above are approximated using equation (7) of Duan and Sun (2003) as recommended by the authors.
 
-During the simulation, Step 1 starts with a look-up in the precomputed table to get the CO2 solubility, :math:`s_{CO2}`, as a function of pressure and temperature.
+Spycher and Pruess (2005) model
+-------------------------------
+The partitioning behavior of CO2 between aqueous and gas phases in chloride brines is computed using the model developed by Spycher and Pruess (2005), which builds upon earlier work by Spycher et al. (2003). This model accounts for both the solubility of CO2 in brine and the vaporization of H2O into the gas phase, offering a comprehensive thermodynamic treatment.
+
+The calculation begins with the determination of equilibrium constants :math:`k_{CO2}` and :math:`k_{H2O}` at a reference pressure :math:`P_0 = 1 \, \text{bar}`. These constants are expressed as temperature-dependent correlations:
+
+.. math::
+
+   \log_{10} k_{CO2}(P_0, T) = a_{CO2} + b_{CO2} T + c_{CO2} T^2 + d_{CO2} T^3
+
+.. math::
+
+   \log_{10} k_{H2O}(P_0, T) = a_{H2O} + b_{H2O} T + c_{H2O} T^2 + d_{H2O} T^3
+
+The coefficients :math:`a, b, c, d` are provided in Table 2 of Spycher et al. (2003). These equilibrium constants are then corrected for pressure using:
+
+.. math::
+
+   k_c(P, T) = k_c(P_0, T) \exp\left( \frac{(P - P_0) \overline{V_c}}{RT} \right)
+
+where :math:`\overline{V_c}` is the average partial molar volume of the pure condensed component :math:`c`, representing either CO2 or H2O.
+
+A fitted Redlich-Kwong equation of state is employed to compute the fugacity coefficients :math:`\Phi_{CO2}` and :math:`\Phi_{H2O}`, with parameters provided in Table 1 of Spycher et al. (2003).
+
+By equating the fugacities derived from the reaction equilibrium and the definitions of fugacity and partial pressure, the following relationships are obtained:
+
+.. math::
+
+   \Phi_{H2O} y_{H2O,g} P = k_{H2O}(P, T) a_{H2O,\ell}
+
+.. math::
+
+   \Phi_{CO2} y_{CO2,g} P = k_{CO2}(P, T) a_{CO2,\ell}
+
+where :math:`a` denotes the activity of the component in the liquid phase.
+
+For systems with low solubility, activities can be approximated by mole fractions. This leads to the following expressions, as given by equations (8) and (10) of Spycher et al. (2003):
+
+.. math::
+
+   y_{H2O,g} = \frac{K_{H2O}(P_0, T) (1 - x_{CO2,\ell})}{\Phi_{H2O} P} 
+   \exp\left( \frac{(P - P_0) \bar{V}_{H2O}}{RT} \right)
+
+.. math::
+
+   x_{CO2,\ell} = \frac{\Phi_{CO2}(1 - y_{H2O,g}) P}{55.508\, K_{CO2}(P_0, T)} 
+   \exp\left( -\frac{(P - P_0) \bar{V}_{CO2}}{RT} \right)
+
+These expressions are used to compute the mole fractions :math:`y_{H2O,g}` and :math:`x_{CO2,\ell}` in the gas and liquid phases, respectively.
+
+
+Flash calculation
+-----------------
+During the simulation, Step 1 starts with a look-up in the precomputed table to get the CO2 solubility, :math:`s_{CO2}`, and H2O solubility :math:`s_{H2O}`, as a function of pressure and temperature. These are respectively in moles of CO2 per kg of brine and moles of water per kg of CO2 phase.
+
+The solubility values are converted into mole/mole values by multiplying by the molecular weight of each component. This gives the solubility of CO2 in water 
+a
+c
+(
+P
+,
+T
+)
+ and vaporised water 
+a
+w
+(
+P
+,
+T
+)
+ as functions of pressure and temperature.
+
 Then, we compute the phase fractions as:
 
 .. math::
