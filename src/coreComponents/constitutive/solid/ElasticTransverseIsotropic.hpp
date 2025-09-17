@@ -379,26 +379,26 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   // Unrotate the material direction first so transforming the stiffness matrix only occurs once
 
   // Get inverse of rotation matrix using transpose
-  real64 beginningRotationTranspose[3][3] = { { 0 } };
+  real64 beginningRotationTranspose[3][3] = {};
   LvArray::tensorOps::transpose< 3, 3 >( beginningRotationTranspose, beginningRotation );
   
   // Normalize the material direction for safety
-  real64 materialDirection[3] ={ 0 };
+  real64 materialDirection[3] ={};
   LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k] );
   LvArray::tensorOps::normalize< 3 >( materialDirection );
 
   // Use beginning rotation to unrotate material direction
-  real64 unrotatedMaterialDirection[3] = { 0 };
+  real64 unrotatedMaterialDirection[3] = {};
   LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( unrotatedMaterialDirection, beginningRotationTranspose, materialDirection );
 
   // Compute the rotational axis between the z direction of the stiffness tensor and the material direction
-  real64 axis[3] = {0};
+  real64 axis[3] = {};
   axis[2] = 1;
-  real64 rotationAxis[3] = { 0 };
+  real64 rotationAxis[3] = {};
   LvArray::tensorOps::crossProduct( rotationAxis, axis, unrotatedMaterialDirection );
 
   // Compute the rotation matrix to transform the stiffness tensor
-  real64 v[3][3] = { { 0 } };
+  real64 v[3][3] = {};
   v[0][1] = -rotationAxis[2];
   v[0][2] = rotationAxis[1];
   v[1][2] = -rotationAxis[0];
@@ -409,19 +409,19 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   real64 c = LvArray::tensorOps::AiBi< 3 >( axis, unrotatedMaterialDirection );
   real64 s = LvArray::tensorOps::l2Norm< 3 >( rotationAxis );
 
-  real64 R[3][3] = { { 0.0 } };
-  LvArray::tensorOps::addIdentity< 3 >( R, 1);
-  LvArray::tensorOps::add< 3, 3 >( R, v);
+  real64 R[3][3] = {};
+  LvArray::tensorOps::addIdentity< 3 >( R, 1 );
+  LvArray::tensorOps::add< 3, 3 >( R, v );
 
-  real64 v_copy[3][3] = { 0.0 };
-  real64 temp[3][3] = { { 0.0 } };
+  real64 v_copy[3][3] = {};
+  real64 temp[3][3] = {};
   LvArray::tensorOps::copy< 3, 3 >( v_copy, v ); 
   LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( temp, v_copy, v );
   LvArray::tensorOps::scale< 3, 3 >( temp, ( 1 - c ) / ( s * s ));
   LvArray::tensorOps::add< 3, 3 >( R, temp );
 
   // Get M to transform stiffness matrix in Voigt notation
-  real64 M[6][6] = { {0} };
+  real64 M[6][6] = {};
   M[0][0] = R[0][0] * R[0][0];
   M[0][1] = R[0][1] * R[0][1];
   M[0][2] = R[0][2] * R[0][2];
@@ -472,7 +472,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   real64 const c66 = m_c66[k];
   real64 const c12 = ( c11 - 2.0 * c66 );
 
-  real64 stiffnessMatrix[6][6] = { { 0 } };
+  real64 stiffnessMatrix[6][6] = {};
   stiffnessMatrix[0][0] = c11;
   stiffnessMatrix[0][1] = c12;
   stiffnessMatrix[0][2] = c13;
@@ -489,9 +489,9 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   stiffnessMatrix[4][4] = c44;
   stiffnessMatrix[5][5] = c66;
 
-  real64 temp2[6][6] = { { 0 } };
+  real64 temp2[6][6] = {};
   LvArray::tensorOps::Rij_eq_AikBkj< 6, 6, 6 >( temp2, M, stiffnessMatrix ); // M * S
-  real64 rotatedStiffnessMatrix[6][6] = { { 0 } };
+  real64 rotatedStiffnessMatrix[6][6] = {};
   LvArray::tensorOps::Rij_eq_AikBjk< 6, 6, 6 >( rotatedStiffnessMatrix, temp2, M ); // ( M * S ) * M^T
 
   LvArray::tensorOps::Ri_eq_AijBj< 6, 6 >( stress, rotatedStiffnessMatrix, strainIncrement );

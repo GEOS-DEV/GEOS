@@ -172,6 +172,11 @@ public:
     Colors
   };
 
+  enum struct NormalsAndPositionsMethodOption : integer
+  {
+    LR
+  };
+
   /**
    * Constructor
    * @param name The name of the solver instance
@@ -325,6 +330,9 @@ public:
 
     static constexpr char const * gridVPlusString() { return "gridVPlus"; }
     static constexpr char const * gridDVPlusString() { return "gridDVPlus"; }
+
+    static constexpr char const * gridLRSurfaceNormalString() { return "gridLRSurfaceNormal"; }
+    static constexpr char const * gridLRSurfacePositionString() { return "gridLRSurfacePosition"; }
 
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
@@ -505,6 +513,10 @@ public:
   GEOS_FORCE_INLINE
   real64 kernel( real64 const & r ); // distance from particle to query point
 
+  GEOS_HOST
+  GEOS_FORCE_INLINE
+  real64 inverseKernel( real64 const & d );
+
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   real64 kernelDevice( real64 const & r,
@@ -512,20 +524,20 @@ public:
                        int const & planeStrain ); // distance from particle to query point
 
   void kernelGradient( arraySlice1d< real64 const > const & x,  // query point
-                       arraySlice1d< real64 const > const & xp,            // particle location
-                       real64 const & r,                      // distance from particle to query point
-                       real64 * result );
+                       arraySlice1d< real64 const > const & xp, // particle location
+                       real64 const & r,                        // distance from particle to query point
+                       real64 (& result)[3] );
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   void kernelGradientDevice( arraySlice1d< real64 const > const & x,  // query point
-                             arraySlice1d< real64 const > const & xp,            // particle location
-                             real64 const & r,                      // distance from particle to query point
+                             real64 const (& xp)[3], //arraySlice1d< real64 const > const & xp, // particle location
+                             real64 const & r,                        // distance from particle to query point
                              real64 const & neighborRadius,
                              int const & planeStrain,
-                             real64 * result );
+                             real64 (& result)[3] );
 
-  GEOS_HOST_DEVICE
+  GEOS_HOST
   GEOS_FORCE_INLINE
   real64 computeKernelField( arraySlice1d< real64 const > const x,    // query point
                              localIndex const numNeighbors,
@@ -534,6 +546,21 @@ public:
                              arrayView1d< real64 const > const & fp );  // scalar field values (e.g. damage) at neighbor particles
 
   GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  real64 computeKernelFieldDevice( arraySlice1d< real64 const > const x,  // query point
+                                   real64 const & neighborRadius,
+                                   int const & planeStrain,
+                                   localIndex const & numNeighbors,
+                                   arraySlice1d< localIndex const > const regionIndices,
+                                   arraySlice1d< localIndex const > const subRegionIndices,
+                                   arraySlice1d< localIndex const > const particleIndices,
+                                   ParticleManager::ParticleView< arrayView1d< real64 const > > particleVolumeView,
+                                   ParticleManager::ParticleView< arrayView2d< real64 const > > particlePositionView,
+                                   ParticleManager::ParticleView< arrayView1d< real64 const > > particleDamageView,
+                                   ParticleManager::ParticleView< arrayView1d< int const > > particleSurfaceFlagView,
+                                   ParticleManager::ParticleView< arrayView1d< int const > > particleCohesiveZoneFlag );
+
+  GEOS_HOST
   GEOS_FORCE_INLINE
   void computeKernelFieldGradient( arraySlice1d< real64 const > const x, // query point
                                    localIndex const numNeighbors,
@@ -572,7 +599,7 @@ public:
                                            ParticleManager::ParticleView< arrayView2d< real64 const > > particleVectorView,
                                            real64 & result );
 
-  GEOS_HOST_DEVICE
+  GEOS_HOST
   GEOS_FORCE_INLINE
   void computeKernelVectorGradient( arraySlice1d< real64 const > const x,       // query point
                                     localIndex const numNeighbors,
@@ -597,12 +624,17 @@ public:
 
   void computeDamageFieldGradient( ParticleManager & particleManager );
 
+  void estimateParticleSurfacePosition( ParticleManager & particleManager );
+
   void updateSurfaceFlagOverload( ParticleManager & particleManager );
 
   void projectDamageFieldGradientToGrid( DomainPartition & domain,
                                          ParticleManager & particleManager,
                                          NodeManager & nodeManager,
                                          MeshLevel & mesh );
+
+  void computeParticleFieldMappings( ParticleManager & particleManager,
+                                     NodeManager & nodeManager );
 
   void updateDeformationGradient( real64 dt,
                                   ParticleManager & particleManager );
@@ -741,8 +773,11 @@ public:
                       //  MeshLevel & mesh
                       );
 
-void logisticRegressionContact( ParticleManager & particleManager,
-                                NodeManager & nodeManager );
+void logisticRegression( ParticleManager & particleManager,
+                         NodeManager & nodeManager );
+
+void mapSurfaceNormalsAndPositionsToParticles( ParticleManager & particleManager,
+                                               NodeManager & nodeManager );
 
 void interpolateTable( real64 x, 
                        real64 dx,
@@ -798,11 +833,11 @@ void interpolateValueInRange( real64 const & x,
 
   void computeSurfaceFlags( ParticleManager & particleManager );
 
-  void computeSurfaceNormals( ParticleManager & particleManager,
-                              NodeManager & nodeManager );
+  void computeParticleSurfaceNormalsAndPositions( ParticleManager & particleManager,
+                                                  NodeManager & nodeManager );
 
-  void computeSurfacePositions( ParticleManager & particleManager,
-                                NodeManager & nodeManager );
+  void logisticRegression1D( ParticleManager & particleManager,
+                             NodeManager & nodeManager );
 
   void computeSphF( ParticleManager & particleManager );
 
@@ -922,6 +957,7 @@ protected:
 
   stdVector< array2d< localIndex > > m_mappedNodes; // mappedNodes[subregion index][particle index][node index]. dims = {# of subregions,
                                                     // # of particles, # of nodes a particle on the subregion maps to}
+  stdVector< array2d< integer > > m_mappedFields;                                                  
   stdVector< array2d< real64 > > m_shapeFunctionValues; // mappedNodes[subregion][particle][nodal shape function value]. dims = {# of
                                                         // subregions, # of particles, # of nodes a particle on the subregion maps to}
   stdVector< array3d< real64 > > m_shapeFunctionGradientValues; // mappedNodes[subregion][particle][nodal shape function gradient
@@ -995,9 +1031,9 @@ protected:
   real64 m_nextParticleDataWriteTime;
 
   real64 m_explicitSurfaceNormalInfluence;
-  int m_computeSurfaceNormalsOnlyOnInitialization;
-  int m_computeSurfaceNormals;
-  int m_computeSurfacePositions;
+  int m_computeParticleSurfaceNormalsAndPositions;
+  NormalsAndPositionsMethodOption m_normalAndPositionMethod;
+  int m_overwriteExistingNormalsAndPositions;
 
   GPUSchemeOption m_gpuScheme;
 
@@ -1010,6 +1046,7 @@ protected:
   real64 m_normalForceConstant;
   real64 m_shearForceConstant;
   int m_reinitializeCohesiveZones;
+  real64 m_totalBinderVolume;
 
   real64 m_numSurfaceIntegrationPoints;
   real64 m_maxCohesiveNormalStress;
@@ -1040,6 +1077,7 @@ protected:
 
   int m_needsNeighborList;
   int m_needsNodalNeighborList;
+  int m_logisticRegression;
   OrderedVariableToManyParticleRelation m_nodalNeighborList;
   real64 m_neighborRadius;
   int m_binSizeMultiplier;
@@ -1228,6 +1266,9 @@ ENUM_STRINGS( SolidMechanicsMPM::GPUSchemeOption,
               "MinimalAtomics",
               "Reduction",
               "Colors" );
+
+ENUM_STRINGS( SolidMechanicsMPM:: NormalsAndPositionsMethodOption,
+              "LR" );
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************

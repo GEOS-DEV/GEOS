@@ -1411,7 +1411,6 @@ void VTKPolyDataWriterInterface::write( real64 const time,
     if(std::filesystem::exists(m_pvd.getFileName()) and cycle != 0)
     // if( m_previousCycle == -1 && cycle != 0)
     {
-      GEOS_LOG_RANK_0( "Restart detected, importing existing pvd file!");
       m_pvd.read();
     }
 

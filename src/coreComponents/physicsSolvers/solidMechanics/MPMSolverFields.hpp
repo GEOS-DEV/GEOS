@@ -394,6 +394,14 @@ DECLARE_FIELD( particleResidueBinderFlag,
                LEVEL_0,
                WRITE_AND_READ,
                "particleResidueBinderFlag" );
+               
+DECLARE_FIELD( particleEstimatedSurfacePosition,
+               "particleEstimatedSurfacePosition",
+               array2d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "particleEstimatedSurfacePosition" );
 }
 
 }
