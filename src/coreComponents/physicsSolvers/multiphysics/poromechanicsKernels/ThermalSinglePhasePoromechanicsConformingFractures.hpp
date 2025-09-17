@@ -49,7 +49,7 @@ public:
   using SinglePhaseFlowAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFlowAccessors;
   using SinglePhaseFluidAccessors = SinglePhaseFVMAbstractBase::SinglePhaseFluidAccessors;
   using PermeabilityAccessors = SinglePhaseFVMAbstractBase::PermeabilityAccessors;
-  using FracturePermeabilityAccessors = StencilMaterialAccessors< constitutive::PermeabilityBase,
+  using FracturePermeabilityAccessors = fluidFlow::StencilMaterialAccessors< constitutive::PermeabilityBase,
                                                                   fields::permeability::dPerm_dDispJump >;
   using SinglePhaseFVMAbstractBase::m_dt;
   using SinglePhaseFVMAbstractBase::m_rankOffset;
@@ -76,15 +76,15 @@ public:
   using Base = singlePhasePoromechanicsConformingFracturesKernels::ConnectorBasedAssemblyKernel< NUM_EQN, NUM_DOF >;
 
   using ThermalSinglePhaseFlowAccessors =
-    StencilAccessors< fields::flow::temperature >;
+    fluidFlow::StencilAccessors< fields::flow::temperature >;
 
   using ThermalSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::SingleFluidBase,
+    fluidFlow::StencilMaterialAccessors< constitutive::SingleFluidBase,
                               fields::singlefluid::enthalpy,
                               fields::singlefluid::dEnthalpy >;
 
   using ThermalConductivityAccessors =
-    StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
+    fluidFlow::StencilMaterialAccessors< constitutive::SinglePhaseThermalConductivityBase,
                               fields::thermalconductivity::effectiveConductivity >;
 
 

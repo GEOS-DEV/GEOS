@@ -38,6 +38,9 @@ class ConstitutiveBase;
 
 }
 
+namespace fluidFlow
+{
+
 /**
  * @class SinglePhaseBase
  *
@@ -403,6 +406,8 @@ void SinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
   }
 }
 
-} /* namespace geos */
+} // namespace fluidFlow
+
+} // namespace geos
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASE_HPP_

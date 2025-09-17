@@ -168,11 +168,11 @@ void SeismicityRate::updateFaultTraction( ElementSubRegionBase & subRegion ) con
   // on the fault. This requires retrieving both the pressure field and the Biot coefficient. We first check
   // to see if a flow solver exists, retrive the pressure field, then pass the porous model through the lambda
   // cast to access the Biot coefficient. Finally, effective stresses on the fault are calculated.
-  if( subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::fluidNamesString() ) )
+  if( subRegion.hasWrapper( fluidFlow::FlowSolverBase::viewKeyStruct::fluidNamesString() ) )
   {
     arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
 
-    string const & porousSolidModelName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
+    string const & porousSolidModelName = subRegion.getReference< string >( fluidFlow::FlowSolverBase::viewKeyStruct::solidNamesString() );
     CoupledSolidBase & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, porousSolidModelName );
     ConstitutivePassThru< CoupledSolidBase >::execute( porousSolid, [&] ( auto & castedPorousSolid )
     {
@@ -407,7 +407,7 @@ void SeismicityRate::integralSolverStep( real64 const & time_n,
                                          real64 const & dt,
                                          ElementSubRegionBase & subRegion )
 {
-  if( subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::fluidNamesString() )  )
+  if( subRegion.hasWrapper( fluidFlow::FlowSolverBase::viewKeyStruct::fluidNamesString() )  )
   {
     seismicityRateKernels::createAndLaunch< parallelDevicePolicy<>, true >( subRegion, time_n, dt, m_directEffect, m_backgroundStressingRate );
   }

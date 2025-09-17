@@ -25,6 +25,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 /**
  * @brief Options for density treatment in gravity
  */
@@ -218,6 +221,8 @@ void shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numRowsIn
 }
 
 } // namespace compositionalMultiphaseUtilities
+
+} // namespace fluidFlow
 
 } // namespace geos
 

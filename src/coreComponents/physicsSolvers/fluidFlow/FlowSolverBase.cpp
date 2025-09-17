@@ -39,6 +39,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
@@ -1009,5 +1012,7 @@ string FlowSolverBase::BCMessage::notAppliedOnRegion( int componentIndex, string
                                     componentName, componentIndex, regionName, subRegionName, setName ),
                           fieldName, setName );
 }
+
+} // namespace fluidFlow
 
 } // namespace geos

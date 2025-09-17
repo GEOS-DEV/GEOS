@@ -25,6 +25,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 class SinglePhaseBase;
 
 /**
@@ -123,7 +126,8 @@ private:
 
 };
 
+} // namespace fluidFlow
 
-} /* namespace geos */
+} // namespace geos
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASESTATISTICS_HPP_ */

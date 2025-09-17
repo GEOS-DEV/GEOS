@@ -1076,7 +1076,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                                          [&]
                                                                            ( localIndex const regionIndex, auto & elementSubRegion )
       {
-        if( elementSubRegion.template hasWrapper< string >( FlowSolverBase::viewKeyStruct::solidNamesString() ) )
+        if( elementSubRegion.template hasWrapper< string >( fluidFlow::FlowSolverBase::viewKeyStruct::solidNamesString() ) )
         {
           poromechanicsRegions.insert( regionNames[regionIndex] );
         }
@@ -1104,7 +1104,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                           solidMechanicsLagrangianFEMKernels::FixedStressThermoPoromechanicsFactory >( mesh,
                                                                                                                                        dofManager,
                                                                                                                                        poromechanicsRegionNames,
-                                                                                                                                       FlowSolverBase::viewKeyStruct::solidNamesString(),
+                                                                                                                                       fluidFlow::FlowSolverBase::viewKeyStruct::solidNamesString(),
                                                                                                                                        localMatrix,
                                                                                                                                        localRhs,
                                                                                                                                        dt );

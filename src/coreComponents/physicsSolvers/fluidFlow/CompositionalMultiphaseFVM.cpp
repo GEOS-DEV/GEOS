@@ -65,6 +65,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
@@ -1704,4 +1707,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
 //START_SPHINX_INCLUDE_01
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphaseFVM, string const &, Group * const )
 //END_SPHINX_INCLUDE_01
-}// namespace geos
+
+} // namespace fluidFlow
+
+} // namespace geos

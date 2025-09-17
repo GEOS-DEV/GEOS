@@ -71,13 +71,13 @@ public:
   using TAG = wellTags::SubRegionTag;
 
   using CompFlowAccessors =
-    StencilAccessors< fields::flow::pressure,
+    fluidFlow::StencilAccessors< fields::flow::pressure,
                       fields::flow::phaseVolumeFraction,
                       fields::flow::dPhaseVolumeFraction,
                       fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
-    StencilMaterialAccessors< constitutive::MultiFluidBase,
+    fluidFlow::StencilMaterialAccessors< constitutive::MultiFluidBase,
                               fields::multifluid::phaseDensity,
                               fields::multifluid::dPhaseDensity,
                               fields::multifluid::phaseViscosity,
@@ -86,7 +86,7 @@ public:
                               fields::multifluid::dPhaseCompFraction >;
 
   using RelPermAccessors =
-    StencilMaterialAccessors< constitutive::RelativePermeabilityBase,
+    fluidFlow::StencilMaterialAccessors< constitutive::RelativePermeabilityBase,
                               fields::relperm::phaseRelPerm,
                               fields::relperm::dPhaseRelPerm_dPhaseVolFraction >;
 
@@ -630,10 +630,10 @@ public:
 
 
   using ThermalCompFlowAccessors =
-    StencilAccessors< fields::flow::temperature >;
+    fluidFlow::StencilAccessors< fields::flow::temperature >;
 
   using ThermalMultiFluidAccessors =
-    StencilMaterialAccessors< MultiFluidBase,
+    fluidFlow::StencilMaterialAccessors< MultiFluidBase,
                               fields::multifluid::phaseEnthalpy,
                               fields::multifluid::dPhaseEnthalpy >;
 

@@ -38,6 +38,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 using namespace constitutive;
 using namespace fields;
 using namespace dataRepository;
@@ -552,5 +555,7 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const time,
 REGISTER_CATALOG_ENTRY( TaskBase,
                         CompositionalMultiphaseStatistics,
                         string const &, dataRepository::Group * const )
+
+} // namespace fluidFlow
 
 } /* namespace geos */

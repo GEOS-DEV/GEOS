@@ -25,9 +25,13 @@
 namespace geos
 {
 
-class FlowSolverBase;
 class MeshLevel;
 class FluxApproximationBase;
+
+namespace fluidFlow
+{
+
+class FlowSolverBase;
 
 /**
  * @class StencilDataCollection
@@ -176,7 +180,8 @@ private:
   void logStoredConnections( string_view stencilName );
 };
 
+} // namespace fluidFlow
 
-} /* namespace geos */
+} // namespace geos
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_CELLTOCELLDATACOLLECTOR_HPP_ */

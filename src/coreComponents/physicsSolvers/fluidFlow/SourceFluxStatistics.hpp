@@ -31,6 +31,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 /**
  * @class SourceFluxStatsAggregator
  *
@@ -445,7 +448,8 @@ void SourceFluxStatsAggregator::forAllSubRegionStatsWrappers( ElementRegionBase 
 inline string SourceFluxStatsAggregator::getStatWrapperName( string_view fluxName ) const
 { return GEOS_FMT( "{}_region_stats_for_{}", fluxName, getName() ); }
 
+} // namespace fluidFlow
 
-} /* namespace geos */
+} // namespace geos
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SOURCEFLUXSTATISTICS_HPP_ */

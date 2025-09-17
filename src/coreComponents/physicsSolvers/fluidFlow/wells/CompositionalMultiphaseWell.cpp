@@ -363,7 +363,7 @@ void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition co
   GEOS_MARK_FUNCTION;
 
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
-  CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+  fluidFlow::CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< fluidFlow::CompositionalMultiphaseBase >( getFlowSolverName() );
   string const referenceFluidName = flowSolver.referenceFluidModelName();
   MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
 
@@ -446,7 +446,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
     {
       // Check if region name exists in list of Reservoir's target regions
       string const regionName = wellControls.referenceReservoirRegion();
-      CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+      fluidFlow::CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< fluidFlow::CompositionalMultiphaseBase >( getFlowSolverName() );
       string_array const & targetRegionsNames = flowSolver.getTargetRegionNames();
       auto const pos = std::find( targetRegionsNames.begin(), targetRegionsNames.end(), regionName );
       GEOS_ERROR_IF( pos == targetRegionsNames.end(),
@@ -456,12 +456,12 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
       ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion());
 
       // Check if regions statistics are being computed
-      GEOS_ERROR_IF( !region.hasWrapper( CompositionalMultiphaseStatistics::catalogName()),
+      GEOS_ERROR_IF( !region.hasWrapper( fluidFlow::CompositionalMultiphaseStatistics::catalogName()),
                      GEOS_FMT( "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be configured for region {} ",
                                getDataContext(), wellControls.getName(), regionName ));
 
-      CompositionalMultiphaseStatistics::RegionStatistics const & stats = region.getReference< CompositionalMultiphaseStatistics::RegionStatistics >(
-        CompositionalMultiphaseStatistics::regionStatisticsName() );
+      fluidFlow::CompositionalMultiphaseStatistics::RegionStatistics const & stats = region.getReference< fluidFlow::CompositionalMultiphaseStatistics::RegionStatistics >(
+        fluidFlow::CompositionalMultiphaseStatistics::regionStatisticsName() );
       wellControls.setRegionAveragePressure( stats.averagePressure );
       wellControls.setRegionAverageTemperature( stats.averageTemperature );
     }
@@ -1021,7 +1021,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
   integer const numPhase = m_numPhases;
 
   // TODO: change the way we access the flowSolver here
-  CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+  fluidFlow::CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< fluidFlow::CompositionalMultiphaseBase >( getFlowSolverName() );
 
   // loop over the wells
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1606,7 +1606,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
     {
       //integer const m_allowCompDensChopping(true);
       integer const m_allowNegativePressure( false );
-      compositionalMultiphaseUtilities::ScalingType const m_scalingType( compositionalMultiphaseUtilities::ScalingType::Global );
+      fluidFlow::compositionalMultiphaseUtilities::ScalingType const m_scalingType( fluidFlow::compositionalMultiphaseUtilities::ScalingType::Global );
       arrayView1d< real64 const > const pressure =
         subRegion.getField< well::pressure >();
       arrayView1d< real64 const > const temperature =
@@ -1704,7 +1704,7 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
   {
 
     // TODO: change the way we access the flowSolver here
-    CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+    fluidFlow::CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< fluidFlow::CompositionalMultiphaseBase >( getFlowSolverName() );
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,

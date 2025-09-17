@@ -25,6 +25,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{  
+
 class SinglePhaseProppantBase : public SinglePhaseBase
 {
 public:
@@ -69,5 +72,9 @@ private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
-}
+
+} // namespace fluidFlow
+
+} // namespace geos
+
 #endif /* GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEPROPPANTBASE_HPP_ */

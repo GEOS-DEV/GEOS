@@ -33,6 +33,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
@@ -295,5 +298,6 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         StencilDataCollection,
                         string const &, dataRepository::Group * const )
 
+} // namespace fluidFlow
 
-} /* namespace geos */
+} // namespace geos

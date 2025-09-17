@@ -36,6 +36,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 /**
  * @brief Options for flow formulation
  */
@@ -653,6 +656,8 @@ void CompositionalMultiphaseBase::accumulationAssemblyLaunch( DofManager const &
     }
   }
 }
+
+} // namespace fluidFlow
 
 } // namespace geos
 

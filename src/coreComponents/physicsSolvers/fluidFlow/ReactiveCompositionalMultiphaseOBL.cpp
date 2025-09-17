@@ -39,10 +39,13 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace fluidFlow::kernels::obl;
+using namespace kernels::obl;
 
 namespace
 {
@@ -1364,9 +1367,10 @@ void ReactiveCompositionalMultiphaseOBL::updateState( DomainPartition & domain )
   } );
 }
 
-
-
 //START_SPHINX_INCLUDE_01
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, ReactiveCompositionalMultiphaseOBL, string const &, Group * const )
 //END_SPHINX_INCLUDE_01
-}// namespace geos
+
+} // namespace fluidFlow
+
+} // namespace geos

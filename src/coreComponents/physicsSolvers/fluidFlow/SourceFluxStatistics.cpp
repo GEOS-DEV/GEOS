@@ -25,6 +25,10 @@
 
 namespace geos
 {
+
+namespace fluidFlow
+{
+
 using namespace dataRepository;
 
 SourceFluxStatsAggregator::SourceFluxStatsAggregator( const string & name,
@@ -413,4 +417,6 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         string const &,
                         dataRepository::Group * const )
 
-} /* namespace geos */
+} // namespace fluidFlow
+
+} // namespace geos

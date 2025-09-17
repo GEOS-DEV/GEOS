@@ -26,6 +26,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{  
+
 /**
  * @class ReactiveCompositionalMultiphaseOBL
  * - A compositional multiphase thermal reactive solver based on OBL linearization approach (https://doi.org/10.1016/j.petrol.2017.08.009)
@@ -353,6 +356,7 @@ private:
   integer m_useDARTSL2Norm;
 };
 
+} // namespace fluidFlow
 
 } // namespace geos
 

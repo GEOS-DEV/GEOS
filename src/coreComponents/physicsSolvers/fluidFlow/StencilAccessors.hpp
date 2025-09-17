@@ -29,6 +29,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 /**
  * @brief A struct to automatically construct and store element view accessors
  * @struct StencilAccessors
@@ -123,7 +126,8 @@ public:
   }
 };
 
+} // namespace fluidFlow
 
-}
+} // namespace geos
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_STENCILACCESSORS_HPP_

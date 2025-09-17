@@ -189,7 +189,7 @@ public:
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
-  virtual string resElementDofName() const override { return CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(); }
+  virtual string resElementDofName() const override { return fluidFlow::CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(); }
 
   virtual localIndex numFluidComponents() const override { return m_numComponents; }
 
@@ -255,11 +255,11 @@ public:
 
     // inputs
 
-    static constexpr char const * useMassFlagString() { return CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(); }
+    static constexpr char const * useMassFlagString() { return fluidFlow::CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(); }
 
-    static constexpr char const * useTotalMassEquationString() { return CompositionalMultiphaseBase::viewKeyStruct::useTotalMassEquationString(); }
+    static constexpr char const * useTotalMassEquationString() { return fluidFlow::CompositionalMultiphaseBase::viewKeyStruct::useTotalMassEquationString(); }
 
-    static constexpr char const * maxCompFracChangeString() { return CompositionalMultiphaseBase::viewKeyStruct::maxCompFracChangeString(); }
+    static constexpr char const * maxCompFracChangeString() { return fluidFlow::CompositionalMultiphaseBase::viewKeyStruct::maxCompFracChangeString(); }
 
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
 
@@ -269,7 +269,7 @@ public:
 
     static constexpr char const * maxRelativeTempChangeString() { return "maxRelativeTemperatureChange"; }
 
-    static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseBase::viewKeyStruct::allowLocalCompDensChoppingString(); }
+    static constexpr char const * allowLocalCompDensChoppingString() { return fluidFlow::CompositionalMultiphaseBase::viewKeyStruct::allowLocalCompDensChoppingString(); }
 
     // control data (not registered on the mesh)
 

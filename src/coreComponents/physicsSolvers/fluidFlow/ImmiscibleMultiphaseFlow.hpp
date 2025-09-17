@@ -27,6 +27,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+  
 //START_SPHINX_INCLUDE_00
 /**
  * @class ImmiscibleMultiphaseFlow
@@ -351,6 +354,7 @@ void ImmiscibleMultiphaseFlow::applyFieldValue( real64 const & time_n,
   } );
 }
 
+} // namespace fluidFlow
 
 } // namespace geos
 

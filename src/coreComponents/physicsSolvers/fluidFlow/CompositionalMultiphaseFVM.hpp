@@ -25,6 +25,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 /**
  * @class CompositionalMultiphaseFVM
  *
@@ -261,7 +264,8 @@ private:
 
 };
 
-} // namespace geos
+} // namespace fluidFlow
 
+} // namespace geos
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEFVM_HPP_

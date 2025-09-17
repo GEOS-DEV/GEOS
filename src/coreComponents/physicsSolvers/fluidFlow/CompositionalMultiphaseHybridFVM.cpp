@@ -42,6 +42,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
@@ -825,4 +828,7 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( ObjectManagerBase & 
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphaseHybridFVM, std::string const &, Group * const )
-} /* namespace geos */
+
+} // namespace fluidFlow
+
+} // namespace geos

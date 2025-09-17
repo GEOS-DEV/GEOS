@@ -25,6 +25,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 /**
  * @class CompositionalMultiphaseHybridFVM
  *
@@ -175,6 +178,8 @@ private:
   SortedArray< localIndex > m_regionFilter;
 
 };
+
+} // namespace fluidFlow
 
 } // namespace geos
 

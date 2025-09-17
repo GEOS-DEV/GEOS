@@ -25,6 +25,8 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
 
 /**
  * @class SinglePhaseHybridFVM
@@ -188,6 +190,8 @@ private:
 
 };
 
-} /* namespace geos */
+} // namespace fluidFlow
+
+} // namespace geos
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEHYBRIDFVM_HPP_

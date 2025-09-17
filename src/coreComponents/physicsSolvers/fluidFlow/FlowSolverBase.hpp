@@ -28,6 +28,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 /**
  * @class FlowSolverBase
  *
@@ -329,7 +332,8 @@ private:
 
 };
 
+} // namespace fluidFlow
 
-}
+} // namespace geos
 
 #endif //GEOS_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_

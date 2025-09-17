@@ -32,6 +32,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 using namespace constitutive;
 using namespace fields;
 using namespace dataRepository;
@@ -288,4 +291,6 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         SinglePhaseStatistics,
                         string const &, dataRepository::Group * const )
 
-} /* namespace geos */
+} // namespace fluidFlow
+
+} // namespace geos

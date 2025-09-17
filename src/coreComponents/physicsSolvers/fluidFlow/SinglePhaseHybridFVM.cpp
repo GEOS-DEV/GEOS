@@ -40,10 +40,13 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace fluidFlow::kernels::singlePhase::hybridFVM;
+using namespace kernels::singlePhase::hybridFVM;
 using namespace mimeticInnerProduct;
 
 SinglePhaseHybridFVM::SinglePhaseHybridFVM( const string & name,
@@ -645,4 +648,7 @@ void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SinglePhaseHybridFVM, string const &, Group * const )
-} /* namespace geos */
+
+} // namespace fluidFlow
+
+} // namespace geos

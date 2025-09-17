@@ -257,13 +257,13 @@ struct PresTempCompFracInitializationKernel
 {
 
   using CompFlowAccessors =
-    StencilAccessors< fields::flow::pressure,
+    fluidFlow::StencilAccessors< fields::flow::pressure,
                       fields::flow::temperature,
                       fields::flow::globalCompDensity,
                       fields::flow::phaseVolumeFraction >;
 
   using MultiFluidAccessors =
-    StencilMaterialAccessors< constitutive::MultiFluidBase,
+    fluidFlow::StencilMaterialAccessors< constitutive::MultiFluidBase,
                               fields::multifluid::phaseMassDensity >;
 
 
@@ -1115,7 +1115,7 @@ public:
   void complete( localIndex const ei, //GEOS_UNUSED_PARAM( ei ),
                  StackVariables & stack ) const
   {
-    using namespace compositionalMultiphaseUtilities;
+    using namespace fluidFlow::compositionalMultiphaseUtilities;
 
     integer const numRows = numComp+1+ IS_THERMAL;
 
@@ -1452,7 +1452,7 @@ public:
                  StackVariables & stack ) const
   {
     GEOS_UNUSED_VAR( iconn );
-    using namespace compositionalMultiphaseUtilities;
+    using namespace fluidFlow::compositionalMultiphaseUtilities;
     if( stack.numConnectedElems ==1 )
     {
       // Setup Jacobian global row indicies
@@ -1639,7 +1639,7 @@ public:
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
 
-    using namespace compositionalMultiphaseUtilities;
+    using namespace fluidFlow::compositionalMultiphaseUtilities;
 
     // create local work arrays
     real64 compFracUp[NC]{};

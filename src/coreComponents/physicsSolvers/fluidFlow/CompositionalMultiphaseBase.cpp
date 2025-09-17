@@ -58,6 +58,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
@@ -2746,5 +2749,7 @@ bool CompositionalMultiphaseBase::checkSequentialSolutionIncrements( DomainParti
 
   return isConverged && (m_sequentialCompDensChange < m_maxSequentialCompDensChange);
 }
+
+} // namespace fluidFlow
 
 } // namespace geos

@@ -33,6 +33,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 using namespace constitutive;
 using namespace fields;
 
@@ -114,6 +117,8 @@ void SinglePhaseProppantBase::updatePorosityAndPermeability( SurfaceElementSubRe
     execute3( porousWrapper, subRegion, newHydraulicAperture, oldHydraulicAperture, proppantPackVolumeFraction );
 
   } );
+}
 
-}
-}
+} // namespace fluidFlow
+
+} // namespace geos

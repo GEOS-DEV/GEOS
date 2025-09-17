@@ -779,7 +779,7 @@ public:
   {
     Base::complete ( iwelem, stack );
 
-    using namespace compositionalMultiphaseUtilities;
+    using namespace fluidFlow::compositionalMultiphaseUtilities;
     if( stack.numConnectedElems ==1 )
     {
       // Setup Jacobian global row indicies for energy equation

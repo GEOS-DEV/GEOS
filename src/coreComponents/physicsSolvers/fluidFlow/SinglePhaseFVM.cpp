@@ -50,6 +50,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
@@ -926,4 +929,7 @@ REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SinglePhaseFVMProppant, string const 
 typedef SinglePhaseFVM<> SinglePhaseFVM;
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SinglePhaseFVM, string const &, Group * const )
 }
-} /* namespace geos */
+
+} // namespace fluidFlow
+
+} // namespace geos

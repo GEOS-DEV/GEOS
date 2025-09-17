@@ -25,6 +25,9 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 class CompositionalMultiphaseBase;
 
 /**
@@ -160,7 +163,8 @@ private:
 
 };
 
+} // namespace fluidFlow
 
-} /* namespace geos */
+} // namespace geos
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICS_HPP_ */
