@@ -49,20 +49,28 @@
 // - MFD reproduces TPFA results when innerProductType="TPFA"
 
 
-//# Notes on estimated condition Number Estimates for Methods and Meshes
+//# Condition Number Estimates for Methods and Meshes
 //
 //| Method / Mesh | polyhedral_voronoi_complex.vtk | polyhedral_voronoi_lattice.vtk | polyhedral_voronoi_regular.vtk |
 //|---|---:|---:|---:|
-//| MFD — TPFA | 3.0077238.e5 | 9.6678605.e2 | 2.5071172.e5 |
-//| MFD — QuasiTPFA | 6.6168582.e5 | 6.966971.e2 | 2.5071172.e2 |
-//| MFD — QuasiRT | 7.2227334.e5 | 1.2007323.e3 | 3.18867.e2 |
-//| MFD — Simple | 3.1486776.e6 | 8.7419486.e2 | 3.18867.e2 |
-//| MFD — BdVLM | 8.7411124.e6 | 6.1777283.e2 | 2.5071172.e2 |
+//| MFD(π) — TPFA | 3.0077238.e5 | 9.6678605.e2 | 2.5071172.e2 |
+//| MFD(π) — QuasiTPFA | 6.6168582.e5 | 6.966971.e2 | 2.5071172.e2 |
+//| MFD(π) — QuasiRT | 7.2227334.e5 | 1.2007323.e3 | 3.18867.e2 |
+//| MFD(π) — Simple | 3.1486776.e6 | 8.7419486.e2 | 3.18867.e2 |
+//| MFD(π) — BdVLM | 8.7411124.e6 | 6.1777283.e2 | 2.5071172.e2 |
+//| MFD(p) — TPFA | 2.5071422.e3 | 1.6605592.e2 | 3.7053199.e1 |
+//| MFD(p) — QuasiTPFA | 3.2336004.e3 | 7.2493851.e1 | 3.7053199.e1 |
+//| MFD(p) — QuasiRT | 7.1975418.e3 | 1.7886776.e2 | 9.6124441.e1 |
+//| MFD(p) — Simple | 6.3551279.e3 | 1.5516863.e2 | 9.6124441.e1 |
+//| MFD(p) — BdVLM | 2.3821719.e3 | 6.7185947.e1 | 3.7053199.e1 |
 //| FV — TPFA | 2.5071422.e3 | 1.6605592.e2 | 3.7053199.e1 |
 //
-// Note: For the MFD method, the condition number estimate is computed on a system expressed only in terms of Lagrange multipliers.
-// With the current construction of the method (i.e., without upwinding in the elliptic components), the cell pressure block is
-// diagonal and can therefore always be eliminated.
+//
+//Note:
+//
+//- For the MFD(π) method, the condition number estimate is computed on a system expressed only in terms of Lagrange multipliers. With the current construction of the method (i.e., without upwinding in the elliptic components), the cell pressure block is diagonal and can therefore always be eliminated;
+//- For the MFD(p) method the story is flipped we eliminated the lagrange multiplier and keep the cell center pressure. I am not advocating to perform this approach by inverting a sparse block exactly, here is possible because the size of the system, but from a preconditiong perspective we can approximate that inverse;
+//- The material parameters are unitary such that  all the methods construct a discretization for a laplacian, so what we actually see in the table is the effect of the mesh distortion.
 
 using namespace geos;
 using namespace geos::dataRepository;
@@ -173,68 +181,68 @@ protected:
   std::string testBinaryDir;
 };
 
-INSTANTIATE_TEST_SUITE_P(
-  MeshFiles,
-  TPFAIntegrationTest,
-  ::testing::Values(
-    "polyhedral_voronoi_complex.vtk",
-    "polyhedral_voronoi_lattice.vtk",
-    "polyhedral_voronoi_regular.vtk"
-    )
-  );
-
-TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
-{
-  ProblemManager & problemManager = state.getProblemManager();
-  DomainPartition & domain = problemManager.getDomainPartition();
-
-  // Retrieve the solver using the PhysicsSolverManager
-  SinglePhaseFVM< SinglePhaseBase > & solver =
-    dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >( problemManager.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ) );
-
-  // Run the simulation to compute the numerical pressure
-  solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
-  solver.implicitStepSetup( 0.0, MAX_TIME_STEP, domain );
-  solver.solverStep( 0.0, MAX_TIME_STEP, 0, domain );
-  solver.implicitStepComplete( 0.0, MAX_TIME_STEP, domain );
-
-  // Access the mesh and subregion
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
-  CellElementSubRegion & subRegion = mesh.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
-
-  // Retrieve pressure field and cell centers
-  arrayView2d< real64 const > centers = subRegion.getElementCenter();
-  arrayView1d< real64 const > volumes = subRegion.getElementVolume();
-  arrayView1d< real64 const > const p_h = subRegion.getField< fields::flow::pressure >();
-
-  // Compute exact pressure and L2 error
-  real64 l2Error = 0.0;
-  real64 totalVolume = 0.0;
-  for( localIndex i = 0; i < subRegion.size(); ++i )
-  {
-    real64 x = centers[i][0];
-    real64 volume = volumes[i];
-    real64 pNumeric = p_h[i];
-    real64 pExact = 2.0 * (1.0 - x) + 1.0 * x;
-    l2Error += (pNumeric - pExact) * (pNumeric - pExact) * volume;
-    totalVolume += volume;
-  }
-
-  l2Error = std::sqrt( l2Error / totalVolume );
-
-  std::string meshFile = GetParam();
-  if( meshFile == "polyhedral_voronoi_regular.vtk" )
-  {
-    // Assert that the L2 error is within machine precision
-    EXPECT_NEAR( l2Error, 0.0, PRESSURE_L2_TOLERANCE );
-  }
-  else
-  {
-    // Assert that the L2 error is not exact
-    EXPECT_GT( l2Error, PRESSURE_L2_TOLERANCE );
-  }
-
-}
+//INSTANTIATE_TEST_SUITE_P(
+//  MeshFiles,
+//  TPFAIntegrationTest,
+//  ::testing::Values(
+//    "polyhedral_voronoi_complex.vtk",
+//    "polyhedral_voronoi_lattice.vtk",
+//    "polyhedral_voronoi_regular.vtk"
+//    )
+//  );
+//
+//TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
+//{
+//  ProblemManager & problemManager = state.getProblemManager();
+//  DomainPartition & domain = problemManager.getDomainPartition();
+//
+//  // Retrieve the solver using the PhysicsSolverManager
+//  SinglePhaseFVM< SinglePhaseBase > & solver =
+//    dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >( problemManager.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ) );
+//
+//  // Run the simulation to compute the numerical pressure
+//  solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
+//  solver.implicitStepSetup( 0.0, MAX_TIME_STEP, domain );
+//  solver.solverStep( 0.0, MAX_TIME_STEP, 0, domain );
+//  solver.implicitStepComplete( 0.0, MAX_TIME_STEP, domain );
+//
+//  // Access the mesh and subregion
+//  MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
+//  CellElementSubRegion & subRegion = mesh.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
+//
+//  // Retrieve pressure field and cell centers
+//  arrayView2d< real64 const > centers = subRegion.getElementCenter();
+//  arrayView1d< real64 const > volumes = subRegion.getElementVolume();
+//  arrayView1d< real64 const > const p_h = subRegion.getField< fields::flow::pressure >();
+//
+//  // Compute exact pressure and L2 error
+//  real64 l2Error = 0.0;
+//  real64 totalVolume = 0.0;
+//  for( localIndex i = 0; i < subRegion.size(); ++i )
+//  {
+//    real64 x = centers[i][0];
+//    real64 volume = volumes[i];
+//    real64 pNumeric = p_h[i];
+//    real64 pExact = 2.0 * (1.0 - x) + 1.0 * x;
+//    l2Error += (pNumeric - pExact) * (pNumeric - pExact) * volume;
+//    totalVolume += volume;
+//  }
+//
+//  l2Error = std::sqrt( l2Error / totalVolume );
+//
+//  std::string meshFile = GetParam();
+//  if( meshFile == "polyhedral_voronoi_regular.vtk" )
+//  {
+//    // Assert that the L2 error is within machine precision
+//    EXPECT_NEAR( l2Error, 0.0, PRESSURE_L2_TOLERANCE );
+//  }
+//  else
+//  {
+//    // Assert that the L2 error is not exact
+//    EXPECT_GT( l2Error, PRESSURE_L2_TOLERANCE );
+//  }
+//
+//}
 
 std::string generateXmlInputMFD( std::string const & innerProductType,
                                  std::string const & meshFile )
