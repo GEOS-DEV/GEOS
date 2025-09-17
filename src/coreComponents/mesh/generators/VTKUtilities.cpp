@@ -694,6 +694,105 @@ AllMeshes redistributeByCellGraph( AllMeshes & input,
   return AllMeshes( finalMesh, finalFractures );
 }
 
+
+/**
+ * @brief Scatter the mesh by blocks  (no geometric information involved, assumes rank 0 has the full mesh)
+ *
+ * @param[in] mesh a vtk grid
+ * @return the vtk grid redistributed
+ */
+vtkSmartPointer< vtkDataSet >
+scatterByBlock( vtkDataSet & mesh )
+{
+  GEOS_MARK_FUNCTION;
+
+  int const rank = MpiWrapper::commRank();
+  int const size = MpiWrapper::commSize();
+
+  // Count total cells across all ranks
+  vtkIdType localCells = mesh.GetNumberOfCells();
+  vtkIdType totalCells = MpiWrapper::allReduce( localCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+
+  // Handle edge cases
+  if( totalCells == 0 )
+  {
+    vtkNew< vtkUnstructuredGrid > emptyMesh;
+    return emptyMesh;
+  }
+
+  if( size == 1 )
+  {
+    vtkNew< vtkUnstructuredGrid > copy;
+    copy->DeepCopy( &mesh );
+    return copy;
+  }
+
+  // Verify rank 0 has the complete mesh for redistribution
+  if( rank == 0 && localCells != totalCells )
+  {
+    GEOS_ERROR( "Rank 0 must have the complete mesh. "
+                << "Rank 0 has " << localCells << " cells but total is " << totalCells );
+  }
+
+  // Scatter cells by contiguous blocks
+  vtkIdType cellsPerRank = totalCells / size;
+  vtkIdType remainder = totalCells % size;
+
+  // Create partitioned dataset
+  vtkNew< vtkPartitionedDataSet > localParts;
+  if( rank == 0 )
+  {
+    // Rank 0 has the full mesh, extract cells for each rank
+    for( int r = 0; r < size; ++r )
+    {
+      vtkIdType rankStart = r * cellsPerRank + std::min( (vtkIdType)r, remainder );
+      vtkIdType rankEnd = rankStart + cellsPerRank + (r < remainder ? 1 : 0);
+
+      // Validate cell range
+      GEOS_ERROR_IF( rankStart< 0 || rankEnd > totalCells,
+                     "Invalid cell range for rank " << r << ": [" << rankStart
+                                                    << ", " << rankEnd << ") with total cells " << totalCells );
+
+      if( rankEnd > rankStart )
+      {
+        // Add cells for this rank
+        vtkNew< vtkExtractCells > extractor;
+        extractor->SetInputDataObject( &mesh );
+        extractor->AddCellRange( rankStart, rankEnd - 1 );
+        extractor->Update();
+        vtkUnstructuredGrid * extracted = extractor->GetOutput();
+        localParts->SetPartition( r, extracted );
+      }
+      else
+      {
+        // Create empty partition for ranks with no cells
+        vtkNew< vtkUnstructuredGrid > emptyPartition;
+        localParts->SetPartition( r, emptyPartition );
+      }
+    }
+  }
+  else
+  {
+    // Other ranks have empty mesh
+    localParts->SetNumberOfPartitions( 0 );
+  }
+
+  //Send cells to appropriate ranks
+  vtkSmartPointer< vtkUnstructuredGrid > result = vtk::redistribute( *localParts, MPI_COMM_GEOS );
+
+  // Final validation
+  vtkIdType finalLocalCells = result->GetNumberOfCells();
+  vtkIdType finalTotalCells = MpiWrapper::allReduce( finalLocalCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+
+  GEOS_ERROR_IF( finalTotalCells != totalCells,
+                 "Block redistribution lost cells: started with " << totalCells
+                                                                  << ", ended with " << finalTotalCells );
+
+  return result;
+}
+
+
+
 /**
  * @brief Redistributes the mesh using a Kd-Tree
  *
@@ -705,12 +804,30 @@ redistributeByKdTree( vtkDataSet & mesh )
 {
   GEOS_MARK_FUNCTION;
 
+  // Count input cells for verification
+  vtkIdType localInputCells = mesh.GetNumberOfCells();
+  vtkIdType globalInputCells = MpiWrapper::allReduce( localInputCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+
   // Use a VTK filter which employs a kd-tree partition internally
   vtkNew< vtkRedistributeDataSetFilter > rdsf;
   rdsf->SetInputDataObject( &mesh );
   rdsf->SetNumberOfPartitions( MpiWrapper::commSize() );
   rdsf->Update();
-  return vtkDataSet::SafeDownCast( rdsf->GetOutputDataObject( 0 ) );
+
+  vtkSmartPointer< vtkDataSet > result = vtkDataSet::SafeDownCast( rdsf->GetOutputDataObject( 0 ) );
+
+  // Verify we didn't lose any cells
+  vtkIdType localOutputCells = result->GetNumberOfCells();
+  vtkIdType globalOutputCells = MpiWrapper::allReduce( localOutputCells, MpiWrapper::Reduction::Sum, MPI_COMM_GEOS );
+
+  if( globalOutputCells != globalInputCells )
+  {
+    GEOS_WARNING( "VTK KdTree redistribution lost " << (globalInputCells - globalOutputCells)
+                                                    << " elements! Falling back to block redistribution." );
+    return scatterByBlock( mesh );
+  }
+
+  return result;
 }
 
 stdVector< int >
@@ -890,8 +1007,8 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
     }
   }
 
-  GEOS_LOG_RANK_0_IF( donorRanks.size() < recipientRanks.size(),
-                      "\nWarning! We strongly encourage the use of partitionRefinement > 5 for this number of MPI ranks \n" );
+  GEOS_WARNING_IF( donorRanks.size() < recipientRanks.size(),
+                   "We strongly encourage the use of partitionRefinement > 5 for this number of MPI ranks" );
 
   vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( mesh, numProcs, newParts.toViewConst() );
   return vtk::redistribute( *splitMesh, MPI_COMM_GEOS );
