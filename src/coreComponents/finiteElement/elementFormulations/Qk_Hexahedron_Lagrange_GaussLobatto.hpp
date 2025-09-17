@@ -41,7 +41,9 @@ namespace finiteElement
  * All the degree-specific versions (Q1, Q2, Q3, ...) are defined at the end of this file.
  */
 template< typename GL_BASIS >
-class Qk_Hexahedron_Lagrange_GaussLobatto final : public FiniteElementBase
+class Qk_Hexahedron_Lagrange_GaussLobatto_impl : public FiniteElementBase_impl< GL_BASIS::TensorProduct3D::numSupportPoints,
+                                                                                6,
+                                                                                GL_BASIS::TensorProduct3D::numSupportPoints >
 {
 public:
 
@@ -70,15 +72,22 @@ public:
   template< typename SUBREGION_TYPE >
   struct MeshData {};
 
+  GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl() = default;
+  GEOS_HOST_DEVICE ~Qk_Hexahedron_Lagrange_GaussLobatto_impl() = default;
+  GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl( Qk_Hexahedron_Lagrange_GaussLobatto_impl const & ) = default;
+  GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl & operator=( Qk_Hexahedron_Lagrange_GaussLobatto_impl const & ) = default;
+  GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl( Qk_Hexahedron_Lagrange_GaussLobatto_impl && ) = default;
+  GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl & operator=( Qk_Hexahedron_Lagrange_GaussLobatto_impl && ) = default;
 
-  Qk_Hexahedron_Lagrange_GaussLobatto * getImpl()
+
+  Qk_Hexahedron_Lagrange_GaussLobatto_impl * getImpl()
   {
-    return static_cast<Qk_Hexahedron_Lagrange_GaussLobatto *>(this);
+    return static_cast<Qk_Hexahedron_Lagrange_GaussLobatto_impl *>(this);
   }
 
-  const Qk_Hexahedron_Lagrange_GaussLobatto * getImpl() const
+  const Qk_Hexahedron_Lagrange_GaussLobatto_impl * getImpl() const
   {
-    return static_cast<const Qk_Hexahedron_Lagrange_GaussLobatto *>(this);
+    return static_cast<const Qk_Hexahedron_Lagrange_GaussLobatto_impl *>(this);
   }
 
 
@@ -137,14 +146,6 @@ public:
                              ( num1dNodes - 1 ) * ( k / 2 ) );
   }
 
-  ~Qk_Hexahedron_Lagrange_GaussLobatto() = default;
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
-  {
-    return numQuadraturePoints;
-  }
-
   /**
    * @brief Get the number of quadrature points.
    * @param stack Stack variables as filled by @ref setupStack.
@@ -156,20 +157,6 @@ public:
   {
     GEOS_UNUSED_VAR( stack );
     return numQuadraturePoints;
-  }
-
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  virtual localIndex getNumSupportPoints() const override
-  {
-    return numNodes;
-  }
-
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  virtual localIndex getMaxSupportPoints() const override
-  {
-    return maxSupportPoints;
   }
 
   /**
@@ -879,7 +866,7 @@ template< typename FUNC, typename ... PARAMS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( real64 const (&coords)[3],
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::supportLoop( real64 const (&coords)[3],
                                                               FUNC && func,
                                                               PARAMS &&... params )
 {
@@ -912,7 +899,7 @@ template< typename FUNC, typename ... PARAMS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::supportLoop( localIndex const q,
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::supportLoop( localIndex const q,
                                                               FUNC && func,
                                                               PARAMS &&... params )
 {
@@ -942,7 +929,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( localIndex const q,
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::calcGradN( localIndex const q,
                                                             real64 const (&X)[numNodes][3],
                                                             real64 (& gradN)[numNodes][3] )
 {
@@ -972,7 +959,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( real64 const (&coords)[3],
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::calcGradN( real64 const (&coords)[3],
                                                             real64 const (&X)[numNodes][3],
                                                             real64 (& gradN)[numNodes][3] )
 {
@@ -989,7 +976,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradN( real64 const (&coord
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-real64 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+real64 Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 calcGradN( localIndex const q,
            real64 const (&X)[numNodes][3],
            StackVariables const & GEOS_UNUSED_PARAM( stack ),
@@ -1002,7 +989,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradNWithCorners( localIndex const q,
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::calcGradNWithCorners( localIndex const q,
                                                                        real64 const (&X)[8][3],
                                                                        real64 (& gradN)[numNodes][3] )
 {
@@ -1024,7 +1011,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradNWithCorners( real64 const (&coords)[3],
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::calcGradNWithCorners( real64 const (&coords)[3],
                                                                        real64 const (&X)[8][3],
                                                                        real64 (& gradN)[numNodes][3] )
 {
@@ -1041,7 +1028,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::calcGradNWithCorners( real64 co
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-real64 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+real64 Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 calcGradNWithCorners( localIndex const q,
                       real64 const (&X)[8][3],
                       StackVariables const & GEOS_UNUSED_PARAM( stack ),
@@ -1059,7 +1046,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 jacobianTransformation( int const qa,
                         int const qb,
                         int const qc,
@@ -1088,7 +1075,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 jacobianTransformation( real64 const (&coords)[3],
                         real64 const (&X)[numNodes][3],
                         real64 ( & J )[3][3] )
@@ -1113,7 +1100,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 jacobianTransformationWithCorners( real64 const (&coords)[3],
                                    real64 const (&X)[8][3],
                                    real64 ( & J )[3][3] )
@@ -1144,7 +1131,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 trilinearInterp( real64 const alpha,
                  real64 const beta,
                  real64 const gamma,
@@ -1169,7 +1156,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 computeLocalCoords( real64 const (&Xmesh)[8][3],
                     real64 const (&X)[numNodes][3] )
 {
@@ -1188,7 +1175,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 jacobianTransformation2d( int const qa,
                           int const qb,
                           real64 const (&X)[4][3],
@@ -1214,7 +1201,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 computeMassTerm( localIndex const q,
                  real64 const (&X)[8][3] )
 {
@@ -1230,7 +1217,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 computeDampingTerm( localIndex const q,
                     real64 const (&X)[4][3] )
 {
@@ -1251,7 +1238,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 computeBMatrix( int const qa,
                 int const qb,
                 int const qc,
@@ -1278,7 +1265,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 computeBzMatrix( int const qa,
                  int const qb,
                  int const qc,
@@ -1305,7 +1292,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 computeBxyMatrix( int const qa,
                   int const qb,
                   int const qc,
@@ -1333,7 +1320,7 @@ template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 computeGradPhiBGradPhi( int const qa,
                         int const qb,
                         int const qc,
@@ -1383,7 +1370,7 @@ template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 computeStiffnessxyTerm( localIndex const q,
                         real64 const (&X)[8][3],
                         FUNC && func )
@@ -1401,7 +1388,7 @@ template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 computeStiffnesszTerm( localIndex const q,
                        real64 const (&X)[8][3],
                        FUNC && func )
@@ -1419,7 +1406,7 @@ template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 computeStiffnessTerm( localIndex const q,
                       real64 const (&X)[8][3],
                       FUNC && func )
@@ -1437,7 +1424,7 @@ template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 computeFirstOrderStiffnessTerm( localIndex const q,
                                 real64 const (&X)[8][3],
                                 FUNC && func )
@@ -1490,7 +1477,7 @@ template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 computeFirstOrderStiffnessTermX( localIndex const q,
                                  real64 const (&X)[8][3],
                                  FUNC && func )
@@ -1515,7 +1502,7 @@ template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 computeFirstOrderStiffnessTermY( localIndex const q,
                                  real64 const (&X)[8][3],
                                  FUNC && func )
@@ -1539,7 +1526,7 @@ template< typename FUNC >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 computeFirstOrderStiffnessTermZ( localIndex const q,
                                  real64 const (&X)[8][3],
                                  FUNC && func )
@@ -1563,7 +1550,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 applyTransformationToParentGradients( int const q,
                                       real64 const ( &invJ )[3][3],
                                       real64 (& gradN)[numNodes][3] )
@@ -1587,7 +1574,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 applyTransformationToParentGradients( real64 const (&coords)[3],
                                       real64 const ( &invJ )[3][3],
                                       real64 (& gradN)[numNodes][3] )
@@ -1607,7 +1594,7 @@ template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 transformedQuadratureWeight( localIndex const q,
                              real64 const (&X)[numNodes][3] )
 {
@@ -1625,7 +1612,7 @@ transformedQuadratureWeight( localIndex const q,
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+void Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 symmetricGradient( int const q,
                    real64 const (&invJ)[3][3],
                    real64 const (&var)[numNodes][3],
@@ -1659,7 +1646,7 @@ symmetricGradient( int const q,
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+void Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 plusGradNajAij( int const q,
                 real64 const (&invJ)[3][3],
                 real64 const (&var)[6],
@@ -1693,7 +1680,7 @@ plusGradNajAij( int const q,
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
+void Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::
 gradient( int const q,
           real64 const (&invJ)[3][3],
           real64 const (&var)[numNodes][3],
@@ -1719,6 +1706,75 @@ gradient( int const q,
     }
   }, invJ, var, grad );
 }
+
+
+
+#ifndef __CUDA_ARCH__
+
+template< typename GL_BASIS >
+class Qk_Hexahedron_Lagrange_GaussLobatto final : public Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >,
+                                                  public FiniteElementBase
+{
+public:
+
+  /// The type of basis used for this element
+  using BASIS = GL_BASIS;
+
+  using IMPL = Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >;
+
+  /// The number of nodes/support points per element.
+  constexpr static localIndex numNodes = Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::numNodes;
+
+  /// The number of faces/support points per element.
+  constexpr static localIndex numFaces = Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::numFaces;
+
+  /// The maximum number of support points per element.
+  constexpr static localIndex maxSupportPoints = numNodes;
+
+  /// The number of quadrature points per element.
+  constexpr static localIndex numQuadraturePoints = Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::numQuadraturePoints;
+
+
+  /// The number of sampling points per element.
+  constexpr static int numSamplingPoints = IMPL::numSamplingPointsPerDirection * IMPL::numSamplingPointsPerDirection * IMPL::numSamplingPointsPerDirection;
+
+  Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS > * getImpl()
+  {
+    return static_cast<Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS > *>(this);
+  }
+
+  const Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS > * getImpl() const
+  {
+    return static_cast<const Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS > *>(this);
+  }
+
+  GEOS_HOST_DEVICE
+  virtual ~Qk_Hexahedron_Lagrange_GaussLobatto() override final = default;
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getNumQuadraturePoints() const override final
+  {
+    return numQuadraturePoints;
+  }
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getNumSupportPoints() const override final
+  {
+    return numNodes;
+  }
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override final
+  {
+    return maxSupportPoints;
+  }
+
+
+};
+#endif // __CUDA_ARCH__
+
+
+
 /**
  * This class contains the kernel accessible functions specific to the standard
  * Trilinear Hexahedron finite element with a Gaussian quadrature rule. It is
