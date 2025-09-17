@@ -82,7 +82,7 @@ public:
                  real64 const & inputDegradationLowerLimit,
                  integer const & inputExtDrivingForceFlag,
                  arrayView1d< real64 > const & inputTensileStrength,
-                 arrayView1d< real64 > const & inputCompressStrength,
+                 arrayView1d< real64 > const & inputCompressiveStrength,
                  arrayView1d< real64 > const & inputDeltaCoefficient,
                  arrayView1d< real64 > const & inputBiotCoefficient,
                  PARAMS && ... baseParams ):
@@ -99,7 +99,7 @@ public:
     m_degradationLowerLimit( inputDegradationLowerLimit ),
     m_extDrivingForceFlag( inputExtDrivingForceFlag ),
     m_tensileStrength( inputTensileStrength ),
-    m_compressStrength( inputCompressStrength ),
+    m_compressiveStrength( inputCompressiveStrength ),
     m_deltaCoefficient( inputDeltaCoefficient ),
     m_biotCoefficient( inputBiotCoefficient )
   {}
@@ -269,19 +269,19 @@ public:
 
       real64 const criticalFractureEnergy = m_criticalFractureEnergy[k];
       real64 const tensileStrength = m_tensileStrength[k];
-      real64 const compressStrength = m_compressStrength[k];
+      real64 const compressiveStrength = m_compressiveStrength[k];
       real64 const deltaCoefficient = m_deltaCoefficient[k];
 
       // Calculate the external driving force according to Kumar et al.
       real64 beta0 = deltaCoefficient * 0.375 * criticalFractureEnergy / m_lengthScale;
 
-      real64 beta1 = -0.375 * criticalFractureEnergy / m_lengthScale * ((1 + deltaCoefficient)*(compressStrength - tensileStrength)/2./compressStrength/tensileStrength)
-                     - (8*mu + 24*kappa - 27*tensileStrength) * (compressStrength - tensileStrength) / 144. / mu / kappa
-                     - m_lengthScale / criticalFractureEnergy * ((mu + 3*kappa)*(pow( compressStrength, 3 ) - pow( tensileStrength, 3 ))*tensileStrength/18/(mu*mu)/(kappa*kappa));
+      real64 beta1 = -0.375 * criticalFractureEnergy / m_lengthScale * ((1 + deltaCoefficient)*(compressiveStrength - tensileStrength)/2./compressiveStrength/tensileStrength)
+                     - (8*mu + 24*kappa - 27*tensileStrength) * (compressiveStrength - tensileStrength) / 144. / mu / kappa
+                     - m_lengthScale / criticalFractureEnergy * ((mu + 3*kappa)*(pow( compressiveStrength, 3 ) - pow( tensileStrength, 3 ))*tensileStrength/18/(mu*mu)/(kappa*kappa));
 
-      real64 beta2 = -0.375 * criticalFractureEnergy / m_lengthScale * (sqrt( 3. )*(1 + deltaCoefficient)*(compressStrength + tensileStrength)/2./compressStrength/tensileStrength)
-                     + (8*mu + 24*kappa - 27*tensileStrength)*(compressStrength + tensileStrength) / 48. / sqrt( 3. ) / mu / kappa
-                     + m_lengthScale / criticalFractureEnergy * ((mu + 3*kappa)*(pow( compressStrength, 3 ) + pow( tensileStrength, 3 ))*tensileStrength/6./sqrt( 3. )/(mu*mu)/(kappa*kappa));
+      real64 beta2 = -0.375 * criticalFractureEnergy / m_lengthScale * (sqrt( 3. )*(1 + deltaCoefficient)*(compressiveStrength + tensileStrength)/2./compressiveStrength/tensileStrength)
+                     + (8*mu + 24*kappa - 27*tensileStrength)*(compressiveStrength + tensileStrength) / 48. / sqrt( 3. ) / mu / kappa
+                     + m_lengthScale / criticalFractureEnergy * ((mu + 3*kappa)*(pow( compressiveStrength, 3 ) + pow( tensileStrength, 3 ))*tensileStrength/6./sqrt( 3. )/(mu*mu)/(kappa*kappa));
 
       real64 beta3 = m_lengthScale * (tensileStrength/mu/kappa) / criticalFractureEnergy;
 
@@ -399,7 +399,7 @@ public:
   arrayView1d< real64 > const m_tensileStrength;
 
   /// A reference view to the compressive strength for each element
-  arrayView1d< real64 > const m_compressStrength;
+  arrayView1d< real64 > const m_compressiveStrength;
 
   /// A reference view to the delta coefficient for each element
   arrayView1d< real64 > const m_deltaCoefficient;
@@ -452,7 +452,7 @@ public:
                                                                        m_degradationLowerLimit,
                                                                        m_extDrivingForceFlag,
                                                                        m_tensileStrength.toView(),
-                                                                       m_compressStrength.toView(),
+                                                                       m_compressiveStrength.toView(),
                                                                        m_deltaCoefficient.toView(),
                                                                        m_biotCoefficient.toView() );
   }
@@ -472,7 +472,7 @@ public:
     /// string/key for the default tensile strength
     static constexpr char const * defaultTensileStrengthString() { return "defaultTensileStrength"; }
     /// string/key for the default compressive strength
-    static constexpr char const * defaultCompressStrengthString() { return "defaultCompressiveStrength"; }
+    static constexpr char const * defaultCompressiveStrengthString() { return "defaultCompressiveStrength"; }
     /// string/key for the default delta coefficient in computing the external driving force
     static constexpr char const * defaultDeltaCoefficientString() { return "defaultDeltaCoefficient"; }
   };
@@ -517,7 +517,7 @@ protected:
   real64 m_defaultTensileStrength;
 
   /// The default value of the compressive strength
-  real64 m_defaultCompressStrength;
+  real64 m_defaultCompressiveStrength;
 
   /// The default value of the delta coefficient (should be calibrated)
   real64 m_defaultDeltaCoefficient;
@@ -532,7 +532,7 @@ protected:
   array1d< real64 > m_tensileStrength;
 
   /// The compressive strength for each cell
-  array1d< real64 > m_compressStrength;
+  array1d< real64 > m_compressiveStrength;
 
   /// The delta coefficient for each cell
   array1d< real64 > m_deltaCoefficient;

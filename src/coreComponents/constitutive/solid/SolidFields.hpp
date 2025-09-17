@@ -178,8 +178,8 @@ DECLARE_FIELD( tensileStrength,
                NO_WRITE,
                "Tensile strength" );
 
-DECLARE_FIELD( compressStrength,
-               "compressStrength",
+DECLARE_FIELD( compressiveStrength,
+               "compressiveStrength",
                array1d< real64 >,
                0,
                NOPLOT,

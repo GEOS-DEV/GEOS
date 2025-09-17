@@ -58,7 +58,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default tensile strength from the uniaxial tension test" );
 
-  this->registerWrapper( viewKeyStruct::defaultCompressStrengthString(), &m_defaultCompressStrength ).
+  this->registerWrapper( viewKeyStruct::defaultCompressiveStrengthString(), &m_defaultCompressiveStrength ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default compressive strength from the uniaxial compression test" );
@@ -86,7 +86,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
 
   this->template registerField< fields::solid::tensileStrength >( &m_tensileStrength );
 
-  this->template registerField< fields::solid::compressStrength >( &m_compressStrength );
+  this->template registerField< fields::solid::compressiveStrength >( &m_compressiveStrength );
 
   this->template registerField< fields::solid::deltaCoefficient >( &m_deltaCoefficient );
 
@@ -105,7 +105,7 @@ void Damage< BASE >::postInputInitialization()
   GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultTensileStrength <= 0.0,
                  BASE::getDataContext() << ": tensile strength must be input and positive when the"
                                            " external driving force flag is turned on" );
-  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultCompressStrength  <= 0.0,
+  GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultCompressiveStrength  <= 0.0,
                  BASE::getDataContext() << ": compressive strength must be input and positive when the"
                                            " external driving force flag is turned on" );
   GEOS_ERROR_IF( m_extDrivingForceFlag == 1 && m_defaultDeltaCoefficient < 0.0,
@@ -119,8 +119,8 @@ void Damage< BASE >::postInputInitialization()
   this->template getField< fields::solid::tensileStrength >().
     setApplyDefaultValue( m_defaultTensileStrength );
 
-  this->template getField< fields::solid::compressStrength >().
-    setApplyDefaultValue( m_defaultCompressStrength );
+  this->template getField< fields::solid::compressiveStrength >().
+    setApplyDefaultValue( m_defaultCompressiveStrength );
 
   this->template getField< fields::solid::deltaCoefficient >().
     setApplyDefaultValue( m_defaultDeltaCoefficient );
@@ -138,7 +138,7 @@ void Damage< BASE >::allocateConstitutiveData( Group & parent, localIndex const 
   m_biotCoefficient.resize( parent.size() );
   m_criticalFractureEnergy.resize( parent.size() );
   m_tensileStrength.resize( parent.size() );
-  m_compressStrength.resize( parent.size() );
+  m_compressiveStrength.resize( parent.size() );
   m_deltaCoefficient.resize( parent.size() );
 
   BASE::allocateConstitutiveData( parent, numPts );
