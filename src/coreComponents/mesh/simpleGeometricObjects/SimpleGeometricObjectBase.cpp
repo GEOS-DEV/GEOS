@@ -33,7 +33,7 @@ SimpleGeometricObjectBase::SimpleGeometricObjectBase( string const & name,
   registerWrapper( viewKeyStruct::epsilonString(), &m_epsilon ).
     setApplyDefaultValue( 1e-6 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "Tolerance for coordinate checks" );
+    setDescription( "Absolute tolerance for coordinate checks. This is an upper bound value. The minimum of the specified epsilon and 1e-12 * GlobalLengthScale will be used, where GlobalLengthScale is the length of the domain." );
 }
 
 SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObjectBase::getCatalog()
