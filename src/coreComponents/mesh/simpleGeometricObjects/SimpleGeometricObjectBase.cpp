@@ -31,9 +31,10 @@ SimpleGeometricObjectBase::SimpleGeometricObjectBase( string const & name,
   setInputFlags( dataRepository::InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::epsilonString(), &m_epsilon ).
-    setApplyDefaultValue( 1e-6 ).
+    setApplyDefaultValue( -1 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "Absolute tolerance for coordinate checks. This is an upper bound value. The minimum of the specified epsilon and 1e-12 * GlobalLengthScale will be used, where GlobalLengthScale is the length of the domain." );
+    setDescription( "Absolute tolerance for coordinate checks. "
+                    "If not specified, default value of 1e-12 * GlobalLengthScale will be used, where GlobalLengthScale is the length scale of the domain." );
 }
 
 SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObjectBase::getCatalog()
@@ -44,13 +45,16 @@ SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObject
 
 void SimpleGeometricObjectBase::postInputInitialization()
 {
-  // determine m_epsilon
-  m_epsilon = std::numeric_limits< real64 >::max();
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  domain.forMeshBodies( [&]( MeshBody const & meshBody )
+  if( m_epsilon < 0.0 ) // if not specified in input, compute it
   {
-    m_epsilon = std::min( m_epsilon, 1e-12 * meshBody.getGlobalLengthScale() );
-  } );
+    // determine m_epsilon
+    m_epsilon = std::numeric_limits< real64 >::max();
+    DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+    domain.forMeshBodies( [&]( MeshBody const & meshBody )
+    {
+      m_epsilon = std::min( m_epsilon, 1e-12 * meshBody.getGlobalLengthScale() );
+    } );
+  }
 }
 
 } /// namespace geos
