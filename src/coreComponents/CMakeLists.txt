@@ -82,7 +82,5 @@ if( ENABLE_UNCRUSTIFY )
 endif()
 
 if( GEOS_ENABLE_TESTS )
-  add_subdirectory( unitTests )
-  add_subdirectory( integrationTest )
   add_subdirectory( integrationTests )
 endif( )
