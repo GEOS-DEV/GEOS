@@ -50,8 +50,8 @@ DECLARE_FIELD( oldStress,
                NO_WRITE,
                "Previous material stress" );
 
-DECLARE_FIELD( solidDensity,
-               "solidDensity",
+DECLARE_FIELD( density,
+               "density",
                array2d< real64 >,
                0,
                NOPLOT,
