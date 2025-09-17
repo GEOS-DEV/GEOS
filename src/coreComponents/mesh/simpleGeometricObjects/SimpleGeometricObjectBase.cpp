@@ -34,7 +34,7 @@ SimpleGeometricObjectBase::SimpleGeometricObjectBase( string const & name,
     setApplyDefaultValue( -1 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Absolute tolerance for coordinate checks. "
-                    "If not specified, default value of 1e-12 * GlobalLengthScale will be used, where GlobalLengthScale is the length scale of the domain." );
+                    "If not specified, default value of 1e-6 * GlobalLengthScale will be used, where GlobalLengthScale is the length scale of the domain." );
 }
 
 SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObjectBase::getCatalog()
@@ -52,7 +52,7 @@ void SimpleGeometricObjectBase::postInputInitialization()
     DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
     domain.forMeshBodies( [&]( MeshBody const & meshBody )
     {
-      m_epsilon = std::min( m_epsilon, 1e-12 * meshBody.getGlobalLengthScale() );
+      m_epsilon = std::min( m_epsilon, 1e-6 * meshBody.getGlobalLengthScale() );
     } );
   }
 }
