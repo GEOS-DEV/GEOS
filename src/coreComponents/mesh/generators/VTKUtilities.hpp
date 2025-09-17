@@ -250,14 +250,13 @@ void importRegularField( vtkDataArray * vtkArray,
  * @param[in] cellBlockManager The instance that stores the vertex blocks.
  * @param[in] translate translate the dataset
  * @param[in] scale scale the dataset
- * @return size of the dataset on x-axis
  */
-real64 writeNodes( integer const logLevel,
-                   vtkDataSet & mesh,
-                   string_array & nodesetNames,
-                   CellBlockManager & cellBlockManager,
-                   const geos::R1Tensor & translate,
-                   const geos::R1Tensor & scale );
+void writeNodes( integer const logLevel,
+                 vtkDataSet & mesh,
+                 string_array & nodesetNames,
+                 CellBlockManager & cellBlockManager,
+                 const geos::R1Tensor & translate,
+                 const geos::R1Tensor & scale );
 
 /**
  * @brief Build all the cell blocks.
@@ -284,6 +283,13 @@ void writeSurfaces( integer const logLevel,
                     vtkDataSet & mesh,
                     const geos::vtk::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager );
+
+/**
+ * @brief Compute the global length of the mesh and its offset.
+ * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
+ * @return A pair containing the global length and the offset of the mesh.
+ */
+std::pair< real64, real64 > getGlobalLengthAndOffset( vtkDataSet & mesh );
 
 } // namespace geos
 

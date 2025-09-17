@@ -42,4 +42,15 @@ SimpleGeometricObjectBase::CatalogInterface::CatalogType & SimpleGeometricObject
   return catalog;
 }
 
+void SimpleGeometricObjectBase::postInputInitialization()
+{
+  // determine m_epsilon
+  m_epsilon = std::numeric_limits< real64 >::max();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  domain.forMeshBodies( [&]( MeshBody const & meshBody )
+  {
+    m_epsilon = std::min( m_epsilon, 1e-12 * meshBody.getGlobalLengthScale() );
+  } );
+}
+
 } /// namespace geos
