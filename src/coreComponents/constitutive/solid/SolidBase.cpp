@@ -58,10 +58,10 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
 
 void SolidBase::postInputInitialization()
 {
-  getWrapper< array2d< real64 > >( fields::solid::density::key() ).
+  getField< fields::solid::density >().
     setApplyDefaultValue( m_defaultDensity );
 
-  getWrapper< array1d< real64 > >( fields::solid::thermalExpansionCoefficient::key() ).
+  getField< fields::solid::thermalExpansionCoefficient >().
     setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
 }
 

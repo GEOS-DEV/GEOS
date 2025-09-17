@@ -190,23 +190,23 @@ void ElasticOrthotropic::postInputInitialization()
   }
 
   // TODO merge in one
-  getWrapper< array1d< real64 > >( fields::solid::c11::key() ).
+  getField< fields::solid::c11 >().
     setApplyDefaultValue( c11 );
-  getWrapper< array1d< real64 > >( fields::solid::c12::key() ).
+  getField< fields::solid::c12 >().
     setApplyDefaultValue( c12 );
-  getWrapper< array1d< real64 > >( fields::solid::c13::key() ).
+  getField< fields::solid::c13 >().
     setApplyDefaultValue( c13 );
-  getWrapper< array1d< real64 > >( fields::solid::c22::key() ).
+  getField< fields::solid::c22 >().
     setApplyDefaultValue( c22 );
-  getWrapper< array1d< real64 > >( fields::solid::c23::key() ).
+  getField< fields::solid::c23 >().
     setApplyDefaultValue( c23 );
-  getWrapper< array1d< real64 > >( fields::solid::c33::key() ).
+  getField< fields::solid::c33 >().
     setApplyDefaultValue( c33 );
-  getWrapper< array1d< real64 > >( fields::solid::c44::key() ).
+  getField< fields::solid::c44 >().
     setApplyDefaultValue( c44 );
-  getWrapper< array1d< real64 > >( fields::solid::c55::key() ).
+  getField< fields::solid::c55 >().
     setApplyDefaultValue( c55 );
-  getWrapper< array1d< real64 > >( fields::solid::c66::key() ).
+  getField< fields::solid::c66 >().
     setApplyDefaultValue( c66 );
 }
 

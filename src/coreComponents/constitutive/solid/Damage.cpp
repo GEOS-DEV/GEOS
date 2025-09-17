@@ -113,16 +113,16 @@ void Damage< BASE >::postInputInitialization()
                                            " external driving force flag is turned on" );
 
   // set results as array default values
-  this->template getWrapper< array1d< real64 > >( fields::solid::criticalFractureEnergy::key() ).
+  this->template getField< fields::solid::criticalFractureEnergy >().
     setApplyDefaultValue( m_defaultCriticalFractureEnergy );
 
-  this->template getWrapper< array1d< real64 > >( fields::solid::tensileStrength::key() ).
+  this->template getField< fields::solid::tensileStrength >().
     setApplyDefaultValue( m_defaultTensileStrength );
 
-  this->template getWrapper< array1d< real64 > >( fields::solid::compressStrength::key() ).
+  this->template getField< fields::solid::compressStrength >().
     setApplyDefaultValue( m_defaultCompressStrength );
 
-  this->template getWrapper< array1d< real64 > >( fields::solid::deltaCoefficient::key() ).
+  this->template getField< fields::solid::deltaCoefficient >().
     setApplyDefaultValue( m_defaultDeltaCoefficient );
 }
 

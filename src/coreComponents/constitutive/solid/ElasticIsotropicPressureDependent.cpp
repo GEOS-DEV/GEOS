@@ -106,10 +106,10 @@ void ElasticIsotropicPressureDependent::postInputInitialization()
   getWrapper< real64 >( viewKeyStruct::refStrainVolString() ).
     setApplyDefaultValue( m_defaultRefStrainVol );
 
-  getWrapper< array1d< real64 > >( fields::solid::recompressionIndex::key() ).
+  getField< fields::solid::recompressionIndex >().
     setApplyDefaultValue( m_defaultRecompressionIndex );
 
-  getWrapper< array1d< real64 > >( fields::solid::shearModulus::key() ).
+  getField< fields::solid::shearModulus >().
     setApplyDefaultValue( m_defaultShearModulus );
 
 }

@@ -100,19 +100,19 @@ void DruckerPrager::postInputInitialization()
 
   // set results as array default values
 
-  getWrapper< array2d< real64 > >( fields::solid::oldCohesion::key() ).
+  getField< fields::solid::oldCohesion >().
     setApplyDefaultValue( C );
 
-  getWrapper< array2d< real64 > >( fields::solid::cohesion::key() ).
+  getField< fields::solid::cohesion >().
     setApplyDefaultValue( C );
 
-  getWrapper< array1d< real64 > >( fields::solid::dilation::key() ).
+  getField< fields::solid::dilation >().
     setApplyDefaultValue( D );
 
-  getWrapper< array1d< real64 > >( fields::solid::friction::key() ).
+  getField< fields::solid::friction >().
     setApplyDefaultValue( F );
 
-  getWrapper< array1d< real64 > >( fields::solid::hardening::key() ).
+  getField< fields::solid::hardening >().
     setApplyDefaultValue( m_defaultHardening );
 }
 

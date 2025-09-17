@@ -79,16 +79,16 @@ void ModifiedCamClay::postInputInitialization()
 
   // set results as array default values
 
-  getWrapper< array2d< real64 > >( fields::solid::oldPreConsolidationPressure::key() ).
+  getField< fields::solid::oldPreConsolidationPressure >().
     setApplyDefaultValue( m_defaultPreConsolidationPressure );
 
-  getWrapper< array2d< real64 > >( fields::solid::preConsolidationPressure::key() ).
+  getField< fields::solid::preConsolidationPressure >().
     setApplyDefaultValue( m_defaultPreConsolidationPressure );
 
-  getWrapper< array1d< real64 > >( fields::solid::virginCompressionIndex::key() ).
+  getField< fields::solid::virginCompressionIndex >().
     setApplyDefaultValue( m_defaultVirginCompressionIndex );
 
-  getWrapper< array1d< real64 > >( fields::solid::cslSlope::key() ).
+  getField< fields::solid::cslSlope >().
     setApplyDefaultValue( m_defaultCslSlope );
 
 }

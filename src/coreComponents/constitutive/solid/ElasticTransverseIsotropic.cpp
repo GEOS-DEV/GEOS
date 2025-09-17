@@ -120,15 +120,15 @@ void ElasticTransverseIsotropic::postInputInitialization()
     }
   }
 
-  getWrapper< array1d< real64 > >( fields::solid::c11::key() ).
+  getField< fields::solid::c11 >().
     setApplyDefaultValue( c11 );
-  getWrapper< array1d< real64 > >( fields::solid::c13::key() ).
+  getField< fields::solid::c13 >().
     setApplyDefaultValue( c13 );
-  getWrapper< array1d< real64 > >( fields::solid::c33::key() ).
+  getField< fields::solid::c33 >().
     setApplyDefaultValue( c33 );
-  getWrapper< array1d< real64 > >( fields::solid::c44::key() ).
+  getField< fields::solid::c44 >().
     setApplyDefaultValue( c44 );
-  getWrapper< array1d< real64 > >( fields::solid::c66::key() ).
+  getField< fields::solid::c66 >().
     setApplyDefaultValue( c66 );
 }
 

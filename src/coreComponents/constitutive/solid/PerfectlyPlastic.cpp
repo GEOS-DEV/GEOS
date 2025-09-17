@@ -46,7 +46,7 @@ void PerfectlyPlastic::postInputInitialization()
 
   GEOS_THROW_IF( m_defaultYieldStress < 0.0, "Negative yield stress detected", InputError );
 
-  getWrapper< array1d< real64 > >( fields::solid::yieldStress::key() ).setApplyDefaultValue( m_defaultYieldStress );
+  getField< fields::solid::yieldStress >().setApplyDefaultValue( m_defaultYieldStress );
 }
 
 

@@ -137,10 +137,10 @@ void ElasticIsotropic::postInputInitialization()
 
   // set results as array default values
 
-  getWrapper< array1d< real64 > >( fields::solid::bulkModulus::key() ).
+  getField< fields::solid::bulkModulus >().
     setApplyDefaultValue( m_defaultBulkModulus );
 
-  getWrapper< array1d< real64 > >( fields::solid::shearModulus::key() ).
+  getField< fields::solid::shearModulus >().
     setApplyDefaultValue( m_defaultShearModulus );
 }
 
