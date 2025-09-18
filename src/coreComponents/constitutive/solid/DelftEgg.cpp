@@ -26,18 +26,7 @@ namespace constitutive
 {
 
 DelftEgg::DelftEgg( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_defaultRecompressionIndex(),
-  m_defaultVirginCompressionIndex(),
-  m_defaultCslSlope(),
-  m_defaultShapeParameter(),
-  m_defaultPreConsolidationPressure(),
-  m_recompressionIndex(),
-  m_virginCompressionIndex(),
-  m_cslSlope(),
-  m_shapeParameter(),
-  m_newPreConsolidationPressure(),
-  m_oldPreConsolidationPressure()
+  ElasticIsotropic( name, parent )
 {
   // register default values
 
@@ -95,17 +84,12 @@ DelftEgg::DelftEgg( string const & name, Group * const parent ):
 }
 
 
-DelftEgg::~DelftEgg()
-{}
-
-
-void DelftEgg::allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex )
+void DelftEgg::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  m_newPreConsolidationPressure.resize( 0, numConstitutivePointsPerParentIndex );
-  m_oldPreConsolidationPressure.resize( 0, numConstitutivePointsPerParentIndex );
+  m_newPreConsolidationPressure.resize( 0, numPts );
+  m_oldPreConsolidationPressure.resize( 0, numPts );
 
-  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 }
 
 

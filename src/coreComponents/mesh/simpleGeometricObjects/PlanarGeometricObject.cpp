@@ -42,9 +42,6 @@ PlanarGeometricObject::PlanarGeometricObject( const string & name, Group * const
     setDescription( "Tangent vector defining the orthonormal basis along with the normal." );
 }
 
-PlanarGeometricObject::~PlanarGeometricObject()
-{}
-
 //REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, PlanarGeometricObject, string const &, Group * const )
 
 } /* namespace geos */
