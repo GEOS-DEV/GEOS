@@ -388,6 +388,109 @@
                        __VA_ARGS__ )
 
 /**
+ * @brief Raise a hard error if two values are equal.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
+ */
+#define GEOS_ERROR_IF_EQ_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, ==, !=, rhs, __VA_ARGS__ )
+
+/**
+ * @brief Raise a hard error if two values are equal.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ */
+#define GEOS_ERROR_IF_EQ( lhs, rhs ) GEOS_ERROR_IF_EQ_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Raise a hard error if two values are not equal.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
+ */
+#define GEOS_ERROR_IF_NE_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, !=, ==, rhs, __VA_ARGS__ )
+
+/**
+ * @brief Raise a hard error if two values are not equal.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ */
+#define GEOS_ERROR_IF_NE( lhs, rhs ) GEOS_ERROR_IF_NE_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Raise a hard error if one value compares greater than the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
+ */
+#define GEOS_ERROR_IF_GT_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, >, <=, rhs, __VA_ARGS__ )
+
+/**
+ * @brief Raise a hard error if one value compares greater than the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ */
+#define GEOS_ERROR_IF_GT( lhs, rhs ) GEOS_ERROR_IF_GT_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Raise a hard error if one value compares greater than or equal to the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
+ */
+#define GEOS_ERROR_IF_GE_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, >=, <, rhs, __VA_ARGS__ )
+
+/**
+ * @brief Raise a hard error if one value compares greater than or equal to the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ */
+#define GEOS_ERROR_IF_GE( lhs, rhs ) GEOS_ERROR_IF_GE_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Raise a hard error if one value compares less than the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
+ */
+#define GEOS_ERROR_IF_LT_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, <, >=, rhs, __VA_ARGS__ )
+
+/**
+ * @brief Raise a hard error if one value compares less than the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ */
+#define GEOS_ERROR_IF_LT( lhs, rhs ) GEOS_ERROR_IF_LT_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Raise a hard error if one value compares less than or equal to the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
+ */
+#define GEOS_ERROR_IF_LE_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, <=, >, rhs, __VA_ARGS__ )
+
+
+/**
+ * @brief Raise a hard error if one value compares less than or equal to the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ */
+#define GEOS_ERROR_IF_LE( lhs, rhs ) GEOS_ERROR_IF_LE_MSG( lhs, rhs, "" )
+
+/**
  * @brief Throw an exception if @p lhs @p OP @p rhs.
  * @param lhs The left side of the operation.
  * @param OP The operation to apply.
@@ -410,16 +513,6 @@
  * @param ... Variable arguments with the following structure:
  *            - First mandatory parameter, the message to log (must be streamable)
  *            - Optional following parameters, context information on the current error (DataContext)
- */
-#define GEOS_ERROR_IF_EQ_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, ==, !=, rhs, __VA_ARGS__ )
-
-/**
- * @brief Raise a hard error if two values are equal.
- * @param lhs expression to be evaluated and used as left-hand side in comparison
- * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param ... Variable arguments with the following structure:
- *            - First mandatory parameter, the message to log (must be streamable)
- *            - Optional following parameters, context information on the current error (DataContext)
  * @param TYPE the type of exception to throw
  */
 #define GEOS_THROW_IF_EQ_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, ==, !=, rhs, msg, TYPE )
@@ -428,26 +521,9 @@
  * @brief Raise a hard error if two values are equal.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- */
-#define GEOS_ERROR_IF_EQ( lhs, rhs ) GEOS_ERROR_IF_EQ_MSG( lhs, rhs, "" )
-
-/**
- * @brief Raise a hard error if two values are equal.
- * @param lhs expression to be evaluated and used as left-hand side in comparison
- * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param TYPE the type of exception to throw
  */
 #define GEOS_THROW_IF_EQ( lhs, rhs, TYPE ) GEOS_THROW_IF_EQ_MSG( lhs, rhs, "", TYPE )
-
-/**
- * @brief Raise a hard error if two values are not equal.
- * @param lhs expression to be evaluated and used as left-hand side in comparison
- * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param ... Variable arguments with the following structure:
- *            - First mandatory parameter, the message to log (must be streamable)
- *            - Optional following parameters, context information on the current error (DataContext)
- */
-#define GEOS_ERROR_IF_NE_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, !=, ==, rhs, __VA_ARGS__ )
 
 /**
  * @brief Throw an exception if two values are not equal.
@@ -459,29 +535,12 @@
 #define GEOS_THROW_IF_NE_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, !=, ==, rhs, msg, TYPE )
 
 /**
- * @brief Raise a hard error if two values are not equal.
- * @param lhs expression to be evaluated and used as left-hand side in comparison
- * @param rhs expression to be evaluated and used as right-hand side in comparison
- */
-#define GEOS_ERROR_IF_NE( lhs, rhs ) GEOS_ERROR_IF_NE_MSG( lhs, rhs, "" )
-
-/**
  * @brief Throw an exception if two values are not equal.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param TYPE the type of exception to throw
  */
 #define GEOS_THROW_IF_NE( lhs, rhs, TYPE ) GEOS_THROW_IF_NE_MSG( lhs, rhs, "", TYPE )
-
-/**
- * @brief Raise a hard error if one value compares greater than the other.
- * @param lhs expression to be evaluated and used as left-hand side in comparison
- * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param ... Variable arguments with the following structure:
- *            - First mandatory parameter, the message to log (must be streamable)
- *            - Optional following parameters, context information on the current error (DataContext)
- */
-#define GEOS_ERROR_IF_GT_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, >, <=, rhs, __VA_ARGS__ )
 
 /**
  * @brief Throw an exception if one value compares greater than the other.
@@ -495,29 +554,12 @@
 #define GEOS_THROW_IF_GT_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, >, <=, rhs, msg, TYPE )
 
 /**
- * @brief Raise a hard error if one value compares greater than the other.
- * @param lhs expression to be evaluated and used as left-hand side in comparison
- * @param rhs expression to be evaluated and used as right-hand side in comparison
- */
-#define GEOS_ERROR_IF_GT( lhs, rhs ) GEOS_ERROR_IF_GT_MSG( lhs, rhs, "" )
-
-/**
  * @brief Throw an exception if one value compares greater than the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param TYPE the type of exception to throw
  */
 #define GEOS_THROW_IF_GT( lhs, rhs, TYPE ) GEOS_THROW_IF_GT_MSG( lhs, rhs, "", TYPE )
-
-/**
- * @brief Raise a hard error if one value compares greater than or equal to the other.
- * @param lhs expression to be evaluated and used as left-hand side in comparison
- * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param ... Variable arguments with the following structure:
- *            - First mandatory parameter, the message to log (must be streamable)
- *            - Optional following parameters, context information on the current error (DataContext)
- */
-#define GEOS_ERROR_IF_GE_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, >=, <, rhs, __VA_ARGS__ )
 
 /**
  * @brief Throw an exception if one value compares greater than or equal to the other.
@@ -529,29 +571,12 @@
 #define GEOS_THROW_IF_GE_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, >=, <, rhs, msg, TYPE )
 
 /**
- * @brief Raise a hard error if one value compares greater than or equal to the other.
- * @param lhs expression to be evaluated and used as left-hand side in comparison
- * @param rhs expression to be evaluated and used as right-hand side in comparison
- */
-#define GEOS_ERROR_IF_GE( lhs, rhs ) GEOS_ERROR_IF_GE_MSG( lhs, rhs, "" )
-
-/**
  * @brief Throw an exception if one value compares greater than or equal to the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param TYPE the type of exception to throw
  */
 #define GEOS_THROW_IF_GE( lhs, rhs, TYPE ) GEOS_THROW_IF_GE_MSG( lhs, rhs, "", TYPE )
-
-/**
- * @brief Raise a hard error if one value compares less than the other.
- * @param lhs expression to be evaluated and used as left-hand side in comparison
- * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param ... Variable arguments with the following structure:
- *            - First mandatory parameter, the message to log (must be streamable)
- *            - Optional following parameters, context information on the current error (DataContext)
- */
-#define GEOS_ERROR_IF_LT_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, <, >=, rhs, __VA_ARGS__ )
 
 /**
  * @brief Throw an exception if one value compares less than the other.
@@ -563,29 +588,12 @@
 #define GEOS_THROW_IF_LT_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, <, >=, rhs, msg, TYPE )
 
 /**
- * @brief Raise a hard error if one value compares less than the other.
- * @param lhs expression to be evaluated and used as left-hand side in comparison
- * @param rhs expression to be evaluated and used as right-hand side in comparison
- */
-#define GEOS_ERROR_IF_LT( lhs, rhs ) GEOS_ERROR_IF_LT_MSG( lhs, rhs, "" )
-
-/**
  * @brief Throw an exception if one value compares less than the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  * @param TYPE the type of exception to throw
  */
 #define GEOS_THROW_IF_LT( lhs, rhs, TYPE ) GEOS_THROW_IF_LT_MSG( lhs, rhs, "", TYPE )
-
-/**
- * @brief Raise a hard error if one value compares less than or equal to the other.
- * @param lhs expression to be evaluated and used as left-hand side in comparison
- * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param ... Variable arguments with the following structure:
- *            - First mandatory parameter, the message to log (must be streamable)
- *            - Optional following parameters, context information on the current error (DataContext)
- */
-#define GEOS_ERROR_IF_LE_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, <=, >, rhs, __VA_ARGS__ )
 
 /**
  * @brief Throw an exception if one value compares less than or equal to the other.
@@ -595,13 +603,6 @@
  * @param TYPE the type of exception to throw
  */
 #define GEOS_THROW_IF_LE_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, <=, >, rhs, msg, TYPE )
-
-/**
- * @brief Raise a hard error if one value compares less than or equal to the other.
- * @param lhs expression to be evaluated and used as left-hand side in comparison
- * @param rhs expression to be evaluated and used as right-hand side in comparison
- */
-#define GEOS_ERROR_IF_LE( lhs, rhs ) GEOS_ERROR_IF_LE_MSG( lhs, rhs, "" )
 
 /**
  * @brief Throw an exception if one value compares less than or equal to the other.
