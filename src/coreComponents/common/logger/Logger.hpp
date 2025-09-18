@@ -133,7 +133,13 @@
 #define GEOS_LOG_RANK_VAR( var ) GEOS_LOG_RANK( #var " = " << var )
 
 /**
- * @brief Implementation of GEOS_ERROR_* and GEOS_ASSERT_* macros.
+ * @brief Conditionally raise a hard error and terminate the program.
+ *        Implementation of GEOS_ERROR_* and GEOS_ASSERT_* macros.
+ * @param COND A condition that causes the error if true.
+ * @param CAUSE_MESSAGE The condition that caused the error, in a readable text format for the user.
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ERROR_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
   do \
@@ -181,7 +187,9 @@
 
 /**
  * @brief Raise a hard error and terminate the program.
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ERROR( ... ) GEOS_ERROR_IF_CAUSE( true, "", __VA_ARGS__ )
 
@@ -368,7 +376,9 @@
  * @param OP The operation to apply.
  * @param NOP The operation that caused the error, used in the message (typically opposite of @p OP).
  * @param rhs The right side of the operation.
- * @param msg The message to diplay.
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ERROR_IF_OP_MSG( lhs, OP, NOP, rhs, ... ) \
   GEOS_ERROR_IF_CAUSE( lhs OP rhs, \
@@ -397,7 +407,9 @@
  * @brief Raise a hard error if two values are equal.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ERROR_IF_EQ_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, ==, !=, rhs, __VA_ARGS__ )
 
@@ -405,7 +417,9 @@
  * @brief Raise a hard error if two values are equal.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  * @param TYPE the type of exception to throw
  */
 #define GEOS_THROW_IF_EQ_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, ==, !=, rhs, msg, TYPE )
@@ -429,7 +443,9 @@
  * @brief Raise a hard error if two values are not equal.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ERROR_IF_NE_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, !=, ==, rhs, __VA_ARGS__ )
 
@@ -461,7 +477,9 @@
  * @brief Raise a hard error if one value compares greater than the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ERROR_IF_GT_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, >, <=, rhs, __VA_ARGS__ )
 
@@ -469,7 +487,9 @@
  * @brief Throw an exception if one value compares greater than the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  * @param TYPE the type of exception to throw
  */
 #define GEOS_THROW_IF_GT_MSG( lhs, rhs, msg, TYPE ) GEOS_THROW_IF_OP_MSG( lhs, >, <=, rhs, msg, TYPE )
@@ -493,7 +513,9 @@
  * @brief Raise a hard error if one value compares greater than or equal to the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ERROR_IF_GE_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, >=, <, rhs, __VA_ARGS__ )
 
@@ -525,7 +547,9 @@
  * @brief Raise a hard error if one value compares less than the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ERROR_IF_LT_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, <, >=, rhs, __VA_ARGS__ )
 
@@ -557,7 +581,9 @@
  * @brief Raise a hard error if one value compares less than or equal to the other.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ERROR_IF_LE_MSG( lhs, rhs, ... ) GEOS_ERROR_IF_OP_MSG( lhs, <=, >, rhs, __VA_ARGS__ )
 
@@ -593,7 +619,9 @@
  * @brief Abort execution if @p COND is false but only when
  *        NDEBUG is not defined..
  * @param COND The condition to check, causes an error if false.
- * @param MSG The message to associate with the error, can be anything streamable to a std::ostream.
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  * @note This macro can be used in both host and device code.
  * @note Tries to provide as much information about the location of the error
  *       as possible. On host this should result in the file and line of the error
@@ -620,7 +648,9 @@
  * @param lhs The left side of the operation.
  * @param OP The operation to apply.
  * @param rhs The right side of the operation.
- * @param msg The message to diplay.
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ASSERT_OP_MSG( lhs, OP, rhs, ... ) \
   GEOS_ERROR_IF_CAUSE( !( lhs OP rhs ), \
@@ -634,7 +664,9 @@
  * @brief Assert that two values compare equal in debug builds.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ASSERT_EQ_MSG( lhs, rhs, ... ) GEOS_ASSERT_OP_MSG( lhs, ==, rhs, __VA_ARGS__ )
 
@@ -649,7 +681,9 @@
  * @brief Assert that two values compare not equal in debug builds.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ASSERT_NE_MSG( lhs, rhs, ... ) GEOS_ASSERT_OP_MSG( lhs, !=, rhs, __VA_ARGS__ )
 
@@ -664,7 +698,9 @@
  * @brief Assert that one value compares greater than the other in debug builds.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ASSERT_GT_MSG( lhs, rhs, ... ) GEOS_ASSERT_OP_MSG( lhs, >, rhs, __VA_ARGS__ )
 
@@ -679,7 +715,9 @@
  * @brief Assert that one value compares greater than or equal to the other in debug builds.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ASSERT_GE_MSG( lhs, rhs, ... ) GEOS_ASSERT_OP_MSG( lhs, >=, rhs, __VA_ARGS__ )
 
@@ -694,7 +732,9 @@
  * @brief Assert that one value compares greater than the other in debug builds.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ASSERT_LT_MSG( lhs, rhs, ... ) GEOS_ASSERT_OP_MSG( lhs, <, rhs, __VA_ARGS__ )
 
@@ -709,7 +749,9 @@
  * @brief Assert that one value compares greater than or equal to the other in debug builds.
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ASSERT_LE_MSG( lhs, rhs, ... ) GEOS_ASSERT_OP_MSG( lhs, <=, rhs, __VA_ARGS__ )
 
