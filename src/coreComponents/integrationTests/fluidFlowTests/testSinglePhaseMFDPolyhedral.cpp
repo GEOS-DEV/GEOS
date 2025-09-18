@@ -155,7 +155,7 @@ std::string generateXmlInputTPFA( std::string const & meshFile )
         discretization="singlePhaseTPFA" targetRegions="{ Domain }">
         <NonlinearSolverParameters newtonTol="1.0e-8" newtonMaxIter="2"/>
         <LinearSolverParameters
-            solverType="fgmres"
+            solverType="gmres"
             preconditionerType="amg"
             krylovTol="1e-15"
             krylovMaxIter="100"
@@ -326,7 +326,7 @@ std::string generateXmlInputMFD( std::string const & innerProductType,
       discretization="singlePhaseMFD" targetRegions="{ Domain }">
       <NonlinearSolverParameters newtonTol="1.0e-8" newtonMaxIter="2"/>
       <LinearSolverParameters
-          solverType="fgmres"
+          solverType="gmres"
           preconditionerType="mgr"
           krylovTol="1e-15"
           krylovMaxIter="100"
