@@ -149,7 +149,12 @@ std::string generateXmlInputTPFA( std::string const & meshFile )
       <SinglePhaseFVM name="SinglePhaseFlow" logLevel="1"
         discretization="singlePhaseTPFA" targetRegions="{ Domain }">
         <NonlinearSolverParameters newtonTol="1.0e-8" newtonMaxIter="2"/>
-        <LinearSolverParameters directParallel="0"/>
+        <LinearSolverParameters
+            solverType="fgmres"
+            preconditionerType="amg"
+            krylovTol="1e-15"
+            krylovMaxIter="100"
+            logLevel="1"/>
       </SinglePhaseFVM>
     </Solvers>
 
@@ -315,7 +320,12 @@ std::string generateXmlInputMFD( std::string const & innerProductType,
     <SinglePhaseHybridFVM name="SinglePhaseFlow" logLevel="1"
       discretization="singlePhaseMFD" targetRegions="{ Domain }">
       <NonlinearSolverParameters newtonTol="1.0e-8" newtonMaxIter="2"/>
-      <LinearSolverParameters directParallel="0"/>
+      <LinearSolverParameters
+          solverType="fgmres"
+          preconditionerType="mgr"
+          krylovTol="1e-15"
+          krylovMaxIter="100"
+          logLevel="1"/>
     </SinglePhaseHybridFVM>
   </Solvers>
 

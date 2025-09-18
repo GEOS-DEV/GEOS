@@ -538,8 +538,6 @@ public:
     
       if( m_faceGhostRank[m_elemToFaces[ei][iFaceLoc]] < 0 )
       {
-        real64 const area = m_faceArea[m_elemToFaces[ei][iFaceLoc]];
-        real64 const invArea = 1.0 / area;
 
         // residual (LM face constraint) continuity of mass flux
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[stack.faceCenteredEqnRowIndex[iFaceLoc]], stack.massFlux[iFaceLoc] );
