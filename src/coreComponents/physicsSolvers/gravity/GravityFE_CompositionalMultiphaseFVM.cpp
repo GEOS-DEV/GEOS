@@ -20,6 +20,7 @@
 #include <iostream>
 
 #include "GravityFE_CompositionalMultiphaseFVM.hpp"
+#include "GravityFields.hpp"
 #include "GravityFEKernel.hpp"
 #include "GravityLogLevelsInfo.hpp"
 
@@ -52,8 +53,6 @@ GravityFE_CompositionalMultiphaseFVM::GravityFE_CompositionalMultiphaseFVM( cons
                                                                             Group * const parent ):
   GravitySolverBase( name, parent )
 {
-
-
   registerWrapper( viewKeyStruct::useRockDensityString(), &m_useRockDensity ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
@@ -68,11 +67,6 @@ GravityFE_CompositionalMultiphaseFVM::GravityFE_CompositionalMultiphaseFVM( cons
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
     setDescription( "Flag to use the reference porosity" );
-}
-
-GravityFE_CompositionalMultiphaseFVM::~GravityFE_CompositionalMultiphaseFVM()
-{
-  // TODO Auto-generated destructor stub
 }
 
 
@@ -105,34 +99,19 @@ void GravityFE_CompositionalMultiphaseFVM::registerDataOnMesh( Group & meshBodie
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    nodeManager.registerField< fields::VolumeIntegral >( this->getName() );
+    nodeManager.registerField< fields::volumeIntegral >( this->getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< fields::MediumDensity >( this->getName() );
-      subRegion.registerField< fields::FluidDensity >( this->getName() );
-      subRegion.registerField< fields::RockDensity >( this->getName() );
-      subRegion.registerField< fields::Porosity >( this->getName() );
+      subRegion.registerField< fields::mediumDensity >( this->getName() );
+      subRegion.registerField< fields::fluidDensity >( this->getName() );
+      subRegion.registerField< fields::rockDensity >( this->getName() );
+      subRegion.registerField< fields::porosity >( this->getName() );
     } );
   } );
 }
-
-
-void GravityFE_CompositionalMultiphaseFVM::postInputInitialization()
-{
-  GravitySolverBase::postInputInitialization();
-
-}
-
-
-
-void GravityFE_CompositionalMultiphaseFVM::initializePostInitialConditionsPreSubGroups()
-{
-  GravitySolverBase::initializePostInitialConditionsPreSubGroups();
-}
-
 
 
 real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const & time_n,
@@ -157,7 +136,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
     auto const nodeGhostRank = nodeManager.ghostRank().toViewConst();
 
     // VolumeIntegral matrix to be computed in this function.
-    auto volumeIntegral = nodeManager.getField< fields::VolumeIntegral >().toView();
+    auto volumeIntegral = nodeManager.getField< fields::volumeIntegral >().toView();
     volumeIntegral.setValues< parallelHostPolicy >( 0. );
 
     // Loop over all sub-regions in regions of type "CellElements".
@@ -171,7 +150,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
       MultiFluidBase const & fluid = constitutiveModels.getGroup< MultiFluidBase >( fluidName );
       arrayView2d< real64 const, multifluid::USD_FLUID > const reservoirFluidDensity = fluid.totalDensity().toViewConst();
 
-      arrayView1d< real64 > const fluidDensity = elementSubRegion.getReference< array1d< real64 > >( fields::FluidDensity::key()).toView();
+      arrayView1d< real64 > const fluidDensity = elementSubRegion.getReference< array1d< real64 > >( fields::fluidDensity::key()).toView();
 
       // Fluid density assignment
       forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
@@ -182,7 +161,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
       // Retrieve porosity.
       string const & solidName = elementSubRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & solid = constitutiveModels.getGroup< CoupledSolidBase >( solidName );
-      arrayView1d< real64 > const porosity = elementSubRegion.getReference< array1d< real64 > >( fields::Porosity::key()).toView();
+      arrayView1d< real64 > const porosity = elementSubRegion.getReference< array1d< real64 > >( fields::porosity::key()).toView();
 
       if( this->m_useReferencePorosity == 1 )
       {
@@ -215,7 +194,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
       }
 
       // Retrieve rock density.
-      arrayView1d< real64 > const rockDensity = elementSubRegion.getReference< array1d< real64 > >( fields::RockDensity::key()).toView();
+      arrayView1d< real64 > const rockDensity = elementSubRegion.getReference< array1d< real64 > >( fields::rockDensity::key()).toView();
       rockDensity.setValues< parallelHostPolicy >( 0. );
 
       if( this->m_useRockDensity == 1 )
@@ -231,7 +210,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
       }
 
       // Build medium density.
-      arrayView1d< real64 > const density = elementSubRegion.getReference< array1d< real64 > >( fields::MediumDensity::key()).toView();
+      arrayView1d< real64 > const density = elementSubRegion.getReference< array1d< real64 > >( fields::mediumDensity::key()).toView();
 
       // Make input arrays const for density calculation
       arrayView1d< real64 const > const porosityConst = porosity.toViewConst();

@@ -37,7 +37,6 @@ public:
   GravityFE_CompositionalMultiphaseFVM() = delete;
   GravityFE_CompositionalMultiphaseFVM( const std::string & name,
                                         Group * const parent );
-  virtual ~GravityFE_CompositionalMultiphaseFVM() override;
 
   GravityFE_CompositionalMultiphaseFVM( GravityFE_CompositionalMultiphaseFVM const & ) = delete;
   GravityFE_CompositionalMultiphaseFVM( GravityFE_CompositionalMultiphaseFVM && ) = delete;
@@ -47,9 +46,8 @@ public:
   static string catalogName() { return "GravityFE_CompositionalMultiphaseFVM"; }
   string getCatalogName() const override { return catalogName(); }
 
-  virtual void initializePreSubGroups() override;
   virtual void registerDataOnMesh( Group & meshBodies ) override final;
-  virtual void postInputInitialization() override final;
+  virtual void initializePreSubGroups() override;
 
 
   /**
@@ -84,10 +82,6 @@ public:
 
 protected:
 
-
-
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
-
   /// Use rock density in addition to fluid density
   localIndex m_useRockDensity;
   localIndex m_useReferencePorosity;
@@ -98,47 +92,6 @@ private:
 
 
 };
-
-namespace fields
-{
-
-DECLARE_FIELD( MediumDensity,
-               "mediumDensity",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Medium density of the cell" );
-DECLARE_FIELD( FluidDensity,
-               "fluidDensity",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Fluid density of the cell" );
-DECLARE_FIELD( RockDensity,
-               "rockDensity",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Rock density of the cell" );
-DECLARE_FIELD( Porosity,
-               "porosity",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Porosity of the cell" );
-DECLARE_FIELD( VolumeIntegral,
-               "volumeIntegral",
-               array1d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "VolumeIntegral of the cell." );
-
-}
 
 } // namespace geos
 

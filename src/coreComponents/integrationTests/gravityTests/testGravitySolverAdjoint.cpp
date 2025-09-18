@@ -5,6 +5,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/gravity/GravityFE.hpp"
+#include "physicsSolvers/gravity/GravityFields.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "integrationTests/fluidFlowTests/testCompFlowUtils.hpp" // For setupProblemFromXML
 #include "physicsSolvers/PhysicsSolverBase.hpp"
@@ -129,7 +130,7 @@ TEST( GravityFEKernelTest, AdjointConsistencyWithGravityFE )
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             CellElementSubRegion & elementSubRegion )
       {
-        arrayView1d< real64 > const density = elementSubRegion.getReference< array1d< real64 > >( fields::MediumDensity::key());
+        arrayView1d< real64 > const density = elementSubRegion.getReference< array1d< real64 > >( fields::mediumDensity::key());
         for( localIndex i = 0; i < density.size(); ++i )
         {
           const_cast< real64 & >(density[i]) = xVec[i];
@@ -167,7 +168,7 @@ TEST( GravityFEKernelTest, AdjointConsistencyWithGravityFE )
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             CellElementSubRegion & elementSubRegion )
       {
-        arrayView1d< real64 > const adjoint = elementSubRegion.getReference< array1d< real64 > >( fields::Adjoint::key());
+        arrayView1d< real64 > const adjoint = elementSubRegion.getReference< array1d< real64 > >( fields::adjoint::key());
         for( localIndex i = 0; i < adjoint.size(); ++i )
         {
           adjointValues.push_back( adjoint[i] );

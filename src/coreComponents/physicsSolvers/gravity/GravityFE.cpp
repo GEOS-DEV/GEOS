@@ -19,6 +19,7 @@
  */
 
 #include "GravityFE.hpp"
+#include "GravityFields.hpp"
 #include "GravityFEKernel.hpp"
 #include "GravityLogLevelsInfo.hpp"
 
@@ -73,31 +74,19 @@ void GravityFE::registerDataOnMesh( Group & meshBodies )
                                                     string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-    nodeManager.registerField< fields::VolumeIntegral >( this->getName() );
+    nodeManager.registerField< fields::volumeIntegral >( this->getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< fields::MediumDensity >( this->getName() );
-      subRegion.registerField< fields::Adjoint >( this->getName() );
-      subRegion.registerField< fields::VolumeIntegral2d >( this->getName() );
+      subRegion.registerField< fields::mediumDensity >( this->getName() );
+      subRegion.registerField< fields::adjoint >( this->getName() );
+      subRegion.registerField< fields::volumeIntegral2d >( this->getName() );
 
       // Assume the maximum number of points per cell is MAX_SUPPORT_POINTS...
-      subRegion.getField< fields::VolumeIntegral2d >().resizeDimension< 1 >( MAX_SUPPORT_POINTS );
+      subRegion.getField< fields::volumeIntegral2d >().resizeDimension< 1 >( MAX_SUPPORT_POINTS );
     } );
   } );
-}
-
-
-void GravityFE::postInputInitialization()
-{
-  GravitySolverBase::postInputInitialization();
-}
-
-
-void GravityFE::initializePostInitialConditionsPreSubGroups()
-{
-  GravitySolverBase::initializePostInitialConditionsPreSubGroups();
 }
 
 
@@ -123,7 +112,7 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
     auto const nodeGhostRank = nodeManager.ghostRank().toViewConst();
 
     // VolumeIntegral matrix to be computed in this function.
-    auto volumeIntegral = nodeManager.getField< fields::VolumeIntegral >().toView();
+    auto volumeIntegral = nodeManager.getField< fields::volumeIntegral >().toView();
 
 
     volumeIntegral.setValues< parallelHostPolicy >( 0. );
@@ -132,7 +121,7 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
-      arrayView1d< real64 > const density = elementSubRegion.getReference< array1d< real64 > >( fields::MediumDensity::key());
+      arrayView1d< real64 > const density = elementSubRegion.getReference< array1d< real64 > >( fields::mediumDensity::key());
       if( geos::isLogLevelActive< geos::gravity::GravityPropertiesDebug >( getLogLevel() ) )
       {
         for( localIndex i=0; i<elementSubRegion.size(); ++i )
@@ -277,8 +266,8 @@ real64 GravityFE::explicitStepAdjoint( real64 const & time_n,
       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
 
       // Output arrays
-      arrayView2d< real64 > volumeIntegral2d = elementSubRegion.getReference< array2d< real64 > >( fields::VolumeIntegral2d::key()).toView();
-      arrayView1d< real64 > adjoint = elementSubRegion.getReference< array1d< real64 > >( fields::Adjoint::key()).toView();
+      arrayView2d< real64 > volumeIntegral2d = elementSubRegion.getReference< array2d< real64 > >( fields::volumeIntegral2d::key()).toView();
+      arrayView1d< real64 > adjoint = elementSubRegion.getReference< array1d< real64 > >( fields::adjoint::key()).toView();
 
       volumeIntegral2d.setValues< parallelHostPolicy >( 0.0 );
       adjoint.zero();

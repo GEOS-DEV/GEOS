@@ -78,51 +78,7 @@ public:
                               DomainPartition & domain ) override;
   /**@}*/
 
-
-
-protected:
-
-  virtual void postInputInitialization() override final;
-
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
-
 };
-
-
-namespace fields
-{
-DECLARE_FIELD( MediumDensity,
-               "mediumDensity",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Medium density of the cell" );
-
-DECLARE_FIELD( VolumeIntegral,
-               "volumeIntegral",
-               array1d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "VolumeIntegral of the cell." );
-
-DECLARE_FIELD( VolumeIntegral2d,
-               "volumeIntegral2d",
-               array2d< real64 >,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "VolumeIntegral for adjoint computation." );
-
-DECLARE_FIELD( Adjoint,
-               "adjoint",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Adjoint field." );
-}
 
 } // namespace geos
 
