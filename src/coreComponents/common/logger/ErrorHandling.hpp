@@ -219,6 +219,12 @@ private:
   { m_filename = filename; }
 
   /**
+   * @return The file name of the output error file
+   */
+  std::string_view getOutputFilename()
+  { return m_filename; }
+
+  /**
    * @brief Gives acces to the error message that is currently being constructed,
    *        potencially at various application layers
    *        Use flushErrorMsg() when the message is fully constructed and you want it to be output

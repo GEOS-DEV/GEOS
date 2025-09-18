@@ -166,6 +166,12 @@ void i_g_n_o_r_e( ARGS const & ... ) {}
 #define GEOS_DETAIL_REST_ARGS_FUNC( COND ) GEOS_DETAIL_REST_ARGS_ ## COND
 #define GEOS_DETAIL_REST_ARGS_DISPATCH( COND, ... ) GEOS_DETAIL_REST_ARGS_FUNC( COND )(__VA_ARGS__)
 
+/// internal macros for GEOS_DETAIL_LAST_ARG_PREP
+#define GEOS_DETAIL_REST_PREP_ARGS_false( FIRST )
+#define GEOS_DETAIL_REST_PREP_ARGS_true( FIRST, ... ) , __VA_ARGS__
+#define GEOS_DETAIL_REST_PREP_ARGS_FUNC( COND ) GEOS_DETAIL_REST_PREP_ARGS_ ## COND
+#define GEOS_DETAIL_REST_PREP_ARGS_DISPATCH( COND, ... ) GEOS_DETAIL_REST_PREP_ARGS_FUNC( COND )(__VA_ARGS__)
+
 /**
  * @return Return the first parameter of the variadic parameters (__VA_ARGS__).
  * @note Undefined behaviour if variadic argument has more that 16 elements.
@@ -179,6 +185,14 @@ void i_g_n_o_r_e( ARGS const & ... ) {}
  */
 #define GEOS_DETAIL_REST_ARGS( ... ) GEOS_DETAIL_REST_ARGS_DISPATCH( GEOS_DETAIL_MORE_THAN_ONE_ARG( __VA_ARGS__ ), \
                                                                      __VA_ARGS__ )
+
+/**
+ * @return Return the parameters following the first of the variadic parameters (__VA_ARGS__),
+ *         prepended with a comma when not empty.
+ * @note Undefined behaviour if variadic argument has more that 16 elements.
+ */
+#define GEOS_DETAIL_REST_PREP_ARGS( ... ) GEOS_DETAIL_REST_PREP_ARGS_DISPATCH( GEOS_DETAIL_MORE_THAN_ONE_ARG( __VA_ARGS__ ), \
+                                                                               __VA_ARGS__ )
 
 ///@}
 
