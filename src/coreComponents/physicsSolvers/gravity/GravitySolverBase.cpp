@@ -18,6 +18,7 @@
  */
 
 #include "GravitySolverBase.hpp"
+#include "GravityLogLevelsInfo.hpp"
 #include <filesystem>
 
 
@@ -115,8 +116,7 @@ void GravitySolverBase::initializePostInitialConditionsPreSubGroups()
       );
   }
 
-
-  if( this->getLogLevel()>0 )
+  if( geos::isLogLevelActive< geos::gravity::GravitySolverStatus >( getLogLevel() ) )
   {
     constexpr auto yesno = [] (int flag) noexcept->const char * { return flag ? "yes" : "no"; };
 
@@ -126,9 +126,9 @@ void GravitySolverBase::initializePostInitialConditionsPreSubGroups()
     GEOS_LOG_RANK_0( "Mode:                        " << m_modeString );
     GEOS_LOG_RANK_0( "Number of stations:          " << m_stationCoordinates.size( 0 ));
     GEOS_LOG_RANK_0( "Log level:                   " << getLogLevel());
-    GEOS_LOG_RANK_0( "  Output Gz to logs:         " << yesno( getLogLevel() > 1 ));
-    GEOS_LOG_RANK_0( "  Output Adjoint to logs:    " << yesno( getLogLevel() > 2 ));
-    GEOS_LOG_RANK_0( "  Output Properties to logs: " << yesno( getLogLevel() > 3 ));
+    GEOS_LOG_RANK_0( "  Output Gz to logs:         " << yesno( geos::isLogLevelActive< geos::gravity::GravityComponentDebug >( getLogLevel() ) ) );
+    GEOS_LOG_RANK_0( "  Output Adjoint to logs:    " << yesno( geos::isLogLevelActive< geos::gravity::GravityAdjointDebug >( getLogLevel() ) ) );
+    GEOS_LOG_RANK_0( "  Output Properties to logs: " << yesno( geos::isLogLevelActive< geos::gravity::GravityPropertiesDebug >( getLogLevel() ) ) );
     gravitySolverLog.end();
   }
 }

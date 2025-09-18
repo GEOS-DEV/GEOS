@@ -20,6 +20,7 @@
 
 #include "GravityFE.hpp"
 #include "GravityFEKernel.hpp"
+#include "GravityLogLevelsInfo.hpp"
 
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -132,7 +133,7 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
       arrayView1d< real64 > const density = elementSubRegion.getReference< array1d< real64 > >( fields::MediumDensity::key());
-      if( this->getLogLevel()>3 )
+      if( geos::isLogLevelActive< geos::gravity::GravityPropertiesDebug >( getLogLevel() ) )
       {
         for( localIndex i=0; i<elementSubRegion.size(); ++i )
         {
@@ -224,7 +225,7 @@ real64 GravityFE::explicitStepModeling( real64 const & time_n,
     gzAtStations[i] = localGzAtStations[i];
   }
 
-  if( this->getLogLevel()>1 )
+  if( geos::isLogLevelActive< geos::gravity::GravityComponentDebug >( getLogLevel() ) )
   {
     for( localIndex iStation = 0; iStation < m_stationCoordinates.size( 0 ); ++iStation )
     {
@@ -341,7 +342,7 @@ real64 GravityFE::explicitStepAdjoint( real64 const & time_n,
 
       adjoint.move( LvArray::MemorySpace::host, true );
 
-      if( this->getLogLevel() > 2 )
+      if( geos::isLogLevelActive< geos::gravity::GravityAdjointDebug >( getLogLevel() ) )
       {
         for( localIndex i=0; i<elementSubRegion.size(); ++i )
         {

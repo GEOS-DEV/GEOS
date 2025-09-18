@@ -21,6 +21,7 @@
 
 #include "GravityFE_CompositionalMultiphaseFVM.hpp"
 #include "GravityFEKernel.hpp"
+#include "GravityLogLevelsInfo.hpp"
 
 
 #include "finiteElement/FiniteElementDiscretization.hpp"
@@ -243,7 +244,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
       } );
 
       // Debug output
-      if( this->getLogLevel() > 3 )
+      if( geos::isLogLevelActive< geos::gravity::GravityPropertiesDebug >( getLogLevel() ) )
       {
         // Move arrays to host for logging
         density.move( LvArray::MemorySpace::host, true );
@@ -344,7 +345,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
     gzAtStations[i] = localGzAtStations[i];
   }
 
-  if( this->getLogLevel() > 1 )
+  if( geos::isLogLevelActive< geos::gravity::GravityComponentDebug >( getLogLevel() ) )
   {
     for( localIndex iStation = 0; iStation < m_stationCoordinates.size( 0 ); ++iStation )
     {

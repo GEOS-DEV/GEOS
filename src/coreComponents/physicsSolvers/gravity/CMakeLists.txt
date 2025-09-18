@@ -18,6 +18,7 @@ Contains:
 
 # Specify solver headers
 set( gravitySolvers_headers
+     GravityLogLevelsInfo.hpp
      GravitySolverBase.hpp
      GravityFE.hpp
      GravityFEKernel.hpp )
