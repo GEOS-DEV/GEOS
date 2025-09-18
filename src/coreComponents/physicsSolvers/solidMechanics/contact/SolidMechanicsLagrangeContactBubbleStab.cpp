@@ -50,6 +50,8 @@ SolidMechanicsLagrangeContactBubbleStab::SolidMechanicsLagrangeContactBubbleStab
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanicsBubbleStab;
   linSolParams.mgr.separateComponents = true;
   linSolParams.dofsPerNode = 3;
+
+  addLogLevel< logInfo::ResidualNorm >();
 }
 
 SolidMechanicsLagrangeContactBubbleStab::~SolidMechanicsLagrangeContactBubbleStab()
@@ -59,7 +61,7 @@ SolidMechanicsLagrangeContactBubbleStab::~SolidMechanicsLagrangeContactBubbleSta
 
 real64 SolidMechanicsLagrangeContactBubbleStab::solverStep( real64 const & time_n,
                                                             real64 const & dt,
-                                                            const integer cycleNumber,
+                                                            integer const cycleNumber,
                                                             DomainPartition & domain )
 {
   if( cycleNumber == 0 )
@@ -467,7 +469,9 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateResidualNorm( real64 co
 
   real64 const contactResidual = calculateContactResidualNorm( domain, dofManager, localRhs );
 
-  return sqrt( solidResidual * solidResidual + contactResidual * contactResidual );
+  real64 const totalResidual = sqrt( solidResidual * solidResidual + contactResidual * contactResidual );
+
+  return totalResidual;
 }
 
 real64 SolidMechanicsLagrangeContactBubbleStab::calculateContactResidualNorm( DomainPartition const & domain,
@@ -510,10 +514,9 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateContactResidualNorm( Do
   stickResidual = MpiWrapper::sum( stickResidual );
   stickResidual = sqrt( stickResidual );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual ));
+  getConvergenceStats().setResidualValue( "Rt", stickResidual );
 
   return sqrt( stickResidual * stickResidual );
 }
@@ -965,7 +968,7 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
       this->m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
       this->m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
 
-      GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
+      GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
   } );
 

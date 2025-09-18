@@ -28,20 +28,6 @@ namespace geos
 
 using namespace dataRepository;
 
-namespace logInfo
-{
-struct SiloOutputTimer : public OutputTimerBase
-{
-  std::string_view getDescription() const override { return "Silo output timing"; }
-};
-}
-
-logInfo::OutputTimerBase const & SiloOutput::getTimerCategory() const
-{
-  static logInfo::SiloOutputTimer timer;
-  return timer;
-}
-
 SiloOutput::SiloOutput( string const & name,
                         Group * const parent ):
   OutputBase( name, parent ),

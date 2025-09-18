@@ -85,11 +85,11 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                     " If set to a negative value, the GlobalId arrays in the input mesh are not used, and generated global Ids are automatically generated."
                     " If set to a positive value, the GlobalId arrays in the input mesh are used and required, and the simulation aborts if they are not available" );
 
-  addLogLevel< logInfo::VTKSteps >();
-
   registerWrapper( viewKeyStruct::dataSourceString(), &m_dataSourceName ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the VTK data source" );
+
+  addLogLevel< logInfo::VTKSteps >();
 }
 
 void VTKMeshGenerator::postInputInitialization()
@@ -206,7 +206,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   m_cellMap = vtk::buildCellMap( *m_vtkMesh, m_attributeName );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': writing nodes...", catalogName(), getName() ) );
-  cellBlockManager.setGlobalLength( writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale ) );
+  writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': writing cells...", catalogName(), getName() ) );
   writeCells( getLogLevel(), *m_vtkMesh, m_cellMap, cellBlockManager );
@@ -216,6 +216,10 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': building connectivity maps...", catalogName(), getName() ) );
   cellBlockManager.buildMaps();
+
+  auto lengthAndOffset = getGlobalLengthAndOffset( *m_vtkMesh );
+  cellBlockManager.setGlobalLength( lengthAndOffset.first );
+  cellBlockManager.setGlobalOffset( lengthAndOffset.second );
 
   for( auto const & [name, mesh]: m_faceBlockMeshes )
   {
