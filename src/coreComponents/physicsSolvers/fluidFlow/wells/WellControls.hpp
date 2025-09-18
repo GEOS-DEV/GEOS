@@ -24,6 +24,7 @@
 #include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "functions/TableFunction.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 
 namespace geos
 {
@@ -305,6 +306,17 @@ public:
   void setNextDtFromTables( real64 const & currentTime, real64 & nextDt );
 
   /**
+   * @brief setter for multi fluid separator
+   * @param[in] fluidSeparatorPtr single or multiphase separator
+   */
+  void setFluidSeparator( std::unique_ptr< constitutive::ConstitutiveBase > fluidSeparatorPtr )  {  m_fluidSeparatorPtr = std::move( fluidSeparatorPtr );}
+  /**
+   * @brief Getter for multi fluid separator
+   * @return reference to separator
+   */
+  constitutive::MultiFluidBase & getMultiFluidSeparator()  { return dynamicCast< constitutive::MultiFluidBase & >( *m_fluidSeparatorPtr ); }
+
+  /**
    * @brief Getter for the reservoir average pressure when m_useSurfaceConditions == 0
    * @return the pressure
    */
@@ -447,6 +459,9 @@ private:
 
   /// Flag to decide whether rates are controlled at rates or surface conditions
   integer m_useSurfaceConditions;
+
+  // Fuild model to compute properties for constraint equation user specified conditions
+  std::unique_ptr< constitutive::ConstitutiveBase >  m_fluidSeparatorPtr;
 
   /// Reservoir region associated with reservoir volume constraint
   string m_referenceReservoirRegion;
