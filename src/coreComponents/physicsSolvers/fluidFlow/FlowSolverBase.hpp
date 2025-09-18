@@ -25,10 +25,7 @@
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 /**
@@ -332,8 +329,6 @@ private:
 
 };
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow
 
 #endif //GEOS_PHYSICSSOLVERS_FINITEVOLUME_FLOWSOLVERBASE_HPP_

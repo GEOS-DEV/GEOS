@@ -24,10 +24,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
   
 //START_SPHINX_INCLUDE_00
@@ -354,8 +351,6 @@ void ImmiscibleMultiphaseFlow::applyFieldValue( real64 const & time_n,
   } );
 }
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_IMMISCIBLEMULTIPHASEFLOW_HPP_

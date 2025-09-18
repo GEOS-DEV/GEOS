@@ -45,10 +45,13 @@
 namespace geos
 {
 
+namespace fluidFlow
+{
+
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace fluidFlow::kernels::singlePhase::proppant;
+using namespace kernels::singlePhase::proppant;
 
 ProppantTransport::ProppantTransport( const string & name,
                                       Group * const parent ):
@@ -1112,4 +1115,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOS_UNUSED_PARAM
 
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, ProppantTransport, string const &, Group * const )
-} /* namespace geos */
+
+} // namespace fluidFlow
+
+} // namespace geos

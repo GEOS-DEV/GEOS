@@ -36,10 +36,7 @@
 #include "physicsSolvers/fluidFlow/kernels/MinPoreVolumeMaxPorosityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/StencilWeightsUpdateKernel.hpp"
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 using namespace dataRepository;
@@ -1013,6 +1010,4 @@ string FlowSolverBase::BCMessage::notAppliedOnRegion( int componentIndex, string
                           fieldName, setName );
 }
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow

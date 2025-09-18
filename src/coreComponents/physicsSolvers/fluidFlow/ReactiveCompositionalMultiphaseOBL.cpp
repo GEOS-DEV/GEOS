@@ -36,10 +36,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/ReactiveCompositionalMultiphaseOBLKernels.hpp"
 
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 using namespace dataRepository;
@@ -1371,6 +1368,4 @@ void ReactiveCompositionalMultiphaseOBL::updateState( DomainPartition & domain )
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, ReactiveCompositionalMultiphaseOBL, string const &, Group * const )
 //END_SPHINX_INCLUDE_01
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow

@@ -21,13 +21,8 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLTAGS_HPP
 
 
-namespace geos
+namespace geos::wells::tags
 {
-
-namespace wellTags
-{
-
-static constexpr real64 minDensForDivision = 1e-10;
 
 // tag to access well and reservoir elements in perforation rates computation
 struct SubRegionTag
@@ -101,11 +96,8 @@ struct RowOffset_WellJac< NC, 1 >
   static constexpr integer VOLBAL    = MASSBAL + NC;
   static constexpr integer ENERGYBAL = VOLBAL+1;
   static constexpr integer nEqn      = ENERGYBAL+1;
-
 };
 
-} // end namespace wellTags
-
-} // end namespace geos
+} // end namespace geos::wells::tags
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLTAGS_HPP

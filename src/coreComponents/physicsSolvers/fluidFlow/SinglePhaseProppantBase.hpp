@@ -22,10 +22,7 @@
 
 #include "SinglePhaseBase.hpp"
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {  
 
 class SinglePhaseProppantBase : public SinglePhaseBase
@@ -73,8 +70,6 @@ private:
 
 };
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow
 
 #endif /* GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEPROPPANTBASE_HPP_ */

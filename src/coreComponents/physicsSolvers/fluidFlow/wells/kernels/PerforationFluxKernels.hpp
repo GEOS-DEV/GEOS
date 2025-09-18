@@ -45,11 +45,6 @@ namespace geos
 namespace wells::kernels::compositional
 {
 
-//struct NoOpStruct
-//{
-//  NoOpStruct(){}
-//};
-
 namespace isothermal
 {
 
@@ -68,16 +63,16 @@ public:
   /// Compile time value for thermal option
   static constexpr integer isThermal = IS_THERMAL;
 
-  using TAG = wellTags::SubRegionTag;
+  using TAG = wells::tags::SubRegionTag;
 
   using CompFlowAccessors =
-    fluidFlow::StencilAccessors< fields::flow::pressure,
+    StencilAccessors< fields::flow::pressure,
                       fields::flow::phaseVolumeFraction,
                       fields::flow::dPhaseVolumeFraction,
                       fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
-    fluidFlow::StencilMaterialAccessors< constitutive::MultiFluidBase,
+    StencilMaterialAccessors< constitutive::MultiFluidBase,
                               fields::multifluid::phaseDensity,
                               fields::multifluid::dPhaseDensity,
                               fields::multifluid::phaseViscosity,
@@ -86,7 +81,7 @@ public:
                               fields::multifluid::dPhaseCompFraction >;
 
   using RelPermAccessors =
-    fluidFlow::StencilMaterialAccessors< constitutive::RelativePermeabilityBase,
+    StencilMaterialAccessors< constitutive::RelativePermeabilityBase,
                               fields::relperm::phaseRelPerm,
                               fields::relperm::dPhaseRelPerm_dPhaseVolFraction >;
 
@@ -630,10 +625,10 @@ public:
 
 
   using ThermalCompFlowAccessors =
-    fluidFlow::StencilAccessors< fields::flow::temperature >;
+    StencilAccessors< fields::flow::temperature >;
 
   using ThermalMultiFluidAccessors =
-    fluidFlow::StencilMaterialAccessors< MultiFluidBase,
+    StencilMaterialAccessors< MultiFluidBase,
                               fields::multifluid::phaseEnthalpy,
                               fields::multifluid::dPhaseEnthalpy >;
 

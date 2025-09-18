@@ -28,7 +28,8 @@
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "functions/FunctionManager.hpp"
-namespace geos
+
+namespace geos::wells
 {
 
 using namespace dataRepository;
@@ -441,4 +442,4 @@ real64 WellSolverBase::setNextDt( real64 const & currentTime, const real64 & cur
   return nextDt;
 }
 
-} // namespace geos
+} // namespace geos::wells

@@ -22,10 +22,7 @@
 
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 /**
@@ -179,8 +176,6 @@ private:
 
 };
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVM_HPP_

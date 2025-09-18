@@ -33,14 +33,7 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SinglePhaseHybridFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/ResidualNormKernel.hpp"
 
-
-/**
- * @namespace the geos namespace that encapsulates the majority of the code
- */
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 using namespace dataRepository;
@@ -649,6 +642,4 @@ void SinglePhaseHybridFVM::updatePressureGradient( DomainPartition & domain )
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SinglePhaseHybridFVM, string const &, Group * const )
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow

@@ -48,10 +48,7 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp"
 
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 using namespace dataRepository;
@@ -1330,6 +1327,4 @@ void SinglePhaseBase::applyDeltaVolume( ElementSubRegionBase & subRegion ) const
   } );
 }
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow

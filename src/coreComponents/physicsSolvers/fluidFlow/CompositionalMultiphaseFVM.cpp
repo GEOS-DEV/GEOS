@@ -62,10 +62,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/DirichletFluxComputeKernel.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/MultiphasePoromechanicsConformingFractures.hpp"
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 using namespace dataRepository;
@@ -1708,6 +1705,4 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( geos::DomainPartition & doma
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphaseFVM, string const &, Group * const )
 //END_SPHINX_INCLUDE_01
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow

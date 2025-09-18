@@ -22,10 +22,7 @@
 
 #include "physicsSolvers/FieldStatisticsBase.hpp"
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 class SinglePhaseBase;
@@ -126,8 +123,6 @@ private:
 
 };
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow
 
 #endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASESTATISTICS_HPP_ */

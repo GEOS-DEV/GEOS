@@ -23,10 +23,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "functions/MultivariableTableFunction.hpp"
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {  
 
 /**
@@ -356,9 +353,6 @@ private:
   integer m_useDARTSL2Norm;
 };
 
-} // namespace fluidFlow
-
-} // namespace geos
-
+} // namespace geos::fluidFlow
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBL_HPP_

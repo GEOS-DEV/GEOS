@@ -45,13 +45,14 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionCheckKernel.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseStatistics.hpp"
 
-namespace geos
+namespace geos::wells
 {
 
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
-using namespace wells::kernels::singlePhase;
+using namespace kernels::singlePhase;
+using namespace fluidFlow;
 
 SinglePhaseWell::SinglePhaseWell( const string & name,
                                   Group * const parent ):
@@ -1302,4 +1303,5 @@ void SinglePhaseWell::printRates( real64 const & time_n,
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SinglePhaseWell, string const &, Group * const )
-}// namespace geos
+
+} // namespace geos::wells

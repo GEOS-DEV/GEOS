@@ -24,7 +24,7 @@
 #include "functions/FunctionManager.hpp"
 
 
-namespace geos
+namespace geos::wells
 {
 
 using namespace dataRepository;
@@ -521,4 +521,4 @@ void WellControls::setNextDtFromTable( TableFunction const * table, real64 const
   }
 }
 
-} //namespace geos
+} //namespace geos::wells

@@ -35,10 +35,7 @@
 #include "common/format/table/TableLayout.hpp"
 
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 using namespace constitutive;
@@ -556,6 +553,4 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         CompositionalMultiphaseStatistics,
                         string const &, dataRepository::Group * const )
 
-} // namespace fluidFlow
-
-} /* namespace geos */
+} // namespace geos::fluidFlow

@@ -66,7 +66,7 @@ public:
   /// Compile time value for thermal option
   static constexpr integer isThermal = IS_THERMAL;
 
-  using TAG = wellTags::SubRegionTag;
+  using TAG = wells::tags::SubRegionTag;
   using SinglePhaseFlowAccessors =
     StencilAccessors< fields::flow::pressure >;
 

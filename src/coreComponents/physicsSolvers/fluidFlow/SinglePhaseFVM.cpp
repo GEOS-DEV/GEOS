@@ -44,13 +44,7 @@
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsConformingFractures.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFractures.hpp"
 
-/**
- * @namespace the geos namespace that encapsulates the majority of the code
- */
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 using namespace dataRepository;
@@ -930,6 +924,4 @@ typedef SinglePhaseFVM<> SinglePhaseFVM;
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, SinglePhaseFVM, string const &, Group * const )
 }
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow

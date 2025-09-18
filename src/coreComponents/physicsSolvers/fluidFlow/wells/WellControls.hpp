@@ -35,6 +35,8 @@ static constexpr auto wellControls = "WellControls";
 }
 }
 
+namespace wells
+{
 
 /**
  * @class WellControls
@@ -520,7 +522,8 @@ ENUM_STRINGS( WellControls::Control,
               "massRate",
               "uninitialized" );
 
+} // namespace wells
 
-} //namespace geos
+} // namespace geos
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP

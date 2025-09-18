@@ -33,12 +33,10 @@
 namespace geos
 {
 
-namespace fluidFlow
-{
-
 using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
+using namespace fluidFlow;
 
 StencilDataCollection::StencilDataCollection( const string & name,
                                               Group * const parent ):
@@ -293,11 +291,8 @@ void StencilDataCollection::logStoredConnections( string_view stencilName )
                                                                getName(), connCount, stencilName ) );
 }
 
-
 REGISTER_CATALOG_ENTRY( TaskBase,
                         StencilDataCollection,
                         string const &, dataRepository::Group * const )
-
-} // namespace fluidFlow
 
 } // namespace geos

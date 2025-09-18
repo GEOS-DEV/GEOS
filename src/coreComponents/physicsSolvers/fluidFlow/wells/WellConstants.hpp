@@ -20,7 +20,9 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTANTS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTANTS_HPP
 
-namespace geos
+#include "common/DataTypes.hpp"
+
+namespace geos::wells
 {
 
 /**
@@ -29,6 +31,8 @@ namespace geos
  */
 struct WellConstants
 {
+  static constexpr real64 minDensForDivision = 1e-10;
+
   /// The default BHP for a rate controlled producer when the BHP is not specified
   static constexpr real64 defaultProducerBHP = 1.01325e5;
 
@@ -36,6 +40,6 @@ struct WellConstants
   static constexpr real64 defaultInjectorBHP = 1.01325e8;
 };
 
-} //namespace geos
+} //namespace geos::wells
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTANTS_HPP

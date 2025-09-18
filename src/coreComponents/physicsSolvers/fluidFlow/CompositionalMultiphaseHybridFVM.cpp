@@ -36,13 +36,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionCheckKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/ResidualNormKernel.hpp"
 
-/**
- * @namespace the geos namespace that encapsulates the majority of the code
- */
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 using namespace dataRepository;
@@ -829,6 +823,4 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( ObjectManagerBase & 
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphaseHybridFVM, std::string const &, Group * const )
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow

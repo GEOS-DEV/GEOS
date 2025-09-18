@@ -23,10 +23,7 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 using namespace dataRepository;
@@ -417,6 +414,4 @@ REGISTER_CATALOG_ENTRY( TaskBase,
                         string const &,
                         dataRepository::Group * const )
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow

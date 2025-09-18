@@ -38,6 +38,9 @@ class SingleFluidBase;
 }
 class WellElementSubRegion;
 
+namespace wells
+{
+
 /**
  * @class SinglePhaseWell
  *
@@ -299,7 +302,8 @@ private:
 
 };
 
-} // namespace geos
+} // namespace wells
 
+} // namespace geos
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELL_HPP_

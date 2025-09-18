@@ -34,6 +34,9 @@ class ConstitutiveManager;
 class MultiFluidBase;
 }
 
+namespace wells
+{
+
 /**
  * @class CompositionalMultiphaseWell
  *
@@ -393,11 +396,10 @@ private:
   /// index of the target phase, used to impose the phase rate constraint
   localIndex m_targetPhaseIndex;
 
-
-
 };
 
-} // namespace geos
+} // namespace wells
 
+} // namespace geos
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_

@@ -35,6 +35,9 @@ class FieldSpecificationBase;
 class FiniteElementBase;
 class DomainPartition;
 
+namespace fluidFlow
+{
+
 /**
  * @class ProppantTransport
  *
@@ -251,7 +254,8 @@ private:
   real64 m_frictionCoefficient;
 };
 
+} // namespace fluidFlow
 
-} /* namespace geos */
+} // namespace geos
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_PROPPANTTRANSPORT_PROPPANTTRANSPORT_HPP_

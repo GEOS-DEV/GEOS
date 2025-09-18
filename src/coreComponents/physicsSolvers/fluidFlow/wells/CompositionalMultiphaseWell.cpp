@@ -54,7 +54,7 @@
 #pragma GCC optimize "O0"
 #endif
 
-namespace geos
+namespace geos::wells
 {
 
 using namespace dataRepository;
@@ -2290,4 +2290,5 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphaseWell, string const &, Group * const )
-} // namespace geos
+
+} // namespace geos::wells

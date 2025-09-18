@@ -26,8 +26,12 @@ namespace geos
 {
 
 class DomainPartition;
-class WellControls;
 class WellElementSubRegion;
+
+namespace wells
+{
+
+class WellControls;
 
 /**
  * @class WellSolverBase
@@ -359,6 +363,8 @@ protected:
   string m_referenceFluidModelName;
 };
 
-}
+} // namespace wells
+
+} // namespace geos
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_

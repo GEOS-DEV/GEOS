@@ -27,11 +27,10 @@ namespace geos
 
 class MeshLevel;
 class FluxApproximationBase;
-
 namespace fluidFlow
 {
-
 class FlowSolverBase;
+}
 
 /**
  * @class StencilDataCollection
@@ -141,7 +140,7 @@ private:
   string m_solverName;
 
   /// Pointer to the target flow solver
-  FlowSolverBase const * m_solver = nullptr;
+  fluidFlow::FlowSolverBase const * m_solver = nullptr;
   /// Pointer to the target mesh body
   MeshLevel const * m_meshLevel = nullptr;
   /// Pointer to the target discretization
@@ -179,8 +178,6 @@ private:
 
   void logStoredConnections( string_view stencilName );
 };
-
-} // namespace fluidFlow
 
 } // namespace geos
 

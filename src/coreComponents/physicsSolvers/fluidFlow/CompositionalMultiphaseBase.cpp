@@ -55,10 +55,7 @@
 #pragma GCC optimize "O0"
 #endif
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 using namespace dataRepository;
@@ -2750,6 +2747,4 @@ bool CompositionalMultiphaseBase::checkSequentialSolutionIncrements( DomainParti
   return isConverged && (m_sequentialCompDensChange < m_maxSequentialCompDensChange);
 }
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow

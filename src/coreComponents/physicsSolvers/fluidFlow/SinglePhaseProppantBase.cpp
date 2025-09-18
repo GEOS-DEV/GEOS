@@ -30,10 +30,7 @@
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/proppant/ProppantBaseKernels.hpp"
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 using namespace constitutive;
@@ -119,6 +116,4 @@ void SinglePhaseProppantBase::updatePorosityAndPermeability( SurfaceElementSubRe
   } );
 }
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow

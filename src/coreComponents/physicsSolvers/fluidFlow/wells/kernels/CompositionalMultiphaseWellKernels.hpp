@@ -257,13 +257,13 @@ struct PresTempCompFracInitializationKernel
 {
 
   using CompFlowAccessors =
-    fluidFlow::StencilAccessors< fields::flow::pressure,
+    StencilAccessors< fields::flow::pressure,
                       fields::flow::temperature,
                       fields::flow::globalCompDensity,
                       fields::flow::phaseVolumeFraction >;
 
   using MultiFluidAccessors =
-    fluidFlow::StencilMaterialAccessors< constitutive::MultiFluidBase,
+    StencilMaterialAccessors< constitutive::MultiFluidBase,
                               fields::multifluid::phaseMassDensity >;
 
 

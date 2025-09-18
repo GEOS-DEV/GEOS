@@ -33,10 +33,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/AccumulationKernel.hpp"
 
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 /**
@@ -657,8 +654,6 @@ void CompositionalMultiphaseBase::accumulationAssemblyLaunch( DofManager const &
   }
 }
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASE_HPP_

@@ -22,10 +22,7 @@
 
 #include "common/DataTypes.hpp"
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 /**
@@ -222,8 +219,6 @@ void shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numRowsIn
 
 } // namespace compositionalMultiphaseUtilities
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEUTILITIES_HPP_

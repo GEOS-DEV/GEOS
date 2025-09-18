@@ -43,10 +43,7 @@
 #pragma GCC optimize "O0"
 #endif
 
-namespace geos
-{
-
-namespace fluidFlow
+namespace geos::fluidFlow
 {
 
 using namespace dataRepository;
@@ -1410,6 +1407,4 @@ real64 ImmiscibleMultiphaseFlow::setNextDtBasedOnStateChange( real64 const & cur
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, ImmiscibleMultiphaseFlow, string const &, Group * const )
 
-} // namespace fluidFlow
-
-} // namespace geos
+} // namespace geos::fluidFlow
