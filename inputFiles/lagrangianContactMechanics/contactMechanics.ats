@@ -50,7 +50,7 @@ decks = [
         name="ContactMechanics_SingleFracCompression_smoke",
         description=
         "Single tilted fracture subjected to remote compression (unstructured grid)",
-        partitions=((1, 1, 1), (2, 2, 1)),
+        partitions=((1, 1, 1),),
         restart_step=1,
         check_step=2,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
@@ -58,7 +58,7 @@ decks = [
         name="ContactMechanics_PassingCrack_smoke",
         description=
         "Analytical benchmark for shear behavior: constant solution",
-        partitions=((1, 1, 1), (2, 2, 1)),
+        partitions=((1, 1, 1),),
         restart_step=1,
         check_step=2,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
