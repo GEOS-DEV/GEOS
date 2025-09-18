@@ -969,7 +969,7 @@ protected:
   stdVector< real64 > m_profilingTimes;
   stdVector< std::string > m_profilingLabels;
 
-  array1d< string > m_plottableFields;
+  string_array m_plottableFields;
   SortedArray< string > m_plottableFieldsSorted;
   int m_plotGridFields;
 
