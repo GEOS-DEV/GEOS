@@ -2154,12 +2154,12 @@ void importNodesets( integer const logLevel,
   }
 }
 
-real64 writeNodes( integer const logLevel,
-                   vtkDataSet & mesh,
-                   string_array & nodesetNames,
-                   CellBlockManager & cellBlockManager,
-                   const geos::R1Tensor & translate,
-                   const geos::R1Tensor & scale )
+void writeNodes( integer const logLevel,
+                 vtkDataSet & mesh,
+                 string_array & nodesetNames,
+                 CellBlockManager & cellBlockManager,
+                 const geos::R1Tensor & translate,
+                 const geos::R1Tensor & scale )
 {
   localIndex const numPts = LvArray::integerConversion< localIndex >( mesh.GetNumberOfPoints() );
   cellBlockManager.setNumNodes( numPts );
@@ -2199,23 +2199,6 @@ real64 writeNodes( integer const logLevel,
 
   // Import remaining nodesets
   importNodesets( logLevel, mesh, nodesetNames, cellBlockManager );
-
-  constexpr real64 minReal = LvArray::NumericLimits< real64 >::min;
-  constexpr real64 maxReal = LvArray::NumericLimits< real64 >::max;
-  real64 xMin[3] = { maxReal, maxReal, maxReal };
-  real64 xMax[3] = { minReal, minReal, minReal };
-
-  vtkBoundingBox bb( mesh.GetBounds() );
-  if( bb.IsValid() )
-  {
-    bb.GetMinPoint( xMin );
-    bb.GetMaxPoint( xMax );
-  }
-
-  MpiWrapper::min< real64 >( xMin, xMin, MPI_COMM_GEOS );
-  MpiWrapper::max< real64 >( xMax, xMax, MPI_COMM_GEOS );
-  LvArray::tensorOps::subtract< 3 >( xMax, xMin );
-  return LvArray::tensorOps::l2Norm< 3 >( xMax );
 }
 
 void writeCells( integer const logLevel,
@@ -2282,5 +2265,33 @@ void writeSurfaces( integer const logLevel,
   }
 }
 
+std::pair< real64, real64 > getGlobalLengthAndOffset( vtkDataSet & mesh )
+{
+  constexpr real64 minReal = LvArray::NumericLimits< real64 >::min;
+  constexpr real64 maxReal = LvArray::NumericLimits< real64 >::max;
+  real64 xMin[3] = { maxReal, maxReal, maxReal };
+  real64 xMax[3] = { minReal, minReal, minReal };
+
+  vtkBoundingBox bb( mesh.GetBounds() );
+  if( bb.IsValid() )
+  {
+    bb.GetMinPoint( xMin );
+    bb.GetMaxPoint( xMax );
+  }
+
+  MpiWrapper::min< real64 >( xMin, xMin, MPI_COMM_GEOS );
+  MpiWrapper::max< real64 >( xMax, xMax, MPI_COMM_GEOS );
+  LvArray::tensorOps::subtract< 3 >( xMax, xMin );
+
+  // global length
+  real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( xMax );
+  LvArray::tensorOps::subtract< 3 >( size, xMin );
+  // global offset
+  real64 offset[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( xMin );
+  LvArray::tensorOps::add< 3 >( offset, xMax );
+  LvArray::tensorOps::scale< 3 >( offset, 0.5 );
+
+  return { LvArray::tensorOps::l2Norm< 3 >( size ), LvArray::tensorOps::l2Norm< 3 >( offset ) };
+}
 
 } // namespace geos
