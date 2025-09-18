@@ -76,7 +76,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     {
       CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
-      meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
+      meshBody.setGlobalLengthScale( std::max( cellBlockManager.getGlobalLength(), cellBlockManager.getGlobalOffset() ) );
     }
   } );
 }
