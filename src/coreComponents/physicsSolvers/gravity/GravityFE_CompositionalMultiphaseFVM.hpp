@@ -79,7 +79,6 @@ public:
     static constexpr char const * useRockDensityString() { return "useRockDensity"; }
     static constexpr char const * usePorosityString() { return "usePorosity"; }
     static constexpr char const * useReferencePorosityString() { return "useReferencePorosity"; }
-    constexpr static char const * flowSolverNameString() { return "flowSolverName"; }
   } gravityViewKeys;
 
 
@@ -88,10 +87,6 @@ protected:
 
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
-
-  /// pointer to the flow solver
-  CompositionalMultiphaseFVM * m_flowSolver;
-  string m_flowSolverName;
 
   /// Use rock density in addition to fluid density
   localIndex m_useRockDensity;

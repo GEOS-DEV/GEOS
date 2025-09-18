@@ -52,9 +52,6 @@ GravityFE_CompositionalMultiphaseFVM::GravityFE_CompositionalMultiphaseFVM( cons
   GravitySolverBase( name, parent )
 {
 
-  registerWrapper( viewKeyStruct::flowSolverNameString(), &m_flowSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the flow solver to dynamically compute the density values" );
 
   registerWrapper( viewKeyStruct::useRockDensityString(), &m_useRockDensity ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -126,8 +123,6 @@ void GravityFE_CompositionalMultiphaseFVM::postInputInitialization()
 {
   GravitySolverBase::postInputInitialization();
 
-  // Create a pointer to the flow solver.
-  m_flowSolver = &this->getParent().getGroup< CompositionalMultiphaseFVM >( m_flowSolverName );
 }
 
 
