@@ -325,7 +325,7 @@ public:
     {}
 
     stackArray2d< real64, NUM_FACE *NUM_FACE > transMatrix;
-    
+
     real64 massFlux[NUM_FACE]{};
     real64 dmassFlux_dPres[NUM_FACE]{};
     real64 dmassFlux_dFacePres[NUM_FACE][NUM_FACE]{};
@@ -358,7 +358,7 @@ public:
     }
   }
 
-  
+
   /**
    * @brief In a given element, compute the one-sided mass flux at this element's faces
    * @param[in] ei the element index
@@ -480,7 +480,7 @@ public:
     {
       // compute the one-sided mass fluxes and their derivatives
       computeMassFlux( ei, stack );
-      
+
       /*
        * perform assembly in this element in two steps:
        * 1) mass conservation equations
@@ -531,11 +531,11 @@ public:
 
     // Step 2: assemble face-centered residuals and their derivatives
     globalIndex const dofColIndexElemPres = stack.elemDofColIndices[0];
-    
+
     // for each element, loop over the local (one-sided) faces
     for( integer iFaceLoc = 0; iFaceLoc < NUM_FACE; ++iFaceLoc )
     {
-    
+
       if( m_faceGhostRank[m_elemToFaces[ei][iFaceLoc]] < 0 )
       {
 

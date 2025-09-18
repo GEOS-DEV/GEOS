@@ -68,9 +68,14 @@
 //
 //Note:
 //
-//- For the MFD(π) method, the condition number estimate is computed on a system expressed only in terms of Lagrange multipliers. With the current construction of the method (i.e., without upwinding in the elliptic components), the cell pressure block is diagonal and can therefore always be eliminated;
-//- For the MFD(p) method the story is flipped we eliminated the lagrange multiplier and keep the cell center pressure. I am not advocating to perform this approach by inverting a sparse block exactly, here is possible because the size of the system, but from a preconditiong perspective we can approximate that inverse;
-//- The material parameters are unitary such that  all the methods construct a discretization for a laplacian, so what we actually see in the table is the effect of the mesh distortion.
+//- For the MFD(π) method, the condition number estimate is computed on a system expressed only in terms of Lagrange multipliers. With the
+// current construction of the method (i.e., without upwinding in the elliptic components), the cell pressure block is diagonal and can
+// therefore always be eliminated;
+//- For the MFD(p) method the story is flipped we eliminated the lagrange multiplier and keep the cell center pressure. I am not advocating
+// to perform this approach by inverting a sparse block exactly, here is possible because the size of the system, but from a preconditiong
+// perspective we can approximate that inverse;
+//- The material parameters are unitary such that  all the methods construct a discretization for a laplacian, so what we actually see in
+// the table is the effect of the mesh distortion.
 
 using namespace geos;
 using namespace geos::dataRepository;
