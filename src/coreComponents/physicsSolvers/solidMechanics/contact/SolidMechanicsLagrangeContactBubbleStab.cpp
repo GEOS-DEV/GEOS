@@ -989,6 +989,8 @@ void SolidMechanicsLagrangeContactBubbleStab::createFaceTypeList( DomainPartitio
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
+    arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
+    
     array1d< localIndex > keys( subRegion.size());
     array1d< localIndex > vals( subRegion.size());
     array1d< localIndex > quadList;
@@ -1004,7 +1006,8 @@ void SolidMechanicsLagrangeContactBubbleStab::createFaceTypeList( DomainPartitio
                                       [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
     {
 
-      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kfe );
+      localIndex const kf0 = elemsToFaces[kfe][0];
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
       if( numNodesPerFace == 3 )
       {
         keys_v[kfe]=0;
