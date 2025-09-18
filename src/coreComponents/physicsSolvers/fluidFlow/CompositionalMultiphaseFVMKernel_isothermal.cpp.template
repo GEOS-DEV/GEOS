@@ -4,7 +4,7 @@ using DirichletFluxComputeKernelPolicy = @DirichletFluxComputeKernelPolicy@;
 
 namespace geos
 {
-namespace kernels::fluidFlow::compositional::fvm::isothermal
+namespace fluidFlow::kernels::compositional::fvm::isothermal
 {
   @EXTERN@ template class @NAME@ < @NCOMP_NDOF@, @KERNEL_TYPE@::KernelWrapper >;
   // template void @NAME@ < @NCOMP_NDOF@, @KERNEL_TYPE@::KernelWrapper >::launch< @NAME@Policy >( localIndex const,

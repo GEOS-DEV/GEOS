@@ -39,6 +39,8 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
+using namespace fluidFlow;
+using namespace wells;
 
 template< typename RESERVOIR_SOLVER >
 CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::

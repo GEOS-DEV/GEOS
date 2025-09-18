@@ -27,7 +27,7 @@
 namespace geos
 {
 
-template< typename FLOW_SOLVER = CompositionalMultiphaseBase, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
+template< typename FLOW_SOLVER = fluidFlow::CompositionalMultiphaseBase, typename MECHANICS_SOLVER = SolidMechanicsLagrangianFEM >
 class MultiphasePoromechanics : public PoromechanicsSolver< FLOW_SOLVER, MECHANICS_SOLVER >
 {
 public:
@@ -60,7 +60,7 @@ public:
    */
   static string catalogName()
   {
-    if constexpr ( std::is_same_v< FLOW_SOLVER, CompositionalMultiphaseBase > )   // special case
+    if constexpr ( std::is_same_v< FLOW_SOLVER, fluidFlow::CompositionalMultiphaseBase > )   // special case
     {
       return "MultiphasePoromechanics";
     }

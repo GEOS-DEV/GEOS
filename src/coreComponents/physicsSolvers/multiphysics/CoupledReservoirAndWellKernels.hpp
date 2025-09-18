@@ -130,7 +130,7 @@ public:
                     FUNC && compFluxKernelOp = NoOpFunc{} ) const
   {
 
-    using namespace compositionalMultiphaseUtilities;
+    using namespace fluidFlow::compositionalMultiphaseUtilities;
     if( m_perfStatus[iperf ] )
     {
       // local working variables and arrays

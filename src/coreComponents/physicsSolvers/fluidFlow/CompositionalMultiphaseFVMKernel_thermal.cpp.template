@@ -4,7 +4,7 @@
 
 namespace geos
 {
-namespace kernels::fluidFlow::compositional::fvm::thermal
+namespace fluidFlow::kernels::compositional::fvm::thermal
 {
   template class @NAME@ < @NCOMP_NDOF@, @KERNEL_TYPE@::KernelWrapper >;
   // these kernels don't implement their own launch, they rely on the isothermal launch which is

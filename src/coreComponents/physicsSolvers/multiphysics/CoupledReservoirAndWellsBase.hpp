@@ -65,7 +65,7 @@ addCouplingNumNonzeros( PhysicsSolverBase const * const solver,
  * @param domain the physical domain object
  */
 bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
-                               WellSolverBase const * const wellSolver,
+                               wells::WellSolverBase const * const wellSolver,
                                DomainPartition const & domain );
 
 }
@@ -345,7 +345,7 @@ private:
                                                       fields::permeability::permeability >();
 
         PerforationData & perforationData = *subRegion.getPerforationData();
-        WellControls const & wellControls = wellSolver()->getWellControls( subRegion );
+        wells::WellControls const & wellControls = wellSolver()->getWellControls( subRegion );
 
         // compute the Peaceman index (if not read from XML)
         perforationData.computeWellTransmissibility( meshLevel, subRegion, permeability );

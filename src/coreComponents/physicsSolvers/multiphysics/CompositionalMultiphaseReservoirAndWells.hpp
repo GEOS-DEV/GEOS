@@ -29,14 +29,14 @@ namespace geos
 {
 
 /// @tparam RESERVOIR_SOLVER compositional flow or compositional poromechanics solver
-template< typename RESERVOIR_SOLVER = CompositionalMultiphaseBase >
+template< typename RESERVOIR_SOLVER = fluidFlow::CompositionalMultiphaseBase >
 class CompositionalMultiphaseReservoirAndWells : public CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
-                                                                                      CompositionalMultiphaseWell >
+                                                                                      wells::CompositionalMultiphaseWell >
 {
 public:
 
   using Base = CoupledReservoirAndWellsBase< RESERVOIR_SOLVER,
-                                             CompositionalMultiphaseWell >;
+                                             wells::CompositionalMultiphaseWell >;
   using Base::getLogLevel;
   using Base::m_solvers;
   using Base::m_linearSolverParameters;
@@ -60,7 +60,7 @@ public:
    */
   static string catalogName()
   {
-    if constexpr (std::is_same_v< RESERVOIR_SOLVER, CompositionalMultiphaseBase > ) // special case
+    if constexpr (std::is_same_v< RESERVOIR_SOLVER, fluidFlow::CompositionalMultiphaseBase > ) // special case
     {
       return "CompositionalMultiphaseReservoir";
     }
@@ -99,7 +99,7 @@ protected:
 
 private:
 
-  CompositionalMultiphaseBase * flowSolver() const;
+  fluidFlow::CompositionalMultiphaseBase * flowSolver() const;
 
 };
 

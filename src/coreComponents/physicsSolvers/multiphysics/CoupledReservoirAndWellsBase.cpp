@@ -24,6 +24,7 @@ namespace geos
 {
 
 using namespace fields;
+using namespace wells;
 
 namespace coupledReservoirAndWellsInternal
 {
