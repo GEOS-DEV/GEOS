@@ -47,15 +47,15 @@ DECLARE_FIELD( oldStress,
                array3dLayoutStress,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Previous material stress" );
 
 DECLARE_FIELD( density,
                "density",
                array2d< real64 >,
                0,
-               NOPLOT,
-               NO_WRITE,
+               LEVEL_0,
+               WRITE_AND_READ,
                "Material density" );
 
 DECLARE_FIELD( bulkModulus,
@@ -63,7 +63,7 @@ DECLARE_FIELD( bulkModulus,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Bulk modulus" );
 
 DECLARE_FIELD( shearModulus,
@@ -71,7 +71,7 @@ DECLARE_FIELD( shearModulus,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Shear modulus" );
 
 DECLARE_FIELD( biotCoefficient,
@@ -79,7 +79,7 @@ DECLARE_FIELD( biotCoefficient,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Biot coefficient" );
 
 DECLARE_FIELD( thermalExpansionCoefficient,
@@ -87,7 +87,7 @@ DECLARE_FIELD( thermalExpansionCoefficient,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Thermal expansion coefficient" );
 
 DECLARE_FIELD( yieldStress,
@@ -95,7 +95,7 @@ DECLARE_FIELD( yieldStress,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Yield stress" );
 
 DECLARE_FIELD( damage,
@@ -110,8 +110,8 @@ DECLARE_FIELD( oldDamage,
                "oldDamage",
                array2d< real64 >,
                0,
-               NOPLOT,
-               NO_WRITE,
+               LEVEL_0,
+               WRITE_AND_READ,
                "Material old damage" );
 
 DECLARE_FIELD( jacobian,
@@ -119,7 +119,7 @@ DECLARE_FIELD( jacobian,
                array2d< real64 >,
                1.0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Jacobian of the deformation" );
 
 DECLARE_FIELD( lengthScale,
@@ -127,7 +127,7 @@ DECLARE_FIELD( lengthScale,
                array1d< real64 >,
                DBL_MIN,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Length scale" );
 
 DECLARE_FIELD( damageGrad,
@@ -166,32 +166,32 @@ DECLARE_FIELD( criticalFractureEnergy,
                "criticalFractureEnergy",
                array1d< real64 >,
                0,
-               NOPLOT,
-               NO_WRITE,
+               LEVEL_0,
+               WRITE_AND_READ,
                "Critical fracture energy" );
 
 DECLARE_FIELD( tensileStrength,
                "tensileStrength",
                array1d< real64 >,
                0,
-               NOPLOT,
-               NO_WRITE,
+               LEVEL_0,
+               WRITE_AND_READ,
                "Tensile strength" );
 
 DECLARE_FIELD( compressiveStrength,
                "compressiveStrength",
                array1d< real64 >,
                0,
-               NOPLOT,
-               NO_WRITE,
+               LEVEL_0,
+               WRITE_AND_READ,
                "Compressive strength" );
 
 DECLARE_FIELD( deltaCoefficient,
                "deltaCoefficient",
                array1d< real64 >,
                0,
-               NOPLOT,
-               NO_WRITE,
+               LEVEL_0,
+               WRITE_AND_READ,
                "Delta coefficient" );
 
 DECLARE_FIELD( recompressionIndex,
@@ -199,7 +199,7 @@ DECLARE_FIELD( recompressionIndex,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Recompression index" );
 
 DECLARE_FIELD( virginCompressionIndex,
@@ -207,7 +207,7 @@ DECLARE_FIELD( virginCompressionIndex,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Virgin compression index" );
 
 DECLARE_FIELD( cslSlope,
@@ -215,7 +215,7 @@ DECLARE_FIELD( cslSlope,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Critical state line slope" );
 
 DECLARE_FIELD( shapeParameter,
@@ -223,14 +223,14 @@ DECLARE_FIELD( shapeParameter,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Shape parameter" );
 
 DECLARE_FIELD( preConsolidationPressure,
                "preConsolidationPressure",
                array2d< real64 >,
                0,
-               LEVEL_0,
+               LEVEL_3,
                WRITE_AND_READ,
                "Current preconsolidation pressure" );
 
@@ -239,7 +239,7 @@ DECLARE_FIELD( oldPreConsolidationPressure,
                array2d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Old preconsolidation pressure" );
 
 DECLARE_FIELD( friction,
@@ -247,7 +247,7 @@ DECLARE_FIELD( friction,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Friction angle" );
 
 DECLARE_FIELD( initialFriction,
@@ -255,7 +255,7 @@ DECLARE_FIELD( initialFriction,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Initial friction angle" );
 
 DECLARE_FIELD( residualFriction,
@@ -263,7 +263,7 @@ DECLARE_FIELD( residualFriction,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Final friction angle" );
 
 DECLARE_FIELD( dilation,
@@ -271,7 +271,7 @@ DECLARE_FIELD( dilation,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Dilation angle" );
 
 DECLARE_FIELD( hardening,
@@ -279,14 +279,14 @@ DECLARE_FIELD( hardening,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Hardening rate" );
 
 DECLARE_FIELD( cohesion,
                "cohesion",
                array2d< real64 >,
                0,
-               LEVEL_0,
+               LEVEL_3,
                WRITE_AND_READ,
                "Cohesion" );
 
@@ -294,7 +294,7 @@ DECLARE_FIELD( oldCohesion,
                "oldCohesion",
                array2d< real64 >,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Old cohesion" );
 
@@ -303,14 +303,14 @@ DECLARE_FIELD( pressureIntercept,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Pressure intercept" );
 
 DECLARE_FIELD( state,
                "state",
                array2d< real64 >,
                0,
-               LEVEL_0,
+               LEVEL_3,
                WRITE_AND_READ,
                "Material state" );
 
@@ -319,7 +319,7 @@ DECLARE_FIELD( oldState,
                array2d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Old material state" );
 
 // TODO merge in one
@@ -328,7 +328,7 @@ DECLARE_FIELD( c11,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "C11 component of Voigt stiffness tensor" );
 
 DECLARE_FIELD( c12,
@@ -336,7 +336,7 @@ DECLARE_FIELD( c12,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "C12 component of Voigt stiffness tensor" );
 
 DECLARE_FIELD( c13,
@@ -344,7 +344,7 @@ DECLARE_FIELD( c13,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "C13 component of Voigt stiffness tensor" );
 
 DECLARE_FIELD( c22,
@@ -352,7 +352,7 @@ DECLARE_FIELD( c22,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "C22 component of Voigt stiffness tensor" );
 
 DECLARE_FIELD( c23,
@@ -360,7 +360,7 @@ DECLARE_FIELD( c23,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "C23 component of Voigt stiffness tensor" );
 
 DECLARE_FIELD( c33,
@@ -368,7 +368,7 @@ DECLARE_FIELD( c33,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "C33 component of Voigt stiffness tensor" );
 
 DECLARE_FIELD( c44,
@@ -376,7 +376,7 @@ DECLARE_FIELD( c44,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "C44 component of Voigt stiffness tensor" );
 
 DECLARE_FIELD( c55,
@@ -384,7 +384,7 @@ DECLARE_FIELD( c55,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "C55 component of Voigt stiffness tensor" );
 
 DECLARE_FIELD( c66,
@@ -392,7 +392,7 @@ DECLARE_FIELD( c66,
                array1d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "C66 component of Voigt stiffness tensor" );
 //
 
@@ -409,7 +409,7 @@ DECLARE_FIELD( oldInternalEnergy,
                array2d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Internal energy of the solid per unit volume at the previous time-step [J/m^3]" );
 
 DECLARE_FIELD( dInternalEnergy_dTemperature,
@@ -417,7 +417,7 @@ DECLARE_FIELD( dInternalEnergy_dTemperature,
                array2d< real64 >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Derivative of the solid internal energy w.r.t. temperature [J/(m^3.K)]" );
 
 }
