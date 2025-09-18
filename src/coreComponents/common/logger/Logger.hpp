@@ -152,7 +152,7 @@
       std::ostringstream __oss; \
       __oss << "***** ERROR\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " CAUSE_MESSAGE "\n"; \
+      __oss << "***** " << CAUSE_MESSAGE << "\n"; \
       __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
@@ -164,6 +164,7 @@
                                          __FILE__, \
                                          __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
+        msgStruct.setCause( CAUSE_MESSAGE ); \
         msgStruct.addCallStackInfo( stackHistory ); \
         msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
         g_errorLogger.flushErrorMsg( msgStruct ); \
@@ -382,9 +383,8 @@
  */
 #define GEOS_ERROR_IF_OP_MSG( lhs, OP, NOP, rhs, ... ) \
   GEOS_ERROR_IF_CAUSE( lhs OP rhs, \
-                       "Expected " << #lhs << " " << #NOP << " " << #rhs << "\n" << \
-                       "  " << #lhs << " = " << lhs << "\n" << \
-                       "  " << #rhs << " = " << rhs << "\n", \
+                       GEOS_FMT( "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = {}\n* " #rhs " = {}\n", \
+                                 lhs, rhs ), \
                        __VA_ARGS__ )
 
 /**
@@ -611,13 +611,12 @@
  */
 #define GEOS_THROW_IF_LE( lhs, rhs, TYPE ) GEOS_THROW_IF_LE_MSG( lhs, rhs, "", TYPE )
 
-#if !defined(NDEBUG)
+#if !defined(NDEBUG) || defined(GEOS_ASSERT_ENABLED)
 
 #define GEOS_ASSERT_ENABLED
 
 /**
- * @brief Abort execution if @p COND is false but only when
- *        NDEBUG is not defined..
+ * @brief Abort execution if @p COND is false but only when NDEBUG is not defined..
  * @param COND The condition to check, causes an error if false.
  * @param ... Variable arguments with the following structure:
  *            - First mandatory parameter, the message to log (must be streamable)
@@ -631,18 +630,6 @@
 #define  GEOS_ASSERT_MSG( COND, ... ) \
   GEOS_ERROR_IF_CAUSE( !( COND ), "Expected: " STRINGIZE( COND ), __VA_ARGS__ )
 
-#else
-
-#define GEOS_ASSERT_MSG( COND, ... ) ((void) 0)
-
-#endif
-
-/**
- * @brief Assert a condition in debug builds.
- * @param COND The condition to check, causes an error if false.
- */
-#define GEOS_ASSERT( COND ) GEOS_ASSERT_MSG( COND, "" )
-
 /**
  * @brief Abort execution if @p lhs @p OP @p rhs is false.
  * @param lhs The left side of the operation.
@@ -654,11 +641,22 @@
  */
 #define GEOS_ASSERT_OP_MSG( lhs, OP, rhs, ... ) \
   GEOS_ERROR_IF_CAUSE( !( lhs OP rhs ), \
-                       "Expected: " STRINGIZE( COND ) \
-                       "  " << #lhs << " = " << lhs << "\n" << \
-                       "  " << #rhs << " = " << rhs << "\n", \
+                       GEOS_FMT( "Expected: " #lhs " " #OP " " #rhs "\n* " #lhs " = {}\n* " #rhs " = {}\n", \
+                                 lhs, rhs ), \
                        __VA_ARGS__ )
 
+#else
+
+#define GEOS_ASSERT_MSG( ... ) ((void) 0)
+#define GEOS_ASSERT_OP_MSG( ... ) ((void) 0)
+
+#endif
+
+/**
+ * @brief Assert a condition in debug builds.
+ * @param COND The condition to check, causes an error if false.
+ */
+#define GEOS_ASSERT( COND ) GEOS_ASSERT_MSG( COND, "" )
 
 /**
  * @brief Assert that two values compare equal in debug builds.

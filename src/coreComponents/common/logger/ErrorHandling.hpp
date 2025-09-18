@@ -97,8 +97,10 @@ public:
   {
     /// the error type (Warning, Error or Exception)
     MsgType m_type = ErrorLogger::MsgType::Undefined;
-    /// the erreur message that can be completed
+    /// the error message that can be completed
     std::string m_msg;
+    /// the cause of the error (erroneous condition, failed assertion...) if identified (optional)
+    std::string m_cause;
     /// the source location file corresponding to the error in the code
     std::string m_file;
     /// the source location line corresponding to the error in the code (default is 0)
@@ -157,6 +159,13 @@ public:
      * @return the reference to the current instance
      */
     ErrorMsg & setType( MsgType msgType );
+
+    /**
+     * @brief Set the cause of the error
+     * @param cause See documentation of m_cause.
+     * @return The reference to the current instance
+     */
+    ErrorMsg & setCause( std::string_view cause );
 
     /**
      * @brief Set the rank on which the error is raised

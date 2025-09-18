@@ -12,6 +12,10 @@
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
+
+// forcefully enable asserts macros for this unit test
+#define GEOS_ASSERT_ENABLED
+
 #include "common/logger/ErrorHandling.hpp"
 #include "common/logger/Logger.hpp"
 #include "dataRepository/DataContext.hpp"
@@ -212,12 +216,12 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
   ErrorLogger g_errorLogger; // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
   beginLocalLoggerTest( g_errorLogger, "errorTestOutput.yaml" );
 
-  GET_LINE( line1 ); EXPECT_EXIT( GEOS_ERROR_IF( testValue > testMaxPrecision || testValue < testMinPrecision,
-                                                 GEOS_FMT( "{}: option should be between {} and {}.",
-                                                           context.toString(), testMinPrecision, testMaxPrecision ),
-                                                 context,
-                                                 additionalContext,
-                                                 importantAdditionalContext.getContextInfo().setPriority( 2 ) ),
+  GET_LINE( line1 ); EXPECT_EXIT( GEOS_ERROR_IF_GT_MSG( testValue, testMaxPrecision,
+                                                        GEOS_FMT( "{}: option should be lower than {}.",
+                                                                  context.toString(), testMaxPrecision ),
+                                                        context,
+                                                        additionalContext,
+                                                        importantAdditionalContext.getContextInfo().setPriority( 2 ) ),
                                   ::testing::ExitedWithCode( 1 ),
                                   ".*" );
 
@@ -228,7 +232,7 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
       R"(- type: Error
     rank: 0
     message: >-
-      Base Test Class (file.xml, l.23): option should be between 1e-06 and 0.001.
+      Base Test Class (file.xml, l.23): option should be lower than 0.001.
     contexts:
       - priority: 2
         inputFile: /path/to/file.xml
@@ -239,6 +243,10 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
       - priority: 0
         inputFile: /path/to/file.xml
         inputLine: 32
+    cause: >-
+      Expected: testValue <= testMaxPrecision
+      * testValue = 5
+      * testMaxPrecision = 0.001
     sourceLocation:
       file: {}
       line: {}
@@ -254,11 +262,11 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
   ErrorLogger g_errorLogger; // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
   beginLocalLoggerTest( g_errorLogger, "assertTestOutput.yaml" );
 
-  GET_LINE( line1 ); EXPECT_EXIT( GEOS_ASSERT_LT_MSG( testValue, testMaxPrecision,
-                                                      GEOS_FMT( "{}: option should be lower than {}.",
-                                                                context.toString(), testMaxPrecision ),
-                                                      context,
-                                                      additionalContext ),
+  GET_LINE( line1 ); EXPECT_EXIT( GEOS_ASSERT_MSG( testValue > testMinPrecision && testValue < testMaxPrecision,
+                                                   GEOS_FMT( "{}: value should be between {} and {}, but is {}.",
+                                                             context.toString(), testMinPrecision, testMaxPrecision, testValue ),
+                                                   context,
+                                                   additionalContext ),
                                   ::testing::ExitedWithCode( 1 ),
                                   ".*" );
 
@@ -269,7 +277,7 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
       R"(- type: Error
     rank: 0
     message: >-
-      Base Test Class (file.xml, l.23): option should be lower than 0.001.
+      Base Test Class (file.xml, l.23): value should be between 1e-06 and 0.001, but is 5.
     contexts:
       - priority: 0
         inputFile: /path/to/file.xml
@@ -277,6 +285,8 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
       - priority: 0
         inputFile: /path/to/file.xml
         inputLine: 32
+    cause: >-
+      Expected: testValue > testMinPrecision && testValue < testMaxPrecision
     sourceLocation:
       file: {}
       line: {}

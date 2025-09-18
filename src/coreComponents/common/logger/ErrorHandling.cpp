@@ -107,6 +107,12 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setType( ErrorLogger::MsgType msg
   return *this;
 }
 
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCause( std::string_view cause )
+{
+  m_cause = cause;
+  return *this;
+}
+
 void ErrorLogger::ErrorMsg::addContextInfoImpl( ErrorLogger::ErrorContext && ctxInfo )
 {
   m_contextsInfo.emplace_back( std::move( ctxInfo ) );
@@ -214,6 +220,13 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
           yamlFile << g_level3Next << ErrorContext::attributeToString( key ) << ": " << value << "\n";
         }
       }
+    }
+
+    // error cause
+    if( !errorMsg.m_cause.empty() )
+    {
+      yamlFile << g_level1Next << "cause: >-\n";
+      streamMultilineYamlAttribute( errorMsg.m_cause, yamlFile, g_level2Next );
     }
 
     // Location of the error in the code
