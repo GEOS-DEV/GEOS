@@ -257,14 +257,19 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
             types.push_back( EnumStrings< MeshObjectPath::ObjectTypes >::toString( type ) );
           }
         }
-        message << GEOS_FMT( "Set '{}':\n"
-                             "  - Does not capture: {}\n", setName, fs.getObjectPath());
+
         if( !types.empty())
         {
+          message << GEOS_FMT( "Set '{}':\n"
+                               "  - Does not capture: {}\n", setName, fs.getObjectPath());
           message << GEOS_FMT( "  - Instead, captures: {}\n", stringutilities::join( types, ", " ));
         }
+        else
+        {
+          message << GEOS_FMT( "Set '{}' does not capture anything in the mesh ", setName );
+        }
       }
-
+      std::cout << "test avant le crash "<< message.str() << std::endl;
       Wrapper< integer > const & wrapper = fs.getWrapper< integer >(
         FieldSpecificationBase::viewKeyStruct::emptySetErrorModeString());
       switch( wrapper.getDefaultValue() )
@@ -272,7 +277,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         case  FieldSpecificationBase::setErrorMode::Silent:
           break;
         case  FieldSpecificationBase::setErrorMode::Error:
-          GEOS_WARNING( message.str()  );
+          GEOS_THROW( message.str() , InputError  );
           break;
         case  FieldSpecificationBase::setErrorMode::SurfaceGeneratorWarning:
           message << GEOS_FMT( "As the simulation includes a SurfaceGenerator, the set may be modified later",
