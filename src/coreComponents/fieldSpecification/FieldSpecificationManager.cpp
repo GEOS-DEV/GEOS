@@ -16,6 +16,8 @@
 #include "FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
+#include "mesh/MeshObjectPath.hpp"
+
 
 namespace geos
 {
@@ -67,8 +69,53 @@ void FieldSpecificationManager::expandObjectCatalogs()
   }
 }
 
+using SetNameToTypesMap = std::map< std::string, std::vector< MeshObjectPath::ObjectTypes > >;
+
+template< typename TYPE, typename ... NEXT_TYPES >
+void forTypes( FieldSpecificationBase const & fs, MeshLevel const & mesh,
+               MeshObjectPath::ObjectTypes const targetType,
+               string const & setName, SetNameToTypesMap & setTypesMap )
+{
+  mesh.forSubGroups< TYPE >( [&]( Group const & targetManager )
+  {
+    TYPE const * manager = dynamic_cast< TYPE const * >( &targetManager );
+
+    if( manager != nullptr )
+    {
+      if( manager->sets().hasWrapper( setName ))
+      {
+        auto const & targetSet = manager->getSet( setName );
+
+        if( std::is_same_v< TYPE, NodeManager > &&
+            targetType !=  MeshObjectPath::ObjectTypes::nodes &&
+            targetSet.size() > 0 )
+        {
+          setTypesMap[setName].push_back( MeshObjectPath::ObjectTypes::nodes );
+        }
+        else if( std::is_same_v< TYPE, EdgeManager >  &&
+                 targetType !=  MeshObjectPath::ObjectTypes::edges &&
+                 targetSet.size() > 0 )
+        {
+          setTypesMap[setName].push_back( MeshObjectPath::ObjectTypes::edges );
+        }
+        else if( std::is_same_v< TYPE, FaceManager > &&
+                 targetType !=  MeshObjectPath::ObjectTypes::faces &&
+                 targetSet.size() > 0 )
+        {
+          setTypesMap[setName].push_back( MeshObjectPath::ObjectTypes::faces );
+        }
+      }
+    }
+  } );
+
+  if constexpr ( sizeof...(NEXT_TYPES) > 0 )
+    forTypes< NEXT_TYPES... >( fs, mesh, targetType, setName, setTypesMap );
+}
+
 void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
 {
+  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  Group const & meshBodies = domain.getMeshBodies();
   // loop over all the FieldSpecification of the XML file
   this->forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs )
   {
@@ -77,6 +124,11 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     map< string, localIndex > isTargetSetEmpty;
     // map from set name to a flag (1 if targetSet has been created, 0 otherwise)
     map< string, localIndex > isTargetSetCreated;
+    // map from setName where we store the derived class of objectManager (if exist)
+    SetNameToTypesMap setTypesMap;
+    // The target type of objectPath
+    MeshObjectPath::ObjectTypes expectedSetType = fs.getMeshObjectPaths().getObjectType();
+
 
     // Step 1: collect all the set names in a map (this is made necessary by the "apply" loop pattern
 
@@ -85,6 +137,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     {
       isTargetSetEmpty[setNames[i]] = 1;
       isTargetSetCreated[setNames[i]] = 0;
+      setTypesMap[setNames[i]].push_back( expectedSetType );
     }
 
     // We have to make sure that the meshLevel is in the target of the boundary conditions
@@ -96,7 +149,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     }
 
     // Step 2: apply the boundary condition
-
     fs.apply< Group >( mesh,
                        [&]( FieldSpecificationBase const &,
                             string const & setName,
@@ -105,31 +157,20 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                             string const fieldName )
     {
       InputFlags const flag = fs.getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).getInputFlag();
-
-      // 2.a) If we enter this loop, we know that the set has been created
-      //      Fracture/fault sets are created later and the "apply" call silently ignores them
       isTargetSetCreated.at( setName ) = 1;
-
-      // 2.b) If the fieldName is registered on this target, we record it
-      //      Unfortunately, we need two exceptions:
-      //       - FieldSpecification that do not target a field, like Aquifer, Traction, Equilibrium, etc. For these, the check is not
-      // necessary (the user cannot mess up)
-      //       - Face boundary conditions that target cell-based quantities, like the face BC of the flow solvers
-      if( targetGroup.hasWrapper( fieldName ) ||
-          flag == InputFlags::FALSE || // no need to check input if the input flag is false (Aquifer, Traction, Equilibrium do not target a
-                                       // field)
-          targetGroup.getName() == MeshLevel::groupStructKeys::faceManagerString() ) // the field names of the face BCs are not always
-                                                                                     // registered on
-                                                                                     // the faceManager...
+      if( targetGroup.hasWrapper( fieldName ) ||flag == InputFlags::FALSE ||
+          targetGroup.getName() == MeshLevel::groupStructKeys::faceManagerString() )     // the field names of the face BCs are not always
+                                                                                         // registered on
+                                                                                         // the faceManager...
       {
         isFieldNameFound = 1;
       }
 
-
-      // 2.c) If the target set is not empty, we record it
-      //      Fracture/fault sets are sometimes at initialization and the "apply" call silently ignores them
       if( targetSet.size() > 0 )
       {
+        if( setTypesMap.count( setName ) == 1 )
+          setTypesMap.erase( setName );
+
         isTargetSetEmpty.at( setName ) = 0;
       }
     } );
@@ -168,7 +209,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       }
 
       std::set< string > registeredSets;
-      DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
       Group const & meshBody = domain.getMeshBodies();
       objectPath.forObjectsInPath( meshBody,
                                    [&]( Group const & targetGroup )
@@ -195,37 +235,50 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       GEOS_THROW( errorMessageBuilder.str(), InputError );
     }
 
-    GeometricObjectManager & geometricObjManager = GeometricObjectManager::getInstance();
-
-    for( auto const & mapEntry : isTargetSetEmpty )
+    if( !setTypesMap.empty())
     {
-      if( mapEntry.second == 1 )
+      for( auto const & [key, values] : setTypesMap )
       {
-        geometricObjManager.forSubGroups< SimpleGeometricObjectBase >(
-          [&]( SimpleGeometricObjectBase const & object )
+        forTypes< FaceManager,
+                  EdgeManager,
+                  NodeManager >( fs, mesh, expectedSetType, key, setTypesMap );
+      }
+
+      std::ostringstream message;
+      message << GEOS_FMT( "{}: this FieldSpecification targets (an) empty set(s).\n",
+                           fs.getDataContext() );
+      for( auto const & [setName, values] : setTypesMap )
+      {
+        string_array types;
+        for( auto const & type : values )
         {
-          if( mapEntry.first == object.getName())
+          if( type != expectedSetType )
           {
-            std::ostringstream message;
-            message << GEOS_FMT( "{}: this FieldSpecification targets (an) empty set(s)\n"
-                                 "The box {}  does not select any region.\n",
-                                 fs.getDataContext(), object.getDataContext());
-            Wrapper< integer > const & wrapper = fs.getWrapper< integer >( FieldSpecificationBase::viewKeyStruct::emptySetErrorModeString());
-            switch( wrapper.getDefaultValue() )
-            {
-              case  FieldSpecificationBase::setErrorMode::Silent:
-                break;
-              case  FieldSpecificationBase::setErrorMode::Error:
-                GEOS_ERROR( message.str()  );
-                break;
-              case  FieldSpecificationBase::setErrorMode::SurfaceGeneratorWarning:
-                message << GEOS_FMT( "As the simulation includes a SurfaceGenerator, the set may be modified later",
-                                     fs.getDataContext() );
-                GEOS_WARNING( message.str() );
-                break;
-            }
+            types.push_back( EnumStrings< MeshObjectPath::ObjectTypes >::toString( type ) );
           }
-        } );
+        }
+        message << GEOS_FMT( "Set '{}':\n"
+                             "  - Does not capture: {}\n", setName, fs.getObjectPath());
+        if( !types.empty())
+        {
+          message << GEOS_FMT( "  - Instead, captures: {}\n", stringutilities::join( types, ", " ));
+        }
+      }
+
+      Wrapper< integer > const & wrapper = fs.getWrapper< integer >(
+        FieldSpecificationBase::viewKeyStruct::emptySetErrorModeString());
+      switch( wrapper.getDefaultValue() )
+      {
+        case  FieldSpecificationBase::setErrorMode::Silent:
+          break;
+        case  FieldSpecificationBase::setErrorMode::Error:
+          GEOS_WARNING( message.str()  );
+          break;
+        case  FieldSpecificationBase::setErrorMode::SurfaceGeneratorWarning:
+          message << GEOS_FMT( "As the simulation includes a SurfaceGenerator, the set may be modified later",
+                               fs.getDataContext() );
+          GEOS_WARNING( message.str() );
+          break;
       }
     }
 
@@ -235,9 +288,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       errorMessageBuilder << GEOS_FMT( "\n{}: there are no field named `{}` under the region `{}`.\n",
                                        fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::fieldNameString() ),
                                        fs.getFieldName(), fs.getObjectPath() );
-
-      DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-      Group const & meshBodies = domain.getMeshBodies();
 
       std::set< string > registeredFields;
       objectPath.forObjectsInPath( meshBodies,

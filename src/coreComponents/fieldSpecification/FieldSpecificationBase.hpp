@@ -133,10 +133,15 @@ public:
       {
         dataRepository::Group const & setGroup = object.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
         string_array setNames = this->getSetNames();
+        // std::cout << "--- setNames -----" << std::endl;
+        // std::cout << "   object: " << object.getName() <<  std::endl;
+        // std::cout << "   setGroup: " << setGroup.getName() <<  std::endl;
         for( auto & setName : setNames )
         {
+          // std::cout << "   setName: " << setName <<  std::endl;
           if( setGroup.hasWrapper( setName ) )
           {
+            // std::cout << "   yes " << setName <<  std::endl;
             SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
             lambda( dynamic_cast< BC_TYPE const & >(*this), setName, targetSet, object, getFieldName() );
           }
