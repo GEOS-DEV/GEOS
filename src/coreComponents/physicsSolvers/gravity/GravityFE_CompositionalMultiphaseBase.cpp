@@ -99,16 +99,16 @@ void GravityFE_CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodi
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    nodeManager.registerField< fields::volumeIntegral >( this->getName() );
+    nodeManager.registerField< fields::volumeIntegral >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< fields::mediumDensity >( this->getName() );
-      subRegion.registerField< fields::fluidDensity >( this->getName() );
-      subRegion.registerField< fields::rockDensity >( this->getName() );
-      subRegion.registerField< fields::porosity >( this->getName() );
+      subRegion.registerField< fields::mediumDensity >( getName() );
+      subRegion.registerField< fields::fluidDensity >( getName() );
+      subRegion.registerField< fields::rockDensity >( getName() );
+      subRegion.registerField< fields::porosity >( getName() );
     } );
   } );
 }
@@ -163,7 +163,7 @@ real64 GravityFE_CompositionalMultiphaseBase::explicitStepModeling( real64 const
       CoupledSolidBase const & solid = constitutiveModels.getGroup< CoupledSolidBase >( solidName );
       arrayView1d< real64 > const porosity = elementSubRegion.getReference< array1d< real64 > >( fields::porosity::key()).toView();
 
-      if( this->m_useReferencePorosity == 1 )
+      if( m_useReferencePorosity == 1 )
       {
         GEOS_LOG_RANK_0( "GravityFE_CompositionalMultiphaseBase: Use referencePorosity" );
         arrayView1d< real64 const > const reservoirPorosity = solid.getReferencePorosity().toViewConst();
@@ -173,7 +173,7 @@ real64 GravityFE_CompositionalMultiphaseBase::explicitStepModeling( real64 const
           porosity[i] = reservoirPorosity[i];
         } );
       }
-      else if( this->m_usePorosity == 1 )
+      else if( m_usePorosity == 1 )
       {
         GEOS_LOG_RANK_0( "GravityFE_CompositionalMultiphaseBase: Use Porosity" );
         arrayView2d< real64 const > const reservoirPorosity = solid.getPorosity().toViewConst();
@@ -197,7 +197,7 @@ real64 GravityFE_CompositionalMultiphaseBase::explicitStepModeling( real64 const
       arrayView1d< real64 > const rockDensity = elementSubRegion.getReference< array1d< real64 > >( fields::rockDensity::key()).toView();
       rockDensity.setValues< parallelHostPolicy >( 0. );
 
-      if( this->m_useRockDensity == 1 )
+      if( m_useRockDensity == 1 )
       {
         string const & solidModelName = elementSubRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
         arrayView2d< real64 const > const reservoirRockDensity =

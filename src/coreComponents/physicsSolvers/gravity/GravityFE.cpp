@@ -74,14 +74,14 @@ void GravityFE::registerDataOnMesh( Group & meshBodies )
                                                     string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
-    nodeManager.registerField< fields::volumeIntegral >( this->getName() );
+    nodeManager.registerField< fields::volumeIntegral >( getName() );
 
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
-      subRegion.registerField< fields::mediumDensity >( this->getName() );
-      subRegion.registerField< fields::adjoint >( this->getName() );
-      subRegion.registerField< fields::volumeIntegral2d >( this->getName() );
+      subRegion.registerField< fields::mediumDensity >( getName() );
+      subRegion.registerField< fields::adjoint >( getName() );
+      subRegion.registerField< fields::volumeIntegral2d >( getName() );
 
       // Assume the maximum number of points per cell is MAX_SUPPORT_POINTS...
       subRegion.getField< fields::volumeIntegral2d >().resizeDimension< 1 >( MAX_SUPPORT_POINTS );
