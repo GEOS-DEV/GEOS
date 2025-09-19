@@ -310,7 +310,6 @@
         msgStruct.setRank( ::geos::logger::internal::rank ); \
         msgStruct.setCause( CAUSE_MESSAGE ); \
         msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-        msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
         g_errorLogger.flushErrorMsg( msgStruct ); \
       } \
     } \

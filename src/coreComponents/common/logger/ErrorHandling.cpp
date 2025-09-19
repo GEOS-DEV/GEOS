@@ -235,16 +235,14 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
     yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
 
     // Information about the stack trace
-    yamlFile << g_level1Next << "sourceCallStack:\n";
-    if( !errorMsg.isValidStackTrace() )
+    if( !errorMsg.m_sourceCallStack.empty() )
     {
-      yamlFile << g_level3Start << "callStackMessage: " << errorMsg.m_sourceCallStack[0] << "\n";
-    }
-    else
-    {
+      yamlFile << g_level1Next << "sourceCallStack:\n";
       for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
       {
-        yamlFile << g_level3Start << "frame" << i << ": " << errorMsg.m_sourceCallStack[i] << "\n";
+        yamlFile << ( errorMsg.isValidStackTrace() ?
+          GEOS_FMT( "{}frame{}: {}\n", g_level3Start, i, errorMsg.m_sourceCallStack[i] ) :
+          GEOS_FMT( "{}{}\n", g_level3Start, errorMsg.m_sourceCallStack[i] ) );
       }
     }
 
