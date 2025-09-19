@@ -21,6 +21,7 @@
 #include "SolidMechanicsLagrangeContact.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "constitutive/solid/SolidFields.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
@@ -307,15 +308,10 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
   {
-    FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager const & nodeManager = mesh.getNodeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     // Get the "face to element" map (valid for the entire mesh)
-    FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
-    arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion;
-    arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion;
-    arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
 
     // Get the volume for all elements
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
@@ -326,10 +322,10 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
 
     // Bulk modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString() );
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::bulkModulus::key() );
     // Shear modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
-      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString() );
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::shearModulus::key() );
 
     using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
     ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
@@ -343,14 +339,15 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
         arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
         arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
         arrayView3d< real64 const > const & faceRotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
-        arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList().toViewConst();
 
-        arrayView1d< real64 > const & normalTractionTolerance =
-          subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
-        arrayView1d< real64 > const & normalDisplacementTolerance =
-          subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
-        arrayView1d< real64 > const & slidingTolerance =
-          subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
+        FixedToManyElementRelation const & faceElementToElems = subRegion.getToCellRelation();
+        array2d< localIndex > const & faceElemToElemRegion = faceElementToElems.m_toElementRegion;
+        array2d< localIndex > const & faceElemToElemSubRegion = faceElementToElems.m_toElementSubRegion;
+        array2d< localIndex > const & faceElemToElemIndex = faceElementToElems.m_toElementIndex;
+
+        arrayView1d< real64 > const & normalTractionTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
+        arrayView1d< real64 > const & normalDisplacementTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() );
+        arrayView1d< real64 > const & slidingTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
 
         RAJA::ReduceMin< ReducePolicy< parallelHostPolicy >, real64 > minSubRegionNormalTractionTolerance( 1e10 );
         RAJA::ReduceMax< ReducePolicy< parallelHostPolicy >, real64 > maxSubRegionNormalTractionTolerance( -1e10 );
@@ -375,10 +372,9 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
 
             for( localIndex i = 0; i < 2; ++i )
             {
-              localIndex const faceIndex = elemsToFaces[kfe][i];
-              localIndex const er = faceToElemRegion[faceIndex][0];
-              localIndex const esr = faceToElemSubRegion[faceIndex][0];
-              localIndex const ei = faceToElemIndex[faceIndex][0];
+              localIndex const er = faceElemToElemRegion[kfe][i];
+              localIndex const esr = faceElemToElemSubRegion[kfe][i];
+              localIndex const ei = faceElemToElemIndex[kfe][i];
 
               real64 const volume = elemVolume[er][esr][ei];
 
@@ -1784,10 +1780,10 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
 
   // Bulk modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-    elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString() );
+    elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::bulkModulus::key() );
   // Shear modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
-    elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString() );
+    elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::shearModulus::key() );
 
   using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
   ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =

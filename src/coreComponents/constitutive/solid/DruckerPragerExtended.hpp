@@ -423,27 +423,6 @@ public:
 
     /// string/key for default cohesion
     static constexpr char const * defaultCohesionString() { return "defaultCohesion"; }
-
-    /// string/key for initial friction angle
-    static constexpr char const * initialFrictionString() { return "initialFriction"; }
-
-    /// string/key for final friction angle
-    static constexpr char const * residualFrictionString() { return "residualFriction"; }
-
-    /// string/key for dilation angle
-    static constexpr char const * dilationRatioString() { return "dilationRatio"; }
-
-    /// string/key for pressure intercept
-    static constexpr char const * pressureInterceptString() { return "pressureIntercept"; }
-
-    /// string/key for cohesion
-    static constexpr char const * hardeningString() { return "hardening"; }
-
-    /// string/key for state variable
-    static constexpr char const * newStateString() { return "stateVariable"; }
-
-    /// string/key for state variable
-    static constexpr char const * oldStateString() { return "oldStateVariable"; }
   };
 
   /**
