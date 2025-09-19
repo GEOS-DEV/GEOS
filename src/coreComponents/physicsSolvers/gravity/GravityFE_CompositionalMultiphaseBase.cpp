@@ -15,11 +15,11 @@
 
 
 /**
- * @file GravityFE_CompositionalMultiphaseFVM.cpp
+ * @file GravityFE_CompositionalMultiphaseBase.cpp
  */
 #include <iostream>
 
-#include "GravityFE_CompositionalMultiphaseFVM.hpp"
+#include "GravityFE_CompositionalMultiphaseBase.hpp"
 #include "GravityFields.hpp"
 #include "GravityFEKernel.hpp"
 #include "GravityLogLevelsInfo.hpp"
@@ -35,7 +35,7 @@
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/solid/SolidBase.hpp"
@@ -49,7 +49,7 @@ using namespace constitutive;
 
 using namespace dataRepository;
 
-GravityFE_CompositionalMultiphaseFVM::GravityFE_CompositionalMultiphaseFVM( const std::string & name,
+GravityFE_CompositionalMultiphaseBase::GravityFE_CompositionalMultiphaseBase( const std::string & name,
                                                                             Group * const parent ):
   GravitySolverBase( name, parent )
 {
@@ -70,7 +70,7 @@ GravityFE_CompositionalMultiphaseFVM::GravityFE_CompositionalMultiphaseFVM( cons
 }
 
 
-void GravityFE_CompositionalMultiphaseFVM::initializePreSubGroups()
+void GravityFE_CompositionalMultiphaseBase::initializePreSubGroups()
 {
   GravitySolverBase::initializePreSubGroups();
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -90,7 +90,7 @@ void GravityFE_CompositionalMultiphaseFVM::initializePreSubGroups()
 }
 
 
-void GravityFE_CompositionalMultiphaseFVM::registerDataOnMesh( Group & meshBodies )
+void GravityFE_CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 {
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
@@ -114,7 +114,7 @@ void GravityFE_CompositionalMultiphaseFVM::registerDataOnMesh( Group & meshBodie
 }
 
 
-real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const & time_n,
+real64 GravityFE_CompositionalMultiphaseBase::explicitStepModeling( real64 const & time_n,
                                                                    real64 const & dt,
                                                                    integer const cycleNumber,
                                                                    DomainPartition & domain )
@@ -165,7 +165,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
 
       if( this->m_useReferencePorosity == 1 )
       {
-        GEOS_LOG_RANK_0( "GravityFE_CompositionalMultiphaseFVM: Use referencePorosity" );
+        GEOS_LOG_RANK_0( "GravityFE_CompositionalMultiphaseBase: Use referencePorosity" );
         arrayView1d< real64 const > const reservoirPorosity = solid.getReferencePorosity().toViewConst();
 
         forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
@@ -175,7 +175,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
       }
       else if( this->m_usePorosity == 1 )
       {
-        GEOS_LOG_RANK_0( "GravityFE_CompositionalMultiphaseFVM: Use Porosity" );
+        GEOS_LOG_RANK_0( "GravityFE_CompositionalMultiphaseBase: Use Porosity" );
         arrayView2d< real64 const > const reservoirPorosity = solid.getPorosity().toViewConst();
 
         forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
@@ -185,7 +185,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
       }
       else
       {
-        GEOS_LOG_RANK_0( "GravityFE_CompositionalMultiphaseFVM: Set Porosity to 1" );
+        GEOS_LOG_RANK_0( "GravityFE_CompositionalMultiphaseBase: Set Porosity to 1" );
 
         forAll< EXEC_POLICY >( elementSubRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
         {
@@ -233,7 +233,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
 
         for( localIndex i = 0; i < elementSubRegion.size(); ++i )
         {
-          GEOS_LOG( "GravityFE_CompositionalMultiphaseFVM: Cell[" << i << "], density= " << density[i]
+          GEOS_LOG( "GravityFE_CompositionalMultiphaseBase: Cell[" << i << "], density= " << density[i]
                                                                   << ", fluidDensity= " << fluidDensityConst[i] << ", rockDensity= " << rockDensityConst[i]
                                                                   << ", porosity= " << porosityConst[i] );
         }
@@ -331,7 +331,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
       auto const & coords = m_stationCoordinates[iStation];
       std::ostringstream logStream;
       logStream << std::fixed << std::setprecision( 2 );
-      logStream << "GravityFE_CompositionalMultiphaseFVM: station[" << std::setw( 5 ) << iStation << "] "
+      logStream << "GravityFE_CompositionalMultiphaseBase: station[" << std::setw( 5 ) << iStation << "] "
                 << std::setw( 15 ) << coords[0] << " "
                 << std::setw( 15 ) << coords[1] << " "
                 << std::setw( 10 )  << coords[2] << " "
@@ -345,7 +345,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepModeling( real64 const 
 }
 
 
-real64 GravityFE_CompositionalMultiphaseFVM::explicitStepAdjoint( real64 const & time_n,
+real64 GravityFE_CompositionalMultiphaseBase::explicitStepAdjoint( real64 const & time_n,
                                                                   real64 const & dt,
                                                                   integer const cycleNumber,
                                                                   DomainPartition & domain )
@@ -357,7 +357,7 @@ real64 GravityFE_CompositionalMultiphaseFVM::explicitStepAdjoint( real64 const &
 
 
 #ifdef GEOS_GRAVITY_WITH_FLUIDFLOW
-REGISTER_CATALOG_ENTRY( PhysicsSolverBase, GravityFE_CompositionalMultiphaseFVM, string const &, dataRepository::Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase, GravityFE_CompositionalMultiphaseBase, string const &, dataRepository::Group * const )
 #endif
 
 } // namespace geos

@@ -15,35 +15,34 @@
 
 
 /**
- * @file GravityFE_CompositionalMultiphaseFVM.hpp
+ * @file GravityFE_CompositionalMultiphaseBase.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFE_COMPOSITIONALMULTUPHASEFVM_HPP_
-#define GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFE_COMPOSITIONALMULTUPHASEFVM_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFE_COMPOSITIONALMULTUPHASEBASE_HPP_
+#define GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFE_COMPOSITIONALMULTUPHASEBASE_HPP_
 
 #include "GravitySolverBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 
 namespace geos
 {
 
-class GravityFE_CompositionalMultiphaseFVM : public GravitySolverBase
+class GravityFE_CompositionalMultiphaseBase : public GravitySolverBase
 {
 
 public:
   using EXEC_POLICY = parallelDevicePolicy< 32 >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
-  GravityFE_CompositionalMultiphaseFVM() = delete;
-  GravityFE_CompositionalMultiphaseFVM( const std::string & name,
+  GravityFE_CompositionalMultiphaseBase() = delete;
+  GravityFE_CompositionalMultiphaseBase( const std::string & name,
                                         Group * const parent );
 
-  GravityFE_CompositionalMultiphaseFVM( GravityFE_CompositionalMultiphaseFVM const & ) = delete;
-  GravityFE_CompositionalMultiphaseFVM( GravityFE_CompositionalMultiphaseFVM && ) = delete;
-  GravityFE_CompositionalMultiphaseFVM & operator=( GravityFE_CompositionalMultiphaseFVM const & ) = delete;
-  GravityFE_CompositionalMultiphaseFVM & operator=( GravityFE_CompositionalMultiphaseFVM && ) = delete;
+  GravityFE_CompositionalMultiphaseBase( GravityFE_CompositionalMultiphaseBase const & ) = delete;
+  GravityFE_CompositionalMultiphaseBase( GravityFE_CompositionalMultiphaseBase && ) = delete;
+  GravityFE_CompositionalMultiphaseBase & operator=( GravityFE_CompositionalMultiphaseBase const & ) = delete;
+  GravityFE_CompositionalMultiphaseBase & operator=( GravityFE_CompositionalMultiphaseBase && ) = delete;
 
-  static string catalogName() { return "GravityFE_CompositionalMultiphaseFVM"; }
+  static string catalogName() { return "GravityFE_CompositionalMultiphaseBase"; }
   string getCatalogName() const override { return catalogName(); }
 
   virtual void registerDataOnMesh( Group & meshBodies ) override final;
@@ -95,4 +94,4 @@ private:
 
 } // namespace geos
 
-#endif // GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFE_COMPOSITIONALMULTUPHASEFVM_HPP_
+#endif // GEOS_PHYSICSSOLVERS_GRAVITY_GRAVITYFE_COMPOSITIONALMULTUPHASEBASE_HPP_

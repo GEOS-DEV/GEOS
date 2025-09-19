@@ -33,8 +33,8 @@ set( dependencyList ${parallelDeps} physicsSolversBase )
 
 # Conditionally add compositional multiphase support if fluid flow is enabled
 if( GEOS_ENABLE_FLUIDFLOW AND TARGET fluidFlowSolvers )
-  list( APPEND gravitySolvers_headers GravityFE_CompositionalMultiphaseFVM.hpp )
-  list( APPEND gravitySolvers_sources GravityFE_CompositionalMultiphaseFVM.cpp )
+  list( APPEND gravitySolvers_headers GravityFE_CompositionalMultiphaseBase.hpp )
+  list( APPEND gravitySolvers_sources GravityFE_CompositionalMultiphaseBase.cpp )
   list( APPEND dependencyList fluidFlowSolvers )
   
   # Define a preprocessor macro so the code knows fluid flow is available
