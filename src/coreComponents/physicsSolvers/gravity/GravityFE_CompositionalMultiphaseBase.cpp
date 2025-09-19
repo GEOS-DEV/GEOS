@@ -50,7 +50,7 @@ using namespace constitutive;
 using namespace dataRepository;
 
 GravityFE_CompositionalMultiphaseBase::GravityFE_CompositionalMultiphaseBase( const std::string & name,
-                                                                            Group * const parent ):
+                                                                              Group * const parent ):
   GravitySolverBase( name, parent )
 {
   registerWrapper( viewKeyStruct::useRockDensityString(), &m_useRockDensity ).
@@ -115,9 +115,9 @@ void GravityFE_CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodi
 
 
 real64 GravityFE_CompositionalMultiphaseBase::explicitStepModeling( real64 const & time_n,
-                                                                   real64 const & dt,
-                                                                   integer const cycleNumber,
-                                                                   DomainPartition & domain )
+                                                                    real64 const & dt,
+                                                                    integer const cycleNumber,
+                                                                    DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( time_n, cycleNumber );
@@ -234,8 +234,8 @@ real64 GravityFE_CompositionalMultiphaseBase::explicitStepModeling( real64 const
         for( localIndex i = 0; i < elementSubRegion.size(); ++i )
         {
           GEOS_LOG( "GravityFE_CompositionalMultiphaseBase: Cell[" << i << "], density= " << density[i]
-                                                                  << ", fluidDensity= " << fluidDensityConst[i] << ", rockDensity= " << rockDensityConst[i]
-                                                                  << ", porosity= " << porosityConst[i] );
+                                                                   << ", fluidDensity= " << fluidDensityConst[i] << ", rockDensity= " << rockDensityConst[i]
+                                                                   << ", porosity= " << porosityConst[i] );
         }
       }
 
@@ -346,9 +346,9 @@ real64 GravityFE_CompositionalMultiphaseBase::explicitStepModeling( real64 const
 
 
 real64 GravityFE_CompositionalMultiphaseBase::explicitStepAdjoint( real64 const & time_n,
-                                                                  real64 const & dt,
-                                                                  integer const cycleNumber,
-                                                                  DomainPartition & domain )
+                                                                   real64 const & dt,
+                                                                   integer const cycleNumber,
+                                                                   DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( time_n, cycleNumber, domain );
   GEOS_ERROR( "Adjoint computation is not available when Gravity is coupled with Flow simulator." );

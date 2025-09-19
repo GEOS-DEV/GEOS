@@ -35,7 +35,7 @@ public:
 
   GravityFE_CompositionalMultiphaseBase() = delete;
   GravityFE_CompositionalMultiphaseBase( const std::string & name,
-                                        Group * const parent );
+                                         Group * const parent );
 
   GravityFE_CompositionalMultiphaseBase( GravityFE_CompositionalMultiphaseBase const & ) = delete;
   GravityFE_CompositionalMultiphaseBase( GravityFE_CompositionalMultiphaseBase && ) = delete;
