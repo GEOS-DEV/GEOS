@@ -353,7 +353,7 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
 
       if( wellControls.getWellState())
       {
-        GEOS_LOG_RANK( "**** Estimate Well Solution - Start **** " << subRegion.getName() );
+        //GEOS_LOG_RANK( "**** Estimate Well Solution - Start **** " << subRegion.getName() );
         auto it = m_estimatorDoFManager.find( region.getName());
         if( it == m_estimatorDoFManager.end())
         {
@@ -433,7 +433,7 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
                               dofManager );
          */
 
-        GEOS_LOG_RANK( "**** Estimate Well Solution End **** " << subRegion.getName());
+       //GEOS_LOG_RANK( "**** Estimate Well Solution End **** " << subRegion.getName());
       }
 
     } );
