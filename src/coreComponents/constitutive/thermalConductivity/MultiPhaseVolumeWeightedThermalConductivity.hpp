@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -119,13 +120,9 @@ public:
    * @param[in] name the name of the class
    * @param[in] parent pointer to the parent Group
    */
-  MultiPhaseVolumeWeightedThermalConductivity( string const & name, Group * const parent );
+  MultiPhaseVolumeWeightedThermalConductivity( string const & name, dataRepository::Group * const parent );
 
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   virtual void initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity,
                                          arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolumeFraction ) const override;
@@ -156,11 +153,11 @@ public:
   {
     static constexpr char const * rockThermalConductivityComponentsString() { return "rockThermalConductivityComponents"; }
     static constexpr char const * phaseThermalConductivityString() { return "phaseThermalConductivity"; }
-  } viewKeys;
+  };
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
 private:
 

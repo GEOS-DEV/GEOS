@@ -2,11 +2,12 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -17,6 +18,7 @@
  */
 
 #include "DelftEgg.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -25,18 +27,7 @@ namespace constitutive
 {
 
 DelftEgg::DelftEgg( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_defaultRecompressionIndex(),
-  m_defaultVirginCompressionIndex(),
-  m_defaultCslSlope(),
-  m_defaultShapeParameter(),
-  m_defaultPreConsolidationPressure(),
-  m_recompressionIndex(),
-  m_virginCompressionIndex(),
-  m_cslSlope(),
-  m_shapeParameter(),
-  m_newPreConsolidationPressure(),
-  m_oldPreConsolidationPressure()
+  ElasticIsotropic( name, parent )
 {
   // register default values
 
@@ -67,50 +58,32 @@ DelftEgg::DelftEgg( string const & name, Group * const parent ):
 
   // register fields
 
-  registerWrapper( viewKeyStruct::recompressionIndexString(), &m_recompressionIndex ).
-    setApplyDefaultValue( -1 ).
-    setDescription( " Recompression index" );
+  registerField< fields::solid::recompressionIndex >( &m_recompressionIndex );
 
-  registerWrapper( viewKeyStruct::virginCompressionIndexString(), &m_virginCompressionIndex ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Virgin compression index" );
+  registerField< fields::solid::virginCompressionIndex >( &m_virginCompressionIndex );
 
-  registerWrapper( viewKeyStruct::cslSlopeString(), &m_cslSlope ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Slope of the critical state line" );
+  registerField< fields::solid::cslSlope >( &m_cslSlope );
 
-  registerWrapper( viewKeyStruct::shapeParameterString(), &m_shapeParameter ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Shape parameter for the yield surface" );
+  registerField< fields::solid::shapeParameter >( &m_shapeParameter );
 
-  registerWrapper( viewKeyStruct::newPreConsolidationPressureString(), &m_newPreConsolidationPressure ).
-    setApplyDefaultValue( -1 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
-    setDescription( "New preconsolidation pressure" );
+  registerField< fields::solid::preConsolidationPressure >( &m_newPreConsolidationPressure );
 
-  registerWrapper( viewKeyStruct::oldPreConsolidationPressureString(), &m_oldPreConsolidationPressure ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Old preconsolidation pressure" );
+  registerField< fields::solid::oldPreConsolidationPressure >( &m_oldPreConsolidationPressure );
 }
 
 
-DelftEgg::~DelftEgg()
-{}
-
-
-void DelftEgg::allocateConstitutiveData( Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex )
+void DelftEgg::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  m_newPreConsolidationPressure.resize( 0, numConstitutivePointsPerParentIndex );
-  m_oldPreConsolidationPressure.resize( 0, numConstitutivePointsPerParentIndex );
+  m_newPreConsolidationPressure.resize( 0, numPts );
+  m_oldPreConsolidationPressure.resize( 0, numPts );
 
-  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 }
 
 
-void DelftEgg::postProcessInput()
+void DelftEgg::postInputInitialization()
 {
-  ElasticIsotropic::postProcessInput();
+  ElasticIsotropic::postInputInitialization();
 
   GEOS_THROW_IF( m_defaultCslSlope <= 0,
                  getFullName() << ": Non-positive slope of critical state line detected", InputError );
@@ -123,22 +96,22 @@ void DelftEgg::postProcessInput()
 
   // set results as array default values
 
-  getWrapper< array2d< real64 > >( viewKeyStruct::oldPreConsolidationPressureString() ).
+  getField< fields::solid::oldPreConsolidationPressure >().
     setApplyDefaultValue( m_defaultPreConsolidationPressure );
 
-  getWrapper< array2d< real64 > >( viewKeyStruct::newPreConsolidationPressureString() ).
+  getField< fields::solid::preConsolidationPressure >().
     setApplyDefaultValue( m_defaultPreConsolidationPressure );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::recompressionIndexString() ).
+  getField< fields::solid::recompressionIndex >().
     setApplyDefaultValue( m_defaultRecompressionIndex );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::virginCompressionIndexString() ).
+  getField< fields::solid::virginCompressionIndex >().
     setApplyDefaultValue( m_defaultVirginCompressionIndex );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::cslSlopeString() ).
+  getField< fields::solid::cslSlope >().
     setApplyDefaultValue( m_defaultCslSlope );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::shapeParameterString() ).
+  getField< fields::solid::shapeParameter >().
     setApplyDefaultValue( m_defaultShapeParameter );
 }
 

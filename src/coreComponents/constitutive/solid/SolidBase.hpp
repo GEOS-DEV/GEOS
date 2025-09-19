@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -337,6 +338,24 @@ public:
   }
 
   /**
+   * @brief Return the current elastic strain increment at a given material point (small-strain interface)
+   *
+   * @param k the element inex
+   * @param q the quadrature index
+   * @param elasticStrainInc Current elastic strain increment
+   */
+  GEOS_HOST_DEVICE
+  virtual void getElasticStrainInc( localIndex const k,
+                                    localIndex const q,
+                                    real64 ( & elasticStrainInc )[6] ) const
+  {
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( elasticStrainInc );
+    GEOS_ERROR( "getElasticStrainInc() of SolidBase was called." );
+  }
+
+  /**
    * @brief Perform a viscous (rate-dependent) state update
    *
    * @param beta time-dependent parameter
@@ -543,36 +562,16 @@ public:
   SolidBase( string const & name,
              Group * const parent );
 
-  /**
-   * Destructor
-   */
-  virtual ~SolidBase() override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr char const * stressString() { return "stress"; }                  ///< New stress key
-    static constexpr char const * oldStressString() { return "oldStress"; }            ///< Old stress key
-    static constexpr char const * densityString() { return "density"; }                ///< Density key
-    static constexpr char const * defaultDensityString() { return "defaultDensity"; }  ///< Default density key
-    static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; } // Thermal expansion
-                                                                                                                // coefficient key
-    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultDrainedLinearTEC"; } // Default
-                                                                                                                   // drained
-                                                                                                                   // linear
-                                                                                                                   // thermal
-                                                                                                                   // expansion
-                                                                                                                   // coefficient
-                                                                                                                   // key
+    /// Default density key
+    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
+    // Default drained linear thermal expansion coefficient key
+    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultDrainedLinearTEC"; }
   };
-
-  /**
-   * @brief Allocate constitutive arrays
-   * @param parent Object's parent group (element subregion)
-   * @param numConstitutivePointsPerParentIndex Number of quadrature points per element
-   */
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;
@@ -677,7 +676,7 @@ public:
 protected:
 
   /// Post-process XML input
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// The current stress at a quadrature point (i.e. at timestep n, global newton iteration k)
   array3d< real64, solid::STRESS_PERMUTATION > m_newStress;

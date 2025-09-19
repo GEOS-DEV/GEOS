@@ -1,6 +1,4 @@
-import os
-import geos_ats
-from geos_ats.test_builder import TestDeck, RestartcheckParameters, generate_geos_tests
+from geos.ats.test_builder import TestDeck, RestartcheckParameters, generate_geos_tests
 
 restartcheck_params = {}
 restartcheck_params['atol'] = 1e-09
@@ -25,6 +23,13 @@ decks = [
     TestDeck(
         name="incompressible_single_phase_wells_2d",
         description='Single phase flow test (2D, incompressible, 3 wells)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=5,
+        check_step=10,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="perf_status_test",
+        description='Single phase flow test (2D, incompressible, 3 wells, open close perfs)',
         partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=5,
         check_step=10,

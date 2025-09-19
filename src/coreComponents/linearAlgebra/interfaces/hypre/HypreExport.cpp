@@ -2,11 +2,12 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -157,10 +158,9 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
     // Sort the values by column index after copying (some solvers expect this)
     forAll< hypre::execPolicy >( numRow, [rowOffsets, colIndices, values] GEOS_HYPRE_DEVICE ( HYPRE_Int const i )
     {
-      using LvArray::sortedArrayManipulation::dualSort;
-      dualSort( colIndices.data() + rowOffsets[i],
-                colIndices.data() + rowOffsets[i + 1],
-                values.data() + rowOffsets[i] );
+      LvArray::sortedArrayManipulation::dualSort( colIndices.data() + rowOffsets[i],
+                                                  colIndices.data() + rowOffsets[i + 1],
+                                                  values.data() + rowOffsets[i] );
     } );
   }
 
@@ -175,7 +175,7 @@ void HypreExport::exportVector( HypreVector const & vec,
   // Gather vector on target rank, or just get the local part
   hypre_Vector * const localVector = m_targetRank < 0
                                    ? hypre_ParVectorLocalVector( vec.unwrapped() )
-                                   : (hypre_Vector *)hypre::parVectorToVectorAll( vec.unwrapped() );
+                                   : (hypre_Vector *)hypre::parVectorToVector( vec.unwrapped(), m_targetRank );
   GEOS_ERROR_IF( rank == m_targetRank && !localVector, "HypreExport: vector is empty on target rank" );
 
   if( m_targetRank < 0 || m_targetRank == rank )

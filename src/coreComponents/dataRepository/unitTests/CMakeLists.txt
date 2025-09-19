@@ -1,13 +1,17 @@
 # Specify list of tests
 set( dataRepository_tests
      testDefaultValue.cpp
+     testDocumentationGeneration.cpp
+     testPacking.cpp
      testWrapper.cpp
      testXmlWrapper.cpp
-     testBufferOps.cpp )
+     testBufferOps.cpp
+     testObjectCatalog.cpp
+     testWrapperHelpers.cpp )
 
-set( dependencyList ${parallelDeps} gtest dataRepository )
+set( dependencyList mainInterface gtest ${parallelDeps} )
 
-if( ENABLE_CUDA_NVTOOLSEXT )
+if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )
 endif()
 

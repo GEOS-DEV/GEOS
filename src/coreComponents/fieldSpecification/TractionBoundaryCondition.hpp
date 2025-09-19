@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -35,7 +36,7 @@ class TableFunction;
 class TractionBoundaryCondition : public FieldSpecificationBase
 {
 public:
-  /// @copydoc FieldSpecificationBase(string const &, Group *)
+  /// @copydoc FieldSpecificationBase(string const &, dataRepository::Group *)
   TractionBoundaryCondition( string const & name, Group * parent );
 
   /// deleted default constructor
@@ -81,6 +82,17 @@ public:
                arrayView1d< real64 > const & localRhs ) const;
 
   /**
+   * @brief Reinitialize the nodal set of scaling variable on traction magnitude.
+   *        One use is to reduce the nodal traction magnitude when there is damage on the boundary.
+   * @param faceManager Reference to the face manager (Tractions are applied on faces)
+   * @param targetSet The set of faces to apply the BC to.
+   * @param nodalScaleSet The nodal set of scaling variable (damage).
+   */
+  void reinitScaleSet( FaceManager const & faceManager,
+                       SortedArrayView< localIndex const > const & targetSet,
+                       arrayView1d< real64 const > const nodalScaleSet );
+
+  /**
    * @brief View keys
    */
   struct viewKeyStruct : public FieldSpecificationBase::viewKeyStruct
@@ -93,6 +105,12 @@ public:
 
 //    /// @return The key for the function describing the components of stress.
 //    constexpr static char const * stressFunctionString() { return "stressFunctions"; }
+
+    /// @return The key for scaleSet
+    constexpr static char const * scaleSetString() { return "scaleSet"; }
+
+    /// @return The key for nodalScaleFlag
+    constexpr static char const * nodalScaleFlagString() { return "nodalScaleFlag"; }
 
   };
 
@@ -108,7 +126,7 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override final;
+  virtual void postInputInitialization() override final;
 
   virtual void initializePreSubGroups() override final;
 
@@ -118,12 +136,18 @@ protected:
   /// single specified value for stress used to generate the traction if m_tractionType == stress.
   R2SymTensor m_inputStress;
 
+  /// Array of scale values
+  array1d< real64 > m_scaleSet;
+
+  /// The flag for applying the nodal scale
+  integer m_nodalScaleFlag;
+
 //  /// names of the functions used to specify stress for the generation of tractions.
-//  array1d<string> m_stressFunctionNames;
+//  string_array m_stressFunctionNames;
 //
 //  bool m_useStressFunctions;
 //
-//  TableFunction const * m_stressFunctions[6];
+//  TableFunction const * m_stressFunctions[6]; // if this line is re-enabled, ensure that those pointers are initialized
 
 };
 

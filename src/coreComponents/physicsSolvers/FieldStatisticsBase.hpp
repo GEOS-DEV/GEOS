@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -21,7 +22,6 @@
 
 #include "events/tasks/TaskBase.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 
@@ -49,7 +49,6 @@ public:
     m_solver( nullptr ),
     m_outputDir( joinPath( OutputBase::getOutputDirectory(), name ) )
   {
-    enableLogLevelInput();
 
     string const key = SOLVER::coupledSolverAttributePrefix() + "SolverName";
     registerWrapper( key, &m_solverName ).
@@ -60,7 +59,7 @@ public:
     this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
       setApplyDefaultValue( 0 ).
       setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-      setDescription( "Write statistics into a CSV file" );
+      setDescription( "When set to 1, write the statistics into a CSV file" );
   }
 
   /**
@@ -81,10 +80,10 @@ public:
 
 protected:
 
-  void postProcessInput() override
+  void postInputInitialization() override
   {
-    ProblemManager & problemManager = this->getGroupByPath< ProblemManager >( "/Problem" );
-    PhysicsSolverManager & physicsSolverManager = problemManager.getPhysicsSolverManager();
+    Group & problemManager = this->getGroupByPath( "/Problem" );
+    Group & physicsSolverManager = problemManager.getGroup( "Solvers" );
 
     m_solver = physicsSolverManager.getGroupPointer< SOLVER >( m_solverName );
     GEOS_THROW_IF( m_solver == nullptr,

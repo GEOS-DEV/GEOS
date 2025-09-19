@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -20,7 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_REACTIVE_REACTIVEMULTIFLUID_HPP_
 
 
-#include "codingUtilities/EnumStrings.hpp"
+#include "common/format/EnumStrings.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/reactive/chemicalReactions/EquilibriumReactions.hpp"
 #include "constitutive/fluid/multifluid/reactive/chemicalReactions/KineticReactions.hpp"
@@ -40,11 +41,14 @@ public:
   using exec_policy = serialPolicy;
 
   ReactiveMultiFluid( string const & name,
-                      Group * const parent );
+                      dataRepository::Group * const parent );
 
   virtual std::unique_ptr< ConstitutiveBase >
   deliverClone( string const & name,
-                Group * const parent ) const override;
+                dataRepository::Group * const parent ) const override;
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   virtual bool isThermal() const override;
 
@@ -171,11 +175,9 @@ protected:
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   void createChemicalReactions();
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// Reaction related terms
   integer m_numPrimarySpecies;
@@ -188,13 +190,13 @@ protected:
 
   std::unique_ptr< chemicalReactions::KineticReactions > m_kineticReactions;
 
-  array2d< real64, multifluid::LAYOUT_FLUID >  m_primarySpeciesConcentration;
+  array2d< real64, constitutive::multifluid::LAYOUT_FLUID >  m_primarySpeciesConcentration;
 
-  array2d< real64, multifluid::LAYOUT_FLUID >  m_secondarySpeciesConcentration;
+  array2d< real64, constitutive::multifluid::LAYOUT_FLUID >  m_secondarySpeciesConcentration;
 
-  array2d< real64, multifluid::LAYOUT_FLUID >  m_primarySpeciesTotalConcentration;
+  array2d< real64, constitutive::multifluid::LAYOUT_FLUID >  m_primarySpeciesTotalConcentration;
 
-  array2d< real64, multifluid::LAYOUT_FLUID >  m_kineticReactionRates;
+  array2d< real64, constitutive::multifluid::LAYOUT_FLUID >  m_kineticReactionRates;
 };
 
 inline void

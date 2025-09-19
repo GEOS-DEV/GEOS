@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -43,9 +44,6 @@ public:
    */
   CoupledSolidBase( string const & name, dataRepository::Group * const parent );
 
-  /// Destructor
-  virtual ~CoupledSolidBase() override;
-
   struct viewKeyStruct
   {
     static constexpr char const * solidModelNameString() { return "solidModelName"; }
@@ -54,11 +52,11 @@ public:
     static constexpr char const * solidInternalEnergyModelNameString() { return "solidInternalEnergyModelName"; }
   };
 
-  virtual std::vector< string > getSubRelationNames() const override final
+  virtual stdVector< string > getSubRelationNames() const override final
   {
-    std::vector< string > subRelationNames = { m_solidModelName,
-                                               m_porosityModelName,
-                                               m_permeabilityModelName };
+    stdVector< string > subRelationNames = { m_solidModelName,
+                                             m_porosityModelName,
+                                             m_permeabilityModelName };
 
     if( !m_solidInternalEnergyModelName.empty() )
     {
@@ -169,6 +167,14 @@ public:
     return getBaseSolidModel().getDensity();
   }
 
+  /*
+   * @brief get the current solid effective stress
+   * return a constant arrayView3d to effective stress in Voigt form
+   */
+  arrayView3d< real64 const, solid::STRESS_USD > const getEffectiveStress() const
+  {
+    return getBaseSolidModel().getStress();
+  }
 
   /*
    * @brief get the current biot coefficient
@@ -202,7 +208,7 @@ public:
   /**
    * @brief initialize the constitutive models fields.
    */
-  void initializeState() const
+  virtual void initializeState() const
   {
     getBasePorosityModel().initializeState();
     getBasePermModel().initializeState();

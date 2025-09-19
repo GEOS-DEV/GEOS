@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -17,6 +18,7 @@
  */
 
 #include "ElasticTransverseIsotropic.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -26,17 +28,7 @@ namespace constitutive
 {
 
 ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Group * const parent ):
-  SolidBase( name, parent ),
-  m_defaultYoungModulusTransverse(),
-  m_defaultYoungModulusAxial(),
-  m_defaultPoissonRatioTransverse(),
-  m_defaultPoissonRatioAxialTransverse(),
-  m_defaultShearModulusAxialTransverse(),
-  m_c11(),
-  m_c13(),
-  m_c33(),
-  m_c44(),
-  m_c66()
+  SolidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultYoungModulusTransverseString(), &m_defaultYoungModulusTransverse ).
     setApplyDefaultValue( -1 ).
@@ -88,33 +80,18 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Stiffness Parameter C66" );
 
-  registerWrapper( viewKeyStruct::c11String(), &m_c11 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C11" );
+  // register fields - TODO merge in one
 
-  registerWrapper( viewKeyStruct::c13String(), &m_c13 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C13" );
-
-  registerWrapper( viewKeyStruct::c33String(), &m_c33 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C33" );
-
-  registerWrapper( viewKeyStruct::c44String(), &m_c44 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C44" );
-
-  registerWrapper( viewKeyStruct::c66String(), &m_c66 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C66" );
+  registerField< fields::solid::c11 >( &m_c11 );
+  registerField< fields::solid::c13 >( &m_c13 );
+  registerField< fields::solid::c33 >( &m_c33 );
+  registerField< fields::solid::c44 >( &m_c44 );
+  registerField< fields::solid::c66 >( &m_c66 );
 }
 
-ElasticTransverseIsotropic::~ElasticTransverseIsotropic()
-{}
-
-void ElasticTransverseIsotropic::postProcessInput()
+void ElasticTransverseIsotropic::postInputInitialization()
 {
-  SolidBase::postProcessInput();
+  SolidBase::postInputInitialization();
 
   real64 & c11  = getReference< real64 >( viewKeyStruct::defaultC11String() );
   real64 & c13  = getReference< real64 >( viewKeyStruct::defaultC13String() );
@@ -143,19 +120,15 @@ void ElasticTransverseIsotropic::postProcessInput()
     }
   }
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c11String() ).
+  getField< fields::solid::c11 >().
     setApplyDefaultValue( c11 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c13String() ).
+  getField< fields::solid::c13 >().
     setApplyDefaultValue( c13 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c33String() ).
+  getField< fields::solid::c33 >().
     setApplyDefaultValue( c33 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c44String() ).
+  getField< fields::solid::c44 >().
     setApplyDefaultValue( c44 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c66String() ).
+  getField< fields::solid::c66 >().
     setApplyDefaultValue( c66 );
 }
 

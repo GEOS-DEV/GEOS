@@ -1,20 +1,45 @@
 # Specify list of tests
 set( gtest_geosx_tests
+     testBrineSalinity.cpp
+     testCO2SpycherPruessModels.cpp
+     testCO2BrinePVTModels.cpp
+     testCompositionalDensity.cpp
+     testCompositionalPhillipsBrineDensity.cpp
+     testCompositionalPhillipsBrineViscosity.cpp
      testCompositionalProperties.cpp
+     testCompositionalFluidComponentType.cpp
+     testCubicEOS.cpp
      testDamageUtilities.cpp
      testDruckerPrager.cpp
      testElasticIsotropic.cpp
+     testInvariantImmiscibleFluid.cpp
      testKValueInitialization.cpp
+     testImmiscibleWaterFlashModel.cpp
+     testImmiscibleWaterProperties.cpp
+     testLohrenzBrayClarkViscosity.cpp
      testModifiedCamClay.cpp
+     testMultiFluidBlackOil.cpp
+     testMultiFluidCO2Brine.cpp
+     testMultiFluidThreePhaseCompositionalMultiphase.cpp
+     testMultiFluidTwoPhaseCompositionalMultiphase.cpp
+     testMultiFluidDeadOil.cpp
+     testMultiFluidSelector.cpp
      testNegativeTwoPhaseFlash.cpp
+     testNegativeTwoPhaseFlash9Comp.cpp
+     testNegativeTwoPhaseFlashModel.cpp
      testParticleFluidEnums.cpp
+     testPressureTemperatureCoordinates.cpp
      testPropertyConversions.cpp
-     testCubicEOS.cpp
-     testRachfordRice.cpp )
+     testSoreideWhitsonEOSPhaseModel.cpp
+     testSoreideWhitsonFlash.cpp
+     testStabilityTest2Comp.cpp
+     testStabilityTest9Comp.cpp
+     testRachfordRice.cpp
+     testTwoPhaseImmiscibleFluid.cpp )
 
 set( dependencyList gtest blas lapack constitutive ${parallelDeps} )
 
-if( ENABLE_CUDA_NVTOOLSEXT )
+if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )
 endif()
 

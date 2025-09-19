@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -110,8 +111,7 @@ public:
    */
   MultiPhaseThermalConductivityBase( string const & name, dataRepository::Group * const parent );
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   /**
    * @brief Initialize the thermal conductivity state (needed when thermal conductivity depends on porosity and phase volume fraction)
@@ -145,7 +145,7 @@ public:
    * @brief Getter for the phase names
    * @return an arrayView of phase names
    */
-  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+  string_array const & phaseNames() const { return m_phaseNames; }
 
   /**
    * @brief Getter for the effective conductivities in the subRegion
@@ -164,18 +164,9 @@ public:
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
   };
 
-private:
-
-  /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  void resizeFields( localIndex const size, localIndex const numPts );
-
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// phase names read from input
   string_array m_phaseNames;

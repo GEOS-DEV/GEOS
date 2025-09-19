@@ -13,9 +13,8 @@
         preconditionerType="mgr"/>
     </SinglePhasePoromechanics>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="LinearElasticitySolver"
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }"/>
@@ -48,7 +47,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ cb1 }"
+      cellBlocks="{ * }"
       materialList="{ fluid, porousRock }"/>
   </ElementRegions>
 
@@ -78,7 +77,7 @@
 
     <BiotPorosity
       name="skeletonPorosity"
-      grainBulkModulus="1.0e27"
+      defaultGrainBulkModulus="1.0e27"
       defaultReferencePorosity="0.3"/>
 
     <ConstantPermeability

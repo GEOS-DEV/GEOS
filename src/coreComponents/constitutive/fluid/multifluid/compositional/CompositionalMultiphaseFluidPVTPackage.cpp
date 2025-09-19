@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -45,6 +46,10 @@ CompositionalMultiphaseFluidPVTPackage::CompositionalMultiphaseFluidPVTPackage( 
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of equation of state types for each phase" );
 
+  registerWrapper( viewKeyStruct::constantPhaseViscosityString(), &m_constantPhaseViscosity ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Viscosity for each phase" );
+
   registerWrapper( viewKeyStruct::componentCriticalPressureString(), &m_componentCriticalPressure ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Component critical pressures" );
@@ -72,13 +77,13 @@ integer CompositionalMultiphaseFluidPVTPackage::getWaterPhaseIndex() const
   return PVTProps::PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
 }
 
-void CompositionalMultiphaseFluidPVTPackage::postProcessInput()
+void CompositionalMultiphaseFluidPVTPackage::postInputInitialization()
 {
-  MultiFluidBase::postProcessInput();
+  MultiFluidBase::postInputInitialization();
 
   auto const getPVTPackagePhaseType = [&]( string const & phaseName )
   {
-    static map< string, pvt::PHASE_TYPE > const phaseTypes
+    static geos::map< string, pvt::PHASE_TYPE > const phaseTypes
     {
       { "gas", pvt::PHASE_TYPE::GAS },
       { "oil", pvt::PHASE_TYPE::OIL },
@@ -93,18 +98,27 @@ void CompositionalMultiphaseFluidPVTPackage::postProcessInput()
   integer const NC = numFluidComponents();
   integer const NP = numFluidPhases();
 
-  auto const checkInputSize = [&]( auto const & array, integer const expected, string const & attribute )
+  auto const checkInputSize = [&]( auto const & array, auto const expected, string const & attribute )
   {
     GEOS_THROW_IF_NE_MSG( array.size(), expected,
                           GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
                           InputError );
 
   };
-  checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString() );
+  checkInputSize( m_equationsOfState, LvArray::integerConversion< size_t >( NP ), viewKeyStruct::equationsOfStateString() );
   checkInputSize( m_componentCriticalPressure, NC, viewKeyStruct::componentCriticalPressureString() );
   checkInputSize( m_componentCriticalTemperature, NC, viewKeyStruct::componentCriticalTemperatureString() );
   checkInputSize( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() );
-  checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString() );
+
+  if( m_constantPhaseViscosity.empty() )
+  {
+    m_constantPhaseViscosity.resize( NP );
+    for( integer ip = 0; ip < NP; ++ip )
+    {
+      m_constantPhaseViscosity[ip] = 0.001;      // Default value = 1 cP
+    }
+  }
+  checkInputSize( m_constantPhaseViscosity, NP, viewKeyStruct::constantPhaseViscosityString() );
 
   if( m_componentVolumeShift.empty() )
   {
@@ -139,15 +153,15 @@ void CompositionalMultiphaseFluidPVTPackage::createFluid()
     return findOption( eosTypes, name, viewKeyStruct::equationsOfStateString(), getFullName() );
   };
 
-  std::vector< pvt::EOS_TYPE > eos( numFluidPhases() );
+  stdVector< pvt::EOS_TYPE > eos( numFluidPhases() );
   std::transform( m_equationsOfState.begin(), m_equationsOfState.end(), eos.begin(), getCompositionalEosType );
 
-  std::vector< pvt::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
-  std::vector< string > const components( m_componentNames.begin(), m_componentNames.end() );
-  std::vector< double > const Mw( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
-  std::vector< double > const Tc( m_componentCriticalTemperature.begin(), m_componentCriticalTemperature.end() );
-  std::vector< double > const Pc( m_componentCriticalPressure.begin(), m_componentCriticalPressure.end() );
-  std::vector< double > const Omega( m_componentAcentricFactor.begin(), m_componentAcentricFactor.end() );
+  stdVector< pvt::PHASE_TYPE > phases( m_phaseTypes.begin(), m_phaseTypes.end() );
+  stdVector< string > const components( m_componentNames.begin(), m_componentNames.end() );
+  stdVector< double > const Mw( m_componentMolarWeight.begin(), m_componentMolarWeight.end() );
+  stdVector< double > const Tc( m_componentCriticalTemperature.begin(), m_componentCriticalTemperature.end() );
+  stdVector< double > const Pc( m_componentCriticalPressure.begin(), m_componentCriticalPressure.end() );
+  stdVector< double > const Omega( m_componentAcentricFactor.begin(), m_componentAcentricFactor.end() );
 
   m_fluid = pvt::MultiphaseSystemBuilder::buildCompositional( pvt::COMPOSITIONAL_FLASH_TYPE::NEGATIVE_OIL_GAS, phases, eos,
                                                               components, Mw, Tc, Pc, Omega );
@@ -167,6 +181,7 @@ CompositionalMultiphaseFluidPVTPackage::deliverClone( string const & name,
 CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
   KernelWrapper( pvt::MultiphaseSystem & fluid,
                  arrayView1d< pvt::PHASE_TYPE > const & phaseTypes,
+                 arrayView1d< geos::real64 const > const & constantPhaseViscosity,
                  arrayView1d< geos::real64 const > const & componentMolarWeight,
                  bool useMass,
                  PhaseProp::ViewType phaseFraction,
@@ -188,7 +203,8 @@ CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
                                    std::move( phaseCompFraction ),
                                    std::move( totalDensity ) ),
   m_fluid( fluid ),
-  m_phaseTypes( phaseTypes )
+  m_phaseTypes( phaseTypes ),
+  m_constantPhaseViscosity( constantPhaseViscosity )
 {}
 
 CompositionalMultiphaseFluidPVTPackage::KernelWrapper
@@ -196,6 +212,7 @@ CompositionalMultiphaseFluidPVTPackage::createKernelWrapper()
 {
   return KernelWrapper( *m_fluid,
                         m_phaseTypes,
+                        m_constantPhaseViscosity,
                         m_componentMolarWeight,
                         m_useMass,
                         m_phaseFraction.toView(),

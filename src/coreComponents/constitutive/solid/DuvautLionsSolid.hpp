@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -26,7 +27,7 @@
 #include "ElasticIsotropic.hpp"
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
-#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 #include "SolidModelDiscretizationOpsIsotropic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -148,23 +149,16 @@ public:
   using KernelWrapper = DuvautLionsSolidUpdates< typename BASE::KernelWrapper >;
 
   DuvautLionsSolid( string const & name, dataRepository::Group * const parent );
-  virtual ~DuvautLionsSolid() override = default;
 
   /**
    * @brief Catalog name
    * @return Static catalog string
    */
 
-  static string catalogName() { return string( "Visco" ) + BASE::m_catalogNameString; }
+  static string catalogName() { return string( "Visco" ) + BASE::catalogName(); }
   virtual string getCatalogName() const override { return catalogName(); }
 
   real64 relaxationTime() const { return m_relaxationTime; }
-
-  virtual void postProcessInput() override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
 
   KernelWrapper createKernelUpdates() const
   {

@@ -2,11 +2,12 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -22,7 +23,7 @@
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
 #include "PropertyConversions.hpp"
-#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geos
@@ -90,7 +91,7 @@ public:
   DruckerPragerUpdates & operator=( DruckerPragerUpdates && ) =  delete;
 
   /// Use the uncompressed version of the stiffness bilinear form
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic;
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
@@ -357,16 +358,9 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  DruckerPrager( string const & name, Group * const parent );
+  DruckerPrager( string const & name, dataRepository::Group * const parent );
 
-  /**
-   * Default Destructor
-   */
-  virtual ~DruckerPrager() override;
-
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   virtual void saveConvergedState() const override;
 
@@ -375,13 +369,10 @@ public:
    */
   ///@{
 
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "DruckerPrager";
-
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static string catalogName() { return m_catalogNameString; }
+  static string catalogName() { return "DruckerPrager"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
@@ -403,21 +394,6 @@ public:
 
     /// string/key for default cohesion
     static constexpr char const * defaultCohesionString() { return "defaultCohesion"; }
-
-    /// string/key for friction angle
-    static constexpr char const * frictionString() { return "friction"; }
-
-    /// string/key for dilation angle
-    static constexpr char const * dilationString() { return "dilation"; }
-
-    /// string/key for cohesion
-    static constexpr char const * hardeningString() { return "hardening"; }
-
-    /// string/key for cohesion
-    static constexpr char const * newCohesionString() { return "cohesion"; }
-
-    /// string/key for cohesion
-    static constexpr char const * oldCohesionString() { return "oldCohesion"; }
   };
 
   /**
@@ -465,7 +441,8 @@ public:
 
 
 protected:
-  virtual void postProcessInput() override;
+
+  virtual void postInputInitialization() override;
 
   /// Material parameter: The default value of yield surface slope
   real64 m_defaultFrictionAngle;

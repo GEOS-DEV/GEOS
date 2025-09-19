@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -29,9 +30,7 @@ namespace constitutive
 {
 
 CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name, Group * const parent ):
-  SingleFluidBase( name, parent ),
-  m_densityModelType( ExponentApproximationType::Linear ),
-  m_viscosityModelType( ExponentApproximationType::Linear )
+  SingleFluidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -67,34 +66,28 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
     setDescription( "Reference fluid viscosity" );
 
   registerWrapper( viewKeyStruct::densityModelTypeString(), &m_densityModelType ).
-    setApplyDefaultValue( m_densityModelType ).
+    setApplyDefaultValue( ExponentApproximationType::Linear ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Type of density model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::viscosityModelTypeString(), &m_viscosityModelType ).
-    setApplyDefaultValue( m_viscosityModelType ).
+    setApplyDefaultValue( ExponentApproximationType::Linear ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Type of viscosity model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
 
 }
 
-CompressibleSinglePhaseFluid::~CompressibleSinglePhaseFluid() = default;
-
-void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Group & parent,
-                                                             localIndex const numConstitutivePointsPerParentIndex )
+void CompressibleSinglePhaseFluid::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SingleFluidBase::allocateConstitutiveData( parent, numPts );
 
-  getField< fields::singlefluid::density >().setApplyDefaultValue( m_defaultDensity );
-  getField< fields::singlefluid::viscosity >().setApplyDefaultValue( m_defaultViscosity );
-
-  m_density.setValues< serialPolicy >( m_referenceDensity );
-  m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
+  getField< fields::singlefluid::density >().setApplyDefaultValue( m_referenceDensity );
+  getField< fields::singlefluid::viscosity >().setApplyDefaultValue( m_referenceViscosity );
 }
 
-void CompressibleSinglePhaseFluid::postProcessInput()
+void CompressibleSinglePhaseFluid::postInputInitialization()
 {
-  SingleFluidBase::postProcessInput();
+  SingleFluidBase::postInputInitialization();
 
   auto const checkNonnegative = [&]( real64 const value, auto const & attribute )
   {
@@ -130,8 +123,11 @@ void CompressibleSinglePhaseFluid::postProcessInput()
   real64 dRho_dP;
   real64 dVisc_dP;
   createKernelWrapper().compute( m_referencePressure, m_referenceDensity, dRho_dP, m_referenceViscosity, dVisc_dP );
-  getField< fields::singlefluid::dDensity_dPressure >().setDefaultValue( dRho_dP );
-  getField< fields::singlefluid::dViscosity_dPressure >().setDefaultValue( dVisc_dP );
+
+  for( integer i=0; i<m_density.value.size(); i++ )
+  {
+    m_density.derivs[0][i][DerivOffset::dP] = dRho_dP;
+  }
 }
 
 CompressibleSinglePhaseFluid::KernelWrapper
@@ -139,10 +135,10 @@ CompressibleSinglePhaseFluid::createKernelWrapper()
 {
   return KernelWrapper( KernelWrapper::DensRelationType( m_referencePressure, m_referenceDensity, m_compressibility ),
                         KernelWrapper::ViscRelationType( m_referencePressure, m_referenceViscosity, m_viscosibility ),
-                        m_density,
-                        m_dDensity_dPressure,
-                        m_viscosity,
-                        m_dViscosity_dPressure );
+                        m_density.value,
+                        m_density.derivs,
+                        m_viscosity.value,
+                        m_viscosity.derivs );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleSinglePhaseFluid, string const &, Group * const )

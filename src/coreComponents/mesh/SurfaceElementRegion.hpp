@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -21,7 +22,7 @@
 #define GEOS_MESH_SURFACEELEMENTREGION_HPP_
 
 #include "ElementRegionBase.hpp"
-#include "codingUtilities/EnumStrings.hpp"
+#include "common/format/EnumStrings.hpp"
 
 namespace geos
 {
@@ -99,6 +100,15 @@ public:
   ///@{
 
   virtual void generateMesh( Group const & faceBlocks ) override;
+
+  /**
+   * @brief This function generates and adds entries to the face/surface mesh.
+   * @param faceManager pointer to the FaceManager object.
+   * @param faceIndices the local indices of the new faces that define the face element.
+   * @return the local index of the new FaceElement entry.
+   */
+  localIndex addToSurfaceMesh( FaceManager const * const faceManager,
+                               localIndex const faceIndices[2] );
 
   /**
    * @brief This function generates and adds entries to the face/fracture mesh.
@@ -195,7 +205,7 @@ private:
   template< typename SUBREGION_TYPE >
   string getUniqueSubRegionName() const
   {
-    std::vector< string > subRegionNames;
+    stdVector< string > subRegionNames;
     forElementSubRegions< SUBREGION_TYPE >( [&]( SUBREGION_TYPE const & sr )
     {
       subRegionNames.push_back( sr.getName() );

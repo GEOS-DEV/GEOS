@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -38,20 +39,20 @@ template< ExponentApproximationType DENS_EAT, ExponentApproximationType VISC_EAT
 class CompressibleSinglePhaseUpdate : public SingleFluidBaseUpdate
 {
 public:
-
+  using SingleFluidProp = SingleFluidVar< real64, 2, singlefluid::LAYOUT_FLUID, singlefluid::LAYOUT_FLUID_DER >;
   using DensRelationType  = ExponentialRelation< real64, DENS_EAT >;
   using ViscRelationType  = ExponentialRelation< real64, VISC_EAT >;
-
+  using DerivOffset = singlefluid::DerivativeOffset;
   CompressibleSinglePhaseUpdate( DensRelationType const & densRelation,
                                  ViscRelationType const & viscRelation,
-                                 arrayView2d< real64 > const & density,
-                                 arrayView2d< real64 > const & dDens_dPres,
-                                 arrayView2d< real64 > const & viscosity,
-                                 arrayView2d< real64 > const & dVisc_dPres )
+                                 arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const & density,
+                                 arrayView3d< real64, constitutive::singlefluid::USD_FLUID_DER > const & dDensity,
+                                 arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const & viscosity,
+                                 arrayView3d< real64, constitutive::singlefluid::USD_FLUID_DER > const & dViscosity )
     : SingleFluidBaseUpdate( density,
-                             dDens_dPres,
+                             dDensity,
                              viscosity,
-                             dVisc_dPres ),
+                             dViscosity ),
     m_densRelation( densRelation ),
     m_viscRelation( viscRelation )
   {}
@@ -110,9 +111,9 @@ public:
   {
     compute( pressure,
              m_density[k][q],
-             m_dDens_dPres[k][q],
+             m_dDensity[k][q][DerivOffset::dP],
              m_viscosity[k][q],
-             m_dVisc_dPres[k][q] );
+             m_dViscosity[k][q][DerivOffset::dP] );
   }
 
   GEOS_HOST_DEVICE
@@ -124,9 +125,9 @@ public:
   {
     compute( pressure,
              m_density[k][q],
-             m_dDens_dPres[k][q],
+             m_dDensity[k][q][DerivOffset::dP],
              m_viscosity[k][q],
-             m_dVisc_dPres[k][q] );
+             m_dViscosity[k][q][DerivOffset::dP] );
   }
 
 private:
@@ -142,17 +143,15 @@ private:
 class CompressibleSinglePhaseFluid : public SingleFluidBase
 {
 public:
-
-  CompressibleSinglePhaseFluid( string const & name, Group * const parent );
-
-  virtual ~CompressibleSinglePhaseFluid() override;
+  using DerivOffset = singlefluid::DerivativeOffset;
+  CompressibleSinglePhaseFluid( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "CompressibleSinglePhaseFluid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
   using KernelWrapper = CompressibleSinglePhaseUpdate< ExponentApproximationType::Linear, ExponentApproximationType::Linear >;
@@ -181,7 +180,7 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// default density value
   real64 m_defaultDensity;

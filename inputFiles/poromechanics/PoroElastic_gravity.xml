@@ -13,9 +13,8 @@
         directParallel="0"/>
     </SinglePhasePoromechanics>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="linearElasticity"
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }"/>
@@ -81,7 +80,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ cellblock }"
+      cellBlocks="{ * }"
       materialList="{ fluid, porousRock }"/>
   </ElementRegions>
 
@@ -110,7 +109,7 @@
 
     <BiotPorosity
       name="skeletonPorosity"
-      grainBulkModulus="1.2e11"
+      defaultGrainBulkModulus="1.2e11"
       defaultReferencePorosity="0.3"/>
 
     <ConstantPermeability

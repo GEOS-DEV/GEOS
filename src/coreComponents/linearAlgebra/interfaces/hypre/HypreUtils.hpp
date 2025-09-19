@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -157,7 +158,7 @@ inline void checkDeviceErrors( char const * msg, char const * file, int const li
   GEOS_ERROR_IF( err != cudaSuccess, GEOS_FMT( "Previous CUDA errors found: {} ({} at {}:{})", msg, cudaGetErrorString( err ), file, line ) );
 #elif GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
   hipError_t const err = hipGetLastError();
-  GEOS_UNUSED_VAR( msg, file, line ); // on crusher geosx_error_if ultimately resolves to an assert, which drops the content on release
+  GEOS_UNUSED_VAR( msg, file, line ); // on crusher geos_error_if ultimately resolves to an assert, which drops the content on release
                                       // builds
   GEOS_ERROR_IF( err != hipSuccess, GEOS_FMT( "Previous HIP errors found: {} ({} at {}:{})", msg, hipGetErrorString( err ), file, line ) );
 #else
@@ -201,14 +202,24 @@ inline HYPRE_BigInt const * toHypreBigInt( geos::globalIndex const * const index
 }
 
 /**
- * @brief Gather a parallel vector on a every rank.
+ * @brief Gather a parallel vector on every rank.
  * @param vec the vector to gather
- * @return A newly allocated serial vector (may be null on ranks that don't have any elements)
+ * @return a newly allocated serial vector (may be null on ranks that don't have any elements)
+ * @note caller takes ownership and must dispose of the vector appropriately
  *
  * This is a wrapper around hypre_ParVectorToVectorAll() that works for both host-based
  * and device-based vectors without relying on Unified Memory.
  */
 HYPRE_Vector parVectorToVectorAll( HYPRE_ParVector const vec );
+
+/**
+ * @brief Gather a parallel vector onto a single rank.
+ * @param vec the vector to gather
+ * @param targetRank the rank to gather the vector on
+ * @return a newly allocated serial vector on @p targetRank, nullptr on the rest
+ * @note caller takes ownership and must dispose of the vector appropriately
+ */
+HYPRE_Vector parVectorToVector( HYPRE_ParVector const vec, int const targetRank );
 
 /**
  * @brief Dummy function that does nothing but conform to hypre's signature for preconditioner setup/apply functions.
@@ -282,6 +293,50 @@ HYPRE_Int relaxationSolve( HYPRE_Solver solver,
  * @return always 0
  */
 HYPRE_Int relaxationDestroy( HYPRE_Solver solver );
+
+/**
+ * @brief Create a Chebyshev smoother.
+ * @param solver the solver
+ * @param order Chebyshev order (degree)
+ * @param eigNumIter number of eigenvalue estimation iterations
+ * @return always 0
+ */
+HYPRE_Int chebyshevCreate( HYPRE_Solver & solver,
+                           HYPRE_Int const order,
+                           HYPRE_Int const eigNumIter );
+
+/**
+ * @brief Setup a Chebyshev smoother.
+ * @param solver the solver
+ * @param A the matrix
+ * @param b the rhs vector (unused)
+ * @param x the solution vector (unused)
+ * @return hypre error code
+ */
+HYPRE_Int chebyshevSetup( HYPRE_Solver solver,
+                          HYPRE_ParCSRMatrix A,
+                          HYPRE_ParVector b,
+                          HYPRE_ParVector x );
+
+/**
+ * @brief Solve with a Chebyshev smoother.
+ * @param solver the solver
+ * @param A the matrix
+ * @param b the rhs vector (unused)
+ * @param x the solution vector (unused)
+ * @return hypre error code
+ */
+HYPRE_Int chebyshevSolve( HYPRE_Solver solver,
+                          HYPRE_ParCSRMatrix A,
+                          HYPRE_ParVector b,
+                          HYPRE_ParVector x );
+
+/**
+ * @brief Destroy a Chebyshev smoother.
+ * @param solver the solver
+ * @return always 0
+ */
+HYPRE_Int chebyshevDestroy( HYPRE_Solver solver );
 
 /**
  * @brief Returns hypre's identifier of the AMG cycle type.
@@ -374,7 +429,7 @@ inline HYPRE_Int getILUType( LinearSolverParameters::AMG::SmootherType const typ
 {
   static map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
   {
-    { LinearSolverParameters::AMG::SmootherType::ilu0, 0 },
+    { LinearSolverParameters::AMG::SmootherType::iluk, 0 },
     { LinearSolverParameters::AMG::SmootherType::ilut, 1 },
   };
   return findOption( typeMap, type, "ILU", "HyprePreconditioner" );
@@ -398,6 +453,8 @@ inline HYPRE_Int getAMGCoarseType( LinearSolverParameters::AMG::CoarseType const
     { LinearSolverParameters::AMG::CoarseType::direct, 9 },
     { LinearSolverParameters::AMG::CoarseType::chebyshev, 16 },
     { LinearSolverParameters::AMG::CoarseType::l1jacobi, 18 },
+    { LinearSolverParameters::AMG::CoarseType::gsElimWPivoting, 99 },
+    { LinearSolverParameters::AMG::CoarseType::gsElimWInverse, 199 },
   };
   return findOption( typeMap, type, "multigrid coarse solver", "HyprePreconditioner" );
 }
@@ -515,9 +572,8 @@ enum class MGRCoarseGridMethod : HYPRE_Int
                           //!< approximated by its diagonal inverse
   cprLikeBlockDiag = 3,   //!< Non-Galerkin coarse grid computation with dropping strategy: CPR-like approximation with inv(A_FF)
                           //!< approximated by its block diagonal inverse
-  approximateInverse = 4, //!< Non-Galerkin coarse grid computation with dropping strategy: inv(A_FF) approximated by sparse approximate
+  approximateInverse = 4  //!< Non-Galerkin coarse grid computation with dropping strategy: inv(A_FF) approximated by sparse approximate
                           //!< inverse
-  galerkinRAI = 5         //!< Galerkin coarse grid computation with arbitrary classical restriction and injective prolongation
 };
 
 /**

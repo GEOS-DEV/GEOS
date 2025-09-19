@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -42,24 +43,14 @@ MultiPhaseVolumeWeightedThermalConductivity::MultiPhaseVolumeWeightedThermalCond
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Phase thermal conductivity [W/(m.K)]" );
 
-  registerField( fields::thermalconductivity::rockThermalConductivity{}, &m_rockThermalConductivity );
+  registerField< fields::thermalconductivity::rockThermalConductivity >( &m_rockThermalConductivity );
 }
 
-std::unique_ptr< ConstitutiveBase >
-MultiPhaseVolumeWeightedThermalConductivity::deliverClone( string const & name,
-                                                           Group * const parent ) const
+void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts )
 {
-  return MultiPhaseThermalConductivityBase::deliverClone( name, parent );
-}
+  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numPts );
 
-void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                            localIndex const numConstitutivePointsPerParentIndex )
-{
-  // NOTE: enforcing 1 quadrature point
-  m_rockThermalConductivity.resize( 0, 1, 3 );
-
-  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
+  // TODO move into initializeState?
   for( localIndex ei = 0; ei < parent.size(); ++ei )
   {
     for( localIndex q = 0; q < 1; ++q )
@@ -71,7 +62,7 @@ void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( data
   }
 }
 
-void MultiPhaseVolumeWeightedThermalConductivity::postProcessInput()
+void MultiPhaseVolumeWeightedThermalConductivity::postInputInitialization()
 {
   GEOS_THROW_IF( m_rockThermalConductivityComponents[0] <= 0 ||
                  m_rockThermalConductivityComponents[1] <= 0 ||

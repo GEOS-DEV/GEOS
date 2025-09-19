@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -143,6 +144,16 @@ public:
   GEOS_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k, localIndex const q, real64 ( &stiffness )[6][6] ) const override final;
 
+  GEOS_HOST_DEVICE
+  virtual void getElasticStrain( localIndex const k,
+                                 localIndex const q,
+                                 real64 ( &elasticStrain )[6] ) const override final;
+
+  GEOS_HOST_DEVICE
+  virtual void getElasticStrainInc( localIndex const k,
+                                    localIndex const q,
+                                    real64 ( &elasticStrainInc )[6] ) const override final;
+
   /**
    * @brief Getter for apparent shear modulus.
    * @return reference to shear modulus that will be used for computing stabilization scalling parameter.
@@ -152,6 +163,15 @@ public:
   {
     return LvArray::math::max( m_c44[k], m_c66[k] );
   }
+
+
+protected:
+
+  GEOS_HOST_DEVICE
+  virtual void computeElasticStrain( localIndex const k,
+                                     localIndex const q,
+                                     real64 const (&stress)[6],
+                                     real64 ( &elasticStrain )[6] ) const;
 
 
 private:
@@ -197,6 +217,57 @@ void ElasticTransverseIsotropicUpdates::getElasticStiffness( localIndex const k,
   stiffness[3][3] = m_c44[k];
   stiffness[4][4] = m_c44[k];
   stiffness[5][5] = m_c66[k];
+}
+
+GEOS_HOST_DEVICE
+inline
+void ElasticTransverseIsotropicUpdates::computeElasticStrain( localIndex const k,
+                                                              localIndex const q,
+                                                              real64 const (&stress)[6],
+                                                              real64 ( & elasticStrain)[6] ) const
+{
+  GEOS_UNUSED_VAR( q );
+  real64 const c12 = ( m_c11[k] - 2.0 * m_c66[k] );
+  real64 const detC = m_c11[k]*(m_c11[k]*m_c33[k] - m_c13[k]*m_c13[k]) - c12*(c12*m_c33[k] - m_c13[k]*m_c13[k]) + m_c13[k]*(c12*m_c13[k] - m_c11[k]*m_c13[k]);
+
+  elasticStrain[0] =
+    ( (m_c11[k]*m_c33[k] - m_c13[k]*m_c13[k])*stress[0] + (m_c13[k]*m_c13[k] - c12*m_c33[k])*stress[1] + (c12*m_c13[k] - m_c13[k]*m_c11[k])*stress[2] ) / detC;
+  elasticStrain[1] =
+    ( (m_c13[k]*m_c13[k] - c12*m_c33[k])*stress[0] + (m_c11[k]*m_c33[k] - m_c13[k]*m_c13[k])*stress[1] + (m_c13[k]*c12 - m_c11[k]*m_c13[k])*stress[2] ) / detC;
+  elasticStrain[2] = ( (c12*m_c13[k] - m_c11[k]*m_c13[k])*stress[0] + (c12*m_c13[k] - m_c11[k]*m_c13[k])*stress[1] + (m_c11[k]*m_c11[k] - c12*c12)*stress[2] ) / detC;
+
+  elasticStrain[3] = stress[3] / m_c44[k];
+  elasticStrain[4] = stress[4] / m_c44[k];
+  elasticStrain[5] = stress[5] / m_c66[k];
+}
+
+
+GEOS_HOST_DEVICE
+inline
+void ElasticTransverseIsotropicUpdates::getElasticStrain( localIndex const k,
+                                                          localIndex const q,
+                                                          real64 ( & elasticStrain)[6] ) const
+{
+
+  real64 stress[6] = {m_newStress[k][q][0], m_newStress[k][q][1], m_newStress[k][q][2], m_newStress[k][q][3], m_newStress[k][q][4], m_newStress[k][q][5]};
+
+  computeElasticStrain( k, q, stress, elasticStrain );
+
+}
+
+GEOS_HOST_DEVICE
+inline
+void ElasticTransverseIsotropicUpdates::getElasticStrainInc( localIndex const k,
+                                                             localIndex const q,
+                                                             real64 ( & elasticStrainInc)[6] ) const
+{
+
+  real64 stress[6] =
+  {m_newStress[k][q][0] - m_oldStress[k][q][0], m_newStress[k][q][1] - m_oldStress[k][q][1], m_newStress[k][q][2] - m_oldStress[k][q][2], m_newStress[k][q][3] - m_oldStress[k][q][3],
+   m_newStress[k][q][4] - m_oldStress[k][q][4], m_newStress[k][q][5] - m_oldStress[k][q][5]};
+
+  computeElasticStrain( k, q, stress, elasticStrainInc );
+
 }
 
 inline
@@ -309,22 +380,14 @@ public:
   ElasticTransverseIsotropic( string const & name, Group * const parent );
 
   /**
-   * Destructor
-   */
-  virtual ~ElasticTransverseIsotropic() override;
-
-  /**
    * @name Static Factory Catalog members and functions
    */
   ///@{
 
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "ElasticTransverseIsotropic";
-
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static string catalogName() { return m_catalogNameString; }
+  static string catalogName() { return "ElasticTransverseIsotropic"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
   ///@}
@@ -363,21 +426,6 @@ public:
 
     /// string/key for default c66 component of Voigt stiffness tensor
     static constexpr char const * defaultC66String() { return "defaultC66"; };
-
-    /// string/key for c11 component of Voigt stiffness tensor
-    static constexpr char const * c11String() { return "c11"; }
-
-    /// string/key for c13 component of Voigt stiffness tensor
-    static constexpr char const * c13String() { return "c13"; }
-
-    /// string/key for c33 component of Voigt stiffness tensor
-    static constexpr char const * c33String() { return "c33"; }
-
-    /// string/key for c44 component of Voigt stiffness tensor
-    static constexpr char const * c44String() { return "c44"; }
-
-    /// string/key for c66 component of Voigt stiffness tensor
-    static constexpr char const * c66String() { return "c66"; }
   };
 
   /**
@@ -574,7 +622,7 @@ public:
   }
 
 protected:
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
 
   /// The default value of the transverse Young's modulus for any new
   /// allocations.

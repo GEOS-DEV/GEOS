@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -20,9 +21,10 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
 
-#include "codingUtilities/EnumStrings.hpp"
+#include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "functions/TableFunction.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 
 namespace geos
 {
@@ -52,6 +54,14 @@ public:
     INJECTOR   /**< An injection well */
   };
 
+  /** Status of wells
+   * Either open or closed
+   */
+  enum class Status : integer
+  {
+    OPEN,  /**< flowing well */
+    CLOSED   /**< shutin well */
+  };
 
   /** Types of well controls
    * Used to specifiy a well's operating conditions
@@ -61,7 +71,8 @@ public:
     BHP,  /**< The well operates at a specified bottom hole pressure (BHP) */
     PHASEVOLRATE, /**< The well operates at a specified phase volumetric flow rate */
     TOTALVOLRATE, /**< The well operates at a specified total volumetric flow rate */
-    UNINITIALIZED, /**< This is the current well control before postProcessInput (needed to restart from file properly) */
+    MASSRATE, /**<The well operates at a specified mass rate */
+    UNINITIALIZED, /**< This is the current well control before postInputInitialization (needed to restart from file properly) */
   };
 
 
@@ -130,6 +141,12 @@ public:
   void switchToTotalRateControl( real64 const & val );
 
   /**
+   * @brief Set the control type to mass rate and set a numerical value for the control.
+   * @param[in] val value for the mass rate
+   */
+  void switchToMassRateControl( real64 const & val );
+
+  /**
    * @brief Set the control type to phase rate and set a numerical value for the control.
    * @param[in] val value for the phase volumetric rate
    */
@@ -140,6 +157,18 @@ public:
    * @return the Control enum enforced at the well
    */
   Control getControl() const { return m_currentControl; }
+
+  /**
+   * @brief Set the control type for the well.
+   * @param[in] newControl type
+   */
+  void setControl( Control const & newControl )  {  m_currentControl = newControl; }
+
+  /**
+   * @brief Get the input control type for the well.
+   * @return the Control enum enforced at the well
+   */
+  Control getInputControl() const { return m_inputControl; }
 
   /**
    * @brief Getter for the reference elevation where the BHP control is enforced
@@ -185,6 +214,16 @@ public:
   {
     return m_rateSign * m_targetPhaseRateTable->evaluate( &currentTime );
   }
+
+  /**
+   * @brief Get the target mass rate
+   * @return the target mass rate
+   */
+  real64 getTargetMassRate( real64 const & currentTime ) const
+  {
+    return m_rateSign * m_targetMassRateTable->evaluate( &currentTime );
+  }
+
   /**
    * @brief Get the target phase name
    * @return the target phase name
@@ -208,6 +247,12 @@ public:
    * @return 1 if we use surface conditions, and 0 otherwise
    */
   integer useSurfaceConditions() const { return m_useSurfaceConditions; }
+
+  /**
+   * @brief Getter for the reservoir region associated with reservoir volume constraint
+   * @return name of reservoir region
+   */
+  string referenceReservoirRegion() const { return m_referenceReservoirRegion; }
 
   /**
    * @brief Getter for the surface pressure when m_useSurfaceConditions == 1
@@ -234,11 +279,10 @@ public:
   bool isProducer() const { return ( m_type == Type::PRODUCER ); }
 
   /**
-   * @brief Is the well open (or shut) at @p currentTime?
-   * @param[in] currentTime the current time
+   * @brief Is the well open (or shut) at currentTime, status initalized in WellSolverBase::implicitStepSetup
    * @return a boolean
    */
-  bool isWellOpen( real64 const & currentTime ) const;
+  bool isWellOpen() const;
 
   /**
    * @brief Getter for the flag to enable crossflow
@@ -252,6 +296,60 @@ public:
    */
   real64 getInitialPressureCoefficient() const { return m_initialPressureCoefficient; }
 
+  /**
+   * @brief set next time step based on tables intervals
+   * @param[in] currentTime the current time
+   * @param[inout] nextDt the time step
+   */
+  void setNextDtFromTables( real64 const & currentTime, real64 & nextDt );
+
+  /**
+   * @brief setter for multi fluid separator
+   * @param[in] fluidSeparatorPtr single or multiphase separator
+   */
+  void setFluidSeparator( std::unique_ptr< constitutive::ConstitutiveBase > fluidSeparatorPtr )  {  m_fluidSeparatorPtr = std::move( fluidSeparatorPtr );}
+  /**
+   * @brief Getter for multi fluid separator
+   * @return reference to separator
+   */
+  constitutive::MultiFluidBase & getMultiFluidSeparator()  { return dynamicCast< constitutive::MultiFluidBase & >( *m_fluidSeparatorPtr ); }
+
+  /**
+   * @brief Getter for the reservoir average pressure when m_useSurfaceConditions == 0
+   * @return the pressure
+   */
+  real64 getRegionAveragePressure() const { return m_regionAveragePressure; }
+
+  /**
+   * @brief Set the reservoir average pressure when m_useSurfaceConditions == 0
+   * @param[in] regionAveragePressure value for pressure
+   */
+  void setRegionAveragePressure( real64 regionAveragePressure ) { m_regionAveragePressure = regionAveragePressure; }
+
+  /**
+   * @brief Getter for the reservoir average temperature when m_useSurfaceConditions == 0
+   * @return the temperature
+   */
+  real64 getRegionAverageTemperature() const { return m_regionAverageTemperature; }
+
+  /**
+   * @brief Set the reservoir average temperature when m_useSurfaceConditions == 0
+   * @param[in] regionAverageTemperature value for temperature
+   */
+  void setRegionAverageTemperature( real64 regionAverageTemperature ) { m_regionAverageTemperature = regionAverageTemperature; }
+
+  /**
+   * @brief Set well status from time and internal action, eg. all perfs closed
+   * @param[in] currentTime the current time
+   * @param[in] status
+   */
+  void setWellStatus ( real64 const & currentTime, WellControls::Status status );
+
+  /**
+   * @brief Is the well open (or shut) based on internal action
+   * @return a Status
+   */
+  WellControls::Status getWellStatus () const { return m_wellStatus; }
   ///@}
 
   /**
@@ -276,12 +374,16 @@ public:
     static constexpr char const * targetPhaseRateString() { return "targetPhaseRate"; }
     /// String key for the well target phase name
     static constexpr char const * targetPhaseNameString() { return "targetPhaseName"; }
+    /// String key for the well target phase name
+    static constexpr char const * targetMassRateString() { return "targetMassRate"; }
     /// String key for the well injection stream
     static constexpr char const * injectionStreamString() { return "injectionStream"; }
     /// String key for the well injection temperature
     static constexpr char const * injectionTemperatureString() { return "injectionTemperature"; }
     /// String key for checking the rates at surface conditions
     static constexpr char const * useSurfaceConditionsString() { return "useSurfaceConditions"; }
+    /// String key for reference reservoir region
+    static constexpr char const * referenceReservoirRegionString() { return "referenceReservoirRegion"; }
     /// String key for the surface pressure
     static constexpr char const * surfacePressureString() { return "surfacePressure"; }
     /// String key for the surface temperature
@@ -290,10 +392,14 @@ public:
     static constexpr char const * targetTotalRateTableNameString() { return "targetTotalRateTableName"; }
     /// string key for phase rate table name
     static constexpr char const * targetPhaseRateTableNameString() { return "targetPhaseRateTableName"; }
+    /// string key for mass rate table name
+    static constexpr char const * targetMassRateTableNameString() { return "targetMassRateTableName"; }
     /// string key for BHP table name
     static constexpr char const * targetBHPTableNameString() { return "targetBHPTableName"; }
     /// string key for status table name
     static constexpr char const * statusTableNameString() { return "statusTableName"; }
+    /// string key for perforation status table name
+    static constexpr char const * perfStatusTableNameString() { return "perfStatusTableName"; }
     /// string key for the crossflow flag
     static constexpr char const * enableCrossflowString() { return "enableCrossflow"; }
     /// string key for the initial pressure coefficient
@@ -303,9 +409,13 @@ public:
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
 
+  static void setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt );
+
 protected:
 
-  virtual void postProcessInput() override;
+  virtual void postInputInitialization() override;
+
+
 
 private:
 
@@ -336,6 +446,9 @@ private:
   /// Name of the targeted phase
   string m_targetPhaseName;
 
+  /// Target MassRate
+  real64 m_targetMassRate;
+
   /// Vector with global component fractions at the injector
   array1d< real64 > m_injectionStream;
 
@@ -344,6 +457,12 @@ private:
 
   /// Flag to decide whether rates are controlled at rates or surface conditions
   integer m_useSurfaceConditions;
+
+  // Fuild model to compute properties for constraint equation user specified conditions
+  std::unique_ptr< constitutive::ConstitutiveBase >  m_fluidSeparatorPtr;
+
+  /// Reservoir region associated with reservoir volume constraint
+  string m_referenceReservoirRegion;
 
   /// Surface pressure
   real64 m_surfacePres;
@@ -357,11 +476,17 @@ private:
   /// Phase rate table name
   string m_targetPhaseRateTableName;
 
+  /// Mass rate table name
+  string m_targetMassRateTableName;
+
   /// BHP table name
   string m_targetBHPTableName;
 
-  /// Status table name
+  /// Well status table name
   string m_statusTableName;
+
+  /// Perforation status table name
+  string m_perfStatusTableName;
 
   /// Flag to enable crossflow
   integer m_isCrossflowEnabled;
@@ -378,11 +503,25 @@ private:
   /// Phase rate table
   TableFunction const * m_targetPhaseRateTable;
 
+  /// Mass rate table
+  TableFunction const * m_targetMassRateTable;
+
   /// BHP table
   TableFunction const * m_targetBHPTable;
 
   /// Status table
   TableFunction const * m_statusTable;
+
+  /// Well status
+  WellControls::Status m_wellStatus;
+
+
+  /// Region average pressure used in volume rate constraint calculations
+  real64 m_regionAveragePressure;
+
+  /// Region average temperature used in volume rate constraint calculations
+  real64 m_regionAverageTemperature;
+
 };
 
 ENUM_STRINGS( WellControls::Type,
@@ -393,6 +532,7 @@ ENUM_STRINGS( WellControls::Control,
               "BHP",
               "phaseVolRate",
               "totalVolRate",
+              "massRate",
               "uninitialized" );
 
 

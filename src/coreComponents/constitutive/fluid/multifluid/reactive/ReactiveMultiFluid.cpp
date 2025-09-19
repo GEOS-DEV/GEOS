@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -36,10 +37,10 @@ ReactiveMultiFluid::
   m_numSecondarySpecies = 11;
   m_numKineticReactions = 2;
 
-  registerField( fields::reactivefluid::primarySpeciesConcentration{}, &m_primarySpeciesConcentration );
-  registerField( fields::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
-  registerField( fields::reactivefluid::primarySpeciesTotalConcentration{}, &m_primarySpeciesTotalConcentration );
-  registerField( fields::reactivefluid::kineticReactionRates{}, &m_kineticReactionRates );
+  registerField< fields::reactivefluid::primarySpeciesConcentration >( &m_primarySpeciesConcentration );
+  registerField< fields::reactivefluid::secondarySpeciesConcentration >( &m_secondarySpeciesConcentration );
+  registerField< fields::reactivefluid::primarySpeciesTotalConcentration >( &m_primarySpeciesTotalConcentration );
+  registerField< fields::reactivefluid::kineticReactionRates >( &m_kineticReactionRates );
 }
 
 bool ReactiveMultiFluid::isThermal() const
@@ -59,9 +60,9 @@ std::unique_ptr< ConstitutiveBase > ReactiveMultiFluid::
   return clone;
 }
 
-void ReactiveMultiFluid::postProcessInput()
+void ReactiveMultiFluid::postInputInitialization()
 {
-  MultiFluidBase::postProcessInput();
+  MultiFluidBase::postInputInitialization();
 
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 1,
                         GEOS_FMT( "{}: invalid number of phases", getFullName() ),
@@ -70,18 +71,19 @@ void ReactiveMultiFluid::postProcessInput()
   createChemicalReactions();
 }
 
-void ReactiveMultiFluid::resizeFields( localIndex const size, localIndex const numPts )
+void ReactiveMultiFluid::allocateConstitutiveData( Group & parent,
+                                                   localIndex const numPts )
 {
-  MultiFluidBase::resizeFields( size, numPts );
-
   integer const numPrimarySpecies = this->numPrimarySpecies();
   integer const numSecondarySpecies = this->numSecondarySpecies();
   integer const numKineticReactions = this->numKineticReactions();
 
-  m_primarySpeciesConcentration.resize( size, numPrimarySpecies );
-  m_secondarySpeciesConcentration.resize( size, numSecondarySpecies );
-  m_primarySpeciesTotalConcentration.resize( size, numPrimarySpecies );
-  m_kineticReactionRates.resize( size, numKineticReactions );
+  m_primarySpeciesConcentration.resize( 0, numPrimarySpecies );
+  m_secondarySpeciesConcentration.resize( 0, numSecondarySpecies );
+  m_primarySpeciesTotalConcentration.resize( 0, numPrimarySpecies );
+  m_kineticReactionRates.resize( 0, numKineticReactions );
+
+  MultiFluidBase::allocateConstitutiveData( parent, numPts );
 }
 
 void ReactiveMultiFluid::createChemicalReactions()

@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -19,7 +20,8 @@
 #ifndef GEOS_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
 #define GEOS_LINEARALGEBRA_UTILITIES_LINEARSOLVERPARAMETERS_HPP_
 
-#include "codingUtilities/EnumStrings.hpp"
+#include "common/format/EnumStrings.hpp"
+#include "common/DataTypes.hpp"
 
 namespace geos
 {
@@ -42,6 +44,7 @@ struct LinearSolverParameters
     gmres,         ///< GMRES
     fgmres,        ///< Flexible GMRES
     bicgstab,      ///< BiCGStab
+    richardson,    ///< Richardson iteration
     preconditioner ///< Preconditioner only
   };
 
@@ -59,13 +62,13 @@ struct LinearSolverParameters
     chebyshev, ///< Chebyshev polynomial smoothing
     iluk,      ///< Incomplete LU with k-level of fill
     ilut,      ///< Incomplete LU with thresholding
-    ic,        ///< Incomplete Cholesky
+    ick,        ///< Incomplete Cholesky with k-level of fill
     ict,       ///< Incomplete Cholesky with thresholding
     amg,       ///< Algebraic Multigrid
     mgr,       ///< Multigrid reduction (Hypre only)
     block,     ///< Block preconditioner
     direct,    ///< Direct solver as preconditioner
-    bgs,       ///< Gauss-Seidel smoothing (backward sweep)
+    bgs        ///< Gauss-Seidel smoothing (backward sweep)
   };
 
   integer logLevel = 0;     ///< Output level [0=none, 1=basic, 2=everything]
@@ -108,6 +111,7 @@ struct LinearSolverParameters
     integer replaceTinyPivot = 1;     ///< Whether to replace tiny pivots by sqrt(epsilon)*norm(A)
     integer iterativeRefine = 1;      ///< Whether to perform iterative refinement
     integer parallel = 1;             ///< Whether to use a parallel solver (instead of a serial one)
+    integer reuseFactorization = 0;   ///< Whether to reuse the LU factorization or not
   }
   direct;                             ///< direct solver parameter struct
 
@@ -116,11 +120,33 @@ struct LinearSolverParameters
   {
     real64 relTolerance = 1e-6;       ///< Relative convergence tolerance for iterative solvers
     integer maxIterations = 200;      ///< Max iterations before declaring convergence failure
-    integer maxRestart = 200;         ///< Max number of vectors in Krylov basis before restarting
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+    integer maxRestart = 100;         ///< Max number of vectors in Krylov basis before restarting (GPUs)
+#else
+    integer maxRestart = 200;         ///< Max number of vectors in Krylov basis before restarting (CPUs)
+#endif
     integer useAdaptiveTol = false;   ///< Use Eisenstat-Walker adaptive tolerance
     real64 weakestTol = 1e-3;         ///< Weakest allowed tolerance when using adaptive method
+    real64 strongestTol = 1e-8;       ///< Strongest allowed tolerance when using adaptive method
+    real64 adaptiveGamma = 0.1;       ///< Gamma parameter for adaptive method
+    real64 adaptiveExponent = 1.0;    ///< Exponent parameter for adaptive method
   }
   krylov;                             ///< Krylov-method parameter struct
+
+  /// Relaxation/stationary iteration parameters (Richardson, damped Jacobi, etc.)
+  struct Relaxation
+  {
+    real64 weight = 2.0 / 3.0;        ///< Relaxation weight (omega) for stationary iterations
+  }
+  relaxation;                         ///< Relaxation method parameters
+
+  /// Chebyshev iteration/smoothing parameters
+  struct Chebyshev
+  {
+    integer order = 2;                ///< Chebyshev order
+    integer eigNumIter = 10;          ///< Number of eigenvalue estimation CG iterations
+  }
+  chebyshev;                          ///< Chebyshev smoother parameters
 
   /// Matrix-scaling parameters
   struct Scaling
@@ -159,9 +185,9 @@ struct LinearSolverParameters
       sgs,                ///< Symmetric Gauss-Seidel smoothing
       l1sgs,              ///< l1-Symmetric Gauss-Seidel smoothing
       chebyshev,          ///< Chebyshev polynomial smoothing
-      ilu0,               ///< ILU(0)
+      iluk,               ///< Incomplete LU with k-level of fill
       ilut,               ///< Incomplete LU with thresholding
-      ic0,                ///< Incomplete Cholesky
+      ick,                ///< Incomplete Cholesky with k-level of fill
       ict                 ///< Incomplete Cholesky with thresholding
     };
 
@@ -176,7 +202,9 @@ struct LinearSolverParameters
       l1sgs,              ///< l1-Symmetric Gauss-Seidel
       chebyshev,          ///< Chebyshev polynomial (GPU support in hypre)
       direct,             ///< Direct solver as preconditioner
-      bgs                 ///< Gauss-Seidel smoothing (backward sweep)
+      bgs,                ///< Gauss-Seidel smoothing (backward sweep)
+      gsElimWPivoting,    ///< Gaussian Elimination with pivoting direct solver
+      gsElimWInverse      ///< Direct inverse with Gaussian Elimination
     };
 
     /// AMG coarsening types (HYPRE only)
@@ -227,15 +255,16 @@ struct LinearSolverParameters
       rigidBodyModes      ///< Rigid body modes
     };
 
-#if defined(GEOSX_USE_HYPRE_CUDA) || defined(GEOSX_USE_HYPRE_HIP)
-    CoarseningType coarseningType = CoarseningType::PMIS;           ///< Coarsening algorithm
-    SmootherType smootherType = SmootherType::l1jacobi;             ///< Smoother type
+#if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
+    CoarseningType coarseningType = CoarseningType::PMIS;           ///< Coarsening algorithm (GPUs)
+    SmootherType smootherType = SmootherType::l1jacobi;             ///< Smoother type (GPUs)
 #else
-    CoarseningType coarseningType = CoarseningType::HMIS;           ///< Coarsening algorithm
-    SmootherType smootherType = SmootherType::l1sgs;                ///< Smoother type
+    CoarseningType coarseningType = CoarseningType::HMIS;           ///< Coarsening algorithm (CPUs)
+    SmootherType smootherType = SmootherType::l1sgs;                ///< Smoother type (CPUs)
 #endif
 
     integer maxLevels = 20;                                         ///< Maximum number of coarsening levels
+    integer numCycles = 1;                                          ///< Number of multigrid cycles
     CycleType cycleType = CycleType::V;                             ///< AMG cycle type
     CoarseType coarseType = CoarseType::direct;                     ///< Coarse-level solver/smoother
     InterpType interpolationType = InterpType::extendedI;           ///< Interpolation algorithm
@@ -245,7 +274,9 @@ struct LinearSolverParameters
     integer numFunctions = 1;                                       ///< Number of amg functions
     integer aggressiveNumPaths = 1;                                 ///< Number of paths agg. coarsening.
     integer aggressiveNumLevels = 0;                                ///< Number of levels for aggressive coarsening.
+    integer maxCoarseSize = 9;                                      ///< Threshold for coarse grid size
     AggInterpType aggressiveInterpType = AggInterpType::multipass;  ///< Interp. type for agg. coarsening.
+    integer aggressiveInterpMaxNonZeros = 16;                       ///< Aggressive Interpolation - Max. nonzeros/row.
     PreOrPost preOrPostSmoothing = PreOrPost::both;                 ///< Pre and/or post smoothing
     real64 threshold = 0.0;                                         ///< Threshold for "strong connections" (for classical
                                                                     ///< and smoothed-aggregation AMG)
@@ -262,35 +293,38 @@ struct LinearSolverParameters
      */
     enum class StrategyType : integer
     {
-      invalid,                                     ///< default value, to ensure solver sets something
-      singlePhaseReservoirFVM,                     ///< finite volume single-phase flow with wells
-      singlePhaseHybridFVM,                        ///< hybrid finite volume single-phase flow
-      singlePhaseReservoirHybridFVM,               ///< hybrid finite volume single-phase flow with wells
-      singlePhasePoromechanics,                    ///< single phase poromechanics with finite volume single phase flow
-      thermalSinglePhasePoromechanics,             ///< thermal single phase poromechanics with finite volume single phase flow
-      hybridSinglePhasePoromechanics,              ///< single phase poromechanics with hybrid finite volume single phase flow
-      singlePhasePoromechanicsEmbeddedFractures,   ///< single phase poromechanics with FV embedded fractures
-      singlePhasePoromechanicsConformingFractures, ///< single phase poromechanics with FV conforming  fractures
-      singlePhasePoromechanicsReservoirFVM,        ///< single phase poromechanics with finite volume single phase flow with wells
-      compositionalMultiphaseFVM,                  ///< finite volume compositional multiphase flow
-      compositionalMultiphaseHybridFVM,            ///< hybrid finite volume compositional multiphase flow
-      compositionalMultiphaseReservoirFVM,         ///< finite volume compositional multiphase flow with wells
-      compositionalMultiphaseReservoirHybridFVM,   ///< hybrid finite volume compositional multiphase flow with wells
-      reactiveCompositionalMultiphaseOBL,          ///< finite volume reactive compositional flow with OBL
-      thermalCompositionalMultiphaseFVM,           ///< finite volume thermal compositional multiphase flow
-      multiphasePoromechanics,                     ///< multiphase poromechanics with finite volume compositional multiphase flow
-      multiphasePoromechanicsReservoirFVM,         ///< multiphase poromechanics with finite volume compositional multiphase flow with wells
-      thermalMultiphasePoromechanics,              ///< thermal multiphase poromechanics with finite volume compositional multiphase flow
-      hydrofracture,                               ///< hydrofracture
-      lagrangianContactMechanics,                  ///< Lagrangian contact mechanics
-      solidMechanicsEmbeddedFractures              ///< Embedded fractures mechanics
+      invalid,                                   ///< default value, to ensure solver sets something
+      singlePhaseReservoirFVM,                   ///< finite volume single-phase flow with wells
+      singlePhaseHybridFVM,                      ///< hybrid finite volume single-phase flow
+      singlePhaseReservoirHybridFVM,             ///< hybrid finite volume single-phase flow with wells
+      singlePhasePoromechanics,                  ///< single phase poromechanics with finite volume single phase flow
+      thermalSinglePhasePoromechanics,           ///< thermal single phase poromechanics with finite volume single phase flow
+      hybridSinglePhasePoromechanics,            ///< single phase poromechanics with hybrid finite volume single phase flow
+      singlePhasePoromechanicsEmbeddedFractures, ///< single phase poromechanics with FV embedded fractures
+      singlePhasePoromechanicsConformingFractures, ///< single phase poromechanics with conforming fractures
+      singlePhasePoromechanicsReservoirFVM,      ///< single phase poromechanics with finite volume single phase flow with wells
+      compositionalMultiphaseFVM,                ///< finite volume compositional multiphase flow
+      compositionalMultiphaseHybridFVM,          ///< hybrid finite volume compositional multiphase flow
+      compositionalMultiphaseReservoirFVM,       ///< finite volume compositional multiphase flow with wells
+      compositionalMultiphaseReservoirHybridFVM, ///< hybrid finite volume compositional multiphase flow with wells
+      immiscibleMultiphaseFVM,                   ///< finite volume immiscible multiphase flow
+      reactiveCompositionalMultiphaseOBL,        ///< finite volume reactive compositional flow with OBL
+      thermalCompositionalMultiphaseFVM,         ///< finite volume thermal compositional multiphase flow
+      thermalCompositionalMultiphaseReservoirFVM,///< finite volume thermal compositional multiphase flow
+      multiphasePoromechanics,                   ///< multiphase poromechanics with finite volume compositional multiphase flow
+      multiphasePoromechanicsReservoirFVM,       ///< multiphase poromechanics with finite volume compositional multiphase flow with wells
+      thermalMultiphasePoromechanics,            ///< thermal multiphase poromechanics with finite volume compositional multiphase flow
+      hydrofracture,                             ///< hydrofracture
+      lagrangianContactMechanics,                ///< Lagrangian contact mechanics
+      augmentedLagrangianContactMechanics,       ///< Augmented Lagrangian contact mechanics
+      lagrangianContactMechanicsBubbleStab,      ///< Lagrangian contact mechanics with bubble stabilization
+      solidMechanicsEmbeddedFractures            ///< Embedded fractures mechanics
     };
 
     StrategyType strategy = StrategyType::invalid; ///< Predefined MGR solution strategy (solver specific)
     integer separateComponents = false;            ///< Apply a separate displacement component (SDC) filter before AMG construction
-    string displacementFieldName;                  ///< Displacement field name need for SDC filter
-    integer areWellsShut = false;                   ///< Flag to let MGR know that wells are shut, and that jacobi can be applied to the
-                                                    ///< well block
+    integer areWellsShut = false;                  ///< Flag to let MGR know that wells are shut, and that jacobi can be applied to the well
+                                                   ///< block
   }
   mgr;                                             ///< Multigrid reduction (MGR) parameters
 
@@ -300,7 +334,7 @@ struct LinearSolverParameters
     integer fill = 0;        ///< Fill level
     real64 threshold = 0.0;  ///< Dropping threshold
   }
-  ifact;                       ///< Incomplete factorization parameter struct
+  ifact;                     ///< Incomplete factorization parameter struct
 
   /// Domain decomposition parameters
   struct DD
@@ -308,6 +342,58 @@ struct LinearSolverParameters
     integer overlap = 0;   ///< Ghost overlap
   }
   dd;                      ///< Domain decomposition parameter struct
+
+  /// Block preconditioner parameters
+  struct Block
+  {
+    /// Shape of the block preconditioner
+    enum class Shape
+    {
+      Diagonal,            ///< (D)^{-1}
+      UpperTriangular,     ///< (DU)^{-1}
+      LowerTriangular,     ///< (LD)^{-1}
+      LowerUpperTriangular ///< (LDU)^{-1}
+    };
+
+    /// Type of Schur complement approximation used
+    enum class SchurType
+    {
+      None,                  ///< No Schur complement - just block-GS/block-Jacobi preconditioner
+      FirstBlockDiagonal,    ///< Approximate first block with its diagonal
+      RowsumDiagonalProbing, ///< Rowsum-preserving diagonal approximation constructed with probing
+      FirstBlockUserDefined  ///< User defined preconditioner for the first block
+    };
+
+    /// Type of block row scaling to apply
+    enum class Scaling
+    {
+      None,          ///< No scaling
+      FrobeniusNorm, ///< Equilibrate Frobenius norm of the diagonal blocks
+      UserProvided   ///< User-provided scaling
+    };
+
+    Shape shape = Shape::UpperTriangular;                   ///< Block preconditioner shape
+    SchurType schurType = SchurType::RowsumDiagonalProbing; ///< Schur complement type
+    Scaling scaling = Scaling::FrobeniusNorm;               ///< Type of system scaling to use
+
+    array1d< LinearSolverParameters const * > subParams;    ///< Pointers to parameters for sub-problems
+    array1d< integer > order;                               ///< Order of application of sub-problem solvers
+
+    /**
+     * @brief Set the number of blocks and resize arrays accordingly.
+     * @param numBlocks the number of sub-problem blocks in the system
+     */
+    void resize( integer const numBlocks )
+    {
+      subParams.resize( numBlocks );
+      order.resize( numBlocks );
+      for( integer i = 0; i < numBlocks; ++i )
+      {
+        order[i] = i;
+      }
+    }
+  }
+  block;             ///< Block preconditioner parameters
 };
 
 /// Declare strings associated with enumeration values.
@@ -317,6 +403,7 @@ ENUM_STRINGS( LinearSolverParameters::SolverType,
               "gmres",
               "fgmres",
               "bicgstab",
+              "richardson",
               "preconditioner" );
 
 /// Declare strings associated with enumeration values.
@@ -330,7 +417,7 @@ ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "chebyshev",
               "iluk",
               "ilut",
-              "icc",
+              "ick",
               "ict",
               "amg",
               "mgr",
@@ -368,13 +455,17 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "compositionalMultiphaseHybridFVM",
               "compositionalMultiphaseReservoirFVM",
               "compositionalMultiphaseReservoirHybridFVM",
+              "immiscibleMultiphaseFVM",
               "reactiveCompositionalMultiphaseOBL",
               "thermalCompositionalMultiphaseFVM",
+              "thermalCompositionalMultiphaseReservoirFVM",
               "multiphasePoromechanics",
               "multiphasePoromechanicsReservoirFVM",
               "thermalMultiphasePoromechanics",
               "hydrofracture",
               "lagrangianContactMechanics",
+              "augmentedLagrangianContactMechanics",
+              "lagrangianContactMechanicsBubbleStab",
               "solidMechanicsEmbeddedFractures" );
 
 /// Declare strings associated with enumeration values.
@@ -398,9 +489,9 @@ ENUM_STRINGS( LinearSolverParameters::AMG::SmootherType,
               "sgs",
               "l1sgs",
               "chebyshev",
-              "ilu0",
+              "iluk",
               "ilut",
-              "ic0",
+              "ick",
               "ict" );
 
 /// Declare strings associated with enumeration values.
@@ -413,7 +504,9 @@ ENUM_STRINGS( LinearSolverParameters::AMG::CoarseType,
               "l1sgs",
               "chebyshev",
               "direct",
-              "bgs" );
+              "bgs",
+              "gsElimWPivoting",
+              "gsElimWInverse" );
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::CoarseningType,
@@ -454,6 +547,26 @@ ENUM_STRINGS( LinearSolverParameters::AMG::AggInterpType,
 ENUM_STRINGS( LinearSolverParameters::AMG::NullSpaceType,
               "constantModes",
               "rigidBodyModes" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::Block::Shape,
+              "D",
+              "DU",
+              "LD",
+              "LDU" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::Block::SchurType,
+              "none",
+              "diagonal",
+              "probing",
+              "user" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::Block::Scaling,
+              "none",
+              "frobenius",
+              "user" );
 
 } /* namespace geos */
 

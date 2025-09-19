@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -410,7 +411,14 @@ public:
   virtual void resize( localIndex const newSize ) override
   {
     wrapperHelpers::move( *m_data, hostMemorySpace, true );
-    wrapperHelpers::resizeDefault( reference(), newSize, m_default );
+    if constexpr ( traits::HasMemberFunction_resizeDefault< T > && DefaultValue< T >::has_default_value )
+    {
+      wrapperHelpers::resizeDefault( reference(), newSize, m_default, this->getName() );
+    }
+    else
+    {
+      wrapperHelpers::resize( reference(), newSize );
+    }
   }
 
   /// @cond DO_NOT_DOCUMENT
@@ -726,11 +734,11 @@ public:
                                                                        targetNode,
                                                                        inputFlag == InputFlags::REQUIRED );
           GEOS_THROW_IF( !m_successfulReadFromInput,
-                         GEOS_FMT( "XML Node {} ({}) with name={} is missing required attribute '{}'."
-                                   "Available options are:\n {}\n For more details, please refer to documentation at:\n"
+                         GEOS_FMT( "XML Node {} ({}) with name={} is missing required attribute '{}'.\n"
+                                   "For more details, please refer to documentation at:\n"
                                    "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
                                    targetNode.name(), nodePos.toString(), targetNode.attribute( "name" ).value(),
-                                   getName(), dumpInputOptions( true ) ),
+                                   getName()),
                          InputError );
         }
         else
@@ -771,11 +779,11 @@ public:
   void addBlueprintField( conduit::Node & fields,
                           string const & name,
                           string const & topology,
-                          std::vector< string > const & componentNames = {} ) const override
+                          stdVector< string > const & componentNames = {} ) const override
   { wrapperHelpers::addBlueprintField( reference(), fields, name, topology, componentNames ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  void populateMCArray( conduit::Node & node, std::vector< string > const & componentNames = {} ) const override
+  void populateMCArray( conduit::Node & node, stdVector< string > const & componentNames = {} ) const override
   { wrapperHelpers::populateMCArray( reference(), node, componentNames ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -894,6 +902,15 @@ public:
   }
 
   /**
+   * @copydoc WrapperBase::appendDescription(string const &)
+   */
+  Wrapper< T > & appendDescription( string const & description )
+  {
+    WrapperBase::appendDescription( description );
+    return *this;
+  }
+
+  /**
    * @copydoc WrapperBase::setRegisteringObjects(string const &)
    */
   Wrapper< T > & setRegisteringObjects( string const & objectName )
@@ -931,7 +948,7 @@ public:
 //  void tvTemplateInstantiation();
 #endif
 
-#if defined(GEOSX_USE_PYGEOSX)
+#if defined(GEOS_USE_PYGEOSX)
   virtual PyObject * createPythonObject( ) override
   { return wrapperHelpers::createPythonObject( reference() ); }
 #endif

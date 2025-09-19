@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -20,9 +21,9 @@
 #include "MpiWrapper.hpp"
 
 // TPL includes
-#ifdef GEOSX_USE_CALIPER
+#ifdef GEOS_USE_CALIPER
 
-#ifdef GEOSX_USE_ADIAK
+#ifdef GEOS_USE_ADIAK
 #include <adiak.hpp>
 #endif
 
@@ -46,6 +47,10 @@ struct CommandLineOptions
 
   /// True iff restarting from the middle of an existing run.
   bool beginFromRestart = false;
+
+  /// If true, GEOS will only do the loading phase, and not actual simulation.
+  /// Useful to validate GEOS inputs.
+  bool onlyValidateInput = false;
 
   /// The path to the restart file, if specified.
   string restartFileName;
@@ -133,6 +138,11 @@ void setupMPI( int argc, char * argv[] );
  */
 void finalizeMPI();
 
+/**
+ * @brief Setup CUDA
+ * @details Will set up CUDA environment values if required
+ */
+void setupCUDA();
 
 /**
  * @brief Setup/init the environment.
@@ -146,7 +156,7 @@ void setupEnvironment( int argc, char * argv[] );
  */
 void cleanupEnvironment();
 
-#if defined( GEOSX_USE_CALIPER )
+#if defined( GEOS_USE_CALIPER )
 
 /**
  * @brief Setup Caliper and Adiak.
@@ -169,7 +179,7 @@ void setupCaliper( cali::ConfigManager & caliperManager,
 template< typename T >
 void pushStatsIntoAdiak( string const & name, T const value )
 {
-#if defined( GEOSX_USE_CALIPER ) && defined( GEOSX_USE_ADIAK ) && !defined(__APPLE__)
+#if defined( GEOS_USE_CALIPER ) && defined( GEOS_USE_ADIAK ) && !defined(__APPLE__)
   // Apple clang doesn't like adiak.
   T const total = MpiWrapper::sum( value );
   adiak::value( name + " sum", total );

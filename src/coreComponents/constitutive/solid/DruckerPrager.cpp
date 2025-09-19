@@ -2,11 +2,12 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -17,6 +18,7 @@
  */
 
 #include "DruckerPrager.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -25,16 +27,7 @@ namespace constitutive
 {
 
 DruckerPrager::DruckerPrager( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_defaultFrictionAngle(),
-  m_defaultDilationAngle(),
-  m_defaultCohesion(),
-  m_defaultHardening(),
-  m_friction(),
-  m_dilation(),
-  m_hardening(),
-  m_newCohesion(),
-  m_oldCohesion()
+  ElasticIsotropic( name, parent )
 {
   // register default values
 
@@ -60,46 +53,30 @@ DruckerPrager::DruckerPrager( string const & name, Group * const parent ):
 
   // register fields
 
-  registerWrapper( viewKeyStruct::frictionString(), &m_friction ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Yield surface slope" );
+  registerField< fields::solid::friction >( &m_friction );
 
-  registerWrapper( viewKeyStruct::dilationString(), &m_dilation ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Plastic potential slope" );
+  registerField< fields::solid::dilation >( &m_dilation );
 
-  registerWrapper( viewKeyStruct::hardeningString(), &m_hardening ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Hardening rate" );
+  registerField< fields::solid::hardening >( &m_hardening );
 
-  registerWrapper( viewKeyStruct::newCohesionString(), &m_newCohesion ).
-    setApplyDefaultValue( -1 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
-    setDescription( "New cohesion state" );
+  registerField< fields::solid::cohesion >( &m_newCohesion );
 
-  registerWrapper( viewKeyStruct::oldCohesionString(), &m_oldCohesion ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Old cohesion state" );
+  registerField< fields::solid::oldCohesion >( &m_oldCohesion );
 }
 
 
-DruckerPrager::~DruckerPrager()
-{}
-
-
-void DruckerPrager::allocateConstitutiveData( dataRepository::Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+void DruckerPrager::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  m_newCohesion.resize( 0, numConstitutivePointsPerParentIndex );
-  m_oldCohesion.resize( 0, numConstitutivePointsPerParentIndex );
+  m_newCohesion.resize( 0, numPts );
+  m_oldCohesion.resize( 0, numPts );
 
-  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 }
 
 
-void DruckerPrager::postProcessInput()
+void DruckerPrager::postInputInitialization()
 {
-  ElasticIsotropic::postProcessInput();
+  ElasticIsotropic::postInputInitialization();
 
   GEOS_THROW_IF( m_defaultCohesion < 0,
                  getFullName() << ": Negative cohesion value detected", InputError );
@@ -123,19 +100,19 @@ void DruckerPrager::postProcessInput()
 
   // set results as array default values
 
-  getWrapper< array2d< real64 > >( viewKeyStruct::oldCohesionString() ).
+  getField< fields::solid::oldCohesion >().
     setApplyDefaultValue( C );
 
-  getWrapper< array2d< real64 > >( viewKeyStruct::newCohesionString() ).
+  getField< fields::solid::cohesion >().
     setApplyDefaultValue( C );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::dilationString() ).
+  getField< fields::solid::dilation >().
     setApplyDefaultValue( D );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::frictionString() ).
+  getField< fields::solid::friction >().
     setApplyDefaultValue( F );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::hardeningString() ).
+  getField< fields::solid::hardening >().
     setApplyDefaultValue( m_defaultHardening );
 }
 

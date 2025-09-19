@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -80,7 +81,7 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
   // 2) classify well elements based on connectivity to local mesh partition
   array1d< integer > elemStatusGlobal;
-  elemStatusGlobal.resizeDefault( numElemsGlobal, WellElementSubRegion::WellElemStatus::UNOWNED );
+  elemStatusGlobal.resizeDefault( numElemsGlobal, WellElementSubRegion::WellElemParallelStatus::UNOWNED );
 
   arrayView1d< globalIndex const > const & perfElemIdGlobal = lineBlock.getPerfElemIndex();
 
@@ -90,11 +91,11 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
     if( perforationData->globalToLocalMap().count( iperfGlobal ) > 0 )
     {
-      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemStatus::LOCAL;
+      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemParallelStatus::LOCAL;
     }
     else
     {
-      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemStatus::REMOTE;
+      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemParallelStatus::REMOTE;
     }
   }
 
@@ -130,6 +131,9 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
                                           subRegion.globalToLocalMap(),
                                           elemOffsetGlobal );
 
+  // Setup MPI gatherv support arrays for use to establish if segment is active
+  // A segment is active if it has an open perforation or an upstream segment is open
+  subRegion.setupCommArrays();
 }
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, WellElementRegion, string const &, Group * const )

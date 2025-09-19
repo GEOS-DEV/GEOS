@@ -2,11 +2,12 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
- * All right reserved
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
@@ -15,8 +16,8 @@
 /**
  * @file NormalOperator.hpp
  */
-#ifndef GEOS_LINEARALGEBRA_NORMALOPERATOR_HPP_
-#define GEOS_LINEARALGEBRA_NORMALOPERATOR_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_NORMALOPERATOR_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_NORMALOPERATOR_HPP_
 
 #include "common/LinearOperator.hpp"
 
@@ -27,19 +28,19 @@ namespace geos
  * @brief Wraps a matrix A and represents A^T * A as a linear operator.
  * @tparam LAI the linear algebra interface
  */
-template< typename LAI >
-class NormalOperator : public LinearOperator< typename LAI::ParallelVector >
+template< typename MATRIX >
+class NormalOperator : public LinearOperator< typename MATRIX::Vector >
 {
 public:
 
   /// Alias for base type
-  using Base = LinearOperator< typename LAI::ParallelVector >;
+  using Base = LinearOperator< typename MATRIX::Vector >;
 
   /// Alias for vector type
   using Vector = typename Base::Vector;
 
   /// Alias for matrix type
-  using Matrix = typename LAI::ParallelMatrix;
+  using Matrix = MATRIX;
 
   /**
    * @brief Constructor
@@ -48,11 +49,6 @@ public:
   explicit NormalOperator( Matrix const & mat )
     : m_matrix( mat )
   {}
-
-  /**
-   * @brief Destructor.
-   */
-  virtual ~NormalOperator() override = default;
 
   /**
    * @brief Apply operator to a vector.
@@ -115,4 +111,4 @@ private:
 
 } // namespace geos
 
-#endif //GEOS_LINEARALGEBRA_NORMALOPERATOR_HPP_
+#endif //GEOS_LINEARALGEBRA_UTILITIES_NORMALOPERATOR_HPP_

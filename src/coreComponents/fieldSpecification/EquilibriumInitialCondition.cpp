@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -89,7 +90,7 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
   addSetName( "all" );
 }
 
-void EquilibriumInitialCondition::postProcessInput()
+void EquilibriumInitialCondition::postInputInitialization()
 {
 
   GEOS_THROW_IF( ( m_temperatureVsElevationTableName.empty() != m_componentFractionVsElevationTableNames.empty() ),
@@ -117,7 +118,7 @@ void EquilibriumInitialCondition::postProcessInput()
                    InputError );
 
     array1d< localIndex > tableSizes( m_componentNames.size() );
-    for( localIndex ic = 0; ic < m_componentNames.size(); ++ic )
+    for( size_t ic = 0; ic < m_componentNames.size(); ++ic )
     {
       GEOS_THROW_IF( m_componentFractionVsElevationTableNames[ic].empty(),
                      getCatalogName() << " " << getDataContext() <<
@@ -166,7 +167,7 @@ void EquilibriumInitialCondition::initializePreSubGroups()
     FunctionManager const & functionManager = FunctionManager::getInstance();
 
     array1d< localIndex > tableSizes( m_componentNames.size() );
-    for( localIndex ic = 0; ic < m_componentNames.size(); ++ic )
+    for( size_t ic = 0; ic < m_componentNames.size(); ++ic )
     {
       TableFunction const & compFracTable = functionManager.getGroup< TableFunction >( m_componentFractionVsElevationTableNames[ic] );
       arrayView1d< real64 const > compFracValues = compFracTable.getValues();
@@ -188,7 +189,7 @@ void EquilibriumInitialCondition::initializePreSubGroups()
 
     array2d< real64 > elevation( m_componentNames.size(), tableSizes[0] );
     array1d< real64 > sumCompFrac( tableSizes[0] );
-    for( localIndex ic = 0; ic < m_componentNames.size(); ++ic )
+    for( size_t ic = 0; ic < m_componentNames.size(); ++ic )
     {
       TableFunction const & compFracTable = functionManager.getGroup< TableFunction >( m_componentFractionVsElevationTableNames[ic] );
 

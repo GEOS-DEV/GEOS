@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -75,9 +76,7 @@ public:
                         string_array const & inputParams,
                         string_array const & componentNames,
                         array1d< real64 > const & componentMolarWeight,
-                        bool const printTable );
-
-  virtual ~FenghourCO2Viscosity() override = default;
+                        TableFunction::OutputOptions const pvtOutputOpts );
 
   static string catalogName() { return "FenghourCO2Viscosity"; }
 
@@ -105,7 +104,7 @@ public:
 private:
 
   /// Table with CO2 viscosity tabulated as a function of (P,T)
-  TableFunction const * m_CO2ViscosityTable;
+  TableFunction const * m_CO2ViscosityTable = nullptr;
 
 };
 
@@ -124,7 +123,7 @@ void FenghourCO2ViscosityUpdate::compute( real64 const & pressure,
                    dPhaseComposition,
                    useMass );
 
-  using Deriv = multifluid::DerivativeOffset;
+  using Deriv = constitutive::multifluid::DerivativeOffset;
 
   real64 const input[2] = { pressure, temperature };
   real64 densityDeriv[2]{};
