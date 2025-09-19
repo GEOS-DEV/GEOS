@@ -27,9 +27,8 @@
         logLevel="1"/>
     </SinglePhasePoromechanics>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="matrixMechSolver"
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Reservoir, Overburden, Underburden, Sideburden }">
@@ -42,7 +41,7 @@
         krylovTol="1.0e-6"
         krylovMaxIter="100"
         logLevel="1"/>
-    </SolidMechanicsLagrangianSSLE>
+    </SolidMechanicsLagrangianFEM>
 
     <SinglePhaseFVM
       name="flowSolver"

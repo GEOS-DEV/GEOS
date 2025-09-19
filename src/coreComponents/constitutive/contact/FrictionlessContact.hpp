@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_CONTACT_FRICTIONLESSCONTACT_HPP_
 
 #include "constitutive/contact/FrictionBase.hpp"
+#include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 
 namespace geos
 {
@@ -85,11 +86,6 @@ public:
                        Group * const parent );
 
   /**
-   * @brief default destructor
-   */
-  virtual ~FrictionlessContact() override;
-
-  /**
    * @return A string that is used to register/lookup this class in the registry
    */
   static string catalogName() { return "FrictionlessContact"; }
@@ -104,14 +100,6 @@ public:
    * @return the wrapper
    */
   KernelWrapper createKernelUpdates() const;
-
-  /**
-   * @struct Structure to hold scoped key names
-   */
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
-  {};
-
-protected:
 
 };
 

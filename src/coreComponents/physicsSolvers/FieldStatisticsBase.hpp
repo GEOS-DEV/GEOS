@@ -49,7 +49,6 @@ public:
     m_solver( nullptr ),
     m_outputDir( joinPath( OutputBase::getOutputDirectory(), name ) )
   {
-    enableLogLevelInput();
 
     string const key = SOLVER::coupledSolverAttributePrefix() + "SolverName";
     registerWrapper( key, &m_solverName ).
@@ -60,7 +59,7 @@ public:
     this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
       setApplyDefaultValue( 0 ).
       setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-      setDescription( "Write statistics into a CSV file" );
+      setDescription( "When set to 1, write the statistics into a CSV file" );
   }
 
   /**

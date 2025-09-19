@@ -47,6 +47,10 @@ public:
   /// Accessor for the catalog name
   static string catalogName() { return "CompositionalMultiphaseStatistics"; }
 
+  /// Accessor for the region statistics catalog name
+  static string regionStatisticsName() { return "regionStatistics"; }
+
+
   /**
    * @defgroup Tasks Interface Functions
    *
@@ -62,25 +66,6 @@ public:
                         DomainPartition & domain ) override;
 
   /**@}*/
-
-private:
-
-  using Base = FieldStatisticsBase< CompositionalMultiphaseBase >;
-
-  /**
-   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
-   */
-  struct viewKeyStruct
-  {
-    /// String for the flag deciding the computation of the CFL numbers
-    constexpr static char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
-    /// String for the flag deciding the computation of the region statistics
-    constexpr static char const * computeRegionStatisticsString() { return "computeRegionStatistics"; }
-    /// String for the region statistics
-    constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
-    /// String for the relperm threshold
-    constexpr static char const * relpermThresholdString() { return "relpermThreshold"; }
-  };
 
   struct RegionStatistics
   {
@@ -118,9 +103,27 @@ private:
     array1d< real64 > immobilePhaseMass;
     /// region component mass
     array2d< real64 > componentMass;
-
-
   };
+private:
+
+  using Base = FieldStatisticsBase< CompositionalMultiphaseBase >;
+
+  /**
+   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
+   */
+  struct viewKeyStruct
+  {
+    /// String for the flag deciding the computation of the CFL numbers
+    constexpr static char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
+    /// String for the flag deciding the computation of the region statistics
+    constexpr static char const * computeRegionStatisticsString() { return "computeRegionStatistics"; }
+    /// String for the region statistics
+    constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
+    /// String for the relperm threshold
+    constexpr static char const * relpermThresholdString() { return "relpermThreshold"; }
+  };
+
+
 
   /**
    * @brief Compute some statistics on the reservoir (average field pressure, etc)
@@ -130,7 +133,7 @@ private:
    */
   void computeRegionStatistics( real64 const time,
                                 MeshLevel & mesh,
-                                arrayView1d< string const > const & regionNames ) const;
+                                string_array const & regionNames ) const;
 
   /**
    * @brief Compute CFL numbers

@@ -160,9 +160,9 @@ void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
   m_referencePosition = cellBlockManager.getNodePositions();
 
   m_toEdgesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToEdges(),
-                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
+                                                             LvArray::sortedArrayManipulation::UNSORTED_WITH_DUPLICATES );
   m_toFacesRelation.base().assimilate< parallelHostPolicy >( cellBlockManager.getNodeToFaces(),
-                                                             LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
+                                                             LvArray::sortedArrayManipulation::UNSORTED_WITH_DUPLICATES );
 
   ToCellRelation< ArrayOfArrays< localIndex > > const toCellBlock = cellBlockManager.getNodeToElements();
   array2d< localIndex > const blockToSubRegion = elemRegionManager.getCellBlockToSubRegionMap( cellBlockManager );
@@ -299,6 +299,8 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                      m_toElements.getElementRegionManager(),
                                      overwriteUpMaps );
 
+//  GEOS_ERROR_IF_NE( m_unmappedGlobalIndicesInToEdges.size(), 0 );
+//  GEOS_ERROR_IF_NE( m_unmappedGlobalIndicesInToFaces.size(), 0 );
   return unPackedSize;
 }
 

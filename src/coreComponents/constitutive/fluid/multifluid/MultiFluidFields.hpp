@@ -139,7 +139,7 @@ DECLARE_FIELD( phaseInternalEnergy,
                "phaseInternalEnergy",
                array3dLayoutPhase,
                0,
-               NOPLOT, // default behavior overridden by thermal models
+               LEVEL_0, // default behavior overridden by thermal models
                NO_WRITE,
                "Phase internal energy" );
 
@@ -206,6 +206,14 @@ DECLARE_FIELD( dTotalDensity,
                NOPLOT,
                NO_WRITE,
                "Derivative of total density with respect to pressure, temperature, and global component fractions" );
+
+DECLARE_FIELD( kValues,
+               "kValues",
+               array4dLayoutPhaseComp,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Phase equilibrium ratios" );
 
 }
 

@@ -22,7 +22,6 @@
     <SolidMechanicsLagrangeContact
       name="fractureMechSolver"
       stabilizationName="singlePhaseTPFA_stab"
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       targetRegions="{ Domain, Fracture }"
       discretization="FE1"/>  
@@ -44,7 +43,7 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       fractureRegion="Fracture"
-      rockToughness="1e6"
+      initialRockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>
 

@@ -18,9 +18,9 @@
  */
 
 #include "PVTDriver.hpp"
-
 #include "common/MpiWrapper.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutiveDrivers/fluid/multiFluid/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
@@ -41,7 +41,6 @@ PVTDriver::PVTDriver( const string & name,
                       Group * const parent ):
   TaskBase( name, parent )
 {
-  enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::fluidNameString(), &m_fluidName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -77,6 +76,11 @@ PVTDriver::PVTDriver( const string & name,
     setApplyDefaultValue( 0 ).
     setDescription( "Flag to indicate that phase compositions should be output" );
 
+  registerWrapper( viewKeyStruct::precisionString(), &m_precision ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_precision ).
+    setDescription( "The precision to use to data out to files" );
+
   //todo refactor in mother class
   registerWrapper( viewKeyStruct::numStepsString(), &m_numSteps ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -91,6 +95,8 @@ PVTDriver::PVTDriver( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
+
+  addLogLevel< logInfo::LogOutput >();
 }
 
 void PVTDriver::postInputInitialization()
@@ -108,9 +114,19 @@ void PVTDriver::postInputInitialization()
                  getWrapperDataContext( viewKeyStruct::outputPhaseCompositionString() ) <<
                  ": option can be either 0 (false) or 1 (true)" );
 
+  GEOS_WARNING_IF( m_precision < minPrecision,
+                   GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
+                             getWrapperDataContext( viewKeyStruct::precisionString() ),
+                             minPrecision, maxPrecision, minPrecision ));
+
+  GEOS_WARNING_IF( maxPrecision < m_precision,
+                   GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
+                             getWrapperDataContext( viewKeyStruct::precisionString() ),
+                             minPrecision, maxPrecision, maxPrecision ) );
+
   // get number of phases and components
 
-  constitutive::MultiFluidBase & baseFluid = getFluid();
+  MultiFluidBase & baseFluid = getFluid();
 
   m_numPhases = baseFluid.numFluidPhases();
   m_numComponents = baseFluid.numFluidComponents();
@@ -124,6 +140,12 @@ void PVTDriver::postInputInitialization()
 
   // If the mass density is requested then add NP columns
   if( m_outputMassDensity != 0 )
+  {
+    numCols += m_numPhases;
+  }
+
+  // If fluid is thermal then add NP columns for the enthalpy
+  if( baseFluid.isThermal() )
   {
     numCols += m_numPhases;
   }
@@ -185,26 +207,23 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
   // get the fluid out of the constitutive manager.
   // for the moment it is of type MultiFluidBase.
 
-  constitutive::MultiFluidBase & baseFluid = getFluid();
+  MultiFluidBase & baseFluid = getFluid();
 
   // depending on logLevel, print some useful info
 
-  if( getLogLevel() > 0 )
-  {
-    GEOS_LOG_RANK_0( "Launching PVT Driver" );
-    GEOS_LOG_RANK_0( "  Fluid .................. " << m_fluidName );
-    GEOS_LOG_RANK_0( "  Type ................... " << baseFluid.getCatalogName() );
-    GEOS_LOG_RANK_0( "  No. of Phases .......... " << m_numPhases );
-    GEOS_LOG_RANK_0( "  No. of Components ...... " << m_numComponents );
-    GEOS_LOG_RANK_0( "  Pressure Control ....... " << m_pressureFunctionName );
-    GEOS_LOG_RANK_0( "  Temperature Control .... " << m_temperatureFunctionName );
-    GEOS_LOG_RANK_0( "  Steps .................. " << m_numSteps );
-    GEOS_LOG_RANK_0( "  Output ................. " << m_outputFile );
-    GEOS_LOG_RANK_0( "  Baseline ............... " << m_baselineFile );
-    GEOS_LOG_RANK_0( "  Output Mass Density .... " << m_outputMassDensity );
-    GEOS_LOG_RANK_0( "  Output Compressibility . " << m_outputCompressibility );
-    GEOS_LOG_RANK_0( "  Output Phase Comp. ..... " << m_outputPhaseComposition );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "Launching PVT Driver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Fluid .................. " << m_fluidName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Type ................... " << baseFluid.getCatalogName() );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  No. of Phases .......... " << m_numPhases );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  No. of Components ...... " << m_numComponents );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Pressure Control ....... " << m_pressureFunctionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Temperature Control .... " << m_temperatureFunctionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Steps .................. " << m_numSteps );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output ................. " << m_outputFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Baseline ............... " << m_baselineFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output Mass Density .... " << m_outputMassDensity );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output Compressibility . " << m_outputCompressibility );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output Phase Comp. ..... " << m_outputPhaseComposition );
 
   // create a dummy discretization with one quadrature point for
   // storing constitutive data
@@ -246,6 +265,7 @@ void PVTDriver::outputResults()
 {
   // TODO: improve file path output to grab command line -o directory
   //       for the moment, we just use the specified m_outputFile directly
+  constitutive::MultiFluidBase & baseFluid = getFluid();
 
   FILE * fp = fopen( m_outputFile.c_str(), "w" );
 
@@ -259,7 +279,7 @@ void PVTDriver::outputResults()
     fprintf( fp, "# column %d = total compressibility\n", ++columnIndex );
   }
 
-  auto const phaseNames = getFluid().phaseNames();
+  auto const phaseNames = baseFluid.phaseNames();
 
   fprintf( fp, "# columns %d-%d = phase fractions\n", columnIndex+1, columnIndex + m_numPhases );
   columnIndex += m_numPhases;
@@ -273,9 +293,15 @@ void PVTDriver::outputResults()
   fprintf( fp, "# columns %d-%d = phase viscosities\n", columnIndex+1, columnIndex + m_numPhases );
   columnIndex += m_numPhases;
 
+  if( baseFluid.isThermal())
+  {
+    fprintf( fp, "# columns %d-%d = phase enthalpies\n", columnIndex+1, columnIndex + m_numPhases );
+    columnIndex += m_numPhases;
+  }
+
   if( m_outputPhaseComposition != 0 )
   {
-    string const componentNames = stringutilities::join( getFluid().componentNames(), ", " );
+    string const componentNames = stringutilities::join( baseFluid.componentNames(), ", " );
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
       fprintf( fp, "# columns %d-%d = %s phase fractions [%s]\n", columnIndex+1, columnIndex + m_numComponents,
@@ -284,11 +310,13 @@ void PVTDriver::outputResults()
     }
   }
 
+  integer const precision = LvArray::math::max( LvArray::math::min( m_precision, maxPrecision ), minPrecision );
+  string const format = GEOS_FMT( "%{}.{}e ", precision+7, precision );
   for( integer n=0; n<m_table.size( 0 ); ++n )
   {
     for( integer col=0; col<m_table.size( 1 ); ++col )
     {
-      fprintf( fp, "%.4e ", m_table( n, col ) );
+      fprintf( fp, format.c_str(), m_table( n, col ) );
     }
     fprintf( fp, "\n" );
   }
@@ -313,6 +341,10 @@ void PVTDriver::compareWithBaseline()
   if( m_outputMassDensity )
   {
     headerRows++;
+  }
+  if( getFluid().isThermal())
+  {
+    headerRows++; // Enthalpy
   }
   if( m_outputPhaseComposition )
   {
@@ -353,15 +385,12 @@ void PVTDriver::compareWithBaseline()
 
   // success
 
-  if( getLogLevel() > 0 )
-  {
-    GEOS_LOG_RANK_0( "  Comparison ............. Internal results consistent with baseline." );
-  }
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Comparison ............. Internal results consistent with baseline." );
 
   file.close();
 }
 
-constitutive::MultiFluidBase &
+MultiFluidBase &
 PVTDriver::getFluid()
 {
   ConstitutiveManager & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );

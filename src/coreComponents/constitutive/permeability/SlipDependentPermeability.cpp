@@ -18,7 +18,6 @@
  */
 
 #include "SlipDependentPermeability.hpp"
-#include "LvArray/src/tensorOps.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 
 namespace geos
@@ -45,23 +44,16 @@ SlipDependentPermeability::SlipDependentPermeability( string const & name, Group
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( " initial permeability of the fracture." );
 
-  registerField( fields::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+  registerField< fields::permeability::dPerm_dDispJump >( &m_dPerm_dDispJump );
 }
 
-std::unique_ptr< ConstitutiveBase >
-SlipDependentPermeability::deliverClone( string const & name,
-                                         Group * const parent ) const
+void SlipDependentPermeability::allocateConstitutiveData( Group & parent,
+                                                          localIndex const numPts )
 {
-  return ConstitutiveBase::deliverClone( name, parent );
-}
-
-void SlipDependentPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                          localIndex const numConstitutivePointsPerParentIndex )
-{
-// NOTE: enforcing 1 quadrature point
+  // NOTE: enforcing 1 quadrature point
   m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
 
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, SlipDependentPermeability, string const &, Group * const )

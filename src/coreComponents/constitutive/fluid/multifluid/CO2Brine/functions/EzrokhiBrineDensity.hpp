@@ -111,8 +111,6 @@ public:
                        array1d< real64 > const & componentMolarWeight,
                        TableFunction::OutputOptions const pvtOutputOpts );
 
-  virtual ~EzrokhiBrineDensity() override = default;
-
   static string catalogName() { return "EzrokhiBrineDensity"; }
 
   virtual string getCatalogName() const override final { return catalogName(); }
@@ -141,10 +139,10 @@ private:
   void makeCoefficients( string_array const & inputPara );
 
   /// Table with water saturated density tabulated as a function (T)
-  TableFunction const * m_waterSatDensityTable;
+  TableFunction const * m_waterSatDensityTable = nullptr;
 
   /// Table with water saturated pressure tabulated as a function (T)
-  TableFunction const * m_waterSatPressureTable;
+  TableFunction const * m_waterSatPressureTable = nullptr;
 
   /// Index of the CO2 phase
   integer m_CO2Index;

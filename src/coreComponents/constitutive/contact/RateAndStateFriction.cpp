@@ -27,16 +27,20 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-RateAndStateFriction::RateAndStateFriction( string const & name, Group * const parent ):
+template< typename USE_SLIP_LAW >
+RateAndStateFriction< USE_SLIP_LAW >::RateAndStateFriction( string const & name, Group * const parent ):
   FrictionBase( name, parent )
 {
   registerWrapper( viewKeyStruct::aCoefficientString(), &m_a ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Rate- and State-dependent friction coefficient a." );
 
   registerWrapper( viewKeyStruct::bCoefficientString(), &m_b ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Rate- and State-dependent friction coefficient b." );
 
   registerWrapper( viewKeyStruct::DcCoefficientString(), &m_Dc ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Rate- and State-dependent friction characteristic length." );
 
   registerWrapper( viewKeyStruct::referenceVelocityString(), &m_V0 ).
@@ -71,10 +75,8 @@ RateAndStateFriction::RateAndStateFriction( string const & name, Group * const p
     setDescription( "Default value of the Rate- and State-dependent friction reference friction coefficient." );
 }
 
-RateAndStateFriction::~RateAndStateFriction()
-{}
-
-void RateAndStateFriction::postInputInitialization()
+template< typename USE_SLIP_LAW >
+void RateAndStateFriction< USE_SLIP_LAW >::postInputInitialization()
 {
   this->getWrapper< array1d< real64 > >( viewKeyStruct::aCoefficientString() ).
     setApplyDefaultValue( m_defaultA );
@@ -95,21 +97,13 @@ void RateAndStateFriction::postInputInitialization()
     setApplyDefaultValue( m_defaultMu0 );
 }
 
-void RateAndStateFriction::allocateConstitutiveData( Group & parent,
-                                                     localIndex const numConstitutivePointsPerParentIndex )
+namespace
 {
-  FrictionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+typedef RateAndStateFriction< std::integral_constant< bool, true > > RateAndStateFrictionWithSlipLaw;
+typedef RateAndStateFriction< std::integral_constant< bool, false > > RateAndStateFrictionWithAgingLaw;
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, RateAndStateFrictionWithSlipLaw, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, RateAndStateFrictionWithAgingLaw, string const &, Group * const )
 }
-
-using RateAndStateFrictionUpdates = RateAndStateFriction::KernelWrapper;
-RateAndStateFrictionUpdates RateAndStateFriction::createKernelUpdates() const
-{
-  return RateAndStateFrictionUpdates( m_displacementJumpThreshold,
-                                      m_frictionCoefficient, m_a, m_b,
-                                      m_Dc, m_V0, m_mu0 );
-}
-
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, RateAndStateFriction, string const &, Group * const )
 
 } /* namespace constitutive */
 

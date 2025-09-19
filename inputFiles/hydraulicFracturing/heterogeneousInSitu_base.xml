@@ -22,10 +22,9 @@
         preconditionerType="mgr"/>
     </Hydrofracture>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="lagsolve"
       logLevel="1"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact"
@@ -35,7 +34,7 @@
       <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-10"/>
-    </SolidMechanicsLagrangianSSLE>
+    </SolidMechanicsLagrangianFEM>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
@@ -53,7 +52,7 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      rockToughness="$K_upscaled$"
+      initialRockToughness="$K_upscaled$"
       nodeBasedSIF="1"
       mpiCommOrder="1"/>
   </Solvers>
@@ -247,7 +246,7 @@
       name="bulk_modulus"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/Domain"
       fieldName="rock_bulkModulus"
       functionName="bulk_modulus"
       scale="1.0"/>
@@ -256,7 +255,7 @@
       name="shear_modulus"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/Domain"
       fieldName="rock_shearModulus"
       functionName="shear_modulus"
       scale="1.0"/>
@@ -265,7 +264,7 @@
       name="sigma_xx"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/Domain"
       fieldName="rock_stress"
       component="0"
       functionName="sigma_xx"
@@ -275,7 +274,7 @@
       name="sigma_yy"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/Domain"
       fieldName="rock_stress"
       component="1"
       functionName="sigma_yy"
@@ -285,7 +284,7 @@
       name="sigma_zz"
       initialCondition="1"
       setNames="{ all }"
-      objectPath="ElementRegions"
+      objectPath="ElementRegions/Domain"
       fieldName="rock_stress"
       component="2"
       functionName="sigma_zz"

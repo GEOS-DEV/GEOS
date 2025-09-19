@@ -17,11 +17,11 @@
  * @file WellControls.cpp
  */
 
+#include "LogLevelsInfo.hpp"
 #include "WellControls.hpp"
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
-#include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 
 
 namespace geos
@@ -49,11 +49,11 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetTotalRateTable( nullptr ),
   m_targetPhaseRateTable( nullptr ),
   m_targetBHPTable( nullptr ),
-  m_statusTable( nullptr )
+  m_statusTable( nullptr ),
+  m_wellStatus( WellControls::Status::OPEN ),
+  m_regionAveragePressure( -1 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
-  enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::typeString(), &m_type ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -71,27 +71,32 @@ WellControls::WellControls( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::targetBHPString(), &m_targetBHP ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Target bottom-hole pressure [Pa]" );
 
   registerWrapper( viewKeyStruct::targetTotalRateString(), &m_targetTotalRate ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Target total volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
 
   registerWrapper( viewKeyStruct::targetPhaseRateString(), &m_targetPhaseRate ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Target phase volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
 
   registerWrapper( viewKeyStruct::targetMassRateString(), &m_targetMassRate ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Target Mass Rate rate ( [kg^3/s])" );
 
   registerWrapper( viewKeyStruct::targetPhaseNameString(), &m_targetPhaseName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setDefaultValue( "" ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Name of the target phase" );
 
   registerWrapper( viewKeyStruct::refElevString(), &m_refElevation ).
@@ -114,7 +119,16 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to specify whether rates are checked at surface or reservoir conditions.\n"
-                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions" );
+                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions.\n"
+                    "See note on referenceReservoirRegion for reservoir condition options" );
+
+  registerWrapper( viewKeyStruct::referenceReservoirRegionString(), &m_referenceReservoirRegion ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setDefaultValue( "" ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Name of reservoir region used for obtaining average region pressure used in volume rate constraint calculations.\n"
+                    "Frequency of pressure update is set in Single/CompositionalMultiPhaseStatistics definition.\n"
+                    "Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint properties" );
 
   registerWrapper( viewKeyStruct::surfacePressureString(), &m_surfacePres ).
     setDefaultValue( 0 ).
@@ -165,6 +179,8 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the well status table when the status of the well is a time dependent function. \n"
                     "If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut." );
+
+  addLogLevel< logInfo::WellControl >();
 }
 
 
@@ -342,8 +358,8 @@ void WellControls::postInputInitialization()
   else if( m_targetBHP <= 0.0 && m_targetBHPTableName.empty() )
   {
     m_targetBHP = isProducer() ? WellConstants::defaultProducerBHP : WellConstants::defaultInjectorBHP;
-    GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::WellControl,
-                                GEOS_FMT( "WellControls {}: Setting {}  to default value {}", getDataContext(), viewKeyStruct::targetBHPString(), m_targetBHP ));
+    GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
+                           GEOS_FMT( "WellControls {}: Setting {}  to default value {}", getDataContext(), viewKeyStruct::targetBHPString(), m_targetBHP ));
   }
 
   // 6.2) Check incoherent information
@@ -358,12 +374,6 @@ void WellControls::postInputInitialization()
   GEOS_THROW_IF( (isProducer() && (m_inputControl == Control::MASSRATE)),
                  "WellControls " << getDataContext() << ": You have to control an injector with "
                                  << EnumStrings< Control >::toString( Control::MASSRATE ),
-                 InputError );
-
-  // 7) Make sure that the flag disabling crossflow is not used for producers
-  GEOS_THROW_IF( isProducer() && m_isCrossflowEnabled == 0,
-                 getWrapperDataContext( viewKeyStruct::enableCrossflowString() ) <<
-                 ": This option cannot be set to '0' for producers",
                  InputError );
 
   // 8) Make sure that the initial pressure coefficient is positive
@@ -461,21 +471,54 @@ void WellControls::postInputInitialization()
                                    << m_statusTable->getName() << " should be TableFunction::InterpolationType::Lower",
                    InputError );
   }
+
 }
 
-bool WellControls::isWellOpen( real64 const & currentTime ) const
+void WellControls::setWellStatus( real64 const & currentTime, WellControls::Status status )
 {
-  bool isOpen = true;
-  if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) )
-      && isZero( getTargetMassRate( currentTime ) ))
+  m_wellStatus = status;
+  if( m_wellStatus == WellControls::Status::OPEN )
   {
-    isOpen = false;
+
+    if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) )
+        && isZero( getTargetMassRate( currentTime ) ) )
+    {
+      m_wellStatus =  WellControls::Status::CLOSED;
+    }
+    if( m_statusTable->evaluate( &currentTime ) < LvArray::NumericLimits< real64 >::epsilon )
+    {
+      m_wellStatus =  WellControls::Status::CLOSED;
+    }
   }
-  if( m_statusTable->evaluate( &currentTime ) < LvArray::NumericLimits< real64 >::epsilon )
+}
+
+bool WellControls::isWellOpen() const
+{
+  return getWellStatus() == WellControls::Status::OPEN;
+}
+
+
+void WellControls::setNextDtFromTables( real64 const & currentTime, real64 & nextDt )
+{
+  WellControls::setNextDtFromTable( m_targetBHPTable, currentTime, nextDt );
+  WellControls::setNextDtFromTable( m_targetMassRateTable, currentTime, nextDt );
+  WellControls::setNextDtFromTable( m_targetPhaseRateTable, currentTime, nextDt );
+  WellControls::setNextDtFromTable( m_targetTotalRateTable, currentTime, nextDt );
+  WellControls::setNextDtFromTable( m_statusTable, currentTime, nextDt );
+}
+
+void WellControls::setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt )
+{
+  if( table )
   {
-    isOpen = false;
+    // small epsilon to make sure we land on the other side of table interval and pick up the right rate
+    real64 const eps = 1e-6;
+    real64 const dtLimit = (table->getCoord( &currentTime, 0, TableFunction::InterpolationType::Upper ) - currentTime) * ( 1.0 + eps );
+    if( dtLimit > eps && dtLimit < nextDt )
+    {
+      nextDt = dtLimit;
+    }
   }
-  return isOpen;
 }
 
 } //namespace geos

@@ -28,7 +28,6 @@
       stabilizationName="singlePhaseTPFA_stab"
       logLevel="1"
       targetRegions="{ Domain, Fracture }"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1">  
       <LinearSolverParameters
         solverType="direct"
@@ -53,7 +52,7 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       fractureRegion="Fracture"
-      rockToughness="1e6"
+      initialRockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>
 </Problem>
