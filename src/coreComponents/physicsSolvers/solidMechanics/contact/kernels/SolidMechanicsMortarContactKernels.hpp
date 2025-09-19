@@ -63,11 +63,11 @@ public:
   /// The number of lagrange multiplier dofs per element.
   static constexpr int numTdofs = 3;
 
-  /// Ready to use gauss point weights for triangle integration cell
-  constexpr static real64 gpWeights[numQuadraturePointsPerElem] = {-0.562500000000000,
-                                                                   0.520833333333333,
-                                                                   0.520833333333333,
-                                                                   0.520833333333333 };
+  /// Ready to use gauss point weights for triangle integration cell (parent area already applied)
+  constexpr static real64 gpWeights[numQuadraturePointsPerElem] = {-0.281250000000000,
+                                                                    0.260416666666667,
+                                                                    0.260416666666667,
+                                                                    0.260416666666667};
 
 
   using Base::m_dofNumber;

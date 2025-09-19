@@ -18,6 +18,16 @@
       forceDt="1.0"
       target="/Solvers/Mortar"/>
 
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput_2beams"/>
+
+    <SoloEvent
+      name="initial_output"
+      targetTime="0.0"
+      target="/Outputs/vtkOutput_2beams"/>
+
   </Events>
 
   <ElementRegions>
@@ -206,9 +216,9 @@
       xCoords="{ 0, 8 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 4 }"
-      ny="{ 2 }"
-      nz="{ 2 }"
+      nx="{ 30 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
       cellBlockNames="{ cb1 }"/>
 
     <InternalMesh
@@ -217,9 +227,9 @@
       xCoords="{ 8, 16 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 4 }"
-      ny="{ 3 }"
-      nz="{ 3 }"
+      nx="{ 40 }"
+      ny="{ 15 }"
+      nz="{ 15 }"
       cellBlockNames="{ cb2 }"/>
 
   </Mesh>

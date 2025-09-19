@@ -261,9 +261,9 @@ void SolidMechanicsMortarContact::setupSystem( DomainPartition & domain,
 
 
   //Write the matrix pattern to a file for debugging
-  ParallelMatrix parallel_matrix;
-  parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
-  parallel_matrix.write("mortar_sparsity_new.mtx");
+  // ParallelMatrix parallel_matrix;
+  // parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
+  // parallel_matrix.write("mortar_sparsity_new.mtx");
 
   computeRotationMatrices( ); 
 
@@ -299,9 +299,9 @@ void SolidMechanicsMortarContact::assembleSystem( real64 const time,
   GEOS_MARK_FUNCTION;
   synchronizeFractureState( domain );
 
-  ParallelMatrix parallel_matrix_0;
-  parallel_matrix_0.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
-  parallel_matrix_0.write("matrix_preMech.mtx");
+  // ParallelMatrix parallel_matrix_0;
+  // parallel_matrix_0.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
+  // parallel_matrix_0.write("matrix_preMech.mtx");
 
   SolidMechanicsLagrangianFEM::assembleSystem( time,
                                                dt,
@@ -310,17 +310,17 @@ void SolidMechanicsMortarContact::assembleSystem( real64 const time,
                                                localMatrix,
                                                localRhs );
 
-  ParallelMatrix parallel_matrix_1;
-  parallel_matrix_1.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
-  parallel_matrix_1.write("matrix_postMech.mtx");
+  // ParallelMatrix parallel_matrix_1;
+  // parallel_matrix_1.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
+  // parallel_matrix_1.write("matrix_postMech.mtx");
 
   //GEOS_ERROR("Interrupt");
 
   assembleBubbles( dt, domain, dofManager, localMatrix, localRhs );
 
-  ParallelMatrix parallel_matrix_2;
-  parallel_matrix_2.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
-  parallel_matrix_2.write("matrix_postBubble.mtx");
+  // ParallelMatrix parallel_matrix_2;
+  // parallel_matrix_2.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
+  // parallel_matrix_2.write("matrix_postBubble.mtx");
 
   std::cout << "Assembling mortar matrices" << std::endl;
 
@@ -328,7 +328,7 @@ void SolidMechanicsMortarContact::assembleSystem( real64 const time,
 
   ParallelMatrix parallel_matrix_3;
   parallel_matrix_3.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
-  parallel_matrix_3.write("matrix_postMortar.mtx");
+  parallel_matrix_3.write("systemMatrix.mtx");
 
   //GEOS_ERROR("Mortar solver is not implemented yet. ");
 
@@ -433,6 +433,9 @@ void SolidMechanicsMortarContact::assembleMortarBubbles( DofManager const & dofM
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
     arrayView1d< globalIndex const > const tractionDofNumber = surfRegion.getReference< globalIndex_array >( tractionDofKey );
 
+    int permutation[numNodesPerElem];
+    feType.getPermutation( permutation );
+    
     forAll< parallelHostPolicy >( elementList.size(), [=] ( localIndex const kk )
     {
       localIndex const k = elementList[kk];
@@ -451,9 +454,10 @@ void SolidMechanicsMortarContact::assembleMortarBubbles( DofManager const & dofM
       }
 
       real64 X[numNodesPerElem][3];
+
       for (localIndex a=0; a<numNodesPerElem; ++a)
       {
-        localIndex const nodeIndex = faceToNodeMap[kf0][a];
+        localIndex const nodeIndex = faceToNodeMap[kf0][permutation[a]];
         X[a][0] = coords[nodeIndex][0];
         X[a][1] = coords[nodeIndex][1];
         X[a][2] = coords[nodeIndex][2];
@@ -466,8 +470,10 @@ void SolidMechanicsMortarContact::assembleMortarBubbles( DofManager const & dofM
       {
          feType.calcBubbleN(q, N);
          real64 detJ = feType.transformedQuadratureWeight(q, X);
+         std::cout << "Bubble: " << N[0] << " - detJ: " << detJ << std::endl;
          abt += N[0] * detJ;
       }
+      std::cout << std::endl;
 
       real64 R[3][3];
       real64 RtAbt[3][3];
@@ -477,15 +483,18 @@ void SolidMechanicsMortarContact::assembleMortarBubbles( DofManager const & dofM
 
       for( int j=0; j<3; ++j )
       {
-        localAtb[j][j] = abt;
+        localAtb[j][j] = -abt;
         for( int i=0; i<3; ++i )
         {
           R[ i ][ j ] = rotationMatrix( k, i, j );
         }
       }
 
-      LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( RtAbt, R, localAtb );
-      LvArray::tensorOps::copy< 3, 3 >( localAtb, RtAbt );
+      GEOS_UNUSED_VAR( RtAbt );
+      GEOS_UNUSED_VAR( R );
+
+      //LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( RtAbt, R, localAtb );
+      //LvArray::tensorOps::copy< 3, 3 >( localAtb, RtAbt );
       LvArray::tensorOps::transpose< 3, 3 >(localAbt, localAtb);
       LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( rhsB, localAbt, tLoc );
       LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( rhsT, localAtb, bLoc );
@@ -749,6 +758,14 @@ void SolidMechanicsMortarContact::applySystemSolution( DofManager const & dofMan
                                                        DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
+
+  // std::cout << "Solution vector:" << std::endl;
+
+  // for( localIndex i = 0; i < localSolution.size(); ++i )
+  // {
+  //   std::cout << GEOS_FMT( " {:15.6e}", localSolution[i] ) << std::endl;
+  // }
+  // std::cout << std::endl;
 
   SolidMechanicsLagrangianFEM::applySystemSolution( dofManager, localSolution, scalingFactor, dt, domain );
 
@@ -1635,6 +1652,8 @@ localIndex SolidMechanicsMortarContact::processMortarPair( localIndex const slav
     projectPointInPlane< MortarSide::Slave >(coord3d, planeNormal, planeCentroid, projected2d);
     projSlave[i][0] = projected2d[0];
     projSlave[i][1] = projected2d[1];
+
+    std::cout << "Coordinates of slave element: (" << coord3d[0] << ", " << coord3d[1] << ", " << coord3d[2] << ")" << std::endl;
   }
 
   for (localIndex i=0; i<numNodeMaster; ++i)
@@ -1645,6 +1664,7 @@ localIndex SolidMechanicsMortarContact::processMortarPair( localIndex const slav
     projectPointInPlane< MortarSide::Master >(coord3d, planeNormal, planeCentroid, projected2d);
     projMaster[i][0] = projected2d[0];
     projMaster[i][1] = projected2d[1];
+    std::cout << "Coordinates of master element: (" << coord3d[0] << ", " << coord3d[1] << ", " << coord3d[2] << ")" << std::endl;
   }
 
   // std::cout << "Coordinates of projected slave element:" << std::endl;
@@ -1667,6 +1687,11 @@ localIndex SolidMechanicsMortarContact::processMortarPair( localIndex const slav
   //std::cout << "Found intersection with " << clipSize << " edges." << std::endl;
   arrayView2d<real64 const> const clipPoly = clippedPoly.toViewConst();
 
+  if (!isClipValid( clipPoly ))
+  {
+    std::cout << "Invalid clip polygon discarded" << std::endl;
+    return 0;
+  } 
 
   // 4. project gauss point for each local triangle into master and slave side
   for (localIndex i = 1; i < clipSize - 1; ++i)
@@ -1803,6 +1828,13 @@ void SolidMechanicsMortarContact::intersect(real64 x1, real64 y1,real64 x2, real
 
   if (std::fabs(denX) < 1e-10 || std::fabs(denY) < 1e-10)
   {
+    // check for coinciding vertices
+    if (std::fabs(x1-x3) < 1e-8 && std::fabs(y1-y3) < 1e-8) { xInt = x1; yInt = y1; return; }
+    if (std::fabs(x1-x4) < 1e-8 && std::fabs(y1-y4) < 1e-8) { xInt = x1; yInt = y1; return; }
+    if (std::fabs(x2-x3) < 1e-8 && std::fabs(y2-y3) < 1e-8) { xInt = x2; yInt = y2; return; }
+    if (std::fabs(x2-x4) < 1e-8 && std::fabs(y2-y4) < 1e-8) { xInt = x2; yInt = y2; return; }
+    std::cout << "Line 1: (" << x1 << ", " << y1 << ") - (" << x2 << ", " << y2 << ")" << std::endl;
+    std::cout << "Line 2: (" << x3 << ", " << y3 << ") - (" << x4 << ", " << y4 << ")" << std::endl;
     GEOS_ERROR("Lines are parallel");
   }
   else
@@ -1811,6 +1843,32 @@ void SolidMechanicsMortarContact::intersect(real64 x1, real64 y1,real64 x2, real
     yInt = numY / denY;
   }
 
+}
+
+bool SolidMechanicsMortarContact::isClipValid( arrayView2d< real64 const > const & clipPoly)
+{
+  // Check if the clipping polygon is valid (non-degenerate)
+
+  if (clipPoly.size(0) < 3) return false;
+
+  // check for non overlapping vertices
+  real64 tol = 1e-8;
+  for (localIndex i = 0; i < clipPoly.size(0); ++i)
+  {
+    for (localIndex j = i + 1; j < clipPoly.size(0); ++j)
+    {
+      real64 d[2];
+      d[0] = clipPoly(i,0) - clipPoly(j,0);
+      d[1] = clipPoly(i,1) - clipPoly(j,1);
+      if (LvArray::tensorOps::l2Norm<2>(d) < tol)
+      {
+        return false;
+      }
+    }
+  }
+
+  return true;
+  
 }
 
 template< ElementShape shape >
@@ -1827,6 +1885,8 @@ void SolidMechanicsMortarContact::projectGP( real64 const (& coordsTri)[3][2],
   localIndex itMax = 3;
   real64 tol = 1e-9;
 
+  std::cout << nGPtri << std::endl;
+
   for (localIndex i = 0; i < nGPtri; ++i)
   {
     real64 xiProj[2] = {0.0, 0.0};
@@ -1837,8 +1897,6 @@ void SolidMechanicsMortarContact::projectGP( real64 const (& coordsTri)[3][2],
     feTriangleCell::calcN( xiq, Ntri );
     real64 coordGP[2];
     LvArray::tensorOps::Ri_eq_AjiBj<2, 3>(coordGP, coordsTri, Ntri);  
-
-    //std::cout << "Coordinate of gp: ( " << coordGP[0] << " , " << coordGP[1] << ")" << std::endl;
  
     real64 Nq[numNodes];
     FE.calcN(xiProj, Nq);
@@ -1881,7 +1939,6 @@ void SolidMechanicsMortarContact::projectGP( real64 const (& coordsTri)[3][2],
       //std::cout << std::endl;
       LvArray::tensorOps::Ri_eq_AjiBj<2, numNodes>(rhs, coordsElem, Nq);
       LvArray::tensorOps::subtract<2>(rhs, coordGP);
-      //std::cout << "rhs: " << rhs[0] << ", " << rhs[1] << std::endl;
     }
 
     if ( iter == itMax)
@@ -1898,7 +1955,8 @@ void SolidMechanicsMortarContact::projectGP( real64 const (& coordsTri)[3][2],
     xi[i][1] = xiProj[1];
 
   }
-}         
+
+}
 
 template<ElementShape shape>
 bool SolidMechanicsMortarContact::checkInFE(real64 xi0, real64 xi1)
@@ -2003,7 +2061,7 @@ void SolidMechanicsMortarContact::calcGradN( real64 const (& xi)[2], real64 (& d
   // for the gradients permutation has already been applied!
   if constexpr ( numNodeElement == 3)
   {
-    dN[0][1] = -1.0;
+    dN[0][0] = -1.0;
     dN[0][1] = 1.0;
     dN[0][2] = 0.0;
     dN[1][0] = -1.0;
@@ -2185,7 +2243,12 @@ void TreeNodeMortar::createNode( MeshLevel const & mesh,
                                  arrayView1d<localIndex> & surfId, 
                                  array1d<localIndex> & surfList ) 
 {
-  
+
+  if (surfList.size() == 0) 
+  {
+    GEOS_ERROR("Mortar:createNode - empty list of surfaces");
+  }
+
   //GEOS_UNUSED_VAR(surfList);
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
@@ -2251,7 +2314,7 @@ void TreeNodeMortar::createNode( MeshLevel const & mesh,
   for (localIndex i=0; i<nSurf; ++i)
   {
     // compute the polytopal primitives of the surface centroids
-    localIndex kface = elemsToFaces[surfList[i]][0];
+    localIndex kface = elemsToFaces[surfId[surfList[i]]][0]; 
     surfacePrimitive[i] = surfCenter[kface][0]*pP[0][dir] + 
                            surfCenter[kface][1]*pP[1][dir] +
                            surfCenter[kface][2]*pP[2][dir];
@@ -2270,6 +2333,8 @@ void TreeNodeMortar::createNode( MeshLevel const & mesh,
   {
     (surfacePrimitive[i] <= m) ? surfLeft.emplace_back(surfList[i]) : surfRight.emplace_back(surfList[i]);
   }
+
+  // TO DO: handle cases where median splitting fails
 
   /*
   for (localIndex i = 0; i < surfLeft.size(); ++i)

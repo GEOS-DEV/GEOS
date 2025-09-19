@@ -270,6 +270,8 @@ private:
   void clip( array2d<real64> & poly,
              real64 xc1, real64 yc1, real64 xc2, real64 yc2);
 
+  bool isClipValid( arrayView2d<real64 const> const & clipPoly);
+
   template< ElementShape shape >
   void projectGP( real64 const (& coordsTri)[3][2],
                   arrayView2d<real64 const> const & coordsElem,
@@ -305,13 +307,13 @@ private:
 
     if constexpr (S == ElementShape::Triangle) 
     {
-        using femType = finiteElement::H1_TriangleFace_Lagrange1_Gauss6;
+        using femType = finiteElement::H1_TriangleFace_Lagrange1_Gauss4;
         
         return *static_cast<femType*>(femTypePtr.get()); 
     } 
     else if constexpr (S == ElementShape::Quadrilateral) 
     {
-        using femType = finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre6;
+        using femType = finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2;
         return *static_cast<femType*>(femTypePtr.get()); 
     } 
     else 
