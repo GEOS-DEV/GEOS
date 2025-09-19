@@ -4,7 +4,33 @@
   <Included>
     <File name="./PoroElastic_CarmanKozenyPermeability_base.xml"/>
   </Included>
-  <!-- SPHINX_POROELASTIC_MESH -->
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhasePoromechanics
+      name="PoroelasticitySolver"
+      solidSolverName="LinearElasticitySolver"
+      flowSolverName="SinglePhaseFlowSolver"
+      logLevel="1"
+      targetRegions="{ Domain }">
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhasePoromechanics>
+
+    <SolidMechanicsLagrangianFEM
+      name="LinearElasticitySolver"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }"/>
+
+    <SinglePhaseFVM
+      name="SinglePhaseFlowSolver"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Domain }"/>
+  </Solvers>
+
   <Mesh>
     <InternalMesh
       name="mesh1"
@@ -18,12 +44,9 @@
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
-  <!-- SPHINX_POROELASTIC_MESH_END -->
+
   <Events
     maxTime="90.0">
-    <!--This event is applied every 1.0s.  The targetExactTimestep
-    flag allows this event to request a dt modification to match an
-    integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
       timeFrequency="10.0"

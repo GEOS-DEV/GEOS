@@ -1,35 +1,4 @@
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
-    <!-- SPHINX_POROELASTIC_SOLVER -->
-    <SinglePhasePoromechanics
-      name="PoroelasticitySolver"
-      solidSolverName="LinearElasticitySolver"
-      flowSolverName="SinglePhaseFlowSolver"
-      logLevel="1"
-      targetRegions="{ Domain }">
-      <LinearSolverParameters
-        directParallel="0"/>
-    </SinglePhasePoromechanics>
-
-    <SolidMechanicsLagrangianFEM
-      name="LinearElasticitySolver"
-      timeIntegrationOption="QuasiStatic"
-      logLevel="1"
-      discretization="FE1"
-      targetRegions="{ Domain }"/>
-
-    <SinglePhaseFVM
-      name="SinglePhaseFlowSolver"
-      logLevel="1"
-      discretization="singlePhaseTPFA"
-      targetRegions="{ Domain }"/>
-  </Solvers>
-
-  <!-- SPHINX_POROELASTIC_SOLVER_END -->
-
-
-  <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS -->
   <NumericalMethods>
     <FiniteElements>
       <FiniteElementSpace
@@ -43,7 +12,6 @@
     </FiniteVolume>
   </NumericalMethods>
 
-  <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS_END -->
   <ElementRegions>
     <CellElementRegion
       name="Domain"
@@ -51,7 +19,6 @@
       materialList="{ fluid, porousRock }"/>
   </ElementRegions>
 
-  <!-- SPHINX_POROELASTIC_CONSTITUTIVE -->
   <Constitutive>
     <PorousElasticIsotropicCarmanKozenyPermeability
       name="porousRock"
@@ -86,9 +53,7 @@
       sphericity="1.0"/>
   </Constitutive>
 
-  <!-- SPHINX_POROELASTIC_CONSTITUTIVE_END -->
   <FieldSpecifications>
-
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -171,5 +136,4 @@
       coordinates="{ 0.0, 0.1e-09, 1e7 }"
       values="{ 0.0, 1.0, 1.0 }"/>
   </Functions>
-
 </Problem>
