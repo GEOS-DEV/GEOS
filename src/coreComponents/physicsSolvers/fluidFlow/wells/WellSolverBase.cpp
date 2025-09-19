@@ -433,7 +433,7 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
                               dofManager );
          */
 
-       //GEOS_LOG_RANK( "**** Estimate Well Solution End **** " << subRegion.getName());
+        //GEOS_LOG_RANK( "**** Estimate Well Solution End **** " << subRegion.getName());
       }
 
     } );

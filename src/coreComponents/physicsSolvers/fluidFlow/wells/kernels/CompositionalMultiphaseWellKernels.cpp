@@ -637,7 +637,8 @@ PresTempCompFracInitializationKernel::
       localIndex const esr = resElementSubRegion[iperf];
       localIndex const ei = resElementIndex[iperf];
       //GEOS_LOG_RANK(
-      // "tjb pref " << iperf << " " <<resPres[er][esr][ei] << " " << alpha*resPres[er][esr][ei] <<" avgTotalMassDens " << avgTotalMassDens << " refWellElemGravCoef " <<refWellElemGravCoef );
+      // "tjb pref " << iperf << " " <<resPres[er][esr][ei] << " " << alpha*resPres[er][esr][ei] <<" avgTotalMassDens " << avgTotalMassDens
+      // << " refWellElemGravCoef " <<refWellElemGravCoef );
 
       // get the perforation pressure and save the estimated reference pressure
       real64 const gravCoefDiff = LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] );
@@ -665,7 +666,8 @@ PresTempCompFracInitializationKernel::
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
     wellElemPres[iwelem] = refPres + avgTotalMassDens * ( wellElemGravCoef[iwelem] - refWellElemGravCoef );
-    //GEOS_LOG_RANK( "tjb pinit " << iwelem << " " << wellElemPres[iwelem] << " " << refPres << " gravCoef " << wellElemGravCoef[iwelem] << " refGravCoef " << refWellElemGravCoef << " aveTemp " <<
+    //GEOS_LOG_RANK( "tjb pinit " << iwelem << " " << wellElemPres[iwelem] << " " << refPres << " gravCoef " << wellElemGravCoef[iwelem] <<
+    // " refGravCoef " << refWellElemGravCoef << " aveTemp " <<
     //               avgTemp );
 
     wellElemTemp[iwelem] = avgTemp;
