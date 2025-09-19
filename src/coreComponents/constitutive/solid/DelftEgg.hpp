@@ -507,24 +507,6 @@ public:
 
     /// string/key for default pre-consolidation pressure
     static constexpr char const * defaultPreConsolidationPressureString() { return "defaultPreConsolidationPressure"; }
-
-    /// string/key for recompression index
-    static constexpr char const * recompressionIndexString() { return "recompressionIndex"; }
-
-    /// string/key for virgin compression index
-    static constexpr char const * virginCompressionIndexString() { return "virginCompressionIndex"; }
-
-    /// string/key for slope of the critical state line
-    static constexpr char const * cslSlopeString() { return "cslSlope"; }
-
-    /// string/key for shape parameter of the yield surface
-    static constexpr char const * shapeParameterString() { return "shapeParameter"; }
-
-    /// string/key for new pre-consolidation pressure
-    static constexpr char const * newPreConsolidationPressureString() { return "preConsolidationPressure"; }
-
-    /// string/key for old pre-consolidation pressure
-    static constexpr char const * oldPreConsolidationPressureString() { return "oldPreConsolidationPressure"; }
   };
 
   /**

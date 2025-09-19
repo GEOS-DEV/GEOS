@@ -118,6 +118,10 @@ struct TestSet
 
     for( integer ip = 0; ip < phaseCount; ++ip )
     {
+      totalSourceMassProd[ip] = 0.0;
+      totalSinkMassProd[ip] = 0.0;
+      sourceMeanRate[ip] = 0.0;
+      sinkMeanRate[ip] = 0.0;
       for( integer timestepId = 0; timestepId < timestepCount; ++timestepId )
       {
         // mass production / injection calculation
@@ -381,9 +385,7 @@ TestSet getTestSet()
 
       <NonlinearSolverParameters newtonMaxIter="40"
                                  allowNonConverged="1" />
-      <LinearSolverParameters solverType="gmres"
-                              preconditionerType="iluk"
-                              krylovTol="1.0e-6" />
+      <LinearSolverParameters directParallel="0" />
 
     </SinglePhaseFVM>
   </Solvers>
@@ -396,19 +398,19 @@ TestSet getTestSet()
 
   <Mesh>
     <InternalMesh name="mesh"
-                  elementTypes="{ C3D8 }"
-                  xCoords="{   0, 10 }"
-                  yCoords="{   0, 10 }"
+                  elementTypes="{ C3D8, C3D8, C3D8, C3D8, C3D8, C3D8, C3D8, C3D8, C3D8 }"
+                  xCoords="{   0,  2,  9, 10 }"
+                  yCoords="{   0,  1,  9, 10 }"
                   zCoords="{ -10,  0 }"
-                  nx="{ 10 }"
-                  ny="{ 10 }"
+                  nx="{ 2, 1, 1 }"
+                  ny="{ 1, 1, 1 }"
                   nz="{ 10 }"
-                  cellBlockNames="{ cellBlock }" />
+                  cellBlockNames="{ cb00, cb01, cb02, cb10, cb11, cb12, cb20, cb21, cb22 }" />
   </Mesh>
 
   <ElementRegions>
     <CellElementRegion name="reservoir"
-                       cellBlocks="{ cellBlock }"
+                       cellBlocks="{ * }"
                        materialList="{ water, rock }" />
   </ElementRegions>
 
@@ -461,9 +463,9 @@ TestSet getTestSet()
     <Box name="sourceBox"
          xMin="{ -0.01, -0.01, -10.01 }"
          xMax="{  2.01,  1.01,  -8.99 }" />
-    <!-- sink selects 2 elements -->
+    <!-- sink selects 1 element -->
     <Box name="sinkBox"
-         xMin="{  4.99, 8.99, -1.01 }"
+         xMin="{  8.99, 8.99, -1.01 }"
          xMax="{ 10.01, 10.01, 0.01 }" />
   </Geometry>
 
@@ -530,7 +532,7 @@ TestSet getTestSet()
 
   testInputs.dt = 500.0;
   testInputs.sourceElementsCount = 2;
-  testInputs.sinkElementsCount = 5;
+  testInputs.sinkElementsCount = 1;
 
   // FluxRate table from 0.0s to 5000.0s
   setRateTable( testInputs.sourceRates,
@@ -622,9 +624,7 @@ TestSet getTestSet()
       <NonlinearSolverParameters newtonMaxIter="8"
                                  maxTimeStepCuts="8"
                                  allowNonConverged="1" />
-      <LinearSolverParameters solverType="gmres"
-                              preconditionerType="iluk"
-                              krylovTol="1.0e-6" />
+      <LinearSolverParameters directParallel="0" />
     </CompositionalMultiphaseFVM>
   </Solvers>
 
@@ -636,19 +636,19 @@ TestSet getTestSet()
 
   <Mesh>
     <InternalMesh name="mesh"
-                  elementTypes="{ C3D8 }"
-                  xCoords="{   0, 10 }"
-                  yCoords="{   0, 10 }"
+                  elementTypes="{ C3D8, C3D8, C3D8, C3D8, C3D8, C3D8, C3D8, C3D8, C3D8 }"
+                  xCoords="{   0,  1,  9, 10 }"
+                  yCoords="{   0,  1,  9, 10 }"
                   zCoords="{ -10,  0 }"
-                  nx="{ 10 }"
-                  ny="{ 10 }"
+                  nx="{ 1, 1, 1 }"
+                  ny="{ 1, 1, 1 }"
                   nz="{ 10 }"
-                  cellBlockNames="{ cellBlock }" />
+                  cellBlockNames="{ cb00, cb01, cb02, cb10, cb11, cb12, cb20, cb21, cb22 }" />
   </Mesh>
 
   <ElementRegions>
     <CellElementRegion name="reservoir"
-                       cellBlocks="{ cellBlock }"
+                       cellBlocks="{ * }"
                        materialList="{ fluid, rock, relperm }" />
   </ElementRegions>
 
@@ -896,9 +896,7 @@ TestSet getTestSet()
       <NonlinearSolverParameters newtonMaxIter="8"
                                  maxTimeStepCuts="8"
                                  allowNonConverged="1" />
-      <LinearSolverParameters solverType="gmres"
-                              preconditionerType="iluk"
-                              krylovTol="1.0e-6" />
+      <LinearSolverParameters directParallel="0" />
     </CompositionalMultiphaseFVM>
   </Solvers>
 
@@ -910,19 +908,19 @@ TestSet getTestSet()
 
   <Mesh>
     <InternalMesh name="mesh"
-                  elementTypes="{ C3D8 }"
-                  xCoords="{   0, 10 }"
-                  yCoords="{   0, 10 }"
+                  elementTypes="{ C3D8, C3D8, C3D8, C3D8, C3D8, C3D8, C3D8, C3D8, C3D8 }"
+                  xCoords="{   0,  1,  9, 10 }"
+                  yCoords="{   0,  1,  9, 10 }"
                   zCoords="{ -10,  0 }"
-                  nx="{ 10 }"
-                  ny="{ 10 }"
+                  nx="{ 1, 1, 1 }"
+                  ny="{ 1, 1, 1 }"
                   nz="{ 10 }"
-                  cellBlockNames="{ cellBlock }" />
+                  cellBlockNames="{ cb00, cb01, cb02, cb10, cb11, cb12, cb20, cb21, cb22 }" />
   </Mesh>
 
   <ElementRegions>
     <CellElementRegion name="reservoir"
-                       cellBlocks="{ cellBlock }"
+                       cellBlocks="{ * }"
                        materialList="{ fluid, rock, relperm }" />
   </ElementRegions>
 

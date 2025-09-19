@@ -3057,10 +3057,10 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const bulkModulus =
     elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "bulkModulus", constitutiveManager );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, solid::STRESS_USD > > const stress =
-    elementManager.constructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
-                                                      arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString(),
-                                                                                                        constitutiveManager );
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, geos::solid::STRESS_USD > > const stress =
+    elementManager.constructFullMaterialViewAccessor< array3d< real64, geos::solid::STRESS_PERMUTATION >,
+                                                      arrayView3d< real64 const, geos::solid::STRESS_USD > >( fields::solid::stress::key(),
+                                                                                                              constitutiveManager );
   nodeManager.getField< fields::solidMechanics::totalDisplacement >().move( hostMemorySpace, false );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -3074,8 +3074,8 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
       string const & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNameString() );
       subRegion.
         getConstitutiveModel( solidMaterialName ).
-        getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString() ).move( hostMemorySpace,
-                                                                                                                       false );
+        getReference< array3d< real64, geos::solid::STRESS_PERMUTATION > >( fields::solid::stress::key() ).move( hostMemorySpace,
+                                                                                                                 false );
     } );
     displacement.move( hostMemorySpace, false );
   } );
@@ -3900,10 +3900,10 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const bulkModulus =
     elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "bulkModulus", constitutiveManager );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, solid::STRESS_USD > > const
-  stress = elementManager.constructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
-                                                             arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString(),
-                                                                                                               constitutiveManager );
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, geos::solid::STRESS_USD > > const
+  stress = elementManager.constructFullMaterialViewAccessor< array3d< real64, geos::solid::STRESS_PERMUTATION >,
+                                                             arrayView3d< real64 const, geos::solid::STRESS_USD > >( fields::solid::stress::key(),
+                                                                                                                     constitutiveManager );
 
   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > const
   dNdX = elementManager.constructViewAccessor< array4d< real64 >, arrayView4d< real64 const > >( keys::dNdX );

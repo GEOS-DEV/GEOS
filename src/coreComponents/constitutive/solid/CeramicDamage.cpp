@@ -18,6 +18,7 @@
  */
 
 #include "CeramicDamage.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -46,20 +47,11 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
     setDescription( "Crack speed" );
 
   // register fields
-  registerWrapper( viewKeyStruct::damageString(), &m_damage ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( "Array of quadrature point damage values" );
+  registerField< fields::solid::damage >( &m_damage );
 
-  registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
-    setApplyDefaultValue( 1.0 ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "Array of quadrature point jacobian values" );
+  registerField< fields::solid::jacobian >( &m_jacobian );
 
-  registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
-    setApplyDefaultValue( DBL_MIN ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setDescription( "Array of quadrature point damage values" );
+  registerField< fields::solid::lengthScale >( &m_lengthScale );
 }
 
 
