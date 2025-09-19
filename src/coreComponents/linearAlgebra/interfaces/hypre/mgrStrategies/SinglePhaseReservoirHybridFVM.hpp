@@ -71,7 +71,7 @@ public:
     m_levelInterpType[0]         = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[0]       = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0]   = MGRCoarseGridMethod::galerkin;
-    m_levelGlobalSmootherType[0] = MGRGlobalSmootherType::jacobi;
+    m_levelGlobalSmootherType[0] = MGRGlobalSmootherType::none;
 
     // Level 1
     m_levelFRelaxType[1]         = MGRFRelaxationType::jacobi;
@@ -79,7 +79,7 @@ public:
     m_levelInterpType[1]         = MGRInterpolationType::jacobi;
     m_levelRestrictType[1]       = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[1]   = MGRCoarseGridMethod::galerkin;
-    m_levelGlobalSmootherType[1] = MGRGlobalSmootherType::jacobi;
+    m_levelGlobalSmootherType[1] = MGRGlobalSmootherType::none;
   }
 
   /**
