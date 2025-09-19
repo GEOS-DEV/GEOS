@@ -174,6 +174,8 @@ stdVector< STRING_T > divideLines( size_t & linesWidth, string_view value )
 
   return lines;
 }
+template stdVector< string > divideLines( size_t &, string_view );
+template stdVector< string_view > divideLines( size_t &, string_view );
 
 template< typename STRING_T >
 stdVector< STRING_T > divideLines( string_view value )
@@ -196,8 +198,8 @@ stdVector< STRING_T > divideLines( string_view value )
 
   return lines;
 }
-template stdVector< string > divideLines( size_t &, string_view );
-template stdVector< string_view > divideLines( size_t &, string_view );
+template stdVector< string > divideLines( string_view );
+template stdVector< string_view > divideLines( string_view );
 
 
 template< typename STRING_T >
@@ -249,6 +251,13 @@ stdVector< STRING_T > wrapTextToMaxLength( stdVector< STRING_T > const & lines,
 }
 template stdVector< string > wrapTextToMaxLength( stdVector< string > const &, size_t & );
 template stdVector< string_view > wrapTextToMaxLength( stdVector< string_view > const &, size_t & );
+
+string wrapTextToMaxLength( string_view text, size_t maxLineLength )
+{
+  stdVector< string_view > lines = divideLines< string_view >( text );
+  lines = wrapTextToMaxLength( lines, maxLineLength );
+  return join( lines, '\n' );
+}
 
 }
 }
