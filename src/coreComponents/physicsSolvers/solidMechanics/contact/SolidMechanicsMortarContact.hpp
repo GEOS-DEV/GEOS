@@ -270,7 +270,7 @@ private:
   void clip( array2d<real64> & poly,
              real64 xc1, real64 yc1, real64 xc2, real64 yc2);
 
-  bool isClipValid( arrayView2d<real64 const> const & clipPoly);
+  bool validateClip( array2d< real64 > & clipPoly);
 
   template< ElementShape shape >
   void projectGP( real64 const (& coordsTri)[3][2],

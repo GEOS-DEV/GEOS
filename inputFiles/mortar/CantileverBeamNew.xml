@@ -216,9 +216,9 @@
       xCoords="{ 0, 8 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 30 }"
-      ny="{ 10 }"
-      nz="{ 10 }"
+      nx="{ 20 }"
+      ny="{ 18 }"
+      nz="{ 18 }"
       cellBlockNames="{ cb1 }"/>
 
     <InternalMesh
@@ -227,9 +227,9 @@
       xCoords="{ 8, 16 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 40 }"
-      ny="{ 15 }"
-      nz="{ 15 }"
+      nx="{ 20 }"
+      ny="{ 12 }"
+      nz="{ 12 }"
       cellBlockNames="{ cb2 }"/>
 
   </Mesh>

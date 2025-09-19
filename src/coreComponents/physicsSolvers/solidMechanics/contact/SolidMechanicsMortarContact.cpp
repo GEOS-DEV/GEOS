@@ -470,13 +470,13 @@ void SolidMechanicsMortarContact::assembleMortarBubbles( DofManager const & dofM
       {
          feType.calcBubbleN(q, N);
          real64 detJ = feType.transformedQuadratureWeight(q, X);
-         std::cout << "Bubble: " << N[0] << " - detJ: " << detJ << std::endl;
+         //std::cout << "Bubble: " << N[0] << " - detJ: " << detJ << std::endl;
          abt += N[0] * detJ;
       }
-      std::cout << std::endl;
+      //std::cout << std::endl;
 
       real64 R[3][3];
-      real64 RtAbt[3][3];
+      real64 RtAtb[3][3];
       real64 localAbt[3][3] = {{ }};
       real64 localAtb[3][3] = {{ }};
       real64 rhsB[3], rhsT[3];
@@ -484,17 +484,18 @@ void SolidMechanicsMortarContact::assembleMortarBubbles( DofManager const & dofM
       for( int j=0; j<3; ++j )
       {
         localAtb[j][j] = -abt;
+
         for( int i=0; i<3; ++i )
         {
           R[ i ][ j ] = rotationMatrix( k, i, j );
         }
       }
 
-      GEOS_UNUSED_VAR( RtAbt );
-      GEOS_UNUSED_VAR( R );
+      // GEOS_UNUSED_VAR( RtAbt );
+      // GEOS_UNUSED_VAR( R );
 
-      //LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( RtAbt, R, localAtb );
-      //LvArray::tensorOps::copy< 3, 3 >( localAtb, RtAbt );
+      LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( RtAtb, R, localAtb );
+      LvArray::tensorOps::copy< 3, 3 >( localAtb, RtAtb );
       LvArray::tensorOps::transpose< 3, 3 >(localAbt, localAtb);
       LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( rhsB, localAbt, tLoc );
       LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( rhsT, localAtb, bLoc );
@@ -1679,19 +1680,27 @@ localIndex SolidMechanicsMortarContact::processMortarPair( localIndex const slav
   // }
 
   // 3. intersect slave and master element and return the resulting intersecting polygon
-  array2d<real64> clippedPoly(numNodeSlave,2);
-  LvArray::tensorOps::copy<numNodeSlave,2>(clippedPoly, projSlave);
-  polygonClipping<numNodeSlave,numNodeMaster>(clippedPoly, projMaster);
+  array2d<real64> clipPoly(numNodeSlave,2);
+  LvArray::tensorOps::copy<numNodeSlave,2>(clipPoly, projSlave);
+  polygonClipping<numNodeSlave,numNodeMaster>(clipPoly, projMaster);
 
-  localIndex clipSize = clippedPoly.size(0);
+  // localIndex clipSize = clipPoly.size(0);
   //std::cout << "Found intersection with " << clipSize << " edges." << std::endl;
-  arrayView2d<real64 const> const clipPoly = clippedPoly.toViewConst();
+  //arrayView2d< real64 > clipPoly = clippedPoly.toView();
 
-  if (!isClipValid( clipPoly ))
+  if (!validateClip( clipPoly ))
   {
     std::cout << "Invalid clip polygon discarded" << std::endl;
     return 0;
   } 
+
+  localIndex clipSize = clipPoly.size(0);
+  
+  std::cout << "Clipped polygon has " << clipSize << " vertices:" << std::endl;
+  for (localIndex i = 0; i < clipSize; ++i)
+  {
+    std::cout << "  (" << clipPoly(i, 0) << ", " << clipPoly(i, 1) << ")" << std::endl;
+  }
 
   // 4. project gauss point for each local triangle into master and slave side
   for (localIndex i = 1; i < clipSize - 1; ++i)
@@ -1805,10 +1814,10 @@ void SolidMechanicsMortarContact::polygonClipping(array2d<real64>& poly,
     clip( poly, clipPoly(i,0), clipPoly(i,1), clipPoly(k,0), clipPoly(k,1));
   }
 
-  for (localIndex i = 0; i < poly.size(0); ++i)
-  {
-    std::cout << "Clipped polygon: (" << poly(i,0) << ", " << poly(i,1) << ")" << std::endl;
-  }
+  // for (localIndex i = 0; i < poly.size(0); ++i)
+  // {
+  //   std::cout << "Clipped polygon: (" << poly(i,0) << ", " << poly(i,1) << ")" << std::endl;
+  // }
 
 }
 
@@ -1845,26 +1854,53 @@ void SolidMechanicsMortarContact::intersect(real64 x1, real64 y1,real64 x2, real
 
 }
 
-bool SolidMechanicsMortarContact::isClipValid( arrayView2d< real64 const > const & clipPoly)
+bool SolidMechanicsMortarContact::validateClip( array2d< real64 > & clipPoly)
 {
-  // Check if the clipping polygon is valid (non-degenerate)
+  // remove duplicated vertices and check if the clipping polygon is valid (non-degenerate) 
+  // return true if the resulting polygon is valid
 
   if (clipPoly.size(0) < 3) return false;
 
-  // check for non overlapping vertices
+  // remove duplicated
   real64 tol = 1e-8;
-  for (localIndex i = 0; i < clipPoly.size(0); ++i)
+  
+  // create a temporary container for filtered vertices
+  std::vector< std::array<real64, 2> > filtered;
+  filtered.reserve(clipPoly.size(0));
+
+  filtered.push_back({clipPoly(0,0), clipPoly(0,1)});
+
+  // remove consecutive duplicates
+  for (localIndex i = 1; i < clipPoly.size(0); ++i)
   {
-    for (localIndex j = i + 1; j < clipPoly.size(0); ++j)
-    {
-      real64 d[2];
-      d[0] = clipPoly(i,0) - clipPoly(j,0);
-      d[1] = clipPoly(i,1) - clipPoly(j,1);
-      if (LvArray::tensorOps::l2Norm<2>(d) < tol)
+      real64 dx = clipPoly(i,0) - filtered.back()[0];
+      real64 dy = clipPoly(i,1) - filtered.back()[1];
+
+      if (std::sqrt(dx*dx + dy*dy) > tol)
       {
-        return false;
+        filtered.push_back({clipPoly(i,0), clipPoly(i,1)});
       }
+  }
+
+  // remove last vertex if it is duplicate of the first (closed polygon)
+  if (filtered.size() > 1)
+  {
+    real64 dx = filtered.front()[0] - filtered.back()[0];
+    real64 dy = filtered.front()[1] - filtered.back()[1];
+    if (std::sqrt(dx*dx + dy*dy) < tol)
+    {
+        filtered.pop_back();
     }
+  }
+
+  if (filtered.size() < 3) return false; // polygon is degenerate
+
+  clipPoly.resize(filtered.size(), 2);
+
+  for (size_t i = 0; i < filtered.size(); ++i)
+  {
+      clipPoly(i,0) = filtered[i][0];
+      clipPoly(i,1) = filtered[i][1];
   }
 
   return true;
