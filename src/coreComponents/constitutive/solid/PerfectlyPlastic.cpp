@@ -18,6 +18,7 @@
  */
 
 #include "PerfectlyPlastic.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -35,9 +36,7 @@ PerfectlyPlastic::PerfectlyPlastic( string const & name, Group * const parent ):
     setDescription( "Default yield stress" );
 
   // register fields
-  registerWrapper( viewKeyStruct::yieldStressString(), &m_yieldStress ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Array of element yield stresses" );
+  registerField< fields::solid::yieldStress >( &m_yieldStress );
 }
 
 
@@ -47,7 +46,7 @@ void PerfectlyPlastic::postInputInitialization()
 
   GEOS_THROW_IF( m_defaultYieldStress < 0.0, "Negative yield stress detected", InputError );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::yieldStressString() ).setApplyDefaultValue( m_defaultYieldStress );
+  getField< fields::solid::yieldStress >().setApplyDefaultValue( m_defaultYieldStress );
 }
 
 

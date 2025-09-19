@@ -538,12 +538,6 @@ public:
 
     /// string/key for reference volumetric strain
     static constexpr char const * refStrainVolString() { return "refStrainVol"; }
-
-    /// string/key for recompression index
-    static constexpr char const * recompressionIndexString() { return "recompressionIndex"; }
-
-    /// string/key for shear modulus
-    static constexpr char const * shearModulusString() { return "shearModulus"; }
   };
 
   /**
