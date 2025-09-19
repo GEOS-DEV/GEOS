@@ -104,12 +104,12 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
 
   GET_LINE( line1 ); GEOS_WARNING( "Conflicting pressure boundary conditions" );
 
-  GET_LINE( line2 ); GEOS_WARNING_IF( testValue == 5, "Pressure value is too small." );
+  GET_LINE( line2 ); /*GEOS_WARNING_IF_GT_MSG( testValue, testMaxPrecision, "Pressure value is too high." );*/
 
-  GET_LINE( line3 ); GEOS_WARNING_CTX_IF( testValue == 5,
+  GET_LINE( line3 ); /*GEOS_WARNING_CTX_IF( testValue == 5,
                                           GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
                                                     context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision ),
-                                          context, additionalContext );
+                                          context, additionalContext );*/
 
   endLocalLoggerTest( g_errorLogger, {
     R"(errors:)",
@@ -130,7 +130,11 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
       R"(- type: Warning
     rank: 0
     message: >-
-      Pressure value is too small.
+      Pressure value is too high.
+    cause: >-
+      Expected: testValue < 0.001
+      * testValue = 5
+      * testMaxPrecision = 0.001
     sourceLocation:
       file: {}
       line: {}

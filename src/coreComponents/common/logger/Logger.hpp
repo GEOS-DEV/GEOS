@@ -281,22 +281,25 @@
 
 /**
  * @brief Conditionally report a warning
- * @param EXP an expression that will be evaluated as a predicate
- * @param MSG a message to log (any expression that can be stream inserted)
+ * @param COND A condition that causes the error if true.
+ * @param CAUSE_MESSAGE The condition that caused the error, in a readable text format for the user.
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
-#define GEOS_WARNING_IF_IMPL( EXP, MSG ) \
+#define GEOS_WARNING_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
   do \
   { \
-    if( EXP ) \
+    if( COND ) \
     { \
       std::ostringstream __msgoss; \
-      __msgoss << MSG; \
+      __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
       std::string message = __msgoss.str(); \
       std::ostringstream __oss; \
       __oss << "***** WARNING\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << message << "\n"; \
+      __oss << "***** " << CAUSE_MESSAGE << "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
       std::cout << __oss.str() << std::endl; \
       if( g_errorLogger.isOutputFileEnabled() ) \
       { \
@@ -305,58 +308,32 @@
                                          __FILE__, \
                                          __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
+        msgStruct.setCause( CAUSE_MESSAGE ); \
+        msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
         msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
         g_errorLogger.flushErrorMsg( msgStruct ); \
       } \
     } \
   } while( false )
 
-/**
- * @brief Conditionally report a warning
- * @param EXP an expression that will be evaluated as a predicate
- * @param MSG a message to log (any expression that can be stream inserted)
- * @param ... One or more DataContext (current error context information)
- */
-#define GEOS_WARNING_CTX_IF( EXP, MSG, ... ) \
-  do \
-  { \
-    if( EXP ) \
-    { \
-      std::ostringstream __msgoss; \
-      __msgoss << MSG; \
-      std::string message = __msgoss.str(); \
-      std::ostringstream __oss; \
-      __oss << "***** WARNING\n"; \
-      __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** Controlling expression (should be false): " STRINGIZE( EXP ) "\n"; \
-      __oss << message << "\n"; \
-      std::cout << __oss.str() << std::endl; \
-      if( g_errorLogger.isOutputFileEnabled() ) \
-      { \
-        ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
-                                         message, \
-                                         __FILE__, \
-                                         __LINE__ ); \
-        msgStruct.setRank( ::geos::logger::internal::rank ); \
-        msgStruct.addContextInfo( __VA_ARGS__ ); \
-        msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
-        g_errorLogger.flushErrorMsg( msgStruct ); \
-      } \
-    } \
-  } while( false )
+// TODO: to be deleted
+#define GEOS_WARNING_CTX_IF( COND, MSG, ... ) GEOS_WARNING_IF( COND, MSG, __VA_ARGS__ )
 
 /**
  * @brief Conditionally report a warning.
- * @param EXP an expression that will be evaluated as a predicate
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param COND an expression that will be evaluated as a predicate
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
-#define GEOS_WARNING_IF( EXP, msg ) GEOS_WARNING_IF_IMPL( EXP, msg )
+#define GEOS_WARNING_IF( COND, ... ) \
+  GEOS_WARNING_IF_CAUSE( COND, "Warning cause: " STRINGIZE( COND ), __VA_ARGS__ )
 
 /**
  * @brief Report a warning.
  * @param msg a message to log (any expression that can be stream inserted)
  */
-#define GEOS_WARNING( msg ) GEOS_WARNING_IF( true, msg )
+#define GEOS_WARNING( ... ) GEOS_WARNING_IF_CAUSE( true, "", __VA_ARGS__ )
 
 /**
  * @brief Conditionally log an info message.
@@ -489,6 +466,124 @@
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  */
 #define GEOS_ERROR_IF_LE( lhs, rhs ) GEOS_ERROR_IF_LE_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Log a warning if @p lhs @p OP @p rhs.
+ * @param lhs The left side of the operation.
+ * @param OP The operation to apply.
+ * @param NOP The operation that caused the error, used in the message (typically opposite of @p OP).
+ * @param rhs The right side of the operation.
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
+ */
+#define GEOS_WARNING_IF_OP_MSG( lhs, OP, NOP, rhs, ... ) \
+  GEOS_WARNING_IF_CAUSE( lhs OP rhs, \
+                         GEOS_FMT( "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = {}\n* " #rhs " = {}\n", \
+                                   lhs, rhs ), \
+                         __VA_ARGS__ )
+
+/**
+ * @brief Log a warning if two values are equal.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
+ */
+#define GEOS_WARNING_IF_EQ_MSG( lhs, rhs, ... ) GEOS_WARNING_IF_OP_MSG( lhs, ==, !=, rhs, __VA_ARGS__ )
+
+/**
+ * @brief Log a warning if two values are equal.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ */
+#define GEOS_WARNING_IF_EQ( lhs, rhs ) GEOS_WARNING_IF_EQ_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Log a warning if two values are not equal.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
+ */
+#define GEOS_WARNING_IF_NE_MSG( lhs, rhs, ... ) GEOS_WARNING_IF_OP_MSG( lhs, !=, ==, rhs, __VA_ARGS__ )
+
+/**
+ * @brief Log a warning if two values are not equal.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ */
+#define GEOS_WARNING_IF_NE( lhs, rhs ) GEOS_WARNING_IF_NE_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Log a warning if one value compares greater than the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
+ */
+#define GEOS_WARNING_IF_GT_MSG( lhs, rhs, ... ) GEOS_WARNING_IF_OP_MSG( lhs, >, <=, rhs, __VA_ARGS__ )
+
+/**
+ * @brief Log a warning if one value compares greater than the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ */
+#define GEOS_WARNING_IF_GT( lhs, rhs ) GEOS_WARNING_IF_GT_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Log a warning if one value compares greater than or equal to the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
+ */
+#define GEOS_WARNING_IF_GE_MSG( lhs, rhs, ... ) GEOS_WARNING_IF_OP_MSG( lhs, >=, <, rhs, __VA_ARGS__ )
+
+/**
+ * @brief Log a warning if one value compares greater than or equal to the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ */
+#define GEOS_WARNING_IF_GE( lhs, rhs ) GEOS_WARNING_IF_GE_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Log a warning if one value compares less than the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
+ */
+#define GEOS_WARNING_IF_LT_MSG( lhs, rhs, ... ) GEOS_WARNING_IF_OP_MSG( lhs, <, >=, rhs, __VA_ARGS__ )
+
+/**
+ * @brief Log a warning if one value compares less than the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ */
+#define GEOS_WARNING_IF_LT( lhs, rhs ) GEOS_WARNING_IF_LT_MSG( lhs, rhs, "" )
+
+/**
+ * @brief Log a warning if one value compares less than or equal to the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ * @param ... Variable arguments with the following structure:
+ *            - First mandatory parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
+ */
+#define GEOS_WARNING_IF_LE_MSG( lhs, rhs, ... ) GEOS_WARNING_IF_OP_MSG( lhs, <=, >, rhs, __VA_ARGS__ )
+
+/**
+ * @brief Log a warning if one value compares less than or equal to the other.
+ * @param lhs expression to be evaluated and used as left-hand side in comparison
+ * @param rhs expression to be evaluated and used as right-hand side in comparison
+ */
+#define GEOS_WARNING_IF_LE( lhs, rhs ) GEOS_WARNING_IF_LE_MSG( lhs, rhs, "" )
 
 /**
  * @brief Throw an exception if @p lhs @p OP @p rhs.
