@@ -1014,6 +1014,7 @@ public:
    * @param[in] q3Dc The 1D quadrature point index in the element's third direction.
    * @param[in] qa The 1D quadrature point index on the face's first direction.
    * @param[in] qb The 1D quadrature point index on the face's second direction.
+   * @param[in] N The face normal vector scaled by the z-component selection matrix.
    * @param[in] AzN The face normal vector scaled by the z-component selection matrix.
    * @param[in] AzJmT A precomputed matrix, typically `sqrt(det(J_2D)) * Az * J_3D^{-T}`.
    * @param[in] func A callable that will receive the computed flux contributions.
