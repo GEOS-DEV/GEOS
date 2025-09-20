@@ -607,15 +607,6 @@ public:
                                     real64 const (&X)[4][3] );
 
   /**
-   * @brief computes the volume of a Hexahedra from its 8 corner coordinates.
-   * @param[in] X Array containing the coordinates of the mesh support points.
-   * @return The volume of the hexahedron.
-   */
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static real64 computeVolumeHexahedra( real64 const (&X)[8][3] );
-
-  /**
    * @brief computes the matrix B, defined as J^{-T}J^{-1}/det(J), where J is the Jacobian matrix,
    *   at the given Gauss-Lobatto point.
    * @param qa The 1d quadrature point index in xi0 direction (0,1)
@@ -718,38 +709,6 @@ public:
                                                  real64 const (&X)[8][3],
                                                  FUNC && func );
 
-
-  /**
-   * @brief Computes trilinear interpolation coefficients for a Qk quadrature point.
-   * @details This function calculates the contribution of each of the 8 corner nodes (Q1 basis)
-   * to the value at a higher-order (Qk) quadrature point `q`.
-   * @tparam FUNC The type of the callable function/lambda.
-   * @param[in] q The local index of the Qk quadrature point.
-   * @param[in] func A callable that will receive the interpolation coefficient for each of the 8 corners.
-   */
-  template< typename FUNC >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void computeInterp( localIndex const q,
-                             FUNC && func );
-
-  /**
-   * @brief Computes the "missing" z-plane volume term using a precomputed derivative term.
-   * @details This is a specialized version of the z-stiffness term calculation where some
-   * derivative information (dzF) is precomputed.
-   * @tparam FUNC The type of the callable function/lambda.
-   * @param[in] q The local index of the quadrature point.
-   * @param[in] X The nodal coordinates of the 8-node hexahedron.
-   * @param[in] func A callable that will receive the computed stiffness contributions (row, col, value).
-   */
-  template< typename FUNC >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void computeMissingzVolumeTerm_precompDzF( localIndex const q,
-                                                    real64 const (&X)[8][3],
-                                                    FUNC && func );
-
-
   /**
    * @brief Computes the "missing" z-plane volume term.
    * @details This term is part of a specialized stiffness matrix, typically for anisotropic or
@@ -785,29 +744,6 @@ public:
                                                 real64 const (&X)[8][3],
                                                 FUNC && func );
 
-
-  /**
-   * @brief Computes a flux term on a face related to the z-direction.
-   * @details This is used for applying boundary conditions or in discontinuous Galerkin methods.
-   * It calculates the flux contribution at a 2D quadrature point on a face, considering
-   * the 3D element geometry.
-   * @tparam FUNC The type of the callable function/lambda.
-   * @param[in] q3D The local index of the 3D quadrature point.
-   * @param[in] q2D The local index of the 2D quadrature point on the face.
-   * @param[in] X3D The nodal coordinates of the 8-node hexahedron.
-   * @param[in] X2D The nodal coordinates of the 4-node face.
-   * @param[in] N The face normal vector.
-   * @param[in] func A callable that will receive the computed flux contributions.
-   */
-  template< typename FUNC >
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  static void computeMissingzFluxTerm( localIndex const q3D,
-                                       localIndex const q2D,
-                                       real64 const (&X3D)[8][3],
-                                       real64 const (&X2D)[4][3],
-                                       real64 const (&N)[3],
-                                       FUNC && func );
   /**
    * @brief computes the matrix B in the case of quasi-stiffness (e.g. for pseudo-acoustic case), defined as J^{-T}A_z J^{-1}/det(J), where
    * J is the Jacobian matrix, and A_z is a zero matrix except on A_z(3,3) = 1.
@@ -1453,7 +1389,6 @@ trilinearInterp( real64 const alpha,
   }
 }
 
-
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -1697,34 +1632,6 @@ computeRotatedBxyMatrix( int const qa,
   LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( B, Jinv, S );
 }
 
-
-
-template< typename GL_BASIS >
-template< typename FUNC >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeMissingzVolumeTerm_precompDzF( localIndex const q,
-                                      real64 const (&X)[8][3],
-                                      FUNC && func )
-{
-  int qa, qb, qc;
-  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-  real64 J[3][3] = {{0}};
-  jacobianTransformation( qa, qb, qc, X, J );
-  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
-  LvArray::tensorOps::transpose< 3 >( J ); // J <- J^T
-  LvArray::tensorOps::invert< 3 >( J ); // J <- J^-T
-  real64 AzInvJT[3][3] = {{0}}; // = det(J) * Az * J^-T
-  // compute Az * J{-T)
-  AzInvJT[2][0] = detJ * J[2][0];
-  AzInvJT[2][1] = detJ * J[2][1];
-  AzInvJT[2][2] = detJ * J[2][2];
-
-  computeGradPhiBGradzF_precompDzF( qa, qb, qc, AzInvJT, func );
-}
-
 template< typename GL_BASIS >
 template< typename FUNC >
 GEOS_HOST_DEVICE
@@ -1842,37 +1749,6 @@ computeRotatedMissingxyVolumeTerm( localIndex const q,
   computeGradPhiBGradPhi( qa, qb, qc, B, func );
 }
 
-
-template< typename GL_BASIS >
-template< typename FUNC >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeInterp( localIndex const q,
-               FUNC && func )
-{
-  int qa, qb, qc;
-  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
-
-  real64 xa = GL_BASIS::parentSupportCoord( qa );
-  real64 xb = GL_BASIS::parentSupportCoord( qb );
-  real64 xc = GL_BASIS::parentSupportCoord( qc );
-
-  for( localIndex k=0; k < LagrangeBasis1::TensorProduct3D::numSupportPoints; k++ )
-  {
-    localIndex k1, k2, k3;         // 1D indices: k1=0 or 1
-    GL_BASIS::TensorProduct3D::multiIndex( k, k1, k2, k3 );         // split k into each dimension
-    real64 phik1, phik2, phik3 = 0;
-    phik1 = LagrangeBasis1::value( k1, xa );
-    phik2 = LagrangeBasis1::value( k2, xb );
-    phik3 = LagrangeBasis1::value( k3, xc );
-    func( phik1*phik2*phik3 );
-  }
-}
-
-
-
 template< typename GL_BASIS >
 template< typename FUNC >
 GEOS_HOST_DEVICE
@@ -1944,55 +1820,6 @@ computeGradPhiBGradF( int const qa,
     }
   }
 }
-
-
-
-// With the "BIS" : compute the flux term instead (new version)
-template< typename GL_BASIS >
-template< typename FUNC >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-void
-Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
-computeMissingzFluxTerm( localIndex const q3D,
-                         localIndex const q2D,
-                         real64 const (&X3D)[8][3],
-                         real64 const (&X2D)[4][3],
-                         real64 const (&N)[3],
-                         FUNC && func )
-{
-  //Get local numbering in ref element
-  int q3Da, q3Db, q3Dc;
-  GL_BASIS::TensorProduct3D::multiIndex( q3D, q3Da, q3Db, q3Dc );
-  //Get local numbering in parametrized surface
-  int q2Da, q2Db;
-  GL_BASIS::TensorProduct2D::multiIndex( q2D, q2Da, q2Db );
-  // 2D Jacobian transformation
-  real64 J2D[3][2] = {{0}};
-  jacobianTransformation2d( q2Da, q2Db, X2D, J2D );
-  // compute J^T.J, using Voigt notation
-  real64 JtJ2D[3] = {0}; // J^T.J (Voigt notation)
-  JtJ2D[0] = J2D[0][0]*J2D[0][0]+J2D[1][0]*J2D[1][0]+J2D[2][0]*J2D[2][0];
-  JtJ2D[1] = J2D[0][1]*J2D[0][1]+J2D[1][1]*J2D[1][1]+J2D[2][1]*J2D[2][1];
-  JtJ2D[2] = J2D[0][0]*J2D[0][1]+J2D[1][0]*J2D[1][1]+J2D[2][0]*J2D[2][1];
-  real64 det2D= LvArray::tensorOps::symDeterminant< 2 >( JtJ2D );
-  real64 const sqrtDetJ2D = sqrt( LvArray::math::abs( det2D ) );
-  //Get 3D jacobian to compute the Trace of the Gradient properly
-  real64 J3D[3][3] = {{0}};
-  jacobianTransformation( q3Da, q3Db, q3Dc, X3D, J3D );
-  LvArray::tensorOps::transpose< 3 >( J3D ); // J3D <- Jacobian^T
-  LvArray::tensorOps::invert< 3 >( J3D ); // J3D <- Jacobian^{-T}
-  real64 Az[3][3] = {{0}};
-  Az[2][2] = sqrtDetJ2D;
-  real64 AzJmT[3][3] = {{0}};
-  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( AzJmT, Az, J3D ); // AzJmT <- sqrtDetJ2D*Az * J^{-T}
-  real64 AzN[3]; // Normal vector
-  AzN[0] = 0;
-  AzN[1] = 0;
-  AzN[2] = N[2];
-  computeFluxGradPhiBGradzF( q3Da, q3Db, q3Dc, q2Da, q2Db, AzN, AzJmT, func );
-}
-
 
 template< typename GL_BASIS >
 template< typename FUNC >
