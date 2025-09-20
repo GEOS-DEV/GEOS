@@ -199,58 +199,14 @@ public:
     stack.invDensity = 1./m_density[k];
 
 
-#if 0
-    // tti amgle computations
-    real32 tti_tilt= 0;
-    real32 tti_azimuth = 0;
-    real32 deg_to_rad = M_PI / 180;
-    // Compute DIP with ATAN
-    // Compute Azimuth with ATAN2
-    real32 ftmp = atan( sqrt( m_tti_dipx[k] * m_tti_dipx[k] + m_tti_dipy[k] * m_tti_dipy[k] ));
-    if((ftmp < 0.) || (ftmp > M_PI * 0.5))
-    {
-      GEOS_LOG_RANK_0( "error in TTI AZIM" );
-      // TODO: ierr=ierr_AZIMUTH
-    }
-    tti_tilt = ftmp;
-    ftmp = atan2( m_tti_dipy[k], m_tti_dipx[k] );
-    if((ftmp < -M_PI) || (ftmp > M_PI))
-    {
-      GEOS_LOG_RANK_0( "error in TTI DIP" );
-      //TODO: ierr=ierr_DIP;
-    }
-    else if( ftmp <= 0. )
-    {
-      ftmp = ftmp + 2 * M_PI;
-    }
-    if( tti_tilt < (0.001*deg_to_rad))
-      tti_azimuth = 0.;
-    else if((ftmp >= 0.) && (ftmp < M_PI))
-      tti_azimuth = ftmp + M_PI;
-    else if((ftmp >= M_PI) && (ftmp <= 2 * M_PI))
-      tti_azimuth = ftmp - M_PI;
-
-
-    stack.tti_tilt = tti_tilt;
-    stack.tti_azimuth = tti_azimuth;
-#else
-
     for( localIndex i=0; i<numNodesPerElem; i++ )
     {
-      //GEOS_LOG_RANK_0(GEOS_FMT("inside k={}, nodesperelem={}, iVertice={}, m_elemToNodes={}", k, numNodesPerElem, i, m_elemsToNodes( k, i
-      // )));
-
       real32 tilt = m_tti_DofTilt[m_elemsToNodes( k, i )];  // value on control point
       real32 azimuth = m_tti_DofAzimuth[m_elemsToNodes( k, i )];  // value on control point
 
       stack.tti_tilt_Q1[i] = tilt;
       stack.tti_azimuth_Q1[i] = azimuth;
     }
-#endif
-
-    //GEOS_LOG_RANK_0(GEOS_FMT("building aniso: {}, {}", tti_tilt, tti_azimuth));
-
-
 
     for( localIndex a=0; a<8; a++ )
     {

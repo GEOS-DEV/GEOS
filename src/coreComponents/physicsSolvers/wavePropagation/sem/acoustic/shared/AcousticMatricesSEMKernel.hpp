@@ -92,18 +92,6 @@ struct AcousticMatricesSEM
         if( localDelta > localEpsilon )
           localDelta = localEpsilon;
 
-#if 0
-        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-        for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
-        {
-          localIndex a = elemsToNodes( e, q ); //global index
-          real32 const localOrder = dofOrder[a];
-
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofEpsilon[a], localEpsilon/localOrder );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofDelta[a], localDelta/localOrder );
-
-        }
-#else
         for( localIndex a = 0; a < 8; ++a )
         {
           localIndex qnIndex = FE_TYPE::meshIndexToLinearIndex3D( a );
@@ -113,8 +101,7 @@ struct AcousticMatricesSEM
           RAJA::atomicAdd< ATOMIC_POLICY >( &dofEpsilon[nodeIndex], localEpsilon / localOrder );
           RAJA::atomicAdd< ATOMIC_POLICY >( &dofDelta[nodeIndex], localDelta / localOrder );
         }
-#endif
-      } );                      // end loop over element
+      } ); // end loop over element
 
       // Compute coord.
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
@@ -158,7 +145,7 @@ struct AcousticMatricesSEM
         }
       } );
 
-#if 1
+      // Interpolate delta and epsilon for all remaining GLL nodes
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
       {
         real64 xLocal[ 8 ][ 3 ];
@@ -235,52 +222,6 @@ struct AcousticMatricesSEM
           }
         }
       } );
-
-#endif
-
-#if 0
-      // Third: Compute delta and epsilon for all remaining GLL nodes
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
-      {
-
-        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
-
-        for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
-        {
-          int qa, qb, qc;
-          FE_TYPE::multiIndex( q, qa, qb, qc );
-
-          // 1D Coord of the nodes
-          real64 xa = m_finiteElement.parentSupportCoord( qa );
-          real64 xb = m_finiteElement.parentSupportCoord( qb );
-          real64 xc = m_finiteElement.parentSupportCoord( qc );
-
-
-          localIndex a = elemsToNodes( e, q ); //global index
-
-          real32 localEpsilon = 0;
-          real32 localDelta = 0;
-
-          for( localIndex k=0; k < LagrangeBasis1::TensorProduct3D::numSupportPoints; k++ )
-          {
-            localIndex ik = FE_TYPE::meshIndexToLinearIndex3D( k ); // indices in Q_r
-            localIndex k1, k2, k3; // 1D indices: k1=0 or 1
-            m_finiteElement.multiIndex( k, k1, k2, k3 ); // split k into each dimension
-            real64 phik1, phik2, phik3 = 0;
-            phik1 = LagrangeBasis1::value( k1, xa );
-            phik2 = LagrangeBasis1::value( k2, xb );
-            phik3 = LagrangeBasis1::value( k3, xc );
-
-            localEpsilon += phik1*phik2*phik3 * dofEpsilon[elemsToNodes( e, ik )];
-            localDelta += phik1*phik2*phik3 * dofDelta[elemsToNodes( e, ik )];
-          }
-
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofEpsilon[a], localEpsilon );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofDelta[a], localDelta );
-        }
-      } );
-#endif
     }
 
     GEOS_HOST_DEVICE
@@ -441,82 +382,6 @@ struct AcousticMatricesSEM
     }
 
 // end debug
-#if 0
-    template< typename EXEC_POLICY, typename ATOMIC_POLICY >
-    void
-    computeQ1Params( localIndex const size,
-                     arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
-                     arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-                     arrayView1d< real32 const > const vti_epsilon,
-                     arrayView1d< real32 const > const vti_delta,
-                     arrayView1d< real32 > const dofEpsilon,
-                     arrayView1d< real32 > const dofDelta,
-                     arrayView1d< real32 > const dofOrder )
-
-    {
-      //First: compute the local mass at each vertices
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
-      {
-        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-        real64 xLocal[ 8 ][ 3 ];
-        for( localIndex a = 0; a < 8; ++a )
-        {
-          localIndex const nodeIndex = elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( a ) );
-          for( localIndex i = 0; i < 3; ++i )
-          {
-            xLocal[a][i] = nodeCoords( nodeIndex, i );
-          }
-        }
-        // Compute Jacobian
-        real64 J[3][3] = {{0}};
-        m_finiteElement.jacobianTransformation( 0, 0, 0, xLocal, J );
-        real64 const detJ = std::abs( LvArray::tensorOps::determinant< 3 >( J ));
-        // Add contributions
-        for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
-        {
-          localIndex a = elemsToNodes( e, q ); //global index
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofOrder[a], detJ ); // Add local determinant to every nodes
-        }
-      } );
-      // Second: compute value of parameters: delta[q] = sum(jac*delta[e])/sum(jac)
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
-      {
-        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-        real32 localEpsilon = std::fabs( vti_epsilon[e] );
-        real32 localDelta = std::fabs( vti_delta[e] );
-        if( localEpsilon < 1e-5 )
-          localEpsilon = 0.;
-        if( localDelta < 1e-5 )
-          localDelta = 0.;
-        if( localDelta > localEpsilon )
-          localDelta = localEpsilon;
-        //Compute Jacobian
-        real64 xLocal[ 8 ][ 3 ];
-        for( localIndex a = 0; a < 8; ++a )
-        {
-          localIndex const nodeIndex = elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( a ) );
-          for( localIndex i = 0; i < 3; ++i )
-          {
-            xLocal[a][i] = nodeCoords( nodeIndex, i );
-          }
-        }
-        real64 J[3][3] = {{0}};
-        m_finiteElement.jacobianTransformation( 0, 0, 0, xLocal, J );
-        real64 const detJ = std::abs( LvArray::tensorOps::determinant< 3 >( J ));
-        //Loop on the vertices but we keep global numbering of Q_r
-        for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
-        {
-          localIndex a = elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( q ));
-          real32 const localMass = dofOrder[a];
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofEpsilon[a], detJ*localEpsilon / localMass );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofDelta[a], detJ*localDelta / localMass );
-        }
-      } ); // end loop over element
-      // Compute on each nodes?
-
-
-    }
-#endif
     FE_TYPE const & m_finiteElement;
   };
   // End debug
