@@ -47,34 +47,31 @@ namespace finiteElement
  *                                            =====  ===  ===
  *
  */
-class H1_QuadrilateralFace_Lagrange1_GaussLegendre2 final : public FiniteElementBase
+class H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl : public FiniteElementBase_impl< 4, 4, 4 >
 {
 public:
 
   /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
 
-  /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = 4;
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
-
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = 4;
-
-  GEOS_HOST_DEVICE
-  virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override
-  {}
-
   /// struct to hold stack variables.
   struct StackVariables {};
 
   /// MeshData struct to hold mesh data.
   template< typename SUBREGION_TYPE >
-struct MeshData {};
+  struct MeshData {};
+
+
+  GEOS_HOST_DEVICE H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl() = default;
+  GEOS_HOST_DEVICE ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl() = default;
+  GEOS_HOST_DEVICE H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl const & ) = default;
+  GEOS_HOST_DEVICE H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl & operator=( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl const & ) = default;
+  GEOS_HOST_DEVICE H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl && ) = default;
+  GEOS_HOST_DEVICE H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl & operator=( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl && ) = default;
+
 
   GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
+  static localIndex getNumQuadraturePoints()
   {
     return numQuadraturePoints;
   }
@@ -92,13 +89,13 @@ struct MeshData {};
   }
 
   GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override
+  static localIndex getNumSupportPoints()
   {
     return numNodes;
   }
 
   GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override
+  static localIndex getMaxSupportPoints()
   {
     return maxSupportPoints;
   }
@@ -283,7 +280,7 @@ private:
 template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
 GEOS_HOST_DEVICE
 inline
-void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+void H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::
   addGradGradStabilization( StackVariables const & stack,
                             real64 ( & matrix )
                             [maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT]
@@ -298,7 +295,7 @@ void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 GEOS_HOST_DEVICE
 inline
 void
-H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::
   calcN( real64 const (&coords)[2],
          real64 (& N)[numNodes] )
 {
@@ -312,7 +309,7 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 GEOS_HOST_DEVICE
 inline
 void
-H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::
   calcN( localIndex const q,
          real64 (& N)[numNodes] )
 {
@@ -326,7 +323,7 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 
 GEOS_HOST_DEVICE
 inline
-void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+void H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::
   calcN( localIndex const q,
          StackVariables const & GEOS_UNUSED_PARAM( stack ),
          real64 ( & N )[numNodes] )
@@ -339,7 +336,7 @@ void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 GEOS_HOST_DEVICE
 inline
 real64
-H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::
   transformedQuadratureWeight( localIndex const q,
                                real64 const (&X)[numNodes][3] )
 {
@@ -381,6 +378,72 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 }
 
 /// @endcond
+
+
+#ifndef __CUDA_ARCH__
+
+class H1_QuadrilateralFace_Lagrange1_GaussLegendre2 final : public H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl,
+                                          public FiniteElementBase
+{
+public:
+
+  /// The type of basis used for this element
+  using BASIS = LagrangeBasis1;
+
+  /// The Implementation type
+  using ImplType = H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl;
+
+  /// The number of nodes/support points per element.
+  constexpr static localIndex numNodes = H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::numNodes;
+
+  /// The number of faces/support points per element.
+  constexpr static localIndex numFaces = H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::numFaces;
+
+  /// The maximum number of support points per element.
+  constexpr static localIndex maxSupportPoints = numNodes;
+
+  /// The number of quadrature points per element.
+  constexpr static localIndex numQuadraturePoints = H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::numQuadraturePoints;
+
+  /// The number of sampling points per element.
+  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
+
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl * getImpl()
+  {
+    return static_cast<H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl *>(this);
+  }
+
+  const H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl * getImpl() const
+  {
+    return static_cast<const H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl *>(this);
+  }
+
+  GEOS_HOST_DEVICE
+  virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override final = default;
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getNumQuadraturePoints() const override final
+  {
+    return numQuadraturePoints;
+  }
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getNumSupportPoints() const override final
+  {
+    return numNodes;
+  }
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override final
+  {
+    return maxSupportPoints;
+  }
+
+
+};
+#endif // __CUDA_ARCH__
+
+
 
 }
 }

@@ -978,7 +978,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
                   using SUBREGION_TYPE = TYPEOFREF( subRegion );
 
                   typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData;
-                  finiteElement::FiniteElementBase::initialize< FE_TYPE, SUBREGION_TYPE >( nodeManager,
+                  FE_TYPE::template initialize< FE_TYPE, SUBREGION_TYPE >( nodeManager,
                                                                                            edgeManager,
                                                                                            faceManager,
                                                                                            subRegion,

@@ -671,6 +671,8 @@ class H1_Wedge_Lagrange1_Gauss6 final : public H1_Wedge_Lagrange1_Gauss6_impl,
 
 public:
 
+  /// Implementation type
+  using ImplType = H1_Wedge_Lagrange1_Gauss6_impl;
 
   H1_Wedge_Lagrange1_Gauss6_impl * getImpl()
   {

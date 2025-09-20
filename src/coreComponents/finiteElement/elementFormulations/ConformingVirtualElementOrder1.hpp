@@ -36,7 +36,7 @@ namespace finiteElement
  * @tparam MAXFACENODES The maximum number of nodes per face that the class expects.
  */
 template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
-class ConformingVirtualElementOrder1 final : public FiniteElementBase_impl<MAXCELLNODES,MAXCELLNODES,1>, public FiniteElementBase
+class ConformingVirtualElementOrder1_impl : public FiniteElementBase_impl< MAXCELLNODES, MAXFACENODES, 1 >
 {
 public:
   /// Type of MeshData::nodesCoords.
@@ -119,28 +119,16 @@ public:
     arrayView1d< real64 const > cellVolumes;
   };
 
-
-
-  ConformingVirtualElementOrder1 * getImpl()
-  {
-    return static_cast<ConformingVirtualElementOrder1 *>(this);
-  }
-
-  const ConformingVirtualElementOrder1 * getImpl() const
-  {
-    return static_cast<const ConformingVirtualElementOrder1 *>(this);
-  }
-
   GEOS_HOST_DEVICE
-  inline
-  localIndex getNumQuadraturePoints() const override
+  inline static
+  localIndex getNumQuadraturePoints()
   {
     return numQuadraturePoints;
   }
 
   GEOS_HOST_DEVICE
-  inline
-  virtual localIndex getMaxSupportPoints() const override
+  inline static
+  localIndex getMaxSupportPoints()
   {
     return maxSupportPoints;
   }
@@ -369,8 +357,8 @@ public:
    * @return Zero.
    */
   GEOS_HOST_DEVICE
-  inline
-  localIndex getNumSupportPoints() const override
+  inline static
+  localIndex getNumSupportPoints()
   {
     GEOS_ERROR( "VEM functions have to be called with the StackVariables syntax" );
     return 0;
@@ -604,36 +592,123 @@ private:
   }
 };
 
+
+
+
+
+
+
+
+#ifndef __CUDA_ARCH__
+
+
+template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
+class ConformingVirtualElementOrder1 final : public ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES >,
+                                             public FiniteElementBase
+{
+public:
+  /// The Implementation type
+  using ImplType = ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES >;
+
+  /// The number of nodes/support points per element.
+  constexpr static localIndex numNodes = ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES >::numNodes;
+
+  /// The number of faces/support points per element.
+  constexpr static localIndex numFaces = ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES >::numFaces;
+
+  /// The maximum number of support points per element.
+  constexpr static localIndex maxSupportPoints = numNodes;
+
+  /// The number of quadrature points per element.
+  constexpr static localIndex numQuadraturePoints = ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES >::numQuadraturePoints;
+
+  ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES > * getImpl()
+  {
+    return static_cast<ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES > *>(this);
+  }
+
+  const ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES > * getImpl() const
+  {
+    return static_cast<const ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES > *>(this);
+  }
+
+  GEOS_HOST_DEVICE
+  virtual ~ConformingVirtualElementOrder1() override final = default;
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getNumQuadraturePoints() const override final
+  {
+    return numQuadraturePoints;
+  }
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getNumSupportPoints() const override final
+  {
+    return numNodes;
+  }
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override final
+  {
+    return maxSupportPoints;
+  }
+
+
+};
+
+
+
+
 /// Convenience typedef for VEM on tetrahedra.
+using H1_Tetrahedron_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 4, 3 >;
 using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 3 >;
 #if !defined( GEOS_USE_HIP )
 /// Convenience typedef for VEM on hexahedra.
+using H1_Hexahedron_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 8, 4 >;
 using H1_Hexahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 8, 4 >;
 #endif
 /// Convenience typedef for VEM on pyramids.
+using H1_Pyramid_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 5, 4 >;
 using H1_Pyramid_VEM_Gauss1 = ConformingVirtualElementOrder1< 5, 4 >;
 #if !defined( GEOS_USE_HIP )
 /// Convenience typedef for VEM on wedges.
+using H1_Wedge_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 6, 4 >;
 using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 4 >;
 #endif
 /// Convenience typedef for VEM on prism5.
+using H1_Prism5_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 10, 5 >;
 using H1_Prism5_VEM_Gauss1 = ConformingVirtualElementOrder1< 10, 5 >;
 /// Convenience typedef for VEM on prism6.
+using H1_Prism6_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 12, 6 >;
 using H1_Prism6_VEM_Gauss1 = ConformingVirtualElementOrder1< 12, 6 >;
 /// Convenience typedef for VEM on prism7.
+using H1_Prism7_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 14, 7 >;
 using H1_Prism7_VEM_Gauss1 = ConformingVirtualElementOrder1< 14, 7 >;
 /// Convenience typedef for VEM on prism8.
+using H1_Prism8_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 16, 8 >;
 using H1_Prism8_VEM_Gauss1 = ConformingVirtualElementOrder1< 16, 8 >;
 /// Convenience typedef for VEM on prism9.
+using H1_Prism9_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 18, 9 >;
 using H1_Prism9_VEM_Gauss1 = ConformingVirtualElementOrder1< 18, 9 >;
 /// Convenience typedef for VEM on prism10.
+using H1_Prism10_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 20, 10 >;
 using H1_Prism10_VEM_Gauss1 = ConformingVirtualElementOrder1< 20, 10 >;
 /// Convenience typedef for VEM on prism11.
 #if !defined( GEOS_USE_HIP )
+using H1_Prism11_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 22, 11 >;
 using H1_Prism11_VEM_Gauss1 = ConformingVirtualElementOrder1< 22, 11 >;
 #endif
-}
-}
+
+
+#endif // __CUDA_ARCH__
+
+
+
+
+
+
+} // namespace finiteElement
+} // namespace geos
 
 #include "ConformingVirtualElementOrder1_impl.hpp"
 

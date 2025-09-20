@@ -545,7 +545,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
       SUBREGION_TYPE & castedSubRegion = dynamicCast< SUBREGION_TYPE & >( elementSubRegion );
       CONSTITUTIVE_TYPE & castedConstitutiveRelation = dynamicCast< CONSTITUTIVE_TYPE & >( *constitutiveRelation );
-      FE_TYPE & castedFiniteElement = dynamicCast< FE_TYPE & >( subRegionFE );
+      typename FE_TYPE::ImplType & castedFiniteElement = *(dynamicCast< FE_TYPE & >( subRegionFE ).getImpl());
 
       auto kernel = kernelFactory.createKernel( nodeManager,
                                                 edgeManager,

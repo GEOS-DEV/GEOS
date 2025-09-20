@@ -28,7 +28,7 @@ using namespace finiteElement;
 
 //***** TEST VIEW SETTERS/GETTERS *****************************************************************
 
-class TestFiniteElementBase final : public FiniteElementBase
+class TestFiniteElementBase final : public FiniteElementBase, public FiniteElementBase_impl< 8, 8, 8 >
 {
   GEOS_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override {return 8;};

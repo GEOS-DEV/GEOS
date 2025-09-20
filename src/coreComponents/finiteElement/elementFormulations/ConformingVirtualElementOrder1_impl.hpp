@@ -29,7 +29,7 @@ namespace finiteElement
 template< localIndex MCN, localIndex MFN >
 template< typename SUBREGION_TYPE >
 GEOS_HOST_DEVICE
-void ConformingVirtualElementOrder1< MCN, MFN >::
+void ConformingVirtualElementOrder1_impl< MCN, MFN >::
 computeProjectors( localIndex const & cellIndex,
                    InputNodeCoords const & nodesCoords,
                    InputCellToNodeMap< SUBREGION_TYPE > const & cellToNodeMap,
@@ -55,7 +55,7 @@ computeProjectors( localIndex const & cellIndex,
   quadratureWeight = cellVolume;
 
   // Compute cell diameter.
-  real64 cellDiameter = ConformingVirtualElementOrder1< MCN, MFN >::
+  real64 cellDiameter = ConformingVirtualElementOrder1_impl< MCN, MFN >::
                         computeDiameter< 3 >
                           ( nodesCoords, cellToNodeMap[cellIndex], numCellPoints );
   real64 const invCellDiameter = 1.0/cellDiameter;
@@ -280,7 +280,7 @@ computeProjectors( localIndex const & cellIndex,
 
 template< localIndex MCN, localIndex MFN >
 GEOS_HOST_DEVICE
-void ConformingVirtualElementOrder1< MCN, MFN >::
+void ConformingVirtualElementOrder1_impl< MCN, MFN >::
 computeFaceIntegrals( InputNodeCoords const & nodesCoords,
                       localIndex const (&faceToNodes)[MFN],
                       localIndex const (&faceToEdges)[MFN],
@@ -315,7 +315,7 @@ computeFaceIntegrals( InputNodeCoords const & nodesCoords,
       faceRotationMatrix[ 1 ][ 2 ]*nodesCoords( faceToNodes[ numVertex ], 1 ) +
       faceRotationMatrix[ 2 ][ 2 ]*nodesCoords( faceToNodes[ numVertex ], 2 );
   }
-  faceDiameter = ConformingVirtualElementOrder1< MCN, MFN >::
+  faceDiameter = ConformingVirtualElementOrder1_impl< MCN, MFN >::
                  computeDiameter< 2 >( faceRotatedVertices,
                                        numFaceVertices );
   real64 const invFaceDiameter = 1.0/faceDiameter;

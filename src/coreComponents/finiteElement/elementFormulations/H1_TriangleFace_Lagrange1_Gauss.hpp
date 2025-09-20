@@ -48,9 +48,13 @@ namespace finiteElement
  *
  */
 template< typename NUM_Q_POINTS >
-class H1_TriangleFace_Lagrange1_Gauss final : public FiniteElementBase
+class H1_TriangleFace_Lagrange1_Gauss_impl : public FiniteElementBase_impl< 3, 3, NUM_Q_POINTS::value >
 {
 public:
+
+  using FiniteElementBase_impl< 3, 3, NUM_Q_POINTS::value >::numNodes;
+  using FiniteElementBase_impl< 3, 3, NUM_Q_POINTS::value >::numQuadraturePoints;
+  using FiniteElementBase_impl< 3, 3, NUM_Q_POINTS::value >::maxSupportPoints;
 
   /// Check that the number of quadrature points is valid.
   static_assert( ( NUM_Q_POINTS::value == 1 ||
@@ -61,27 +65,24 @@ public:
   /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
 
-  /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = 3;
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
-
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = NUM_Q_POINTS::value;
-
-  GEOS_HOST_DEVICE
-  virtual ~H1_TriangleFace_Lagrange1_Gauss() override
-  {}
 
   /// struct to hold stack variables.
   struct StackVariables {};
 
   /// MeshData struct to hold mesh data.
   template< typename SUBREGION_TYPE >
-struct MeshData {};
+  struct MeshData {};
+
+  GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl() = default;
+  GEOS_HOST_DEVICE ~H1_TriangleFace_Lagrange1_Gauss_impl() = default;
+  GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl( H1_TriangleFace_Lagrange1_Gauss_impl const & ) = default;
+  GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl & operator=( H1_TriangleFace_Lagrange1_Gauss_impl const & ) = default;
+  GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl( H1_TriangleFace_Lagrange1_Gauss_impl && ) = default;
+  GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl & operator=( H1_TriangleFace_Lagrange1_Gauss_impl && ) = default;
+
 
   GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
+  localIndex getNumQuadraturePoints()
   {
     return numQuadraturePoints;
   }
@@ -99,7 +100,7 @@ struct MeshData {};
   }
 
   GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override
+  localIndex getNumSupportPoints()
   {
     return numNodes;
   }
@@ -117,7 +118,7 @@ struct MeshData {};
   }
 
   GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override
+  localIndex getMaxSupportPoints()
   {
     return maxSupportPoints;
   }
@@ -363,7 +364,7 @@ template< typename NUM_Q_POINTS >
 template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, bool UPPER >
 GEOS_HOST_DEVICE
 inline
-void H1_TriangleFace_Lagrange1_Gauss< NUM_Q_POINTS >::
+void H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 addGradGradStabilization( StackVariables const & stack,
                           real64 ( & matrix )
                           [maxSupportPoints * NUMDOFSPERTRIALSUPPORTPOINT]
@@ -379,7 +380,7 @@ template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
 void
-H1_TriangleFace_Lagrange1_Gauss< NUM_Q_POINTS >::
+H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 calcN( real64 const (&coords)[2],
        real64 ( & N )[numNodes] )
 {
@@ -395,7 +396,7 @@ template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
 void
-H1_TriangleFace_Lagrange1_Gauss< NUM_Q_POINTS >::
+H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 calcN( localIndex const q,
        real64 (& N)[numNodes] )
 {
@@ -409,7 +410,7 @@ calcN( localIndex const q,
 template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
-void H1_TriangleFace_Lagrange1_Gauss< NUM_Q_POINTS >::
+void H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 calcN( localIndex const q,
        StackVariables const & GEOS_UNUSED_PARAM( stack ),
        real64 ( & N )[numNodes] )
@@ -423,7 +424,7 @@ template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 inline
 real64
-H1_TriangleFace_Lagrange1_Gauss< NUM_Q_POINTS >::
+H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >::
 transformedQuadratureWeight( localIndex const q,
                              real64 const (&X)[numNodes][3] )
 {
@@ -437,11 +438,79 @@ transformedQuadratureWeight( localIndex const q,
 
 /// @endcond
 
-/// @brief Istanciation of the class with 1 quadrature points.
+
+#ifndef __CUDA_ARCH__
+
+template< typename NUM_Q_POINTS >
+class H1_TriangleFace_Lagrange1_Gauss final : public H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >,
+                                          public FiniteElementBase
+{
+public:
+
+  /// The type of basis used for this element
+  using BASIS = LagrangeBasis1;
+
+  /// The Implementation type
+  using ImplType = H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >;
+
+  /// The number of nodes/support points per element.
+  constexpr static localIndex numNodes = H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >::numNodes;
+
+  /// The number of faces/support points per element.
+  constexpr static localIndex numFaces = H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >::numFaces;
+
+  /// The maximum number of support points per element.
+  constexpr static localIndex maxSupportPoints = numNodes;
+
+  /// The number of quadrature points per element.
+  constexpr static localIndex numQuadraturePoints = H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >::numQuadraturePoints;
+
+  constexpr static int numSamplingPointsPerDirection = H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >::numSamplingPointsPerDirection;
+
+  /// The number of sampling points per element.
+  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
+
+  H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS > * getImpl()
+  {
+    return static_cast<H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS > *>(this);
+  }
+
+  const H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS > * getImpl() const
+  {
+    return static_cast<const H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS > *>(this);
+  }
+
+  GEOS_HOST_DEVICE
+  virtual ~H1_TriangleFace_Lagrange1_Gauss() override final = default;
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getNumQuadraturePoints() const override final
+  {
+    return numQuadraturePoints;
+  }
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getNumSupportPoints() const override final
+  {
+    return numNodes;
+  }
+
+  GEOS_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override final
+  {
+    return maxSupportPoints;
+  }
+
+
+};
+#endif // __CUDA_ARCH__
+
+
+/// @brief Instantiation of the class with 1 quadrature points.
 using H1_TriangleFace_Lagrange1_Gauss1 = H1_TriangleFace_Lagrange1_Gauss< std::integral_constant< int, 1 > >;
-/// @brief Istanciation of the class with 4 quadrature points.
+/// @brief Instantiation of the class with 4 quadrature points.
 using H1_TriangleFace_Lagrange1_Gauss4 = H1_TriangleFace_Lagrange1_Gauss< std::integral_constant< int, 4 > >;
-/// @brief Istanciation of the class with 6 quadrature points.
+/// @brief Instantiation of the class with 6 quadrature points.
 using H1_TriangleFace_Lagrange1_Gauss6 = H1_TriangleFace_Lagrange1_Gauss< std::integral_constant< int, 6 > >;
 
 

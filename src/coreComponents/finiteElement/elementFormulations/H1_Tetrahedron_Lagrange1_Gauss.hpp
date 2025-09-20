@@ -724,6 +724,8 @@ public:
   /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
 
+  /// The Implementation type.
+  using ImplType = H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >;
 
   H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > * getImpl()
   {
@@ -764,10 +766,13 @@ public:
 
 
 /// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss_impl class for the 1-point Gaussian quadrature rule.
+using H1_Tetrahedron_Lagrange1_Gauss1_impl = H1_Tetrahedron_Lagrange1_Gauss_impl< std::integral_constant< int, 1 > >;
 using H1_Tetrahedron_Lagrange1_Gauss1 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 1 > >;
 /// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss class for the 5-point Gaussian quadrature rule.
+using H1_Tetrahedron_Lagrange1_Gauss5_impl = H1_Tetrahedron_Lagrange1_Gauss_impl< std::integral_constant< int, 5 > >;
 using H1_Tetrahedron_Lagrange1_Gauss5 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 5 > >;
 /// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss class for the 14-point Gaussian quadrature rule.
+using H1_Tetrahedron_Lagrange1_Gauss14_impl = H1_Tetrahedron_Lagrange1_Gauss_impl< std::integral_constant< int, 14 > >;
 using H1_Tetrahedron_Lagrange1_Gauss14 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 14 > >;
 
 }

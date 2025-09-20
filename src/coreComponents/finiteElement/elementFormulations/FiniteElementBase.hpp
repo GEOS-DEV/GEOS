@@ -35,47 +35,8 @@ namespace finiteElement
 {
 
 
-/**
- * @brief An helper struct to determine the function space.
- * @tparam N The number of components per support point (i.e., 1 if
- *   scalar variable, 3 if vector variable)
- */
-template< int N >
-struct FunctionSpaceHelper
-{};
 
 /// @cond Doxygen_Suppress
-
-//*************************************************************************************************
-//***** Definitions *******************************************************************************
-//*************************************************************************************************
-
-template<>
-struct FunctionSpaceHelper< 1 >
-{
-  GEOS_HOST_DEVICE
-  constexpr static PDEUtilities::FunctionSpace getFunctionSpace()
-  {
-    return PDEUtilities::FunctionSpace::H1;
-  }
-};
-
-template<>
-struct FunctionSpaceHelper< 3 >
-{
-  GEOS_HOST_DEVICE
-  constexpr static PDEUtilities::FunctionSpace getFunctionSpace()
-  {
-    return PDEUtilities::FunctionSpace::H1vector;
-  }
-};
-
-template< int N >
-GEOS_HOST_DEVICE
-constexpr PDEUtilities::FunctionSpace getFunctionSpace()
-{
-  return FunctionSpaceHelper< N >::getFunctionSpace();
-}
 
 
 /// @endcond
@@ -285,8 +246,6 @@ public:
   }
 
 
-
-
   /**
    * @brief Getter for the function space.
    * @tparam The number of components per support point (i.e., 1 if
@@ -295,7 +254,21 @@ public:
    */
   template< int N >
   GEOS_HOST_DEVICE
-  constexpr static PDEUtilities::FunctionSpace getFunctionSpace();
+  constexpr static PDEUtilities::FunctionSpace getFunctionSpace()
+  {
+    if constexpr( N == 1 )
+    {
+      return PDEUtilities::FunctionSpace::H1;
+    }
+    else if constexpr( N == 3 )
+    {
+      return PDEUtilities::FunctionSpace::H1vector;
+    }
+    else
+    {
+      static_assert(N == 1 || N == 3, "Unsupported number of components per support point");
+    }
+  }
 
 
 
@@ -412,10 +385,6 @@ public:
 
 
 };
-
-
-
-
 
 
 

@@ -599,6 +599,9 @@ public:
   /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
 
+  /// The Implementation type
+  using ImplType = H1_Pyramid_Lagrange1_Gauss5_impl;
+
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = H1_Pyramid_Lagrange1_Gauss5_impl::numNodes;
 

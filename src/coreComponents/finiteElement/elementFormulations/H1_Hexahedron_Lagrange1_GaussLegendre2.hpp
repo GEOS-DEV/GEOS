@@ -874,6 +874,9 @@ public:
   /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
 
+  /// The Implementation type
+  using ImplType = H1_Hexahedron_Lagrange1_GaussLegendre2_impl;
+
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = H1_Hexahedron_Lagrange1_GaussLegendre2_impl::numNodes;
 
