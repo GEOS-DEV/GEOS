@@ -607,10 +607,9 @@ public:
                                     real64 const (&X)[4][3] );
 
   /**
-   * @brief computes the volume of a Hexahedra
-   * @param q The quadrature point index
-   * @param X Array containing the coordinates of the mesh support points.
-   * @return The diagonal mass term associated to q
+   * @brief computes the volume of a Hexahedra from its 8 corner coordinates.
+   * @param[in] X Array containing the coordinates of the mesh support points.
+   * @return The volume of the hexahedron.
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -684,6 +683,15 @@ public:
                                       real64 const (&X)[8][3],
                                       FUNC && func );
 
+  /**
+   * @brief Computes the "missing" xy-plane volume term and passes contributions to a callback.
+   * @details This term is part of a specialized stiffness matrix, typically for anisotropic or
+   * pseudo-acoustic formulations, considering only derivatives in the x and y directions.
+   * @tparam FUNC The type of the callable function/lambda.
+   * @param[in] q The local index of the quadrature point.
+   * @param[in] X The nodal coordinates of the 8-node hexahedron.
+   * @param[in] func A callable that will receive the computed stiffness contributions (row, col, value).
+   */
   template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -691,6 +699,16 @@ public:
                                           real64 const (&X)[8][3],
                                           FUNC && func );
 
+  /**
+   * @brief Computes the "missing" xy-plane volume term for a rotated coordinate system.
+   * @details This is the rotated-system equivalent of @ref computeMissingxyVolumeTerm.
+   * @tparam FUNC The type of the callable function/lambda.
+   * @param[in] q The local index of the quadrature point.
+   * @param[in] theta The tilt angle of the rotation.
+   * @param[in] phi The azimuth angle of the rotation.
+   * @param[in] X The nodal coordinates of the 8-node hexahedron.
+   * @param[in] func A callable that will receive the computed stiffness contributions (row, col, value).
+   */
   template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -701,13 +719,29 @@ public:
                                                  FUNC && func );
 
 
-
+  /**
+   * @brief Computes trilinear interpolation coefficients for a Qk quadrature point.
+   * @details This function calculates the contribution of each of the 8 corner nodes (Q1 basis)
+   * to the value at a higher-order (Qk) quadrature point `q`.
+   * @tparam FUNC The type of the callable function/lambda.
+   * @param[in] q The local index of the Qk quadrature point.
+   * @param[in] func A callable that will receive the interpolation coefficient for each of the 8 corners.
+   */
   template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void computeInterp( localIndex const q,
                              FUNC && func );
 
+  /**
+   * @brief Computes the "missing" z-plane volume term using a precomputed derivative term.
+   * @details This is a specialized version of the z-stiffness term calculation where some
+   * derivative information (dzF) is precomputed.
+   * @tparam FUNC The type of the callable function/lambda.
+   * @param[in] q The local index of the quadrature point.
+   * @param[in] X The nodal coordinates of the 8-node hexahedron.
+   * @param[in] func A callable that will receive the computed stiffness contributions (row, col, value).
+   */
   template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -716,7 +750,15 @@ public:
                                                     FUNC && func );
 
 
-
+  /**
+   * @brief Computes the "missing" z-plane volume term.
+   * @details This term is part of a specialized stiffness matrix, typically for anisotropic or
+   * pseudo-acoustic formulations, considering only derivatives in the z-direction.
+   * @tparam FUNC The type of the callable function/lambda.
+   * @param[in] q The local index of the quadrature point.
+   * @param[in] X The nodal coordinates of the 8-node hexahedron.
+   * @param[in] func A callable that will receive the computed stiffness contributions (row, col, value).
+   */
   template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -724,6 +766,16 @@ public:
                                          real64 const (&X)[8][3],
                                          FUNC && func );
 
+  /**
+   * @brief Computes the "missing" z-plane volume term for a rotated coordinate system.
+   * @details This is the rotated-system equivalent of @ref computeMissingzVolumeTerm.
+   * @tparam FUNC The type of the callable function/lambda.
+   * @param[in] q The local index of the quadrature point.
+   * @param[in] theta The tilt angle of the rotation.
+   * @param[in] phi The azimuth angle of the rotation.
+   * @param[in] X The nodal coordinates of the 8-node hexahedron.
+   * @param[in] func A callable that will receive the computed stiffness contributions (row, col, value).
+   */
   template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -734,7 +786,19 @@ public:
                                                 FUNC && func );
 
 
-
+  /**
+   * @brief Computes a flux term on a face related to the z-direction.
+   * @details This is used for applying boundary conditions or in discontinuous Galerkin methods.
+   * It calculates the flux contribution at a 2D quadrature point on a face, considering
+   * the 3D element geometry.
+   * @tparam FUNC The type of the callable function/lambda.
+   * @param[in] q3D The local index of the 3D quadrature point.
+   * @param[in] q2D The local index of the 2D quadrature point on the face.
+   * @param[in] X3D The nodal coordinates of the 8-node hexahedron.
+   * @param[in] X2D The nodal coordinates of the 4-node face.
+   * @param[in] N The face normal vector.
+   * @param[in] func A callable that will receive the computed flux contributions.
+   */
   template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -896,6 +960,18 @@ public:
                           FUNC && func );
 
 
+  /**
+   * @brief Computes the Grad(Phi)*B*Grad(z(F)) stiffness term with a precomputed matrix.
+   * @details This is a helper function that computes the contribution to the stiffness matrix
+   * from the term integral(Grad(Phi) * B * Grad(z(F))), where `AzJmT` is a precomputed matrix
+   * incorporating parts of B and the Jacobian.
+   * @tparam FUNC The type of the callable function/lambda.
+   * @param[in] qa The 1D quadrature point index in the first direction.
+   * @param[in] qb The 1D quadrature point index in the second direction.
+   * @param[in] qc The 1D quadrature point index in the third direction.
+   * @param[in] AzJmT A precomputed matrix, typically `det(J) * Az * J^{-T}`.
+   * @param[in] func A callable that will receive the computed stiffness contributions.
+   */
   template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -906,6 +982,18 @@ public:
                                     real64 const (&AzJmT)[3][3],
                                     FUNC && func );
 
+  /**
+   * @brief Computes the Grad(Phi)*B*Grad(F) stiffness term where F is a Q1 field.
+   * @details This computes the contribution to the stiffness matrix from the term
+   * integral(Grad(Phi_i) * B * Grad(F_k)), where Phi_i is a Qk basis function and F_k
+   * is a Q1 (trilinear) basis function.
+   * @tparam FUNC The type of the callable function/lambda.
+   * @param[in] qa The 1D quadrature point index in the first direction.
+   * @param[in] qb The 1D quadrature point index in the second direction.
+   * @param[in] qc The 1D quadrature point index in the third direction.
+   * @param[in] B The symmetric 3x3 matrix B in Voigt notation.
+   * @param[in] func A callable that will receive the computed stiffness contributions.
+   */
   template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -916,6 +1004,20 @@ public:
                         real64 const (&B)[6],
                         FUNC && func );
 
+  /**
+   * @brief Computes the Grad(Phi)*B*Grad(z(F)) flux term.
+   * @details This is a helper function for face integrals that computes the flux contribution
+   * from the term integral( (B*Grad(z(F))) . n * Phi).
+   * @tparam FUNC The type of the callable function/lambda.
+   * @param[in] q3Da The 1D quadrature point index in the element's first direction.
+   * @param[in] q3Db The 1D quadrature point index in the element's second direction.
+   * @param[in] q3Dc The 1D quadrature point index in the element's third direction.
+   * @param[in] qa The 1D quadrature point index on the face's first direction.
+   * @param[in] qb The 1D quadrature point index on the face's second direction.
+   * @param[in] AzN The face normal vector scaled by the z-component selection matrix.
+   * @param[in] AzJmT A precomputed matrix, typically `sqrt(det(J_2D)) * Az * J_3D^{-T}`.
+   * @param[in] func A callable that will receive the computed flux contributions.
+   */
   template< typename FUNC >
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
