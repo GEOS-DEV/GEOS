@@ -1757,20 +1757,15 @@ computeInterp( localIndex const q,
   real64 xb = GL_BASIS::parentSupportCoord( qb );
   real64 xc = GL_BASIS::parentSupportCoord( qc );
 
-
   for( localIndex k=0; k < LagrangeBasis1::TensorProduct3D::numSupportPoints; k++ )
   {
-    localIndex ik = meshIndexToLinearIndex3D( k );         // indices in Q_r
     localIndex k1, k2, k3;         // 1D indices: k1=0 or 1
     GL_BASIS::TensorProduct3D::multiIndex( k, k1, k2, k3 );         // split k into each dimension
     real64 phik1, phik2, phik3 = 0;
     phik1 = LagrangeBasis1::value( k1, xa );
     phik2 = LagrangeBasis1::value( k2, xb );
     phik3 = LagrangeBasis1::value( k3, xc );
-
-
     func( phik1*phik2*phik3 );
-
   }
 }
 

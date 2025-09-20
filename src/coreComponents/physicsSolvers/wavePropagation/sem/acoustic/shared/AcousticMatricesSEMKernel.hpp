@@ -26,7 +26,7 @@ namespace geos
 
 struct AcousticMatricesSEM
 {
-  //Debug
+  // Debug
   template< typename FE_TYPE >
   struct DofArrays
   {
@@ -109,18 +109,12 @@ struct AcousticMatricesSEM
           localIndex qnIndex = FE_TYPE::meshIndexToLinearIndex3D( a );
           localIndex nodeIndex = elemsToNodes( e, qnIndex );
           real32 const localOrder = dofOrder[nodeIndex];
-          // if (e<10)
-          // {
-          //  GEOS_LOG_RANK_0(GEOS_FMT("Elem {}, local {}, order: {}", e, a, localOrder));
-          //  }
 
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofEpsilon[nodeIndex], localEpsilon/localOrder );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofDelta[nodeIndex], localDelta/localOrder );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dofEpsilon[nodeIndex], localEpsilon / localOrder );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dofDelta[nodeIndex], localDelta / localOrder );
         }
 #endif
-
-      } ); // end loop over element
-
+      } );                      // end loop over element
 
       // Compute coord.
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
@@ -135,8 +129,6 @@ struct AcousticMatricesSEM
           RAJA::atomicExchange< ATOMIC_POLICY >( &nodeZ[nodeIndex], nodeCoords( nodeIndex, 2 ) );
         }
       } );
-
-
 
       // Set anisotropy to 0 in a bubble around the source.
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
@@ -158,7 +150,6 @@ struct AcousticMatricesSEM
 
             if( std::sqrt( dist )<radiusIsoAroundSource )
             {
-              //std::cout<<"dist="<<dist<<" "<<taper<<std::endl;
               RAJA::atomicExchange< ATOMIC_POLICY >( &dofEpsilon[nodeIndex], static_cast< float >(taper * dofEpsilon[nodeIndex]) );
               RAJA::atomicExchange< ATOMIC_POLICY >( &dofDelta[nodeIndex], static_cast< float >(taper * dofDelta[nodeIndex]) );
 
@@ -166,8 +157,6 @@ struct AcousticMatricesSEM
           }
         }
       } );
-
-
 
 #if 1
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
@@ -180,8 +169,6 @@ struct AcousticMatricesSEM
         {
           localIndex const nodeIndex = elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( a ) );
 
-          //GEOS_LOG_RANK_0(GEOS_FMT("elem {}, a {} {}, ", e, a, FE_TYPE::meshIndexToLinearIndex3D( a )));
-
           for( localIndex i = 0; i < 3; ++i )
           {
             xLocal[a][i] = nodeCoords( nodeIndex, i );
@@ -190,8 +177,6 @@ struct AcousticMatricesSEM
           epsiQ1[a] = dofEpsilon[nodeIndex];
 
         }
-
-        //GEOS_LOG(GEOS_FMT("elem {}, delta {}", e, deltaQ1));
 
         constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
@@ -296,33 +281,14 @@ struct AcousticMatricesSEM
         }
       } );
 #endif
-
-
     }
 
-
-
+    GEOS_HOST_DEVICE
     double cosine_taper( double r, double rmin, double rmax )
     {
-      if( r <= rmin )
-      {
-        return 0.0;
-      }
-      else if( r >= rmax )
-      {
-        return 1.0;
-      }
-      else
-      {
-
-
-        double x = (M_PI * (r - rmin)) / (rmax - rmin);
-        return 0.5 * (1.0 - cos( x ));
-
-      }
+      double t = std::clamp((r - rmin) / (rmax - rmin), 0.0, 1.0 );
+      return 0.5 * (1.0 - std::cos( M_PI * t ));
     }
-
-
 
     template< typename EXEC_POLICY, typename ATOMIC_POLICY >
     void
@@ -343,35 +309,21 @@ struct AcousticMatricesSEM
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
       {
         // tti amgle computations
-        real32 tti_tilt= 0;
         real32 tti_azimuth = 0;
         real32 deg_to_rad = M_PI / 180;
-        // Compute DIP with ATAN
-        // Compute Azimuth with ATAN2
-        real32 ftmp = atan( sqrt( tti_dipx[e] * tti_dipx[e] + tti_dipy[e] * tti_dipy[e] ));
-        if((ftmp < 0.) || (ftmp > M_PI * 0.5))
-        {
-          GEOS_LOG_RANK_0( "error in TTI AZIM" );
-          // TODO: ierr=ierr_AZIMUTH
-        }
-        tti_tilt = ftmp;
-        ftmp = atan2( tti_dipy[e], tti_dipx[e] );
-        if((ftmp < -M_PI) || (ftmp > M_PI))
-        {
-          GEOS_LOG_RANK_0( "error in TTI DIP" );
-          //TODO: ierr=ierr_DIP;
-        }
-        else if( ftmp <= 0. )
+        real32 tti_tilt = atan( sqrt( tti_dipx[e] * tti_dipx[e] + tti_dipy[e] * tti_dipy[e] ));
+
+        real32 ftmp = atan2( tti_dipy[e], tti_dipx[e] );
+        if( ftmp <= 0. )
         {
           ftmp = ftmp + 2 * M_PI;
         }
-        if( tti_tilt < (0.001*deg_to_rad))
+        if( tti_tilt < (0.001 * deg_to_rad))
           tti_azimuth = 0.;
         else if((ftmp >= 0.) && (ftmp < M_PI))
           tti_azimuth = ftmp + M_PI;
         else if((ftmp >= M_PI) && (ftmp <= 2 * M_PI))
           tti_azimuth = ftmp - M_PI;
-
 
         for( localIndex a = 0; a < 8; ++a )
         {
@@ -379,18 +331,10 @@ struct AcousticMatricesSEM
           localIndex nodeIndex = elemsToNodes( e, qnIndex );
           real32 const localOrder = dofOrder[nodeIndex];
 
-          //if (e<10)
-          //{
-          //GEOS_LOG_RANK_0(GEOS_FMT("Elem {}, local {}, order: {}", e, a, localOrder));
-          //}
-
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofTilt[nodeIndex], tti_tilt/localOrder );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofAzimuth[nodeIndex], tti_azimuth/localOrder );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dofTilt[nodeIndex], tti_tilt / localOrder );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dofAzimuth[nodeIndex], tti_azimuth / localOrder );
         }
-
       } );
-
-
 
       // Set anisotropy to 0 in a bubble around the source.
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
@@ -421,8 +365,6 @@ struct AcousticMatricesSEM
         }
       } );
 
-
-
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
       {
         real64 xLocal[ 8 ][ 3 ];
@@ -431,8 +373,6 @@ struct AcousticMatricesSEM
         for( localIndex a = 0; a < 8; ++a )
         {
           localIndex const nodeIndex = elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( a ) );
-
-          //GEOS_LOG_RANK_0(GEOS_FMT("elem {}, a {} {}, ", e, a, FE_TYPE::meshIndexToLinearIndex3D( a )));
 
           for( localIndex i = 0; i < 3; ++i )
           {
@@ -498,11 +438,9 @@ struct AcousticMatricesSEM
           }
         }
       } );
-
     }
 
-
-//end debug
+// end debug
 #if 0
     template< typename EXEC_POLICY, typename ATOMIC_POLICY >
     void
@@ -580,7 +518,6 @@ struct AcousticMatricesSEM
     }
 #endif
     FE_TYPE const & m_finiteElement;
-
   };
   // End debug
 
@@ -635,11 +572,10 @@ struct AcousticMatricesSEM
           real32 const localIncrement = invC2 * m_finiteElement.computeMassTerm( q, xLocal );
           RAJA::atomicAdd< ATOMIC_POLICY >( &mass[elemsToNodes( e, q )], localIncrement );
         }
-      } ); // end loop over element
+      } );    // end loop over element
     }
 
     FE_TYPE const & m_finiteElement;
-
   };
   template< typename FE_TYPE >
   struct DampingMatrix
@@ -704,7 +640,6 @@ struct AcousticMatricesSEM
         }
       } );
     }
-
 
     /**
      * @brief Launches the precomputation of the damping matrices
@@ -821,8 +756,6 @@ struct AcousticMatricesSEM
         }
       } );
     }
-
-
 
 #if 0
     /**
@@ -948,7 +881,6 @@ struct AcousticMatricesSEM
         }
       } );
     }
-
 
 #else
     /**
@@ -1078,10 +1010,7 @@ struct AcousticMatricesSEM
 
     /// The finite element space/discretization object for the element type in the subRegion
     FE_TYPE const & m_finiteElement;
-
   };
-
-
 
   template< typename FE_TYPE >
   struct GradientKappaBuoyancy
@@ -1142,7 +1071,7 @@ struct AcousticMatricesSEM
             } );
           }
         }
-      } ); // end loop over element
+      } );    // end loop over element
     }
     /// The finite element space/discretization object for the element type in the subRegion
     FE_TYPE const & m_finiteElement;
@@ -1176,7 +1105,6 @@ struct AcousticMatricesSEM
                              arrayView1d< real32 const > const q_n,
                              arrayView1d< real32 const > const p_n,
                              arrayView1d< real32 > const imag )
-
     {
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
       {
@@ -1199,16 +1127,13 @@ struct AcousticMatricesSEM
             imag[e] += q_n[nodeIdx] * p_n[nodeIdx] * m_finiteElement.computeMassTerm( q, xLocal );
           }
         }
-      } ); // end loop over element
+      } );    // end loop over element
     }
     /// The finite element space/discretization object for the element type in the subRegion
     FE_TYPE const & m_finiteElement;
   };
-
-
-
 };
 
 } // namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICMATRICESSEMKERNEL_HPP_
+#endif // GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICMATRICESSEMKERNEL_HPP_

@@ -22,12 +22,9 @@
 
 namespace geos
 {
-
 struct AcousticTimeSchemeSEM
 {
-
-  using EXEC_POLICY = parallelDevicePolicy< >;
-
+  using EXEC_POLICY = parallelDevicePolicy<>;
 
   /**
    * @brief  Apply second order Leap-Frog time scheme for isotropic case without PML
@@ -66,7 +63,6 @@ struct AcousticTimeSchemeSEM
         p_np1[a] /= mass[a] + 0.5 * dt * damping[a];
       }
     } );
-
   };
 
   /**
@@ -124,7 +120,6 @@ struct AcousticTimeSchemeSEM
         p_np1[a] /= mass[a] + 0.5 * dt * damping[a];
       }
     } );
-
   };
 
   /**
@@ -308,9 +303,9 @@ struct AcousticTimeSchemeSEM
       }
     } );
   };
-
 };
+
 
 } // namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICTIMESCHEMESEMKERNEL_HPP_
+#endif // GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICTIMESCHEMESEMKERNEL_HPP_
