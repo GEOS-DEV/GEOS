@@ -93,9 +93,9 @@ void AcousticTTIFletcherWaveEquationSEM::registerDataOnMesh( Group & meshBodies 
                                acousticvtifields::AcousticDofEpsilon,
                                acousticvtifields::AcousticDofDelta,
                                acousticvtifields::AcousticDofOrder,
-                               acousticfields::Node_X,
-                               acousticfields::Node_Y,
-                               acousticfields::Node_Z,
+                               acousticvtifields::Node_X,
+                               acousticvtifields::Node_Y,
+                               acousticvtifields::Node_Z,
                                acousticttifields::AcousticDofTilt,
                                acousticttifields::AcousticDofAzimuth,
                                //end  debug
@@ -349,9 +349,9 @@ void AcousticTTIFletcherWaveEquationSEM::initializePostInitialConditionsPreSubGr
     dofDelta.zero();
     dofOrder.zero(); // number of Hexa countaining a dof
 
-    arrayView1d< real32 > const nodeX = nodeManager.getField< acousticfields::Node_X >();
-    arrayView1d< real32 > const nodeY = nodeManager.getField< acousticfields::Node_Y >();
-    arrayView1d< real32 > const nodeZ = nodeManager.getField< acousticfields::Node_Z >();
+    arrayView1d< real32 > const nodeX = nodeManager.getField< acousticvtifields::Node_X >();
+    arrayView1d< real32 > const nodeY = nodeManager.getField< acousticvtifields::Node_Y >();
+    arrayView1d< real32 > const nodeZ = nodeManager.getField< acousticvtifields::Node_Z >();
 
     arrayView1d< real32 > const dofTilt    = nodeManager.getField< acousticttifields::AcousticDofTilt >();
     arrayView1d< real32 > const dofAzimuth = nodeManager.getField< acousticttifields::AcousticDofAzimuth >();

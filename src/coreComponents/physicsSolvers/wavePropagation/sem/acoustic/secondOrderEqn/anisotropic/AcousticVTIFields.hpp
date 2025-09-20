@@ -217,6 +217,29 @@ DECLARE_FIELD( AcousticBottomSurfaceNodeIndicator,
                WRITE_AND_READ,
                "Bottom surface indicator, 1 if a face is on the bottom surface 0 otherwise." );
 
+DECLARE_FIELD( Node_X,
+               "node_x",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Node X." );
+
+DECLARE_FIELD( Node_Y,
+               "node_y",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Node Y." );
+
+DECLARE_FIELD( Node_Z,
+               "node_z",
+               array1d< real32 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Node Z." );
 }
 
 }

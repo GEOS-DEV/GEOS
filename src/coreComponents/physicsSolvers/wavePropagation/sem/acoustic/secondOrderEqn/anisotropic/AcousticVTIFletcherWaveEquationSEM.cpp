@@ -94,9 +94,9 @@ void AcousticVTIFletcherWaveEquationSEM::registerDataOnMesh( Group & meshBodies 
                                acousticvtifields::AcousticDofEpsilon,
                                acousticvtifields::AcousticDofDelta,
                                acousticvtifields::AcousticDofOrder,
-                               acousticfields::Node_X,
-                               acousticfields::Node_Y,
-                               acousticfields::Node_Z,
+                               acousticvtifields::Node_X,
+                               acousticvtifields::Node_Y,
+                               acousticvtifields::Node_Z,
                                //end  debug
                                acousticvtifields::AcousticLateralSurfaceNodeIndicator,
                                acousticvtifields::AcousticBottomSurfaceNodeIndicator >( getName() );
@@ -344,9 +344,9 @@ void AcousticVTIFletcherWaveEquationSEM::initializePostInitialConditionsPreSubGr
     dofDelta.zero();
     dofOrder.zero(); // number of Hexa countaining a dof
 
-    arrayView1d< real32 > const nodeX = nodeManager.getField< acousticfields::Node_X >();
-    arrayView1d< real32 > const nodeY = nodeManager.getField< acousticfields::Node_Y >();
-    arrayView1d< real32 > const nodeZ = nodeManager.getField< acousticfields::Node_Z >();
+    arrayView1d< real32 > const nodeX = nodeManager.getField< acousticvtifields::Node_X >();
+    arrayView1d< real32 > const nodeY = nodeManager.getField< acousticvtifields::Node_Y >();
+    arrayView1d< real32 > const nodeZ = nodeManager.getField< acousticvtifields::Node_Z >();
 
     // End Debug
 
@@ -801,13 +801,6 @@ void AcousticVTIFletcherWaveEquationSEM::computeUnknowns( real64 const & time_n,
   arrayView1d< real32 > const stiffnessVector_p = nodeManager.getField< acousticvtifields::StiffnessVector_p >();
   arrayView1d< real32 > const stiffnessVector_q = nodeManager.getField< acousticvtifields::StiffnessVector_q >();
   arrayView1d< real32 > const rhs = nodeManager.getField< acousticfields::ForcingRHS >();
-
-  arrayView1d< real32 > const dofDelta = nodeManager.getField< acousticvtifields::AcousticDofDelta >();
-  arrayView1d< real32 > const dofEpsilon = nodeManager.getField< acousticvtifields::AcousticDofEpsilon >();
-  arrayView1d< real32 > const nodeX = nodeManager.getField< acousticfields::Node_X >();
-  arrayView1d< real32 > const nodeY = nodeManager.getField< acousticfields::Node_Y >();
-  arrayView1d< real32 > const nodeZ = nodeManager.getField< acousticfields::Node_Z >();
-
 
   if( isForward )
   {
