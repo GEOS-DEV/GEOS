@@ -579,7 +579,7 @@ public:
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static void computeLocalCoords( real64 const (&Xmesh)[8][3],
-                                  real64 const (&X)[numNodes][3] );
+                                  real64 ( &X )[numNodes][3] );
 
   /**
    * @brief computes the non-zero contributions of the d.o.f. indexd by q to the
@@ -1014,7 +1014,6 @@ public:
    * @param[in] q3Dc The 1D quadrature point index in the element's third direction.
    * @param[in] qa The 1D quadrature point index on the face's first direction.
    * @param[in] qb The 1D quadrature point index on the face's second direction.
-   * @param[in] N The face normal vector scaled by the z-component selection matrix.
    * @param[in] AzN The face normal vector scaled by the z-component selection matrix.
    * @param[in] AzJmT A precomputed matrix, typically `sqrt(det(J_2D)) * Az * J_3D^{-T}`.
    * @param[in] func A callable that will receive the computed flux contributions.
@@ -1028,7 +1027,7 @@ public:
                              int const q3Dc,
                              int const qa,
                              int const qb,
-                             real64 const (&N)[3],
+                             real64 const (&AzN)[3],
                              real64 const (&AzJmT)[3][3],
                              FUNC && func );
 
@@ -1337,7 +1336,7 @@ calcGradNWithCorners( localIndex const q,
                       StackVariables const & GEOS_UNUSED_PARAM( stack ),
                       real64 ( & gradN )[numNodes][3] )
 {
-  return calcGradN( q, X, gradN );
+  return calcGradNWithCorners( q, X, gradN );
 }
 //*************************************************************************************************
 #if __GNUC__
@@ -1461,7 +1460,7 @@ GEOS_FORCE_INLINE
 void
 Qk_Hexahedron_Lagrange_GaussLobatto< GL_BASIS >::
 computeLocalCoords( real64 const (&Xmesh)[8][3],
-                    real64 const (&X)[numNodes][3] )
+                    real64 (& X)[numNodes][3] )
 {
   int qa, qb, qc;
   for( int q=0; q<numNodes; q++ )
