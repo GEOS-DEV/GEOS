@@ -178,13 +178,6 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
   } );
 }
 
-void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time,
-                                                 real64 const & dt,
-                                                 DomainPartition & domain )
-{
-  SinglePhaseBase::implicitStepComplete( time, dt, domain );
-}
-
 void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
                                       DofManager & dofManager ) const
 {
@@ -621,10 +614,10 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
 
 void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  // 1. Reset the cell-centered fields
+  // Reset the cell-centered fields
   SinglePhaseBase::resetStateToBeginningOfStep( domain );
 
-  // 2. Reset the face-based fields
+  // Reset the face-based fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )

@@ -205,10 +205,12 @@ TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
     dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >( problemManager.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ) );
 
   // Run the simulation to compute the numerical pressure
-  solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
-  solver.implicitStepSetup( 0.0, TIME_STEP, domain );
-  solver.solverStep( 0.0, TIME_STEP, 0, domain );
-  solver.implicitStepComplete( 0.0, TIME_STEP, domain );
+//  solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
+//  solver.implicitStepSetup( 0.0, TIME_STEP, domain );
+//  solver.solverStep( 0.0, TIME_STEP, 0, domain );
+//  solver.implicitStepComplete( 0.0, TIME_STEP, domain );
+  
+  solver.execute(0.0, TIME_STEP, 0, 0, 0, domain);
 
   // Access the mesh and subregion
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
@@ -378,11 +380,14 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
   SinglePhaseHybridFVM & solver = dynamic_cast< SinglePhaseHybridFVM & >( problemManager.getPhysicsSolverManager().getGroup< SinglePhaseHybridFVM >( "SinglePhaseFlow" ) );
 
   // Run the simulation to compute the numerical pressure
-  solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
-  solver.implicitStepSetup( 0.0, TIME_STEP, domain );
-  solver.solverStep( 0.0, TIME_STEP, 0, domain );
-  solver.implicitStepComplete( 0.0, TIME_STEP, domain );
-
+//  solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
+//  solver.implicitStepSetup( 0.0, TIME_STEP, domain );
+//  solver.solverStep( 0.0, TIME_STEP, 0, domain );
+//  solver.implicitStepComplete( 0.0, TIME_STEP, domain );
+//  solver.updateConfiguration(domain, 1);
+  
+  solver.execute(0.0, TIME_STEP, 0, 0, 0, domain);
+  
   // Access the mesh and subregion
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   CellElementSubRegion & subRegion = mesh.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
