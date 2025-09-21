@@ -232,7 +232,7 @@ TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
     totalVolume += volume;
   }
 
-  l2Error = std::sqrt( l2Error / totalVolume );
+  l2Error = std::sqrt( l2Error ) / totalVolume;
 
   std::string meshFile = GetParam();
   if( meshFile == "polyhedral_voronoi_regular.vtk" )
@@ -401,12 +401,12 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
     real64 volume = volumes[i];
     real64 pNumeric = p_h[i];
     real64 pExact = 2.0 * (1.0 - x) + 1.0 * x;
-    std::cout << "Cell " << i << " center: " << centers[i][0] << ", p_h: " << p_h[i] << ", pExact: " << pExact << std::endl;
+    std::cout << "Cell " << i << " center: " << centers[i][0] << ", p_h: " << pNumeric << ", pExact: " << pExact << std::endl;
     l2Error += (pNumeric - pExact) * (pNumeric - pExact) * volume;
     totalVolume += volume;
   }
 
-  l2Error = std::sqrt( l2Error / totalVolume );
+  l2Error = std::sqrt( l2Error ) / totalVolume;
 
   auto [innerProduct, meshFile] = GetParam();
   if( innerProduct == TPFA and std::string( meshFile ) != "polyhedral_voronoi_regular.vtk" )
