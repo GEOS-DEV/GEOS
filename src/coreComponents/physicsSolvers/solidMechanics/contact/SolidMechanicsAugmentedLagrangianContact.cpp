@@ -744,8 +744,6 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
       LvArray::tensorOps::copy< 3 >( oldDispJump[kfe], dispJump[kfe] );
       oldFractureState[kfe] = fractureState[kfe];
 
-
-
     } );
 
   } );
@@ -976,7 +974,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
       FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
 
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
-      arrayView2d< real64 const > const traction = subRegion.getField< contact::traction >();
+      arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
       arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
 
       arrayView2d< real64 const > const deltaDispJump = subRegion.getField< contact::deltaDispJump >();
@@ -1037,7 +1035,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             frictionWrapper,
                                             ghostRank,
-                                            traction_new_v,
+                                            traction,
                                             dispJump,
                                             deltaDispJump,
                                             normalTractionTolerance,
@@ -1107,34 +1105,11 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
                          GEOS_FMT( "  ALM convergence summary:"
-                                   " converged: {:6} | stick & gn>0: {:6} | compenetration:  {:6} | stick & gt>lim:  {:6} | tau>tauLim:  {:6}\n",
+                                   " converged: {:6} | stick & gn>0: {:6} | interpenetration:  {:6} | stick & gt>lim:  {:6} | tau>tauLim:  {:6}\n",
                                    globalCondConv[0], globalCondConv[1], globalCondConv[2],
                                    globalCondConv[3], globalCondConv[4] ));
 
-  if( hasConfigurationConvergedGlobally )
-  {
-
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                  MeshLevel & mesh,
-                                                                  string_array const & regionNames )
-    {
-      ElementRegionManager & elemManager = mesh.getElemManager();
-
-      elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                  FaceElementSubRegion & subRegion )
-      {
-
-        arrayView2d< real64 > const traction_new_v = traction_new.toView();
-        arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
-
-        forAll< parallelDevicePolicy<> >( subRegion.size(), [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
-        {
-          LvArray::tensorOps::copy< 3 >( traction[kfe], traction_new_v[kfe] );
-        } );
-      } );
-    } );
-  }
-  else
+  if( ! hasConfigurationConvergedGlobally )
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
