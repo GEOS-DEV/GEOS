@@ -149,10 +149,13 @@
       std::ostringstream __msgoss; \
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
       std::string message =  __msgoss.str(); \
+      __msgoss.clear(); \
+      __msgoss << CAUSE_MESSAGE; \
+      std::string cause =  __msgoss.str(); \
       std::ostringstream __oss; \
       __oss << "***** ERROR\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << CAUSE_MESSAGE << "\n"; \
+      __oss << "***** " << cause << "\n"; \
       __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
@@ -164,7 +167,7 @@
                                          __FILE__, \
                                          __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
-        msgStruct.setCause( CAUSE_MESSAGE ); \
+        msgStruct.setCause( cause ); \
         msgStruct.addCallStackInfo( stackHistory ); \
         msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
         g_errorLogger.flushErrorMsg( msgStruct ); \
@@ -211,10 +214,13 @@
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
       std::string message =  __msgoss.str(); \
+      __msgoss.clear(); \
+      __msgoss << CAUSE_MESSAGE; \
+      std::string cause =  __msgoss.str(); \
       std::ostringstream __oss; \
       __oss << "***** EXCEPTION\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << CAUSE_MESSAGE << "\n"; \
+      __oss << "***** " << cause << "\n"; \
       __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
@@ -224,6 +230,7 @@
           .setType( ErrorLogger::MsgType::Exception ) \
           .setCodeLocation( __FILE__, __LINE__ ) \
           .addToMsg( message ) \
+          .setCause( cause ) \
           .setRank( ::geos::logger::internal::rank ) \
           .addCallStackInfo( stackHistory ) \
           .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
@@ -271,10 +278,13 @@
       std::ostringstream __msgoss; \
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
       std::string message = __msgoss.str(); \
+      __msgoss.clear(); \
+      __msgoss << CAUSE_MESSAGE; \
+      std::string cause =  __msgoss.str(); \
       std::ostringstream __oss; \
       __oss << "***** WARNING\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << CAUSE_MESSAGE << "\n"; \
+      __oss << "***** " << cause << "\n"; \
       __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
       std::cout << __oss.str() << std::endl; \
       if( g_errorLogger.isOutputFileEnabled() ) \
@@ -284,7 +294,7 @@
                                          __FILE__, \
                                          __LINE__ ); \
         msgStruct.setRank( ::geos::logger::internal::rank ); \
-        msgStruct.setCause( CAUSE_MESSAGE ); \
+        msgStruct.setCause( cause ); \
         msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
         g_errorLogger.flushErrorMsg( msgStruct ); \
       } \
@@ -335,8 +345,7 @@
  */
 #define GEOS_ERROR_IF_OP_MSG( lhs, OP, NOP, rhs, ... ) \
   GEOS_ERROR_IF_CAUSE( lhs OP rhs, \
-                       GEOS_FMT( "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = {}\n* " #rhs " = {}\n", \
-                                 lhs, rhs ), \
+                       "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = " << lhs << "\n* " #rhs " = " << rhs << "\n", \
                        __VA_ARGS__ )
 
 /**
@@ -454,8 +463,7 @@
  */
 #define GEOS_WARNING_IF_OP_MSG( lhs, OP, NOP, rhs, ... ) \
   GEOS_WARNING_IF_CAUSE( lhs OP rhs, \
-                         GEOS_FMT( "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = {}\n* " #rhs " = {}\n", \
-                                   lhs, rhs ), \
+                       "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = " << lhs << "\n* " #rhs " = " << rhs << "\n", \
                          __VA_ARGS__ )
 
 /**
@@ -573,8 +581,7 @@
  */
 #define GEOS_THROW_IF_OP_MSG( lhs, OP, NOP, rhs, MSG, ... ) \
   GEOS_THROW_IF_CAUSE( lhs OP rhs, \
-                       GEOS_FMT( "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = {}\n* " #rhs " = {}\n", \
-                                 lhs, rhs ), \
+                       "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = " << lhs << "\n* " #rhs " = " << rhs << "\n", \
                        MSG, __VA_ARGS__ )
 
 
@@ -734,8 +741,7 @@
  */
 #define GEOS_ASSERT_OP_MSG( lhs, OP, rhs, ... ) \
   GEOS_ERROR_IF_CAUSE( !( lhs OP rhs ), \
-                       GEOS_FMT( "Expected: " #lhs " " #OP " " #rhs "\n* " #lhs " = {}\n* " #rhs " = {}\n", \
-                                 lhs, rhs ), \
+                       "Expected: " #lhs " " #OP " " #rhs "\n* " #lhs " = " << lhs << "\n* " #rhs " = " << rhs << "\n", \
                        __VA_ARGS__ )
 
 #else
