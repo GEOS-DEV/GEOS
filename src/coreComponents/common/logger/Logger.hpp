@@ -789,7 +789,7 @@
  * @param lhs expression to be evaluated and used as left-hand side in comparison
  * @param rhs expression to be evaluated and used as right-hand side in comparison
  */
-#define GEOS_ASSERT_NE( lhs, rhs ) GEOS_ASSERT_NE( lhs, rhs )
+#define GEOS_ASSERT_NE( lhs, rhs ) GEOS_ASSERT_NE_MSG( lhs, rhs, "" )
 
 /**
  * @brief Assert that one value compares greater than the other in debug builds.
