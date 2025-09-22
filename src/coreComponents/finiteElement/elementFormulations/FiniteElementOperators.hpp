@@ -37,8 +37,8 @@ template< int NUM_SUPPORT_POINTS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void value( real64 const (&N)[NUM_SUPPORT_POINTS],
-                               real64 const (&var)[NUM_SUPPORT_POINTS],
-                               real64 & value )
+            real64 const (&var)[NUM_SUPPORT_POINTS],
+            real64 & value )
 {
   value = LvArray::tensorOps::AiBi< NUM_SUPPORT_POINTS >( N, var );
 }
@@ -53,8 +53,8 @@ template< int NUM_SUPPORT_POINTS,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void value( real64 const (&N)[NUM_SUPPORT_POINTS],
-                               real64 const (&var)[NUM_SUPPORT_POINTS][NUM_COMPONENTS],
-                               real64 (& value)[NUM_COMPONENTS] )
+            real64 const (&var)[NUM_SUPPORT_POINTS][NUM_COMPONENTS],
+            real64 (& value)[NUM_COMPONENTS] )
 {
   LvArray::tensorOps::Ri_eq_AjiBj< 3, NUM_SUPPORT_POINTS >( value, var, N );
 }
@@ -89,8 +89,8 @@ template< int NUM_SUPPORT_POINTS,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void symmetricGradient( GRADIENT_TYPE const & gradN,
-                                           real64 const (&var)[NUM_SUPPORT_POINTS][3],
-                                           real64 (& gradVar)[6] )
+                        real64 const (&var)[NUM_SUPPORT_POINTS][3],
+                        real64 (& gradVar)[6] )
 {
   gradVar[0] = gradN[0][0] * var[0][0];
   gradVar[1] = gradN[0][1] * var[0][1];
@@ -127,7 +127,7 @@ template< int NUM_SUPPORT_POINTS,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 symmetricGradientTrace( GRADIENT_TYPE const & gradN,
-                                                  real64 const (&var)[NUM_SUPPORT_POINTS][3] )
+                               real64 const (&var)[NUM_SUPPORT_POINTS][3] )
 {
   real64 result = gradN[0][0] * var[0][0] + gradN[0][1] * var[0][1] + gradN[0][2] * var[0][2];
 
@@ -159,8 +159,8 @@ template< int NUM_SUPPORT_POINTS,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void gradient( GRADIENT_TYPE const & gradN,
-                                  real64 const (&var)[NUM_SUPPORT_POINTS],
-                                  real64 (& gradVar)[3] )
+               real64 const (&var)[NUM_SUPPORT_POINTS],
+               real64 (& gradVar)[3] )
 {
   LvArray::tensorOps::Ri_eq_AjiBj< 3, NUM_SUPPORT_POINTS >( gradVar, gradN, var );
 }
@@ -180,8 +180,8 @@ template< int NUM_SUPPORT_POINTS,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void gradient( GRADIENT_TYPE const & gradN,
-                                  real64 const (&var)[NUM_SUPPORT_POINTS][3],
-                                  real64 (& gradVar)[3][3] )
+               real64 const (&var)[NUM_SUPPORT_POINTS][3],
+               real64 (& gradVar)[3][3] )
 {
   LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, NUM_SUPPORT_POINTS >( gradVar, var, gradN );
 }
@@ -211,10 +211,10 @@ template< int NUM_SUPPORT_POINTS,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void valueAndGradient( real64 const (&N)[NUM_SUPPORT_POINTS],
-                                          GRADIENT_TYPE const & gradN,
-                                          real64 const (&var)[NUM_SUPPORT_POINTS],
-                                          real64 & value,
-                                          real64 (& gradVar)[3] )
+                       GRADIENT_TYPE const & gradN,
+                       real64 const (&var)[NUM_SUPPORT_POINTS],
+                       real64 & value,
+                       real64 (& gradVar)[3] )
 {
   value = N[0] * var[0];
   for( int i = 0; i < 3; ++i )
@@ -267,8 +267,8 @@ template< int NUM_SUPPORT_POINTS,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void plusGradNajAij( GRADIENT_TYPE const & gradN,
-                                        real64 const (&var_detJxW)[6],
-                                        real64 (& R)[NUM_SUPPORT_POINTS][3] )
+                     real64 const (&var_detJxW)[6],
+                     real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -288,8 +288,8 @@ template< int NUM_SUPPORT_POINTS,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void plusGradNajAij( GRADIENT_TYPE const & gradN,
-                                        real64 const (&var_detJxW)[3][3],
-                                        real64 (& R)[NUM_SUPPORT_POINTS][3] )
+                     real64 const (&var_detJxW)[3][3],
+                     real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -309,8 +309,8 @@ template< int NUM_SUPPORT_POINTS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void plusNaFi( real64 const (&N)[NUM_SUPPORT_POINTS],
-                                  real64 const (&var_detJxW)[3],
-                                  real64 ( & R )[NUM_SUPPORT_POINTS][3] )
+               real64 const (&var_detJxW)[3],
+               real64 ( & R )[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -340,10 +340,10 @@ template< int NUM_SUPPORT_POINTS,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void plusGradNajAijPlusNaFi( GRADIENT_TYPE const & gradN,
-                                                real64 const (&var_detJxW)[6],
-                                                real64 const (&N)[NUM_SUPPORT_POINTS],
-                                                real64 const (&forcingTerm_detJxW)[3],
-                                                real64 (& R)[NUM_SUPPORT_POINTS][3] )
+                             real64 const (&var_detJxW)[6],
+                             real64 const (&N)[NUM_SUPPORT_POINTS],
+                             real64 const (&forcingTerm_detJxW)[3],
+                             real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {
@@ -363,10 +363,10 @@ template< int NUM_SUPPORT_POINTS,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void plusGradNajAijPlusNaFi( GRADIENT_TYPE const & gradN,
-                                                real64 const (&var_detJxW)[3][3],
-                                                real64 const (&N)[NUM_SUPPORT_POINTS],
-                                                real64 const (&forcingTerm_detJxW)[3],
-                                                real64 (& R)[NUM_SUPPORT_POINTS][3] )
+                             real64 const (&var_detJxW)[3][3],
+                             real64 const (&N)[NUM_SUPPORT_POINTS],
+                             real64 const (&forcingTerm_detJxW)[3],
+                             real64 (& R)[NUM_SUPPORT_POINTS][3] )
 {
   for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
   {

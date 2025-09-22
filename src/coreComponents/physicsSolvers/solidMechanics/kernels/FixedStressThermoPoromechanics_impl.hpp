@@ -124,7 +124,7 @@ quadraturePointKernel( localIndex const k,
 {
   real64 dNdX[ numNodesPerElem ][ 3 ];
   real64 const detJxW = FE_TYPE::calcGradN( q, stack.xLocal,
-                                                                           stack.feStack, dNdX );
+                                            stack.feStack, dNdX );
 
   real64 strainInc[6] = {0};
   real64 totalStress[6] = {0};
@@ -160,10 +160,10 @@ quadraturePointKernel( localIndex const k,
   real64 N[numNodesPerElem];
   FE_TYPE::calcN( q, stack.feStack, N );
   finiteElement::feOps::plusGradNajAijPlusNaFi( dNdX,
-                                   totalStress,
-                                   N,
-                                   gravityForce,
-                                   reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
+                                                totalStress,
+                                                N,
+                                                gravityForce,
+                                                reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
   real64 const stabilizationScaling = computeStabilizationScaling( k );
   m_finiteElementSpace.template
   addEvaluatedGradGradStabilizationVector< FE_TYPE,

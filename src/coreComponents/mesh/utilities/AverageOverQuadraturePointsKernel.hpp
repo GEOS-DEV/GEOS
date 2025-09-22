@@ -58,11 +58,11 @@ public:
     m_elementVolume( elementSubRegion.getElementVolume() )
   {
     FE_TYPE:: template
-      initialize< FE_TYPE >( nodeManager,
-                             edgeManager,
-                             faceManager,
-                             elementSubRegion,
-                             m_meshData );
+    initialize< FE_TYPE >( nodeManager,
+                           edgeManager,
+                           faceManager,
+                           elementSubRegion,
+                           m_meshData );
   }
 
   //*****************************************************************************

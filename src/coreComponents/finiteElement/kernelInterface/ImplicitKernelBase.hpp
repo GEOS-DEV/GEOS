@@ -104,12 +104,12 @@ public:
     m_rhs( inputRhs ),
     m_dt( inputDt )
   {
-    
+
     FE_TYPE::fillMeshData( nodeManager,
-                                              edgeManager,
-                                              faceManager,
-                                              elementSubRegion,
-                                              m_meshData );
+                           edgeManager,
+                           faceManager,
+                           elementSubRegion,
+                           m_meshData );
     GEOS_UNUSED_VAR( targetRegionIndex );
   }
 

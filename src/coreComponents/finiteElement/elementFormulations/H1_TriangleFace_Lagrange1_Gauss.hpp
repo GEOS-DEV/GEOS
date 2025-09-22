@@ -443,7 +443,7 @@ transformedQuadratureWeight( localIndex const q,
 
 template< typename NUM_Q_POINTS >
 class H1_TriangleFace_Lagrange1_Gauss final : public H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >,
-                                          public FiniteElementBase
+  public FiniteElementBase
 {
 public:
 
@@ -470,35 +470,24 @@ public:
   /// The number of sampling points per element.
   constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
+
+  H1_TriangleFace_Lagrange1_Gauss():
+    FiniteElementBase( numNodes,
+                       maxSupportPoints,
+                       numQuadraturePoints )
+  {}
+
+
+  virtual ~H1_TriangleFace_Lagrange1_Gauss() override final = default;
+
   H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS > * getImpl()
   {
-    return static_cast<H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS > *>(this);
+    return static_cast< H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS > * >(this);
   }
 
   const H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS > * getImpl() const
   {
-    return static_cast<const H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS > *>(this);
-  }
-
-  GEOS_HOST_DEVICE
-  virtual ~H1_TriangleFace_Lagrange1_Gauss() override final = default;
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override final
-  {
-    return numQuadraturePoints;
-  }
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override final
-  {
-    return numNodes;
-  }
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override final
-  {
-    return maxSupportPoints;
+    return static_cast< H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS > const * >(this);
   }
 
 

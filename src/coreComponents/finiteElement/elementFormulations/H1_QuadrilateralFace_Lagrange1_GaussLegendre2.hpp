@@ -383,7 +383,7 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::
 #ifndef __CUDA_ARCH__
 
 class H1_QuadrilateralFace_Lagrange1_GaussLegendre2 final : public H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl,
-                                          public FiniteElementBase
+  public FiniteElementBase
 {
 public:
 
@@ -408,35 +408,23 @@ public:
   /// The number of sampling points per element.
   constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
-  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl * getImpl()
-  {
-    return static_cast<H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl *>(this);
-  }
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2():
+    FiniteElementBase( numNodes,
+                       maxSupportPoints,
+                       numQuadraturePoints )
+  {}
 
-  const H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl * getImpl() const
-  {
-    return static_cast<const H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl *>(this);
-  }
 
-  GEOS_HOST_DEVICE
   virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override final = default;
 
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override final
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl * getImpl()
   {
-    return numQuadraturePoints;
+    return static_cast< H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl * >(this);
   }
 
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override final
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl const * getImpl() const
   {
-    return numNodes;
-  }
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override final
-  {
-    return maxSupportPoints;
+    return static_cast< H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl const * >(this);
   }
 
 

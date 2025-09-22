@@ -637,8 +637,8 @@ GEOS_HOST_DEVICE
 inline
 real64
 H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::calcGradFaceBubbleN( localIndex const q,
-                                                                     real64 const (&X)[numNodes][3],
-                                                                     real64 (& gradN)[numFaces][3] )
+                                                                          real64 const (&X)[numNodes][3],
+                                                                          real64 (& gradN)[numFaces][3] )
 {
 
   //real64 detJ = determinantJacobianTransformation( X );
@@ -711,13 +711,11 @@ transformedQuadratureWeight( localIndex const q,
 
 
 
-
-
 #ifndef __CUDA_ARCH__
 
 template< typename NUM_Q_POINTS >
 class H1_Tetrahedron_Lagrange1_Gauss final : public H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >,
-                                             public FiniteElementBase
+  public FiniteElementBase
 {
 public:
 
@@ -727,41 +725,31 @@ public:
   /// The Implementation type.
   using ImplType = H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >;
 
-  H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > * getImpl()
-  {
-    return static_cast<H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > *>(this);
-  }
 
-  const H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > * getImpl() const
-  {
-    return static_cast<const H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > *>(this);
-  }
+  H1_Tetrahedron_Lagrange1_Gauss():
+    FiniteElementBase( ImplType::numNodes,
+                       ImplType::maxSupportPoints,
+                       ImplType::numQuadraturePoints )
+  {}
 
-  GEOS_HOST_DEVICE
+
   virtual ~H1_Tetrahedron_Lagrange1_Gauss() override final = default;
 
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override final
+
+  H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > * getImpl()
   {
-    return H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::numQuadraturePoints;
+    return static_cast< H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > * >(this);
   }
 
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override final
+  H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > const * getImpl() const
   {
-    return H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::numNodes;
+    return static_cast< H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > const * >(this);
   }
 
-  GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override final
-  {
-    return H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::maxSupportPoints;
-  }
 
 
 };
 #endif // __CUDA_ARCH__
-
 
 
 

@@ -525,8 +525,8 @@ void H1_Pyramid_Lagrange1_Gauss5_impl::
 GEOS_HOST_DEVICE
 inline
 real64 H1_Pyramid_Lagrange1_Gauss5_impl::calcGradN( localIndex const q,
-                                               real64 const (&X)[numNodes][3],
-                                               real64 (& gradN)[numNodes][3] )
+                                                    real64 const (&X)[numNodes][3],
+                                                    real64 (& gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
@@ -554,8 +554,8 @@ GEOS_HOST_DEVICE
 inline
 real64
 H1_Pyramid_Lagrange1_Gauss5_impl::calcGradFaceBubbleN( localIndex const q,
-                                                  real64 const (&X)[numNodes][3],
-                                                  real64 (& gradN)[numFaces][3] )
+                                                       real64 const (&X)[numNodes][3],
+                                                       real64 (& gradN)[numFaces][3] )
 {
   GEOS_UNUSED_VAR( q, X, gradN );
   GEOS_ERROR( "Unsupported bubble functions for pyramid elements" );
@@ -582,17 +582,10 @@ H1_Pyramid_Lagrange1_Gauss5_impl::
 
 
 
-
-
-
-
-
-
-
 #ifndef __CUDA_ARCH__
 
 class H1_Pyramid_Lagrange1_Gauss5 final : public H1_Pyramid_Lagrange1_Gauss5_impl,
-                                          public FiniteElementBase
+  public FiniteElementBase
 {
 public:
 
@@ -602,52 +595,24 @@ public:
   /// The Implementation type
   using ImplType = H1_Pyramid_Lagrange1_Gauss5_impl;
 
-  /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = H1_Pyramid_Lagrange1_Gauss5_impl::numNodes;
 
-  /// The number of faces/support points per element.
-  constexpr static localIndex numFaces = H1_Pyramid_Lagrange1_Gauss5_impl::numFaces;
+  H1_Pyramid_Lagrange1_Gauss5():
+    FiniteElementBase( numNodes,
+                       maxSupportPoints,
+                       numQuadraturePoints )
+  {}
 
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
-
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = H1_Pyramid_Lagrange1_Gauss5_impl::numQuadraturePoints;
-
-  /// The number of sampling points per element.
-  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
+  virtual ~H1_Pyramid_Lagrange1_Gauss5() override final = default;
 
   H1_Pyramid_Lagrange1_Gauss5_impl * getImpl()
   {
-    return static_cast<H1_Pyramid_Lagrange1_Gauss5_impl *>(this);
+    return static_cast< H1_Pyramid_Lagrange1_Gauss5_impl * >(this);
   }
 
-  const H1_Pyramid_Lagrange1_Gauss5_impl * getImpl() const
+  H1_Pyramid_Lagrange1_Gauss5_impl const * getImpl() const
   {
-    return static_cast<const H1_Pyramid_Lagrange1_Gauss5_impl *>(this);
+    return static_cast< H1_Pyramid_Lagrange1_Gauss5_impl const * >(this);
   }
-
-  GEOS_HOST_DEVICE
-  virtual ~H1_Pyramid_Lagrange1_Gauss5() override final = default;
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override final
-  {
-    return numQuadraturePoints;
-  }
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override final
-  {
-    return numNodes;
-  }
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override final
-  {
-    return maxSupportPoints;
-  }
-
 
 };
 #endif // __CUDA_ARCH__

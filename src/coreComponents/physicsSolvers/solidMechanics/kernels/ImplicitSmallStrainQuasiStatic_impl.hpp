@@ -143,10 +143,10 @@ void ImplicitSmallStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE 
   real64 N[numNodesPerElem];
   FE_TYPE::calcN( q, stack.feStack, N );
   finiteElement::feOps::plusGradNajAijPlusNaFi( dNdX,
-                                   stress,
-                                   N,
-                                   gravityForce,
-                                   reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
+                                                stress,
+                                                N,
+                                                gravityForce,
+                                                reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
   real64 const stabilizationScaling = computeStabilizationScaling( k );
   m_finiteElementSpace.template addEvaluatedGradGradStabilizationVector< FE_TYPE, numDofPerTrialSupportPoint >( stack.feStack,
                                                                                                                 stack.uhat_local,

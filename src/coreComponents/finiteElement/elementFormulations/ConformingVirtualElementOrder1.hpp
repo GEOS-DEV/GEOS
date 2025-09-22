@@ -594,17 +594,12 @@ private:
 
 
 
-
-
-
-
-
 #ifndef __CUDA_ARCH__
 
 
 template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 class ConformingVirtualElementOrder1 final : public ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES >,
-                                             public FiniteElementBase
+  public FiniteElementBase
 {
 public:
   /// The Implementation type
@@ -624,38 +619,24 @@ public:
 
   ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES > * getImpl()
   {
-    return static_cast<ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES > *>(this);
+    return static_cast< ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES > * >(this);
   }
 
   const ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES > * getImpl() const
   {
-    return static_cast<const ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES > *>(this);
+    return static_cast< const ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES > * >(this);
   }
 
-  GEOS_HOST_DEVICE
+  ConformingVirtualElementOrder1():
+    FiniteElementBase( numNodes,
+                       maxSupportPoints,
+                       numQuadraturePoints )
+  {}
+
   virtual ~ConformingVirtualElementOrder1() override final = default;
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override final
-  {
-    return numQuadraturePoints;
-  }
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override final
-  {
-    return numNodes;
-  }
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override final
-  {
-    return maxSupportPoints;
-  }
 
 
 };
-
 
 
 
@@ -701,9 +682,6 @@ using H1_Prism11_VEM_Gauss1 = ConformingVirtualElementOrder1< 22, 11 >;
 
 
 #endif // __CUDA_ARCH__
-
-
-
 
 
 

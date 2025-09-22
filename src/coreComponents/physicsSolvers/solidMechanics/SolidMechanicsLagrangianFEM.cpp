@@ -386,10 +386,10 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 
           typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData;
           FE_TYPE::template initialize< FE_TYPE, SUBREGION_TYPE >( nodes,
-                                                                                   edgeManager,
-                                                                                   faceManager,
-                                                                                   elementSubRegion,
-                                                                                   meshData );
+                                                                   edgeManager,
+                                                                   faceManager,
+                                                                   elementSubRegion,
+                                                                   meshData );
 
           constexpr localIndex maxSupportPoints = FE_TYPE::maxSupportPoints;
           constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;

@@ -30,12 +30,11 @@ using namespace finiteElement;
 
 class TestFiniteElementBase final : public FiniteElementBase, public FiniteElementBase_impl< 8, 8, 8 >
 {
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override {return 8;};
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override {return 8;};
-  GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override {return 8;};
+  TestFiniteElementBase():
+    FiniteElementBase( 8, 8, 8 ),
+    FiniteElementBase_impl< 8, 8, 8 >()
+  {}
+
   template< typename SUBREGION_TYPE >
   static void fillMeshData( NodeManager const & GEOS_UNUSED_PARAM( nodeManager ),
                             EdgeManager const & GEOS_UNUSED_PARAM( edgeManager ),

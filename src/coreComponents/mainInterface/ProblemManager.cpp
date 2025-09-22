@@ -979,10 +979,10 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
                   typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData;
                   FE_TYPE::template initialize< FE_TYPE, SUBREGION_TYPE >( nodeManager,
-                                                                                           edgeManager,
-                                                                                           faceManager,
-                                                                                           subRegion,
-                                                                                           meshData );
+                                                                           edgeManager,
+                                                                           faceManager,
+                                                                           subRegion,
+                                                                           meshData );
 
                   localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 

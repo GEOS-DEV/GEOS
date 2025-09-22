@@ -52,7 +52,7 @@ namespace finiteElement
  *             0       2          |/____ r
  *
  */
-class H1_Wedge_Lagrange1_Gauss6_impl : public FiniteElementBase_impl<6, 5, 6>
+class H1_Wedge_Lagrange1_Gauss6_impl : public FiniteElementBase_impl< 6, 5, 6 >
 {
 public:
 
@@ -524,7 +524,7 @@ GEOS_HOST_DEVICE
 inline
 void
 H1_Wedge_Lagrange1_Gauss6_impl::calcN( real64 const (&coords)[3],
-                                  real64 (& N)[numNodes] )
+                                       real64 (& N)[numNodes] )
 {
   real64 const r  = coords[0];
   real64 const s  = coords[1];
@@ -600,8 +600,8 @@ GEOS_HOST_DEVICE
 inline
 real64
 H1_Wedge_Lagrange1_Gauss6_impl::calcGradFaceBubbleN( localIndex const q,
-                                                real64 const (&X)[numNodes][3],
-                                                real64 (& gradN)[numFaces][3] )
+                                                     real64 const (&X)[numNodes][3],
+                                                     real64 (& gradN)[numFaces][3] )
 {
 
   real64 J[3][3] = {{0}};
@@ -666,7 +666,7 @@ H1_Wedge_Lagrange1_Gauss6_impl::
 #ifndef __CUDA_ARCH__
 
 class H1_Wedge_Lagrange1_Gauss6 final : public H1_Wedge_Lagrange1_Gauss6_impl,
-                                        public FiniteElementBase
+  public FiniteElementBase
 {
 
 public:
@@ -674,36 +674,20 @@ public:
   /// Implementation type
   using ImplType = H1_Wedge_Lagrange1_Gauss6_impl;
 
+
+  H1_Wedge_Lagrange1_Gauss6():
+    FiniteElementBase( numNodes, maxSupportPoints, numQuadraturePoints )
+  {}
+
   H1_Wedge_Lagrange1_Gauss6_impl * getImpl()
   {
-    return static_cast<H1_Wedge_Lagrange1_Gauss6_impl *>(this);
+    return static_cast< H1_Wedge_Lagrange1_Gauss6_impl * >(this);
   }
 
-  const H1_Wedge_Lagrange1_Gauss6_impl * getImpl() const
+  H1_Wedge_Lagrange1_Gauss6_impl const * getImpl() const
   {
-    return static_cast<const H1_Wedge_Lagrange1_Gauss6_impl *>(this);
+    return static_cast< H1_Wedge_Lagrange1_Gauss6_impl const * >(this);
   }
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
-  {
-    return numQuadraturePoints;
-  }
-
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override
-  {
-    return numNodes;
-  }
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override
-  {
-    return maxSupportPoints;
-  }
-
-
 
 };
 

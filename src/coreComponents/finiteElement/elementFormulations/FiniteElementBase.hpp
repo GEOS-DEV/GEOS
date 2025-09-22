@@ -43,20 +43,6 @@ namespace finiteElement
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 template< int NUM_SUPPORT_POINTS,
           int NUM_FACES,
           int NUM_QUADRATURE_POINTS >
@@ -167,12 +153,6 @@ public:
 
 
 
-
-
-
-
-
-
   /**
    * @brief Method to fill a MeshData object.
    * @param nodeManager The node manager.
@@ -182,7 +162,7 @@ public:
    * @param meshData MeshData struct to be filled.
    */
   template< typename SUBREGION_TYPE,
-            typename MESH_DATA_TYPE > 
+            typename MESH_DATA_TYPE >
   static void fillMeshData( NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
@@ -206,9 +186,9 @@ public:
    * @param cellSubRegion The cell sub-region for which the element has to be initialized.
    * @param meshData The struct to be filled according to the @p LEAF class needs.
    */
-  template< typename LEAF, 
+  template< typename LEAF,
             typename SUBREGION_TYPE,
-            typename MESH_DATA_TYPE > 
+            typename MESH_DATA_TYPE >
   static void initialize( NodeManager const & nodeManager,
                           EdgeManager const & edgeManager,
                           FaceManager const & faceManager,
@@ -253,7 +233,7 @@ public:
    * @param meshData A MeshData object previously filled.
    * @param stack Object that holds stack variables.
    */
-  template< typename LEAF, 
+  template< typename LEAF,
             typename MESH_DATA_TYPE >
   GEOS_HOST_DEVICE
   void setup( localIndex const & cellIndex,
@@ -274,17 +254,17 @@ public:
   GEOS_HOST_DEVICE
   constexpr static PDEUtilities::FunctionSpace getFunctionSpace()
   {
-    if constexpr( N == 1 )
+    if constexpr ( N == 1 )
     {
       return PDEUtilities::FunctionSpace::H1;
     }
-    else if constexpr( N == 3 )
+    else if constexpr ( N == 3 )
     {
       return PDEUtilities::FunctionSpace::H1vector;
     }
     else
     {
-      static_assert(N == 1 || N == 3, "Unsupported number of components per support point");
+      static_assert( N == 1 || N == 3, "Unsupported number of components per support point" );
     }
   }
 
@@ -300,7 +280,7 @@ public:
    * @param matrix The matrix that needs to be stabilized.
    * @param scaleFactor Scaling of the stabilization matrix.
    */
-  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, 
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT,
             localIndex MAXSUPPORTPOINTS,
             bool UPPER,
             typename STACK_VARIABLES_TYPE >
@@ -314,8 +294,6 @@ public:
                      matrix,
                      scaleFactor );
   }
-
-
 
 
 
@@ -354,7 +332,7 @@ public:
    * @p NUMDOFSPERTRIALSUPPORTPOINT.
    * @param scaleFactor Scaling of the stabilization matrix.
    */
-  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT, 
+  template< localIndex NUMDOFSPERTRIALSUPPORTPOINT,
             localIndex MAXSUPPORTPOINTS,
             typename STACK_VARIABLES_TYPE >
   GEOS_HOST_DEVICE
@@ -415,8 +393,14 @@ class FiniteElementBase
 {
 public:
 
-  /// Default Constructor
-  FiniteElementBase() = default;
+  GEOS_HOST_DEVICE
+  FiniteElementBase( localIndex const numSupportPoints,
+                     localIndex const maxSupportPoints,
+                     localIndex const numQuadraturePoints ):
+    m_numSupportPoints( numSupportPoints ),
+    m_maxSupportPoints( maxSupportPoints ),
+    m_numQuadraturePoints( numQuadraturePoints )
+  {}
 
   /**
    * @brief Destructor
@@ -425,40 +409,18 @@ public:
   virtual ~FiniteElementBase() = default;
 
   /**
-   * @brief Copy Constructor
-   * @param source The object to copy.
-   */
-  FiniteElementBase( FiniteElementBase const & source ) = default;
-
-  /// Default Move constructor
-  FiniteElementBase( FiniteElementBase && ) = default;
-
-  /**
-   * @brief Deleted copy assignment operator
-   * @return deleted
-   */
-  FiniteElementBase & operator=( FiniteElementBase const & ) = delete;
-
-  /**
-   * @brief Deleted move assignment operator
-   * @return deleted
-   */
-  FiniteElementBase & operator=( FiniteElementBase && ) = delete;
-
-  /**
    * @brief Virtual getter for the number of quadrature points per element.
    * @return The number of quadrature points per element.
    */
   GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const = 0;
+  localIndex getNumQuadraturePoints() const { return m_numQuadraturePoints; };
 
   /**
    * @brief Virtual getter for the number of support points per element.
    * @return The number of support points per element.
    */
   GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const = 0;
-
+  localIndex getNumSupportPoints() const { return m_numSupportPoints; };
 
   /**
    * @brief Get the maximum number of support points for this element.
@@ -467,8 +429,12 @@ public:
    * @return The number of maximum support points for this element.
    */
   GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const = 0;
+  localIndex getMaxSupportPoints() const { return m_maxSupportPoints; };
 
+private:
+  localIndex const m_numSupportPoints;
+  localIndex const m_maxSupportPoints;
+  localIndex const m_numQuadraturePoints;
 };
 
 

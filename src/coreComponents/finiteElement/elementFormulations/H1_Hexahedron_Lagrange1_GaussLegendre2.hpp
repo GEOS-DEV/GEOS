@@ -499,10 +499,10 @@ private:
 template< typename FUNC, typename ... PARAMS >
 GEOS_HOST_DEVICE inline void
 H1_Hexahedron_Lagrange1_GaussLegendre2_impl::supportLoop( int const qa,
-                                                     int const qb,
-                                                     int const qc,
-                                                     FUNC && func,
-                                                     PARAMS &&... params )
+                                                          int const qb,
+                                                          int const qc,
+                                                          FUNC && func,
+                                                          PARAMS &&... params )
 {
 
 /// Options for how to calculate the parent gradients.
@@ -594,8 +594,8 @@ GEOS_HOST_DEVICE
 inline
 real64
 H1_Hexahedron_Lagrange1_GaussLegendre2_impl::calcGradN( localIndex const q,
-                                                   real64 const (&X)[numNodes][3],
-                                                   real64 (& gradN)[numNodes][3] )
+                                                        real64 const (&X)[numNodes][3],
+                                                        real64 (& gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
@@ -627,8 +627,8 @@ GEOS_HOST_DEVICE
 inline
 real64
 H1_Hexahedron_Lagrange1_GaussLegendre2_impl::calcGradFaceBubbleN( localIndex const q,
-                                                             real64 const (&X)[numNodes][3],
-                                                             real64 (& gradN)[numFaces][3] )
+                                                                  real64 const (&X)[numNodes][3],
+                                                                  real64 (& gradN)[numFaces][3] )
 {
   real64 J[3][3] = {{0}};
 
@@ -758,9 +758,9 @@ H1_Hexahedron_Lagrange1_GaussLegendre2_impl::
 GEOS_HOST_DEVICE
 inline
 void H1_Hexahedron_Lagrange1_GaussLegendre2_impl::symmetricGradient( int const q,
-                                                                real64 const (&invJ)[3][3],
-                                                                real64 const (&var)[numNodes][3],
-                                                                real64 (& grad)[6] )
+                                                                     real64 const (&invJ)[3][3],
+                                                                     real64 const (&var)[numNodes][3],
+                                                                     real64 (& grad)[6] )
 {
   int qa, qb, qc;
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -793,9 +793,9 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2_impl::symmetricGradient( int const q
 GEOS_HOST_DEVICE
 inline
 void H1_Hexahedron_Lagrange1_GaussLegendre2_impl::plusGradNajAij( int const q,
-                                                             real64 const (&invJ)[3][3],
-                                                             real64 const (&var)[6],
-                                                             real64 (& R)[numNodes][3] )
+                                                                  real64 const (&invJ)[3][3],
+                                                                  real64 const (&var)[6],
+                                                                  real64 (& R)[numNodes][3] )
 {
   int qa, qb, qc;
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -828,9 +828,9 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2_impl::plusGradNajAij( int const q,
 GEOS_HOST_DEVICE
 inline
 void H1_Hexahedron_Lagrange1_GaussLegendre2_impl::gradient( int const q,
-                                                       real64 const (&invJ)[3][3],
-                                                       real64 const (&var)[numNodes][3],
-                                                       real64 (& grad)[3][3] )
+                                                            real64 const (&invJ)[3][3],
+                                                            real64 const (&var)[numNodes][3],
+                                                            real64 (& grad)[3][3] )
 {
   int qa, qb, qc;
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -866,8 +866,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2_impl::gradient( int const q,
 
 #ifndef __CUDA_ARCH__
 
-class H1_Hexahedron_Lagrange1_GaussLegendre2 final : public H1_Hexahedron_Lagrange1_GaussLegendre2_impl,
-                                          public FiniteElementBase
+class H1_Hexahedron_Lagrange1_GaussLegendre2 final : public H1_Hexahedron_Lagrange1_GaussLegendre2_impl, public FiniteElementBase
 {
 public:
 
@@ -892,35 +891,23 @@ public:
   /// The number of sampling points per element.
   constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
-  H1_Hexahedron_Lagrange1_GaussLegendre2_impl * getImpl()
-  {
-    return static_cast<H1_Hexahedron_Lagrange1_GaussLegendre2_impl *>(this);
-  }
-
-  const H1_Hexahedron_Lagrange1_GaussLegendre2_impl * getImpl() const
-  {
-    return static_cast<const H1_Hexahedron_Lagrange1_GaussLegendre2_impl *>(this);
-  }
+  H1_Hexahedron_Lagrange1_GaussLegendre2():
+    FiniteElementBase( numNodes,
+                       maxSupportPoints,
+                       numQuadraturePoints )
+  {}
 
   GEOS_HOST_DEVICE
   virtual ~H1_Hexahedron_Lagrange1_GaussLegendre2() override final = default;
 
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override final
+  H1_Hexahedron_Lagrange1_GaussLegendre2_impl * getImpl()
   {
-    return numQuadraturePoints;
+    return static_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_impl * >(this);
   }
 
-  GEOS_HOST_DEVICE
-  virtual localIndex getNumSupportPoints() const override final
+  H1_Hexahedron_Lagrange1_GaussLegendre2_impl const * getImpl() const
   {
-    return numNodes;
-  }
-
-  GEOS_HOST_DEVICE
-  virtual localIndex getMaxSupportPoints() const override final
-  {
-    return maxSupportPoints;
+    return static_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_impl const * >(this);
   }
 
 

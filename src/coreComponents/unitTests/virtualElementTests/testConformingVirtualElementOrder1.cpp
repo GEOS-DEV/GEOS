@@ -190,8 +190,8 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   using VEM = ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES >;
   typename VEM::template MeshData< CellElementSubRegion > meshData;
   VEM::template initialize< VEM >( nodeManager, edgeManager,
-                                        faceManager, cellSubRegion,
-                                        meshData );
+                                   faceManager, cellSubRegion,
+                                   meshData );
 
   // Arrays that store quantities to be tested.
   localIndex const numCells = cellSubRegion.getElementVolume().size();
@@ -215,7 +215,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
     VEM virtualElement;
     virtualElement.template setup< VEM >( cellIndex, meshData, stack );
 
-    checkIntegralMeanConsistency< VEM >( stack, 
+    checkIntegralMeanConsistency< VEM >( stack,
                                          sumBasisFunctionsView( cellIndex ) );
     checkIntegralMeanDerivativesConsistency< VEM >( stack,
                                                     sumXDerivativesView( cellIndex ),
