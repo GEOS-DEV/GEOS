@@ -334,10 +334,8 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
     {
       elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr, CellElementSubRegion & elementSubRegion )
       {
-        string const & solidMaterialName = elementSubRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-
-        arrayView2d< real64 const > const
-        rho = elementSubRegion.getConstitutiveModel( solidMaterialName ).getReference< array2d< real64 > >( SolidBase::viewKeyStruct::densityString() );
+        SolidBase & solid = getConstitutiveModel< SolidBase >( elementSubRegion );
+        arrayView2d< real64 const > const rho = solid.getDensity();
 
         SortedArray< localIndex > & elemsAttachedToSendOrReceiveNodes = getElemsAttachedToSendOrReceiveNodes( elementSubRegion );
         SortedArray< localIndex > & elemsNotAttachedToSendOrReceiveNodes = getElemsNotAttachedToSendOrReceiveNodes( elementSubRegion );
@@ -1288,8 +1286,8 @@ SolidMechanicsLagrangianFEM::
     totalResidualNorm = std::max( residual, totalResidualNorm );
   } );
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::ResidualNorm,
-                         GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), totalResidualNorm ));
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), totalResidualNorm ));
   getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), totalResidualNorm );
 
   return totalResidualNorm;
