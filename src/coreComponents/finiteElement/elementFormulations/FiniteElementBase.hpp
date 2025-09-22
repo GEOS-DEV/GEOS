@@ -88,6 +88,24 @@ public:
   GEOS_HOST_DEVICE FiniteElementBase_impl( FiniteElementBase_impl && ) = default;
   GEOS_HOST_DEVICE FiniteElementBase_impl & operator=( FiniteElementBase_impl && ) = default;
 
+  /**
+   * @struct StackVariables
+   * @brief Kernel variables allocated on the stack.
+   *
+   * Contains variables that will be allocated on the stack. Used only by Virtual Element classes to
+   * hold the computed projections of basis functions
+   */
+  struct StackVariables
+  {};
+
+  /**
+   * @struct MeshData
+   * @brief Variables used to initialize the class.
+   */
+  template< typename SUBREGION_TYPE >
+  struct MeshData
+  {};
+
   GEOS_HOST_DEVICE
   static localIndex getNumQuadraturePoints()
   {

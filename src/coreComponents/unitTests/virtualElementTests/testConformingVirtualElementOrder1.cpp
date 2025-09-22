@@ -82,7 +82,7 @@ checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
                                       localIndex const & cellIndex,
                                       traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const & cellToNodes,
                                       arrayView2d< real64 const > const & cellCenters,
-                                      FiniteElementBase const & feBase,
+                                      VEM const & feBase,
                                       typename VEM::StackVariables const & stack,
                                       arraySlice1d< real64 > & stabTimeMonomialDofsNorm )
 {
@@ -187,9 +187,9 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
 
   // Allocate and fill a VEM::MeshData struct.
-  using VEM = ConformingVirtualElementOrder1< MAXCELLNODES, MAXFACENODES >;
+  using VEM = ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES >;
   typename VEM::template MeshData< CellElementSubRegion > meshData;
-  FiniteElementBase::initialize< VEM >( nodeManager, edgeManager,
+  VEM::template initialize< VEM >( nodeManager, edgeManager,
                                         faceManager, cellSubRegion,
                                         meshData );
 
