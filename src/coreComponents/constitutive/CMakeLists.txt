@@ -34,8 +34,8 @@ set( constitutive_headers
      capillaryPressure/TableCapillaryPressure.hpp
      capillaryPressure/TableCapillaryPressureHelpers.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
-     capillaryPressure/capillaryPressureSelector.hpp
-     capillaryPressure/layouts.hpp
+     capillaryPressure/CapillaryPressureSelector.hpp
+     capillaryPressure/Layouts.hpp
      contact/BartonBandis.hpp
      contact/CoulombFriction.hpp
      contact/FrictionSelector.hpp
@@ -60,6 +60,7 @@ set( constitutive_headers
      fluid/multifluid/MultiFluidConstants.hpp
      fluid/multifluid/MultiFluidUtils.hpp
      fluid/multifluid/MultiFluidFields.hpp
+     fluid/multifluid/constant/InvariantImmiscibleFluid.hpp
      fluid/multifluid/blackOil/BlackOilFluidBase.hpp
      fluid/multifluid/blackOil/BlackOilFluid.hpp
      fluid/multifluid/blackOil/DeadOilFluid.hpp
@@ -86,15 +87,19 @@ set( constitutive_headers
      fluid/multifluid/CO2Brine/functions/WaterDensity.hpp
      fluid/multifluid/compositional/functions/CompositionalProperties_impl.hpp
      fluid/multifluid/compositional/functions/CompositionalProperties.hpp
+     fluid/multifluid/compositional/functions/CubicEOSPhaseModel_impl.hpp
      fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp
+     fluid/multifluid/compositional/functions/EOSStackVariables.hpp
      fluid/multifluid/compositional/functions/FlashData.hpp
      fluid/multifluid/compositional/functions/FugacityCalculator.hpp
      fluid/multifluid/compositional/functions/KValueInitialization.hpp
+     fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash_impl.hpp
      fluid/multifluid/compositional/functions/NegativeTwoPhaseFlash.hpp
      fluid/multifluid/compositional/functions/RachfordRice.hpp
      fluid/multifluid/compositional/functions/SoreideWhitsonEOSPhaseModel_impl.hpp
      fluid/multifluid/compositional/functions/SoreideWhitsonEOSPhaseModel.hpp
      fluid/multifluid/compositional/functions/StabilityTest.hpp
+     fluid/multifluid/compositional/functions/Utilities.hpp
      fluid/multifluid/compositional/models/CompositionalDensity.hpp
      fluid/multifluid/compositional/models/ConstantViscosity.hpp
      fluid/multifluid/compositional/models/FunctionBase.hpp
@@ -113,8 +118,10 @@ set( constitutive_headers
      fluid/multifluid/compositional/parameters/ComponentType.hpp
      fluid/multifluid/compositional/parameters/CriticalVolume.hpp
      fluid/multifluid/compositional/parameters/EquationOfState.hpp
+     fluid/multifluid/compositional/parameters/FlashParameters.hpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp
      fluid/multifluid/compositional/parameters/ModelParameters.hpp
+     fluid/multifluid/compositional/parameters/PhaseType.hpp
      fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.hpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.hpp
@@ -152,6 +159,7 @@ set( constitutive_headers
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyStone2RelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
+     relativePermeability/KilloughHysteresis.hpp
      relativePermeability/RelativePermeabilityBase.hpp
      relativePermeability/RelativePermeabilityFields.hpp
      relativePermeability/RelativePermeabilityInterpolators.hpp
@@ -160,8 +168,9 @@ set( constitutive_headers
      relativePermeability/TableRelativePermeabilityHysteresis.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
      relativePermeability/VanGenuchtenStone2RelativePermeability.hpp
-     relativePermeability/layouts.hpp
+     relativePermeability/Layouts.hpp
      relativePermeability/RelativePermeabilitySelector.hpp
+     relativePermeability/LogLevelsInfo.hpp
      solid/CompressibleSolid.hpp
      solid/ProppantSolid.hpp
      solid/CoupledSolidBase.hpp
@@ -181,14 +190,14 @@ set( constitutive_headers
      solid/ElasticOrthotropic.hpp
      solid/InvariantDecompositions.hpp
      solid/PorousDamageSolid.hpp
-     solid/PerfectlyPlastic.hpp     
+     solid/PerfectlyPlastic.hpp
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
      solid/SolidUtilities.hpp
      solid/SolidInternalEnergy.hpp
      solid/SolidModelDiscretizationOps.hpp
-     solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
+     solid/SolidModelDiscretizationOpsFullyAnisotropic.hpp
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
      solid/SolidModelDiscretizationOpsOrthotropic.hpp
@@ -234,6 +243,7 @@ set( constitutive_sources
      dispersion/DispersionBase.cpp
      dispersion/LinearIsotropicDispersion.cpp
      fluid/multifluid/MultiFluidBase.cpp
+     fluid/multifluid/constant/InvariantImmiscibleFluid.cpp
      fluid/multifluid/blackOil/BlackOilFluidBase.cpp
      fluid/multifluid/blackOil/BlackOilFluid.cpp
      fluid/multifluid/blackOil/DeadOilFluid.cpp
@@ -266,7 +276,9 @@ set( constitutive_sources
      fluid/multifluid/compositional/parameters/BrineSalinity.cpp
      fluid/multifluid/compositional/parameters/ComponentProperties.cpp
      fluid/multifluid/compositional/parameters/CriticalVolume.cpp
+     fluid/multifluid/compositional/parameters/FlashParameters.cpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.cpp
+     fluid/multifluid/compositional/parameters/PhaseType.cpp
      fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.cpp
@@ -296,11 +308,15 @@ set( constitutive_sources
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/BrooksCoreyStone2RelativePermeability.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
+     relativePermeability/KilloughHysteresis.cpp
      relativePermeability/RelativePermeabilityBase.cpp
      relativePermeability/TableRelativePermeability.cpp
      relativePermeability/TableRelativePermeabilityHelpers.cpp
      relativePermeability/TableRelativePermeabilityHysteresis.cpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
+     relativePermeability/TableRelativePermeability.cpp
+     relativePermeability/TableRelativePermeabilityHelpers.cpp
+     relativePermeability/TableRelativePermeabilityHysteresis.cpp
      relativePermeability/VanGenuchtenStone2RelativePermeability.cpp
      solid/CompressibleSolid.cpp
      solid/CoupledSolidBase.cpp
@@ -368,4 +384,7 @@ install( TARGETS constitutive LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
+  add_subdirectory( relativePermeability/unitTests )
+  add_subdirectory( capillaryPressure/unitTests )
+  add_subdirectory( solid/unitTests )
 endif( )

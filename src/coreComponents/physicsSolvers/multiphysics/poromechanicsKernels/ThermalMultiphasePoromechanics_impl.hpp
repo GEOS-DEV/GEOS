@@ -78,12 +78,13 @@ ThermalMultiphasePoromechanics( NodeManager const & nodeManager,
   m_rockInternalEnergy_n( inputConstitutiveType.getInternalEnergy_n() ),
   m_rockInternalEnergy( inputConstitutiveType.getInternalEnergy() ),
   m_dRockInternalEnergy_dTemperature( inputConstitutiveType.getDinternalEnergy_dTemperature() ),
+  m_referenceTemperature( elementSubRegion.template getField< fields::flow::initialTemperature >() ),
   m_temperature_n( elementSubRegion.template getField< fields::flow::temperature_n >() ),
   m_temperature( elementSubRegion.template getField< fields::flow::temperature >() )
 {
   // extract fluid constitutive data views
   {
-    string const fluidModelName = elementSubRegion.template getReference< string >( fluidModelKey );
+    string const & fluidModelName = elementSubRegion.template getReference< string >( fluidModelKey );
     constitutive::MultiFluidBase const & fluid =
       elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelName );
 
@@ -109,6 +110,7 @@ setup( localIndex const k,
   stack.localTemperatureDofIndex = stack.localPressureDofIndex + m_numComponents + 1;
   stack.temperature = m_temperature[k];
   stack.deltaTemperatureFromLastStep = m_temperature[k] - m_temperature_n[k];
+  stack.deltaTemperature = m_temperature[k] - m_referenceTemperature[k];
 }
 
 template< typename SUBREGION_TYPE,
@@ -133,7 +135,7 @@ smallStrainUpdate( localIndex const k,
                                                        m_dt,
                                                        m_pressure[k],
                                                        m_pressure_n[k],
-                                                       stack.temperature,
+                                                       stack.deltaTemperature,
                                                        stack.deltaTemperatureFromLastStep,
                                                        stack.strainIncrement,
                                                        stack.totalStress,

@@ -81,7 +81,7 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
   // 2) classify well elements based on connectivity to local mesh partition
   array1d< integer > elemStatusGlobal;
-  elemStatusGlobal.resizeDefault( numElemsGlobal, WellElementSubRegion::WellElemStatus::UNOWNED );
+  elemStatusGlobal.resizeDefault( numElemsGlobal, WellElementSubRegion::WellElemParallelStatus::UNOWNED );
 
   arrayView1d< globalIndex const > const & perfElemIdGlobal = lineBlock.getPerfElemIndex();
 
@@ -91,11 +91,11 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
     if( perforationData->globalToLocalMap().count( iperfGlobal ) > 0 )
     {
-      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemStatus::LOCAL;
+      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemParallelStatus::LOCAL;
     }
     else
     {
-      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemStatus::REMOTE;
+      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemParallelStatus::REMOTE;
     }
   }
 
@@ -131,6 +131,9 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
                                           subRegion.globalToLocalMap(),
                                           elemOffsetGlobal );
 
+  // Setup MPI gatherv support arrays for use to establish if segment is active
+  // A segment is active if it has an open perforation or an upstream segment is open
+  subRegion.setupCommArrays();
 }
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, WellElementRegion, string const &, Group * const )

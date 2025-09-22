@@ -53,6 +53,7 @@ public:
   {
     Default,
     SEM,
+    DG
   };
 
 
@@ -90,6 +91,8 @@ public:
 
   int getOrder() const { return m_order; }
 
+  Formulation getFormulation() const { return m_formulation; }
+
 private:
 
   struct viewKeyStruct
@@ -119,7 +122,8 @@ private:
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( FiniteElementDiscretization::Formulation,
               "default",
-              "SEM" );
+              "SEM",
+              "DG" );
 
 template< typename SUBREGION_TYPE,
           typename FE_TYPE >
@@ -132,8 +136,8 @@ FiniteElementDiscretization::
 {
   GEOS_MARK_FUNCTION;
 
-  // do not precompute shape functions in case of SEM formulation (not needed)
-  if( m_formulation == Formulation::SEM )
+  // do not precompute shape functions in case of SEM or DG formulation (not needed)
+  if( m_formulation == Formulation::SEM || m_formulation == Formulation::DG )
     return;
 
   array4d< real64 > & dNdX = elementSubRegion->dNdX();

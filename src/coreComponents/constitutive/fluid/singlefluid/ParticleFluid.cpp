@@ -78,8 +78,6 @@ ParticleFluid::ParticleFluid( string const & name, Group * const parent ):
 
 }
 
-ParticleFluid::~ParticleFluid() = default;
-
 void ParticleFluid::postInputInitialization()
 {
   ParticleFluidBase::postInputInitialization();
