@@ -211,11 +211,6 @@ TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
     dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >( problemManager.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ) );
 
   // Run the simulation to compute the numerical pressure
-//  solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
-//  solver.implicitStepSetup( 0.0, TIME_STEP, domain );
-//  solver.solverStep( 0.0, TIME_STEP, 0, domain );
-//  solver.implicitStepComplete( 0.0, TIME_STEP, domain );
-
   solver.execute( 0.0, TIME_STEP, 0, 0, 0, domain );
 
   // Access the mesh and subregion
@@ -228,19 +223,20 @@ TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
   arrayView1d< real64 const > const p_h = subRegion.getField< fields::flow::pressure >();
 
   // Compute exact pressure and L2 error
-  real64 l2Error = 0.0;
-  real64 totalVolume = 0.0;
-  forAll< parallelHostPolicy >( subRegion.size(), [ & ] ( localIndex i )
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > l2Error_ReduceSum( 0.0 );
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > totalVolume_ReduceSum( 0.0 );
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex i )
   {
     real64 x = centers[i][0];
     real64 volume = volumes[i];
     real64 pNumeric = p_h[i];
     real64 pExact = 2.0 * (1.0 - x) + 1.0 * x;
-    l2Error += (pNumeric - pExact) * (pNumeric - pExact) * volume;
-    totalVolume += volume;
+    l2Error_ReduceSum += (pNumeric - pExact) * (pNumeric - pExact) * volume;
+    totalVolume_ReduceSum += volume;
   } );
 
-  l2Error = std::sqrt( l2Error ) / totalVolume;
+  real64 const data[2] = { l2Error_ReduceSum.get(), totalVolume_ReduceSum.get() };
+  real64 l2Error = std::sqrt( data[0] ) / data[1];
 
   std::string meshFile = GetParam();
   if( meshFile == "polyhedral_voronoi_regular.vtk" )
@@ -386,12 +382,6 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
   SinglePhaseHybridFVM & solver = dynamic_cast< SinglePhaseHybridFVM & >( problemManager.getPhysicsSolverManager().getGroup< SinglePhaseHybridFVM >( "SinglePhaseFlow" ) );
 
   // Run the simulation to compute the numerical pressure
-//  solver.setupSystem( domain, solver.getDofManager(), solver.getLocalMatrix(), solver.getSystemRhs(), solver.getSystemSolution() );
-//  solver.implicitStepSetup( 0.0, TIME_STEP, domain );
-//  solver.solverStep( 0.0, TIME_STEP, 0, domain );
-//  solver.implicitStepComplete( 0.0, TIME_STEP, domain );
-//  solver.updateConfiguration(domain, 1);
-
   solver.execute( 0.0, TIME_STEP, 0, 0, 0, domain );
 
   // Access the mesh and subregion
@@ -404,19 +394,20 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
   arrayView1d< real64 const > const p_h = subRegion.getField< fields::flow::pressure >();
 
   // Compute exact pressure and L2 error
-  real64 l2Error = 0.0;
-  real64 totalVolume = 0.0;
-  forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex i )
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > l2Error_ReduceSum( 0.0 );
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > totalVolume_ReduceSum( 0.0 );
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex i )
   {
     real64 x = centers[i][0];
     real64 volume = volumes[i];
     real64 pNumeric = p_h[i];
     real64 pExact = 2.0 * (1.0 - x) + 1.0 * x;
-    l2Error += (pNumeric - pExact) * (pNumeric - pExact) * volume;
-    totalVolume += volume;
+    l2Error_ReduceSum += (pNumeric - pExact) * (pNumeric - pExact) * volume;
+    totalVolume_ReduceSum += volume;
   } );
 
-  l2Error = std::sqrt( l2Error ) / totalVolume;
+  real64 const data[2] = { l2Error_ReduceSum.get(), totalVolume_ReduceSum.get() };
+  real64 l2Error = std::sqrt( data[0] ) / data[1];
 
   auto [innerProduct, meshFile] = GetParam();
   if( innerProduct == TPFA and std::string( meshFile ) != "polyhedral_voronoi_regular.vtk" )
@@ -457,8 +448,8 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
   // Use the CMAKE-defined TEST_BINARY_DIR variable
   std::string testBinaryDir = TEST_BINARY_DIR;
 
-  std::vector< real64 > p_tpfa;
-  std::vector< real64 > p_mfd;
+  arrayView1d< real64 const > p_tpfa;
+  arrayView1d< real64 const > p_mfd;
   geos::localIndex n_data_tpfa = 0;
   geos::localIndex n_data_mfd = 0;
 
@@ -487,8 +478,7 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
     CellElementSubRegion & subRegionTPFA =
       meshTPFA.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
 
-    p_tpfa = std::vector< real64 >( subRegionTPFA.getField< fields::flow::pressure >().begin(),
-                                    subRegionTPFA.getField< fields::flow::pressure >().end());
+    p_tpfa = subRegionTPFA.getField< fields::flow::pressure >();
     n_data_tpfa = subRegionTPFA.size();
 
     // tpfaState destroyed here — CommunicationTools cleaned up
@@ -519,8 +509,7 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
     CellElementSubRegion & subRegionMFD =
       meshMFD.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
 
-    p_mfd = std::vector< real64 >( subRegionMFD.getField< fields::flow::pressure >().begin(),
-                                   subRegionMFD.getField< fields::flow::pressure >().end());
+    p_mfd = subRegionMFD.getField< fields::flow::pressure >();
     n_data_mfd = subRegionMFD.size();
 
     // mfdState destroyed here
@@ -528,7 +517,7 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
 
   // --- Compare cellwise pressures ---
   ASSERT_EQ( n_data_tpfa, n_data_mfd );
-  forAll< parallelHostPolicy >( n_data_tpfa, [&] ( localIndex i )
+  forAll< parallelDevicePolicy<> >( n_data_tpfa, [=] ( localIndex i )
   {
     real64 p_num_tpfa = p_tpfa[i];
     real64 p_num_mfd  = p_mfd[i];
