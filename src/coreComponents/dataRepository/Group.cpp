@@ -396,7 +396,6 @@ void Group::initialize()
   {
     getGroup( groupName ).initialize();
   }
-
   initializePostSubGroups();
 }
 
