@@ -876,21 +876,6 @@ public:
   /// The Implementation type
   using ImplType = H1_Hexahedron_Lagrange1_GaussLegendre2_impl;
 
-  /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = H1_Hexahedron_Lagrange1_GaussLegendre2_impl::numNodes;
-
-  /// The number of faces/support points per element.
-  constexpr static localIndex numFaces = H1_Hexahedron_Lagrange1_GaussLegendre2_impl::numFaces;
-
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
-
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = H1_Hexahedron_Lagrange1_GaussLegendre2_impl::numQuadraturePoints;
-
-  /// The number of sampling points per element.
-  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
-
   H1_Hexahedron_Lagrange1_GaussLegendre2():
     FiniteElementBase( numNodes,
                        maxSupportPoints,

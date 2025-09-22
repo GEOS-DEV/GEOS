@@ -1720,23 +1720,7 @@ public:
   /// The type of basis used for this element
   using BASIS = GL_BASIS;
 
-  using IMPL = Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >;
-
-  /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::numNodes;
-
-  /// The number of faces/support points per element.
-  constexpr static localIndex numFaces = Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::numFaces;
-
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
-
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::numQuadraturePoints;
-
-
-  /// The number of sampling points per element.
-  constexpr static int numSamplingPoints = IMPL::numSamplingPointsPerDirection * IMPL::numSamplingPointsPerDirection * IMPL::numSamplingPointsPerDirection;
+  using ImplType = Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >;
 
   Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS > * getImpl()
   {
@@ -1750,9 +1734,9 @@ public:
 
 
   Qk_Hexahedron_Lagrange_GaussLobatto():
-    FiniteElementBase( numNodes,
-                       maxSupportPoints,
-                       numQuadraturePoints )
+    FiniteElementBase( ImplType::numNodes,
+                       ImplType::maxSupportPoints,
+                       ImplType::numQuadraturePoints )
   {}
 
   virtual ~Qk_Hexahedron_Lagrange_GaussLobatto() override final = default;

@@ -453,28 +453,12 @@ public:
   /// The Implementation type
   using ImplType = H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >;
 
-  /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >::numNodes;
-
-  /// The number of faces/support points per element.
-  constexpr static localIndex numFaces = H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >::numFaces;
-
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
-
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >::numQuadraturePoints;
-
-  constexpr static int numSamplingPointsPerDirection = H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >::numSamplingPointsPerDirection;
-
-  /// The number of sampling points per element.
-  constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
 
   H1_TriangleFace_Lagrange1_Gauss():
-    FiniteElementBase( numNodes,
-                       maxSupportPoints,
-                       numQuadraturePoints )
+    FiniteElementBase( ImplType::numNodes,
+                       ImplType::maxSupportPoints,
+                       ImplType::numQuadraturePoints )
   {}
 
 
