@@ -112,7 +112,7 @@ public:
   {
     silent,
     error,
-    surfaceGeneratorWarning
+    warning
   };
 
   /**
@@ -884,7 +884,7 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
   ENUM_STRINGS( FieldSpecificationBase::SetErrorMode,
                 "silent",
                 "error",
-                "surfaceGeneratorWarning" );
+                "warning" );
 
 }
 

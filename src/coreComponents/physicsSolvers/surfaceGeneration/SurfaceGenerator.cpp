@@ -283,7 +283,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
     {
       fs.getWrapper< string >( FieldSpecificationBase::viewKeyStruct::errorSetModeString())
         .setApplyDefaultValue(
-        EnumStrings< FieldSpecificationBase::SetErrorMode >::toString( FieldSpecificationBase::SetErrorMode::surfaceGeneratorWarning ));
+        EnumStrings< FieldSpecificationBase::SetErrorMode >::toString( FieldSpecificationBase::SetErrorMode::warning ));
     } );
   } );
 

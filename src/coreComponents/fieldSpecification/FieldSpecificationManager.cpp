@@ -292,7 +292,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         case  FieldSpecificationBase::SetErrorMode::error:
           GEOS_THROW( message.str(), InputError );
           break;
-        case  FieldSpecificationBase::SetErrorMode::surfaceGeneratorWarning:
+        case  FieldSpecificationBase::SetErrorMode::warning:
           message << GEOS_FMT( "As the simulation includes a SurfaceGenerator, the set may be modified later",
                                fs.getDataContext() );
           GEOS_WARNING( message.str() );
