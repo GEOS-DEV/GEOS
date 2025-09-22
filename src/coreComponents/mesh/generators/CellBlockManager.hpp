@@ -214,6 +214,14 @@ public:
    */
   void setGlobalLength( real64 globalLength ) { m_globalLength = globalLength; }
 
+  real64 getGlobalOffset() const override { return m_globalOffset; }
+
+  /**
+   * @brief Setter for the global offset
+   * @param globalOffset the global offset
+   */
+  void setGlobalOffset( real64 globalOffset ) { m_globalOffset = globalOffset; }
+
 private:
 
   struct viewKeyStruct
@@ -286,6 +294,7 @@ private:
   std::map< integer, std::set< string > > m_regionAttributesCellBlocks;
 
   real64 m_globalLength;
+  real64 m_globalOffset;
 
   localIndex m_numNodes;
   localIndex m_numFaces;

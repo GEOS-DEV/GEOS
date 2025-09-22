@@ -6,9 +6,41 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #3810 (2025-09-07) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3808-13401-c19069f.tar.gz>
+PR #3821 (2025-09-19) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3821-13726-7dd8089.tar.gz>
 =====================
-Add error as warning option in FieldSpecication
+Enable parallel versions for some contact mechanics tests.
+
+PR #3796 (2025-09-18) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3796-13696-bfe23a1.tar.gz>
+=====================
+Add solid fields.
+
+PR #3801 (2025-09-17) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3801-13669-3ca52ce.tar.gz>
+=====================
+Tolerance for geometric objects coordinates check.
+
+PR #3813 (2025-09-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3813-13627-4228acd.tar.gz>
+=====================
+Create a separator ("fluid model") for each well. Only schema differences in results.
+
+PR #3629 (2025-09-16) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3711-13370-49f4348.tar.gz>
+=====================
+Fix some bugs in surface generation communication.
+
+PR #3745 (2025-09-14) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3745-13577-97fabfe.tar.gz>
+=====================
+Oscillation detection and scaling option.
+
+PR #3776 (2025-09-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3776-13560-88bd98b.tar.gz>
+=====================
+Constitutive cleanup: rebaseline due to technical diffs, no real results changes.
+
+PR #3349 (2025-09-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3349-13555-41d98d4.tar.gz>
+=====================
+Configuration loop acceleration for `SolidMechanicsLagrangeContact`.
+
+PR #3812 (2025-09-11) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3812-13496-8dc0bc6.tar.gz>
+=====================
+Add reset of k-values for compositional fluid model. Improves the convergence of models at the start.
 
 PR #3285 (2025-09-09) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3285-13414-69e5962.tar.gz>
 =====================

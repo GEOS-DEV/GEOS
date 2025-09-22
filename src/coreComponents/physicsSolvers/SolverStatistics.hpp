@@ -164,13 +164,13 @@ public:
   /**
    * @brief Output the statistics to the console in table format
    */
-  void outputStatistics();
+  void outputStatistics() const;
 
   /**
    * @brief Close the stream output file
    */
   void closeFile()
-  {  if( m_csvOutputOpened ) { m_logStream.close(); m_csvOutputOpened = false; } }
+  { if( m_csvOutputOpened ) { m_logStream.close(); m_csvOutputOpened = false; } }
 
 protected:
 
