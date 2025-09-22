@@ -106,10 +106,10 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
 
   GET_LINE( line2 ); GEOS_WARNING_IF_GT_MSG( testValue, testMaxPrecision, "Pressure value is too high." );
 
-  GET_LINE( line3 ); GEOS_WARNING_CTX_IF( testValue == 5,
-                                          GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
-                                                    context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision ),
-                                          context, additionalContext );
+  GET_LINE( line3 ); GEOS_WARNING_IF( testValue == 5,
+                                      GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
+                                                context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision ),
+                                      context, additionalContext );
 
   endLocalLoggerTest( g_errorLogger, {
     R"(errors:)",
@@ -168,10 +168,10 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
   // Stacked exception test (contexts must appear sorted by priority)
   try
   {
-    line1 = __LINE__; GEOS_THROW_CTX_IF( testValue == 5,
-                                         "Group " << context.toString() << " has no wrapper named" << std::endl,
-                                         std::domain_error,
-                                         context.getContextInfo().setPriority( 1 ) );
+    line1 = __LINE__; GEOS_THROW_IF( testValue == 5,
+                                     "Group " << context.toString() << " has no wrapper named" << std::endl,
+                                     std::domain_error,
+                                     context.getContextInfo().setPriority( 1 ) );
   }
   catch( std::domain_error const & ex )
   {
