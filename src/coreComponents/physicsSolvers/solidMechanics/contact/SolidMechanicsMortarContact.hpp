@@ -32,23 +32,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSMORTARCONTACT_HPP_
 #define GEOS_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSMORTARCONTACT_HPP_
 
-#define POLYTOP { \
-    1e100, -1e100, 1e100, -1e100, 1e100, -1e100, 1e100, -1e100, 1e100, \
-    -1e100, 1e100, -1e100, 1e100, -1e100, 1e100, -1e100, 1e100, -1e100  \
-}
-
-#define POLYTOP_PRIMITIVES { \
-    {1, 0, 0, 1, 1, 0, 1, 1, 0}, \
-    {0, 1, 0, 1, 0, 1, -1, 0, 1}, \
-    {0, 0, 1, 0, 1, 1, 0, -1, -1} \
-}
-
-#define BOUNDING_BOX_EXPANSION 0.025
-
-
 #include "physicsSolvers/solidMechanics/contact/ContactSolverBase.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
-//#include "finiteElement/FiniteElementDispatch.hpp"
 
 namespace geos
 {
@@ -86,8 +71,6 @@ public:
    * @copydoc PhysicsSolverBase::getCatalogName()
    */
   string getCatalogName() const override {return catalogName(); }
-
-  //using FaceTypeMap = std::map< string, std::map< string, array1d< localIndex > > >;
 
   using connectivityMapType = std::map< std::pair< ElementShape, ElementShape >, ArrayOfArrays < localIndex > >;
 
@@ -141,10 +124,7 @@ public:
 
   void createFaceTypeListMortar( MortarSide side );
 
-  
-
   void createBubbleCellList( ) const;
-
 
   void setMortarSurfaces( DomainPartition & domain);
 
@@ -168,7 +148,7 @@ private:
   // list local coordinates of gauss points of subtriangles on each mortar side
   std::map< MortarSide, std::map< std::pair< ElementShape, ElementShape >, array3d< real64 > > > m_gpLocalCoords;
 
-  // coordinates of triangle gauss points ready to go (they are private in the triangle class)
+  // coordinates of triangle gauss points (they are private in the triangle class)
   constexpr static localIndex nGPtri = feTriangleCell::numQuadraturePoints;
   constexpr static real64 qCoords[nGPtri][2] = {
     { 0.333333333333333, 0.333333333333333 },
@@ -176,7 +156,6 @@ private:
     { 0.200000000000000, 0.600000000000000 },
     { 0.200000000000000, 0.200000000000000 }
   };
-
 
   void addBubbleCouplingNumNonzeros( DofManager & dofManager,
                                      arrayView1d< localIndex > const & rowLengths ) const;
@@ -218,8 +197,6 @@ private:
                        arrayView1d< real64 > const & localRhs );
 
   void computeRotationMatrices( );
-
-
 
   string m_slaveName;
   string m_masterName;
@@ -334,7 +311,22 @@ class TreeNodeMortar
     bool isLeaf = false;
 
      // primitives of polytopal bounding box 
-    double polytop[18] = POLYTOP; 
+     real64 polytop[18] =
+    {
+      1e100, -1e100, 1e100, -1e100, 1e100,
+      -1e100, 1e100, -1e100, 1e100, -1e100,
+      1e100, -1e100, 1e100, -1e100, 1e100,
+      -1e100, 1e100, -1e100
+    }; 
+
+    static constexpr real64 boundingBoxExpansion = 0.025;
+
+    static constexpr localIndex  polytopPrimitives[3][9] = 
+    {
+      {  1,  0,  0,  1,  1,  0,  1,  1,  0 },
+      {  0,  1,  0,  1,  0,  1, -1,  0,  1 },
+      {  0,  0,  1,  0,  1,  1,  0, -1, -1 }
+    };
 
      // id of face corresponding to leaf nodes  
     localIndex leafId;  

@@ -18,6 +18,16 @@
       forceDt="1.0"
       target="/Solvers/Mortar"/>
 
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput_2beams"/>
+
+    <SoloEvent
+      name="initial_output"
+      targetTime="0.0"
+      target="/Outputs/vtkOutput_2beams"/>
+
   </Events>
 
   <ElementRegions>
@@ -174,7 +184,9 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="2"
       discretization="FE1"
-      targetRegions="{ meshMaster/regionMaster, meshMaster/surfaceMaster, meshSlave/regionSlave, meshSlave/surfaceSlave  }">
+      targetRegions="{ meshMaster/regionMaster, meshMaster/surfaceMaster, meshSlave/regionSlave, meshSlave/surfaceSlave  }"
+      master = "surfaceMaster"
+      slave = "surfaceSlave">
       <NonlinearSolverParameters
         newtonTol="5.0e-6"
         logLevel="2"
@@ -204,9 +216,9 @@
       xCoords="{ 0, 8 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 4 }"
-      ny="{ 2 }"
-      nz="{ 2 }"
+      nx="{ 20 }"
+      ny="{ 12 }"
+      nz="{ 12 }"
       cellBlockNames="{ cb1 }"/>
 
     <InternalMesh
@@ -215,9 +227,9 @@
       xCoords="{ 8, 16 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 4 }"
-      ny="{ 3 }"
-      nz="{ 3 }"
+      nx="{ 20 }"
+      ny="{ 18 }"
+      nz="{ 18 }"
       cellBlockNames="{ cb2 }"/>
 
   </Mesh>
