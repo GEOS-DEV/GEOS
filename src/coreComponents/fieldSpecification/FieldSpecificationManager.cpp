@@ -69,12 +69,23 @@ void FieldSpecificationManager::expandObjectCatalogs()
   }
 }
 
-using SetNameToTypesMap = std::map< std::string, std::vector< MeshObjectPath::ObjectTypes > >;
+/// @brief alias for the map containing the relationship between the fieldSpefication "setNames" and the/their associated manager(s)
+/// Represented as : { { "setName", { ObjectPathType (= A Manager) , localIndex (0,1) }, ... }, ... }
+using SetNameToTypesMap = std::map< std::string, std::vector< std::pair< MeshObjectPath::ObjectTypes, localIndex > > >;
 
+/**
+ * @brief Iterate through all the manager of meshLevel
+ * @tparam TYPE The current type to be tested
+ * @tparam NEXT_TYPES The remaining Types
+ * @param mesh Holds all the managers.
+ * @param targetType The target fieldSpecification object path type
+ * @param setName The current setName to be evaluated in all the managers
+ * @param setTypesMap The map containing the relation between the setNames and their managers
+ */
 template< typename TYPE, typename ... NEXT_TYPES >
-void forTypes( FieldSpecificationBase const & fs, MeshLevel const & mesh,
-               MeshObjectPath::ObjectTypes const targetType,
-               string const & setName, SetNameToTypesMap & setTypesMap )
+void forManagerInMeshLevel( MeshLevel const & mesh,
+                            MeshObjectPath::ObjectTypes const targetType,
+                            string const & setName, SetNameToTypesMap & setTypesMap )
 {
   mesh.forSubGroups< TYPE >( [&]( Group const & targetManager )
   {
@@ -90,26 +101,26 @@ void forTypes( FieldSpecificationBase const & fs, MeshLevel const & mesh,
             targetType !=  MeshObjectPath::ObjectTypes::nodes &&
             targetSet.size() > 0 )
         {
-          setTypesMap[setName].push_back( MeshObjectPath::ObjectTypes::nodes );
+          setTypesMap[setName].push_back( { MeshObjectPath::ObjectTypes::nodes, 0 } );
         }
         else if( std::is_same_v< TYPE, EdgeManager >  &&
                  targetType !=  MeshObjectPath::ObjectTypes::edges &&
                  targetSet.size() > 0 )
         {
-          setTypesMap[setName].push_back( MeshObjectPath::ObjectTypes::edges );
+          setTypesMap[setName].push_back( { MeshObjectPath::ObjectTypes::edges, 0 } );
         }
         else if( std::is_same_v< TYPE, FaceManager > &&
                  targetType !=  MeshObjectPath::ObjectTypes::faces &&
                  targetSet.size() > 0 )
         {
-          setTypesMap[setName].push_back( MeshObjectPath::ObjectTypes::faces );
+          setTypesMap[setName].push_back( { MeshObjectPath::ObjectTypes::faces, 0 } );
         }
       }
     }
   } );
 
   if constexpr ( sizeof...(NEXT_TYPES) > 0 )
-    forTypes< NEXT_TYPES... >( fs, mesh, targetType, setName, setTypesMap );
+    forManagerInMeshLevel< NEXT_TYPES... >( mesh, targetType, setName, setTypesMap );
 }
 
 void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
@@ -120,14 +131,13 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
   this->forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase const & fs )
   {
     localIndex isFieldNameFound = 0;
-    // map from set name to a flag (1 if targetSet empty, 0 otherwise)
-    map< string, localIndex > isTargetSetEmpty;
     // map from set name to a flag (1 if targetSet has been created, 0 otherwise)
     map< string, localIndex > isTargetSetCreated;
-    // map from setName where we store the derived class of objectManager (if exist)
+    // map from all the targeted setNames where we store the associated pair [ObjectType, Bool]
+    // 0 if the target objectType exists, 1 otherwise
     SetNameToTypesMap setTypesMap;
-    // The target type of objectPath
-    MeshObjectPath::ObjectTypes expectedSetType = fs.getMeshObjectPaths().getObjectType();
+    // The fs target objectPath type
+    MeshObjectPath::ObjectTypes const expectedSetType = fs.getMeshObjectPaths().getObjectType();
 
 
     // Step 1: collect all the set names in a map (this is made necessary by the "apply" loop pattern
@@ -135,9 +145,8 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     string_array const & setNames = fs.getSetNames();
     for( size_t i = 0; i < setNames.size(); ++i )
     {
-      isTargetSetEmpty[setNames[i]] = 1;
       isTargetSetCreated[setNames[i]] = 0;
-      setTypesMap[setNames[i]].push_back( expectedSetType );
+      setTypesMap[setNames[i]].push_back( {expectedSetType, 1 } );
     }
 
     // We have to make sure that the meshLevel is in the target of the boundary conditions
@@ -149,6 +158,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     }
 
     // Step 2: apply the boundary condition
+
     fs.apply< Group >( mesh,
                        [&]( FieldSpecificationBase const &,
                             string const & setName,
@@ -167,20 +177,26 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       }
 
       if( targetSet.size() > 0 )
-      {
-        if( setTypesMap.count( setName ) == 1 )
-          setTypesMap.erase( setName );
-
-        isTargetSetEmpty.at( setName ) = 0;
-      }
+        std::get< 1 >( setTypesMap[setName].front()) = 0;
     } );
 
     // Step 3: MPI synchronization
     isFieldNameFound = MpiWrapper::max( isFieldNameFound );
 
-    for( std::pair< string const, localIndex > & mapEntry : isTargetSetEmpty )
+    string_array setNamesToErase;
+    for( auto & [setName, typesValue] : setTypesMap )
     {
-      mapEntry.second = MpiWrapper::min( mapEntry.second );
+      auto & typeValue =  std::get< 1 >( typesValue.front() );
+      typeValue =  MpiWrapper::min( typeValue );
+      if( typeValue == 0 )
+      {
+        setNamesToErase.push_back( setName );
+      }
+    }
+
+    for( auto const & setName : setNamesToErase )
+    {
+      setTypesMap.erase( setName );
     }
 
     for( std::pair< string const, localIndex > & mapEntry : isTargetSetCreated )
@@ -235,41 +251,39 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       GEOS_THROW( errorMessageBuilder.str(), InputError );
     }
 
-    if( !setTypesMap.empty())
+    if( !setTypesMap.empty() && MpiWrapper::commRank() == 0 )
     {
-      for( auto const & [key, values] : setTypesMap )
-      {
-        forTypes< FaceManager,
-                  EdgeManager,
-                  NodeManager >( fs, mesh, expectedSetType, key, setTypesMap );
-      }
-
       std::ostringstream message;
       message << GEOS_FMT( "{}: this FieldSpecification targets (an) empty set(s).\n",
                            fs.getDataContext() );
-      for( auto const & [setName, values] : setTypesMap )
+
+      for( auto const & [setName, objectTypesPair] : setTypesMap )
       {
-        string_array types;
-        for( auto const & type : values )
+        forManagerInMeshLevel< FaceManager,
+                               EdgeManager,
+                               NodeManager >( mesh, expectedSetType, setName, setTypesMap );
+
+        string_array capturedTypes;
+        for( auto const & pair : objectTypesPair )
         {
-          if( type != expectedSetType )
+          if( pair.first != expectedSetType )
           {
-            types.push_back( EnumStrings< MeshObjectPath::ObjectTypes >::toString( type ) );
+            capturedTypes.push_back( EnumStrings< MeshObjectPath::ObjectTypes >::toString( pair.first ) );
           }
         }
 
-        if( !types.empty())
+        if( !capturedTypes.empty())
         {
           message << GEOS_FMT( "Set '{}':\n"
                                "  - Does not capture: {}\n", setName, fs.getObjectPath());
-          message << GEOS_FMT( "  - Instead, captures: {}\n", stringutilities::join( types, ", " ));
+          message << GEOS_FMT( "  - Instead, captures: {}\n", stringutilities::join( capturedTypes, ", " ));
         }
         else
         {
           message << GEOS_FMT( "Set '{}' does not capture anything in the mesh ", setName );
         }
       }
-      std::cout << "test avant le crash "<< message.str() << std::endl;
+
       Wrapper< integer > const & wrapper = fs.getWrapper< integer >(
         FieldSpecificationBase::viewKeyStruct::emptySetErrorModeString());
       switch( wrapper.getDefaultValue() )
@@ -277,7 +291,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         case  FieldSpecificationBase::setErrorMode::Silent:
           break;
         case  FieldSpecificationBase::setErrorMode::Error:
-          GEOS_THROW( message.str() , InputError  );
+          GEOS_THROW( message.str(), InputError );
           break;
         case  FieldSpecificationBase::setErrorMode::SurfaceGeneratorWarning:
           message << GEOS_FMT( "As the simulation includes a SurfaceGenerator, the set may be modified later",
@@ -286,6 +300,8 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
           break;
       }
     }
+
+    MpiWrapper::barrier( MPI_COMM_GEOS );
 
     if( isFieldNameFound == 0 )
     {
