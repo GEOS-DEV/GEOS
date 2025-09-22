@@ -443,15 +443,6 @@ public:
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
-    /// string/key for quadrature point damage value
-    static constexpr char const * damageString() { return "damage"; }
-
-    /// string/key for quadrature point jacobian value
-    static constexpr char const * jacobianString() { return "jacobian"; }
-
-    /// string/key for element/particle length scale
-    static constexpr char const * lengthScaleString() { return "lengthScale"; }
-
     /// string/key for tensile strength
     static constexpr char const * tensileStrengthString() { return "tensileStrength"; }
 

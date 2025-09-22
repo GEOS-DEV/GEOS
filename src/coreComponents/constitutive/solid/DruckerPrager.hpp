@@ -394,21 +394,6 @@ public:
 
     /// string/key for default cohesion
     static constexpr char const * defaultCohesionString() { return "defaultCohesion"; }
-
-    /// string/key for friction angle
-    static constexpr char const * frictionString() { return "friction"; }
-
-    /// string/key for dilation angle
-    static constexpr char const * dilationString() { return "dilation"; }
-
-    /// string/key for cohesion
-    static constexpr char const * hardeningString() { return "hardening"; }
-
-    /// string/key for cohesion
-    static constexpr char const * newCohesionString() { return "cohesion"; }
-
-    /// string/key for cohesion
-    static constexpr char const * oldCohesionString() { return "oldCohesion"; }
   };
 
   /**
