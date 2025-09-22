@@ -1371,9 +1371,9 @@ public:
   }
 
   /**
-  * @brief Get the device-compatible implementation type.
-  * @return A pointer to the device-compatible implementation type.
-  */
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   ImplType const * getImpl() const
   {
     return static_cast< ImplType const * >(this);

@@ -115,8 +115,8 @@ public:
    * @param stack Stack variables as filled by @ref setupStack.
    * @return The number of quadrature points.
    */
+  template < typename STACK_VARIABLES_TYPE >
   GEOS_HOST_DEVICE
-  template< typename STACK_VARIABLES_TYPE >
   static localIndex getNumQuadraturePoints( STACK_VARIABLES_TYPE const & stack )
   {
     GEOS_UNUSED_VAR( stack );
@@ -138,8 +138,8 @@ public:
    * @param stack Object that holds stack variables.
    * @return The number of support points.
    */
-  GEOS_HOST_DEVICE
   template< typename STACK_VARIABLES_TYPE >
+  GEOS_HOST_DEVICE
   static localIndex getNumSupportPoints( STACK_VARIABLES_TYPE const & stack )
   {
     GEOS_UNUSED_VAR( stack );

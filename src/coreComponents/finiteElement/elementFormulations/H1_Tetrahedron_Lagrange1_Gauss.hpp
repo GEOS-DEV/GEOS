@@ -55,19 +55,19 @@ public:
 
   /// Number of nodes in the element
   constexpr static localIndex numNodes = BASE::numNodes;
-  
+
   /// Number of support points in the element
   constexpr static localIndex numSupportPoints = BASE::numSupportPoints;
-  
+
   /// Maximum number of support points in the element
   constexpr static localIndex maxSupportPoints = BASE::maxSupportPoints;
-  
+
   /// Number of faces in the element
   constexpr static localIndex numFaces = BASE::numFaces;
-  
+
   /// Number of quadrature points in the element
   constexpr static localIndex numQuadraturePoints = BASE::numQuadraturePoints;
-  
+
   /// Number of sampling points per direction
   constexpr static int numSamplingPointsPerDirection = 10;
 
