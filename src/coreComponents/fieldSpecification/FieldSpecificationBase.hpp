@@ -108,7 +108,12 @@ public:
   /// deleted move assignement
   FieldSpecificationBase & operator=( FieldSpecificationBase && ) = delete;
 
-  enum SetErrorMode : integer { Silent = 0, Error = 1, SurfaceGeneratorWarning = 2 };
+  enum class SetErrorMode : integer
+  {
+    silent,
+    error,
+    surfaceGeneratorWarning
+  };
 
   /**
    * @brief Apply this field specification to the discretization
@@ -394,8 +399,8 @@ public:
     constexpr static char const * beginTimeString() { return "beginTime"; }
     /// @return The key for endTime
     constexpr static char const * endTimeString() { return "endTime"; }
-    /// @return The key errorAsWarning
-    constexpr static char const * emptySetErrorModeString() { return "errorAsWarning"; }
+    /// @return The key errorSetMode
+    constexpr static char const * errorSetModeString() { return "errorSetMode"; }
   };
 
   /**
@@ -551,15 +556,6 @@ public:
     return *(m_meshObjectPaths.get());
   }
 
-/**
- * @return The flag that determine if the error is transformed to a warning
- */
-  integer getErrorAsWarning() const
-  {
-    return m_emptySetErrorMode;
-  }
-
-
 protected:
 
 
@@ -604,7 +600,7 @@ private:
   string m_bcApplicationFunctionName;
 
   /// Value indicating whether we converts an error into a warning
-  SetErrorMode m_emptySetErrorMode;
+  string m_emptySetErrorMode;
 };
 
 
@@ -884,6 +880,11 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
     }
   } );
 }
+
+  ENUM_STRINGS( FieldSpecificationBase::SetErrorMode,
+                "silent",
+                "error",
+                "surfaceGeneratorWarning" );
 
 }
 

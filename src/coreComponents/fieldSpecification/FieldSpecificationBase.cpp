@@ -82,13 +82,14 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Time at which the boundary condition will stop being applied." );
 
-  registerWrapper( viewKeyStruct::emptySetErrorModeString(), &m_emptySetErrorMode ).
-    setApplyDefaultValue( SetErrorMode::Error ).
+  registerWrapper( viewKeyStruct::errorSetModeString(), &m_emptySetErrorMode ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( "error" ).
     setDescription( "Set the log state when we a “set” does not target any region\n"
-                    "When set to 0, no output\n"
-                    "When set to 1, output an error\n"
-                    "When set to 2, output a throw\n" );
+                    "When set to \"Silent\", no output\n"
+                    "When set to \"Warning\", output an error\n"
+                    "When set to \"Error\", output a throw\n" );
 
 }
 
