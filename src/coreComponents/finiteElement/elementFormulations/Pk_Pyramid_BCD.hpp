@@ -31,6 +31,12 @@ namespace geos
 namespace finiteElement
 {
 
+namespace
+{
+  template < int ORDER >
+  constexpr int Pk_Pyramid_BCD_NumNodes = ( ORDER + 1 ) * ( ORDER + 2 ) * ( 2 * ORDER + 3 ) / 6;
+}
+
 
 /**
  * This class is the basis class for the pyramid finite element cells with
@@ -39,36 +45,34 @@ namespace finiteElement
  * For now only P1 is implemented, P2 and higher will be implemented later.
  */
 template< int ORDER >
-class Pk_Pyramid_BCD final : public FiniteElementBase
+class Pk_Pyramid_BCD_impl : public FiniteElementBase_impl< Pk_Pyramid_BCD_NumNodes< ORDER >,
+                                                           5,
+                                                           Pk_Pyramid_BCD_NumNodes< ORDER > >
 {
 public:
+  using Base = FiniteElementBase_impl< Pk_Pyramid_BCD_NumNodes< ORDER >,
+                                        5,
+                                        Pk_Pyramid_BCD_NumNodes< ORDER > >;
 
-  /// The order of the finite element.
-  static constexpr int order = ORDER;
+/// struct to hold stack variables.
+  struct StackVariables {};
 
-  /// The number of shape functions per element.
-  constexpr static localIndex numNodes = ( ORDER + 1 ) * ( ORDER + 2 ) * ( 2 * ORDER + 3 ) / 6;
-
-  /// The number of faces points per element.
-  constexpr static localIndex numFaces = 5;
-
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
+   /// The number of shape functions per element.
+  using Base::numNodes;
 
   /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = numNodes;
+  using Base::numQuadraturePoints;
+
+  /// The maximum number of support points per element.
+  using Base::maxSupportPoints;
+  /// The order of the finite element.
+  static constexpr int order = ORDER;
 
   /// The number of modal points per element.
   constexpr static localIndex numModes = numNodes;
 
-  /** @cond Doxygen_Suppress */
-  USING_FINITEELEMENTBASE
-  /** @endcond Doxygen_Suppress */
-
-  virtual ~Pk_Pyramid_BCD() = default;
-
   GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
+  static localIndex getNumQuadraturePoints()
   {
     return numQuadraturePoints;
   }
@@ -88,14 +92,14 @@ public:
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  virtual localIndex getNumSupportPoints() const override
+  static localIndex getNumSupportPoints()
   {
     return numNodes;
   }
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  virtual localIndex getMaxSupportPoints() const override
+  static localIndex getMaxSupportPoints()
   {
     return maxSupportPoints;
   }
@@ -741,6 +745,44 @@ public:
   }
 
 };
+
+#ifndef GEOS_DEVICE_COMPILE
+
+template < int ORDER >
+class Pk_Pyramid_BCD final : public Pk_Pyramid_BCD_impl< ORDER >, public FiniteElementBase
+{
+public:
+
+  /// The Implementation type
+  using ImplType = Pk_Pyramid_BCD_impl< ORDER >;
+
+  using ImplType::numNodes;
+  using ImplType::maxSupportPoints;
+  using ImplType::numQuadraturePoints;
+
+  Pk_Pyramid_BCD():
+    FiniteElementBase( numNodes,
+                       maxSupportPoints,
+                       numQuadraturePoints )
+  {}
+
+  GEOS_HOST_DEVICE
+  virtual ~Pk_Pyramid_BCD() override final = default;
+
+  ImplType * getImpl()
+  {
+    return static_cast< ImplType * >(this);
+  }
+
+  ImplType const * getImpl() const
+  {
+    return static_cast< ImplType const * >(this);
+  }
+
+
+};
+#endif // GEOS_DEVICE_COMPILE
+
 
 /**
  *  Pyramid element with BCD basis functions of order 1.

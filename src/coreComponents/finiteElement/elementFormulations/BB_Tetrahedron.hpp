@@ -30,6 +30,12 @@ namespace geos
 namespace finiteElement
 {
 
+namespace
+{
+  template < int ORDER >
+  constexpr int BB_Tetrahedron_NumNodes = ( ORDER + 1 ) * ( ORDER + 2 ) * ( ORDER + 3 ) / 6;
+}
+
 /**
  * This class contains the kernel accessible functions specific to the
  * Bernstein-Bézier (BB) modal any-order tetrahedron finite element with
@@ -42,33 +48,35 @@ namespace finiteElement
  * by 0<=l1,l2,l3,l3<=1, l1+l2+l3+l4=1
  */
 template< int ORDER >
-class BB_Tetrahedron final : public FiniteElementBase
+class BB_Tetrahedron_impl : public FiniteElementBase_impl< BB_Tetrahedron_NumNodes< ORDER >,
+                                                           4,
+                                                           BB_Tetrahedron_NumNodes< ORDER > >
 {
 public:
+  using Base = FiniteElementBase_impl< BB_Tetrahedron_NumNodes< ORDER >,
+                                       4,
+                                       BB_Tetrahedron_NumNodes< ORDER > >;
+
+  /// struct to hold stack variables.
+  struct StackVariables {};
+
+   /// The number of shape functions per element.
+  using Base::numNodes;
+
+  /// The number of quadrature points per element.
+  using Base::numQuadraturePoints;
+
+  /// The maximum number of support points per element.
+  using Base::maxSupportPoints;
 
   /// The order of the finite element.
   static constexpr int order = ORDER;
 
-  /// The number of shape functions per element.
-  constexpr static localIndex numNodes = ( ORDER + 1 ) * ( ORDER + 2 ) * ( ORDER + 3 ) / 6;
-
   /// The number of shape functions per face
   constexpr static localIndex numNodesPerFace = ( ORDER + 1 ) * ( ORDER + 2 ) / 2;
 
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
-
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = numNodes;
-
-  /** @cond Doxygen_Suppress */
-  USING_FINITEELEMENTBASE
-  /** @endcond Doxygen_Suppress */
-
-  virtual ~BB_Tetrahedron() = default;
-
   GEOS_HOST_DEVICE
-  virtual localIndex getNumQuadraturePoints() const override
+  static localIndex getNumQuadraturePoints()
   {
     return numQuadraturePoints;
   }
@@ -88,14 +96,14 @@ public:
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  virtual localIndex getNumSupportPoints() const override
+  static localIndex getNumSupportPoints()
   {
     return numNodes;
   }
 
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
-  virtual localIndex getMaxSupportPoints() const override
+  static localIndex getMaxSupportPoints()
   {
     return maxSupportPoints;
   }
@@ -1319,6 +1327,45 @@ public:
   }
 
 };
+
+
+#ifndef GEOS_DEVICE_COMPILE
+
+template < int ORDER >
+class BB_Tetrahedron final : public BB_Tetrahedron_impl< ORDER >, public FiniteElementBase
+{
+public:
+
+  /// The Implementation type
+  using ImplType = BB_Tetrahedron_impl< ORDER >;
+
+  using ImplType::numNodes;
+  using ImplType::maxSupportPoints;
+  using ImplType::numQuadraturePoints;
+
+  BB_Tetrahedron():
+    FiniteElementBase( numNodes,
+                       maxSupportPoints,
+                       numQuadraturePoints )
+  {}
+
+  GEOS_HOST_DEVICE
+  virtual ~BB_Tetrahedron() override final = default;
+
+  ImplType * getImpl()
+  {
+    return static_cast< ImplType * >(this);
+  }
+
+  ImplType const * getImpl() const
+  {
+    return static_cast< ImplType const * >(this);
+  }
+
+
+};
+#endif // GEOS_DEVICE_COMPILE
+
 
 /**
  *  Tetrahedron element with Bernstein-Bézier basis functions of order 1.
