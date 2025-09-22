@@ -109,15 +109,14 @@ protected:
 class PorosityBase : public ConstitutiveBase
 {
 public:
-  PorosityBase( string const & name, Group * const parent );
+  PorosityBase( string const & name, dataRepository::Group * const parent );
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * defaultReferencePorosityString() { return "defaultReferencePorosity"; }
-  } viewKeys;
+  };
 
   /**
    * @brief Number of elements storing solid data
