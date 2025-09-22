@@ -594,7 +594,7 @@ private:
 
 
 
-#ifndef __CUDA_ARCH__
+#ifndef GEOS_DEVICE_COMPILE
 
 
 template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
@@ -681,7 +681,7 @@ using H1_Prism11_VEM_Gauss1 = ConformingVirtualElementOrder1< 22, 11 >;
 #endif
 
 
-#endif // __CUDA_ARCH__
+#endif // GEOS_DEVICE_COMPILE
 
 
 

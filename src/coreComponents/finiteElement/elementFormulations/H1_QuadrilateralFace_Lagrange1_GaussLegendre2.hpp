@@ -380,7 +380,7 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::
 /// @endcond
 
 
-#ifndef __CUDA_ARCH__
+#ifndef GEOS_DEVICE_COMPILE
 
 class H1_QuadrilateralFace_Lagrange1_GaussLegendre2 final : public H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl,
   public FiniteElementBase
@@ -415,7 +415,7 @@ public:
 
 
 };
-#endif // __CUDA_ARCH__
+#endif // GEOS_DEVICE_COMPILE
 
 
 

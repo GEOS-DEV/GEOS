@@ -582,7 +582,7 @@ H1_Pyramid_Lagrange1_Gauss5_impl::
 
 
 
-#ifndef __CUDA_ARCH__
+#ifndef GEOS_DEVICE_COMPILE
 
 class H1_Pyramid_Lagrange1_Gauss5 final : public H1_Pyramid_Lagrange1_Gauss5_impl,
   public FiniteElementBase
@@ -615,7 +615,7 @@ public:
   }
 
 };
-#endif // __CUDA_ARCH__
+#endif // GEOS_DEVICE_COMPILE
 
 }
 }

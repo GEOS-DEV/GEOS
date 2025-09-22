@@ -864,7 +864,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2_impl::gradient( int const q,
 
 
 
-#ifndef __CUDA_ARCH__
+#ifndef GEOS_DEVICE_COMPILE
 
 class H1_Hexahedron_Lagrange1_GaussLegendre2 final : public H1_Hexahedron_Lagrange1_GaussLegendre2_impl, public FiniteElementBase
 {
@@ -897,7 +897,7 @@ public:
 
 
 };
-#endif // __CUDA_ARCH__
+#endif // GEOS_DEVICE_COMPILE
 
 
 

@@ -711,7 +711,7 @@ transformedQuadratureWeight( localIndex const q,
 
 
 
-#ifndef __CUDA_ARCH__
+#ifndef GEOS_DEVICE_COMPILE
 
 template< typename NUM_Q_POINTS >
 class H1_Tetrahedron_Lagrange1_Gauss final : public H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >,
@@ -749,7 +749,7 @@ public:
 
 
 };
-#endif // __CUDA_ARCH__
+#endif // GEOS_DEVICE_COMPILE
 
 
 

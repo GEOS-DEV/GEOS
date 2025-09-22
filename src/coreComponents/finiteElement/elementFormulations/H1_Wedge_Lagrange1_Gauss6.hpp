@@ -663,7 +663,7 @@ H1_Wedge_Lagrange1_Gauss6_impl::
 }
 
 
-#ifndef __CUDA_ARCH__
+#ifndef GEOS_DEVICE_COMPILE
 
 class H1_Wedge_Lagrange1_Gauss6 final : public H1_Wedge_Lagrange1_Gauss6_impl,
   public FiniteElementBase
@@ -691,7 +691,7 @@ public:
 
 };
 
-#endif // __CUDA_ARCH__
+#endif // GEOS_DEVICE_COMPILE
 
 
 }

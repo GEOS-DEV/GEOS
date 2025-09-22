@@ -384,7 +384,7 @@ public:
 
 
 
-#ifndef __CUDA_ARCH__
+#ifndef GEOS_DEVICE_COMPILE
 
 /**
  * @brief Base class for FEM element implementations.
@@ -438,7 +438,7 @@ private:
 };
 
 
-#endif // __CUDA_ARCH__
+#endif // GEOS_DEVICE_COMPILE
 
 
 

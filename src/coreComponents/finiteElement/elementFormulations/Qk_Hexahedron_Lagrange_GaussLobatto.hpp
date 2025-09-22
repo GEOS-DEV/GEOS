@@ -1709,7 +1709,7 @@ gradient( int const q,
 
 
 
-#ifndef __CUDA_ARCH__
+#ifndef GEOS_DEVICE_COMPILE
 
 template< typename GL_BASIS >
 class Qk_Hexahedron_Lagrange_GaussLobatto final : public Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >,
@@ -1742,7 +1742,7 @@ public:
   virtual ~Qk_Hexahedron_Lagrange_GaussLobatto() override final = default;
 
 };
-#endif // __CUDA_ARCH__
+#endif // GEOS_DEVICE_COMPILE
 
 
 
