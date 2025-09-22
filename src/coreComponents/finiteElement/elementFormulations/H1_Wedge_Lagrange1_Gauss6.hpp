@@ -67,14 +67,14 @@ public:
   template< typename SUBREGION_TYPE >
   struct MeshData {};
 
-
+  /// @cond DO_NOT_DOCUMENT
   GEOS_HOST_DEVICE H1_Wedge_Lagrange1_Gauss6_impl() = default;
   GEOS_HOST_DEVICE ~H1_Wedge_Lagrange1_Gauss6_impl() = default;
   GEOS_HOST_DEVICE H1_Wedge_Lagrange1_Gauss6_impl( H1_Wedge_Lagrange1_Gauss6_impl const & ) = default;
   GEOS_HOST_DEVICE H1_Wedge_Lagrange1_Gauss6_impl & operator=( H1_Wedge_Lagrange1_Gauss6_impl const & ) = default;
   GEOS_HOST_DEVICE H1_Wedge_Lagrange1_Gauss6_impl( H1_Wedge_Lagrange1_Gauss6_impl && ) = default;
   GEOS_HOST_DEVICE H1_Wedge_Lagrange1_Gauss6_impl & operator=( H1_Wedge_Lagrange1_Gauss6_impl && ) = default;
-
+  /// @endcond DO_NOT_DOCUMENT
 
   /**
    * @brief Get the number of quadrature points.
@@ -662,9 +662,12 @@ H1_Wedge_Lagrange1_Gauss6_impl::
   return LvArray::tensorOps::determinant< 3 >( J ) * weight;
 }
 
+/// @endcond Doxygen_Suppress
+
 
 #ifndef GEOS_DEVICE_COMPILE
 
+/// @copydoc H1_Wedge_Lagrange1_Gauss6_impl
 class H1_Wedge_Lagrange1_Gauss6 final : public H1_Wedge_Lagrange1_Gauss6_impl,
   public FiniteElementBase
 {
@@ -674,16 +677,23 @@ public:
   /// Implementation type
   using ImplType = H1_Wedge_Lagrange1_Gauss6_impl;
 
-
   H1_Wedge_Lagrange1_Gauss6():
     FiniteElementBase( numNodes, maxSupportPoints, numQuadraturePoints )
   {}
 
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   H1_Wedge_Lagrange1_Gauss6_impl * getImpl()
   {
     return static_cast< H1_Wedge_Lagrange1_Gauss6_impl * >(this);
   }
 
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   H1_Wedge_Lagrange1_Gauss6_impl const * getImpl() const
   {
     return static_cast< H1_Wedge_Lagrange1_Gauss6_impl const * >(this);

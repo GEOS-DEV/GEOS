@@ -50,11 +50,12 @@ class Pk_Pyramid_BCD_impl : public FiniteElementBase_impl< Pk_Pyramid_BCD_NumNod
                                                            Pk_Pyramid_BCD_NumNodes< ORDER > >
 {
 public:
+  /// Convenience alias for the base class.
   using Base = FiniteElementBase_impl< Pk_Pyramid_BCD_NumNodes< ORDER >,
                                        5,
                                        Pk_Pyramid_BCD_NumNodes< ORDER > >;
 
-/// struct to hold stack variables.
+  /// struct to hold stack variables.
   struct StackVariables {};
 
   /// The number of shape functions per element.
@@ -65,12 +66,14 @@ public:
 
   /// The maximum number of support points per element.
   using Base::maxSupportPoints;
+
   /// The order of the finite element.
   static constexpr int order = ORDER;
 
   /// The number of modal points per element.
   constexpr static localIndex numModes = numNodes;
 
+  /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
   GEOS_HOST_DEVICE
   static localIndex getNumQuadraturePoints()
   {
@@ -90,6 +93,7 @@ public:
     return numQuadraturePoints;
   }
 
+  /// @copydoc FiniteElementBase_impl::getNumSupportPoints()
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static localIndex getNumSupportPoints()
@@ -97,6 +101,7 @@ public:
     return numNodes;
   }
 
+  /// @copydoc FiniteElementBase_impl::getMaxSupportPoints()
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static localIndex getMaxSupportPoints()
@@ -748,6 +753,7 @@ public:
 
 #ifndef GEOS_DEVICE_COMPILE
 
+/// @copydoc Pk_Pyramid_BCD_impl
 template< int ORDER >
 class Pk_Pyramid_BCD final : public Pk_Pyramid_BCD_impl< ORDER >, public FiniteElementBase
 {
@@ -756,8 +762,13 @@ public:
   /// The Implementation type
   using ImplType = Pk_Pyramid_BCD_impl< ORDER >;
 
+  /// The number of nodes per element.
   using ImplType::numNodes;
+
+  /// The max number of support points per element.
   using ImplType::maxSupportPoints;
+
+  /// The number of quadrature points per element.
   using ImplType::numQuadraturePoints;
 
   Pk_Pyramid_BCD():
@@ -769,25 +780,33 @@ public:
   GEOS_HOST_DEVICE
   virtual ~Pk_Pyramid_BCD() override final = default;
 
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   ImplType * getImpl()
   {
     return static_cast< ImplType * >(this);
   }
 
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   ImplType const * getImpl() const
   {
     return static_cast< ImplType const * >(this);
   }
 
-
 };
+
+/// Pyramid element with BCD basis functions of order 1.
+using P1_Pyramid_BCD = Pk_Pyramid_BCD< 1 >;
+
 #endif // GEOS_DEVICE_COMPILE
 
-
-/**
- *  Pyramid element with BCD basis functions of order 1.
- */
-using P1_Pyramid_BCD = Pk_Pyramid_BCD< 1 >;
+/// Pyramid element with BCD basis functions of order 1.
+using P1_Pyramid_BCD_impl = Pk_Pyramid_BCD_impl< 1 >;
 
 
 }

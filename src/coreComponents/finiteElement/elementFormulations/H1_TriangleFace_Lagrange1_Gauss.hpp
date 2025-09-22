@@ -73,14 +73,16 @@ public:
   template< typename SUBREGION_TYPE >
   struct MeshData {};
 
+  /// @cond DO_NOT_DOCUMENT
   GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl() = default;
   GEOS_HOST_DEVICE ~H1_TriangleFace_Lagrange1_Gauss_impl() = default;
   GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl( H1_TriangleFace_Lagrange1_Gauss_impl const & ) = default;
   GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl & operator=( H1_TriangleFace_Lagrange1_Gauss_impl const & ) = default;
   GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl( H1_TriangleFace_Lagrange1_Gauss_impl && ) = default;
   GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl & operator=( H1_TriangleFace_Lagrange1_Gauss_impl && ) = default;
+  /// @endcond DO_NOT_DOCUMENT
 
-
+  /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
   GEOS_HOST_DEVICE
   localIndex getNumQuadraturePoints()
   {
@@ -99,6 +101,7 @@ public:
     return numQuadraturePoints;
   }
 
+  /// @copydoc FiniteElementBase_impl::getNumSupportPoints()
   GEOS_HOST_DEVICE
   localIndex getNumSupportPoints()
   {
@@ -117,6 +120,7 @@ public:
     return numNodes;
   }
 
+  /// @copydoc FiniteElementBase_impl::getMaxSupportPoints()
   GEOS_HOST_DEVICE
   localIndex getMaxSupportPoints()
   {
@@ -441,6 +445,7 @@ transformedQuadratureWeight( localIndex const q,
 
 #ifndef GEOS_DEVICE_COMPILE
 
+/// @copydoc H1_TriangleFace_Lagrange1_Gauss_impl
 template< typename NUM_Q_POINTS >
 class H1_TriangleFace_Lagrange1_Gauss final : public H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >,
   public FiniteElementBase
@@ -453,31 +458,35 @@ public:
   /// The Implementation type
   using ImplType = H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >;
 
-
-
+  /// Constructor
   H1_TriangleFace_Lagrange1_Gauss():
     FiniteElementBase( ImplType::numNodes,
                        ImplType::maxSupportPoints,
                        ImplType::numQuadraturePoints )
   {}
 
-
+  /// Destructor
   virtual ~H1_TriangleFace_Lagrange1_Gauss() override final = default;
 
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS > * getImpl()
   {
     return static_cast< H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS > * >(this);
   }
 
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   const H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS > * getImpl() const
   {
     return static_cast< H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS > const * >(this);
   }
 
-
 };
-#endif // GEOS_DEVICE_COMPILE
-
 
 /// @brief Instantiation of the class with 1 quadrature points.
 using H1_TriangleFace_Lagrange1_Gauss1 = H1_TriangleFace_Lagrange1_Gauss< std::integral_constant< int, 1 > >;
@@ -486,6 +495,14 @@ using H1_TriangleFace_Lagrange1_Gauss4 = H1_TriangleFace_Lagrange1_Gauss< std::i
 /// @brief Instantiation of the class with 6 quadrature points.
 using H1_TriangleFace_Lagrange1_Gauss6 = H1_TriangleFace_Lagrange1_Gauss< std::integral_constant< int, 6 > >;
 
+#endif // GEOS_DEVICE_COMPILE
+
+/// @brief Instantiation of the class with 1 quadrature points.
+using H1_TriangleFace_Lagrange1_Gauss1_impl = H1_TriangleFace_Lagrange1_Gauss_impl< std::integral_constant< int, 1 > >;
+/// @brief Instantiation of the class with 4 quadrature points.
+using H1_TriangleFace_Lagrange1_Gauss4_impl = H1_TriangleFace_Lagrange1_Gauss_impl< std::integral_constant< int, 4 > >;
+/// @brief Instantiation of the class with 6 quadrature points.
+using H1_TriangleFace_Lagrange1_Gauss6_impl = H1_TriangleFace_Lagrange1_Gauss_impl< std::integral_constant< int, 6 > >;
 
 }
 }

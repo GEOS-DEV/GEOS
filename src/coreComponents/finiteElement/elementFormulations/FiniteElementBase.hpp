@@ -34,15 +34,7 @@ namespace geos
 namespace finiteElement
 {
 
-
-
-/// @cond Doxygen_Suppress
-
-
-/// @endcond
-
-
-
+/// @brief Device-compatible (non virtual) Base class for all finite element formulations.
 template< int NUM_SUPPORT_POINTS,
           int NUM_FACES,
           int NUM_QUADRATURE_POINTS >
@@ -50,14 +42,19 @@ class FiniteElementBase_impl
 {
 public:
 
+  /// The number of nodes per element.
   constexpr static localIndex numNodes = NUM_SUPPORT_POINTS;
 
+  /// The number of support points per element.
   constexpr static localIndex numSupportPoints = NUM_SUPPORT_POINTS;
 
+  /// The maximum number of support points per element.
   constexpr static localIndex maxSupportPoints = numSupportPoints;
 
+  /// The number of faces per element.
   constexpr static localIndex numFaces = NUM_FACES;
 
+  /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = NUM_QUADRATURE_POINTS;
 
   /// Number of sampling points.
@@ -66,12 +63,23 @@ public:
   /// The number of sampling points per element.
   constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
-
+  /// Default constructor.
   GEOS_HOST_DEVICE FiniteElementBase_impl() = default;
+  /// Default destructor.
   GEOS_HOST_DEVICE ~FiniteElementBase_impl() = default;
+  /// Default copy constructor.
   GEOS_HOST_DEVICE FiniteElementBase_impl( FiniteElementBase_impl const & ) = default;
+  /**
+   * @brief Default copy assignment operator.
+   * @return A reference to this object.
+   */
   GEOS_HOST_DEVICE FiniteElementBase_impl & operator=( FiniteElementBase_impl const & ) = default;
+  /// Default move constructor.
   GEOS_HOST_DEVICE FiniteElementBase_impl( FiniteElementBase_impl && ) = default;
+  /**
+   * @brief Default move assignment operator.
+   * @return A reference to this object.
+   */
   GEOS_HOST_DEVICE FiniteElementBase_impl & operator=( FiniteElementBase_impl && ) = default;
 
   /**
@@ -92,6 +100,10 @@ public:
   struct MeshData
   {};
 
+  /**
+   * @brief Get the number of quadrature points.
+   * @return The number of quadrature points.
+   */
   GEOS_HOST_DEVICE
   static localIndex getNumQuadraturePoints()
   {
@@ -111,6 +123,10 @@ public:
     return numQuadraturePoints;
   }
 
+  /**
+   * @brief Get the number of support points.
+   * @return The number of support points.
+   */
   GEOS_HOST_DEVICE
   static localIndex getNumSupportPoints()
   {
@@ -130,6 +146,10 @@ public:
     return numNodes;
   }
 
+  /**
+   * @brief Get the maximum number of support points.
+   * @return The maximum number of support points.
+   */
   GEOS_HOST_DEVICE
   static localIndex getMaxSupportPoints()
   {
@@ -393,6 +413,12 @@ class FiniteElementBase
 {
 public:
 
+  /**
+   * @brief Default constructor.
+   * @param numSupportPoints The number of support points.
+   * @param maxSupportPoints The maximum number of support points.
+   * @param numQuadraturePoints The number of quadrature points.
+   */
   GEOS_HOST_DEVICE
   FiniteElementBase( localIndex const numSupportPoints,
                      localIndex const maxSupportPoints,

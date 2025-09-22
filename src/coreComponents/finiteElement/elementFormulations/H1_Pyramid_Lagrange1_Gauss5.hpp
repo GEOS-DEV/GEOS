@@ -71,12 +71,14 @@ public:
   template< typename SUBREGION_TYPE >
   struct MeshData {};
 
+  /// @cond DO_NOT_DOCUMENT
   GEOS_HOST_DEVICE H1_Pyramid_Lagrange1_Gauss5_impl() = default;
   GEOS_HOST_DEVICE ~H1_Pyramid_Lagrange1_Gauss5_impl() = default;
   GEOS_HOST_DEVICE H1_Pyramid_Lagrange1_Gauss5_impl( H1_Pyramid_Lagrange1_Gauss5_impl const & ) = default;
   GEOS_HOST_DEVICE H1_Pyramid_Lagrange1_Gauss5_impl & operator=( H1_Pyramid_Lagrange1_Gauss5_impl const & ) = default;
   GEOS_HOST_DEVICE H1_Pyramid_Lagrange1_Gauss5_impl( H1_Pyramid_Lagrange1_Gauss5_impl && ) = default;
   GEOS_HOST_DEVICE H1_Pyramid_Lagrange1_Gauss5_impl & operator=( H1_Pyramid_Lagrange1_Gauss5_impl && ) = default;
+  /// @endcond DO_NOT_DOCUMENT
 
   /**
    * @brief Calculate shape functions values at a single point.
@@ -584,6 +586,7 @@ H1_Pyramid_Lagrange1_Gauss5_impl::
 
 #ifndef GEOS_DEVICE_COMPILE
 
+/// @copydoc H1_Pyramid_Lagrange1_Gauss5_impl
 class H1_Pyramid_Lagrange1_Gauss5 final : public H1_Pyramid_Lagrange1_Gauss5_impl,
   public FiniteElementBase
 {
@@ -604,11 +607,19 @@ public:
 
   virtual ~H1_Pyramid_Lagrange1_Gauss5() override final = default;
 
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   H1_Pyramid_Lagrange1_Gauss5_impl * getImpl()
   {
     return static_cast< H1_Pyramid_Lagrange1_Gauss5_impl * >(this);
   }
 
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   H1_Pyramid_Lagrange1_Gauss5_impl const * getImpl() const
   {
     return static_cast< H1_Pyramid_Lagrange1_Gauss5_impl const * >(this);

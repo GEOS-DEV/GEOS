@@ -53,6 +53,7 @@ class BB_Tetrahedron_impl : public FiniteElementBase_impl< BB_Tetrahedron_NumNod
                                                            BB_Tetrahedron_NumNodes< ORDER > >
 {
 public:
+  /// Convenience alias for base class type.
   using Base = FiniteElementBase_impl< BB_Tetrahedron_NumNodes< ORDER >,
                                        4,
                                        BB_Tetrahedron_NumNodes< ORDER > >;
@@ -75,6 +76,7 @@ public:
   /// The number of shape functions per face
   constexpr static localIndex numNodesPerFace = ( ORDER + 1 ) * ( ORDER + 2 ) / 2;
 
+  /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
   GEOS_HOST_DEVICE
   static localIndex getNumQuadraturePoints()
   {
@@ -94,6 +96,7 @@ public:
     return numQuadraturePoints;
   }
 
+  /// @copydoc FiniteElementBase_impl::getNumSupportPoints()
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static localIndex getNumSupportPoints()
@@ -101,6 +104,7 @@ public:
     return numNodes;
   }
 
+  /// @copydoc FiniteElementBase_impl::getMaxSupportPoints()
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static localIndex getMaxSupportPoints()
@@ -130,7 +134,6 @@ public:
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static real64 jacobianDeterminant( real64 const (&X)[4][3] )
-
   {
     real64 m[3][3] = {};
     for( int i = 0; i < 3; i++ )
@@ -1331,6 +1334,7 @@ public:
 
 #ifndef GEOS_DEVICE_COMPILE
 
+/// @copydoc BB_Tetrahedron_impl
 template< int ORDER >
 class BB_Tetrahedron final : public BB_Tetrahedron_impl< ORDER >, public FiniteElementBase
 {
@@ -1339,8 +1343,13 @@ public:
   /// The Implementation type
   using ImplType = BB_Tetrahedron_impl< ORDER >;
 
+  /// The number of nodes per element.
   using ImplType::numNodes;
+
+  /// The max number of support points per element.
   using ImplType::maxSupportPoints;
+
+  /// The number of quadrature points per element.
   using ImplType::numQuadraturePoints;
 
   BB_Tetrahedron():
@@ -1352,35 +1361,47 @@ public:
   GEOS_HOST_DEVICE
   virtual ~BB_Tetrahedron() override final = default;
 
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   ImplType * getImpl()
   {
     return static_cast< ImplType * >(this);
   }
 
+  /**
+  * @brief Get the device-compatible implementation type.
+  * @return A pointer to the device-compatible implementation type.
+  */
   ImplType const * getImpl() const
   {
     return static_cast< ImplType const * >(this);
   }
 
-
 };
-#endif // GEOS_DEVICE_COMPILE
 
-
-/**
- *  Tetrahedron element with Bernstein-Bézier basis functions of order 1.
- */
+///  Tetrahedron element with Bernstein-Bézier basis functions of order 1.
 using BB1_Tetrahedron = BB_Tetrahedron< 1 >;
-/**
- *  Tetrahedron element with Bernstein-Bézier basis functions of order 2.
- */
+///  Tetrahedron element with Bernstein-Bézier basis functions of order 2.
 using BB2_Tetrahedron = BB_Tetrahedron< 2 >;
-/**
- *  Tetrahedron element with Bernstein-Bézier basis functions of order 3.
- */
+///  Tetrahedron element with Bernstein-Bézier basis functions of order 3.
 using BB3_Tetrahedron = BB_Tetrahedron< 3 >;
+
 //using BB4_Tetrahedron = BB_Tetrahedron< 4 >;
 //using BB5_Tetrahedron = BB_Tetrahedron< 5 >;
+
+#endif // GEOS_DEVICE_COMPILE
+
+///  Tetrahedron element with Bernstein-Bézier basis functions of order 1.
+using BB1_Tetrahedron_impl = BB_Tetrahedron_impl< 1 >;
+///  Tetrahedron element with Bernstein-Bézier basis functions of order 2.
+using BB2_Tetrahedron_impl = BB_Tetrahedron_impl< 2 >;
+///  Tetrahedron element with Bernstein-Bézier basis functions of order 3.
+using BB3_Tetrahedron_impl = BB_Tetrahedron_impl< 3 >;
+
+// using BB2_Tetrahedron_impl = BB_Tetrahedron_impl< 4 >;
+// using BB3_Tetrahedron_impl = BB_Tetrahedron_impl< 5 >;
 
 }
 }

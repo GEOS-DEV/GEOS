@@ -72,24 +72,14 @@ public:
   template< typename SUBREGION_TYPE >
   struct MeshData {};
 
+  /// @cond DO_NOT_DOCUMENT
   GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl() = default;
   GEOS_HOST_DEVICE ~Qk_Hexahedron_Lagrange_GaussLobatto_impl() = default;
   GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl( Qk_Hexahedron_Lagrange_GaussLobatto_impl const & ) = default;
   GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl & operator=( Qk_Hexahedron_Lagrange_GaussLobatto_impl const & ) = default;
   GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl( Qk_Hexahedron_Lagrange_GaussLobatto_impl && ) = default;
   GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl & operator=( Qk_Hexahedron_Lagrange_GaussLobatto_impl && ) = default;
-
-
-  Qk_Hexahedron_Lagrange_GaussLobatto_impl * getImpl()
-  {
-    return static_cast< Qk_Hexahedron_Lagrange_GaussLobatto_impl * >(this);
-  }
-
-  const Qk_Hexahedron_Lagrange_GaussLobatto_impl * getImpl() const
-  {
-    return static_cast< const Qk_Hexahedron_Lagrange_GaussLobatto_impl * >(this);
-  }
-
+  /// @endcond DO_NOT_DOCUMENT
 
   /**
    * @brief The linear index associated to the given one-dimensional indices in the three directions
@@ -1722,11 +1712,19 @@ public:
 
   using ImplType = Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >;
 
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS > * getImpl()
   {
     return static_cast< Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS > * >(this);
   }
 
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   const Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS > * getImpl() const
   {
     return static_cast< const Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS > * >(this);

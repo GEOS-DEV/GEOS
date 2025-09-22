@@ -50,13 +50,28 @@ template< typename NUM_Q_POINTS >
 class H1_Tetrahedron_Lagrange1_Gauss_impl : public FiniteElementBase_impl< 4, 4, NUM_Q_POINTS::value >
 {
 public:
+  /// Convenience type alias for the base class
   using BASE = FiniteElementBase_impl< 4, 4, NUM_Q_POINTS::value >;
+
+  /// Number of nodes in the element
   constexpr static localIndex numNodes = BASE::numNodes;
+  
+  /// Number of support points in the element
   constexpr static localIndex numSupportPoints = BASE::numSupportPoints;
+  
+  /// Maximum number of support points in the element
   constexpr static localIndex maxSupportPoints = BASE::maxSupportPoints;
+  
+  /// Number of faces in the element
   constexpr static localIndex numFaces = BASE::numFaces;
+  
+  /// Number of quadrature points in the element
   constexpr static localIndex numQuadraturePoints = BASE::numQuadraturePoints;
+  
+  /// Number of sampling points per direction
   constexpr static int numSamplingPointsPerDirection = 10;
+
+  /// Total number of sampling points
   constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
   /// Check that the number of quadrature points is valid.
@@ -68,7 +83,6 @@ public:
   /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
 
-
   /// struct to hold stack variables.
   struct StackVariables {};
 
@@ -76,15 +90,16 @@ public:
   template< typename SUBREGION_TYPE >
   struct MeshData {};
 
+  /// @cond DO_NOT_DOCUMENT
   GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl() = default;
   GEOS_HOST_DEVICE ~H1_Tetrahedron_Lagrange1_Gauss_impl() = default;
   GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl( H1_Tetrahedron_Lagrange1_Gauss_impl const & ) = default;
   GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl & operator=( H1_Tetrahedron_Lagrange1_Gauss_impl const & ) = default;
   GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl( H1_Tetrahedron_Lagrange1_Gauss_impl && ) = default;
   GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl & operator=( H1_Tetrahedron_Lagrange1_Gauss_impl && ) = default;
+  /// @endcond DO_NOT_DOCUMENT
 
-
-
+  /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
   GEOS_HOST_DEVICE
   static localIndex getNumQuadraturePoints()
   {
@@ -104,12 +119,14 @@ public:
     return numQuadraturePoints;
   }
 
+  /// @copydoc FiniteElementBase_impl::getNumSupportPoints()
   GEOS_HOST_DEVICE
   static localIndex getNumSupportPoints()
   {
     return numNodes;
   }
 
+  /// @copydoc FiniteElementBase_impl::getMaxSupportPoints()
   GEOS_HOST_DEVICE
   static localIndex getMaxSupportPoints()
   {
@@ -713,6 +730,7 @@ transformedQuadratureWeight( localIndex const q,
 
 #ifndef GEOS_DEVICE_COMPILE
 
+/// @copydoc H1_Tetrahedron_Lagrange1_Gauss_impl
 template< typename NUM_Q_POINTS >
 class H1_Tetrahedron_Lagrange1_Gauss final : public H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >,
   public FiniteElementBase
@@ -725,44 +743,51 @@ public:
   /// The Implementation type.
   using ImplType = H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >;
 
-
+  /// Constructor
   H1_Tetrahedron_Lagrange1_Gauss():
     FiniteElementBase( ImplType::numNodes,
                        ImplType::maxSupportPoints,
                        ImplType::numQuadraturePoints )
   {}
 
-
+  /// Destructor
   virtual ~H1_Tetrahedron_Lagrange1_Gauss() override final = default;
 
-
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > * getImpl()
   {
     return static_cast< H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > * >(this);
   }
 
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > const * getImpl() const
   {
     return static_cast< H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS > const * >(this);
   }
 
-
-
 };
+
+/// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss_impl class for the 1-point Gaussian quadrature rule.
+using H1_Tetrahedron_Lagrange1_Gauss1 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 1 > >;
+/// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss class for the 5-point Gaussian quadrature rule.
+using H1_Tetrahedron_Lagrange1_Gauss5 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 5 > >;
+/// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss class for the 14-point Gaussian quadrature rule.
+using H1_Tetrahedron_Lagrange1_Gauss14 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 14 > >;
+
 #endif // GEOS_DEVICE_COMPILE
-
-
 
 /// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss_impl class for the 1-point Gaussian quadrature rule.
 using H1_Tetrahedron_Lagrange1_Gauss1_impl = H1_Tetrahedron_Lagrange1_Gauss_impl< std::integral_constant< int, 1 > >;
-using H1_Tetrahedron_Lagrange1_Gauss1 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 1 > >;
 /// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss class for the 5-point Gaussian quadrature rule.
 using H1_Tetrahedron_Lagrange1_Gauss5_impl = H1_Tetrahedron_Lagrange1_Gauss_impl< std::integral_constant< int, 5 > >;
-using H1_Tetrahedron_Lagrange1_Gauss5 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 5 > >;
 /// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss class for the 14-point Gaussian quadrature rule.
 using H1_Tetrahedron_Lagrange1_Gauss14_impl = H1_Tetrahedron_Lagrange1_Gauss_impl< std::integral_constant< int, 14 > >;
-using H1_Tetrahedron_Lagrange1_Gauss14 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 14 > >;
-
 }
 }
 

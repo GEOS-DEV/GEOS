@@ -14,7 +14,7 @@
  */
 
 /**
- * @file H1_Hexahedron_Lagrange1_GaussLegendre2_impl.hpp
+ * @file H1_Hexahedron_Lagrange1_GaussLegendre2.hpp
  */
 
 #ifndef GEOS_FINITEELEMENT_ELEMENTFORMULATIONS_TRILINEARHEXAHEDRON_HPP_
@@ -82,15 +82,16 @@ public:
   template< typename SUBREGION_TYPE >
   struct MeshData {};
 
-
+  /// @cond DO_NOT_DOCUMENT
   GEOS_HOST_DEVICE H1_Hexahedron_Lagrange1_GaussLegendre2_impl() = default;
   GEOS_HOST_DEVICE ~H1_Hexahedron_Lagrange1_GaussLegendre2_impl() = default;
   GEOS_HOST_DEVICE H1_Hexahedron_Lagrange1_GaussLegendre2_impl( H1_Hexahedron_Lagrange1_GaussLegendre2_impl const & ) = default;
   GEOS_HOST_DEVICE H1_Hexahedron_Lagrange1_GaussLegendre2_impl & operator=( H1_Hexahedron_Lagrange1_GaussLegendre2_impl const & ) = default;
   GEOS_HOST_DEVICE H1_Hexahedron_Lagrange1_GaussLegendre2_impl( H1_Hexahedron_Lagrange1_GaussLegendre2_impl && ) = default;
   GEOS_HOST_DEVICE H1_Hexahedron_Lagrange1_GaussLegendre2_impl & operator=( H1_Hexahedron_Lagrange1_GaussLegendre2_impl && ) = default;
+  /// @endcond DO_NOT_DOCUMENT
 
-
+  /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
   GEOS_HOST_DEVICE
   static localIndex getNumQuadraturePoints()
   {
@@ -109,12 +110,14 @@ public:
     return numQuadraturePoints;
   }
 
+  /// @copydoc FiniteElementBase_impl::getNumSupportPoints()
   GEOS_HOST_DEVICE
   static localIndex getNumSupportPoints()
   {
     return numNodes;
   }
 
+  /// @copydoc FiniteElementBase_impl::getMaxSupportPoints()
   GEOS_HOST_DEVICE
   static localIndex getMaxSupportPoints()
   {
@@ -866,6 +869,7 @@ void H1_Hexahedron_Lagrange1_GaussLegendre2_impl::gradient( int const q,
 
 #ifndef GEOS_DEVICE_COMPILE
 
+/// @copydoc H1_Hexahedron_Lagrange1_GaussLegendre2_impl
 class H1_Hexahedron_Lagrange1_GaussLegendre2 final : public H1_Hexahedron_Lagrange1_GaussLegendre2_impl, public FiniteElementBase
 {
 public:
@@ -885,11 +889,19 @@ public:
   GEOS_HOST_DEVICE
   virtual ~H1_Hexahedron_Lagrange1_GaussLegendre2() override final = default;
 
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   H1_Hexahedron_Lagrange1_GaussLegendre2_impl * getImpl()
   {
     return static_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_impl * >(this);
   }
 
+  /**
+   * @brief Get the device-compatible implementation type.
+   * @return A pointer to the device-compatible implementation type.
+   */
   H1_Hexahedron_Lagrange1_GaussLegendre2_impl const * getImpl() const
   {
     return static_cast< H1_Hexahedron_Lagrange1_GaussLegendre2_impl const * >(this);
