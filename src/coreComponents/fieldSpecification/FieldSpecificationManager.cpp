@@ -18,7 +18,6 @@
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshObjectPath.hpp"
 
-
 namespace geos
 {
 
@@ -288,12 +287,12 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         FieldSpecificationBase::viewKeyStruct::emptySetErrorModeString());
       switch( wrapper.getDefaultValue() )
       {
-        case  FieldSpecificationBase::setErrorMode::Silent:
+        case  FieldSpecificationBase::SetErrorMode::Silent:
           break;
-        case  FieldSpecificationBase::setErrorMode::Error:
+        case  FieldSpecificationBase::SetErrorMode::Error:
           GEOS_THROW( message.str(), InputError );
           break;
-        case  FieldSpecificationBase::setErrorMode::SurfaceGeneratorWarning:
+        case  FieldSpecificationBase::SetErrorMode::SurfaceGeneratorWarning:
           message << GEOS_FMT( "As the simulation includes a SurfaceGenerator, the set may be modified later",
                                fs.getDataContext() );
           GEOS_WARNING( message.str() );

@@ -108,7 +108,7 @@ public:
   /// deleted move assignement
   FieldSpecificationBase & operator=( FieldSpecificationBase && ) = delete;
 
-  enum setErrorMode : integer { Silent = 0, Error = 1, SurfaceGeneratorWarning = 2 };
+  enum SetErrorMode : integer { Silent = 0, Error = 1, SurfaceGeneratorWarning = 2 };
 
   /**
    * @brief Apply this field specification to the discretization
@@ -133,15 +133,10 @@ public:
       {
         dataRepository::Group const & setGroup = object.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
         string_array setNames = this->getSetNames();
-        // std::cout << "--- setNames -----" << std::endl;
-        // std::cout << "   object: " << object.getName() <<  std::endl;
-        // std::cout << "   setGroup: " << setGroup.getName() <<  std::endl;
         for( auto & setName : setNames )
         {
-          // std::cout << "   setName: " << setName <<  std::endl;
           if( setGroup.hasWrapper( setName ) )
           {
-            // std::cout << "   yes " << setName <<  std::endl;
             SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
             lambda( dynamic_cast< BC_TYPE const & >(*this), setName, targetSet, object, getFieldName() );
           }
@@ -609,7 +604,7 @@ private:
   string m_bcApplicationFunctionName;
 
   /// Value indicating whether we converts an error into a warning
-  integer m_emptySetErrorMode;
+  SetErrorMode m_emptySetErrorMode;
 };
 
 

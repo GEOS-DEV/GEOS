@@ -83,7 +83,7 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setDescription( "Time at which the boundary condition will stop being applied." );
 
   registerWrapper( viewKeyStruct::emptySetErrorModeString(), &m_emptySetErrorMode ).
-    setApplyDefaultValue( setErrorMode::Error ).
+    setApplyDefaultValue( SetErrorMode::Error ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Set the log state when we a “set” does not target any region\n"
                     "When set to 0, no output\n"

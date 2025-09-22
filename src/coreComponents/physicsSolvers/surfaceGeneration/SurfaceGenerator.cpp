@@ -282,7 +282,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
     fsm.forSubGroups< FieldSpecificationBase >( [&] ( FieldSpecificationBase & fs )
     {
       fs.getWrapper< integer >( FieldSpecificationBase::viewKeyStruct::emptySetErrorModeString())
-        .setDefaultValue( FieldSpecificationBase::setErrorMode::SurfaceGeneratorWarning );
+        .setDefaultValue( FieldSpecificationBase::SetErrorMode::SurfaceGeneratorWarning );
     } );
   } );
 
