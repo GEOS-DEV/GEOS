@@ -17,7 +17,6 @@
  * SolidMechanicsAugmentedLagrangianContact.cpp
  */
 
-#include "mesh/DomainPartition.hpp"
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp"
@@ -29,8 +28,9 @@
 #include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
-
 #include "constitutive/contact/FrictionSelector.hpp"
+#include "constitutive/solid/SolidFields.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
@@ -809,7 +809,8 @@ void SolidMechanicsAugmentedLagrangianContact::updateState( DomainPartition & do
   GEOS_UNUSED_VAR( domain );
 }
 
-bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartition & domain )
+bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartition & domain,
+                                                                    integer const GEOS_UNUSED_PARAM( configurationLoopIter ) )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1714,10 +1715,10 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
 
     // Bulk modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString() );
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::bulkModulus::key() );
     // Shear modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
-      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString() );
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::shearModulus::key() );
 
     using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
     ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
