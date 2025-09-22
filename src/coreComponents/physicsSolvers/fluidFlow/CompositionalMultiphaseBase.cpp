@@ -20,7 +20,8 @@
 #include "CompositionalMultiphaseBase.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureSelector.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/diffusion/DiffusionSelector.hpp"
 #include "constitutive/dispersion/DispersionSelector.hpp"
@@ -31,7 +32,6 @@
 #include "constitutive/thermalConductivity/MultiPhaseThermalConductivitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -49,7 +49,6 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolidInternalEnergyUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticPressureKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/StatisticsKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/AccumulationZFormulationKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/zFormulation/PhaseVolumeFractionZFormulationKernel.hpp"
 
 #if defined( __INTEL_COMPILER )
@@ -191,10 +190,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( 0.01 ).
     setDescription( "Minimum value for solution scaling factor" );
 
-  addLogLevel< logInfo::Convergence >();
-  addLogLevel< logInfo::Solution >();
-  addLogLevel< logInfo::SourceFluxFailure >();
-  addLogLevel< logInfo::TimeStep >();
+  addLogLevel< logInfo::BoundaryConditions >();
 }
 
 void CompositionalMultiphaseBase::postInputInitialization()
@@ -1378,10 +1374,12 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 }
 
 void
-CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                                real64 const & GEOS_UNUSED_PARAM( dt ),
+CompositionalMultiphaseBase::implicitStepSetup( real64 const & time_n,
+                                                real64 const & dt,
                                                 DomainPartition & domain )
 {
+  PhysicsSolverBase::implicitStepSetup( time_n, dt, domain );
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
@@ -1470,62 +1468,7 @@ void CompositionalMultiphaseBase::assembleLocalTerms( DomainPartition & domain,
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
-      string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
-
-      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-      CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-
-      if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
-      {
-        // isothermal for now
-        isothermalCompositionalMultiphaseBaseKernels::
-          AccumulationZFormulationKernelFactory::
-          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                     m_numPhases,
-                                                     dofManager.rankOffset(),
-                                                     kernelFlags,
-                                                     dofKey,
-                                                     subRegion,
-                                                     fluid,
-                                                     solid,
-                                                     localMatrix,
-                                                     localRhs );
-      }
-      else
-      {
-        if( m_isThermal )
-        {
-          thermalCompositionalMultiphaseBaseKernels::
-            AccumulationKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                       m_numPhases,
-                                                       dofManager.rankOffset(),
-                                                       kernelFlags,
-                                                       dofKey,
-                                                       subRegion,
-                                                       fluid,
-                                                       solid,
-                                                       localMatrix,
-                                                       localRhs );
-        }
-        else
-        {
-          isothermalCompositionalMultiphaseBaseKernels::
-            AccumulationKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                       m_numPhases,
-                                                       dofManager.rankOffset(),
-                                                       kernelFlags,
-                                                       dofKey,
-                                                       subRegion,
-                                                       fluid,
-                                                       solid,
-                                                       localMatrix,
-                                                       localRhs );
-        }
-      }
+      accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
     } );
   } );
 }
@@ -1629,7 +1572,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( bcLogMessage,
                                                   getName(), time+dt, fs.getCatalogName(), fs.getName(),
                                                   setName, subRegion.getName(), fs.getScale(), numTargetElems ),
@@ -1642,9 +1585,9 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
       }
       if( !subRegion.hasWrapper( dofKey ) )
       {
-        GEOS_LOG_LEVEL_BY_RANK_ON_GROUP( logInfo::SourceFluxFailure,
-                                         GEOS_FMT( "{}: trying to apply SourceFlux, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
-                                                   getDataContext(), setName, subRegion.getName() ),
+        GEOS_LOG_LEVEL_BY_RANK_ON_GROUP( logInfo::BoundaryConditions,
+                                         GEOS_FMT( "{}: trying to apply {}, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
+                                                   getDataContext(), SourceFluxBoundaryCondition::catalogName(), setName, subRegion.getName() ),
                                          fs );
         return;
       }
@@ -2528,6 +2471,8 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
 void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
+
+  PhysicsSolverBase::resetStateToBeginningOfStep( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,

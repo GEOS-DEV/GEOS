@@ -1,0 +1,61 @@
+<VTKFile type="UnstructuredGrid" version="1.0" byte_order="LittleEndian">
+  <UnstructuredGrid>
+    <Piece NumberOfPoints="16" NumberOfCells="3">
+      <PointData GlobalIds="GLOBAL_IDS_POINTS">
+        <DataArray type="Int64" IdType="1" Name="GLOBAL_IDS_POINTS" format="ascii">
+         10 11
+         14 15
+         26 27
+         30 31
+         42 43
+         46 47
+         58 59
+         62 63
+        </DataArray>
+      </PointData>
+      <CellData GlobalIds="GLOBAL_IDS_CELLS" Scalars="attribute">
+        <DataArray type="Int64" IdType="1" Name="GLOBAL_IDS_CELLS" format="ascii">
+          24 25 26
+        </DataArray>
+        <DataArray type="Int32" Name="attribute" format="ascii">
+          3 3 9
+        </DataArray>
+      </CellData>
+      <Points>
+        <DataArray type="Float32" Name="coordinates" NumberOfComponents="3" format="ascii">
+          2 2 0
+          3 2 0
+          2 3 0
+          3 3 0
+          2 2 1
+          3 2 1
+          2 3 1
+          3 3 1
+          2 2 2
+          3 2 2
+          2 3 2
+          3 3 2
+          2 2 3
+          3 2 3
+          2 3 3
+          3 3 3
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray type="Int32" Name="connectivity" format="ascii">
+          0 1 3 2 4 5 7 6
+          4 5 7 6 8 9 11 10
+          8 9 11 10 12 13 15 14
+        </DataArray>
+        <DataArray type="Int32" Name="offsets" format="ascii">
+          8
+          16
+          24
+        </DataArray>
+        <DataArray type="UInt8" Name="types" format="ascii">
+          12 12 12
+        </DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>

@@ -87,7 +87,7 @@ public:
 
   real64 calculateFractureResidualNorm( DomainPartition const & domain,
                                         DofManager const & dofManager,
-                                        arrayView1d< real64 const > const & localRhs ) const;
+                                        arrayView1d< real64 const > const & localRhs );
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
@@ -118,7 +118,8 @@ public:
                         real64 const dt,
                         DomainPartition & domain );
 
-  virtual bool updateConfiguration( DomainPartition & domain ) override final;
+  virtual bool updateConfiguration( DomainPartition & domain,
+                                    integer configurationLoopIter ) override final;
 
   bool useStaticCondensation() const { return m_useStaticCondensation; }
 

@@ -382,7 +382,7 @@ void DomainPartition::outputPartitionInformation() const
 
   GEOS_LOG_RANK_0( "MPI Partitioning information:" );
 
-  stdVector< TableData > partitionsData;
+  std::set< TableData > partitionsData;
   forMeshBodies( [&]( MeshBody const & meshBody )
   {
     meshBody.getMeshLevels().forSubGroupsIndex< MeshLevel >( [&]( int const level, MeshLevel const & meshLevel )
@@ -412,28 +412,6 @@ void DomainPartition::outputPartitionInformation() const
 
         if( MpiWrapper::commRank() == 0 )
         {
-          TableLayout const layout = TableLayout( "Mesh partitioning over ranks",
-                                                  {TableLayout::Column()
-                                                     .setName( "Ranks" )
-                                                     .setValuesAlignment( TableLayout::Alignment::right ),
-                                                   TableLayout::Column()
-                                                     .setName( "Nodes" )
-                                                     .setValuesAlignment( TableLayout::Alignment::right )
-                                                     .addSubColumns( {  "Local", "Ghost", "Total" } ),
-                                                   TableLayout::Column()
-                                                     .setName( "Edges" )
-                                                     .setValuesAlignment( TableLayout::Alignment::right )
-                                                     .addSubColumns( {  "Local", "Ghost", "Total" } ),
-                                                   TableLayout::Column()
-                                                     .setName( "Faces" )
-                                                     .setValuesAlignment( TableLayout::Alignment::right )
-                                                     .addSubColumns( {  "Local", "Ghost", "Total" } ),
-                                                   TableLayout::Column()
-                                                     .setName( "Elems" )
-                                                     .setValuesAlignment( TableLayout::Alignment::right )
-                                                     .addSubColumns( {  "Local", "Ghost", "Total" } ),
-                                                  } )
-                                       .setMargin( TableLayout::MarginValue::small );
           TableData tableData;
 
           for( int rankId = 0; rankId < MpiWrapper::commSize(); ++rankId )
@@ -502,19 +480,43 @@ void DomainPartition::outputPartitionInformation() const
             addSummaryRow( tableData, localTotalMaxRatio, "max(local/total)" );
           }
 
-
-          partitionsData.push_back( tableData );
-          if( partitionsData.size() == 1 ||
-              !(partitionsData[0] == partitionsData.back()))
-          {
-            TableTextFormatter logPartition( layout );
-            GEOS_LOG( logPartition.toString( tableData ));
-          }
-
+          partitionsData.insert( tableData );
         }
-
       }
     } );
+
+    if( MpiWrapper::commRank() == 0 )
+    {
+      TableLayout const layout = TableLayout( "Mesh partitioning over ranks",
+                                              {TableLayout::Column()
+                                                 .setName( "Ranks" )
+                                                 .setValuesAlignment( TableLayout::Alignment::right ),
+                                               TableLayout::Column()
+                                                 .setName( "Nodes" )
+                                                 .setValuesAlignment( TableLayout::Alignment::right )
+                                                 .addSubColumns( {  "Local", "Ghost", "Total" } ),
+                                               TableLayout::Column()
+                                                 .setName( "Edges" )
+                                                 .setValuesAlignment( TableLayout::Alignment::right )
+                                                 .addSubColumns( {  "Local", "Ghost", "Total" } ),
+                                               TableLayout::Column()
+                                                 .setName( "Faces" )
+                                                 .setValuesAlignment( TableLayout::Alignment::right )
+                                                 .addSubColumns( {  "Local", "Ghost", "Total" } ),
+                                               TableLayout::Column()
+                                                 .setName( "Elems" )
+                                                 .setValuesAlignment( TableLayout::Alignment::right )
+                                                 .addSubColumns( {  "Local", "Ghost", "Total" } ),
+                                              } )
+                                   .setMargin( TableLayout::MarginValue::small );
+
+      for( auto const & partition : partitionsData )
+      {
+        TableTextFormatter const logPartition( layout );
+        GEOS_LOG( logPartition.toString( partition ));
+      }
+
+    }
   } );
 
 }

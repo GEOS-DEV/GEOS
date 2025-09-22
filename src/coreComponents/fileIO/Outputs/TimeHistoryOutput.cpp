@@ -26,20 +26,6 @@ namespace geos
 {
 using namespace dataRepository;
 
-namespace logInfo
-{
-struct TimeHistoryOutputTimer : public OutputTimerBase
-{
-  std::string_view getDescription() const override { return "Time history output timing"; }
-};
-}
-
-logInfo::OutputTimerBase const & TimeHistoryOutput::getTimerCategory() const
-{
-  static logInfo::TimeHistoryOutputTimer timer;
-  return timer;
-}
-
 TimeHistoryOutput::TimeHistoryOutput( string const & name,
                                       Group * const parent ):
   OutputBase( name, parent ),
@@ -71,7 +57,6 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
     setDescription( "The current history record to be written, on restart from an earlier time allows use to remove invalid future history." );
 
   addLogLevel< logInfo::DataCollectorInitialization >();
-  addLogLevel< logInfo::OutputEvents >();
   addLogLevel< logInfo::HDF5Writing >();
 }
 

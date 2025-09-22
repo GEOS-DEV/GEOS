@@ -1,0 +1,18 @@
+<VTKFile type="PUnstructuredGrid" version="1.0" byte_order="LittleEndian">
+  <PUnstructuredGrid GhostLevel="0">
+    <PPointData GlobalIds="GLOBAL_IDS_POINTS">
+      <PDataArray type="Int64" IdType="1" Name="GLOBAL_IDS_POINTS" format="ascii"/>
+    </PPointData>
+    <PCellData GlobalIds="GLOBAL_IDS_CELLS" Scalars="attribute">
+      <PDataArray type="Int64" IdType="1" Name="GLOBAL_IDS_CELLS" format="ascii"/>
+      <PDataArray type="Int32" Name="attribute" format="ascii"/>
+    </PCellData>
+    <PPoints>
+      <PDataArray type="Float32" Name="coordinates" NumberOfComponents="3" format="ascii"/>
+    </PPoints>
+    <Piece Source="cube/cube_0.vtu"/>
+    <Piece Source="cube/cube_1.vtu"/>
+    <Piece Source="cube/cube_2.vtu"/>
+    <Piece Source="cube/cube_3.vtu"/>
+  </PUnstructuredGrid>
+</VTKFile>

@@ -45,8 +45,6 @@ set( solidMechanicsSolvers_headers
      contact/SolidMechanicsLagrangeContact.hpp
      contact/SolidMechanicsLagrangeContactBubbleStab.hpp
      contact/SolidMechanicsAugmentedLagrangianContact.hpp
-     contact/SolidMechanicsMortarContact.hpp
-     contact/kernels/SolidMechanicsMortarContactKernels.hpp
      contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp
      contact/kernels/SolidMechanicsDisplacementJumpUpdateKernels.hpp
      contact/kernels/SolidMechanicsEFEMKernelsBase.hpp
@@ -70,8 +68,7 @@ set( solidMechanicsSolvers_sources
      contact/SolidMechanicsEmbeddedFractures.cpp
      contact/SolidMechanicsLagrangeContact.cpp
      contact/SolidMechanicsLagrangeContactBubbleStab.cpp
-     contact/SolidMechanicsAugmentedLagrangianContact.cpp
-     contact/SolidMechanicsMortarContact.cpp )
+     contact/SolidMechanicsAugmentedLagrangianContact.cpp )
 
 #include( kernels/SolidMechanicsKernels.cmake)
 

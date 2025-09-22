@@ -96,9 +96,6 @@ class PressurePorosity : public PorosityBase
 public:
   PressurePorosity( string const & name, Group * const parent );
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   static string catalogName() { return "PressurePorosity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -107,7 +104,7 @@ public:
   {
     static constexpr char const * referencePressureString() { return "referencePressure"; }
     static constexpr char const * compressibilityString() { return "compressibility"; }
-  } viewKeys;
+  };
 
   using KernelWrapper = PressurePorosityUpdates;
 
@@ -129,7 +126,6 @@ public:
 
 
 private:
-  virtual void postInputInitialization() override;
 
   real64 m_referencePressure;
 

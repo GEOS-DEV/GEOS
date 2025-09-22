@@ -401,7 +401,6 @@ public:
                                                                               stack.dispColIndices,
                                                                               localAbu[i],
                                                                               numNodesPerElem*3 );
-
     }
 
     return maxForce;

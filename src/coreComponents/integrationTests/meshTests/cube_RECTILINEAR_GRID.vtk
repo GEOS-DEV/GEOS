@@ -1,0 +1,24 @@
+# vtk DataFile Version 5.1
+Cube structured points dataset
+ASCII
+DATASET RECTILINEAR_GRID
+DIMENSIONS 4 4 4
+X_COORDINATES 4 float
+0 1 2 3
+Y_COORDINATES 4 float
+0 1 2 3
+Z_COORDINATES 4 float
+0 1 2 3
+CELL_DATA 27
+SCALARS attribute int 1
+LOOKUP_TABLE default
+3 3 3
+3 3 3
+3 3 3
+3 3 3
+3 3 3
+3 3 3
+3 3 3
+3 3 3
+3 -1 9
+

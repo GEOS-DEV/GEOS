@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="Velocity"
+      component="0"
+      scale="0.0"
+      setNames="{ xpos }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="Velocity"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="Velocity"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+  </FieldSpecifications>
+</Problem>

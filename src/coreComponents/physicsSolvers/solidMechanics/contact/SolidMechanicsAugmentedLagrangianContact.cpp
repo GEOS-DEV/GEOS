@@ -1,4 +1,3 @@
-
 /*
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
@@ -18,7 +17,6 @@
  * SolidMechanicsAugmentedLagrangianContact.cpp
  */
 
-#include "mesh/DomainPartition.hpp"
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp"
@@ -30,8 +28,9 @@
 #include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
-
 #include "constitutive/contact/FrictionSelector.hpp"
+#include "constitutive/solid/SolidFields.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
@@ -90,9 +89,6 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
 
   // Set the default linear solver parameters
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
-  addLogLevel< logInfo::Configuration >();
-  addLogLevel< logInfo::Convergence >();
-  addLogLevel< logInfo::Tolerance >();
 
   // Strategy: AMG with separate displacement components
   linSolParams.dofsPerNode = 3;
@@ -699,13 +695,15 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
   real64 const bubbleResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
   // time-step when maxForce = 0;
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( RBubbleDisp ) = ( {:4.2e} )", bubbleResidualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( RBubbleDisp ) = ( {:4.2e} )", bubbleResidualNorm ));
 
-  return sqrt( solidResidualNorm * solidResidualNorm + bubbleResidualNorm * bubbleResidualNorm );
 
+  real64 totalResidualNorm = sqrt( solidResidualNorm * solidResidualNorm + bubbleResidualNorm * bubbleResidualNorm );
+
+  getConvergenceStats().setResidualValue( "RBubbleDisp", bubbleResidualNorm );
+
+  return totalResidualNorm;
 }
 
 void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager const & dofManager,
@@ -811,7 +809,8 @@ void SolidMechanicsAugmentedLagrangianContact::updateState( DomainPartition & do
   GEOS_UNUSED_VAR( domain );
 }
 
-bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartition & domain )
+bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartition & domain,
+                                                                    integer const GEOS_UNUSED_PARAM( configurationLoopIter ) )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1150,7 +1149,7 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
       this->m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
       this->m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
 
-      GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
+      GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
   } );
 
@@ -1716,10 +1715,10 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
 
     // Bulk modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString() );
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::bulkModulus::key() );
     // Shear modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
-      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString() );
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::shearModulus::key() );
 
     using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
     ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
@@ -1836,7 +1835,7 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
             normalTractionTolerance[kfe] = m_tolNormalTracFac * (averageConstrainedModulus / averageBoxSize0) *
                                            (normalDisplacementTolerance[kfe]);
 
-            GEOS_LOG_LEVEL( logInfo::Tolerance,
+            GEOS_LOG_LEVEL( logInfo::ContactTolerance,
                             GEOS_FMT( "kfe: {}, normalDisplacementTolerance: {}, slidingTolerance: {}, normalTractionTolerance: {}",
                                       kfe, normalDisplacementTolerance[kfe], slidingTolerance[kfe], normalTractionTolerance[kfe] ));
 

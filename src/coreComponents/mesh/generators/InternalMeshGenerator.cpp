@@ -561,9 +561,19 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   // Make sure that the node manager fields are initialized
   auto & nodeSets = cellBlockManager.getNodeSets();
 
-  real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
-  LvArray::tensorOps::subtract< 3 >( size, m_min );
-  cellBlockManager.setGlobalLength( LvArray::tensorOps::l2Norm< 3 >( size ) );
+  // global length
+  {
+    real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
+    LvArray::tensorOps::subtract< 3 >( size, m_min );
+    cellBlockManager.setGlobalLength( LvArray::tensorOps::l2Norm< 3 >( size ) );
+  }
+  // global offset
+  {
+    real64 offset[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_min );
+    LvArray::tensorOps::add< 3 >( offset, m_max );
+    LvArray::tensorOps::scale< 3 >( offset, 0.5 );
+    cellBlockManager.setGlobalOffset( LvArray::tensorOps::l2Norm< 3 >( offset ) );
+  }
 
 //  bool isRadialWithOneThetaPartition = false;
 

@@ -32,7 +32,6 @@ set( finiteElement_headers
      elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp
      elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp
      elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp
-     elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre6.hpp
      elementFormulations/H1_Tetrahedron_Lagrange1_Gauss.hpp
      elementFormulations/H1_TriangleFace_Lagrange1_Gauss.hpp
      elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp
@@ -42,6 +41,8 @@ set( finiteElement_headers
      elementFormulations/LagrangeBasis2.hpp
      elementFormulations/LagrangeBasis3GL.hpp
      elementFormulations/LagrangeBasis5GL.hpp
+     elementFormulations/BB_Tetrahedron.hpp
+     elementFormulations/Pk_Pyramid_BCD.hpp
      kernelInterface/InterfaceKernelBase.hpp
      kernelInterface/ImplicitKernelBase.hpp
      kernelInterface/KernelBase.hpp
@@ -79,5 +80,5 @@ install( TARGETS finiteElement LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
+  add_subdirectory( elementFormulations/unitTests )
 endif( )
-

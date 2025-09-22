@@ -1,0 +1,20 @@
+# vtk DataFile Version 5.1
+Cube structured points dataset
+ASCII
+DATASET STRUCTURED_POINTS
+DIMENSIONS 4 4 4
+ORIGIN 0.0 0.0 0.0
+SPACING 1.0 1.0 1.0
+CELL_DATA 27
+SCALARS attribute int 1
+LOOKUP_TABLE default
+3 3 3
+3 3 3
+3 3 3
+3 3 3
+3 3 3
+3 3 3
+3 3 3
+3 3 3
+3 -1 9
+
