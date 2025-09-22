@@ -32,8 +32,8 @@ namespace finiteElement
 
 namespace
 {
-  template < int ORDER >
-  constexpr int BB_Tetrahedron_NumNodes = ( ORDER + 1 ) * ( ORDER + 2 ) * ( ORDER + 3 ) / 6;
+template< int ORDER >
+constexpr int BB_Tetrahedron_NumNodes = ( ORDER + 1 ) * ( ORDER + 2 ) * ( ORDER + 3 ) / 6;
 }
 
 /**
@@ -60,7 +60,7 @@ public:
   /// struct to hold stack variables.
   struct StackVariables {};
 
-   /// The number of shape functions per element.
+  /// The number of shape functions per element.
   using Base::numNodes;
 
   /// The number of quadrature points per element.
@@ -1331,7 +1331,7 @@ public:
 
 #ifndef GEOS_DEVICE_COMPILE
 
-template < int ORDER >
+template< int ORDER >
 class BB_Tetrahedron final : public BB_Tetrahedron_impl< ORDER >, public FiniteElementBase
 {
 public:
