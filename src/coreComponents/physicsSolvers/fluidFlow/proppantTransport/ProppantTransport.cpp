@@ -700,7 +700,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
       {
 
         string const & subRegionName = subRegion.getName();
-        GEOS_ERROR_CTX_IF( bcStatusMap[subRegionName].count( setName ) > 0,
+        GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0,
                            getDataContext() << ": Conflicting proppant boundary conditions on set " << setName,
                            getDataContext() );
         bcStatusMap[subRegionName][setName].resize( m_numComponents );
@@ -721,10 +721,10 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
         string const & subRegionName = subRegion.getName();
         localIndex const comp = fs.getComponent();
 
-        GEOS_ERROR_CTX_IF( bcStatusMap[subRegionName].count( setName ) == 0,
+        GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0,
                            getDataContext() << ": Proppant boundary condition not prescribed on set '" << setName << "'",
                            getDataContext() );
-        GEOS_ERROR_CTX_IF( bcStatusMap[subRegionName][setName][comp],
+        GEOS_ERROR_IF( bcStatusMap[subRegionName][setName][comp],
                            getDataContext() << ": Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'",
                            getDataContext() );
         bcStatusMap[subRegionName][setName][comp] = true;
@@ -744,7 +744,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
           for( localIndex ic = 0; ic < m_numComponents; ++ic )
           {
             bcConsistent &= bcStatusEntryInner.second[ic];
-            GEOS_WARNING_CTX_IF( !bcConsistent,
+            GEOS_WARNING_IF( !bcConsistent,
                                  getDataContext() << ": Composition boundary condition not applied to component " <<
                                  ic << " on region '" << bcStatusEntryOuter.first << "'," <<
                                  " set '" << bcStatusEntryInner.first << "'", getDataContext() );

@@ -73,14 +73,14 @@ void TableCapillaryPressure::postInputInitialization()
   CapillaryPressureBase::postInputInitialization();
 
   integer const numPhases = m_phaseNames.size();
-  GEOS_THROW_CTX_IF( numPhases != 2 && numPhases != 3,
+  GEOS_THROW_IF( numPhases != 2 && numPhases != 3,
                      GEOS_FMT( "{}: the expected number of fluid phases is either two, or three",
                                getFullName() ),
                      InputError, getDataContext() );
 
   if( numPhases == 2 )
   {
-    GEOS_THROW_CTX_IF( m_wettingNonWettingCapPresTableName.empty(),
+    GEOS_THROW_IF( m_wettingNonWettingCapPresTableName.empty(),
                        GEOS_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the capillary pressure table for the pair (wetting phase, non-wetting phase)",
                                  getFullName(),
                                  viewKeyStruct::wettingNonWettingCapPresTableNameString() ),
@@ -88,7 +88,7 @@ void TableCapillaryPressure::postInputInitialization()
   }
   else if( numPhases == 3 )
   {
-    GEOS_THROW_CTX_IF( m_wettingIntermediateCapPresTableName.empty() || m_nonWettingIntermediateCapPresTableName.empty(),
+    GEOS_THROW_IF( m_wettingIntermediateCapPresTableName.empty() || m_nonWettingIntermediateCapPresTableName.empty(),
                        GEOS_FMT( "{}: for a three-phase flow simulation, we must use {} to specify the capillary pressure table "
                                  "for the pair (wetting phase, intermediate phase), and {} to specify the capillary pressure table "
                                  "for the pair (non-wetting phase, intermediate phase)",
@@ -121,7 +121,7 @@ void TableCapillaryPressure::initializePreSubGroups()
   }
   else if( numPhases == 3 )
   {
-    GEOS_THROW_CTX_IF( !functionManager.hasGroup( m_wettingIntermediateCapPresTableName ),
+    GEOS_THROW_IF( !functionManager.hasGroup( m_wettingIntermediateCapPresTableName ),
                        GEOS_FMT( "{}: the table function named {} could not be found",
                                  getFullName(),
                                  m_wettingIntermediateCapPresTableName ),
@@ -129,7 +129,7 @@ void TableCapillaryPressure::initializePreSubGroups()
     TableFunction const & capPresTableWI = functionManager.getGroup< TableFunction >( m_wettingIntermediateCapPresTableName );
     TableCapillaryPressureHelpers::validateCapillaryPressureTable( capPresTableWI, getFullName(), false );
 
-    GEOS_THROW_CTX_IF( !functionManager.hasGroup( m_nonWettingIntermediateCapPresTableName ),
+    GEOS_THROW_IF( !functionManager.hasGroup( m_nonWettingIntermediateCapPresTableName ),
                        GEOS_FMT( "{}: the table function named {} could not be found",
                                  getFullName(),
                                  m_nonWettingIntermediateCapPresTableName ),

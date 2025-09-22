@@ -73,7 +73,7 @@ Group * WellSolverBase::createChild( string const & childKey, string const & chi
     PhysicsSolverBase::groupKeyStruct::linearSolverParametersString(),
     PhysicsSolverBase::groupKeyStruct::nonlinearSolverParametersString(),
   };
-  GEOS_ERROR_CTX_IF( childTypes.count( childKey ) == 0,
+  GEOS_ERROR_IF( childTypes.count( childKey ) == 0,
                      CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) ,
                      getDataContext() );
   if( childKey == keys::wellControls )

@@ -62,7 +62,7 @@ CellElementRegionSelector::getMatchingCellblocks( CellElementRegion const & regi
     }
   }
 
-  GEOS_THROW_CTX_IF( !matching,
+  GEOS_THROW_IF( !matching,
                      GEOS_FMT( "{}: No cellBlock name is satisfying the qualifier '{}'.\n"
                                "Available cellBlock list: {{ {} }}\nAvailable region attribute list: {{ {} }}",
                                region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ),
@@ -82,7 +82,7 @@ CellElementRegionSelector::verifyRequestedCellBlocks( CellElementRegion const & 
   for( string const & requestedCellBlockName : cellBlockNames )
   {
     // if cell block does not exist in the mesh
-    GEOS_THROW_CTX_IF( m_cellBlocksOwners.count( requestedCellBlockName ) == 0,
+    GEOS_THROW_IF( m_cellBlocksOwners.count( requestedCellBlockName ) == 0,
                        GEOS_FMT( "{}: No cellBlock named '{}'.\nAvailable cellBlock list: {{ {} }}",
                                  region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ),
                                  requestedCellBlockName,

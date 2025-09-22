@@ -38,7 +38,7 @@ void DeadOilFluid::postInputInitialization()
   BlackOilFluidBase::postInputInitialization();
 
   integer const numComps = numFluidComponents();
-  GEOS_THROW_CTX_IF( numComps != 2 && numComps != 3,
+  GEOS_THROW_IF( numComps != 2 && numComps != 3,
                      GEOS_FMT( "{}: this model only supports 2 or 3 components", getFullName() ),
                      InputError, getDataContext() );
 }
@@ -48,7 +48,7 @@ void DeadOilFluid::readInputDataFromPVTFiles()
   GEOS_THROW_IF_NE_MSG( m_tableFiles.size(), numFluidPhases(),
                         GEOS_FMT( "{}: the number of table files must be equal to the number of phases", getFullName() ),
                         InputError );
-  GEOS_THROW_CTX_IF( m_formationVolFactorTableNames.size() > 0.0 || m_viscosityTableNames.size() > 0.0,
+  GEOS_THROW_IF( m_formationVolFactorTableNames.size() > 0.0 || m_viscosityTableNames.size() > 0.0,
                      GEOS_FMT( "{}: input is redundant (both TableFunction names and pvt files)", getFullName() ),
                      InputError, getDataContext() );
 
@@ -71,7 +71,7 @@ void DeadOilFluid::readInputDataFromPVTFiles()
 
 void DeadOilFluid::readInputDataFromTableFunctions()
 {
-  GEOS_THROW_CTX_IF( !m_tableFiles.empty(),
+  GEOS_THROW_IF( !m_tableFiles.empty(),
                      GEOS_FMT( "{}: input is redundant (both TableFunction names and pvt files)", getFullName() ),
                      InputError, getDataContext() );
 
@@ -114,10 +114,10 @@ void DeadOilFluid::readInputDataFromTableFunctions()
   FunctionManager const & functionManager = FunctionManager::getInstance();
   for( integer iph = 0; iph < m_hydrocarbonPhaseOrder.size(); ++iph )
   {
-    GEOS_THROW_CTX_IF( !functionManager.hasGroup( m_formationVolFactorTableNames[iph] ),
+    GEOS_THROW_IF( !functionManager.hasGroup( m_formationVolFactorTableNames[iph] ),
                        GEOS_FMT( "{}: formation volume factor table '{}' not found", getFullName(), m_formationVolFactorTableNames[iph] ),
                        InputError, getDataContext() );
-    GEOS_THROW_CTX_IF( !functionManager.hasGroup( m_viscosityTableNames[iph] ),
+    GEOS_THROW_IF( !functionManager.hasGroup( m_viscosityTableNames[iph] ),
                        GEOS_FMT( "{}: viscosity table '{}' not found", getFullName(), m_viscosityTableNames[iph] ),
                        InputError, getDataContext() );
   }

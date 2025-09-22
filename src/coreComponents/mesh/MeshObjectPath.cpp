@@ -211,7 +211,7 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
     namesInRepository.emplace_back( group.getName() );
   } );
 
-  GEOS_THROW_CTX_IF( namesInRepository.empty(),
+  GEOS_THROW_IF( namesInRepository.empty(),
                      GEOS_FMT( "{0} has no children.", parentGroup.getDataContext().toString()),
                      InputError, parentGroup.getDataContext() );
 
@@ -232,7 +232,7 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
 
       }
     }
-    GEOS_THROW_CTX_IF( !foundMatch,
+    GEOS_THROW_IF( !foundMatch,
                        GEOS_FMT( "{0} has no child named {1}.\n"
                                  "{0} has the following children: {{ {2} }}",
                                  parentGroup.getDataContext().toString(),

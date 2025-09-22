@@ -1811,7 +1811,7 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
             realNodes++;
           }
         }
-        GEOS_ERROR_CTX_IF( realNodes != 2,
+        GEOS_ERROR_IF( realNodes != 2,
                            getDataContext() << ": An edge shared by two fracture elements must have 2 nodes.",
                            getDataContext() );
         edge.resize( realNodes );

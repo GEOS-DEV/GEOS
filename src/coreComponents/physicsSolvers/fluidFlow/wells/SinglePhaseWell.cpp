@@ -145,17 +145,17 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
   WellControls::Control const currentControl = wellControls.getControl();
   real64 const targetTotalRate = wellControls.getTargetTotalRate( time_n );
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time_n );
-  GEOS_THROW_CTX_IF( currentControl == WellControls::Control::PHASEVOLRATE,
+  GEOS_THROW_IF( currentControl == WellControls::Control::PHASEVOLRATE,
                      "WellControls " << wellControls.getDataContext() <<
                      ": Phase rate control is not available for SinglePhaseWell",
                      InputError, wellControls.getDataContext() );
   // The user always provides positive rates, but these rates are later multiplied by -1 internally for producers
-  GEOS_THROW_CTX_IF( ( ( wellControls.isInjector() && targetTotalRate < 0.0 ) ||
+  GEOS_THROW_IF( ( ( wellControls.isInjector() && targetTotalRate < 0.0 ) ||
                        ( wellControls.isProducer() && targetTotalRate > 0.0) ),
                      "WellControls " << wellControls.getDataContext() <<
                      ": Target total rate cannot be negative",
                      InputError, wellControls.getDataContext() );
-  GEOS_THROW_CTX_IF( !isZero( targetPhaseRate ),
+  GEOS_THROW_IF( !isZero( targetPhaseRate ),
                      "WellControls " << wellControls.getDataContext() <<
                      ": Target phase rate cannot be used for SinglePhaseWell",
                      InputError, wellControls.getDataContext() );

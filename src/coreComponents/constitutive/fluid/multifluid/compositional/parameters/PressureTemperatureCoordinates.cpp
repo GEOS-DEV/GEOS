@@ -70,7 +70,7 @@ void PressureTemperatureCoordinates::postInputInitializationImpl( MultiFluidBase
                           InputError );
 
     // Values must be strictly increasing
-    GEOS_THROW_CTX_IF( !isStrictlyIncreasing( m_pressureCoordinates.toSliceConst()),
+    GEOS_THROW_IF( !isStrictlyIncreasing( m_pressureCoordinates.toSliceConst()),
                        GEOS_FMT( "{}: invalid values of pressure coordinates provided in {}. "
                                  "Values must be strictly increasing.", fluid->getFullName(), viewKeyStruct::pressureCoordinatesString() ),
                        InputError, fluid->getDataContext() );
@@ -85,7 +85,7 @@ void PressureTemperatureCoordinates::postInputInitializationImpl( MultiFluidBase
                           InputError );
 
     // Values must be strictly increasing
-    GEOS_THROW_CTX_IF( !isStrictlyIncreasing( m_temperatureCoordinates.toSliceConst()),
+    GEOS_THROW_IF( !isStrictlyIncreasing( m_temperatureCoordinates.toSliceConst()),
                        GEOS_FMT( "{}: invalid values of temperature coordinates provided in {}. "
                                  "Values must be strictly increasing.", fluid->getFullName(), viewKeyStruct::temperatureCoordinatesString() ),
                        InputError, fluid->getDataContext() );

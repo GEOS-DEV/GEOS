@@ -161,11 +161,11 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
         string const fluidModelName = castedFluid.getCatalogName();
-        GEOS_THROW_CTX_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
+        GEOS_THROW_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
                            GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model {} is not for thermal fluid",
                                      getDataContext(), fluid.getDataContext() ),
                            InputError, getDataContext(), fluid.getDataContext() );
-        GEOS_THROW_CTX_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
+        GEOS_THROW_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
                            GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid {}, but the solver option is incompatible with the fluid model",
                                      getDataContext(), fluid.getDataContext() ),
                            InputError, getDataContext(), fluid.getDataContext() );
@@ -412,7 +412,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     equilCounter++;
 
     // check that the gravity vector is aligned with the z-axis
-    GEOS_THROW_CTX_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
+    GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
                        getCatalogName() << " " << getDataContext() <<
                        ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
                        ") is not aligned with the z-axis. \n"
@@ -531,7 +531,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
                                            elevationValues.toNestedView(),
                                            pressureValues.toView() );
 
-      GEOS_THROW_CTX_IF( !equilHasConverged,
+      GEOS_THROW_IF( !equilHasConverged,
                          getCatalogName() << " " << getDataContext() <<
                          ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
                          std::runtime_error, getDataContext() );

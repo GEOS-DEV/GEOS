@@ -145,7 +145,7 @@ public:
   {
     Base::initializePreSubGroups();
 
-    GEOS_THROW_CTX_IF( m_stabilizationType == stabilization::StabilizationType::Local,
+    GEOS_THROW_IF( m_stabilizationType == stabilization::StabilizationType::Local,
                        this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
                        ": Local stabilization has been temporarily disabled",
                        InputError, this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) );

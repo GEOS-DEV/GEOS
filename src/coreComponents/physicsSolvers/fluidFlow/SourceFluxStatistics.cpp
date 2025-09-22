@@ -57,7 +57,7 @@ void SourceFluxStatsAggregator::postInputInitialization()
     {
       m_fluxNames.emplace_back( string( sourceFlux.getName() ) );
     } );
-    GEOS_WARNING_CTX_IF( m_fluxNames.empty(),
+    GEOS_WARNING_IF( m_fluxNames.empty(),
                          GEOS_FMT( "{}: No {} was found in {}.",
                                    getDataContext(), SourceFluxBoundaryCondition::catalogName(),
                                    fsManager.getDataContext() ),
@@ -67,7 +67,7 @@ void SourceFluxStatsAggregator::postInputInitialization()
   {
     for( string const & fluxName : m_fluxNames )
     {
-      GEOS_ERROR_CTX_IF( !fsManager.hasGroup< SourceFluxBoundaryCondition >( fluxName ),
+      GEOS_ERROR_IF( !fsManager.hasGroup< SourceFluxBoundaryCondition >( fluxName ),
                          GEOS_FMT( "{}: No {} named {} was found in {}.",
                                    getDataContext(), SourceFluxBoundaryCondition::catalogName(),
                                    fluxName, fsManager.getDataContext() ), getDataContext() );

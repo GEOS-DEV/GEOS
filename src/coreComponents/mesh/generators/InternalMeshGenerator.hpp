@@ -350,7 +350,7 @@ private:
               getWrapperDataContext( i == 0 ? viewKeyStruct::xBiasString() :
                                      i == 1 ? viewKeyStruct::yBiasString() :
                                      viewKeyStruct::zBiasString() );
-            GEOS_ERROR_CTX_IF( fabs( m_nElemBias[i][block] ) >= 1,
+            GEOS_ERROR_IF( fabs( m_nElemBias[i][block] ) >= 1,
                                wrapperContext <<
                                ", block index = " << block << " : Mesh bias must between -1 and 1!",
                                wrapperContext );

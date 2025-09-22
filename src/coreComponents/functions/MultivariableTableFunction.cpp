@@ -35,7 +35,7 @@ MultivariableTableFunction::MultivariableTableFunction( const string & name,
 void MultivariableTableFunction::initializeFunctionFromFile( string const & filename )
 {
   std::ifstream file( filename.c_str() );
-  GEOS_THROW_CTX_IF( !file, catalogName() << " " << getDataContext() << ": could not read input file " << filename,
+  GEOS_THROW_IF( !file, catalogName() << " " << getDataContext() << ": could not read input file " << filename,
                      InputError, getDataContext() );
 
   integer numDims, numOps;
@@ -68,14 +68,14 @@ void MultivariableTableFunction::initializeFunctionFromFile( string const & file
   for( integer i = 0; i < numDims; i++ )
   {
     file >> axisPoints[i];
-    GEOS_THROW_CTX_IF( !file, catalogName() << " " << getDataContext() << ": can`t read the number of points for axis " + std::to_string( i ),
+    GEOS_THROW_IF( !file, catalogName() << " " << getDataContext() << ": can`t read the number of points for axis " + std::to_string( i ),
                        InputError, getDataContext() );
     GEOS_THROW_IF_LE_MSG( axisPoints[i], 1, catalogName() << " " << getDataContext() << ": minimum 2 discretization point per axis are expected", InputError );
     file >> axisMinimums[i];
-    GEOS_THROW_CTX_IF( !file, catalogName() << " " << getDataContext() << ": can`t read minimum value for axis " + std::to_string( i ),
+    GEOS_THROW_IF( !file, catalogName() << " " << getDataContext() << ": can`t read minimum value for axis " + std::to_string( i ),
                        InputError, getDataContext() );
     file >> axisMaximums[i];
-    GEOS_THROW_CTX_IF( !file, catalogName() << " " << getDataContext() << ": can`t read maximum value for axis " + std::to_string( i ),
+    GEOS_THROW_IF( !file, catalogName() << " " << getDataContext() << ": can`t read maximum value for axis " + std::to_string( i ),
                        InputError, getDataContext() );
     GEOS_THROW_IF_LT_MSG( axisMaximums[i], axisMinimums[i], catalogName() << " " << getDataContext() << ": maximum axis value is expected to be larger than minimum", InputError );
 
@@ -99,14 +99,14 @@ void MultivariableTableFunction::initializeFunctionFromFile( string const & file
     for( auto j = 0; j < numOps; j++ )
     {
       file >> m_pointData[i * numOps + j];
-      GEOS_THROW_CTX_IF( !file, catalogName() << " " << getDataContext() << ": table file is shorter than expected",
+      GEOS_THROW_IF( !file, catalogName() << " " << getDataContext() << ": table file is shorter than expected",
                          InputError, getDataContext() );
     }
   }
   real64 value;
 
   file >> value;
-  GEOS_THROW_CTX_IF( file, catalogName() << " " << getDataContext() << ": table file is longer than expected",
+  GEOS_THROW_IF( file, catalogName() << " " << getDataContext() << ": table file is longer than expected",
                      InputError, getDataContext() );
 
   file.close();

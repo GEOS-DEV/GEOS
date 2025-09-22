@@ -49,7 +49,7 @@ CellElementRegion::~CellElementRegion()
 
 void CellElementRegion::generateMesh( Group const & cellBlocks )
 {
-  GEOS_THROW_CTX_IF( m_cellBlockNames.empty(),
+  GEOS_THROW_IF( m_cellBlockNames.empty(),
                      GEOS_FMT( "{}: No cellBlock selected in this region.",
                                getDataContext() ),
                      InputError, getDataContext() );
@@ -57,7 +57,7 @@ void CellElementRegion::generateMesh( Group const & cellBlocks )
   for( string const & cbName : m_cellBlockNames )
   {
     CellBlockABC const * cellBlock = cellBlocks.getGroupPointer< CellBlockABC >( cbName );
-    GEOS_THROW_CTX_IF( cellBlock == nullptr,
+    GEOS_THROW_IF( cellBlock == nullptr,
                        GEOS_FMT( "{}: No cellBlock named '{}' found.\nAvailable cellBlock list: {{ {} }}\nNo CellElementRegionSelector has been used to verify the cellBlock selection.",
                                  getDataContext(), cbName, stringutilities::join( m_cellBlockNames, ", " ) ),
                        InputError, getDataContext() );

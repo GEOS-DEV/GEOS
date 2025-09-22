@@ -204,7 +204,7 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-  GEOS_ERROR_CTX_IF( fluxApprox.upwindingParams().upwindingScheme == UpwindingScheme::HU2PH && m_numPhases != 2,
+  GEOS_ERROR_IF( fluxApprox.upwindingParams().upwindingScheme == UpwindingScheme::HU2PH && m_numPhases != 2,
                      GEOS_FMT( "{}: upwinding scheme {} only supports 2-phase flow",
                                getDataContext(),
                                EnumStrings< UpwindingScheme >::toString( UpwindingScheme::HU2PH )),
@@ -1260,7 +1260,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateFaceDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_CTX_IF( !bcConsistent,
+    GEOS_ERROR_IF( !bcConsistent,
                        GEOS_FMT( "{}: inconsistent boundary conditions", getDataContext() ),
                        getDataContext() );
   }

@@ -96,7 +96,7 @@ void VTKMeshGenerator::postInputInitialization()
 {
   ExternalMeshGeneratorBase::postInputInitialization();
 
-  GEOS_ERROR_CTX_IF( !this->m_filePath.empty() && !m_dataSourceName.empty(),
+  GEOS_ERROR_IF( !this->m_filePath.empty() && !m_dataSourceName.empty(),
                      getDataContext() << ": Access to the mesh via file or data source are mutually exclusive. "
                                          "You can't set " << viewKeyStruct::dataSourceString() << " or " << viewKeyStruct::meshPathString() << " and " <<
                      ExternalMeshGeneratorBase::viewKeyStruct::filePathString(),
@@ -108,7 +108,7 @@ void VTKMeshGenerator::postInputInitialization()
 
     m_dataSource = externalDataManager.getGroupPointer< VTKHierarchicalDataSource >( m_dataSourceName );
 
-    GEOS_THROW_CTX_IF( m_dataSource == nullptr,
+    GEOS_THROW_IF( m_dataSource == nullptr,
                        getDataContext() << ": VTK Data Object Source not found: " << m_dataSourceName,
                        InputError, getDataContext() );
 

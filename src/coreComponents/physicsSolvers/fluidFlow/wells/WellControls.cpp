@@ -228,7 +228,7 @@ void WellControls::postInputInitialization()
   // 0) Assign the value of the current well control
   // When the simulation starts from a restart file, we don't want to use the inputControl,
   // because the control may have switched in the simulation that generated the restart
-  GEOS_THROW_CTX_IF( m_inputControl == Control::UNINITIALIZED,
+  GEOS_THROW_IF( m_inputControl == Control::UNINITIALIZED,
                      getWrapperDataContext( viewKeyStruct::inputControlString() ) <<
                      ": Input well control cannot be uninitialized",
                      InputError, getWrapperDataContext( viewKeyStruct::inputControlString() ) );
@@ -239,25 +239,25 @@ void WellControls::postInputInitialization()
   }
 
   // 1.a) check target BHP
-  GEOS_THROW_CTX_IF( m_targetBHP < 0,
+  GEOS_THROW_IF( m_targetBHP < 0,
                      getWrapperDataContext( viewKeyStruct::targetBHPString() ) <<
                      ": Target bottom-hole pressure is negative",
                      InputError, getWrapperDataContext( viewKeyStruct::targetBHPString() ) );
 
   // 1.b) check target rates
-  GEOS_THROW_CTX_IF( m_targetTotalRate < 0,
+  GEOS_THROW_IF( m_targetTotalRate < 0,
                      getWrapperDataContext( viewKeyStruct::targetTotalRateString() ) << ": Target rate is negative",
                      InputError, getWrapperDataContext( viewKeyStruct::targetTotalRateString() ) );
 
-  GEOS_THROW_CTX_IF( m_targetPhaseRate < 0,
+  GEOS_THROW_IF( m_targetPhaseRate < 0,
                      getWrapperDataContext( viewKeyStruct::targetPhaseRateString() ) << ": Target oil rate is negative",
                      InputError, getWrapperDataContext( viewKeyStruct::targetPhaseRateString() ) );
 
-  GEOS_THROW_CTX_IF( m_targetMassRate < 0,
+  GEOS_THROW_IF( m_targetMassRate < 0,
                      getWrapperDataContext( viewKeyStruct::targetMassRateString() ) << ": Target mass rate is negative",
                      InputError, getWrapperDataContext( viewKeyStruct::targetMassRateString() ) );
 
-  GEOS_THROW_CTX_IF( (m_injectionStream.empty()  && m_injectionTemperature >= 0) ||
+  GEOS_THROW_IF( (m_injectionStream.empty()  && m_injectionTemperature >= 0) ||
                      (!m_injectionStream.empty() && m_injectionTemperature < 0),
                      "WellControls " << getDataContext() << ": Both "
                                      << viewKeyStruct::injectionStreamString() << " and " << viewKeyStruct::injectionTemperatureString()
@@ -280,23 +280,23 @@ void WellControls::postInputInitialization()
     real64 sum = 0.0;
     for( localIndex ic = 0; ic < m_injectionStream.size(); ++ic )
     {
-      GEOS_ERROR_CTX_IF( m_injectionStream[ic] < 0.0 || m_injectionStream[ic] > 1.0,
+      GEOS_ERROR_IF( m_injectionStream[ic] < 0.0 || m_injectionStream[ic] > 1.0,
                          getWrapperDataContext( viewKeyStruct::injectionStreamString() ) << ": Invalid injection stream",
                          getWrapperDataContext( viewKeyStruct::injectionStreamString() ) );
       sum += m_injectionStream[ic];
     }
-    GEOS_THROW_CTX_IF( LvArray::math::abs( 1.0 - sum ) > std::numeric_limits< real64 >::epsilon(),
+    GEOS_THROW_IF( LvArray::math::abs( 1.0 - sum ) > std::numeric_limits< real64 >::epsilon(),
                        getWrapperDataContext( viewKeyStruct::injectionStreamString() ) << ": Invalid injection stream",
                        InputError, getWrapperDataContext( viewKeyStruct::injectionStreamString() ) );
   }
 
   // 3) check the flag for surface / reservoir conditions
-  GEOS_THROW_CTX_IF( m_useSurfaceConditions != 0 && m_useSurfaceConditions != 1,
+  GEOS_THROW_IF( m_useSurfaceConditions != 0 && m_useSurfaceConditions != 1,
                      getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) << ": The flag to select surface/reservoir conditions must be equal to 0 or 1",
                      InputError, getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) );
 
   // 4) check that at least one rate constraint has been defined
-  GEOS_THROW_CTX_IF( ((m_targetPhaseRate <= 0.0 && m_targetPhaseRateTableName.empty()) &&
+  GEOS_THROW_IF( ((m_targetPhaseRate <= 0.0 && m_targetPhaseRateTableName.empty()) &&
                       (m_targetMassRate <= 0.0 && m_targetMassRateTableName.empty()) &&
                       (m_targetTotalRate <= 0.0 && m_targetTotalRateTableName.empty())),
                      "WellControls " << getDataContext() << ": You need to specify a phase, mass, or total rate constraint. \n" <<
@@ -312,27 +312,27 @@ void WellControls::postInputInitialization()
                      InputError, getDataContext() );
 
   // 5) check whether redundant information has been provided
-  GEOS_THROW_CTX_IF( ((m_targetPhaseRate > 0.0 && !m_targetPhaseRateTableName.empty())),
+  GEOS_THROW_IF( ((m_targetPhaseRate > 0.0 && !m_targetPhaseRateTableName.empty())),
                      "WellControls " << getDataContext() << ": You have provided redundant information for well phase rate." <<
                      " The keywords " << viewKeyStruct::targetPhaseRateString() << " and " << viewKeyStruct::targetPhaseRateTableNameString() << " cannot be specified together",
                      InputError, getDataContext() );
 
-  GEOS_THROW_CTX_IF( ((m_targetTotalRate > 0.0 && !m_targetTotalRateTableName.empty())),
+  GEOS_THROW_IF( ((m_targetTotalRate > 0.0 && !m_targetTotalRateTableName.empty())),
                      "WellControls " << getDataContext() << ": You have provided redundant information for well total rate." <<
                      " The keywords " << viewKeyStruct::targetTotalRateString() << " and " << viewKeyStruct::targetTotalRateTableNameString() << " cannot be specified together",
                      InputError, getDataContext() );
 
-  GEOS_THROW_CTX_IF( ((m_targetBHP > 0.0 && !m_targetBHPTableName.empty())),
+  GEOS_THROW_IF( ((m_targetBHP > 0.0 && !m_targetBHPTableName.empty())),
                      "WellControls " << getDataContext() << ": You have provided redundant information for well BHP." <<
                      " The keywords " << viewKeyStruct::targetBHPString() << " and " << viewKeyStruct::targetBHPTableNameString() << " cannot be specified together",
                      InputError, getDataContext() );
 
-  GEOS_THROW_CTX_IF( ((m_targetMassRate > 0.0 && !m_targetMassRateTableName.empty())),
+  GEOS_THROW_IF( ((m_targetMassRate > 0.0 && !m_targetMassRateTableName.empty())),
                      "WellControls " << getDataContext() << ": You have provided redundant information for well mass rate." <<
                      " The keywords " << viewKeyStruct::targetMassRateString() << " and " << viewKeyStruct::targetMassRateTableNameString() << " cannot be specified together",
                      InputError, getDataContext() );
 
-  GEOS_THROW_CTX_IF( ((m_targetMassRate > 0.0 &&  m_useSurfaceConditions==0)),
+  GEOS_THROW_IF( ((m_targetMassRate > 0.0 &&  m_useSurfaceConditions==0)),
                      "WellControls " << getDataContext() << ": Option only valid if useSurfaceConditions set to 1",
                      InputError, getDataContext() );
 
@@ -340,7 +340,7 @@ void WellControls::postInputInitialization()
   //      Otherwise the BHP will be set to a default value.
   if( m_currentControl == Control::BHP )
   {
-    GEOS_THROW_CTX_IF( ((m_targetBHP <= 0.0 && m_targetBHPTableName.empty())),
+    GEOS_THROW_IF( ((m_targetBHP <= 0.0 && m_targetBHPTableName.empty())),
                        "WellControls " << getDataContext() << ": You have to provide well BHP by specifying either "
                                        << viewKeyStruct::targetBHPString() << " or " << viewKeyStruct::targetBHPTableNameString(),
                        InputError, getDataContext() );
@@ -355,25 +355,25 @@ void WellControls::postInputInitialization()
   // 6.2) Check incoherent information
 
   // An injector must be controlled by TotalVolRate
-  GEOS_THROW_CTX_IF( (isInjector() && (m_inputControl == Control::PHASEVOLRATE)),
+  GEOS_THROW_IF( (isInjector() && (m_inputControl == Control::PHASEVOLRATE)),
                      "WellControls " << getDataContext() << ": You have to control an injector with "
                                      << EnumStrings< Control >::toString( Control::TOTALVOLRATE ),
                      InputError, getDataContext() );
 
   // An injector must be controlled by TotalVolRate
-  GEOS_THROW_CTX_IF( (isProducer() && (m_inputControl == Control::MASSRATE)),
+  GEOS_THROW_IF( (isProducer() && (m_inputControl == Control::MASSRATE)),
                      "WellControls " << getDataContext() << ": You have to control an injector with "
                                      << EnumStrings< Control >::toString( Control::MASSRATE ),
                      InputError, getDataContext() );
 
   // 7) Make sure that the flag disabling crossflow is not used for producers
-  GEOS_THROW_CTX_IF( isProducer() && m_isCrossflowEnabled == 0,
+  GEOS_THROW_IF( isProducer() && m_isCrossflowEnabled == 0,
                      getWrapperDataContext( viewKeyStruct::enableCrossflowString() ) <<
                      ": This option cannot be set to '0' for producers",
                      InputError, getWrapperDataContext( viewKeyStruct::enableCrossflowString() ) );
 
   // 8) Make sure that the initial pressure coefficient is positive
-  GEOS_THROW_CTX_IF( m_initialPressureCoefficient < 0,
+  GEOS_THROW_IF( m_initialPressureCoefficient < 0,
                      getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) <<
                      ": This tuning coefficient is negative",
                      InputError, getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) );
@@ -390,7 +390,7 @@ void WellControls::postInputInitialization()
     FunctionManager & functionManager = FunctionManager::getInstance();
     m_targetBHPTable = &(functionManager.getGroup< TableFunction const >( m_targetBHPTableName ));
 
-    GEOS_THROW_CTX_IF( m_targetBHPTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
+    GEOS_THROW_IF( m_targetBHPTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
                        "WellControls " << getDataContext() << ": The interpolation method for the time-dependent BHP table "
                                        << m_targetBHPTable->getName() << " should be TableFunction::InterpolationType::Lower",
                        InputError, getDataContext() );
@@ -407,7 +407,7 @@ void WellControls::postInputInitialization()
     FunctionManager & functionManager = FunctionManager::getInstance();
     m_targetTotalRateTable = &(functionManager.getGroup< TableFunction const >( m_targetTotalRateTableName ));
 
-    GEOS_THROW_CTX_IF( m_targetTotalRateTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
+    GEOS_THROW_IF( m_targetTotalRateTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
                        "WellControls " << getDataContext() << ": The interpolation method for the time-dependent total rate table "
                                        << m_targetTotalRateTable->getName() << " should be TableFunction::InterpolationType::Lower",
                        InputError, getDataContext() );
@@ -424,7 +424,7 @@ void WellControls::postInputInitialization()
     FunctionManager & functionManager = FunctionManager::getInstance();
     m_targetPhaseRateTable = &(functionManager.getGroup< TableFunction const >( m_targetPhaseRateTableName ));
 
-    GEOS_THROW_CTX_IF( m_targetPhaseRateTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
+    GEOS_THROW_IF( m_targetPhaseRateTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
                        "WellControls " << getDataContext() << ": The interpolation method for the time-dependent phase rate table "
                                        << m_targetPhaseRateTable->getName() << " should be TableFunction::InterpolationType::Lower",
                        InputError, getDataContext() );
@@ -440,7 +440,7 @@ void WellControls::postInputInitialization()
     FunctionManager & functionManager = FunctionManager::getInstance();
     m_targetMassRateTable = &(functionManager.getGroup< TableFunction const >( m_targetMassRateTableName ));
 
-    GEOS_THROW_CTX_IF( m_targetMassRateTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
+    GEOS_THROW_IF( m_targetMassRateTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
                        "WellControls " << getDataContext() << ": The interpolation method for the time-dependent mass rate table "
                                        << m_targetMassRateTable->getName() << " should be TableFunction::InterpolationType::Lower",
                        InputError, getDataContext() );
@@ -462,7 +462,7 @@ void WellControls::postInputInitialization()
     FunctionManager & functionManager = FunctionManager::getInstance();
     m_statusTable = &(functionManager.getGroup< TableFunction const >( m_statusTableName ));
 
-    GEOS_THROW_CTX_IF( m_statusTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
+    GEOS_THROW_IF( m_statusTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
                        "WellControls " << getDataContext() << ": The interpolation method for the time-dependent status table "
                                        << m_statusTable->getName() << " should be TableFunction::InterpolationType::Lower",
                        InputError, getDataContext() );

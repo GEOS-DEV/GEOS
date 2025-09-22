@@ -150,11 +150,11 @@ void TriaxialDriver::postInputInitialization()
   // double check the initial stress value is consistent with any function values that
   // may overwrite it.
 
-  GEOS_THROW_CTX_IF( !isEqual( m_initialStress, m_table( 0, SIG0 ), 1e-6 ),
+  GEOS_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG0 ), 1e-6 ),
                      getDataContext() << ": Initial stress values indicated by initialStress and axialFunction(time=0) appear inconsistent",
                      InputError, getDataContext() );
 
-  GEOS_THROW_CTX_IF( !isEqual( m_initialStress, m_table( 0, SIG1 ), 1e-6 ),
+  GEOS_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG1 ), 1e-6 ),
                      getDataContext() << ": Initial stress values indicated by initialStress and radialFunction(time=0) appear inconsistent",
                      InputError, getDataContext() );
 }

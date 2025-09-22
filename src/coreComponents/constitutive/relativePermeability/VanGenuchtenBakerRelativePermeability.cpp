@@ -72,7 +72,7 @@ void VanGenuchtenBakerRelativePermeability::postInputInitialization()
 {
   RelativePermeabilityBase::postInputInitialization();
 
-  GEOS_THROW_CTX_IF( m_phaseOrder[PhaseType::OIL] < 0,
+  GEOS_THROW_IF( m_phaseOrder[PhaseType::OIL] < 0,
                      GEOS_FMT( "{}: reference oil phase has not been defined and must be included in model", getFullName() ),
                      InputError, getDataContext() );
 

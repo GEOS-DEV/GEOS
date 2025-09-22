@@ -186,9 +186,6 @@
 #define GEOS_ERROR_IF( COND, ... ) \
   GEOS_ERROR_IF_CAUSE( COND, "Error cause: " STRINGIZE( COND ), __VA_ARGS__ )
 
-// TODO: to be deleted
-#define GEOS_ERROR_CTX_IF( COND, MSG, ... ) GEOS_ERROR_IF( COND, MSG, __VA_ARGS__ )
-
 /**
  * @brief Raise a hard error and terminate the program.
  * @param ... Variable arguments with the following structure:
@@ -250,9 +247,6 @@
 #define GEOS_THROW_IF( COND, MSG, ... ) \
   GEOS_THROW_IF_CAUSE( COND, "Error cause: " STRINGIZE( COND ), MSG, __VA_ARGS__ )
 
-// TODO: to be deleted
-#define GEOS_THROW_CTX_IF( COND, MSG, EXCEPTION_TYPE, ... ) GEOS_THROW_IF( COND, MSG, EXCEPTION_TYPE, __VA_ARGS__ )
-
 /**
  * @brief Conditionally raise a hard error and terminate the program.
  * @param MSG a message to log (any expression that can be stream inserted)
@@ -300,9 +294,6 @@
       } \
     } \
   } while( false )
-
-// TODO: to be deleted
-#define GEOS_WARNING_CTX_IF( COND, MSG, ... ) GEOS_WARNING_IF( COND, MSG, __VA_ARGS__ )
 
 /**
  * @brief Conditionally report a warning.

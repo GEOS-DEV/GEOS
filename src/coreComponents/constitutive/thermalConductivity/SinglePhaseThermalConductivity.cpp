@@ -118,7 +118,7 @@ void SinglePhaseThermalConductivity::allocateConstitutiveData( dataRepository::G
 
 void SinglePhaseThermalConductivity::postInputInitialization()
 {
-  GEOS_THROW_CTX_IF( m_defaultThermalConductivityComponents[0] <= 0 ||
+  GEOS_THROW_IF( m_defaultThermalConductivityComponents[0] <= 0 ||
                      m_defaultThermalConductivityComponents[1] <= 0 ||
                      m_defaultThermalConductivityComponents[2] <= 0,
                      GEOS_FMT( "{}: the components of the default thermal conductivity tensor must be strictly positive",

@@ -77,7 +77,7 @@ void TractionBoundaryCondition::postInputInitialization()
 {
   if( m_tractionType == TractionType::vector )
   {
-    GEOS_ERROR_CTX_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) < 1e-20,
+    GEOS_ERROR_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) < 1e-20,
                        getDataContext() << ": " << viewKeyStruct::directionString() << " is required for " <<
                        viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
                        ", but appears to be unspecified",
@@ -98,7 +98,7 @@ void TractionBoundaryCondition::postInputInitialization()
                       viewKeyStruct::tractionTypeString() << " != " << TractionType::stress <<
                       ", so value of " << viewKeyStruct::inputStressString() << " is unused." );
 
-  GEOS_ERROR_CTX_IF( !inputStressRead && m_tractionType == TractionType::stress,
+  GEOS_ERROR_IF( !inputStressRead && m_tractionType == TractionType::stress,
                      getDataContext() << ": " << viewKeyStruct::tractionTypeString() << " = " << TractionType::stress <<
                      ", but " << viewKeyStruct::inputStressString() << " is not specified.",
                      getDataContext() );
