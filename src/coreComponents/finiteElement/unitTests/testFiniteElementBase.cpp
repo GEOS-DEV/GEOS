@@ -25,10 +25,12 @@
 using namespace geos;
 using namespace finiteElement;
 
+#ifndef GEOS_DEVICE_COMPILE
 
 //***** TEST VIEW SETTERS/GETTERS *****************************************************************
 
-class TestFiniteElementBase final : public FiniteElementBase, public FiniteElementBase_impl< 8, 8, 8 >
+class TestFiniteElementBase final : public FiniteElementBase,
+  public FiniteElementBase_impl< 8, 8, 8 >
 {
   TestFiniteElementBase():
     FiniteElementBase( 8, 8, 8 ),
@@ -43,8 +45,9 @@ class TestFiniteElementBase final : public FiniteElementBase, public FiniteEleme
                             MeshData< SUBREGION_TYPE > & GEOS_UNUSED_PARAM( meshData )
                             )
   {}
+
   template< typename SUBREGION_TYPE >
-  GEOS_HOST_DEVICE
+  // GEOS_HOST_DEVICE
   static void setupStack( localIndex const & GEOS_UNUSED_PARAM( cellIndex ),
                           MeshData< SUBREGION_TYPE > const & GEOS_UNUSED_PARAM( meshData ),
                           StackVariables & GEOS_UNUSED_PARAM( stack ) )
@@ -342,7 +345,7 @@ static void plusGradNajAij( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
 
 
 template< int NUM_SUPPORT_POINTS >
-GEOS_HOST_DEVICE
+// GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void plusGradNajAij( real64 const (&gradN)[NUM_SUPPORT_POINTS][3],
                      real64 const (&var_detJxW)[3][3],
@@ -513,3 +516,5 @@ TEST( FiniteElementBase, test_plusGradNajAijPlusNaFi )
     }
   }
 }
+
+#endif // GEOS_DEVICE_COMPILE

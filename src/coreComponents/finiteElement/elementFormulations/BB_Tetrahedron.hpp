@@ -1331,9 +1331,6 @@ public:
 
 };
 
-
-#ifndef GEOS_DEVICE_COMPILE
-
 /// @copydoc BB_Tetrahedron_impl
 template< int ORDER >
 class BB_Tetrahedron final : public BB_Tetrahedron_impl< ORDER >, public FiniteElementBase
@@ -1356,10 +1353,17 @@ public:
     FiniteElementBase( numNodes,
                        maxSupportPoints,
                        numQuadraturePoints )
-  {}
+  { }
 
+#ifdef __CUDACC__
+  #pragma diag_push
+  #pragma nv_diag_suppress 20012
+#endif
   GEOS_HOST_DEVICE
   virtual ~BB_Tetrahedron() override final = default;
+#ifdef __CUDACC__
+  #pragma diag_pop
+#endif
 
   /**
    * @brief Get the device-compatible implementation type.
@@ -1391,7 +1395,6 @@ using BB3_Tetrahedron = BB_Tetrahedron< 3 >;
 //using BB4_Tetrahedron = BB_Tetrahedron< 4 >;
 //using BB5_Tetrahedron = BB_Tetrahedron< 5 >;
 
-#endif // GEOS_DEVICE_COMPILE
 
 ///  Tetrahedron element with Bernstein-Bézier basis functions of order 1.
 using BB1_Tetrahedron_impl = BB_Tetrahedron_impl< 1 >;

@@ -895,7 +895,7 @@ GEOS_HOST_DEVICE
 inline
 real64 hexahedronVolume( real64 const (&X)[8][3] )
 {
-  return elementVolume< finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2 >( X );
+  return elementVolume< finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2_impl >( X );
 }
 
 /**
@@ -907,7 +907,7 @@ GEOS_HOST_DEVICE
 inline
 real64 tetrahedronVolume( real64 const (&X)[4][3] )
 {
-  return elementVolume< finiteElement::H1_Tetrahedron_Lagrange1_Gauss1 >( X );
+  return elementVolume< finiteElement::H1_Tetrahedron_Lagrange1_Gauss1_impl >( X );
 }
 
 /**
@@ -919,7 +919,7 @@ GEOS_HOST_DEVICE
 inline
 real64 wedgeVolume( real64 const (&X)[6][3] )
 {
-  return elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 >( X );
+  return elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6_impl >( X );
 }
 
 /**
@@ -931,7 +931,7 @@ GEOS_HOST_DEVICE
 inline
 real64 pyramidVolume( real64 const (&X)[5][3] )
 {
-  return elementVolume< finiteElement::H1_Pyramid_Lagrange1_Gauss5 >( X );
+  return elementVolume< finiteElement::H1_Pyramid_Lagrange1_Gauss5_impl >( X );
 }
 
 /**
@@ -978,7 +978,7 @@ real64 prismVolume( real64 const (&X)[2*N][3] )
     LvArray::tensorOps::copy< 3 >( XWedge[3], X[a+1+N] );
     LvArray::tensorOps::copy< 3 >( XWedge[4], XGBot );
     LvArray::tensorOps::copy< 3 >( XWedge[5], XGTop );
-    result = result + computationalGeometry::elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 >( XWedge );
+    result = result + computationalGeometry::elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6_impl >( XWedge );
   }
   LvArray::tensorOps::copy< 3 >( XWedge[0], X[N-1] );
   LvArray::tensorOps::copy< 3 >( XWedge[1], X[2*N-1] );
@@ -986,7 +986,7 @@ real64 prismVolume( real64 const (&X)[2*N][3] )
   LvArray::tensorOps::copy< 3 >( XWedge[3], X[N] );
   LvArray::tensorOps::copy< 3 >( XWedge[4], XGBot );
   LvArray::tensorOps::copy< 3 >( XWedge[5], XGTop );
-  result = result + computationalGeometry::elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 >( XWedge );
+  result = result + computationalGeometry::elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6_impl >( XWedge );
   return result;
 }
 

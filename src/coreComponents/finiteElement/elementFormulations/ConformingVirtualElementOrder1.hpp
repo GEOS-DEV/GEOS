@@ -596,8 +596,6 @@ private:
 
 
 
-#ifndef GEOS_DEVICE_COMPILE
-
 /// @copydoc ConformingVirtualElementOrder1_impl
 template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 class ConformingVirtualElementOrder1 final : public ConformingVirtualElementOrder1_impl< MAXCELLNODES, MAXFACENODES >,
@@ -677,7 +675,6 @@ using H1_Prism10_VEM_Gauss1 = ConformingVirtualElementOrder1< 20, 10 >;
 using H1_Prism11_VEM_Gauss1 = ConformingVirtualElementOrder1< 22, 11 >;
 #endif
 
-#endif // GEOS_DEVICE_COMPILE
 
 /// Convenience typedef for VEM on tetrahedra.
 using H1_Tetrahedron_VEM_Gauss1_impl = ConformingVirtualElementOrder1_impl< 4, 3 >;

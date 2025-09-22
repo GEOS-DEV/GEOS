@@ -63,6 +63,10 @@ public:
   /// The number of sampling points per element.
   constexpr static int numSamplingPoints = numSamplingPointsPerDirection * numSamplingPointsPerDirection * numSamplingPointsPerDirection;
 
+#ifdef __CUDACC__
+  #pragma diag_push
+  #pragma nv_diag_suppress 20012
+#endif
   /// Default constructor.
   GEOS_HOST_DEVICE FiniteElementBase_impl() = default;
   /// Default destructor.
@@ -81,6 +85,9 @@ public:
    * @return A reference to this object.
    */
   GEOS_HOST_DEVICE FiniteElementBase_impl & operator=( FiniteElementBase_impl && ) = default;
+#ifdef __CUDACC__
+  #pragma diag_pop
+#endif
 
   /**
    * @struct StackVariables
@@ -115,7 +122,7 @@ public:
    * @param stack Stack variables as filled by @ref setupStack.
    * @return The number of quadrature points.
    */
-  template < typename STACK_VARIABLES_TYPE >
+  template< typename STACK_VARIABLES_TYPE >
   GEOS_HOST_DEVICE
   static localIndex getNumQuadraturePoints( STACK_VARIABLES_TYPE const & stack )
   {
@@ -403,9 +410,6 @@ public:
 };
 
 
-
-#ifndef GEOS_DEVICE_COMPILE
-
 /**
  * @brief Base class for FEM element implementations.
  */
@@ -426,7 +430,11 @@ public:
     m_numSupportPoints( numSupportPoints ),
     m_maxSupportPoints( maxSupportPoints ),
     m_numQuadraturePoints( numQuadraturePoints )
-  {}
+  {
+#ifdef GEOS_DEVICE_COMPILE
+    GEOS_ERROR( "Programming error: FiniteElementBase is not device-instantiable." );
+#endif
+  }
 
   /**
    * @brief Destructor
@@ -462,11 +470,6 @@ private:
   localIndex const m_maxSupportPoints;
   localIndex const m_numQuadraturePoints;
 };
-
-
-#endif // GEOS_DEVICE_COMPILE
-
-
 
 } // namespace geos::finiteElement
 } // namespace geos

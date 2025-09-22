@@ -27,7 +27,6 @@
 #include "LvArray/src/tensorOps.hpp"
 #include "FiniteElementDispatch.hpp"
 
-
 namespace geos
 {
 
@@ -41,8 +40,6 @@ string const dNdX = "dNdX";
 string const detJ = "detJ";
 }
 }
-
-
 
 class FiniteElementDiscretization : public dataRepository::Group
 {
@@ -182,7 +179,6 @@ FiniteElementDiscretization::
   }
 
 }
-
 
 } /* namespace geos */
 

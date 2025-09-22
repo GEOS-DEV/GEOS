@@ -91,12 +91,19 @@ public:
   struct MeshData {};
 
   /// @cond DO_NOT_DOCUMENT
+#ifdef __CUDACC__
+  #pragma diag_push
+  #pragma nv_diag_suppress 20012
+#endif
   GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl() = default;
   GEOS_HOST_DEVICE ~H1_Tetrahedron_Lagrange1_Gauss_impl() = default;
   GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl( H1_Tetrahedron_Lagrange1_Gauss_impl const & ) = default;
   GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl & operator=( H1_Tetrahedron_Lagrange1_Gauss_impl const & ) = default;
   GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl( H1_Tetrahedron_Lagrange1_Gauss_impl && ) = default;
   GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl & operator=( H1_Tetrahedron_Lagrange1_Gauss_impl && ) = default;
+#ifdef __CUDACC__
+  #pragma diag_pop
+#endif
   /// @endcond DO_NOT_DOCUMENT
 
   /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
@@ -727,9 +734,6 @@ transformedQuadratureWeight( localIndex const q,
 /// @endcond
 
 
-
-#ifndef GEOS_DEVICE_COMPILE
-
 /// @copydoc H1_Tetrahedron_Lagrange1_Gauss_impl
 template< typename NUM_Q_POINTS >
 class H1_Tetrahedron_Lagrange1_Gauss final : public H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >,
@@ -779,8 +783,6 @@ using H1_Tetrahedron_Lagrange1_Gauss1 = H1_Tetrahedron_Lagrange1_Gauss< std::int
 using H1_Tetrahedron_Lagrange1_Gauss5 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 5 > >;
 /// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss class for the 14-point Gaussian quadrature rule.
 using H1_Tetrahedron_Lagrange1_Gauss14 = H1_Tetrahedron_Lagrange1_Gauss< std::integral_constant< int, 14 > >;
-
-#endif // GEOS_DEVICE_COMPILE
 
 /// @brief Instantiate the H1_Tetrahedron_Lagrange1_Gauss_impl class for the 1-point Gaussian quadrature rule.
 using H1_Tetrahedron_Lagrange1_Gauss1_impl = H1_Tetrahedron_Lagrange1_Gauss_impl< std::integral_constant< int, 1 > >;

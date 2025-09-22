@@ -233,6 +233,4 @@ dispatchlowOrder3D( FiniteElementBase const & input,
 
 } // namespace geos
 
-
-
 #endif /* GEOS_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_ */

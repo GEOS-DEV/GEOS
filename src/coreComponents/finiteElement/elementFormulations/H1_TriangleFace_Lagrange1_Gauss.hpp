@@ -74,12 +74,19 @@ public:
   struct MeshData {};
 
   /// @cond DO_NOT_DOCUMENT
+#ifdef __CUDACC__
+  #pragma diag_push
+  #pragma nv_diag_suppress 20012
+#endif
   GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl() = default;
   GEOS_HOST_DEVICE ~H1_TriangleFace_Lagrange1_Gauss_impl() = default;
   GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl( H1_TriangleFace_Lagrange1_Gauss_impl const & ) = default;
   GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl & operator=( H1_TriangleFace_Lagrange1_Gauss_impl const & ) = default;
   GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl( H1_TriangleFace_Lagrange1_Gauss_impl && ) = default;
   GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl & operator=( H1_TriangleFace_Lagrange1_Gauss_impl && ) = default;
+#ifdef __CUDACC__
+  #pragma diag_pop
+#endif
   /// @endcond DO_NOT_DOCUMENT
 
   /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
@@ -443,8 +450,6 @@ transformedQuadratureWeight( localIndex const q,
 /// @endcond
 
 
-#ifndef GEOS_DEVICE_COMPILE
-
 /// @copydoc H1_TriangleFace_Lagrange1_Gauss_impl
 template< typename NUM_Q_POINTS >
 class H1_TriangleFace_Lagrange1_Gauss final : public H1_TriangleFace_Lagrange1_Gauss_impl< NUM_Q_POINTS >,
@@ -494,8 +499,6 @@ using H1_TriangleFace_Lagrange1_Gauss1 = H1_TriangleFace_Lagrange1_Gauss< std::i
 using H1_TriangleFace_Lagrange1_Gauss4 = H1_TriangleFace_Lagrange1_Gauss< std::integral_constant< int, 4 > >;
 /// @brief Instantiation of the class with 6 quadrature points.
 using H1_TriangleFace_Lagrange1_Gauss6 = H1_TriangleFace_Lagrange1_Gauss< std::integral_constant< int, 6 > >;
-
-#endif // GEOS_DEVICE_COMPILE
 
 /// @brief Instantiation of the class with 1 quadrature points.
 using H1_TriangleFace_Lagrange1_Gauss1_impl = H1_TriangleFace_Lagrange1_Gauss_impl< std::integral_constant< int, 1 > >;

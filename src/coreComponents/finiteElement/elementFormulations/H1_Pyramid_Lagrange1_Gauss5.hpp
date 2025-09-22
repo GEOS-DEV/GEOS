@@ -72,12 +72,19 @@ public:
   struct MeshData {};
 
   /// @cond DO_NOT_DOCUMENT
+#ifdef __CUDACC__
+  #pragma diag_push
+  #pragma nv_diag_suppress 20012
+#endif
   GEOS_HOST_DEVICE H1_Pyramid_Lagrange1_Gauss5_impl() = default;
   GEOS_HOST_DEVICE ~H1_Pyramid_Lagrange1_Gauss5_impl() = default;
   GEOS_HOST_DEVICE H1_Pyramid_Lagrange1_Gauss5_impl( H1_Pyramid_Lagrange1_Gauss5_impl const & ) = default;
   GEOS_HOST_DEVICE H1_Pyramid_Lagrange1_Gauss5_impl & operator=( H1_Pyramid_Lagrange1_Gauss5_impl const & ) = default;
   GEOS_HOST_DEVICE H1_Pyramid_Lagrange1_Gauss5_impl( H1_Pyramid_Lagrange1_Gauss5_impl && ) = default;
   GEOS_HOST_DEVICE H1_Pyramid_Lagrange1_Gauss5_impl & operator=( H1_Pyramid_Lagrange1_Gauss5_impl && ) = default;
+#ifdef __CUDACC__
+  #pragma diag_pop
+#endif
   /// @endcond DO_NOT_DOCUMENT
 
   /**
@@ -582,10 +589,6 @@ H1_Pyramid_Lagrange1_Gauss5_impl::
 
 /// @endcond
 
-
-
-#ifndef GEOS_DEVICE_COMPILE
-
 /// @copydoc H1_Pyramid_Lagrange1_Gauss5_impl
 class H1_Pyramid_Lagrange1_Gauss5 final : public H1_Pyramid_Lagrange1_Gauss5_impl,
   public FiniteElementBase
@@ -626,7 +629,6 @@ public:
   }
 
 };
-#endif // GEOS_DEVICE_COMPILE
 
 }
 }

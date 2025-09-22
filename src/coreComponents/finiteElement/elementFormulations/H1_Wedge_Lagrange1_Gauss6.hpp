@@ -68,12 +68,19 @@ public:
   struct MeshData {};
 
   /// @cond DO_NOT_DOCUMENT
+#ifdef __CUDACC__
+  #pragma diag_push
+  #pragma nv_diag_suppress 20012
+#endif
   GEOS_HOST_DEVICE H1_Wedge_Lagrange1_Gauss6_impl() = default;
   GEOS_HOST_DEVICE ~H1_Wedge_Lagrange1_Gauss6_impl() = default;
   GEOS_HOST_DEVICE H1_Wedge_Lagrange1_Gauss6_impl( H1_Wedge_Lagrange1_Gauss6_impl const & ) = default;
   GEOS_HOST_DEVICE H1_Wedge_Lagrange1_Gauss6_impl & operator=( H1_Wedge_Lagrange1_Gauss6_impl const & ) = default;
   GEOS_HOST_DEVICE H1_Wedge_Lagrange1_Gauss6_impl( H1_Wedge_Lagrange1_Gauss6_impl && ) = default;
   GEOS_HOST_DEVICE H1_Wedge_Lagrange1_Gauss6_impl & operator=( H1_Wedge_Lagrange1_Gauss6_impl && ) = default;
+#ifdef __CUDACC__
+  #pragma diag_pop
+#endif
   /// @endcond DO_NOT_DOCUMENT
 
   /**
@@ -664,9 +671,6 @@ H1_Wedge_Lagrange1_Gauss6_impl::
 
 /// @endcond Doxygen_Suppress
 
-
-#ifndef GEOS_DEVICE_COMPILE
-
 /// @copydoc H1_Wedge_Lagrange1_Gauss6_impl
 class H1_Wedge_Lagrange1_Gauss6 final : public H1_Wedge_Lagrange1_Gauss6_impl,
   public FiniteElementBase
@@ -700,9 +704,6 @@ public:
   }
 
 };
-
-#endif // GEOS_DEVICE_COMPILE
-
 
 }
 }

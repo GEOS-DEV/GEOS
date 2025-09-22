@@ -208,9 +208,29 @@ public:
           func( i, j, k );
         }
       }
-
     }
+  }
 
+  /**
+   * @brief Generate the indexes for the modal shape functions
+   * @param func The function to call with the generated indexes
+   */
+  template< typename FUNC >
+  GEOS_FORCE_INLINE
+  static constexpr void generateIndexesHost( FUNC && func )
+  {
+
+    for( localIndex i = 0; i <= ORDER; ++i )
+    {
+      for( localIndex j = 0; j <= ORDER; ++j )
+      {
+        localIndex maxIj = LvArray::math::max( i, j );
+        for( localIndex k = 0; k <= ORDER - maxIj; ++k )
+        {
+          func( i, j, k );
+        }
+      }
+    }
   }
 
   /**
@@ -471,13 +491,12 @@ public:
     for( int j = 0; j < numNodes; ++j )
     {
       localIndex count = 0;
-      generateIndexes( [&]( localIndex const p, localIndex const r, localIndex const s )
+      generateIndexesHost( [&]( localIndex const p, localIndex const r, localIndex const s )
       {
-        PsiX[count]=calcModal( p, r, s, coords[j] );
+        PsiX[count] = calcModal( p, r, s, coords[j] );
         VDM[count][j] = PsiX[count];
         ++count;
       } );
-      //   }
     }
     array2d< real64 > VDM_inv;
     VDM_inv.resize( numNodes, numNodes );
@@ -751,8 +770,6 @@ public:
 
 };
 
-#ifndef GEOS_DEVICE_COMPILE
-
 /// @copydoc Pk_Pyramid_BCD_impl
 template< int ORDER >
 class Pk_Pyramid_BCD final : public Pk_Pyramid_BCD_impl< ORDER >, public FiniteElementBase
@@ -777,8 +794,15 @@ public:
                        numQuadraturePoints )
   {}
 
+#ifdef __CUDACC__
+  #pragma diag_push
+  #pragma nv_diag_suppress 20012
+#endif
   GEOS_HOST_DEVICE
   virtual ~Pk_Pyramid_BCD() override final = default;
+#ifdef __CUDACC__
+  #pragma diag_pop
+#endif
 
   /**
    * @brief Get the device-compatible implementation type.
@@ -802,8 +826,6 @@ public:
 
 /// Pyramid element with BCD basis functions of order 1.
 using P1_Pyramid_BCD = Pk_Pyramid_BCD< 1 >;
-
-#endif // GEOS_DEVICE_COMPILE
 
 /// Pyramid element with BCD basis functions of order 1.
 using P1_Pyramid_BCD_impl = Pk_Pyramid_BCD_impl< 1 >;

@@ -1698,9 +1698,6 @@ gradient( int const q,
 }
 
 
-
-#ifndef GEOS_DEVICE_COMPILE
-
 template< typename GL_BASIS >
 class Qk_Hexahedron_Lagrange_GaussLobatto final : public Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >,
   public FiniteElementBase
@@ -1740,8 +1737,6 @@ public:
   virtual ~Qk_Hexahedron_Lagrange_GaussLobatto() override final = default;
 
 };
-#endif // GEOS_DEVICE_COMPILE
-
 
 
 /**
@@ -1948,6 +1943,12 @@ using Q4_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto<
  *    0        1        2        3        4        5                   o----- xi0
  */
 using Q5_Hexahedron_Lagrange_GaussLobatto = Qk_Hexahedron_Lagrange_GaussLobatto< LagrangeBasis5GL >;
+
+using Q1_Hexahedron_Lagrange_GaussLobatto_impl = Qk_Hexahedron_Lagrange_GaussLobatto_impl< LagrangeBasis1 >;
+using Q2_Hexahedron_Lagrange_GaussLobatto_impl = Qk_Hexahedron_Lagrange_GaussLobatto_impl< LagrangeBasis2 >;
+using Q3_Hexahedron_Lagrange_GaussLobatto_impl = Qk_Hexahedron_Lagrange_GaussLobatto_impl< LagrangeBasis3GL >;
+using Q4_Hexahedron_Lagrange_GaussLobatto_impl = Qk_Hexahedron_Lagrange_GaussLobatto_impl< LagrangeBasis4GL >;
+using Q5_Hexahedron_Lagrange_GaussLobatto_impl = Qk_Hexahedron_Lagrange_GaussLobatto_impl< LagrangeBasis5GL >;
 
 /// @endcond
 

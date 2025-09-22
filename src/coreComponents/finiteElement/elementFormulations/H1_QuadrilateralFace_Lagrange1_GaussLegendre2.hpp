@@ -62,12 +62,19 @@ public:
   struct MeshData {};
 
   /// @cond DO_NOT_DOCUMENT
+#ifdef __CUDACC__
+  #pragma diag_push
+  #pragma nv_diag_suppress 20012
+#endif
   GEOS_HOST_DEVICE H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl() = default;
   GEOS_HOST_DEVICE ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl() = default;
   GEOS_HOST_DEVICE H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl const & ) = default;
   GEOS_HOST_DEVICE H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl & operator=( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl const & ) = default;
   GEOS_HOST_DEVICE H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl && ) = default;
   GEOS_HOST_DEVICE H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl & operator=( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl && ) = default;
+#ifdef __CUDACC__
+  #pragma diag_pop
+#endif
   /// @endcond DO_NOT_DOCUMENT
 
   /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
@@ -383,8 +390,6 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl::
 /// @endcond
 
 
-#ifndef GEOS_DEVICE_COMPILE
-
 /// @copydoc H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl
 class H1_QuadrilateralFace_Lagrange1_GaussLegendre2 final : public H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl,
   public FiniteElementBase
@@ -426,9 +431,6 @@ public:
 
 
 };
-#endif // GEOS_DEVICE_COMPILE
-
-
 
 }
 }
