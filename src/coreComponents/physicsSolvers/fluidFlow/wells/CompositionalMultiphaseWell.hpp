@@ -345,8 +345,7 @@ protected:
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion,
-                                        ElementRegionManager const & elemManager ) override;
+                                        WellElementSubRegion const & subRegion ) override;
 
   /**
    * @brief Create well separator

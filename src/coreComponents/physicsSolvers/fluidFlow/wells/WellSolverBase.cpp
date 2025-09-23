@@ -159,7 +159,7 @@ void WellSolverBase::initializePostSubGroups()
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
-      validateWellConstraints( 0, 0, subRegion, elemManager );
+      validateWellConstraints( 0, 0, subRegion );
 
       // validate perforation status table
       PerforationData & perforationData = *subRegion.getPerforationData();
