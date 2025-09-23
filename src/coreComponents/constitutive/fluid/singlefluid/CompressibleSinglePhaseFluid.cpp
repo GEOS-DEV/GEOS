@@ -110,9 +110,9 @@ void CompressibleSinglePhaseFluid::postInputInitialization()
   // Due to the way update wrapper is currently implemented, we can only support one model type
   auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
   {
-    GEOS_THROW_IF_NE_MSG( value, ExponentApproximationType::Linear,
-                          GEOS_FMT( "{}: invalid model type in attribute '{}' (only linear currently supported)", getFullName(), attribute ),
-                          InputError );
+    GEOS_THROW_IF( value != ExponentApproximationType::Linear && value != ExponentApproximationType::Full,
+                   GEOS_FMT( "{}: invalid model type in attribute '{}' (only linear or fully exponential currently supported)", getFullName(), attribute ),
+                   InputError );
   };
   checkModelType( m_densityModelType, viewKeyStruct::densityModelTypeString() );
   checkModelType( m_viscosityModelType, viewKeyStruct::viscosityModelTypeString() );
