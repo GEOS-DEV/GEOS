@@ -291,7 +291,7 @@ public:
     LvArray::tensorOps::Ri_eq_AijBj< 6, 3 >( strainIncBubble, localStrainBubbleMatrix, stack.bIncrLocal );
     LvArray::tensorOps::Ri_eq_AijBj< 6, nUdof >( strainInc, strainMatrix, stack.uIncrLocal );
 
-    LvArray::tensorOps::add< 6 >( strainInc, strainIncBubble );
+    //LvArray::tensorOps::add< 6 >( strainInc, strainIncBubble );
 
     real64 totalStress[6] = {0};
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
