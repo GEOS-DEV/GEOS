@@ -522,7 +522,7 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
   {
     real64 p_num_tpfa = p_tpfa[i];
     real64 p_num_mfd  = p_mfd[i];
-    real64 maxPressureDiff     = std::abs(p_num_tpfa - p_num_mfd);
+    maxPressureDiff.max(std::abs(p_num_tpfa - p_num_mfd));
   } );
   EXPECT_LE(maxPressureDiff.get(), PRESSURE_L2_TOLERANCE);
 }
