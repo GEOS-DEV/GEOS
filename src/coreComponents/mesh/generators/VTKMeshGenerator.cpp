@@ -207,7 +207,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   m_cellMap = vtk::buildCellMap( *m_vtkMesh, m_attributeName );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': writing nodes...", catalogName(), getName() ) );
-  cellBlockManager.setGlobalLength( writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale ) );
+  writeNodes( getLogLevel(), *m_vtkMesh, m_nodesetNames, cellBlockManager, this->m_translate, this->m_scale );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': writing cells...", catalogName(), getName() ) );
   writeCells( getLogLevel(), *m_vtkMesh, m_cellMap, cellBlockManager );
@@ -217,6 +217,10 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': building connectivity maps...", catalogName(), getName() ) );
   cellBlockManager.buildMaps();
+
+  auto lengthAndOffset = getGlobalLengthAndOffset( *m_vtkMesh );
+  cellBlockManager.setGlobalLength( lengthAndOffset.first );
+  cellBlockManager.setGlobalOffset( lengthAndOffset.second );
 
   for( auto const & [name, mesh]: m_faceBlockMeshes )
   {

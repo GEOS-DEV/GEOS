@@ -621,24 +621,7 @@
 		<!--usePML => Flag to apply PML-->
 		<xsd:attribute name="usePML" type="integer" />
 	</xsd:complexType>
-	<xsd:complexType name="SolverStatisticsType">
-		<!--numDiscardedLinearIterations => Cumulative number of discarded linear iterations-->
-		<xsd:attribute name="numDiscardedLinearIterations" type="integer" />
-		<!--numDiscardedNonlinearIterations => Cumulative number of discarded nonlinear iterations-->
-		<xsd:attribute name="numDiscardedNonlinearIterations" type="integer" />
-		<!--numDiscardedOuterLoopIterations => Cumulative number of discarded outer loop iterations-->
-		<xsd:attribute name="numDiscardedOuterLoopIterations" type="integer" />
-		<!--numSuccessfulLinearIterations => Cumulative number of successful linear iterations-->
-		<xsd:attribute name="numSuccessfulLinearIterations" type="integer" />
-		<!--numSuccessfulNonlinearIterations => Cumulative number of successful nonlinear iterations-->
-		<xsd:attribute name="numSuccessfulNonlinearIterations" type="integer" />
-		<!--numSuccessfulOuterLoopIterations => Cumulative number of successful outer loop iterations-->
-		<xsd:attribute name="numSuccessfulOuterLoopIterations" type="integer" />
-		<!--numTimeStepCuts => Number of time step cuts-->
-		<xsd:attribute name="numTimeStepCuts" type="integer" />
-		<!--numTimeSteps => Number of time steps-->
-		<xsd:attribute name="numTimeSteps" type="integer" />
-	</xsd:complexType>
+	<xsd:complexType name="SolverStatisticsType" />
 	<xsd:complexType name="AcousticElasticSEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1604,7 +1587,7 @@
 		<xsd:attribute name="dPorosity_dPressure" type="real64_array2d" />
 		<!--dPorosity_dTemperature => Derivative of rock porosity with respect to temperature-->
 		<xsd:attribute name="dPorosity_dTemperature" type="real64_array2d" />
-		<!--grainBulkModulus => Grain Bulk modulus.-->
+		<!--grainBulkModulus => Grain bulk modulus-->
 		<xsd:attribute name="grainBulkModulus" type="real64_array" />
 		<!--initialPorosity => Initial porosity-->
 		<xsd:attribute name="initialPorosity" type="real64_array2d" />
@@ -2631,8 +2614,6 @@
 		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="real64_array4d" />
 		<!--jFuncMultiplier => Multiplier for the Leverett J-function-->
 		<xsd:attribute name="jFuncMultiplier" type="real64_array2d" />
-		<!--jFunctionWrappers => (no description available)-->
-		<xsd:attribute name="jFunctionWrappers" type="LvArray_Array_lt_geos_TableFunction_KernelWrapper_cm_-1_cm_-camp_int_seq_lt_long_cm_-0l_gt__cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
 		<!--phaseCapPressure => Phase capillary pressure-->
 		<xsd:attribute name="phaseCapPressure" type="real64_array3d" />
 		<!--phaseOrder => (no description available)-->
@@ -3575,6 +3556,10 @@
 		<xsd:attribute name="topWellElementIndex" type="integer" />
 		<!--wellControlsName => (no description available)-->
 		<xsd:attribute name="wellControlsName" type="groupNameRef" />
+		<!--wellLocalElementGlobalIndex => (no description available)-->
+		<xsd:attribute name="wellLocalElementGlobalIndex" type="globalIndex_array" />
+		<!--wellLocalElementStatus => (no description available)-->
+		<xsd:attribute name="wellLocalElementStatus" type="integer_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ConstitutiveModelsType" />
 	<xsd:complexType name="wellElementSubRegionType">
@@ -3600,6 +3585,12 @@
 		<xsd:attribute name="maxGlobalIndex" type="globalIndex" />
 		<!--numPerforationsGlobal => (no description available)-->
 		<xsd:attribute name="numPerforationsGlobal" type="globalIndex" />
+		<!--perforationName => Perforation name-->
+		<xsd:attribute name="perforationName" type="string_array" />
+		<!--perforationStatus => Table of time vs perforation open/close status-->
+		<xsd:attribute name="perforationStatus" type="integer_array" />
+		<!--perforationStatusTableName => Perforation status table name-->
+		<xsd:attribute name="perforationStatusTableName" type="string_array" />
 		<!--reservoirElementGlobalIndex => For each perforation, global element index of the perforated element-->
 		<xsd:attribute name="reservoirElementGlobalIndex" type="globalIndex_array" />
 		<!--reservoirElementIndex => For each perforation, element index of the perforated element-->

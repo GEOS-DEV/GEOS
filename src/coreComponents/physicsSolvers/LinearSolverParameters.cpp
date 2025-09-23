@@ -157,6 +157,11 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Whether to use a parallel solver (instead of a serial one)" );
 
+  registerWrapper( viewKeyStruct::reuseFactorizationString(), &m_parameters.direct.reuseFactorization ).
+    setApplyDefaultValue( m_parameters.direct.reuseFactorization ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Whether to reuse the LU factorization (experimental)" );
+
   registerWrapper( viewKeyStruct::krylovMaxIterString(), &m_parameters.krylov.maxIterations ).
     setApplyDefaultValue( m_parameters.krylov.maxIterations ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -455,9 +460,7 @@ void LinearSolverParametersInput::print()
     }
   }
   TableLayout const tableLayout = TableLayout( GEOS_FMT( "{}: linear solver", getParent().getName() ),
-                                               { TableLayout::Column()
-                                                   .setName( "Parameter" )
-                                                   .setValuesAlignment( TableLayout::Alignment::left ),
+                                               { TableLayout::Column().setName( "Parameter" ).setValuesAlignment( TableLayout::Alignment::left ),
                                                  "Value" } );
   TableTextFormatter const tableFormatter( tableLayout );
   GEOS_LOG_RANK_0( tableFormatter.toString( tableData ));

@@ -26,16 +26,7 @@ namespace constitutive
 {
 
 DruckerPrager::DruckerPrager( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_defaultFrictionAngle(),
-  m_defaultDilationAngle(),
-  m_defaultCohesion(),
-  m_defaultHardening(),
-  m_friction(),
-  m_dilation(),
-  m_hardening(),
-  m_newCohesion(),
-  m_oldCohesion()
+  ElasticIsotropic( name, parent )
 {
   // register default values
 
@@ -84,17 +75,12 @@ DruckerPrager::DruckerPrager( string const & name, Group * const parent ):
 }
 
 
-DruckerPrager::~DruckerPrager()
-{}
-
-
-void DruckerPrager::allocateConstitutiveData( dataRepository::Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+void DruckerPrager::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  m_newCohesion.resize( 0, numConstitutivePointsPerParentIndex );
-  m_oldCohesion.resize( 0, numConstitutivePointsPerParentIndex );
+  m_newCohesion.resize( 0, numPts );
+  m_oldCohesion.resize( 0, numPts );
 
-  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 }
 
 

@@ -483,7 +483,7 @@ void ElasticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, Do
 
 real64 ElasticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                               real64 const & dt,
-                                                              integer cycleNumber,
+                                                              integer const cycleNumber,
                                                               DomainPartition & domain,
                                                               integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
@@ -495,7 +495,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & tim
 
 real64 ElasticFirstOrderWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                                real64 const & dt,
-                                                               integer cycleNumber,
+                                                               integer const cycleNumber,
                                                                DomainPartition & domain,
                                                                integer GEOS_UNUSED_PARAM( computeGradient ) )
 {

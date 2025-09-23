@@ -28,10 +28,7 @@ namespace constitutive
 {
 
 CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
-  FrictionBase( name, parent ),
-  m_cohesion(),
-  m_frictionCoefficient(),
-  m_elasticSlip()
+  FrictionBase( name, parent )
 {
   registerWrapper( viewKeyStruct::shearStiffnessString(), &m_shearStiffness ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -52,9 +49,6 @@ CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
     setDescription( "Elastic Slip" );
 }
 
-CoulombFriction::~CoulombFriction()
-{}
-
 void CoulombFriction::postInputInitialization()
 {
   GEOS_THROW_IF( m_frictionCoefficient < 0.0,
@@ -63,14 +57,12 @@ void CoulombFriction::postInputInitialization()
 
 }
 
-void CoulombFriction::allocateConstitutiveData( Group & parent,
-                                                localIndex const numConstitutivePointsPerParentIndex )
+void CoulombFriction::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
   m_elasticSlip.resize( 0, 2 );
 
-  FrictionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  FrictionBase::allocateConstitutiveData( parent, numPts );
 }
-
 
 CoulombFrictionUpdates CoulombFriction::createKernelUpdates() const
 {

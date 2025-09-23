@@ -28,26 +28,7 @@ namespace constitutive
 
 template< typename BASE >
 Damage< BASE >::Damage( string const & name, Group * const parent ):
-  BASE( name, parent ),
-  m_newDamage(),
-  m_oldDamage(),
-  m_damageGrad(),
-  m_strainEnergyDensity(),
-  m_volStrain(),
-  m_extDrivingForce(),
-  m_lengthScale(),
-  m_defaultCriticalFractureEnergy(),
-  m_criticalStrainEnergy(),
-  m_degradationLowerLimit( 0.0 ),
-  m_extDrivingForceFlag( 0 ),
-  m_defaultTensileStrength(),
-  m_defaultCompressStrength(),
-  m_defaultDeltaCoefficient(),
-  m_biotCoefficient(),
-  m_criticalFractureEnergy(),
-  m_tensileStrength(),
-  m_compressStrength(),
-  m_deltaCoefficient()
+  BASE( name, parent )
 {
   this->registerWrapper( viewKeyStruct::newDamageString(), &m_newDamage ).
     setApplyDefaultValue( 0.0 ).
@@ -180,21 +161,21 @@ void Damage< BASE >::postInputInitialization()
 }
 
 template< typename BASE >
-void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
-                                               localIndex const numConstitutivePointsPerParentIndex )
+void Damage< BASE >::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  m_newDamage.resize( 0, numConstitutivePointsPerParentIndex );
-  m_oldDamage.resize( 0, numConstitutivePointsPerParentIndex );
-  m_damageGrad.resize( 0, numConstitutivePointsPerParentIndex, 3 );
-  m_strainEnergyDensity.resize( 0, numConstitutivePointsPerParentIndex );
-  m_volStrain.resize( 0, numConstitutivePointsPerParentIndex );
-  m_extDrivingForce.resize( 0, numConstitutivePointsPerParentIndex );
+  m_newDamage.resize( 0, numPts );
+  m_oldDamage.resize( 0, numPts );
+  m_damageGrad.resize( 0, numPts, 3 );
+  m_strainEnergyDensity.resize( 0, numPts );
+  m_volStrain.resize( 0, numPts );
+  m_extDrivingForce.resize( 0, numPts );
   m_biotCoefficient.resize( parent.size() );
   m_criticalFractureEnergy.resize( parent.size() );
   m_tensileStrength.resize( parent.size() );
   m_compressStrength.resize( parent.size() );
   m_deltaCoefficient.resize( parent.size() );
-  BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+
+  BASE::allocateConstitutiveData( parent, numPts );
 }
 
 template< typename BASE >
