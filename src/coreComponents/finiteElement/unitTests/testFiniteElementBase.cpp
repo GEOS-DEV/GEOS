@@ -25,8 +25,6 @@
 using namespace geos;
 using namespace finiteElement;
 
-#ifndef GEOS_DEVICE_COMPILE
-
 //***** TEST VIEW SETTERS/GETTERS *****************************************************************
 
 class TestFiniteElementBase final : public FiniteElementBase,
@@ -516,5 +514,3 @@ TEST( FiniteElementBase, test_plusGradNajAijPlusNaFi )
     }
   }
 }
-
-#endif // GEOS_DEVICE_COMPILE
