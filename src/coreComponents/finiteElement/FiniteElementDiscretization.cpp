@@ -22,8 +22,6 @@
 
 #include "common/GeosxMacros.hpp"
 
-#ifndef GEOS_DEVICE_COMPILE
-
 namespace geos
 {
 using namespace dataRepository;
@@ -315,5 +313,3 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
 REGISTER_CATALOG_ENTRY( Group, FiniteElementDiscretization, string const &, Group * const )
 
 } /* namespace geos */
-
-#endif /* GEOS_DEVICE_COMPILE */
