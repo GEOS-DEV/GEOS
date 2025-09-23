@@ -1232,11 +1232,11 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--errorSetMode => Set the log state when we a “set” does not target any region
-When set to "Silent", no output
-When set to "Warning", output an error
-When set to "Error", output a throw
+When set to "silent", no output
+When set to "warning", output an error
+When set to "error", output a throw
 -->
-		<xsd:attribute name="errorSetMode" type="groupNameRef" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
@@ -1251,6 +1251,11 @@ When set to "Error", output a throw
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_FieldSpecificationBase_SetErrorMode">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|silent|error|warning" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="DirichletType">
 		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
 		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
@@ -1263,11 +1268,11 @@ When set to "Error", output a throw
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--errorSetMode => Set the log state when we a “set” does not target any region
-When set to "Silent", no output
-When set to "Warning", output an error
-When set to "Error", output a throw
+When set to "silent", no output
+When set to "warning", output an error
+When set to "error", output a throw
 -->
-		<xsd:attribute name="errorSetMode" type="groupNameRef" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
@@ -1295,11 +1300,11 @@ When set to "Error", output a throw
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--errorSetMode => Set the log state when we a “set” does not target any region
-When set to "Silent", no output
-When set to "Warning", output an error
-When set to "Error", output a throw
+When set to "silent", no output
+When set to "warning", output an error
+When set to "error", output a throw
 -->
-		<xsd:attribute name="errorSetMode" type="groupNameRef" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
@@ -1337,11 +1342,11 @@ When set to "Error", output a throw
 		<!--equilibrationTolerance => Tolerance in the fixed-point iteration scheme used for hydrostatic initialization-->
 		<xsd:attribute name="equilibrationTolerance" type="real64" default="0.001" />
 		<!--errorSetMode => Set the log state when we a “set” does not target any region
-When set to "Silent", no output
-When set to "Warning", output an error
-When set to "Error", output a throw
+When set to "silent", no output
+When set to "warning", output an error
+When set to "error", output a throw
 -->
-		<xsd:attribute name="errorSetMode" type="groupNameRef" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialPhaseName => Name of the phase initially saturating the reservoir-->
@@ -1369,11 +1374,11 @@ When set to "Error", output a throw
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--errorSetMode => Set the log state when we a “set” does not target any region
-When set to "Silent", no output
-When set to "Warning", output an error
-When set to "Error", output a throw
+When set to "silent", no output
+When set to "warning", output an error
+When set to "error", output a throw
 -->
-		<xsd:attribute name="errorSetMode" type="groupNameRef" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--objectPath => Path to the target field-->
@@ -1411,11 +1416,11 @@ When set to "Error", output a throw
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--errorSetMode => Set the log state when we a “set” does not target any region
-When set to "Silent", no output
-When set to "Warning", output an error
-When set to "Error", output a throw
+When set to "silent", no output
+When set to "warning", output an error
+When set to "error", output a throw
 -->
-		<xsd:attribute name="errorSetMode" type="groupNameRef" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--functionName => Name of a function that specifies the variation of the production rate variations of this SourceFlux.Multiplied by scale. If no function is provided, a constant value of 1 is used.The produced fluid rate unit is in kg by default, or in mole if the flow solver uses moles.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
@@ -1439,11 +1444,11 @@ When set to "Error", output a throw
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--errorSetMode => Set the log state when we a “set” does not target any region
-When set to "Silent", no output
-When set to "Warning", output an error
-When set to "Error", output a throw
+When set to "silent", no output
+When set to "warning", output an error
+When set to "error", output a throw
 -->
-		<xsd:attribute name="errorSetMode" type="groupNameRef" default="error" />
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
