@@ -612,13 +612,13 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
 
       bool const isFluidModelThermal = fluid.isThermal();
       GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
-                         GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
-                                   getDataContext(), fluid.getDataContext() ),
-                         InputError, getDataContext(), fluid.getDataContext() );
+                     GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
+                               getDataContext(), fluid.getDataContext() ),
+                     InputError, getDataContext(), fluid.getDataContext() );
       GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
-                         GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
-                                   getDataContext(), fluid.getDataContext() ),
-                         InputError, getDataContext(), fluid.getDataContext() );
+                     GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
+                               getDataContext(), fluid.getDataContext() ),
+                     InputError, getDataContext(), fluid.getDataContext() );
 
       string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
@@ -1104,14 +1104,14 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
     // check that the gravity vector is aligned with the z-axis
     GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
-                       getCatalogName() << " " << getDataContext() <<
-                       ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
-                       ") is not aligned with the z-axis. \n"
-                       "This is incompatible with the " << bc.getCatalogName() << " " << bc.getDataContext() <<
-                       "used in this simulation. To proceed, you can either: \n" <<
-                       "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
-                       "   - Remove the hydrostatic equilibrium initial condition from the XML file",
-                       InputError, getDataContext(), bc.getDataContext() );
+                   getCatalogName() << " " << getDataContext() <<
+                   ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
+                   ") is not aligned with the z-axis. \n"
+                   "This is incompatible with the " << bc.getCatalogName() << " " << bc.getDataContext() <<
+                   "used in this simulation. To proceed, you can either: \n" <<
+                   "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
+                   "   - Remove the hydrostatic equilibrium initial condition from the XML file",
+                   InputError, getDataContext(), bc.getDataContext() );
 
     // ensure that the temperature and composition tables are defined
     GEOS_THROW_IF( bc.getTemperatureVsElevationTableName().empty(),
@@ -1222,24 +1222,24 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
       string_array const & componentNames = fs.getComponentNames();
       GEOS_THROW_IF( fluid.componentNames().size() != componentNames.size(),
-                         "Mismatch in number of components between constitutive model "
-                         << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
-                         InputError, fluid.getDataContext(), fs.getDataContext() );
+                     "Mismatch in number of components between constitutive model "
+                     << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
+                     InputError, fluid.getDataContext(), fs.getDataContext() );
       for( integer ic = 0; ic < fluid.numFluidComponents(); ++ic )
       {
         GEOS_THROW_IF( fluid.componentNames()[ic] != componentNames[ic],
-                           "Mismatch in component names between constitutive model "
-                           << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
-                           InputError, fluid.getDataContext(), fs.getDataContext() );
+                       "Mismatch in component names between constitutive model "
+                       << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
+                       InputError, fluid.getDataContext(), fs.getDataContext() );
       }
 
       // Note: for now, we assume that the reservoir is in a single-phase state at initialization
       string_array const & phaseNames = fluid.phaseNames();
       auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
       GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
-                         getCatalogName() << " " << getDataContext() << ": phase name " <<
-                         initPhaseName << " not found in the phases of " << fluid.getDataContext(),
-                         InputError, getDataContext(), fluid.getDataContext() );
+                     getCatalogName() << " " << getDataContext() << ": phase name " <<
+                     initPhaseName << " not found in the phases of " << fluid.getDataContext(),
+                     InputError, getDataContext(), fluid.getDataContext() );
       integer const ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
 
       // Step 3.4: compute the hydrostatic pressure values
@@ -1271,11 +1271,11 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                pressureValues.toView() );
 
         GEOS_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
-                           getCatalogName() << " " << getDataContext() <<
-                           ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
-                           "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
-                           "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
-                           std::runtime_error, getDataContext() );
+                       getCatalogName() << " " << getDataContext() <<
+                       ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
+                       "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
+                       "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
+                       std::runtime_error, getDataContext() );
 
         GEOS_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
                             getCatalogName() << " " << getDataContext() <<
@@ -1334,9 +1334,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       } );
 
       GEOS_ERROR_IF( minPressure.get() < 0.0,
-                         GEOS_FMT( "{}: A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
-                                   getDataContext(), minPressure.get(), region.getName(), subRegion.getName() ),
-                         getDataContext() );
+                     GEOS_FMT( "{}: A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
+                               getDataContext(), minPressure.get(), region.getName(), subRegion.getName() ),
+                     getDataContext() );
     } );
   } );
 }
@@ -1849,8 +1849,8 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
   {
     bool const bcConsistent = validateDirichletBC( domain, time_n + dt );
     GEOS_ERROR_IF( !bcConsistent,
-                       GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ),
-                       getDataContext() );
+                   GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ),
+                   getDataContext() );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();

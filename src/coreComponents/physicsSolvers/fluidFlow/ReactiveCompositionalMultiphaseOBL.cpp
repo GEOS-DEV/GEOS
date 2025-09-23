@@ -1067,8 +1067,8 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
   {
     bool const bcConsistent = validateDirichletBC( domain, time + dt );
     GEOS_ERROR_IF( !bcConsistent,
-                       GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ),
-                       getDataContext() );
+                   GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ),
+                   getDataContext() );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();

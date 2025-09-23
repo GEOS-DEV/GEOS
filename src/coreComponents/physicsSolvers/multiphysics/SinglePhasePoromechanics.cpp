@@ -115,10 +115,10 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePostIn
   for( size_t i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
   {
     GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
-                       == flowTargetRegionNames.end(),
-                       GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
-                                 getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], this->flowSolver()->getDataContext() ),
-                       InputError, this->getDataContext(), this->flowSolver()->getDataContext() );
+                   == flowTargetRegionNames.end(),
+                   GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
+                             getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], this->flowSolver()->getDataContext() ),
+                   InputError, this->getDataContext(), this->flowSolver()->getDataContext() );
   }
 
   // Populate sub-block solver parameters for block preconditioner

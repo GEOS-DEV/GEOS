@@ -157,8 +157,8 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
       if( !strs.empty() )
       {
         GEOS_THROW_IF( strs.size() < 2,
-                           GEOS_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
-                           InputError, getDataContext() );
+                       GEOS_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
+                       InputError, getDataContext() );
 
         if( strs[0] == "DensityFun" )
         {
@@ -192,16 +192,16 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
 
   // at this point, we have read the file and we check the consistency of non-thermal models
   GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::DENSITY].empty(),
-                     GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Density::catalogName() ),
-                     InputError, getDataContext() );
+                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Density::catalogName() ),
+                 InputError, getDataContext() );
   GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::VISCOSITY].empty(),
-                     GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Viscosity::catalogName() ),
-                     InputError, getDataContext() );
+                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Viscosity::catalogName() ),
+                 InputError, getDataContext() );
   // we also detect any inconsistency arising in the enthalpy models
   GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::ENTHALPY].empty() &&
-                     ( PHASE::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
-                     GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
-                     InputError, getDataContext() );
+                 ( PHASE::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
+                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
+                 InputError, getDataContext() );
 
   bool const isClone = this->isClone();
   TableFunction::OutputOptions const pvtOutputOpts = {

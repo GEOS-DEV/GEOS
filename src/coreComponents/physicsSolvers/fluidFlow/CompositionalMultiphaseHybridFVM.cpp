@@ -87,14 +87,14 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
   GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
-                     getCatalogName() << " " << getDataContext() <<
-                     ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
-                     InputError, getDataContext() );
+                 getCatalogName() << " " << getDataContext() <<
+                 ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
+                 InputError, getDataContext() );
 
   GEOS_THROW_IF( m_hasCapPressure,
-                     getCatalogName() << " " << getDataContext() <<
-                     ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
-                     InputError, getDataContext() );
+                 getCatalogName() << " " << getDataContext() <<
+                 ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
+                 InputError, getDataContext() );
 }
 
 void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGroups()
@@ -145,9 +145,9 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     } );
 
     GEOS_THROW_IF( minVal.get() <= 0.0,
-                       getCatalogName() << " " << getDataContext() <<
-                       ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
-                       std::runtime_error, getDataContext() );
+                   getCatalogName() << " " << getDataContext() <<
+                   ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
+                   std::runtime_error, getDataContext() );
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )

@@ -36,7 +36,7 @@ void MultivariableTableFunction::initializeFunctionFromFile( string const & file
 {
   std::ifstream file( filename.c_str() );
   GEOS_THROW_IF( !file, catalogName() << " " << getDataContext() << ": could not read input file " << filename,
-                     InputError, getDataContext() );
+                 InputError, getDataContext() );
 
   integer numDims, numOps;
   globalIndex numPointsTotal = 1;
@@ -69,14 +69,14 @@ void MultivariableTableFunction::initializeFunctionFromFile( string const & file
   {
     file >> axisPoints[i];
     GEOS_THROW_IF( !file, catalogName() << " " << getDataContext() << ": can`t read the number of points for axis " + std::to_string( i ),
-                       InputError, getDataContext() );
+                   InputError, getDataContext() );
     GEOS_THROW_IF_LE_MSG( axisPoints[i], 1, catalogName() << " " << getDataContext() << ": minimum 2 discretization point per axis are expected", InputError );
     file >> axisMinimums[i];
     GEOS_THROW_IF( !file, catalogName() << " " << getDataContext() << ": can`t read minimum value for axis " + std::to_string( i ),
-                       InputError, getDataContext() );
+                   InputError, getDataContext() );
     file >> axisMaximums[i];
     GEOS_THROW_IF( !file, catalogName() << " " << getDataContext() << ": can`t read maximum value for axis " + std::to_string( i ),
-                       InputError, getDataContext() );
+                   InputError, getDataContext() );
     GEOS_THROW_IF_LT_MSG( axisMaximums[i], axisMinimums[i], catalogName() << " " << getDataContext() << ": maximum axis value is expected to be larger than minimum", InputError );
 
     numPointsTotal *= axisPoints[i];
@@ -100,14 +100,14 @@ void MultivariableTableFunction::initializeFunctionFromFile( string const & file
     {
       file >> m_pointData[i * numOps + j];
       GEOS_THROW_IF( !file, catalogName() << " " << getDataContext() << ": table file is shorter than expected",
-                         InputError, getDataContext() );
+                     InputError, getDataContext() );
     }
   }
   real64 value;
 
   file >> value;
   GEOS_THROW_IF( file, catalogName() << " " << getDataContext() << ": table file is longer than expected",
-                     InputError, getDataContext() );
+                 InputError, getDataContext() );
 
   file.close();
 

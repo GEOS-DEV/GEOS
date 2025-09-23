@@ -146,9 +146,9 @@ public:
     Base::initializePreSubGroups();
 
     GEOS_THROW_IF( m_stabilizationType == stabilization::StabilizationType::Local,
-                       this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
-                       ": Local stabilization has been temporarily disabled",
-                       InputError, this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) );
+                   this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
+                   ": Local stabilization has been temporarily disabled",
+                   InputError, this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) );
 
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 

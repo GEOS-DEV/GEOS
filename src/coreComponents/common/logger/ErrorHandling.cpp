@@ -241,8 +241,8 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
       for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
       {
         yamlFile << ( errorMsg.isValidStackTrace() ?
-          GEOS_FMT( "{}frame{}: {}\n", g_level3Start, i, errorMsg.m_sourceCallStack[i] ) :
-          GEOS_FMT( "{}{}\n", g_level3Start, errorMsg.m_sourceCallStack[i] ) );
+                      GEOS_FMT( "{}frame{}: {}\n", g_level3Start, i, errorMsg.m_sourceCallStack[i] ) :
+                      GEOS_FMT( "{}{}\n", g_level3Start, errorMsg.m_sourceCallStack[i] ) );
       }
     }
 

@@ -34,9 +34,9 @@ TEST( testMacros, testArgumentCount )
 
   // Expected out of bound (>16 params): wrongly cast the last '!' to integer type
   EXPECT_EQ( 33, int( GEOS_DETAIL_MORE_THAN_ONE_ARG( 'a', 'b', 'c', 'd',
-                                                    'e', 'f', 'g', 'h',
-                                                    'i', 'j', 'k', 'l',
-                                                    'w', 'x', 'y', 'z', '!' ) ) );
+                                                     'e', 'f', 'g', 'h',
+                                                     'i', 'j', 'k', 'l',
+                                                     'w', 'x', 'y', 'z', '!' ) ) );
 }
 
 

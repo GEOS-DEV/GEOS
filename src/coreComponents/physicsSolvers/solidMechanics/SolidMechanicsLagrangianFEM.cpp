@@ -709,14 +709,14 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
         "\n{} {}: There is no displacement boundary condition applied to this problem in the {} direction. \n"
         "The problem may be ill-posed.\n";
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[0] == 0, // target set is empty
-                           GEOS_FMT( bcLogMessage,
-                                     getCatalogName(), getDataContext(), 'x' ), getDataContext() );
+                       GEOS_FMT( bcLogMessage,
+                                 getCatalogName(), getDataContext(), 'x' ), getDataContext() );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[1] == 0, // target set is empty
-                           GEOS_FMT( bcLogMessage,
-                                     getCatalogName(), getDataContext(), 'y' ), getDataContext() );
+                       GEOS_FMT( bcLogMessage,
+                                 getCatalogName(), getDataContext(), 'y' ), getDataContext() );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[2] == 0, // target set is empty
-                           GEOS_FMT( bcLogMessage,
-                                     getCatalogName(), getDataContext(), 'z' ), getDataContext() );
+                       GEOS_FMT( bcLogMessage,
+                                 getCatalogName(), getDataContext(), 'z' ), getDataContext() );
     }
   }
 

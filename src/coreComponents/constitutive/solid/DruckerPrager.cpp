@@ -103,17 +103,17 @@ void DruckerPrager::postInputInitialization()
   ElasticIsotropic::postInputInitialization();
 
   GEOS_THROW_IF( m_defaultCohesion < 0,
-                     getFullName() << ": Negative cohesion value detected",
-                     InputError, getDataContext() );
+                 getFullName() << ": Negative cohesion value detected",
+                 InputError, getDataContext() );
   GEOS_THROW_IF( m_defaultFrictionAngle < 0,
-                     getFullName() << ": Negative friction angle detected",
-                     InputError, getDataContext() );
+                 getFullName() << ": Negative friction angle detected",
+                 InputError, getDataContext() );
   GEOS_THROW_IF( m_defaultDilationAngle < 0,
-                     getFullName() << ": Negative dilation angle detected",
-                     InputError, getDataContext() );
+                 getFullName() << ": Negative dilation angle detected",
+                 InputError, getDataContext() );
   GEOS_THROW_IF( m_defaultFrictionAngle < m_defaultDilationAngle,
-                     getFullName() << ": Dilation angle should not exceed friction angle",
-                     InputError, getDataContext() );
+                 getFullName() << ": Dilation angle should not exceed friction angle",
+                 InputError, getDataContext() );
 
   // convert from Mohr-Coulomb constants to Drucker-Prager constants, assuming DP
   // passes through the triaxial compression corners of the MC surface.

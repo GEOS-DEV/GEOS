@@ -701,8 +701,8 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
 
         string const & subRegionName = subRegion.getName();
         GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0,
-                           getDataContext() << ": Conflicting proppant boundary conditions on set " << setName,
-                           getDataContext() );
+                       getDataContext() << ": Conflicting proppant boundary conditions on set " << setName,
+                       getDataContext() );
         bcStatusMap[subRegionName][setName].resize( m_numComponents );
         bcStatusMap[subRegionName][setName].setValues< serialPolicy >( false );
 
@@ -722,11 +722,11 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
         localIndex const comp = fs.getComponent();
 
         GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0,
-                           getDataContext() << ": Proppant boundary condition not prescribed on set '" << setName << "'",
-                           getDataContext() );
+                       getDataContext() << ": Proppant boundary condition not prescribed on set '" << setName << "'",
+                       getDataContext() );
         GEOS_ERROR_IF( bcStatusMap[subRegionName][setName][comp],
-                           getDataContext() << ": Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'",
-                           getDataContext() );
+                       getDataContext() << ": Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'",
+                       getDataContext() );
         bcStatusMap[subRegionName][setName][comp] = true;
 
         fs.applyFieldValue< FieldSpecificationEqual >( targetSet,
@@ -745,9 +745,9 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
           {
             bcConsistent &= bcStatusEntryInner.second[ic];
             GEOS_WARNING_IF( !bcConsistent,
-                                 getDataContext() << ": Composition boundary condition not applied to component " <<
-                                 ic << " on region '" << bcStatusEntryOuter.first << "'," <<
-                                 " set '" << bcStatusEntryInner.first << "'", getDataContext() );
+                             getDataContext() << ": Composition boundary condition not applied to component " <<
+                             ic << " on region '" << bcStatusEntryOuter.first << "'," <<
+                             " set '" << bcStatusEntryInner.first << "'", getDataContext() );
           }
         }
       }

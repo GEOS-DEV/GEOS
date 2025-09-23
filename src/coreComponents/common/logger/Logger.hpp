@@ -454,7 +454,7 @@
  */
 #define GEOS_WARNING_IF_OP_MSG( lhs, OP, NOP, rhs, ... ) \
   GEOS_WARNING_IF_CAUSE( lhs OP rhs, \
-                       "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = " << lhs << "\n* " #rhs " = " << rhs << "\n", \
+                         "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = " << lhs << "\n* " #rhs " = " << rhs << "\n", \
                          __VA_ARGS__ )
 
 /**

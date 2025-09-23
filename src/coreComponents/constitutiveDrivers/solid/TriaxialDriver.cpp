@@ -151,12 +151,12 @@ void TriaxialDriver::postInputInitialization()
   // may overwrite it.
 
   GEOS_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG0 ), 1e-6 ),
-                     getDataContext() << ": Initial stress values indicated by initialStress and axialFunction(time=0) appear inconsistent",
-                     InputError, getDataContext() );
+                 getDataContext() << ": Initial stress values indicated by initialStress and axialFunction(time=0) appear inconsistent",
+                 InputError, getDataContext() );
 
   GEOS_THROW_IF( !isEqual( m_initialStress, m_table( 0, SIG1 ), 1e-6 ),
-                     getDataContext() << ": Initial stress values indicated by initialStress and radialFunction(time=0) appear inconsistent",
-                     InputError, getDataContext() );
+                 getDataContext() << ": Initial stress values indicated by initialStress and radialFunction(time=0) appear inconsistent",
+                 InputError, getDataContext() );
 }
 
 

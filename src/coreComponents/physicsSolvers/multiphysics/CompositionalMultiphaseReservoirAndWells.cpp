@@ -151,18 +151,18 @@ initializePreSubGroups()
   bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
   bool const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
   GEOS_THROW_IF( useMassFlow != useMassWell,
-                     GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
-                               this->getDataContext(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
-                               Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
-                     InputError, this->getDataContext(), Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() );
+                 GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                           this->getDataContext(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
+                           Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
+                 InputError, this->getDataContext(), Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() );
 
   bool const isThermalFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::isThermalString() );
   bool const isThermalWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::isThermalString() );
   GEOS_THROW_IF( isThermalFlow != isThermalWell,
-                     GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
-                               this->getDataContext(), CompositionalMultiphaseBase::viewKeyStruct::isThermalString(),
-                               Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
-                     InputError, this->getDataContext(), Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() );
+                 GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                           this->getDataContext(), CompositionalMultiphaseBase::viewKeyStruct::isThermalString(),
+                           Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
+                 InputError, this->getDataContext(), Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() );
 }
 
 template< typename RESERVOIR_SOLVER >
