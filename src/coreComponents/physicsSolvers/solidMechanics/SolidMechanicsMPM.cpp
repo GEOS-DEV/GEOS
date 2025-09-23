@@ -446,7 +446,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "temperatureTable", &m_temperatureTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Array that stores the time-depended domain Temperature" );
+    setDescription( "Array that stores the time-dependent domain Temperature" );
 
   registerWrapper( "stressControlKp", &m_stressControlKp ).
     setInputFlag( InputFlags::OPTIONAL ).
