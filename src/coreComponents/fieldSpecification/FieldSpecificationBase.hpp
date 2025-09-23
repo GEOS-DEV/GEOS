@@ -57,6 +57,13 @@ public:
                                                              string const &,
                                                              dataRepository::Group * const >;
 
+  enum class SetErrorMode : integer
+  {
+    silent,
+    error,
+    warning
+  };
+
   /**
    * @brief static function to return static catalog.
    * @return the static catalog to create derived types through the static factory methods.
@@ -107,13 +114,6 @@ public:
 
   /// deleted move assignement
   FieldSpecificationBase & operator=( FieldSpecificationBase && ) = delete;
-
-  enum class SetErrorMode : integer
-  {
-    silent,
-    error,
-    warning
-  };
 
   /**
    * @brief Apply this field specification to the discretization
@@ -557,7 +557,7 @@ public:
   }
 
   /**
-   * @return A boolean indicating if we have a SurfaceGenerator component 
+   * @return A boolean indicating if we have a SurfaceGenerator component
    */
   bool getIsSurfaceGenerationCase() const
   {
