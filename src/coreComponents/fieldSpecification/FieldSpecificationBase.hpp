@@ -58,7 +58,7 @@ public:
                                                              dataRepository::Group * const >;
   /**
    * @enum  SetErrorMode
-   * @brief 
+   * @brief Indicate the error handling mode.
    */
   enum class SetErrorMode : integer
   {
@@ -887,6 +887,10 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
   } );
 }
 
+
+/**
+ * @brief Indicate the error handling mode
+*/
 ENUM_STRINGS( FieldSpecificationBase::SetErrorMode,
               "silent",
               "error",

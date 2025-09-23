@@ -240,6 +240,7 @@ public:
 
 private:
   static FieldSpecificationManager * m_instance;
+  /// Indicate if the SurfaceGenerator element is present
   bool m_isSurfaceGenerationCase = false;
 
 };
