@@ -51,22 +51,29 @@ class H1_Tetrahedron_Lagrange1_Gauss_impl : public FiniteElementBase_impl< 4, 4,
 {
 public:
   /// Convenience type alias for the base class
-  using BASE = FiniteElementBase_impl< 4, 4, NUM_Q_POINTS::value >;
+  using Base = FiniteElementBase_impl< 4, 4, NUM_Q_POINTS::value >;
+
+  /// Stack variables for the element.
+  using StackVariables = typename Base::StackVariables;
+
+  /// Mesh data structure for the element.
+  template <typename SubregionType>
+  using MeshData = typename Base::template MeshData<SubregionType>;
 
   /// Number of nodes in the element
-  constexpr static localIndex numNodes = BASE::numNodes;
-
-  /// Number of support points in the element
-  constexpr static localIndex numSupportPoints = BASE::numSupportPoints;
-
-  /// Maximum number of support points in the element
-  constexpr static localIndex maxSupportPoints = BASE::maxSupportPoints;
-
-  /// Number of faces in the element
-  constexpr static localIndex numFaces = BASE::numFaces;
+  using Base::numNodes;
 
   /// Number of quadrature points in the element
-  constexpr static localIndex numQuadraturePoints = BASE::numQuadraturePoints;
+  using Base::numQuadraturePoints;
+
+  /// Maximum number of support points in the element
+  using Base::maxSupportPoints;
+
+  /// Number of support points in the element
+  constexpr static localIndex numSupportPoints = Base::numSupportPoints;
+
+  /// Number of faces in the element
+  constexpr static localIndex numFaces = Base::numFaces;
 
   /// Number of sampling points per direction
   constexpr static int numSamplingPointsPerDirection = 10;
@@ -82,13 +89,6 @@ public:
 
   /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
-
-  /// struct to hold stack variables.
-  struct StackVariables {};
-
-  /// MeshData struct to hold mesh data.
-  template< typename SUBREGION_TYPE >
-  struct MeshData {};
 
   /// @cond DO_NOT_DOCUMENT
 #ifdef __CUDACC__

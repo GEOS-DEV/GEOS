@@ -55,8 +55,12 @@ public:
                                        5,
                                        Pk_Pyramid_BCD_NumNodes< ORDER > >;
 
-  /// struct to hold stack variables.
-  struct StackVariables {};
+  /// Stack variables for the element.
+  using StackVariables = typename Base::StackVariables;
+
+  /// Mesh data structure for the element.
+  template <typename SubregionType>
+  using MeshData = typename Base::template MeshData<SubregionType>;
 
   /// The number of shape functions per element.
   using Base::numNodes;

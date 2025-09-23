@@ -51,10 +51,24 @@ template< typename NUM_Q_POINTS >
 class H1_TriangleFace_Lagrange1_Gauss_impl : public FiniteElementBase_impl< 3, 3, NUM_Q_POINTS::value >
 {
 public:
+  /// Convenience type alias for the base class
+  using Base = FiniteElementBase_impl< 3, 3, NUM_Q_POINTS::value >;
 
-  using FiniteElementBase_impl< 3, 3, NUM_Q_POINTS::value >::numNodes;
-  using FiniteElementBase_impl< 3, 3, NUM_Q_POINTS::value >::numQuadraturePoints;
-  using FiniteElementBase_impl< 3, 3, NUM_Q_POINTS::value >::maxSupportPoints;
+  /// Stack variables for the element.
+  using StackVariables = typename Base::StackVariables;
+
+  /// Mesh data structure for the element.
+  template <typename SubregionType>
+  using MeshData = typename Base::template MeshData<SubregionType>;
+
+  /// Number of nodes in the element
+  using Base::numNodes;
+
+  /// Number of quadrature points in the element
+  using Base::numQuadraturePoints;
+
+  /// Maximum number of support points in the element
+  using Base::maxSupportPoints;
 
   /// Check that the number of quadrature points is valid.
   static_assert( ( NUM_Q_POINTS::value == 1 ||
@@ -64,14 +78,6 @@ public:
 
   /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
-
-
-  /// struct to hold stack variables.
-  struct StackVariables {};
-
-  /// MeshData struct to hold mesh data.
-  template< typename SUBREGION_TYPE >
-  struct MeshData {};
 
   /// @cond DO_NOT_DOCUMENT
 #ifdef __CUDACC__

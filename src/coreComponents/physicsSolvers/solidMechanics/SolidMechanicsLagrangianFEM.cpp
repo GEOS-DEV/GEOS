@@ -356,10 +356,9 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-        finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe,
-                                                                                 [&] ( auto const finiteElement )
+        finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [&] ( auto const element )
         {
-          using FE_TYPE = TYPEOFREF( finiteElement );
+          using FE_TYPE = TYPEOFREF( element );
           using SUBREGION_TYPE = TYPEOFREF( elementSubRegion );
 
           typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData;
@@ -376,9 +375,8 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
           for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
           {
             typename FE_TYPE::StackVariables feStack;
-            finiteElement.template setup< FE_TYPE >( k, meshData, feStack );
-            localIndex const numSupportPoints =
-              finiteElement.getNumSupportPoints( feStack );
+            element.template setup< FE_TYPE >( k, meshData, feStack );
+            localIndex const numSupportPoints = element.getNumSupportPoints( feStack );
 
             for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
             {

@@ -56,16 +56,17 @@ class H1_Wedge_Lagrange1_Gauss6_impl : public FiniteElementBase_impl< 6, 5, 6 >
 {
 public:
 
+  using Base = FiniteElementBase_impl< 6, 5, 6 >;
+
   /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
 
+  /// Stack variables for the element.
+  using StackVariables = typename Base::StackVariables;
 
-  /// struct to hold stack variables.
-  struct StackVariables {};
-
-  /// MeshData struct to hold mesh data.
-  template< typename SUBREGION_TYPE >
-  struct MeshData {};
+  /// Mesh data structure for the element.
+  template <typename SubregionType>
+  using MeshData = typename Base::template MeshData<SubregionType>;
 
   /// @cond DO_NOT_DOCUMENT
 #ifdef __CUDACC__

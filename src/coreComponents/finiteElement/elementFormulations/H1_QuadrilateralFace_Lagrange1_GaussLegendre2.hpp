@@ -50,16 +50,27 @@ namespace finiteElement
 class H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl : public FiniteElementBase_impl< 4, 4, 4 >
 {
 public:
+  /// Convenience type alias for the base class
+  using Base = FiniteElementBase_impl< 4, 4, 4 >;
 
   /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
 
-  /// struct to hold stack variables.
-  struct StackVariables {};
+  /// Stack variables for the element.
+  using StackVariables = typename Base::StackVariables;
 
-  /// MeshData struct to hold mesh data.
-  template< typename SUBREGION_TYPE >
-  struct MeshData {};
+  /// Mesh data structure for the element.
+  template <typename SubregionType>
+  using MeshData = typename Base::template MeshData<SubregionType>;
+
+  /// Number of nodes in the element
+  using Base::numNodes;
+
+  /// Number of quadrature points in the element
+  using Base::numQuadraturePoints;
+
+  /// Maximum number of support points in the element
+  using Base::maxSupportPoints;
 
   /// @cond DO_NOT_DOCUMENT
 #ifdef __CUDACC__

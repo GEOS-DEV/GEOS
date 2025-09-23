@@ -46,6 +46,10 @@ class Qk_Hexahedron_Lagrange_GaussLobatto_impl : public FiniteElementBase_impl< 
                                                                                 GL_BASIS::TensorProduct3D::numSupportPoints >
 {
 public:
+  /// Convenience type alias for the base class
+  using Base = FiniteElementBase_impl< GL_BASIS::TensorProduct3D::numSupportPoints,
+                                       6,
+                                       GL_BASIS::TensorProduct3D::numSupportPoints >;
 
   /// The number of nodes/support points per element per dimension.
   constexpr static localIndex num1dNodes = GL_BASIS::numSupportPoints;
@@ -65,12 +69,12 @@ public:
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = numNodes;
 
-  /// struct to hold stack variables.
-  struct StackVariables {};
+  /// Stack variables for the element.
+  using StackVariables = typename Base::StackVariables;
 
-  /// MeshData struct to hold mesh data.
-  template< typename SUBREGION_TYPE >
-  struct MeshData {};
+  /// Mesh data structure for the element.
+  template <typename SubregionType>
+  using MeshData = typename Base::template MeshData<SubregionType>;
 
   /// @cond DO_NOT_DOCUMENT
   GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl() = default;
