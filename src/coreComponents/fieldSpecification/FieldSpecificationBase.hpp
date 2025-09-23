@@ -556,6 +556,16 @@ public:
     return *(m_meshObjectPaths.get());
   }
 
+  bool getIsSurfaceGenerationCase() const
+  {
+    return m_isSurfaceGenerationCase;
+  }
+
+  void setIsSurfaceGenerationCase( bool isSurfaceGenerationCase )
+  {
+    m_isSurfaceGenerationCase = isSurfaceGenerationCase;
+  }
+
 protected:
 
 
@@ -600,7 +610,10 @@ private:
   string m_bcApplicationFunctionName;
 
   /// Value indicating whether we converts an error into a warning
-  string m_emptySetErrorMode;
+  SetErrorMode m_emptySetErrorMode;
+
+  /// Boolean indicating if we have a SurfaceGenerator XML component
+  bool m_isSurfaceGenerationCase = false;
 };
 
 
@@ -881,10 +894,10 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
   } );
 }
 
-  ENUM_STRINGS( FieldSpecificationBase::SetErrorMode,
-                "silent",
-                "error",
-                "warning" );
+ENUM_STRINGS( FieldSpecificationBase::SetErrorMode,
+              "silent",
+              "error",
+              "warning" );
 
 }
 

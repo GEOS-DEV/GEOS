@@ -282,10 +282,9 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
           message << GEOS_FMT( "Set '{}' does not capture anything in the mesh ", setName );
         }
       }
-      string const cc = "error";
-      Wrapper< string > const & wrapper = fs.getWrapper< string >(
+      Wrapper< FieldSpecificationBase::SetErrorMode > const & wrapper = fs.getWrapper< FieldSpecificationBase::SetErrorMode >(
         FieldSpecificationBase::viewKeyStruct::errorSetModeString());
-      switch( EnumStrings< FieldSpecificationBase::SetErrorMode >::fromString( wrapper.getDefaultValue() ))
+      switch( wrapper.referenceAsView() )
       {
         case  FieldSpecificationBase::SetErrorMode::silent:
           break;
@@ -293,14 +292,12 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
           GEOS_THROW( message.str(), InputError );
           break;
         case  FieldSpecificationBase::SetErrorMode::warning:
-          message << GEOS_FMT( "As the simulation includes a SurfaceGenerator, the set may be modified later",
-                               fs.getDataContext() );
+          if( fs.getIsSurfaceGenerationCase() )
+            message << "As the simulation includes a SurfaceGenerator, the set may be modified later";
           GEOS_WARNING( message.str() );
           break;
       }
     }
-
-    MpiWrapper::barrier( MPI_COMM_GEOS );
 
     if( isFieldNameFound == 0 )
     {
