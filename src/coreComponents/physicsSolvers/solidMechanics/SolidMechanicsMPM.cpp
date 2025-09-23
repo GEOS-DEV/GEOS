@@ -6383,9 +6383,9 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
       {
 
         // Print particle temperature for debugging
-        std::cout << "Particle " << p 
-                  << " Position: (" << x << ", " << y << ", " << z << ")"
-                  << " Temperature: " << particleTemperature[p] << std::endl;
+        //std::cout << "Particle " << p 
+        //          << " Position: (" << x << ", " << y << ", " << z << ")"
+        //          << " Temperature: " << particleTemperature[p] << std::endl;
 
         boxMass += particleMass[p];
         boxMatVolume += particleVolume[p];
@@ -6393,7 +6393,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
         boxKineticEnergy += particleKineticEnergy[p] * particleVolume[p];
         boxInternalEnergy += particleInternalEnergy[p] * particleVolume[p];
         boxTemperature += particleTemperature[p] * particleVolume[p];
-        std::cout << "boxTemp first " << boxTemperature << std::endl;
+        //std::cout << "boxTemp first " << boxTemperature << std::endl;
         for( int i=0; i<6; i++ )
         {
           boxStress[i] += particleStress[p][i] * particleVolume[p]; // volume weighted average, will normalize later.
@@ -6456,9 +6456,9 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     {
       throw std::ios_base::failure( std::strerror( errno ) );
     }
-    std::cout << "boxTemperature sum: " << boxTemperature << std::endl;
-    std::cout << "boxVolume: " << boxVolume << std::endl;
-    std::cout << "Average temperature: " << boxSums[18]  << std::endl;
+    //std::cout << "boxTemperature sum: " << boxTemperature << std::endl;
+    //std::cout << "boxVolume: " << boxVolume << std::endl;
+    //std::cout << "Average temperature: " << boxSums[18]  << std::endl;
     //make sure write fails with exception if something is wrong
     file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
     // time | sig_xx | sig_yy | sig_zz | sig_xy | sig_yz | sig_zx | density | damage | internal energy | kinetic energy | epxx | epyy | epzz | epyz | epxz | epxy | total particle volume | particleTemperature | F00 | F11 | F22
@@ -9049,7 +9049,7 @@ void SolidMechanicsMPM::interpolateTemperatureTable( real64 dt,
   m_domainTemperature = temperature[0];
   m_domainTemperatureRate = temperature_rate[0];
 
-  std::cout<<"time: "<<time_n<<", temperature = "<<temperature<<", m_domainTemperature = "<<m_domainTemperature<<", temperature rate= "<<temperature_rate<<", m_domainTemperatureRate = "<<m_domainTemperatureRate<<std::endl;
+  //std::cout<<"time: "<<time_n<<", temperature = "<<temperature<<", m_domainTemperature = "<<m_domainTemperature<<", temperature rate= "<<temperature_rate<<", m_domainTemperatureRate = "<<m_domainTemperatureRate<<std::endl;
 
 }
 
@@ -9952,7 +9952,7 @@ void SolidMechanicsMPM::printProfilingResults()
   if( rank == 0 )
   {
     std::cout << "---------------------------------------------" << std::endl;
-    std::cout << "Fraction of total time for one step: " << std::endl;
+    std::phSo << "Fraction of total time for one step: " << std::endl;
     for( unsigned int i = 0; i < numIntervals; i++ )
     {
       std::cout << " (" << i << ") ";
