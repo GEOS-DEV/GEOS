@@ -6626,8 +6626,6 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageElasticIsotropicType">
-		<!--biotCoefficient => Biot coefficient-->
-		<xsd:attribute name="biotCoefficient" type="real64_array" default="{0}" />
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
 		<xsd:attribute name="criticalStrainEnergy" type="real64" use="required" />
 		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
@@ -6668,8 +6666,6 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageSpectralElasticIsotropicType">
-		<!--biotCoefficient => Biot coefficient-->
-		<xsd:attribute name="biotCoefficient" type="real64_array" default="{0}" />
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
 		<xsd:attribute name="criticalStrainEnergy" type="real64" use="required" />
 		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
@@ -6702,8 +6698,6 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageVolDevElasticIsotropicType">
-		<!--biotCoefficient => Biot coefficient-->
-		<xsd:attribute name="biotCoefficient" type="real64_array" default="{0}" />
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
 		<xsd:attribute name="criticalStrainEnergy" type="real64" use="required" />
 		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
