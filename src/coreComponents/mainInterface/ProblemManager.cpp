@@ -32,6 +32,7 @@
 #include "events/tasks/TasksManager.hpp"
 #include "events/EventManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
+#include "common/format/LogPart.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
@@ -61,7 +62,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 ProblemManager::ProblemManager( conduit::Node & root ):
-  dataRepository::Group( dataRepository::keys::ProblemManager, root ),
+  Group( keys::ProblemManager, root ),
   m_physicsSolverManager( nullptr ),
   m_eventManager( nullptr ),
   m_functionManager( nullptr ),
@@ -159,25 +160,37 @@ ProblemManager::~ProblemManager()
 
 
 Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
-{ return nullptr; }
+{
+  // Unused as all children are created within the constructor
+  return nullptr;
+}
 
 
 void ProblemManager::problemSetup()
 {
   GEOS_MARK_FUNCTION;
+
   postInputInitializationRecursive();
 
+  LogPart meshGenerationLog( "Mesh generation", MpiWrapper::commRank() == 0 );
+  meshGenerationLog.begin();
   generateMesh();
+  meshGenerationLog.end();
 
 //  initialize_postMeshGeneration();
-
+  LogPart numericalMethodLog( "Numerical Methods", MpiWrapper::commRank() == 0 );
+  numericalMethodLog.begin();
   applyNumericalMethods();
+  numericalMethodLog.end();
 
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
 
   initialize();
 
+  LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );
+  importFieldsLog.begin();
   importFields();
+  importFieldsLog.end();
 }
 
 
@@ -244,7 +257,7 @@ bool ProblemManager::parseRestart( string & restartFileName, CommandLineOptions 
     string dirname, basename;
     std::tie( dirname, basename ) = splitPath( restartFileName );
 
-    std::vector< string > dir_contents = readDirectory( dirname );
+    stdVector< string > dir_contents = readDirectory( dirname );
 
     GEOS_THROW_IF( dir_contents.empty(),
                    "Directory gotten from " << restartFileName << " " << dirname << " is empty.",
@@ -455,52 +468,44 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
     meshManager.generateMeshLevels( domain );
     Group & meshBodies = domain.getMeshBodies();
 
-    // Parse element regions
-    xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::elemManagerString() );
-
-    for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
+    auto parseRegions = [&]( string_view regionManagerKey, bool const hasParticles )
     {
-      string const regionName = regionNode.attribute( "name" ).value();
-      try
-      {
-        string const
-        regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies,
-                                                                    regionNode.attribute( "meshBody" ).value() );
+      xmlWrapper::xmlNode regionsNode = xmlProblemNode.child( regionManagerKey.data() );
+      xmlWrapper::xmlNodePos regionsNodePos = xmlDocument.getNodePosition( regionsNode );
+      std::set< string > regionNames;
 
-        MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
-        meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+      for( xmlWrapper::xmlNode regionNode : regionsNode.children() )
+      {
+        auto const regionNodePos = xmlDocument.getNodePosition( regionNode );
+        string const regionName = Group::processInputName( regionNode, regionNodePos,
+                                                           regionsNode.name(), regionsNodePos, regionNames );
+        try
         {
-          ElementRegionManager & elementManager = meshLevel.getElemManager();
-          Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
-          newRegion->processInputFileRecursive( xmlDocument, regionNode );
-        } );
+          string const regionMeshBodyName =
+            ElementRegionBase::verifyMeshBodyName( meshBodies,
+                                                   regionNode.attribute( "meshBody" ).value() );
+
+          MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
+          meshBody.setHasParticles( hasParticles );
+          meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+          {
+            ObjectManagerBase & elementManager = hasParticles ?
+                                                 static_cast< ObjectManagerBase & >( meshLevel.getParticleManager() ):
+                                                 static_cast< ObjectManagerBase & >( meshLevel.getElemManager() );
+            Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
+            newRegion->processInputFileRecursive( xmlDocument, regionNode );
+          } );
+        }
+        catch( InputError const & e )
+        {
+          throw InputError( e, GEOS_FMT( "Error while parsing region {} ({}):\n",
+                                         regionName, regionNodePos.toString() ) );
+        }
       }
-      catch( InputError const & e )
-      {
-        string const nodePosString = xmlDocument.getNodePosition( regionNode ).toString();
-        throw InputError( e, "Error while parsing region " + regionName + " (" + nodePosString + "):\n" );
-      }
-    }
+    };
 
-    // Parse particle regions
-    xmlWrapper::xmlNode particleRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::particleManagerString() );
-
-    for( xmlWrapper::xmlNode regionNode : particleRegionsNode.children() )
-    {
-      string const regionName = regionNode.attribute( "name" ).value();
-      string const
-      regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies,
-                                                                  regionNode.attribute( "meshBody" ).value() );
-
-      MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
-      meshBody.setHasParticles( true );
-      meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
-      {
-        ParticleManager & particleManager = meshLevel.getParticleManager();
-        Group * newRegion = particleManager.createChild( regionNode.name(), regionName );
-        newRegion->processInputFileRecursive( xmlDocument, regionNode );
-      } );
-    }
+    parseRegions( MeshLevel::groupStructKeys::elemManagerString(), false );
+    parseRegions( MeshLevel::groupStructKeys::particleManagerString(), true );
   }
 }
 
@@ -550,10 +555,9 @@ void ProblemManager::postInputInitialization()
   }
 }
 
-
 void ProblemManager::initializationOrder( string_array & order )
 {
-  SortedArray< string > usedNames;
+  set< string > usedNames;
 
   // first, numerical methods
   order.emplace_back( groupKeys.numericalMethodsManager.key() );
@@ -595,14 +599,14 @@ void ProblemManager::generateMesh()
 
   // get all the discretizations from the numerical methods.
   // map< pair< mesh body name, pointer to discretization>, array of region names >
-  map< std::pair< string, Group const * const >, arrayView1d< string const > const >
+  map< std::pair< string, Group const * const >, string_array const & >
   discretizations = getDiscretizations();
 
   // setup the base discretizations (hard code this for now)
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
     MeshLevel & baseMesh = meshBody.getBaseDiscretization();
-    array1d< string > junk;
+    string_array junk;
 
     if( meshBody.hasParticles() ) // mesh bodies with particles load their data into particle blocks, not cell blocks
     {
@@ -610,7 +614,7 @@ void ProblemManager::generateMesh()
 
       this->generateMeshLevel( baseMesh,
                                particleBlockManager,
-                               junk.toViewConst() );
+                               junk );
     }
     else
     {
@@ -619,7 +623,7 @@ void ProblemManager::generateMesh()
       this->generateMeshLevel( baseMesh,
                                cellBlockManager,
                                nullptr,
-                               junk.toViewConst() );
+                               junk );
 
       ElementRegionManager & elemManager = baseMesh.getElemManager();
       elemManager.generateWells( cellBlockManager, baseMesh );
@@ -647,11 +651,12 @@ void ProblemManager::generateMesh()
       {
         int const order = feDiscretization->getOrder();
         string const & discretizationName = feDiscretization->getName();
-        arrayView1d< string const > const regionNames = discretizationPair.second;
+        FiniteElementDiscretization::Formulation const & formulationName = feDiscretization->getFormulation();
+        string_array const & regionNames = discretizationPair.second;
         CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
         // create a high order MeshLevel
-        if( order > 1 )
+        if( order > 1 && formulationName == FiniteElementDiscretization::Formulation::SEM )
         {
           MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                                        discretizationName, order );
@@ -662,8 +667,9 @@ void ProblemManager::generateMesh()
                                    regionNames );
         }
         // Just create a shallow copy of the base discretization.
-        else if( order==1 )
+        else if( order==1  ||  formulationName == FiniteElementDiscretization::Formulation::DG )
         {
+          // create a shallow copy of the base discretization
           meshBody.createShallowMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                            discretizationName );
         }
@@ -751,11 +757,11 @@ void ProblemManager::applyNumericalMethods()
 
 
 
-map< std::pair< string, Group const * const >, arrayView1d< string const > const >
+map< std::pair< string, Group const * const >, string_array const & >
 ProblemManager::getDiscretizations() const
 {
 
-  map< std::pair< string, Group const * const >, arrayView1d< string const > const > meshDiscretizations;
+  map< std::pair< string, Group const * const >, string_array const & > meshDiscretizations;
 
   NumericalMethodsManager const &
   numericalMethodManager = getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.key() );
@@ -804,7 +810,7 @@ ProblemManager::getDiscretizations() const
 void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
                                         CellBlockManagerABC const & cellBlockManager,
                                         Group const * const discretization,
-                                        arrayView1d< string const > const & )
+                                        string_array const & )
 {
   if( discretization != nullptr )
   {
@@ -872,7 +878,7 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
 
 void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
                                         ParticleBlockManagerABC & particleBlockManager,
-                                        arrayView1d< string const > const & )
+                                        string_array const & )
 {
   ParticleManager & particleManager = meshLevel.getParticleManager();
 
@@ -965,7 +971,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
                 finiteElement::FiniteElementBase &
                 fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ) ).
-                       setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).reference();
+                       setRestartFlags( RestartFlags::NO_WRITE ).reference();
                 subRegion.excludeWrappersFromPacking( { discretizationName } );
 
                 finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe,
@@ -1045,10 +1051,9 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     string const regionName = std::get< 2 >( key );
     string const subRegionName = std::get< 3 >( key );
 
-    GEOS_LOG_RANK_0( "regionQuadrature: meshBodyName, meshLevelName, regionName, subRegionName = "<<
-                     meshBodyName<<", "<<meshLevelName<<", "<<regionName<<", "<<subRegionName );
-
-
+    GEOS_LOG_RANK_0( GEOS_FMT( "meshBodyName/meshLevelName/regionName/subRegionName = {}/{}/{}/{}, {} quadrature {}",
+                               meshBodyName, meshLevelName, regionName, subRegionName, numQuadraturePoints,
+                               numQuadraturePoints == 1 ? "point" : "points" ) );
 
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
     MeshLevel & meshLevel = meshBody.getMeshLevel( meshLevelName );
@@ -1063,13 +1068,6 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
       for( auto & materialName : materialList )
       {
         constitutiveManager.hangConstitutiveRelation( materialName, &particleSubRegion, numQuadraturePoints );
-        GEOS_LOG_RANK_0( GEOS_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
-                                   meshBodyName,
-                                   meshLevelName,
-                                   regionName,
-                                   subRegionName,
-                                   materialName,
-                                   numQuadraturePoints ) );
       }
     }
 //    if( meshLevel.isShallowCopy() )
@@ -1083,13 +1081,6 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
       for( auto & materialName : materialList )
       {
         constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, numQuadraturePoints );
-        GEOS_LOG_RANK_0( GEOS_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
-                                   meshBodyName,
-                                   meshLevelName,
-                                   regionName,
-                                   subRegionName,
-                                   materialName,
-                                   numQuadraturePoints ) );
       }
     }
   }

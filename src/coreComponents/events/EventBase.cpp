@@ -20,8 +20,8 @@
 #include "EventBase.hpp"
 #include <cstring>
 
+#include "events/LogLevelsInfo.hpp"
 #include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
 
 namespace geos
 {
@@ -52,9 +52,6 @@ EventBase::EventBase( const string & name,
   m_target( nullptr )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
-  // This enables logLevel filtering
-  enableLogLevelInput();
 
   registerWrapper( viewKeyStruct::eventTargetString(), &m_eventTarget ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
@@ -107,6 +104,8 @@ EventBase::EventBase( const string & name,
 
   registerWrapper( viewKeyStruct::isTargetExecutingString(), &m_targetExecFlag ).
     setDescription( "Index of the current subevent" );
+
+  addLogLevel< logInfo::EventExecution >();
 }
 
 
@@ -123,7 +122,8 @@ EventBase::CatalogInterface::CatalogType & EventBase::getCatalog()
 Group * EventBase::createChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
-  std::unique_ptr< EventBase > event = EventBase::CatalogInterface::factory( childKey, childName, this );
+  std::unique_ptr< EventBase > event =
+    EventBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
   return &this->registerGroup< EventBase >( childName, std::move( event ) );
 }
 
@@ -243,9 +243,10 @@ bool EventBase::execute( real64 const time_n,
     EventBase * subEvent = static_cast< EventBase * >( this->getSubGroups()[m_currentSubEvent] );
 
     // Print debug information for logLevel >= 1
-    GEOS_LOG_LEVEL_RANK_0( 1,
-                           "          SubEvent: " << m_currentSubEvent << " (" << subEvent->getName() << "), dt_request=" << subEvent->getCurrentEventDtRequest() << ", forecast=" <<
-                           subEvent->getForecast() );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::EventExecution,
+                           GEOS_FMT( "          SubEvent {} (no.{}): dt_request={}, forecast={}",
+                                     subEvent->getName(), m_currentSubEvent,
+                                     subEvent->getCurrentEventDtRequest(), subEvent->getForecast() ) );
 
     if( subEvent->isReadyForExec() )
     {

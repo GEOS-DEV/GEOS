@@ -19,6 +19,7 @@
 
 #include "PhaseFieldDamageFEM.hpp"
 #include "PhaseFieldDamageFEMKernels.hpp"
+#include "PhaseFieldPressurizedDamageFEMKernels.hpp"
 #include <math.h>
 #include <vector>
 
@@ -27,17 +28,13 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
-#include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
-#include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/solid/Damage.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
-#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
-#include "discretizationMethods/NumericalMethodsManager.hpp"
 
 #include "mesh/DomainPartition.hpp"
 
@@ -56,7 +53,8 @@ using namespace constitutive;
 PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
                                           Group * const parent ):
   PhysicsSolverBase( name, parent ),
-  m_fieldName( "primaryField" )
+  m_fieldName( "primaryField" ),
+  m_fracturePressureTermFlag( 0 )
 {
 
   registerWrapper< TimeIntegrationOption >( PhaseFieldDamageFEMViewKeys.timeIntegrationOption.key(), &m_timeIntegrationOption ).
@@ -81,6 +79,13 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
     setApplyDefaultValue( 1.5 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The upper bound of the damage" );
+
+  registerWrapper( viewKeyStruct::fracturePressureTermFlagString(), &m_fracturePressureTermFlag ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The flag to indicate whether to add the fracture pressure contribution" );
+
+  addLogLevel< logInfo::ResidualNorm >();
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
@@ -92,7 +97,7 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
 {
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
-                                                    arrayView1d< string const > const & regionNames )
+                                                    string_array const & regionNames )
   {
     NodeManager & nodes = mesh.getNodeManager();
 
@@ -110,17 +115,8 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setDescription( "field variable representing the diffusion coefficient" );
 
-
-      subRegion.registerWrapper< string >( viewKeyStruct::solidModelNamesString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRestartFlags( RestartFlags::NO_WRITE ).
-        setSizedFromParent( 0 );
-
-      string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidModelNamesString() );
-      solidMaterialName = PhysicsSolverBase::getConstitutiveName< SolidBase >( subRegion );
-      GEOS_ERROR_IF( solidMaterialName.empty(), GEOS_FMT( "{}: SolidBase model not found on subregion {}",
-                                                          getDataContext(), subRegion.getName() ) );
-
+      // TODO this should be in setConstitutiveNames
+      setConstitutiveName< SolidBase >( subRegion, viewKeyStruct::solidModelNamesString(), "solid" );
     } );
   } );
 }
@@ -202,7 +198,7 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
   GEOS_MARK_FUNCTION;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -217,22 +213,45 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n
                                   PhaseFieldDamageKernelLocalDissipation::Linear :
                                   PhaseFieldDamageKernelLocalDissipation::Quadratic;
 
-    PhaseFieldDamageKernelFactory kernelFactory( dofIndex,
-                                                 dofManager.rankOffset(),
-                                                 localMatrix,
-                                                 localRhs,
-                                                 dt,
-                                                 m_fieldName,
-                                                 localDissipation );
+    if( m_fracturePressureTermFlag )
+    {
+      PhaseFieldPressurizedDamageKernelFactory kernelFactory( dofIndex,
+                                                              dofManager.rankOffset(),
+                                                              localMatrix,
+                                                              localRhs,
+                                                              dt,
+                                                              m_fieldName,
+                                                              localDissipation );
 
-    finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy<>,
-                                    constitutive::DamageBase,
-                                    CellElementSubRegion >( mesh,
-                                                            regionNames,
-                                                            this->getDiscretizationName(),
-                                                            viewKeyStruct::solidModelNamesString(),
-                                                            kernelFactory );
+      finiteElement::
+        regionBasedKernelApplication< parallelDevicePolicy<>,
+                                      constitutive::DamageBase,
+                                      CellElementSubRegion >( mesh,
+                                                              regionNames,
+                                                              this->getDiscretizationName(),
+                                                              viewKeyStruct::solidModelNamesString(),
+                                                              kernelFactory );
+    }
+    else
+    {
+      PhaseFieldDamageKernelFactory kernelFactory( dofIndex,
+                                                   dofManager.rankOffset(),
+                                                   localMatrix,
+                                                   localRhs,
+                                                   dt,
+                                                   m_fieldName,
+                                                   localDissipation );
+
+      finiteElement::
+        regionBasedKernelApplication< parallelDevicePolicy<>,
+                                      constitutive::DamageBase,
+                                      CellElementSubRegion >( mesh,
+                                                              regionNames,
+                                                              this->getDiscretizationName(),
+                                                              viewKeyStruct::solidModelNamesString(),
+                                                              kernelFactory );
+    }
+
 #else // this has your changes to the old base code
     matrix.zero();
     rhs.zero();
@@ -419,7 +438,7 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
   // Syncronize ghost nodes
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, { m_fieldName } );
@@ -494,7 +513,7 @@ PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( ti
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     const NodeManager & nodeManager = mesh.getNodeManager();
     const arrayView1d< const integer > & ghostRank = nodeManager.ghostRank();
@@ -547,10 +566,11 @@ PhaseFieldDamageFEM::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( ti
 
   const real64 residual = sqrt( globalResidualNorm[0] ) / ( globalResidualNorm[1] );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residual );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residual ))
+
+
+  getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), residual );
 
   return residual;
 }
@@ -565,7 +585,7 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
-                                                               arrayView1d< string const > const & )
+                                                               string_array const & )
   {
     fsManager.template apply< NodeManager >( time,
                                              mesh,
@@ -600,7 +620,7 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -630,7 +650,7 @@ void PhaseFieldDamageFEM::applyIrreversibilityConstraint( DofManager const & dof
                                                       rankOffSet,
                                                       localMatrix,
                                                       rhsContribution,
-                                                      damangeUpperBound,
+                                                      1.0,
                                                       damageAtNode );
 
           globalIndex const localRow = dof - rankOffSet;

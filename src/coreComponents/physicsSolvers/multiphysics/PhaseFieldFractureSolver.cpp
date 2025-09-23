@@ -20,12 +20,10 @@
 
 #include "PhaseFieldFractureSolver.hpp"
 
-#include "constitutive/ConstitutiveManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "finiteElement/Kinematics.h"
+#include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 
 namespace geos
@@ -60,7 +58,7 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & regionNames )
+                                                                  string_array const & regionNames )
     {
       NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -87,7 +85,7 @@ void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( DomainPartition & doma
           using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
           typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
 
-          arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_damage;
+          arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_newDamage;
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodes = elementSubRegion.nodeList();
 
           finiteElement::FiniteElementBase const &

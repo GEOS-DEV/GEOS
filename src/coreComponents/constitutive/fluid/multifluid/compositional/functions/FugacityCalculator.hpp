@@ -20,9 +20,11 @@
 #ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_FUGACITYCALCULATOR_HPP_
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_FUGACITYCALCULATOR_HPP_
 
-#include "constitutive/fluid/multifluid/compositional/models/ComponentProperties.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/EquationOfState.hpp"
-#include "constitutive/fluid/multifluid/compositional/functions/CubicEOSPhaseModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/EquationOfState.hpp"
+#include "CubicEOSPhaseModel.hpp"
+#include "SoreideWhitsonEOSPhaseModel.hpp"
+#include "FlashData.hpp"
 
 namespace geos
 {
@@ -43,6 +45,7 @@ struct FugacityCalculator
    * @param[in] composition composition of the phase
    * @param[in] componentProperties The compositional component properties
    * @param[in] equationOfState The equation of state
+   * @param[in] flashData The parameters required for the flash
    * @param[out] logFugacity the calculated log fugacity
    */
   template< int USD >
@@ -53,6 +56,7 @@ struct FugacityCalculator
                                   arraySlice1d< real64 const, USD > const & composition,
                                   ComponentProperties::KernelWrapper const & componentProperties,
                                   EquationOfStateType const equationOfState,
+                                  FlashData const & flashData,
                                   arraySlice1d< real64 > const & logFugacity );
 
   /**
@@ -63,7 +67,8 @@ struct FugacityCalculator
    * @param[in] composition composition of the phase
    * @param[in] componentProperties The compositional component properties
    * @param[in] equationOfState The equation of state
-   * @param[in] logFugacity the calculated log fugacity
+   * @param[in] flashData The parameters required for the flash
+   * @param[out] logFugacity the calculated log fugacity
    * @param[out] logFugacityDerivs the calculated derivatives of the log fugacity
    */
   template< int USD1, int USD2 >
@@ -74,7 +79,8 @@ struct FugacityCalculator
                                              arraySlice1d< real64 const, USD1 > const & composition,
                                              ComponentProperties::KernelWrapper const & componentProperties,
                                              EquationOfStateType const equationOfState,
-                                             arraySlice1d< real64 const > const & logFugacity,
+                                             FlashData const & flashData,
+                                             arraySlice1d< real64 > const & logFugacity,
                                              arraySlice2d< real64, USD2 > const & logFugacityDerivs );
 };
 
@@ -86,6 +92,7 @@ void FugacityCalculator::computeLogFugacity( integer const numComps,
                                              arraySlice1d< real64 const, USD > const & composition,
                                              ComponentProperties::KernelWrapper const & componentProperties,
                                              EquationOfStateType const equationOfState,
+                                             FlashData const & flashData,
                                              arraySlice1d< real64 > const & logFugacity )
 {
   if( equationOfState == EquationOfStateType::PengRobinson )
@@ -108,6 +115,17 @@ void FugacityCalculator::computeLogFugacity( integer const numComps,
                                     componentProperties,
                                     logFugacity );
   }
+  else if( equationOfState == EquationOfStateType::SoreideWhitson )
+  {
+    SoreideWhitsonEOSPhaseModel< PengRobinsonEOS >::
+    computeLogFugacityCoefficients( numComps,
+                                    pressure,
+                                    temperature,
+                                    composition,
+                                    componentProperties,
+                                    flashData.salinity,
+                                    logFugacity );
+  }
 }
 
 template< int USD1, int USD2 >
@@ -118,30 +136,43 @@ void FugacityCalculator::computeLogFugacityDerivatives( integer const numComps,
                                                         arraySlice1d< real64 const, USD1 > const & composition,
                                                         ComponentProperties::KernelWrapper const & componentProperties,
                                                         EquationOfStateType const equationOfState,
-                                                        arraySlice1d< real64 const > const & logFugacity,
+                                                        FlashData const & flashData,
+                                                        arraySlice1d< real64 > const & logFugacity,
                                                         arraySlice2d< real64, USD2 > const & logFugacityDerivs )
 {
   if( equationOfState == EquationOfStateType::PengRobinson )
   {
     CubicEOSPhaseModel< PengRobinsonEOS >::
-    computeLogFugacityCoefficients( numComps,
-                                    pressure,
-                                    temperature,
-                                    composition,
-                                    componentProperties,
-                                    logFugacity,
-                                    logFugacityDerivs );
+    computeLogFugacityCoefficientsAndDerivs( numComps,
+                                             pressure,
+                                             temperature,
+                                             composition,
+                                             componentProperties,
+                                             logFugacity,
+                                             logFugacityDerivs );
   }
   else if( equationOfState == EquationOfStateType::SoaveRedlichKwong )
   {
     CubicEOSPhaseModel< SoaveRedlichKwongEOS >::
-    computeLogFugacityCoefficients( numComps,
-                                    pressure,
-                                    temperature,
-                                    composition,
-                                    componentProperties,
-                                    logFugacity,
-                                    logFugacityDerivs );
+    computeLogFugacityCoefficientsAndDerivs( numComps,
+                                             pressure,
+                                             temperature,
+                                             composition,
+                                             componentProperties,
+                                             logFugacity,
+                                             logFugacityDerivs );
+  }
+  else if( equationOfState == EquationOfStateType::SoreideWhitson )
+  {
+    SoreideWhitsonEOSPhaseModel< PengRobinsonEOS >::
+    computeLogFugacityCoefficientsAndDerivs( numComps,
+                                             pressure,
+                                             temperature,
+                                             composition,
+                                             componentProperties,
+                                             flashData.salinity,
+                                             logFugacity,
+                                             logFugacityDerivs );
   }
 }
 

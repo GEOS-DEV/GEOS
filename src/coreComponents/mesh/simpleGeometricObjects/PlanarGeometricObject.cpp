@@ -18,7 +18,6 @@
  */
 
 #include "PlanarGeometricObject.hpp"
-#include "LvArray/src/tensorOps.hpp"
 
 namespace geos
 {
@@ -42,9 +41,6 @@ PlanarGeometricObject::PlanarGeometricObject( const string & name, Group * const
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Tangent vector defining the orthonormal basis along with the normal." );
 }
-
-PlanarGeometricObject::~PlanarGeometricObject()
-{}
 
 //REGISTER_CATALOG_ENTRY( SimpleGeometricObjectBase, PlanarGeometricObject, string const &, Group * const )
 

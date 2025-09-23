@@ -57,4 +57,8 @@ add_dependencies( mainInterface generate_version )
 
 target_include_directories( mainInterface PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_link_options(mainInterface PUBLIC -Wl,--no-as-needed)
+endif()
+
 install( TARGETS mainInterface LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
