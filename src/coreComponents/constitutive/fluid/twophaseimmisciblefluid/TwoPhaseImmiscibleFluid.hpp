@@ -253,7 +253,7 @@ void TwoPhaseImmiscibleFluid::KernelWrapper::
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
-  // LvArray::forValuesInSlice( phaseDensity.derivs, []( real64 & val ) { val = 0.0; } );
+  LvArray::forValuesInSlice( phaseDensity.derivs, []( real64 & val ) { val = 0.0; } );
 
   for( integer iph = 0; iph < 2; ++iph )
   {
@@ -274,7 +274,7 @@ void TwoPhaseImmiscibleFluid::KernelWrapper::
 {
   using Deriv = constitutive::multifluid::DerivativeOffset;
 
-  // LvArray::forValuesInSlice( phaseViscosity.derivs, []( real64 & val ) { val = 0.0; } );
+  LvArray::forValuesInSlice( phaseViscosity.derivs, []( real64 & val ) { val = 0.0; } );
 
   for( integer iph = 0; iph < 2; ++iph )
   {
