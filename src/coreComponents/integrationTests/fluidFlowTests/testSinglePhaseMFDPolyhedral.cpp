@@ -225,7 +225,7 @@ TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
   // Compute exact pressure and L2 error
   RAJA::ReduceSum< parallelDeviceReduce, real64 > l2Error_ReduceSum( 0.0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > totalVolume_ReduceSum( 0.0 );
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex i )
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
     real64 x = centers[i][0];
     real64 volume = volumes[i];
@@ -396,7 +396,7 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
   // Compute exact pressure and L2 error
   RAJA::ReduceSum< parallelDeviceReduce, real64 > l2Error_ReduceSum( 0.0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > totalVolume_ReduceSum( 0.0 );
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex i )
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
     real64 x = centers[i][0];
     real64 volume = volumes[i];
@@ -450,8 +450,8 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
 
   arrayView1d< real64 const > p_tpfa;
   arrayView1d< real64 const > p_mfd;
-  geos::localIndex n_data_tpfa = 0;
-  geos::localIndex n_data_mfd = 0;
+  localIndex n_data_tpfa = 0;
+  localIndex n_data_mfd = 0;
 
   // --- Run TPFA solver ---
   {
@@ -517,13 +517,14 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
 
   // --- Compare cellwise pressures ---
   ASSERT_EQ( n_data_tpfa, n_data_mfd );
+  RAJA::ReduceMax<parallelDeviceReduce, real64> maxPressureDiff(0.0);
   forAll< parallelDevicePolicy<> >( n_data_tpfa, [=] ( localIndex i )
   {
     real64 p_num_tpfa = p_tpfa[i];
     real64 p_num_mfd  = p_mfd[i];
-    real64 p_diff     = (p_num_tpfa - p_num_mfd);
-    EXPECT_NEAR( p_diff, 0.0, PRESSURE_L2_TOLERANCE ) << "Mismatch at cell " << i;
+    real64 maxPressureDiff     = std::abs(p_num_tpfa - p_num_mfd);
   } );
+  EXPECT_LE(maxPressureDiff.get(), PRESSURE_L2_TOLERANCE);
 }
 
 
