@@ -100,8 +100,6 @@ public:
                          array1d< real64 > const & componentMolarWeight,
                          TableFunction::OutputOptions const pvtOutputOpts );
 
-  virtual ~EzrokhiBrineViscosity() override = default;
-
   static string catalogName() { return "EzrokhiBrineViscosity"; }
 
   virtual string getCatalogName() const override final { return catalogName(); }
@@ -130,7 +128,7 @@ private:
   void makeCoefficients( string_array const & inputPara );
 
   /// Table with water viscosity tabulated as a function (T)
-  TableFunction const * m_waterViscosityTable;
+  TableFunction const * m_waterViscosityTable = nullptr;
 
   /// Index of the CO2 phase
   integer m_CO2Index;

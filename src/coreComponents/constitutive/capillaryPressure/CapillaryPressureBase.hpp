@@ -22,7 +22,7 @@
 
 #include "common/DataLayouts.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/capillaryPressure/layouts.hpp"
+#include "constitutive/capillaryPressure/Layouts.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geos
@@ -105,7 +105,7 @@ public:
                          dataRepository::Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   /**
    * @brief Initialize the capillary pressure state (needed when capillary pressure depends on porosity and permeability)
@@ -140,7 +140,7 @@ public:
    * @brief Getter for the phase names
    * @return an array of phase names
    */
-  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+  string_array const & phaseNames() const { return m_phaseNames; }
 
   /*
    * @brief Getter for the cell-wise phase capillary pressures
@@ -162,13 +162,6 @@ public:
   };
 
 private:
-
-  /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  void resizeFields( localIndex const size, localIndex const numPts );
 
   /**
    * @brief Called internally to set array dim labels.

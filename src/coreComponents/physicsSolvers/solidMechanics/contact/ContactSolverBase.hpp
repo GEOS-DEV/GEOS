@@ -82,7 +82,7 @@ protected:
 
   void setFractureRegions( dataRepository::Group const & domain );
 
-  std::vector< string > m_fractureRegionNames;
+  stdVector< string > m_fractureRegionNames;
 
   template< typename LAMBDA >
   void forFractureRegionOnMeshTargets( Group const & meshBodies, LAMBDA && lambda ) const
@@ -90,7 +90,7 @@ protected:
     forDiscretizationOnMeshTargets( meshBodies,
                                     [&]( string const,
                                          MeshLevel const & mesh,
-                                         arrayView1d< string const > const )
+                                         string_array const & )
     {
       ElementRegionManager const & elemManager = mesh.getElemManager();
 
@@ -109,7 +109,7 @@ protected:
     forDiscretizationOnMeshTargets( meshBodies,
                                     [&]( string const,
                                          MeshLevel & mesh,
-                                         arrayView1d< string const > const )
+                                         string_array const & )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
 

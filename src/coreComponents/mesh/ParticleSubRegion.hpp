@@ -88,41 +88,12 @@ public:
   ///@}
 
   /**
-   * @name Miscellaneous
-   */
-  ///@{
-
-  /**
-   * @brief Helper function to apply a lambda function over all constructive groups
-   * @tparam LAMBDA the type of the lambda function
-   * @param lambda the lambda function
-   */
-  template< typename LAMBDA >
-  void forMaterials( LAMBDA lambda )
-  {
-    for( auto & constitutiveGroup : m_constitutiveGrouping )
-    {
-      lambda( constitutiveGroup );
-    }
-  }
-
-  ///@}
-
-  /**
    * @brief struct to serve as a container for variable strings and keys
    * @struct viewKeyStruct
    */
   struct viewKeyStruct : public ParticleSubRegionBase::viewKeyStruct
   {
-    /// @return String key for the constitutive grouping
-    static constexpr char const * constitutiveGroupingString() { return "ConstitutiveGrouping"; }
-    /// @return String key for the constitutive map
-    static constexpr char const * constitutiveMapString() { return "ConstitutiveMap"; }
-
-    /// ViewKey for the constitutive grouping
-    dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString() };
-    /// ViewKey for the constitutive map
-    dataRepository::ViewKey constitutiveMap       = { constitutiveMapString() };
+    // Left blank
   }
   /// viewKey struct for the ParticleSubRegion class
   m_ParticleBlockSubRegionViewKeys;
@@ -131,9 +102,6 @@ public:
   virtual viewKeyStruct const & viewKeys() const override { return m_ParticleBlockSubRegionViewKeys; }
 
 private:
-
-  /// Map used for constitutive grouping
-  map< string, localIndex_array > m_constitutiveGrouping;
 
   /// Name of the properties registered from an external mesh
   string_array m_externalPropertyNames;

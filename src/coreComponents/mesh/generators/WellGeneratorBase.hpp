@@ -189,13 +189,26 @@ public:
    * @brief Get the target region for a perforation.
    * @return the target regions for a perforation
    */
-  arrayView1d< string const > getPerfTargetRegion() const { return m_perfTargetRegion; };
+  string_array const & getPerfTargetRegion() const { return m_perfTargetRegion; };
 
   /**
    * @brief Get the global indices of the well elements connected to each perforation.
    * @return list providing the global index of the connected well element for each perforation
    */
   arrayView1d< globalIndex const > getPerfElemIndex() const { return m_perfElemId; }
+
+  /**
+   * @brief Get name of perforation status table function
+   * @return perforation table names
+   */
+  string_array const & getPerfStatusTableName() const { return m_perfStatusTableName; };
+
+
+  /**
+   * @brief Get name of perforations
+   * @return perforation names
+   */
+  string_array const & getPerfName() const { return m_perfName; };
 
   /**
    * @returns The number of physical dimensions
@@ -400,7 +413,13 @@ protected:
   array1d< real64 > m_perfDistFromHead;
 
   /// Target region for the perforation
-  array1d< string > m_perfTargetRegion;
+  string_array m_perfTargetRegion;
+
+  /// Perforation status table function name
+  string_array m_perfStatusTableName;
+
+  /// Perforation name
+  string_array m_perfName;
 
 };
 }

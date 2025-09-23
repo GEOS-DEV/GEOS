@@ -41,6 +41,7 @@ public:
   using Base::m_stabilizationType;
   using Base::m_stabilizationRegionNames;
   using Base::m_stabilizationMultiplier;
+  using Base::updateBulkDensity;
 
   /**
    * @brief main constructor for SinglePhasePoromechanics objects
@@ -49,9 +50,6 @@ public:
    */
   SinglePhasePoromechanics( const string & name,
                             dataRepository::Group * const parent );
-
-  /// Destructor for the class
-  ~SinglePhasePoromechanics() override {}
 
   /**
    * @brief name of the node manager in the object catalog
@@ -93,6 +91,9 @@ public:
                             ParallelVector & solution,
                             bool const setSparsity = true ) override;
 
+  virtual std::unique_ptr< PreconditionerBase< LAInterface > >
+  createPreconditioner( DomainPartition & domain ) const override;
+
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
@@ -111,12 +112,15 @@ public:
 
   struct viewKeyStruct : Base::viewKeyStruct
   {
-    // nothing yet here
+    /// Flag to indicate if it is the phase-field formulation
+    constexpr static char const * damageFlagString() { return "damageFlag"; }
   };
 
 protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  integer m_damageFlag;
 
   virtual void setMGRStrategy()
   {
@@ -129,9 +133,6 @@ protected:
    * @param[in] subRegion the element subRegion
    */
   virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) override;
-
-  void createPreconditioner();
-
 };
 
 } /* namespace geos */

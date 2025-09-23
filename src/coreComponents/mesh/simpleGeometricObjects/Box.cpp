@@ -55,13 +55,10 @@ Box::Box( const string & name, Group * const parent ):
   registerWrapper( viewKeyStruct::sinStrikeString(), &m_sinStrike );
 }
 
-Box::~Box()
-{}
-
-
-
 void Box::postInputInitialization()
 {
+  SimpleGeometricObjectBase::postInputInitialization();
+
   LvArray::tensorOps::copy< 3 >( m_boxCenter, m_min );
   LvArray::tensorOps::add< 3 >( m_boxCenter, m_max );
   LvArray::tensorOps::scale< 3 >( m_boxCenter, 0.5 );
@@ -72,7 +69,7 @@ void Box::postInputInitialization()
     if( m_max[i]<m_min[i] )
     {
       std::swap( m_max[i], m_min[i] );
-      GEOS_LOG_RANK_0( GEOS_FMT( "Reordering box definition for {} component as {} < {} ", i, m_max[i], m_min[i] ) );
+      GEOS_LOG_RANK_0( GEOS_FMT( "Reordering box definition {} for {} component as {} < {} ", getName(), i, m_max[i], m_min[i] ) );
     }
   }
 
@@ -103,7 +100,7 @@ bool Box::isCoordInObject( real64 const ( &coord ) [3] ) const
   }
   for( int i = 0; i < 3; ++i )
   {
-    if( coord0[i] < m_min[i] || coord0[i] > m_max[i] )
+    if( coord0[i] < m_min[i] - m_epsilon || coord0[i] > m_max[i] + m_epsilon )
     {
       return false;
     }

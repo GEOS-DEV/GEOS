@@ -149,7 +149,19 @@ public:
    * @brief Get the target region for the perforations.
    * @return list of target regions for all the perforations on the well
    */
-  virtual arrayView1d< string const > getPerfTargetRegion() const = 0;
+  virtual string_array const & getPerfTargetRegion() const = 0;
+
+  /**
+   * @brief Get names of perfs
+   * @return list perforation names
+   */
+  virtual string_array const & getPerfName() const = 0;
+
+  /**
+   * @brief Get names of perf status tables
+   * @return list of table names
+   */
+  virtual string_array const & getPerfStatusTableName() const = 0;
 
   /**
    * @brief Get the global indices of the well elements connected to each perforation.

@@ -26,8 +26,8 @@
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsDisplacementJumpUpdateKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
-#include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
@@ -50,6 +50,8 @@ SolidMechanicsLagrangeContactBubbleStab::SolidMechanicsLagrangeContactBubbleStab
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanicsBubbleStab;
   linSolParams.mgr.separateComponents = true;
   linSolParams.dofsPerNode = 3;
+
+  addLogLevel< logInfo::ResidualNorm >();
 }
 
 SolidMechanicsLagrangeContactBubbleStab::~SolidMechanicsLagrangeContactBubbleStab()
@@ -59,7 +61,7 @@ SolidMechanicsLagrangeContactBubbleStab::~SolidMechanicsLagrangeContactBubbleSta
 
 real64 SolidMechanicsLagrangeContactBubbleStab::solverStep( real64 const & time_n,
                                                             real64 const & dt,
-                                                            const integer cycleNumber,
+                                                            integer const cycleNumber,
                                                             DomainPartition & domain )
 {
   if( cycleNumber == 0 )
@@ -69,7 +71,7 @@ real64 SolidMechanicsLagrangeContactBubbleStab::solverStep( real64 const & time_
 
     forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&]( string const &,
                                                                   MeshLevel & mesh,
-                                                                  arrayView1d< string const > const & )
+                                                                  string_array const & )
 
     {
       fieldSpecificationManager.applyInitialConditions( mesh );
@@ -102,7 +104,7 @@ void SolidMechanicsLagrangeContactBubbleStab::registerDataOnMesh( Group & meshBo
 
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
-                                                    arrayView1d< string const > const & )
+                                                    string_array const & )
   {
     FaceManager & faceManager = meshLevel.getFaceManager();
 
@@ -139,12 +141,12 @@ void SolidMechanicsLagrangeContactBubbleStab::setupDofs( DomainPartition const &
 
   SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
 
-  map< std::pair< string, string >, array1d< string > > meshTargets;
+  map< std::pair< string, string >, string_array > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel const & meshLevel,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
-    array1d< string > regions;
+    string_array regions;
     ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
     elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
                                                                     [&]( localIndex const,
@@ -260,7 +262,7 @@ void SolidMechanicsLagrangeContactBubbleStab::computeRotationMatrices( DomainPar
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -340,7 +342,7 @@ void SolidMechanicsLagrangeContactBubbleStab::assembleStabilization( real64 cons
   // Loop for assembling contributes of bubble elements (Abb, Abu, Aub)
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -365,7 +367,7 @@ void SolidMechanicsLagrangeContactBubbleStab::assembleStabilization( real64 cons
     real64 maxTraction = finiteElement::
                            regionBasedKernelApplication
                          < parallelDevicePolicy< >,
-                           constitutive::ElasticIsotropic,
+                           ElasticIsotropic,
                            CellElementSubRegion >( mesh,
                                                    regionNames,
                                                    getDiscretizationName(),
@@ -385,7 +387,7 @@ void SolidMechanicsLagrangeContactBubbleStab::assembleContact( real64 const dt,
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager const & faceManager = mesh.getFaceManager();
@@ -416,12 +418,12 @@ void SolidMechanicsLagrangeContactBubbleStab::assembleContact( real64 const dt,
       real64 maxTraction = finiteElement::
                              interfaceBasedKernelApplication
                            < parallelDevicePolicy< >,
-                             constitutive::FrictionBase >( mesh,
-                                                           fractureRegionName,
-                                                           faceElementList,
-                                                           subRegionFE,
-                                                           viewKeyStruct::frictionLawNameString(),
-                                                           kernelFactory );
+                             FrictionBase >( mesh,
+                                             fractureRegionName,
+                                             faceElementList,
+                                             subRegionFE,
+                                             viewKeyStruct::frictionLawNameString(),
+                                             kernelFactory );
 
       GEOS_UNUSED_VAR( maxTraction );
     } );
@@ -436,7 +438,7 @@ void SolidMechanicsLagrangeContactBubbleStab::implicitStepComplete( real64 const
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
@@ -467,7 +469,9 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateResidualNorm( real64 co
 
   real64 const contactResidual = calculateContactResidualNorm( domain, dofManager, localRhs );
 
-  return sqrt( solidResidual * solidResidual + contactResidual * contactResidual );
+  real64 const totalResidual = sqrt( solidResidual * solidResidual + contactResidual * contactResidual );
+
+  return totalResidual;
 }
 
 real64 SolidMechanicsLagrangeContactBubbleStab::calculateContactResidualNorm( DomainPartition const & domain,
@@ -480,7 +484,7 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateContactResidualNorm( Do
   real64 stickResidual = 0.0;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames,
                                                                         [&]( localIndex const, FaceElementSubRegion const & subRegion )
@@ -510,10 +514,9 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateContactResidualNorm( Do
   stickResidual = MpiWrapper::sum( stickResidual );
   stickResidual = sqrt( stickResidual );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual ));
+  getConvergenceStats().setResidualValue( "Rt", stickResidual );
 
   return sqrt( stickResidual * stickResidual );
 }
@@ -553,7 +556,7 @@ void SolidMechanicsLagrangeContactBubbleStab::applySystemSolution( DofManager co
   // Loop for updating the displacement jump
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
 
   {
 
@@ -587,12 +590,12 @@ void SolidMechanicsLagrangeContactBubbleStab::applySystemSolution( DofManager co
       real64 maxTraction = finiteElement::
                              interfaceBasedKernelApplication
                            < parallelDevicePolicy< >,
-                             constitutive::NullModel >( mesh,
-                                                        fractureRegionName,
-                                                        faceElementList,
-                                                        subRegionFE,
-                                                        "",
-                                                        kernelFactory );
+                             NullModel >( mesh,
+                                          fractureRegionName,
+                                          faceElementList,
+                                          subRegionFE,
+                                          "",
+                                          kernelFactory );
 
       GEOS_UNUSED_VAR( maxTraction );
 
@@ -601,7 +604,7 @@ void SolidMechanicsLagrangeContactBubbleStab::applySystemSolution( DofManager co
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     FieldIdentifiers fieldsToBeSync;
 
@@ -628,7 +631,7 @@ void SolidMechanicsLagrangeContactBubbleStab::addCouplingNumNonzeros( DomainPart
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -735,7 +738,7 @@ void SolidMechanicsLagrangeContactBubbleStab::addCouplingSparsityPattern( Domain
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & regionNames )
+                                                                string_array const & regionNames )
   {
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -886,7 +889,7 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
 
   {
 
@@ -965,7 +968,7 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
       this->m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
       this->m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
 
-      GEOS_LOG_LEVEL_INFO_RANK_0( logInfo::Configuration, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
+      GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
   } );
 
@@ -977,7 +980,7 @@ void SolidMechanicsLagrangeContactBubbleStab::createFaceTypeList( DomainPartitio
   // Generate lists containing elements of various face types
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel const & mesh,
-                                                                arrayView1d< string const > const )
+                                                                string_array const & )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -1055,7 +1058,7 @@ void SolidMechanicsLagrangeContactBubbleStab::createBubbleCellList( DomainPartit
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
-                                                                arrayView1d< string const > const regionNames )
+                                                                string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 

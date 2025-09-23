@@ -44,9 +44,8 @@ CapillaryPressureBase::CapillaryPressureBase( string const & name,
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerField( fields::cappres::phaseCapPressure{}, &m_phaseCapPressure );
-  registerField( fields::cappres::dPhaseCapPressure_dPhaseVolFraction{}, &m_dPhaseCapPressure_dPhaseVolFrac );
-
+  registerField< fields::cappres::phaseCapPressure >( &m_phaseCapPressure );
+  registerField< fields::cappres::dPhaseCapPressure_dPhaseVolFraction >( &m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
 void CapillaryPressureBase::postInputInitialization()
@@ -81,33 +80,24 @@ void CapillaryPressureBase::postInputInitialization()
     m_phaseOrder[m_phaseTypes[ip]] = ip;
   }
 
-  // call to correctly set member array tertiary sizes on the 'main' material object
-  resizeFields( 0, 0 );
-
   // set labels on array wrappers for plottable fields
   setLabels();
 }
 
-void CapillaryPressureBase::resizeFields( localIndex const size,
-                                          localIndex const numPts )
+void CapillaryPressureBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
   integer const NP = numFluidPhases();
 
-  m_phaseCapPressure.resize( size, numPts, NP );
-  m_dPhaseCapPressure_dPhaseVolFrac.resize( size, numPts, NP, NP );
+  m_phaseCapPressure.resize( 0, numPts, NP );
+  m_dPhaseCapPressure_dPhaseVolFrac.resize( 0, numPts, NP, NP );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 void CapillaryPressureBase::setLabels()
 {
   getField< fields::cappres::phaseCapPressure >().
     setDimLabels( 2, m_phaseNames );
-}
-
-void CapillaryPressureBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                      localIndex const numConstitutivePointsPerParentIndex )
-{
-  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 } // namespace constitutive

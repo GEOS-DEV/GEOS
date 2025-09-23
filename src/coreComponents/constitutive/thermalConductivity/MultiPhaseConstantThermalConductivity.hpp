@@ -67,17 +67,13 @@ public:
    * @param[in] name the name of the class
    * @param[in] parent pointer to the parent Group
    */
-  MultiPhaseConstantThermalConductivity( string const & name, Group * const parent );
-
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  MultiPhaseConstantThermalConductivity( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "MultiPhaseConstantThermalConductivity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = MultiPhaseConstantThermalConductivityUpdate;
@@ -95,7 +91,7 @@ public:
   struct viewKeyStruct : public MultiPhaseThermalConductivityBase::viewKeyStruct
   {
     static constexpr char const * thermalConductivityComponentsString() { return "thermalConductivityComponents"; }
-  } viewKeys;
+  };
 
 protected:
 

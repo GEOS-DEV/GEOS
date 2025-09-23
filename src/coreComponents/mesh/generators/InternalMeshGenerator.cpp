@@ -161,12 +161,11 @@ void InternalMeshGenerator::postInputInitialization()
 
   m_numElePerBox.resize( m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
 
-  if( m_elementType.size() != m_numElePerBox.size() )
+  if( LvArray::integerConversion< int >( m_elementType.size() ) != m_numElePerBox.size() )
   {
     if( m_elementType.size() == 1 )
     {
-      string const elementType = m_elementType[0];
-      m_elementType.resizeDefault( m_numElePerBox.size(), elementType );
+      m_elementType.resize( m_numElePerBox.size(), m_elementType[0] );
     }
     else
     {
@@ -194,12 +193,11 @@ void InternalMeshGenerator::postInputInitialization()
     {
       numBlocks *= m_nElems[i].size();
     }
-    if( numBlocks != m_regionNames.size() )
+    if( numBlocks != LvArray::integerConversion< localIndex >( m_regionNames.size()) )
     {
       if( m_regionNames.size() == 1 )
       {
-        string const regionName = m_regionNames[0];
-        m_regionNames.resizeDefault( numBlocks, regionName );
+        m_regionNames.resize( numBlocks, m_regionNames[0] );
       }
       else
       {
@@ -563,9 +561,19 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   // Make sure that the node manager fields are initialized
   auto & nodeSets = cellBlockManager.getNodeSets();
 
-  real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
-  LvArray::tensorOps::subtract< 3 >( size, m_min );
-  cellBlockManager.setGlobalLength( LvArray::tensorOps::l2Norm< 3 >( size ) );
+  // global length
+  {
+    real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
+    LvArray::tensorOps::subtract< 3 >( size, m_min );
+    cellBlockManager.setGlobalLength( LvArray::tensorOps::l2Norm< 3 >( size ) );
+  }
+  // global offset
+  {
+    real64 offset[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_min );
+    LvArray::tensorOps::add< 3 >( offset, m_max );
+    LvArray::tensorOps::scale< 3 >( offset, 0.5 );
+    cellBlockManager.setGlobalOffset( LvArray::tensorOps::l2Norm< 3 >( offset ) );
+  }
 
 //  bool isRadialWithOneThetaPartition = false;
 
@@ -795,7 +803,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   {
     array1d< integer > numElements;
-    array1d< string > elementRegionNames;
+    string_array elementRegionNames;
     std::map< string, localIndex > localElemIndexInRegion;
 
     for( auto const & numElemsInRegion : numElemsInRegions )
@@ -809,7 +817,6 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
     // Assign global numbers to elements
     regionOffset = 0;
-    SortedArray< string > processedRegionNames;
     localIndex iR = 0;
 
     // Reset the number of nodes in each dimension in case of periodic BCs so the element firstNodeIndex

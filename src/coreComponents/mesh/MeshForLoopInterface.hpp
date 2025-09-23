@@ -26,7 +26,6 @@
 
 #include "common/DataTypes.hpp"
 #include "mesh/MeshLevel.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
 
 namespace geos
 {

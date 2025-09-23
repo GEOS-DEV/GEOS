@@ -75,6 +75,9 @@ on:
         required: false
         type: string
         default: '--ninja'
+      GEOS_ENABLE_BOUNDS_CHECK:
+        required: false
+        type: string
     secrets:
       GOOGLE_CLOUD_GCP:
         required: false
@@ -84,7 +87,7 @@ jobs:
     steps:
     - name: does_pr_have_necessary_labels
       if: ${{inputs.REQUIRED_LABEL && github.event_name == 'pull_request'}}
-      run: | 
+      run: |
         pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
         LABELS=$(echo ${pr_json} | jq -crM '[.labels[].name]')
         echo " the labels are ${LABELS}"
@@ -111,7 +114,7 @@ jobs:
 
     - id: 'auth'
       if: ${{ inputs.GCP_BUCKET || inputs.USE_SCCACHE }}
-      uses: 'google-github-actions/auth@v2.1.8'
+      uses: 'google-github-actions/auth@v2.1.10'
       with:
         credentials_json: '${{ secrets.GOOGLE_CLOUD_GCP }}'
         create_credentials_file: true
@@ -195,17 +198,37 @@ jobs:
         GITHUB_WORKSPACE_MOUNT_POINT=/tmp/geos
         docker_args+=(--volume=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE_MOUNT_POINT})
         script_args+=(--repository ${GITHUB_WORKSPACE_MOUNT_POINT})
+
+        if [ ! -z "${{ inputs.GEOS_ENABLE_BOUNDS_CHECK }}" ]; then
+          script_args+=(--geos-enable-bounds-check "${{ inputs.GEOS_ENABLE_BOUNDS_CHECK }}")
+        fi
         
         # The linear algebra environment variables (ENABLE_HYPRE, ENABLE_HYPRE_DEVICE & ENABLE_TRILINOS)
-        # could be passed as scripts parameters as well, but a specific care must be taken to be sure
+        # are passed as scripts parameters. Specific care must be taken to be sure
         # there's no conflict with the host-config files.
+
+        # Hypre
         ENABLE_HYPRE=${{ inputs.ENABLE_HYPRE }}
-        ENABLE_HYPRE_DEVICE=${{ inputs.ENABLE_HYPRE_DEVICE }}
+        if [ ! -z "${{ inputs.ENABLE_HYPRE }}" ]; then
+          script_args+=(--enable-hypre "${{ inputs.ENABLE_HYPRE }}")
+        fi
+
+        # Trilinos
         ENABLE_TRILINOS=${{ inputs.ENABLE_TRILINOS }}
         docker_args+=(-e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF})
         docker_args+=(-e ENABLE_HYPRE_DEVICE=${ENABLE_HYPRE_DEVICE:-CPU})
         docker_args+=(-e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON})
         docker_args+=(-e GEOS_BUILD_SHARED_LIBS=${{ inputs.BUILD_SHARED_LIBS }})
+
+        if [ ! -z "${{ inputs.ENABLE_TRILINOS }}" ]; then
+          script_args+=(--enable-trilinos "${{ inputs.ENABLE_TRILINOS }}")
+        fi
+
+        # ENABLE_HYPRE_DEVICE
+        ENABLE_HYPRE_DEVICE=${{ inputs.ENABLE_HYPRE_DEVICE }}
+        if [ ! -z "${{ inputs.ENABLE_HYPRE_DEVICE }}" ]; then
+          script_args+=(--enable-hypre-device "${{ inputs.ENABLE_HYPRE_DEVICE }}")
+        fi
 
         docker_args+=(--cap-add=SYS_PTRACE --rm)
 
@@ -215,7 +238,7 @@ jobs:
 
         DOCKER_REPOSITORY=${{ inputs.DOCKER_REPOSITORY }}
         SPLIT_DOCKER_REPOSITORY=(${DOCKER_REPOSITORY//// })
-        CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}
+        CONTAINER_NAME=geosx_build_${SPLIT_DOCKER_REPOSITORY[1]}_${GITHUB_SHA:0:7}_${{ inputs.CMAKE_BUILD_TYPE }}
         echo "CONTAINER_NAME: ${CONTAINER_NAME}"
         if [ "$(docker ps -aq -f name=${CONTAINER_NAME})" ]; then
           docker rm -f ${CONTAINER_NAME}
@@ -268,6 +291,7 @@ jobs:
         fi
 
         echo running "docker run \
+          --user nobody \
           ${docker_args[@]} \
           -h=`hostname` \
           ${{ inputs.DOCKER_REPOSITORY }}:${{ inputs.DOCKER_IMAGE_TAG }} \
@@ -292,13 +316,16 @@ jobs:
         # Send to the bucket and print the download link when it makes sense.
         if [[ ! -z "${{ inputs.GCP_BUCKET }}" ]]; then
           if [[ "${{ inputs.BUILD_TYPE }}" = "integrated_tests" || ${EXIT_STATUS} -eq 0 ]]; then
+            # disable warning about parallel composite upload
+            CLOUDSDK_PYTHON=python3 gcloud config set storage/parallel_composite_upload_enabled True
+
             if [ -f ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} ]; then
-              CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+              CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead ${DATA_EXCHANGE_DIR}/${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
               echo "Download the bundle at https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/${DATA_BASENAME}"
             fi
 
             if [ -f ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME} ]; then
-              CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+              CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead ${DATA_EXCHANGE_DIR}/test_logs_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
               echo "Download integrated test logs here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/test_logs_${DATA_BASENAME}"
             fi
 
@@ -321,7 +348,7 @@ jobs:
               fi
                 
               # 2. We push the baselines to the cloud
-              CLOUDSDK_PYTHON=python3 gsutil cp -a public-read ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
+              CLOUDSDK_PYTHON=python3 gcloud storage cp --quiet -a publicRead ${DATA_EXCHANGE_DIR}/baseline_${DATA_BASENAME} gs://${{ inputs.GCP_BUCKET }}/
               echo "Download test baselines here: https://storage.googleapis.com/${{ inputs.GCP_BUCKET }}/baseline_${DATA_BASENAME}"
               echo "New baseline ID: baseline_${DATA_BASENAME::-7}"
             else
@@ -334,7 +361,7 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: inputs.CODE_COVERAGE
-      uses: codecov/codecov-action@v5.3.1
+      uses: codecov/codecov-action@v5.4.2
       with:
         files: ${GITHUB_WORKSPACE}/geos_coverage.info.cleaned
         fail_ci_if_error: true

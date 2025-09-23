@@ -62,17 +62,13 @@ ProppantSlurryFluid::ProppantSlurryFluid( string const & name, Group * const par
 
 }
 
-ProppantSlurryFluid::~ProppantSlurryFluid() = default;
-
-void ProppantSlurryFluid::allocateConstitutiveData( dataRepository::Group & parent,
-                                                    localIndex const numConstitutivePointsPerParentIndex )
+void ProppantSlurryFluid::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  SlurryFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SlurryFluidBase::allocateConstitutiveData( parent, numPts );
 
-  m_density.setValues< serialPolicy >( m_referenceDensity );
-  m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
+  m_density.value.setValues< serialPolicy >( m_referenceDensity );
+  m_viscosity.value.setValues< serialPolicy >( m_referenceViscosity );
 }
-
 
 void ProppantSlurryFluid::postInputInitialization()
 {
@@ -109,21 +105,21 @@ ProppantSlurryFluid::createKernelWrapper()
                         m_nIndices,
                         m_Ks,
                         m_isNewtonianFluid,
-                        m_density,
-                        m_dDensity_dPressure,
+                        m_density.value,
+                        m_density.derivs,
                         m_dDensity_dProppantConc,
                         m_dDensity_dCompConc,
                         m_componentDensity,
                         m_dCompDens_dPres,
                         m_dCompDens_dCompConc,
-                        m_fluidDensity,
+                        m_fluidDensity.value,
                         m_dFluidDens_dPres,
                         m_dFluidDens_dCompConc,
                         m_fluidViscosity,
                         m_dFluidVisc_dPres,
                         m_dFluidVisc_dCompConc,
-                        m_viscosity,
-                        m_dViscosity_dPressure,
+                        m_viscosity.value,
+                        m_viscosity.derivs,
                         m_dViscosity_dProppantConc,
                         m_dViscosity_dCompConc );
 }
