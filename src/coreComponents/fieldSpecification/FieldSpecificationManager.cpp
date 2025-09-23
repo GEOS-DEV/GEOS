@@ -68,8 +68,8 @@ void FieldSpecificationManager::expandObjectCatalogs()
   }
 }
 
-/// @brief alias for the map containing the relationship between the fieldSpefication "setNames" and the/their associated manager(s)
-/// Represented as : { { "setName", { ObjectPathType (= A Manager) , localIndex (0,1) }, ... }, ... }
+/// @brief alias for the map allowing to know the existance of given element types (node, edge, cell...)
+/// Represented as : { { "setName", { ObjectPathType (= An element container) , [0 | 1] (not empty) }, ... }, ... }
 using SetNameToTypesMap = std::map< std::string, std::vector< std::pair< MeshObjectPath::ObjectTypes, localIndex > > >;
 
 /**
@@ -132,8 +132,6 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     localIndex isFieldNameFound = 0;
     // map from set name to a flag (1 if targetSet has been created, 0 otherwise)
     map< string, localIndex > isTargetSetCreated;
-    // map from all the targeted setNames where we store the associated pair [ObjectType, Bool]
-    // 0 if the target objectType exists, 1 otherwise
     SetNameToTypesMap setTypesMap;
     // The fs target objectPath type
     MeshObjectPath::ObjectTypes const expectedSetType = fs.getMeshObjectPaths().getObjectType();
@@ -282,9 +280,15 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
           message << GEOS_FMT( "Set '{}' does not capture anything in the mesh ", setName );
         }
       }
-      Wrapper< FieldSpecificationBase::SetErrorMode > const & wrapper = fs.getWrapper< FieldSpecificationBase::SetErrorMode >(
+      auto errMode = fs.getReference< FieldSpecificationBase::SetErrorMode >(
         FieldSpecificationBase::viewKeyStruct::errorSetModeString());
-      switch( wrapper.referenceAsView() )
+
+      if( errMode == FieldSpecificationBase::SetErrorMode::error && m_isSurfaceGenerationCase )
+      {
+        errMode = FieldSpecificationBase::SetErrorMode::warning;
+      }
+
+      switch( errMode )
       {
         case  FieldSpecificationBase::SetErrorMode::silent:
           break;
@@ -292,7 +296,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
           GEOS_THROW( message.str(), InputError );
           break;
         case  FieldSpecificationBase::SetErrorMode::warning:
-          if( fs.getIsSurfaceGenerationCase() )
+          if( m_isSurfaceGenerationCase )
             message << "As the simulation includes a SurfaceGenerator, the set may be modified later";
           GEOS_WARNING( message.str() );
           break;

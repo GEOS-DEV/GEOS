@@ -229,8 +229,18 @@ public:
     } );
   }
 
+  /**
+   * Mutator
+   * @param isSurfaceGenerationCase The boolean for m_isSurfaceGenerationCase
+   */
+  void setIsSurfaceGenerationCase( bool isSurfaceGenerationCase )
+  {
+    m_isSurfaceGenerationCase = isSurfaceGenerationCase;
+  }
+
 private:
   static FieldSpecificationManager * m_instance;
+  bool m_isSurfaceGenerationCase = false;
 
 };
 
