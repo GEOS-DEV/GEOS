@@ -556,11 +556,18 @@ public:
     return *(m_meshObjectPaths.get());
   }
 
+  /**
+   * @return A boolean indicating if we have a SurfaceGenerator component 
+   */
   bool getIsSurfaceGenerationCase() const
   {
     return m_isSurfaceGenerationCase;
   }
 
+  /**
+   * Mutator
+   * @param isSurfaceGenerationCase The boolean for m_isSurfaceGenerationCase
+   */
   void setIsSurfaceGenerationCase( bool isSurfaceGenerationCase )
   {
     m_isSurfaceGenerationCase = isSurfaceGenerationCase;
