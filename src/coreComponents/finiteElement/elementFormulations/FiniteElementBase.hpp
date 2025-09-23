@@ -423,37 +423,29 @@ public:
    * @param maxSupportPoints The maximum number of support points.
    * @param numQuadraturePoints The number of quadrature points.
    */
-  GEOS_HOST_DEVICE
   FiniteElementBase( localIndex const numSupportPoints,
                      localIndex const maxSupportPoints,
                      localIndex const numQuadraturePoints ):
     m_numSupportPoints( numSupportPoints ),
     m_maxSupportPoints( maxSupportPoints ),
     m_numQuadraturePoints( numQuadraturePoints )
-  {
-#ifdef GEOS_DEVICE_COMPILE
-    GEOS_ERROR( "Programming error: FiniteElementBase is not device-instantiable." );
-#endif
-  }
+  { }
 
   /**
    * @brief Destructor
    */
-  GEOS_HOST_DEVICE
   virtual ~FiniteElementBase() = default;
 
   /**
    * @brief Virtual getter for the number of quadrature points per element.
    * @return The number of quadrature points per element.
    */
-  GEOS_HOST_DEVICE
   localIndex getNumQuadraturePoints() const { return m_numQuadraturePoints; };
 
   /**
    * @brief Virtual getter for the number of support points per element.
    * @return The number of support points per element.
    */
-  GEOS_HOST_DEVICE
   localIndex getNumSupportPoints() const { return m_numSupportPoints; };
 
   /**
@@ -462,7 +454,6 @@ public:
    * number of support points.
    * @return The number of maximum support points for this element.
    */
-  GEOS_HOST_DEVICE
   localIndex getMaxSupportPoints() const { return m_maxSupportPoints; };
 
 private:
