@@ -57,6 +57,7 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   m_particleDamage = particleBlock.getParticleDamage();
   m_particlePorosity = particleBlock.getParticlePorosity();
   m_particleTemperature = particleBlock.getParticleTemperature();
+  m_particleTemperatureRate = particleBlock.getParticleTemperatureRate();
   m_particleStrengthScale = particleBlock.getParticleStrengthScale();
   m_particleCenter = particleBlock.getParticleCenter();
   m_particleVelocity = particleBlock.getParticleVelocity();

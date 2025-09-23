@@ -77,6 +77,9 @@ public:
    * @param[in] shearSofteningShapeParameter1 The shear softening shape parameter 1
    * @param[in] shearSofteningShapeParameter2 The shear softening shape parameter 2
    * @param[in] maximumStretch The maximum stretch
+   * @param[in] maximumStretchA 
+   * @param[in] maximumStretchB 
+   * @param[in] maximumStretchT0 
    * @param[in] thermalSoftening not currently implemented (CC: TODO)
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
@@ -116,6 +119,9 @@ public:
                                  real64 const & shearSofteningShapeParameter1,
                                  real64 const & shearSofteningShapeParameter2,
                                  real64 const & maximumStretch,
+                                 real64 const & maximumStretchA,
+                                 real64 const & maximumStretchB,
+                                 real64 const & maximumStretchT0,
                                  arrayView1d< real64 > const & bulkModulus,
                                  arrayView1d< real64 > const & shearModulus,
                                  arrayView1d< real64 const > const & thermalExpansionCoefficient,
@@ -160,7 +166,10 @@ public:
     m_shearSofteningMagnitudeT0( shearSofteningMagnitudeT0 ),
     m_shearSofteningShapeParameter1( shearSofteningShapeParameter1 ),
     m_shearSofteningShapeParameter2( shearSofteningShapeParameter2 ),
-    m_maximumStretch( maximumStretch )
+    m_maximumStretch( maximumStretch ),
+    m_maximumStretchA( maximumStretchA ),
+    m_maximumStretchB( maximumStretchB ),
+    m_maximumStretchT0( maximumStretchT0 )
   {
 
   }
@@ -308,6 +317,9 @@ private:
 
   /// The compressive strength
   real64 const m_maximumStretch;
+  real64 const m_maximumStretchA;
+  real64 const m_maximumStretchB;
+  real64 const m_maximumStretchT0;
 
 };
 
@@ -414,7 +426,6 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
 {
   // elastic predictor "trialStress" (assume strainIncrement is all elastic)
   // using current definitions of m_bulkModulus[k] and m_shearModulus[k]
-
   real64 scale = StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_bulkModulusT0, m_bulkModulusA, m_bulkModulusB );      // This will actually be some function:   m_bulkModulus[k] = m_defaultBulkModulus + A*f(m_temperature[k]), etc.
   m_bulkModulus[k] = m_defaultBulkModulus * scale;
   
@@ -499,7 +510,14 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     LvArray::tensorOps::symEigenvectors< 3 >( stretch, eigenVectors, U );
 
     // Find the largest eigenvalues
-    real64 maximumStretch = 0.0;
+    //real64 maximumStretch = 0.0;
+
+
+    real64 maximumStretch = m_maximumStretch * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_maximumStretchT0, m_maximumStretchA, m_maximumStretchB );     
+
+
+
+
     for( localIndex i = 0; i < 3; ++i )
     {
         maximumStretch = std::max( stretch[i], maximumStretch );
@@ -519,13 +537,8 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     // In initialization, yieldStrength is set to defaultYieldStrenght, but we will generally want it to be modified by temp
     //
 
-      // Here we would update the m_bulkModulus[k] and m_shearModulus[k] with temperature dependent values:
-  // These will be input paramters:
-  
-
-
-
-
+    // Here we would update the m_bulkModulus[k] and m_shearModulus[k] with temperature dependent values:
+    // These will be input paramters:
     real64 oldYieldStrength = m_yieldStrength[k];
 
     // Compute change in yield strength: yieldStrength = m_initialYield + plasticSoftening + stretchHardening;
@@ -533,7 +546,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 yield0 = m_defaultYieldStrength * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_yieldStrengthT0, m_yieldStrengthA, m_yieldStrengthB ); 
     real64 strainHardeningSlope = m_strainHardeningSlope * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_strainHardeningSlopeT0, m_strainHardeningSlopeA, m_strainHardeningSlopeB ); 
     real64 shearSofteningMagnitude = m_shearSofteningMagnitude * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_shearSofteningMagnitudeT0, m_shearSofteningMagnitudeA, m_shearSofteningMagnitudeB );     
-    
+
     real64 unrotatedTempPlasticStrain[6] = { 0 };
     real64 plasticStrainIncrement[6] = { 0 };
     
@@ -679,7 +692,7 @@ real64 StrainHardeningPolymerUpdates::thermalSoftening( const real64 & T,
                                                         const real64 & B
 ) const 
 { 
-  if (A > 1.e-16)
+  if (std::abs(A) > 1.e-16)
   {
     return 1. + A / (1. +std::exp( B * (T-T0) ) );
   }
@@ -687,8 +700,6 @@ real64 StrainHardeningPolymerUpdates::thermalSoftening( const real64 & T,
   {
     return 1.;
   }
-
-  
 }
 
 /**
@@ -799,6 +810,9 @@ public:
     
     /// string/key for maximum stretch
     static constexpr char const * maximumStretchString() { return "maximumStretch"; }
+    static constexpr char const * maximumStretchAString() { return "maximumStretchA"; }
+    static constexpr char const * maximumStretchBString() { return "maximumStretchB"; }
+    static constexpr char const * maximumStretchT0String() { return "maximumStretchT0"; }
   };
 
   /**
@@ -836,6 +850,9 @@ public:
                                           m_shearSofteningShapeParameter1,
                                           m_shearSofteningShapeParameter2,
                                           m_maximumStretch,
+                                          m_maximumStretchA,
+                                          m_maximumStretchB,
+                                          m_maximumStretchT0,
                                           m_bulkModulus,
                                           m_shearModulus,
                                           m_thermalExpansionCoefficient,
@@ -888,6 +905,9 @@ public:
                                           m_shearSofteningShapeParameter1,
                                           m_shearSofteningShapeParameter2,
                                           m_maximumStretch,
+                                          m_maximumStretchA,
+                                          m_maximumStretchB,
+                                          m_maximumStretchT0,
                                           m_bulkModulus,
                                           m_shearModulus,
                                           m_thermalExpansionCoefficient,
@@ -967,6 +987,9 @@ protected:
 
   /// Material parameter: The value of maximum theoretical strength
   real64 m_maximumStretch;
+  real64 m_maximumStretchA;
+  real64 m_maximumStretchB;
+  real64 m_maximumStretchT0;
 };
 
 } /* namespace constitutive */

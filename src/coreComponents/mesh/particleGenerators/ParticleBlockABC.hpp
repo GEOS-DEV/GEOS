@@ -93,6 +93,12 @@ public:
   virtual array1d< real64 > getParticleTemperature() const = 0;
 
   /**
+   * @brief Get the list of particle temperature rate values in this subregion.
+   * @return the list of particle temperature rate values in this subregion.
+   */
+  virtual array1d< real64 > getParticleTemperatureRate() const = 0;
+
+  /**
    * @brief Get the list of particle strength scale values in this subregion.
    * @return the list of particle strength scale values in this subregion.
    */

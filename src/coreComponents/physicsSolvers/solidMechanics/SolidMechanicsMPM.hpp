@@ -818,6 +818,8 @@ protected:
   array1d< real64 > m_domainStress;
   real64 m_domainTemperature;
   int m_setDomainTemperature;
+  real64 m_domainTemperatureRate;
+  int m_setDomainTemperatureRate;
 
   array1d< real64 > m_stressControlLastError;
   array1d< real64 > m_stressControlITerm;

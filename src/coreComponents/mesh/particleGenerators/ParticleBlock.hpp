@@ -171,6 +171,7 @@ public:
   void setParticlePorosity( array1d< real64 > const particlePorosity )
   { m_particlePorosity = particlePorosity; }
 
+
   array1d< real64 > getParticleTemperature() const override
   { return m_particleTemperature; }
 
@@ -180,6 +181,17 @@ public:
    */
   void setParticleTemperature( array1d< real64 > const particleTemperature )
   { m_particleTemperature = particleTemperature; }
+
+
+  array1d< real64 > getParticleTemperatureRate() const override
+  { return m_particleTemperatureRate; }
+
+  /**
+   * @brief Set the list of particle temperature rate values in this subregion.
+   * @param particleTemperatureRate The input list of temperature rate values
+   */
+  void setParticleTemperatureRate( array1d< real64 > const particleTemperatureRate )
+  { m_particleTemperatureRate = particleTemperatureRate; }
 
   array1d< real64 > getParticleStrengthScale() const override
   { return m_particleStrengthScale; }
@@ -330,6 +342,9 @@ private:
 
   /// Member level field for the particle temperature.
   array1d< real64 > m_particleTemperature;
+
+  /// Member level field for the particle temperature rate.
+  array1d< real64 > m_particleTemperatureRate;
 
   /// Member level field for the particle strength scale.
   array1d< real64 > m_particleStrengthScale;

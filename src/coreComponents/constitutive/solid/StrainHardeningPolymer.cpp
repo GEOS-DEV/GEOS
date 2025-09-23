@@ -54,7 +54,10 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
   m_shearSofteningMagnitudeT0(),
   m_shearSofteningShapeParameter1(),
   m_shearSofteningShapeParameter2(),
-  m_maximumStretch()
+  m_maximumStretch(),
+  m_maximumStretchA(),
+  m_maximumStretchB(),
+  m_maximumStretchT0()
 {
   // register default values
    
@@ -166,6 +169,24 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setApplyDefaultValue( DBL_MAX ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum stretch" );
+
+
+  registerWrapper( viewKeyStruct::maximumStretchAString(), &m_maximumStretchA ).
+    setApplyDefaultValue( 300 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "max Stretch A" );
+
+
+  registerWrapper( viewKeyStruct::maximumStretchBString(), &m_maximumStretchB ).
+    setApplyDefaultValue( DBL_MAX ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Maximum stretch B" );
+
+
+  registerWrapper( viewKeyStruct::maximumStretchT0String(), &m_maximumStretchT0 ).
+    setApplyDefaultValue( DBL_MAX ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Maximum stretch T0" );
 
   // CC: TODO add defaults for plasticStrain, how to apply default for array (voigt notation)
   // Check if defaults for matrices and tensors are correctly set
