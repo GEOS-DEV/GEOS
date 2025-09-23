@@ -41,6 +41,7 @@ struct HydrostaticPressureKernel
                               real64 const & equilTolerance,
                               real64 const (&gravVector)[ 3 ],
                               FLUID_WRAPPER fluidWrapper,
+                              TableFunction::KernelWrapper tempTableWrapper,
                               real64 const & refElevation,
                               real64 const & refPres,
                               real64 const & refDens,
@@ -51,6 +52,7 @@ struct HydrostaticPressureKernel
     // Step 1: guess the pressure with the refDensity
 
     real64 const gravCoef = gravVector[2] * ( refElevation - newElevation );
+    real64 const temp = tempTableWrapper.compute( &newElevation );
     real64 pres0 = refPres - refDens * gravCoef;
     real64 pres1 = 0.0;
 
@@ -60,6 +62,7 @@ struct HydrostaticPressureKernel
     real64 visc = 0.0;
     constitutive::SingleFluidBaseUpdate::computeValues( fluidWrapper,
                                                         pres0,
+                                                        temp,
                                                         dens,
                                                         visc );
     pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
@@ -83,6 +86,7 @@ struct HydrostaticPressureKernel
       // compute the density at this elevation using the previous pressure, and compute the new pressure
       constitutive::SingleFluidBaseUpdate::computeValues( fluidWrapper,
                                                           pres0,
+                                                          temp,
                                                           dens,
                                                           visc );
       pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
@@ -108,6 +112,7 @@ struct HydrostaticPressureKernel
           real64 const & datumElevation,
           real64 const & datumPres,
           FLUID_WRAPPER fluidWrapper,
+          TableFunction::KernelWrapper tempTableWrapper,
           arrayView1d< arrayView1d< real64 > const > elevationValues,
           arrayView1d< real64 > pressureValues )
   {
@@ -117,9 +122,11 @@ struct HydrostaticPressureKernel
 
     real64 datumDens = 0.0;
     real64 datumVisc = 0.0;
+    real64 const datumTemp = tempTableWrapper.compute( &datumElevation );
 
     constitutive::SingleFluidBaseUpdate::computeValues( fluidWrapper,
                                                         datumPres,
+                                                        datumTemp,
                                                         datumDens,
                                                         datumVisc );
 
@@ -144,6 +151,7 @@ struct HydrostaticPressureKernel
                                   equilTolerance,
                                   gravVector,
                                   fluidWrapper,
+                                  tempTableWrapper,
                                   datumElevation,
                                   datumPres,
                                   datumDens,
@@ -166,6 +174,7 @@ struct HydrostaticPressureKernel
                                     equilTolerance,
                                     gravVector,
                                     fluidWrapper,
+                                    tempTableWrapper,
                                     elevationValues[0][iRef+i],
                                     pressureValues[iRef+i],
                                     dens[iRef+i],
@@ -190,6 +199,7 @@ struct HydrostaticPressureKernel
                                     equilTolerance,
                                     gravVector,
                                     fluidWrapper,
+                                    tempTableWrapper,
                                     elevationValues[0][iRef-i],
                                     pressureValues[iRef-i],
                                     dens[iRef-i],
