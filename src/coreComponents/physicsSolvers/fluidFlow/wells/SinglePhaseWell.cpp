@@ -292,18 +292,20 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
   }
   else
   {
-    ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion() );
+    if( wellControls.referenceReservoirRegion() != "" )
+    {
+      ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion() );
 
-    // Check if regions statistics are being computed
-    SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >( SinglePhaseStatistics::regionStatisticsName() );
-    GEOS_ERROR_IF( stats.averagePressure <= 0.0,
-                   GEOS_FMT( "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
-                             getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ));
-    wellControls.setRegionAveragePressure( stats.averagePressure );
-    wellControls.setRegionAverageTemperature( stats.averageTemperature );
-
+      // Check if regions statistics are being computed
+      SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >( SinglePhaseStatistics::regionStatisticsName() );
+      GEOS_ERROR_IF( stats.averagePressure <= 0.0,
+                     GEOS_FMT( "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
+                               getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ));
+      wellControls.setRegionAveragePressure( stats.averagePressure );
+      wellControls.setRegionAverageTemperature( stats.averageTemperature );
+    }
     // use region conditions
-    flashPressure = stats.averagePressure;
+    flashPressure = wellControls.getRegionAveragePressure();
     if( flashPressure < 0.0 )
     {
       // use segment conditions
