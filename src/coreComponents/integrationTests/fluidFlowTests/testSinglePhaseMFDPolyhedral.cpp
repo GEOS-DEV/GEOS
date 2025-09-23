@@ -517,14 +517,14 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
 
   // --- Compare cellwise pressures ---
   ASSERT_EQ( n_data_tpfa, n_data_mfd );
-  RAJA::ReduceMax<parallelDeviceReduce, real64> maxPressureDiff(0.0);
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxPressureDiff( 0.0 );
   forAll< parallelDevicePolicy<> >( n_data_tpfa, [=] ( localIndex i )
   {
     real64 p_num_tpfa = p_tpfa[i];
     real64 p_num_mfd  = p_mfd[i];
-    maxPressureDiff.max(std::abs(p_num_tpfa - p_num_mfd));
+    maxPressureDiff.max( std::abs( p_num_tpfa - p_num_mfd ));
   } );
-  EXPECT_LE(maxPressureDiff.get(), PRESSURE_L2_TOLERANCE);
+  EXPECT_LE( maxPressureDiff.get(), PRESSURE_L2_TOLERANCE );
 }
 
 
