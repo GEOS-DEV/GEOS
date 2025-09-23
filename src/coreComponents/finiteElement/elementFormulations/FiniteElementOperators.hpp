@@ -56,7 +56,7 @@ void value( real64 const (&N)[NUM_SUPPORT_POINTS],
             real64 const (&var)[NUM_SUPPORT_POINTS][NUM_COMPONENTS],
             real64 (& value)[NUM_COMPONENTS] )
 {
-  LvArray::tensorOps::Ri_eq_AjiBj<NUM_COMPONENTS, NUM_SUPPORT_POINTS>(value, var, N);
+  LvArray::tensorOps::Ri_eq_AjiBj< NUM_COMPONENTS, NUM_SUPPORT_POINTS >( value, var, N );
 }
 
 ///@}
