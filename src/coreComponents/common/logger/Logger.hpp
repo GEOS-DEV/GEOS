@@ -223,13 +223,17 @@
       __oss << stackHistory; \
       if( g_errorLogger.isOutputFileEnabled() ) \
       { \
+        if( g_errorLogger.currentErrorMsg().m_type == ErrorLogger::MsgType::Undefined ) \
+        { /* first throw site, we initialize the error message completly */ \
+          g_errorLogger.currentErrorMsg() \
+            .setType( ErrorLogger::MsgType::Exception ) \
+            .setCodeLocation( __FILE__, __LINE__ ) \
+            .setCause( cause ) \
+            .setRank( ::geos::logger::internal::rank ) \
+            .addCallStackInfo( stackHistory ); \
+        } \
         g_errorLogger.currentErrorMsg() \
-          .setType( ErrorLogger::MsgType::Exception ) \
-          .setCodeLocation( __FILE__, __LINE__ ) \
           .addToMsg( message ) \
-          .setCause( cause ) \
-          .setRank( ::geos::logger::internal::rank ) \
-          .addCallStackInfo( stackHistory ) \
           .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
       } \
       throw GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )( __oss.str() ); \
