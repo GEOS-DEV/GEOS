@@ -26,7 +26,7 @@
 
 using namespace geos;
 
-static const string header =
+static const string part1 =
   R"xml(
     <?xml version="1.0" ?>
 
@@ -70,15 +70,13 @@ static const string header =
       xMax="{ 10.01, 2.01, 10.01 }"/>
 
     <Box
-      name="sink"
-      xMin="{ 7.99, -0.01, -0.01 }"
-      xMax="{ 10.01, 2.01, 0.01 }"/>
-
-    <Box
       name="aquifer"
       xMin="{ -0.01, 3.99, 3.99 }"
       xMax="{  0.01, 5.01, 6.01 }"/> 
-    
+)xml";
+
+static const string part2 =
+  R"xml(
   </Geometry>
 
   <Events
@@ -151,11 +149,12 @@ static const string header =
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Channel1"
+      errorSetMode="silent"
       fieldName="pressure"
       scale="0.0"/>
     )xml";
 
-static const string footer =
+static const string part3 =
   R"xml(
     <FieldSpecification
       name="sinkTerm"
@@ -189,92 +188,15 @@ static const string footer =
 
 )xml";
 
-static const string xmlWrongSetNames =
-  R"xml(
-    <FieldSpecification
-      name="sourceTerm"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="5e6"
-      setNames="{ s }"/>
-)xml";
-
-static const string xmlWrongFieldNames =
-  R"xml(
-    <FieldSpecification
-      name="sourceTerm"
-      objectPath="ElementRegions/Channel1"
-      fieldName="pdfd"
-      scale="5e6"
-      setNames="{ source }"/>
-)xml";
-
-static const string xmlWrongTargetAllRegion =
-  R"xml(
-    <FieldSpecification
-      name="sourceTerm"
-      objectPath="ElementRegions"
-      fieldName="wrongField"
-      scale="5e6"
-      setNames="{ all }"/>
-)xml";
-
-static const string xmlWrongNoMaterial =
-  R"xml(
-    <FieldSpecification
-      name="sourceTerm"
-      objectPath="ElementRegions/Channel2"
-      fieldName="wrongField"
-      scale="5e6"
-      setNames="{ all }"/>
-)xml";
-
-
-
 CommandLineOptions g_commandLineOptions;
 
-void setupAndPlayWrongFieldSpecification( string const & wrongXml,
-                                          string const & expectedMsg1, string const & expectedMsg2 )
+void setupAndPlayWrongBC( string const & xml )
 {
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
-  std::ostringstream xmlInput;
-  xmlInput << header << wrongXml << footer;
-  problem.parseInputString( xmlInput.str() );
+  problem.parseInputString( xml );
   problem.problemSetup();
-
-  bool trowHappened = false;
-
-  try
-  {
-    problem.applyInitialConditions();
-  }
-  catch( std::exception const & e )
-  {
-    // checks if the exception contains the expected message
-    GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg1 ), string::npos,
-                          "The error message was not containing the expected sequence.\n" <<
-                          "  Error message :\n" << e.what() <<
-                          "  expected sequence :\n" << expectedMsg1 );
-    GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg2 ), string::npos,
-                          "The error message was not containing the expected sequence.\n" <<
-                          "  Error message :\n" << e.what() <<
-                          "  expected sequence :\n" << expectedMsg2 );
-    trowHappened = true;
-  }
-  ASSERT_TRUE( trowHappened );
-}
-
-void setupAndCheckFieldSpecification( string const & xml )
-{
-  GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
-  ProblemManager & problem = state.getProblemManager();
-  std::ostringstream xmlInput;
-  xmlInput << header << xml << footer;
-  problem.parseInputString( xmlInput.str() );
-  problem.problemSetup();
-
-  EXPECT_NO_THROW( problem.applyInitialConditions() );
+  problem.applyInitialConditions();
 }
 
 std::vector< string > splitStringByDelimiter( string const & s, string const & delimiter )
@@ -294,43 +216,65 @@ std::vector< string > splitStringByDelimiter( string const & s, string const & d
   return tokens;
 }
 
-TEST( testIncorrectFieldSpecification, testWrongSetNames )
-{
-  static constexpr auto expectedMsg1 =  "there are no set(s) named `s` under the objectPath `faceManager`";
-  static constexpr auto expectedMsg2 =  "all, aquifer, externalSet, sink, source, xneg, xpos, yneg, ypos, zneg, zpos";
-  setupAndPlayWrongFieldSpecification( xmlWrongSetNames, expectedMsg1, expectedMsg2 );
-}
-
-TEST( testIncorrectFieldSpecification, testSetNames )
-{
-  static constexpr auto tokens =  "all, aquifer, externalSet, sink, source, xneg, xpos, yneg, ypos, zneg, zpos";
-  std::vector< string > const splitToken = splitStringByDelimiter( tokens, "," );
-  for( auto const & token : splitToken )
-  {
-    string const xmlTemplate = R"xml(
-    <FieldSpecification
-      name="sourceTerm"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="5e6"
-      setNames="{ )xml" + token + R"xml( }"/>
-    )xml";
-    setupAndCheckFieldSpecification( xmlTemplate );
-  }
-}
-
 TEST( testIncorrectFieldSpecification, testWrongFieldNames )
 {
+  static const string xmlWrongFieldNames =
+    R"xml(
+    <FieldSpecification
+      name="sourceTerm"
+      objectPath="ElementRegions/Channel1"
+      errorSetMode="silent"
+      fieldName="pdfd"
+      scale="5e6"
+      setNames="{ source }"/>
+  )xml";
+
+  static const string boxComponent =
+    R"xml(
+    <Box
+      name="sink"
+      xMin="{ 7.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 2.01, 0.01 }"/>
+  )xml";
+
   static constexpr auto expectedMsg1 =  "Available fields in ElementRegions/Channel1 are:";
   static constexpr auto expectedMsg2 =  "{ channelPerm_dPerm_dPressure, channelPerm_permeability, deltaPressure, elementCenter, elementVolume, "
                                         "ghostRank, localToGlobalMap, mass, pressure, rockPorosity_initialPorosity, rockPorosity_porosity, "
                                         "rockPorosity_referencePorosity, temperature, water_dDensity, water_dEnthalpy, water_dInternalEnergy, "
                                         "water_dViscosity, water_density, water_enthalpy, water_internalEnergy, water_viscosity }";
-  setupAndPlayWrongFieldSpecification( xmlWrongFieldNames, expectedMsg1, expectedMsg2 );
+  std::ostringstream xmlInput;
+  xmlInput << part1 << boxComponent <<  part2 << xmlWrongFieldNames << part3;
+
+  bool trowHappened = false;
+  try
+  {
+    setupAndPlayWrongBC( xmlInput.str() );
+  }
+  catch( std::exception const & e )
+  {
+    GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg1 ), string::npos,
+                          "The error message was not containing the expected sequence.\n" <<
+                          "  Error message :\n" << e.what() <<
+                          "  expected sequence :\n" << expectedMsg1 );
+    GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg2 ), string::npos,
+                          "The error message was not containing the expected sequence.\n" <<
+                          "  Error message :\n" << e.what() <<
+                          "  expected sequence :\n" << expectedMsg2 );
+    trowHappened = true;
+  }
+  ASSERT_TRUE( trowHappened );
 }
 
-TEST( testIncorrectFieldSpecification, testFieldSpecification )
+TEST( testIncorrectFieldSpecification, testRightFieldNames )
 {
+
+  static const string boxComponent =
+    R"xml(
+    <Box
+      name="sink"
+      xMin="{ 7.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 2.01, 0.01 }"/>
+  )xml";
   static constexpr auto tokens =  "channelPerm_dPerm_dPressure, channelPerm_permeability, deltaPressure, elementCenter, elementVolume, "
                                   "ghostRank, localToGlobalMap, mass, pressure, rockPorosity_initialPorosity, rockPorosity_porosity, "
                                   "rockPorosity_referencePorosity, temperature, water_dDensity, water_dEnthalpy, water_dInternalEnergy, "
@@ -342,13 +286,143 @@ TEST( testIncorrectFieldSpecification, testFieldSpecification )
     <FieldSpecification
       name="sourceTerm"
       objectPath="ElementRegions/Channel1"
+      errorSetMode="silent"
       fieldName=")xml" + string( stringutilities::trimSpaces( token )) + R"xml("
       scale="5e6"
       setNames="{ source }"/>
     )xml";
-    setupAndCheckFieldSpecification( xmlTemplate );
+
+    std::ostringstream xmlInput;
+    xmlInput << part1 << boxComponent << part2 << xmlTemplate << part3;
+
+    EXPECT_NO_THROW( setupAndPlayWrongBC( xmlInput.str() ));
   }
 }
+
+TEST( testIncorrectFieldSpecification, testSetNameTargetNothing )
+{
+  string const boxComponent = R"xml(
+    <Box
+        name="sink"
+        xMin="{ 20, 20, -5 }"
+        xMax="{ 21, 21, -6 }"/>
+    )xml";
+
+  std::ostringstream xmlInput;
+  xmlInput << part1 << boxComponent << part2 << part3;
+
+  bool trowHappened = false;
+  try
+  {
+    setupAndPlayWrongBC( xmlInput.str() );
+  }
+
+  catch( std::exception const & e )
+  {
+    string const & expectedMsg1 = "does not capture anything in the mesh";
+    GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg1 ), string::npos,
+                          "The error message was not containing the expected sequence.\n" <<
+                          "  Error message :\n" << e.what() <<
+                          "  expected sequence :\n" << expectedMsg1 );
+    trowHappened = true;
+  }
+
+  ASSERT_TRUE( trowHappened );
+}
+
+TEST( testIncorrectFieldSpecification, testSetName )
+{
+
+  static string const boxComponent = R"xml(
+    <Box
+        name="sink2"
+        xMin="{ 2.99, -0.01, -0.01 }"
+        xMax="{ 8.99, 5.01, 1.01 }"/>
+    )xml";
+
+  static string const fsComponent =
+    R"xml(
+    <FieldSpecification
+      name="bcTemp"
+      objectPath="ElementRegions/Channel2"
+      fieldName="temperature"
+      scale="-5e6"
+      setNames="{ sink2 }"/>
+      )xml";
+
+  std::ostringstream xmlInput;
+  xmlInput << part1 << boxComponent<< part2 << fsComponent << part3;
+
+  bool trowHappened = false;
+  try
+  {
+    setupAndPlayWrongBC( xmlInput.str() );
+  }
+  catch( std::exception const & e )
+  {
+    string const & expectedMsg1 = "- Does not capture: ElementRegions/Channel2";
+    string const & expectedMsg2 = "- Instead, captures: faceManager, edgeManager, nodeManager";
+    GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg1 ), string::npos,
+                          "The error message was not containing the expected sequence.\n" <<
+                          "  Error message :\n" << e.what() <<
+                          "  expected sequence :\n" << expectedMsg1 );
+    GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg2 ), string::npos,
+                          "The error message was not containing the expected sequence.\n" <<
+                          "  Error message :\n" << e.what() <<
+                          "  expected sequence :\n" << expectedMsg2 );
+    trowHappened = true;
+  }
+
+  ASSERT_TRUE( trowHappened );
+}
+
+TEST( testIncorrectFieldSpecification, testMultiSetNames )
+{
+  static string const boxComponent1 = R"xml(
+   <Box
+      name="sink"
+      xMin="{ 0.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 10.01, 2.01 }"/>
+    )xml";
+
+  static string const fsComponent =
+    R"xml(
+    <FieldSpecification
+      name="bcTemp"
+      initialCondition="1"
+      objectPath="ElementRegions/Channel1"
+      fieldName="pressure"
+      scale="0.0"
+      setNames="{ sink, xneg }"/>
+      )xml";
+
+  std::ostringstream xmlInput;
+  xmlInput << part1 <<boxComponent1<< part2 << fsComponent << part3;
+
+  bool trowHappened = false;
+  try
+  {
+    setupAndPlayWrongBC( xmlInput.str() );
+  }
+  catch( std::exception const & e )
+  {
+    string const & expectedMsg1 = "Set 'xneg':";
+    string const & expectedMsg2 = "- Instead, captures: faceManager, edgeManager, nodeManager";
+    GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg1 ), string::npos,
+                          "The error message was not containing the expected sequence.\n" <<
+                          "  Error message :\n" << e.what() <<
+                          "  expected sequence :\n" << expectedMsg1 );
+    GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg2 ), string::npos,
+                          "The error message was not containing the expected sequence.\n" <<
+                          "  Error message :\n" << e.what() <<
+                          "  expected sequence :\n" << expectedMsg2 );
+    trowHappened = true;
+  }
+
+  ASSERT_TRUE( trowHappened );
+}
+
+
 
 int main( int argc, char * * argv )
 {
