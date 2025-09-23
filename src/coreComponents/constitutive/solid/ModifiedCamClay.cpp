@@ -18,6 +18,7 @@
  */
 
 #include "ModifiedCamClay.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -47,22 +48,13 @@ ModifiedCamClay::ModifiedCamClay( string const & name, Group * const parent ):
 
   // register fields
 
-  registerWrapper( viewKeyStruct::virginCompressionIndexString(), &m_virginCompressionIndex ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Virgin compression index" );
+  registerField< fields::solid::virginCompressionIndex >( &m_virginCompressionIndex );
 
-  registerWrapper( viewKeyStruct::cslSlopeString(), &m_cslSlope ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Slope of the critical state line" );
+  registerField< fields::solid::cslSlope >( &m_cslSlope );
 
-  registerWrapper( viewKeyStruct::newPreConsolidationPressureString(), &m_newPreConsolidationPressure ).
-    setApplyDefaultValue( -1 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
-    setDescription( "New preconsolidation pressure" );
+  registerField< fields::solid::preConsolidationPressure >( &m_newPreConsolidationPressure );
 
-  registerWrapper( viewKeyStruct::oldPreConsolidationPressureString(), &m_oldPreConsolidationPressure ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Old preconsolidation pressure" );
+  registerField< fields::solid::oldPreConsolidationPressure >( &m_oldPreConsolidationPressure );
 }
 
 
@@ -90,16 +82,16 @@ void ModifiedCamClay::postInputInitialization()
 
   // set results as array default values
 
-  getWrapper< array2d< real64 > >( viewKeyStruct::oldPreConsolidationPressureString() ).
+  getField< fields::solid::oldPreConsolidationPressure >().
     setApplyDefaultValue( m_defaultPreConsolidationPressure );
 
-  getWrapper< array2d< real64 > >( viewKeyStruct::newPreConsolidationPressureString() ).
+  getField< fields::solid::preConsolidationPressure >().
     setApplyDefaultValue( m_defaultPreConsolidationPressure );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::virginCompressionIndexString() ).
+  getField< fields::solid::virginCompressionIndex >().
     setApplyDefaultValue( m_defaultVirginCompressionIndex );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::cslSlopeString() ).
+  getField< fields::solid::cslSlope >().
     setApplyDefaultValue( m_defaultCslSlope );
 
 }

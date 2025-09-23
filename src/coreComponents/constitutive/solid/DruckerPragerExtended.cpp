@@ -18,6 +18,7 @@
  */
 
 #include "DruckerPragerExtended.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -57,34 +58,19 @@ DruckerPragerExtended::DruckerPragerExtended( string const & name, Group * const
 
   // register fields
 
-  registerWrapper( viewKeyStruct::initialFrictionString(), &m_initialFriction ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Initial yield surface slope" );
+  registerField< fields::solid::initialFriction >( &m_initialFriction );
 
-  registerWrapper( viewKeyStruct::residualFrictionString(), &m_residualFriction ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Residual yield surface slope" );
+  registerField< fields::solid::residualFriction >( &m_residualFriction );
 
-  registerWrapper( viewKeyStruct::dilationRatioString(), &m_dilationRatio ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Plastic potential slope ratio" );
+  registerField< fields::solid::dilation >( &m_dilationRatio );
 
-  registerWrapper( viewKeyStruct::pressureInterceptString(), &m_pressureIntercept ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Pressure point at cone vertex" );
+  registerField< fields::solid::pressureIntercept >( &m_pressureIntercept );
 
-  registerWrapper( viewKeyStruct::hardeningString(), &m_hardening ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Hardening parameter" );
+  registerField< fields::solid::hardening >( &m_hardening );
 
-  registerWrapper( viewKeyStruct::newStateString(), &m_newState ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
-    setDescription( "New equivalent plastic shear strain" );
+  registerField< fields::solid::state >( &m_newState );
 
-  registerWrapper( viewKeyStruct::oldStateString(), &m_oldState ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Old equivalent plastic shear strain" );
+  registerField< fields::solid::oldState >( &m_oldState );
 }
 
 
@@ -133,19 +119,19 @@ void DruckerPragerExtended::postInputInitialization()
 
   // set results as array default values
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::initialFrictionString() ).
+  getWrapper< array1d< real64 > >( fields::solid::initialFriction::key()).
     setApplyDefaultValue( F_i );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::residualFrictionString() ).
+  getWrapper< array1d< real64 > >( fields::solid::residualFriction::key() ).
     setApplyDefaultValue( F_r );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::pressureInterceptString() ).
+  getWrapper< array1d< real64 > >( fields::solid::pressureIntercept::key() ).
     setApplyDefaultValue( P );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::dilationRatioString() ).
+  getWrapper< array1d< real64 > >( fields::solid::dilation::key() ).
     setApplyDefaultValue( m_defaultDilationRatio );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::hardeningString() ).
+  getWrapper< array1d< real64 > >( fields::solid::hardening::key() ).
     setApplyDefaultValue( m_defaultHardening );
 }
 

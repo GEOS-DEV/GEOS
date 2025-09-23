@@ -18,6 +18,7 @@
  */
 
 #include "DruckerPrager.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -52,26 +53,15 @@ DruckerPrager::DruckerPrager( string const & name, Group * const parent ):
 
   // register fields
 
-  registerWrapper( viewKeyStruct::frictionString(), &m_friction ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Yield surface slope" );
+  registerField< fields::solid::friction >( &m_friction );
 
-  registerWrapper( viewKeyStruct::dilationString(), &m_dilation ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Plastic potential slope" );
+  registerField< fields::solid::dilation >( &m_dilation );
 
-  registerWrapper( viewKeyStruct::hardeningString(), &m_hardening ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Hardening rate" );
+  registerField< fields::solid::hardening >( &m_hardening );
 
-  registerWrapper( viewKeyStruct::newCohesionString(), &m_newCohesion ).
-    setApplyDefaultValue( -1 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
-    setDescription( "New cohesion state" );
+  registerField< fields::solid::cohesion >( &m_newCohesion );
 
-  registerWrapper( viewKeyStruct::oldCohesionString(), &m_oldCohesion ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Old cohesion state" );
+  registerField< fields::solid::oldCohesion >( &m_oldCohesion );
 }
 
 
@@ -114,19 +104,19 @@ void DruckerPrager::postInputInitialization()
 
   // set results as array default values
 
-  getWrapper< array2d< real64 > >( viewKeyStruct::oldCohesionString() ).
+  getField< fields::solid::oldCohesion >().
     setApplyDefaultValue( C );
 
-  getWrapper< array2d< real64 > >( viewKeyStruct::newCohesionString() ).
+  getField< fields::solid::cohesion >().
     setApplyDefaultValue( C );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::dilationString() ).
+  getField< fields::solid::dilation >().
     setApplyDefaultValue( D );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::frictionString() ).
+  getField< fields::solid::friction >().
     setApplyDefaultValue( F );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::hardeningString() ).
+  getField< fields::solid::hardening >().
     setApplyDefaultValue( m_defaultHardening );
 }
 
