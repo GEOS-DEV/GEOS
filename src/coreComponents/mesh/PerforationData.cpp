@@ -143,7 +143,7 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
       if( close_perf )
       {
         m_localPerfStatus[iperf] = PerforationStatus::CLOSED;
-        WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
+        GEOS_MAYBE_UNUSED WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
         GEOS_LOG_RANK( "\n \nWarning! Perforation " << wellRegion.getWellGeneratorName() <<
                        " is defined with a zero transmissibility.\n" <<
                        "The simulation is going to proceed with this zero transmissibility,\n" <<

@@ -181,7 +181,7 @@ public:
    */
   //START_SPHINX_2
   static std::unique_ptr< BASETYPE > factory( std::string const & objectTypeName,
-                                              DataContext const & context,
+                                              GEOS_MAYBE_UNUSED DataContext const & context,
                                               ARGS... args )
   {
     // We stop the simulation if the type to create is not found

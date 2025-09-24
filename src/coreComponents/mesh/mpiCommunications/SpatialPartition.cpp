@@ -215,7 +215,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
 
     //check to make sure our dimensions agree
     {
-      string_view partitionsLogMessage =
+      GEOS_MAYBE_UNUSED string_view partitionsLogMessage =
         "The total number of processes = {} does not correspond to the total number of partitions = {}.\n"
         "The number of cells in an axis cannot be lower that the partition count of this axis\n";
 
