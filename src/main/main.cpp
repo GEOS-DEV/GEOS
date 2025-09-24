@@ -77,6 +77,10 @@ int main( int argc, char *argv[] )
   catch( std::exception const & e )
   {
     GEOS_LOG( e.what() );
+    if( g_errorLogger.isOutputFileEnabled() )
+    {
+      g_errorLogger.flushErrorMsg( g_errorLogger.currentErrorMsg() );
+    }
     LvArray::system::callErrorHandler();
     basicCleanup();
     std::abort();

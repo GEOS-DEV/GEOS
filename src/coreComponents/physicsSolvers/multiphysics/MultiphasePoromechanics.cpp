@@ -274,12 +274,12 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePostIni
                    GEOS_FMT( "{} {}: region {} must be a target region of {}",
                              getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i],
                              this->solidMechanicsSolver()->getDataContext() ),
-                   InputError );
+                   InputError, this->getDataContext(), this->solidMechanicsSolver()->getDataContext() );
     GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
                    == flowTargetRegionNames.end(),
                    GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
                              getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], this->flowSolver()->getDataContext() ),
-                   InputError );
+                   InputError, this->getDataContext(), this->flowSolver()->getDataContext() );
   }
 }
 

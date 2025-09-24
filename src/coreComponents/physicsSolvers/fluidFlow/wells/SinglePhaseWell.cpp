@@ -182,17 +182,17 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
   GEOS_THROW_IF( currentControl == WellControls::Control::PHASEVOLRATE,
                  "WellControls " << wellControls.getDataContext() <<
                  ": Phase rate control is not available for SinglePhaseWell",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
   // The user always provides positive rates, but these rates are later multiplied by -1 internally for producers
   GEOS_THROW_IF( ( ( wellControls.isInjector() && targetTotalRate < 0.0 ) ||
                    ( wellControls.isProducer() && targetTotalRate > 0.0) ),
                  "WellControls " << wellControls.getDataContext() <<
                  ": Target total rate cannot be negative",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
   GEOS_THROW_IF( !isZero( targetPhaseRate ),
                  "WellControls " << wellControls.getDataContext() <<
                  ": Target phase rate cannot be used for SinglePhaseWell",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
 }
 
 void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )

@@ -90,7 +90,7 @@ public:
                      GEOS_FMT( "{}: Could not find solver '{}' of type {}",
                                getDataContext(),
                                solverName, solverType ),
-                     InputError );
+                     InputError, getDataContext() );
       GEOS_LOG_LEVEL_RANK_0( logInfo::Coupling,
                              GEOS_FMT( "{}: found {} solver named {}",
                                        getName(), solver->getCatalogName(), solverName ) );
@@ -699,7 +699,7 @@ protected:
                              EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential ),
                              NonlinearSolverParameters::viewKeysStruct::lineSearchActionString(),
                              EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
-                   InputError );
+                   InputError, getNonlinearSolverParameters().getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::couplingTypeString() ) );
 
     if( !isSequential )
     {

@@ -92,10 +92,12 @@ void ElasticIsotropicPressureDependent::postInputInitialization()
   GEOS_ERROR_IF( numConstantsSpecified != 2,
                  getFullName() << ": A specific pair of elastic constants is required: (Cr, G). " );
   GEOS_THROW_IF( m_defaultRecompressionIndex <= 0,
-                 getFullName() << ": Non-positive recompression index detected " << m_defaultRecompressionIndex, InputError );
+                 getFullName() << ": Non-positive recompression index detected " << m_defaultRecompressionIndex,
+                 InputError, getDataContext() );
   real64 poisson = conversions::bulkModAndShearMod::toPoissonRatio( -1 * m_defaultRefPressure / m_defaultRecompressionIndex, m_defaultShearModulus );
   GEOS_THROW_IF( poisson < 0,
-                 getFullName() << ": Elastic parameters lead to negative Poisson ratio at reference pressure ", InputError );
+                 getFullName() << ": Elastic parameters lead to negative Poisson ratio at reference pressure ",
+                 InputError, getDataContext() );
 
 
   // set results as array default values

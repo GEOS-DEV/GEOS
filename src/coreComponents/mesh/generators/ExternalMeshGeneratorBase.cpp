@@ -80,9 +80,9 @@ void ExternalMeshGeneratorBase::postInputInitialization()
     bool const hasDuplicates = tmp.size() != LvArray::integerConversion< std::size_t >( v.size() );
 
     GEOS_THROW_IF( hasDuplicates,
-                   getWrapperDataContext( key ) << ": '" << stringutilities::join( v, ", " ) <<
-                   "' already present in list of fields to import.",
-                   InputError );
+                       getWrapperDataContext( key ) << ": '" << stringutilities::join( v, ", " ) <<
+                       "' already present in list of fields to import.",
+                       InputError, getWrapperDataContext( key ) );
   };
   checkDuplicates( m_volumicFieldsInGEOS, viewKeyStruct::volumicFieldsInGEOSString() );
   checkDuplicates( m_surfacicFieldsInGEOS, viewKeyStruct::surfacicFieldsInGEOSString() );

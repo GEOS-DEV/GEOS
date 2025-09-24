@@ -353,6 +353,9 @@ void CompositionalMultiphaseWell::validateWellControlsForFluid( WellControls con
     } catch( SimulationError const & ex )
     {
       string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
+      g_errorLogger.currentErrorMsg()
+        .addToMsg( errorMsg )
+        .addContextInfo( getDataContext().getContextInfo().setPriority( 1 ) );
       throw SimulationError( ex, errorMsg );
     }
   }
@@ -414,14 +417,14 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
       GEOS_THROW_IF( ( compFrac < 0.0 ) || ( compFrac > 1.0 ),
                      "WellControls " << wellControls.getDataContext() <<
                      ": Invalid injection stream for well " << subRegion.getName(),
-                     InputError );
+                     InputError, wellControls.getDataContext() );
       compFracSum += compFrac;
     }
     GEOS_THROW_IF( ( compFracSum < 1.0 - std::numeric_limits< real64 >::epsilon() ) ||
                    ( compFracSum > 1.0 + std::numeric_limits< real64 >::epsilon() ),
                    "WellControls " << wellControls.getDataContext() <<
                    ": Invalid injection stream for well " << subRegion.getName(),
-                   InputError );
+                   InputError, wellControls.getDataContext() );
   }
 }
 
@@ -477,42 +480,42 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   GEOS_THROW_IF( wellControls.isInjector() && currentControl == WellControls::Control::PHASEVOLRATE,
                  "WellControls " << wellControls.getDataContext() <<
                  ": Phase rate control is not available for injectors",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
   GEOS_THROW_IF( wellControls.isProducer() && currentControl == WellControls::Control::TOTALVOLRATE,
                  "WellControls " << wellControls.getDataContext() <<
                  ": Total rate control is not available for producers",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
 
   GEOS_THROW_IF( wellControls.isInjector() && targetTotalRate < 0.0,
                  "WellControls " << wellControls.getDataContext() <<
                  ": Target total rate cannot be negative for injectors",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
   GEOS_THROW_IF( wellControls.isInjector() && !isZero( targetPhaseRate ),
                  "WellControls " << wellControls.getDataContext() <<
                  ": Target phase rate cannot be used for injectors",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
   GEOS_THROW_IF( wellControls.isProducer() && !isZero( targetTotalRate ),
                  "WellControls " << wellControls.getDataContext() <<
                  ": Target total rate cannot be used for producers",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
   GEOS_THROW_IF( wellControls.isProducer() && !isZero( targetMassRate ),
                  "WellControls " << wellControls.getDataContext() <<
                  ": Target mass rate cannot be used for producers",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
   GEOS_THROW_IF( !m_useMass && !isZero( targetMassRate ),
                  "WellControls " << wellControls.getDataContext() <<
                  ": Target mass rate cannot with useMass=0",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
 
   // The user always provides positive rates, but these rates are later multiplied by -1 internally for producers
   GEOS_THROW_IF( wellControls.isProducer() && targetPhaseRate > 0.0,
                  "WellControls " << wellControls.getDataContext() <<
                  ": Target phase rate cannot be negative for producers",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
   GEOS_THROW_IF( wellControls.isProducer() && !isZero( targetTotalRate ),
                  "WellControls " << wellControls.getDataContext() <<
                  ": Target total rate cannot be used for producers",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
 
   // Find target phase index for phase rate constraint
   for( integer ip = 0; ip < fluid.numFluidPhases(); ++ip )
@@ -525,7 +528,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   GEOS_THROW_IF( wellControls.isProducer() && m_targetPhaseIndex == -1,
                  "WellControls " << wellControls.getDataContext() <<
                  ": Phase " << wellControls.getTargetPhaseName() << " not found for well control " << wellControls.getName(),
-                 InputError );
+                 InputError, wellControls.getDataContext() );
 }
 
 void CompositionalMultiphaseWell::initializePostSubGroups()

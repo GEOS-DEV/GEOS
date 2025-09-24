@@ -200,6 +200,9 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
   }
   catch( std::exception const & e )
   {
+    g_errorLogger.currentErrorMsg()
+      .addToMsg( getDataContext().toString() + " has a wrong objectPath: " + objectPath + "\n" )
+      .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
     throw InputError( e, getDataContext().toString() + " has a wrong objectPath: " + objectPath + "\n" );
   }
 }

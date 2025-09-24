@@ -164,11 +164,11 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
         GEOS_THROW_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
                        GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model {} is not for thermal fluid",
                                  getDataContext(), fluid.getDataContext() ),
-                       InputError );
+                       InputError, getDataContext(), fluid.getDataContext() );
         GEOS_THROW_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
                        GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid {}, but the solver option is incompatible with the fluid model",
                                  getDataContext(), fluid.getDataContext() ),
-                       InputError );
+                       InputError, getDataContext(), fluid.getDataContext() );
       } );
     } );
   } );
@@ -420,7 +420,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
                    "used in this simulation. To proceed, you can either: \n" <<
                    "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
                    "   - Remove the hydrostatic equilibrium initial condition from the XML file",
-                   InputError );
+                   InputError, getDataContext(), bc.getDataContext() );
   } );
 
   if( equilCounter == 0 )
@@ -534,7 +534,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
       GEOS_THROW_IF( !equilHasConverged,
                      getCatalogName() << " " << getDataContext() <<
                      ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
-                     std::runtime_error );
+                     std::runtime_error, getDataContext() );
     } );
 
     // Step 3.4: create hydrostatic pressure table
