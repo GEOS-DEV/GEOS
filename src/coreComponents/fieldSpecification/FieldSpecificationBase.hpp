@@ -604,9 +604,6 @@ private:
 
   /// Value indicating whether we converts an error into a warning
   SetErrorMode m_emptySetErrorMode;
-
-  /// Boolean indicating if we have a SurfaceGenerator XML component
-  bool m_isSurfaceGenerationCase = false;
 };
 
 
@@ -890,7 +887,7 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
 
 /**
  * @brief Indicate the error handling mode
-*/
+ */
 ENUM_STRINGS( FieldSpecificationBase::SetErrorMode,
               "silent",
               "error",
