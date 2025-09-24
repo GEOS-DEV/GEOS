@@ -426,21 +426,6 @@ public:
 
     /// string/key for default c66 component of Voigt stiffness tensor
     static constexpr char const * defaultC66String() { return "defaultC66"; };
-
-    /// string/key for c11 component of Voigt stiffness tensor
-    static constexpr char const * c11String() { return "c11"; }
-
-    /// string/key for c13 component of Voigt stiffness tensor
-    static constexpr char const * c13String() { return "c13"; }
-
-    /// string/key for c33 component of Voigt stiffness tensor
-    static constexpr char const * c33String() { return "c33"; }
-
-    /// string/key for c44 component of Voigt stiffness tensor
-    static constexpr char const * c44String() { return "c44"; }
-
-    /// string/key for c66 component of Voigt stiffness tensor
-    static constexpr char const * c66String() { return "c66"; }
   };
 
   /**

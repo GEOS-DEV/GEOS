@@ -220,6 +220,12 @@ public:
   virtual real64 getGlobalLength() const = 0;
 
   /**
+   * @brief Getter for the global offset
+   * @return the global offset of the mesh
+   */
+  virtual real64 getGlobalOffset() const = 0;
+
+  /**
    * @brief Generates in place the high-order maps for this cell block manager.
    * @param[in] order The order of the discretization.
    * @param[in] maxVertexGlobalID: maximum globalID for nodes
