@@ -1240,7 +1240,9 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="pressureInfluenceFunctionName" type="groupNameRef" default="" />
 		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--setNames => Name of sets that boundary condition is applied to.A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).A set can contain by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
+		<!--setNames => Name of sets that the boundary condition is applied to.
+A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
+A set can be created by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -1250,13 +1252,15 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--component => Component of field (if tensor) to apply boundary condition to.The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.
+The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
 		<xsd:attribute name="component" type="integer" default="-1" />
 		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
-		<!--fieldName => Name of field that boundary condition is applied to.A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
+		<!--fieldName => Name of field that boundary condition is applied to.
+A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
@@ -1266,7 +1270,9 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--setNames => Name of sets that boundary condition is applied to.A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).A set can contain by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
+		<!--setNames => Name of sets that the boundary condition is applied to.
+A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
+A set can be created by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -1276,13 +1282,15 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--component => Component of field (if tensor) to apply boundary condition to.The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.
+The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
 		<xsd:attribute name="component" type="integer" default="-1" />
 		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
-		<!--fieldName => Name of field that boundary condition is applied to.A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
+		<!--fieldName => Name of field that boundary condition is applied to.
+A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
@@ -1292,7 +1300,9 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--setNames => Name of sets that boundary condition is applied to.A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).A set can contain by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
+		<!--setNames => Name of sets that the boundary condition is applied to.
+A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
+A set can be created by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -1338,7 +1348,8 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--component => Component of field (if tensor) to apply boundary condition to.The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.
+The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
 		<xsd:attribute name="component" type="integer" default="-1" />
 		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
@@ -1352,7 +1363,9 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="reflectivity" type="real32" default="0.001" />
 		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--setNames => Name of sets that boundary condition is applied to.A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).A set can contain by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
+		<!--setNames => Name of sets that the boundary condition is applied to.
+A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
+A set can be created by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--thicknessMaxXYZ => Thickness of the PML region, at right, back, and bottom sides, used to compute the damping profile-->
 		<xsd:attribute name="thicknessMaxXYZ" type="R1Tensor32" default="{-1,-1,-1}" />
@@ -1374,7 +1387,8 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--component => Component of field (if tensor) to apply boundary condition to.The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.
+The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
 		<xsd:attribute name="component" type="integer" default="-1" />
 		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
@@ -1388,7 +1402,9 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Multiplier of the functionName value. If no functionName is provided, this value is used directly.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--setNames => Name of sets that boundary condition is applied to.A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).A set can contain by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
+		<!--setNames => Name of sets that the boundary condition is applied to.
+A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
+A set can be created by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -1416,7 +1432,9 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--scaleSet => (no description available)-->
 		<xsd:attribute name="scaleSet" type="real64_array" default="{0}" />
-		<!--setNames => Name of sets that boundary condition is applied to.A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).A set can contain by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
+		<!--setNames => Name of sets that the boundary condition is applied to.
+A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
+A set can be created by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--tractionType => Type of traction boundary condition. Options are:
 vector - traction is applied to the faces as specified from the scale and direction,
@@ -1491,7 +1509,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<!--voxelFile => Voxel file name for ND Table-->
 		<xsd:attribute name="voxelFile" type="path" default="" />
 		<!--writeCSV => When set to 1, write PVT tables into a CSV file.
- if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.Set to 0 by default-->
+ if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -2312,7 +2330,8 @@ Information output from lower logLevels is added with the desired log level
  - Output timing information
  - The statistics (minimal, maximal, average and sum) of memory usage of each Umpire memory pool across all ranks.-->
 		<xsd:attribute name="logLevel" type="integer" default="1" />
-		<!--writeCSV => When set to 1, write the same statistics as the 'logLevel' allows to output in a CSV fileIf the umpire statistics log is enabled, set to 1 by default, otherwise set to 0-->
+		<!--writeCSV => When set to 1, write the same statistics as the 'logLevel' allows to output in a CSV file
+If the umpire statistics log is enabled, set to 1 by default, otherwise set to 0-->
 		<xsd:attribute name="writeCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -2981,7 +3000,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetCompFracChangeInTimeStep" type="real64" default="1.79769e+308" />
 		<!--targetFlowCFL => Target CFL condition `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when computing the next timestep.-->
 		<xsd:attribute name="targetFlowCFL" type="real64" default="-1" />
-		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) allowable change in the phase volume fraction within a single time step.-->
+		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in the phase volume fraction within a single time step.-->
 		<xsd:attribute name="targetPhaseVolFractionChangeInTimeStep" type="real64" default="0.2" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -3091,7 +3110,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0.5" />
 		<!--targetCompFracChangeInTimeStep => Target change in component fraction in a time step-->
 		<xsd:attribute name="targetCompFracChangeInTimeStep" type="real64" default="1.79769e+308" />
-		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) allowable change in the phase volume fraction within a single time step.-->
+		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in the phase volume fraction within a single time step.-->
 		<xsd:attribute name="targetPhaseVolFractionChangeInTimeStep" type="real64" default="0.2" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -3265,7 +3284,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--useTotalMassEquation => Use total mass equation-->
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
-		<!--writeCSV => When set to 1, write the rates into a CSV fileSet to 0 by default-->
+		<!--writeCSV => When set to 1, write the rates into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
@@ -3291,7 +3310,7 @@ When set to 2 also output convergence information to a csv-->
  - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) 
  - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) -->
 		<xsd:attribute name="initialPressureCoefficient" type="real64" default="0.1" />
-		<!--injectionStream => Defines the global component of the injected fluid in the reservoir as a fraction of its components [moles/m^3 or kg/m^3]-->
+		<!--injectionStream => Defines the global component densities of the injected fluid in the reservoir as a fraction of its components [moles/m^3 or kg/m^3]-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
 		<!--injectionTemperature => Temperature of the injection stream [K]-->
 		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
@@ -3313,7 +3332,7 @@ If the status function evaluates to a positive value at the current time, the we
 		<xsd:attribute name="surfacePressure" type="real64" default="0" />
 		<!--surfaceTemperature => Surface temperature used to compute volumetric rates when surface conditions are used [K]-->
 		<xsd:attribute name="surfaceTemperature" type="real64" default="0" />
-		<!--targetBHP => The Bottom Hole Pressure [Pa] being targeted during the injection.-->
+		<!--targetBHP => The target bottom-hole pressure [Pa] for the well.-->
 		<xsd:attribute name="targetBHP" type="real64" default="0" />
 		<!--targetBHPTableName => Name of the BHP table when the rate is a time dependent function-->
 		<xsd:attribute name="targetBHPTableName" type="groupNameRef" default="" />
@@ -3813,7 +3832,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="maxSequentialTemperatureChange" type="real64" default="0.1" />
 		<!--solutionChangeScalingFactor => Damping factor for solution change targets-->
 		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0.5" />
-		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) allowable change in the phase volume fraction within a single time step.-->
+		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in the phase volume fraction within a single time step.-->
 		<xsd:attribute name="targetPhaseVolFractionChangeInTimeStep" type="real64" default="0.2" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -4389,7 +4408,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
-		<!--maxCompFractionChange => Maximum (absolute) allowed change in the composition fraction of any component within a single time step, in a Newton iteration-->
+		<!--maxCompFractionChange => Maximum (absolute) change in the composition fraction of any component within a single time step, in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
 		<xsd:attribute name="maxSequentialPressureChange" type="real64" default="100000" />
@@ -5044,7 +5063,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="timeStepFromTables" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
-		<!--writeCSV => When set to 1, write the rates into a CSV fileSet to 0 by default-->
+		<!--writeCSV => When set to 1, write the rates into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
@@ -5579,7 +5598,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseStatisticsType">
-		<!--computeCFLNumbers => Flag to decide whether CFL numbers are computed or not, used to calculate a safe time-step for the simulation-->
+		<!--computeCFLNumbers => Flag to decide whether CFL numbers are computed or not-->
 		<xsd:attribute name="computeCFLNumbers" type="integer" default="0" />
 		<!--computeRegionStatistics => Flag to decide whether region statistics are computed or not-->
 		<xsd:attribute name="computeRegionStatistics" type="integer" default="1" />
@@ -5593,7 +5612,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--relpermThreshold => Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2-->
 		<xsd:attribute name="relpermThreshold" type="real64" default="1e-06" />
-		<!--writeCSV => When set to 1, write the statistics into a CSV fileSet to 0 by default-->
+		<!--writeCSV => When set to 1, write the statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5795,7 +5814,7 @@ Information output from lower logLevels is added with the desired log level
 1
  - Print statistics-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--writeCSV => When set to 1, write the statistics into a CSV fileSet to 0 by default-->
+		<!--writeCSV => When set to 1, write the statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5825,7 +5844,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
-		<!--writeCSV => When set to 1, write the statistics into a CSV fileSet to 0 by default-->
+		<!--writeCSV => When set to 1, write the statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5844,7 +5863,7 @@ Information output from lower logLevels is added with the desired log level
 3
  - Print statistics for each source flux in each regions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--writeCSV => When set to 1, write the statistics into a CSV fileSet to 0 by default-->
+		<!--writeCSV => When set to 1, write the statistics into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5988,7 +6007,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="defaultGrainBulkModulus" type="real64" use="required" />
 		<!--defaultPorosityTEC => Default thermal expansion coefficient-->
 		<xsd:attribute name="defaultPorosityTEC" type="real64" default="0" />
-		<!--defaultReferencePorosity => The default porosity value of the rock at the referencePressure-->
+		<!--defaultReferencePorosity => The default porosity value of the rock at the reference pressure-->
 		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
 		<!--useUniaxialFixedStress => Flag enabling uniaxial approximation in fixed stress update-->
 		<xsd:attribute name="useUniaxialFixedStress" type="integer" default="0" />
@@ -6034,7 +6053,7 @@ The expected format is "{ gasExp, oilExp }", in that order-->
 		<!--gasOilRelPermMaxValue => Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation
 The expected format is "{ gasMax, oilMax }", in that order-->
 		<xsd:attribute name="gasOilRelPermMaxValue" type="real64_array" default="{0}" />
-		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase (expressed as a percentage) used to compute the relative permeability -->
+		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase (between 0 and 1) used to compute the relative permeability -->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
@@ -6062,13 +6081,13 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyRelativePermeabilityType">
-		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase (expressed as a percentage) used to compute the relative permeability -->
+		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase (between 0 and 1) used to compute the relative permeability -->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
 		<!--phaseRelPermExponent => Minimum relative permeability power law exponent for each phase-->
 		<xsd:attribute name="phaseRelPermExponent" type="real64_array" default="{1}" />
-		<!--phaseRelPermMaxValue => Ratio between a phase's permeability and the maximum permeability of the rock, for each phase.-->
+		<!--phaseRelPermMaxValue => Maximum relative permeability value for each phase-->
 		<xsd:attribute name="phaseRelPermMaxValue" type="real64_array" default="{0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -6117,7 +6136,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--writeCSV => When set to 1, write PVT tables into a CSV file.
- if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.Set to 0 by default-->
+if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -6146,7 +6165,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--writeCSV => When set to 1, write PVT tables into a CSV file.
- if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.Set to 0 by default-->
+if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -6175,7 +6194,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--writeCSV => When set to 1, write PVT tables into a CSV file.
- if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.Set to 0 by default-->
+if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -6204,7 +6223,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--writeCSV => When set to 1, write PVT tables into a CSV file.
- if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.Set to 0 by default-->
+if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -7309,9 +7328,9 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 	<xsd:complexType name="PressurePorosityType">
 		<!--compressibility => Solid compressibility [Pa^-1]-->
 		<xsd:attribute name="compressibility" type="real64" use="required" />
-		<!--defaultReferencePorosity => The default porosity value of the rock at the referencePressure-->
+		<!--defaultReferencePorosity => The default porosity value of the rock at the reference pressure-->
 		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
-		<!--referencePressure => Reference pressure for solid compressibility[Pa]-->
+		<!--referencePressure => Reference pressure for solid compressibility [Pa]-->
 		<xsd:attribute name="referencePressure" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -7325,7 +7344,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantPorosityType">
-		<!--defaultReferencePorosity => The default porosity value of the rock at the referencePressure-->
+		<!--defaultReferencePorosity => The default porosity value of the rock at the reference pressure-->
 		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
 		<!--maxProppantConcentration => Maximum proppant concentration -->
 		<xsd:attribute name="maxProppantConcentration" type="real64" use="required" />
@@ -7422,7 +7441,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--writeCSV => When set to 1, write PVT tables into a CSV file.
-If the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.Set to 0 by default-->
+If the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -7445,7 +7464,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--writeCSV => When set to 1, write PVT tables into a CSV file.
-If the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.Set to 0 by default-->
+If the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -7649,7 +7668,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phaseCapPressureExponentInv" type="real64_array" default="{0.5}" />
 		<!--phaseCapPressureMultiplier => Entry pressure value for each phase-->
 		<xsd:attribute name="phaseCapPressureMultiplier" type="real64_array" default="{1}" />
-		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase (expressed as a percentage) used to compute the relative permeability -->
+		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase (between 0 and 1) used to compute the capillary pressure-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
