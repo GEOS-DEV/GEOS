@@ -101,10 +101,8 @@ public:
       }
     }
 
-    //==============================================================================
-    // Private Helper Kernels
-    //==============================================================================
-private:
+
+public:
 
     template< typename EXEC_POLICY, typename ViewType >
     void zero_out_array( ViewType const & view ) const
@@ -328,7 +326,8 @@ private:
 
     GEOS_HOST_DEVICE double cosine_taper( double r, double rmin, double rmax ) const
     {
-      double const t = std::clamp( ( r - rmin ) / ( rmax - rmin ), 0.0, 1.0 );
+      double const expr = ( rmax - rmin > 1e-9 ) ? ( ( r - rmin ) / ( rmax - rmin ) ) : 0.0;
+      double const t = (expr < 0.0) ? 0.0 : ( (1.0 < expr) ? 1.0 : expr );
       return 0.5 * ( 1.0 - std::cos( geos::constants::pi * t ) );
     }
 
