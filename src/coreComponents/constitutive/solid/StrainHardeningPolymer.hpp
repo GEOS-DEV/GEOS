@@ -510,20 +510,14 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     LvArray::tensorOps::symEigenvectors< 3 >( stretch, eigenVectors, U );
 
     // Find the largest eigenvalues
-    //real64 maximumStretch = 0.0;
-
-
-    real64 maximumStretch = m_maximumStretch * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_maximumStretchT0, m_maximumStretchA, m_maximumStretchB );     
-
-
-
-
+    real64 maximumStretch = 0.0;
     for( localIndex i = 0; i < 3; ++i )
     {
         maximumStretch = std::max( stretch[i], maximumStretch );
     }
 
-    if(maximumStretch > m_maximumStretch)
+    real64 stretchAtFailure = m_maximumStretch * StrainHardeningPolymerUpdates::thermalSoftening( m_temperature[k], m_maximumStretchT0, m_maximumStretchA, m_maximumStretchB );     
+    if(maximumStretch > stretchAtFailure)
     {
         m_damage[k][q] = 1.0;
     }
@@ -694,7 +688,7 @@ real64 StrainHardeningPolymerUpdates::thermalSoftening( const real64 & T,
 { 
   if (std::abs(A) > 1.e-16)
   {
-    return 1. + A / (1. +std::exp( B * (T-T0) ) );
+    return 1. + A / (1. + std::exp( B * (T-T0) ) );
   }
   else
   {
