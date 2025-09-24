@@ -95,9 +95,6 @@ void AcousticTTIZhangWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                acousticvtifields::AcousticDofOrder,
                                acousticttifields::AcousticDofTilt,
                                acousticttifields::AcousticDofAzimuth,
-                               acousticvtifields::Node_X,
-                               acousticvtifields::Node_Y,
-                               acousticvtifields::Node_Z,
                                //end  debug
                                acousticvtifields::AcousticLateralSurfaceNodeIndicator,
                                acousticvtifields::AcousticBottomSurfaceNodeIndicator >( getName() );
@@ -347,11 +344,6 @@ void AcousticTTIZhangWaveEquationSEM::initializePostInitialConditionsPreSubGroup
     dofDelta.zero();
     dofOrder.zero(); // number of Hexa countaining a dof
 
-    arrayView1d< real32 > const nodeX = nodeManager.getField< acousticvtifields::Node_X >();
-    arrayView1d< real32 > const nodeY = nodeManager.getField< acousticvtifields::Node_Y >();
-    arrayView1d< real32 > const nodeZ = nodeManager.getField< acousticvtifields::Node_Z >();
-
-
     arrayView1d< real32 > const dofTilt    = nodeManager.getField< acousticttifields::AcousticDofTilt >();
     arrayView1d< real32 > const dofAzimuth = nodeManager.getField< acousticttifields::AcousticDofAzimuth >();
     dofTilt.zero();
@@ -392,19 +384,16 @@ void AcousticTTIZhangWaveEquationSEM::initializePostInitialConditionsPreSubGroup
 
         // Debug
         AcousticMatricesSEM::DofArrays< FE_TYPE > kernelDebug( finiteElement );
-        kernelDebug.template computeDofArrays< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
-                                                                             nodeCoords,
-                                                                             elemsToNodes,
-                                                                             vti_epsilon,
-                                                                             vti_delta,
-                                                                             dofEpsilon,
-                                                                             dofDelta,
-                                                                             dofOrder,
-                                                                             sourceCoordinates,
-                                                                             m_radiusIsoAroundSource,
-                                                                             nodeX,
-                                                                             nodeY,
-                                                                             nodeZ );
+        kernelDebug.template computeDofArraysVTI< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                                nodeCoords,
+                                                                                elemsToNodes,
+                                                                                vti_epsilon,
+                                                                                vti_delta,
+                                                                                dofEpsilon,
+                                                                                dofDelta,
+                                                                                dofOrder,
+                                                                                sourceCoordinates,
+                                                                                m_radiusIsoAroundSource );
 
         kernelDebug.template computeDofArraysTTI< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
                                                                                 nodeCoords,

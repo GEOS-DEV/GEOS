@@ -24,211 +24,52 @@
 namespace geos
 {
 
+
+
 struct AcousticMatricesSEM
 {
   // Debug
   template< typename FE_TYPE >
+
   struct DofArrays
   {
+    DofArrays( FE_TYPE const & finiteElement ): m_finiteElement( finiteElement ) {}
 
-    DofArrays( FE_TYPE const & finiteElement )
-      : m_finiteElement( finiteElement )
-    {}
-    /**
-     * @brief Launches the precomputation of the mass matrices
-     * @tparam EXEC_POLICY the execution policy
-     * @tparam ATOMIC_POLICY the atomic policy
-     * @tparam FE_TYPE the type of discretization
-     * @param[in] finiteElement The finite element discretization used
-     * @param[in] size the number of cells in the subRegion
-     * @param[in] numFacesPerElem number of faces per element
-     * @param[in] nodeCoords coordinates of the nodes
-     * @param[in] elemsToNodes map from element to nodes
-     * @param[in] epsilon cell-wise velocity
-     * @param[in] delta cell-wise density
-     * @param[out] dofEpsilon Array of epsilon on dof
-     * @param[out] dofDelta Array of delta on dof
-     * @param[out] dofOrder Number of elements containing the dof
-     */
+    //==============================================================================
+    // Public API
+    //==============================================================================
+public:
+
     template< typename EXEC_POLICY, typename ATOMIC_POLICY >
     void
-    computeDofArrays( localIndex const size,
-                      arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
-                      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-                      arrayView1d< real32 const > const vti_epsilon,
-                      arrayView1d< real32 const > const vti_delta,
-                      arrayView1d< real32 > const dofEpsilon,
-                      arrayView1d< real32 > const dofDelta,
-                      arrayView1d< real32 > const dofOrder,
-                      arrayView2d< real64 const > const sourceCoordinates,
-                      real64 const radiusIsoAroundSource,
-                      arrayView1d< real32 > const nodeX,
-                      arrayView1d< real32 > const nodeY,
-                      arrayView1d< real32 > const nodeZ )
-
+    computeDofArraysVTI( localIndex const size,
+                         arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                         arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                         arrayView1d< real32 const > const vtiEpsilon,
+                         arrayView1d< real32 const > const vtiDelta,
+                         arrayView1d< real32 > const dofEpsilon,
+                         arrayView1d< real32 > const dofDelta,
+                         arrayView1d< real32 > const dofOrder,
+                         arrayView2d< real64 const > const sourceCoordinates,
+                         real64 const radiusIsoAroundSource )
     {
+      zero_out_array< EXEC_POLICY >( dofEpsilon );
+      zero_out_array< EXEC_POLICY >( dofDelta );
+      zero_out_array< EXEC_POLICY >( dofOrder );
 
-      // First: how many element contains the dofs ?
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
+      computeDofOrder< EXEC_POLICY, ATOMIC_POLICY >( size, elemsToNodes, dofOrder );
+
+      computeCornerNodeValuesVTI< EXEC_POLICY, ATOMIC_POLICY >( size, elemsToNodes, vtiEpsilon, vtiDelta,
+                                                                dofEpsilon, dofDelta, dofOrder );
+
+      applySourceTapering< EXEC_POLICY >( nodeCoords, sourceCoordinates, radiusIsoAroundSource,
+                                          dofEpsilon, dofDelta );
+
+      if( FE_TYPE::numNodes > 8 ) // A Hex8 element has 8 nodes. Anything more is high-order.
       {
-        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-        for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
-        {
-          localIndex a = elemsToNodes( e, q ); //global index
-          real32 localIncrement = 1.0;
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofOrder[a], localIncrement ); // add one element
-        }
-      } );
-
-      // Second: Compute delta and epsilon on the main vertices (approx)
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
-      {
-        real32 localEpsilon = vti_epsilon[e];
-        real32 localDelta = vti_delta[e];
-        if( localEpsilon < 1e-5 )
-          localEpsilon = 0.;
-        if( localDelta < 1e-5 )
-          localDelta = 0.;
-        if( localDelta > localEpsilon )
-          localDelta = localEpsilon;
-
-        for( localIndex a = 0; a < 8; ++a )
-        {
-          localIndex qnIndex = FE_TYPE::meshIndexToLinearIndex3D( a );
-          localIndex nodeIndex = elemsToNodes( e, qnIndex );
-          real32 const localOrder = dofOrder[nodeIndex];
-
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofEpsilon[nodeIndex], localEpsilon / localOrder );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofDelta[nodeIndex], localDelta / localOrder );
-        }
-      } ); // end loop over element
-
-      // Compute coord.
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
-      {
-        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-        for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
-        {
-          localIndex const nodeIndex = elemsToNodes( e, q );
-
-          RAJA::atomicExchange< ATOMIC_POLICY >( &nodeX[nodeIndex], nodeCoords( nodeIndex, 0 ) );
-          RAJA::atomicExchange< ATOMIC_POLICY >( &nodeY[nodeIndex], nodeCoords( nodeIndex, 1 ) );
-          RAJA::atomicExchange< ATOMIC_POLICY >( &nodeZ[nodeIndex], nodeCoords( nodeIndex, 2 ) );
-        }
-      } );
-
-      // Set anisotropy to 0 in a bubble around the source.
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
-      {
-        for( localIndex a = 0; a < 8; ++a )
-        {
-          localIndex qnIndex = FE_TYPE::meshIndexToLinearIndex3D( a );
-          localIndex nodeIndex = elemsToNodes( e, qnIndex );
-
-          // Compute distance to source.
-          for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
-          {
-            real64 dist=0;
-            for( localIndex i = 0; i < 3; ++i )
-            {
-              dist += pow( nodeCoords( nodeIndex, i ) - sourceCoordinates[isrc][i], 2 );
-            }
-            double taper = cosine_taper( std::sqrt( dist ), 0.0, radiusIsoAroundSource );
-
-            if( std::sqrt( dist )<radiusIsoAroundSource )
-            {
-              RAJA::atomicExchange< ATOMIC_POLICY >( &dofEpsilon[nodeIndex], static_cast< float >(taper * dofEpsilon[nodeIndex]) );
-              RAJA::atomicExchange< ATOMIC_POLICY >( &dofDelta[nodeIndex], static_cast< float >(taper * dofDelta[nodeIndex]) );
-
-            }
-          }
-        }
-      } );
-
-      // Interpolate delta and epsilon for all remaining GLL nodes
-      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
-      {
-        real64 xLocal[ 8 ][ 3 ];
-        real32 deltaQ1[8]={};
-        real32 epsiQ1[8]={};
-
-        for( localIndex a = 0; a < 8; ++a )
-        {
-          localIndex const nodeIndex = elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( a ) );
-
-          for( localIndex i = 0; i < 3; ++i )
-          {
-            xLocal[a][i] = nodeCoords( nodeIndex, i );
-          }
-          deltaQ1[a] = dofDelta[nodeIndex];
-          epsiQ1[a] = dofEpsilon[nodeIndex];
-
-        }
-
-        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
-        real64 x[ 3 ];
-        if( numQuadraturePointsPerElem>8 )
-        {
-          for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
-          {
-
-            if( q!=0 && q!=2 && q!=6 && q!=8 && q!=18 && q!=20 && q!=24 && q!=26 )
-            {
-              localIndex const nodeIndex = elemsToNodes( e, q );
-              real32 const localOrder = dofOrder[nodeIndex];
-              for( localIndex i = 0; i < 3; ++i )
-              {
-                x[i] = nodeCoords( nodeIndex, i );
-              }
-
-              real64 xd = (x[0] - xLocal[0][0]) / (xLocal[7][0] - xLocal[0][0]);
-              real64 yd = (x[1] - xLocal[0][1]) / (xLocal[7][1] - xLocal[0][1]);
-              real64 zd = (x[2] - xLocal[0][2]) / (xLocal[7][2] - xLocal[0][2]);
-
-              // Perform linear interpolation along the x-axis
-              real32 c00 = deltaQ1[0] * (1 - xd) + deltaQ1[1] * xd;
-              real32 c01 = deltaQ1[2] * (1 - xd) + deltaQ1[3] * xd;
-              real32 c10 = deltaQ1[4] * (1 - xd) + deltaQ1[5] * xd;
-              real32 c11 = deltaQ1[6] * (1 - xd) + deltaQ1[7] * xd;
-
-              // Perform linear interpolation along the y-axis
-              real32 c0 = c00 * (1 - yd) + c01 * yd;
-              real32 c1 = c10 * (1 - yd) + c11 * yd;
-
-              // Perform linear interpolation along the z-axis
-              real32 c = c0 * (1 - zd) + c1 * zd;
-
-              RAJA::atomicAdd< ATOMIC_POLICY >( &dofDelta[nodeIndex], c/localOrder );
-
-
-              // Perform linear interpolation along the x-axis
-              c00 = epsiQ1[0] * (1 - xd) + epsiQ1[1] * xd;
-              c01 = epsiQ1[2] * (1 - xd) + epsiQ1[3] * xd;
-              c10 = epsiQ1[4] * (1 - xd) + epsiQ1[5] * xd;
-              c11 = epsiQ1[6] * (1 - xd) + epsiQ1[7] * xd;
-
-              // Perform linear interpolation along the y-axis
-              c0 = c00 * (1 - yd) + c01 * yd;
-              c1 = c10 * (1 - yd) + c11 * yd;
-
-              // Perform linear interpolation along the z-axis
-              c = c0 * (1 - zd) + c1 * zd;
-
-              RAJA::atomicAdd< ATOMIC_POLICY >( &dofEpsilon[nodeIndex], c/localOrder );
-
-            }
-
-          }
-        }
-      } );
-    }
-
-    GEOS_HOST_DEVICE
-    double cosine_taper( double r, double rmin, double rmax )
-    {
-      double t = std::clamp((r - rmin) / (rmax - rmin), 0.0, 1.0 );
-      return 0.5 * (1.0 - std::cos( M_PI * t ));
+        interpolateInternalGLLNodes< EXEC_POLICY, ATOMIC_POLICY >( size, nodeCoords, elemsToNodes, dofOrder,
+                                                                   dofEpsilon, dofDelta );
+      }
     }
 
     template< typename EXEC_POLICY, typename ATOMIC_POLICY >
@@ -243,147 +84,258 @@ struct AcousticMatricesSEM
                          arrayView1d< real32 > const dofOrder,
                          arrayView2d< real64 const > const sourceCoordinates,
                          real64 const radiusIsoAroundSource )
-
     {
+      zero_out_array< EXEC_POLICY >( dofTilt );
+      zero_out_array< EXEC_POLICY >( dofAzimuth );
 
-      // Second: Compute tilt and azim on the main vertices (approx)
+      computeCornerNodeValuesTTI< EXEC_POLICY, ATOMIC_POLICY >( size, elemsToNodes, tti_dipx, tti_dipy,
+                                                                dofTilt, dofAzimuth, dofOrder );
+
+      applySourceTapering< EXEC_POLICY >( nodeCoords, sourceCoordinates, radiusIsoAroundSource,
+                                          dofTilt, dofAzimuth );
+
+      if( FE_TYPE::numNodes > 8 ) // A Hex8 element has 8 nodes. Anything more is high-order.
+      {
+        interpolateInternalGLLNodes< EXEC_POLICY, ATOMIC_POLICY >( size, nodeCoords, elemsToNodes, dofOrder,
+                                                                   dofTilt, dofAzimuth );
+      }
+    }
+
+    //==============================================================================
+    // Private Helper Kernels
+    //==============================================================================
+private:
+
+    template< typename EXEC_POLICY, typename ViewType >
+    void zero_out_array( ViewType const & view ) const
+    {
+      const localIndex size = view.size();
+      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const i )
+      {
+        view[i] = 0;
+      } );
+    }
+
+    template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+    void
+    computeDofOrder( localIndex const size,
+                     arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                     arrayView1d< real32 > const dofOrder ) const
+    {
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
       {
-        // tti amgle computations
-        real32 tti_azimuth = 0;
-        real32 deg_to_rad = M_PI / 180;
-        real32 tti_tilt = atan( sqrt( tti_dipx[e] * tti_dipx[e] + tti_dipy[e] * tti_dipy[e] ));
-
-        real32 ftmp = atan2( tti_dipy[e], tti_dipx[e] );
-        if( ftmp <= 0. )
+        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+        for( localIndex a = 0; a < numNodesPerElem; ++a )
         {
-          ftmp = ftmp + 2 * M_PI;
-        }
-        if( tti_tilt < (0.001 * deg_to_rad))
-          tti_azimuth = 0.;
-        else if((ftmp >= 0.) && (ftmp < M_PI))
-          tti_azimuth = ftmp + M_PI;
-        else if((ftmp >= M_PI) && (ftmp <= 2 * M_PI))
-          tti_azimuth = ftmp - M_PI;
-
-        for( localIndex a = 0; a < 8; ++a )
-        {
-          localIndex qnIndex = FE_TYPE::meshIndexToLinearIndex3D( a );
-          localIndex nodeIndex = elemsToNodes( e, qnIndex );
-          real32 const localOrder = dofOrder[nodeIndex];
-
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofTilt[nodeIndex], tti_tilt / localOrder );
-          RAJA::atomicAdd< ATOMIC_POLICY >( &dofAzimuth[nodeIndex], tti_azimuth / localOrder );
+          localIndex const nodeIndex = elemsToNodes( e, a );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dofOrder[nodeIndex], 1.0f );
         }
       } );
+    }
 
-      // Set anisotropy to 0 in a bubble around the source.
+    template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+    void
+    computeCornerNodeValuesVTI( localIndex const size,
+                                arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                                arrayView1d< real32 const > const vtiEpsilon,
+                                arrayView1d< real32 const > const vtiDelta,
+                                arrayView1d< real32 > const dofEpsilon,
+                                arrayView1d< real32 > const dofDelta,
+                                arrayView1d< real32 > const dofOrder ) const
+    {
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
       {
-        for( localIndex a = 0; a < 8; ++a )
+        real32 localEpsilon = vtiEpsilon[e];
+        real32 localDelta = vtiDelta[e];
+        if( localEpsilon < 1e-5f ) localEpsilon = 0.f;
+        if( localDelta < 1e-5f ) localDelta = 0.f;
+        if( localDelta > localEpsilon ) localDelta = localEpsilon;
+
+        constexpr localIndex numCorners = 8;
+        for( localIndex a = 0; a < numCorners; ++a )
         {
-          localIndex qnIndex = FE_TYPE::meshIndexToLinearIndex3D( a );
-          localIndex nodeIndex = elemsToNodes( e, qnIndex );
+          localIndex const cornerNodeIndex = FE_TYPE::meshIndexToLinearIndex3D( a );
+          localIndex const globalNodeIndex = elemsToNodes( e, cornerNodeIndex );
+          real32 const invOrder = 1.f / dofOrder[globalNodeIndex];
 
-          // Compute distance to source.
-          for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
-          {
-            real64 dist=0;
-            for( localIndex i = 0; i < 3; ++i )
-            {
-              dist += pow( nodeCoords( nodeIndex, i ) - sourceCoordinates[isrc][i], 2 );
-            }
-
-            double taper = cosine_taper( std::sqrt( dist ), 0.0, radiusIsoAroundSource );
-
-
-            if( std::sqrt( dist )<radiusIsoAroundSource )
-            {
-              RAJA::atomicExchange< ATOMIC_POLICY >( &dofTilt[nodeIndex], static_cast< float >(dofTilt[nodeIndex] * taper) );
-              RAJA::atomicExchange< ATOMIC_POLICY >( &dofAzimuth[nodeIndex], static_cast< float >(dofAzimuth[nodeIndex] * taper) );
-            }
-          }
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dofEpsilon[globalNodeIndex], localEpsilon * invOrder );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dofDelta[globalNodeIndex], localDelta * invOrder );
         }
       } );
+    }
 
+    template< typename EXEC_POLICY, typename ATOMIC_POLICY >
+    void
+    computeCornerNodeValuesTTI( localIndex const size,
+                                arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                                arrayView1d< real32 const > const tti_dipx,
+                                arrayView1d< real32 const > const tti_dipy,
+                                arrayView1d< real32 > const dofTilt,
+                                arrayView1d< real32 > const dofAzimuth,
+                                arrayView1d< real32 > const dofOrder ) const
+    {
       forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
       {
-        real64 xLocal[ 8 ][ 3 ];
-        real32 tiltQ1[8]={};
-        real32 azimuthQ1[8]={};
-        for( localIndex a = 0; a < 8; ++a )
-        {
-          localIndex const nodeIndex = elemsToNodes( e, FE_TYPE::meshIndexToLinearIndex3D( a ) );
+        real32 const dipx = tti_dipx[e];
+        real32 const dipy = tti_dipy[e];
+        real32 const deg_to_rad = geos::constants::pi / 180.f;
+        real32 const localTilt = std::atan( std::sqrt( dipx * dipx + dipy * dipy ) );
 
-          for( localIndex i = 0; i < 3; ++i )
-          {
-            xLocal[a][i] = nodeCoords( nodeIndex, i );
-          }
-          tiltQ1[a] = dofTilt[nodeIndex];
-          azimuthQ1[a] = dofAzimuth[nodeIndex];
+        real32 localAzimuth = 0.f;
+        real32 const ftmp = std::atan2( dipy, dipx );
+        if( localTilt >= ( 0.001f * deg_to_rad ) )
+        {
+          localAzimuth = ( ftmp <= 0.f ) ? ( ftmp + geos::constants::pi )
+                                         : ( ftmp - geos::constants::pi );
+          if( localAzimuth < 0. ) localAzimuth += 2 * geos::constants::pi;
         }
 
-
-        constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
-
-        real64 x[ 3 ];
-        if( numQuadraturePointsPerElem>8 )
+        constexpr localIndex numCorners = 8;
+        for( localIndex a = 0; a < numCorners; ++a )
         {
-          for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+          localIndex const cornerNodeIndex = FE_TYPE::meshIndexToLinearIndex3D( a );
+          localIndex const globalNodeIndex = elemsToNodes( e, cornerNodeIndex );
+          real32 const invOrder = 1.f / dofOrder[globalNodeIndex];
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dofTilt[globalNodeIndex], localTilt * invOrder );
+          RAJA::atomicAdd< ATOMIC_POLICY >( &dofAzimuth[globalNodeIndex], localAzimuth * invOrder );
+        }
+      } );
+    }
+
+    template< typename EXEC_POLICY, typename View1, typename View2 >
+    void
+    applySourceTapering( arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                         arrayView2d< real64 const > const sourceCoordinates,
+                         real64 const radiusIsoAroundSource,
+                         View1 const dofField1,
+                         View2 const dofField2 ) const
+    {
+      const localIndex numNodes = nodeCoords.size( 0 );
+      forAll< EXEC_POLICY >( numNodes, [=] GEOS_HOST_DEVICE ( localIndex const nodeIndex )
+      {
+        real64 minDistSq = -1.0;
+
+        for( localIndex isrc = 0; isrc < sourceCoordinates.size( 0 ); ++isrc )
+        {
+          real64 const dx = nodeCoords( nodeIndex, 0 ) - sourceCoordinates[isrc][0];
+          real64 const dy = nodeCoords( nodeIndex, 1 ) - sourceCoordinates[isrc][1];
+          real64 const dz = nodeCoords( nodeIndex, 2 ) - sourceCoordinates[isrc][2];
+          real64 const distSq = dx * dx + dy * dy + dz * dz;
+          if( ( minDistSq < 0.0 ) || ( distSq < minDistSq ) )
           {
+            minDistSq = distSq;
+          }
+        }
 
-            if( q!=0 && q!=2 && q!=6 && q!=8 && q!=18 && q!=20 && q!=24 && q!=26 )
-            {
-              localIndex const nodeIndex = elemsToNodes( e, q );
-              real32 const localOrder = dofOrder[nodeIndex];
-              for( localIndex i = 0; i < 3; ++i )
-              {
-                x[i] = nodeCoords( nodeIndex, i );
-              }
+        real64 const radiusSq = radiusIsoAroundSource * radiusIsoAroundSource;
+        if( ( minDistSq >= 0.0 ) && ( minDistSq < radiusSq ) )
+        {
+          real64 const minDist = std::sqrt( minDistSq );
+          real32 const taper = static_cast< real32 >( cosine_taper( minDist, 0.0, radiusIsoAroundSource ) );
+          auto const taper_squared = taper * taper;
 
-              real64 xd = (x[0] - xLocal[0][0]) / (xLocal[7][0] - xLocal[0][0]);
-              real64 yd = (x[1] - xLocal[0][1]) / (xLocal[7][1] - xLocal[0][1]);
-              real64 zd = (x[2] - xLocal[0][2]) / (xLocal[7][2] - xLocal[0][2]);
+          dofField1[nodeIndex] *= taper_squared * taper_squared;
+          dofField2[nodeIndex] *= taper_squared * taper_squared;
+        }
+      } );
+    }
 
-              // Perform linear interpolation along the x-axis
-              real32 c00 = tiltQ1[0] * (1 - xd) + tiltQ1[1] * xd;
-              real32 c01 = tiltQ1[2] * (1 - xd) + tiltQ1[3] * xd;
-              real32 c10 = tiltQ1[4] * (1 - xd) + tiltQ1[5] * xd;
-              real32 c11 = tiltQ1[6] * (1 - xd) + tiltQ1[7] * xd;
+    template< typename EXEC_POLICY, typename ATOMIC_POLICY, typename View1, typename View2 >
+    void
+    interpolateInternalGLLNodes( localIndex const size,
+                                 arrayView2d< WaveSolverBase::wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords,
+                                 arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                                 arrayView1d< real32 > const dofOrder,
+                                 View1 const dofField1,
+                                 View2 const dofField2 ) const
+    {
+      forAll< EXEC_POLICY >( size, [=] GEOS_HOST_DEVICE ( localIndex const e )
+      {
+        constexpr localIndex numCorners = 8;
 
-              // Perform linear interpolation along the y-axis
-              real32 c0 = c00 * (1 - yd) + c01 * yd;
-              real32 c1 = c10 * (1 - yd) + c11 * yd;
+        real64 coordCorners[numCorners][3];
+        real32 vals1Corners[numCorners];
+        real32 vals2Corners[numCorners];
 
-              // Perform linear interpolation along the z-axis
-              real32 c = c0 * (1 - zd) + c1 * zd;
+        for( localIndex a = 0; a < numCorners; ++a )
+        {
+          localIndex const cornerNodeIndex = FE_TYPE::meshIndexToLinearIndex3D( a );
+          localIndex const globalNodeIndex = elemsToNodes( e, cornerNodeIndex );
 
-              RAJA::atomicAdd< ATOMIC_POLICY >( &dofTilt[nodeIndex], c/localOrder );
+          coordCorners[a][0] = nodeCoords( globalNodeIndex, 0 );
+          coordCorners[a][1] = nodeCoords( globalNodeIndex, 1 );
+          coordCorners[a][2] = nodeCoords( globalNodeIndex, 2 );
 
-              // Perform linear interpolation along the x-axis
-              c00 = azimuthQ1[0] * (1 - xd) + azimuthQ1[1] * xd;
-              c01 = azimuthQ1[2] * (1 - xd) + azimuthQ1[3] * xd;
-              c10 = azimuthQ1[4] * (1 - xd) + azimuthQ1[5] * xd;
-              c11 = azimuthQ1[6] * (1 - xd) + azimuthQ1[7] * xd;
+          vals1Corners[a] = dofField1[globalNodeIndex];
+          vals2Corners[a] = dofField2[globalNodeIndex];
+        }
 
-              // Perform linear interpolation along the y-axis
-              c0 = c00 * (1 - yd) + c01 * yd;
-              c1 = c10 * (1 - yd) + c11 * yd;
+        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+        for( localIndex q = 0; q < numNodesPerElem; ++q )
+        {
+          if( !is_corner_node( q ) )
+          {
+            localIndex const globalNodeIndex = elemsToNodes( e, q );
+            real64 coordTarget[3] = { nodeCoords( globalNodeIndex, 0 ), nodeCoords( globalNodeIndex, 1 ), nodeCoords( globalNodeIndex, 2 ) };
+            real32 const invOrder = 1.f / dofOrder[globalNodeIndex];
 
-              // Perform linear interpolation along the z-axis
-              c = c0 * (1 - zd) + c1 * zd;
+            real32 const interp_val1 = trilinear_interpolate( coordTarget, coordCorners, vals1Corners );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &dofField1[globalNodeIndex], interp_val1 * invOrder );
 
-              RAJA::atomicAdd< ATOMIC_POLICY >( &dofAzimuth[nodeIndex], c/localOrder );
-            }
-
+            real32 const interp_val2 = trilinear_interpolate( coordTarget, coordCorners, vals2Corners );
+            RAJA::atomicAdd< ATOMIC_POLICY >( &dofField2[globalNodeIndex], interp_val2 * invOrder );
           }
         }
       } );
     }
 
-// end debug
+    //==============================================================================
+    // Low-level static helpers
+    //==============================================================================
+
+    GEOS_HOST_DEVICE static bool is_corner_node( localIndex const q )
+    {
+      for( localIndex a = 0; a < 8; ++a )
+      {
+        if( FE_TYPE::meshIndexToLinearIndex3D( a ) == q )
+        {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    GEOS_HOST_DEVICE static real32
+    trilinear_interpolate( real64 const (&coordTarget)[3],
+                           real64 const (&coordCorners)[8][3],
+                           real32 const (&valCorners)[8] )
+    {
+      // This assumes the 8 corners are ordered logically like a unit cube.
+      real64 const xd = ( coordTarget[0] - coordCorners[0][0] ) / ( coordCorners[7][0] - coordCorners[0][0] );
+      real64 const yd = ( coordTarget[1] - coordCorners[0][1] ) / ( coordCorners[7][1] - coordCorners[0][1] );
+      real64 const zd = ( coordTarget[2] - coordCorners[0][2] ) / ( coordCorners[7][2] - coordCorners[0][2] );
+
+      real32 const c00 = valCorners[0] * ( 1.f - xd ) + valCorners[1] * xd;
+      real32 const c10 = valCorners[2] * ( 1.f - xd ) + valCorners[3] * xd;
+      real32 const c01 = valCorners[4] * ( 1.f - xd ) + valCorners[5] * xd;
+      real32 const c11 = valCorners[6] * ( 1.f - xd ) + valCorners[7] * xd;
+
+      real32 const c0 = c00 * ( 1.f - yd ) + c10 * yd;
+      real32 const c1 = c01 * ( 1.f - yd ) + c11 * yd;
+
+      return c0 * ( 1.f - zd ) + c1 * zd;
+    }
+
+    GEOS_HOST_DEVICE double cosine_taper( double r, double rmin, double rmax ) const
+    {
+      double const t = std::clamp( ( r - rmin ) / ( rmax - rmin ), 0.0, 1.0 );
+      return 0.5 * ( 1.0 - std::cos( geos::constants::pi * t ) );
+    }
+
+    // Member data
     FE_TYPE const & m_finiteElement;
   };
+
   // End debug
 
   template< typename FE_TYPE >
@@ -520,8 +472,8 @@ struct AcousticMatricesSEM
      * @param[in] bottomSurfaceFaceIndicator flag equal to 1 if the face is on the bottom surface, and to 0 otherwise
      * @param[in] velocity cell-wise velocity
      * @param[in] density cell-wise density
-     * @param[in] vti_epsilon cell-wise epsilon (Thomsen parameter)
-     * @param[in] vti_delta density cell-wise delta (Thomsen parameter)
+     * @param[in] vtiEpsilon cell-wise epsilon (Thomsen parameter)
+     * @param[in] vtiDelta density cell-wise delta (Thomsen parameter)
      * @param[in] vti_sigma sigma cell-wise parameter
      * @param[out] damping_pp Damping matrix D^{pp}
      * @param[out] damping_pq Damping matrix D^{pq}
@@ -540,8 +492,8 @@ struct AcousticMatricesSEM
                                        arrayView1d< localIndex const > const bottomSurfaceFaceIndicator,
                                        arrayView1d< real32 const > const velocity,
                                        arrayView1d< real32 const > const density,
-                                       arrayView1d< real32 const > const vti_epsilon,
-                                       arrayView1d< real32 const > const vti_delta,
+                                       arrayView1d< real32 const > const vtiEpsilon,
+                                       arrayView1d< real32 const > const vtiDelta,
                                        arrayView1d< real32 const > const vti_sigma,
                                        arrayView1d< real32 > const damping_pp,
                                        arrayView1d< real32 > const damping_pq,
@@ -567,19 +519,19 @@ struct AcousticMatricesSEM
               }
             }
             constexpr localIndex numNodesPerFace = FE_TYPE::numNodesPerFace;
-            real32 vti_f = 1 - (vti_epsilon[e] - vti_delta[e]) / vti_sigma[e];
+            real32 vti_f = 1 - (vtiEpsilon[e] - vtiDelta[e]) / vti_sigma[e];
             if( lateralSurfaceFaceIndicator[f] == 1 )
             {
               // ABC coefficients
-              real32 alpha = 1.0 / (velocity[e] * density[e] * sqrt( 1+2*vti_epsilon[e] ));
+              real32 alpha = 1.0 / (velocity[e] * density[e] * sqrt( 1+2*vtiEpsilon[e] ));
               // VTI coefficients
               real32 vti_p_xy = 0;
               real32 vti_q_xy = 0;
               real32 vti_qp_xy= 0;
 
-              vti_p_xy  = (1+2*vti_epsilon[e]);
+              vti_p_xy  = (1+2*vtiEpsilon[e]);
               vti_q_xy  = -(vti_f - 1);
-              vti_qp_xy = (vti_f+2*vti_delta[e]);
+              vti_qp_xy = (vti_f+2*vtiDelta[e]);
               for( localIndex q = 0; q < numNodesPerFace; ++q )
               {
                 real32 const aux = m_finiteElement.computeDampingTerm( q, xLocal );
@@ -637,8 +589,8 @@ struct AcousticMatricesSEM
      * @param[in] bottomSurfaceFaceIndicator flag equal to 1 if the face is on the bottom surface, and to 0 otherwise
      * @param[in] velocity cell-wise velocity
      * @param[in] density cell-wise density
-     * @param[in] vti_epsilon cell-wise epsilon (Thomsen parameter)
-     * @param[in] vti_delta density cell-wise delta (Thomsen parameter)
+     * @param[in] vtiEpsilon cell-wise epsilon (Thomsen parameter)
+     * @param[in] vtiDelta density cell-wise delta (Thomsen parameter)
      * @param[out] damping_pp Damping matrix D^{pp}
      * @param[out] damping_pq Damping matrix D^{pq}
      * @param[out] damping_qp Damping matrix D^{qp}
@@ -686,14 +638,14 @@ struct AcousticMatricesSEM
 
             for( localIndex q = 0; q < numNodesPerFace; ++q )
             {
-              //            real32 epsi = std::fabs( vti_epsilon[e] );
+              //            real32 epsi = std::fabs( vtiEpsilon[e] );
               real32 epsi = std::fabs( dofEpsilon[facesToNodes( f, q )] );
               // end debug
 
               if( std::fabs( epsi ) < 1e-5 )
                 epsi = 0;
               // debug
-              //         real32 delt = std::fabs( vti_delta[e] );
+              //         real32 delt = std::fabs( vtiDelta[e] );
               real32 delt = std::fabs( dofDelta[facesToNodes( f, q )] );
               // end debug
               if( std::fabs( delt ) < 1e-5 )
@@ -702,7 +654,7 @@ struct AcousticMatricesSEM
                 delt = epsi;
               real32 sqrtEpsi = sqrt( 1 + 2 * epsi );
               // debug
-              //            real32 sqrtDelta = sqrt( 1 + 2 * vti_delta[e] );
+              //            real32 sqrtDelta = sqrt( 1 + 2 * vtiDelta[e] );
               real32 sqrtDelta = sqrt( 1 + 2 * dofDelta[facesToNodes( f, q )] );
               // end debug
               if( lateralSurfaceFaceIndicator[f] == 1 )
@@ -762,8 +714,8 @@ struct AcousticMatricesSEM
      * @param[in] bottomSurfaceFaceIndicator flag equal to 1 if the face is on the bottom surface, and to 0 otherwise
      * @param[in] velocity cell-wise velocity
      * @param[in] density cell-wise density
-     * @param[in] vti_epsilon cell-wise epsilon (Thomsen parameter)
-     * @param[in] vti_delta density cell-wise delta (Thomsen parameter)
+     * @param[in] vtiEpsilon cell-wise epsilon (Thomsen parameter)
+     * @param[in] vtiDelta density cell-wise delta (Thomsen parameter)
      * @param[out] damping_pp Damping matrix D^{pp}
      * @param[out] damping_pq Damping matrix D^{pq}
      * @param[out] damping_qp Damping matrix D^{qp}
@@ -781,8 +733,8 @@ struct AcousticMatricesSEM
                                     arrayView1d< localIndex const > const bottomSurfaceFaceIndicator,
                                     arrayView1d< real32 const > const velocity,
                                     arrayView1d< real32 const > const density,
-                                    arrayView1d< real32 const > const vti_epsilon,
-                                    arrayView1d< real32 const > const vti_delta,
+                                    arrayView1d< real32 const > const vtiEpsilon,
+                                    arrayView1d< real32 const > const vtiDelta,
                                     arrayView1d< real32 > const damping_pp,
                                     arrayView1d< real32 > const damping_pq,
                                     arrayView1d< real32 > const damping_qp,
@@ -811,14 +763,14 @@ struct AcousticMatricesSEM
 
 
             {
-              real32 epsi = std::fabs( vti_epsilon[e] );
+              real32 epsi = std::fabs( vtiEpsilon[e] );
 
               // end debug
 
               if( std::fabs( epsi ) < 1e-5 )
                 epsi = 0;
               // debug
-              real32 delt = std::fabs( vti_delta[e] );
+              real32 delt = std::fabs( vtiDelta[e] );
 
               // end debug
               if( std::fabs( delt ) < 1e-5 )
@@ -827,7 +779,7 @@ struct AcousticMatricesSEM
                 delt = epsi;
               real32 sqrtEpsi = sqrt( 1 + 2 * epsi );
               // debug
-              real32 sqrtDelta = sqrt( 1 + 2 * vti_delta[e] );
+              real32 sqrtDelta = sqrt( 1 + 2 * vtiDelta[e] );
 
               // end debug
               if( lateralSurfaceFaceIndicator[f] == 1 )
