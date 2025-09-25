@@ -141,6 +141,7 @@
  *            - Mandatory first parameter, the message to log (must be streamable)
  *            - Optional following parameters, context information on the current error (DataContext)
  */
+#if !defined(GEOS_DEVICE_COMPILE)
 #define GEOS_ERROR_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
   do \
   { \
@@ -175,6 +176,23 @@
       LvArray::system::callErrorHandler(); \
     } \
   } while( false )
+#elif __CUDA_ARCH__
+#define GEOS_ERROR_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      static constexpr string_view formatString = 
+        "***** WARNING\n" \
+        "***** LOCATION" LOCATION "\n" \
+        "***** BLOCK:  [%u, %u, %u]\n" \
+        "***** THREAD: [%u, %u, %u]\n" \
+        "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+        "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n" \
+      asm( "trap;" ); \
+    } \
+  } while( false )
+#endif
 
 /**
  * @brief Conditionally raise a hard error and terminate the program.
@@ -203,6 +221,7 @@
  *            - Mandatory first parameter, the type of the exception to throw
  *            - Optional following parameters, context information on the current error (DataContext)
  */
+#if !defined(GEOS_DEVICE_COMPILE)
 #define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... ) \
   do \
   { \
@@ -239,6 +258,23 @@
       throw GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )( __oss.str() ); \
     } \
   } while( false )
+#elif __CUDA_ARCH__
+#define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      static constexpr string_view formatString = 
+        "***** WARNING\n" \
+        "***** LOCATION" LOCATION "\n" \
+        "***** BLOCK:  [%u, %u, %u]\n" \
+        "***** THREAD: [%u, %u, %u]\n" \
+        "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+        "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n" \
+      asm( "trap;" ); \
+    } \
+  } while( false )
+#endif
 
 /**
  * @brief Conditionally raise a hard error and terminate the program.
@@ -268,6 +304,7 @@
  *            - Mandatory first parameter, the message to log (must be streamable)
  *            - Optional following parameters, context information on the current error (DataContext)
  */
+#if !defined(GEOS_DEVICE_COMPILE)
 #define GEOS_WARNING_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
   do \
   { \
@@ -298,6 +335,23 @@
       } \
     } \
   } while( false )
+#elif __CUDA_ARCH__
+#define GEOS_WARNING_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      static constexpr string_view formatString = 
+        "***** WARNING\n" \
+        "***** LOCATION" LOCATION "\n" \
+        "***** BLOCK:  [%u, %u, %u]\n" \
+        "***** THREAD: [%u, %u, %u]\n" \
+        "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+        "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n" \
+      asm( "trap;" ); \
+    } \
+  } while( false )
+#endif
 
 /**
  * @brief Conditionally report a warning.
