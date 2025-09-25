@@ -54,7 +54,7 @@ public:
 
   virtual void setSparsityPattern( DomainPartition & domain,
                                    DofManager & dofManager,
-                                   SparsityPattern< globalIndex > & pattern );
+                                   SparsityPattern< globalIndex > & pattern ) override;
 
   virtual void
   setupCoupling( DomainPartition const & domain,
