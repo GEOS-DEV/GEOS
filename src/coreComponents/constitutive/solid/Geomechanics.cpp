@@ -23,7 +23,6 @@ namespace geos
 using namespace dataRepository;
 namespace constitutive
 {
-
 Geomechanics::Geomechanics( string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_b0( 0.0 ),
@@ -31,6 +30,10 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_b2( 0.0 ),
   m_b3( 0.0 ),
   m_b4( 0.0 ),
+  m_dstrendh( 0.0 ),
+  m_dfslopedh( 0.0 ),
+  m_dpeakI1dh( 0.0 ),
+  m_dcrdh( 0.0 ),
   m_g0( 0.0 ),
   m_g1( 0.0 ),
   m_g2( 0.0 ),
@@ -52,6 +55,8 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_fractureEnergyReleaseRate( 0.0 ),
   m_fractureSofteningExponent( 1.0 ),
   m_fractureStress( 0.0 ),
+  m_initialTemperature( 0.0 ),
+  m_Q( 0.0 ),
   m_brittleDuctileTransition( 0.0 ),
   m_damageEvolutionCriterion( 0 ),
   m_cr( 0.0 ),
@@ -106,6 +111,22 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::b4String(), &m_b4 ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default tangent elastic bulk modulus parameter 4" );
+
+  registerWrapper( viewKeyStruct::dstrendhString(), &m_dstrendh ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Constant for STREN hardening rate" );
+
+  registerWrapper( viewKeyStruct::dfslopedhString(), &m_dfslopedh ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Constant for FSLOPE hardening rate" );
+
+  registerWrapper( viewKeyStruct::dpeakI1dhString(), &m_dpeakI1dh ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Constant for PEAKI1 hardening rate" );
+
+  registerWrapper( viewKeyStruct::dcrdhString(), &m_dcrdh ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Constant for hardened CR" );
 
   registerWrapper( viewKeyStruct::g0String(), &m_g0 ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -182,6 +203,14 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::fractureStressString(), &m_fractureStress ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Fracture stress" );
+
+  registerWrapper( viewKeyStruct::initialTemperatureString(), &m_initialTemperature ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "initial Temperature" );
+
+  registerWrapper( viewKeyStruct::QString(), &m_Q ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "activation energy" );
 
   registerWrapper( viewKeyStruct::damageEvolutionCriterionString(), &m_damageEvolutionCriterion ).
     setInputFlag( InputFlags::OPTIONAL ).

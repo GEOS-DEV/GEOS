@@ -50,6 +50,10 @@ public:
    * @param[in] b2 The value for the tangent elastic bulk modulus paramter 2
    * @param[in] b3 The value for the tangent elastic bulk modulus paramter 3
    * @param[in] b4 The value for the tangent elastic bulk modulus paramter 4
+   * @param[in] dstrendh The value (constant) for hardened stren
+   * @param[in] dfslopedh The value (constant) for hardened fslope
+   * @param[in] dpeakI1dh The value (constant) for hardened peakI1
+   * @param[in] dcrdh The value (constant) for hardened cr
    * @param[in] g0 The value for the tangent elastic shear modulus paramter 0
    * @param[in] g1 The value for the tangent elastic shear modulus paramter 1
    * @param[in] g2 The value for the tangent elastic shear modulus paramter 2
@@ -71,6 +75,8 @@ public:
    * @param[in] fractureEnergyReleaseRate The value for the fracture energy release rate
    * @param[in] fractureSofteningExponent controls shape of softening with damage
    * @param[in] fractureStress The root J2 value for the fracture stress 
+   * @param[in] initialTemperature initial temperature
+   * @param[in] Q activation energy
    * @param[in] brittleDuctileTransition The root J2 value for the fracture stress 
    * @param[in] damageEvolutionCriterion this is to trigger the damage for TXCo tests 0 or 1 for dilation vs pressure
    * @param[in] cr The value for the cap shape paramter
@@ -97,6 +103,10 @@ public:
                        real64 const & b2,
                        real64 const & b3,
                        real64 const & b4,
+                       real64 const & dstrendh,
+                       real64 const & dfslopedh,
+                       real64 const & dpeakI1dh,
+                       real64 const & dcrdh,
                        real64 const & g0,
                        real64 const & g1,
                        real64 const & g2,
@@ -118,6 +128,8 @@ public:
                        real64 const & fractureEnergyReleaseRate,
                        real64 const & fractureSofteningExponent,
                        real64 const & fractureStress,
+                       real64 const & initialTemperature,
+                       real64 const & Q,
                        real64 const & brittleDuctileTransition,
                        int const & damageEvolutionCriterion,
                        real64 const & cr,
@@ -170,6 +182,10 @@ public:
     m_b2( b2 ),
     m_b3( b3 ),
     m_b4( b4 ),
+    m_dstrendh( dstrendh ),
+    m_dfslopedh( dfslopedh ),
+    m_dpeakI1dh( dpeakI1dh ),
+    m_dcrdh( dcrdh ),
     m_g0( g0 ),
     m_g1( g1 ),
     m_g2( g2 ),
@@ -191,6 +207,8 @@ public:
     m_fractureEnergyReleaseRate( fractureEnergyReleaseRate ),
     m_fractureSofteningExponent( fractureSofteningExponent ),
     m_fractureStress( fractureStress ),
+    m_initialTemperature( initialTemperature ),
+    m_Q( Q ),
     m_brittleDuctileTransition( brittleDuctileTransition ),
     m_damageEvolutionCriterion ( damageEvolutionCriterion ),
     m_cr( cr ),
@@ -524,6 +542,10 @@ private:
   real64 const & m_b2;
   real64 const & m_b3;
   real64 const & m_b4;
+  real64 const & m_dstrendh;
+  real64 const & m_dfslopedh;
+  real64 const & m_dpeakI1dh;
+  real64 const & m_dcrdh;
   real64 const & m_g0;
   real64 const & m_g1;
   real64 const & m_g2;
@@ -545,6 +567,8 @@ private:
   real64 const & m_fractureEnergyReleaseRate;
   real64 const & m_fractureSofteningExponent;
   real64 const & m_fractureStress;
+  real64 const & m_initialTemperature;
+  real64 const & m_Q;
   real64 const & m_brittleDuctileTransition;
   int const & m_damageEvolutionCriterion;
   real64 const & m_cr;
@@ -1094,19 +1118,17 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     // rate multiplier going from reference temperature T0 to temperature T
     // is ( A*exp[-E_a/(R*T)] ) / ( A*exp[-E_a/(R*T0)] ) = Exp[-Ea*( 1/(R*T) - 1./(R*T0) )]
 
-    real64 m_referenceTemperature = 300.0; // This could be an input variable
-    real64 m_gasConstantR = 8.314;  // this is J/(mol*K) and also works for mm,mg,us,K units, but this should be a user input 
+    real64 m_referenceTemperature =  m_initialTemperature; // We require 
+    real64 m_gasConstantR = 8.314;  // this is J/(mol*K) and also works for mm,mg,us,K units, TODO: this should be a user input 
                                     // to allow for other unit systems.
-    real64 m_creepActivationEnergy = 1.0;  // This will be a user input that can be used to fit temperature dependence.
+    real64 m_creepActivationEnergy = m_Q;  // This will be a user input that can be used to fit temperature dependence.
 
-    real64 creepRateTemperatureMultiplier = exp(-1.0*m_creepActivationEnergy*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) ); 
-		
-    real64 c0 = m_creepC0;
-		real64 c1 = m_creepC1;
-    real64 c2 = m_creepC2;
-    real64 A = m_creepA;  // volumetric creep rate parameter
-    real64 B = m_creepB;  // volumetric creep rate parameter
-    real64 C = m_creepC;  // volumetric creep rate parameter
+    real64 creepRateTemperatureMultiplier = 1.0;
+    if (temperature > 1.e-10 and m_referenceTemperature > 1.e-10 )
+    {
+    creepRateTemperatureMultiplier = exp(-1.0*m_creepActivationEnergy*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) ); 
+    }
+
     real64 equilibriumPorosityPressureExponent = m_creepD;  // volumetric creep rate parameter
     real64 equilibriumPorosityOffset = m_creepE;  // volumetric creep rate parameter
     real64 compactionRatePressureExponent = m_creepF;  // volumetric creep rate parameter
@@ -1158,12 +1180,12 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
     //std::cout<<"vonMisesStress_old = "<<vonMisesStress_old<<", elasticVMShearStrain = "<<elasticVMShearStrain<<", c0 = "<<c0<<", c1 = "<<c1<<", c2 = "<<c2<<std::endl;
 
-		if ( ( elasticVMShearStrain > 1.e-12 ) && ( c2 > 1.e-16 ) )
+		if ( ( elasticVMShearStrain > 1.e-12 ) && ( m_creepC2 > 1.e-16 ) )
 		{  // only apply creep if there is elastic strain
       //shear strain for TXCr tests
-      real64 equilibriumShearStrainConstant = c0;
-      real64 equilibriumShearStrainExponent = c1;
-      real64 shearStrainRateConstant = creepRateTemperatureMultiplier*c2;
+      real64 equilibriumShearStrainConstant = m_creepC0;
+      real64 equilibriumShearStrainExponent = m_creepC1;
+      real64 shearStrainRateConstant = creepRateTemperatureMultiplier*m_creepC2;
 
       // relax shear stress until equivalent plastic shear strain reaches the equilibrium value for the current level of shear stress.
       real64 plasticVMshearStrain = rootTwoThirds*ep_rootJ2_old;
@@ -1175,7 +1197,6 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 			real64 devStressCreepScale = std::max ( elasticVMShearStrain - creepVMStrainIncrement , 0.0 ) / elasticVMShearStrain;
 
       //std::cout<<"equilibriumVMShearStrain = "<<equilibriumVMShearStrain<<", plasticVMshearStrain = "<<plasticVMshearStrain<<", creepVMStrainIncrement = "<<creepVMStrainIncrement<<", devStressCreepScale = "<<devStressCreepScale<<std::endl;
-
 
 			// increment plastic strain such that total strain is constant:  (0.5/g0)*stress_dev*( 1.0 - devStressCreepScale );
 			real64 creepStrainIncrement[6];  
@@ -1204,60 +1225,60 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     // unloaded porosity at the start of the step.
     real64 phi_p = std::max( 1.e-10 , 1.0 + exp(-evp)*( phi_i - 1 ) ); 
     // equilibrium porosity at the start of the step.
-		real64 phi_e = std::max(1.e-10 , A * exp( -std::pow(p,equilibriumPorosityPressureExponent) / B ) + equilibriumPorosityOffset );    
+    // TODO: make the temperature dependence of the equilibrium porosity based on input parameters not these hard-wired terms
+    real64 phi_e = std::max(1.e-10 , 
+                            m_creepA * exp( -std::pow( p/bulk ,equilibriumPorosityPressureExponent) ) 
+                            + equilibriumPorosityOffset  
+                            + (-3.e-6 * std::pow(std::max(temperature - m_referenceTemperature, 0.0), 2.)) 
+                            - (0.0002 * std::max(temperature - m_referenceTemperature, 0.0))
+                            );    
 
-    // uncomment for debugging:
-    //std::cout<<"pn = "<<p<<", evp_n = "<<evp<<", phi_p_n = "<<phi_p<<", phi_e_n = "<<phi_e<<", X_n = "<<X_old<<std::endl;
+    if ( (phi_p - phi_e > 1.e-10) && (p > 1.e-12) && ( m_creepC > 1.e-16) && ( evp + m_p3 > 1.e-10 ) )
+    {  // creep compaction
+      real64 dphidt = -1.0*creepRateTemperatureMultiplier*std::pow( p / m_creepB ,compactionRatePressureExponent)*m_creepC*( phi_p - phi_e );  // creep compaction rate:
+      real64 phi_c = std::max( phi_e, phi_p + dphidt*dt ); // unloaded porosity after creep, don't let it go below equilibrium level
+      real64 evp_c = log( (phi_i - 1. ) / ( phi_c - 1. ) ); // vol. strain after creep.
+      evp_c = std::max( evp_c, - m_p3 ); // don't let porosity go negative.
+      real64 devp = evp_c - evp;  // creep vol. strain increment
 
-    // TODO: have the creep model use actual bulk, not the conservative bulk=b0+b1
+      real64 p_c;  // pressure after relaxation.
 
-    if ( (phi_p - phi_e > 1.e-10) && (p > 1.e-12) && (C > 1.e-16) && ( evp + m_p3 > 1.e-10 ) )
- 		  {  // creep compaction
- 			  real64 dphidt = -1.0*creepRateTemperatureMultiplier*std::pow(p,compactionRatePressureExponent)*C*( phi_p - phi_e );  // creep compaction rate:
- 			  real64 phi_c = std::max( phi_e, phi_p + dphidt*dt ); // unloaded porosity after creep, don't let it go below equilibrium level
- 			  real64 evp_c = log( (phi_i - 1. ) / ( phi_c - 1. ) ); // vol. strain after creep.
- 			  evp_c = std::max( evp_c, - m_p3 ); // don't let porosity go negative.
-        real64 devp = evp_c - evp;  // creep vol. strain increment
+      // We don't want to allow more plastic vol strain than the current elastic vol strain.
+      if ( devp < - p / bulk )
+      { // increment in p. vol strain is greater than current elastic vol strain.
+        devp = -p/bulk;
+        p_c = 0.;
+        evp_c = evp + devp;
+      }
+      else
+      {
+        p_c = std::max( 0., p + bulk*devp );  // relaxed pressure after creep.
+      }
 
-        real64 p_c;  // pressure after relaxation.
+      // update stress and plastic strain values after creep
+      stress_iso[0] = -1.0*p_c;
+      stress_iso[1] = -1.0*p_c;
+      stress_iso[2] = -1.0*p_c;
+      ep_iso[0] = evp_c/3.;
+      ep_iso[1] = evp_c/3.;
+      ep_iso[2] = evp_c/3.;
 
-        // We don't want to allow more plastic vol strain than the current elastic vol strain.
-        if ( devp < - p / bulk )
-        { // increment in p. vol strain is greater than current elastic vol strain.
-           devp = -p/bulk;
-           p_c = 0.;
-           evp_c = evp + devp;
-        }
-        else
-        {
-          p_c = std::max( 0., p + bulk*devp );  // relaxed pressure after creep.
-        }
+      // computeBuckling(buckling,       // this is overwritten
+      //                 evp_c,          // buckling strain, could be evp, directional strain, log(J), etc. 
+      //                 lengthScale);   // element
 
-        // update stress and plastic strain values after creep
-        stress_iso[0] = -1.0*p_c;
-			  stress_iso[1] = -1.0*p_c;
-        stress_iso[2] = -1.0*p_c;
- 			  ep_iso[0] = evp_c/3.;
- 			  ep_iso[1] = evp_c/3.;
- 			  ep_iso[2] = evp_c/3.;
+      // update cap function to be consistent with new vol. plastic
+      X_old = computeX( evp_c,
+      phi_i, // Initial porosity (inferred from crush curve, used for fluid model/
+      bulk, // matrix bulk modulus
+      0.0, // Fluid bulk modulus
+      0.0, // Term to simplify the fluid model expressions
+      0.0, // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
+      0.0,
+      buckling );
 
-        // computeBuckling(buckling,       // this is overwritten
-        //                 evp_c,          // buckling strain, could be evp, directional strain, log(J), etc. 
-        //                 lengthScale);   // element
-
-        // update cap function to be consistent with new vol. plastic
-        X_old = computeX( evp_c,
-        phi_i, // Initial porosity (inferred from crush curve, used for fluid model/
-        bulk, // matrix bulk modulus
-        0.0, // Fluid bulk modulus
-        0.0, // Term to simplify the fluid model expressions
-        0.0, // Zero fluid pressure vol. strain.  (will equal zero if pfi=0)
-        0.0,
-        buckling );
-
-        // uncomment for debugging:
-        //std::cout<<"Creep compaction: dphidt = "<<dphidt<<", phi_c = "<<phi_c<<", evp_c = "<<evp_c<<", devp = "<<devp<<", p_c = "<<p_c<<", X_c = "<<X_old<<std::endl;
- 		  }
+      //std::cout<<"Creep compaction: dphidt = "<<dphidt<<", phi_c = "<<phi_c<<", evp_c = "<<evp_c<<", devp = "<<devp<<", p_c = "<<p_c<<", X_c = "<<X_old<<std::endl;
+    }
 
 
 	    // Reassemble the stress with a scaled deviatoric stress tensor
@@ -1713,7 +1734,9 @@ real64 GeomechanicsUpdates::computeBD(const real64 & a1,
    // TODO: This may need to be changed for general use if the 
    // value of m_peakI1 has been modified by coher or hardening
    // before these
-   // values of a1,a2,a3,a4 were computed.
+   // values of a1,a2,a3,a4 were computed.  For now we just use this to decide
+   // whether inelastic deformation should trigger damage evolution so 
+   // we'll stick to 
 
    // we want initial value so setting X to p0
    real64 X = m_p0;
@@ -2096,8 +2119,9 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
 
 	// If there is no porosity (p3=0) and no fluid effects (Kf=0) then the nonhardening
 	// return will be the solution
-	if ( isZero( m_p3 ) && isZero( Kf ) ){
-        Zeta_new = Zeta_old,
+	if ( isZero( m_p3 ) && isZero( Kf ) )
+  {
+    Zeta_new = Zeta_old,
 		X_new = X_old;
 
     //MH: TODO: add computeCohere here to update damage for non-porous material.
@@ -2442,13 +2466,8 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
   // The following are the input parameters, modified by hardening and or damage
   //  Any change to peakI1 should be copied in the non-hardening return and
   //  yield function updates, which have branch points based on the peakI1 value.
-  real64 peakI1_h, fSlope_h; //
-
-  // raise coher to an exponent before softening to allow control of softening rate.
   real64 nonlinearCoher = std::pow(coher,m_fractureSofteningExponent);
-  fSlope_h = nonlinearCoher*m_fSlope + ( 1. - nonlinearCoher )*m_fSlopeFailed;
-  peakI1_h = (fSlope_h > 1.e-12) ? nonlinearCoher*(m_peakI1 + hardening/fSlope_h) : nonlinearCoher*m_peakI1;
-  peakI1_h = strengthScale*peakI1_h;
+  real64 peakI1_h = buckling*( m_peakI1 + hardening*m_dpeakI1dh )*nonlinearCoher*strengthScale; // dpeakI1dh has units of stress
 
   // It may be better to use an interior point at the center of the yield surface, rather than at zeta, in particular
   // when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be problematic when the user has specified
@@ -2791,12 +2810,13 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
 	real64 I1mZ = I1 - Zeta;    // Shifted stress to evalue yield criteria
 
   // Parameters modified by damage and/or hardening
-  real64 peakI1_h, fSlope_h; //
+  real64 peakI1_h, cr_h; //
   real64 nonlinearCoher = std::pow(coher,m_fractureSofteningExponent);
-  fSlope_h = nonlinearCoher*m_fSlope + ( 1. - nonlinearCoher )*m_fSlopeFailed;
-  peakI1_h = (fSlope_h > 1.e-12) ? nonlinearCoher*(m_peakI1 + hardening/fSlope_h) : nonlinearCoher*m_peakI1;
-  peakI1_h = strengthScale*peakI1_h;
+  peakI1_h = ( m_peakI1 + hardening*m_dpeakI1dh )*nonlinearCoher*strengthScale;
 
+  // Branch point after hardening with limits (not this doesn't affect brittle-ductile transition)
+  // point used to determine damamage evolution.
+  cr_h = std::min(0.99999999999, std::max( 1.e-10, m_cr * ( 1 + hardening*m_dcrdh/m_g0 ) ) );
 
 	// --------------------------------------------------------------------
 	// *** SHEAR LIMIT FUNCTION (Ff) ***
@@ -2808,7 +2828,7 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
 	// --------------------------------------------------------------------
 	// *** Branch Point (Kappa) ***
 	// --------------------------------------------------------------------
-	real64  Kappa  = peakI1_h-m_cr*(peakI1_h-X); // Branch Point
+	real64  Kappa  = peakI1_h - cr_h*(peakI1_h-X); // Branch Point
 
 	// --------------------------------------------------------------------
 	// *** COMPOSITE YIELD FUNCTION ***
@@ -2956,14 +2976,15 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   // The following are the input parameters, modified by hardening and or damage
   //  Any change to peakI1 should be copied in the non-hardening return and
   //  yield function updates, which have branch points based on the peakI1 value.
+
+  // Parameters modified by damage and/or hardening
   real64 stren_h, peakI1_h, fSlope_h, ySlope_h;  
   real64 nonlinearCoher = std::pow(coher,m_fractureSofteningExponent);
-
-  stren_h = buckling*(m_stren + hardening);
-  fSlope_h = nonlinearCoher*m_fSlope + ( 1. - nonlinearCoher )*m_fSlopeFailed;
+  
+  stren_h = buckling*(m_stren + hardening*m_dstrendh); //  dstrendh has units of stress
+  fSlope_h = nonlinearCoher*m_fSlope*( 1 + hardening*m_dfslopedh ) + ( 1. - nonlinearCoher )*m_fSlopeFailed; // dfslopedh is unitless
+  peakI1_h = buckling*( m_peakI1 + hardening*m_dpeakI1dh )*nonlinearCoher*strengthScale; // dpeakI1dh has units of stress
   ySlope_h = std::min( 0.99999*fSlope_h, m_ySlope );
-  peakI1_h = (fSlope_h > 1.e-12) ? nonlinearCoher*(m_peakI1 + hardening/fSlope_h) : nonlinearCoher*m_peakI1;
-  peakI1_h = strengthScale*peakI1_h*buckling;
 
   if (fSlope_h > 0.0 && peakI1_h >= 0.0 && isZero( m_stren ) && isZero( ySlope_h) )
   {// ----------------------------------------------Linear Drucker-Prager
@@ -3071,6 +3092,18 @@ public:
     /// string/key for tangent elastic bulk modulus parameter 4 
     static constexpr char const * b4String() { return "b4"; }
 
+    /// string/key for constant for tuning hardened stren
+    static constexpr char const * dstrendhString() { return "dstrendh"; }
+
+    /// string/key for constant for tuning  hardened fslope
+    static constexpr char const * dfslopedhString() { return "dfslopedh"; }
+
+    /// string/key for constant for tuning hardened peakI1
+    static constexpr char const * dpeakI1dhString() { return "dpeakI1dh"; }
+
+    /// string/key for constant for tuning hardened peakI1
+    static constexpr char const * dcrdhString() { return "dcrdh"; }
+
     /// string/key for tangent elastic shear modulus parameter 0 
     static constexpr char const * g0String() { return "g0"; }
 
@@ -3125,6 +3158,12 @@ public:
 
     /// string/key for fracture stress
     static constexpr char const * fractureStressString() { return "fractureStress"; }
+
+    /// string/key for initialDomainTemperature
+    static constexpr char const * initialTemperatureString() { return "initialTemperature"; }
+
+    /// string/key for activation energy
+    static constexpr char const * QString() { return "Q"; }
 
     /// string/keay for brittleDuctileTransition
     static constexpr char const * brittleDuctileTransitionString() { return "brittleDuctileTransition"; }
@@ -3252,6 +3291,10 @@ public:
                                 m_b2,
                                 m_b3,
                                 m_b4,
+                                m_dstrendh,
+                                m_dpeakI1dh,
+                                m_dfslopedh,
+                                m_dcrdh,
                                 m_g0,
                                 m_g1,
                                 m_g2,
@@ -3273,6 +3316,8 @@ public:
                                 m_fractureEnergyReleaseRate,
                                 m_fractureSofteningExponent,
                                 m_fractureStress,
+                                m_initialTemperature,
+                                m_Q,
                                 m_brittleDuctileTransition,
                                 m_damageEvolutionCriterion,
                                 m_cr,
@@ -3332,6 +3377,10 @@ public:
                           m_b2,
                           m_b3,
                           m_b4,
+                          m_dstrendh,
+                          m_dpeakI1dh,
+                          m_dfslopedh,
+                          m_dcrdh,
                           m_g0,
                           m_g1,
                           m_g2,
@@ -3353,6 +3402,8 @@ public:
                           m_fractureEnergyReleaseRate,
                           m_fractureSofteningExponent,
                           m_fractureStress,
+                          m_initialTemperature,
+                          m_Q,
                           m_brittleDuctileTransition,
                           m_damageEvolutionCriterion,
                           m_cr,
@@ -3476,6 +3527,10 @@ protected:
   real64 m_b3;
   real64 m_b4;
 
+  real64 m_dstrendh;
+  real64 m_dfslopedh;
+  real64 m_dpeakI1dh;
+  real64 m_dcrdh;
 
   // Tangent elastic shear modulus parameters
   real64 m_g0;
@@ -3509,6 +3564,10 @@ protected:
   real64 m_fractureEnergyReleaseRate;
   real64 m_fractureSofteningExponent;  // shape parameter that controls softening with damage
   real64 m_fractureStress;
+
+  real64 m_initialTemperature;
+  real64 m_Q;
+
   real64 m_brittleDuctileTransition;
   int m_damageEvolutionCriterion;
 

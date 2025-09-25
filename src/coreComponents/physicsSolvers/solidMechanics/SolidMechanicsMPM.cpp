@@ -6457,7 +6457,6 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   {
     // Calculate the box volume
     real64 boxVolume = m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2];
-    real64 boxMass = boxSums[6];
     real64 boxReferenceVolume = boxSums[7];
 
     // Write to file
