@@ -495,54 +495,43 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setupSystem( DomainPartition &
 {
   GEOS_MARK_FUNCTION;
 
-  GEOS_UNUSED_VAR( setSparsity );
+  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
-  dofManager.setDomain( domain );
+  setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
+}
 
-  setupDofs( domain, dofManager );
-  dofManager.reorderByRank();
-
-  localIndex const numLocalRows = dofManager.numLocalDofs();
-
+template< typename POROMECHANICS_SOLVER >
+void HydrofractureSolver< POROMECHANICS_SOLVER >::setSparsityPattern( DomainPartition & domain,
+                                                                      DofManager & dofManager,
+                                                                      SparsityPattern< globalIndex > & pattern )
+{
   SparsityPattern< globalIndex > patternOriginal;
   dofManager.setSparsityPattern( patternOriginal );
 
   // Get the original row lengths (diagonal blocks only)
-  array1d< localIndex > rowLengths( patternOriginal.numRows() );
+  array1d< localIndex > rowLengths( patternOriginal.numRows());
   for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
   {
     rowLengths[localRow] = patternOriginal.numNonZeros( localRow );
   }
 
   // Add the number of nonzeros induced by coupling
-  addFluxApertureCouplingNNZ( domain, dofManager, rowLengths.toView() );
+  addFluxApertureCouplingNNZ( domain, dofManager, rowLengths.toView());
 
   // Create a new pattern with enough capacity for coupled matrix
-  SparsityPattern< globalIndex > pattern;
   pattern.resizeFromRowCapacities< parallelHostPolicy >( patternOriginal.numRows(),
                                                          patternOriginal.numColumns(),
-                                                         rowLengths.data() );
+                                                         rowLengths.data());
 
   // Copy the original nonzeros
   for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
   {
-    globalIndex const * cols = patternOriginal.getColumns( localRow ).dataIfContiguous();
-    pattern.insertNonZeros( localRow, cols, cols + patternOriginal.numNonZeros( localRow ) );
+    globalIndex const *cols = patternOriginal.getColumns( localRow ).dataIfContiguous();
+    pattern.insertNonZeros( localRow, cols, cols + patternOriginal.numNonZeros( localRow ));
   }
 
   // Add the nonzeros from coupling
-  addFluxApertureCouplingSparsityPattern( domain, dofManager, pattern.toView() );
-
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  localMatrix.setName( this->getName() + "/matrix" );
-
-  rhs.setName( this->getName() + "/rhs" );
-  rhs.create( numLocalRows, MPI_COMM_GEOS );
-
-  solution.setName( this->getName() + "/solution" );
-  solution.create( numLocalRows, MPI_COMM_GEOS );
-
-  setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
+  addFluxApertureCouplingSparsityPattern( domain, dofManager, pattern.toView());
 }
 
 template< typename POROMECHANICS_SOLVER >

@@ -232,7 +232,6 @@ void SolidMechanicsLagrangeContact::setupSystem( DomainPartition & domain,
   {
     createPreconditioner( domain );
   }
-
 }
 
 void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,

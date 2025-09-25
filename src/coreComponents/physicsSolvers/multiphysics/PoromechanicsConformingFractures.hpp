@@ -70,53 +70,7 @@ public:
   {
     GEOS_MARK_FUNCTION;
 
-    GEOS_UNUSED_VAR( setSparsity );
-
-    /// 1. Add all coupling terms handled directly by the DofManager
-    dofManager.setDomain( domain );
-    this->setupDofs( domain, dofManager );
-    dofManager.reorderByRank();
-
-    /// 2. Add coupling terms not added by the DofManager.
-    localIndex const numLocalRows = dofManager.numLocalDofs();
-
-    SparsityPattern< globalIndex > patternOriginal;
-    dofManager.setSparsityPattern( patternOriginal );
-
-    // Get the original row lengths (diagonal blocks only)
-    array1d< localIndex > rowLengths( patternOriginal.numRows() );
-    for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
-    {
-      rowLengths[localRow] = patternOriginal.numNonZeros( localRow );
-    }
-
-    // Add the number of nonzeros induced by coupling
-    addTransmissibilityCouplingNNZ( domain, dofManager, rowLengths.toView() );
-
-    // Create a new pattern with enough capacity for coupled matrix
-    SparsityPattern< globalIndex > pattern;
-    pattern.resizeFromRowCapacities< parallelHostPolicy >( patternOriginal.numRows(),
-                                                           patternOriginal.numColumns(),
-                                                           rowLengths.data() );
-
-    // Copy the original nonzeros
-    for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
-    {
-      globalIndex const * cols = patternOriginal.getColumns( localRow ).dataIfContiguous();
-      pattern.insertNonZeros( localRow, cols, cols + patternOriginal.numNonZeros( localRow ) );
-    }
-
-    // Add the nonzeros from coupling
-    addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView() );
-
-    localMatrix.setName( this->getName() + "/matrix" );
-    localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-
-    rhs.setName( this->getName() + "/rhs" );
-    rhs.create( numLocalRows, MPI_COMM_GEOS );
-
-    solution.setName( this->getName() + "/solution" );
-    solution.create( numLocalRows, MPI_COMM_GEOS );
+    PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
     setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 
@@ -124,6 +78,40 @@ public:
     // {
     //   m_precond = createPreconditioner( domain );
     // }
+  }
+
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   SparsityPattern< globalIndex > & pattern ) override
+  {
+    /// 2. Add coupling terms not added by the DofManager.
+    SparsityPattern< globalIndex > patternOriginal;
+    dofManager.setSparsityPattern( patternOriginal );
+
+    // Get the original row lengths (diagonal blocks only)
+    array1d< localIndex > rowLengths( patternOriginal.numRows());
+    for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
+    {
+      rowLengths[localRow] = patternOriginal.numNonZeros( localRow );
+    }
+
+    // Add the number of nonzeros induced by coupling
+    addTransmissibilityCouplingNNZ( domain, dofManager, rowLengths.toView());
+
+    // Create a new pattern with enough capacity for coupled matrix
+    pattern.resizeFromRowCapacities< parallelHostPolicy >( patternOriginal.numRows(),
+                                                           patternOriginal.numColumns(),
+                                                           rowLengths.data());
+
+    // Copy the original nonzeros
+    for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
+    {
+      globalIndex const *cols = patternOriginal.getColumns( localRow ).dataIfContiguous();
+      pattern.insertNonZeros( localRow, cols, cols + patternOriginal.numNonZeros( localRow ));
+    }
+
+    // Add the nonzeros from coupling
+    addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView());
   }
 
   virtual void assembleSystem( real64 const time_n,

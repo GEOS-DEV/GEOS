@@ -129,50 +129,42 @@ public:
     GEOS_MARK_FUNCTION;
 
     // call reservoir solver setup (needed in case of SinglePhasePoromechanicsConformingFractures)
+    // TODO this logic does not really work - the pattern can be overwritten below
     reservoirSolver()->setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
-    dofManager.setDomain( domain );
+    PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+  }
 
-    Base::setupDofs( domain, dofManager );
-    dofManager.reorderByRank();
-
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   SparsityPattern< globalIndex > & pattern ) override
+  {
     // Set the sparsity pattern without reservoir-well coupling
     SparsityPattern< globalIndex > patternDiag;
     dofManager.setSparsityPattern( patternDiag );
 
     // Get the original row lengths (diagonal blocks only)
-    array1d< localIndex > rowLengths( patternDiag.numRows() );
+    array1d< localIndex > rowLengths( patternDiag.numRows());
     for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
     {
       rowLengths[localRow] = patternDiag.numNonZeros( localRow );
     }
 
     // Add the number of nonzeros induced by coupling on perforations
-    addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
+    addCouplingNumNonzeros( domain, dofManager, rowLengths.toView());
 
     // Create a new pattern with enough capacity for coupled matrix
-    SparsityPattern< globalIndex > pattern;
-    pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data() );
+    pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data());
 
     // Copy the original nonzeros
     for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
     {
-      globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-      pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
+      globalIndex const *cols = patternDiag.getColumns( localRow ).dataIfContiguous();
+      pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ));
     }
 
     // Add the nonzeros from coupling
-    addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
-
-    // Finally, steal the pattern into a CRS matrix
-    localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-    localMatrix.setName( this->getName() + "/localMatrix" );
-
-    rhs.setName( this->getName() + "/rhs" );
-    rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-
-    solution.setName( this->getName() + "/solution" );
-    solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+    addCouplingSparsityPattern( domain, dofManager, pattern.toView());
   }
 
   /**@}*/

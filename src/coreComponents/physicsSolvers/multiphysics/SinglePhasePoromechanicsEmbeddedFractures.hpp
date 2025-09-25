@@ -52,12 +52,9 @@ public:
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
-  virtual void setupSystem( DomainPartition & domain,
-                            DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution,
-                            bool const setSparsity = true ) override;
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   SparsityPattern< globalIndex > & pattern );
 
   virtual void
   setupCoupling( DomainPartition const & domain,

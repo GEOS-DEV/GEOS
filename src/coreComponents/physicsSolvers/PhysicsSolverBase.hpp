@@ -402,6 +402,11 @@ public:
                ParallelVector & solution,
                bool const setSparsity = true );
 
+  virtual void
+  setSparsityPattern( DomainPartition & domain,
+                      DofManager & dofManager,
+                      SparsityPattern< globalIndex > & pattern );
+
   /**
    * @brief Create a preconditioner for this solver's linear system.
    * @param domain the domain containing the mesh and fields

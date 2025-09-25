@@ -113,6 +113,11 @@ public:
                ParallelVector & solution,
                bool const setSparsity = false ) override;
 
+  virtual void
+  setSparsityPattern( DomainPartition & domain,
+                      DofManager & dofManager,
+                      SparsityPattern< globalIndex > & pattern ) override;
+
   virtual std::unique_ptr< PreconditionerBase< LAInterface > >
   createPreconditioner( DomainPartition & domain ) const override;
 

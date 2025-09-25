@@ -1197,7 +1197,7 @@ void PhysicsSolverBase::setupSystem( DomainPartition & domain,
   if( setSparsity )
   {
     SparsityPattern< globalIndex > pattern;
-    dofManager.setSparsityPattern( pattern );
+    setSparsityPattern( domain, dofManager, pattern );
     localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
   }
   localMatrix.setName( this->getName() + "/matrix" );
@@ -1207,6 +1207,13 @@ void PhysicsSolverBase::setupSystem( DomainPartition & domain,
 
   solution.setName( this->getName() + "/solution" );
   solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+}
+
+void PhysicsSolverBase::setSparsityPattern( DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                            DofManager & dofManager,
+                                            SparsityPattern< globalIndex > & pattern )
+{
+  dofManager.setSparsityPattern( pattern );
 }
 
 void PhysicsSolverBase::setSystemSetupTimestamp( Timestamp timestamp )

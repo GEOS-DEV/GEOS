@@ -69,6 +69,10 @@ public:
                ParallelVector & solution,
                bool const setSparsity = true ) override final;
 
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   SparsityPattern< globalIndex > & pattern ) override final;
+
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
