@@ -134,20 +134,20 @@ public:
     real64 dEnthalpy_dPressure = 0.0;
     real64 dEnthalpy_dTemperature = 0.0;
 
-    fluidWrapper.compute( real64 const pressure,
-                          real64 const temperature,
-                          real64 & density,
-                          real64 & dDensity_dPressure,
-                          real64 & dDensity_dTemperature,
-                          real64 & viscosity,
-                          real64 & dViscosity_dPressure,
-                          real64 & dViscosity_dTemperature,
-                          real64 & internalEnergy,
-                          real64 & dInternalEnergy_dPressure,
-                          real64 & dInternalEnergy_dTemperature,
-                          real64 & enthalpy,
-                          real64 & dEnthalpy_dPressure,
-                          real64 & dEnthalpy_dTemperature );
+    fluidWrapper.compute( pressure,
+                          temperature,
+                          density,
+                          dDensity_dPressure,
+                          dDensity_dTemperature,
+                          viscosity,
+                          dViscosity_dPressure,
+                          dViscosity_dTemperature,
+                          internalEnergy,
+                          dInternalEnergy_dPressure,
+                          dInternalEnergy_dTemperature,
+                          enthalpy,
+                          dEnthalpy_dPressure,
+                          dEnthalpy_dTemperature );
   }
 
 //START_SPHINX_INCLUDE_02
