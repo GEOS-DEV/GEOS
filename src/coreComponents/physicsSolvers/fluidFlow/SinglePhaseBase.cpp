@@ -505,9 +505,9 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     // Creation of Wrapper in case of TemperatureVsElevationTableName
     if( m_isThermal )
     {
-    string const tempTableName = fs.getTemperatureVsElevationTableName();
-    TableFunction const & tempTable = functionManager.getGroup< TableFunction >( tempTableName );
-    TableFunction::KernelWrapper tempTableWrapper = tempTable.createKernelWrapper();
+      string const tempTableName = fs.getTemperatureVsElevationTableName();
+      TableFunction const & tempTable = functionManager.getGroup< TableFunction >( tempTableName );
+      TableFunction::KernelWrapper tempTableWrapper = tempTable.createKernelWrapper();
     }
 
     // filter out region not in target
