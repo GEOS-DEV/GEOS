@@ -163,6 +163,22 @@ public:
   arrayView1d< real64 > getParticleTemperature()
   { return m_particleTemperature; }
 
+
+   /**
+   * @brief Get the temperature rate of each particle in this subregion.
+   * @return an arrayView1d of const particle temperature
+   */
+  arrayView1d< real64 const > getParticleTemperatureRate() const
+  { return m_particleTemperatureRate; }
+
+  /**
+   * @copydoc getParticleTemperatureRate() const
+   */
+  arrayView1d< real64 > getParticleTemperatureRate()
+  { return m_particleTemperatureRate; }
+
+
+
   /**
    * @brief Get the strength scale of each particle in this subregion.
    * @return an arrayView1d of const particle strength scale
@@ -418,6 +434,9 @@ public:
     /// @return String key for the member level field for the particle temperature.
     static constexpr char const * particleTemperatureString() { return "particleTemperature"; }
 
+    /// @return String key for the member level field for the particle temperature rate.
+    static constexpr char const * particleTemperatureRateString() { return "particleTemperatureRate"; }
+
     /// @return String key for the member level field for the particle strength scale.
     static constexpr char const * particleStrengthScaleString() { return "particleStrengthScale"; }
 
@@ -545,6 +564,9 @@ protected:
 
   /// Member level field for the particle temperature.
   array1d< real64 > m_particleTemperature;
+
+  /// Member level field for the particle temperatureRate.
+  array1d< real64 > m_particleTemperatureRate;
 
   /// Member level field for the particle strength scale.
   array1d< real64 > m_particleStrengthScale;
