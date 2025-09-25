@@ -28,7 +28,7 @@ namespace geos
 {
 static constexpr std::string_view g_level1Start = "  - ";
 static constexpr std::string_view g_level1Next =  "    ";
-static constexpr std::string_view g_level2Start = "    - ";
+// static constexpr std::string_view g_level2Start = "    - "; // unused for now
 static constexpr std::string_view g_level2Next =  "      ";
 static constexpr std::string_view g_level3Start = "      - ";
 static constexpr std::string_view g_level3Next =  "        ";
