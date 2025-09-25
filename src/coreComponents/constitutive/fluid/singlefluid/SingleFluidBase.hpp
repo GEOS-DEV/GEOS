@@ -119,16 +119,35 @@ public:
   GEOS_HOST_DEVICE
   static void computeValues( FLUIDWRAPPER const fluidWrapper,
                              real64 const pressure,
+                             real64 const temperature,
                              real64 & density,
                              real64 & viscosity )
   {
     real64 dDensity_dPressure = 0.0;
     real64 dViscosity_dPressure = 0.0;
-    fluidWrapper.compute( pressure,
-                          density,
-                          dDensity_dPressure,
-                          viscosity,
-                          dViscosity_dPressure );
+    real64 dDensity_dTemperature = 0.0;
+    real64 dViscosity_dTemperature = 0.0;
+    real64 internalEnergy = 0.0;
+    real64 dInternalEnergy_dPressure = 0.0;
+    real64 dInternalEnergy_dTemperature = 0.0;
+    real64 enthalpy = 0.0;
+    real64 dEnthalpy_dPressure = 0.0;
+    real64 dEnthalpy_dTemperature = 0.0;
+
+    fluidWrapper.compute( real64 const pressure,
+                          real64 const temperature,
+                          real64 & density,
+                          real64 & dDensity_dPressure,
+                          real64 & dDensity_dTemperature,
+                          real64 & viscosity,
+                          real64 & dViscosity_dPressure,
+                          real64 & dViscosity_dTemperature,
+                          real64 & internalEnergy,
+                          real64 & dInternalEnergy_dPressure,
+                          real64 & dInternalEnergy_dTemperature,
+                          real64 & enthalpy,
+                          real64 & dEnthalpy_dPressure,
+                          real64 & dEnthalpy_dTemperature );
   }
 
 //START_SPHINX_INCLUDE_02

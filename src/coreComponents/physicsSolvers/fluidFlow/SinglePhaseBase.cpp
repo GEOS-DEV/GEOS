@@ -543,6 +543,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
                                            datumElevation,
                                            datumPressure,
                                            fluidWrapper,
+                                           tempTableWrapper,
                                            elevationValues.toNestedView(),
                                            pressureValues.toView() );
 
