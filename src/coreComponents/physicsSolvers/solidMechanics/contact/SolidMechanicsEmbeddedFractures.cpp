@@ -59,11 +59,6 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
     setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
 }
 
-SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
-{
-  // TODO Auto-generated destructor stub
-}
-
 void SolidMechanicsEmbeddedFractures::postInputInitialization()
 {
   ContactSolverBase::postInputInitialization();

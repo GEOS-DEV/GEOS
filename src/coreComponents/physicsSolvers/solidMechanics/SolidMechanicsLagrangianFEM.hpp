@@ -111,7 +111,7 @@ public:
                CRSMatrix< real64, globalIndex > & localMatrix,
                ParallelVector & rhs,
                ParallelVector & solution,
-               bool const setSparsity = false ) override;
+               bool setSparsity = true ) override;
 
   virtual void
   setSparsityPattern( DomainPartition & domain,
