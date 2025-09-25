@@ -501,13 +501,13 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
 
     FunctionManager & functionManager = FunctionManager::getInstance();
-
+    TableFunction::KernelWrapper tempTableWrapper
     // Creation of Wrapper in case of TemperatureVsElevationTableName
     if( m_isThermal )
     {
       string const tempTableName = fs.getTemperatureVsElevationTableName();
       TableFunction const & tempTable = functionManager.getGroup< TableFunction >( tempTableName );
-      TableFunction::KernelWrapper tempTableWrapper = tempTable.createKernelWrapper();
+      tempTableWrapper = tempTable.createKernelWrapper();
     }
 
     // filter out region not in target
