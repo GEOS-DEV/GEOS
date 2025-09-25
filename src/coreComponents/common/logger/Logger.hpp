@@ -149,7 +149,7 @@
       std::ostringstream __msgoss; \
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
       std::string message =  __msgoss.str(); \
-      __msgoss.clear(); \
+      __msgoss = std::ostringstream(); \
       __msgoss << CAUSE_MESSAGE; \
       std::string cause =  __msgoss.str(); \
       std::ostringstream __oss; \
@@ -211,7 +211,7 @@
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
       std::string message =  __msgoss.str(); \
-      __msgoss.clear(); \
+      __msgoss = std::ostringstream(); \
       __msgoss << CAUSE_MESSAGE; \
       std::string cause =  __msgoss.str(); \
       std::ostringstream __oss; \
@@ -276,7 +276,7 @@
       std::ostringstream __msgoss; \
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
       std::string message = __msgoss.str(); \
-      __msgoss.clear(); \
+      __msgoss = std::ostringstream(); \
       __msgoss << CAUSE_MESSAGE; \
       std::string cause =  __msgoss.str(); \
       std::ostringstream __oss; \
