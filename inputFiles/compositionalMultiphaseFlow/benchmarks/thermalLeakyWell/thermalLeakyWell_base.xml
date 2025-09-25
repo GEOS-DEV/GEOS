@@ -3,22 +3,22 @@
 <Problem>
 
   <Events
-    maxTime="17.28e7">
+    maxTime="8.64e6">
     <PeriodicEvent
       name="outputs"
       timeFrequency="8.64e6"
       target="/Outputs/vtkOutput"/>
     <PeriodicEvent
       name="statistics"
-      timeFrequency="1e7"
+      timeFrequency="1e6"
       target="/Tasks/compflowStatistics"/>
     <PeriodicEvent
       name="timeHistoryOutput"
-      timeFrequency="1e7"
+      timeFrequency="4.32e6"
       target="/Outputs/timeHistoryOutput"/>
     <PeriodicEvent
       name="timeHistoryCollection"
-      timeFrequency="1e7"
+      timeFrequency="4.32e6"
       target="/Tasks/compOutfluxCollection"/>
     <PeriodicEvent
       name="solverApplications"
@@ -168,7 +168,7 @@
     <FieldSpecification   
       name="bcPressure"
       objectPath="faceManager"
-      setNames="{ east, west, south, north }"
+      setNames="{ xneg }"
       fieldName="pressure"
       functionName="pressureFunction"
       scale="1"/>
