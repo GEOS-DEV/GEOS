@@ -106,7 +106,7 @@ public:
     // Copy the original nonzeros
     for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
     {
-      globalIndex const *cols = patternOriginal.getColumns( localRow ).dataIfContiguous();
+      globalIndex const * cols = patternOriginal.getColumns( localRow ).dataIfContiguous();
       pattern.insertNonZeros( localRow, cols, cols + patternOriginal.numNonZeros( localRow ));
     }
 

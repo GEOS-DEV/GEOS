@@ -402,6 +402,12 @@ public:
                ParallelVector & solution,
                bool const setSparsity = true );
 
+  /**
+   * @brief Set the sparsity pattern of the linear system matrix
+   * @param domain the domain containing the mesh and fields
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern to be filled
+   */
   virtual void
   setSparsityPattern( DomainPartition & domain,
                       DofManager & dofManager,

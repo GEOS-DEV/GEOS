@@ -53,8 +53,8 @@ public:
                           DofManager & dofManager ) const override;
 
   virtual void setSparsityPattern( DomainPartition & domain,
-                           DofManager & dofManager,
-                           SparsityPattern< globalIndex > & pattern ) override;
+                                   DofManager & dofManager,
+                                   SparsityPattern< globalIndex > & pattern ) override;
 
   virtual void implicitStepComplete( real64 const & time_n,
                                      real64 const & dt,

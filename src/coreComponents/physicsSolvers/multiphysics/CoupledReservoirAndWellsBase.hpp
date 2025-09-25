@@ -159,7 +159,7 @@ public:
     // Copy the original nonzeros
     for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
     {
-      globalIndex const *cols = patternDiag.getColumns( localRow ).dataIfContiguous();
+      globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
       pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ));
     }
 
