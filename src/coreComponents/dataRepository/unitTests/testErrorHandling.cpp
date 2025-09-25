@@ -202,6 +202,8 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
       - priority: 0
         inputFile: /path/to/file.xml
         inputLine: 32
+    cause: >-
+      Error cause: testValue == 5
     sourceLocation:
       file: {}
       line: {}
