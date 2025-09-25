@@ -2702,8 +2702,27 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   // Integrate domainF:
   for(int i=0; i < m_numDims; i++ )
 	{
-    if( m_stressControl[i] == 1 )
+    if( m_stressControl[i] >= 1 )
+    { // m_domainL may have been modified by stressControl.  Compute a consistent m_domainF so 
+      // box averages are correct.
+      //
+      // For stressControl == 2, we are using the FTable domainL but limiting compression or
+      // tension if specified stress limits are exceeded.  When this limit has been applied,
+      // m_domainF will not be consistent with the FTable.  It can be desirable to have the
+      // domainF(t) response realign with the FTable after unloading (to simplify use of other)
+      // events.  So here we check that the material isn't over-compressed and don't allow 
+      // expansion until we are again consistent with the table.
+      //
+      // m_domainF will be the value from the Ftable.  oldDomainF will be the value from the
+      // previous step/
+      if ( m_stressControl[i] == 2 && ( m_domainL[i] > 0 && oldDomainF[i] > m_domainF[i] ) )
     {
+        m_domainL[i] = 0;
+      }
+      else if ( m_stressControl[i] == 2 && ( m_domainL[i] < 0 && oldDomainF[i] < m_domainF[i] ) )
+      {
+        m_domainL[i] = 0;
+      }
 			m_domainF[i] = oldDomainF[i] + m_domainL[i]*oldDomainF[i]*dt;
     }
   }
