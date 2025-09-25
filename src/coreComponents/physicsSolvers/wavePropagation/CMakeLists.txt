@@ -24,6 +24,13 @@ set( wavePropagationSolvers_headers
      shared/PrecomputeSourcesAndReceiversKernel.hpp
      shared/TaperKernel.hpp
      sem/acoustic/shared/AcousticFields.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderAnisotropicWaveEquationSEM.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderAnisotropicVTISEM.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderAnisotropicTTISEM.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderVTIFletcher.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderTTIFletcher.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderVTIZhang.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderTTIZhang.hpp
      sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.hpp
      sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEMKernel.hpp
      sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIFields.hpp
@@ -67,6 +74,12 @@ set( wavePropagationSolvers_headers
 set( wavePropagationSolvers_sources
      shared/WaveSolverBase.cpp
      sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.cpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderAnisotropicWaveEquationSEM.cpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderVTIFletcher.cpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderTTIFletcher.cpp     
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderVTIZhang.cpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderTTIZhang.cpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderAnisotropicTTISEM.cpp
      sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIFletcherWaveEquationSEM.cpp
      sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIZhangWaveEquationSEM.cpp
      sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIFletcherWaveEquationSEM.cpp

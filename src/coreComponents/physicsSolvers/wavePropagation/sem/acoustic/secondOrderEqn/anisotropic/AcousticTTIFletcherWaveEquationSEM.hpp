@@ -185,9 +185,6 @@ private:
 
   /// Array of size the number of receivers and filled with 0.5 (used for calculating the seismos)
   array1d< real32 > m_seismoCoeff;
-
-  /// Radius around source for isotropic zone
-  real64 m_radiusIsoAroundSource = 10.0;
 };
 
 } /* namespace geos */
