@@ -119,9 +119,25 @@ public:
   GEOS_HOST_DEVICE
   static void computeValues( FLUIDWRAPPER const fluidWrapper,
                              real64 const pressure,
-                             real64 const temperature,
                              real64 & density,
                              real64 & viscosity )
+  {
+    real64 dDensity_dPressure = 0.0;
+    real64 dViscosity_dPressure = 0.0;
+    fluidWrapper.compute( pressure,
+                          density,
+                          dDensity_dPressure,
+                          viscosity,
+                          dViscosity_dPressure );
+  }
+
+  template< typename FLUIDWRAPPER >
+  GEOS_HOST_DEVICE
+  static void computeThermalValues( FLUIDWRAPPER const fluidWrapper,
+                                    real64 const pressure,
+                                    real64 const temperature,
+                                    real64 & density,
+                                    real64 & viscosity )
   {
     real64 dDensity_dPressure = 0.0;
     real64 dViscosity_dPressure = 0.0;

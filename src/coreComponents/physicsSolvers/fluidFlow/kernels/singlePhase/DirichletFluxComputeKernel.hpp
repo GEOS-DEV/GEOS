@@ -193,8 +193,8 @@ public:
     localIndex const kf  = m_sei( iconn, Order::FACE );
 
     // Get flow quantities on the elem/face
-    real64 faceDens, faceVisc, temperature = 0.0;
-    constitutive::SingleFluidBaseUpdate::computeValues( m_fluidWrapper, m_facePres[kf], temperature, faceDens, faceVisc );
+    real64 faceDens, faceVisc;
+    constitutive::SingleFluidBaseUpdate::computeValues( m_fluidWrapper, m_facePres[kf], faceDens, faceVisc );
 
     mobility[Order::ELEM] = m_mob[er][esr][ei];
     singlePhaseBaseKernels::MobilityKernel::compute( faceDens, faceVisc, mobility[Order::FACE] );

@@ -421,6 +421,13 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
                    "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
                    "   - Remove the hydrostatic equilibrium initial condition from the XML file",
                    InputError );
+
+    // ensure that the temperature tables are defined for thermal simulations
+    GEOS_THROW_IF( m_isThermal && bc.getTemperatureVsElevationTableName().empty(),
+                   getCatalogName() << " " << bc.getDataContext()
+                                    << ": " << EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString()
+                                    << " must be provided for a thermal simulation",
+                   InputError );
   } );
 
   if( equilCounter == 0 )
@@ -495,16 +502,11 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     FunctionManager & functionManager = FunctionManager::getInstance();
 
     // Creation of Wrapper in case of TemperatureVsElevationTableName
-    TableFunction::KernelWrapper tempTableWrapper;
-    bool tempTableGradient = false;
-
-    if ( !fs.getTemperatureVsElevationTableName().empty() )
+    if( m_isThermal )
     {
-
-      tempTableGradient = true;
-      string const tempTableName = fs.getTemperatureVsElevationTableName();
-      TableFunction const & tempTable = functionManager.getGroup< TableFunction >( tempTableName );
-      tempTableWrapper = tempTable.createKernelWrapper();
+    string const tempTableName = fs.getTemperatureVsElevationTableName();
+    TableFunction const & tempTable = functionManager.getGroup< TableFunction >( tempTableName );
+    TableFunction::KernelWrapper tempTableWrapper = tempTable.createKernelWrapper();
     }
 
     // filter out region not in target
@@ -533,24 +535,49 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
       typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
       // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
-      bool const equilHasConverged =
-        HydrostaticPressureKernel::launch( numPointsInTable,
-                                           maxNumEquilIterations,
-                                           equilTolerance,
-                                           gravVector,
-                                           minElevation,
-                                           elevationIncrement,
-                                           datumElevation,
-                                           datumPressure,
-                                           fluidWrapper,
-                                           tempTableWrapper,
-                                           elevationValues.toNestedView(),
-                                           pressureValues.toView() );
+      if( m_isThermal )
+      {
+        bool const equilHasConverged =
+          thermalSinglePhaseBaseKernels::
+            HydrostaticPressureKernel::launch( numPointsInTable,
+                                               maxNumEquilIterations,
+                                               equilTolerance,
+                                               gravVector,
+                                               minElevation,
+                                               elevationIncrement,
+                                               datumElevation,
+                                               datumPressure,
+                                               fluidWrapper,
+                                               tempTableWrapper,
+                                               elevationValues.toNestedView(),
+                                               pressureValues.toView() );
 
-      GEOS_THROW_IF( !equilHasConverged,
-                     getCatalogName() << " " << getDataContext() <<
-                     ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
-                     std::runtime_error );
+        GEOS_THROW_IF( !equilHasConverged,
+                       getCatalogName() << " " << getDataContext() <<
+                       ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
+                       std::runtime_error );
+      }
+      else
+      {
+        bool const equilHasConverged =
+          singlePhaseBaseKernels::
+            HydrostaticPressureKernel::launch( numPointsInTable,
+                                               maxNumEquilIterations,
+                                               equilTolerance,
+                                               gravVector,
+                                               minElevation,
+                                               elevationIncrement,
+                                               datumElevation,
+                                               datumPressure,
+                                               fluidWrapper,
+                                               elevationValues.toNestedView(),
+                                               pressureValues.toView() );
+
+        GEOS_THROW_IF( !equilHasConverged,
+                       getCatalogName() << " " << getDataContext() <<
+                       ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
+                       std::runtime_error );
+      }
     } );
 
     // Step 3.4: create hydrostatic pressure table
@@ -578,7 +605,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
       pres[k] = presTableWrapper.compute( &elevation );
-      if ( tempTableGradient )
+      if ( m_isThermal )
       {
         temp[k] = tempTableWrapper.compute( &elevation );
       }
