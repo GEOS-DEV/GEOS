@@ -501,7 +501,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
 
     FunctionManager & functionManager = FunctionManager::getInstance();
-    TableFunction::KernelWrapper tempTableWrapper
+    TableFunction::KernelWrapper tempTableWrapper;
     // Creation of Wrapper in case of TemperatureVsElevationTableName
     if( m_isThermal )
     {
