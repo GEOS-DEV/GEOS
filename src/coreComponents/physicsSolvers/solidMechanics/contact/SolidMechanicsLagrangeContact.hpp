@@ -57,13 +57,9 @@ public:
   setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
-  virtual void
-  setupSystem( DomainPartition & domain,
-               DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
-               ParallelVector & rhs,
-               ParallelVector & solution,
-               bool const setSparsity = true ) override final;
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   SparsityPattern< globalIndex > & pattern ) override;
 
   virtual std::unique_ptr< PreconditionerBase< LAInterface > >
   createPreconditioner( DomainPartition & domain ) const override;
