@@ -2,10 +2,12 @@
 set( gtest_geosx_tests
      testDataTypes.cpp
      testFixedSizeDeque.cpp
+     testMacros.cpp
      testMpiWrapper.cpp
      testTypeDispatch.cpp
      testLifoStorage.cpp
-     testUnits.cpp )
+     testUnits.cpp
+     testToolchain.cpp )
 
 set( gtest_geosx_mpi_tests
      testMpiWrapper.cpp )

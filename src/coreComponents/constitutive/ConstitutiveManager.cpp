@@ -74,12 +74,12 @@ ConstitutiveManager::hangConstitutiveRelation( string const & constitutiveRelati
 
   // 1. Allocate constitutive relation
   // we only register the constitutive relation if it has not been registered yet.
-  GEOS_ERROR_CTX_IF( constitutiveGroup->hasGroup( constitutiveRelationInstanceName ),
-                     GEOS_FMT( "Error! The constitutive relation {} has already been registered on the subRegion {}. "
-                               "Make sure that the same constitutive model is not listed as a material on a"
-                               " region both as a stand-alone one and as part of a compound constitutive model.",
-                               constitutiveRelationInstanceName, parent->getDataContext().toString() ),
-                     parent->getDataContext() );
+  GEOS_ERROR_IF( constitutiveGroup->hasGroup( constitutiveRelationInstanceName ),
+                 GEOS_FMT( "Error! The constitutive relation {} has already been registered on the subRegion {}. "
+                           "Make sure that the same constitutive model is not listed as a material on a"
+                           " region both as a stand-alone one and as part of a compound constitutive model.",
+                           constitutiveRelationInstanceName, parent->getDataContext().toString() ),
+                 parent->getDataContext() );
 
   ConstitutiveBase const & constitutiveRelation = getConstitutiveRelation( constitutiveRelationInstanceName );
 

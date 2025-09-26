@@ -44,6 +44,7 @@
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "fileIO/Outputs/ChomboIO.hpp"
 
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsFixedStressThermoPoromechanicsKernelsDispatchTypeList.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
@@ -333,10 +334,8 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
     {
       elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr, CellElementSubRegion & elementSubRegion )
       {
-        string const & solidMaterialName = elementSubRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-
-        arrayView2d< real64 const > const
-        rho = elementSubRegion.getConstitutiveModel( solidMaterialName ).getReference< array2d< real64 > >( SolidBase::viewKeyStruct::densityString() );
+        SolidBase & solid = getConstitutiveModel< SolidBase >( elementSubRegion );
+        arrayView2d< real64 const > const rho = solid.getDensity();
 
         SortedArray< localIndex > & elemsAttachedToSendOrReceiveNodes = getElemsAttachedToSendOrReceiveNodes( elementSubRegion );
         SortedArray< localIndex > & elemsNotAttachedToSendOrReceiveNodes = getElemsNotAttachedToSendOrReceiveNodes( elementSubRegion );
@@ -439,7 +438,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 
 real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
                                                 real64 const & dt,
-                                                const int cycleNumber,
+                                                integer const cycleNumber,
                                                 DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -708,15 +707,15 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
         "\nWarning!"
         "\n{} {}: There is no displacement boundary condition applied to this problem in the {} direction. \n"
         "The problem may be ill-posed.\n";
-      GEOS_WARNING_CTX_IF( isDisplacementBCAppliedGlobal[0] == 0, // target set is empty
-                           GEOS_FMT( bcLogMessage,
-                                     getCatalogName(), getDataContext(), 'x' ), getDataContext() );
-      GEOS_WARNING_CTX_IF( isDisplacementBCAppliedGlobal[1] == 0, // target set is empty
-                           GEOS_FMT( bcLogMessage,
-                                     getCatalogName(), getDataContext(), 'y' ), getDataContext() );
-      GEOS_WARNING_CTX_IF( isDisplacementBCAppliedGlobal[2] == 0, // target set is empty
-                           GEOS_FMT( bcLogMessage,
-                                     getCatalogName(), getDataContext(), 'z' ), getDataContext() );
+      GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[0] == 0, // target set is empty
+                       GEOS_FMT( bcLogMessage,
+                                 getCatalogName(), getDataContext(), 'x' ), getDataContext() );
+      GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[1] == 0, // target set is empty
+                       GEOS_FMT( bcLogMessage,
+                                 getCatalogName(), getDataContext(), 'y' ), getDataContext() );
+      GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[2] == 0, // target set is empty
+                       GEOS_FMT( bcLogMessage,
+                                 getCatalogName(), getDataContext(), 'z' ), getDataContext() );
     }
   }
 
@@ -1287,10 +1286,9 @@ SolidMechanicsLagrangianFEM::
     totalResidualNorm = std::max( residual, totalResidualNorm );
   } );
 
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-  {
-    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), totalResidualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), totalResidualNorm ));
+  getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), totalResidualNorm );
 
   return totalResidualNorm;
 }

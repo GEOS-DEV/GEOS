@@ -86,15 +86,15 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
-  GEOS_THROW_CTX_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
-                     getCatalogName() << " " << getDataContext() <<
-                     ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
-                     InputError, getDataContext() );
+  GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
+                 getCatalogName() << " " << getDataContext() <<
+                 ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
+                 InputError, getDataContext() );
 
-  GEOS_THROW_CTX_IF( m_hasCapPressure,
-                     getCatalogName() << " " << getDataContext() <<
-                     ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
-                     InputError, getDataContext() );
+  GEOS_THROW_IF( m_hasCapPressure,
+                 getCatalogName() << " " << getDataContext() <<
+                 ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
+                 InputError, getDataContext() );
 }
 
 void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGroups()
@@ -144,10 +144,10 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
       minVal.min( transMultiplier[iface] );
     } );
 
-    GEOS_THROW_CTX_IF( minVal.get() <= 0.0,
-                       getCatalogName() << " " << getDataContext() <<
-                       ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
-                       std::runtime_error, getDataContext() );
+    GEOS_THROW_IF( minVal.get() <= 0.0,
+                   getCatalogName() << " " << getDataContext() <<
+                   ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
+                   std::runtime_error, getDataContext() );
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
@@ -726,6 +726,8 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( real64 const & G
   }
 
   GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
+
+  getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), residualNorm );
 
   return residualNorm;
 }

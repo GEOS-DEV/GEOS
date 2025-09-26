@@ -102,10 +102,10 @@ void BlackOilFluidBase::fillWaterData( array1d< array1d< real64 > > const & tabl
                         getFullName() << ": four columns (pressure, formation volume factor, compressibility, and viscosity) are expected for water",
                         InputError );
 
-  GEOS_THROW_CTX_IF( m_waterParams.referencePressure > 0.0 || m_waterParams.formationVolFactor > 0.0 ||
-                     m_waterParams.compressibility > 0.0 || m_waterParams.viscosity > 0.0,
-                     getFullName() << ": input is redundant (user provided both water data and a water pvt file)",
-                     InputError, getDataContext() );
+  GEOS_THROW_IF( m_waterParams.referencePressure > 0.0 || m_waterParams.formationVolFactor > 0.0 ||
+                 m_waterParams.compressibility > 0.0 || m_waterParams.viscosity > 0.0,
+                 getFullName() << ": input is redundant (user provided both water data and a water pvt file)",
+                 InputError, getDataContext() );
 
   m_waterParams.referencePressure = tableValues[0][0];
   m_waterParams.formationVolFactor = tableValues[0][1];
@@ -280,9 +280,9 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
 
 void BlackOilFluidBase::createAllKernelWrappers()
 {
-  GEOS_THROW_CTX_IF( m_hydrocarbonPhaseOrder.size() != 1 && m_hydrocarbonPhaseOrder.size() != 2,
-                     GEOS_FMT( "{}: the number of hydrocarbon phases must be 1 (oil) or 2 (oil+gas)", getFullName() ),
-                     InputError, getDataContext() );
+  GEOS_THROW_IF( m_hydrocarbonPhaseOrder.size() != 1 && m_hydrocarbonPhaseOrder.size() != 2,
+                 GEOS_FMT( "{}: the number of hydrocarbon phases must be 1 (oil) or 2 (oil+gas)", getFullName() ),
+                 InputError, getDataContext() );
 
   if( m_formationVolFactorTableKernels.empty() && m_viscosityTableKernels.empty() )
   {
@@ -311,9 +311,9 @@ void BlackOilFluidBase::validateTable( TableFunction const & table,
   // we only issue a warning here, as we still want to allow this configuration
   for( localIndex i = 3; i < property.size(); ++i )
   {
-    GEOS_THROW_CTX_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
-                       GEOS_FMT( "{}: in table '{}', viscosity values must be monotone", getFullName(), table.getName() ),
-                       InputError, getDataContext() );
+    GEOS_THROW_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
+                   GEOS_FMT( "{}: in table '{}', viscosity values must be monotone", getFullName(), table.getName() ),
+                   InputError, getDataContext() );
   }
 
   // we don't check the first value, as it may be used to specify surface conditions

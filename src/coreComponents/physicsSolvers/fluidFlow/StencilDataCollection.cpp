@@ -68,11 +68,11 @@ void StencilDataCollection::postInputInitialization()
     Group & physicsSolverManager = problemManager.getGroup( "Solvers" );
 
     m_solver = physicsSolverManager.getGroupPointer< FlowSolverBase >( m_solverName );
-    GEOS_THROW_CTX_IF( m_solver == nullptr,
-                       GEOS_FMT( "{}: Could not find flow solver named '{}'.",
-                                 getDataContext(),
-                                 m_solverName ),
-                       InputError, getDataContext() );
+    GEOS_THROW_IF( m_solver == nullptr,
+                   GEOS_FMT( "{}: Could not find flow solver named '{}'.",
+                             getDataContext(),
+                             m_solverName ),
+                   InputError, getDataContext() );
   }
 
   { // find mesh & discretization
@@ -113,12 +113,12 @@ void StencilDataCollection::initializePostInitialConditionsPostSubGroups()
                                       getName(), connCount, m_discretization->getName() ) );
     ++supportedStencilCount;
   } );
-  GEOS_ERROR_CTX_IF( supportedStencilCount == 0,
-                     GEOS_FMT( "{}: No compatible discretization was found.", getDataContext() ),
-                     getDataContext() );
-  GEOS_ERROR_CTX_IF( supportedStencilCount > 1,
-                     GEOS_FMT( "{}: Multiple discretization was found.", getDataContext() ),
-                     getDataContext() );
+  GEOS_ERROR_IF( supportedStencilCount == 0,
+                 GEOS_FMT( "{}: No compatible discretization was found.", getDataContext() ),
+                 getDataContext() );
+  GEOS_ERROR_IF( supportedStencilCount > 1,
+                 GEOS_FMT( "{}: Multiple discretization was found.", getDataContext() ),
+                 getDataContext() );
 }
 
 

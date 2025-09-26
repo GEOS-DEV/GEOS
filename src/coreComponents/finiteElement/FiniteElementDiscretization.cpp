@@ -62,9 +62,9 @@ FiniteElementDiscretization::~FiniteElementDiscretization()
 
 void FiniteElementDiscretization::postInputInitialization()
 {
-  GEOS_ERROR_CTX_IF( m_useVem < 0 || m_useVem > 1,
-                     getDataContext() << ": The flag useVirtualElements can be either 0 or 1",
-                     getDataContext() );
+  GEOS_ERROR_IF( m_useVem < 0 || m_useVem > 1,
+                 getDataContext() << ": The flag useVirtualElements can be either 0 or 1",
+                 getDataContext() );
 }
 
 std::unique_ptr< FiniteElementBase >
@@ -205,10 +205,10 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     {
 #if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
-        GEOS_ERROR_CTX_IF( m_formulation != Formulation::SEM,
-                           getDataContext() << ": Element type Hexahedron with order 2 available" <<
-                           " only when using the Spectral Element Method",
-                           getDataContext() );
+        GEOS_ERROR_IF( m_formulation != Formulation::SEM,
+                       getDataContext() << ": Element type Hexahedron with order 2 available" <<
+                       " only when using the Spectral Element Method",
+                       getDataContext() );
         return std::make_unique< Q2_Hexahedron_Lagrange_GaussLobatto >();
 #else
       GEOS_ERROR( "Cannot compile this with HIP active." );
@@ -233,10 +233,10 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     {
 #if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
-        GEOS_ERROR_CTX_IF( m_formulation != Formulation::SEM,
-                           getDataContext() << ": Element type Hexahedron with order 3 available" <<
-                           " only when using the Spectral Element Method",
-                           getDataContext() );
+        GEOS_ERROR_IF( m_formulation != Formulation::SEM,
+                       getDataContext() << ": Element type Hexahedron with order 3 available" <<
+                       " only when using the Spectral Element Method",
+                       getDataContext() );
         return std::make_unique< Q3_Hexahedron_Lagrange_GaussLobatto >();
 #else
       GEOS_ERROR( "Cannot compile this with HIP active." );
@@ -261,10 +261,10 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     {
 #if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
-        GEOS_ERROR_CTX_IF( m_formulation != Formulation::SEM,
-                           getDataContext() << ": Element type Hexahedron with order 4 available only" <<
-                           " when using the Spectral Element Method",
-                           getDataContext() );
+        GEOS_ERROR_IF( m_formulation != Formulation::SEM,
+                       getDataContext() << ": Element type Hexahedron with order 4 available only" <<
+                       " when using the Spectral Element Method",
+                       getDataContext() );
         return std::make_unique< Q4_Hexahedron_Lagrange_GaussLobatto >();
 #else
       GEOS_ERROR( "Cannot compile this with HIP active." );
@@ -289,10 +289,10 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
     {
 #if !defined( GEOS_USE_HIP )
       case ElementType::Hexahedron:
-        GEOS_ERROR_CTX_IF( m_formulation != Formulation::SEM,
-                           getDataContext() << ": Element type Hexahedron with order 5 available only" <<
-                           " when using the Spectral Element Method",
-                           getDataContext() );
+        GEOS_ERROR_IF( m_formulation != Formulation::SEM,
+                       getDataContext() << ": Element type Hexahedron with order 5 available only" <<
+                       " when using the Spectral Element Method",
+                       getDataContext() );
         return std::make_unique< Q5_Hexahedron_Lagrange_GaussLobatto >();
 #else
       GEOS_ERROR( "Cannot compile this with HIP active." );

@@ -33,7 +33,7 @@ namespace geos
 {
 static constexpr std::string_view g_level1Start = "  - ";
 static constexpr std::string_view g_level1Next =  "    ";
-static constexpr std::string_view g_level2Start = "    - ";
+// static constexpr std::string_view g_level2Start = "    - "; // unused for now
 static constexpr std::string_view g_level2Next =  "      ";
 static constexpr std::string_view g_level3Start = "      - ";
 static constexpr std::string_view g_level3Next =  "        ";
@@ -147,6 +147,12 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setType( ErrorLogger::MsgType msg
   return *this;
 }
 
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCause( std::string_view cause )
+{
+  m_cause = cause;
+  return *this;
+}
+
 void ErrorLogger::ErrorMsg::addContextInfoImpl( ErrorLogger::ErrorContext && ctxInfo )
 {
   m_contextsInfo.emplace_back( std::move( ctxInfo ) );
@@ -256,6 +262,13 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
       }
     }
 
+    // error cause
+    if( !errorMsg.m_cause.empty() )
+    {
+      yamlFile << g_level1Next << "cause: >-\n";
+      streamMultilineYamlAttribute( errorMsg.m_cause, yamlFile, g_level2Next );
+    }
+
     // Location of the error in the code
     if( !errorMsg.m_file.empty() )
     {
@@ -264,17 +277,14 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
       yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
     }
     // Information about the stack trace
-    if( !errorMsg.isValidStackTrace() )
-    {
-      yamlFile << g_level1Next << "sourceCallStack:\n";
-      yamlFile << g_level3Start << "callStackMessage: " << errorMsg.m_sourceCallStack[0] << "\n";
-    }
-    else if( errorMsg.m_sourceCallStack.size() > 0 )
+    if( !errorMsg.m_sourceCallStack.empty() )
     {
       yamlFile << g_level1Next << "sourceCallStack:\n";
       for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
       {
-        yamlFile << g_level3Start << "frame" << i << ": " << errorMsg.m_sourceCallStack[i] << "\n";
+        yamlFile << ( errorMsg.isValidStackTrace() ?
+                      GEOS_FMT( "{}frame{}: {}\n", g_level3Start, i, errorMsg.m_sourceCallStack[i] ) :
+                      GEOS_FMT( "{}{}\n", g_level3Start, errorMsg.m_sourceCallStack[i] ) );
       }
     }
 

@@ -96,6 +96,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     YPAR,
     ZPAR,
     SCHEMA,
+    VALIDATE_INPUT,
     NONBLOCKING_MPI,
     SUPPRESS_PINNED,
     PROBLEMNAME,
@@ -109,7 +110,9 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
 
   const option::Descriptor usage[] =
   {
-    { UNKNOWN, 0, "", "", Arg::unknown, "USAGE: geosx -i input.xml [options]\n\nOptions:" },
+    { UNKNOWN, 0, "", "", Arg::unknown, "USAGE: geosx -i input.xml [options]\n"
+                                        "       geosx -s schema-output.xml\n\n"
+                                        "Options:" },
     { HELP, 0, "?", "help", Arg::None, "\t-?, --help" },
     { INPUT, 0, "i", "input", Arg::nonEmpty, "\t-i, --input, \t Input xml filename (required)" },
     { RESTART, 0, "r", "restart", Arg::nonEmpty, "\t-r, --restart, \t Target restart filename" },
@@ -117,6 +120,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     { YPAR, 0, "y", "ypartitions", Arg::numeric, "\t-y, --y-partitions, \t Number of partitions in the y-direction" },
     { ZPAR, 0, "z", "zpartitions", Arg::numeric, "\t-z, --z-partitions, \t Number of partitions in the z-direction" },
     { SCHEMA, 0, "s", "schema", Arg::nonEmpty, "\t-s, --schema, \t Name of the output schema" },
+    { VALIDATE_INPUT, 0, "v", "validate-input", Arg::None, "\t-v, --validate-input, \t Only do the loading phase, and not actual simulation. Useful to validate 'input'." },
     { NONBLOCKING_MPI, 0, "b", "use-nonblocking", Arg::None, "\t-b, --use-nonblocking, \t Use non-blocking MPI communication" },
     { PROBLEMNAME, 0, "n", "name", Arg::nonEmpty, "\t-n, --name, \t Name of the problem, used for output" },
     { SUPPRESS_PINNED, 0, "s", "suppress-pinned", Arg::None, "\t-s, --suppress-pinned, \t Suppress usage of pinned memory for MPI communication buffers" },
@@ -143,7 +147,13 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     int columns = getenv( "COLUMNS" ) ? atoi( getenv( "COLUMNS" )) : 120;
     option::printUsage( fwrite, stdout, usage, columns );
 
-    if( options[HELP] )
+    if( noXML )
+    {
+      std::cout << '\n';
+      GEOS_LOG_RANK( "No XML input file nor schema specified. Exiting..." );
+      throw NotAnError();
+    }
+    else if( options[HELP] )
     {
       throw NotAnError();
     }
@@ -205,6 +215,11 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       case SCHEMA:
       {
         commandLineOptions->schemaName = opt.arg;
+      }
+      break;
+      case VALIDATE_INPUT:
+      {
+        commandLineOptions->onlyValidateInput = true;
       }
       break;
       case PROBLEMNAME:

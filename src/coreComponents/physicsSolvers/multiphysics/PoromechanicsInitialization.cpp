@@ -71,12 +71,12 @@ postInputInitialization()
   Group & problemManager = this->getGroupByPath( "/Problem" );
   Group & physicsSolverManager = problemManager.getGroup( "Solvers" );
 
-  GEOS_THROW_CTX_IF( !physicsSolverManager.hasGroup( m_poromechanicsSolverName ),
-                     GEOS_FMT( "{}: {} solver named {} not found",
-                               getWrapperDataContext( viewKeyStruct::poromechanicsSolverNameString() ),
-                               POROMECHANICS_SOLVER::catalogName(),
-                               m_poromechanicsSolverName ),
-                     InputError, getWrapperDataContext( viewKeyStruct::poromechanicsSolverNameString() ) );
+  GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_poromechanicsSolverName ),
+                 GEOS_FMT( "{}: {} solver named {} not found",
+                           getWrapperDataContext( viewKeyStruct::poromechanicsSolverNameString() ),
+                           POROMECHANICS_SOLVER::catalogName(),
+                           m_poromechanicsSolverName ),
+                 InputError, getWrapperDataContext( viewKeyStruct::poromechanicsSolverNameString() ) );
 
   m_poromechanicsSolver = &physicsSolverManager.getGroup< POROMECHANICS_SOLVER >( m_poromechanicsSolverName );
 
@@ -84,12 +84,12 @@ postInputInitialization()
   {
     TasksManager & tasksManager = problemManager.getGroup< TasksManager >( "Tasks" );
 
-    GEOS_THROW_CTX_IF( !tasksManager.hasGroup( m_solidMechanicsStatisticsName ),
-                       GEOS_FMT( "{}: {} task named {} not found",
-                                 getWrapperDataContext( viewKeyStruct::solidMechanicsStatisticsNameString() ),
-                                 SolidMechanicsStatistics::catalogName(),
-                                 m_solidMechanicsStatisticsName ),
-                       InputError, getWrapperDataContext( viewKeyStruct::solidMechanicsStatisticsNameString() ) );
+    GEOS_THROW_IF( !tasksManager.hasGroup( m_solidMechanicsStatisticsName ),
+                   GEOS_FMT( "{}: {} task named {} not found",
+                             getWrapperDataContext( viewKeyStruct::solidMechanicsStatisticsNameString() ),
+                             SolidMechanicsStatistics::catalogName(),
+                             m_solidMechanicsStatisticsName ),
+                   InputError, getWrapperDataContext( viewKeyStruct::solidMechanicsStatisticsNameString() ) );
 
     m_solidMechanicsStatistics = &tasksManager.getGroup< SolidMechanicsStatistics >( m_solidMechanicsStatisticsName );
   }

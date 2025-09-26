@@ -30,8 +30,7 @@ namespace constitutive
 {
 
 ThermalCompressibleSinglePhaseFluid::ThermalCompressibleSinglePhaseFluid( string const & name, Group * const parent ):
-  CompressibleSinglePhaseFluid( name, parent ),
-  m_internalEnergyModelType( ExponentApproximationType::Linear )
+  CompressibleSinglePhaseFluid( name, parent )
 {
   m_densityModelType = ExponentApproximationType::Full;
   m_numDOF=2;
@@ -56,18 +55,16 @@ ThermalCompressibleSinglePhaseFluid::ThermalCompressibleSinglePhaseFluid( string
     setDescription( "Reference fluid internal energy" );
 
   registerWrapper( viewKeyStruct::internalEnergyModelTypeString(), &m_internalEnergyModelType ).
-    setApplyDefaultValue( m_internalEnergyModelType ).
+    setApplyDefaultValue( ExponentApproximationType::Linear ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Type of internal energy model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
 
 }
 
-ThermalCompressibleSinglePhaseFluid::~ThermalCompressibleSinglePhaseFluid() = default;
-
-void ThermalCompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                    localIndex const numConstitutivePointsPerParentIndex )
+void ThermalCompressibleSinglePhaseFluid::allocateConstitutiveData( Group & parent,
+                                                                    localIndex const numPts )
 {
-  CompressibleSinglePhaseFluid::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  CompressibleSinglePhaseFluid::allocateConstitutiveData( parent, numPts );
 
   m_internalEnergy.value.setValues< serialPolicy >( m_referenceInternalEnergy );
 }
@@ -90,9 +87,9 @@ void ThermalCompressibleSinglePhaseFluid::postInputInitialization()
   // Due to the way update wrapper is currently implemented, we can only support one model type
   auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
   {
-    GEOS_THROW_CTX_IF( value != ExponentApproximationType::Linear && value != ExponentApproximationType::Full,
-                       GEOS_FMT( "{}: invalid model type in attribute '{}' (only linear or fully exponential currently supported)", getFullName(), attribute ),
-                       InputError, getDataContext() );
+    GEOS_THROW_IF( value != ExponentApproximationType::Linear && value != ExponentApproximationType::Full,
+                   GEOS_FMT( "{}: invalid model type in attribute '{}' (only linear or fully exponential currently supported)", getFullName(), attribute ),
+                   InputError, getDataContext() );
   };
   checkModelType( m_internalEnergyModelType, viewKeyStruct::internalEnergyModelTypeString() );
 }

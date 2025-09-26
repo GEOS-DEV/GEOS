@@ -157,6 +157,11 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Whether to use a parallel solver (instead of a serial one)" );
 
+  registerWrapper( viewKeyStruct::reuseFactorizationString(), &m_parameters.direct.reuseFactorization ).
+    setApplyDefaultValue( m_parameters.direct.reuseFactorization ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Whether to reuse the LU factorization (experimental)" );
+
   registerWrapper( viewKeyStruct::krylovMaxIterString(), &m_parameters.krylov.maxIterations ).
     setApplyDefaultValue( m_parameters.krylov.maxIterations ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -323,30 +328,30 @@ void LinearSolverParametersInput::postInputInitialization()
 
   static const std::set< integer > binaryOptions = { 0, 1 };
 
-  GEOS_ERROR_CTX_IF( binaryOptions.count( m_parameters.stopIfError ) == 0,
-                     getWrapperDataContext( viewKeyStruct::stopIfErrorString() ) <<
-                     ": option can be either 0 (false) or 1 (true)",
-                     getWrapperDataContext( viewKeyStruct::stopIfErrorString() ) );
-  GEOS_ERROR_CTX_IF( binaryOptions.count( m_parameters.direct.checkResidual ) == 0,
-                     getWrapperDataContext( viewKeyStruct::directCheckResidualString() ) <<
-                     ": option can be either 0 (false) or 1 (true)",
-                     getWrapperDataContext( viewKeyStruct::directCheckResidualString() ) );
-  GEOS_ERROR_CTX_IF( binaryOptions.count( m_parameters.direct.equilibrate ) == 0,
-                     getWrapperDataContext( viewKeyStruct::directEquilString() ) <<
-                     ": option can be either 0 (false) or 1 (true)",
-                     getWrapperDataContext( viewKeyStruct::directEquilString() ) );
-  GEOS_ERROR_CTX_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0,
-                     getWrapperDataContext( viewKeyStruct::directReplTinyPivotString() ) <<
-                     ": option can be either 0 (false) or 1 (true)",
-                     getWrapperDataContext( viewKeyStruct::directReplTinyPivotString() ) );
-  GEOS_ERROR_CTX_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0,
-                     getWrapperDataContext( viewKeyStruct::directIterRefString() ) <<
-                     ": option can be either 0 (false) or 1 (true)",
-                     getWrapperDataContext( viewKeyStruct::directIterRefString() ) );
-  GEOS_ERROR_CTX_IF( binaryOptions.count( m_parameters.direct.parallel ) == 0,
-                     getWrapperDataContext( viewKeyStruct::directParallelString() ) <<
-                     ": option can be either 0 (false) or 1 (true)",
-                     getWrapperDataContext( viewKeyStruct::directParallelString() ) );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.stopIfError ) == 0,
+                 getWrapperDataContext( viewKeyStruct::stopIfErrorString() ) <<
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::stopIfErrorString() ) );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.checkResidual ) == 0,
+                 getWrapperDataContext( viewKeyStruct::directCheckResidualString() ) <<
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::directCheckResidualString() ) );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.equilibrate ) == 0,
+                 getWrapperDataContext( viewKeyStruct::directEquilString() ) <<
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::directEquilString() ) );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0,
+                 getWrapperDataContext( viewKeyStruct::directReplTinyPivotString() ) <<
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::directReplTinyPivotString() ) );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0,
+                 getWrapperDataContext( viewKeyStruct::directIterRefString() ) <<
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::directIterRefString() ) );
+  GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.parallel ) == 0,
+                 getWrapperDataContext( viewKeyStruct::directParallelString() ) <<
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::directParallelString() ) );
 
   GEOS_ERROR_IF_LT_MSG( m_parameters.krylov.maxIterations, 0,
                         getWrapperDataContext( viewKeyStruct::krylovMaxIterString() ) <<
@@ -455,9 +460,7 @@ void LinearSolverParametersInput::print()
     }
   }
   TableLayout const tableLayout = TableLayout( GEOS_FMT( "{}: linear solver", getParent().getName() ),
-                                               { TableLayout::Column()
-                                                   .setName( "Parameter" )
-                                                   .setValuesAlignment( TableLayout::Alignment::left ),
+                                               { TableLayout::Column().setName( "Parameter" ).setValuesAlignment( TableLayout::Alignment::left ),
                                                  "Value" } );
   TableTextFormatter const tableFormatter( tableLayout );
   GEOS_LOG_RANK_0( tableFormatter.toString( tableData ));

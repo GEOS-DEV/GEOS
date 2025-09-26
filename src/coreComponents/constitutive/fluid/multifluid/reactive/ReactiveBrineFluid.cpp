@@ -75,7 +75,8 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "When set to 1, write PVT tables into a CSV file" );
+    setDescription( "When set to 1, write PVT tables into a CSV file.\n"
+                    "If the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0." );
 
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
@@ -156,9 +157,9 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
 
       if( !strs.empty() )
       {
-        GEOS_THROW_CTX_IF( strs.size() < 2,
-                           GEOS_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
-                           InputError, getDataContext() );
+        GEOS_THROW_IF( strs.size() < 2,
+                       GEOS_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
+                       InputError, getDataContext() );
 
         if( strs[0] == "DensityFun" )
         {
@@ -191,17 +192,17 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
   }
 
   // at this point, we have read the file and we check the consistency of non-thermal models
-  GEOS_THROW_CTX_IF( phase1InputParams[PHASE::InputParamOrder::DENSITY].empty(),
-                     GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Density::catalogName() ),
-                     InputError, getDataContext() );
-  GEOS_THROW_CTX_IF( phase1InputParams[PHASE::InputParamOrder::VISCOSITY].empty(),
-                     GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Viscosity::catalogName() ),
-                     InputError, getDataContext() );
+  GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::DENSITY].empty(),
+                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Density::catalogName() ),
+                 InputError, getDataContext() );
+  GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::VISCOSITY].empty(),
+                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Viscosity::catalogName() ),
+                 InputError, getDataContext() );
   // we also detect any inconsistency arising in the enthalpy models
-  GEOS_THROW_CTX_IF( phase1InputParams[PHASE::InputParamOrder::ENTHALPY].empty() &&
-                     ( PHASE::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
-                     GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
-                     InputError, getDataContext() );
+  GEOS_THROW_IF( phase1InputParams[PHASE::InputParamOrder::ENTHALPY].empty() &&
+                 ( PHASE::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
+                 GEOS_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE::Enthalpy::catalogName() ),
+                 InputError, getDataContext() );
 
   bool const isClone = this->isClone();
   TableFunction::OutputOptions const pvtOutputOpts = {
