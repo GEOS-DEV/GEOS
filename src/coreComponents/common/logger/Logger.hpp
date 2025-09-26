@@ -182,16 +182,15 @@
   { \
     if( COND ) \
     { \
-      static constexpr string_view formatString = 
-        "***** WARNING\n" \
-        "***** LOCATION" LOCATION "\n" \
-        "***** BLOCK:  [%u, %u, %u]\n" \
-        "***** THREAD: [%u, %u, %u]\n" \
-        "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
-        "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n" \
-      asm( "trap;" ); \
+      static constexpr string_view formatString = "***** WARNING\n" \
+                                                  "***** LOCATION" LOCATION "\n" \
+                                                                            "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                            "***** THREAD: [%u, %u, %u]\n" \
+                                                                            "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+                                                                                                                "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      asm ( "trap;" ); \
     } \
-  } while( false )
+  }while( false )
 #endif
 
 /**
@@ -264,16 +263,15 @@
   { \
     if( COND ) \
     { \
-      static constexpr string_view formatString = 
-        "***** WARNING\n" \
-        "***** LOCATION" LOCATION "\n" \
-        "***** BLOCK:  [%u, %u, %u]\n" \
-        "***** THREAD: [%u, %u, %u]\n" \
-        "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
-        "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n" \
-      asm( "trap;" ); \
+      static constexpr string_view formatString = "***** WARNING\n" \
+                                                  "***** LOCATION" LOCATION "\n" \
+                                                                            "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                            "***** THREAD: [%u, %u, %u]\n" \
+                                                                            "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+                                                                                                                "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      asm ( "trap;" ); \
     } \
-  } while( false )
+  }while( false )
 #endif
 
 /**
@@ -341,16 +339,15 @@
   { \
     if( COND ) \
     { \
-      static constexpr string_view formatString = 
-        "***** WARNING\n" \
-        "***** LOCATION" LOCATION "\n" \
-        "***** BLOCK:  [%u, %u, %u]\n" \
-        "***** THREAD: [%u, %u, %u]\n" \
-        "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
-        "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n" \
-      asm( "trap;" ); \
+      static constexpr string_view formatString = "***** WARNING\n" \
+                                                  "***** LOCATION" LOCATION "\n" \
+                                                                            "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                            "***** THREAD: [%u, %u, %u]\n" \
+                                                                            "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+                                                                                                                "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      asm ( "trap;" ); \
     } \
-  } while( false )
+  }while( false )
 #endif
 
 /**
