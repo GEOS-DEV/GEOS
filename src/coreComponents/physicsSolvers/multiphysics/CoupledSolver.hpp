@@ -398,6 +398,16 @@ public:
     return result;
   }
 
+  virtual void
+  synchronizeNonlinearSolverParameters() override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->getNonlinearSolverParameters() = getNonlinearSolverParameters();
+      solver->synchronizeNonlinearSolverParameters();
+    } );
+  }
+
 protected:
 
   /**
@@ -699,11 +709,6 @@ protected:
                              EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
                    InputError );
 
-    if( !isSequential )
-    {
-      synchronizeNonlinearSolverParameters();
-    }
-
     if( m_nonlinearSolverParameters.m_nonlinearAccelerationType != NonlinearSolverParameters::NonlinearAccelerationType::None )
     {
       validateNonlinearAcceleration();
@@ -719,13 +724,13 @@ protected:
                  InputError );
   }
 
-  virtual void
-  synchronizeNonlinearSolverParameters() override
+  virtual void initializePostSubGroups() override
   {
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
+    if( !isSequential )
     {
-      solver->getNonlinearSolverParameters() = getNonlinearSolverParameters();
-    } );
+      synchronizeNonlinearSolverParameters();
+    }
   }
 
   virtual void startSequentialIteration( integer const & iter,
