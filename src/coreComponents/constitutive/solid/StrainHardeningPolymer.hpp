@@ -427,13 +427,11 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
   // elastic predictor "trialStress" (assume strainIncrement is all elastic)
   // using current definitions of m_bulkModulus[k] and m_shearModulus[k]
 
-
   real64 scale = StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_bulkModulusT0, m_bulkModulusA, m_bulkModulusB );      // This will actually be some function:   m_bulkModulus[k] = m_defaultBulkModulus + A*f(m_temperature[k]), etc.
   m_bulkModulus[k] = m_defaultBulkModulus * scale;
   
   scale = StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_shearModulusT0, m_shearModulusA, m_shearModulusB);      // This will actually be some function:   m_bulkModulus[k] = m_defaultBulkModulus + A*f(m_temperature[k]), etc.
   m_shearModulus[k] = m_defaultShearModulus *  scale; // This will actually be some function of m_temperature[k]
-
 
   ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, 
                                                          q, 
@@ -512,15 +510,19 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 eigenVectors[3][3] = { { 0 } };
     LvArray::tensorOps::symEigenvectors< 3 >( stretch, eigenVectors, U );
 
-    // Find the largest eigenvalues
-    real64 maximumStretch = 0.0;
+    // Find the largest eigenvalues and compare to max allowable failure stretch (which is temperature dependent)
+    
+    // Stretch to failure at current temperature:
+    real64 failureStretch = m_maximumStretch * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_maximumStretchT0, m_maximumStretchA, m_maximumStretchB );     
+
+    // Maximum principal stretch:
+    real64 maximumStretch = 0.0;  
     for( localIndex i = 0; i < 3; ++i )
     {
         maximumStretch = std::max( stretch[i], maximumStretch );
     }
 
-    real64 stretchAtFailure = m_maximumStretch * StrainHardeningPolymerUpdates::thermalSoftening( m_temperature[k], m_maximumStretchT0, m_maximumStretchA, m_maximumStretchB );     
-    if(maximumStretch > stretchAtFailure)
+    if(maximumStretch > failureStretch)
     {
         m_damage[k][q] = 1.0;
     }
@@ -549,9 +551,6 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 strainHardeningSlope = m_strainHardeningSlope * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_strainHardeningSlopeT0, m_strainHardeningSlopeA, m_strainHardeningSlopeB ); 
     real64 shearSofteningMagnitude = m_shearSofteningMagnitude * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_shearSofteningMagnitudeT0, m_shearSofteningMagnitudeA, m_shearSofteningMagnitudeB );     
     
-      //std::cout<<"temperature "<<m_temperature[k]<<"      bulkModulus "<<m_bulkModulus[k]    <<  "      shearModulus "<<m_shearModulus[k] <<".     yieldy0 "<<yield0   <<".       strainHardeningSlope "<<strainHardeningSlope  <<"         shearSofteningMagnitude "<<shearSofteningMagnitude <<"              maximumStretch: "<< maximumStretch <<std::endl;
-
-
     real64 unrotatedTempPlasticStrain[6] = { 0 };
     real64 plasticStrainIncrement[6] = { 0 };
     

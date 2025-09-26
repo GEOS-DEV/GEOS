@@ -448,7 +448,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "temperatureTable", &m_temperatureTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Array that stores the time-depended domain Temperature" );
+    setDescription( "Array that stores the time-dependent domain Temperature" );
 
   registerWrapper( "stressControlKp", &m_stressControlKp ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -2705,8 +2705,27 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   // Integrate domainF:
   for(int i=0; i < m_numDims; i++ )
 	{
-    if( m_stressControl[i] == 1 )
+    if( m_stressControl[i] >= 1 )
+    { // m_domainL may have been modified by stressControl.  Compute a consistent m_domainF so 
+      // box averages are correct.
+      //
+      // For stressControl == 2, we are using the FTable domainL but limiting compression or
+      // tension if specified stress limits are exceeded.  When this limit has been applied,
+      // m_domainF will not be consistent with the FTable.  It can be desirable to have the
+      // domainF(t) response realign with the FTable after unloading (to simplify use of other)
+      // events.  So here we check that the material isn't over-compressed and don't allow 
+      // expansion until we are again consistent with the table.
+      //
+      // m_domainF will be the value from the Ftable.  oldDomainF will be the value from the
+      // previous step/
+      if ( m_stressControl[i] == 2 && ( m_domainL[i] > 0 && oldDomainF[i] > m_domainF[i] ) )
     {
+        m_domainL[i] = 0;
+      }
+      else if ( m_stressControl[i] == 2 && ( m_domainL[i] < 0 && oldDomainF[i] < m_domainF[i] ) )
+      {
+        m_domainL[i] = 0;
+      }
 			m_domainF[i] = oldDomainF[i] + m_domainL[i]*oldDomainF[i]*dt;
     }
   }
@@ -6390,10 +6409,9 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
         boxMass += particleMass[p];
         boxMatVolume += particleVolume[p];
         boxParticleReferenceVolume += particleReferenceVolume[p];
-        boxKineticEnergy += particleKineticEnergy[p] * particleVolume[p];
-        boxInternalEnergy += particleInternalEnergy[p] * particleVolume[p];
-        boxTemperature += particleTemperature[p] * particleVolume[p];
-        //std::cout << "boxTemp first " << boxTemperature << std::endl;
+        boxKineticEnergy += particleKineticEnergy[p] * particleMass[p];
+        boxInternalEnergy += particleInternalEnergy[p] * particleMass[p];
+        boxTemperature += particleTemperature[p] * particleMass[p];
         for( int i=0; i<6; i++ )
         {
           boxStress[i] += particleStress[p][i] * particleVolume[p]; // volume weighted average, will normalize later.
@@ -6407,26 +6425,26 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   // Additive sync: sxx, syy, szz, sxy, syz, sxz, mass, particle volume, damage
   // Check the voigt indexing of stress
   real64 boxSums[19];
-  boxSums[0] = boxStress[0];       // sig_xx * volume
-  boxSums[1] = boxStress[1];       // sig_yy * volume
-  boxSums[2] = boxStress[2];       // sig_zz * volume
-  boxSums[3] = boxStress[3];       // sig_yz * volume
-  boxSums[4] = boxStress[4];       // sig_xz * volume
-  boxSums[5] = boxStress[5];       // sig_xy * volume
+  boxSums[0] = boxStress[0];       // sig_xx * volume (will be normalized by box volume to give effective continuum stress of porous material)
+  boxSums[1] = boxStress[1];       // sig_yy * volume (will be normalized by box volume)
+  boxSums[2] = boxStress[2];       // sig_zz * volume (will be normalized by box volume)
+  boxSums[3] = boxStress[3];       // sig_yz * volume (will be normalized by box volume)
+  boxSums[4] = boxStress[4];       // sig_xz * volume (will be normalized by box volume)
+  boxSums[5] = boxStress[5];       // sig_xy * volume (will be normalized by box volume)
   boxSums[6] = boxMass;            // total mass in box
   boxSums[7] = boxParticleReferenceVolume > 0.0 ? boxParticleReferenceVolume : 1.0;  // total particle reference volume in box; prevent div0 error
-  boxSums[8] = boxDamage;          // damage * volume
-  boxSums[9] = boxInternalEnergy;          // internal energy * volume
-  boxSums[10] = boxKineticEnergy; // kinetic energy * volume
-  boxSums[11] = boxPlasticStrain[0]; // plasticStrain_xx
-  boxSums[12] = boxPlasticStrain[1]; // plasticStrain_yy
-  boxSums[13] = boxPlasticStrain[2]; // plasticStrain_zz
-  boxSums[14] = boxPlasticStrain[3]; // plasticStrain_yz
-  boxSums[15] = boxPlasticStrain[4]; // plasticStrain_xz
-  boxSums[16] = boxPlasticStrain[5]; // plasticStrain_xy
+  boxSums[8] = boxDamage;            // damage * referenceVolume  (will be normalized by reference volume to give reference volume fraction of damaged material)
+  boxSums[9] = boxInternalEnergy;    // internal energy * mass (will be normalized by mass)
+  boxSums[10] = boxKineticEnergy;    // kinetic energy * mass  (will be normalized by mass)
+  boxSums[11] = boxPlasticStrain[0]; // plasticStrain_xx * matvolume (will be normalized by mat volume, so it isn't reduced by presence of porosity.)
+  boxSums[12] = boxPlasticStrain[1]; // plasticStrain_yy * matvolume (will be normalized by mat volume)
+  boxSums[13] = boxPlasticStrain[2]; // plasticStrain_zz * matvolume (will be normalized by mat volume)
+  boxSums[14] = boxPlasticStrain[3]; // plasticStrain_yz * matvolume (will be normalized by mat volume)
+  boxSums[15] = boxPlasticStrain[4]; // plasticStrain_xz * matvolume (will be normalized by mat volume)
+  boxSums[16] = boxPlasticStrain[5]; // plasticStrain_xy * matvolume (will be normalized by mat volume)
   boxSums[17] = boxMatVolume;
-  boxSums[18] = boxTemperature;
-
+  boxSums[18] = boxTemperature;      // temperature * mass (this is an abitrary choice, could be volume weighted)
+      
   // Do an MPI sync to total these values and write from proc0 to a file.  Also compute global F
   // so file is directly plottable in excel as CSV or something.
   for( localIndex i = 0; i < 19; i++ )
@@ -6448,6 +6466,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   {
     // Calculate the box volume
     real64 boxVolume = m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2];
+    real64 boxReferenceVolume = boxSums[7];
 
     // Write to file
     std::ofstream file;
@@ -6464,42 +6483,42 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     // time | sig_xx | sig_yy | sig_zz | sig_xy | sig_yz | sig_zx | density | damage | internal energy | kinetic energy | epxx | epyy | epzz | epyz | epxz | epxy | total particle volume | particleTemperature | F00 | F11 | F22
     file << time_n + dt
          << ","
-         << boxSums[0] / boxVolume
+         << boxSums[0] / boxVolume // sig_xx
          << ","
-         << boxSums[1] / boxVolume
+         << boxSums[1] / boxVolume // sig_yy
          << ","
-         << boxSums[2] / boxVolume
+         << boxSums[2] / boxVolume // sig_zz
          << ","
-         << boxSums[3] / boxVolume
+         << boxSums[3] / boxVolume // sig_xy
          << ","
-         << boxSums[4] / boxVolume
+         << boxSums[4] / boxVolume // sig_yz
          << ","
-         << boxSums[5] / boxVolume
+         << boxSums[5] / boxVolume // sig_zx
          << ","
-         << boxSums[6] / boxVolume
+         << boxSums[6] / boxVolume // density
          << ","
-         << boxSums[8] / boxSums[7] // We normalize by total particle reference volume because this should equal one if all the material is
+         << boxSums[8] / boxReferenceVolume // We normalize by total particle reference volume because this should equal one if all the material is
                                     // damaged
          << ", "
-         << boxSums[9] / boxVolume
+         << boxSums[9] / boxMass
          << ", "
-         << boxSums[10] / boxVolume
+         << boxSums[10] / boxMass
          << ", "
-         << boxSums[11] / boxVolume
+         << boxSums[11] / boxMatVolume
          << ", "
-         << boxSums[12] / boxVolume
+         << boxSums[12] / boxMatVolume
          << ", "
-         << boxSums[13] / boxVolume
+         << boxSums[13] / boxMatVolume
          << ", "
-         << boxSums[14] / boxVolume
+         << boxSums[14] / boxMatVolume
          << ", "
-         << boxSums[15] / boxVolume
+         << boxSums[15] / boxMatVolume
          << ", "
-         << boxSums[16] / boxVolume
+         << boxSums[16] / boxMatVolume
          << ", "
-         << boxSums[17]
+         << boxMass
          << ", "
-         << boxSums[18] / boxSums[17]
+         << boxSums[18] / boxMass
          << ", "
          << m_domainF[0]
          << ", "

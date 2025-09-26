@@ -995,7 +995,7 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
 
   
   // MM make alphaDense  here
-  double alphaDense[3][3];
+  real64 alphaDense[3][3] = { { 0 } };
   for (int i = 0; i < 3; ++i)
   {
       for (int j = 0; j < 3; ++j)
@@ -1017,6 +1017,22 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
   //    std::cout << std::endl;
   //}
 
+  // Construct the dense 3x3 transversely isotropic thermal expansion tensor.
+  // We do this in a loop to easily implement the indicial expression, but    
+  // this could be more efficient since we only need 6 of the components.
+  real64 alphaDense[3][3] = { { 0 } };
+  for (int i = 0; i < 3; ++i)
+  {
+      for (int j = 0; j < 3; ++j)
+      {
+          real64 delta = (i == j) ? 1.0 : 0.0;
+          alphaDense[i][j] = (m_alphaL - m_alphaT) * materialDirection[i] * materialDirection[j] + delta * m_alphaT;
+      }
+  }
+
+  // The trial stress increment is computed using the transversely isotropic basis construction of the stiffness
+  // tensor, and we subtract a thermal strain rate from the symmetric portion of the velocity gradient too
+  // allow for thermal expansion effects:
   real64 stressIncrementDense[3][3] = { { 0 } };
   //std::cout<<"stressIncrementDense:   " << stressIncrementDense <<std::endl;
   int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
@@ -1052,10 +1068,7 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
                                           h2*transverselyIsotropicB2(materialDirection,i,j,p,w) +
                                           h3*transverselyIsotropicB3(materialDirection,i,j,p,w) +
                                           h4*transverselyIsotropicB4(materialDirection,i,j,p,w) +
-//                                          h5*transverselyIsotropicB5(materialDirection,i,j,p,w))*D[voigtMap[p][w]]*timeIncrement;
-//                                        still need to find temp rate 
-                                          h5 * transverselyIsotropicB5(materialDirection, i, j, p, w)) * (D[voigtMap[p][w]] - (alphaVoigt[voigtMap[p][w]] * temperatureRateNew)) * timeIncrement;
-                                          //std::cout << "Type check: alphaVoigt[voigtMap[p][w]] = " << alphaVoigt[voigtMap[p][w]] << std::endl;
+                                          h5*transverselyIsotropicB5(materialDirection,i,j,p,w))*( D[voigtMap[p][w]] - alphaDense[p][w]*m_temperatureRate[k] )*timeIncrement;
 				}
 			}
 		}
