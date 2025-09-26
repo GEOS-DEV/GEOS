@@ -107,41 +107,19 @@ public:
   }
 
   /**
-   * @brief default destructor
-   */
-  virtual ~CoupledReservoirAndWellsBase () override {}
-
-  /**
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
    */
   /**@{*/
 
-  virtual void
-  setupSystem( DomainPartition & domain,
-               DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
-               ParallelVector & rhs,
-               ParallelVector & solution,
-               bool const setSparsity = true ) override
-  {
-    GEOS_MARK_FUNCTION;
-
-    // call reservoir solver setup (needed in case of SinglePhasePoromechanicsConformingFractures)
-    // TODO this logic does not really work - the pattern can be overwritten below
-    reservoirSolver()->setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
-
-    PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
-  }
-
   virtual void setSparsityPattern( DomainPartition & domain,
                                    DofManager & dofManager,
                                    SparsityPattern< globalIndex > & pattern ) override
   {
-    // Set the sparsity pattern without reservoir-well coupling
+    // Set the reservoir sparsity pattern without reservoir-well coupling
     SparsityPattern< globalIndex > patternDiag;
-    dofManager.setSparsityPattern( patternDiag );
+    reservoirSolver()->setSparsityPattern( domain, dofManager, patternDiag );
 
     // Get the original row lengths (diagonal blocks only)
     array1d< localIndex > rowLengths( patternDiag.numRows());
