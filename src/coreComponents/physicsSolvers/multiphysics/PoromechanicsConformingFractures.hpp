@@ -183,6 +183,8 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
+    integer const numComp = numFluidComponents();
+
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &, //  meshBodyName,
                                                                         MeshLevel const & mesh,
                                                                         string_array const & ) // regionNames
@@ -228,7 +230,10 @@ protected:
                 if( k1 != k0 )
                 {
                   localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
-                  rowLengths[rowNumber] += 3*numNodesPerElement;
+                  for( integer ic = 0; ic < numComp; ic++ )
+                  {
+                    rowLengths[rowNumber + ic] += 3*numNodesPerElement;
+                  }
                 }
               }
             }
@@ -250,6 +255,8 @@ protected:
                                            SparsityPatternView< globalIndex > const & pattern ) const
   {
     GEOS_MARK_FUNCTION;
+
+    integer const numComp = numFluidComponents();
 
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                         MeshLevel const & mesh,
@@ -325,7 +332,10 @@ protected:
                     for( localIndex i = 0; i < 3; ++i )
                     {
                       globalIndex const colIndex = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
-                      pattern.insertNonZero( rowIndex, colIndex );
+                      for( integer ic = 0; ic < numComp; ic++ )
+                      {
+                        pattern.insertNonZero( rowIndex + ic, colIndex );
+                      }
                     }
                   }
                 }
