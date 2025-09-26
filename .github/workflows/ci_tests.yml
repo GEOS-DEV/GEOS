@@ -236,7 +236,6 @@ jobs:
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON: ubuntu-22.04
-      USE_SCCACHE: false
     secrets: inherit
 
   # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.
