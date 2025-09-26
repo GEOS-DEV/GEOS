@@ -252,10 +252,7 @@ public:
   {
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      if( m_writeStatisticsCSV >= 2 )
-      {
-        solver->updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iteration );
-      }
+      solver->updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iteration );
     } );
   }
 
