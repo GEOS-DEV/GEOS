@@ -26,6 +26,7 @@ namespace geos
 {
 using namespace fields;
 using wsCoordType = WaveSolverUtils::wsCoordType;
+
 /**
  * @brief Base class for damping matrix computers
  */
@@ -143,6 +144,58 @@ public:
       );
   }
 };
+
+/**
+ * @brief Template deduction for computeDampingMatrices
+ *
+ * This wrapper function explicitly specifies all template parameters,
+ * eliminating template argument deduction issues that can occur when
+ * the compiler has trouble matching argument types.
+ */
+template< typename DampingComputer, typename FE_TYPE, typename EXEC_POLICY, typename ATOMIC_POLICY >
+void callComputeDampingMatrices(
+  DampingComputer & dampingComputer,
+  FE_TYPE const & finiteElement,
+  CellElementSubRegion & elementSubRegion,
+  arrayView2d< localIndex const > const & elemsToNodes,
+  arrayView2d< localIndex const > const & elemsToFaces,
+  ArrayOfArraysView< localIndex const > const & facesToNodes,
+  arrayView1d< integer const > const & facesDomainBoundaryIndicator,
+  arrayView1d< localIndex const > const & freeSurfaceFaceIndicator,
+  arrayView1d< localIndex const > const & lateralSurfaceFaceIndicator,
+  arrayView1d< localIndex const > const & bottomSurfaceFaceIndicator,
+  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const & nodeCoords,
+  arrayView1d< real32 const > const & velocity,
+  arrayView1d< real32 const > const & density,
+  arrayView1d< real32 const > const & vti_epsilon,
+  arrayView1d< real32 const > const & vti_delta,
+  arrayView1d< real32 > const & damping_pp,
+  arrayView1d< real32 > const & damping_pq,
+  arrayView1d< real32 > const & damping_qp,
+  arrayView1d< real32 > const & damping_qq )
+{
+  // Forward the call with explicitly specified template parameters
+  dampingComputer.template computeDampingMatrices< FE_TYPE, EXEC_POLICY, ATOMIC_POLICY >(
+    finiteElement,
+    elementSubRegion,
+    elemsToNodes,
+    elemsToFaces,
+    facesToNodes,
+    facesDomainBoundaryIndicator,
+    freeSurfaceFaceIndicator,
+    lateralSurfaceFaceIndicator,
+    bottomSurfaceFaceIndicator,
+    nodeCoords,
+    velocity,
+    density,
+    vti_epsilon,
+    vti_delta,
+    damping_pp,
+    damping_pq,
+    damping_qp,
+    damping_qq
+    );
+}
 
 } // namespace geos
 

@@ -762,7 +762,8 @@ void AcousticSecondOrderAnisotropicWaveEquationSEM::initializeMatricesTemplate( 
 
       // 3. Delegate damping matrix computation to the specific implementation (Zhang or Fletcher)
       DampingComputer dampingComputer;
-      dampingComputer.template computeDampingMatrices< FE_TYPE, EXEC_POLICY, ATOMIC_POLICY >(
+      callComputeDampingMatrices< DampingComputer, FE_TYPE, EXEC_POLICY, ATOMIC_POLICY >(
+        dampingComputer,
         finiteElement,
         elementSubRegion,
         elemsToNodes,
@@ -789,5 +790,6 @@ void AcousticSecondOrderAnisotropicWaveEquationSEM::initializeMatricesTemplate( 
 // Explicit template instantiations
 template void AcousticSecondOrderAnisotropicWaveEquationSEM::initializeMatricesTemplate< ZhangDampingComputer >( MeshLevel & mesh, string_array const & regionNames );
 template void AcousticSecondOrderAnisotropicWaveEquationSEM::initializeMatricesTemplate< FletcherDampingComputer >( MeshLevel & mesh, string_array const & regionNames );
+
 
 } // namespace geos
