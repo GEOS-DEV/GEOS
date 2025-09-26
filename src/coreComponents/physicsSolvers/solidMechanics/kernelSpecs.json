@@ -96,6 +96,8 @@
         "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>",
         "PorousSolid<ModifiedCamClay, ConstantPermeability>",
         "PorousSolid<ModifiedCamClay, CarmanKozenyPermeability>"
+        "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, ConstantPermeability>"
+        "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, CarmanKozenyPermeability>"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",
