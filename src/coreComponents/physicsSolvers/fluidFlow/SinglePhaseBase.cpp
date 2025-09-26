@@ -429,6 +429,19 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
                                     << ": " << EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString()
                                     << " must be provided for a thermal simulation",
                    InputError );
+
+    //ensure that compositions are empty
+    GEOS_THROW_IF( !bc.getComponentFractionVsElevationTableNames().empty(),
+                   getCatalogName() << " " << bc.getDataContext()
+                                    << ": " << EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString()
+                                    << " must not be provided for a single phase simulation.",
+                   InputError );
+
+    GEOS_THROW_IF( !bc.getComponentNames().empty(),
+                   getCatalogName() << " " << bc.getDataContext()
+                                    << ": " << EquilibriumInitialCondition::viewKeyStruct::componentNamesString()
+                                    << " must not be provided for a single phase simulation.",
+                   InputError );
   } );
 
   if( equilCounter == 0 )
@@ -606,7 +619,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
       pres[k] = presTableWrapper.compute( &elevation );
-      if ( m_isThermal )
+      if( m_isThermal )
       {
         temp[k] = tempTableWrapper.compute( &elevation );
       }
