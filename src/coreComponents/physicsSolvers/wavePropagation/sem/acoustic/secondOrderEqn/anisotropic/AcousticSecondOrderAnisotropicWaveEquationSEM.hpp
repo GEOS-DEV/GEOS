@@ -113,7 +113,10 @@ public:
    */
   virtual real64 computeTimeStep( real64 & dtOut ) override;
 
-
+  struct viewKeyStruct : WaveSolverBase::viewKeyStruct
+  {
+    static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
+  } waveEquationViewKeys;
 
 protected:
   virtual void postInputInitialization() override;
@@ -165,12 +168,6 @@ private:
    * @brief Precompute surface field indicators for boundary conditions.
    */
   virtual void precomputeSurfaceFieldIndicator( DomainPartition & domain );
-
-
-  struct viewKeyStruct : WaveSolverBase::viewKeyStruct
-  {
-    static constexpr char const * pressureNp1AtReceiversString() { return "pressureNp1AtReceivers"; }
-  } waveEquationViewKeys;
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
   array2d< real32 > m_pressureNp1AtReceivers;
