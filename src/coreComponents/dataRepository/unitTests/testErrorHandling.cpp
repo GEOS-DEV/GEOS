@@ -99,7 +99,11 @@ void endLocalLoggerTest( ErrorLogger & errorLogger,
 
 TEST( ErrorHandling, testYamlFileWarningOutput )
 {
-  ErrorLogger g_errorLogger;  // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+  ErrorLogger g_errorLogger; // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
+#pragma GCC diagnostic pop
+
   beginLocalLoggerTest( g_errorLogger, "warningTestOutput.yaml" );
 
   GET_LINE( line1 ); GEOS_WARNING( "Conflicting pressure boundary conditions" );
@@ -161,7 +165,11 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
 
 TEST( ErrorHandling, testYamlFileExceptionOutput )
 {
-  ErrorLogger g_errorLogger;  // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+  ErrorLogger g_errorLogger; // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
+#pragma GCC diagnostic pop
+
   beginLocalLoggerTest( g_errorLogger, "exceptionTestOutput.yaml" );
   size_t line1;
 
@@ -217,7 +225,11 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
 
 TEST( ErrorHandling, testYamlFileErrorOutput )
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
   ErrorLogger g_errorLogger; // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
+#pragma GCC diagnostic pop
+
   beginLocalLoggerTest( g_errorLogger, "errorTestOutput.yaml" );
 
   GET_LINE( line1 ); EXPECT_EXIT( GEOS_ERROR_IF_GT_MSG( testValue, testMaxPrecision,
@@ -265,7 +277,11 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
 #ifdef GEOS_ASSERT_ENABLED
 TEST( ErrorHandling, testYamlFileAssertOutput )
 {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
   ErrorLogger g_errorLogger; // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
+#pragma GCC diagnostic pop
+
   beginLocalLoggerTest( g_errorLogger, "assertTestOutput.yaml" );
 
   GET_LINE( line1 ); EXPECT_EXIT( GEOS_ASSERT_MSG( testValue > testMinPrecision && testValue < testMaxPrecision,
