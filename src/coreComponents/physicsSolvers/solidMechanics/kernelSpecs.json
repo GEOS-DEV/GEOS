@@ -95,8 +95,8 @@
         "PorousSolid<ElasticIsotropic, ConstantPermeability>",
         "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>",
         "PorousSolid<ModifiedCamClay, ConstantPermeability>",
-        "PorousSolid<ModifiedCamClay, CarmanKozenyPermeability>"
-        "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, ConstantPermeability>"
+        "PorousSolid<ModifiedCamClay, CarmanKozenyPermeability>",
+        "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, ConstantPermeability>",
         "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, CarmanKozenyPermeability>"
       ],
       "FE_TYPE": [
