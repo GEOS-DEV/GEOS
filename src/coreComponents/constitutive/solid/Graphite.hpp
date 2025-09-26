@@ -1019,20 +1019,6 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
   real64 stressIncrementDense[3][3] = { { 0 } };
   //std::cout<<"stressIncrementDense:   " << stressIncrementDense <<std::endl;
   int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
-  //std::cout<<"voigtMap:   " << voigtMap <<std::endl;
-	double alphaVoigt[6];
-  //std::cout<< "alphaVoigt:   " << alphaVoigt <<std::endl;
-  // Voigt notation mapping for symmetric tensors
-
-  alphaVoigt[0] = alphaDense[0][0];
-  alphaVoigt[1] = alphaDense[1][1];
-  alphaVoigt[2] = alphaDense[2][2];
-  alphaVoigt[3] = alphaDense[1][2]; 
-  alphaVoigt[4] = alphaDense[0][2]; 
-  alphaVoigt[5] = alphaDense[0][1]; 
-  //std::cout<< "alphaVoigt[5]" <<  alphaVoigt[5] <<std::endl;
-  //real64 temperatureRateNew = m_temperatureRate[k];
-  //std::cout<<"temperature rate:   " << m_temperatureRate << std::endl;
 
   for(int i=0; i<3; i++)
 	{

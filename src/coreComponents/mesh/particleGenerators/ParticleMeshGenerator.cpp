@@ -312,9 +312,6 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       // Temperature Rate
       particleTemperatureRate[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::TemperatureRate )];
 
-      // Temperature Rate
-      particleTemperatureRate[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::TemperatureRate )];
-
       // strengthScale
       particleStrengthScale[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::StrengthScale )];
 

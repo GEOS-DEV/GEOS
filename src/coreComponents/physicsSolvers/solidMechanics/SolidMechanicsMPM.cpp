@@ -1397,7 +1397,6 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particleHeatCapacity >( getName() );
         subRegion.registerField< particleReferencePorosity >( getName() );
         subRegion.registerField< particleReferenceTemperature >( getName() );
-        subRegion.registerField< particleReferenceTemperatureRate >( getName() );
         subRegion.registerField< particleInternalEnergy >( getName() );
         subRegion.registerField< particleKineticEnergy >( getName() );
         subRegion.registerField< particleArtificialViscosity >( getName() );
@@ -1966,7 +1965,6 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     arrayView1d< real64 > const particleReferenceVolume = subRegion.getField< fields::mpm::particleReferenceVolume >();
     arrayView1d< real64 > const particleReferencePorosity = subRegion.getField< fields::mpm::particleReferencePorosity >();
     arrayView1d< real64 > const particleReferenceTemperature = subRegion.getField< fields::mpm::particleReferenceTemperature >();
-    arrayView1d< real64 > const particleReferenceTemperatureRate = subRegion.getField< fields::mpm::particleReferenceTemperatureRate >();
 
 
     // Are these fields automatically set on initiailization?
@@ -2012,7 +2010,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       particleReferenceVolume[p] = particleVolume[p];
       particleReferencePorosity[p] = particlePorosity[p];
       particleReferenceTemperature[p] = particleTemperature[p];
-      particleReferenceTemperatureRate[p] = particleTemperatureRate[p];
+
       // Should already be initialized by default value from DECLARE_FIELD
       particleDeleteFlag[p] = 0;
       particleCrystalHealFlag[p] = 0;
@@ -6400,12 +6398,6 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
           y > boxAverageMin[1] && y < boxAverageMax[1] && 
           z > boxAverageMin[2] && z < boxAverageMax[2] )
       {
-
-        // Print particle temperature for debugging
-        //std::cout << "Particle " << p 
-        //          << " Position: (" << x << ", " << y << ", " << z << ")"
-        //          << " Temperature: " << particleTemperature[p] << std::endl;
-
         boxMass += particleMass[p];
         boxMatVolume += particleVolume[p];
         boxParticleReferenceVolume += particleReferenceVolume[p];
@@ -6516,7 +6508,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
          << ", "
          << boxSums[16] / boxMatVolume
          << ", "
-         << boxMass
+         << boxMatVolume
          << ", "
          << boxSums[18] / boxMass
          << ", "

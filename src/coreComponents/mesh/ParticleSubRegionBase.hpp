@@ -317,24 +317,6 @@ public:
   arrayView2d< real64 > getParticleSurfaceTraction()
   { return m_particleSurfaceTraction; }
 
-
-
-  /**
-   * @brief Get the shrinkage flag of each particle in this subregion.
-   * @return an arrayView1d of const particle shrinkage flag
-   */
-  arrayView1d< int const > getParticleShrinkageFlag() const
-  { return m_particleShrinkageFlag; }
-
-  /**
-   * @copydoc getParticleShrinkageFlag() const
-   */
-  arrayView1d< int > getParticleShrinkageFlag()
-  { return m_particleShrinkageFlag; }
-
-
-
-
   /**
    * @brief Get the group in which the constitutive models of this subregion are registered.
    * @return a pointer to the const group in which the constitutive models are registered
@@ -484,9 +466,6 @@ public:
   
     /// @return String key for the member level field for the particle surface traction.
     static constexpr char const * particleSurfaceTractionString() { return "particleSurfaceTraction"; }
-
-    /// @return String key for the member level field for the particle shrinkage flag.
-    static constexpr char const * particleShrinkageFlagString() { return "particleShrinkageFlag"; }
   };
 
   /**
@@ -618,9 +597,6 @@ protected:
 
   /// Member level field for the particle surface traction.
   array2d< real64 > m_particleSurfaceTraction;
-
-  /// Member level field for the particle shrinkage flag.
-  array1d< int > m_particleShrinkageFlag;
 
   /// Indices of particles that are not ghosts
   SortedArray< localIndex > m_activeParticleIndices;

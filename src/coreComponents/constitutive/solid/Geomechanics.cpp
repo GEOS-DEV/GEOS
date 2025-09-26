@@ -30,16 +30,10 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_b2( 0.0 ),
   m_b3( 0.0 ),
   m_b4( 0.0 ),
-<<<<<<< HEAD
-  m_C1a( 0.0 ),
-  m_C2a( 0.0 ),
-  m_C3( 0.0 ),
-=======
   m_dstrendh( 0.0 ),
   m_dfslopedh( 0.0 ),
   m_dpeakI1dh( 0.0 ),
   m_dcrdh( 0.0 ),
->>>>>>> origin/feature/mpm
   m_g0( 0.0 ),
   m_g1( 0.0 ),
   m_g2( 0.0 ),
@@ -118,25 +112,6 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Default tangent elastic bulk modulus parameter 4" );
 
-<<<<<<< HEAD
-  registerWrapper( viewKeyStruct::C1aString(), &m_C1a ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Constant for hardened STREN" );
-
-  registerWrapper( viewKeyStruct::C2aString(), &m_C2a ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Constant for hardened FSLOPE" );
-
-  registerWrapper( viewKeyStruct::C3String(), &m_C3 ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Constant for hardened PEAKI1" );
-
-  registerWrapper( viewKeyStruct::C4String(), &m_C4 ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Constant for hardened X, p0" );
-
-  registerWrapper( viewKeyStruct::C5String(), &m_C5 ).
-=======
   registerWrapper( viewKeyStruct::dstrendhString(), &m_dstrendh ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Constant for STREN hardening rate" );
@@ -150,7 +125,6 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setDescription( "Constant for PEAKI1 hardening rate" );
 
   registerWrapper( viewKeyStruct::dcrdhString(), &m_dcrdh ).
->>>>>>> origin/feature/mpm
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Constant for hardened CR" );
 
@@ -448,13 +422,11 @@ void Geomechanics::postInputInitialization()
     // GEOS_THROW_IF( m_t1RateDependence <= 0.0, "t1RateDependence must be greater than 0", InputError );
     // GEOS_THROW_IF( m_t2RateDependence <= 0.0, "t2RateDependence must be greater than 0", InputError );
     // GEOS_THROW_IF( m_fractureEnergyReleaseRate <= 0.0, "fractureEnergyReleaseRate must be greater than 0", InputError );
-    //GEOS_THROW_IF( m_fractureSofteningExponent <= 0.0, "fracture softening exponent must be greater than 0", InputError);
+    GEOS_THROW_IF( m_fractureSofteningExponent <= 0.0, "fracture softening exponent must be greater than 0", InputError);
     GEOS_THROW_IF( m_cr <= 0.0, "cr must be 0 < CR < 1", InputError );
     // GEOS_THROW_IF( m_fluidBulkModulus <= 0.0, "fluidBulkModulus must be greater than 0", InputError );
     // GEOS_THROW_IF( m_initialFluidPressure <= 0.0, "initialFluidPressure must be greater than 0", InputError );
-    //GEOS_THROW_IF( m_C1a < 0.0, "C1a must be greater than or equal to 0", InputError );
-    //GEOS_THROW_IF( m_C2a < 0.0, "C2a must be greater than or equal to 0", InputError );
-    //GEOS_THROW_IF( m_C3 < 0.0, "C3 must be greater than or equal to 0", InputError );
+
 }
 
 

@@ -30,8 +30,7 @@
 namespace geos
 {
 
-class ParticleManager;
-class MeshLevel;
+
 
 namespace constitutive
 {
@@ -2488,7 +2487,7 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
   { 
 	  real64 lTrial = sqrt(I1trialMinusZeta * I1trialMinusZeta + rJ2_trial * rJ2_trial),
 			     lYield = 0.5 * (peakI1_h - X);
-	  I1_0 = Zeta + peakI1_hd - std::min(lTrial, lYield);
+	  I1_0 = Zeta + peakI1_h - std::min(lTrial, lYield);
   }
   else if( (I1trialMinusZeta < peakI1_h) && (I1trialMinusZeta > X) ){ // Trial is above yield surface
 	  I1_0 = I1_trial;
@@ -2799,7 +2798,7 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
                                                const real64 & Zeta,
 									                             const real64 & coher,
                                                const real64 & hardening,
-                                               const real64 & GEOS_UNUSED_PARAM( strengthScale ),
+                                               const real64 & strengthScale,
 									                             const real64 & a1,
 									                             const real64 & a2,
 									                             const real64 & a3,
@@ -2848,11 +2847,11 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
 	// Evaluate Composite Yield Function F(I1) = Ff(I1)*fc(I1) in each region.
 	// The elseif statements have nested if statements, which is not equivalent
 	// to them having a single elseif(A&&B&&C)
-	if( I1mZ < X_h )
+	if( I1mZ < X )
 	{//---------------------------------------------------(I1<X)
 		YIELD = 1;
 	}
-	else if(( I1mZ < Kappa )&&( I1mZ >= X_h )) 
+	else if(( I1mZ < Kappa )&&( I1mZ >= X )) 
   {// ---------------(X<I1<kappa)
 		// p3 is the maximum achievable volumetric plastic strain in compresson
 		// so if a value of 0 has been specified this indicates the user
@@ -2861,19 +2860,19 @@ int GeomechanicsUpdates::computeYieldFunction( const real64 & I1,
 		// **Elliptical Cap Function: (fc)**
 		// fc = sqrt(1.0 - Pow((Kappa-I1mZ)/(Kappa-X)),2.0);
 		// faster version: fc2 = fc^2
-		real64 fc2 = 1.0 - ((Kappa-I1mZ)/(Kappa-X_h))*((Kappa-I1mZ)/(Kappa-X_h));
+		real64 fc2 = 1.0 - ((Kappa-I1mZ)/(Kappa-X))*((Kappa-I1mZ)/(Kappa-X));
 		if(rJ2*rJ2 > Ff*Ff*fc2 )
 		{
 			YIELD = 1;
 		}
 	}
-	else if(( I1mZ <= peakI1_hd )&&( I1mZ >= Kappa ))
+	else if(( I1mZ <= peakI1_h )&&( I1mZ >= Kappa ))
   { // -----(kappa<I1<PEAKI1)
 		if(rJ2 > Ff) {
 			YIELD = 1;
 		}
 	}
-	else if( I1mZ > peakI1_hd )
+	else if( I1mZ > peakI1_h )
 	{// --------------------------------(peakI1<I1)
     YIELD = 1;
 	};
@@ -2975,7 +2974,7 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
 		                                              real64 & a4,
 		                                              const real64 & coher,
                                                   const real64 & hardening,
-                                                  const real64 & strengthscale,
+                                                  const real64 & strengthScale,
                                                   const real64 & buckling
 ) const 
 { // Value of I1 at strength=0 (Perturbed by variability)
@@ -3000,39 +2999,35 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
 
   if (fSlope_h > 0.0 && peakI1_h >= 0.0 && isZero( m_stren ) && isZero( ySlope_h) )
   {// ----------------------------------------------Linear Drucker-Prager
-    a1 = peakI1_hd * fSlope_hd;
+    a1 = peakI1_h * fSlope_h;
     a2 = 0.0;
     a3 = 0.0;
-    a4 = fSlope_hd;
+    a4 = fSlope_h;
   }
   else if ( isZero( fSlope_h ) && isZero( peakI1_h ) && stren_h > 0.0 && isZero( ySlope_h ) )
   { // ------------------------------------------------------- Von Mises
-    a1 = stren_hd*nonlinearCoher;
+    a1 = stren_h*nonlinearCoher;
     a2 = 0.0;
     a3 = 0.0;
     a4 = 0.0;
   }
   else if ( fSlope_h > 0.0 && isZero( ySlope_h ) && stren_h > 0.0 && isZero( peakI1_h ) )
   { // ------------------------------------------------------- 0 PEAKI1 to vonMises
-    a1 = stren_hd;
-    a2 = fSlope_hd / stren_hd;
-    a3 = stren_hd;
+    a1 = stren_h;
+    a2 = fSlope_h / stren_h;
+    a3 = stren_h;
     a4 = 0.0;
   }
-  else if (fSlope_hd > ySlope_hd && ySlope_hd > 0.0 && stren_hd > ySlope_hd*peakI1_hd && peakI1_hd >= 0.0)
+  else if (fSlope_h > ySlope_h && ySlope_h > 0.0 && stren_h > ySlope_h*peakI1_h && peakI1_h >= 0.0)
   { // ------------------------------------------------------- Nonlinear Drucker-Prager
-    a1 = stren_hd;
-    a2 = (fSlope_hd-ySlope_hd )/(stren_hd - ySlope_hd*peakI1_hd);
-    a3 = (stren_hd-ySlope_hd*peakI1_hd)*std::exp(-a2*peakI1_hd);
-    a4 = ySlope_hd ;
-    //std::cout<<" hardening: " << hardening << "FSLOPEH: "<< fSlope_h << " YSLOPEH: " << ySlope_h << "STRENh: " << stren_h << "PEAKI1H: "<< peakI1_h << std::endl;
-    //std::cout<<" hardening: " << hardening << "FSLOPEHD: "<< fSlope_hd << " YSLOPEHD: " << ySlope_hd << "STRENhD: " << stren_hd << "PEAKI1HD: "<< peakI1_hd << std::endl;
-
+    a1 = stren_h;
+    a2 = (fSlope_h-ySlope_h )/(stren_h - ySlope_h*peakI1_h);
+    a3 = (stren_h-ySlope_h*peakI1_h)*std::exp(-a2*peakI1_h);
+    a4 = ySlope_h ;
   }
   else
   {
-	  //std::cout<<"bad limit surface parameters. hardening: " << hardening << "FSLOPEH: "<< fSlope_h << " YSLOPEH: " << ySlope_h << "STRENh: " << stren_h << "PEAKI1H: "<< peakI1_h << std::endl;
-	  //std::cout<<"bad limit surface parameters. hardening: " << hardening << "FSLOPEDH: "<< fSlope_hd << " YSLOPEHD: " << ySlope_hd << "STRENhd: " << stren_hd << "PEAKI1HD: "<< peakI1_hd << std::endl;  
+	  std::cout<<"bad limit surface parameters."<<std::endl;
 }
 
   //std::cout<<"m_peakI1 = "<<m_peakI1<<", m_stren = "<<m_stren<<", m_ySlope = "<<m_ySlope<<", m_fSlope = "<<m_fSlope<<std::endl;
@@ -3189,7 +3184,7 @@ public:
     static constexpr char const * damageEvolutionCriterionString() { return "damageEvolutionCriterion"; }
 
     /// string/key for peak t1 shear limit parameter
-    static constexpr char const * peakI1String()  { return "peakI1"; }
+    static constexpr char const * peakI1String() { return "peakI1"; }
 
     /// string/key for F slope shear limit parameter
     static constexpr char const * fSlopeString() { return "fSlope"; }
