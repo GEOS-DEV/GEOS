@@ -9952,7 +9952,7 @@ void SolidMechanicsMPM::printProfilingResults()
   if( rank == 0 )
   {
     std::cout << "---------------------------------------------" << std::endl;
-    std::phSo << "Fraction of total time for one step: " << std::endl;
+    std::cout << "Fraction of total time for one step: " << std::endl;
     for( unsigned int i = 0; i < numIntervals; i++ )
     {
       std::cout << " (" << i << ") ";

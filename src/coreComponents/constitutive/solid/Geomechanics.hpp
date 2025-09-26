@@ -1235,7 +1235,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
       //std::cout<<"Before: ep_dev = ["<<ep_dev[0]<<", "<<ep_dev[1]<<", "<<ep_dev[2]<<", "<<ep_dev[3]<<", "<<ep_dev[4]<<", "<<ep_dev[5]<<"]"<<std::endl;
       LvArray::tensorOps::add< 6 >( ep_dev, creepStrainIncrement );
       //std::cout<<"After: ep_dev = ["<<ep_dev[0]<<", "<<ep_dev[1]<<", "<<ep_dev[2]<<", "<<ep_dev[3]<<", "<<ep_dev[4]<<", "<<ep_dev[5]<<"]"<<std::endl;
-
+ 
 			// relax elastic deviatoric stress due to creep
 			// stress_dev *= devStressCreepScale;
       LvArray::tensorOps::scale< 6 >( stress_dev, devStressCreepScale );
@@ -3048,8 +3048,8 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
 		                                              real64 & a4,
 		                                              const real64 & coher,
                                                   const real64 & hardening,
-                                                  const real64 & buckling,
-                                                  const real64 & strengthScale
+                                                  const real64 & strengthscale,
+                                                  const real64 & buckling
 ) const 
 { // Value of I1 at strength=0 (Perturbed by variability)
   // The shear limit surface is defined in terms of the a1,a2,a3,a4 parameters, but
