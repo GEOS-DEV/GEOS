@@ -419,8 +419,6 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
                                                                    faceManager,
                                                                    elementSubRegion,
                                                                    meshData );
-          constexpr localIndex maxSupportPoints = FE_TYPE::maxSupportPoints;
-          constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
           constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
           for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )

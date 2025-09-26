@@ -630,7 +630,7 @@ template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64
-H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::calcJacobian( localIndex const q,
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::calcJacobian( localIndex const GEOS_UNUSED_PARAM( q ),
                                                                    real64 const (&X)[numNodes][3],
                                                                    real64 (& J)[3][3] )
 {
