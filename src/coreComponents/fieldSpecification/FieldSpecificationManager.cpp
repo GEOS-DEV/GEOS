@@ -110,7 +110,16 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                             string const fieldName )
     {
       InputFlags const flag = fs.getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).getInputFlag();
+
+      // 2.a) If we enter this loop, we know that the set has been created
+      //      Fracture/fault sets are created later and the "apply" call silently ignores them
       isTargetSetCreated.at( setName ) = 1;
+
+      // 2.b) If the fieldName is registered on this target, we record it
+      //      Unfortunately, we need two exceptions:
+      //       - FieldSpecification that do not target a field, like Aquifer, Traction, Equilibrium, etc. For these, the check is not
+      // necessary (the user cannot mess up)
+      //       - Face boundary conditions that target cell-based quantities, like the face BC of the flow solvers
       if( targetGroup.hasWrapper( fieldName ) ||flag == InputFlags::FALSE ||
           targetGroup.getName() == MeshLevel::groupStructKeys::faceManagerString() )     // the field names of the face BCs are not always
                                                                                          // registered on
