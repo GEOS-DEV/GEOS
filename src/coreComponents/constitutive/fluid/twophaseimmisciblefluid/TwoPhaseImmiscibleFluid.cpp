@@ -38,7 +38,7 @@ TwoPhaseImmiscibleFluid::TwoPhaseImmiscibleFluid( string const & name, Group * c
 {
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of fluid phases" );
 
   // 1) First option: specify PVT tables from one file per phase, read the files line by line, and populate the internal TableFunctions
@@ -60,46 +60,40 @@ TwoPhaseImmiscibleFluid::TwoPhaseImmiscibleFluid( string const & name, Group * c
     setDescription( "List of viscosity TableFuncion names from the Function block. \n"
                     "The user must provide one TableFunction per phase, respecting the order provided in \"phaseNames\"." );
 
-  registerField( fields::twophaseimmisciblefluid::phaseDensity{}, &m_phaseDensity.value );
-  registerField( fields::twophaseimmisciblefluid::dPhaseDensity{}, &m_phaseDensity.derivs );
-  registerField( fields::twophaseimmisciblefluid::phaseDensity_n{}, &m_phaseDensity_n );
+  registerField< fields::twophaseimmisciblefluid::phaseDensity >( &m_phaseDensity.value );
+  registerField< fields::twophaseimmisciblefluid::dPhaseDensity >( &m_phaseDensity.derivs );
+  registerField< fields::twophaseimmisciblefluid::phaseDensity_n >( &m_phaseDensity_n );
 
-  registerField( fields::twophaseimmisciblefluid::phaseViscosity{}, &m_phaseViscosity.value );
-  registerField( fields::twophaseimmisciblefluid::dPhaseViscosity{}, &m_phaseViscosity.derivs );
+  registerField< fields::twophaseimmisciblefluid::phaseViscosity >( &m_phaseViscosity.value );
+  registerField< fields::twophaseimmisciblefluid::dPhaseViscosity >( &m_phaseViscosity.derivs );
 }
 
 
-std::unique_ptr< ConstitutiveBase >
-TwoPhaseImmiscibleFluid::deliverClone( string const & name, Group * const parent ) const
-{
-  return ConstitutiveBase::deliverClone( name, parent );
-}
-
-
-void TwoPhaseImmiscibleFluid::resizeFields( localIndex const size, localIndex const numPts )
+void TwoPhaseImmiscibleFluid::allocateConstitutiveData( Group & parent,
+                                                        localIndex const numPts )
 {
   // Assume sole dependency on pressure, i.e. one derivative
-  m_phaseDensity.value.resize( size, numPts, 2 );
-  m_phaseDensity.derivs.resize( size, numPts, 2, 1 );
+  m_phaseDensity.value.resize( 0, numPts, 2 );
+  m_phaseDensity.derivs.resize( 0, numPts, 2, 1 );
 
-  m_phaseDensity_n.resize( size, numPts, 2 );
+  m_phaseDensity_n.resize( 0, numPts, 2 );
 
-  m_phaseViscosity.value.resize( size, numPts, 2 );
-  m_phaseViscosity.derivs.resize( size, numPts, 2, 1 );
-}
+  m_phaseViscosity.value.resize( 0, numPts, 2 );
+  m_phaseViscosity.derivs.resize( 0, numPts, 2, 1 );
 
-
-void TwoPhaseImmiscibleFluid::allocateConstitutiveData( dataRepository::Group & parent,
-                                                        localIndex const numConstitutivePointsPerParentIndex )
-{
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
 
 void TwoPhaseImmiscibleFluid::postInputInitialization()
 {
   ConstitutiveBase::postInputInitialization();
+
+  // Ensure that we have two phases defined
+  GEOS_THROW_IF_NE_MSG( m_phaseNames.size(), 2,
+                        GEOS_FMT( "{}: invalid number of phases. There should be 2 phases defined by {}", getFullName(),
+                                  viewKeyStruct::phaseNamesString() ),
+                        InputError );
 
   // Input relationships can be provided either as text files or TableFunctions.
   m_tableFiles.empty() ? readInputDataFromTableFunctions() : readInputDataFromFileTableFunctions();

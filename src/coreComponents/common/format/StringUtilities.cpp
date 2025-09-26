@@ -178,6 +178,31 @@ template stdVector< string > divideLines( size_t &, string_view );
 template stdVector< string_view > divideLines( size_t &, string_view );
 
 template< typename STRING_T >
+stdVector< STRING_T > divideLines( string_view value )
+{
+  size_t current = 0;
+  size_t end = value.find( '\n' );
+
+  stdVector< STRING_T > lines;
+
+  // Process each line until no more newlines are found
+  while( end != STRING_T::npos )
+  {
+    lines.push_back( STRING_T( value.substr( current, end - current ) ) );
+    current = end + 1;
+    end = value.find( '\n', current );
+  }
+  // Add the last part
+  if( current <= value.size())
+    lines.push_back( STRING_T( value.substr( current )  ) );
+
+  return lines;
+}
+template stdVector< string > divideLines( string_view );
+template stdVector< string_view > divideLines( string_view );
+
+
+template< typename STRING_T >
 stdVector< STRING_T > wrapTextToMaxLength( stdVector< STRING_T > const & lines,
                                            size_t & maxLineLength )
 {
@@ -226,6 +251,13 @@ stdVector< STRING_T > wrapTextToMaxLength( stdVector< STRING_T > const & lines,
 }
 template stdVector< string > wrapTextToMaxLength( stdVector< string > const &, size_t & );
 template stdVector< string_view > wrapTextToMaxLength( stdVector< string_view > const &, size_t & );
+
+string wrapTextToMaxLength( string_view text, size_t maxLineLength )
+{
+  stdVector< string_view > lines = divideLines< string_view >( text );
+  lines = wrapTextToMaxLength( lines, maxLineLength );
+  return join( lines, '\n' );
+}
 
 }
 }

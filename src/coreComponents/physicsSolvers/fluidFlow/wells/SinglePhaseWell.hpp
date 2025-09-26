@@ -269,12 +269,9 @@ public:
 
     // control data (not registered on the mesh)
     static constexpr char const * currentBHPString() { return "currentBHP"; }
-    static constexpr char const * dCurrentBHP_dPresString() { return "dCurrentBHP_dPres"; }
-
+    static constexpr char const * dCurrentBHPString() { return "dCurrentBHP"; }
     static constexpr char const * currentVolRateString() { return "currentVolumetricRate"; }
-    static constexpr char const * dCurrentVolRate_dPresString() { return "dCurrentVolumetricRate_dPres"; }
-    static constexpr char const * dCurrentVolRate_dRateString() { return "dCurrentVolumetricRate_dRate"; }
-
+    static constexpr char const * dCurrentVolRateString() { return "dCurrentVolRate"; }
   };
 
 protected:
@@ -288,6 +285,8 @@ protected:
 
 private:
 
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
+
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
@@ -299,10 +298,12 @@ private:
    * @param time_n the time at the beginning of the time step
    * @param dt the time step dt
    * @param subRegion the well subRegion
+   * @param elemManager the element manager
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion ) override;
+                                        WellElementSubRegion const & subRegion,
+                                        ElementRegionManager const & elemManager ) override;
 
 };
 

@@ -67,7 +67,7 @@ DECLARE_FIELD( initialPorosity,
                "initialPorosity",
                array2d< real64 >,
                0.0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
                "Initial porosity" );
 
@@ -82,7 +82,7 @@ DECLARE_FIELD( referencePorosity,
 DECLARE_FIELD( biotCoefficient,
                "biotCoefficient",
                array1d< real64 >,
-               0,
+               1.0,
                LEVEL_0,
                WRITE_AND_READ,
                "Biot coefficient" );
@@ -114,12 +114,10 @@ DECLARE_FIELD( averageMeanTotalStressIncrement_k,
 DECLARE_FIELD( grainBulkModulus,
                "grainBulkModulus",
                array1d< real64 >,
-               0,
+               -1.0,
                LEVEL_0,
                WRITE_AND_READ,
-               "Biot coefficient" );
-
-
+               "Grain bulk modulus" );
 
 }
 

@@ -144,6 +144,14 @@ public:
    */
   WellControls const & getWellControls( WellElementSubRegion const & subRegion ) const;
 
+
+  /**
+   * @brief Open and close perfs based on user defined perf status table
+   * @param time_n evaluation time
+   * @param domain  the domain
+   */
+  void setPerforationStatus( real64 const & time_n, DomainPartition & domain );
+
   /**
    * @defgroup Solver Interface Functions
    *
@@ -435,12 +443,13 @@ public:
 
   struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
   {
-    static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
     static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
     static constexpr char const * writeSegDebugFlagString() { return "writeSegDebug"; }
     static constexpr char const * useNewCodeString() { return "useNewCode"; }
+
+    static constexpr char const * fluidNamesString() { return "fluidNames"; }
   };
 
 
@@ -452,9 +461,6 @@ private:
    * @param domain the domain parition
    */
   void precomputeData( DomainPartition & domain );
-
-  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
-
 
 protected:
 
@@ -478,7 +484,8 @@ protected:
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion ) = 0;
+                                        WellElementSubRegion const & subRegion,
+                                        ElementRegionManager const & elemManager ) = 0;
 
   virtual void printRates( real64 const & time_n,
                            real64 const & dt,
@@ -529,7 +536,7 @@ protected:
   integer m_timeStepFromTables;
 
   /// flag to freeze the initial state during initialization in coupled problems
-  integer m_keepVariablesConstantDuringInitStep;
+  bool m_keepVariablesConstantDuringInitStep;
   /// flag to write detailed segment properties
   integer m_writeSegDebug;
 

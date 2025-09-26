@@ -23,7 +23,6 @@
 namespace geos
 {
 using namespace dataRepository;
-using namespace constitutive;
 
 CellElementSubRegion::CellElementSubRegion( string const & name, Group * const parent ):
   ElementSubRegionBase( name, parent )
@@ -31,11 +30,6 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation );
   registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
   registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation );
-
-  registerWrapper( viewKeyStruct::constitutiveGroupingString(), &m_constitutiveGrouping ).
-    setSizedFromParent( 0 );
-
-  registerWrapper( viewKeyStruct::constitutivePointVolumeFractionString(), &m_constitutivePointVolumeFraction );
 
   registerWrapper( viewKeyStruct::dNdXString(), &m_dNdX ).setSizedFromParent( 1 ).reference().resizeDimension< 3 >( 3 );
 

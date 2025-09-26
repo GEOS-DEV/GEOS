@@ -20,6 +20,8 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 
+#include "constitutive/fluid/multifluid/Layouts.hpp"
+#include "constitutive/relativePermeability/Layouts.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
@@ -445,6 +447,7 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   void saveState( WellElementSubRegion & subRegion );
+  virtual void postRestartInitialization() override final;
   /*
    * @brief Utility function that checks the consistency of the constitutive models
    * @param[in] domain the domain partition
@@ -473,10 +476,17 @@ protected:
    * @param time_n the time at the beginning of the time step
    * @param dt the time step dt
    * @param subRegion the well subRegion
+   * @param elemManager the element manager
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion ) override;
+                                        WellElementSubRegion const & subRegion,
+                                        ElementRegionManager const & elemManager ) override;
+
+  /**
+   * @brief Create well separator
+   */
+  void createSeparator();
 
   void printRates( real64 const & time_n,
                    real64 const & dt,

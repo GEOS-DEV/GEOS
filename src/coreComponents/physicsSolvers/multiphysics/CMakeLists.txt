@@ -21,8 +21,10 @@ Contains:
 set( multiPhysicsSolvers_headers
     CompositionalMultiphaseReservoirAndWells.hpp
     CoupledReservoirAndWellsBase.hpp
+    CoupledReservoirAndWellKernels.hpp
     CoupledSolver.hpp
     PoromechanicsSolver.hpp
+    PoromechanicsConformingFractures.hpp
     FlowProppantTransportSolver.hpp
     HydrofractureSolver.hpp
     HydrofractureSolverKernels.hpp

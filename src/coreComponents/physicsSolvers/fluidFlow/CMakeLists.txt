@@ -72,6 +72,7 @@ set( fluidFlowSolvers_headers
      kernels/compositional/CapillaryPressureUpdateKernel.hpp
      kernels/compositional/CFLKernel.hpp
      kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp
+     kernels/compositional/CompositionalMultiphaseHybridFVMKernels_impl.hpp
      kernels/compositional/DiffusionDispersionFluxComputeKernel.hpp
      kernels/compositional/DirichletFluxComputeKernel.hpp
      kernels/compositional/DissipationFluxComputeKernel.hpp
@@ -153,7 +154,6 @@ set( fluidFlowSolvers_sources
      kernels/compositional/AquiferBCKernel.cpp
      kernels/compositional/CFLKernel.cpp
      kernels/compositional/FluxComputeKernelBase.cpp
-     kernels/compositional/CompositionalMultiphaseHybridFVMKernels.cpp
      wells/CompositionalMultiphaseWell.cpp
      wells/kernels/CompositionalMultiphaseWellKernels.cpp
      wells/SinglePhaseWell.cpp
@@ -238,4 +238,10 @@ install( TARGETS fluidFlowSolvers LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/li
 
 if( externalComponentDeps )
   target_include_directories( fluidFlowSolvers PUBLIC ${CMAKE_SOURCE_DIR}/externalComponents )
+endif()
+
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+  add_subdirectory( kernels/singlePhase/unitTests )
+  add_subdirectory( wells/unitTests )
 endif()

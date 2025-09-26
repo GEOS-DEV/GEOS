@@ -44,6 +44,8 @@ set( linearAlgebra_headers
      solvers/PreconditionerBlockJacobi.hpp
      solvers/PreconditionerIdentity.hpp
      solvers/PreconditionerJacobi.hpp
+     solvers/PreconditionerNull.hpp
+     solvers/RichardsonSolver.hpp
      solvers/SeparateComponentPreconditioner.hpp
      utilities/Arnoldi.hpp
      utilities/BlockOperator.hpp
@@ -70,6 +72,7 @@ set( linearAlgebra_sources
      solvers/CgSolver.cpp
      solvers/GmresSolver.cpp
      solvers/KrylovSolver.cpp
+     solvers/RichardsonSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp
      utilities/ReverseCutHillMcKeeOrdering.cpp )
 
@@ -197,5 +200,6 @@ install( TARGETS linearAlgebra LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
+  add_subdirectory( utilities/unitTests )
 endif( )
 

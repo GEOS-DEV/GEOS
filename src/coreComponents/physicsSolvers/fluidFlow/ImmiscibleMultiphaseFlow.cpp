@@ -26,9 +26,7 @@
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
-#include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
@@ -59,7 +57,7 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
   :
   FlowSolverBase( name, parent ),
   m_numPhases( 2 ),
-  m_hasCapPressure( 0 ),
+  m_hasCapPressure( false ),
   m_useTotalMassEquation ( 1 )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
@@ -180,27 +178,9 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
 
 void ImmiscibleMultiphaseFlow::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
+  setConstitutiveName< TwoPhaseImmiscibleFluid >( subRegion, viewKeyStruct::fluidNamesString(), "two phase immiscible fluid" );
 
-  string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  fluidName = getConstitutiveName< TwoPhaseImmiscibleFluid >( subRegion );
-  GEOS_ERROR_IF( fluidName.empty(), GEOS_FMT( "{}: Fluid model not found on subregion {}",
-                                              getDataContext(), subRegion.getName() ) );
-
-
-
-  string & relPermName = subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
-                           setPlotLevel( PlotLevel::NOPLOT ).
-                           setRestartFlags( RestartFlags::NO_WRITE ).
-                           setSizedFromParent( 0 ).
-                           setDescription( "Name of the relative permeability constitutive model to use" ).
-                           reference();
-
-  relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
-
-  GEOS_THROW_IF( relPermName.empty(),
-                 GEOS_FMT( "{}: Relative permeability model not found on subregion {}",
-                           getDataContext(), subRegion.getDataContext() ),
-                 InputError );
+  setConstitutiveName< RelativePermeabilityBase >( subRegion, viewKeyStruct::relPermNamesString(), "relative permeability" );
 }
 
 void ImmiscibleMultiphaseFlow::initializePreSubGroups()
@@ -1141,10 +1121,10 @@ real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUS
     physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm[0], localResidualNormalizer[0], residualNorm );
   }
 
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-  {
-    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
+                                                              coupledSolverAttributePrefix(), residualNorm ))
+
+  getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), residualNorm );
 
   return residualNorm;
 }
@@ -1178,7 +1158,7 @@ void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManage
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
   {
-    std::vector< string > fields{ fields::flow::pressure::key(), fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() };
+    stdVector< string > fields{ fields::flow::pressure::key(), fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() };
 
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( fields, regionNames );
@@ -1307,6 +1287,7 @@ void ImmiscibleMultiphaseFlow::implicitStepComplete( real64 const & time,
       }
     } );
   } );
+
 }
 
 void ImmiscibleMultiphaseFlow::saveConvergedState( ElementSubRegionBase & subRegion ) const

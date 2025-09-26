@@ -89,7 +89,7 @@ void CompositionalMultiphaseFluidPVTPackage::postInputInitialization()
 
   auto const getPVTPackagePhaseType = [&]( string const & phaseName )
   {
-    static map< string, pvt::PHASE_TYPE > const phaseTypes
+    static geos::map< string, pvt::PHASE_TYPE > const phaseTypes
     {
       { "gas", pvt::PHASE_TYPE::GAS },
       { "oil", pvt::PHASE_TYPE::OIL },

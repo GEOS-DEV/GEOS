@@ -23,7 +23,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"  // For GravityDensityScheme
+
 namespace geos
 {
 
@@ -90,8 +90,8 @@ public:
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
-  calculateResidualNorm( real64 const & time_n,
-                         real64 const & dt,
+  calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                         real64 const & GEOS_UNUSED_PARAM( dt ),
                          DomainPartition const & domain,
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
@@ -215,9 +215,6 @@ public:
   struct viewKeyStruct : public FlowSolverBase::viewKeyStruct
   {
     // inputs
-    static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
-    static constexpr char const * relPermNamesString() { return "relPermNames"; }
-    static constexpr char const * elemDofFieldString() { return "elemDofField"; }
 
     // density averaging scheme
     static constexpr char const * gravityDensitySchemeString()    { return "gravityDensityScheme"; }
@@ -230,6 +227,10 @@ public:
     // nonlinear solver parameters
     static constexpr char const * maxRelativePresChangeString() { return "maxRelativePressureChange"; }
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
+
+    static constexpr char const * capPressureNamesString() { return "capillary_pressure"; }
+    static constexpr char const * relPermNamesString() { return "relative_permeability"; }
+    static constexpr char const * elemDofFieldString() { return "elemDofField"; }
   };
 
 
@@ -282,7 +283,7 @@ private:
   integer m_numPhases;
 
   /// flag to determine whether or not to apply capillary pressure
-  integer m_hasCapPressure;
+  bool m_hasCapPressure;
 
   /// flag to determine whether or not to use total velocity formulation
   integer m_useTotalMassEquation;
