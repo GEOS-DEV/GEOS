@@ -59,8 +59,8 @@ public:
   using StackVariables = typename Base::StackVariables;
 
   /// Mesh data structure for the element.
-  template <typename SubregionType>
-  using MeshData = typename Base::template MeshData<SubregionType>;
+  template< typename SubregionType >
+  using MeshData = typename Base::template MeshData< SubregionType >;
 
   /// The number of shape functions per element.
   using Base::numNodes;

@@ -51,38 +51,38 @@ public:
                                        6,
                                        GL_BASIS::TensorProduct3D::numSupportPoints >;
 
+  /// The number of shape functions per element.
+  using Base::numNodes;
+
+  /// The number of quadrature points per element.
+  using Base::numQuadraturePoints;
+
+  /// The maximum number of support points per element.
+  using Base::maxSupportPoints;
+
   /// The number of nodes/support points per element per dimension.
   constexpr static localIndex num1dNodes = GL_BASIS::numSupportPoints;
 
   /// Half the number of support points, rounded down. Precomputed for efficiency
   constexpr static localIndex halfNodes = ( GL_BASIS::numSupportPoints - 1 )/ 2;
 
-  /// The number of nodes/support points per element.
-  constexpr static localIndex numNodes = GL_BASIS::TensorProduct3D::numSupportPoints;
-
   /// The number of nodes/support points per face
   constexpr static localIndex numNodesPerFace = GL_BASIS::TensorProduct2D::numSupportPoints;
-
-  /// The maximum number of support points per element.
-  constexpr static localIndex maxSupportPoints = numNodes;
-
-  /// The number of quadrature points per element.
-  constexpr static localIndex numQuadraturePoints = numNodes;
 
   /// Stack variables for the element.
   using StackVariables = typename Base::StackVariables;
 
   /// Mesh data structure for the element.
-  template <typename SubregionType>
-  using MeshData = typename Base::template MeshData<SubregionType>;
+  template< typename SubregionType >
+  using MeshData = typename Base::template MeshData< SubregionType >;
 
   /// @cond DO_NOT_DOCUMENT
-  GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl() = default;
-  GEOS_HOST_DEVICE ~Qk_Hexahedron_Lagrange_GaussLobatto_impl() = default;
-  GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl( Qk_Hexahedron_Lagrange_GaussLobatto_impl const & ) = default;
-  GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl & operator=( Qk_Hexahedron_Lagrange_GaussLobatto_impl const & ) = default;
-  GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl( Qk_Hexahedron_Lagrange_GaussLobatto_impl && ) = default;
-  GEOS_HOST_DEVICE Qk_Hexahedron_Lagrange_GaussLobatto_impl & operator=( Qk_Hexahedron_Lagrange_GaussLobatto_impl && ) = default;
+  Qk_Hexahedron_Lagrange_GaussLobatto_impl() = default;
+  ~Qk_Hexahedron_Lagrange_GaussLobatto_impl() = default;
+  Qk_Hexahedron_Lagrange_GaussLobatto_impl( Qk_Hexahedron_Lagrange_GaussLobatto_impl const & ) = default;
+  Qk_Hexahedron_Lagrange_GaussLobatto_impl & operator=( Qk_Hexahedron_Lagrange_GaussLobatto_impl const & ) = default;
+  Qk_Hexahedron_Lagrange_GaussLobatto_impl( Qk_Hexahedron_Lagrange_GaussLobatto_impl && ) = default;
+  Qk_Hexahedron_Lagrange_GaussLobatto_impl & operator=( Qk_Hexahedron_Lagrange_GaussLobatto_impl && ) = default;
   /// @endcond DO_NOT_DOCUMENT
 
   /**
@@ -277,6 +277,35 @@ public:
     return calcN( q, N );
   }
 
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static
+  real64 calcJacobian( localIndex const q,
+                       real64 const (&X)[numNodes][3],
+                       real64 ( &J )[3][3] );
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static
+  real64 calcJacobian( localIndex const q,
+                       real64 const (&X)[numNodes][3],
+                       StackVariables const &stack,
+                       real64 ( &J )[3][3] );
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
@@ -949,6 +978,48 @@ Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::calcGradN( localIndex cons
   return detJ;
 }
 //*************************************************************************************************
+template< typename GL_BASIS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::calcJacobian( localIndex const q,
+                                                                    real64 const (&X)[numNodes][3],
+                                                                    real64 (& J)[3][3] )
+{
+  for( int i = 0; i < 3; ++i )
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      J[i][j] = 0;
+    }
+  }
+  int qa, qb, qc;
+  GL_BASIS::TensorProduct3D::multiIndex( q, qa, qb, qc );
+  real64 Xmesh[8][3] = {{0}};
+  for( int k = 0; k < 8; k++ )
+  {
+    const localIndex nodeIndex = meshIndexToLinearIndex3D( k );
+    for( int i = 0; i < 3; i++ )
+    {
+      Xmesh[k][i] = X[nodeIndex][i];
+    }
+  }
+  jacobianTransformation( qa, qb, qc, Xmesh, J );
+  return LvArray::tensorOps::determinant< 3 >( J );
+}
+
+template< typename GL_BASIS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::calcJacobian( localIndex const q,
+                                                                    real64 const (&X)[numNodes][3],
+                                                                    StackVariables const & GEOS_UNUSED_PARAM( stack ),
+                                                                    real64 (& J)[3][3] )
+{
+  return calcJacobian( q, X, J );
+}
+
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
@@ -1713,6 +1784,11 @@ public:
 
   using ImplType = Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >;
 
+  Qk_Hexahedron_Lagrange_GaussLobatto(): FiniteElementBase( ImplType::numNodes,
+                                                            ImplType::maxSupportPoints,
+                                                            ImplType::numQuadraturePoints )
+  { }
+
   /**
    * @brief Get the device-compatible implementation type.
    * @return A pointer to the device-compatible implementation type.
@@ -1731,15 +1807,7 @@ public:
     return static_cast< const Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS > * >(this);
   }
 
-
-  Qk_Hexahedron_Lagrange_GaussLobatto():
-    FiniteElementBase( ImplType::numNodes,
-                       ImplType::maxSupportPoints,
-                       ImplType::numQuadraturePoints )
-  {}
-
   virtual ~Qk_Hexahedron_Lagrange_GaussLobatto() override final = default;
-
 };
 
 

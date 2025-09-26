@@ -62,8 +62,8 @@ public:
   using StackVariables = typename Base::StackVariables;
 
   /// Mesh data structure for the element.
-  template <typename SubregionType>
-  using MeshData = typename Base::template MeshData<SubregionType>;
+  template< typename SubregionType >
+  using MeshData = typename Base::template MeshData< SubregionType >;
 
   /// The number of shape functions per element.
   using Base::numNodes;
@@ -411,6 +411,57 @@ public:
     }
   }
 
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static real64 calcJacobian( localIndex const q,
+                              real64 const (&X)[numNodes][3],
+                              real64 (& J)[3][3] )
+  {
+    GEOS_UNUSED_VAR( q );
+    for( int i = 0; i < 3; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
+        J[i][j] = 0;
+      }
+    }
+    real64 m[3][3] = {};
+    for( int i = 0; i < 3; i++ )
+    {
+      for( int j = 0; j < 3; j++ )
+      {
+        m[ i ][ j ] = X[ i + 1 ][ j ] - X[ 0 ][ j ];
+      }
+    }
+    real64 const detJ = LvArray::math::abs( LvArray::tensorOps::determinant< 3 >( m ) );
+    return detJ;
+  }
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static real64 calcJacobian( localIndex const q,
+                              real64 const (&X)[numNodes][3],
+                              StackVariables const & stack,
+                              real64 (& J)[3][3] )
+  {
+    GEOS_UNUSED_VAR( stack );
+    return calcJacobian( q, X, J );
+  }
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
@@ -1344,19 +1395,10 @@ public:
   /// The Implementation type
   using ImplType = BB_Tetrahedron_impl< ORDER >;
 
-  /// The number of nodes per element.
-  using ImplType::numNodes;
-
-  /// The max number of support points per element.
-  using ImplType::maxSupportPoints;
-
-  /// The number of quadrature points per element.
-  using ImplType::numQuadraturePoints;
-
   BB_Tetrahedron():
-    FiniteElementBase( numNodes,
-                       maxSupportPoints,
-                       numQuadraturePoints )
+    FiniteElementBase( ImplType::numNodes,
+                       ImplType::maxSupportPoints,
+                       ImplType::numQuadraturePoints )
   { }
 
 #ifdef __CUDACC__

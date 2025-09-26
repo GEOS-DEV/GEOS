@@ -57,8 +57,8 @@ public:
   using StackVariables = typename Base::StackVariables;
 
   /// Mesh data structure for the element.
-  template <typename SubregionType>
-  using MeshData = typename Base::template MeshData<SubregionType>;
+  template< typename SubregionType >
+  using MeshData = typename Base::template MeshData< SubregionType >;
 
   /// Number of nodes in the element
   using Base::numNodes;
@@ -91,19 +91,12 @@ public:
   using BASIS = LagrangeBasis1;
 
   /// @cond DO_NOT_DOCUMENT
-#ifdef __CUDACC__
-  #pragma diag_push
-  #pragma nv_diag_suppress 20012
-#endif
-  GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl() = default;
-  GEOS_HOST_DEVICE ~H1_Tetrahedron_Lagrange1_Gauss_impl() = default;
-  GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl( H1_Tetrahedron_Lagrange1_Gauss_impl const & ) = default;
-  GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl & operator=( H1_Tetrahedron_Lagrange1_Gauss_impl const & ) = default;
-  GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl( H1_Tetrahedron_Lagrange1_Gauss_impl && ) = default;
-  GEOS_HOST_DEVICE H1_Tetrahedron_Lagrange1_Gauss_impl & operator=( H1_Tetrahedron_Lagrange1_Gauss_impl && ) = default;
-#ifdef __CUDACC__
-  #pragma diag_pop
-#endif
+  H1_Tetrahedron_Lagrange1_Gauss_impl() = default;
+  ~H1_Tetrahedron_Lagrange1_Gauss_impl() = default;
+  H1_Tetrahedron_Lagrange1_Gauss_impl( H1_Tetrahedron_Lagrange1_Gauss_impl const & ) = default;
+  H1_Tetrahedron_Lagrange1_Gauss_impl & operator=( H1_Tetrahedron_Lagrange1_Gauss_impl const & ) = default;
+  H1_Tetrahedron_Lagrange1_Gauss_impl( H1_Tetrahedron_Lagrange1_Gauss_impl && ) = default;
+  H1_Tetrahedron_Lagrange1_Gauss_impl & operator=( H1_Tetrahedron_Lagrange1_Gauss_impl && ) = default;
   /// @endcond DO_NOT_DOCUMENT
 
   /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
@@ -266,6 +259,36 @@ public:
 
     calcFaceBubbleN( pointCoord, N );
   }
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static
+  real64 calcJacobian( localIndex const q,
+                       real64 const (&X)[numNodes][3],
+                       real64 ( &J )[3][3] );
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static
+  real64 calcJacobian( localIndex const q,
+                       real64 const (&X)[numNodes][3],
+                       StackVariables const &stack,
+                       real64 ( &J )[3][3] );
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
@@ -603,6 +626,49 @@ calcN( localIndex const q,
 }
 
 //*************************************************************************************************
+template< typename NUM_Q_POINTS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::calcJacobian( localIndex const q,
+                                                                   real64 const (&X)[numNodes][3],
+                                                                   real64 (& J)[3][3] )
+{
+  for( int i = 0; i < 3; ++i )
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      J[i][j] = 0;
+    }
+  }
+  J[0][0] = X[1][0] - X[0][0];
+  J[0][1] = X[2][0] - X[0][0];
+  J[0][2] = X[3][0] - X[0][0];
+
+  J[1][0] = X[1][1] - X[0][1];
+  J[1][1] = X[2][1] - X[0][1];
+  J[1][2] = X[3][1] - X[0][1];
+
+  J[2][0] = X[1][2] - X[0][2];
+  J[2][1] = X[2][2] - X[0][2];
+  J[2][2] = X[3][2] - X[0][2];
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  return detJ;
+}
+
+template< typename NUM_Q_POINTS >
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+H1_Tetrahedron_Lagrange1_Gauss_impl< NUM_Q_POINTS >::calcJacobian( localIndex const q,
+                                                                   real64 const (&X)[numNodes][3],
+                                                                   StackVariables const & GEOS_UNUSED_PARAM( stack ),
+                                                                   real64 (& J)[3][3] )
+{
+  return calcJacobian( q, X, J );
+}
+
+
 
 template< typename NUM_Q_POINTS >
 GEOS_HOST_DEVICE

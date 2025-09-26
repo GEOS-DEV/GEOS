@@ -937,6 +937,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
         ElementRegionManager & elemManager = meshLevel.getElemManager();
         FaceManager const & faceManager = meshLevel.getFaceManager();
         EdgeManager const & edgeManager = meshLevel.getEdgeManager();
+        // arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const &X = nodeManager.referencePosition();
 
         for( auto const & regionName : regionNames )
         {
@@ -988,6 +989,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
 
                   localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
+                  // feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >(X, &subRegion, meshData, finiteElement);
 
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
                                                                                               meshLevel.getName(),

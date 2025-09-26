@@ -437,13 +437,16 @@ public:
   virtual ~FiniteElementBase() = default;
 
   /**
-   * @brief Virtual getter for the number of quadrature points per element.
+   * @brief Getter for the number of quadrature points per element.
    * @return The number of quadrature points per element.
    */
-  localIndex getNumQuadraturePoints() const { return m_numQuadraturePoints; };
+  localIndex getNumQuadraturePoints() const
+  {
+    return m_numQuadraturePoints;
+  }
 
   /**
-   * @brief Virtual getter for the number of support points per element.
+   * @brief Getter for the number of support points per element.
    * @return The number of support points per element.
    */
   localIndex getNumSupportPoints() const { return m_numSupportPoints; };

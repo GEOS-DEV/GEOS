@@ -148,6 +148,35 @@ public:
   }
 
   /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static
+  real64 calcJacobian( localIndex const q,
+                       real64 const (&X)[numNodes][3],
+                       StackVariables const & stack,
+                       real64 (& J)[3][3] )
+  {
+    {
+      GEOS_UNUSED_VAR( q, X, stack );
+      for( localIndex i = 0; i < 3; ++i )
+      {
+        for( localIndex j = 0; j < 3; ++j )
+        {
+          J[i][j] = ( i == j ) ? 1.0 : 0.0;
+        }
+      }
+      return 1.0;
+    }
+  }
+
+  /**
    * @brief Calculate the shape functions projected derivatives wrt the physical
    *   coordinates.
    * @param q Index of the quadrature point.
@@ -435,6 +464,31 @@ public:
                                            real64 ( & J )[3][3] )
   {
     GEOS_ERROR( "No reference element map is defined for VEM classes" );
+    GEOS_UNUSED_VAR( q, X );
+    for( localIndex i = 0; i < 3; ++i )
+    {
+      for( localIndex j = 0; j < 3; ++j )
+      {
+        J[i][j] = 0.0;
+      }
+    }
+    return 0.0;
+  }
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static real64 calcJacobian( localIndex const q,
+                              real64 const (&X)[numNodes][3],
+                              real64 (& J)[3][3] )
+  {
+    GEOS_ERROR( "VEM functions have to be called with the StackVariables syntax" );
     GEOS_UNUSED_VAR( q, X );
     for( localIndex i = 0; i < 3; ++i )
     {

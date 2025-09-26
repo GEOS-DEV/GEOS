@@ -253,18 +253,6 @@ public:
   { return m_dNdX; }
 
   /**
-   * @brief @return The array of jacobian determinantes.
-   */
-  array2d< real64 > & detJ()
-  { return m_detJ; }
-
-  /**
-   * @brief @return The array of jacobian determinantes.
-   */
-  arrayView2d< real64 const > detJ() const
-  { return m_detJ; }
-
-  /**
    * @brief @return The sorted array of local fractured elements.
    */
   SortedArray< localIndex > & fracturedElementsList()
@@ -351,9 +339,6 @@ private:
 
   /// The array of shape function derivaties.
   array4d< real64 > m_dNdX;
-
-  /// The array of jacobian determinantes.
-  array2d< real64 > m_detJ;
 
   /// Map of unmapped global indices in the element-to-node map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInNodelist;

@@ -60,8 +60,8 @@ public:
   using StackVariables = typename Base::StackVariables;
 
   /// Mesh data structure for the element.
-  template <typename SubregionType>
-  using MeshData = typename Base::template MeshData<SubregionType>;
+  template< typename SubregionType >
+  using MeshData = typename Base::template MeshData< SubregionType >;
 
   /// Number of nodes in the element
   using Base::numNodes;
@@ -73,19 +73,14 @@ public:
   using Base::maxSupportPoints;
 
   /// @cond DO_NOT_DOCUMENT
-#ifdef __CUDACC__
-  #pragma diag_push
-  #pragma nv_diag_suppress 20012
-#endif
-  GEOS_HOST_DEVICE H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl() = default;
-  GEOS_HOST_DEVICE ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl() = default;
-  GEOS_HOST_DEVICE H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl const & ) = default;
-  GEOS_HOST_DEVICE H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl & operator=( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl const & ) = default;
-  GEOS_HOST_DEVICE H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl && ) = default;
-  GEOS_HOST_DEVICE H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl & operator=( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl && ) = default;
-#ifdef __CUDACC__
-  #pragma diag_pop
-#endif
+
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl() = default;
+  ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl() = default;
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl const & ) = default;
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl & operator=( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl const & ) = default;
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl && ) = default;
+  H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl & operator=( H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl && ) = default;
+
   /// @endcond DO_NOT_DOCUMENT
 
   /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()
@@ -413,11 +408,10 @@ public:
   /// The Implementation type
   using ImplType = H1_QuadrilateralFace_Lagrange1_GaussLegendre2_impl;
 
-
   H1_QuadrilateralFace_Lagrange1_GaussLegendre2():
-    FiniteElementBase( numNodes,
-                       maxSupportPoints,
-                       numQuadraturePoints )
+    FiniteElementBase( ImplType::numNodes,
+                       ImplType::maxSupportPoints,
+                       ImplType::numQuadraturePoints )
   {}
 
   virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override final = default;

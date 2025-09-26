@@ -295,6 +295,60 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   return rval;
 }
 
+void SolidMechanicsLagrangianFEM::initializeMass( MeshLevel & mesh, CellElementSubRegion & subRegion )
+{
+  NodeManager & nodes = mesh.getNodeManager();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodes.referencePosition();
+
+  arrayView1d< real64 > & mass = nodes.getField< solidMechanics::mass >();
+  mass.zero(); // assign to zero so that accumulation below works properly
+
+  SolidBase & solid = getConstitutiveModel< SolidBase >( subRegion );
+  arrayView2d< real64 const > const rho = solid.getDensity();
+  arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = subRegion.nodeList();
+
+  finiteElement::FiniteElementBase const &
+  fe = subRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+  finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( fe, [&] ( auto const element )
+  {
+    using FE_TYPE = TYPEOFREF( element );
+
+    typename FE_TYPE::StackVariables feStack;
+    localIndex const numSupportPoints = element.getNumSupportPoints( feStack );
+    constexpr localIndex maxSupportPoints = FE_TYPE::maxSupportPoints;
+    constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+    constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    {
+      real64 N[maxSupportPoints];
+      real64 xLocal[ numNodesPerElem ][3];
+      real64 J[3][3];
+      real64 detJ = 0.0;
+
+      for( localIndex a = 0; a < numSupportPoints; ++a )
+      {
+        localIndex const nodeIndex = elemsToNodes[ ei ][ a ];
+        for( int i = 0; i < 3; ++i )
+        {
+          xLocal[ a ][ i ] = X[ nodeIndex ][ i ];
+        }
+      }
+
+      for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
+      {
+        FE_TYPE::calcN( q, feStack, N );
+        detJ = FE_TYPE::calcJacobian( q, xLocal, feStack, J );
+        for( localIndex a = 0; a < numSupportPoints; ++a )
+        {
+          mass[ elemsToNodes[ ei ][ a ] ] += rho[ ei ][ q ] * detJ * N[ a ];
+        }
+      }
+    } );
+  } );
+
+}
+
 
 void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
 {
@@ -306,13 +360,12 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
                                        auto const & regionNames )
   {
     NodeManager & nodes = mesh.getNodeManager();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodes.referencePosition();
     Group & nodeSets = nodes.sets();
 
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     FaceManager const & faceManager = mesh.getFaceManager();
     EdgeManager const & edgeManager = mesh.getEdgeManager();
-    arrayView1d< real64 > & mass = nodes.getField< solidMechanics::mass >();
-    mass.zero(); // assign to zero so that accumulation below works properly
 
     arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
 
@@ -334,8 +387,9 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
     {
       elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const esr, CellElementSubRegion & elementSubRegion )
       {
-        SolidBase & solid = getConstitutiveModel< SolidBase >( elementSubRegion );
-        arrayView2d< real64 const > const rho = solid.getDensity();
+        initializeMass( mesh, elementSubRegion );
+
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
         SortedArray< localIndex > & elemsAttachedToSendOrReceiveNodes = getElemsAttachedToSendOrReceiveNodes( elementSubRegion );
         SortedArray< localIndex > & elemsNotAttachedToSendOrReceiveNodes = getElemsNotAttachedToSendOrReceiveNodes( elementSubRegion );
@@ -351,8 +405,6 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
           "SolidMechanicsLagrangianFEM::m_elemsNotAttachedToSendOrReceiveNodes["
           + std::to_string( er ) + "][" + std::to_string( esr ) + "]" );
 
-        arrayView2d< real64 const > const & detJ = elementSubRegion.detJ();
-        arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
         finiteElement::FiniteElementBase const &
         fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -367,29 +419,18 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
                                                                    faceManager,
                                                                    elementSubRegion,
                                                                    meshData );
-
           constexpr localIndex maxSupportPoints = FE_TYPE::maxSupportPoints;
           constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
+          constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
-          real64 N[maxSupportPoints];
           for( localIndex k=0; k < elemsToNodes.size( 0 ); ++k )
           {
+
             typename FE_TYPE::StackVariables feStack;
             element.template setup< FE_TYPE >( k, meshData, feStack );
-            localIndex const numSupportPoints = element.getNumSupportPoints( feStack );
-
-            for( localIndex q=0; q<numQuadraturePointsPerElem; ++q )
-            {
-              FE_TYPE::calcN( q, feStack, N );
-
-              for( localIndex a=0; a< numSupportPoints; ++a )
-              {
-                mass[elemsToNodes[k][a]] += rho[k][q] * detJ[k][q] * N[a];
-              }
-            }
 
             bool isAttachedToGhostNode = false;
-            for( localIndex a=0; a<elementSubRegion.numNodesPerElement(); ++a )
+            for( localIndex a = 0; a < numNodesPerElem; ++a )
             {
               if( nodeGhostRank[elemsToNodes[k][a]] >= -1 )
               {
@@ -401,7 +442,6 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
                 tmpNonSendOrReceiveNodes.insert( elemsToNodes[k][a] );
               }
             }
-
             if( isAttachedToGhostNode )
             {
               tmpElemsAttachedToSendOrReceiveNodes.insert( k );
@@ -424,8 +464,6 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
         m_targetNodes = m_sendOrReceiveNodes;
         m_targetNodes.insert( m_nonSendOrReceiveNodes.begin(),
                               m_nonSendOrReceiveNodes.end() );
-
-
       } );
     } );
 

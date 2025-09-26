@@ -58,8 +58,8 @@ public:
   using StackVariables = typename Base::StackVariables;
 
   /// Mesh data structure for the element.
-  template <typename SubregionType>
-  using MeshData = typename Base::template MeshData<SubregionType>;
+  template< typename SubregionType >
+  using MeshData = typename Base::template MeshData< SubregionType >;
 
   /// Number of nodes in the element
   using Base::numNodes;
@@ -80,19 +80,12 @@ public:
   using BASIS = LagrangeBasis1;
 
   /// @cond DO_NOT_DOCUMENT
-#ifdef __CUDACC__
-  #pragma diag_push
-  #pragma nv_diag_suppress 20012
-#endif
-  GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl() = default;
-  GEOS_HOST_DEVICE ~H1_TriangleFace_Lagrange1_Gauss_impl() = default;
-  GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl( H1_TriangleFace_Lagrange1_Gauss_impl const & ) = default;
-  GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl & operator=( H1_TriangleFace_Lagrange1_Gauss_impl const & ) = default;
-  GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl( H1_TriangleFace_Lagrange1_Gauss_impl && ) = default;
-  GEOS_HOST_DEVICE H1_TriangleFace_Lagrange1_Gauss_impl & operator=( H1_TriangleFace_Lagrange1_Gauss_impl && ) = default;
-#ifdef __CUDACC__
-  #pragma diag_pop
-#endif
+  H1_TriangleFace_Lagrange1_Gauss_impl() = default;
+  ~H1_TriangleFace_Lagrange1_Gauss_impl() = default;
+  H1_TriangleFace_Lagrange1_Gauss_impl( H1_TriangleFace_Lagrange1_Gauss_impl const & ) = default;
+  H1_TriangleFace_Lagrange1_Gauss_impl & operator=( H1_TriangleFace_Lagrange1_Gauss_impl const & ) = default;
+  H1_TriangleFace_Lagrange1_Gauss_impl( H1_TriangleFace_Lagrange1_Gauss_impl && ) = default;
+  H1_TriangleFace_Lagrange1_Gauss_impl & operator=( H1_TriangleFace_Lagrange1_Gauss_impl && ) = default;
   /// @endcond DO_NOT_DOCUMENT
 
   /// @copydoc FiniteElementBase_impl::getNumQuadraturePoints()

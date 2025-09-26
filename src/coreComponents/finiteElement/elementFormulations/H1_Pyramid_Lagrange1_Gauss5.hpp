@@ -72,19 +72,12 @@ public:
   struct MeshData {};
 
   /// @cond DO_NOT_DOCUMENT
-#ifdef __CUDACC__
-  #pragma diag_push
-  #pragma nv_diag_suppress 20012
-#endif
-  GEOS_HOST_DEVICE H1_Pyramid_Lagrange1_Gauss5_impl() = default;
-  GEOS_HOST_DEVICE ~H1_Pyramid_Lagrange1_Gauss5_impl() = default;
-  GEOS_HOST_DEVICE H1_Pyramid_Lagrange1_Gauss5_impl( H1_Pyramid_Lagrange1_Gauss5_impl const & ) = default;
-  GEOS_HOST_DEVICE H1_Pyramid_Lagrange1_Gauss5_impl & operator=( H1_Pyramid_Lagrange1_Gauss5_impl const & ) = default;
-  GEOS_HOST_DEVICE H1_Pyramid_Lagrange1_Gauss5_impl( H1_Pyramid_Lagrange1_Gauss5_impl && ) = default;
-  GEOS_HOST_DEVICE H1_Pyramid_Lagrange1_Gauss5_impl & operator=( H1_Pyramid_Lagrange1_Gauss5_impl && ) = default;
-#ifdef __CUDACC__
-  #pragma diag_pop
-#endif
+  H1_Pyramid_Lagrange1_Gauss5_impl() = default;
+  ~H1_Pyramid_Lagrange1_Gauss5_impl() = default;
+  H1_Pyramid_Lagrange1_Gauss5_impl( H1_Pyramid_Lagrange1_Gauss5_impl const & ) = default;
+  H1_Pyramid_Lagrange1_Gauss5_impl & operator=( H1_Pyramid_Lagrange1_Gauss5_impl const & ) = default;
+  H1_Pyramid_Lagrange1_Gauss5_impl( H1_Pyramid_Lagrange1_Gauss5_impl && ) = default;
+  H1_Pyramid_Lagrange1_Gauss5_impl & operator=( H1_Pyramid_Lagrange1_Gauss5_impl && ) = default;
   /// @endcond DO_NOT_DOCUMENT
 
   /**
@@ -153,6 +146,36 @@ public:
     GEOS_UNUSED_VAR( q, N );
     GEOS_ERROR( "Unsupported bubble functions for pyramid elements" );
   }
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static
+  real64 calcJacobian( localIndex const q,
+                       real64 const (&X)[numNodes][3],
+                       real64 ( &J )[3][3] );
+
+  /**
+   * @brief Calculate the Jacobian matrix at a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param J Array to contain the Jacobian matrix at the quadrature point.
+   * @return The determinant of the Jacobian matrix.
+   */
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  static
+  real64 calcJacobian( localIndex const q,
+                       real64 const (&X)[numNodes][3],
+                       StackVariables const &stack,
+                       real64 ( &J )[3][3] );
 
   /**
    * @brief Calculate the shape functions derivatives wrt the physical
@@ -530,6 +553,36 @@ void H1_Pyramid_Lagrange1_Gauss5_impl::
 }
 
 //*************************************************************************************************
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+H1_Pyramid_Lagrange1_Gauss5_impl::calcJacobian( localIndex const q,
+                                                real64 const (&X)[numNodes][3],
+                                                real64 (& J)[3][3] )
+{
+  for( int i = 0; i < 3; ++i )
+  {
+    for( int j = 0; j < 3; ++j )
+    {
+      J[i][j] = 0;
+    }
+  }
+  jacobianTransformation( q, X, J );
+  real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
+  return detJ;
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+real64
+H1_Pyramid_Lagrange1_Gauss5_impl::calcJacobian( localIndex const q,
+                                                real64 const (&X)[numNodes][3],
+                                                StackVariables const & GEOS_UNUSED_PARAM( stack ),
+                                                real64 (& J)[3][3] )
+{
+  return calcJacobian( q, X, J );
+}
 
 GEOS_HOST_DEVICE
 inline
