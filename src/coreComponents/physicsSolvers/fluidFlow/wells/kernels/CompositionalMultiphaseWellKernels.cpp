@@ -652,9 +652,10 @@ PresTempCompFracInitializationKernel::
         localIndex const er = resElementRegion[iperf];
         localIndex const esr = resElementSubRegion[iperf];
         localIndex const ei = resElementIndex[iperf];
-      //GEOS_LOG_RANK(
-      // "tjb pref " << iperf << " " <<resPres[er][esr][ei] << " " << alpha*resPres[er][esr][ei] <<" avgTotalMassDens " << avgTotalMassDens
-      // << " refWellElemGravCoef " <<refWellElemGravCoef );
+        //GEOS_LOG_RANK(
+        // "tjb pref " << iperf << " " <<resPres[er][esr][ei] << " " << alpha*resPres[er][esr][ei] <<" avgTotalMassDens " <<
+        // avgTotalMassDens
+        // << " refWellElemGravCoef " <<refWellElemGravCoef );
 
         // get the perforation pressure and save the estimated reference pressure
         real64 const gravCoefDiff = LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] );

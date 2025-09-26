@@ -45,7 +45,16 @@ integer InvariantImmiscibleFluid::getWaterPhaseIndex() const
   }
   return -1;
 }
-
+integer InvariantImmiscibleFluid::getPhaseIndex( const std::string & phaseName ) const
+{
+  // find index of water phase in user ordering
+  for( size_t i=0; i< m_phaseNames.size(); ++i )
+  {
+    if( stringutilities::toLower( m_phaseNames[i] ) == phaseName )
+      return static_cast< integer >(i);
+  }
+  return -1;
+}
 void InvariantImmiscibleFluid::postInputInitialization()
 {
   // check base inputs

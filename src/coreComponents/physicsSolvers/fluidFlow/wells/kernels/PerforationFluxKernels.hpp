@@ -848,10 +848,9 @@ public:
                    PerforationData * const perforationData,
                    ElementSubRegionBase const & subRegion,
                    MultiFluidBase const & fluid,
-                   ElementRegionManager & elemManager,
+                   ElementRegionManager const & elemManager,
                    bool const isInjector,
-                   bool const isCrossflowEnabled ,
-                   integer const disableReservoirToWellFlow )
+                   bool const isCrossflowEnabled )
   {
     geos::internal::kernelLaunchSelectorCompPhaseSwitch( numComp, numPhases, [&]( auto NC, auto NP )
     {

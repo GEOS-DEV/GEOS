@@ -54,7 +54,7 @@ IterationsStatistics::IterationsStatistics( string const & name, Group * const p
     setApplyDefaultValue( 0 ).
     setDescription( "Number of time step cuts" );
 
-  registerWrapper( viewKeyStruct::numCurrentOuterLoopIterationsString(), &m_currentNumOuterLoopIterations ).
+  registerWrapper( viewKeyStruct::numCurrentConfigIterationsString(), &m_currentNumConfigIterations ).
     setApplyDefaultValue( 0 ).
     setDescription( "Cumulative number of current outer loop iterations" );
 

@@ -123,6 +123,7 @@ private:
 
   array1d< integer > getPhaseTypes() const;
 
+  integer findPhaseIndex( string names ) const;
   static std::unique_ptr< compositional::ModelParameters > createModelParameters();
 
   // Flash model

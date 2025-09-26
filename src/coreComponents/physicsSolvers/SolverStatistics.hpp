@@ -59,7 +59,7 @@ public:
 
 
     /// String key for the current number of outer loop iterations
-    static constexpr char const * numCurrentOuterLoopIterationsString() { return "numCurrentOuterLoopIterations"; }
+    static constexpr char const * numCurrentConfigIterationsString() { return "numCurrentConfigIterations"; }
     /// String key for the current number of nonlinear iterations
     static constexpr char const * numCurrentNonlinearIterationsString() { return "numCurrentNonlinearIterations"; }
     /// String key for the current number of linear iterations

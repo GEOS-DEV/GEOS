@@ -51,12 +51,12 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_targetPhaseRateTable( nullptr ), // tjb remove
   m_targetBHPTable( nullptr ), // tjb remove
   m_statusTable( nullptr ),
-  m_wellStatus( WellControls::Status::OPEN ),
-  m_regionAveragePressure( -1 ),
   m_wellOpen( false ),
   m_estimateSolution( 0 ),
   m_constraintSwitch( true ),
-  m_currentConstraint( nullptr )
+  m_currentConstraint( nullptr ),
+  m_wellStatus( WellControls::Status::OPEN ),
+  m_regionAveragePressure( -1 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 

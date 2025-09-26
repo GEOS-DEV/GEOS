@@ -320,7 +320,7 @@ public:
    * @brief Is the well open (or shut) at currentTime, status initalized in WellSolverBase::implicitStepSetup
    * @return a boolean
    */
-  bool isWellOpen( real64 const & currentTime ) const;
+  bool isWellOpen() const;
 
   void setWellState( bool open );
   bool getWellState() const;
@@ -352,17 +352,6 @@ public:
    * @param[inout] nextDt the time step
    */
   void setNextDtFromTables( real64 const & currentTime, real64 & nextDt );
-
-  /**
-   * @brief setter for multi fluid separator
-   * @param[in] fluidSeparatorPtr single or multiphase separator
-   */
-  void setFluidSeparator( std::unique_ptr< constitutive::ConstitutiveBase > fluidSeparatorPtr )  {  m_fluidSeparatorPtr = std::move( fluidSeparatorPtr );}
-  /**
-   * @brief Getter for multi fluid separator
-   * @return reference to separator
-   */
-  constitutive::MultiFluidBase & getMultiFluidSeparator()  { return dynamicCast< constitutive::MultiFluidBase & >( *m_fluidSeparatorPtr ); }
 
   /**
    * @brief getter for esitmator switch
@@ -636,9 +625,6 @@ private:
 
   /// flag to use the estimator
   integer m_estimateSolution;
-
-  // Fuild model to compute properties for constraint equation user specified conditions
-  std::unique_ptr< constitutive::ConstitutiveBase >  m_fluidSeparatorPtr;
 
   /// List of constraints
   //constraint_array m_ConstraintList;

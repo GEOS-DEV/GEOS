@@ -488,18 +488,6 @@ public:
                        ParallelVector const & solution,
                        string const & tag ="" ) const;
 
-  /**
-   * @brief Update the convergence information and write then into a CSV file
-   * @param time_n the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param cycleNumber event cycle number
-   * @param iteration current iteration
-   */
-  virtual void
-  updateAndWriteConvergenceStep( real64 const & time_n,
-                                 real64 const & dt,
-                                 integer const cycleNumber,
-                                 integer const iteration );
 
   /**
    * @brief Update the convergence information and write then into a CSV file

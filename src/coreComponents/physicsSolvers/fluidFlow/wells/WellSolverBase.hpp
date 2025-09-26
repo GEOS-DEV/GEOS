@@ -259,7 +259,7 @@ public:
 
   virtual void assembleWellAccumulationTerms( real64 const & GEOS_UNUSED_PARAM( time ),
                                               real64 const & GEOS_UNUSED_PARAM( dt ),
-                                              WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ),
+                                              WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ),
                                               DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                               CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
                                               arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) {};

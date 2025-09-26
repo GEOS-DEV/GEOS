@@ -226,7 +226,7 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
 
   dofManager.addCoupling( wellElementDofName(),
                           wellElementDofName(),
-                          DofManager::Connector::Node ):
+                          DofManager::Connector::Node );
 }
 
 void WellSolverBase::setPerforationStatus( real64 const & time_n, DomainPartition & domain )
@@ -311,7 +311,7 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
                                         real64 const & dt,
                                         DomainPartition & domain )
 {
-
+  GEOS_UNUSED_VAR( dt );
   // Open close perfs
   setPerforationStatus( time_n, domain );
 
@@ -337,7 +337,7 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
 
         bool const hasNonZeroRate = MpiWrapper::max< integer >( hasNonZero( compPerfRate ));
 
-        if( time_n <= 0.0  || ( wellControls.isWellOpen( time_n ) && !hasNonZeroRate ) )
+        if( time_n <= 0.0  || ( wellControls.isWellOpen() && !hasNonZeroRate ) )
         {
           GEOS_LOG_RANK( "tjb initialize wells "<< subRegion.getName());
           if( !wellControls.getWellState() && isThermal() ) // tjb add as schema option
@@ -415,7 +415,7 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
       WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
                                            .getGroup< WellElementSubRegion >( region.getSubRegionName() );
       WellControls & wellControls = getWellControls( subRegion );
-      if( wellControls.isWellOpen( time_n ) )
+      if( wellControls.isWellOpen() )
       {
         if( !wellControls.getWellState() )
         {
@@ -968,6 +968,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
         lineSearchSuccess = lineSearchWithParabolicInterpolation( time_n,
                                                                   stepDt,
                                                                   cycleNumber,
+                                                                  newtonIter,
                                                                   domain,
                                                                   dofManager,
                                                                   m_localMatrix.toViewConstSizes(),
@@ -1027,7 +1028,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
       solveLinearSystem( dofManager, m_matrix, m_rhs, m_solution );
 
 // Increment the solver statistics for reporting purposes
-      m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
+      getIterationStats().updateNonlinearIteration( m_linearSolverResult.numIterations );
 
 // Output the linear system solution for debugging purposes
       debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution, tag );

@@ -281,7 +281,7 @@ public:
 
   virtual void assembleWellAccumulationTerms( real64 const & time,
                                               real64 const & dt,
-                                              WellElementSubRegion const & subRegion,
+                                              WellElementSubRegion & subRegion,
                                               DofManager const & dofManager,
                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                               arrayView1d< real64 > const & localRhs ) override;
