@@ -49,9 +49,9 @@ public:
     arrayView2d< localIndex const > const & elemsToFaces,
     ArrayOfArraysView< localIndex const > const & facesToNodes,
     arrayView1d< integer const > const & facesDomainBoundaryIndicator,
-    arrayView1d< integer const > const & freeSurfaceFaceIndicator,
-    arrayView1d< integer const > const & lateralSurfaceFaceIndicator,
-    arrayView1d< integer const > const & bottomSurfaceFaceIndicator,
+    arrayView1d< localIndex const > const & freeSurfaceFaceIndicator,
+    arrayView1d< localIndex const > const & lateralSurfaceFaceIndicator,
+    arrayView1d< localIndex const > const & bottomSurfaceFaceIndicator,
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const & nodeCoords,
     arrayView1d< real32 const > const & velocity,
     arrayView1d< real32 const > const & density,
@@ -60,7 +60,7 @@ public:
     arrayView1d< real32 > const & damping_pp,
     arrayView1d< real32 > const & damping_pq,
     arrayView1d< real32 > const & damping_qp,
-    arrayView1d< real32 > const & damping_qq )
+    arrayView1d< real32 > const & damping_qq ) const
   {
     // Get DOF arrays needed for Zhang method
     NodeManager & nodeManager = elementSubRegion.getParent().getParent().getGroup< MeshLevel >( 0 ).getNodeManager();
@@ -104,9 +104,9 @@ public:
     arrayView2d< localIndex const > const & elemsToFaces,
     ArrayOfArraysView< localIndex const > const & facesToNodes,
     arrayView1d< integer const > const & facesDomainBoundaryIndicator,
-    arrayView1d< integer const > const & freeSurfaceFaceIndicator,
-    arrayView1d< integer const > const & lateralSurfaceFaceIndicator,
-    arrayView1d< integer const > const & bottomSurfaceFaceIndicator,
+    arrayView1d< localIndex const > const & freeSurfaceFaceIndicator,
+    arrayView1d< localIndex const > const & lateralSurfaceFaceIndicator,
+    arrayView1d< localIndex const > const & bottomSurfaceFaceIndicator,
     arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const & nodeCoords,
     arrayView1d< real32 const > const & velocity,
     arrayView1d< real32 const > const & density,
@@ -115,7 +115,7 @@ public:
     arrayView1d< real32 > const & damping_pp,
     arrayView1d< real32 > const & damping_pq,
     arrayView1d< real32 > const & damping_qp,
-    arrayView1d< real32 > const & damping_qq )
+    arrayView1d< real32 > const & damping_qq ) const
   {
     // Fletcher always needs sigma field
     arrayView1d< real32 const > const vti_sigma = elementSubRegion.getField< acousticvtifields::AcousticSigma >();

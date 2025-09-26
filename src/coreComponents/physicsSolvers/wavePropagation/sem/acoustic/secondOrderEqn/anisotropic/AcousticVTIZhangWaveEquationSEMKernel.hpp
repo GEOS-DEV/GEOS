@@ -117,7 +117,6 @@ public:
     m_vti_delta( elementSubRegion.template getField< geos::fields::acousticvtifields::AcousticDelta >() ),
     m_vti_DofEpsilon( nodeManager.getField< geos::fields::acousticvtifields::AcousticDofEpsilon >() ),
     m_vti_DofDelta( nodeManager.getField< geos::fields::acousticvtifields::AcousticDofDelta >() ),
-    m_vti_GradzDelta( elementSubRegion.template getField< geos::fields::acousticvtifields::AcousticGradzDelta >() ),
     m_dt( dt )
   {
     GEOS_UNUSED_VAR( edgeManager );
@@ -297,9 +296,6 @@ protected:
   arrayView1d< real32 const > const m_vti_DofEpsilon;
   /// The array containing the delta Thomsen parameter.
   arrayView1d< real32 const > const m_vti_DofDelta;
-
-  /// dz delta.
-  arrayView1d< real32 const > const m_vti_GradzDelta;
 
   /// The time increment for this time integration step.
   real64 const m_dt;

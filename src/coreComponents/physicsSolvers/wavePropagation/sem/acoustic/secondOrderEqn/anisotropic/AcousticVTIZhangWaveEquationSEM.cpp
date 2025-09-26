@@ -119,7 +119,6 @@ void AcousticVTIZhangWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerField< acousticvtifields::AcousticDelta >( getName() );
       subRegion.registerField< acousticvtifields::AcousticEpsilon >( getName() );
-      subRegion.registerField< acousticvtifields::AcousticGradzDelta >( getName() );
     } );
 
   } );
