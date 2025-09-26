@@ -2484,18 +2484,18 @@ int GeomechanicsUpdates::nonHardeningReturn( const real64 & I1_trial,           
   // It may be better to use an interior point at the center of the yield surface, rather than at zeta, in particular
   // when PEAKI1=0.  Picking the midpoint between PEAKI1 and X would be problematic when the user has specified
   // some no porosity condition (e.g. p0=-1e99)
-  if( I1trialMinusZeta>= peakI1_hd ) // Trial is past vertex
+  if( I1trialMinusZeta>= peakI1_h ) // Trial is past vertex
   { 
 	  real64 lTrial = sqrt(I1trialMinusZeta * I1trialMinusZeta + rJ2_trial * rJ2_trial),
-			     lYield = 0.5 * (peakI1_hd - X);
+			     lYield = 0.5 * (peakI1_h - X);
 	  I1_0 = Zeta + peakI1_hd - std::min(lTrial, lYield);
   }
-  else if( (I1trialMinusZeta < peakI1_hd) && (I1trialMinusZeta > X) ){ // Trial is above yield surface
+  else if( (I1trialMinusZeta < peakI1_h) && (I1trialMinusZeta > X) ){ // Trial is above yield surface
 	  I1_0 = I1_trial;
   }
   else if( I1trialMinusZeta <= X ) // Trial is past X, use yield midpoint as interior point
   {
-	  I1_0 = Zeta + 0.5 * (peakI1_hd + X);
+	  I1_0 = Zeta + 0.5 * (peakI1_h + X);
   }
   else
   { // Shouldn't get here

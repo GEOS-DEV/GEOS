@@ -992,23 +992,6 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
 	real64 h4 = Ep/( 1 + nup );
 	real64 h5 = 2*Gzp;
 
-
-  
-  // MM make alphaDense  here
-  real64 alphaDense[3][3] = { { 0 } };
-  for (int i = 0; i < 3; ++i)
-  {
-      for (int j = 0; j < 3; ++j)
-      {
-          double delta = (i == j) ? 1.0 : 0.0;
-          //std::cout<<"delta:   " << delta <<std::endl;
-          alphaDense[i][j] = (m_alphaL - m_alphaT) * materialDirection[i] * materialDirection[j] + delta * m_alphaT;
-          //std::cout<<"alphaL:   " << m_alphaL << "alphaT:   " << m_alphaT <<std::endl;
-
-      }
-  }
-
-  
   //std::cout << "alphaDense:" << std::endl;
   //for (int i = 0; i < 3; ++i) {
   //    for (int j = 0; j < 3; ++j) {
@@ -1048,7 +1031,7 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
   alphaVoigt[4] = alphaDense[0][2]; 
   alphaVoigt[5] = alphaDense[0][1]; 
   //std::cout<< "alphaVoigt[5]" <<  alphaVoigt[5] <<std::endl;
-  real64 temperatureRateNew = m_temperatureRate[k];
+  //real64 temperatureRateNew = m_temperatureRate[k];
   //std::cout<<"temperature rate:   " << m_temperatureRate << std::endl;
 
   for(int i=0; i<3; i++)
