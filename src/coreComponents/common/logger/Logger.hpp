@@ -188,9 +188,10 @@
                                                                             "***** THREAD: [%u, %u, %u]\n" \
                                                                             "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
                                                                                                                 "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
     } \
-  }while( false )
+  } while( false )
 #endif
 
 /**
@@ -269,9 +270,10 @@
                                                                             "***** THREAD: [%u, %u, %u]\n" \
                                                                             "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
                                                                                                                 "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
     } \
-  }while( false )
+  } while( false )
 #endif
 
 /**
@@ -345,9 +347,10 @@
                                                                             "***** THREAD: [%u, %u, %u]\n" \
                                                                             "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
                                                                                                                 "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
     } \
-  }while( false )
+  } while( false )
 #endif
 
 /**
