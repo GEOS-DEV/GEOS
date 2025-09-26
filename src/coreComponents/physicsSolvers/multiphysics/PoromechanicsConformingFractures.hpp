@@ -84,9 +84,9 @@ public:
                                    DofManager & dofManager,
                                    SparsityPattern< globalIndex > & pattern ) override
   {
-    /// 2. Add coupling terms not added by the DofManager.
+    // start with the flow solver sparsity pattern (it could be reservoir + wells)
     SparsityPattern< globalIndex > patternOriginal;
-    dofManager.setSparsityPattern( patternOriginal );
+    this->flowSolver()->setSparsityPattern( domain, dofManager, patternOriginal );
 
     // Get the original row lengths (diagonal blocks only)
     array1d< localIndex > rowLengths( patternOriginal.numRows());
