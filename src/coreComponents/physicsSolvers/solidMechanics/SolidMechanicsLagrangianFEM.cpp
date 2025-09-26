@@ -360,7 +360,6 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
                                        auto const & regionNames )
   {
     NodeManager & nodes = mesh.getNodeManager();
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodes.referencePosition();
     Group & nodeSets = nodes.sets();
 
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
