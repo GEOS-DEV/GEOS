@@ -361,7 +361,7 @@ TEST( testIncorrectFieldSpecification, testSetName )
   catch( std::exception const & e )
   {
     string const & expectedMsg1 = "- Does not capture: ElementRegions/Channel2";
-    string const & expectedMsg2 = "- Instead, captures: faceManager, edgeManager, nodeManager";
+    string const & expectedMsg2 = "- Instead, captures: nodeManager, edgeManager, faceManager";
     GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg1 ), string::npos,
                           "The error message was not containing the expected sequence.\n" <<
                           "  Error message :\n" << e.what() <<
@@ -407,7 +407,7 @@ TEST( testIncorrectFieldSpecification, testMultiSetNames )
   catch( std::exception const & e )
   {
     string const & expectedMsg1 = "Set 'xneg':";
-    string const & expectedMsg2 = "- Instead, captures: faceManager, edgeManager, nodeManager";
+    string const & expectedMsg2 = "- Instead, captures: nodeManager, edgeManager, faceManager";
     GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg1 ), string::npos,
                           "The error message was not containing the expected sequence.\n" <<
                           "  Error message :\n" << e.what() <<

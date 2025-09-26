@@ -46,9 +46,9 @@ public:
    */
   using permutationMapType = std::map< string, std::map< string, std::map< string, stdVector< string > > > >;
 
-  /**
-   * @brief Contains enums for the types of objects
-   */
+/**
+ * @brief Contains enums for the types of objects
+ */
   enum class ObjectTypes : int
   {
     nodes,  ///< a NodeManager
@@ -58,95 +58,114 @@ public:
     invalid ///< an invalide object
   };
 
-  /**
-   * @brief Construct a new Mesh Object Path object
-   *
-   * @param path The path string
-   * @param meshBodies  The Group that contains all MeshBody objects
-   * @throw InputError when the input path is wrong.
-   */
+  /// @brief alias for the map allowing to know the existance of given element types (node, edge, cell...)
+  /// with localIndex = 0 | 1 ( exist / not existing)
+  using SetNameToTypesMap = std::map< std::string, std::map< MeshObjectPath::ObjectTypes, localIndex > >;
+
+/**
+ * @brief Construct a new Mesh Object Path object
+ *
+ * @param path The path string
+ * @param meshBodies  The Group that contains all MeshBody objects
+ * @throw InputError when the input path is wrong.
+ */
   MeshObjectPath( string const path,
                   dataRepository::Group const & meshBodies );
 
-  /**
-   * @brief Processes the path string into the permutation container
-   *
-   * @param path The path string
-   * @param meshBodies  The Group that contains all MeshBody objects
-   */
+/**
+ * @brief Processes the path string into the permutation container
+ *
+ * @param path The path string
+ * @param meshBodies  The Group that contains all MeshBody objects
+ */
   void processPath( string const path,
                     dataRepository::Group const & meshBodies );
 
-  /**
-   * @brief Get the Object Type object
-   * @return ObjectTypes const&
-   */
+/**
+ * @brief Get the Object Type object
+ * @return ObjectTypes const&
+ */
   ObjectTypes const & getObjectType() const
   {
     return m_objectType;
   }
 
-  /**
-   * @brief Get the m_pathPermutations object
-   *
-   * @return permutationMapType const&
-   */
+/**
+ * @brief Get the m_pathPermutations object
+ *
+ * @return permutationMapType const&
+ */
   permutationMapType const & pathPermutations() const
   {
     return m_pathPermutations;
   }
 
-  /**
-   * @brief Helper function to decide whether a given meshLevel is in the objectPath
-   * @param[in] meshLevel the mesh level that we want to search for in the objectPath
-   * @return true if the meshLevel is in the objectPath, false otherwise
-   * @details An example use case is in the validation of boundary conditions
-   */
+/**
+ * @brief Helper function to decide whether a given meshLevel is in the objectPath
+ * @param[in] meshLevel the mesh level that we want to search for in the objectPath
+ * @return true if the meshLevel is in the objectPath, false otherwise
+ * @details An example use case is in the validation of boundary conditions
+ */
   bool containsMeshLevel( MeshLevel const & meshLevel ) const;
 
-  /**
-   * @brief LLoop over objects in the path and execute a callback function.
-   *
-   * @tparam OBJECT_TYPE The type of object to loop over
-   * @tparam FUNC The type of function that is executed on the OBJECT_TYPE. Takes a
-   *  single OBJECT_TYPE as an argument.
-   *  func( dynamic_cast< OBJECT_TYPE & >(object) );
-   * @param meshBodies Group that contains the MeshBody objects.
-   * @param func The function that is executed on the OBJECT_TYPE
-   */
+/**
+ * @brief LLoop over objects in the path and execute a callback function.
+ *
+ * @tparam OBJECT_TYPE The type of object to loop over
+ * @tparam FUNC The type of function that is executed on the OBJECT_TYPE. Takes a
+ *  single OBJECT_TYPE as an argument.
+ *  func( dynamic_cast< OBJECT_TYPE & >(object) );
+ * @param meshBodies Group that contains the MeshBody objects.
+ * @param func The function that is executed on the OBJECT_TYPE
+ */
   template< typename OBJECT_TYPE = dataRepository::Group,
             typename FUNC >
   void forObjectsInPath( dataRepository::Group & meshBodies,
                          FUNC && func ) const;
 
-  /**
-   * @brief Loop over objects in the path and execute a callback function.
-   *
-   * @tparam OBJECT_TYPE The type of object to loop over
-   * @tparam FUNC The type of function that is executed on the OBJECT_TYPE. Takes a
-   *  single OBJECT_TYPE as an argument.
-   *  func( dynamic_cast< OBJECT_TYPE & >(object) );
-   * @param meshBodies Group that contains the MeshBody objects.
-   * @param func The function that is executed on the OBJECT_TYPE
-   */
+/**
+ * @brief Loop over objects in the path and execute a callback function.
+ *
+ * @tparam OBJECT_TYPE The type of object to loop over
+ * @tparam FUNC The type of function that is executed on the OBJECT_TYPE. Takes a
+ *  single OBJECT_TYPE as an argument.
+ *  func( dynamic_cast< OBJECT_TYPE & >(object) );
+ * @param meshBodies Group that contains the MeshBody objects.
+ * @param func The function that is executed on the OBJECT_TYPE
+ */
   template< typename OBJECT_TYPE = dataRepository::Group,
             typename FUNC >
   void forObjectsInPath( dataRepository::Group const & meshBodies,
                          FUNC && func ) const;
 
-  /**
-   * @brief Loop over objects in the path and execute a callback function.
-   *
-   * @tparam OBJECT_TYPE The type of object to loop over
-   * @tparam FUNC The type of function that is executed on the OBJECT_TYPE. Takes a
-   *  single OBJECT_TYPE as an argument.
-   *  func( dynamic_cast< OBJECT_TYPE & >(object) );
-   * @param level The MeshLevel that contains OBJECT_TYPE to be executed on.
-   * @param func The function that is executed on the OBJECT_TYPE
-   */
+/**
+ * @brief Loop over objects in the path and execute a callback function.
+ *
+ * @tparam OBJECT_TYPE The type of object to loop over
+ * @tparam FUNC The type of function that is executed on the OBJECT_TYPE. Takes a
+ *  single OBJECT_TYPE as an argument.
+ *  func( dynamic_cast< OBJECT_TYPE & >(object) );
+ * @param level The MeshLevel that contains OBJECT_TYPE to be executed on.
+ * @param func The function that is executed on the OBJECT_TYPE
+ */
   template< typename OBJECT_TYPE = dataRepository::Group,
             typename FUNC >
   void forObjectsInPath( MeshLevel & level, FUNC && func ) const;
+
+/**
+ * @brief Given an objectType and a setName from the current fieldSpecification, iterate over all managers;
+ * if the setName exists in the manager, return the associated ObjectTypes.
+ * @tparam TYPE The current type to be tested
+ * @tparam NEXT_TYPES The remaining Types
+ * @tparam FUNC The type of function that is executed on the OBJECT_TYPE
+ * @param mesh Holds all the managers.
+ * @param setName The setName to be evaluated in all the managers
+ * @param func The function that is executed on the OBJECT_TYPE
+ */
+  template< typename TYPE, typename ... NEXT_TYPES,
+            typename FUNC >
+  void forManagersForSetName( MeshLevel const & mesh, string const & setName,
+                              FUNC && func ) const;
 
 #if defined(MESH_OBJECT_PATH_PRIVATE_FUNCTION_UNIT_TESTING)
   template< typename OBJECT_TYPE >
@@ -165,16 +184,16 @@ public:
 
 private:
 
-  /**
-   * @brief Loop over objects in the path and execute a callback function.
-   * @tparam OBJECT_TYPE The type of object to loop over
-   * @tparam FUNC The type of function that is executed on the OBJECT_TYPE. Takes a
-   *  single OBJECT_TYPE as an argument.
-   *  func( dynamic_cast< OBJECT_TYPE & >(object) );
-   * @param levelPair an entry for a given level extracted from m_pathPermutations.
-   * @param level The MeshLevel that contains OBJECT_TYPE to be executed on.
-   * @param func The function that is executed on the OBJECT_TYPE
-   */
+/**
+ * @brief Loop over objects in the path and execute a callback function.
+ * @tparam OBJECT_TYPE The type of object to loop over
+ * @tparam FUNC The type of function that is executed on the OBJECT_TYPE. Takes a
+ *  single OBJECT_TYPE as an argument.
+ *  func( dynamic_cast< OBJECT_TYPE & >(object) );
+ * @param levelPair an entry for a given level extracted from m_pathPermutations.
+ * @param level The MeshLevel that contains OBJECT_TYPE to be executed on.
+ * @param func The function that is executed on the OBJECT_TYPE
+ */
   template< typename OBJECT_TYPE,
             typename FUNC >
   void forObjectsInPath( std::pair< string const, std::map< string, stdVector< string > > > const & levelPair,
@@ -187,45 +206,45 @@ private:
                          MeshLevel const & meshLevel,
                          FUNC && func ) const;
 
-  /**
-   * @brief A logical check for whether or not the m_objecType is consistent
-   *  with a specific OBJECT_TYPE
-   * @tparam OBJECT_TYPE The type to check m_objectType against.
-   * @return true If OBJECT_TYPE is the same type of a base of the type implied by m_objectType.
-   * @return false If OBJECT_TYPE is NOT the same type of a base of the type implied by m_objectType.
-   */
+/**
+ * @brief A logical check for whether or not the m_objecType is consistent
+ *  with a specific OBJECT_TYPE
+ * @tparam OBJECT_TYPE The type to check m_objectType against.
+ * @return true If OBJECT_TYPE is the same type of a base of the type implied by m_objectType.
+ * @return false If OBJECT_TYPE is NOT the same type of a base of the type implied by m_objectType.
+ */
   template< typename OBJECT_TYPE >
   bool checkObjectTypeConsistency() const;
 
-  /**
-   * @brief prints the contents of m_pathPermutations for debugging
-   */
+/**
+ * @brief prints the contents of m_pathPermutations for debugging
+ */
   void printPermutations() const;
 
-  /**
-   * @brief Create a tokenized version of the path
-   * @param path The input path
-   * @param meshBodies The Group that contains the MeshBody objects on the domain
-   * @return stdVector< string >  A tokenized representation of the path.
-   */
+/**
+ * @brief Create a tokenized version of the path
+ * @param path The input path
+ * @param meshBodies The Group that contains the MeshBody objects on the domain
+ * @return stdVector< string >  A tokenized representation of the path.
+ */
   stdVector< string > fillPathTokens( string const & path,
                                       dataRepository::Group const & meshBodies ) const;
 
-  /**
-   * @brief Convert the tokenized path into a collection of permutations and fill
-   *  m_pathPermutations.
-   * @param pathTokens The tokenized path
-   * @param meshBodies The Group that contains the MeshBody objects on the domain
-   */
+/**
+ * @brief Convert the tokenized path into a collection of permutations and fill
+ *  m_pathPermutations.
+ * @param pathTokens The tokenized path
+ * @param meshBodies The Group that contains the MeshBody objects on the domain
+ */
   void processPathTokens( stdVector< string > const & pathTokens,
                           dataRepository::Group const & meshBodies );
 
 
 
-  /// The type ObjectType for this path
+/// The type ObjectType for this path
   ObjectTypes const m_objectType;
 
-  /// The path container
+/// The path container
   permutationMapType m_pathPermutations;
 
 };
@@ -384,6 +403,46 @@ void MeshObjectPath::forObjectsInPath( MeshLevel & meshLevel,
       }
     }
   }
+}
+
+template< typename TYPE, typename ... NEXT_TYPES,
+          typename FUNC >
+void MeshObjectPath::forManagersForSetName( MeshLevel const & mesh, string const & setName,
+                                            FUNC && func ) const
+{
+  mesh.forSubGroups< TYPE >( [&]( dataRepository::Group const & targetManager )
+  {
+    TYPE const * manager = dynamic_cast< TYPE const * >( &targetManager );
+
+    if( manager != nullptr )
+    {
+      if( manager->sets().hasWrapper( setName ))
+      {
+        auto const & targetSet = manager->getSet( setName );
+        if( std::is_same_v< TYPE, NodeManager > &&
+            getObjectType() !=  MeshObjectPath::ObjectTypes::nodes &&
+            targetSet.size() > 0 )
+        {
+          func( MeshObjectPath::ObjectTypes::nodes );
+        }
+        else if( std::is_same_v< TYPE, EdgeManager >  &&
+                 getObjectType() !=  MeshObjectPath::ObjectTypes::edges &&
+                 targetSet.size() > 0 )
+        {
+          func( MeshObjectPath::ObjectTypes::edges );
+        }
+        else if( std::is_same_v< TYPE, FaceManager > &&
+                 getObjectType() !=  MeshObjectPath::ObjectTypes::faces &&
+                 targetSet.size() > 0 )
+        {
+          func( MeshObjectPath::ObjectTypes::faces );
+        }
+      }
+    }
+  } );
+
+  if constexpr ( sizeof...(NEXT_TYPES) > 0 )
+    forManagersForSetName< NEXT_TYPES... >( mesh, setName, func );
 }
 
 

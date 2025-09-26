@@ -68,60 +68,6 @@ void FieldSpecificationManager::expandObjectCatalogs()
   }
 }
 
-/// @brief alias for the map allowing to know the existance of given element types (node, edge, cell...)
-/// Represented as : { { "setName", { ObjectPathType (= An element container) , [0 | 1] (not empty) }, ... }, ... }
-using SetNameToTypesMap = std::map< std::string, std::vector< std::pair< MeshObjectPath::ObjectTypes, localIndex > > >;
-
-/**
- * @brief Iterate through all the manager of meshLevel
- * @tparam TYPE The current type to be tested
- * @tparam NEXT_TYPES The remaining Types
- * @param mesh Holds all the managers.
- * @param targetType The target fieldSpecification object path type
- * @param setName The current setName to be evaluated in all the managers
- * @param setTypesMap The map containing the relation between the setNames and their managers
- */
-template< typename TYPE, typename ... NEXT_TYPES >
-void forManagerInMeshLevel( MeshLevel const & mesh,
-                            MeshObjectPath::ObjectTypes const targetType,
-                            string const & setName, SetNameToTypesMap & setTypesMap )
-{
-  mesh.forSubGroups< TYPE >( [&]( Group const & targetManager )
-  {
-    TYPE const * manager = dynamic_cast< TYPE const * >( &targetManager );
-
-    if( manager != nullptr )
-    {
-      if( manager->sets().hasWrapper( setName ))
-      {
-        auto const & targetSet = manager->getSet( setName );
-
-        if( std::is_same_v< TYPE, NodeManager > &&
-            targetType !=  MeshObjectPath::ObjectTypes::nodes &&
-            targetSet.size() > 0 )
-        {
-          setTypesMap[setName].push_back( { MeshObjectPath::ObjectTypes::nodes, 0 } );
-        }
-        else if( std::is_same_v< TYPE, EdgeManager >  &&
-                 targetType !=  MeshObjectPath::ObjectTypes::edges &&
-                 targetSet.size() > 0 )
-        {
-          setTypesMap[setName].push_back( { MeshObjectPath::ObjectTypes::edges, 0 } );
-        }
-        else if( std::is_same_v< TYPE, FaceManager > &&
-                 targetType !=  MeshObjectPath::ObjectTypes::faces &&
-                 targetSet.size() > 0 )
-        {
-          setTypesMap[setName].push_back( { MeshObjectPath::ObjectTypes::faces, 0 } );
-        }
-      }
-    }
-  } );
-
-  if constexpr ( sizeof...(NEXT_TYPES) > 0 )
-    forManagerInMeshLevel< NEXT_TYPES... >( mesh, targetType, setName, setTypesMap );
-}
-
 void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
 {
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -132,9 +78,9 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     localIndex isFieldNameFound = 0;
     // map from set name to a flag (1 if targetSet has been created, 0 otherwise)
     map< string, localIndex > isTargetSetCreated;
-    SetNameToTypesMap setTypesMap;
-    // The fs target objectPath type
-    MeshObjectPath::ObjectTypes const expectedSetType = fs.getMeshObjectPaths().getObjectType();
+    MeshObjectPath::SetNameToTypesMap setTypesMap;
+    // The fieldSpecification target objectType
+    MeshObjectPath::ObjectTypes const targetElementType = fs.getMeshObjectPaths().getObjectType();
 
 
     // Step 1: collect all the set names in a map (this is made necessary by the "apply" loop pattern
@@ -143,7 +89,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     for( size_t i = 0; i < setNames.size(); ++i )
     {
       isTargetSetCreated[setNames[i]] = 0;
-      setTypesMap[setNames[i]].push_back( {expectedSetType, 1 } );
+      setTypesMap[setNames[i]][targetElementType] =  1;
     }
 
     // We have to make sure that the meshLevel is in the target of the boundary conditions
@@ -174,18 +120,18 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       }
 
       if( targetSet.size() > 0 )
-        std::get< 1 >( setTypesMap[setName].front()) = 0;
+        setTypesMap[setName][targetElementType] = 0;
     } );
 
     // Step 3: MPI synchronization
     isFieldNameFound = MpiWrapper::max( isFieldNameFound );
 
     string_array setNamesToErase;
-    for( auto & [setName, typesValue] : setTypesMap )
+    for( auto & [setName, typesAssociated] : setTypesMap )
     {
-      auto & typeValue =  std::get< 1 >( typesValue.front() );
-      typeValue =  MpiWrapper::min( typeValue );
-      if( typeValue == 0 )
+      localIndex & elementTypeValue = typesAssociated[targetElementType];
+      elementTypeValue =  MpiWrapper::min( elementTypeValue );
+      if( elementTypeValue == 0 )
       {
         setNamesToErase.push_back( setName );
       }
@@ -254,18 +200,20 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       message << GEOS_FMT( "{}: this FieldSpecification targets (an) empty set(s).\n",
                            fs.getDataContext() );
 
-      for( auto const & [setName, objectTypesPair] : setTypesMap )
+      for( auto const & [setName, elementsType] : setTypesMap )
       {
-        forManagerInMeshLevel< FaceManager,
-                               EdgeManager,
-                               NodeManager >( mesh, expectedSetType, setName, setTypesMap );
-
+        objectPath.forManagersForSetName< FaceManager,
+                                          EdgeManager,
+                                          NodeManager >( mesh, setName,
+                                                         [&]( MeshObjectPath::ObjectTypes managerType ){
+          setTypesMap[setName][managerType] =  0;
+        } );
         string_array capturedTypes;
-        for( auto const & pair : objectTypesPair )
+        for( auto const & [element, isExisting] : elementsType )
         {
-          if( pair.first != expectedSetType )
+          if( element != targetElementType )
           {
-            capturedTypes.push_back( EnumStrings< MeshObjectPath::ObjectTypes >::toString( pair.first ) );
+            capturedTypes.push_back( EnumStrings< MeshObjectPath::ObjectTypes >::toString( element ) );
           }
         }
 
