@@ -21,11 +21,10 @@
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ACOUSTICMATRICESSEMKERNEL_HPP_
 
 #include "finiteElement/elementFormulations/Qk_Hexahedron_Lagrange_GaussLobatto.hpp"
+
+
 namespace geos
 {
-
-
-
 struct AcousticMatricesSEM
 {
   // Debug

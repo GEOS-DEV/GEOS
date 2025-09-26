@@ -25,6 +25,7 @@
 #include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticMatricesSEMKernel.hpp"
 #include "physicsSolvers/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
 #include "events/EventManager.hpp"
+#include "DampingMatrixComputers.hpp"
 
 
 namespace geos
@@ -671,5 +672,122 @@ void AcousticSecondOrderAnisotropicWaveEquationSEM::initializePML()
   GEOS_ERROR( "This option (PML) is not supported" );
   return;
 }
+
+
+template< typename DampingComputer >
+void AcousticSecondOrderAnisotropicWaveEquationSEM::initializeMatricesTemplate( MeshLevel & mesh, string_array const & regionNames )
+{
+  GEOS_MARK_FUNCTION;
+
+  NodeManager & nodeManager = mesh.getNodeManager();
+  FaceManager & faceManager = mesh.getFaceManager();
+  ElementRegionManager & elemManager = mesh.getElemManager();
+
+  arrayView1d< integer const > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
+  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+  ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
+
+  /// mass matrix to be computed in this function
+  arrayView1d< real32 > const mass = nodeManager.getField< acousticfields::AcousticMassVector >();
+
+  /// damping matrices to be computed for each dof in the boundary of the mesh
+  arrayView1d< real32 > const damping_pp = nodeManager.getField< acousticvtifields::DampingVector_pp >();
+  arrayView1d< real32 > const damping_pq = nodeManager.getField< acousticvtifields::DampingVector_pq >();
+  arrayView1d< real32 > const damping_qp = nodeManager.getField< acousticvtifields::DampingVector_qp >();
+  arrayView1d< real32 > const damping_qq = nodeManager.getField< acousticvtifields::DampingVector_qq >();
+
+  mass.zero();
+  damping_pp.zero();
+  damping_pq.zero();
+  damping_qp.zero();
+  damping_qq.zero();
+
+  // DOF arrays (common VTI fields - these will already be zeroed by parent classes)
+  arrayView1d< real32 > const dofEpsilon = nodeManager.getField< acousticvtifields::AcousticDofEpsilon >();
+  arrayView1d< real32 > const dofDelta   = nodeManager.getField< acousticvtifields::AcousticDofDelta >();
+  arrayView1d< real32 > const dofOrder   = nodeManager.getField< acousticvtifields::AcousticDofOrder >();
+  dofEpsilon.zero();
+  dofDelta.zero();
+  dofOrder.zero();
+
+  /// get array of indicators: 1 if face is on the free surface; 0 otherwise
+  arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getField< acousticfields::AcousticFreeSurfaceFaceIndicator >();
+  arrayView1d< localIndex const > const lateralSurfaceFaceIndicator = faceManager.getField< acousticvtifields::AcousticLateralSurfaceFaceIndicator >();
+  arrayView1d< localIndex const > const bottomSurfaceFaceIndicator = faceManager.getField< acousticvtifields::AcousticBottomSurfaceFaceIndicator >();
+
+  // Get source coordinates for DOF arrays computation
+  arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
+
+  elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                              CellElementSubRegion & elementSubRegion )
+  {
+    finiteElement::FiniteElementBase const &
+    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
+    arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
+
+    computeTargetNodeSet( elemsToNodes, elementSubRegion.size(), fe.getNumQuadraturePoints());
+
+    arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
+    arrayView1d< real32 const > const density = elementSubRegion.getField< acousticfields::AcousticDensity >();
+    arrayView1d< real32 const > const vti_epsilon = elementSubRegion.getField< acousticvtifields::AcousticEpsilon >();
+    arrayView1d< real32 const > const vti_delta = elementSubRegion.getField< acousticvtifields::AcousticDelta >();
+
+    finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
+    {
+      using FE_TYPE = TYPEOFREF( finiteElement );
+
+      // 1. Common mass matrix computation (always the same)
+      AcousticMatricesSEM::MassMatrix< FE_TYPE > kernelM( finiteElement );
+      kernelM.template computeMassMatrix< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                        nodeCoords,
+                                                                        elemsToNodes,
+                                                                        velocity,
+                                                                        density,
+                                                                        mass );
+
+      // 2. Common VTI DOF arrays computation (both VTI and TTI need this)
+      AcousticMatricesSEM::DofArrays< FE_TYPE > kernelDebug( finiteElement );
+      kernelDebug.template computeDofArraysVTI< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                              nodeCoords,
+                                                                              elemsToNodes,
+                                                                              vti_epsilon,
+                                                                              vti_delta,
+                                                                              dofEpsilon,
+                                                                              dofDelta,
+                                                                              dofOrder,
+                                                                              sourceCoordinates,
+                                                                              m_radiusIsoAroundSource );
+
+      // 3. Delegate damping matrix computation to the specific implementation (Zhang or Fletcher)
+      DampingComputer dampingComputer;
+      dampingComputer.template computeDampingMatrices< FE_TYPE, EXEC_POLICY, ATOMIC_POLICY >(
+        finiteElement,
+        elementSubRegion,
+        elemsToNodes,
+        elemsToFaces,
+        facesToNodes,
+        facesDomainBoundaryIndicator,
+        freeSurfaceFaceIndicator,
+        lateralSurfaceFaceIndicator,
+        bottomSurfaceFaceIndicator,
+        nodeCoords,
+        velocity,
+        density,
+        vti_epsilon,
+        vti_delta,
+        damping_pp,
+        damping_pq,
+        damping_qp,
+        damping_qq
+        );
+    } );
+  } );
+}
+
+// Explicit template instantiations
+template void AcousticSecondOrderAnisotropicWaveEquationSEM::initializeMatricesTemplate< ZhangDampingComputer >( MeshLevel & mesh, string_array const & regionNames );
+template void AcousticSecondOrderAnisotropicWaveEquationSEM::initializeMatricesTemplate< FletcherDampingComputer >( MeshLevel & mesh, string_array const & regionNames );
 
 } // namespace geos

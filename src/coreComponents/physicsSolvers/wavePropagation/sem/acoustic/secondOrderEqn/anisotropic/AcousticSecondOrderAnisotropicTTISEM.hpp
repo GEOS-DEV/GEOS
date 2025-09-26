@@ -43,6 +43,14 @@ public:
 
 protected:
   virtual void initializePostInitialConditionsPreSubGroups() override final;
+/**
+ * @brief Template method for TTI matrix initialization (common VTI stuff + TTI DOF arrays)
+ * @tparam DampingComputer The specific damping computer to use (Zhang or Fletcher)
+ * @param mesh The mesh level
+ * @param regionNames The region names to process
+ */
+  template< typename DampingComputer >
+  void initializeMatricesTemplate( MeshLevel & mesh, string_array const & regionNames );
 
 };
 

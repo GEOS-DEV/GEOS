@@ -17,6 +17,7 @@
 #include "physicsSolvers/wavePropagation/sem/acoustic/shared/AcousticMatricesSEMKernel.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
 #include "AcousticTTIFields.hpp"
+#include "DampingMatrixComputers.hpp"
 
 
 namespace geos
@@ -70,5 +71,61 @@ void AcousticSecondOrderAnisotropicTTISEM::initializePostInitialConditionsPreSub
     dofAzimuth.zero();
   } );
 }
+
+template< typename DampingComputer >
+void AcousticSecondOrderAnisotropicTTISEM::initializeMatricesTemplate( MeshLevel & mesh, string_array const & regionNames )
+{
+  // First do all the common VTI stuff (mass + VTI DOF arrays + damping)
+  AcousticSecondOrderAnisotropicWaveEquationSEM::initializeMatricesTemplate< DampingComputer >( mesh, regionNames );
+
+  // Now add TTI-specific DOF arrays computation
+  NodeManager & nodeManager = mesh.getNodeManager();
+  ElementRegionManager & elemManager = mesh.getElemManager();
+
+  arrayView2d< wsCoordType const, nodes::REFERENCE_POSITION_USD > const nodeCoords = nodeManager.getField< fields::referencePosition32 >().toViewConst();
+
+  // TTI-specific DOF arrays
+  arrayView1d< real32 > const dofTilt = nodeManager.getField< acousticttifields::AcousticDofTilt >();
+  arrayView1d< real32 > const dofAzimuth = nodeManager.getField< acousticttifields::AcousticDofAzimuth >();
+  dofTilt.zero();
+  dofAzimuth.zero();
+
+  // Get source coordinates for DOF arrays computation
+  arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
+
+  elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                              CellElementSubRegion & elementSubRegion )
+  {
+    finiteElement::FiniteElementBase const &
+    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
+    arrayView1d< real32 const > const tti_dipx = elementSubRegion.getField< acousticttifields::AcousticDipX >();
+    arrayView1d< real32 const > const tti_dipy = elementSubRegion.getField< acousticttifields::AcousticDipY >();
+    arrayView1d< real32 > const dofOrder   = nodeManager.getField< acousticvtifields::AcousticDofOrder >();
+
+    finiteElement::FiniteElementDispatchHandler< SEM_FE_TYPES >::dispatch3D( fe, [&] ( auto const finiteElement )
+    {
+      using FE_TYPE = TYPEOFREF( finiteElement );
+
+      // TTI-specific DOF arrays computation
+      AcousticMatricesSEM::DofArrays< FE_TYPE > kernelDebug( finiteElement );
+      kernelDebug.template computeDofArraysTTI< EXEC_POLICY, ATOMIC_POLICY >( elementSubRegion.size(),
+                                                                              nodeCoords,
+                                                                              elemsToNodes,
+                                                                              tti_dipx,
+                                                                              tti_dipy,
+                                                                              dofTilt,
+                                                                              dofAzimuth,
+                                                                              dofOrder,
+                                                                              sourceCoordinates,
+                                                                              m_radiusIsoAroundSource );
+    } );
+  } );
+}
+
+// Explicit template instantiations
+template void AcousticSecondOrderAnisotropicTTISEM::initializeMatricesTemplate< ZhangDampingComputer >( MeshLevel & mesh, string_array const & regionNames );
+template void AcousticSecondOrderAnisotropicTTISEM::initializeMatricesTemplate< FletcherDampingComputer >( MeshLevel & mesh, string_array const & regionNames );
 
 } // namespace geos

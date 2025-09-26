@@ -61,11 +61,11 @@ public:
    *
    * These functions provide the primary interface that is required for derived classes
    */
-  /**@{*/  
+  /**@{*/
   virtual real64 explicitStepForward( real64 const & time_n, real64 const & dt, integer const cycleNumber, DomainPartition & domain, integer const computeGradient ) override;
   virtual real64 explicitStepBackward( real64 const & time_n, real64 const & dt, integer const cycleNumber, DomainPartition & domain, integer const computeGradient ) override;
   virtual real32 getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames ) override;
-    /**@}*/
+  /**@}*/
 
   /**
    * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
@@ -136,6 +136,15 @@ protected:
    */
   virtual void applyStiffnessKernels( const real64 & dt, MeshLevel & mesh, const string_array & regionNames ) = 0;
 
+
+  /**
+   * @brief Template method for common matrix initialization (mass + VTI DOF arrays + damping)
+   * @tparam DampingComputer The specific damping computer to use (Zhang or Fletcher)
+   * @param mesh The mesh level
+   * @param regionNames The region names to process
+   */
+  template< typename DampingComputer >
+  void initializeMatricesTemplate( MeshLevel & mesh, string_array const & regionNames );
 
 private:
 

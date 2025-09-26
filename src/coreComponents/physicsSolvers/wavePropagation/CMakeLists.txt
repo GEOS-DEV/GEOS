@@ -31,6 +31,7 @@ set( wavePropagationSolvers_headers
      sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderTTIFletcher.hpp
      sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderVTIZhang.hpp
      sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderTTIZhang.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/DampingMatrixComputers.hpp
      sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.hpp
      sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEMKernel.hpp
      sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIFields.hpp
