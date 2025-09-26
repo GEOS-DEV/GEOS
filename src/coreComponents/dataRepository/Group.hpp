@@ -1752,6 +1752,7 @@ Group::addLogLevel()
 }
 
 } /* end namespace dataRepository */
+
 } /* end namespace geos */
 
 #endif /* GEOS_DATAREPOSITORY_GROUP_HPP_ */
