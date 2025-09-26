@@ -250,6 +250,7 @@ public:
   updateAndWriteConvergenceStep( real64 const & time_n, real64 const & dt,
                                  integer const cycleNumber, integer const iteration ) override
   {
+    PhysicsSolverBase::updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iteration );
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
       solver->updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iteration );
