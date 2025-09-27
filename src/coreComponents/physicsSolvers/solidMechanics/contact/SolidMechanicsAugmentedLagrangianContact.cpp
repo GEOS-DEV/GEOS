@@ -217,6 +217,7 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
 
 void SolidMechanicsAugmentedLagrangianContact::setSparsityPattern( DomainPartition & domain,
                                                                    DofManager & dofManager,
+                                                                   CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
                                                                    SparsityPattern< globalIndex > & pattern )
 {
   // Set the sparsity pattern without the Abu and Aub blocks.

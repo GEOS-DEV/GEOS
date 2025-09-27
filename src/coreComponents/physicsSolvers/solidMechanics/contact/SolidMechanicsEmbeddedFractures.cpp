@@ -230,11 +230,12 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
 
 void SolidMechanicsEmbeddedFractures::setSparsityPattern( DomainPartition & domain,
                                                           DofManager & dofManager,
+                                                          CRSMatrix< real64, globalIndex > & localMatrix,
                                                           SparsityPattern< globalIndex > & pattern )
 {
   if( m_useStaticCondensation )
   {
-    SolidMechanicsLagrangianFEM::setSparsityPattern( domain, dofManager, pattern );
+    SolidMechanicsLagrangianFEM::setSparsityPattern( domain, dofManager, localMatrix, pattern );
     return;
   }
 

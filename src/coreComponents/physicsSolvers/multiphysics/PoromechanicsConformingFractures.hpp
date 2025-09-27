@@ -61,32 +61,14 @@ public:
                             DofManager::Connector::Elem );
   }
 
-  virtual void setupSystem( DomainPartition & domain,
-                            DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution,
-                            bool const setSparsity = true ) override
-  {
-    GEOS_MARK_FUNCTION;
-
-    PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
-
-    setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
-
-    // if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
-    // {
-    //   m_precond = createPreconditioner( domain );
-    // }
-  }
-
   virtual void setSparsityPattern( DomainPartition & domain,
                                    DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
                                    SparsityPattern< globalIndex > & pattern ) override
   {
     // start with the flow solver sparsity pattern (it could be reservoir + wells)
     SparsityPattern< globalIndex > patternOriginal;
-    this->flowSolver()->setSparsityPattern( domain, dofManager, patternOriginal );
+    this->flowSolver()->setSparsityPattern( domain, dofManager, localMatrix, patternOriginal );
 
     // Get the original row lengths (diagonal blocks only)
     array1d< localIndex > rowLengths( patternOriginal.numRows());
@@ -112,6 +94,8 @@ public:
 
     // Add the nonzeros from coupling
     addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView());
+
+    setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
   }
 
   virtual void assembleSystem( real64 const time_n,
@@ -358,7 +342,12 @@ protected:
                                    DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                    CRSMatrix< real64, globalIndex > & localMatrix )
   {
+
+    std::cout << "PoromechanicsConformingFractures::setUpDflux_dApertureMatrix\n";
+
     integer const numComp = numFluidComponents();
+
+    std::cout << " numComp = " << numComp << '\n';
 
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                         MeshLevel const & mesh,

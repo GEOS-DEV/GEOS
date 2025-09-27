@@ -115,11 +115,12 @@ public:
 
   virtual void setSparsityPattern( DomainPartition & domain,
                                    DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
                                    SparsityPattern< globalIndex > & pattern ) override
   {
     // Set the reservoir sparsity pattern without reservoir-well coupling
     SparsityPattern< globalIndex > patternDiag;
-    reservoirSolver()->setSparsityPattern( domain, dofManager, patternDiag );
+    reservoirSolver()->setSparsityPattern( domain, dofManager, localMatrix, patternDiag );
 
     // Get the original row lengths (diagonal blocks only)
     array1d< localIndex > rowLengths( patternDiag.numRows());

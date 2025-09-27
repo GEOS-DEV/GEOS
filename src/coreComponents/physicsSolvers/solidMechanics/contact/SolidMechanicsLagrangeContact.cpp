@@ -215,10 +215,11 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
 
 void SolidMechanicsLagrangeContact::setSparsityPattern( DomainPartition & domain,
                                                         DofManager & dofManager,
+                                                        CRSMatrix< real64, globalIndex > & localMatrix,
                                                         SparsityPattern< globalIndex > & pattern )
 {
   // avoid calling SolidMechanicsLagrangianFEM::setSparsityPattern
-  PhysicsSolverBase::setSparsityPattern( domain, dofManager, pattern );
+  PhysicsSolverBase::setSparsityPattern( domain, dofManager, localMatrix, pattern );
 }
 
 void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,

@@ -989,6 +989,7 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
 
 void SolidMechanicsLagrangianFEM::setSparsityPattern( DomainPartition & domain,
                                                       DofManager & dofManager,
+                                                      CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
                                                       SparsityPattern< globalIndex > & pattern )
 {
   pattern.resize( dofManager.numLocalDofs(),
