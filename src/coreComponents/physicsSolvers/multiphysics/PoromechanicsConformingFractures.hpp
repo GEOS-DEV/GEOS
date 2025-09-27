@@ -342,12 +342,7 @@ protected:
                                    DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                    CRSMatrix< real64, globalIndex > & localMatrix )
   {
-
-    std::cout << "PoromechanicsConformingFractures::setUpDflux_dApertureMatrix\n";
-
     integer const numComp = numFluidComponents();
-
-    std::cout << " numComp = " << numComp << '\n';
 
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                         MeshLevel const & mesh,
