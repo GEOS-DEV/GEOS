@@ -225,7 +225,8 @@ TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
   // Compute exact pressure and L2 error
   RAJA::ReduceSum< parallelDeviceReduce, real64 > l2Error_ReduceSum( 0.0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > totalVolume_ReduceSum( 0.0 );
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+  localIndex const n_cells  = subRegion.size();
+  forAll< geos::parallelDevicePolicy<> >( n_cells, [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
     real64 x = centers[i][0];
     real64 volume = volumes[i];
@@ -396,7 +397,8 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
   // Compute exact pressure and L2 error
   RAJA::ReduceSum< parallelDeviceReduce, real64 > l2Error_ReduceSum( 0.0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > totalVolume_ReduceSum( 0.0 );
-  forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+  localIndex const n_cells  = subRegion.size();
+  forAll< geos::parallelDevicePolicy<> >( n_cells, [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
     real64 x = centers[i][0];
     real64 volume = volumes[i];
@@ -425,107 +427,109 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
 // Ensures that MFD with innerProductType="TPFA" reproduces exactly the
 // same pressure field as the standard TPFA solver for each mesh.
 // This test guarantees solver consistency between TPFA and MFD formulations.
-//class TPFAvsMFDTPFATest : public ::testing::TestWithParam< const char * >
-//{
-//protected:
-//  TPFAvsMFDTPFATest() = default;
-//};
-//
-//// Instantiate parameterized test for all mesh files
-//INSTANTIATE_TEST_SUITE_P(
-//  MeshFiles,
-//  TPFAvsMFDTPFATest,
-//  ::testing::Values(
-//    "polyhedral_voronoi_complex.vtk",
-//    "polyhedral_voronoi_lattice.vtk",
-//    "polyhedral_voronoi_regular.vtk"
-//    )
-//  );
-//
-//TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
-//{
-//  const char * meshFile = GetParam();
-//  // Use the CMAKE-defined TEST_BINARY_DIR variable
-//  std::string testBinaryDir = TEST_BINARY_DIR;
-//
-//  arrayView1d< real64 const > p_tpfa;
-//  arrayView1d< real64 const > p_mfd;
-//  localIndex n_data_tpfa = 0;
-//  localIndex n_data_mfd = 0;
-//
-//  // --- Run TPFA solver ---
-//  {
-//    GeosxState tpfaState( std::make_unique< CommandLineOptions >( g_commandLineOptions ));
-//
-//    std::string xmlTPFA = generateXmlInputTPFA( testBinaryDir + "/" + meshFile );
-//    setupProblemFromXML( tpfaState.getProblemManager(), xmlTPFA.c_str());
-//
-//    ProblemManager & pmTPFA = tpfaState.getProblemManager();
-//    DomainPartition & domainTPFA = pmTPFA.getDomainPartition();
-//
-//    auto & solverTPFA =
-//      dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >(
-//        pmTPFA.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ));
-//
-//    solverTPFA.setupSystem( domainTPFA, solverTPFA.getDofManager(),
-//                            solverTPFA.getLocalMatrix(), solverTPFA.getSystemRhs(),
-//                            solverTPFA.getSystemSolution());
-//    solverTPFA.implicitStepSetup( 0.0, TIME_STEP, domainTPFA );
-//    solverTPFA.solverStep( 0.0, TIME_STEP, 0, domainTPFA );
-//    solverTPFA.implicitStepComplete( 0.0, TIME_STEP, domainTPFA );
-//
-//    MeshLevel & meshTPFA = domainTPFA.getMeshBody( 0 ).getBaseDiscretization();
-//    CellElementSubRegion & subRegionTPFA =
-//      meshTPFA.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
-//
-//    p_tpfa = subRegionTPFA.getField< fields::flow::pressure >();
-//    n_data_tpfa = subRegionTPFA.size();
-//
-//    // tpfaState destroyed here — CommunicationTools cleaned up
-//  }
-//
-//  // --- Run MFD solver with innerProductType=TPFA ---
-//  {
-//    GeosxState mfdState( std::make_unique< CommandLineOptions >( g_commandLineOptions ));
-//
-//    std::string xmlMFD = generateXmlInputMFD( TPFA, testBinaryDir + "/" + meshFile );
-//    setupProblemFromXML( mfdState.getProblemManager(), xmlMFD.c_str());
-//
-//    ProblemManager & pmMFD = mfdState.getProblemManager();
-//    DomainPartition & domainMFD = pmMFD.getDomainPartition();
-//
-//    auto & solverMFD =
-//      dynamic_cast< SinglePhaseHybridFVM & >(
-//        pmMFD.getPhysicsSolverManager().getGroup< SinglePhaseHybridFVM >( "SinglePhaseFlow" ));
-//
-//    solverMFD.setupSystem( domainMFD, solverMFD.getDofManager(),
-//                           solverMFD.getLocalMatrix(), solverMFD.getSystemRhs(),
-//                           solverMFD.getSystemSolution());
-//    solverMFD.implicitStepSetup( 0.0, TIME_STEP, domainMFD );
-//    solverMFD.solverStep( 0.0, TIME_STEP, 0, domainMFD );
-//    solverMFD.implicitStepComplete( 0.0, TIME_STEP, domainMFD );
-//
-//    MeshLevel & meshMFD = domainMFD.getMeshBody( 0 ).getBaseDiscretization();
-//    CellElementSubRegion & subRegionMFD =
-//      meshMFD.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
-//
-//    p_mfd = subRegionMFD.getField< fields::flow::pressure >();
-//    n_data_mfd = subRegionMFD.size();
-//
-//    // mfdState destroyed here
-//  }
-//
-//  // --- Compare cellwise pressures ---
-//  ASSERT_EQ( n_data_tpfa, n_data_mfd );
-//  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxPressureDiff( 0.0 );
-//  forAll< parallelDevicePolicy<> >( n_data_tpfa, [=] ( localIndex i )
-//  {
-//    real64 p_num_tpfa = p_tpfa[i];
-//    real64 p_num_mfd  = p_mfd[i];
-//    maxPressureDiff.max( std::abs( p_num_tpfa - p_num_mfd ));
-//  } );
-//  EXPECT_LE( maxPressureDiff.get(), PRESSURE_L2_TOLERANCE );
-//}
+class TPFAvsMFDTPFATest : public ::testing::TestWithParam< const char * >
+{
+protected:
+  TPFAvsMFDTPFATest() = default;
+};
+
+// Instantiate parameterized test for all mesh files
+INSTANTIATE_TEST_SUITE_P(
+  MeshFiles,
+  TPFAvsMFDTPFATest,
+  ::testing::Values(
+    "polyhedral_voronoi_complex.vtk",
+    "polyhedral_voronoi_lattice.vtk",
+    "polyhedral_voronoi_regular.vtk"
+    )
+  );
+
+TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
+{
+  const char * meshFile = GetParam();
+  // Use the CMAKE-defined TEST_BINARY_DIR variable
+  std::string testBinaryDir = TEST_BINARY_DIR;
+
+  arrayView1d< real64 const > p_tpfa;
+  arrayView1d< real64 const > p_mfd;
+  localIndex n_data_tpfa = 0;
+  localIndex n_data_mfd = 0;
+
+  // --- Run TPFA solver ---
+  {
+    GeosxState tpfaState( std::make_unique< CommandLineOptions >( g_commandLineOptions ));
+
+    std::string xmlTPFA = generateXmlInputTPFA( testBinaryDir + "/" + meshFile );
+    setupProblemFromXML( tpfaState.getProblemManager(), xmlTPFA.c_str());
+
+    ProblemManager & pmTPFA = tpfaState.getProblemManager();
+    DomainPartition & domainTPFA = pmTPFA.getDomainPartition();
+
+    auto & solverTPFA =
+      dynamic_cast< SinglePhaseFVM< SinglePhaseBase > & >(
+        pmTPFA.getPhysicsSolverManager().getGroup< SinglePhaseFVM< SinglePhaseBase > >( "SinglePhaseFlow" ));
+
+    solverTPFA.setupSystem( domainTPFA, solverTPFA.getDofManager(),
+                            solverTPFA.getLocalMatrix(), solverTPFA.getSystemRhs(),
+                            solverTPFA.getSystemSolution());
+    solverTPFA.implicitStepSetup( 0.0, TIME_STEP, domainTPFA );
+    solverTPFA.solverStep( 0.0, TIME_STEP, 0, domainTPFA );
+    solverTPFA.implicitStepComplete( 0.0, TIME_STEP, domainTPFA );
+
+    MeshLevel & meshTPFA = domainTPFA.getMeshBody( 0 ).getBaseDiscretization();
+    CellElementSubRegion & subRegionTPFA =
+      meshTPFA.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
+
+    p_tpfa = subRegionTPFA.getField< fields::flow::pressure >();
+    n_data_tpfa = subRegionTPFA.size();
+
+    // tpfaState destroyed here — CommunicationTools cleaned up
+  }
+
+  // --- Run MFD solver with innerProductType=TPFA ---
+  {
+    GeosxState mfdState( std::make_unique< CommandLineOptions >( g_commandLineOptions ));
+
+    std::string xmlMFD = generateXmlInputMFD( TPFA, testBinaryDir + "/" + meshFile );
+    setupProblemFromXML( mfdState.getProblemManager(), xmlMFD.c_str());
+
+    ProblemManager & pmMFD = mfdState.getProblemManager();
+    DomainPartition & domainMFD = pmMFD.getDomainPartition();
+
+    auto & solverMFD =
+      dynamic_cast< SinglePhaseHybridFVM & >(
+        pmMFD.getPhysicsSolverManager().getGroup< SinglePhaseHybridFVM >( "SinglePhaseFlow" ));
+
+    solverMFD.setupSystem( domainMFD, solverMFD.getDofManager(),
+                           solverMFD.getLocalMatrix(), solverMFD.getSystemRhs(),
+                           solverMFD.getSystemSolution());
+    solverMFD.implicitStepSetup( 0.0, TIME_STEP, domainMFD );
+    solverMFD.solverStep( 0.0, TIME_STEP, 0, domainMFD );
+    solverMFD.implicitStepComplete( 0.0, TIME_STEP, domainMFD );
+
+    MeshLevel & meshMFD = domainMFD.getMeshBody( 0 ).getBaseDiscretization();
+    CellElementSubRegion & subRegionMFD =
+      meshMFD.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
+
+    p_mfd = subRegionMFD.getField< fields::flow::pressure >();
+    n_data_mfd = subRegionMFD.size();
+
+    // mfdState destroyed here
+  }
+
+  // --- Compare cellwise pressures ---
+  ASSERT_EQ( n_data_tpfa, n_data_mfd );
+  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxPressureDiff( 0.0 );
+  localIndex const n_cells = n_data_tpfa;
+  forAll< geos::parallelDevicePolicy<> >( n_cells, [=] GEOS_HOST_DEVICE ( localIndex const i )
+  {
+    real64 p_num_tpfa = p_tpfa[i];
+    real64 p_num_mfd  = p_mfd[i];
+    maxPressureDiff.max( std::abs( p_num_tpfa - p_num_mfd ));
+  } );
+  real64 const maxPressureDiff_value = maxPressureDiff.get();
+  EXPECT_LE( maxPressureDiff_value, PRESSURE_L2_TOLERANCE );
+}
 
 
 
