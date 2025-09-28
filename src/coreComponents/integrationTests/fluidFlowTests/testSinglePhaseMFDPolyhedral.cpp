@@ -450,8 +450,8 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
   // Use the CMAKE-defined TEST_BINARY_DIR variable
   std::string testBinaryDir = TEST_BINARY_DIR;
 
-  std::vector< real64> p_tpfa;
-  std::vector< real64> p_mfd;
+  std::vector< real64 > p_tpfa;
+  std::vector< real64 > p_mfd;
   localIndex n_data_tpfa = 0;
   localIndex n_data_mfd = 0;
 
@@ -482,7 +482,7 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
 
     arrayView1d< real64 const > p_h = subRegionTPFA.getField< fields::flow::pressure >();
     n_data_tpfa = subRegionTPFA.size();
-    
+
 #if defined(GEOS_USE_CUDA)
     p_h.move( parallelDeviceMemorySpace, false );
 #else
@@ -526,7 +526,7 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
     p_h.move( hostMemorySpace, false );
 #endif
     p_mfd = std::vector< real64 >( p_h.data(), p_h.data() + n_data_mfd );
-    
+
     // mfdState destroyed here
   }
 
