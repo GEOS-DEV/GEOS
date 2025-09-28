@@ -25,14 +25,6 @@
       fieldName="rockPorosityA_referencePorosity"
       scale="0.25"/>
 
-    <!-- <FieldSpecification
-      name="PorositySink"
-      initialCondition="1"
-      setNames="{ sink }"
-      objectPath="ElementRegions/MediumA"
-      fieldName="rockPorosityA_referencePorosity"
-      scale="1.0"/> -->
-
     <FieldSpecification
       name="PorosityMediumB"
       initialCondition="1"
@@ -40,14 +32,6 @@
       objectPath="ElementRegions/MediumB"
       fieldName="rockPorosityB_referencePorosity"
       scale="0.5"/>
-    
-    <!-- <FieldSpecification
-      name="DiffusivitySink"
-      initialCondition="1"
-      setNames="{ sink }"
-      objectPath="ElementRegions/MediumA"
-      fieldName="diffusionA_diffusivity"
-      scale="1e8"/> -->
 
     <FieldSpecification
       name="initialPressureSource"
@@ -81,8 +65,8 @@
 
     <FieldSpecification
       name="sinkPressure"
-      setNames="{ sink }"
-      objectPath="ElementRegions/MediumA"
+      setNames="{ xpos }"
+      objectPath="faceManager"
       fieldName="pressure"
       scale="1.0e6"/>
   </FieldSpecifications>

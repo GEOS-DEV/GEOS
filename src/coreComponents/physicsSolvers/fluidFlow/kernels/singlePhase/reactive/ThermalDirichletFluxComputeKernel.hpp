@@ -17,30 +17,33 @@
  * @file ThermalDirichletFluxComputeKernel.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASE_THERMALDIRICHLETFLUXCOMPUTEKERNEL_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASE_THERMALDIRICHLETFLUXCOMPUTEKERNEL_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEREACTIVE_THERMALDIRICHLETFLUXCOMPUTEKERNEL_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEREACTIVE_THERMALDIRICHLETFLUXCOMPUTEKERNEL_HPP
 
-#include "physicsSolvers/fluidFlow/kernels/singlePhase/FluxComputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/DirichletFluxComputeKernel.hpp"
 
-#include "constitutive/fluid/singlefluid/SingleFluidSelector.hpp"
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
 #include "constitutive/thermalConductivity/ThermalConductivityFields.hpp"
 
 namespace geos
 {
 
-namespace thermalSinglePhaseFVMKernels
+namespace thermalSinglePhaseReactiveFVMKernels
 {
 
 /******************************** DirichletFluxComputeKernel ********************************/
 
 /**
  * @class DirichletFluxComputeKernel
+ * @tparam NUM_SPECIES number of fluid primary species
+ * @tparam NUM_EQN number of equations
+ * @tparam NUM_DOF number of degrees of freedom
  * @tparam FLUIDWRAPPER the type of the fluid wrapper
+ * @tparam BASE_FLUID_TYPE the type of the base model for the reactive fluid model
  * @brief Define the interface for the assembly kernel in charge of Dirichlet face flux terms
  */
-template< integer NUM_EQN, integer NUM_DOF, typename FLUIDWRAPPER >
-class DirichletFluxComputeKernel : public singlePhaseFVMKernels::DirichletFluxComputeKernel< NUM_EQN, NUM_DOF, FLUIDWRAPPER >
+template< integer NUM_SPECIES, integer NUM_EQN, integer NUM_DOF, typename FLUIDWRAPPER, typename BASE_FLUID_TYPE >
+class DirichletFluxComputeKernel : public singlePhaseReactiveFVMKernels::DirichletFluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, FLUIDWRAPPER, BASE_FLUID_TYPE >
 {
 public:
 
@@ -73,10 +76,8 @@ public:
   using AbstractBase::m_dDens;
   using AbstractBase::m_dMob;
 
-  using AbstractBase::m_localMatrix;
-  using AbstractBase::m_localRhs;
-
-  using Base = singlePhaseFVMKernels::DirichletFluxComputeKernel< NUM_EQN, NUM_DOF, FLUIDWRAPPER >;
+  using Base = singlePhaseReactiveFVMKernels::DirichletFluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, FLUIDWRAPPER, BASE_FLUID_TYPE >;
+  using Base::numSpecies;
   using Base::numDof;
   using Base::numEqn;
   using Base::m_stencilWrapper;
@@ -86,11 +87,14 @@ public:
   using Base::m_facePres;
   using Base::m_faceGravCoef;
 
+  using ReactiveSinglePhaseFlowAccessors = typename Base::ReactiveSinglePhaseFlowAccessors;
+  using ReactiveSinglePhaseFluidAccessors = typename Base::ReactiveSinglePhaseFluidAccessors;
+
   using ThermalSinglePhaseFlowAccessors =
     StencilAccessors< fields::flow::temperature >;
 
-  using ThermalSinglePhaseFluidAccessors =
-    StencilMaterialAccessors< constitutive::SingleFluidBase,
+  using ThermalReactiveSinglePhaseFluidAccessors =
+    StencilMaterialAccessors< constitutive::reactivefluid::ReactiveSinglePhaseFluid< BASE_FLUID_TYPE >,
                               fields::singlefluid::enthalpy,
                               fields::singlefluid::dEnthalpy >;
 
@@ -107,11 +111,14 @@ public:
    * @param[in] fluidWrapper reference to the fluid wrapper
    * @param[in] dofNumberAccessor the degree of freedom number accessor
    * @param[in] singlePhaseFlowAccessors the single phase flow accessor
-   * @param[in] thermalSinglePhaseFlowAccessors the thermal single phase flow accessor
+   * @param[in] reactiveSinglePhaseFlowAccessors accessor for *reactive* wrappers registered by the solver
+   * @param[in] thermalSinglePhaseFlowAccessors accessor for *thermal* wrappers registered by the solver
    * @param[in] singlePhaseFluidAccessors the single phase fluid accessor
-   * @param[in] thermalSinglePhaseFluidAccessors the thermal single phase fluid accessor
+   * @param[in] reactiveSinglePhaseFluidAccessors accessor for *reactive* wrappers registered by the single fluid model
+   * @param[in] thermalReactiveSinglePhaseFluidAccessors accessor for *thermal reactive* wrappers registered by the single fluid model
    * @param[in] permeabilityAccessors the permeability accessor
    * @param[in] thermalConductivityAccessors the thermal conductivity accessor
+   * @param[in] mobilePrimarySpeciesFlags the array of flags to indicate mobile primary species
    * @param[in] dt the time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -122,11 +129,14 @@ public:
                               FLUIDWRAPPER const & fluidWrapper,
                               DofNumberAccessor const & dofNumberAccessor,
                               SinglePhaseFlowAccessors const & singlePhaseFlowAccessors,
+                              ReactiveSinglePhaseFlowAccessors const & reactiveSinglePhaseFlowAccessors,
                               ThermalSinglePhaseFlowAccessors const & thermalSinglePhaseFlowAccessors,
                               SinglePhaseFluidAccessors const & singlePhaseFluidAccessors,
-                              ThermalSinglePhaseFluidAccessors const & thermalSinglePhaseFluidAccessors,
+                              ReactiveSinglePhaseFluidAccessors const & reactiveSinglePhaseFluidAccessors,
+                              ThermalReactiveSinglePhaseFluidAccessors const & thermalReactiveSinglePhaseFluidAccessors,
                               PermeabilityAccessors const & permeabilityAccessors,
                               ThermalConductivityAccessors const & thermalConductivityAccessors,
+                              arrayView1d< integer const > const & mobilePrimarySpeciesFlags,
                               real64 const & dt,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
@@ -137,15 +147,18 @@ public:
             fluidWrapper,
             dofNumberAccessor,
             singlePhaseFlowAccessors,
+            reactiveSinglePhaseFlowAccessors,
             singlePhaseFluidAccessors,
+            reactiveSinglePhaseFluidAccessors,
             permeabilityAccessors,
+            mobilePrimarySpeciesFlags,
             dt,
             localMatrix,
             localRhs ),
     m_temp( thermalSinglePhaseFlowAccessors.get( fields::flow::temperature {} ) ),
     m_faceTemp( faceManager.getField< fields::flow::faceTemperature >() ),
-    m_enthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
-    m_dEnthalpy( thermalSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
+    m_enthalpy( thermalReactiveSinglePhaseFluidAccessors.get( fields::singlefluid::enthalpy {} ) ),
+    m_dEnthalpy( thermalReactiveSinglePhaseFluidAccessors.get( fields::singlefluid::dEnthalpy {} ) ),
     m_thermalConductivity( thermalConductivityAccessors.get( fields::thermalconductivity::effectiveConductivity {} ) ),
     m_dThermalCond_dT( thermalConductivityAccessors.get( fields::thermalconductivity::dEffectiveConductivity_dT {} ) )
   {}
@@ -200,12 +213,8 @@ public:
                                            real64 const & f,
                                            real64 const & dF_dP,
                                            real64 const & mobility_up,
-                                           real64 const & dMobility_dP_up,
-                                           real64 const & dens_up,
-                                           real64 const & dDens_dP_up )
-    {
-      GEOS_UNUSED_VAR( dens_up, dDens_dP_up );
-      
+                                           real64 const & dMobility_dP_up )
+    {      
       // Compute the derivatives of the density wrt temperature
 
       real64 const dDens_dT = 0.5 * m_dDens[er][esr][ei][0][DerivOffset::dT];
@@ -253,11 +262,11 @@ public:
       stack.dEnergyFlux_dT += thermalTrans + dThermalTrans_dT * deltaT;
 
       // Add energyFlux and its derivatives to localFlux and localFluxJacobian
-      integer const localRowIndexEnergy = numEqn - 1;
+      integer const localRowIndexEnergy = numEqn - numSpecies - 1;
       stack.localFlux[localRowIndexEnergy] =  m_dt * stack.energyFlux;
 
       stack.localFluxJacobian[localRowIndexEnergy][0] =  m_dt * stack.dEnergyFlux_dP;
-      stack.localFluxJacobian[localRowIndexEnergy][numDof-1] =  m_dt * stack.dEnergyFlux_dT;
+      stack.localFluxJacobian[localRowIndexEnergy][numDof-numSpecies-1] =  m_dt * stack.dEnergyFlux_dT;
     } );
 
   }
@@ -273,12 +282,13 @@ public:
   {
     Base::complete( iconn, stack, [&] ( localIndex const localRow )
     {
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn - 1], stack.localFlux[numEqn-1] );
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn - numSpecies - 1], 
+                       stack.localFlux[numEqn - numSpecies - 1] );
 
       AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
-        ( localRow + numEqn - 1,
+        ( localRow + numEqn - numSpecies - 1,
         stack.dofColIndices,
-        stack.localFluxJacobian[numEqn-1],
+        stack.localFluxJacobian[numEqn - numSpecies - 1],
         numDof );
     } );
   }
@@ -313,75 +323,88 @@ public:
   /**
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] numSpecies the number of primary species
+   * @param[in] mobilePrimarySpeciesFlags the array of flags to indicate mobile primary species
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey string to get the element degrees of freedom numbers
    * @param[in] solverName name of the solver (to name accessors)
    * @param[in] faceManager reference to the face manager
    * @param[in] elemManager reference to the element region manager
    * @param[in] stencilWrapper reference to the boundary stencil wrapper
-   * @param[in] fluidBase the single phase fluid constitutive model
+   * @param[in] reactiveFluid the single phase reactive fluid constitutive model
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
   template< typename POLICY >
   static void
-  createAndLaunch( globalIndex const rankOffset,
+  createAndLaunch( integer const numSpecies,
+                   arrayView1d< integer const > const mobilePrimarySpeciesFlags,
+                   globalIndex const rankOffset,
                    string const & dofKey,
                    string const & solverName,
                    FaceManager const & faceManager,
                    ElementRegionManager const & elemManager,
                    BoundaryStencilWrapper const & stencilWrapper,
-                   constitutive::SingleFluidBase & fluidBase,
+                   constitutive::reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid & reactiveFluid,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
+    constitutiveUpdatePassThru( reactiveFluid, [&]( auto & fluid )
     {
       using FluidType = TYPEOFREF( fluid );
       typename FluidType::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
 
-      integer constexpr NUM_DOF = 2;
-      integer constexpr NUM_EQN = 2;
+      singlePhaseReactiveBaseKernels::internal::kernelLaunchSelectorCompSwitch( numSpecies, [&]( auto NS )
+      {
+        integer constexpr NUM_SPECIES = NS();
+        integer constexpr NUM_DOF = 2+NS();
+        integer constexpr NUM_EQN = 2+NS();
 
-      using kernelType = DirichletFluxComputeKernel< NUM_EQN, NUM_DOF, typename FluidType::KernelWrapper >;
+        using kernelType = DirichletFluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, typename FluidType::KernelWrapper, constitutive::ThermalCompressibleSinglePhaseFluid >;
 
-      ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
-        elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+        ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
+          elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
 
-      dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
+        dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-      typename kernelType::SinglePhaseFlowAccessors singlePhaseFlowAccessors( elemManager, solverName );
-      typename kernelType::ThermalSinglePhaseFlowAccessors thermalSinglePhaseFlowAccessors( elemManager, solverName );
-      typename kernelType::SinglePhaseFluidAccessors singlePhaseFluidAccessors( elemManager, solverName );
-      typename kernelType::ThermalSinglePhaseFluidAccessors thermalSinglePhaseFluidAccessors( elemManager, solverName );
-      typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
-      typename kernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
+        typename kernelType::SinglePhaseFlowAccessors singlePhaseFlowAccessors( elemManager, solverName );
+        typename kernelType::ReactiveSinglePhaseFlowAccessors reactiveFlowAccessors( elemManager, solverName );
+        typename kernelType::ThermalSinglePhaseFlowAccessors thermalSinglePhaseFlowAccessors( elemManager, solverName );
+        typename kernelType::SinglePhaseFluidAccessors singlePhaseFluidAccessors( elemManager, solverName );
+        typename kernelType::ReactiveSinglePhaseFluidAccessors reactiveFluidAccessors( elemManager, solverName );
+        typename kernelType::ThermalReactiveSinglePhaseFluidAccessors thermalFluidAccessors( elemManager, solverName );
+        typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+        typename kernelType::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
 
-      kernelType kernel( rankOffset,
-                         faceManager,
-                         stencilWrapper,
-                         fluidWrapper,
-                         dofNumberAccessor,
-                         singlePhaseFlowAccessors,
-                         thermalSinglePhaseFlowAccessors,
-                         singlePhaseFluidAccessors,
-                         thermalSinglePhaseFluidAccessors,
-                         permeabilityAccessors,
-                         thermalConductivityAccessors,
-                         dt,
-                         localMatrix,
-                         localRhs );
+        kernelType kernel( rankOffset,
+                           faceManager,
+                           stencilWrapper,
+                           fluidWrapper,
+                           dofNumberAccessor,
+                           singlePhaseFlowAccessors,
+                           reactiveFlowAccessors,
+                           thermalSinglePhaseFlowAccessors,
+                           singlePhaseFluidAccessors,
+                           reactiveFluidAccessors,
+                           thermalFluidAccessors,
+                           permeabilityAccessors,
+                           thermalConductivityAccessors,
+                           mobilePrimarySpeciesFlags,
+                           dt,
+                           localMatrix,
+                           localRhs );
 
-      kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+        kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
+      } );
     } );
   }
 
 };
 
-} // namespace thermalSinglePhaseFVMKernels
+} // namespace thermalSinglePhaseReactiveFVMKernels
 
 } // namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASE_THERMALDIRICHLETFLUXCOMPUTEKERNEL_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEREACTIVE_THERMALDIRICHLETFLUXCOMPUTEKERNEL_HPP

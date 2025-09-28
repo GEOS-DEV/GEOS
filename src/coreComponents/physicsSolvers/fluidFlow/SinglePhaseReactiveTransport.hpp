@@ -25,11 +25,13 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseReactiveTransportFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/AccumulationKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/DirichletFluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/FluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ResidualNormKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ReactionUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalAccumulationKernels.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalDirichletFluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalFluxComputeKernel.hpp"
 #include "constitutive/fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp"
 
@@ -307,6 +309,24 @@ protected:
 
   /// array to store the indices of immobile primary species
   array1d< integer > m_immobilePrimarySpeciesIndices; 
+
+private:
+
+  /**
+   * @brief Function to perform the application of Dirichlet BCs on faces
+   * @param time_n current time
+   * @param dt time step
+   * @param faceSet degree-of-freedom manager associated with the linear system
+   * @param domain the domain
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  void applyFaceDirichletBC( real64 const time_n,
+                             real64 const dt,
+                             DofManager const & faceSet,
+                             DomainPartition & domain,
+                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                             arrayView1d< real64 > const & localRhs );
 
 };
 

@@ -65,8 +65,8 @@
 
     <FieldSpecification
       name="sinkPressure"
-      setNames="{ sink }"
-      objectPath="ElementRegions/MediumA"
+      setNames="{ xpos }"
+      objectPath="faceManager"
       fieldName="pressure"
       scale="1.0e6"/>
 

@@ -66,12 +66,14 @@ set( fluidFlowSolvers_headers
      kernels/singlePhase/proppant/ProppantBaseKernels.hpp
      kernels/singlePhase/proppant/ProppantFluxKernels.hpp
      kernels/singlePhase/reactive/AccumulationKernels.hpp
+     kernels/singlePhase/reactive/DirichletFluxComputeKernel.hpp
      kernels/singlePhase/reactive/FluidUpdateKernel.hpp
      kernels/singlePhase/reactive/FluxComputeKernel.hpp
      kernels/singlePhase/reactive/KernelLaunchSelectors.hpp
      kernels/singlePhase/reactive/ReactionUpdateKernel.hpp
      kernels/singlePhase/reactive/ResidualNormKernel.hpp
      kernels/singlePhase/reactive/ThermalAccumulationKernels.hpp
+     kernels/singlePhase/reactive/ThermalDirichletFluxComputeKernel.hpp
      kernels/singlePhase/reactive/ThermalFluxComputeKernel.hpp
      kernels/compositional/AccumulationKernel.hpp
      kernels/compositional/AquiferBCKernel.hpp

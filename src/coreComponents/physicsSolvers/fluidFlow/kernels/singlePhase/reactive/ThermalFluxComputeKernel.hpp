@@ -38,6 +38,7 @@ namespace thermalSinglePhaseReactiveFVMKernels
  * @tparam NUM_EQN number of equations
  * @tparam NUM_DOF number of degrees of freedom
  * @tparam STENCILWRAPPER the type of the stencil wrapper
+ * @tparam BASE_FLUID_TYPE the type of the base model for the reactive fluid model
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer NUM_SPECIES, integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER, typename BASE_FLUID_TYPE >

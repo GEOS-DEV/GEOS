@@ -13,7 +13,7 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ -1e-4, 0, 0.1, 1, 1.1, 2.1, 3.1 }"
+      xCoords="{ -1e-4, 0, 0.1, 1, 1.1, 2.1, 2.1001 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
       nx="{ 1, 10, 90, 40, 100, 1 }"
@@ -30,10 +30,10 @@
   </Geometry>
 
   <Events
-    maxTime="1">
+    maxTime="5200">
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="10"
+      cycleFrequency="2000"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
@@ -80,12 +80,12 @@
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="1e-4"
+      maxEventDt="1e-2"
       target="/Solvers/SinglePhaseReactiveFlow"/>
 
     <PeriodicEvent
       name="restarts"
-      cycleFrequency="10000"
+      cycleFrequency="50000"
       target="/Outputs/restartOutput"/>
   </Events>
 

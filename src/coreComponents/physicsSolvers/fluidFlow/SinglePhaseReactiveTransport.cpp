@@ -109,7 +109,6 @@ SinglePhaseReactiveTransport::SinglePhaseReactiveTransport( const string & name,
   addLogLevel< logInfo::BoundaryConditions >();
 }
 
-// TODO: we need to update the class of ReactiveSingleFluid to be consistent with the chemistry module!!!
 void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
 {
   using namespace fields::flow;
@@ -857,12 +856,14 @@ void SinglePhaseReactiveTransport::applyBoundaryConditions( real64 const time_n,
 {
   GEOS_MARK_FUNCTION;
 
-  // apply pressure boundary conditions.
+  // apply Dirichlet boundary conditions.
   applyDirichletBC( time_n, dt, domain, dofManager, localMatrix.toViewConstSizes(), localRhs.toView() );
 
   // apply flux boundary conditions
   applySourceFluxBC( time_n, dt, domain, dofManager, localMatrix.toViewConstSizes(), localRhs.toView() );
 
+  // apply face Dirichlet boundary conditions.
+  applyFaceDirichletBC( time_n, dt, dofManager, domain, localMatrix, localRhs );
 }
 
 void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
@@ -1545,6 +1546,166 @@ void SinglePhaseReactiveTransport::saveConvergedState( ElementSubRegionBase & su
   arrayView2d< real64 const, compflow::USD_COMP > const primarySpeciesAggregateMole = subRegion.template getField< fields::flow::primarySpeciesAggregateMole >();
   arrayView2d< real64, compflow::USD_COMP > const primarySpeciesAggregateMole_n = subRegion.template getField< fields::flow::primarySpeciesAggregateMole_n >();
   primarySpeciesAggregateMole_n.setValues< parallelDevicePolicy<> >( primarySpeciesAggregateMole );
+}
+
+namespace
+{
+char const faceBcLogMessage[] =
+  "SinglePhaseReactiveTransport {}: at time {}s, "
+  "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. "
+  "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). "
+  "\nThe total number of target faces (including ghost faces) is {}."
+  "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.";
+}
+
+void SinglePhaseReactiveTransport::applyFaceDirichletBC( real64 const time_n,
+                                                         real64 const dt,
+                                                         DofManager const & dofManager,
+                                                         DomainPartition & domain,
+                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                         arrayView1d< real64 > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+
+  array1d< integer > mobilePrimarySpeciesFlags;
+  mobilePrimarySpeciesFlags.resize( m_numPrimarySpecies );
+
+  for( integer i=0; i<mobilePrimarySpeciesFlags.size(); ++i )
+  {
+    mobilePrimarySpeciesFlags[i] = 1;
+  }
+
+  if( m_immobilePrimarySpeciesIndices.size() > 0 )
+  {
+    for( integer i = 0; i < m_immobilePrimarySpeciesIndices.size(); ++i )
+    {
+      localIndex const immobileSpeciesIndex = m_immobilePrimarySpeciesIndices[i];
+      mobilePrimarySpeciesFlags[immobileSpeciesIndex] = 0;
+    }
+  }
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  string const & dofKey = dofManager.getKey( SinglePhaseBase::viewKeyStruct::elemDofFieldString() );
+
+  this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                      MeshLevel & mesh,
+                                                                      string_array const & )
+  {
+    FaceManager & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    if( m_isThermal )
+    {
+      // Take BCs defined for "pressure" field and apply values to "facePressure"
+      applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
+                                      fields::flow::pressure::key(), fields::flow::facePressure::key() );
+
+      // Take BCs defined for "temperature" field and apply values to "faceTemperature"
+      applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
+                                      fields::flow::temperature::key(), fields::flow::faceTemperature::key() );
+
+      // Then launch the face Dirichlet kernel
+      fsManager.apply< FaceManager >( time_n + dt,
+                                      mesh,
+                                      fields::flow::pressure::key(), // we have required that pressure is always present
+                                      [&] ( FieldSpecificationBase const &,
+                                            string const & setName,
+                                            SortedArrayView< localIndex const > const &,
+                                            FaceManager &,
+                                            string const & )
+      {
+        BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+        if( stencil.size() == 0 )
+        {
+          return;
+        }
+
+        // TODO: same issue as in the single-phase case
+        //       currently we just use model from the first cell in this stencil
+        //       since it's not clear how to create fluid kernel wrappers for arbitrary models.
+        //       Can we just use cell properties for an approximate flux computation?
+        //       Then we can forget about capturing the fluid model.
+        localIndex const er = stencil.getElementRegionIndices()( 0, 0 );
+        localIndex const esr = stencil.getElementSubRegionIndices()( 0, 0 );
+        ElementSubRegionBase & subRegion = elemManager.getRegion( er ).getSubRegion( esr );
+        string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+        reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid & reactiveFluid = subRegion.getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( fluidName );
+
+        BoundaryStencilWrapper const stencilWrapper = stencil.createKernelWrapper();
+
+        thermalSinglePhaseReactiveFVMKernels::
+            DirichletFluxComputeKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
+                                                       mobilePrimarySpeciesFlags,
+                                                       dofManager.rankOffset(),
+                                                       dofKey,
+                                                       this->getName(),
+                                                       faceManager,
+                                                       elemManager,
+                                                       stencilWrapper,
+                                                       reactiveFluid,
+                                                       dt,
+                                                       localMatrix,
+                                                       localRhs );
+      } );
+    }
+    else
+    {
+      // Take BCs defined for "pressure" field and apply values to "facePressure"
+      applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
+                                      fields::flow::pressure::key(), fields::flow::facePressure::key() );
+
+      // Then launch the face Dirichlet kernel
+      fsManager.apply< FaceManager >( time_n + dt,
+                                      mesh,
+                                      fields::flow::pressure::key(), // we have required that pressure is always present
+                                      [&] ( FieldSpecificationBase const &,
+                                            string const & setName,
+                                            SortedArrayView< localIndex const > const &,
+                                            FaceManager &,
+                                            string const & )
+      {
+        BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+        if( stencil.size() == 0 )
+        {
+          return;
+        }
+
+        // TODO: same issue as in the single-phase case
+        //       currently we just use model from the first cell in this stencil
+        //       since it's not clear how to create fluid kernel wrappers for arbitrary models.
+        //       Can we just use cell properties for an approximate flux computation?
+        //       Then we can forget about capturing the fluid model.
+        localIndex const er = stencil.getElementRegionIndices()( 0, 0 );
+        localIndex const esr = stencil.getElementSubRegionIndices()( 0, 0 );
+        ElementSubRegionBase & subRegion = elemManager.getRegion( er ).getSubRegion( esr );
+        string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+        reactivefluid::ReactiveCompressibleSinglePhaseFluid & reactiveFluid = subRegion.getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( fluidName );
+
+        BoundaryStencilWrapper const stencilWrapper = stencil.createKernelWrapper();
+
+        singlePhaseReactiveFVMKernels::
+            DirichletFluxComputeKernelFactory::
+            createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
+                                                       mobilePrimarySpeciesFlags,
+                                                       dofManager.rankOffset(),
+                                                       dofKey,
+                                                       this->getName(),
+                                                       faceManager,
+                                                       elemManager,
+                                                       stencilWrapper,
+                                                       reactiveFluid,
+                                                       dt,
+                                                       localMatrix,
+                                                       localRhs );
+      } );
+    }
+  } );
 }
 
 void SinglePhaseReactiveTransport::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PARAM( time_n ),
