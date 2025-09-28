@@ -483,11 +483,11 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
     arrayView1d< real64 const > p_h = subRegionTPFA.getField< fields::flow::pressure >();
     n_data_tpfa = subRegionTPFA.size();
 
-#if defined(GEOS_USE_CUDA)
-    p_h.move( parallelDeviceMemorySpace, false );
-#else
+//#if defined(GEOS_USE_CUDA)
+//    p_h.move( parallelDeviceMemorySpace, false );
+//#else
     p_h.move( hostMemorySpace, false );
-#endif
+//#endif
     p_tpfa = std::vector< real64 >( p_h.data(), p_h.data() + n_data_tpfa );
 
     // tpfaState destroyed here — CommunicationTools cleaned up
@@ -520,11 +520,11 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
 
     arrayView1d< real64 const > p_h = subRegionMFD.getField< fields::flow::pressure >();
     n_data_mfd = subRegionMFD.size();
-#if defined(GEOS_USE_CUDA)
-    p_h.move( parallelDeviceMemorySpace, false );
-#else
+//#if defined(GEOS_USE_CUDA)
+//    p_h.move( parallelDeviceMemorySpace, false );
+//#else
     p_h.move( hostMemorySpace, false );
-#endif
+//#endif
     p_mfd = std::vector< real64 >( p_h.data(), p_h.data() + n_data_mfd );
 
     // mfdState destroyed here
