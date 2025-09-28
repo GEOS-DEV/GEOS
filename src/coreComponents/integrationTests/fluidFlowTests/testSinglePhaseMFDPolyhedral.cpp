@@ -76,8 +76,8 @@
 // This elimination is performed directly in the current setting due to the smaller system size, this is not intended as a general
 // recommendation to invert sparse blocks exactly. Instead, from a preconditioning perspective, one could approximate the inverse
 // efficiently.
-//Material Parameters and Mesh Effects
-//All material parameters are set to unit values, resulting in each method constructing a discretization of the Laplacian. In this manner,
+//Regarding mesh effects. all material parameters are set to unit values, resulting in each method constructing a discretization of the
+// Laplacian. In this manner,
 // the observed variations in the condition number estimates are attributable to mesh distortion effects only.
 
 using namespace geos;
@@ -433,6 +433,14 @@ protected:
   TPFAvsMFDTPFATest() = default;
 };
 
+// Helper function to copy arrayView1d<real64 const> to std::vector<real64>
+static inline std::vector< real64 > arrayViewToVector( arrayView1d< real64 const > & arr, localIndex n )
+{
+  arr.move( hostMemorySpace, false );
+  return std::vector< real64 >( arr.data(), arr.data() + n );
+}
+
+
 // Instantiate parameterized test for all mesh files
 INSTANTIATE_TEST_SUITE_P(
   MeshFiles,
@@ -483,12 +491,7 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
     arrayView1d< real64 const > p_h = subRegionTPFA.getField< fields::flow::pressure >();
     n_data_tpfa = subRegionTPFA.size();
 
-//#if defined(GEOS_USE_CUDA)
-//    p_h.move( parallelDeviceMemorySpace, false );
-//#else
-    p_h.move( hostMemorySpace, false );
-//#endif
-    p_tpfa = std::vector< real64 >( p_h.data(), p_h.data() + n_data_tpfa );
+    p_tpfa = arrayViewToVector( p_h, n_data_tpfa );
 
     // tpfaState destroyed here — CommunicationTools cleaned up
   }
@@ -520,12 +523,8 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
 
     arrayView1d< real64 const > p_h = subRegionMFD.getField< fields::flow::pressure >();
     n_data_mfd = subRegionMFD.size();
-//#if defined(GEOS_USE_CUDA)
-//    p_h.move( parallelDeviceMemorySpace, false );
-//#else
-    p_h.move( hostMemorySpace, false );
-//#endif
-    p_mfd = std::vector< real64 >( p_h.data(), p_h.data() + n_data_mfd );
+
+    p_mfd = arrayViewToVector( p_h, n_data_mfd );
 
     // mfdState destroyed here
   }
