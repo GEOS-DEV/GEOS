@@ -8,7 +8,7 @@ These notes should be in reverse-chronological order, and use the following time
 
 PR #3780 (2025-09-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3780-13887-c1f3598.tar.gz>
 =====================
-Refactor single phase hybrid MFD. This refactor remove upwinding from the elliptic components.
+Refactor single phase hybrid MFD. This refactor removes upwinding discretization from the MFD discretization.
 
 PR #3779 (2025-09-21) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3779-13734-44eed3f.tar.gz>
 =====================
