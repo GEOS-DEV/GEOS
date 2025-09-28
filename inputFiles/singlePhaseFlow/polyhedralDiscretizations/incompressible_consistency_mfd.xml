@@ -17,16 +17,43 @@
  <Solvers>
     <SinglePhaseHybridFVM
       name="SinglePhaseFlow"
-      logLevel="1"
       discretization="singlePhaseMFD"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
-        newtonMaxIter="8"/>
+        newtonMaxIter="2"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1e-10"
+        krylovMaxIter="100"
+        logLevel="1" />   
     </SinglePhaseHybridFVM>
   </Solvers>
+
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialFacePressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="faceManager"
+      fieldName="facePressure"
+      scale="1.0e7"/>
+    <FieldSpecification
+      name="west_pressure"
+      setNames="{ westBC }"
+      objectPath="faceManager"
+      fieldName="bcPressure"
+      scale="2.0e7" />
+    <FieldSpecification
+      name="east_pressure"
+      setNames="{ eastBC }"
+      objectPath="faceManager"
+      fieldName="bcPressure"
+      scale="1.0e7" />      
+  </FieldSpecifications>
+
 
   <Events
     minTime="0.0"  

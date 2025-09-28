@@ -35,11 +35,14 @@
 
     <CompressibleSinglePhaseFluid
       name="fluid"
-      defaultDensity="1000"
+      defaultDensity="1000.0"
+      referenceDensity="1000.0"
       defaultViscosity="0.001"
+      referenceViscosity="0.001"
       referencePressure="0.0"
       compressibility="0.0"
-      viscosibility="0.0"/>
+      viscosibility="0.0"
+      densityModelType="linear"/>
 
     <CompressibleSolidConstantPermeability
       name="rock"
@@ -63,7 +66,6 @@
   </Constitutive>
 
   <FieldSpecifications>
-
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
@@ -71,19 +73,6 @@
       objectPath="ElementRegions/Domain"
       fieldName="pressure"
       scale="1.0e7"/>    
-    <FieldSpecification
-      name="west_pressure"
-      setNames="{ westBC }"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="2.0e7" />
-    <FieldSpecification
-      name="east_pressure"
-      setNames="{ eastBC }"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="1.0e7" />      
-
   </FieldSpecifications>
   
 </Problem>

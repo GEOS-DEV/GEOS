@@ -16,16 +16,35 @@
  <Solvers>
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      logLevel="1"
+      logLevel="5"
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="2"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovTol="1e-10"
+        krylovMaxIter="100"
+        logLevel="1" />  
     </SinglePhaseFVM>
   </Solvers>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="west_pressure"
+      setNames="{ westBC }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="2.0e7" />
+    <FieldSpecification
+      name="east_pressure"
+      setNames="{ eastBC }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="1.0e7" />      
+  </FieldSpecifications>
 
   <Events
     minTime="0.0"  
