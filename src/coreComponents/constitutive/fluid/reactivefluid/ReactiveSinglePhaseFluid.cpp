@@ -43,16 +43,16 @@ ReactiveSinglePhaseFluid( string const & name, Group * const parent ):
     setDescription( "Chemical System type. Available options are: "
                     "``" + EnumStrings< ChemicalSystemType >::concat( "|" ) + "``" );
   
-  this->registerField( fields::reactivefluid::initialPrimarySpeciesConcentration{}, &m_initialPrimarySpeciesConcentration );
-  this->registerField( fields::reactivefluid::secondarySpeciesConcentration{}, &m_secondarySpeciesConcentration );
-  this->registerField( fields::reactivefluid::primarySpeciesAggregateConcentration{}, &m_primarySpeciesAggregateConcentration );
-  this->registerField( fields::reactivefluid::primarySpeciesAggregateConcentration_n{}, &m_primarySpeciesAggregateConcentration_n );
-  this->registerField( fields::reactivefluid::primarySpeciesMobileAggregateConcentration{}, &m_primarySpeciesMobileAggregateConcentration );
-  this->registerField( fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations{}, &m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations );
-  this->registerField( fields::reactivefluid::dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations{}, &m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations );
-  this->registerField( fields::reactivefluid::kineticReactionRates{}, &m_kineticReactionRates );
-  this->registerField( fields::reactivefluid::aggregateSpeciesRates{}, &m_aggregateSpeciesRates );
-  this->registerField( fields::reactivefluid::dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations{}, &m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations );
+  this->template registerField< fields::reactivefluid::initialPrimarySpeciesConcentration >( &m_initialPrimarySpeciesConcentration );
+  this->template registerField< fields::reactivefluid::secondarySpeciesConcentration >( &m_secondarySpeciesConcentration );
+  this->template registerField< fields::reactivefluid::primarySpeciesAggregateConcentration >( &m_primarySpeciesAggregateConcentration );
+  this->template registerField< fields::reactivefluid::primarySpeciesAggregateConcentration_n >( &m_primarySpeciesAggregateConcentration_n );
+  this->template registerField< fields::reactivefluid::primarySpeciesMobileAggregateConcentration >( &m_primarySpeciesMobileAggregateConcentration );
+  this->template registerField< fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations >( &m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations );
+  this->template registerField< fields::reactivefluid::dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations >( &m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations );
+  this->template registerField< fields::reactivefluid::kineticReactionRates >( &m_kineticReactionRates );
+  this->template registerField< fields::reactivefluid::aggregateSpeciesRates >( &m_aggregateSpeciesRates );
+  this->template registerField< fields::reactivefluid::dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations >( &m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations );
 }
 
 template< typename BASE >

@@ -314,7 +314,7 @@ public:
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override
   {
-    real64 scalingFactor = 1e9;
+    real64 scalingFactor = PhysicsSolverBase::scalingForSystemSolution( domain, dofManager, localSolution );
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
       real64 const singlePhysicsScalingFactor = solver->scalingForSystemSolution( domain, dofManager, localSolution );
@@ -363,12 +363,13 @@ public:
     return isConverged;
   }
 
-  virtual bool updateConfiguration( DomainPartition & domain ) override
+  virtual bool updateConfiguration( DomainPartition & domain,
+                                    integer const configurationLoopIter ) override
   {
     bool result = true;
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      result &= solver->updateConfiguration( domain );
+      result &= solver->updateConfiguration( domain, configurationLoopIter );
     } );
     return result;
   }
@@ -482,7 +483,7 @@ protected:
       for( iter = 0; iter < solverParams.m_maxIterNewton; iter++ )
       {
         // Increment the solver statistics for reporting purposes
-        getIterationStats().incrementConfigIteration();
+        getIterationStats().updateNonlinearIteration( 0 );
 
         startSequentialIteration( iter, domain );
 
@@ -706,7 +707,9 @@ protected:
     }
 
     if( m_nonlinearSolverParameters.m_nonlinearAccelerationType != NonlinearSolverParameters::NonlinearAccelerationType::None )
+    {
       validateNonlinearAcceleration();
+    }
   }
 
   virtual void validateNonlinearAcceleration()

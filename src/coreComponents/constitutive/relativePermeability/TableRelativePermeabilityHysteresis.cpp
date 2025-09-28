@@ -148,10 +148,8 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
     setRestartFlags( RestartFlags::NO_WRITE );
 
   // register fields
-  registerField( fields::relperm::phaseMaxHistoricalVolFraction{},
-                 &m_phaseMaxHistoricalVolFraction );
-  registerField( fields::relperm::phaseMinHistoricalVolFraction{},
-                 &m_phaseMinHistoricalVolFraction );
+  registerField< fields::relperm::phaseMaxHistoricalVolFraction >( &m_phaseMaxHistoricalVolFraction );
+  registerField< fields::relperm::phaseMinHistoricalVolFraction >( &m_phaseMinHistoricalVolFraction );
 
 }
 
@@ -167,11 +165,11 @@ void TableRelativePermeabilityHysteresis::postInputInitialization()
                            getFullName() ),
                  InputError );
 
-  m_phaseHasHysteresis.resize( 2 );
+  m_phaseMinVolumeFraction.resize( numPhases );
+  m_phaseHasHysteresis.resize( numPhases );
 
   //initialize STONE-II only used var to avoid discrepancies in baselines
   m_waterOilMaxRelPerm = 1.;
-
 
   if( numPhases == 2 )
   {
@@ -272,7 +270,9 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateWettingRelPer
   real64 drainagePhaseRelPermMinEndPoint = -1;
   real64 drainagePhaseRelPermMaxEndPoint = -1;
 
-  string const tableName = ( numPhases == 2 ) ?   m_drainageWettingNonWettingRelPermTableNames[0] : m_drainageWettingIntermediateRelPermTableNames[0];
+  string const tableName = ( numPhases == 2 ) ?
+                           m_drainageWettingNonWettingRelPermTableNames[0] : m_drainageWettingIntermediateRelPermTableNames[0];
+
   checkExistenceAndValidateRelPermTable( tableName, // input
                                          drainagePhaseMinVolFraction, // output
                                          drainagePhaseMaxVolFraction,
@@ -287,7 +287,6 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateWettingRelPer
 
   if( m_phaseHasHysteresis[IPT::WETTING] )
   {
-
     checkExistenceAndValidateRelPermTable( m_imbibitionWettingRelPermTableName, // input
                                            imbibitionPhaseMinVolFraction, // output
                                            imbibitionPhaseMaxVolFraction,
@@ -317,7 +316,6 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateWettingRelPer
                              getFullName(),
                              drainagePhaseRelPermMaxEndPoint, imbibitionPhaseRelPermMaxEndPoint ),
                    InputError );
-
   }
 
   m_wettingCurve.setPoints( drainagePhaseMinVolFraction, drainagePhaseRelPermMinEndPoint,   // same as imbibition min
@@ -564,15 +562,17 @@ TableRelativePermeabilityHysteresis::createKernelWrapper()
                         m_dPhaseRelPerm_dPhaseVolFrac );
 }
 
-void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, localIndex const numPts )
+void TableRelativePermeabilityHysteresis::allocateConstitutiveData( Group & parent,
+                                                                    localIndex const numPts )
 {
-  RelativePermeabilityBase::resizeFields( size, numPts );
-
   integer const numPhases = numFluidPhases();
 
   m_phaseMinVolumeFraction.resize( numPhases );
-  m_phaseMaxHistoricalVolFraction.resize( size, numPhases );
-  m_phaseMinHistoricalVolFraction.resize( size, numPhases );
+  m_phaseMaxHistoricalVolFraction.resize( 0, numPhases );
+  m_phaseMinHistoricalVolFraction.resize( 0, numPhases );
+
+  RelativePermeabilityBase::allocateConstitutiveData( parent, numPts );
+
   m_phaseMaxHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 0.0 );
   m_phaseMinHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 1.0 );
 }

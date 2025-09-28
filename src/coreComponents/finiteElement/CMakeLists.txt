@@ -80,5 +80,5 @@ install( TARGETS finiteElement LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
+  add_subdirectory( elementFormulations/unitTests )
 endif( )
-
