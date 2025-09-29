@@ -6,6 +6,10 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3790 (2025-09-29) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3790-13899-bb7b286.tar.gz>
+=====================
+Enable Kozeny-Carman Permeability for PorousSolid.
+
 PR #3779 (2025-09-21) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3779-13734-44eed3f.tar.gz>
 =====================
 Add new inputs for function input var scaling. Add new Multiscale linear solver parameters XML block.
