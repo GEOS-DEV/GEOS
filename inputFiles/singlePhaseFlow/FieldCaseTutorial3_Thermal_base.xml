@@ -1,35 +1,70 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
+<!-- SPHINX_FIELD_CASE_SOLVER -->
+  <Solvers>
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Reservoir, Burdens }"
+      isThermal="1"
+      temperature="323.15"
+      initialDt="0.5"
+      logLevel="1">
+      <NonlinearSolverParameters
+          newtonTol="1.0e-4"
+          newtonMaxIter="8"
+          maxTimeStepCuts="10"
+          lineSearchAction="None"
+          logLevel="1"/>
+      <LinearSolverParameters
+          solverType="gmres"
+          preconditionerType="amg"
+          amgSmootherType="l1jacobi"
+          krylovTol="1.0e-5"
+          krylovMaxIter="250"
+          krylovAdaptiveTol="1"
+          krylovWeakestTol="0.01"
+          logLevel="1" />
+    </SinglePhaseFVM>
+  </Solvers>
+<!-- SPHINX_FIELD_CASE_SOLVER_END -->
+
 <!-- SPHINX_FIELD_CASE_REGION -->
   <ElementRegions>
     <CellElementRegion
       name="Reservoir"
-      cellBlocks="{ 2 }"
-      materialList="{ water, rock }"/>
+      cellBlocks="{ 2_tetrahedra }"
+      materialList="{ water, rock, thermalCond }"/>
 
     <CellElementRegion
-      name="Burden"
-      cellBlocks="{ 1, 3 }"
-      materialList="{ water, rock }"/>
+      name="Burdens"
+      cellBlocks="{ 1_tetrahedra, 3_tetrahedra }"
+      materialList="{ water, rock, thermalCond }"/>
   </ElementRegions>
 <!-- SPHINX_FIELD_CASE_REGION_END -->
 
 <!-- SPHINX_FIELD_CASE_CONSTITUTIVE -->
   <Constitutive>
-    <CompressibleSinglePhaseFluid
+    <ThermalCompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
       defaultViscosity="0.001"
-      referencePressure="0.0"
-      compressibility="1e-9"
-      viscosibility="0.0"/>
+      referencePressure="1e5"
+      referenceViscosity="1.0E-3" 
+      referenceTemperature="277.15"
+      compressibility="4.5e-10"
+      viscosibility="0.0"
+      thermalExpansionCoeff="1e-5"
+      referenceInternalEnergy="1"/>
 
     <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockEnergy"/>
 
     <NullModel
       name="nullSolid"/>
@@ -43,6 +78,17 @@
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-16 }"/>
+
+    <SolidInternalEnergy
+      name="rockEnergy"
+      referenceVolumetricHeatCapacity="1.672e5"
+      referenceTemperature='0.0'
+      referenceInternalEnergy="0.0" />
+
+    <SinglePhaseThermalConductivity
+      name="thermalCond"
+      defaultThermalConductivityComponents="{ 2, 2, 2 }"/>
+
   </Constitutive>
 <!-- SPHINX_FIELD_CASE_CONSTITUTIVE_END -->
 
@@ -56,27 +102,7 @@
   </NumericalMethods>
 <!-- SPHINX_FIELD_CASE_NUMERICAL_END -->
 
-<!-- SPHINX_FIELD_CASE_SOLVER -->
-  <Solvers>
-    <SinglePhaseFVM
-      name="SinglePhaseFlow"
-      discretization="singlePhaseTPFA"
-      targetRegions="{ Reservoir }"
-      logLevel="1">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="8"
-        lineSearchAction="None"
-        logLevel="1"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"
-        amgSmootherType="l1jacobi"
-        krylovTol="1.0e-10"
-        logLevel="1"/>
-    </SinglePhaseFVM>
-  </Solvers>
-<!-- SPHINX_FIELD_CASE_SOLVER_END -->
+
 
 <!-- SPHINX_FIELD_CASE_GEOMETRY -->
   <Geometry>
@@ -90,15 +116,28 @@
       xMin="{ 15500, 7000, -5000 }"
       xMax="{ 16000, 7500, 0 }"/>
 
-    <Box
+    <!-- <Box
       name="sink"
       xMin="{ 6500, 1500, -5000 }"
-      xMax="{ 7000, 2000, 0 }"/>
+      xMax="{ 7000, 2000, 0 }"/> -->
+
+    <Box
+      name="sink"
+      xMin="{ 4500, 2500, -5000 }"
+      xMax="{ 5000, 3000, 0 }"/>
+  
   </Geometry>
 <!-- SPHINX_FIELD_CASE_GEOMETRY_END -->
 
 <!-- SPHINX_FIELD_CASE_FIELD -->
   <FieldSpecifications>
+
+    <HydrostaticEquilibrium
+      name="Initialisation"
+      datumElevation="-1000"
+      datumPressure="1e7"
+      objectPath="ElementRegions"
+      temperatureVsElevationTableName="initTempTable"  />
 
     <FieldSpecification
        name="permx"
@@ -131,35 +170,41 @@
        functionName="permzFunc"/>
 
     <FieldSpecification
-      name="initialPressure"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Reservoir/2_tetrahedra"
-      fieldName="pressure"
-      scale="1e7"
-      />
-
-    <FieldSpecification
       name="sourceTerm"
       objectPath="ElementRegions/Reservoir/2_tetrahedra"
       fieldName="pressure"
-      scale="15e7"
-      setNames="{ source }"
-      />
+      scale="1.7e7"
+      beginTime="1"
+      endTime="100e6"
+      setNames="{ source }"/>
+
+    <FieldSpecification
+      name="sourceTemperature"
+      objectPath="ElementRegions/Reservoir/2_tetrahedra"
+      fieldName="temperature"
+      scale="290.15"
+      beginTime="1"
+      endTime="100e6"
+      setNames="{ source }"/>
 
     <FieldSpecification
       name="sinkTerm"
       objectPath="ElementRegions/Reservoir/2_tetrahedra"
       fieldName="pressure"
-      scale="5e7"
+      scale="5e6"
+      beginTime="1"
+      endTime="100e6"
       setNames="{ sink }"/>
+
   </FieldSpecifications>
 <!-- SPHINX_FIELD_CASE_FIELD_END -->
 
 <!-- SPHINX_FIELD_CASE_OUTPUT -->
   <Outputs>
     <VTK
-      name="reservoir_with_properties"/>
+      name="reservoir_with_properties"
+      fieldNames="{initialPressure, initialTemperature}"/>
+    
     <Restart
       name="restartOutput"/>
   </Outputs>
@@ -167,11 +212,11 @@
 
 <!-- SPHINX_FIELD_CASE_TFUNC -->
   <Functions>
-    <TableFunction
-      name="timeInj"
-      inputVarNames="{ time }"
-      coordinates="{ 1e6, 10e6, 50e6 }"
-      values="{ 1, 0.01, 0.00001 }"/>
+      <TableFunction
+        name="initTempTable"
+        coordinates="{ -2000, -500 }"
+        values="{ 337.15, 292.15 }"
+        interpolation="linear"/>
 
     <TableFunction
       name="initialPressureFunc"

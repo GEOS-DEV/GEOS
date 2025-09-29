@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./FieldCaseTutorial3_base.xml" />
+    <File name="./FieldCaseTutorial3_Thermal_base.xml" />
   </Included>
 
   <!-- SPHINX_FIELD_CASE_MESH -->
@@ -13,9 +13,14 @@
   <!-- SPHINX_FIELD_CASE_MESH_END -->
 
   <!-- SPHINX_FIELD_CASE_EVENTS -->
-  <Events maxTime="100.0e6">
+  <Events minTime="0" maxTime="100e6">
+
+    <SoloEvent name="Initial_output"
+               targetTime="0"
+               target="/Outputs/reservoir_with_properties" />
+
     <PeriodicEvent name="solverApplications"
-                   forceDt="10.0e6"
+                   maxEventDt="10.0e6"
                    target="/Solvers/SinglePhaseFlow" />
 
     <PeriodicEvent name="outputs"
@@ -28,5 +33,6 @@
 
   </Events>
   <!-- SPHINX_FIELD_CASE_EVENTS_END -->
+
 
 </Problem>
