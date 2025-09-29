@@ -19,12 +19,16 @@
 
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsALMKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsALMKernelsBase.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsALMSimultaneousKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsDisplacementJumpUpdateKernels.hpp"
+#include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsConformingPressureContributionKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp"
+#include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsPressureFaceBubbleKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
@@ -157,6 +161,16 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
         setRegisteringObjects( getName()).
         setDescription( "An array that stores the displacement jumps used to update the penalty coefficients." ).
         reference().resizeDimension< 1 >( 3 );
+
+      // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
+      // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
+      subRegion.registerField< flow::pressure >( getName() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( this->getName());
+
+      subRegion.registerField< flow::pressure_n >( getName() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( this->getName());
 
     } );
   } );
@@ -380,9 +394,32 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                                                localMatrix,
                                                localRhs );
 
+
   //ParallelMatrix parallel_matrix;
   //parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
   //parallel_matrix.write("mech.mtx");
+
+  assembleContact( time, dt, domain, dofManager, localMatrix, localRhs );
+
+  // for sequential: add (fixed) pressure force contribution into residual (no derivatives)
+  if( m_isFixedStressPoromechanicsUpdate || m_performStressInitialization )
+  {
+    assembleForceResidualPressureContribution( domain, dt, dofManager, localMatrix, localRhs );
+  }
+
+}
+
+void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const time,
+                                                                real64 const dt,
+                                                                DomainPartition & domain,
+                                                                DofManager const & dofManager,
+                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                arrayView1d< real64 > const & localRhs )
+{
+
+  GEOS_MARK_FUNCTION;
+
+  GEOS_UNUSED_VAR( time );
 
   // Loop for assembling contributes from interface elements (Aut*eps^-1*Atu and Aub*eps^-1*Abu)
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
@@ -555,6 +592,113 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
 
 }
 
+void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureContribution( DomainPartition & domain,
+                                                                                          real64 const & dt,
+                                                                                          DofManager const & dofManager,
+                                                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                                          arrayView1d< real64 > const & localRhs )
+{
+
+  GEOS_MARK_FUNCTION;
+
+  //GEOS_UNUSED_VAR( domain, dofManager, localMatrix, localRhs );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
+
+    string const & dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+    string const & bubbleDofKey = dofManager.getKey( contact::totalBubbleDisplacement::key() );
+
+    arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+    arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
+
+    string const & fractureRegionName = this->getUniqueFractureRegionName();
+
+    //GEOS_UNUSED_VAR( fractureRegionName, meshName, dt, localMatrix, localRhs );
+    forFiniteElementOnFractureSubRegions( meshName, [&] ( string const &,
+                                                          finiteElement::FiniteElementBase const & subRegionFE,
+                                                          arrayView1d< localIndex const > const & faceElementList )
+    {
+
+      solidMechanicsConformingContactKernels::AssemblePressureContributionFactory
+      kernelFactory( dispDofNumber,
+                     bubbleDofNumber,
+                     dofManager.rankOffset(),
+                     localMatrix,
+                     localRhs,
+                     dt,
+                     faceElementList );
+
+      real64 maxTraction = finiteElement::
+                             interfaceBasedKernelApplication
+                           < parallelDevicePolicy< >,
+                             constitutive::NullModel >( mesh,
+                                                        fractureRegionName,
+                                                        faceElementList,
+                                                        subRegionFE,
+                                                        "",
+                                                        kernelFactory );
+
+      GEOS_UNUSED_VAR( maxTraction );
+
+    } );
+
+    set< string > poromechanicsRegions;
+    set< string > mechanicsRegions;
+    ElementRegionManager const & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                       [&]
+                                                                         ( localIndex const regionIndex, auto & elementSubRegion )
+    {
+      if( elementSubRegion.template hasWrapper< string >( FlowSolverBase::viewKeyStruct::solidNamesString() ) )
+      {
+        poromechanicsRegions.insert( regionNames[regionIndex] );
+      }
+      else
+      {
+        mechanicsRegions.insert( regionNames[regionIndex] );
+      }
+    } );
+
+    string_array poromechanicsRegionNames;
+    poromechanicsRegionNames.reserve( poromechanicsRegions.size());
+    for( auto const & region : poromechanicsRegions )
+    {
+      poromechanicsRegionNames.emplace_back( region );
+    }
+    string_array mechanicsRegionNames;
+    mechanicsRegionNames.reserve( mechanicsRegions.size());
+    for( auto const & region : mechanicsRegions )
+    {
+      mechanicsRegionNames.emplace_back( region );
+    }
+
+    solidMechanicsConformingContactKernels::PressureFaceBubbleFactory kernelFactory( dispDofNumber,
+                                                                                     bubbleDofNumber,
+                                                                                     dofManager.rankOffset(),
+                                                                                     localMatrix,
+                                                                                     localRhs,
+                                                                                     dt );
+
+    real64 maxTraction = finiteElement::regionBasedKernelApplication
+                         < parallelDevicePolicy< >,
+                           constitutive::PorousSolid< ElasticIsotropic >,
+                           CellElementSubRegion >( mesh,
+                                                   poromechanicsRegionNames,
+                                                   getDiscretizationName(),
+                                                   FlowSolverBase::viewKeyStruct::solidNamesString(),
+                                                   kernelFactory );
+
+    GEOS_UNUSED_VAR( maxTraction );
+  } );
+
+}
+
 void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 const & time_n,
                                                                      real64 const & dt,
                                                                      DomainPartition & domain )
@@ -599,8 +743,6 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
       LvArray::tensorOps::fill< 3 >( deltaDispJump[kfe], 0.0 );
       LvArray::tensorOps::copy< 3 >( oldDispJump[kfe], dispJump[kfe] );
       oldFractureState[kfe] = fractureState[kfe];
-
-
 
     } );
 
@@ -833,7 +975,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
       FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
 
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
-      arrayView2d< real64 const > const traction = subRegion.getField< contact::traction >();
+      arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
       arrayView2d< real64 const > const dispJump = subRegion.getField< contact::dispJump >();
 
       arrayView2d< real64 const > const deltaDispJump = subRegion.getField< contact::deltaDispJump >();
@@ -894,7 +1036,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             frictionWrapper,
                                             ghostRank,
-                                            traction_new_v,
+                                            traction,
                                             dispJump,
                                             deltaDispJump,
                                             normalTractionTolerance,
@@ -964,34 +1106,11 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
                          GEOS_FMT( "  ALM convergence summary:"
-                                   " converged: {:6} | stick & gn>0: {:6} | compenetration:  {:6} | stick & gt>lim:  {:6} | tau>tauLim:  {:6}\n",
+                                   " converged: {:6} | stick & gn>0: {:6} | interpenetration:  {:6} | stick & gt>lim:  {:6} | tau>tauLim:  {:6}\n",
                                    globalCondConv[0], globalCondConv[1], globalCondConv[2],
                                    globalCondConv[3], globalCondConv[4] ));
 
-  if( hasConfigurationConvergedGlobally )
-  {
-
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                  MeshLevel & mesh,
-                                                                  string_array const & regionNames )
-    {
-      ElementRegionManager & elemManager = mesh.getElemManager();
-
-      elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                  FaceElementSubRegion & subRegion )
-      {
-
-        arrayView2d< real64 > const traction_new_v = traction_new.toView();
-        arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
-
-        forAll< parallelDevicePolicy<> >( subRegion.size(), [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
-        {
-          LvArray::tensorOps::copy< 3 >( traction[kfe], traction_new_v[kfe] );
-        } );
-      } );
-    } );
-  }
-  else
+  if( ! hasConfigurationConvergedGlobally )
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
@@ -1835,9 +1954,9 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
             normalTractionTolerance[kfe] = m_tolNormalTracFac * (averageConstrainedModulus / averageBoxSize0) *
                                            (normalDisplacementTolerance[kfe]);
 
-            GEOS_LOG_LEVEL( logInfo::ContactTolerance,
-                            GEOS_FMT( "kfe: {}, normalDisplacementTolerance: {}, slidingTolerance: {}, normalTractionTolerance: {}",
-                                      kfe, normalDisplacementTolerance[kfe], slidingTolerance[kfe], normalTractionTolerance[kfe] ));
+            //GEOS_LOG_LEVEL( logInfo::ContactTolerance,
+            //                GEOS_FMT( "kfe: {}, normalDisplacementTolerance: {}, slidingTolerance: {}, normalTractionTolerance: {}",
+            //                          kfe, normalDisplacementTolerance[kfe], slidingTolerance[kfe], normalTractionTolerance[kfe] ));
 
             iterativePenalty[kfe][0] = m_iterPenaltyNFac*averageConstrainedModulus/(averageBoxSize0);
             iterativePenalty[kfe][1] = m_iterPenaltyTFac*averageConstrainedModulus/(averageBoxSize0);
