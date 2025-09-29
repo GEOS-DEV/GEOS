@@ -51,8 +51,8 @@ namespace
 {
 
 /**
- * @brief Converts from GEOSX to SuperLU_Dist columns permutation option
- * @param[in] value the GEOSX option
+ * @brief Converts from GEOS to SuperLU_Dist columns permutation option
+ * @param[in] value the GEOS option
  * @return the SuperLU_Dist option
  */
 colperm_t const & getColPermType( LinearSolverParameters::Direct::ColPerm const & value )
@@ -72,8 +72,8 @@ colperm_t const & getColPermType( LinearSolverParameters::Direct::ColPerm const 
 }
 
 /**
- * @brief Converts from GEOSX to SuperLU_Dist rows permutation option
- * @param[in] value the GEOSX option
+ * @brief Converts from GEOS to SuperLU_Dist rows permutation option
+ * @param[in] value the GEOS option
  * @return the SuperLU_Dist option
  */
 rowperm_t const & getRowPermType( LinearSolverParameters::Direct::RowPerm const & value )
