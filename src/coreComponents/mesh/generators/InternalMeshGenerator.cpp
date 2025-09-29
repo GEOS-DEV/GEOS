@@ -21,6 +21,7 @@
 #include "CellBlockManager.hpp"
 
 #include "common/DataTypes.hpp"
+#include "mesh/MeshFields.hpp"
 
 #include <cmath>
 
@@ -850,6 +851,9 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
           arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = cellBlock.getElemToNode();
           arrayView1d< globalIndex > const & elemLocalToGlobal = cellBlock.localToGlobalMap();
 
+          cellBlock.addProperty< fields::StructuredIndex::type >( fields::StructuredIndex::key() ).resizeDimension< 1 >( m_dim );
+          auto const cartIndex = cellBlock.getReference< fields::StructuredIndex::type >( fields::StructuredIndex::key() ).toView();
+
           integer numElemsInDirForBlock[3] =
           { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,
             lastElemIndexForBlockInPartition[1][jblock] - firstElemIndexForBlockInPartition[1][jblock] + 1,
@@ -934,6 +938,13 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
                   {
                     elemsToNodes[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
+
+                  // Store original cartesian IJK indices for later use
+                  for( int dim = 0; dim < m_dim; ++dim )
+                  {
+                    cartIndex[localElemIndex][dim] = globalIJK[dim];
+                  }
+
                   ++localElemIndex;
                 }
               }
