@@ -652,7 +652,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
           m_accumulatedModeIWork[k] = oldAccumulatedModeIWork + LvArray::tensorOps::AiBi< 6 >( stress, strainIncrement);
 
           // Set damage equal to the ratio of the dissipated energy to the expected regularized fracture energy release rate:
-          m_damage[k][q] = std::max( m_damage[k][q] , ( m_accumulatedModeIWork[k] - elasticStrainEnergy ) / ( m_fractureEnergyReleaseRate / m_lengthScale[k] ) );
+          m_damage[k][q] = fmin( fmax( m_damage[k][q] , ( m_accumulatedModeIWork[k] - elasticStrainEnergy ) / ( m_fractureEnergyReleaseRate / m_lengthScale[k] ) ), 1.0 );
 
         } // end of fixed point iteration on damage.
       }

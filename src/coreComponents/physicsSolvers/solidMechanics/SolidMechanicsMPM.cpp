@@ -1247,26 +1247,37 @@ void SolidMechanicsMPM::postInputInitialization()
     GEOS_ERROR_IF(!( m_prescribedBoundaryTransverseVelocities.size(0) == 6 && m_prescribedBoundaryTransverseVelocities.size(1) == 2 ), "Check dimensions of prescribedBoundaryTransverseVelocities!" );
   }
 
-  if( m_prescribedBoundaryFTable == 1 && m_prescribedFTable == 1 )
+  if( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 )
   {
     // Reads the FTable directly from the xml
     int numRows = m_fTable.size( 0 );
     GEOS_ERROR_IF(numRows == 0, "Prescribed boundary deformation is enabled but no F table was specified.");
     for(int i = 0; i < numRows; ++i){
+
       GEOS_ERROR_IF(m_fTable[i].size() != 4, "F table row " << i+1 << " must have 4 elements.");
       GEOS_ERROR_IF(m_fTable[i][0] < 0, "F table times must be positive.");
 
-      if(i == 0)
+      int rank;
+      MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+      if (rank == 0 )
       {
-        GEOS_ERROR_IF( compareFloat( m_fTable[i][1], 1.0, 1e-12 ) || 
-                       compareFloat( m_fTable[i][2], 1.0, 1e-12 ) || 
-                       compareFloat( m_fTable[i][3], 1.0, 1e-12 ) , "Deformation of first row of F table must be 1." );
+        std::cout<<"i="<<i<<", m_fTable[i][0] = "<<m_fTable[i][0]<<", m_fTable[i][1] = "<<m_fTable[i][1]<<", m_fTable[i][2] = "<<m_fTable[i][2]<<", m_fTable[i][3] = "<<m_fTable[i][3]<<std::endl;
       }
-      else
-      {
-        GEOS_ERROR_IF( m_fTable[i][1] < 0 || 
-                       m_fTable[i][2] < 0 || 
-                       m_fTable[i][3] < 0, "F table entries must be positive." );
+
+      for(int k=0; k<3; ++k)
+      { // Stress-control = 1 overrides FTable control, so if we aren't doing stress control in a direction,
+        // this checks that the table is well defined:
+        if (m_stressControl[k] != 1)
+        {
+          if(i == 0)
+          {
+            GEOS_ERROR_IF( !compareFloat( m_fTable[i][k+1], 1.0, 1e-12 ), "Deformation of first row of F table must be 1." );
+          }
+          else
+          {
+            GEOS_ERROR_IF( m_fTable[i][k+1] < 0, "F table entries must be positive." );
+          }
+        }
       }
     }
   }
@@ -6455,9 +6466,11 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
   if( rank == 0 )
   {
-    // Calculate the box volume
+    // Calculate the box volume and take the post-MPI sync normalization values for mat volume and mass:
     real64 boxVolume = m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2];
     real64 boxReferenceVolume = boxSums[7];
+    boxMatVolume = boxSums[17];
+    boxMass = boxSums[6];
 
     // Write to file
     std::ofstream file;
@@ -6805,6 +6818,15 @@ void SolidMechanicsMPM::stressControl( real64 dt,
       }
     }
 	}
+
+  int rank;
+  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+  if (rank == 0 )
+  {
+    std::cout<<"Stress control:  targetStress = [ "<<targetStress[0]<<", "<<targetStress[1]<<", "<<targetStress[2]<<" ], currentStress = [ "<<currentStress[0]<<", "<<currentStress[1]<<", "<<currentStress[2]<<" ]"<<std::endl;
+    std::cout<<"m_domainF = [ "<<m_domainF[0]<<", "<<m_domainF[1]<<", "<<m_domainF[2]<<" ], m_domainL = [ "<<m_domainL[0]<<", "<<m_domainL[1]<<", "<<m_domainL[2]<<" ]"<<std::endl;
+  }
+
 }
 
 
