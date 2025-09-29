@@ -182,13 +182,13 @@
   { \
     if( COND ) \
     { \
-      static constexpr string_view formatString = "***** WARNING\n" \
+      static constexpr string_view formatString = "***** ERROR\n" \
                                                   "***** LOCATION" LOCATION "\n" \
                                                                             "***** BLOCK:  [%u, %u, %u]\n" \
                                                                             "***** THREAD: [%u, %u, %u]\n" \
                                                                             "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
                                                                                                                 "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
-      printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
+      printf( formatString.data(), blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
     } \
   } while( false )
@@ -264,13 +264,13 @@
   { \
     if( COND ) \
     { \
-      static constexpr string_view formatString = "***** WARNING\n" \
+      static constexpr string_view formatString = "***** ERROR\n" \
                                                   "***** LOCATION" LOCATION "\n" \
                                                                             "***** BLOCK:  [%u, %u, %u]\n" \
                                                                             "***** THREAD: [%u, %u, %u]\n" \
                                                                             "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
                                                                                                                 "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
-      printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
+      printf( formatString.data(), blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
     } \
   } while( false )
@@ -347,7 +347,7 @@
                                                                             "***** THREAD: [%u, %u, %u]\n" \
                                                                             "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
                                                                                                                 "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
-      printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
+      printf( formatString.data(), blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
     } \
   } while( false )
