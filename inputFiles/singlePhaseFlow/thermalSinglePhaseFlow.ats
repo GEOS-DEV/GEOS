@@ -42,8 +42,8 @@ decks = [
         description=
         '3D thermal single phase flow with geothermal gradient',
         partitions=((1, 1, 1), (2, 2, 1)),
-        restart_step=1,
-        check_step=2,
+        restart_step=25,
+        check_step=49,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)), 
 ]
 

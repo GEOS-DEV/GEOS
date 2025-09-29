@@ -95,8 +95,8 @@ decks = [
         description=
         '3D Single phase flow test with burdens',
         partitions=((1, 1, 1), (2, 2, 1)),
-        restart_step=10,
-        check_step=20,
+        restart_step=3,
+        check_step=9,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)), 
 ]
 
