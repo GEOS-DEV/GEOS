@@ -134,7 +134,7 @@ struct ControlEquationHelper
   inline
   static
   void
-  switchControl( bool const isProducer,
+  selectLimitingConstraint( bool const isProducer,
                  WellControls::Control const & inputControl,
                  WellControls::Control const & currentControl,
                  integer const phasePhaseIndex,

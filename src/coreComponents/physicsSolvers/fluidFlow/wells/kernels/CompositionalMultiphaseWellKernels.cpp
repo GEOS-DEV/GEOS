@@ -37,7 +37,7 @@ GEOS_HOST_DEVICE
 inline
 void
 ControlEquationHelper::
-  switchControl( bool const isProducer,
+  selectLimitingConstraint( bool const isProducer,
                  WellControls::Control const & inputControl,
                  WellControls::Control const & currentControl,
                  integer const phasePhaseIndex,
@@ -140,6 +140,7 @@ ControlEquationHelper::
            real64 const & targetPhaseRate,
            real64 const & targetTotalRate,
            real64 const & targetMassRate,
+           real64 const & targetValue,
            real64 const & currentBHP,
            arrayView1d< real64 const > const & dCurrentBHP,
            arrayView1d< real64 const > const & currentPhaseVolRate,
@@ -152,7 +153,7 @@ ControlEquationHelper::
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs )
 {
-
+  GEOS_UNUSED_VAR( targetValue );  // tjb keeping this around if needed to compare with old constraint eqn jacgen
   using COFFSET_WJ = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
   using Deriv = multifluid::DerivativeOffset;
 
@@ -321,10 +322,17 @@ PressureRelationKernel::
   bool const isProducer = wellControls.isProducer();
   WellControls::Control const currentControl = wellControls.getControl();
   WellControls::Control const inputControl = wellControls.getInputControl();
+  bool const constraintSwitch = wellControls.getConstraintSwitch();
+
   real64 const targetBHP = wellControls.getTargetBHP( time );
   real64 const targetTotalRate = wellControls.getTargetTotalRate( time );
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time );
   real64 const targetMassRate = wellControls.getTargetMassRate( time );
+
+  // temp tjb. only needed if new code path
+  real64 targetValue =0.0;
+  if( wellControls.getCurrentConstraint() != nullptr )
+    targetValue = wellControls.getCurrentConstraint()->getConstraintValue( time );
 
   // dynamic well control data
   real64 const & currentBHP =
@@ -364,7 +372,10 @@ PressureRelationKernel::
     {
 
       WellControls::Control newControl = currentControl;
-      ControlEquationHelper::switchControl( isProducer,
+      if( false && constraintSwitch )
+      {
+
+        ControlEquationHelper::selectLimitingConstraint( isProducer,
                                             inputControl,
                                             currentControl,
                                             targetPhaseIndex,
@@ -377,17 +388,26 @@ PressureRelationKernel::
                                             currentTotalVolRate,
                                             currentMassRate,
                                             newControl );
+      }
+      else
+      {
+        newControl = currentControl;
+      }
+
       if( currentControl != newControl )
       {
         switchControl.max( 1 );
       }
+      if( constraintSwitch )
+      {
       ControlEquationHelper::compute< NC, IS_THERMAL >( rankOffset,
                                                         newControl,
-                                                        targetPhaseIndex,
-                                                        targetBHP,
-                                                        targetPhaseRate,
-                                                        targetTotalRate,
-                                                        targetMassRate,
+                                                          targetPhaseIndex, // tjb - remove ?
+                                                          targetBHP,    // tjb - remove
+                                                          targetPhaseRate, // tjb - remove
+                                                          targetTotalRate, // tjb - remove
+                                                          targetMassRate, // tjb - remove
+                                                          targetValue, // tjb
                                                         currentBHP,
                                                         dCurrentBHP,
                                                         currentPhaseVolRate,
@@ -398,6 +418,7 @@ PressureRelationKernel::
                                                         wellElemDofNumber[iwelemControl],
                                                         localMatrix,
                                                         localRhs );
+      }
       // TODO: for consistency, we should assemble here, not in compute...
 
     }

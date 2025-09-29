@@ -32,24 +32,28 @@ using namespace dataRepository;
 WellControls::WellControls( string const & name, Group * const parent )
   : Group( name, parent ),
   m_type( Type::PRODUCER ),
-  m_refElevation( 0.0 ),
-  m_refGravCoef( 0.0 ),
-  m_inputControl( Control::UNINITIALIZED ),
-  m_currentControl( Control::UNINITIALIZED ),
+  m_refElevation( 0.0 ),  // tjb remove
+  m_refGravCoef( 0.0 ),  // tjb remove
+  m_inputControl( Control::UNINITIALIZED ), // tjb remove
+  m_currentControl( Control::UNINITIALIZED ), // tjb remove
   m_targetBHP( 0.0 ),
-  m_targetTotalRate( 0.0 ),
-  m_targetPhaseRate( 0.0 ),
-  m_targetMassRate( 0.0 ),
+  m_targetTotalRate( 0.0 ),  // tjb remove
+  m_targetPhaseRate( 0.0 ), // tjb remove
+  m_targetMassRate( 0.0 ), // tjb remove
   m_useSurfaceConditions( 0 ),
-  m_surfacePres( 0.0 ),
-  m_surfaceTemp( 0.0 ),
+  m_surfacePres( -1.0 ),
+  m_surfaceTemp( -1.0 ),
   m_isCrossflowEnabled( 1 ),
   m_initialPressureCoefficient( 0.1 ),
   m_rateSign( -1.0 ),
-  m_targetTotalRateTable( nullptr ),
-  m_targetPhaseRateTable( nullptr ),
-  m_targetBHPTable( nullptr ),
+  m_targetTotalRateTable( nullptr ), // tjb remove
+  m_targetPhaseRateTable( nullptr ), // tjb remove
+  m_targetBHPTable( nullptr ), // tjb remove
   m_statusTable( nullptr ),
+  m_wellOpen( false ),
+  m_estimateSolution( 0 ),
+  m_constraintSwitch( true ),
+  m_currentConstraint( nullptr ),
   m_wellStatus( WellControls::Status::OPEN ),
   m_regionAveragePressure( -1 )
 {
@@ -180,12 +184,121 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDescription( "Name of the well status table when the status of the well is a time dependent function. \n"
                     "If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut." );
 
+
+  this->registerWrapper( viewKeyStruct::estimateWellSolutionString(), &m_estimateSolution ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to esitmate well solution prior to coupled reservoir and well solve." );
+
   addLogLevel< logInfo::WellControl >();
 }
 
 
 WellControls::~WellControls()
 {}
+
+Group * WellControls::createChild( string const & childKey, string const & childName )
+{
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
+  ////const auto childTypes = { viewKeyStruct::perforationString() };
+  //GEOS_ERROR_IF( childKey != viewKeyStruct::perforationString(),
+  //               CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
+
+  Group * constraint = nullptr;
+  if( childKey == viewKeyStruct::minimumWHPConstraintString() )
+  {
+    MinimumWHPConstraint & whpConstraint = registerGroup< MinimumWHPConstraint >( childName );
+    m_minWHPConstraint = std::shared_ptr< MinimumWHPConstraint >( &whpConstraint );
+    constraint = &whpConstraint;
+  }
+  else if( childKey == viewKeyStruct::minimumBHPConstraintString() )
+  {
+    MinimumBHPConstraint & bhpConstraint = registerGroup< MinimumBHPConstraint >( childName );
+    m_minBHPConstraint = std::shared_ptr< MinimumBHPConstraint >( &bhpConstraint );
+    constraint = &bhpConstraint;
+  }
+  else if( childKey == viewKeyStruct::maximumBHPConstraintString() )
+  {
+    MaximumBHPConstraint & bhpConstraint = registerGroup< MaximumBHPConstraint >( childName );
+    m_maxBHPConstraint = std::shared_ptr< MaximumBHPConstraint >( &bhpConstraint );
+    constraint = &bhpConstraint;
+  }
+  else if( childKey == viewKeyStruct::phaseProductionConstraintString() )
+  {
+    PhaseProductionConstraint & phaseConstraint = registerGroup< PhaseProductionConstraint >( childName );
+    m_productionRateConstraintList.emplace_back( std::shared_ptr< WellConstraintBase >( &phaseConstraint ) );
+    constraint = &phaseConstraint;
+  }
+  else if( childKey == viewKeyStruct::phaseInjectionConstraintString() )
+  {
+    PhaseInjectionConstraint & phaseConstraint = registerGroup< PhaseInjectionConstraint >( childName );
+    m_injectionRateConstraintList.emplace_back( std::shared_ptr< WellConstraintBase >( &phaseConstraint ) );
+    constraint = &phaseConstraint;
+  }
+  else if( childKey == viewKeyStruct::totalVolProductionConstraintString() )
+  {
+    TotalVolProductionConstraint & volConstraint = registerGroup< TotalVolProductionConstraint >( childName );
+    m_productionRateConstraintList.emplace_back( std::shared_ptr< WellConstraintBase >( &volConstraint ) );
+    constraint = &volConstraint;
+  }
+  else if( childKey == viewKeyStruct::totalVolInjectionConstraintString() )
+  {
+    TotalVolInjectionConstraint & volConstraint = registerGroup< TotalVolInjectionConstraint >( childName );
+    m_injectionRateConstraintList.emplace_back( std::shared_ptr< WellConstraintBase >( &volConstraint ) );
+    constraint = &volConstraint;
+  }
+  else if( childKey == viewKeyStruct::massProductionConstraintString() )
+  {
+    MassProductionConstraint & massConstraint = registerGroup< MassProductionConstraint >( childName );
+    m_productionRateConstraintList.emplace_back( std::shared_ptr< WellConstraintBase >( &massConstraint ) );
+    constraint = &massConstraint;
+
+  }
+  else if( childKey == viewKeyStruct::massInjectionConstraintString() )
+  {
+    MassInjectionConstraint & massConstraint = registerGroup< MassInjectionConstraint >( childName );
+    m_injectionRateConstraintList.emplace_back( std::shared_ptr< WellConstraintBase >( &massConstraint ) );
+    constraint = &massConstraint;
+  }
+  else if( childKey == viewKeyStruct::liquidProductionConstraintString() )
+  {
+    LiquidProductionConstraint & liquidConstraint = registerGroup< LiquidProductionConstraint >( childName );
+    m_productionRateConstraintList.emplace_back( std::shared_ptr< LiquidProductionConstraint >( &liquidConstraint ) );
+    constraint = &liquidConstraint;
+  }
+  return constraint;
+}
+
+void WellControls::createMinBHPConstraintForWHP()
+{
+  // Create constraint and set local pointer
+  MinimumBHPConstraint & bhpConstraint = registerGroup< MinimumBHPConstraint >( m_minWHPConstraint->getName()+"MinimumBHPConstraint" );
+  m_minBHPConstraintForWHP = std::shared_ptr< MinimumBHPConstraint >( &bhpConstraint );
+  // Set properties from the original minBHP constraint
+  m_minBHPConstraintForWHP->setReferenceElevation( m_minBHPConstraint->getReferenceElevation() );
+  m_minBHPConstraintForWHP->setReferenceGravityCoef ( m_minBHPConstraint->getReferenceGravityCoef() );
+  // Set to inactive. WHP estimator solve will set status
+  m_minBHPConstraintForWHP->setConstraintActive( false );
+}
+void WellControls::createMaxLiquidConstraintForWHP()
+{
+  // Create constraint and set local pointer
+  LiquidProductionConstraint & liquidConstraint = registerGroup< LiquidProductionConstraint >( m_minWHPConstraint->getName()+"LiquidProductionConstraint" );
+  m_maxLiquidConstraintForWHP = std::shared_ptr< LiquidProductionConstraint >( &liquidConstraint );
+  // Set properties from VFP table
+  FunctionManager & functionManager = FunctionManager::getInstance();
+  const PipeFlowTableFunction & m_flowTable =  functionManager.getGroup< PipeFlowTableFunction const >( m_minWHPConstraint->getFlowTableName());
+  string_array ratePhases = m_flowTable.getRatePhases();
+  m_maxLiquidConstraintForWHP->setPhaseNames( ratePhases );
+  m_maxLiquidConstraintForWHP->validateLiquidType( getMultiFluidSeparator());
+  // WHP estimator solve will set status
+  m_maxLiquidConstraintForWHP->setConstraintActive( false );
+}
+
+void WellControls::expandObjectCatalogs()
+{
+  //createChild( keys::wellControls, keys::wellControls );
+}
 
 void WellControls::switchToBHPControl( real64 const & val )
 {
@@ -306,6 +419,7 @@ void WellControls::postInputInitialization()
                  InputError );
 
   // 4) check that at least one rate constraint has been defined
+#if 0
   GEOS_THROW_IF( ((m_targetPhaseRate <= 0.0 && m_targetPhaseRateTableName.empty()) &&
                   (m_targetMassRate <= 0.0 && m_targetMassRateTableName.empty()) &&
                   (m_targetTotalRate <= 0.0 && m_targetTotalRateTableName.empty())),
@@ -320,7 +434,7 @@ void WellControls::postInputInitialization()
                  "either " << viewKeyStruct::targetMassRateString() <<
                  " or " << viewKeyStruct::targetMassRateTableNameString(),
                  InputError );
-
+#endif
   // 5) check whether redundant information has been provided
   GEOS_THROW_IF( ((m_targetPhaseRate > 0.0 && !m_targetPhaseRateTableName.empty())),
                  "WellControls " << getDataContext() << ": You have provided redundant information for well phase rate." <<
@@ -344,6 +458,13 @@ void WellControls::postInputInitialization()
 
   GEOS_THROW_IF( ((m_targetMassRate > 0.0 &&  m_useSurfaceConditions==0)),
                  "WellControls " << getDataContext() << ": Option only valid if useSurfaceConditions set to 1",
+                 InputError );
+
+  GEOS_THROW_IF( ((m_useSurfaceConditions==1 &&  m_surfacePres< 0.0)),
+                 "WellControls " << getDataContext() << " " << viewKeyStruct::surfacePressureString()<< " not set ",
+                 InputError );
+  GEOS_THROW_IF( ((m_useSurfaceConditions==1 &&  m_surfaceTemp<0.0)),
+                 "WellControls " << getDataContext() << " " << viewKeyStruct::surfaceTemperatureString()<< " not set ",
                  InputError );
 
   // 6.1) If the well is under BHP control then the BHP must be specified.
@@ -497,9 +618,30 @@ bool WellControls::isWellOpen() const
   return getWellStatus() == WellControls::Status::OPEN;
 }
 
+void WellControls::setWellState( bool open )
+{
+  m_wellOpen = open;
+}
+
+bool WellControls::getWellState() const
+{
+  return m_wellOpen;
+}
+
+void WellControls::setConstraintSwitch( bool constraintSwitch )
+{
+  m_constraintSwitch = constraintSwitch;
+}
+
+bool WellControls::getConstraintSwitch() const
+{
+  return m_constraintSwitch;
+}
+
 
 void WellControls::setNextDtFromTables( real64 const & currentTime, real64 & nextDt )
 {
+  // replace with iter over constraints - tjb
   WellControls::setNextDtFromTable( m_targetBHPTable, currentTime, nextDt );
   WellControls::setNextDtFromTable( m_targetMassRateTable, currentTime, nextDt );
   WellControls::setNextDtFromTable( m_targetPhaseRateTable, currentTime, nextDt );

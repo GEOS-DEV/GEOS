@@ -26,6 +26,13 @@
 #include "functions/TableFunction.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 
+#include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellTotalVolRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraints.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+
 namespace geos
 {
 namespace dataRepository
@@ -122,6 +129,18 @@ public:
   WellControls & operator=( WellControls && ) = delete;
 
   ///@}
+
+  /**
+   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
+   * @param childKey the catalog key of the new geometric object to create
+   * @param childName the name of the new geometric object in the repository
+   * @return the group child
+   */
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  /// Expand catalog for schema generation
+
+  virtual void expandObjectCatalogs() override;
+
 
   /**
    * @name Getters / Setters
@@ -284,6 +303,18 @@ public:
    */
   bool isWellOpen() const;
 
+  void setWellState( bool open );
+  bool getWellState() const;
+
+
+  void setConstraintSwitch( bool constraintSwitch );
+  bool getConstraintSwitch() const;
+
+  void setCurrentConstraint( WellConstraintBase * currentConstraint ) { m_currentConstraint = currentConstraint;}
+  WellConstraintBase *  getCurrentConstraint() { return m_currentConstraint; }
+  WellConstraintBase const *  getCurrentConstraint() const { return m_currentConstraint; }
+
+
   /**
    * @brief Getter for the flag to enable crossflow
    * @return the flag deciding whether crossflow is allowed or not
@@ -302,6 +333,13 @@ public:
    * @param[inout] nextDt the time step
    */
   void setNextDtFromTables( real64 const & currentTime, real64 & nextDt );
+
+  /**
+   * @brief getter for esitmator switch
+   * @return True if estimate well solution
+   */
+  integer estimateSolution() const { return m_estimateSolution; }
+
 
   /**
    * @brief setter for multi fluid separator
@@ -404,13 +442,52 @@ public:
     static constexpr char const * enableCrossflowString() { return "enableCrossflow"; }
     /// string key for the initial pressure coefficient
     static constexpr char const * initialPressureCoefficientString() { return "initialPressureCoefficient"; }
+    /// string key for the esitmate well solution flag
+    static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
 
+        /// string key for the minimum BHP presssure for a producer
+    static constexpr char const * minimumBHPConstraintString() { return "MinimumBHPConstraint"; }
+    /// string key for the maximum BHP presssure for a injection
+    static constexpr char const * maximumBHPConstraintString() { return "MaximumBHPConstraint"; }
+    /// string key for the maximum phase rate for a producer
+    static constexpr char const * phaseProductionConstraintString() { return "PhaseProductionConstraint"; }
+    /// string key for the maximum phase rate for a injection
+    static constexpr char const * phaseInjectionConstraintString() { return "PhaseInjectionConstraint"; }
+    /// string key for the maximum volume rate for a producer
+    static constexpr char const * totalVolProductionConstraintString() { return "TotalVolProductionConstraint"; }
+    /// string key for the maximum volume rate for a injector
+    static constexpr char const * totalVolInjectionConstraintString() { return "TotalVolInjectionConstraint"; }
+    /// string key for the maximum mass rate for a producer
+    static constexpr char const * massProductionConstraintString() { return "massProductionConstraint"; }
+    /// string key for the maximum mass rate for a injector
+    static constexpr char const * massInjectionConstraintString() { return "massInjectionConstraint"; }
+    /// string key for the liquid rate for a producer
+    static constexpr char const * liquidProductionConstraintString() { return "liquidProductionConstraint"; }
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
 
   static void setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt );
 
+  /**
+   * @brief Create a constraint
+   * @tparam ConstraintType the type of constraint to create
+   * @param[in] constraintName name to assign to the constraint
+   */
+  template< typename ConstraintType > void createConstraint ( string const & constraintName );
+
+
+  /**
+   * @brief Getters for constraints
+   */
+  std::shared_ptr< MinimumBHPConstraint > getMinBHPConstraint() { return m_minBHPConstraint; };
+  std::shared_ptr< MaximumBHPConstraint > getMaxBHPConstraint() { return m_maxBHPConstraint; };
+
+  std::shared_ptr< LiquidProductionConstraint > getMaxLiquidConstraintForWHP() { return m_maxLiquidConstraintForWHP; };
+  std::shared_ptr< MinimumBHPConstraint > getMinimumBHPConstraintForWHP() { return m_minBHPConstraintForWHP; };
+  // Lists of rate constraints
+  std::vector< std::shared_ptr< WellConstraintBase > > getProdRateConstraints() { return m_productionRateConstraintList; };
+  std::vector< std::shared_ptr< WellConstraintBase > > getInjRateConstraints() { return m_injectionRateConstraintList; }
 protected:
 
   virtual void postInputInitialization() override;
@@ -511,6 +588,28 @@ private:
 
   /// Status table
   TableFunction const * m_statusTable;
+
+  bool m_wellOpen;
+
+  /// flag to use the estimator
+  integer m_estimateSolution;
+
+  /// List of constraints
+  //constraint_array m_ConstraintList;
+  // Bool to trigger old/new constraint switch logic
+  bool m_constraintSwitch;
+
+  // Current constraint
+  WellConstraintBase * m_currentConstraint;
+  // Minimum and maximum BHP and WHP constraints
+  std::shared_ptr< MinimumBHPConstraint >  m_minBHPConstraint;
+  std::shared_ptr< MaximumBHPConstraint >  m_maxBHPConstraint;
+
+
+  // Lists of rate constraints
+  std::vector< std::shared_ptr< WellConstraintBase > > m_productionRateConstraintList;
+  std::vector< std::shared_ptr< WellConstraintBase > > m_injectionRateConstraintList;
+
 
   /// Well status
   WellControls::Status m_wellStatus;
