@@ -71,7 +71,7 @@ case $key in
     echo "-p/--python-target \"Target parent python bin\""
     echo "-b/--bin-dir \"Directory to link new scripts\""
     echo "-d/--pkg-dir \"Directory containing target python packages\""
-    echo "-t/--tool-branch \"Target branch for geosPythonPackages (default=main) \""
+    echo "-r/--python-pkg-branch \"Target branch for geosPythonPackages (default=main) \""
     echo "-v/--verbose \"Increase verbosity level\""
     echo ""
     exit

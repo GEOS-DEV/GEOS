@@ -346,7 +346,6 @@ void SolidMechanicsLagrangianFEM::initializeMass( MeshLevel & mesh, CellElementS
       }
     } );
   } );
-
 }
 
 void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
