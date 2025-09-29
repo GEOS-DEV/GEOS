@@ -491,6 +491,16 @@ protected:
                            real64 const & dt,
                            DomainPartition & domain ) = 0;
 
+  virtual bool evaluateConstraints( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                    real64 const & GEOS_UNUSED_PARAM( stepDt ),
+                                    integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                    integer const GEOS_UNUSED_PARAM( coupledIterationNumber ),
+                                    DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                    MeshLevel & GEOS_UNUSED_PARAM( mesh ),
+                                    ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
+                                    WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ),
+                                    DofManager const & GEOS_UNUSED_PARAM( dofManager ) ) { return false;};
+
   virtual bool evaluateProductionConstraints( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                               real64 const & GEOS_UNUSED_PARAM( stepDt ),
                                               integer const GEOS_UNUSED_PARAM( cycleNumber ),

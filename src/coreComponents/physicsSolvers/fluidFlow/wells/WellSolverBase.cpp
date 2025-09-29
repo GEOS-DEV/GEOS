@@ -456,6 +456,17 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
 
 
         wellControls.setConstraintSwitch( false );
+#if 1
+        evaluateConstraints( time_n,
+                             dt,
+                             cycleNumber,
+                             coupledIterationNumber,
+                             domain,
+                             meshLevel,
+                             elementRegionManager,
+                             subRegion,
+                             dofManager );
+#else
         if( wellControls.isProducer())
         {
           evaluateProductionConstraints( time_n,
@@ -481,6 +492,7 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
                                         subRegion,
                                         dofManager );
         }
+#endif
         // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
         // the well initialization code requires control type to by synced
         integer owner = -1;

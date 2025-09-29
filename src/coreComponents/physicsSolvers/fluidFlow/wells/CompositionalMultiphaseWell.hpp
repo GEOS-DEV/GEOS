@@ -499,15 +499,25 @@ protected:
                       integer current_newton_iteration,
                       DomainPartition & domain );
 
-  virtual bool evaluateProductionConstraints( real64 const & time_n,
-                                              real64 const & stepDt,
-                                              integer const cycleNumber,
-                                              integer const coupledIterationNumber,
-                                              DomainPartition & domain,
-                                              MeshLevel & mesh,
-                                              ElementRegionManager & elemManager,
-                                              WellElementSubRegion & subRegion,
-                                              DofManager const & dofManager ) override;
+  bool evaluateProductionConstraints1( real64 const & time_n,
+                                       real64 const & stepDt,
+                                       integer const cycleNumber,
+                                       integer const coupledIterationNumber,
+                                       DomainPartition & domain,
+                                       MeshLevel & mesh,
+                                       ElementRegionManager & elemManager,
+                                       WellElementSubRegion & subRegion,
+                                       DofManager const & dofManager );
+
+  virtual bool evaluateConstraints( real64 const & time_n,
+                                    real64 const & stepDt,
+                                    integer const cycleNumber,
+                                    integer const coupledIterationNumber,
+                                    DomainPartition & domain,
+                                    MeshLevel & mesh,
+                                    ElementRegionManager & elemManager,
+                                    WellElementSubRegion & subRegion,
+                                    DofManager const & dofManager ) override;
 
   virtual bool evaluateInjectionConstraints( real64 const & time_n,
                                              real64 const & stepDt,
@@ -533,6 +543,17 @@ private:
 
   template< typename ... GROUPTYPES >
   void selectLimitingConstraint( real64 const & time_n, integer const coupledIterationNumber, WellElementSubRegion & subRegion );
+
+  void solveConstraint( std::shared_ptr< WellConstraintBase > constraint,
+                        real64 const & time_n,
+                        real64 const & dt,
+                        integer const cycleNumber,
+                        integer const coupledIterationNumber,
+                        DomainPartition & domain,
+                        MeshLevel & mesh,
+                        ElementRegionManager & elemManager,
+                        WellElementSubRegion & subRegion,
+                        DofManager const & dofManager );
 
   template< typename GROUPTYPE, typename ... GROUPTYPES >
   void solveConstraint( real64 const & time_n,

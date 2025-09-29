@@ -516,10 +516,15 @@ public:
   /**
    * @brief Getters for constraints
    */
+  std::shared_ptr< MinimumBHPConstraint > getMinBHPConstraint() { return m_minBHPConstraint; };
   std::shared_ptr< MinimumWHPConstraint > getMinWHPConstraint() { return m_minWHPConstraint; };
+  std::shared_ptr< MaximumBHPConstraint > getMaxBHPConstraint() { return m_maxBHPConstraint; };
 
   std::shared_ptr< LiquidProductionConstraint > getMaxLiquidConstraintForWHP() { return m_maxLiquidConstraintForWHP; };
   std::shared_ptr< MinimumBHPConstraint > getMinimumBHPConstraintForWHP() { return m_minBHPConstraintForWHP; };
+  // Lists of rate constraints
+  std::vector< std::shared_ptr< WellConstraintBase > > getProdRateConstraints() { return m_productionRateConstraintList; };
+  std::vector< std::shared_ptr< WellConstraintBase > > getInjRateConstraints() { return m_injectionRateConstraintList; }
 protected:
 
   virtual void postInputInitialization() override;
