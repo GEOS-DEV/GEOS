@@ -26,7 +26,7 @@
  * @name Hypre forward declarations.
  *
  * Forward declare hypre's vector structs and pointer aliases in order
- * to avoid including hypre headers and leaking into the rest of GEOSX.
+ * to avoid including hypre headers and leaking into the rest of GEOS.
  */
 ///@{
 
