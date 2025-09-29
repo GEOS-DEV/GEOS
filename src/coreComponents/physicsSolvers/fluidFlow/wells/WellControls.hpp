@@ -28,7 +28,7 @@
 
 #include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellWHPConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellTotalVolRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraints.hpp"
@@ -485,9 +485,9 @@ public:
     /// string key for the maximum phase rate for a injection
     static constexpr char const * phaseInjectionConstraintString() { return "PhaseInjectionConstraint"; }
     /// string key for the maximum volume rate for a producer
-    static constexpr char const * volumeProductionConstraintString() { return "VolumeProductionConstraint"; }
+    static constexpr char const * totalVolProductionConstraintString() { return "TotalVolProductionConstraint"; }
     /// string key for the maximum volume rate for a injector
-    static constexpr char const * volumeInjectionConstraintString() { return "VolumeInjectionConstraint"; }
+    static constexpr char const * totalVolInjectionConstraintString() { return "TotalVolInjectionConstraint"; }
     /// string key for the maximum mass rate for a producer
     static constexpr char const * massProductionConstraintString() { return "massProductionConstraint"; }
     /// string key for the maximum mass rate for a injector

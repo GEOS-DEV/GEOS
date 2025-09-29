@@ -14,11 +14,11 @@
  */
 
 /*
- * @file WellVolumeRateConstraints.cpp
+ * @file WellTotalVolRateConstraints.cpp
  */
 
 #include "LogLevelsInfo.hpp"
-#include "WellVolumeRateConstraints.hpp"
+#include "WellTotalVolRateConstraints.hpp"
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
@@ -29,7 +29,7 @@ namespace geos
 
 using namespace dataRepository;
 
-VolumeConstraint::VolumeConstraint( string const & name, Group * const parent )
+TotalVolConstraint::TotalVolConstraint( string const & name, Group * const parent )
   : WellConstraintBase( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
@@ -42,18 +42,18 @@ VolumeConstraint::VolumeConstraint( string const & name, Group * const parent )
 }
 
 
-VolumeConstraint::~VolumeConstraint()
+TotalVolConstraint::~TotalVolConstraint()
 {}
 
-void VolumeConstraint::postInputInitialization()
+void TotalVolConstraint::postInputInitialization()
 {
   WellConstraintBase::postInputInitialization();
 
 }
 
 
-VolumeProductionConstraint::VolumeProductionConstraint( string const & name, Group * const parent )
-  : VolumeConstraint( name, parent )
+TotalVolProductionConstraint::TotalVolProductionConstraint( string const & name, Group * const parent )
+  : TotalVolConstraint( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
   m_rateSign=-1.0;
@@ -61,23 +61,23 @@ VolumeProductionConstraint::VolumeProductionConstraint( string const & name, Gro
 }
 
 
-VolumeProductionConstraint::~VolumeProductionConstraint()
+TotalVolProductionConstraint::~TotalVolProductionConstraint()
 {}
 
-void VolumeProductionConstraint::postInputInitialization()
+void TotalVolProductionConstraint::postInputInitialization()
 {
-  VolumeConstraint::postInputInitialization();
+  TotalVolConstraint::postInputInitialization();
 
 }
 
-bool VolumeProductionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const
+bool TotalVolProductionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const
 {
   return currentConstraint.totalVolumeRate() <  getConstraintValue( currentTime );
 }
 
 
-VolumeInjectionConstraint::VolumeInjectionConstraint( string const & name, Group * const parent )
-  : VolumeConstraint( name, parent )
+TotalVolInjectionConstraint::TotalVolInjectionConstraint( string const & name, Group * const parent )
+  : TotalVolConstraint( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -87,19 +87,19 @@ VolumeInjectionConstraint::VolumeInjectionConstraint( string const & name, Group
 }
 
 
-VolumeInjectionConstraint::~VolumeInjectionConstraint()
+TotalVolInjectionConstraint::~TotalVolInjectionConstraint()
 {}
 
-void VolumeInjectionConstraint::postInputInitialization()
+void TotalVolInjectionConstraint::postInputInitialization()
 {
 
-  VolumeConstraint::postInputInitialization();
+  TotalVolConstraint::postInputInitialization();
 // Validate the injection stream and temperature
   validateInjectionStream( m_injectionStream, m_injectionTemperature, getConstraintKey(), *this );
 
 }
 
-bool VolumeInjectionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const
+bool TotalVolInjectionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const
 {
   return currentConstraint.totalVolumeRate() >  getConstraintValue( currentTime );
 }

@@ -27,7 +27,7 @@
 
 #include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellWHPConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellTotalVolRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
 namespace geos

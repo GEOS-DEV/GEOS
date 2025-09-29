@@ -27,7 +27,7 @@
 
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellTotalVolRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraints.hpp"
@@ -349,11 +349,11 @@ struct ConstraintHelper< NC, IS_THERMAL, LiquidConstraint >
 };
 
 template< integer NC, integer IS_THERMAL >
-struct ConstraintHelper< NC, IS_THERMAL, VolumeConstraint >
+struct ConstraintHelper< NC, IS_THERMAL, TotalVolConstraint >
 {
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
-                                          VolumeConstraint & constraint,
+                                          TotalVolConstraint & constraint,
                                           WellElementSubRegion const & subRegion,
                                           string const & wellDofKey,
                                           localIndex const & rankOffset,

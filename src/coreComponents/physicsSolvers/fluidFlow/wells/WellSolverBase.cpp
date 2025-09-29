@@ -478,7 +478,6 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
                                          elementRegionManager,
                                          subRegion,
                                          dofManager );
-
         }
         else
         {

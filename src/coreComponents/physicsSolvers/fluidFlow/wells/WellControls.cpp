@@ -236,15 +236,15 @@ Group * WellControls::createChild( string const & childKey, string const & child
     m_injectionRateConstraintList.emplace_back( std::shared_ptr< WellConstraintBase >( &phaseConstraint ) );
     constraint = &phaseConstraint;
   }
-  else if( childKey == viewKeyStruct::volumeProductionConstraintString() )
+  else if( childKey == viewKeyStruct::totalVolProductionConstraintString() )
   {
-    VolumeProductionConstraint & volConstraint = registerGroup< VolumeProductionConstraint >( childName );
+    TotalVolProductionConstraint & volConstraint = registerGroup< TotalVolProductionConstraint >( childName );
     m_productionRateConstraintList.emplace_back( std::shared_ptr< WellConstraintBase >( &volConstraint ) );
     constraint = &volConstraint;
   }
-  else if( childKey == viewKeyStruct::volumeInjectionConstraintString() )
+  else if( childKey == viewKeyStruct::totalVolInjectionConstraintString() )
   {
-    VolumeInjectionConstraint & volConstraint = registerGroup< VolumeInjectionConstraint >( childName );
+    TotalVolInjectionConstraint & volConstraint = registerGroup< TotalVolInjectionConstraint >( childName );
     m_injectionRateConstraintList.emplace_back( std::shared_ptr< WellConstraintBase >( &volConstraint ) );
     constraint = &volConstraint;
   }

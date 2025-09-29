@@ -54,7 +54,7 @@
 
 #include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellWHPConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellTotalVolRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraints.hpp"
@@ -1970,7 +1970,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
       {
         // tjb needed for backward compatibility
         //wellControls.forSubGroups< MaximumBHPConstraint >( [&]( auto & constraint )
-        wellControls.forSubGroups< VolumeInjectionConstraint >( [&]( auto & constraint )
+        wellControls.forSubGroups< TotalVolInjectionConstraint >( [&]( auto & constraint )
         {
           constraint.setBHP ( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
           constraint.setPhaseVolumeRates ( wellControls.getReference< array1d< real64 > >(
@@ -3344,7 +3344,7 @@ void CompositionalMultiphaseWell::assembleWellConstraintTerms( real64 const & ti
   WellControls & wellControls = getWellControls( subRegion );
 
   {
-    wellControls.forSubGroups< BHPConstraint, PhaseConstraint, MassConstraint, VolumeConstraint, LiquidConstraint >( [&]( auto & constraint )
+    wellControls.forSubGroups< BHPConstraint, PhaseConstraint, MassConstraint, TotalVolConstraint, LiquidConstraint >( [&]( auto & constraint )
     {
       using ConstraintType = std::remove_reference_t< decltype(constraint) >;
       if( constraint.getName() == wellControls.getCurrentConstraint()->getName())
@@ -4229,15 +4229,15 @@ bool CompositionalMultiphaseWell::evaluateProductionConstraints1( real64 const &
                                                           dofManager );
 
   this->template solveConstraint< PhaseProductionConstraint, LiquidProductionConstraint,
-                                  MassProductionConstraint, VolumeProductionConstraint >( time_n,
-                                                                                          dt,
-                                                                                          cycleNumber,
-                                                                                          coupledIterationNumber,
-                                                                                          domain,
-                                                                                          mesh,
-                                                                                          elemManager,
-                                                                                          subRegion,
-                                                                                          dofManager );
+                                  MassProductionConstraint, TotalVolProductionConstraint >( time_n,
+                                                                                            dt,
+                                                                                            cycleNumber,
+                                                                                            coupledIterationNumber,
+                                                                                            domain,
+                                                                                            mesh,
+                                                                                            elemManager,
+                                                                                            subRegion,
+                                                                                            dofManager );
 
   solveWHPConstraint( time_n,
                       dt,
@@ -4250,9 +4250,9 @@ bool CompositionalMultiphaseWell::evaluateProductionConstraints1( real64 const &
                       dofManager );
 
   this->template selectLimitingConstraint< MinimumWHPConstraint, MinimumBHPConstraint, PhaseProductionConstraint,
-                                           MassProductionConstraint, VolumeProductionConstraint >( time_n,
-                                                                                                   coupledIterationNumber,
-                                                                                                   subRegion );
+                                           MassProductionConstraint, TotalVolProductionConstraint >( time_n,
+                                                                                                     coupledIterationNumber,
+                                                                                                     subRegion );
   // this should be done in calculateLImitingConstraint
   //  wellControls.setControl( static_cast< WellControls::Control >(limitingConstraint->getControl()) );     // old
   // wellControls.setCurrentConstraint( limitingConstraint );     // new
@@ -4308,20 +4308,20 @@ CompositionalMultiphaseWell::
                                                           dofManager );
 
   this->template solveConstraint< PhaseInjectionConstraint,
-                                  MassInjectionConstraint, VolumeInjectionConstraint >( time_n,
-                                                                                        dt,
-                                                                                        cycleNumber,
-                                                                                        coupledIterationNumber,
-                                                                                        domain,
-                                                                                        mesh,
-                                                                                        elemManager,
-                                                                                        subRegion,
-                                                                                        dofManager );
+                                  MassInjectionConstraint, TotalVolInjectionConstraint >( time_n,
+                                                                                          dt,
+                                                                                          cycleNumber,
+                                                                                          coupledIterationNumber,
+                                                                                          domain,
+                                                                                          mesh,
+                                                                                          elemManager,
+                                                                                          subRegion,
+                                                                                          dofManager );
 
   this->template selectLimitingConstraint< MaximumBHPConstraint, PhaseInjectionConstraint,
-                                           MassInjectionConstraint, VolumeInjectionConstraint >( time_n,
-                                                                                                 coupledIterationNumber,
-                                                                                                 subRegion );
+                                           MassInjectionConstraint, TotalVolInjectionConstraint >( time_n,
+                                                                                                   coupledIterationNumber,
+                                                                                                   subRegion );
 
   // this should be done in calculateLimitingCosntraint
   //wellControls.setControl( static_cast< WellControls::Control >(limitingConstraint->getControl()) );     // old

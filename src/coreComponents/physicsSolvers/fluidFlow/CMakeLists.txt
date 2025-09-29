@@ -119,7 +119,7 @@ set( fluidFlowSolvers_headers
      wells/WellConstraintsBase.hpp
      wells/WellBHPConstraints.hpp
      wells/WellWHPConstraints.hpp 
-     wells/WellVolumeRateConstraints.hpp
+     wells/WellTotalVolRateConstraints.hpp
      wells/WellMassRateConstraints.hpp
      wells/WellPhaseRateConstraints.hpp
      wells/WellLiquidRateConstraints.hpp
@@ -162,7 +162,7 @@ set( fluidFlowSolvers_sources
      wells/WellConstraintsBase.cpp
      wells/WellBHPConstraints.cpp
      wells/WellWHPConstraints.cpp
-     wells/WellVolumeRateConstraints.cpp
+     wells/WellTotalVolRateConstraints.cpp
      wells/WellMassRateConstraints.cpp
      wells/WellPhaseRateConstraints.cpp
      wells/WellLiquidRateConstraints.cpp

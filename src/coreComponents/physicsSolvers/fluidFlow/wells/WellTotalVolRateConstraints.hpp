@@ -18,8 +18,8 @@
  */
 
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLVOLUMERATECONSTRAINTS_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLVOLUMERATECONSTRAINTS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLTOTALVOLRATECONSTRAINTS_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLTOTALVOLRATECONSTRAINTS_HPP
 
 #include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
@@ -31,18 +31,18 @@ namespace dataRepository
 {
 namespace keys
 {
-static constexpr auto volumeProductionConstraint = "VolumeProductionConstraint";
-static constexpr auto volumeInjectionConstraint = "VolumeInjectionConstraint";
+static constexpr auto totalVolProductionConstraint = "TotalVolProductionConstraint";
+static constexpr auto totalVolInjectionConstraint = "TotalVolInjectionConstraint";
 }
 }
 
 
 /**
- * @class VolumeConstraint
+ * @class TotalVolConstraint
  * @brief This class describes a volume rate constraint used to control a well.
  */
 
-class VolumeConstraint : public WellConstraintBase
+class TotalVolConstraint : public WellConstraintBase
 {
 public:
 
@@ -56,40 +56,40 @@ public:
    * @param[in] name the name of this instantiation of WellControls in the repository
    * @param[in] parent the parent group of this instantiation of WellControls
    */
-  explicit VolumeConstraint( string const & name, dataRepository::Group * const parent );
+  explicit TotalVolConstraint( string const & name, dataRepository::Group * const parent );
 
 
   /**
    * @brief Default destructor.
    */
-  ~VolumeConstraint() override;
+  ~TotalVolConstraint() override;
 
   /**
    * @brief Deleted default constructor.
    */
-  VolumeConstraint() = delete;
+  TotalVolConstraint() = delete;
 
   /**
    * @brief Deleted copy constructor.
    */
-  VolumeConstraint( VolumeConstraint const & ) = delete;
+  TotalVolConstraint( TotalVolConstraint const & ) = delete;
 
   /**
    * @brief Deleted move constructor.
    */
-  VolumeConstraint( VolumeConstraint && ) = delete;
+  TotalVolConstraint( TotalVolConstraint && ) = delete;
 
   /**
    * @brief Deleted assignment operator.
    * @return a reference to a constraint object
    */
-  VolumeConstraint & operator=( VolumeConstraint const & ) = delete;
+  TotalVolConstraint & operator=( TotalVolConstraint const & ) = delete;
 
   /**
    * @brief Deleted move operator.
    * @return a reference to a constraint object
    */
-  VolumeConstraint & operator=( VolumeConstraint && ) = delete;
+  TotalVolConstraint & operator=( TotalVolConstraint && ) = delete;
 
   ///@}
   /**
@@ -109,7 +109,7 @@ public:
    * @brief Get name of constraint
    * @return constraint key
    */
-  virtual std::string getConstraintKey( ) const override { return "VolumeInjectionConstraint"; };
+  virtual std::string getConstraintKey( ) const override { return "TotalVolInjectionConstraint"; };
   ///@}
 
   // Temp interface - tjb
@@ -123,11 +123,11 @@ protected:
 
 
 /**
- * @class VolumeProductionConstraint
+ * @class TotalVolProductionConstraint
  * @brief This class describes a volume rate constraint used to control a production well.
  */
 
-class VolumeProductionConstraint : public VolumeConstraint
+class TotalVolProductionConstraint : public TotalVolConstraint
 {
 public:
 
@@ -141,40 +141,40 @@ public:
    * @param[in] name the name of this instantiation of WellControls in the repository
    * @param[in] parent the parent group of this instantiation of WellControls
    */
-  explicit VolumeProductionConstraint( string const & name, dataRepository::Group * const parent );
+  explicit TotalVolProductionConstraint( string const & name, dataRepository::Group * const parent );
 
 
   /**
    * @brief Default destructor.
    */
-  ~VolumeProductionConstraint() override;
+  ~TotalVolProductionConstraint() override;
 
   /**
    * @brief Deleted default constructor.
    */
-  VolumeProductionConstraint() = delete;
+  TotalVolProductionConstraint() = delete;
 
   /**
    * @brief Deleted copy constructor.
    */
-  VolumeProductionConstraint( VolumeProductionConstraint const & ) = delete;
+  TotalVolProductionConstraint( TotalVolProductionConstraint const & ) = delete;
 
   /**
    * @brief Deleted move constructor.
    */
-  VolumeProductionConstraint( VolumeProductionConstraint && ) = delete;
+  TotalVolProductionConstraint( TotalVolProductionConstraint && ) = delete;
 
   /**
    * @brief Deleted assignment operator.
    * @return a reference to a constraint object
    */
-  VolumeProductionConstraint & operator=( VolumeProductionConstraint const & ) = delete;
+  TotalVolProductionConstraint & operator=( TotalVolProductionConstraint const & ) = delete;
 
   /**
    * @brief Deleted move operator.
    * @return a reference to a constraint object
    */
-  VolumeProductionConstraint & operator=( VolumeProductionConstraint && ) = delete;
+  TotalVolProductionConstraint & operator=( TotalVolProductionConstraint && ) = delete;
 
   ///@}
 
@@ -186,7 +186,7 @@ public:
    * @brief Get name of constraint
    * @return constraint key
    */
-  virtual std::string getConstraintKey( ) const override { return "VolumeProductionConstraint"; };
+  virtual std::string getConstraintKey( ) const override { return "TotalVolProductionConstraint"; };
   ///@}
 
   virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
@@ -197,11 +197,11 @@ protected:
 };
 
 /**
- * @class VolumeInjectionConstraint
+ * @class TotalVolInjectionConstraint
  * @brief This class describes a volume rate constraint used to control a injection well.
  */
 
-class VolumeInjectionConstraint : public VolumeConstraint
+class TotalVolInjectionConstraint : public TotalVolConstraint
 {
 public:
 
@@ -212,44 +212,44 @@ public:
   ///@{
 
   /**
-   * @brief Constructor for VolumeInjectionConstraint Objects.
+   * @brief Constructor for TotalVolInjectionConstraint Objects.
    * @param[in] name the name of this instantiation of WellControls in the repository
    * @param[in] parent the parent group of this instantiation of WellControls
    */
-  explicit VolumeInjectionConstraint( string const & name, dataRepository::Group * const parent );
+  explicit TotalVolInjectionConstraint( string const & name, dataRepository::Group * const parent );
 
 
   /**
    * @brief Default destructor.
    */
-  ~VolumeInjectionConstraint() override;
+  ~TotalVolInjectionConstraint() override;
 
   /**
    * @brief Deleted default constructor.
    */
-  VolumeInjectionConstraint() = delete;
+  TotalVolInjectionConstraint() = delete;
 
   /**
    * @brief Deleted copy constructor.
    */
-  VolumeInjectionConstraint( VolumeInjectionConstraint const & ) = delete;
+  TotalVolInjectionConstraint( TotalVolInjectionConstraint const & ) = delete;
 
   /**
    * @brief Deleted move constructor.
    */
-  VolumeInjectionConstraint( VolumeInjectionConstraint && ) = delete;
+  TotalVolInjectionConstraint( TotalVolInjectionConstraint && ) = delete;
 
   /**
    * @brief Deleted assignment operator.
    * @return a reference to a constraint object
    */
-  VolumeInjectionConstraint & operator=( VolumeInjectionConstraint const & ) = delete;
+  TotalVolInjectionConstraint & operator=( TotalVolInjectionConstraint const & ) = delete;
 
   /**
    * @brief Deleted move operator.
    * @return a reference to a constraint object
    */
-  VolumeInjectionConstraint & operator=( VolumeInjectionConstraint && ) = delete;
+  TotalVolInjectionConstraint & operator=( TotalVolInjectionConstraint && ) = delete;
 
   ///@}
 
