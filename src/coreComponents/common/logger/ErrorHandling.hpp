@@ -111,6 +111,8 @@ public:
     std::vector< ErrorContext > m_contextsInfo;
     /// the stack trace
     std::vector< std::string > m_sourceCallStack;
+    /// the string stack trace
+    std::string m_stringCallStack;
 
     /**
      * @brief Construct a default Error Message without field specification
@@ -205,6 +207,16 @@ private:
 
     bool m_isValidStackTrace = false;
   };
+
+  static void formatMsgToAscii( ErrorLogger::ErrorMsg const & errMsg, string const & rank,
+                                std::ostream & output )
+  {
+    output << "***** EXCEPTION\n";
+    output << "***** LOCATION: " LOCATION "\n";
+    output << "***** " << errMsg.m_cause << "\n";
+    output << "***** Rank " << rank << ": " << errMsg.m_msg << "\n";
+    output << errMsg.m_stringCallStack;
+  }
 
   /**
    * @return true if the YAML file output is enabled

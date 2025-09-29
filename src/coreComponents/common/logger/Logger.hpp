@@ -146,35 +146,22 @@
   { \
     if( COND ) \
     { \
-      std::ostringstream __msgoss; \
-      __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
-      std::string message =  __msgoss.str(); \
-      __msgoss.clear(); \
-      __msgoss << CAUSE_MESSAGE; \
-      std::string cause =  __msgoss.str(); \
-      std::ostringstream __oss; \
-      __oss << "***** ERROR\n"; \
-      __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
-      std::string stackHistory = LvArray::system::stackTrace( true ); \
-      __oss << stackHistory; \
-      std::cout << __oss.str() << std::endl; \
-      if( g_errorLogger.isOutputFileEnabled() ) \
-      { \
-        ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
-                                         message, \
-                                         __FILE__, \
-                                         __LINE__ ); \
-        msgStruct.setRank( ::geos::logger::internal::rank ); \
-        msgStruct.setCause( cause ); \
-        msgStruct.addCallStackInfo( stackHistory ); \
-        msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-        g_errorLogger.flushErrorMsg( msgStruct ); \
-      } \
+      std::ostringstream msgoss; \
+      std::ostringstream causemsgsoss; \
+      msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
+      causemsgsoss << CAUSE_MESSAGE; \
+      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
+                                       msgoss.str(), \
+                                       __FILE__, \
+                                       __LINE__ ); \
+      msgStruct.setRank( ::geos::logger::internal::rank ); \
+      msgStruct.setCause( causemsgsoss.str() ); \
+      msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
+      msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
+      g_errorLogger.flushErrorMsg( msgStruct ); \
       LvArray::system::callErrorHandler(); \
     } \
-  } while( false )
+  }while( false )
 
 /**
  * @brief Conditionally raise a hard error and terminate the program.
@@ -208,35 +195,23 @@
   { \
     if( COND ) \
     { \
-      std::ostringstream __msgoss; \
-      __msgoss << MSG; \
-      std::string message =  __msgoss.str(); \
-      __msgoss.clear(); \
-      __msgoss << CAUSE_MESSAGE; \
-      std::string cause =  __msgoss.str(); \
-      std::ostringstream __oss; \
-      __oss << "***** EXCEPTION\n"; \
-      __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
-      std::string stackHistory = LvArray::system::stackTrace( true ); \
-      __oss << stackHistory; \
-      if( g_errorLogger.isOutputFileEnabled() ) \
-      { \
-        if( g_errorLogger.currentErrorMsg().m_type == ErrorLogger::MsgType::Undefined ) \
-        { /* first throw site, we initialize the error message completly */ \
-          g_errorLogger.currentErrorMsg() \
-            .setType( ErrorLogger::MsgType::Exception ) \
-            .setCodeLocation( __FILE__, __LINE__ ) \
-            .setCause( cause ) \
-            .setRank( ::geos::logger::internal::rank ) \
-            .addCallStackInfo( stackHistory ); \
-        } \
+      std::ostringstream msgoss; \
+      std::ostringstream causemsgsoss; \
+      msgoss << MSG; \
+      causemsgsoss << CAUSE_MESSAGE; \
+      if( g_errorLogger.currentErrorMsg().m_type == ErrorLogger::MsgType::Undefined ) \
+      {   /* first throw site, we initialize the error message completly */ \
         g_errorLogger.currentErrorMsg() \
-          .addToMsg( message ) \
-          .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
+          .setType( ErrorLogger::MsgType::Exception ) \
+          .setCodeLocation( __FILE__, __LINE__ ) \
+          .setCause( causemsgsoss.str() ) \
+          .setRank( ::geos::logger::internal::rank ) \
+          .addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       } \
-      throw GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )( __oss.str() ); \
+      g_errorLogger.currentErrorMsg() \
+        .addToMsg( msgoss.str() ) \
+        .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
+      throw GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )(msgoss.str()); \
     } \
   } while( false )
 
@@ -273,31 +248,20 @@
   { \
     if( COND ) \
     { \
-      std::ostringstream __msgoss; \
-      __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
-      std::string message = __msgoss.str(); \
-      __msgoss.clear(); \
-      __msgoss << CAUSE_MESSAGE; \
-      std::string cause =  __msgoss.str(); \
-      std::ostringstream __oss; \
-      __oss << "***** WARNING\n"; \
-      __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::rankString << ": " << message << "\n"; \
-      std::cout << __oss.str() << std::endl; \
-      if( g_errorLogger.isOutputFileEnabled() ) \
-      { \
-        ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
-                                         message, \
-                                         __FILE__, \
-                                         __LINE__ ); \
-        msgStruct.setRank( ::geos::logger::internal::rank ); \
-        msgStruct.setCause( cause ); \
-        msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-        g_errorLogger.flushErrorMsg( msgStruct ); \
-      } \
+      std::ostringstream msgoss; \
+      std::ostringstream causemsgsoss; \
+      msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
+      causemsgsoss << CAUSE_MESSAGE; \
+      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
+                                       msgoss.str(), \
+                                       __FILE__, \
+                                       __LINE__ ); \
+      msgStruct.setRank( ::geos::logger::internal::rank ); \
+      msgStruct.setCause( causemsgsoss.str() ); \
+      msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
+      g_errorLogger.flushErrorMsg( msgStruct ); \
     } \
-  } while( false )
+  }while( false )
 
 /**
  * @brief Conditionally report a warning.
@@ -980,6 +944,6 @@ void FinalizeLogger();
 
 }   // namespace logger
 
-} // namespace geos
+}   // namespace geos
 
 #endif /* GEOS_COMMON_LOGGER_HPP */
