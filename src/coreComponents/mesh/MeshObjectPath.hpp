@@ -423,19 +423,19 @@ void MeshObjectPath::forManagersForSetName( MeshLevel const & mesh, string const
             getObjectType() !=  MeshObjectPath::ObjectTypes::nodes &&
             targetSet.size() > 0 )
         {
-          func( MeshObjectPath::ObjectTypes::nodes );
+          func( MeshObjectPath::ObjectTypes::nodes, setName );
         }
         else if( std::is_same_v< TYPE, EdgeManager >  &&
                  getObjectType() !=  MeshObjectPath::ObjectTypes::edges &&
                  targetSet.size() > 0 )
         {
-          func( MeshObjectPath::ObjectTypes::edges );
+          func( MeshObjectPath::ObjectTypes::edges, setName );
         }
         else if( std::is_same_v< TYPE, FaceManager > &&
                  getObjectType() !=  MeshObjectPath::ObjectTypes::faces &&
                  targetSet.size() > 0 )
         {
-          func( MeshObjectPath::ObjectTypes::faces );
+          func( MeshObjectPath::ObjectTypes::faces, setName );
         }
       }
     }
