@@ -9,7 +9,7 @@
 *.swo
 *.swn
 *.nfs*
-*.vscode/*.json
+*.vscode/*
 *.vscode-codespaces*
 *.out
 *.core
