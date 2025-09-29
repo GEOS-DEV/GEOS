@@ -724,8 +724,10 @@ protected:
                  InputError );
   }
 
-  virtual void initializePostSubGroups() override
+  virtual void initializePreSubGroups() override
   {
+    PhysicsSolverBase::initializePreSubGroups();
+
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     if( !isSequential )
     {
