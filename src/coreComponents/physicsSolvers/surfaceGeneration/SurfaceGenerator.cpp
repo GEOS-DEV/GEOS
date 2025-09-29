@@ -3905,12 +3905,6 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
                                                              arrayView3d< real64 const, geos::solid::STRESS_USD > >( fields::solid::stress::key(),
                                                                                                                      constitutiveManager );
 
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > const
-  dNdX = elementManager.constructViewAccessor< array4d< real64 >, arrayView4d< real64 const > >( keys::dNdX );
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const
-  detJ = elementManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( keys::detJ );
-
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elementManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
 
@@ -3928,11 +3922,6 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
   for( localIndex i=0; i < nodeIndices.size(); ++i )
   {
     localIndex nodeID = nodeIndices( i );
-//    localIndex_array temp11;
-//    for (int ii = 0; ii < nodeToElementMap.sizeOfArray(nodeID); ii++)
-//    {
-//      temp11.emplace_back(nodeToElementMap[nodeID][ii]);
-//    }
 
     for( localIndex k=0; k<nodeToRegionMap.sizeOfArray( nodeID ); ++k )
     {
@@ -3952,8 +3941,6 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
       LvArray::tensorOps::subtract< 3 >( x0_xEle, X[edgeToNodeMap[edgeID][1]] );
       real64 const udist = LvArray::tensorOps::AiBi< 3 >( x0_x1, x0_xEle );
 
-      localIndex const numQuadraturePoints = detJ[er][esr].size( 1 );
-
       if(( udist <= edgeLength && udist > 0.0 ) || threeNodesPinched )
       {
         real64 const K  = bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
@@ -3971,15 +3958,50 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
             // repeated indices and the following may run multiple
             // times for the same element.
 
-            //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
-            solidMechanicsLagrangianFEMKernels::ExplicitKernel::
-              calculateSingleNodalForce( ei,
-                                         n,
-                                         numQuadraturePoints,
-                                         dNdX[er][esr],
-                                         detJ[er][esr],
-                                         stress[er][esr][m_solidMaterialFullIndex[er]],
-                                         temp );
+            // wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
+
+            arrayView3d< real64 const, geos::solid::STRESS_USD > const & subregionStress = stress[er][esr][m_solidMaterialFullIndex[er]];
+
+            // ASSUMPTION(?): subregions only have one registered element type
+            finiteElement::FiniteElementBase const * finiteElement = nullptr;
+            elementSubRegion.forWrappers< finiteElement::FiniteElementBase >( [&]( auto const & fe )
+            {
+              finiteElement = &fe.reference();
+            } );
+
+            finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( *finiteElement, [ & ]( auto const & fe )
+            {
+
+              using FE_TYPE = TYPEOFREF(fe);
+              typename FE_TYPE::StackVariables feStack;
+              constexpr localIndex numQuadraturePoints = FE_TYPE::numQuadraturePoints;
+              constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+              real64 xLocal[numNodesPerElement][3] = {{0}};
+              localIndex const numSupportPoints = finiteElement->getNumSupportPoints();
+              for (localIndex a = 0; a < numSupportPoints; ++a)
+              {
+                LvArray::tensorOps::copy<3>(xLocal[a], X[elementsToNodes(ei, a)]);
+              }
+
+              for( localIndex q = 0; q < numQuadraturePoints; ++q )
+              {
+                real64 dNdX[numNodesPerElement][3] = {{0}};
+                real64 J[3][3] = {{0}};
+
+                real64 const detJ = FE_TYPE::calcJacobian(q, xLocal, feStack, J);
+                FE_TYPE::calcGradN(q, xLocal, feStack, dNdX);
+
+                temp[0] -= (subregionStress(k, q, 0) * dNdX[n][0] +
+                            subregionStress(k, q, 5) * dNdX[n][1] +
+                            subregionStress(k, q, 4) * dNdX[n][2]) * detJ;
+                temp[1] -= (subregionStress(k, q, 5) * dNdX[n][0] +
+                            subregionStress(k, q, 1) * dNdX[n][1] +
+                            subregionStress(k, q, 3) * dNdX[n][2]) * detJ;
+                temp[2] -= (subregionStress(k, q, 4) * dNdX[n][0] +
+                            subregionStress(k, q, 3) * dNdX[n][1] +
+                            subregionStress(k, q, 2) * dNdX[n][2]) * detJ;
+              }
+            } );
 
             LvArray::tensorOps::scale< 3 >( temp, YoungModulus );
             LvArray::tensorOps::scale< 3 >( temp, 1.0 / (1 - poissonRatio * poissonRatio) );
