@@ -61,32 +61,14 @@ public:
                             DofManager::Connector::Elem );
   }
 
-  virtual void setupSystem( DomainPartition & domain,
-                            DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution,
-                            bool const setSparsity = true ) override
-  {
-    GEOS_MARK_FUNCTION;
-
-    PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
-
-    setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
-
-    // if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
-    // {
-    //   m_precond = createPreconditioner( domain );
-    // }
-  }
-
   virtual void setSparsityPattern( DomainPartition & domain,
                                    DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
                                    SparsityPattern< globalIndex > & pattern ) override
   {
-    /// 2. Add coupling terms not added by the DofManager.
+    // start with the flow solver sparsity pattern (it could be reservoir + wells)
     SparsityPattern< globalIndex > patternOriginal;
-    dofManager.setSparsityPattern( patternOriginal );
+    this->flowSolver()->setSparsityPattern( domain, dofManager, localMatrix, patternOriginal );
 
     // Get the original row lengths (diagonal blocks only)
     array1d< localIndex > rowLengths( patternOriginal.numRows());
@@ -112,6 +94,8 @@ public:
 
     // Add the nonzeros from coupling
     addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView());
+
+    setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
   }
 
   virtual void assembleSystem( real64 const time_n,
@@ -183,6 +167,8 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
+    integer const numComp = numFluidComponents();
+
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &, //  meshBodyName,
                                                                         MeshLevel const & mesh,
                                                                         string_array const & ) // regionNames
@@ -228,7 +214,10 @@ protected:
                 if( k1 != k0 )
                 {
                   localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
-                  rowLengths[rowNumber] += 3*numNodesPerElement;
+                  for( integer ic = 0; ic < numComp; ic++ )
+                  {
+                    rowLengths[rowNumber + ic] += 3*numNodesPerElement;
+                  }
                 }
               }
             }
@@ -250,6 +239,8 @@ protected:
                                            SparsityPatternView< globalIndex > const & pattern ) const
   {
     GEOS_MARK_FUNCTION;
+
+    integer const numComp = numFluidComponents();
 
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                         MeshLevel const & mesh,
@@ -325,7 +316,10 @@ protected:
                     for( localIndex i = 0; i < 3; ++i )
                     {
                       globalIndex const colIndex = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
-                      pattern.insertNonZero( rowIndex, colIndex );
+                      for( integer ic = 0; ic < numComp; ic++ )
+                      {
+                        pattern.insertNonZero( rowIndex + ic, colIndex );
+                      }
                     }
                   }
                 }

@@ -116,6 +116,7 @@ public:
   virtual void
   setSparsityPattern( DomainPartition & domain,
                       DofManager & dofManager,
+                      CRSMatrix< real64, globalIndex > & localMatrix,
                       SparsityPattern< globalIndex > & pattern ) override;
 
   virtual std::unique_ptr< PreconditionerBase< LAInterface > >

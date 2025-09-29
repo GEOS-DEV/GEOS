@@ -264,11 +264,11 @@ real64 HydrofractureSolver< POROMECHANICS_SOLVER >::fullyCoupledSolverStep( real
     // Only build the sparsity pattern if the mesh has changed
     if( meshModificationTimestamp > getSystemSetupTimestamp() )
     {
-      setupSystem( domain,
-                   m_dofManager,
-                   m_localMatrix,
-                   m_rhs,
-                   m_solution );
+      this->setupSystem( domain,
+                         m_dofManager,
+                         m_localMatrix,
+                         m_rhs,
+                         m_solution );
       setSystemSetupTimestamp( meshModificationTimestamp );
     }
 
@@ -486,23 +486,9 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setupCoupling( DomainPartition
 }
 
 template< typename POROMECHANICS_SOLVER >
-void HydrofractureSolver< POROMECHANICS_SOLVER >::setupSystem( DomainPartition & domain,
-                                                               DofManager & dofManager,
-                                                               CRSMatrix< real64, globalIndex > & localMatrix,
-                                                               ParallelVector & rhs,
-                                                               ParallelVector & solution,
-                                                               bool const setSparsity )
-{
-  GEOS_MARK_FUNCTION;
-
-  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
-
-  setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
-}
-
-template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::setSparsityPattern( DomainPartition & domain,
                                                                       DofManager & dofManager,
+                                                                      CRSMatrix< real64, globalIndex > & localMatrix,
                                                                       SparsityPattern< globalIndex > & pattern )
 {
   SparsityPattern< globalIndex > patternOriginal;
@@ -532,6 +518,8 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setSparsityPattern( DomainPart
 
   // Add the nonzeros from coupling
   addFluxApertureCouplingSparsityPattern( domain, dofManager, pattern.toView());
+
+  setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 }
 
 template< typename POROMECHANICS_SOLVER >
