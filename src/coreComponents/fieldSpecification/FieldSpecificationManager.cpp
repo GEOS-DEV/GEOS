@@ -214,7 +214,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         objectPath.forManagersForSetName< FaceManager,
                                           EdgeManager,
                                           NodeManager >( mesh, setName,
-                                                         [&]( MeshObjectPath::ObjectTypes managerType ){
+                                                         [&setTypesMap, setName]( MeshObjectPath::ObjectTypes managerType ){
           setTypesMap[setName][managerType] =  0;
         } );
         string_array capturedTypes;
