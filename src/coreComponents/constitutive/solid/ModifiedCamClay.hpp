@@ -518,18 +518,6 @@ public:
 
     /// string/key for default preconsolidation pressure
     static constexpr char const * defaultPreConsolidationPressureString() { return "defaultPreConsolidationPressure"; }
-
-    /// string/key for virgin compression index
-    static constexpr char const * virginCompressionIndexString() { return "virginCompressionIndex"; }
-
-    /// string/key for slope of the criticalstate line
-    static constexpr char const * cslSlopeString() { return "cslSlope"; }
-
-    /// string/key for new preconsolidation pressure
-    static constexpr char const * newPreConsolidationPressureString() { return "preConsolidationPressure"; }
-
-    /// string/key for old preconsolidation pressure
-    static constexpr char const * oldPreConsolidationPressureString() { return "oldPreConsolidationPressure"; }
   };
 
   /**

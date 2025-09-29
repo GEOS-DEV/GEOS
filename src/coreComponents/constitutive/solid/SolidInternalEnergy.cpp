@@ -18,6 +18,7 @@
  */
 
 #include "SolidInternalEnergy.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -30,19 +31,6 @@ namespace constitutive
 SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const parent ):
   ConstitutiveBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::internalEnergyString(), &m_internalEnergy ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Internal energy of the solid per unit volume [J/m^3]" );
-
-  registerWrapper( viewKeyStruct::oldInternalEnergyString(), &m_internalEnergy_n ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Internal energy of the solid per unit volume at the previous time-step [J/m^3]" );
-
-  registerWrapper( viewKeyStruct::dInternalEnergy_dTemperatureString(), &m_dInternalEnergy_dTemperature ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Derivative of the solid internal energy w.r.t. temperature [J/(m^3.K)]" );
-
   registerWrapper( viewKeyStruct::referenceVolumetricHeatCapacityString(), &m_referenceVolumetricHeatCapacity ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Reference solid volumetric heat capacity [J/(kg.K)]" );
@@ -59,6 +47,14 @@ SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const par
   registerWrapper( viewKeyStruct::referenceInternalEnergyString(), &m_referenceInternalEnergy ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Internal energy at the reference temperature [J/kg]" );
+
+  // register fields
+
+  registerField< fields::solid::internalEnergy >( &m_internalEnergy );
+
+  registerField< fields::solid::oldInternalEnergy >( &m_internalEnergy_n );
+
+  registerField< fields::solid::dInternalEnergy_dTemperature >( &m_dInternalEnergy_dTemperature );
 }
 
 void SolidInternalEnergy::allocateConstitutiveData( Group & parent, localIndex const numPts )

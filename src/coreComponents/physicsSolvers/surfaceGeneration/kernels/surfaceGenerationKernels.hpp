@@ -21,6 +21,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/SolidBase.hpp"
+#include "constitutive/solid/SolidFields.hpp"
 
 #include "constitutive/ConstitutiveManager.hpp"
 #include "surfaceGenerationKernelsHelpers.hpp"
@@ -44,9 +45,9 @@ public:
     m_detJ( elemManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( dataRepository::keys::detJ ) ),
     m_bulkModulus( elemManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "bulkModulus", constitutiveManager ) ),
     m_shearModulus( elemManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "shearModulus", constitutiveManager ) ),
-    m_stress( elemManager.constructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
-                                                             arrayView3d< real64 const, solid::STRESS_USD > >( constitutive::SolidBase::viewKeyStruct::stressString(),
-                                                                                                               constitutiveManager ) )
+    m_stress( elemManager.constructFullMaterialViewAccessor< array3d< real64, geos::solid::STRESS_PERMUTATION >,
+                                                             arrayView3d< real64 const, geos::solid::STRESS_USD > >( fields::solid::stress::key(),
+                                                                                                                     constitutiveManager ) )
   {
     m_solidMaterialFullIndex.resize( elemManager.numRegions() );
     elemManager.forElementRegionsComplete< CellElementRegion >( [&]( localIndex regionIndex,
