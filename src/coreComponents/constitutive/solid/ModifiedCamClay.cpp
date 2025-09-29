@@ -76,6 +76,8 @@ void ModifiedCamClay::postInputInitialization()
                  getFullName() << ": Non-positive virgin compression index detected", InputError );
   GEOS_THROW_IF( m_defaultVirginCompressionIndex <= m_defaultRecompressionIndex,
                  getFullName() << ": Recompression index should exceed virgin recompression index", InputError );
+  GEOS_THROW_IF( m_defaultPreConsolidationPressure >= 0,
+                 getFullName() << ": Preconsolidation pressure must be negative", InputError );
 
   // set results as array default values
 
