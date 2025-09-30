@@ -43,6 +43,7 @@ typedef int MPI_Datatype;
 #define MPI_SIGNED_CHAR    ((MPI_Datatype)0x4c000118)
 #define MPI_UNSIGNED_CHAR  ((MPI_Datatype)0x4c000102)
 #define MPI_BYTE           ((MPI_Datatype)0x4c00010d)
+#define MPI_C_BOOL         ((MPI_Datatype)0x4c00013f)
 #define MPI_WCHAR          ((MPI_Datatype)0x4c00040e)
 #define MPI_SHORT          ((MPI_Datatype)0x4c000203)
 #define MPI_UNSIGNED_SHORT ((MPI_Datatype)0x4c000204)
@@ -876,7 +877,7 @@ struct MpiTypeImpl< bool * >
   static MPI_Datatype get()
   {
     // Return the appropriate MPI_Datatype for bool*
-    return MPI_BYTE;
+    return MPI_C_BOOL;
   }
 };
 

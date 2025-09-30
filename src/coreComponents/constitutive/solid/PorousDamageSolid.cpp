@@ -37,9 +37,6 @@ PorousDamageSolid< SOLID_TYPE >::PorousDamageSolid( string const & name, Group *
   CoupledSolid< SOLID_TYPE, BiotPorosity, DamagePermeability >( name, parent )
 {}
 
-template< typename SOLID_TYPE >
-PorousDamageSolid< SOLID_TYPE >::~PorousDamageSolid() = default;
-
 // Register all PorousDamageSolid model types.
 typedef PorousDamageSolid< Damage< ElasticIsotropic > > PorousDamageElasticIsotropic;
 typedef PorousDamageSolid< DamageSpectral< ElasticIsotropic > > PorousDamageSpectralElasticIsotropic;

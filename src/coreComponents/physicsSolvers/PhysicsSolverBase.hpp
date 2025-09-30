@@ -403,6 +403,19 @@ public:
                bool const setSparsity = true );
 
   /**
+   * @brief Set the sparsity pattern of the linear system matrix
+   * @param domain the domain containing the mesh and fields
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the system matrix
+   * @param pattern the sparsity pattern to be filled
+   */
+  virtual void
+  setSparsityPattern( DomainPartition & domain,
+                      DofManager & dofManager,
+                      CRSMatrix< real64, globalIndex > & localMatrix,
+                      SparsityPattern< globalIndex > & pattern );
+
+  /**
    * @brief Create a preconditioner for this solver's linear system.
    * @param domain the domain containing the mesh and fields
    * @return the newly created preconditioner object
@@ -596,9 +609,11 @@ public:
   /**
    * @brief updates the configuration (if needed) based on the state after a converged Newton loop.
    * @param domain the domain containing the mesh and fields
+   * @param configurationLoopIter current configuration iteration number
    * @return a bool that states whether the configuration used to solve the nonlinear loop is still valid or not.
    */
-  virtual bool updateConfiguration( DomainPartition & domain );
+  virtual bool updateConfiguration( DomainPartition & domain,
+                                    integer configurationLoopIter );
 
   /**
    * @brief
@@ -920,9 +935,25 @@ public:
     return m_solverStatistics.m_iterationsStats;
   }
   /**
+   * @return An IterationsStatistics for the "root" solver.
+   * Otherwise return an empty IterationsStatistics
+   * (const version)
+   */
+  IterationsStatistics const & getIterationStats() const
+  {
+    return m_solverStatistics.m_iterationsStats;
+  }
+  /**
    * @return A ConvergenceStatistics for all sub-solvers
    */
   ConvergenceStatistics & getConvergenceStats()
+  {
+    return m_solverStatistics.m_convergenceStats;
+  }
+  /**
+   * @return A ConvergenceStatistics for all sub-solvers (const version)
+   */
+  ConvergenceStatistics const & getConvergenceStats() const
   {
     return m_solverStatistics.m_convergenceStats;
   }
@@ -955,6 +986,13 @@ public:
   {
     return m_meshTargets;
   }
+
+  /**
+   * @brief Detect oscillations in the solution
+   * @return true if oscillations are detected, false otherwise
+   */
+  bool detectOscillations() const;
+
 protected:
 
   virtual void postInputInitialization() override;
@@ -1139,6 +1177,9 @@ protected:
 
   /// Timers for the aggregate profiling of the solver
   std::map< std::string, std::chrono::system_clock::duration > m_timers;
+
+  /// History of the solution vector, used for oscillation detection
+  ArrayOfArrays< real64 > m_solutionHistory;
 
 private:
   /// List of names of regions the solver will be applied to

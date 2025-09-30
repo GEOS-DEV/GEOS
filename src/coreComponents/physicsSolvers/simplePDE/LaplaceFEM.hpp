@@ -38,9 +38,6 @@ public:
   LaplaceFEM( const string & name,
               Group * const parent );
 
-  /// Destructor
-  virtual ~LaplaceFEM() override;
-
   /// "CatalogName()" return the string used as XML tag in the input file.  It ties the XML tag with
   /// this C++ classes. This is important.
   static string catalogName() { return "LaplaceFEM"; }
@@ -58,13 +55,11 @@ public:
 // /**@{*/
 
 //START_SPHINX_INCLUDE_SOLVERINTERFACE
-  virtual void
-  setupSystem( DomainPartition & domain,
-               DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
-               ParallelVector & rhs,
-               ParallelVector & solution,
-               bool const setSparsity = false ) override;
+
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override;
 
   virtual void
   assembleSystem( real64 const time,

@@ -140,6 +140,12 @@ public:
     static constexpr char const * sequentialConvergenceCriterionString() { return "sequentialConvergenceCriterion"; }
     static constexpr char const * subcyclingOptionString()               { return "subcycling"; }
     static constexpr char const * nonlinearAccelerationTypeString() { return "nonlinearAccelerationType"; }
+
+    static constexpr char const * oscillationScalingString() { return "oscillationScaling"; }
+    static constexpr char const * oscillationScalingFactorString() { return "oscillationScalingFactor"; }
+    static constexpr char const * oscillationCheckDepthString() { return "oscillationCheckDepth"; }
+    static constexpr char const * oscillationToleranceString() { return "oscillationTolerance"; }
+    static constexpr char const * oscillationFractionString() { return "oscillationFraction"; }
   } viewKeys;
 
   /**
@@ -337,7 +343,7 @@ public:
   integer m_maxNumConfigurationAttempts;
 
   /// Configuration tolerance
-  double m_configurationTolerance;
+  real64 m_configurationTolerance;
 
   /// Type of coupling
   CouplingType m_couplingType;
@@ -352,7 +358,22 @@ public:
   NonlinearAccelerationType m_nonlinearAccelerationType;
 
   /// Value used to make sure that residual normalizers are not too small when computing residual norm
-  real64 m_minNormalizer = 1e-12;
+  real64 m_minNormalizer;
+
+  /// Flag to enable oscillation detection and scaling
+  integer m_oscillationScaling;
+
+  /// Oscillation scaling factor
+  real64 m_oscillationScalingFactor;
+
+  /// Oscillation check depth in solution history
+  integer m_oscillationCheckDepth;
+
+  /// Tolerance for oscillation detection
+  real64 m_oscillationTolerance;
+
+  /// Fraction of dofs oscillating to declare oscillation
+  real64 m_oscillationFraction;
 };
 
 ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,
