@@ -49,7 +49,7 @@ int main( int argc, char *argv[] )
       {
         state.applyInitialConditions();
         state.run();
-        LVARRAY_WARNING_IF( state.getState() != State::COMPLETED, "Simulation exited early." );
+        GEOS_WARNING_IF( state.getState() != State::COMPLETED, "Simulation exited early." );
       }
 
       initTime = state.getInitTime();

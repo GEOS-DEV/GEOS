@@ -27,7 +27,7 @@ namespace geos
 
 /**
  * @brief Insert an exception message in another one.
- * @param originalMsg original exception message (i.e. thrown from LVARRAY_THROW or GEOS_THROW)
+ * @param originalMsg original exception message (i.e. thrown from GEOS_THROW)
  * @param msgToInsert message to insert at the top of the originalMsg
  */
 std::string insertExMsg( std::string const & originalMsg, std::string const & msgToInsert )
