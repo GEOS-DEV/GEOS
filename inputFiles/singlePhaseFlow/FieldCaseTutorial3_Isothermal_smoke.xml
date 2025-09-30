@@ -2,8 +2,26 @@
 
 <Problem>
   <Included>
-    <File name="./FieldCaseTutorial3_Thermal_base.xml" />
+    <File name="./FieldCaseTutorial3_Isothermal_base.xml" />
   </Included>
+
+<!-- SPHINX_FIELD_CASE_SOLVER -->
+  <Solvers>
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Reservoir }"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"
+        lineSearchAction="None"
+        logLevel="1"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseFVM>
+  </Solvers>
+<!-- SPHINX_FIELD_CASE_SOLVER_END -->
 
   <!-- SPHINX_FIELD_CASE_MESH -->
   <Mesh>
@@ -13,8 +31,7 @@
   <!-- SPHINX_FIELD_CASE_MESH_END -->
 
   <!-- SPHINX_FIELD_CASE_EVENTS -->
-  <Events minTime="0" maxTime="100.0e6">
-
+  <Events maxTime="100.0e6">
     <PeriodicEvent name="solverApplications"
                    forceDt="50.0e6"
                    target="/Solvers/SinglePhaseFlow" />
@@ -26,6 +43,5 @@
 
   </Events>
   <!-- SPHINX_FIELD_CASE_EVENTS_END -->
-
 
 </Problem>
