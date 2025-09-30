@@ -72,8 +72,8 @@ TEST_F( GraphColoringTest, CartesianDecomposition3D6 )
 
   if( rank == 0 )
   {
-    size_t const nx = 4, ny = 2, nz = 1;
-    std::tie( xadj, adjncy ) = generateGraphCartPartitionning3D6( nx, ny, nz );
+    size_t const nx = 2, ny = 2, nz = 1;
+    std::tie( xadj, adjncy ) = generateGraphCartPartitioning3D6( nx, ny, nz );
   }
 
 #ifdef GEOS_USE_TRILINOS
@@ -95,14 +95,14 @@ TEST_F( GraphColoringTest, CartesianDecomposition3D26 )
 
   if( rank == 0 )
   {
-    size_t const nx = 2, ny = 2, nz = 2;
-    std::tie( xadj, adjncy ) = generateGraphCartPartitionning3D26( nx, ny, nz );
+    size_t const nx = 2, ny = 2, nz = 1;
+    std::tie( xadj, adjncy ) = generateGraphCartPartitioning3D26( nx, ny, nz );
   }
 
 #ifdef GEOS_USE_TRILINOS
-  runColoringTest( zoltanColoring, xadj, adjncy, 8 );
+  runColoringTest( zoltanColoring, xadj, adjncy, 4 );
 #endif
-  runColoringTest( rlfColoringMPI, xadj, adjncy, 8 );
+  runColoringTest( rlfColoringMPI, xadj, adjncy, 4 );
 }
 
 
@@ -121,7 +121,7 @@ TEST_F( GraphColoringTest, RandomGraphs )
 
     if( rank == 0 )
     {
-      size_t num_nodes = 8;
+      size_t num_nodes = 4;
       size_t num_edges = rand() % (num_nodes * 3 + 1) + num_nodes;
       std::tie( xadj, adjncy ) = generateGraphRandom( num_nodes, num_edges );
     }

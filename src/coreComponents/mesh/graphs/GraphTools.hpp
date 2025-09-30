@@ -92,7 +92,7 @@ std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphRandom( 
  * @param nz Number of divisions along the z-axis.
  * @return A tuple containing xadj and adjncy.
  */
-std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphCartPartitionning3D6( size_t nx, size_t ny, size_t nz );
+std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphCartPartitioning3D6( size_t nx, size_t ny, size_t nz );
 
 /**
  * @brief Generates the adjacency list representation (xadj and adjncy) for a Cartesian domain decomposition in 3D.
@@ -105,7 +105,7 @@ std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphCartPart
  * @param nz Number of divisions along the z-axis.
  * @return A tuple containing xadj and adjncy.
  */
-std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphCartPartitionning3D26( size_t nx, size_t ny, size_t nz );
+std::tuple< std::vector< size_t >, std::vector< size_t > > generateGraphCartPartitioning3D26( size_t nx, size_t ny, size_t nz );
 
 
 } // namespace geos

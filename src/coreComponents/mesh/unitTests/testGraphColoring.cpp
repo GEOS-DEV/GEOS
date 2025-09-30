@@ -35,7 +35,7 @@ TEST( GraphColoringTest, CountPositiveDistinctColors )
 TEST( GraphColoringTest, CartesianDecomposition3D6 )
 {
   size_t const nx = 3, ny = 4, nz = 3;
-  auto [xadj, adjncy] = generateGraphCartPartitionning3D6( nx, ny, nz );
+  auto [xadj, adjncy] = generateGraphCartPartitioning3D6( nx, ny, nz );
   geos::graph::RLFGraphColoring graphColoring;
   std::vector< int > colors = graphColoring.colorGraph( xadj, adjncy );
 
@@ -47,7 +47,7 @@ TEST( GraphColoringTest, CartesianDecomposition3D6 )
 TEST( GraphColoringTest, CartesianDecomposition3D26 )
 {
   size_t const nx = 3, ny = 4, nz = 3;
-  auto [xadj, adjncy] = generateGraphCartPartitionning3D26( nx, ny, nz );
+  auto [xadj, adjncy] = generateGraphCartPartitioning3D26( nx, ny, nz );
   geos::graph::RLFGraphColoring graphColoring;
   std::vector< int > colors = graphColoring.colorGraph( xadj, adjncy );
   EXPECT_TRUE( graphColoring.isColoringValid( xadj, adjncy, colors ));
