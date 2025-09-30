@@ -76,8 +76,6 @@ int main( int argc, char *argv[] )
   }
   catch( std::exception const & e )
   {
-    GEOS_LOG( e.what() );
-
     g_errorLogger.flushErrorMsg( g_errorLogger.currentErrorMsg() );
 
     LvArray::system::callErrorHandler();
