@@ -161,7 +161,6 @@ public:
 
   void selectWellConstraint( real64 const & time_n,
                              real64 const & dt,
-                             integer const cycleNumber,
                              integer const coupledIterationNumber,
                              DomainPartition & domain );
 
@@ -424,12 +423,6 @@ protected:
                            DomainPartition & domain ) = 0;
 
   virtual bool evaluateConstraints( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                    real64 const & GEOS_UNUSED_PARAM( stepDt ),
-                                    integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                                    integer const GEOS_UNUSED_PARAM( coupledIterationNumber ),
-                                    DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                                    MeshLevel & GEOS_UNUSED_PARAM( mesh ),
-                                    ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
                                     WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion )) { return false;};
 
 

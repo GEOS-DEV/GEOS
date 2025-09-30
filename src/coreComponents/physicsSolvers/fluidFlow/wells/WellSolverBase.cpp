@@ -310,12 +310,13 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
 
 void WellSolverBase::selectWellConstraint( real64 const & time_n,
                                            real64 const & dt,
-                                           const integer cycleNumber,
                                            const integer coupledIterationNumber,
                                            DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
+  GEOS_UNUSED_VAR(dt);
+  GEOS_UNUSED_VAR(coupledIterationNumber);
+ 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
                                                                MeshLevel & meshLevel,
                                                                string_array const & regionNames )
@@ -349,12 +350,6 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
         wellControls.setConstraintSwitch( false );
 
         evaluateConstraints( time_n,
-                             dt,
-                             cycleNumber,
-                             coupledIterationNumber,
-                             domain,
-                             meshLevel,
-                             elementRegionManager,
                              subRegion );
 
         // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
@@ -405,7 +400,7 @@ void WellSolverBase::assembleSystem( real64 const time,
     //  wellEstimator flag > 0 =>   well esitmator solved for each constraint and then selects the constraint
     //                         =>   estimator solve only performed first "wellEstimator" iterations
     NonlinearSolverParameters const & nonlinearParams =  getNonlinearSolverParameters();
-    selectWellConstraint( time, dt, 0, nonlinearParams.m_numNewtonIterations, domain );
+    selectWellConstraint( time, dt, nonlinearParams.m_numNewtonIterations, domain );
   }
 
 

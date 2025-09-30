@@ -3196,12 +3196,6 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
 
 
 bool CompositionalMultiphaseWell::evaluateConstraints( real64 const & time_n,
-                                                       real64 const & dt,
-                                                       integer const cycleNumber,
-                                                       integer const coupledIterationNumber,
-                                                       DomainPartition & domain,
-                                                       MeshLevel & mesh,
-                                                       ElementRegionManager & elemManager,
                                                        WellElementSubRegion & subRegion )
 {
   WellControls & wellControls = getWellControls( subRegion );

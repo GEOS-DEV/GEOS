@@ -446,12 +446,6 @@ protected:
                    DomainPartition & domain ) override;
 
   virtual bool evaluateConstraints( real64 const & time_n,
-                                    real64 const & stepDt,
-                                    integer const cycleNumber,
-                                    integer const coupledIterationNumber,
-                                    DomainPartition & domain,
-                                    MeshLevel & mesh,
-                                    ElementRegionManager & elemManager,
                                     WellElementSubRegion & subRegion ) override;
 
 private:
