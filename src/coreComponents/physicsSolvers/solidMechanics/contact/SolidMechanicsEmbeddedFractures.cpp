@@ -57,8 +57,6 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
   getWrapperBase( viewKeyStruct::contactPenaltyStiffnessString() ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
-
-  addLogLevel< logInfo::LinearSolverConfiguration >();
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
@@ -95,8 +93,8 @@ void SolidMechanicsEmbeddedFractures::setMGRStrategy()
   linearSolverParameters.dofsPerNode = 3;
 
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::solidMechanicsEmbeddedFractures;
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
-                                                                       EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver, GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                                                          EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
 void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
@@ -174,7 +172,7 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
     string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
     FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
     arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
-    arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+    arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
     constitutiveUpdatePassThru( frictionLaw, [&] ( auto & castedFrictionLaw )
     {
       using FrictionType = TYPEOFREF( castedFrictionLaw );
@@ -586,8 +584,9 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
   if( !m_useStaticCondensation )
   {
     real64 const fractureResidualNorm = calculateFractureResidualNorm( domain, dofManager, localRhs );
+    real64 totalResidualNorm = sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
 
-    return sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
+    return totalResidualNorm;
   }
   else
   {
@@ -597,7 +596,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( real64 const & ti
 
 real64 SolidMechanicsEmbeddedFractures::calculateFractureResidualNorm( DomainPartition const & domain,
                                                                        DofManager const & dofManager,
-                                                                       arrayView1d< real64 const > const & localRhs ) const
+                                                                       arrayView1d< real64 const > const & localRhs )
 {
   string const jumpDofKey = dofManager.getKey( contact::dispJump::key() );
 
@@ -663,11 +662,10 @@ real64 SolidMechanicsEmbeddedFractures::calculateFractureResidualNorm( DomainPar
   real64 const fractureResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
                                                                                                 // time-step when maxForce = 0;
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( RFracture ) = ( {:4.2e} )", fractureResidualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( RFracture ) = ( {:4.2e} )", fractureResidualNorm ));
 
+  getConvergenceStats().setResidualValue( "RFracture", fractureResidualNorm );
   return fractureResidualNorm;
 }
 
@@ -775,7 +773,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 
       arrayView3d< real64 > const & dFractureTraction_dJump = subRegion.getField< contact::dTraction_dJump >();
 
-      arrayView1d< integer const > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer const > const fractureState = subRegion.getField< contact::fractureState >();
 
       arrayView1d< real64 > const & slip = subRegion.getField< contact::slip >();
 
@@ -799,7 +797,8 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
   } );
 }
 
-bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain )
+bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain,
+                                                           integer const GEOS_UNUSED_PARAM( configurationLoopIter ) )
 {
   int hasConfigurationConverged = true;
 
@@ -810,7 +809,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & dispJump = subRegion.getField< contact::dispJump >();
       arrayView2d< real64 const > const & traction = subRegion.getField< contact::traction >();
-      arrayView1d< integer > const & fractureState = subRegion.getField< contact::fractureState >();
+      arrayView1d< integer > const fractureState = subRegion.getField< contact::fractureState >();
 
       string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
       FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );

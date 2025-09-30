@@ -243,6 +243,7 @@
         "5, 6"
       ],
       "KERNEL_TYPE": [
+        "constitutive::InvariantImmiscibleFluid",
         "constitutive::DeadOilFluid",
         "constitutive::BlackOilFluid",
         "constitutive::CO2BrinePhillipsFluid",

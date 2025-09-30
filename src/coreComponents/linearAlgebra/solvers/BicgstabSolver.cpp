@@ -20,6 +20,7 @@
 
 #include "BicgstabSolver.hpp"
 
+#include "common/TimingMacros.hpp"
 #include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "common/LinearOperator.hpp"
@@ -40,6 +41,7 @@ template< typename VECTOR >
 void BicgstabSolver< VECTOR >::solve( Vector const & b,
                                       Vector & x ) const
 {
+  GEOS_MARK_FUNCTION;
   Stopwatch watch;
 
   // Define vectors

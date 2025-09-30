@@ -76,10 +76,7 @@ public:
     return true;
   }
 
-protected:
-  logInfo::OutputTimerBase const & getTimerCategory() const override;
 };
-
 
 } // namespace geos
 

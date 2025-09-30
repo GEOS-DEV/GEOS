@@ -24,7 +24,7 @@ Here, we will walk through an example file included in the source tree at
 
 .. code-block:: sh
 
-   src/coreComponents/unitTests/constitutiveTests/testPVT_docExample.xml
+   src/coreComponents/integrationTests/constitutiveTests/testPVT_docExample.xml
 
 The first thing to note is that the XML file structure is identical to a standard GEOS input deck.  
 In fact, once the constitutive block is calibrated, one could start adding solver and discretization blocks to the same file to create a proper field simulation.  
@@ -33,14 +33,14 @@ This makes it easy to go back and forth between calibration and simulation.
 The first step is to define a parameterized fluid model to test.
 Here, we create a particular type of CO2-Brine mixture:
 
-.. literalinclude:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
+.. literalinclude:: ../../integrationTests/constitutiveTests/testPVT_docExample.xml
   :language: xml
   :start-after: <!-- SPHINX_PVTDRIVER_CONSTITUTIVE_START --> 
   :end-before: <!-- SPHINX_PVTDRIVER_CONSTITUTIVE_END -->
 
 We also define two time-history functions for the pressure (Pascal units) and temperature (Kelvin units) conditions we want to explore.
 
-.. literalinclude:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
+.. literalinclude:: ../../integrationTests/constitutiveTests/testPVT_docExample.xml
   :language: xml
   :start-after: <!-- SPHINX_PVTDRIVER_FUNCTIONS_START --> 
   :end-before: <!-- SPHINX_PVTDRIVER_FUNCTIONS_END -->
@@ -51,7 +51,7 @@ Here, we fix the temperature at 350K and simply ramp up pressure from 1 MPa to 5
 
 A ``PVTDriver`` is then added as a ``Task``, a particular type of executable event often used for simple actions. 
 
-.. literalinclude:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
+.. literalinclude:: ../../integrationTests/constitutiveTests/testPVT_docExample.xml
   :language: xml
   :start-after: <!-- SPHINX_PVTDRIVER_TASKS_START --> 
   :end-before: <!-- SPHINX_PVTDRIVER_TASKS_END -->
@@ -65,7 +65,7 @@ The ``logLevel`` parameter controls the verbosity of log output during execution
 The driver task is added as a ``SoloEvent`` to the event queue.  
 This leads to a trivial event queue, since all we do is launch the driver and then quit.
 
-.. literalinclude:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
+.. literalinclude:: ../../integrationTests/constitutiveTests/testPVT_docExample.xml
   :language: xml
   :start-after: <!-- SPHINX_PVTDRIVER_EVENTS_START --> 
   :end-before: <!-- SPHINX_PVTDRIVER_EVENTS_END -->
@@ -102,8 +102,8 @@ The file is a simple ASCII format with a brief header followed by test data:
   4.0816e-02 3.0000e+06 3.5000e+02 4.9901e+01 1.0000e+00 4.1563e-11 4.9901e+01 1.0066e+03 1.7778e-05 9.9525e-04
   ...
 
-Note that the number of columns will depend on how many phases and components are present.
-In this case, we have a two-phase, two-component mixture.
+Note that the number of columns will depend on how many phases and components are present and on whether the fluid is thermal or not.
+In this case, we have a two-phase, two-component isothermal mixture.
 The total density is reported in column 4, while phase fractions, phase densities, and phase viscosities are reported in subsequent columns.
 If the ``outputCompressibility`` flag is activated, an extra column will be added for the total fluid compressibility after the density.
 This is defined as :math:`c_t=\frac{1}{\rho_t}\left(\partial{\rho_t}/\partial P\right)` where :math:`\rho_t` is the total density.
