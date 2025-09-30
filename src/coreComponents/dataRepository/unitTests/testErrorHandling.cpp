@@ -110,10 +110,9 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
 
   GET_LINE( line2 ); GEOS_WARNING_IF_GT_MSG( testValue, testMaxPrecision, "Pressure value is too high." );
 
-  GET_LINE( line3 ); GEOS_WARNING_IF( testValue == 5,
-                                      GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
-                                                context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision ),
-                                      context, additionalContext );
+  string const warningMsg = GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
+                                      context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision );
+  GET_LINE( line3 ); GEOS_WARNING_IF( testValue == 5, warningMsg, context, additionalContext );
 
   endLocalLoggerTest( g_errorLogger, {
     R"(errors:)",
@@ -176,10 +175,7 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
   // Stacked exception test (contexts must appear sorted by priority)
   try
   {
-    line1 = __LINE__; GEOS_THROW_IF( testValue == 5,
-                                     "Group " << context.toString() << " has no wrapper named" << std::endl,
-                                     std::domain_error,
-                                     context.getContextInfo().setPriority( 1 ) );
+    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group: " << context.toString(), std::domain_error, context );
   }
   catch( std::domain_error const & ex )
   {
@@ -199,12 +195,12 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
     rank: 0
     message: >-
       Table input error.
-      Group Base Test Class (file.xml, l.23) has no wrapper named
+      Empty Group: Base Test Class (file.xml, l.23)
     contexts:
       - priority: 2
         inputFile: /path/to/file.xml
         inputLine: 64
-      - priority: 1
+      - priority: 0
         inputFile: /path/to/file.xml
         inputLine: 23
       - priority: 0
@@ -232,20 +228,20 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
 
   beginLocalLoggerTest( g_errorLogger, "errorTestOutput.yaml" );
 
-  GET_LINE( line1 ); EXPECT_EXIT( GEOS_ERROR_IF_GT_MSG( testValue, testMaxPrecision,
-                                                        GEOS_FMT( "{}: option should be lower than {}.",
-                                                                  context.toString(), testMaxPrecision ),
-                                                        context,
-                                                        additionalContext,
-                                                        importantAdditionalContext.getContextInfo().setPriority( 2 ) ),
-                                  ::testing::ExitedWithCode( 1 ),
-                                  ".*" );
+  EXPECT_EXIT( GEOS_ERROR_IF_GT_MSG( testValue, testMaxPrecision,
+                                     GEOS_FMT( "{}: option should be lower than {}.",
+                                               context.toString(), testMaxPrecision ),
+                                     context,
+                                     additionalContext,
+                                     importantAdditionalContext.getContextInfo().setPriority( 2 ) ),
+               ::testing::ExitedWithCode( 1 ),
+               ".*" );
 
   endLocalLoggerTest( g_errorLogger, {
     R"(errors:)",
 
-    GEOS_FMT(
-      R"(- type: Error
+    // we won't test the line index for this test as it cannot be a one-liner.
+    R"(- type: Error
     rank: 0
     message: >-
       Base Test Class (file.xml, l.23): option should be lower than 0.001.
@@ -263,11 +259,10 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
       Expected: testValue <= testMaxPrecision
       * testValue = 5
       * testMaxPrecision = 0.001
-    sourceLocation:
-      file: {}
-      line: {}
-    sourceCallStack:)",
-      __FILE__, line1 ),
+    sourceLocation:)",
+    "  file: ",
+    "  line: ",
+    "sourceCallStack:",
     "- frame0: ",
     "- frame1: ",
     "- frame2: "
@@ -284,19 +279,19 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
 
   beginLocalLoggerTest( g_errorLogger, "assertTestOutput.yaml" );
 
-  GET_LINE( line1 ); EXPECT_EXIT( GEOS_ASSERT_MSG( testValue > testMinPrecision && testValue < testMaxPrecision,
-                                                   GEOS_FMT( "{}: value should be between {} and {}, but is {}.",
-                                                             context.toString(), testMinPrecision, testMaxPrecision, testValue ),
-                                                   context,
-                                                   additionalContext ),
-                                  ::testing::ExitedWithCode( 1 ),
-                                  ".*" );
+  EXPECT_EXIT( GEOS_ASSERT_MSG( testValue > testMinPrecision && testValue < testMaxPrecision,
+                                GEOS_FMT( "{}: value should be between {} and {}, but is {}.",
+                                          context.toString(), testMinPrecision, testMaxPrecision, testValue ),
+                                context,
+                                additionalContext ),
+               ::testing::ExitedWithCode( 1 ),
+               ".*" );
 
   endLocalLoggerTest( g_errorLogger, {
     R"(errors:)",
 
-    GEOS_FMT(
-      R"(- type: Error
+    // we won't test the line index for this test as it cannot be a one-liner.
+    R"(- type: Error
     rank: 0
     message: >-
       Base Test Class (file.xml, l.23): value should be between 1e-06 and 0.001, but is 5.
@@ -309,11 +304,10 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
         inputLine: 32
     cause: >-
       Expected: testValue > testMinPrecision && testValue < testMaxPrecision
-    sourceLocation:
-      file: {}
-      line: {}
-    sourceCallStack:)",
-      __FILE__, line1 ),
+    sourceLocation:)",
+    "  file: ",
+    "  line: ",
+    "sourceCallStack:",
     "- frame0: ",
     "- frame1: ",
     "- frame2: "
@@ -327,6 +321,6 @@ int main( int ac, char * av[] )
   ::testing::InitGoogleTest( &ac, av );
   geos::setupEnvironment( ac, av );
   int const result = RUN_ALL_TESTS();
-  geos::cleanupEnvironment();
+  geos::cleanupEnvironment( );
   return result;
 }
