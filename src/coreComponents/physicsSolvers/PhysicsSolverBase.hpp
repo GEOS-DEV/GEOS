@@ -406,6 +406,7 @@ public:
    * @brief Set the sparsity pattern of the linear system matrix
    * @param domain the domain containing the mesh and fields
    * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the system matrix
    * @param pattern the sparsity pattern to be filled
    */
   virtual void
