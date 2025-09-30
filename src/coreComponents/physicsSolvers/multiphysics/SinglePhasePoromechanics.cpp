@@ -22,6 +22,7 @@
 #include "SinglePhasePoromechanics.hpp"
 
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "linearAlgebra/multiscale/MultiscalePreconditioner.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsDamage.hpp"
@@ -53,8 +54,6 @@ SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::SinglePhasePoromechan
   : Base( name, parent ),
   m_damageFlag()
 {
-  Base::template addLogLevel< logInfo::LinearSolverConfiguration >();
-
   this->registerWrapper( viewKeyStruct::damageFlagString(), &m_damageFlag ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -96,8 +95,6 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupSystem( Dom
 
   // setup monolithic coupled system
   PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
-
-  dofManager.printFieldInfo();
 
   if( !this->m_precond && this->m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
@@ -164,7 +161,7 @@ void SinglePhasePoromechanics<>::setMGRStrategy()
       linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
     }
   }
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "{}: MGR strategy set to {}", getName(),
                                    EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
@@ -191,7 +188,7 @@ void SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLag
   {
     linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM;
   }
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "{}: MGR strategy set to {}", this->getName(),
                                    EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
@@ -406,6 +403,10 @@ SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::createPreconditioner(
                            this->flowSolver()->createPreconditioner( domain ) );
 
       return precond;
+    }
+    case LinearSolverParameters::PreconditionerType::multiscale:
+    {
+      return std::make_unique< MultiscalePreconditioner< LAInterface > >( linParams, domain );
     }
     default:
     {

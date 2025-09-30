@@ -36,6 +36,8 @@ MeshManager::MeshManager( string const & name,
   Group( name, parent )
 {
   setInputFlags( InputFlags::REQUIRED );
+
+  addLogLevel< logInfo::ImportFields >();
 }
 
 MeshManager::~MeshManager()
@@ -74,7 +76,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     {
       CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
-      meshBody.setGlobalLengthScale( cellBlockManager.getGlobalLength() );
+      meshBody.setGlobalLengthScale( std::max( cellBlockManager.getGlobalLength(), cellBlockManager.getGlobalOffset() ) );
     }
   } );
 }

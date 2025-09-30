@@ -230,14 +230,14 @@ string TableTextFormatter::toString< TableData >( TableData const & tableData ) 
   CellLayoutRows errorCellsLayout;
   size_t tableTotalWidth = 0;
 
-  getErrorsList().clear();
-
   initalizeTableGrids( m_tableLayout, tableData,
                        headerCellsLayout, dataCellsLayout, errorCellsLayout,
                        tableTotalWidth );
   outputTable( m_tableLayout, tableOutput,
                headerCellsLayout, dataCellsLayout, errorCellsLayout,
                tableTotalWidth );
+
+  getErrorsList().clear();
   return tableOutput.str();
 }
 

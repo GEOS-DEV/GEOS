@@ -76,3 +76,7 @@ blt_add_library( NAME       finiteVolume
 target_include_directories( finiteVolume PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 install( TARGETS finiteVolume LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+
+if( GEOS_ENABLE_TESTS )
+  add_subdirectory( mimeticInnerProducts/unitTests )
+endif()

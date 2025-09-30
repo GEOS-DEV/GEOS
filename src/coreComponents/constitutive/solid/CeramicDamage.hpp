@@ -36,7 +36,7 @@
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
 #include "PropertyConversions.hpp"
-#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geos
@@ -109,7 +109,7 @@ public:
   CeramicDamageUpdates & operator=( CeramicDamageUpdates && ) =  delete;
 
   /// Use the uncompressed version of the stiffness bilinear form
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // TODO: typo in anistropic (fix in DiscOps PR)
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic;
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
@@ -420,50 +420,29 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  CeramicDamage( string const & name, Group * const parent );
-
-  /**
-   * Default Destructor
-   */
-  virtual ~CeramicDamage() override;
-
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
-  virtual void saveConvergedState() const override;
+  CeramicDamage( string const & name, dataRepository::Group * const parent );
 
   /**
    * @name Static Factory Catalog members and functions
    */
   ///@{
 
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "CeramicDamage";
-
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static string catalogName() { return m_catalogNameString; }
+  static string catalogName() { return "CeramicDamage"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
   ///@}
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   /**
    * Keys for data specified in this class.
    */
   struct viewKeyStruct : public SolidBase::viewKeyStruct
   {
-    /// string/key for quadrature point damage value
-    static constexpr char const * damageString() { return "damage"; }
-
-    /// string/key for quadrature point jacobian value
-    static constexpr char const * jacobianString() { return "jacobian"; }
-
-    /// string/key for element/particle length scale
-    static constexpr char const * lengthScaleString() { return "lengthScale"; }
-
     /// string/key for tensile strength
     static constexpr char const * tensileStrengthString() { return "tensileStrength"; }
 
@@ -526,6 +505,7 @@ public:
 
 
 protected:
+
   virtual void postInputInitialization() override;
 
   /// State variable: The damage values for each quadrature point

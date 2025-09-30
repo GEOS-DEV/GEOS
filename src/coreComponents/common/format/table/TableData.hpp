@@ -112,9 +112,14 @@ public:
   { m_errors->clear(); }
 
   /**
-   * @return The rows of the table
+   * @return The const rows of the table
    */
   stdVector< stdVector< CellData > > const & getTableDataRows() const;
+
+  /**
+   * @return The rows of the table
+   */
+  stdVector< stdVector< CellData > > & getTableDataRows();
 
   /**
    * @brief Get all error messages

@@ -34,10 +34,6 @@ DamageVolDev< BASE >::DamageVolDev( string const & name, Group * const parent ):
   Damage< BASE >( name, parent )
 {}
 
-template< typename BASE >
-DamageVolDev< BASE >::~DamageVolDev()
-{}
-
 typedef DamageVolDev< ElasticIsotropic > DamageVolDevElasticIsotropic;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageVolDevElasticIsotropic, string const &, Group * const )

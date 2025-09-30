@@ -47,13 +47,13 @@ public:
                        real64 const & inputDegradationLowerLimit,
                        int const & inputExtDrivingForceFlag,
                        arrayView1d< real64 > const & inputTensileStrength,
-                       arrayView1d< real64 > const & inputCompressStrength,
+                       arrayView1d< real64 > const & inputCompressiveStrength,
                        arrayView1d< real64 > const & inputDeltaCoefficient,
                        arrayView1d< real64 > const & inputBiotCoefficient,
                        PARAMS && ... baseParams ):
     DamageUpdates< UPDATE_BASE >( inputNewDamage, inputOldDamage, inputDamageGrad, inputStrainEnergyDensity, inputVolumetricStrain, inputExtDrivingForce, inputLengthScale,
                                   inputCriticalFractureEnergy, inputcriticalStrainEnergy, inputDegradationLowerLimit, inputExtDrivingForceFlag,
-                                  inputTensileStrength, inputCompressStrength, inputDeltaCoefficient, inputBiotCoefficient,
+                                  inputTensileStrength, inputCompressiveStrength, inputDeltaCoefficient, inputBiotCoefficient,
                                   std::forward< PARAMS >( baseParams )... )
   {}
 
@@ -78,7 +78,7 @@ public:
   using DamageUpdates< UPDATE_BASE >::m_damageGrad;
   using DamageUpdates< UPDATE_BASE >::m_extDrivingForceFlag;
   using DamageUpdates< UPDATE_BASE >::m_tensileStrength;
-  using DamageUpdates< UPDATE_BASE >::m_compressStrength;
+  using DamageUpdates< UPDATE_BASE >::m_compressiveStrength;
   using DamageUpdates< UPDATE_BASE >::m_deltaCoefficient;
   using DamageUpdates< UPDATE_BASE >::m_biotCoefficient;
   using DamageUpdates< UPDATE_BASE >::m_disableInelasticity;
@@ -183,15 +183,14 @@ public:
   using Damage< BASE >::m_degradationLowerLimit;
   using Damage< BASE >::m_extDrivingForceFlag;
   using Damage< BASE >::m_tensileStrength;
-  using Damage< BASE >::m_compressStrength;
+  using Damage< BASE >::m_compressiveStrength;
   using Damage< BASE >::m_deltaCoefficient;
   using Damage< BASE >::m_biotCoefficient;
 
   DamageVolDev( string const & name, dataRepository::Group * const parent );
-  virtual ~DamageVolDev() override;
 
 
-  static string catalogName() { return string( "DamageVolDev" ) + BASE::m_catalogNameString; }
+  static string catalogName() { return string( "DamageVolDev" ) + BASE::catalogName(); }
   virtual string getCatalogName() const override { return catalogName(); }
 
 
@@ -209,7 +208,7 @@ public:
                                                                        m_degradationLowerLimit,
                                                                        m_extDrivingForceFlag,
                                                                        m_tensileStrength.toView(),
-                                                                       m_compressStrength.toView(),
+                                                                       m_compressiveStrength.toView(),
                                                                        m_deltaCoefficient.toView(),
                                                                        m_biotCoefficient.toView() );
   }

@@ -21,7 +21,6 @@
 #include "CompositionalMultiphaseReservoirAndWells.hpp"
 
 #include "common/TimingMacros.hpp"
-#include "dataRepository/LogLevelsInfo.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "physicsSolvers/multiphysics/CoupledReservoirAndWellKernels.hpp"
@@ -48,7 +47,6 @@ CompositionalMultiphaseReservoirAndWells( const string & name,
   : Base( name, parent )
 {
   Base::template addLogLevel< logInfo::Crossflow >();
-  Base::template addLogLevel< logInfo::LinearSolverConfiguration >();
 }
 
 template< typename RESERVOIR_SOLVER >
@@ -108,7 +106,7 @@ setMGRStrategy()
       linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseReservoirFVM;
     }
   }
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "{}: MGR strategy set to {}", getName(),
                                    EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
@@ -135,7 +133,7 @@ setMGRStrategy()
   {
     linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM;
   }
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolverConfiguration,
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
                          GEOS_FMT( "{}: MGR strategy set to {}", getName(),
                                    EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
@@ -225,6 +223,8 @@ addCouplingSparsityPattern( DomainPartition const & domain,
       // This will fill J_WR, and J_RW
       forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
       {
+
+
         stackArray1d< globalIndex, maxNumDof > eqnRowIndicesRes( resNDOF );
         stackArray1d< globalIndex, maxNumDof > eqnRowIndicesWell( wellNDOF );
         stackArray1d< globalIndex, maxNumDof > dofColIndicesRes( resNDOF );
@@ -284,6 +284,8 @@ assembleCouplingTerms( real64 const time_n,
                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                        arrayView1d< real64 > const & localRhs )
 {
+  GEOS_UNUSED_VAR( time_n );
+
   using namespace compositionalMultiphaseUtilities;
 
   GEOS_THROW_IF( !Base::m_isWellTransmissibilityComputed,
@@ -325,7 +327,7 @@ assembleCouplingTerms( real64 const time_n,
         ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
         getLogLevel() >= 1; // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
 
-      if( !wellControls.isWellOpen( time_n ) )
+      if( !wellControls.isWellOpen() )
       {
         return;
       }

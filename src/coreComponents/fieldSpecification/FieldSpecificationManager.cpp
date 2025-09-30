@@ -14,6 +14,8 @@
  */
 
 #include "FieldSpecificationManager.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mesh/MeshBody.hpp"
 
 namespace geos
 {
@@ -171,10 +173,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       {
         isFieldNameFound = 1;
       }
-      else
-      {
-        invalidRegion = targetGroup.getName();
-      }
+
 
       // 2.c) If the target set is not empty, we record it
       //      Fracture/fault sets are sometimes at initialization and the "apply" call silently ignores them
@@ -185,21 +184,11 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     } );
 
     // Step 3: MPI synchronization
-
     isFieldNameFound = MpiWrapper::max( isFieldNameFound );
 
     for( std::pair< string const, localIndex > & mapEntry : isTargetSetEmpty )
     {
       mapEntry.second = MpiWrapper::min( mapEntry.second );
-    }
-    bool areAllSetsEmpty = true;
-    for( std::pair< string const, localIndex > & mapEntry : isTargetSetEmpty )
-    {
-      if( mapEntry.second == 0 ) // target set is not empty
-      {
-        areAllSetsEmpty = false;
-        break;
-      }
     }
 
     for( std::pair< string const, localIndex > & mapEntry : isTargetSetCreated )
@@ -227,14 +216,32 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
         missingSetNames.emplace_back( mapEntry.first );
       }
 
-      string setNamesError = GEOS_FMT( "\n{}: there is/are no set(s) named `{}` under the {} `{}`.\n",
+      std::set< string > registeredSets;
+      DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+      Group const & meshBody = domain.getMeshBodies();
+      objectPath.forObjectsInPath( meshBody,
+                                   [&]( Group const & targetGroup )
+      {
+        string_array availableRegions;
+        ObjectManagerBase const & targetObject = dynamic_cast< ObjectManagerBase const & >(targetGroup);
+        targetObject.sets().forWrappers( [&] ( dataRepository::WrapperBase const & wrapper )
+        {
+          registeredSets.insert( wrapper.getName());
+        } );
+      } );
+
+      std::ostringstream errorMessageBuilder;
+      errorMessageBuilder << GEOS_FMT( "\n{}: there are no set(s) named `{}` under the {} `{}`.\n",
                                        fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::objectPathString() ),
                                        fmt::join( missingSetNames, ", " ),
                                        FieldSpecificationBase::viewKeyStruct::objectPathString(), fs.getObjectPath() );
+      errorMessageBuilder << ( !registeredSets.empty() ?
+                               GEOS_FMT( "Available set(s) are: {}",
+                                         stringutilities::join( registeredSets, ", " ) ) :
+                               GEOS_FMT( "No set are available for the targeted `{}`",
+                                         FieldSpecificationBase::viewKeyStruct::objectPathString() ) );
 
-      setNamesError.append( stringutilities::join( allPresentSets, ", " ));
-
-      GEOS_THROW( setNamesError, InputError );
+      GEOS_THROW( errorMessageBuilder.str(), InputError );
     }
 
     // if a target set is empty, we issue a warning
@@ -242,32 +249,39 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     for( auto const & mapEntry : isTargetSetEmpty )
     {
       GEOS_LOG_RANK_0_IF( ( mapEntry.second == 1 ), // target set is empty
-                          GEOS_FMT( "\nWarning!\n{}: this FieldSpecification targets (an) empty set(s)"
-                                    "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}` in `{}`. \n",
-                                    fs.getDataContext(), mapEntry.first, fs.getObjectPath() ) );
+                          GEOS_FMT( "\nWarning!\n{}: this FieldSpecification targets (an) empty set(s) within `{}`"
+                                    "\nIf the simulation does not involve the SurfaceGenerator, check the content of the set `{}`. \n",
+                                    fs.getDataContext(), fs.getObjectPath(), mapEntry.first ) );
     }
 
     if( isFieldNameFound == 0 )
     {
-      std::ostringstream fieldNameNotFoundMessage;
-      std::string fieldNamePath =
-        GEOS_FMT( "\n{}: there is no {} named `{}` under the region `{}`.\n",
-                  fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::fieldNameString() ),
-                  FieldSpecificationBase::viewKeyStruct::fieldNameString(),
-                  fs.getFieldName(), fs.getObjectPath() );
+      std::ostringstream errorMessageBuilder;
+      errorMessageBuilder << GEOS_FMT( "\n{}: there are no field named `{}` under the region `{}`.\n",
+                                       fs.getWrapperDataContext( FieldSpecificationBase::viewKeyStruct::fieldNameString() ),
+                                       fs.getFieldName(), fs.getObjectPath() );
 
-      fieldNameNotFoundMessage << fieldNamePath;
-      if( areAllSetsEmpty )
-      {
-        GEOS_LOG_RANK_0( fieldNameNotFoundMessage.str() );
-      }
-      else
-      {
-        fieldNameNotFoundMessage << GEOS_FMT( "Available fields in {} are:\n", fs.getObjectPath() );
-        fieldNameNotFoundMessage << stringutilities::join( allPresentFieldsName[invalidRegion], ", " );
+      DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+      Group const & meshBodies = domain.getMeshBodies();
 
-        GEOS_THROW( fieldNameNotFoundMessage.str(), InputError );
-      };
+      std::set< string > registeredFields;
+      objectPath.forObjectsInPath( meshBodies,
+                                   [&]( Group const & targetGroup )
+      {
+        targetGroup.forWrappers( [&]( dataRepository::WrapperBase const & wrapper ) {
+          if( wrapper.getPlotLevel() != dataRepository::PlotLevel::NOPLOT )
+            registeredFields.insert( wrapper.getName());
+        } );
+      } );
+
+      if( !registeredFields.empty())
+        errorMessageBuilder << ( !registeredFields.empty() ?
+                                 GEOS_FMT( "Available fields in {} are:\n{{ {} }}", fs.getObjectPath(),
+                                           stringutilities::join( registeredFields, ", " )) :
+                                 GEOS_FMT( "No available field in {}.",
+                                           fs.getObjectPath() ) );
+
+      GEOS_THROW( errorMessageBuilder.str(), InputError );
     }
   } );
 }
