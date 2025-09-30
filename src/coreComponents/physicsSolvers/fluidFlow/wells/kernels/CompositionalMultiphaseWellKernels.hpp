@@ -135,18 +135,18 @@ struct ControlEquationHelper
   static
   void
   selectLimitingConstraint( bool const isProducer,
-                 WellControls::Control const & inputControl,
-                 WellControls::Control const & currentControl,
-                 integer const phasePhaseIndex,
-                 real64 const & targetBHP,
-                 real64 const & targetPhaseRate,
-                 real64 const & targetTotalRate,
-                 real64 const & targetMassRate,
-                 real64 const & currentBHP,
-                 arrayView1d< real64 const > const & currentPhaseVolRate,
-                 real64 const & currentTotalVolRate,
-                 real64 const & currentMassRate,
-                 WellControls::Control & newControl );
+                            WellControls::Control const & inputControl,
+                            WellControls::Control const & currentControl,
+                            integer const phasePhaseIndex,
+                            real64 const & targetBHP,
+                            real64 const & targetPhaseRate,
+                            real64 const & targetTotalRate,
+                            real64 const & targetMassRate,
+                            real64 const & currentBHP,
+                            arrayView1d< real64 const > const & currentPhaseVolRate,
+                            real64 const & currentTotalVolRate,
+                            real64 const & currentMassRate,
+                            WellControls::Control & newControl );
 
   template< integer NC, integer IS_THERMAL >
   GEOS_HOST_DEVICE
@@ -160,6 +160,7 @@ struct ControlEquationHelper
            real64 const & targetTotalRate,
            real64 const & targetMassRate,
            real64 const & currentBHP,
+           real64 const & targetValue,
            arrayView1d< real64 const > const & dCurrentBHP,
            arrayView1d< real64 const > const & currentPhaseVolRate,
            arrayView2d< real64 const > const & dCurrentPhaseVolRate,

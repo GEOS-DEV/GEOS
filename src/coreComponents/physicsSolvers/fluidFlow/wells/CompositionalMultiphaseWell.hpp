@@ -25,6 +25,8 @@
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
+#include "physicsSolvers/fluidFlow/wells/WellConstraintsBase.hpp"
+
 namespace geos
 {
 
@@ -93,6 +95,13 @@ public:
 
 
   virtual real64
+  calculateWellResidualNorm( real64 const & time_n,
+                             real64 const & dt,
+                             WellElementSubRegion const & subRegion,
+                             DofManager const & dofManager,
+                             arrayView1d< real64 const > const & localRhs ) override;
+
+  virtual real64
   calculateResidualNorm( real64 const & time_n,
                          real64 const & dt,
                          DomainPartition const & domain,
@@ -100,15 +109,35 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual real64
+  scalingForWellSystemSolution( ElementSubRegionBase & subRegion,
+                                DofManager const & dofManager,
+                                arrayView1d< real64 const > const & localSolution ) override;
+
+  virtual real64
   scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
+
+  virtual bool
+  checkWellSystemSolution( ElementSubRegionBase & subRegion,
+                           DofManager const & dofManager,
+                           arrayView1d< real64 const > const & localSolution,
+                           real64 const scalingFactor ) override;
 
   virtual bool
   checkSystemSolution( DomainPartition & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override;
+
+  virtual void
+  applyWellSystemSolution( DofManager const & dofManager,
+                           arrayView1d< real64 const > const & localSolution,
+                           real64 const scalingFactor,
+                           real64 const dt,
+                           DomainPartition & domain,
+                           MeshLevel & mesh,
+                           WellElementSubRegion & subRegion ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
@@ -160,6 +189,21 @@ public:
   void updateFluidModel( WellElementSubRegion & subRegion );
 
   /**
+   * @brief Update well separator using current values of pressure and composition at the reference element
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
+   */
+  void updateSeparator( WellElementSubRegion & subRegion );
+
+  /**
+   * @brief  Calculate well rates at reference element
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param targetIndex the targetIndex of the subRegion
+   */
+
+  void calculateReferenceElementRates( WellElementSubRegion & subRegion );
+
+  /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
@@ -176,6 +220,16 @@ public:
    * @brief Recompute the perforation rates for all the wells
    * @param domain the domain containing the mesh and fields
    */
+  virtual void computeWellPerforationRates( real64 const & time_n,
+                                            real64 const & GEOS_UNUSED_PARAM( dt ),
+                                            ElementRegionManager const & elemManager,
+                                            WellElementSubRegion & subRegion )override;
+
+
+  /**
+   * @brief Recompute the perforation rates for all the wells
+   * @param domain the domain containing the mesh and fields
+   */
   virtual void computePerforationRates( real64 const & time_n,
                                         real64 const & dt, DomainPartition & domain ) override;
 
@@ -183,6 +237,7 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
+  virtual real64 updateWellState( WellElementSubRegion & subRegion ) override;
   virtual void updateState( DomainPartition & domain ) override;
 
   virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
@@ -196,6 +251,13 @@ public:
   virtual localIndex numFluidPhases() const override { return m_numPhases; }
 
   integer useTotalMassEquation() const { return m_useTotalMassEquation; }
+
+  virtual void assembleWellFluxTerms( real64 const & time,
+                                      real64 const & dt,
+                                      WellElementSubRegion const & subRegion,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief assembles the flux terms for all connections between well elements
@@ -213,6 +275,14 @@ public:
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs )override;
+
+  virtual void assembleWellAccumulationTerms( real64 const & time,
+                                              real64 const & dt,
+                                              WellElementSubRegion & subRegion,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs ) override;
+
   /**
    * @brief assembles the accumulation term for all the well elements
    * @param domain the physical domain object
@@ -226,6 +296,21 @@ public:
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
+
+  virtual void assembleWellConstraintTerms( real64 const & time_n,
+                                            real64 const & dt,
+                                            WellElementSubRegion const & subRegion,
+                                            DofManager const & dofManager,
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            arrayView1d< real64 > const & localRhs ) override;
+
+
+  virtual void assembleWellPressureRelations( real64 const & time_n,
+                                              real64 const & dt,
+                                              WellElementSubRegion const & subRegion,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head
@@ -248,6 +333,8 @@ public:
    * @param domain the physical domain object
    */
   void chopNegativeDensities( DomainPartition & domain );
+
+  void chopNegativeDensities( WellElementSubRegion & subRegion );
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
@@ -312,6 +399,7 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  void saveState( WellElementSubRegion & subRegion );
   virtual void postRestartInitialization() override final;
   /*
    * @brief Utility function that checks the consistency of the constitutive models
@@ -357,6 +445,37 @@ protected:
                    real64 const & dt,
                    DomainPartition & domain ) override;
 
+
+  bool evaluateProductionConstraints1( real64 const & time_n,
+                                       real64 const & stepDt,
+                                       integer const cycleNumber,
+                                       integer const coupledIterationNumber,
+                                       DomainPartition & domain,
+                                       MeshLevel & mesh,
+                                       ElementRegionManager & elemManager,
+                                       WellElementSubRegion & subRegion,
+                                       DofManager const & dofManager );
+
+  virtual bool evaluateConstraints( real64 const & time_n,
+                                    real64 const & stepDt,
+                                    integer const cycleNumber,
+                                    integer const coupledIterationNumber,
+                                    DomainPartition & domain,
+                                    MeshLevel & mesh,
+                                    ElementRegionManager & elemManager,
+                                    WellElementSubRegion & subRegion,
+                                    DofManager const & dofManager ) override;
+
+  virtual bool evaluateInjectionConstraints( real64 const & time_n,
+                                             real64 const & stepDt,
+                                             integer const cycleNumber,
+                                             integer const coupledIterationNumber,
+                                             DomainPartition & domain,
+                                             MeshLevel & mesh,
+                                             ElementRegionManager & elemManager,
+                                             WellElementSubRegion & subRegion,
+                                             DofManager const & dofManager )override;
+
 private:
 
   /**
@@ -365,7 +484,34 @@ private:
    */
   void initializeWells( DomainPartition & domain, real64 const & time_n ) override;
 
+  void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) override;
+
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
+
+  template< typename ... GROUPTYPES >
+  void selectLimitingConstraint( real64 const & time_n, integer const coupledIterationNumber, WellElementSubRegion & subRegion );
+
+  void solveConstraint( std::shared_ptr< WellConstraintBase > constraint,
+                        real64 const & time_n,
+                        real64 const & dt,
+                        integer const cycleNumber,
+                        integer const coupledIterationNumber,
+                        DomainPartition & domain,
+                        MeshLevel & mesh,
+                        ElementRegionManager & elemManager,
+                        WellElementSubRegion & subRegion,
+                        DofManager const & dofManager );
+
+  template< typename GROUPTYPE, typename ... GROUPTYPES >
+  void solveConstraint( real64 const & time_n,
+                        real64 const & stepDt,
+                        integer const cycleNumber,
+                        integer const coupledIterationNumber,
+                        DomainPartition & domain,
+                        MeshLevel & mesh,
+                        ElementRegionManager & elemManager,
+                        WellElementSubRegion & subRegion,
+                        DofManager const & dofManager );
 
 
 

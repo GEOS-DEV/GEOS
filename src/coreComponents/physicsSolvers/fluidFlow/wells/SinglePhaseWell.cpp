@@ -417,6 +417,13 @@ real64 SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
   return 0.0;  // change in phasevolume fraction doesnt apply
 }
 
+void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n )
+{
+  GEOS_UNUSED_VAR( domain );
+  GEOS_UNUSED_VAR( mesh );
+  GEOS_UNUSED_VAR( subRegion );
+  GEOS_UNUSED_VAR( time_n );
+};
 void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & time_n )
 {
   GEOS_MARK_FUNCTION;

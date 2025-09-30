@@ -38,18 +38,18 @@ inline
 void
 ControlEquationHelper::
   selectLimitingConstraint( bool const isProducer,
-                 WellControls::Control const & inputControl,
-                 WellControls::Control const & currentControl,
-                 integer const phasePhaseIndex,
-                 real64 const & targetBHP,
-                 real64 const & targetPhaseRate,
-                 real64 const & targetTotalRate,
-                 real64 const & targetMassRate,
-                 real64 const & currentBHP,
-                 arrayView1d< real64 const > const & currentPhaseVolRate,
-                 real64 const & currentTotalVolRate,
-                 real64 const & currentMassRate,
-                 WellControls::Control & newControl )
+                            WellControls::Control const & inputControl,
+                            WellControls::Control const & currentControl,
+                            integer const phasePhaseIndex,
+                            real64 const & targetBHP,
+                            real64 const & targetPhaseRate,
+                            real64 const & targetTotalRate,
+                            real64 const & targetMassRate,
+                            real64 const & currentBHP,
+                            arrayView1d< real64 const > const & currentPhaseVolRate,
+                            real64 const & currentTotalVolRate,
+                            real64 const & currentMassRate,
+                            WellControls::Control & newControl )
 {
   // if isViable is true at the end of the following checks, no need to switch
   bool controlIsViable = false;
@@ -376,18 +376,18 @@ PressureRelationKernel::
       {
 
         ControlEquationHelper::selectLimitingConstraint( isProducer,
-                                            inputControl,
-                                            currentControl,
-                                            targetPhaseIndex,
-                                            targetBHP,
-                                            targetPhaseRate,
-                                            targetTotalRate,
-                                            targetMassRate,
-                                            currentBHP,
-                                            currentPhaseVolRate,
-                                            currentTotalVolRate,
-                                            currentMassRate,
-                                            newControl );
+                                                         inputControl,
+                                                         currentControl,
+                                                         targetPhaseIndex,
+                                                         targetBHP,
+                                                         targetPhaseRate,
+                                                         targetTotalRate,
+                                                         targetMassRate,
+                                                         currentBHP,
+                                                         currentPhaseVolRate,
+                                                         currentTotalVolRate,
+                                                         currentMassRate,
+                                                         newControl );
       }
       else
       {
@@ -400,24 +400,24 @@ PressureRelationKernel::
       }
       if( constraintSwitch )
       {
-      ControlEquationHelper::compute< NC, IS_THERMAL >( rankOffset,
-                                                        newControl,
+        ControlEquationHelper::compute< NC, IS_THERMAL >( rankOffset,
+                                                          newControl,
                                                           targetPhaseIndex, // tjb - remove ?
                                                           targetBHP,    // tjb - remove
                                                           targetPhaseRate, // tjb - remove
                                                           targetTotalRate, // tjb - remove
                                                           targetMassRate, // tjb - remove
                                                           targetValue, // tjb
-                                                        currentBHP,
-                                                        dCurrentBHP,
-                                                        currentPhaseVolRate,
-                                                        dCurrentPhaseVolRate,
-                                                        currentTotalVolRate,
-                                                        dCurrentTotalVolRate,
-                                                        massDensity,
-                                                        wellElemDofNumber[iwelemControl],
-                                                        localMatrix,
-                                                        localRhs );
+                                                          currentBHP,
+                                                          dCurrentBHP,
+                                                          currentPhaseVolRate,
+                                                          dCurrentPhaseVolRate,
+                                                          currentTotalVolRate,
+                                                          dCurrentTotalVolRate,
+                                                          massDensity,
+                                                          wellElemDofNumber[iwelemControl],
+                                                          localMatrix,
+                                                          localRhs );
       }
       // TODO: for consistency, we should assemble here, not in compute...
 

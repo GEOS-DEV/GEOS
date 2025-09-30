@@ -445,7 +445,7 @@ public:
     /// string key for the esitmate well solution flag
     static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
 
-        /// string key for the minimum BHP presssure for a producer
+    /// string key for the minimum BHP presssure for a producer
     static constexpr char const * minimumBHPConstraintString() { return "MinimumBHPConstraint"; }
     /// string key for the maximum BHP presssure for a injection
     static constexpr char const * maximumBHPConstraintString() { return "MaximumBHPConstraint"; }
@@ -483,8 +483,6 @@ public:
   std::shared_ptr< MinimumBHPConstraint > getMinBHPConstraint() { return m_minBHPConstraint; };
   std::shared_ptr< MaximumBHPConstraint > getMaxBHPConstraint() { return m_maxBHPConstraint; };
 
-  std::shared_ptr< LiquidProductionConstraint > getMaxLiquidConstraintForWHP() { return m_maxLiquidConstraintForWHP; };
-  std::shared_ptr< MinimumBHPConstraint > getMinimumBHPConstraintForWHP() { return m_minBHPConstraintForWHP; };
   // Lists of rate constraints
   std::vector< std::shared_ptr< WellConstraintBase > > getProdRateConstraints() { return m_productionRateConstraintList; };
   std::vector< std::shared_ptr< WellConstraintBase > > getInjRateConstraints() { return m_injectionRateConstraintList; }
