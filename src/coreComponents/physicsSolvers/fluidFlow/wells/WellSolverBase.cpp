@@ -308,46 +308,6 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
 
 }
 
-void WellSolverBase::setupWellDofs( DomainPartition & domain )
-{
-  if( m_estimatorDoFManager.empty() )
-  {
-
-    map< std::pair< string, string >, string_array > meshTargets;
-    string_array regions;
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
-                                                                 MeshLevel & meshLevel,
-                                                                 string_array const & regionNames )
-    {
-      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
-      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
-                                                                   [&]( localIndex const,
-                                                                        WellElementRegion & region )
-      {
-        meshTargets.clear();
-        regions.clear();
-        regions.emplace_back( region.getName() );
-        auto const key = std::make_pair( meshBodyName, meshLevel.getName());
-        meshTargets[key] = std::move( regions );
-
-        DofManager regionDoFManager( region.getName());
-        regionDoFManager.setDomain( domain );
-        regionDoFManager.addField( wellElementDofName(),
-                                   FieldLocation::Elem,
-                                   numDofPerWellElement(),
-                                   meshTargets );
-
-        regionDoFManager.addCoupling( wellElementDofName(),
-                                      wellElementDofName(),
-                                      DofManager::Connector::Node );
-
-        regionDoFManager.reorderByRank();
-        m_estimatorDoFManager.emplace( region.getName(), std::move( regionDoFManager ));
-      } );
-    } );
-  }
-}
-
 void WellSolverBase::selectWellConstraint( real64 const & time_n,
                                            real64 const & dt,
                                            const integer cycleNumber,
@@ -355,9 +315,6 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
                                            DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
-  //GEOS_LOG_RANK( "**** Estimate Well Solution - Start **** " << getName() );
-  setupWellDofs( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
                                                                MeshLevel & meshLevel,
@@ -389,31 +346,8 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
 
       if( wellControls.getWellState())
       {
-        //GEOS_LOG_RANK( "**** Estimate Well Solution - Start **** " << subRegion.getName() );
-        auto it = m_estimatorDoFManager.find( region.getName());
-        if( it == m_estimatorDoFManager.end())
-        {
-          throw std::runtime_error( "DofManager for region " + region.getName() + " not found." );
-        }
-        DofManager & dofManager = it->second;
-
-// Only build the sparsity pattern if the mesh has changed
-        Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
-
-        if( meshModificationTimestamp > getSystemSetupTimestamp() )
-        {
-          // These are esitmator matrices
-          setupWellSystem( domain, dofManager, m_localMatrix, m_rhs, m_solution );
-          //setSystemSetupTimestamp( meshModificationTimestamp );
-
-          //std::ostringstream oss;
-          //m_dofManager.printFieldInfo( oss );
-          //GEOS_LOG_LEVEL( logInfo::Fields, oss.str())
-        }
-
-
         wellControls.setConstraintSwitch( false );
-#if 1
+
         evaluateConstraints( time_n,
                              dt,
                              cycleNumber,
@@ -421,34 +355,8 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
                              domain,
                              meshLevel,
                              elementRegionManager,
-                             subRegion,
-                             dofManager );
-#else
-        if( wellControls.isProducer())
-        {
-          evaluateProductionConstraints( time_n,
-                                         dt,
-                                         cycleNumber,
-                                         coupledIterationNumber,
-                                         domain,
-                                         meshLevel,
-                                         elementRegionManager,
-                                         subRegion,
-                                         dofManager );
-        }
-        else
-        {
-          evaluateInjectionConstraints( time_n,
-                                        dt,
-                                        cycleNumber,
-                                        coupledIterationNumber,
-                                        domain,
-                                        meshLevel,
-                                        elementRegionManager,
-                                        subRegion,
-                                        dofManager );
-        }
-#endif
+                             subRegion );
+
         // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
         // the well initialization code requires control type to by synced
         integer owner = -1;
@@ -461,58 +369,12 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
         WellControls::Control wellControl = wellControls.getControl();
         MpiWrapper::broadcast( wellControl, owner );
         wellControls.setControl( wellControl );
-
-        //implicitStepSetup( time_n, dt, domain );
-
-// currently the only method is implicit time integration
-        //real64 const dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
-
-// final step for completion of timestep. typically secondary variable updates and cleanup.
-        //implicitStepComplete( time_n, dt_return, domain );
-        /*
-           solveNonlinearSystem( time_n,
-                              dt,
-                              cycleNumber,
-                              domain,
-                              meshLevel,
-                              elementRegionManager,
-                              subRegion,
-                              dofManager );
-         */
-
-        //GEOS_LOG_RANK( "**** Estimate Well Solution End **** " << subRegion.getName());
       }
-
     } );
   } );
-  //GEOS_LOG_RANK( "**** Estimate Well Solution End **** " << getName());
+
 }
 
-void WellSolverBase::setupWellSystem( DomainPartition & domain,
-                                      DofManager & dofManager,
-                                      CRSMatrix< real64, globalIndex > & localMatrix,
-                                      ParallelVector & rhs,
-                                      ParallelVector & solution,
-                                      bool const setSparsity )
-{
-  GEOS_MARK_FUNCTION;
-
-  setupWellDofs( domain );
-
-  if( setSparsity )
-  {
-    SparsityPattern< globalIndex > pattern;
-    dofManager.setSparsityPattern( pattern );
-    localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  }
-  localMatrix.setName( this->getName() + "/matrix" );
-
-  rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-
-  solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-}
 void WellSolverBase::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -525,27 +387,6 @@ void WellSolverBase::updateState( DomainPartition & domain )
                                                                                           WellElementSubRegion & subRegion )
     { updateSubRegionState( subRegion ); } );
   } );
-}
-
-void WellSolverBase::assembleWellSystem( real64 const time_n,
-                                         real64 const dt,
-                                         ElementRegionManager const & elementRegionManager,
-                                         WellElementSubRegion & subRegion,
-                                         DofManager const & dofManager,
-                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                         arrayView1d< real64 > const & localRhs )
-{
-  assembleWellAccumulationTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-  WellControls & wellControls = getWellControls( subRegion );
-  if( !wellControls.getConstraintSwitch() )
-  {
-
-    assembleWellConstraintTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-  }
-  assembleWellPressureRelations( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-  computeWellPerforationRates( time_n, dt, elementRegionManager, subRegion );
-  assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-
 }
 
 void WellSolverBase::assembleSystem( real64 const time,
@@ -563,8 +404,8 @@ void WellSolverBase::assembleSystem( real64 const time,
     // iteration
     //  wellEstimator flag > 0 =>   well esitmator solved for each constraint and then selects the constraint
     //                         =>   estimator solve only performed first "wellEstimator" iterations
-
-    selectWellConstraint( time, dt, 0, geos::currentCoupledNewton, domain );
+    NonlinearSolverParameters const & nonlinearParams =  getNonlinearSolverParameters();
+    selectWellConstraint( time, dt, 0, nonlinearParams.m_numNewtonIterations, domain );
   }
 
 

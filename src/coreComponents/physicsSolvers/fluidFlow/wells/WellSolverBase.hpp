@@ -159,6 +159,13 @@ public:
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
+  void selectWellConstraint( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             integer const coupledIterationNumber,
+                             DomainPartition & domain );
+
+
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
@@ -179,24 +186,6 @@ public:
 
 
   /**@}*/
-
-  /**
-   * @brief function to assemble the linear system matrix and rhs
-   * @param time the time at the beginning of the step
-   * @param dt the desired timestep
-   * @param domain the domain partition
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-
-  void assembleWellSystem( real64 const time,
-                           real64 const dt,
-                           ElementRegionManager const & elementRegionManager,
-                           WellElementSubRegion & subRegion,
-                           DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs );
 
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
@@ -315,14 +304,6 @@ public:
                              WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ),
                              DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                              arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localRhs ) ) {return std::numeric_limits< real64 >::max();};
-  bool solveNonlinearSystem( real64 const & time_n,
-                             real64 const & stepDt,
-                             integer const cycleNumber,
-                             DomainPartition & domain,
-                             MeshLevel & mesh,
-                             ElementRegionManager & elementRegionManager,
-                             WellElementSubRegion & subregion,
-                             DofManager const & dofManager );
 
   virtual real64
   scalingForWellSystemSolution( ElementSubRegionBase & GEOS_UNUSED_PARAM( subRegion ),
@@ -449,28 +430,9 @@ protected:
                                     DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                     MeshLevel & GEOS_UNUSED_PARAM( mesh ),
                                     ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
-                                    WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ),
-                                    DofManager const & GEOS_UNUSED_PARAM( dofManager ) ) { return false;};
+                                    WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion )) { return false;};
 
-  virtual bool evaluateProductionConstraints( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                              real64 const & GEOS_UNUSED_PARAM( stepDt ),
-                                              integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                                              integer const GEOS_UNUSED_PARAM( coupledIterationNumber ),
-                                              DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                                              MeshLevel & GEOS_UNUSED_PARAM( mesh ),
-                                              ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
-                                              WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ),
-                                              DofManager const & GEOS_UNUSED_PARAM( dofManager ) ) { return false;};
 
-  virtual bool evaluateInjectionConstraints( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                             real64 const & GEOS_UNUSED_PARAM( stepDt ),
-                                             integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                                             integer const GEOS_UNUSED_PARAM( coupledIterationNumber ),
-                                             DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                                             MeshLevel & GEOS_UNUSED_PARAM( mesh ),
-                                             ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
-                                             WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ),
-                                             DofManager const & GEOS_UNUSED_PARAM( dofManager ) ) {return true;};
   /// name of the flow solver
   string m_flowSolverName;
 

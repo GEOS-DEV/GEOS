@@ -445,17 +445,6 @@ protected:
                    real64 const & dt,
                    DomainPartition & domain ) override;
 
-
-  bool evaluateProductionConstraints1( real64 const & time_n,
-                                       real64 const & stepDt,
-                                       integer const cycleNumber,
-                                       integer const coupledIterationNumber,
-                                       DomainPartition & domain,
-                                       MeshLevel & mesh,
-                                       ElementRegionManager & elemManager,
-                                       WellElementSubRegion & subRegion,
-                                       DofManager const & dofManager );
-
   virtual bool evaluateConstraints( real64 const & time_n,
                                     real64 const & stepDt,
                                     integer const cycleNumber,
@@ -463,18 +452,7 @@ protected:
                                     DomainPartition & domain,
                                     MeshLevel & mesh,
                                     ElementRegionManager & elemManager,
-                                    WellElementSubRegion & subRegion,
-                                    DofManager const & dofManager ) override;
-
-  virtual bool evaluateInjectionConstraints( real64 const & time_n,
-                                             real64 const & stepDt,
-                                             integer const cycleNumber,
-                                             integer const coupledIterationNumber,
-                                             DomainPartition & domain,
-                                             MeshLevel & mesh,
-                                             ElementRegionManager & elemManager,
-                                             WellElementSubRegion & subRegion,
-                                             DofManager const & dofManager )override;
+                                    WellElementSubRegion & subRegion ) override;
 
 private:
 
@@ -501,18 +479,6 @@ private:
                         ElementRegionManager & elemManager,
                         WellElementSubRegion & subRegion,
                         DofManager const & dofManager );
-
-  template< typename GROUPTYPE, typename ... GROUPTYPES >
-  void solveConstraint( real64 const & time_n,
-                        real64 const & stepDt,
-                        integer const cycleNumber,
-                        integer const coupledIterationNumber,
-                        DomainPartition & domain,
-                        MeshLevel & mesh,
-                        ElementRegionManager & elemManager,
-                        WellElementSubRegion & subRegion,
-                        DofManager const & dofManager );
-
 
 
   /// flag indicating whether mass or molar formulation should be used

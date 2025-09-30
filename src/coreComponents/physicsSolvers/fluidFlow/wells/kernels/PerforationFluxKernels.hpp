@@ -569,7 +569,7 @@ public:
                    string const flowSolverName,
                    PerforationData * const perforationData,
                    ElementSubRegionBase const & subRegion,
-                   ElementRegionManager & elemManager,
+                   ElementRegionManager const & elemManager,
                    bool const isInjector,
                    bool const isCrossflowEnabled )
   {
@@ -848,7 +848,7 @@ public:
                    PerforationData * const perforationData,
                    ElementSubRegionBase const & subRegion,
                    MultiFluidBase const & fluid,
-                   ElementRegionManager & elemManager,
+                   ElementRegionManager const & elemManager,
                    bool const isInjector,
                    bool const isCrossflowEnabled )
   {
