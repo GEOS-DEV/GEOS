@@ -269,6 +269,8 @@ private:
 
   virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionerBase & partitioner ) override;
 
+private:
+
   /**
    * @brief Convert ndim node spatialized index to node global index.
    * @param[in] node ndim spatialized array index

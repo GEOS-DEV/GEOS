@@ -27,10 +27,13 @@ namespace geos
 {
 
 PartitionerBase::PartitionerBase( string const & name,
-                               Group * const parent ):
-  Group( name, parent )
+                                  Group * const parent ):
+  Group( name, parent ),
+  m_numPartitions( 1 ),
+  m_numFirstOrderNeighbors( 0 ),
+  m_numColors( 1 ),
+  m_color( 0 )
 {}
-
 
 PartitionerBase::CatalogInterface::CatalogType & PartitionerBase::getCatalog()
 {

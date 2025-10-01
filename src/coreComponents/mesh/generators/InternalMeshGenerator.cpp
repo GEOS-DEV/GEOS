@@ -19,7 +19,7 @@
 
 #include "InternalMeshGenerator.hpp"
 #include "CellBlockManager.hpp"
-
+#include "mesh/mpiCommunications/CartesianPartitioner.hpp"
 #include "common/DataTypes.hpp"
 
 #include <cmath>
@@ -545,7 +545,15 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 {
   GEOS_MARK_FUNCTION;
 
-  CartesianPartitioner & partitioner = dynamic_cast< CartesianPartitioner & >(partitionerBase);
+  // InternalMeshGenerator requires CartesianPartitioner
+  CartesianPartitioner * cartesianPartitioner = dynamic_cast< CartesianPartitioner * >( &partitionerBase );
+
+  GEOS_ERROR_IF( cartesianPartitioner == nullptr,
+                 GEOS_FMT( "InternalMeshGenerator '{}' requires CartesianPartitioner. "
+                           "Current partitioner type is not compatible. ",
+                           getName() ) );
+
+  CartesianPartitioner & partitioner = *cartesianPartitioner;
 
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.

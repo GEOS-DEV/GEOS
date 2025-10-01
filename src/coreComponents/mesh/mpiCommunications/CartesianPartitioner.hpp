@@ -38,12 +38,15 @@ public:
 
   ~CartesianPartitioner();
 
+  /**
+   * @brief Structure to hold scoped key names
+   */
   struct viewKeyStruct
   {
     constexpr static char const * partitionCountsString() { return "partitionCounts"; }
-  }
+  };
 
- /**
+  /**
    * @brief Return the name of the VTKMeshGenerator in object Catalog.
    * @return string that contains the key name to VTKMeshGenerator in the Catalog
    */
@@ -70,20 +73,10 @@ public:
     return m_partitionCounts;
   }
 
-  array1d< int > & getPartitionCounts()
-  {
-    return m_partitionCounts;
-  }
-
 
   void setPeriodicity( int index, int value )
   {
     m_periodic[index] = value;
-  }
-
-  array1d< int > & getPeriodicity()
-  {
-    return m_periodic;
   }
 
   array1d< int > const & getPeriodicity() const
@@ -92,22 +85,22 @@ public:
   }
 
 
-  real64 * getLocalMin()
+  real64 const * getLocalMin() const
   {
     return m_localMin;
   }
 
-  real64 * getLocalMax()
+  real64 const * getLocalMax() const
   {
     return m_localMax;
   }
 
-  real64 * getGlobalMin()
+  real64 const * getGlobalMin() const
   {
     return m_globalGridMin;
   }
 
-  real64 * getGlobalMax()
+  real64 const * getGlobalMax() const
   {
     return m_globalGridMax;
   }

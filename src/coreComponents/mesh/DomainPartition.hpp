@@ -27,6 +27,7 @@
 #include "mesh/MeshBody.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "mesh/mpiCommunications/PartitionerBase.hpp"
+#include "mesh/mpiCommunications/PartitionerManager.hpp"
 
 namespace geos
 {
@@ -37,7 +38,7 @@ namespace dataRepository
 namespace keys
 {
 /// @return PartitionerManager string key
-string const partitionerManager( "partitionerManager" );
+//string const partitionerManager( "partitionerManager" );
 
 }
 }
@@ -157,6 +158,8 @@ public:
   NumericalMethodsManager & getNumericalMethodManager()
   { return this->getParent().getGroup< NumericalMethodsManager >( "NumericalMethods" ); }
 
+
+
   /**
    * @brief Get the mesh bodies, const version.
    * @return Reference to a const instance of a Group that contains MeshBody instances.
@@ -245,6 +248,11 @@ public:
     getMeshBodies().forSubGroupsIndex< MeshBody >( std::forward< FUNCTION >( function ) );
   }
 
+  /**
+   * @brief Check if a partitioner has been defined
+   * @return True if a partitioner exists, false otherwise
+   */
+  bool hasPartitioner() const;
 
   PartitionerBase & getPartitioner();
   PartitionerBase const & getPartitioner() const;
@@ -260,6 +268,46 @@ public:
    * @return Container of communicators.
    */
   stdVector< NeighborCommunicator > const & getNeighbors() const;
+
+  /**
+   * @brief Set the neighbor communicators by copying from the partitioner.
+   * @param neighbors The neighbor communicators to copy (typically from partitioner.getNeighbors()).
+   * @note This should be called after mesh partitioning completes and before setupCommunications().
+   *       The partitioner creates the initial neighbor topology (rank IDs), and the domain takes
+   *       ownership of the runtime copy which will be modified during setupCommunications() to add
+   *       MPI buffers, ghost entity lists, and other communication infrastructure.
+   */
+  void setNeighbors( stdVector< NeighborCommunicator > const & neighbors );
+
+private:
+
+  /**
+   * @brief Get the PartitionerManager from ProblemManager
+   * @return Reference to the PartitionerManager
+   */
+  PartitionerManager & getPartitionerManager();
+
+  /**
+   * @brief Get the PartitionerManager from ProblemManager (const version)
+   * @return Const reference to the PartitionerManager
+   */
+  PartitionerManager const & getPartitionerManager() const;
+
+  /**
+   * @brief Neighbor communicators for MPI domain decomposition.
+   *
+   * This vector is initially populated from the partitioner (which creates the initial neighbor
+   * topology with rank IDs during mesh partitioning), then modified during setupCommunications()
+   * and throughout the simulation to maintain runtime communication state including:
+   * - MPI send/receive buffers
+   * - Ghost entity lists (nodes, edges, faces, elements)
+   * - Unpacking state for asynchronous communication
+   *
+   * @see NeighborCommunicator for the mutable communication state stored in each communicator
+   * @see setNeighbors() for the initial copy from partitioner
+   * @see setupCommunications() for where communication infrastructure is built
+   */
+  stdVector< NeighborCommunicator > m_neighbors;
 
 };
 

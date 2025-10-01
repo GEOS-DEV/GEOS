@@ -27,26 +27,8 @@
 
 namespace geos
 {
+using namespace dataRepository;
 
-  CartesianPartitioner::CartesianPartitioner( string const & name,
-                                              Group * const parent ):
-    PartitionerBase( name, parent ),
-    m_cartComm( MPI_COMM_NULL ),
-    m_periodic( m_ndim ),
-    m_coords( m_ndim ),
-    m_partitionCounts(),
-    m_localMin{ 0.0, 0.0, 0.0 },
-    m_localMax{ 0.0, 0.0, 0.0 },
-    m_localSize{ 0.0, 0.0, 0.0 },
-    m_globalGridMin{ 0.0, 0.0, 0.0 },
-    m_globalGridMax{ 0.0, 0.0, 0.0 },
-    m_globalGridSize{ 0.0, 0.0, 0.0 },
-    m_cartRank( 0 )
-  {
-    registerWrapper( viewKeyStruct::paritionCountsString(), &m_partitionCounts ).
-      setInputFlag( InputFlags::OPTIONAL ).
-      setDescription( "Method (library) used to partition the mesh" );
-  }
 
 // Modulo
 // returns a positive value regardless of the sign of numerator
@@ -68,8 +50,10 @@ real64 MapValueToRange( real64 value, real64 min, real64 max )
 }
 
 
-CartesianPartitioner::CartesianPartitioner():
-  PartitionerBase(),
+
+CartesianPartitioner::CartesianPartitioner( string const & name,
+                                            Group * const parent ):
+  PartitionerBase( name, parent ),
   m_cartComm( MPI_COMM_NULL ),
   m_periodic( m_ndim ),
   m_coords( m_ndim ),
@@ -82,7 +66,9 @@ CartesianPartitioner::CartesianPartitioner():
   m_globalGridSize{ 0.0, 0.0, 0.0 },
   m_cartRank( 0 )
 {
-  setPartitionCounts( 1, 1, 1 );
+  registerWrapper( viewKeyStruct::partitionCountsString(), &m_partitionCounts ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Method (library) used to partition the mesh" );
 }
 
 

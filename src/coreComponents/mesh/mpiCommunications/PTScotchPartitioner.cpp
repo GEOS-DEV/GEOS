@@ -38,17 +38,17 @@
 
 namespace geos
 {
-
+using namespace dataRepository;
 
 static_assert( std::is_same< int64_t, SCOTCH_Num >::value,
                "Non-matching index types. Scotch must be configured with 64-bit indices." );
 
 
+PTScotchPartitioner::PTScotchPartitioner( string const & name,
+                                          Group * const parent ):
+  PartitionerBase( name, parent )
+{}
 
-PTScotchPartitioner::PTScotchPartitioner()
-{
-// Constructor implementation
-}
 
 PTScotchPartitioner::~PTScotchPartitioner()
 {
@@ -154,5 +154,7 @@ void PTScotchPartitioner::color()
   std::cout<<std::endl;
 #endif
 }
+
+REGISTER_CATALOG_ENTRY( PartitionerBase, PTScotchPartitioner, string const &, Group * const )
 
 }

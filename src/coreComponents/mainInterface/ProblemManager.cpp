@@ -46,6 +46,10 @@
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/PartitionerBase.hpp"
+#include "mesh/mpiCommunications/CartesianPartitioner.hpp"
+#include "mesh/mpiCommunications/PartitionerManager.hpp"
+#include "mesh/generators/InternalMeshGenerator.hpp"
+#include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "schema/schemaUtilities.hpp"
@@ -512,8 +516,52 @@ void ProblemManager::postInputInitialization()
   integer const & suppressPinned = commandLine.getReference< integer >( viewKeys.suppressPinned );
   setPreferPinned((suppressPinned == 0));
 
+  // Auto-create default partitioner if none specified in XML
+  PartitionerManager & partitionerManager = getGroup< PartitionerManager >( groupKeys.partitionerManager );
+  if( partitionerManager.numSubGroups() == 0 )
+  {
+    MeshManager const & meshManager = getGroup< MeshManager >( groupKeys.meshManager );
+
+    bool hasInternalMesh = false;
+    bool hasExternalMesh = false;
+
+    // Check what type of mesh generators are being used
+    meshManager.forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase const & meshGen )
+    {
+      if( dynamic_cast< InternalMeshGenerator const * >( &meshGen ) != nullptr )
+      {
+        hasInternalMesh = true;
+      }
+      else if( dynamic_cast< ExternalMeshGeneratorBase const * >( &meshGen ) != nullptr )
+      {
+        hasExternalMesh = true;
+      }
+    } );
+
+    // Create default partitioner based on mesh type
+    if( hasInternalMesh && hasExternalMesh )
+    {
+      GEOS_ERROR( "Both internal and external meshes detected." );
+    }
+    else if( hasInternalMesh )
+    {
+      GEOS_LOG_RANK_0( "No partitioner specified in XML. Creating default CartesianPartitioner for internal mesh." );
+      partitionerManager.createChild( "Cartesian", "defaultPartitioner" );
+    }
+    else if( hasExternalMesh )
+    {
+      GEOS_LOG_RANK_0( "No partitioner specified in XML. Creating default ParMetisPartitioner for external mesh." );
+      partitionerManager.createChild( "ParMetis", "defaultPartitioner" );
+    }
+    else
+    {
+      GEOS_ERROR( "No partitioner defined and no mesh generators found." );
+    }
+  }
+
   PartitionerBase & partitioner = domain.getPartitioner();
 
+  // Handle command-line partition overrides
   bool repartition = false;
   integer xpar = 1;
   integer ypar = 1;
@@ -535,12 +583,30 @@ void ProblemManager::postInputInitialization()
   }
   if( repartition )
   {
-    partitioner.setPartitionCounts( xpar, ypar, zpar );
-    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
-    // Case : Using MPI domain decomposition and partition are not defined (mainly for external mesh readers)
-    if( mpiSize > 1 && xpar == 1 && ypar == 1 && zpar == 1 )
+    // Validate that command-line overrides are compatible with partitioner type
+    CartesianPartitioner * cartesianPartitioner = dynamic_cast< CartesianPartitioner * >( &partitioner );
+    if( cartesianPartitioner != nullptr )
     {
-      partitioner.setPartitionCounts( 1, 1, mpiSize );
+      int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
+      integer const totalPartitions = xpar * ypar * zpar;
+
+      // Validate that partition counts match MPI size
+      if( totalPartitions != mpiSize )
+      {
+        GEOS_ERROR( GEOS_FMT( "Partition count mismatch: -x {} -y {} -z {} = {} total partitions, "
+                              "but running with {} MPI ranks. "
+                              "For CartesianPartitioner, the product of partition counts must equal the number of MPI ranks.",
+                              xpar, ypar, zpar, totalPartitions, mpiSize ) );
+      }
+
+      cartesianPartitioner->setPartitionCounts( xpar, ypar, zpar );
+    }
+    else
+    {
+      GEOS_WARNING( GEOS_FMT( "Command-line partition counts (-x {} -y {} -z {}) only apply to CartesianPartitioner. "
+                              "Current partitioner '{}' does not support explicit partition counts. "
+                              "These flags will be ignored.",
+                              xpar, ypar, zpar, partitioner.getName() ) );
     }
   }
 }
@@ -675,6 +741,12 @@ void ProblemManager::generateMesh()
       }
     }
   }
+
+  // Copy the neighbor topology from the partitioner to the domain.
+  // The partitioner has created the initial neighbor structure (rank IDs) during mesh partitioning.
+  // The domain now takes ownership of this structure and will populate it with runtime communication
+  // infrastructure (MPI buffers, ghost entity lists) during setupCommunications().
+  domain.setNeighbors( domain.getPartitioner().getNeighbors() );
 
   domain.setupCommunications( useNonblockingMPI );
   domain.outputPartitionInformation();

@@ -21,8 +21,14 @@
 
 namespace geos
 {
-ParticleCartesianPartitioner::ParticleCartesianPartitioner()
+using namespace dataRepository;
+
+
+ParticleCartesianPartitioner::ParticleCartesianPartitioner( string const & name,
+                                                            Group * const parent ):
+  CartesianPartitioner( name, parent )
 {}
+
 
 ParticleCartesianPartitioner::~ParticleCartesianPartitioner()
 {}
@@ -777,5 +783,6 @@ void ParticleCartesianPartitioner::sendParticlesToNeighbor( ParticleSubRegionBas
 
 }
 
+REGISTER_CATALOG_ENTRY( PartitionerBase, ParticleCartesianPartitioner, string const &, Group * const )
 
 }

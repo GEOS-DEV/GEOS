@@ -101,6 +101,7 @@ set( mesh_headers
      mpiCommunications/NeighborCommunicator.hpp
      mpiCommunications/NeighborData.hpp
      mpiCommunications/PartitionerBase.hpp
+     mpiCommunications/PartitionerManager.hpp
      mpiCommunications/CartesianPartitioner.hpp
      mpiCommunications/ParticleCartesianPartitioner.hpp
      mpiCommunications/ParMetisPartitioner.hpp
@@ -183,6 +184,7 @@ set( mesh_sources
      mpiCommunications/MPI_iCommData.cpp
      mpiCommunications/NeighborCommunicator.cpp
      mpiCommunications/PartitionerBase.cpp
+     mpiCommunications/PartitionerManager.cpp
      mpiCommunications/CartesianPartitioner.cpp
      mpiCommunications/ParticleCartesianPartitioner.cpp
      mpiCommunications/ParMetisPartitioner.cpp     

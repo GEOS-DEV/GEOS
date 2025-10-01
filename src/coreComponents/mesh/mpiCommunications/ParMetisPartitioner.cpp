@@ -39,16 +39,25 @@
 
 namespace geos
 {
+using namespace dataRepository;
 
 using camp::idx_t;
 
 static_assert( std::is_same< idx_t, pmet_idx_t >::value, "Non-matching index types. ParMETIS must be built with 64-bit indices." );
 
 
-ParMetisPartitioner::ParMetisPartitioner()
+
+ParMetisPartitioner::ParMetisPartitioner( string const & name,
+                                          Group * const parent ):
+  PartitionerBase( name, parent ),
+  m_numRefinements( 0 )
 {
-// Constructor implementation
+  registerWrapper( viewKeyStruct::numRefinementsString(), &m_numRefinements ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Number of ParMetis refinements" );
 }
+
+
 
 ParMetisPartitioner::~ParMetisPartitioner()
 {
@@ -186,5 +195,9 @@ void ParMetisPartitioner::color()
   std::cout<<std::endl;
 #endif
 }
+
+
+REGISTER_CATALOG_ENTRY( PartitionerBase, ParMetisPartitioner, string const &, Group * const )
+
 
 }

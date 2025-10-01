@@ -31,8 +31,26 @@ namespace geos
 class PTScotchPartitioner : public PartitionerBase
 {
 public:
-  PTScotchPartitioner();
+
+  PTScotchPartitioner( string const & name,
+                       Group * const parent );
+
   ~PTScotchPartitioner();
+
+  /**
+   * @brief Structure to hold scoped key names
+   */
+  struct viewKeyStruct
+  {
+    //constexpr static char const * m_partitionCountsString() { return "partitionCounts"; }
+  };
+
+  /**
+   * @brief Return the name of the VTKMeshGenerator in object Catalog.
+   * @return string that contains the key name to VTKMeshGenerator in the Catalog
+   */
+  static string catalogName() { return "PTScotch"; }
+
 
 
   void setNeighborsRank( const std::vector< int > & neighborsRank ) override;

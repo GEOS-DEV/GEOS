@@ -32,6 +32,7 @@
 #include "mesh/mpiCommunications/CartesianPartitioner.hpp"
 #include "mesh/LogLevelsInfo.hpp"
 
+#include "mainInterface/ProblemManager.hpp"
 
 namespace geos
 {
@@ -53,14 +54,13 @@ DomainPartition::DomainPartition( string const & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( false );
 
-#else
+
   this->registerWrapper< ParMetisPartitioner, PartitionerBase >( keys::partitionerManager ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( false );
 #endif
 
-  std::vector< NeighborCommunicator > & neighbors = getNeighbors();
-  this->registerWrapper( "Neighbors", &neighbors ).
+  this->registerWrapper( "Neighbors", &m_neighbors ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( false );
 
@@ -74,27 +74,55 @@ DomainPartition::DomainPartition( string const & name,
 DomainPartition::~DomainPartition()
 {}
 
+PartitionerManager & DomainPartition::getPartitionerManager()
+{
+  Group & problemManager = this->getParent();
+  return problemManager.getGroup< PartitionerManager >( ProblemManager::groupKeysStruct().partitionerManager.key() );
+}
+
+PartitionerManager const & DomainPartition::getPartitionerManager() const
+{
+  Group const & problemManager = this->getParent();
+  return problemManager.getGroup< PartitionerManager >( ProblemManager::groupKeysStruct().partitionerManager.key() );
+}
+
+bool DomainPartition::hasPartitioner() const
+{
+  return getPartitionerManager().hasPartitioner();
+}
 
 PartitionerBase & DomainPartition::getPartitioner()
-{ return getReference< PartitionerBase >( dataRepository::keys::partitionerManager ); }
+{
+  return getPartitionerManager().getPartitioner();
+}
 
 PartitionerBase const & DomainPartition::getPartitioner() const
-{ return getReference< PartitionerBase >( dataRepository::keys::partitionerManager ); }
+{
+  return getPartitionerManager().getPartitioner();
+}
+
 
 
 /**
- * @brief Get the neighbor communicators. @see DomainPartition#neighbors.
+ * @brief Get the neighbor communicators. @see DomainPartition#m_neighbors.
  * @return Container of communicators.
  */
 std::vector< NeighborCommunicator > & DomainPartition::getNeighbors()
-{ return getPartitioner().getNeighbors(); }
+{ return m_neighbors; }
 
 /**
- * @brief Get the neighbor communicators, const version. @see DomainPartition#neighbors.
+ * @brief Get the neighbor communicators, const version. @see DomainPartition#m_neighbors.
  * @return Container of communicators.
  */
 std::vector< NeighborCommunicator > const & DomainPartition::getNeighbors() const
-{ return getPartitioner().getNeighbors(); }
+{ return m_neighbors; }
+
+/**
+ * @brief Set the neighbor communicators by copying from the partitioner.
+ * @param neighbors The neighbor communicators to copy (typically from partitioner.getNeighbors()).
+ */
+void DomainPartition::setNeighbors( std::vector< NeighborCommunicator > const & neighbors )
+{ m_neighbors = neighbors; }
 
 
 void DomainPartition::initializationOrder( string_array & order )
@@ -123,15 +151,12 @@ void DomainPartition::initializationOrder( string_array & order )
 void DomainPartition::setupBaseLevelMeshGlobalInfo()
 {
   GEOS_MARK_FUNCTION;
-//BDBD
-//#if defined(GEOS_USE_MPI)
 
   PartitionerBase & partitioner = getPartitioner();
   partitioner.appendNeighborsOfNeighbors();
 
   std::vector< NeighborCommunicator > & neighbors = getNeighbors();
 
-//#endif
 
   forMeshBodies( [&]( MeshBody & meshBody )
   {

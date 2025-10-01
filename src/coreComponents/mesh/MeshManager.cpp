@@ -20,7 +20,10 @@
 #include "mesh/LogLevelsInfo.hpp"
 
 #include "generators/CellBlockManagerABC.hpp"
+#include "generators/InternalMeshGenerator.hpp"
+#include "generators/ExternalMeshGeneratorBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "mesh/mpiCommunications/CartesianPartitioner.hpp"
 #include "common/TimingMacros.hpp"
 
 #include <unordered_set>
@@ -67,6 +70,27 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     meshBody.createMeshLevel( 0 );
 
     PartitionerBase & partitioner = domain.getPartitioner();
+
+    // Validate partitioner-mesh compatibility
+    bool const isInternalMesh = dynamic_cast< InternalMeshGenerator * >( &meshGen ) != nullptr;
+    bool const isExternalMesh = dynamic_cast< ExternalMeshGeneratorBase * >( &meshGen ) != nullptr;
+    bool const isCartesianPartitioner = dynamic_cast< CartesianPartitioner * >( &partitioner ) != nullptr;
+
+    if( isInternalMesh && !isCartesianPartitioner )
+    {
+      GEOS_ERROR( GEOS_FMT( "Mesh '{}': InternalMeshGenerator requires CartesianPartitioner. "
+                            "Current partitioner '{}' is not compatible. "
+                            "Please specify <Cartesian name=\"partitioner\"/> in XML.",
+                            meshGen.getName(), partitioner.getName() ) );
+    }
+
+    if( isExternalMesh && isCartesianPartitioner )
+    {
+      GEOS_ERROR( GEOS_FMT( "Mesh '{}': CartesianPartitioner cannot be used with external meshes. "
+                            "CartesianPartitioner is designed for structured internal meshes only. "
+                            "Please use <ParMetis name=\"partitioner\"/> or <PTScotch name=\"partitioner\"/> instead.",
+                            meshGen.getName() ) );
+    }
 
     meshGen.generateMesh( meshBody, partitioner );
 

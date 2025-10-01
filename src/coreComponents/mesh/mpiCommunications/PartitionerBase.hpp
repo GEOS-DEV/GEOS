@@ -22,6 +22,7 @@
 #define GEOS_PARTITIONER_PARTITIONERBASE_HPP_
 
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+#include "dataRepository/Group.hpp"
 
 
 namespace geos
@@ -35,14 +36,17 @@ using pmet_idx_t = int32_t;
 using pmet_idx_t = int64_t;
 #endif
 
-class PartitionerBase
+class PartitionerBase : public dataRepository::Group
 {
 public:
 
   explicit PartitionerBase( string const & name,
-                              Group * const parent );
+                            Group * const parent );
 
-  /// using alias for templated Catalog meshGenerator type
+  virtual ~PartitionerBase() = default;
+
+
+  /// using alias for templated Catalog PartitionerBase type
   using CatalogInterface = dataRepository::CatalogInterface< PartitionerBase, string const &, Group * const >;
 
   /**
@@ -78,11 +82,6 @@ public:
     return m_neighborsRank;
   }
 
-  std::vector< int > & getNeighborsRank()
-  {
-    return m_neighborsRank;
-  }
-
 
   void buildNeighbors();
 
@@ -94,21 +93,11 @@ public:
   { return m_neighbors; }
 
 
-  int getNumNeighbors()
-  {
-    return static_cast< int >(m_neighbors.size());
-  }
-
   int getNumNeighbors() const
   {
     return static_cast< int >(m_neighbors.size());
   }
 
-
-  int getNumFirstOrderNeighbors()
-  {
-    return m_numFirstOrderNeighbors;
-  }
 
   int getNumFirstOrderNeighbors() const
   {
@@ -143,16 +132,8 @@ public:
   {
     return m_color;
   }
-  int getColor()
-  {
-    return m_color;
-  }
 
   int getNumColors() const
-  {
-    return m_numColors;
-  }
-  int getNumColors()
   {
     return m_numColors;
   }
@@ -162,27 +143,17 @@ public:
   {
     return m_numPartitions;
   }
-  int getNumPartitions()
-  {
-    return m_numPartitions;
-  }
-
-
-
-  virtual ~PartitionerBase() = default;
-
-  PartitionerBase(): m_numColors( 1 ), m_color( 0 ), m_numPartitions( 1 ), m_numFirstOrderNeighbors( 0 ) {}
-
 
 
 protected:
   stdVector< NeighborCommunicator > m_neighbors;
   std::vector< int > m_neighborsRank;
 
-  int m_numColors;
-  int m_color;
   int m_numPartitions;
   int m_numFirstOrderNeighbors;
+  int m_numColors;
+  int m_color;
+
 
 
 private:

@@ -30,8 +30,26 @@ namespace geos
 class ParMetisPartitioner : public PartitionerBase
 {
 public:
-  ParMetisPartitioner();
+
+  ParMetisPartitioner( string const & name,
+                       Group * const parent );
+
   ~ParMetisPartitioner();
+
+  /**
+   * @brief Structure to hold scoped key names
+   */
+  struct viewKeyStruct
+  {
+    constexpr static char const * numRefinementsString() { return "numRefinements"; }
+  };
+
+  /**
+   * @brief Return the name of the VTKMeshGenerator in object Catalog.
+   * @return string that contains the key name to VTKMeshGenerator in the Catalog
+   */
+  static string catalogName() { return "ParMetis"; }
+
 
   void setPartitionCounts( unsigned int xPartitions, unsigned int yPartitions, unsigned int zPartitions ) override;
 
@@ -75,6 +93,9 @@ public:
 private:
 
   void color() override;
+
+
+  int m_numRefinements;
 };
 
 } // namespace geos

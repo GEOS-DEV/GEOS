@@ -31,8 +31,27 @@ namespace geos
 class ParticleCartesianPartitioner : public CartesianPartitioner
 {
 public:
-  ParticleCartesianPartitioner();
+
+
+  ParticleCartesianPartitioner( string const & name,
+                                Group * const parent );
+
   ~ParticleCartesianPartitioner();
+
+  /**
+   * @brief Structure to hold scoped key names
+   */
+  struct viewKeyStruct
+  {
+    //constexpr static char const * m_partitionCountsString() { return "partitionCounts"; }
+  };
+
+  /**
+   * @brief Return the name of the VTKMeshGenerator in object Catalog.
+   * @return string that contains the key name to VTKMeshGenerator in the Catalog
+   */
+  static string catalogName() { return "ParticleCartesian"; }
+
 
   void updateSizes( arrayView1d< real64 > const domainL,
                     real64 const dt );
