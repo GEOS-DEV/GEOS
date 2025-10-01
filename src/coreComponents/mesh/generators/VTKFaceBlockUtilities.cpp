@@ -288,7 +288,7 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
     {
       es.push_back( nodeToEdges[i][j] );
     }
-    n2e[globalPtIds->GetValue( i )] = es;
+    n2e.at( globalPtIds->GetValue( i )) = es;
   }
 
   auto const comp = []( std::pair< vtkIdType, int > const & l, std::pair< vtkIdType, int > const & r ) { return l.second < r.second; };
@@ -312,9 +312,13 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
     for( vtkIdType const & d: allDuplicatedNodesOfEdge )
     {
       localIndex const dd = LvArray::integerConversion< localIndex >( d );
-      for( localIndex const & val: n2e[dd] )
+      auto n2eIt = n2e.find( dd );
+      if( n2eIt != n2e.end() )
       {
-        edgeCount[val]++;
+        for( localIndex const & val: n2e.at( dd ) )
+        {
+          edgeCount.at( val )++;
+        }
       }
     }
     auto const res = std::max_element( edgeCount.cbegin(), edgeCount.cend(), comp );
