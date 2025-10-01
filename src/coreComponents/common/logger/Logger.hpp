@@ -182,13 +182,13 @@
   { \
     if( COND ) \
     { \
-      static constexpr string_view formatString = "***** ERROR\n" \
-                                                  "***** LOCATION" LOCATION "\n" \
-                                                                            "***** BLOCK:  [%u, %u, %u]\n" \
-                                                                            "***** THREAD: [%u, %u, %u]\n" \
-                                                                            "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
-                                                                                                                "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
-      printf( formatString.data(), blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
+      static char const formatString[] = "***** ERROR\n" \
+                                         "***** LOCATION" LOCATION "\n" \
+                                                                   "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                   "***** THREAD: [%u, %u, %u]\n" \
+                                                                   "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+                                                                                                       "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
     } \
   } while( false )
@@ -264,13 +264,13 @@
   { \
     if( COND ) \
     { \
-      static constexpr string_view formatString = "***** ERROR\n" \
-                                                  "***** LOCATION" LOCATION "\n" \
-                                                                            "***** BLOCK:  [%u, %u, %u]\n" \
-                                                                            "***** THREAD: [%u, %u, %u]\n" \
-                                                                            "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
-                                                                                                                "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
-      printf( formatString.data(), blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
+      static char const formatString[] = "***** ERROR\n" \
+                                         "***** LOCATION" LOCATION "\n" \
+                                                                   "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                   "***** THREAD: [%u, %u, %u]\n" \
+                                                                   "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+                                                                                                       "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
     } \
   } while( false )
@@ -341,13 +341,13 @@
   { \
     if( COND ) \
     { \
-      static constexpr string_view formatString = "***** WARNING\n" \
-                                                  "***** LOCATION" LOCATION "\n" \
-                                                                            "***** BLOCK:  [%u, %u, %u]\n" \
-                                                                            "***** THREAD: [%u, %u, %u]\n" \
-                                                                            "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
-                                                                                                                "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
-      printf( formatString.data(), blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
+      static char const formatString[] = "***** WARNING\n" \
+                                         "***** LOCATION" LOCATION "\n" \
+                                                                   "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                   "***** THREAD: [%u, %u, %u]\n" \
+                                                                   "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+                                                                                                       "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
       asm ( "trap;" ); \
     } \
   } while( false )
@@ -365,7 +365,9 @@
 
 /**
  * @brief Report a warning.
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - Mandatory first parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_WARNING( ... ) GEOS_WARNING_IF_CAUSE( true, "", __VA_ARGS__ )
 
@@ -762,6 +764,9 @@
 
 #if !defined(NDEBUG) || defined(GEOS_ASSERT_ENABLED)
 
+/**
+ * @brief Enables assertion macros (GEOS_ASSERT*) when NDEBUG is not defined or previously explicitly enabled.
+ */
 #define GEOS_ASSERT_ENABLED
 
 /**

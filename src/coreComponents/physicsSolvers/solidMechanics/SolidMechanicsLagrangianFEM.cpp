@@ -981,11 +981,23 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
                                                bool const setSparsity )
 {
   GEOS_MARK_FUNCTION;
+
   PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
-  SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
-                                                  dofManager.numGlobalDofs(),
-                                                  8*8*3*1.2 );
+  if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
+  {
+    m_precond = createPreconditioner( domain );
+  }
+}
+
+void SolidMechanicsLagrangianFEM::setSparsityPattern( DomainPartition & domain,
+                                                      DofManager & dofManager,
+                                                      CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                                                      SparsityPattern< globalIndex > & pattern )
+{
+  pattern.resize( dofManager.numLocalDofs(),
+                  dofManager.numGlobalDofs(),
+                  8*8*3*1.2 );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -999,21 +1011,15 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
       fillSparsity< CellElementSubRegion,
                     solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
                                                                                           regionNames,
-                                                                                          this->getDiscretizationName(),
+                                                                                          getDiscretizationName(),
                                                                                           dofNumber,
                                                                                           dofManager.rankOffset(),
-                                                                                          sparsityPattern );
+                                                                                          pattern );
 
 
   } );
 
-  sparsityPattern.compress();
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );
-
-  if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
-  {
-    m_precond = createPreconditioner( domain );
-  }
+  pattern.compress();
 }
 
 void SolidMechanicsLagrangianFEM::computeRigidBodyModes( DomainPartition & domain ) const
