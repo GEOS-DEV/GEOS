@@ -1123,6 +1123,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     if (temperature > 1.e-10 and m_referenceTemperature > 1.e-10 )
     {
     creepRateTemperatureMultiplier = exp(-1.0*m_creepActivationEnergy*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) ); 
+    std::cout << "creepRateTemperatureMultiplier" << creepRateTemperatureMultiplier << std::endl;
     }
 
     real64 equilibriumPorosityPressureExponent = m_creepD;  // volumetric creep rate parameter
@@ -1228,6 +1229,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
                             + (-3.e-6 * std::pow(std::max(temperature - m_referenceTemperature, 0.0), 2.)) 
                             - (0.0002 * std::max(temperature - m_referenceTemperature, 0.0))
                             );    
+    std::cout << "temperature" << temperature << ", referenceTemperature" << m_referenceTemperature << ", temperature-reference Temperature" << temperature - m_referenceTemperature << std::endl;
 
     if ( (phi_p - phi_e > 1.e-10) && (p > 1.e-12) && ( m_creepC > 1.e-16) && ( evp + m_p3 > 1.e-10 ) )
     {  // creep compaction
