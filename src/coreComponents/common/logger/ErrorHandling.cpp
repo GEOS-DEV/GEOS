@@ -22,6 +22,7 @@
 #include "common/format/StringUtilities.hpp"
 
 #include <fstream>
+#include <regex>
 #include <string_view>
 
 namespace geos
