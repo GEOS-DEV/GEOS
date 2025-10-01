@@ -111,7 +111,13 @@ public:
                CRSMatrix< real64, globalIndex > & localMatrix,
                ParallelVector & rhs,
                ParallelVector & solution,
-               bool const setSparsity = false ) override;
+               bool setSparsity = true ) override;
+
+  virtual void
+  setSparsityPattern( DomainPartition & domain,
+                      DofManager & dofManager,
+                      CRSMatrix< real64, globalIndex > & localMatrix,
+                      SparsityPattern< globalIndex > & pattern ) override;
 
   virtual std::unique_ptr< PreconditionerBase< LAInterface > >
   createPreconditioner( DomainPartition & domain ) const override;
@@ -123,6 +129,11 @@ public:
                   DofManager const & dofManager,
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
+
+  virtual void solveLinearSystem( DofManager const & dofManager,
+                                  ParallelMatrix & matrix,
+                                  ParallelVector & rhs,
+                                  ParallelVector & solution ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
