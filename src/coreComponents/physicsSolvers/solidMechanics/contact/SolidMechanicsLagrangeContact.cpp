@@ -213,26 +213,13 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
 
 }
 
-void SolidMechanicsLagrangeContact::setupSystem( DomainPartition & domain,
-                                                 DofManager & dofManager,
-                                                 CRSMatrix< real64, globalIndex > & localMatrix,
-                                                 ParallelVector & rhs,
-                                                 ParallelVector & solution,
-                                                 bool const GEOS_UNUSED_PARAM( setSparsity ) )
+void SolidMechanicsLagrangeContact::setSparsityPattern( DomainPartition & domain,
+                                                        DofManager & dofManager,
+                                                        CRSMatrix< real64, globalIndex > & localMatrix,
+                                                        SparsityPattern< globalIndex > & pattern )
 {
-  if( m_precond )
-  {
-    m_precond->clear();
-  }
-
-  // setup monolithic coupled system
-  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, true ); // "true" is to force setSparsity
-
-  if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
-  {
-    createPreconditioner( domain );
-  }
-
+  // avoid calling SolidMechanicsLagrangianFEM::setSparsityPattern
+  PhysicsSolverBase::setSparsityPattern( domain, dofManager, localMatrix, pattern );
 }
 
 void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,
