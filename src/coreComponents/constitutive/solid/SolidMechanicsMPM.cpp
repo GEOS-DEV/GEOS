@@ -6350,7 +6350,6 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   real64 boxPlasticStrain[6] = { 0.0 };
   real64 boxStress[6] = { 0.0 }; // we sum stress * volume in particles, additive sync, then divide by box volume.
   real64 boxMass = 0.0; // we sum particle mass, additive sync, then divide by box volume
-  //std::cout << "boxMass line 6353 " << boxMass << std::endl; 
   real64 boxParticleReferenceVolume = 0.0;
   real64 boxDamage = 0.0; // we sum damage * reference volume, additive sync, then divide by total reference volume in box
   real64 boxInternalEnergy = 0.0;
@@ -6399,13 +6398,11 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
           z > boxAverageMin[2] && z < boxAverageMax[2] )
       {
         boxMass += particleMass[p];
-        //std::cout << "boxMass line 6401 " << boxMass << std::endl; 
         boxMatVolume += particleVolume[p];
         boxParticleReferenceVolume += particleReferenceVolume[p];
         boxKineticEnergy += particleKineticEnergy[p] * particleMass[p];
         boxInternalEnergy += particleInternalEnergy[p] * particleMass[p];
         boxTemperature += particleTemperature[p] * particleMass[p];
-        //std::cout << "particleMass[p]: " << particleMass[p] << " particleVolume[p]: " << particleVolume[p] << std::endl;
         for( int i=0; i<6; i++ )
         {
           boxStress[i] += particleStress[p][i] * particleVolume[p]; // volume weighted average, will normalize later.
@@ -6425,8 +6422,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   boxSums[3] = boxStress[3];       // sig_yz * volume (will be normalized by box volume)
   boxSums[4] = boxStress[4];       // sig_xz * volume (will be normalized by box volume)
   boxSums[5] = boxStress[5];       // sig_xy * volume (will be normalized by box volume)
-  boxSums[6] = boxMass;
-  //std::cout << "boxMass line 6427 " << boxMass << std::endl;            // total mass in box
+  boxSums[6] = boxMass;            // total mass in box
   boxSums[7] = boxParticleReferenceVolume > 0.0 ? boxParticleReferenceVolume : 1.0;  // total particle reference volume in box; prevent div0 error
   boxSums[8] = boxDamage;            // damage * referenceVolume  (will be normalized by reference volume to give reference volume fraction of damaged material)
   boxSums[9] = boxInternalEnergy;    // internal energy * mass (will be normalized by mass)
@@ -6462,8 +6458,6 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     // Calculate the box volume
     real64 boxVolume = m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2];
     real64 boxReferenceVolume = boxSums[7];
-    boxMass = boxSums[6];
-    boxMatVolume = boxSums[17];
 
     // Write to file
     std::ofstream file;
@@ -6472,13 +6466,9 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     {
       throw std::ios_base::failure( std::strerror( errno ) );
     }
-    //std::cout << "boxSums[9] / boxMass : boxSums [9] " << boxSums[9] << "boxMass: " << boxMass << std::endl;            // total mass in box
-    //std::cout << "boxSums[16] / boxMatVolume : boxSums [16] " << boxSums[16] << "boxMatVolume" << boxMatVolume << std::endl;            // total mass in box
-
     //make sure write fails with exception if something is wrong
     file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
     // time | sig_xx | sig_yy | sig_zz | sig_xy | sig_yz | sig_zx | density | damage | internal energy | kinetic energy | epxx | epyy | epzz | epyz | epxz | epxy | total particle volume | particleTemperature | F00 | F11 | F22
-    //std::cout << "boxVolume: " << boxVolume << " boxMass 6476: " << boxMass << " boxMatVolume: " << boxMatVolume << std::endl;
     file << time_n + dt
          << ","
          << boxSums[0] / boxVolume // sig_xx
@@ -6495,7 +6485,8 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
          << ","
          << boxSums[6] / boxVolume // density
          << ","
-         << boxSums[8] / boxReferenceVolume // We normalize by total particle reference volume because this should equal one if all the material is                                    // damaged
+         << boxSums[8] / boxReferenceVolume // We normalize by total particle reference volume because this should equal one if all the material is
+                                    // damaged
          << ", "
          << boxSums[9] / boxMass
          << ", "
