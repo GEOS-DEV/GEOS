@@ -26,6 +26,7 @@
 
 #include <_hypre_parcsr_mv.h>
 #include <_hypre_IJ_mv.h>
+#include <vector>
 
 namespace geos
 {
@@ -36,10 +37,9 @@ HypreExport::HypreExport( HypreMatrix const & mat,
                           integer const targetRank )
   : m_targetRank( targetRank )
 {
-  // make a sub-communicator for scatter and ensure target rank is mapped to 0 in new comm
-  int const rank = MpiWrapper::commRank( mat.comm() );
+  // Build a sub-communicator of ranks that have rows, preserving natural rank order.
   int const color = ( mat.numLocalRows() > 0 ) ? 0 : MPI_UNDEFINED;
-  int const key = ( rank == m_targetRank ) ? 0 : ( rank < m_targetRank ) ? rank + 1 : rank;
+  int const key = MpiWrapper::commRank( mat.comm() );
   m_subComm = MpiWrapper::commSplit( mat.comm(), color, key );
 }
 
@@ -196,43 +196,74 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
                                 HypreVector & vec ) const
 {
   hypre_Vector * const localVector = hypre_ParVectorLocalVector( vec.unwrapped() );
-  if( m_subComm != MPI_COMM_NULL )
-  {
-    hypre_Vector * wrapperVector{};
-    if( MpiWrapper::commRank( vec.comm() ) == m_targetRank )
-    {
-      GEOS_LAI_ASSERT_EQ( values.size(), vec.globalSize() );
-      values.move( hostMemorySpace, false );
 
-      // HACK: create a hypre vector that points to local data; we have to use const_cast,
-      //       but this is ok because we don't modify the values, only scatter the vector.
-      wrapperVector = hypre_SeqVectorCreate( LvArray::integerConversion< HYPRE_Int >( values.size() ) );
-      hypre_VectorOwnsData( wrapperVector ) = false;
-      hypre_VectorData( wrapperVector ) = const_cast< real64 * >( values.data() );
-      hypre_SeqVectorInitialize_v2( wrapperVector, HYPRE_MEMORY_HOST );
+  // Single-rank import: scatter the global vector from target rank to all ranks with rows
+  if( m_targetRank >= 0 && m_subComm != MPI_COMM_NULL )
+  {
+    int const subRank = MpiWrapper::commRank( m_subComm );
+    int const subSize = MpiWrapper::commSize( m_subComm );
+    int const parentRank = MpiWrapper::commRank( vec.comm() );
+
+    // Locate the sub-comm rank corresponding to the target parent rank
+    std::vector< int > parentRanks( subSize );
+    MPI_CHECK_ERROR( MpiWrapper::allgather( &parentRank, 1, parentRanks.data(), 1, m_subComm ) );
+
+    int targetSubRank = -1;
+    for( int i = 0; i < subSize; ++i )
+    {
+      if( parentRanks[i] == m_targetRank ) { targetSubRank = i; break; }
+    }
+    GEOS_ERROR_IF( targetSubRank < 0, "HypreExport::importVector: target rank has no rows and is not in the sub-communicator" );
+
+    // Build counts and displacements from actual local sizes
+    int const myLocal = LvArray::integerConversion< int >( vec.localSize() );
+    std::vector< int > counts( subSize );
+    MPI_CHECK_ERROR( MpiWrapper::allgather( &myLocal, 1, counts.data(), 1, m_subComm ) );
+
+    std::vector< int > displs( subSize );
+    displs[0] = 0;
+    for( int i = 1; i < subSize; ++i )
+    {
+      displs[i] = displs[i-1] + counts[i-1];
     }
 
-    // scatter the data
-    hypre_ParVector * const parVector = hypre_VectorToParVector( m_subComm,
-                                                                 wrapperVector,
-                                                                 hypre_ParVectorPartitioning( vec.unwrapped() ) );
-    // copy local part of the data over to the output vector
+    // On the root of the scatter, validate and expose host buffer
+    real64 const * sendBuf = nullptr;
+    if( subRank == targetSubRank )
+    {
+      GEOS_ERROR_IF_NE( values.size(), vec.globalSize() );
+      values.move( hostMemorySpace, false );
+      sendBuf = values.data();
+    }
+
+    // Receive local chunk into host buffer and then copy to hypre local vector (host/device)
+    std::vector< real64 > recvBuf( static_cast< size_t >( myLocal ) );
+
+    MPI_CHECK_ERROR( MPI_Scatterv( sendBuf,
+                                   counts.data(),
+                                   displs.data(),
+                                   MPI_DOUBLE,
+                                   recvBuf.data(),
+                                   myLocal,
+                                   MPI_DOUBLE,
+                                   targetSubRank,
+                                   m_subComm ) );
+
     hypre_TMemcpy( hypre_VectorData( localVector ),
-                   hypre_VectorData( hypre_ParVectorLocalVector( parVector ) ),
+                   recvBuf.data(),
                    HYPRE_Real,
                    vec.localSize(),
                    hypre_VectorMemoryLocation( localVector ),
-                   hypre_ParVectorMemoryLocation( parVector ) );
-
-    GEOS_LAI_CHECK_ERROR( hypre_ParVectorDestroy( parVector ) );
-    GEOS_LAI_CHECK_ERROR( hypre_SeqVectorDestroy( wrapperVector ) );
+                   HYPRE_MEMORY_HOST );
   }
   else
   {
+    // Parallel local fill: copy provided local values directly into hypre vector
     exportArray( hypre_VectorMemoryLocation( localVector ),
                  values,
                  hypre_VectorData( localVector ) );
   }
+
   vec.touch();
 }
 
