@@ -211,7 +211,10 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
     int targetSubRank = -1;
     for( int i = 0; i < subSize; ++i )
     {
-      if( parentRanks[i] == m_targetRank ) { targetSubRank = i; break; }
+      if( parentRanks[i] == m_targetRank )
+      {
+        targetSubRank = i; break;
+      }
     }
     GEOS_ERROR_IF( targetSubRank < 0, "HypreExport::importVector: target rank has no rows and is not in the sub-communicator" );
 
