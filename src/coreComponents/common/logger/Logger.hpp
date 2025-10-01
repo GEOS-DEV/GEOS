@@ -365,7 +365,9 @@
 
 /**
  * @brief Report a warning.
- * @param msg a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - Mandatory first parameter, the message to log (must be streamable)
+ *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_WARNING( ... ) GEOS_WARNING_IF_CAUSE( true, "", __VA_ARGS__ )
 
@@ -762,6 +764,9 @@
 
 #if !defined(NDEBUG) || defined(GEOS_ASSERT_ENABLED)
 
+/**
+ * @brief Enables assertion macros (GEOS_ASSERT*) when NDEBUG is not defined or previously explicitly enabled.
+ */
 #define GEOS_ASSERT_ENABLED
 
 /**
