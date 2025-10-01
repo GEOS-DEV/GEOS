@@ -259,7 +259,7 @@ void HypreSolver::solve( HypreVector const & rhs,
     m_result.status = result ? LinearSolverResult::Status::NotConverged : LinearSolverResult::Status::Success;
   }
 
-  // Clear error code to avoid GEOSX from crashing if Krylov method did not converge
+  // Clear error code to avoid GEOS from crashing if Krylov method did not converge
   GEOS_LAI_CHECK_ERROR( HYPRE_ClearAllErrors() );
 
   // Get final residual norm
