@@ -254,7 +254,6 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
   }
   else
   {
-    // Parallel local fill: copy provided local values directly into hypre vector
     exportArray( hypre_VectorMemoryLocation( localVector ),
                  values,
                  hypre_VectorData( localVector ) );
