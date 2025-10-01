@@ -1247,26 +1247,47 @@ void SolidMechanicsMPM::postInputInitialization()
     GEOS_ERROR_IF(!( m_prescribedBoundaryTransverseVelocities.size(0) == 6 && m_prescribedBoundaryTransverseVelocities.size(1) == 2 ), "Check dimensions of prescribedBoundaryTransverseVelocities!" );
   }
 
-  if( m_prescribedBoundaryFTable == 1 && m_prescribedFTable == 1 )
+  // Check stress control
+  if( m_stressControl.size() == 0 ){
+    m_stressControl.resize( 3 );
+    LvArray::tensorOps::fill<3>( m_stressControl, 0 );
+  }
+  else
+  {
+    GEOS_ERROR_IF( m_stressControl.size() != 3, "Stress control input must have size 3.");
+  }
+
+  if( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 )
   {
     // Reads the FTable directly from the xml
     int numRows = m_fTable.size( 0 );
     GEOS_ERROR_IF(numRows == 0, "Prescribed boundary deformation is enabled but no F table was specified.");
     for(int i = 0; i < numRows; ++i){
+
       GEOS_ERROR_IF(m_fTable[i].size() != 4, "F table row " << i+1 << " must have 4 elements.");
       GEOS_ERROR_IF(m_fTable[i][0] < 0, "F table times must be positive.");
 
-      if(i == 0)
+      int rank;
+      MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+      if (rank == 0 )
       {
-        GEOS_ERROR_IF( compareFloat( m_fTable[i][1], 1.0, 1e-12 ) || 
-                       compareFloat( m_fTable[i][2], 1.0, 1e-12 ) || 
-                       compareFloat( m_fTable[i][3], 1.0, 1e-12 ) , "Deformation of first row of F table must be 1." );
+        std::cout<<"i="<<i<<", m_fTable[i][0] = "<<m_fTable[i][0]<<", m_fTable[i][1] = "<<m_fTable[i][1]<<", m_fTable[i][2] = "<<m_fTable[i][2]<<", m_fTable[i][3] = "<<m_fTable[i][3]<<std::endl;
       }
-      else
-      {
-        GEOS_ERROR_IF( m_fTable[i][1] < 0 || 
-                       m_fTable[i][2] < 0 || 
-                       m_fTable[i][3] < 0, "F table entries must be positive." );
+
+      for(int k=0; k<3; ++k)
+      { // Stress-control = 1 overrides FTable control, so if we aren't doing stress control in a direction,
+        // this checks that the table is well defined:
+        if (m_stressControl[k] != 1)
+        {
+          if(i == 0)
+          {
+            GEOS_ERROR_IF( !compareFloat( m_fTable[i][k+1], 1.0, 1e-12 ), "Deformation of first row of F table must be 1." );
+          }
+          else
+          {
+            GEOS_ERROR_IF( m_fTable[i][k+1] < 0, "F table entries must be positive." );
+          }
+        }
       }
     }
   }
@@ -1293,15 +1314,7 @@ void SolidMechanicsMPM::postInputInitialization()
     LvArray::tensorOps::fill< 6 >( m_globalFaceReactions, 0.0 );
   }
 
-  // Check stress control
-  if( m_stressControl.size() == 0 ){
-    m_stressControl.resize( 3 );
-    LvArray::tensorOps::fill<3>( m_stressControl, 0 );
-  }
-  else
-  {
-    GEOS_ERROR_IF( m_stressControl.size() != 3, "Stress control input must have size 3.");
-  }
+
 
   if( m_domainStress.size() == 0 )
   {
@@ -6350,7 +6363,6 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   real64 boxPlasticStrain[6] = { 0.0 };
   real64 boxStress[6] = { 0.0 }; // we sum stress * volume in particles, additive sync, then divide by box volume.
   real64 boxMass = 0.0; // we sum particle mass, additive sync, then divide by box volume
-  //std::cout << "boxMass line 6353 " << boxMass << std::endl; 
   real64 boxParticleReferenceVolume = 0.0;
   real64 boxDamage = 0.0; // we sum damage * reference volume, additive sync, then divide by total reference volume in box
   real64 boxInternalEnergy = 0.0;
@@ -6399,13 +6411,11 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
           z > boxAverageMin[2] && z < boxAverageMax[2] )
       {
         boxMass += particleMass[p];
-        //std::cout << "boxMass line 6401 " << boxMass << std::endl; 
         boxMatVolume += particleVolume[p];
         boxParticleReferenceVolume += particleReferenceVolume[p];
         boxKineticEnergy += particleKineticEnergy[p] * particleMass[p];
         boxInternalEnergy += particleInternalEnergy[p] * particleMass[p];
         boxTemperature += particleTemperature[p] * particleMass[p];
-        //std::cout << "particleMass[p]: " << particleMass[p] << " particleVolume[p]: " << particleVolume[p] << std::endl;
         for( int i=0; i<6; i++ )
         {
           boxStress[i] += particleStress[p][i] * particleVolume[p]; // volume weighted average, will normalize later.
@@ -6425,8 +6435,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   boxSums[3] = boxStress[3];       // sig_yz * volume (will be normalized by box volume)
   boxSums[4] = boxStress[4];       // sig_xz * volume (will be normalized by box volume)
   boxSums[5] = boxStress[5];       // sig_xy * volume (will be normalized by box volume)
-  boxSums[6] = boxMass;
-  //std::cout << "boxMass line 6427 " << boxMass << std::endl;            // total mass in box
+  boxSums[6] = boxMass;            // total mass in box
   boxSums[7] = boxParticleReferenceVolume > 0.0 ? boxParticleReferenceVolume : 1.0;  // total particle reference volume in box; prevent div0 error
   boxSums[8] = boxDamage;            // damage * referenceVolume  (will be normalized by reference volume to give reference volume fraction of damaged material)
   boxSums[9] = boxInternalEnergy;    // internal energy * mass (will be normalized by mass)
@@ -6459,11 +6468,11 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
   if( rank == 0 )
   {
-    // Calculate the box volume
+    // Calculate the box volume and take the post-MPI sync normalization values for mat volume and mass:
     real64 boxVolume = m_domainExtent[0] * m_domainExtent[1] * m_domainExtent[2];
     real64 boxReferenceVolume = boxSums[7];
-    boxMass = boxSums[6];
     boxMatVolume = boxSums[17];
+    boxMass = boxSums[6];
 
     // Write to file
     std::ofstream file;
@@ -6472,13 +6481,9 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     {
       throw std::ios_base::failure( std::strerror( errno ) );
     }
-    //std::cout << "boxSums[9] / boxMass : boxSums [9] " << boxSums[9] << "boxMass: " << boxMass << std::endl;            // total mass in box
-    //std::cout << "boxSums[16] / boxMatVolume : boxSums [16] " << boxSums[16] << "boxMatVolume" << boxMatVolume << std::endl;            // total mass in box
-
     //make sure write fails with exception if something is wrong
     file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
     // time | sig_xx | sig_yy | sig_zz | sig_xy | sig_yz | sig_zx | density | damage | internal energy | kinetic energy | epxx | epyy | epzz | epyz | epxz | epxy | total particle volume | particleTemperature | F00 | F11 | F22
-    //std::cout << "boxVolume: " << boxVolume << " boxMass 6476: " << boxMass << " boxMatVolume: " << boxMatVolume << std::endl;
     file << time_n + dt
          << ","
          << boxSums[0] / boxVolume // sig_xx
@@ -6495,7 +6500,8 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
          << ","
          << boxSums[6] / boxVolume // density
          << ","
-         << boxSums[8] / boxReferenceVolume // We normalize by total particle reference volume because this should equal one if all the material is                                    // damaged
+         << boxSums[8] / boxReferenceVolume // We normalize by total particle reference volume because this should equal one if all the material is
+                                    // damaged
          << ", "
          << boxSums[9] / boxMass
          << ", "
@@ -6814,6 +6820,15 @@ void SolidMechanicsMPM::stressControl( real64 dt,
       }
     }
 	}
+
+  int rank;
+  MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
+  if (rank == 0 )
+  {
+    std::cout<<"Stress control:  targetStress = [ "<<targetStress[0]<<", "<<targetStress[1]<<", "<<targetStress[2]<<" ], currentStress = [ "<<currentStress[0]<<", "<<currentStress[1]<<", "<<currentStress[2]<<" ]"<<std::endl;
+    std::cout<<"m_domainF = [ "<<m_domainF[0]<<", "<<m_domainF[1]<<", "<<m_domainF[2]<<" ], m_domainL = [ "<<m_domainL[0]<<", "<<m_domainL[1]<<", "<<m_domainL[2]<<" ]"<<std::endl;
+  }
+
 }
 
 

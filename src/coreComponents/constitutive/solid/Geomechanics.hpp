@@ -995,10 +995,6 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
   real64 evp_n = LvArray::tensorOps::symTrace< 3 >( ep_n ); // ep_n.Trace(); // Volumetric plastic strain at start of step.
   
-  // computeBuckling(buckling,       // this is overwritten
-  //                 evp_n,          // buckling strain, could be evp, directional strain, log(J), etc. 
-  //                 lengthScale);   // element
-
   // hydrostatic compressive strength at start of step(t_n)
   real64 X_n = computeX( evp_n,
                           phi_i,
@@ -1263,10 +1259,6 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
       ep_iso[0] = evp_c/3.;
       ep_iso[1] = evp_c/3.;
       ep_iso[2] = evp_c/3.;
-
-      // computeBuckling(buckling,       // this is overwritten
-      //                 evp_c,          // buckling strain, could be evp, directional strain, log(J), etc. 
-      //                 lengthScale);   // element
 
       // update cap function to be consistent with new vol. plastic
       X_old = computeX( evp_c,
