@@ -322,7 +322,7 @@ private:
   integer m_iteration = 0;
 
   /// Residuals with their names
-  std::map< string, real64 > m_residuals;
+  stdMap< string, real64 > m_residuals;
 
   /// A boolean indicating whether the CSV file is open or not
   bool m_csvOutputOpened  = false;
