@@ -37,9 +37,10 @@ HypreExport::HypreExport( HypreMatrix const & mat,
                           integer const targetRank )
   : m_targetRank( targetRank )
 {
-  // Build a sub-communicator of ranks that have rows, preserving natural rank order.
+  // make a sub-communicator for scatter and ensure target rank is mapped to 0 in new comm
+  int const rank = MpiWrapper::commRank( mat.comm() );
   int const color = ( mat.numLocalRows() > 0 ) ? 0 : MPI_UNDEFINED;
-  int const key = MpiWrapper::commRank( mat.comm() );
+  int const key = ( rank == m_targetRank ) ? 0 : ( rank < m_targetRank ) ? rank + 1 : rank;
   m_subComm = MpiWrapper::commSplit( mat.comm(), color, key );
 }
 
