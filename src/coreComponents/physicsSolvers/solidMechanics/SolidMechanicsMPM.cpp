@@ -1247,6 +1247,16 @@ void SolidMechanicsMPM::postInputInitialization()
     GEOS_ERROR_IF(!( m_prescribedBoundaryTransverseVelocities.size(0) == 6 && m_prescribedBoundaryTransverseVelocities.size(1) == 2 ), "Check dimensions of prescribedBoundaryTransverseVelocities!" );
   }
 
+  // Check stress control
+  if( m_stressControl.size() == 0 ){
+    m_stressControl.resize( 3 );
+    LvArray::tensorOps::fill<3>( m_stressControl, 0 );
+  }
+  else
+  {
+    GEOS_ERROR_IF( m_stressControl.size() != 3, "Stress control input must have size 3.");
+  }
+
   if( m_prescribedBoundaryFTable == 1 || m_prescribedFTable == 1 )
   {
     // Reads the FTable directly from the xml
@@ -1304,15 +1314,7 @@ void SolidMechanicsMPM::postInputInitialization()
     LvArray::tensorOps::fill< 6 >( m_globalFaceReactions, 0.0 );
   }
 
-  // Check stress control
-  if( m_stressControl.size() == 0 ){
-    m_stressControl.resize( 3 );
-    LvArray::tensorOps::fill<3>( m_stressControl, 0 );
-  }
-  else
-  {
-    GEOS_ERROR_IF( m_stressControl.size() != 3, "Stress control input must have size 3.");
-  }
+
 
   if( m_domainStress.size() == 0 )
   {
