@@ -26,7 +26,7 @@
 
 #include <_hypre_parcsr_mv.h>
 #include <_hypre_IJ_mv.h>
-#include <vector>
+#include <algorithm>
 
 namespace geos
 {
@@ -37,8 +37,8 @@ HypreExport::HypreExport( HypreMatrix const & mat,
                           integer const targetRank )
   : m_targetRank( targetRank )
 {
-  // make a sub-communicator for scatter and ensure target rank is mapped to 0 in new comm
   int const rank = MpiWrapper::commRank( mat.comm() );
+  // Build a sub-communicator of ranks that have rows, preserving natural rank order.
   int const color = ( mat.numLocalRows() > 0 ) ? 0 : MPI_UNDEFINED;
   int const key = ( rank == m_targetRank ) ? 0 : ( rank < m_targetRank ) ? rank + 1 : rank;
   m_subComm = MpiWrapper::commSplit( mat.comm(), color, key );
@@ -205,35 +205,27 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
     int const subSize = MpiWrapper::commSize( m_subComm );
     int const parentRank = MpiWrapper::commRank( vec.comm() );
 
-    // Locate the sub-comm rank corresponding to the target parent rank
-    std::vector< int > parentRanks( subSize );
+    // Verify that sub-comm rank 0 corresponds to target parent rank (constructor assigns key to make target rank 0)
+    array1d< int > parentRanks( subSize );
     MPI_CHECK_ERROR( MpiWrapper::allgather( &parentRank, 1, parentRanks.data(), 1, m_subComm ) );
-
-    int targetSubRank = -1;
-    for( int i = 0; i < subSize; ++i )
-    {
-      if( parentRanks[i] == m_targetRank )
-      {
-        targetSubRank = i; break;
-      }
-    }
-    GEOS_ERROR_IF( targetSubRank < 0, "HypreExport::importVector: target rank has no rows and is not in the sub-communicator" );
+    GEOS_ERROR_IF( parentRanks[0] != m_targetRank,
+                   "HypreExport::importVector: target rank has no rows and is not in the sub-communicator" );
 
     // Build counts and displacements from actual local sizes
     int const myLocal = LvArray::integerConversion< int >( vec.localSize() );
-    std::vector< int > counts( subSize );
+    array1d< int > counts( subSize );
     MPI_CHECK_ERROR( MpiWrapper::allgather( &myLocal, 1, counts.data(), 1, m_subComm ) );
 
-    std::vector< int > displs( subSize );
+    array1d< int > displs( subSize );
     displs[0] = 0;
     for( int i = 1; i < subSize; ++i )
     {
       displs[i] = displs[i-1] + counts[i-1];
     }
 
-    // On the root of the scatter, validate and expose host buffer
+    // On the root of the scatter (sub-comm rank 0), validate and expose host buffer
     real64 const * sendBuf = nullptr;
-    if( subRank == targetSubRank )
+    if( subRank == 0 )
     {
       GEOS_ERROR_IF_NE( values.size(), vec.globalSize() );
       values.move( hostMemorySpace, false );
@@ -241,7 +233,7 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
     }
 
     // Receive local chunk into host buffer and then copy to hypre local vector (host/device)
-    std::vector< real64 > recvBuf( static_cast< size_t >( myLocal ) );
+    array1d< real64 > recvBuf( myLocal );
 
     MPI_CHECK_ERROR( MPI_Scatterv( sendBuf,
                                    counts.data(),
@@ -250,7 +242,7 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
                                    recvBuf.data(),
                                    myLocal,
                                    MPI_DOUBLE,
-                                   targetSubRank,
+                                   /*root*/ 0,
                                    m_subComm ) );
 
     hypre_TMemcpy( hypre_VectorData( localVector ),
