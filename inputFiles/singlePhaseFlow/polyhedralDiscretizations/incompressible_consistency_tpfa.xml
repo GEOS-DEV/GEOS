@@ -23,11 +23,7 @@
         newtonTol="1.0e-5"
         newtonMaxIter="2"/>
       <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"
-        krylovTol="1e-10"
-        krylovMaxIter="100"
-        logLevel="1" />  
+        directParallel="0"/>
     </SinglePhaseFVM>
   </Solvers>
 

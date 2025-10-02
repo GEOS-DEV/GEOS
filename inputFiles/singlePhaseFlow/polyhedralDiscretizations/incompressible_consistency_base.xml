@@ -8,7 +8,7 @@
       logLevel="5"  
       partitionRefinement="0"
       useGlobalIds="0"
-      file="polyhedral_voronoi_lattice.vtk"/>
+      file="polyhedral_voronoi_lattice.vtu"/>
   </Mesh>
 
   <Geometry>

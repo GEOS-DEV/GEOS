@@ -31,9 +31,9 @@
 //    the same pressure field as the TPFA solver
 //
 // Tested Meshes:
-// - polyhedral_voronoi_complex.vtk
-// - polyhedral_voronoi_lattice.vtk
-// - polyhedral_voronoi_regular.vtk
+// - polyhedral_voronoi_complex.vtu
+// - polyhedral_voronoi_lattice.vtu
+// - polyhedral_voronoi_regular.vtu
 //
 // Inner Products for MFD:
 // - TPFA
@@ -43,14 +43,14 @@
 // - BdVLM
 //
 // L2 error comparisons are performed to ensure:
-// - TPFA produces machine-precision correct solutions on regular meshes
-// - MFD reproduces machine-precision correct solutions on star-shaped meshes
-// - MFD reproduces TPFA results when innerProductType="TPFA"
+// - TPFA produces machine-precision exact solutions on regular meshes
+// - MFD reproduces machine-precision exact solutions on star-shaped meshes
+// - MFD reproduces exactly TPFA results when innerProductType="TPFA"
 
 
 //# Condition Number Estimates for Methods and Meshes
 //
-//| Method / Mesh | polyhedral_voronoi_complex.vtk | polyhedral_voronoi_lattice.vtk | polyhedral_voronoi_regular.vtk |
+//| Method / Mesh | polyhedral_voronoi_complex.vtu | polyhedral_voronoi_lattice.vtu | polyhedral_voronoi_regular.vtu |
 //|---|---:|---:|---:|
 //| MFD(π) — TPFA | 3.0077238.e5 | 9.6678605.e2 | 2.5071172.e2 |
 //| MFD(π) — QuasiTPFA | 6.6168582.e5 | 6.966971.e2 | 2.5071172.e2 |
@@ -194,9 +194,9 @@ INSTANTIATE_TEST_SUITE_P(
   MeshFiles,
   TPFAIntegrationTest,
   ::testing::Values(
-    "polyhedral_voronoi_complex.vtk",
-    "polyhedral_voronoi_lattice.vtk",
-    "polyhedral_voronoi_regular.vtk"
+    "polyhedral_voronoi_complex.vtu",
+    "polyhedral_voronoi_lattice.vtu",
+    "polyhedral_voronoi_regular.vtu"
     )
   );
 
@@ -239,7 +239,7 @@ TEST_P( TPFAIntegrationTest, PressureFieldL2Error )
   real64 l2Error = std::sqrt( data[0] ) / data[1];
 
   std::string meshFile = GetParam();
-  if( meshFile == "polyhedral_voronoi_regular.vtk" )
+  if( meshFile == "polyhedral_voronoi_regular.vtu" )
   {
     // Assert that the L2 error is within machine precision
     EXPECT_NEAR( l2Error, 0.0, PRESSURE_L2_TOLERANCE );
@@ -365,9 +365,9 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::Combine(
     ::testing::Values( TPFA, QuasiTPFA, QuasiRT, Simple, BdVLM ),
     ::testing::Values(
-      "polyhedral_voronoi_complex.vtk",
-      "polyhedral_voronoi_lattice.vtk",
-      "polyhedral_voronoi_regular.vtk"
+      "polyhedral_voronoi_complex.vtu",
+      "polyhedral_voronoi_lattice.vtu",
+      "polyhedral_voronoi_regular.vtu"
       )
     )
   );
@@ -411,7 +411,7 @@ TEST_P( MFDIntegrationTest, PressureFieldL2Error )
   real64 l2Error = std::sqrt( data[0] ) / data[1];
 
   auto [innerProduct, meshFile] = GetParam();
-  if( innerProduct == TPFA and std::string( meshFile ) != "polyhedral_voronoi_regular.vtk" )
+  if( innerProduct == TPFA and std::string( meshFile ) != "polyhedral_voronoi_regular.vtu" )
   {
     // Assert that the L2 error is not exact
     EXPECT_GT( l2Error, PRESSURE_L2_TOLERANCE );
@@ -446,9 +446,9 @@ INSTANTIATE_TEST_SUITE_P(
   MeshFiles,
   TPFAvsMFDTPFATest,
   ::testing::Values(
-    "polyhedral_voronoi_complex.vtk",
-    "polyhedral_voronoi_lattice.vtk",
-    "polyhedral_voronoi_regular.vtk"
+    "polyhedral_voronoi_complex.vtu",
+    "polyhedral_voronoi_lattice.vtu",
+    "polyhedral_voronoi_regular.vtu"
     )
   );
 
