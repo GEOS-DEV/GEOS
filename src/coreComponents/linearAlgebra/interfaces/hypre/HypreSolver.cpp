@@ -290,6 +290,8 @@ void HypreSolver::solve( HypreVector const & rhs,
 void HypreSolver::clear()
 {
   Base::clear();
+  m_precond.clear();
+
   if( m_solver )
   {
     GEOS_LAI_CHECK_ERROR( m_solver->destroy( m_solver->ptr ) );
