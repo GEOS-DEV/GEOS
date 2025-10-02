@@ -248,6 +248,7 @@ public:
     dataRepository::GroupKey functionManager = { "Functions" };                           ///< Functions key
     dataRepository::GroupKey geometricObjectManager = { "Geometry" };                     ///< Geometry key
     dataRepository::GroupKey meshManager = { "Mesh" };                                    ///< Mesh key
+    dataRepository::GroupKey partitionerManager = { "Partitioner" };                      ///< Partitioner key
     dataRepository::GroupKey numericalMethodsManager = { numericalMethodsManagerString() }; ///< Numerical methods key
     dataRepository::GroupKey outputManager = { "Outputs" };                               ///< Outputs key
     dataRepository::GroupKey physicsSolverManager = { "Solvers" };                        ///< Solvers key
