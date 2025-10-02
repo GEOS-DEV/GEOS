@@ -686,15 +686,24 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // real64 temp[3] = { 0 };
     LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, unrotatedMaterialDirection );
     real64 planeNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );
-
     real64 failureStrength = m_failureStrength * m_strengthScale[k];
 
-    // increment damage, but enforce 0<=d<=1
+    // Increment damage based on max plane-normal stress and crack-speed normalization, but enforce 0<=d<=1
     if ( planeNormalStress > failureStrength )
     {
         real64 timeToFailure = m_lengthScale[k] / m_crackSpeed;
         m_damage[k][q] = std::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
     }
+
+    // If strain-softening is enabled, insert damage once max strain is reached.
+    if ( ( m_distortionStrainHardeningC0 < 0.999 || m_inPlaneStrainHardeningC0 < 0.999 || m_coupledStrainHardeningC0 < 0.999 ) && m_relaxation[k][q] > 0.999 )
+    {
+      m_damage[k][q] = 1.0;
+    }
+
+
+
+
 
     // strength scale factor, combining plastic softening and damage
     real64 damageMultiplier = (1.0 - m_damage[k][q]);
