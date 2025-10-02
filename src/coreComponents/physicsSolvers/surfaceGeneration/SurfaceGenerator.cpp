@@ -21,7 +21,7 @@
 
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/mpiCommunications/PartitionerBase.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -464,15 +464,13 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                                                 MeshLevel & meshLevel,
                                                                 string_array const & )
   {
-    SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
-    int const tileColor=partition.getColor();
-    int const numTileColors=partition.numColor();
+    PartitionerBase & partitioner = domain.getPartitioner();
 
     rval = separationDriver( domain,
                              meshLevel,
                              domain.getNeighbors(),
-                             tileColor,
-                             numTileColors,
+                             partitioner.getColor(),
+                             partitioner.getNumColors(),
                              0,
                              time_n + dt );
 

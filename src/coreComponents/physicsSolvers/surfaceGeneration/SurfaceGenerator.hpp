@@ -27,7 +27,7 @@
 namespace geos
 {
 
-class SpatialPartition;
+//class SpatialPartition;
 class NodeManager;
 class EdgeManager;
 class FaceManager;
