@@ -29,6 +29,7 @@
 #include "DuvautLionsSolid.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
+#include "constitutive/permeability/StrainDependentPermeability.hpp"
 
 namespace geos
 {

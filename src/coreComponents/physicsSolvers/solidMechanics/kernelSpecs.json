@@ -138,7 +138,7 @@
       "CONSTITUTIVE_TYPE": [
         "PorousSolid<ElasticIsotropic, ConstantPermeability>",
         "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>",
-        "PorousSolid<ElasticIsotropic, StrainDependentPermeability>",
+        "PorousSolid<ElasticIsotropic, StrainDependentPermeability>"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",
