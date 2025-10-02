@@ -57,13 +57,12 @@ public:
                 arraySlice1d< real64 > const & dPerm_dVolStrain ) const;
 
   GEOS_HOST_DEVICE
-  virtual void updateFromPressurePorosityAndStrain( localIndex const k,
-                                                    localIndex const q,
-                                                    real64 const & volStrain,
-                                                    real64 const & pressure,
-                                                    real64 const & porosity ) const override
+  virtual void updateFromPorosityAndStrain( localIndex const k,
+                                            localIndex const q,
+                                            real64 const & volStrain,
+                                            real64 const & porosity ) const override
   {
-    GEOS_UNUSED_VAR( pressure, porosity );
+    GEOS_UNUSED_VAR( porosity );
 
     real64 referencePermeability[3];
 
