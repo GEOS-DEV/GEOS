@@ -19,7 +19,7 @@
 
 #include "InternalMeshGenerator.hpp"
 #include "CellBlockManager.hpp"
-
+#include "mesh/mpiCommunications/CartesianPartitioner.hpp"
 #include "common/DataTypes.hpp"
 #include "mesh/MeshFields.hpp"
 
@@ -541,9 +541,20 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
   }
 }
 
-void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
+
+void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionerBase & partitionerBase )
 {
   GEOS_MARK_FUNCTION;
+
+  // InternalMeshGenerator requires CartesianPartitioner
+  CartesianPartitioner * cartesianPartitioner = dynamic_cast< CartesianPartitioner * >( &partitionerBase );
+
+  GEOS_ERROR_IF( cartesianPartitioner == nullptr,
+                 GEOS_FMT( "InternalMeshGenerator '{}' requires CartesianPartitioner. "
+                           "Current partitioner type is not compatible. ",
+                           getName() ) );
+
+  CartesianPartitioner & partitioner = *cartesianPartitioner;
 
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
@@ -556,7 +567,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     m_max[1] = m_vertices[1].back();
     m_max[2] = m_vertices[2].back();
 
-    partition.setSizes( m_min, m_max );
+    partitioner.partition( m_min, m_max );
   }
 
   // Make sure that the node manager fields are initialized
@@ -603,7 +614,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     {
       m_numElemsTotal[dim] += m_nElems[dim][block];
     }
-    array1d< int > const & parts = partition.getPartitions();
+    array1d< int > const & parts = partitioner.getPartitionCounts();
     GEOS_ERROR_IF( parts[dim] > m_numElemsTotal[dim], "Number of partitions in a direction should not exceed the number of elements in that direction" );
 
     elemCenterCoords[dim].resize( m_numElemsTotal[dim] );
@@ -629,7 +640,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     //    lastElemIndexInPartition[i] = -2;
     for( int k = 0; k < m_numElemsTotal[dim]; ++k )
     {
-      if( partition.isCoordInPartition( elemCenterCoords[dim][k], dim ) )
+      if( partitioner.isCoordInPartition( elemCenterCoords[dim][k], dim ) )
       {
         firstElemIndexInPartition[dim] = k;
         break;
@@ -640,7 +651,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     {
       for( int k = firstElemIndexInPartition[dim]; k < m_numElemsTotal[dim]; ++k )
       {
-        if( partition.isCoordInPartition( elemCenterCoords[dim][k], dim ) )
+        if( partitioner.isCoordInPartition( elemCenterCoords[dim][k], dim ) )
         {
           lastElemIndexInPartition[dim] = k;
         }
@@ -733,7 +744,8 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   {
     numNodesInDir[dim] = lastElemIndexInPartition[dim] - firstElemIndexInPartition[dim] + 2;
   }
-  reduceNumNodesForPeriodicBoundary( partition, numNodesInDir );
+
+  reduceNumNodesForPeriodicBoundary( partitioner, numNodesInDir );
   numNodes = numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2];
 
   cellBlockManager.setNumNodes( numNodes );
@@ -760,7 +772,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
           getNodePosition( globalIJK, m_trianglePattern, X[localNodeIndex] );
 
           // Alter global node map for radial mesh
-          setNodeGlobalIndicesOnPeriodicBoundary( partition, globalIJK );
+          setNodeGlobalIndicesOnPeriodicBoundary( partitioner, globalIJK );
 
           nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( globalIJK );
 
@@ -823,7 +835,8 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     // Reset the number of nodes in each dimension in case of periodic BCs so the element firstNodeIndex
     //  calculation is correct? Not actually needed in parallel since we still have ghost nodes in that case and
     //  the count has not been altered due to periodicity.
-    if( std::any_of( partition.m_Periodic.begin(), partition.m_Periodic.end(), []( int & dimPeriodic ) { return dimPeriodic == 1; } ) )
+    array1d< int > const periodic = partitioner.getPeriodicity();
+    if( std::any_of( periodic.begin(), periodic.end(), []( int & dimPeriodic ) { return dimPeriodic == 1; } ) )
     {
       for( int i = 0; i < m_dim; ++i )
       {
