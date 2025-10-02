@@ -205,11 +205,12 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
     int const subSize = MpiWrapper::commSize( m_subComm );
     int const parentRank = MpiWrapper::commRank( vec.comm() );
 
-    // Verify that sub-comm rank 0 corresponds to target parent rank (constructor assigns key to make target rank 0)
-    array1d< int > parentRanks( subSize );
-    MPI_CHECK_ERROR( MpiWrapper::allgather( &parentRank, 1, parentRanks.data(), 1, m_subComm ) );
-    GEOS_ERROR_IF( parentRanks[0] != m_targetRank,
-                   "HypreExport::importVector: target rank has no rows and is not in the sub-communicator" );
+    // Root of the sub-communicator must be the target rank (the constructor maps it to 0)
+    if( subRank == 0 )
+    {
+      GEOS_ERROR_IF( parentRank != m_targetRank,
+                     "HypreExport::importVector: target rank has no rows and is not in the sub-communicator" );
+    }
 
     // Build counts and displacements from actual local sizes
     int const myLocal = LvArray::integerConversion< int >( vec.localSize() );
@@ -223,10 +224,12 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
       displs[i] = displs[i-1] + counts[i-1];
     }
 
-    // On the root of the scatter (sub-comm rank 0), validate and expose host buffer
+    // Root validates buffer size and prepares send pointer
     real64 const * sendBuf = nullptr;
     if( subRank == 0 )
     {
+      int const total = displs[subSize-1] + counts[subSize-1];
+      GEOS_ERROR_IF_NE( vec.globalSize(), total );
       GEOS_ERROR_IF_NE( values.size(), vec.globalSize() );
       values.move( hostMemorySpace, false );
       sendBuf = values.data();
