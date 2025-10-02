@@ -70,6 +70,8 @@ public:
     referencePermeability[1] = m_referencePermeability[k][0][1];
     referencePermeability[2] = m_referencePermeability[k][0][2];
 
+    volStrain = m_constitutiveUpdate.getVolStrain( k, q );
+
     compute( m_referencePorosity[k],
              referencePermeability,
              m_strainDependenceConstants,
