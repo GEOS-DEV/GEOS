@@ -38,7 +38,7 @@ public:
                                      arrayView3d< real64 > const & dPerm_dVolStrain,
                                      arrayView1d< real64 > const & referencePorosity,
                                      arrayView3d< real64 > const & referencePermeability,
-                                     real64 const strainDependenceConstants )
+                                     R1Tensor const strainDependenceConstants )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
     m_dPerm_dPorosity( dPerm_dPorosity ),
     m_dPerm_dVolStrain( dPerm_dVolStrain ),
@@ -70,8 +70,6 @@ public:
     referencePermeability[1] = m_referencePermeability[k][0][1];
     referencePermeability[2] = m_referencePermeability[k][0][2];
 
-    volStrain = m_constitutiveUpdate.getVolStrain( k, q );
-
     compute( m_referencePorosity[k],
              referencePermeability,
              m_strainDependenceConstants,
@@ -89,14 +87,14 @@ private:
   /// dPermeability_dVolumetricStrain
   arrayView3d< real64 > m_dPerm_dVolStrain;
 
-  /// Volumetric strain dependence coefficients for each permeability component
-  R1Tensor m_strainDependenceConstants;
+  /// Reference porosity
+  arrayView1d< real64 > m_referencePorosity;
 
   /// Reference permeability
   arrayView3d< real64 > m_referencePermeability;
 
-  /// Reference porosity
-  arrayView1d< real64 > m_referencePorosity;
+  /// Volumetric strain dependence coefficients for each permeability component
+  R1Tensor m_strainDependenceConstants;
 };
 
 
@@ -128,10 +126,10 @@ public:
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure,
                           m_dPerm_dPorosity,
-                          m_dPerm_dVolStrain,
-                          m_strainDependenceConstants,
+                          m_dPerm_dVolStrain,                          
                           m_referencePorosity,
-                          m_referencePermeability );
+                          m_referencePermeability,
+                          m_strainDependenceConstants);
   }
 
 
@@ -158,14 +156,14 @@ private:
   /// dPermeability_dVolumetricStrain
   array3d< real64 > m_dPerm_dVolStrain;
 
-  /// Volumetric strain dependence coefficients for each permeability component
-  R1Tensor m_strainDependenceConstants;
+  /// Reference porosity
+  array1d< real64 > m_referencePorosity;
 
   /// Reference permeability
   array3d< real64 > m_referencePermeability;
 
-  /// Reference porosity
-  array1d< real64 > m_referencePorosity;
+  /// Volumetric strain dependence coefficients for each permeability component
+  R1Tensor m_strainDependenceConstants;
 };
 
 
@@ -178,14 +176,16 @@ void StrainDependentPermeabilityUpdate::compute( real64 const & referencePorosit
                                                  arraySlice1d< real64 > const & permeability,
                                                  arraySlice1d< real64 > const & dPerm_dPorosity,
                                                  arraySlice1d< real64 > const & dPerm_dVolStrain ) const
-{
+{ 
+  (void)dPerm_dPorosity;
+
   real64 const por = 1 - (1 - referencePorosity) * LvArray::math::exp(-volStrain);
   
   for( localIndex i = 0; i < permeability.size(); ++i )
   {
-    real64 const permMultiplier = LvArray::math::pow( por/referencePorosity, strainDependenceConstants[i] );
+    real64 const permMultiplier = std::pow( por/referencePorosity, strainDependenceConstants[i] );
 
-    real64 const dpermMultiplier_dVolStrain = strainDependenceConstants[i] * LvArray::math::pow( por/referencePorosity, strainDependenceConstants[i]-1 ) /referencePorosity * ((1 - referencePorosity) * LvArray::math::exp(-volStrain));
+    real64 const dpermMultiplier_dVolStrain = strainDependenceConstants[i] * std::pow( por/referencePorosity, strainDependenceConstants[i]-1 ) /referencePorosity * ((1 - referencePorosity) * LvArray::math::exp(-volStrain));
 
     permeability[i] = permMultiplier * referencePermeability[i];
     dPerm_dVolStrain[i] = dpermMultiplier_dVolStrain * referencePermeability[i];
