@@ -22,6 +22,7 @@
 
 #include "mesh/LogLevelsInfo.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
+#include "LvArray/src/genericTensorOps.hpp"
 #include <vtkPolyData.h>
 #include <vtkCellData.h>
 #include <vtkPolyLine.h>

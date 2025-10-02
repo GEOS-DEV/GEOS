@@ -18,10 +18,13 @@
 #include "common/format/table/TableLayout.hpp"
 #include "common/TypeDispatch.hpp"
 
+#include "LvArray/src/genericTensorOps.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "mesh/generators/CollocatedNodes.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 #include "mesh/MeshFields.hpp"
+
 
 #ifdef GEOS_USE_PARMETIS
 #include "mesh/generators/ParMETISInterface.hpp"
