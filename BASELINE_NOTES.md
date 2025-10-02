@@ -6,7 +6,7 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #3842 (2025-10-01) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3780-13966-206841b.tar.gz>
+PR #3842 (2025-10-01) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3780-13967-17d92c8.tar.gz>
 =====================
 Refactor of the single-phase hybrid MFD implementation to remove the upwinding scheme from the discretization.
 
