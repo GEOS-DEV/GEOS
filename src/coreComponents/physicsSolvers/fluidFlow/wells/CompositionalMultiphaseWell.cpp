@@ -397,49 +397,14 @@ void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition co
   } );
 }
 
-void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion const & subRegion ) const
-{
-  WellControls const & wellControls = getWellControls( subRegion );
 
-  // check well injection stream for injectors
-  if( wellControls.isInjector())
-  {
-    arrayView1d< real64 const > const & injectionStream = wellControls.getInjectionStream();
-
-    integer const streamSize = injectionStream.size();
-    GEOS_THROW_IF( ( streamSize == 0 ),
-                   "WellControls " << wellControls.getName() <<
-                   " : Injection stream not specified for well " << subRegion.getName(),
-                   InputError );
-    GEOS_THROW_IF( ( streamSize != m_numComponents ),
-                   "WellControls " << wellControls.getName() <<
-                   " : Injection stream for well " << subRegion.getName() << " should have " <<
-                   m_numComponents << " components.",
-                   InputError );
-
-    real64 compFracSum = 0;
-    for( integer ic = 0; ic < m_numComponents; ++ic )
-    {
-      real64 const compFrac = injectionStream[ic];
-      GEOS_THROW_IF( ( compFrac < 0.0 ) || ( compFrac > 1.0 ),
-                     "WellControls " << wellControls.getDataContext() <<
-                     ": Invalid injection stream for well " << subRegion.getName(),
-                     InputError );
-      compFracSum += compFrac;
-    }
-    GEOS_THROW_IF( ( compFracSum < 1.0 - std::numeric_limits< real64 >::epsilon() ) ||
-                   ( compFracSum > 1.0 + std::numeric_limits< real64 >::epsilon() ),
-                   "WellControls " << wellControls.getDataContext() <<
-                   ": Invalid injection stream for well " << subRegion.getName(),
-                   InputError );
-  }
-}
 
 void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n,
                                                            real64 const & GEOS_UNUSED_PARAM( dt ),
                                                            WellElementSubRegion const & subRegion,
                                                            ElementRegionManager const & elemManager )
 {
+  GEOS_UNUSED_VAR(time_n);
   WellControls & wellControls = getWellControls( subRegion );
   if( !wellControls.useSurfaceConditions() )
   {
@@ -486,65 +451,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   } );
 
 
-  // now that we know we are single-phase, we can check a few things in the constraints
 
-  WellControls::Control const currentControl = wellControls.getControl();
-  real64 const & targetTotalRate = wellControls.getTargetTotalRate( time_n );
-  real64 const & targetPhaseRate = wellControls.getTargetPhaseRate( time_n );
-  real64 const & targetMassRate = wellControls.getTargetMassRate( time_n );
-
-  GEOS_THROW_IF( wellControls.isInjector() && currentControl == WellControls::Control::PHASEVOLRATE,
-                 "WellControls " << wellControls.getDataContext() <<
-                 ": Phase rate control is not available for injectors",
-                 InputError );
-  GEOS_THROW_IF( wellControls.isProducer() && currentControl == WellControls::Control::TOTALVOLRATE,
-                 "WellControls " << wellControls.getDataContext() <<
-                 ": Total rate control is not available for producers",
-                 InputError );
-
-  GEOS_THROW_IF( wellControls.isInjector() && targetTotalRate < 0.0,
-                 "WellControls " << wellControls.getDataContext() <<
-                 ": Target total rate cannot be negative for injectors",
-                 InputError );
-  GEOS_THROW_IF( wellControls.isInjector() && !isZero( targetPhaseRate ),
-                 "WellControls " << wellControls.getDataContext() <<
-                 ": Target phase rate cannot be used for injectors",
-                 InputError );
-  GEOS_THROW_IF( wellControls.isProducer() && !isZero( targetTotalRate ),
-                 "WellControls " << wellControls.getDataContext() <<
-                 ": Target total rate cannot be used for producers",
-                 InputError );
-  GEOS_THROW_IF( wellControls.isProducer() && !isZero( targetMassRate ),
-                 "WellControls " << wellControls.getDataContext() <<
-                 ": Target mass rate cannot be used for producers",
-                 InputError );
-  GEOS_THROW_IF( !m_useMass && !isZero( targetMassRate ),
-                 "WellControls " << wellControls.getDataContext() <<
-                 ": Target mass rate cannot with useMass=0",
-                 InputError );
-
-  // The user always provides positive rates, but these rates are later multiplied by -1 internally for producers
-  GEOS_THROW_IF( wellControls.isProducer() && targetPhaseRate > 0.0,
-                 "WellControls " << wellControls.getDataContext() <<
-                 ": Target phase rate cannot be negative for producers",
-                 InputError );
-  GEOS_THROW_IF( wellControls.isProducer() && !isZero( targetTotalRate ),
-                 "WellControls " << wellControls.getDataContext() <<
-                 ": Target total rate cannot be used for producers",
-                 InputError );
-
-  // Find target phase index for phase rate constraint
-  for( integer ip = 0; ip < fluid.numFluidPhases(); ++ip )
-  {
-    if( fluid.phaseNames()[ip] == wellControls.getTargetPhaseName() )
-    {
-      m_targetPhaseIndex = ip;
-    }
-  }
-  GEOS_THROW_IF( wellControls.isProducer() && m_targetPhaseIndex == -1,
-                 "WellControls " << wellControls.getDataContext() <<
-                 ": Phase " << wellControls.getTargetPhaseName() << " not found for well control " << wellControls.getName(),
-                 InputError );
 }
 
 void CompositionalMultiphaseWell::initializePostSubGroups()
@@ -555,16 +462,6 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
 
   validateConstitutiveModels( domain );
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel & mesh,
-                                                               string_array const & regionNames )
-  {
-    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          WellElementSubRegion & subRegion )
-    {
-      validateInjectionStreams( subRegion );
-    } );
-  } );
 }
 
 void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
@@ -1413,7 +1310,6 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
     compositionalMultiphaseWellKernels::
       RateInitializationKernel::
       launch( subRegion.size(),
-              m_targetPhaseIndex,
               wellControls,
               time_n,       // initialization done at time_n
               wellElemPhaseDens,
@@ -1763,7 +1659,6 @@ CompositionalMultiphaseWell::calculateWellResidualNorm( real64 const & time_n,
 
       thermalCompositionalMultiphaseWellKernels::ResidualNormKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                   m_targetPhaseIndex,
                                                    rankOffset,
                                                    wellDofKey,
                                                    localRhs,
@@ -1791,7 +1686,6 @@ CompositionalMultiphaseWell::calculateWellResidualNorm( real64 const & time_n,
       compositionalMultiphaseWellKernels::ResidualNormKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                    numDofPerWellElement(),
-                                                   m_targetPhaseIndex,
                                                    rankOffset,
                                                    wellDofKey,
                                                    localRhs,
@@ -1897,7 +1791,6 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
 
           thermalCompositionalMultiphaseWellKernels::ResidualNormKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                       m_targetPhaseIndex,
                                                        rankOffset,
                                                        wellDofKey,
                                                        localRhs,
@@ -1925,7 +1818,6 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
           compositionalMultiphaseWellKernels::ResidualNormKernelFactory::
             createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                        numDofPerWellElement(),
-                                                       m_targetPhaseIndex,
                                                        rankOffset,
                                                        wellDofKey,
                                                        localRhs,
@@ -2780,7 +2672,7 @@ void CompositionalMultiphaseWell::assembleWellConstraintTerms( real64 const & ti
 }
 
 
-void CompositionalMultiphaseWell::assembleWellPressureRelations( real64 const & time_n,
+void CompositionalMultiphaseWell::assembleWellPressureRelations( real64 const & GEOS_UNUSED_PARAM(time_n),
                                                                  real64 const & GEOS_UNUSED_PARAM( dt ),
                                                                  WellElementSubRegion const & subRegion,
                                                                  DofManager const & dofManager,
@@ -2826,11 +2718,6 @@ void CompositionalMultiphaseWell::assembleWellPressureRelations( real64 const & 
       isThermal,
       subRegion.size(),
       dofManager.rankOffset(),
-      subRegion.isLocallyOwned(),
-      subRegion.getTopWellElementIndex(),
-      m_targetPhaseIndex,
-      wellControls,
-      time_n,       // controls evaluated with BHP/rate of the beginning of step
       elemStatus,
       wellElemDofNumber,
       wellElemGravCoef,
@@ -2841,53 +2728,6 @@ void CompositionalMultiphaseWell::assembleWellPressureRelations( real64 const & 
       controlHasSwitched,
       localMatrix,
       localRhs );
-
-    if( controlHasSwitched )
-    {
-      // TODO: move the switch logic into wellControls
-      // TODO: implement a more general switch when more then two constraints per well type are allowed
-
-      if( wellControls.getControl() == WellControls::Control::BHP )
-      {
-        if( wellControls.isProducer() )
-        {
-          wellControls.switchToPhaseRateControl( wellControls.getTargetPhaseRate( time_n ) );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
-                                 GEOS_FMT( "Control switch for well {} from BHP constraint to phase volumetric rate constraint", subRegion.getName() ) );
-        }
-        else if( wellControls.getInputControl() == WellControls::Control::MASSRATE )
-        {
-          wellControls.switchToMassRateControl( wellControls.getTargetMassRate( time_n ) );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
-                                 GEOS_FMT( "Control switch for well {} from BHP constraint to mass rate constraint", subRegion.getName()) );
-        }
-        else
-        {
-          wellControls.switchToTotalRateControl( wellControls.getTargetTotalRate( time_n ) );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
-                                 GEOS_FMT( "Control switch for well {} from BHP constraint to total volumetric rate constraint", subRegion.getName()) );
-        }
-      }
-      else
-      {
-        wellControls.switchToBHPControl( wellControls.getTargetBHP( time_n ) );
-        GEOS_LOG_LEVEL_RANK_0( logInfo::WellControl,
-                               GEOS_FMT( "Control switch for well {} from rate constraint to BHP constraint", subRegion.getName() ) );
-      }
-    }
-
-    // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
-    // the well initialization code requires control type to by synced
-    integer owner = -1;
-    // Only subregion owner evaluates well control and control changes need to be broadcast to all ranks
-    if( subRegion.isLocallyOwned() )
-    {
-      owner = MpiWrapper::commRank( MPI_COMM_GEOS );
-    }
-    owner = MpiWrapper::max( owner );
-    WellControls::Control wellControl = wellControls.getControl();
-    MpiWrapper::broadcast( wellControl, owner );
-    wellControls.setControl( wellControl );
 
   }
 
@@ -3200,7 +3040,7 @@ bool CompositionalMultiphaseWell::evaluateConstraints( real64 const & time_n,
 {
   WellControls & wellControls = getWellControls( subRegion );
   // create list of all constraints to process
-  std::vector< std::shared_ptr< WellConstraintBase > > constraintList;
+  std::vector< WellConstraintBase * > constraintList;
   if( wellControls.isProducer() )
   {
     constraintList = wellControls.getProdRateConstraints();
@@ -3214,7 +3054,7 @@ bool CompositionalMultiphaseWell::evaluateConstraints( real64 const & time_n,
     constraintList.insert( constraintList.begin(), wellControls.getMaxBHPConstraint() );
   }
   // Get current constraint
-  std::shared_ptr< WellConstraintBase >  limitingConstraint = nullptr;
+  WellConstraintBase *  limitingConstraint = nullptr;
   for( auto & constraint : constraintList )
   {
     if( constraint->getName() == wellControls.getCurrentConstraint()->getName())
@@ -3245,7 +3085,7 @@ bool CompositionalMultiphaseWell::evaluateConstraints( real64 const & time_n,
       if( constraint->checkViolation( *limitingConstraint, time_n ) )
       {
         wellControls.setControl( static_cast< WellControls::Control >(constraint->getControl()) );     // tjb old
-        wellControls.setCurrentConstraint( constraint.get() );
+        wellControls.setCurrentConstraint( constraint );
         GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
                            " Well " << subRegion.getName() << " New Limiting Constraint " << constraint->getName() << " "  << constraint->getConstraintValue( time_n )  );
       }

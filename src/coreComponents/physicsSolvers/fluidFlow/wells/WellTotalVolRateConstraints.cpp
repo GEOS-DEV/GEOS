@@ -56,7 +56,6 @@ TotalVolProductionConstraint::TotalVolProductionConstraint( string const & name,
   : TotalVolConstraint( name, parent )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-  m_rateSign=-1.0;
 
 }
 
@@ -81,9 +80,6 @@ TotalVolInjectionConstraint::TotalVolInjectionConstraint( string const & name, G
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-
-  // Field registration
-  registerInjectionStream( m_injectionStream, m_injectionTemperature, *this );
 }
 
 
@@ -92,11 +88,7 @@ TotalVolInjectionConstraint::~TotalVolInjectionConstraint()
 
 void TotalVolInjectionConstraint::postInputInitialization()
 {
-
   TotalVolConstraint::postInputInitialization();
-// Validate the injection stream and temperature
-  validateInjectionStream( m_injectionStream, m_injectionTemperature, getConstraintKey(), *this );
-
 }
 
 bool TotalVolInjectionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const

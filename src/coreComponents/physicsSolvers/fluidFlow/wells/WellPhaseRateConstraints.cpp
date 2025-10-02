@@ -49,6 +49,19 @@ PhaseConstraint::PhaseConstraint( string const & name, Group * const parent )
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Name of the target phase" );
 
+  if constexpr ( std::is_same_v< WellType, WellTypes::Injector > )
+  {
+    registerWrapper( injectionStreamKey::injectionStreamString(), &m_injectionStream ).
+      setDefaultValue( -1 ).
+      setSizedFromParent( 0 ).
+      setInputFlag( InputFlags::OPTIONAL ).
+      setDescription( "Global component densities of the injection stream [moles/m^3 or kg/m^3]" );
+
+    registerWrapper( injectionStreamKey::injectionTemperatureString(), &m_injectionTemperature ).
+      setDefaultValue( -1 ).
+      setInputFlag( InputFlags::OPTIONAL ).
+      setDescription( "Temperature of the injection stream [K]" );
+  }
 }
 
 PhaseConstraint::~PhaseConstraint()
@@ -121,6 +134,52 @@ bool PhaseInjectionConstraint::checkViolation( WellConstraintBase const & curren
   return currentConstraint.phaseVolumeRates()[m_phaseIndex] > getConstraintValue( currentTime );
 }
 
+template< typename WellConstraintType >
+PhaseConstraint1< WellConstraintType >::PhaseConstraint1( string const & name, Group * const parent )
+  : WellConstraintType( name, parent )
+{
 
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+
+  registerWrapper( viewKeyStruct::phaseRateString(), &m_constraintValue ).
+    setDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Phase rate,  (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s]) " );
+
+  registerWrapper( viewKeyStruct::phaseNameString(), &m_phaseName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setDefaultValue( "" ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Name of the target phase" );
+}
+
+PhaseConstraint1< WellConstraintType >::~PhaseConstraint1()
+{}
+
+void PhaseConstraint1< WellConstraintType >::postInputInitialization()
+{
+  // Validate value and table options
+  WellConstraintType::postInputInitialization();
+
+}
+
+bool PhaseConstraint1< WellConstraintType >::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
+{
+  return currentConstraint.phaseVolumeRates()[m_phaseIndex] > getConstraintValue( currentTime );
+}
+
+namespace
+{
+//typedef MultiphasePoromechanicsConformingFractures< MultiphaseReservoirAndWells<> >
+// MultiphasePoromechanicsConformingFractures;
+//REGISTER_CATALOG_ENTRY( PhysicsSolverBase, MultiphasePoromechanicsConformingFractures, string const &, Group * const )
+typedef PhaseConstraint1< InjectionConstraint > PhaseInjectionConstraint1;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, PhaseInjectionConstraint1, string const &, Group * const )
+typedef PhaseConstraint1< ProductionConstraint > PhaseProductionConstraint1;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, PhaseProductionConstraint1, string const &, Group * const )
+
+}
 
 } //namespace geos

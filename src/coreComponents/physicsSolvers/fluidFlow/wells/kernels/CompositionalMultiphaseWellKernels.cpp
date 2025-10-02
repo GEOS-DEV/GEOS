@@ -301,11 +301,6 @@ void
 PressureRelationKernel::
   launch( localIndex const size,
           globalIndex const rankOffset,
-          bool const isLocallyOwned,
-          localIndex const iwelemControl,
-          integer const targetPhaseIndex,
-          WellControls const & wellControls,
-          real64 const & time,
           arrayView1d< integer const > const elemStatus,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
@@ -318,43 +313,6 @@ PressureRelationKernel::
           arrayView1d< real64 > const & localRhs )
 {
   using COFFSET_WJ = compositionalMultiphaseWellKernels::ColOffset_WellJac< NC, IS_THERMAL >;
-  // static well control data
-  bool const isProducer = wellControls.isProducer();
-  WellControls::Control const currentControl = wellControls.getControl();
-  WellControls::Control const inputControl = wellControls.getInputControl();
-  bool const constraintSwitch = wellControls.getConstraintSwitch();
-
-  real64 const targetBHP = wellControls.getTargetBHP( time );
-  real64 const targetTotalRate = wellControls.getTargetTotalRate( time );
-  real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time );
-  real64 const targetMassRate = wellControls.getTargetMassRate( time );
-
-  // temp tjb. only needed if new code path
-  real64 targetValue =0.0;
-  if( wellControls.getCurrentConstraint() != nullptr )
-    targetValue = wellControls.getCurrentConstraint()->getConstraintValue( time );
-
-  // dynamic well control data
-  real64 const & currentBHP =
-    wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
-  arrayView1d< real64 const > const & dCurrentBHP =
-    wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentBHPString() );
-
-  arrayView1d< real64 const > const & currentPhaseVolRate =
-    wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
-  arrayView2d< real64 const > const & dCurrentPhaseVolRate =
-    wellControls.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentPhaseVolRateString() );
-
-  real64 const & currentTotalVolRate =
-    wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
-  arrayView1d< real64 const > const & dCurrentTotalVolRate =
-    wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentTotalVolRateString() );
-
-  real64 const & currentMassRate =
-    wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() );
-
-  real64 const & massDensity  =
-    wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::massDensityString() );
 
   RAJA::ReduceMax< parallelDeviceReduce, localIndex > switchControl( 0 );
 
@@ -368,61 +326,7 @@ PressureRelationKernel::
 
     localIndex const iwelemNext = nextWellElemIndex[iwelem];
 
-    if( iwelemNext < 0 && isLocallyOwned ) // if iwelemNext < 0, form control equation
-    {
-
-      WellControls::Control newControl = currentControl;
-      if( false && constraintSwitch )
-      {
-
-        ControlEquationHelper::selectLimitingConstraint( isProducer,
-                                                         inputControl,
-                                                         currentControl,
-                                                         targetPhaseIndex,
-                                                         targetBHP,
-                                                         targetPhaseRate,
-                                                         targetTotalRate,
-                                                         targetMassRate,
-                                                         currentBHP,
-                                                         currentPhaseVolRate,
-                                                         currentTotalVolRate,
-                                                         currentMassRate,
-                                                         newControl );
-      }
-      else
-      {
-        newControl = currentControl;
-      }
-
-      if( currentControl != newControl )
-      {
-        switchControl.max( 1 );
-      }
-      if( constraintSwitch )
-      {
-        ControlEquationHelper::compute< NC, IS_THERMAL >( rankOffset,
-                                                          newControl,
-                                                          targetPhaseIndex, // tjb - remove ?
-                                                          targetBHP,    // tjb - remove
-                                                          targetPhaseRate, // tjb - remove
-                                                          targetTotalRate, // tjb - remove
-                                                          targetMassRate, // tjb - remove
-                                                          targetValue, // tjb
-                                                          currentBHP,
-                                                          dCurrentBHP,
-                                                          currentPhaseVolRate,
-                                                          dCurrentPhaseVolRate,
-                                                          currentTotalVolRate,
-                                                          dCurrentTotalVolRate,
-                                                          massDensity,
-                                                          wellElemDofNumber[iwelemControl],
-                                                          localMatrix,
-                                                          localRhs );
-      }
-      // TODO: for consistency, we should assemble here, not in compute...
-
-    }
-    else if( iwelemNext >= 0 ) // if iwelemNext >= 0, form momentum equation
+    if( iwelemNext >= 0 )   // if iwelemNext >= 0, form momentum equation
     {
 
       real64 localPresRel = 0;
@@ -476,11 +380,6 @@ PressureRelationKernel::
   void PressureRelationKernel:: \
     launch< NC, IS_THERMAL >( localIndex const size, \
                               globalIndex const rankOffset, \
-                              bool const isLocallyOwned, \
-                              localIndex const iwelemControl, \
-                              integer const targetPhaseIndex, \
-                              WellControls const & wellControls, \
-                              real64 const & time, \
                               arrayView1d< integer const > const elemStatus, \
                               arrayView1d< globalIndex const > const & wellElemDofNumber, \
                               arrayView1d< real64 const > const & wellElemGravCoef, \
@@ -737,61 +636,73 @@ CompDensInitializationKernel::
 void
 RateInitializationKernel::
   launch( localIndex const subRegionSize,
-          integer const targetPhaseIndex,
           WellControls const & wellControls,
           real64 const & time,
           arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens,
           arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDens,
           arrayView1d< real64 > const & connRate )
 {
-  WellControls::Control const control = wellControls.getControl();
-  bool const isProducer = wellControls.isProducer();
-  real64 const targetTotalRate = wellControls.getTargetTotalRate( time );
-  real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time );
-  real64 const targetMassRate = wellControls.getTargetMassRate( time );
-
-  // Estimate the connection rates
-  forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
+  if( wellControls.isProducer() )
   {
-    if( control == WellControls::Control::BHP )
+    std::vector< WellConstraintBase * >  const constraints = wellControls.getProdRateConstraints();
+    // Use first rate constraint to set initial connection rates
+    real64 const constraintVal = constraints[0]->getConstraintValue( time );
+    ConstraintTypeId const controlType = constraints[0]->getControl();
+    if( controlType == ConstraintTypeId::PHASEVOLRATE )
     {
-      // if BHP constraint set rate below the absolute max rate
-      // with the appropriate sign (negative for prod, positive for inj)
-      if( isProducer )
-      {
-        connRate[iwelem] = LvArray::math::max( 0.1 * targetPhaseRate * phaseDens[iwelem][0][targetPhaseIndex], -1e3 );
-      }
-      else
-      {
-        if( isZero( targetMassRate ) )
-        {
-          connRate[iwelem] = LvArray::math::min( 0.1 * targetTotalRate * totalDens[iwelem][0], 1e3 );
-        }
-        else
-        {
-          connRate[iwelem] = targetMassRate;
-        }
+      integer const targetPhaseIndex = dynamic_cast< const PhaseConstraint1< ProductionConstraint > * >( constraints[0] )->getPhaseIndex();
 
-      }
-    }
-    else if( control == WellControls::Control::MASSRATE )
-    {
-      connRate[iwelem] = targetMassRate;
-    }
-    else
-    {
-      if( isProducer )
+      forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
       {
-        connRate[iwelem] = targetPhaseRate * phaseDens[iwelem][0][targetPhaseIndex];
-      }
-      else
-      {
-        connRate[iwelem] = targetTotalRate * totalDens[iwelem][0];
-      }
+        connRate[iwelem] = LvArray::math::max( 0.1 * constraintVal * phaseDens[iwelem][0][targetPhaseIndex], -1e3 );
+      } );
     }
-  } );
+    else if( controlType == ConstraintTypeId::TOTALVOLRATE )
+    {
+      forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
+      {
+        connRate[iwelem] = LvArray::math::max( 0.1 * constraintVal * totalDens[iwelem][0], -1e3 );
+      } );
+    }
+    else if( controlType == ConstraintTypeId::MASSRATE )
+    {
+      forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
+      {
+        connRate[iwelem] = constraintVal;
+      } );
+    }
+  }
+  else
+  {
+    std::vector< WellConstraintBase * >  const constraints = wellControls.getInjRateConstraints();
+    // Use first rate constraint to set initial connection rates
+    real64 const constraintVal = constraints[0]->getConstraintValue( time );
+    ConstraintTypeId const controlType = constraints[0]->getControl();
+    if( controlType == ConstraintTypeId::PHASEVOLRATE )
+    {
+      integer const targetPhaseIndex = dynamic_cast< const PhaseConstraint1< InjectionConstraint > * >( constraints[0] )->getPhaseIndex();
+
+      forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
+      {
+        connRate[iwelem] = LvArray::math::max( 0.1 * constraintVal * phaseDens[iwelem][0][targetPhaseIndex], 1e3 );
+      } );
+    }
+    else if( controlType == ConstraintTypeId::TOTALVOLRATE )
+    {
+      forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
+      {
+        connRate[iwelem] = LvArray::math::max( 0.1 * constraintVal * totalDens[iwelem][0], 1e3 );
+      } );
+    }
+    else if( controlType == ConstraintTypeId::MASSRATE )
+    {
+      forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
+      {
+        connRate[iwelem] = constraintVal;
+      } );
+    }
+  }
 }
-
 
 } // end namespace compositionalMultiphaseWellKernels
 

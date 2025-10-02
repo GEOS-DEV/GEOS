@@ -134,4 +134,66 @@ void WellConstraintBase::setNextDtFromTable( TableFunction const * table, real64
   }
 }
 
+// *** Phase Constraint for Injection Well  ***************************************************************
+ProductionConstraint::ProductionConstraint( string const & name, Group * const parent )
+  : WellConstraintBase( name, parent )
+{}
+
+ProductionConstraint::~ProductionConstraint()
+{}
+
+void ProductionConstraint::postInputInitialization()
+{
+  // Validate value and table options
+  WellConstraintBase::postInputInitialization();
+
+}
+
+// *** Phase Constraint for Injection Well  ***************************************************************
+InjectionConstraint::InjectionConstraint( string const & name, Group * const parent )
+  : WellConstraintBase( name, parent )
+{
+  registerWrapper( injectionStreamKey::injectionStreamString(), &m_injectionStream ).
+    setDefaultValue( -1 ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Global component densities of the injection stream [moles/m^3 or kg/m^3]" );
+
+  registerWrapper( injectionStreamKey::injectionTemperatureString(), &m_injectionTemperature ).
+    setDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Temperature of the injection stream [K]" );
+}
+
+InjectionConstraint::~InjectionConstraint()
+{}
+
+void InjectionConstraint::postInputInitialization()
+{
+  // Validate value and table options
+  WellConstraintBase::postInputInitialization();
+
+// Validate the injection stream and temperature
+  validateInjectionStream(  );
+
+}
+
+void InjectionConstraint::validateInjectionStream( )
+{
+  if( !m_injectionStream.empty())
+  {
+    real64 sum = 0.0;
+    for( localIndex ic = 0; ic < m_injectionStream.size(); ++ic )
+    {
+      GEOS_ERROR_IF( m_injectionStream[ic] < 0.0 || m_injectionStream[ic] > 1.0,
+                     getWrapperDataContext( injectionStreamKey::injectionStreamString() ) << ": Invalid injection stream" );
+      sum += m_injectionStream[ic];
+    }
+    GEOS_THROW_IF( LvArray::math::abs( 1.0 - sum ) > std::numeric_limits< real64 >::epsilon(),
+                   getWrapperDataContext( injectionStreamKey::injectionStreamString() ) << ": Invalid injection stream",
+                   InputError );
+  }
+}
+
+
 } //namespace geos

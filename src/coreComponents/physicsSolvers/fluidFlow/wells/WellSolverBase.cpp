@@ -314,9 +314,9 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
                                            DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-  GEOS_UNUSED_VAR(dt);
-  GEOS_UNUSED_VAR(coupledIterationNumber);
- 
+  GEOS_UNUSED_VAR( dt );
+  GEOS_UNUSED_VAR( coupledIterationNumber );
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
                                                                MeshLevel & meshLevel,
                                                                string_array const & regionNames )

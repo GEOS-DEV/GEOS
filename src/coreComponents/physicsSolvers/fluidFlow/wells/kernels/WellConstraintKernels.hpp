@@ -158,7 +158,7 @@ struct ConstraintHelper< NC, IS_THERMAL, PhaseConstraint >
     arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const & dPhaseDens = fluidSeparator.dPhaseDensity();
 
     // constraint data
-    integer ip = getPhaseIndex( fluidSeparator, constraint.getPhaseName());
+    integer ip = getPhaseIndexFromFluidModel( fluidSeparator, constraint.getPhaseName());
     real64 const & targetPhaseRate = constraint.getConstraintValue( time_n );
 
     // current constraint value

@@ -418,11 +418,6 @@ protected:
   void validateWellControlsForFluid( WellControls const & wellControls,
                                      constitutive::MultiFluidBase const & fluid ) const;
 
-  /**
-   * @brief Checks injection streams for validity (compositions sum to one)
-   * @param subRegion the well subRegion
-   */
-  void validateInjectionStreams( WellElementSubRegion const & subRegion ) const;
 
   /**
    * @brief Make sure that the well constraints are compatible

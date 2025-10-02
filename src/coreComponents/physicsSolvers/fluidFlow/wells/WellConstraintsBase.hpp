@@ -415,6 +415,155 @@ protected:
   real64 m_rateSign;
 };
 
+/**
+ * @class ProductionConstraint
+ * @brief This class describes constraint used to control a production well.
+ */
+
+class ProductionConstraint : public WellConstraintBase
+{
+public:
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+
+  /**
+   * @brief Constructor for WellControls Objects.
+   * @param[in] name the name of this instantiation of WellControls in the repository
+   * @param[in] parent the parent group of this instantiation of WellControls
+   */
+  explicit ProductionConstraint( string const & name, dataRepository::Group * const parent );
+
+  /**
+   * @brief Default destructor.
+   */
+  ~ProductionConstraint() override;
+
+  /**
+   * @brief Deleted default constructor.
+   */
+  ProductionConstraint() = delete;
+
+  /**
+   * @brief Deleted copy constructor.
+   */
+  ProductionConstraint( ProductionConstraint const & ) = delete;
+
+  /**
+   * @brief Deleted move constructor.
+   */
+  ProductionConstraint( ProductionConstraint && ) = delete;
+
+  /**
+   * @brief Deleted assignment operator.
+   * @return a reference to a constraint object
+   */
+  ProductionConstraint & operator=( ProductionConstraint const & ) = delete;
+
+  /**
+   * @brief Deleted move operator.
+   * @return a reference to a constraint object
+   */
+  ProductionConstraint & operator=( ProductionConstraint && ) = delete;
+
+  ///@}
+
+protected:
+
+  virtual void postInputInitialization() override;
+
+
+};
+
+/**
+ * @class InjectionConstraint
+ * @brief This class describes   constraint used to control a injection well.
+ */
+
+class InjectionConstraint : public WellConstraintBase
+{
+public:
+  /**
+   * @name Constructor / Destructor
+   */
+  ///@{
+
+  /**
+   * @brief Constructor for WellControls Objects.
+   * @param[in] name the name of this instantiation of WellControls in the repository
+   * @param[in] parent the parent group of this instantiation of WellControls
+   */
+  explicit InjectionConstraint( string const & name, dataRepository::Group * const parent );
+
+  /**
+   * @brief Default destructor.
+   */
+  ~InjectionConstraint() override;
+
+  /**
+   * @brief Deleted default constructor.
+   */
+  InjectionConstraint() = delete;
+
+  /**
+   * @brief Deleted copy constructor.
+   */
+  InjectionConstraint( InjectionConstraint const & ) = delete;
+
+  /**
+   * @brief Deleted move constructor.
+   */
+  InjectionConstraint( InjectionConstraint && ) = delete;
+
+  /**
+   * @brief Deleted assignment operator.
+   * @return a reference to a constraint object
+   */
+  InjectionConstraint & operator=( InjectionConstraint const & ) = delete;
+
+  /**
+   * @brief Deleted move operator.
+   * @return a reference to a constraint object
+   */
+  InjectionConstraint & operator=( InjectionConstraint && ) = delete;
+
+  ///@}
+
+  struct injectionStreamKey
+  {
+    /// String key for the well injection stream
+    static constexpr char const * injectionStreamString() { return "injectionStream"; }
+    /// String key for the well injection temperature
+    static constexpr char const * injectionTemperatureString() { return "injectionTemperature"; }
+  };
+
+  /**
+   * @brief Const accessor for the composition of the injection stream
+   * @return a global component fraction vector
+   */
+  arrayView1d< real64 const > getInjectionStream() const { return m_injectionStream; }
+
+  /**
+   * @brief Const accessor for the temperature of the injection stream
+   * @return the temperature of the injection stream
+   */
+  real64 getInjectionTemperature() const { return m_injectionTemperature; }
+
+protected:
+
+  virtual void postInputInitialization() override;
+
+  void validateInjectionStream();
+private:
+
+  /// Vector with global component fractions at the injector
+  array1d< real64 > m_injectionStream;
+
+  /// Temperature at the injector
+  real64 m_injectionTemperature;
+
+};
 
 
 } //namespace geos
