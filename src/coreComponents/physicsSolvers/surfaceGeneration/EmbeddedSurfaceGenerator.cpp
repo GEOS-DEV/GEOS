@@ -20,7 +20,6 @@
 #include "EmbeddedSurfaceGenerator.hpp"
 #include "EmbeddedSurfacesParallelSynchronization.hpp"
 
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
