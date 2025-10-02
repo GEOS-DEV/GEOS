@@ -28,7 +28,7 @@ namespace geos
 {
 
 class ParticleManager;
-class SpatialPartition;
+class PartitionerBase;
 
 /**
  * @class ParticleMeshGenerator
@@ -61,7 +61,8 @@ public:
    */
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
-  virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition ) override;
+  virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager,
+                                         ParticleManager & particleManager, PartitionerBase & partitioner ) override;
 
   void importFieldOnArray( Block block,
                            string const & blockName,

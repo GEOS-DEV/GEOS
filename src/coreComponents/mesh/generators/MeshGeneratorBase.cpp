@@ -51,7 +51,7 @@ MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog
   return catalog;
 }
 
-void MeshGeneratorBase::generateMesh( Group & parent, SpatialPartition & partition )
+void MeshGeneratorBase::generateMesh( Group & parent, PartitionerBase & partitioner )
 {
   MeshBody & meshBody = dynamic_cast< MeshBody & >( parent );
   if( meshBody.hasParticles() )
@@ -61,13 +61,13 @@ void MeshGeneratorBase::generateMesh( Group & parent, SpatialPartition & partiti
     MeshLevel & meshLevel0 = meshBody.getBaseDiscretization();
     ParticleManager & particleManager = meshLevel0.getParticleManager();
 
-    fillParticleBlockManager( particleBlockManager, particleManager, partition );
+    fillParticleBlockManager( particleBlockManager, particleManager, partitioner );
   }
   else
   {
     CellBlockManager & cellBlockManager = parent.registerGroup< CellBlockManager >( keys::cellManager );
 
-    fillCellBlockManager( cellBlockManager, partition );
+    fillCellBlockManager( cellBlockManager, partitioner );
 
     this->attachWellInfo( cellBlockManager );
   }
