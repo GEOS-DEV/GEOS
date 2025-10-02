@@ -406,13 +406,13 @@ public:
         real64 const T_ij = stack.transMatrix[iFaceLoc][jFaceLoc];
 
         // T * lambda * (\nabla p - rho * g * \nabla d)
-        stack.massFlux[iFaceLoc] += m_dt * T_ij * massMobility * potDif;
+        stack.massFlux[iFaceLoc] = stack.massFlux[iFaceLoc] + m_dt * T_ij * massMobility * potDif;
 
         // derivatives w.r.t. element-centered pressure
-        stack.dmassFlux_dPres[iFaceLoc] += m_dt * T_ij * ( dmassMobility_dPres * potDif + massMobility * dPotDif_dPres );
+        stack.dmassFlux_dPres[iFaceLoc] = stack.dmassFlux_dPres[iFaceLoc] + m_dt * T_ij * ( dmassMobility_dPres * potDif + massMobility * dPotDif_dPres );
 
         // derivatives w.r.t. face-centered pressures
-        stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc] += m_dt * T_ij * massMobility * dPotDif_dFacePres;
+        stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc] = stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc] + m_dt * T_ij * massMobility * dPotDif_dFacePres;
       }
     }
   }
@@ -435,12 +435,12 @@ public:
     for( integer iFaceLoc = 0; iFaceLoc < NUM_FACE; ++iFaceLoc )
     {
       // accumulate the mass flux divergence and its derivatives using the actual mass flux
-      stack.divMassFluxes += stack.massFlux[iFaceLoc];
-      stack.dDivMassFluxes_dElemVars[0] += stack.dmassFlux_dPres[iFaceLoc];
+      stack.divMassFluxes = stack.divMassFluxes + stack.massFlux[iFaceLoc];
+      stack.dDivMassFluxes_dElemVars[0] = stack.dDivMassFluxes_dElemVars[0] + stack.dmassFlux_dPres[iFaceLoc];
 
       for( integer jFaceLoc = 0; jFaceLoc < NUM_FACE; ++jFaceLoc )
       {
-        stack.dDivMassFluxes_dFaceVars[jFaceLoc] += stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc];
+        stack.dDivMassFluxes_dFaceVars[jFaceLoc] = stack.dDivMassFluxes_dFaceVars[jFaceLoc] + stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc];
       }
 
       // collect the relevant dof numbers (always local)
@@ -476,11 +476,11 @@ public:
                                       m_lengthTolerance,
                                       stack.transMatrix );
 
+    // compute the one-sided mass fluxes and their derivatives
+    computeMassFlux( ei, stack );
+
     if( m_elemGhostRank[ei] < 0 )
     {
-      // compute the one-sided mass fluxes and their derivatives
-      computeMassFlux( ei, stack );
-
       /*
        * perform assembly in this element in two steps:
        * 1) mass conservation equations
@@ -790,7 +790,7 @@ public:
       // if not on boundary, increment the normalizer
       if( !onBoundary && isInTarget )
       {
-        massNormalizer += m_density_n[er][esr][ei][0] * m_porosity_n[er][esr][ei][0] * m_volume[er][esr][ei];
+        massNormalizer = massNormalizer + m_density_n[er][esr][ei][0] * m_porosity_n[er][esr][ei][0] * m_volume[er][esr][ei];
         elemCounter++;
       }
     }
@@ -812,7 +812,7 @@ public:
       computeMassNormalizer( kf, massNormalizer, multiplier );
 
       // scaled residual to be in mass units (needed because element and face residuals are blended in a single norm)
-      stack.localValue[0] += LvArray::math::abs( m_localResidual[stack.localRow] * multiplier ) / LvArray::math::max( m_minNormalizer, massNormalizer );
+      stack.localValue[0] = stack.localValue[0] + LvArray::math::abs( m_localResidual[stack.localRow] * multiplier ) / LvArray::math::max( m_minNormalizer, massNormalizer );
     }
   }
 
@@ -828,8 +828,8 @@ public:
 
       // scaled residual to be in mass units (needed because element and face residuals are blended in a single norm)
       real64 const valMass = m_localResidual[stack.localRow] * multiplier;
-      stack.localValue[0] += valMass * valMass;
-      stack.localNormalizer[0] += massNormalizer;
+      stack.localValue[0] = stack.localValue[0] + valMass * valMass;
+      stack.localNormalizer[0] = stack.localNormalizer[0] + massNormalizer;
     }
   }
 
