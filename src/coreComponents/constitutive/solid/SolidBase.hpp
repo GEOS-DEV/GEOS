@@ -55,15 +55,21 @@ protected:
    * @param[in] oldStress The old stress data from the constitutive model class.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] disableInelasticity Flag to disable inelastic response
+   * @param[in] anelasticStrainMagnitude The ArrayView holding the anelastic strain magnitude data for each element.
+   * @param[in] enableAnelasticStrain Flag to enable stress modification due to anelastic strain
    */
   SolidBaseUpdates( arrayView3d< real64, solid::STRESS_USD > const & newStress,
                     arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                     arrayView1d< real64 const > const & thermalExpansionCoefficient,
-                    const bool & disableInelasticity ):
+                    const bool & disableInelasticity,
+                    arrayView1d< real64 const > const & anelasticStrainMagnitude,
+                    const integer enableAnelasticStrain ):
     m_newStress( newStress ),
     m_oldStress( oldStress ),
     m_thermalExpansionCoefficient( thermalExpansionCoefficient ),
-    m_disableInelasticity ( disableInelasticity )
+    m_disableInelasticity ( disableInelasticity ),
+    m_anelasticStrainMagnitude( anelasticStrainMagnitude ),
+    m_enableAnelasticStrain( enableAnelasticStrain )
   {}
 
   /// Deleted default constructor
@@ -101,6 +107,12 @@ public:
   /// Flag to disable inelasticity
   const bool m_disableInelasticity;
 
+  /// The anelastic strain magnitude (i.e. chemistry, electrochemistry, etc.)
+  arrayView1d< real64 const > const m_anelasticStrainMagnitude;
+
+  /// Flag to enable stress modification due to anelastic strain
+  const integer m_enableAnelasticStrain;
+
   /**
    * @brief Get bulkModulus
    * @param[in] k Element index.
@@ -124,6 +136,17 @@ public:
   real64 getThermalExpansionCoefficient( localIndex const k ) const
   {
     return m_thermalExpansionCoefficient[k];
+  }
+
+  /**
+   * @brief Get anelasticStrainMagnitude
+   * @param[in] k Element index.
+   * @return the nelasticStrainMagnitude of element k
+   */
+  GEOS_HOST_DEVICE
+  real64 getAnelasticStrainMagnitude( localIndex const k ) const
+  {
+    return m_anelasticStrainMagnitude[k];
   }
 
   /**
@@ -372,6 +395,22 @@ public:
   }
 
   /**
+   * @brief Calculate the stress modifier due to anelastic strain
+   *
+   * @param[out] stress New stress value (Cauchy stress)
+   */
+  GEOS_HOST_DEVICE
+  virtual void stressModificationByAnelasticStain( localIndex const k,
+                                                   localIndex const q,
+                                                   real64 ( & stressModifier )[6] ) const
+  {
+    GEOS_UNUSED_VAR( k );
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( stressModifier );
+    GEOS_ERROR( "stressModificationByAnelasticStain() not implemented for this model" );
+  }
+
+  /**
    * @brief Return the strain energy density at a given material point
    *
    * @param k the element inex
@@ -571,6 +610,10 @@ public:
     static constexpr char const * defaultDensityString() { return "defaultDensity"; }
     // Default drained linear thermal expansion coefficient key
     static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultDrainedLinearTEC"; }
+    // Default anelastic strain magnitude key
+    static constexpr char const * defaultAnelasticStrainMagnitudeString() { return "defaultAnelasticStrainMagnitude"; }
+    // Enable stress modification due to anelastic strain key
+    static constexpr char const * enableAnelasticStrainString() { return "enableAnelasticStrain"; }
   };
 
   /// Save state data in preparation for next timestep
@@ -698,6 +741,16 @@ protected:
 
   /// Flag to disable inelasticity (plasticity, damage, etc.)
   bool m_disableInelasticity = false;
+
+  /// The anelastic strain magnitude (i.e. chemistry, electrochemistry, etc.)
+  array1d< real64 > m_anelasticStrainMagnitude;
+
+  /// The default value of the anelastic strain magnitude
+  real64 m_defaultAnelasticStrainMagnitude;
+
+  /// Flag to enable stress modification due to anelastic strain
+  integer m_enableAnelasticStrain;
+
 };
 
 } // namespace constitutive

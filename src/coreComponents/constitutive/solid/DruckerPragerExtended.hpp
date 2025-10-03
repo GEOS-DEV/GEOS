@@ -46,7 +46,9 @@ public:
    * @param[in] bulkModulus The ArrayView holding the bulk modulus data for each element.
    * @param[in] shearModulus The ArrayView holding the shear modulus data for each element.
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
+   * @param[in] anelasticStrainMagnitude The ArrayView holding the anelastic strain magnitude data for each element.
    * @param[in] stress The ArrayView holding the stress data for each quadrature point.
+   * @param[in] enableAnelasticStrain Flag to enable stress modification due to anelastic strain
    */
   DruckerPragerExtendedUpdates( arrayView1d< real64 const > const & initialFriction,
                                 arrayView1d< real64 const > const & residualFriction,
@@ -58,10 +60,12 @@ public:
                                 arrayView1d< real64 const > const & bulkModulus,
                                 arrayView1d< real64 const > const & shearModulus,
                                 arrayView1d< real64 const > const & thermalExpansionCoefficient,
+                                arrayView1d< real64 const > const & anelasticStrainMagnitude,
                                 arrayView3d< real64, solid::STRESS_USD > const & newStress,
                                 arrayView3d< real64, solid::STRESS_USD > const & oldStress,
-                                bool const & disableInelasticity ):
-    ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity ),
+                                bool const & disableInelasticity,
+                                const integer & enableAnelasticStrain ):
+    ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, anelasticStrainMagnitude, newStress, oldStress, disableInelasticity, enableAnelasticStrain ),
     m_initialFriction( initialFriction ),
     m_residualFriction( residualFriction ),
     m_dilationRatio( dilationRatio ),
@@ -441,9 +445,11 @@ public:
                                          m_bulkModulus,
                                          m_shearModulus,
                                          m_thermalExpansionCoefficient,
+                                         m_anelasticStrainMagnitude,
                                          m_newStress,
                                          m_oldStress,
-                                         m_disableInelasticity );
+                                         m_disableInelasticity,
+                                         m_enableAnelasticStrain );
   }
 
   /**
@@ -467,9 +473,11 @@ public:
                           m_bulkModulus,
                           m_shearModulus,
                           m_thermalExpansionCoefficient,
+                          m_anelasticStrainMagnitude,
                           m_newStress,
                           m_oldStress,
-                          m_disableInelasticity );
+                          m_disableInelasticity,
+                          m_enableAnelasticStrain );
   }
 
 

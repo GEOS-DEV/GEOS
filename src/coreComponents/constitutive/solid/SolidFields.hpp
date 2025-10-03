@@ -420,6 +420,14 @@ DECLARE_FIELD( dInternalEnergy_dTemperature,
                WRITE_AND_READ,
                "Derivative of the solid internal energy w.r.t. temperature [J/(m^3.K)]" );
 
+DECLARE_FIELD( anelasticStrainMagnitude,
+               "anelasticStrainMagnitude",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Anelastic strain magnitude (i.e. chemistry, electrochemistry, etc.)" );
+
 }
 
 }

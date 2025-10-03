@@ -40,6 +40,16 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Linear Thermal Expansion Coefficient of the Solid Rock Frame" );
 
+  registerWrapper( viewKeyStruct::defaultAnelasticStrainMagnitudeString(), &m_defaultAnelasticStrainMagnitude ).
+    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default anelastic strain magnitude" );
+
+  registerWrapper( viewKeyStruct::enableAnelasticStrainString(), &m_enableAnelasticStrain ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Whether to enable stress modification due to anelastic strain. Can be 0 or 1" );
+
   // register fields
 
   string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
@@ -53,6 +63,8 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
   registerField< fields::solid::density >( &m_density );
 
   registerField< fields::solid::thermalExpansionCoefficient >( &m_thermalExpansionCoefficient );
+
+  registerField< fields::solid::anelasticStrainMagnitude >( &m_anelasticStrainMagnitude );
 }
 
 
@@ -63,6 +75,13 @@ void SolidBase::postInputInitialization()
 
   getField< fields::solid::thermalExpansionCoefficient >().
     setApplyDefaultValue( m_defaultThermalExpansionCoefficient );
+
+  getField< fields::solid::anelasticStrainMagnitude >().
+    setApplyDefaultValue( m_defaultAnelasticStrainMagnitude );
+
+  GEOS_ERROR_IF( m_enableAnelasticStrain == 0 && m_defaultAnelasticStrainMagnitude > 0.0,
+                 getDataContext() << ": enableAnelasticStrain flag must be 1 if a nonzero"
+                                     " AnelasticStrainMagnitude is used" );
 }
 
 
