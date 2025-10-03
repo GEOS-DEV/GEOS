@@ -135,6 +135,7 @@ public:
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
+    static constexpr char const * referencePermeabilityComponentsString() { return "referencePermeabilityComponents"; }
     static constexpr char const * dPerm_dPorosityString() { return "dPerm_dPorosity"; }
     static constexpr char const * dPerm_dVolStrainString() { return "dPerm_dVolStrain"; }
     static constexpr char const * strainDependenceConstantsString() { return "strainDependenceConstants"; }
@@ -149,6 +150,9 @@ protected:
   virtual void postInputInitialization() override;
 
 private:
+
+  /// Permeability components at the reference pressure
+  R1Tensor m_referencePermeabilityComponents;
 
   /// dPermeability_dPorosity
   array3d< real64 > m_dPerm_dPorosity;

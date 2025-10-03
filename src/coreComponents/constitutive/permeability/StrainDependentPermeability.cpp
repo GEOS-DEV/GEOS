@@ -19,6 +19,8 @@
 
 #include "StrainDependentPermeability.hpp"
 
+#include "constitutive/permeability/PermeabilityFields.hpp"
+
 namespace geos
 {
 
