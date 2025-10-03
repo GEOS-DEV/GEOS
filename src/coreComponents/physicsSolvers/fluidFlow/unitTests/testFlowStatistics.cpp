@@ -791,13 +791,13 @@ TestSet getTestSet()
 </Problem>
 )xml";
 
-  testInputs.tableFiles["pvtgas.txt"] = "DensityFun SpanWagnerCO2Density 1.5e7 2.5e7 1e5 370.15 400.15 2\n"
-                                        "ViscosityFun FenghourCO2Viscosity 1.5e7 2.5e7 1e5 370.15 400.15 2\n";
+  testInputs.tableFiles.insert( {"pvtgas.txt", "DensityFun SpanWagnerCO2Density 1.5e7 2.5e7 1e5 370.15 400.15 2\n"
+                                               "ViscosityFun FenghourCO2Viscosity 1.5e7 2.5e7 1e5 370.15 400.15 2\n"} );
 
-  testInputs.tableFiles["pvtliquid.txt"] = "DensityFun EzrokhiBrineDensity 0.1033 -2.2991e-5 -2.3658e-6\n"
-                                           "ViscosityFun EzrokhiBrineViscosity 0 0 0\n";
+  testInputs.tableFiles.insert( {"pvtliquid.txt", "DensityFun EzrokhiBrineDensity 0.1033 -2.2991e-5 -2.3658e-6\n"
+                                                  "ViscosityFun EzrokhiBrineViscosity 0 0 0\n"} );
 
-  testInputs.tableFiles["co2flash.txt"] = "FlashModel CO2Solubility 1.5e7 2.5e7 1e5 370.15 400.15 2 0\n";
+  testInputs.tableFiles.insert( {"co2flash.txt", "FlashModel CO2Solubility 1.5e7 2.5e7 1e5 370.15 400.15 2 0\n"} );
 
 
   testInputs.sourceFluxName = "sourceFlux";
@@ -1063,13 +1063,13 @@ TestSet getTestSet()
 </Problem>
 )xml";
 
-  testInputs.tableFiles["pvtgas.txt"] = "DensityFun SpanWagnerCO2Density 1.5e7 2.5e7 1e5 370.15 400.15 2\n"
-                                        "ViscosityFun FenghourCO2Viscosity 1.5e7 2.5e7 1e5 370.15 400.15 2\n";
+  testInputs.tableFiles.insert( {"pvtgas.txt", "DensityFun SpanWagnerCO2Density 1.5e7 2.5e7 1e5 370.15 400.15 2\n"
+                                               "ViscosityFun FenghourCO2Viscosity 1.5e7 2.5e7 1e5 370.15 400.15 2\n"} );
 
-  testInputs.tableFiles["pvtliquid.txt"] = "DensityFun EzrokhiBrineDensity 0.1033 -2.2991e-5 -2.3658e-6\n"
-                                           "ViscosityFun EzrokhiBrineViscosity 0 0 0\n";
+  testInputs.tableFiles.insert( {"pvtliquid.txt", "DensityFun EzrokhiBrineDensity 0.1033 -2.2991e-5 -2.3658e-6\n"
+                                                  "ViscosityFun EzrokhiBrineViscosity 0 0 0\n"} );
 
-  testInputs.tableFiles["co2flash.txt"] = "FlashModel CO2Solubility 1.5e7 2.5e7 1e5 370.15 400.15 2 0\n";
+  testInputs.tableFiles.insert( {"co2flash.txt", "FlashModel CO2Solubility 1.5e7 2.5e7 1e5 370.15 400.15 2 0\n"} );
 
 
   testInputs.sourceFluxName = "sourceFlux";
