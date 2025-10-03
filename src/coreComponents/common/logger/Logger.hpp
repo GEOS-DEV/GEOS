@@ -794,13 +794,13 @@
  *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ASSERT_OP_MSG( lhs, OP, rhs, ... ) \
-  { \
+  do { \
     auto const lhsResult = (lhs); \
     auto const rhsResult = (rhs); \
-    GEOS_ERROR_IF_CAUSE( !( lhs OP rhs ), \
-                        "Expected: " #lhs " " #OP " " #rhs "\n* " #lhs " = " << lhsResult << "\n* " #rhs " = " << rhsResult << "\n", \
-                        __VA_ARGS__ ) \
-  }
+    GEOS_ERROR_IF_CAUSE( !( lhsResult OP rhsResult ), \
+                         "Expected: " #lhs " " #OP " " #rhs "\n* " #lhs " = " << lhsResult << "\n* " #rhs " = " << rhsResult << "\n", \
+                         __VA_ARGS__ ); \
+  } while( false );
 
 #else
 

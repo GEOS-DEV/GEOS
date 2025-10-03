@@ -835,40 +835,80 @@
 					<xsd:selector xpath="PorousDelftEgg" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousDelftEggCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousDelftEggCarmanKozenyPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousDruckerPragerUniqueName">
 					<xsd:selector xpath="PorousDruckerPrager" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousDruckerPragerCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousDruckerPragerCarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousElasticIsotropicUniqueName">
 					<xsd:selector xpath="PorousElasticIsotropic" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousElasticIsotropicCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousElasticIsotropicCarmanKozenyPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousElasticOrthotropicUniqueName">
 					<xsd:selector xpath="PorousElasticOrthotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousElasticOrthotropicCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousElasticOrthotropicCarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousElasticTransverseIsotropicUniqueName">
 					<xsd:selector xpath="PorousElasticTransverseIsotropic" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousElasticTransverseIsotropicCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousElasticTransverseIsotropicCarmanKozenyPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousExtendedDruckerPragerUniqueName">
 					<xsd:selector xpath="PorousExtendedDruckerPrager" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousExtendedDruckerPragerCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousExtendedDruckerPragerCarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousModifiedCamClayUniqueName">
 					<xsd:selector xpath="PorousModifiedCamClay" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousModifiedCamClayCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousModifiedCamClayCarmanKozenyPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousViscoDruckerPragerUniqueName">
 					<xsd:selector xpath="PorousViscoDruckerPrager" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousViscoDruckerPragerCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousViscoDruckerPragerCarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousViscoExtendedDruckerPragerUniqueName">
 					<xsd:selector xpath="PorousViscoExtendedDruckerPrager" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousViscoExtendedDruckerPragerCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousViscoExtendedDruckerPragerCarmanKozenyPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousViscoModifiedCamClayUniqueName">
 					<xsd:selector xpath="PorousViscoModifiedCamClay" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousViscoModifiedCamClayCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousViscoModifiedCamClayCarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutivePressurePermeabilityUniqueName">
@@ -6081,15 +6121,25 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="PorousDamageSpectralElasticIsotropic" type="PorousDamageSpectralElasticIsotropicType" />
 			<xsd:element name="PorousDamageVolDevElasticIsotropic" type="PorousDamageVolDevElasticIsotropicType" />
 			<xsd:element name="PorousDelftEgg" type="PorousDelftEggType" />
+			<xsd:element name="PorousDelftEggCarmanKozenyPermeability" type="PorousDelftEggCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousDruckerPrager" type="PorousDruckerPragerType" />
+			<xsd:element name="PorousDruckerPragerCarmanKozenyPermeability" type="PorousDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousElasticIsotropic" type="PorousElasticIsotropicType" />
+			<xsd:element name="PorousElasticIsotropicCarmanKozenyPermeability" type="PorousElasticIsotropicCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousElasticOrthotropic" type="PorousElasticOrthotropicType" />
+			<xsd:element name="PorousElasticOrthotropicCarmanKozenyPermeability" type="PorousElasticOrthotropicCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousElasticTransverseIsotropic" type="PorousElasticTransverseIsotropicType" />
+			<xsd:element name="PorousElasticTransverseIsotropicCarmanKozenyPermeability" type="PorousElasticTransverseIsotropicCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousExtendedDruckerPrager" type="PorousExtendedDruckerPragerType" />
+			<xsd:element name="PorousExtendedDruckerPragerCarmanKozenyPermeability" type="PorousExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousModifiedCamClay" type="PorousModifiedCamClayType" />
+			<xsd:element name="PorousModifiedCamClayCarmanKozenyPermeability" type="PorousModifiedCamClayCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousViscoDruckerPrager" type="PorousViscoDruckerPragerType" />
+			<xsd:element name="PorousViscoDruckerPragerCarmanKozenyPermeability" type="PorousViscoDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousViscoExtendedDruckerPrager" type="PorousViscoExtendedDruckerPragerType" />
+			<xsd:element name="PorousViscoExtendedDruckerPragerCarmanKozenyPermeability" type="PorousViscoExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousViscoModifiedCamClay" type="PorousViscoModifiedCamClayType" />
+			<xsd:element name="PorousViscoModifiedCamClayCarmanKozenyPermeability" type="PorousViscoModifiedCamClayCarmanKozenyPermeabilityType" />
 			<xsd:element name="PressurePermeability" type="PressurePermeabilityType" />
 			<xsd:element name="PressurePorosity" type="PressurePorosityType" />
 			<xsd:element name="ProppantPermeability" type="ProppantPermeabilityType" />
@@ -7315,7 +7365,31 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousDelftEggCarmanKozenyPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PorousDruckerPragerType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousDruckerPragerCarmanKozenyPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
@@ -7339,7 +7413,31 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousElasticIsotropicCarmanKozenyPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PorousElasticOrthotropicType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousElasticOrthotropicCarmanKozenyPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
@@ -7363,7 +7461,31 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousElasticTransverseIsotropicCarmanKozenyPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PorousExtendedDruckerPragerType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousExtendedDruckerPragerCarmanKozenyPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
@@ -7387,7 +7509,31 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousModifiedCamClayCarmanKozenyPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PorousViscoDruckerPragerType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousViscoDruckerPragerCarmanKozenyPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
@@ -7411,7 +7557,31 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousViscoExtendedDruckerPragerCarmanKozenyPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PorousViscoModifiedCamClayType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousViscoModifiedCamClayCarmanKozenyPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
