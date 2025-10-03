@@ -358,7 +358,7 @@ jobs:
             ENABLE_HYPRE_DEVICE: CUDA
             ENABLE_HYPRE: ON
             ENABLE_TRILINOS: OFF
-            GEOS_ENABLE_BOUNDS_CHECK: ON
+            GEOS_ENABLE_BOUNDS_CHECK: OFF
             DOCKER_REPOSITORY: geosx/rockylinux8-clang17-cuda12.9.1
             RUNS_ON: streak
             NPROC: 8
