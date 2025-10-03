@@ -358,11 +358,13 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
   SortedArray< localIndex > & xposNodes = nodeSets.at( "xpos" );
   SortedArray< localIndex > & ynegNodes = nodeSets.at( "yneg" );
   SortedArray< localIndex > & yposNodes = nodeSets.at( "ypos" );
+
+
   // Created on the fly
-  SortedArray< localIndex > & rnegNodes = nodeSets["rneg"];
-  SortedArray< localIndex > & rposNodes = nodeSets["rpos"];
-  SortedArray< localIndex > & tnegNodes = nodeSets["tneg"];
-  SortedArray< localIndex > & tposNodes = nodeSets["tpos"];
+  SortedArray< localIndex > & rnegNodes = nodeSets.try_emplace( "rneg" ).first->second;
+  SortedArray< localIndex > & rposNodes = nodeSets.try_emplace( "rpos" ).first->second;;
+  SortedArray< localIndex > & tnegNodes = nodeSets.try_emplace( "tneg" ).first->second;;
+  SortedArray< localIndex > & tposNodes = nodeSets.try_emplace( "tpos" ).first->second;;
 
   // Map to radial mesh
   for( localIndex a = 0; a < numNodes; ++a )

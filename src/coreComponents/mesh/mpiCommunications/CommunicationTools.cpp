@@ -473,14 +473,15 @@ private:
   {
     for( globalIndex const & gi: nodes )
     {
-      nodeToMpiRank[gi] = mpiRank;
+      nodeToMpiRank.try_emplace( gi ).first->second =mpiRank;
     }
-    minMpiRankToNodes[mpiRank];  // Explicitly allocate all the ranks. Important, otherwise mpi ranks without nodes will not be defined.
+    minMpiRankToNodes.insert( { mpiRank, {} } );  // Explicitly allocate all the ranks. Important, otherwise mpi ranks without nodes will
+                                                  // not be defined.
   }
 
   for( auto const & [node, mpiRank]: nodeToMpiRank )
   {
-    minMpiRankToNodes[mpiRank].emplace_back( node );
+    minMpiRankToNodes.try_emplace( mpiRank ).first->second.emplace_back( node );
   }
 
   return minMpiRankToNodes;
@@ -547,7 +548,8 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
       // Some ranks may also have some nodes that the current rank requires.
       // In that case, we store the information.
       // Later in this function, we'll send this request to the rank and it will send those to us.
-      array1d< globalIndex > & requestedMatches = requestedMatchesMap[allNeighbors[i].neighborRank()];
+      array1d< globalIndex > & requestedMatches = requestedMatchesMap.
+                                                    try_emplace( allNeighbors[i].neighborRank()).first->second;
       {
         stdVector< globalIndex > intersection;
         std::set_intersection( requestedNodes.cbegin(), requestedNodes.cend(),

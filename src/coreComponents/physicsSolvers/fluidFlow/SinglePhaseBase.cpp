@@ -408,7 +408,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
   {
     // collect all the equil name to idx
-    equilNameToEquilId[bc.getName()] = equilCounter;
+    equilNameToEquilId.insert( {bc.getName(), equilCounter} );
     equilCounter++;
 
     // check that the gravity vector is aligned with the z-axis
@@ -942,7 +942,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
     // collect all the bc names to idx
-    bcNameToBcId[bc.getName()] = bcCounter;
+    bcNameToBcId.insert( {bc.getName(), bcCounter} );
     bcCounter++;
   } );
 

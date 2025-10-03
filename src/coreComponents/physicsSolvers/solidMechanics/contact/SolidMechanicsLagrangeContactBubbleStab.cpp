@@ -43,8 +43,8 @@ SolidMechanicsLagrangeContactBubbleStab::SolidMechanicsLagrangeContactBubbleStab
                                                                                   Group * const parent ):
   ContactSolverBase( name, parent )
 {
-  m_faceTypeToFiniteElements["Quadrilateral"] =  std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
-  m_faceTypeToFiniteElements["Triangle"] =  std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >();
+  m_faceTypeToFiniteElements.insert( {"Quadrilateral", std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >()} );
+  m_faceTypeToFiniteElements.insert( {"Triangle", std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >()} );
 
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanicsBubbleStab;
@@ -955,8 +955,12 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
         slipList_v[kfe] = vals_v[nStick+kfe];
       } );
 
-      this->m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
-      this->m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
+      this->m_faceTypesToFaceElementsStick.
+        try_emplace( meshName ).first->second.
+        try_emplace( finiteElementName ).first->second = stickList;
+      this->m_faceTypesToFaceElementsSlip.
+        try_emplace( meshName ).first->second.
+        try_emplace( finiteElementName ).first->second = slipList;
 
       GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
@@ -1037,8 +1041,12 @@ void SolidMechanicsLagrangeContactBubbleStab::createFaceTypeList( DomainPartitio
       quadList_v[kfe] = vals_v[nTri+kfe];
     } );
 
-    this->m_faceTypesToFaceElements[meshName]["Quadrilateral"] =  quadList;
-    this->m_faceTypesToFaceElements[meshName]["Triangle"] =  triList;
+    this->m_faceTypesToFaceElements.
+      try_emplace( meshName ).first->second.
+      try_emplace( "Quadrilateral" ).first->second = quadList;
+    this->m_faceTypesToFaceElements.
+      try_emplace( meshName ).first->second.
+      try_emplace( "Triangle" ).first->second = triList;
   } );
 
 }

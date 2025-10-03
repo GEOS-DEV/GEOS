@@ -56,7 +56,7 @@ ENUM_STRINGS( PartitionMethod,
  * This should be an unordered_map, but some outdated standard libraries on some systems
  * do not provide std::hash specialization for enums. This is not performance critical though.
  */
-using CellMapType = stdMap< ElementType, std::unordered_map< int, stdVector< vtkIdType > > >;
+using CellMapType = stdMap< ElementType, stdUnorderedMap< int, stdVector< vtkIdType > > >;
 
 /**
  * @brief Return a VTK controller for multiprocessing.

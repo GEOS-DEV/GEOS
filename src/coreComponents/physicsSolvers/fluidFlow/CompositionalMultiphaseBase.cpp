@@ -1099,7 +1099,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
   {
 
     // collect all the equilibrium names to idx
-    equilNameToEquilId[bc.getName()] = equilCounter;
+    equilNameToEquilId.insert( {bc.getName(), equilCounter} );
     equilCounter++;
 
     // check that the gravity vector is aligned with the z-axis
@@ -1390,7 +1390,6 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & time_n,
                                                                                 auto & subRegion )
     {
       saveConvergedState( subRegion );
-
       // update porosity, permeability
       updatePorosityAndPermeability( subRegion );
       // update all fluid properties
@@ -1534,7 +1533,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
     // collect all the bc names to idx
-    bcNameToBcId[bc.getName()] = bcCounter;
+    bcNameToBcId.insert( {bc.getName(), bcCounter} );
     bcCounter++;
   } );
 

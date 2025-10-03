@@ -585,6 +585,10 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName );
     cellBlock.setElementType( EnumStrings< ElementType >::fromString( m_elementType[aa++] ) );
   }
+  nodeSets = {
+    {"xneg", {}}, {"xpos", {}}, {"yneg", {}},
+    {"ypos", {}}, {"zneg", {}}, {"zpos", {}}, {"all", {}}
+  };
 
   SortedArray< localIndex > & xnegNodes = nodeSets["xneg"];
   SortedArray< localIndex > & xposNodes = nodeSets["xpos"];
@@ -617,7 +621,6 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
                            MpiWrapper::Reduction::Max,
                            MPI_COMM_GEOS );
   }
-
   // Find starting/ending index
   // Get the first and last indices in this partition each direction
   integer firstElemIndexInPartition[3] = { -1, -1, -1 };
@@ -692,8 +695,8 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     {
       for( integer iblock = 0; iblock < m_nElems[0].size(); ++iblock, ++regionOffset )
       {
-        numElemsInRegions[ m_regionNames[ regionOffset ] ] = 0;
-        elemTypeInRegions[ m_regionNames[ regionOffset ] ] = ElementType::Quadrilateral;
+        numElemsInRegions.insert( { m_regionNames[ regionOffset ], 0 } );
+        elemTypeInRegions.insert( { m_regionNames[ regionOffset ], ElementType::Quadrilateral } );
       }
     }
   }
@@ -811,7 +814,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     {
       numElements.emplace_back( numElemsInRegion.second );
       elementRegionNames.emplace_back( numElemsInRegion.first );
-      localElemIndexInRegion[numElemsInRegion.first] = 0;
+      localElemIndexInRegion.insert( { numElemsInRegion.first, 0 } );
     }
 
     cellBlockManager.resize( numElements, elementRegionNames );

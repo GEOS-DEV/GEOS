@@ -564,7 +564,7 @@ AllMeshes loadAllMeshes( Path const & filePath,
 
   for( string const & faceBlockName: faceBlockNames )
   {
-    faces[faceBlockName] = loadMesh( filePath, faceBlockName, lastRank );
+    faces.insert( { faceBlockName, loadMesh( filePath, faceBlockName, lastRank ) } );
   }
 
   return AllMeshes( main, faces );
@@ -656,6 +656,7 @@ partitionByCellGraph( AllMeshes & input,
       GEOS_THROW( "Unknown partition method", InputError );
     }
   }
+  return {};
 }
 
 /**
@@ -688,7 +689,7 @@ redistributeByCellGraph( AllMeshes & input,
     localNumFracCells += (rank == numRanks - 1) ? fracture->GetNumberOfCells() : 0;
     array1d< pmet_idx_t > tmp( numFracCells );
     std::copy( newPartitions.begin() + fracOffset, newPartitions.begin() + fracOffset + numFracCells, tmp.begin() );
-    newFracturePartitions[fractureName] = tmp;
+    newFracturePartitions.insert( { fractureName, tmp } );
     fracOffset += numFracCells;
   }
   // Now do the same for the 3d mesh, simply by trimming the fracture information.
@@ -1452,7 +1453,7 @@ splitCellsByType( vtkDataSet & mesh )
       case 2:
       {
         // Merge all 2D elements together as polygons (we don't track their shapes).
-        stdVector< vtkIdType > & surfaceCells = typeToCells[ ElementType::Polygon ];
+        stdVector< vtkIdType > & surfaceCells = typeToCells.try_emplace( ElementType::Polygon ).first->second;
         surfaceCells.insert( surfaceCells.end(), cellListsByType[t].begin(), cellListsByType[t].end() );
         break;
       }
@@ -1488,7 +1489,7 @@ splitCellsByTypeAndAttribute( stdMap< ElementType, stdVector< vtkIdType > > & ty
   {
     ElementType const elemType = t2c.first;
     stdVector< vtkIdType > & cells = t2c.second;
-    std::unordered_map< int, stdVector< vtkIdType > > & attributeToCells = typeToAttributeToCells[elemType];
+    stdUnorderedMap< int, stdVector< vtkIdType > > & attributeToCells = typeToAttributeToCells.try_emplace( elemType ).first->second;
 
     if( attributeDataArray == nullptr )
     {
@@ -1510,12 +1511,12 @@ splitCellsByTypeAndAttribute( stdMap< ElementType, stdVector< vtkIdType > > & ty
         }
         for( auto const & count : cellCounts )
         {
-          attributeToCells[count.first].reserve( count.second );
+          attributeToCells.try_emplace( count.first ).first->second.reserve( count.second );
         }
         for( vtkIdType c: cells )
         {
           int const region = static_cast< int >( attribute.Get( c, 0 ) );
-          attributeToCells[region].push_back( c );
+          attributeToCells.try_emplace( region ).first->second.push_back( c );
         }
       } );
     }
@@ -1550,7 +1551,7 @@ void extendCellMapWithRemoteKeys( CellMapType & cellMap )
       for( int attrValue: allCellAttributes )
       {
         // This code inserts an empty element list if one was not present
-        cellMap[elemType][attrValue];
+        cellMap.try_emplace( elemType ).first->second.try_emplace( attrValue );
       }
     }
   }
@@ -1562,7 +1563,7 @@ void extendCellMapWithRemoteKeys( CellMapType & cellMap )
   stdVector< int > allSurfaceAttributes = collectUniqueValues( surfaceAttributes );
   for( int attrValue: allSurfaceAttributes )
   {
-    cellMap[ElementType::Polygon][attrValue];
+    cellMap.try_emplace( ElementType::Polygon ).first->second.try_emplace( attrValue );
   }
 }
 
@@ -1622,10 +1623,10 @@ stdVector< localIndex > getHexahedronNodeOrderingFromPolyhedron( vtkCell * const
   stdVector< localIndex > nodeOrder( 8 );
 
   // Generate global to local map
-  std::unordered_map< localIndex, localIndex > G2L;
+  stdUnorderedMap< localIndex, localIndex > G2L;
   for( localIndex iPoint = 0; iPoint < 8; ++iPoint )
   {
-    G2L[cell->GetPointId( iPoint )] = iPoint;
+    G2L.insert( {cell->GetPointId( iPoint ), iPoint} );
   }
 
   // Assuming the input parameters are correct, take the first quad
@@ -2219,10 +2220,10 @@ void printMeshStatistics( vtkDataSet &,
       std::accumulate( typeToCells.second.begin(), typeToCells.second.end(), localIndex{},
                        []( auto const s, auto const & region ) { return s + region.second.size(); } );
 
-    totalLocalElems[typeToCells.first] =  MpiWrapper::sum( globalIndex{ localElemsOfType }, comm );
-    minLocalElemsCounts[typeToCells.first] =  MpiWrapper::min( localElemsOfType );
-    avgLocalElemsCounts[typeToCells.first] =  LvArray::integerConversion< localIndex >( MpiWrapper::sum( localElemsOfType ) / size );
-    maxLocalElemsCounts[typeToCells.first] = MpiWrapper::max( localElemsOfType );
+    totalLocalElems.insert( {typeToCells.first, MpiWrapper::sum( globalIndex{ localElemsOfType }, comm )} );
+    minLocalElemsCounts.insert( {typeToCells.first, MpiWrapper::min( localElemsOfType )} );
+    avgLocalElemsCounts.insert( {typeToCells.first, LvArray::integerConversion< localIndex >( MpiWrapper::sum( localElemsOfType ) / size )} );
+    maxLocalElemsCounts.insert( {typeToCells.first, MpiWrapper::max( localElemsOfType )} );
   }
 
   if( rank == 0 )
@@ -2321,7 +2322,7 @@ void importNodesets( integer const logLevel,
                    InputError );
     vtkTypeInt64Array const & nodesetMask = *vtkTypeInt64Array::FastDownCast( curArray );
 
-    SortedArray< localIndex > & targetNodeset = nodeSets[ nodesetNames[i] ];
+    SortedArray< localIndex > & targetNodeset = nodeSets.try_emplace( nodesetNames[i] ).first->second;
     for( localIndex j=0; j < numPoints; ++j )
     {
       if( nodesetMask.GetValue( j ) == 1 )
@@ -2372,7 +2373,7 @@ void writeNodes( integer const logLevel,
   // Generate the "all" set
   array1d< localIndex > allNodes( numPts );
   std::iota( allNodes.begin(), allNodes.end(), 0 );
-  SortedArray< localIndex > & allNodeSet = cellBlockManager.getNodeSets()[ "all" ];
+  SortedArray< localIndex > & allNodeSet = cellBlockManager.getNodeSets().try_emplace( "all" ).first->second;
   allNodeSet.insert( allNodes.begin(), allNodes.end() );
 
   // Import remaining nodesets
@@ -2465,7 +2466,7 @@ void writeSurfaces( integer const logLevel,
     GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing surface " << surfaceName );
 
     // Get or create all surfaces (even those which are empty in this rank)
-    SortedArray< localIndex > & curNodeSet = nodeSets[ surfaceName ];
+    SortedArray< localIndex > & curNodeSet = nodeSets.try_emplace( surfaceName ).first->second;
 
     for( vtkIdType const c : cellIds )
     {

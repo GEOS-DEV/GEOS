@@ -636,7 +636,6 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-
     updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
 
   } );
@@ -730,7 +729,6 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
           localSetSize += 1;
         }
       } );
-
       // increment the set size for this source flux boundary conditions
       bcAllSetsSize[bcNameToBcId.at( fs.getName())] += localSetSize.get();
     } );
@@ -769,7 +767,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
 
   fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
   {
-    aquiferNameToAquiferId[bc.getName()] = aquiferCounter;
+    aquiferNameToAquiferId.insert( {bc.getName(), aquiferCounter} );
     aquiferCounter++;
   } );
 

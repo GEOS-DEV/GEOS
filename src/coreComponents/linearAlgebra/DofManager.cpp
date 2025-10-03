@@ -623,7 +623,7 @@ void DofManager::addCoupling( string const & rowFieldName,
 
   if( m_coupling.count( {rowFieldIndex, colFieldIndex} ) == 0 )
   {
-    CouplingDescription & coupling = m_coupling[ { rowFieldIndex, colFieldIndex } ];
+    CouplingDescription & coupling = m_coupling.try_emplace( { rowFieldIndex, colFieldIndex } ).first->second;
     coupling.connector = connectivity;
     if( connectivity == Connector::None && rowFieldIndex == colFieldIndex )
     {
@@ -641,7 +641,7 @@ void DofManager::addCoupling( string const & rowFieldName,
   }
   else
   {
-    CouplingDescription & coupling = m_coupling[ { rowFieldIndex, colFieldIndex } ];
+    CouplingDescription & coupling = m_coupling.try_emplace( { rowFieldIndex, colFieldIndex } ).first->second;
     addNewSupports( processSupportList, m_coupling[ { rowFieldIndex, colFieldIndex } ].support );
 
     // Set connectivity with active symmetry flag
@@ -660,7 +660,7 @@ void DofManager::addCoupling( string const & fieldName,
 
   GEOS_ERROR_IF( field.location != FieldLocation::Elem, "Field must be supported on elements in order to use stencil sparsity" );
 
-  CouplingDescription & coupling = m_coupling[ {fieldIndex, fieldIndex} ];
+  CouplingDescription & coupling = m_coupling.try_emplace( { fieldIndex, fieldIndex} ).first->second;
   coupling.connector = Connector::Stencil;
   coupling.support = field.support;
   coupling.stencils = &stencils;
@@ -1580,7 +1580,7 @@ void DofManager::reorderByRank()
   for( FieldDescription & field : m_fields )
   {
     // compute local permutation of dofs, if needed
-    permutations[ field.name ] = computePermutation( field );
+    permutations.insert( {field.name, computePermutation( field ) } );
   }
 
   // Second loop: compute the dof number array
@@ -1627,12 +1627,14 @@ void DofManager::reorderByRank()
 
         if( field.location == FieldLocation::Elem )
         {
-          fieldsToBeSync[{ body.getName(), mesh.getName() }].addElementFields( {field.key}, regions );
+          fieldsToBeSync.try_emplace( { body.getName(), mesh.getName() } ).first->second.
+            addElementFields( {field.key}, regions );
 
         }
         else
         {
-          fieldsToBeSync[{ body.getName(), mesh.getName() }].addFields( field.location, {field.key} );
+          fieldsToBeSync.try_emplace( { body.getName(), mesh.getName() } ).first->second.
+            addFields( field.location, {field.key} );
         }
 
       } );

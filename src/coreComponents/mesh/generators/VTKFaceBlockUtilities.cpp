@@ -59,10 +59,10 @@ public:
       {
         globalIndex const & g = l2g[l];
         m_elementToCellBlock[g] = c;
-        g2l[g] = l;
+        g2l.insert( {g, l} );
       }
 
-      m_cbe[c] = g2l;
+      m_cbe.insert( {c, g2l} );
       m_cbf[c] = cb.getElemToFacesConstView();
     }
   }
@@ -449,7 +449,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
   stdMap< vtkIdType, localIndex > ng2l;  // global to local mapping for nodes.
   for( vtkIdType i = 0; i < globalPtIds->GetNumberOfValues(); ++i )
   {
-    ng2l[globalPtIds->GetValue( i )] = i;
+    ng2l.insert( { globalPtIds->GetValue( i ), i} );
   }
 
   // Let's build the elem2d to elem3d mapping.
@@ -467,7 +467,8 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
     for( int j = 0; j < pointIds->GetNumberOfIds(); ++j )
     {
       vtkIdType const pointId = boundaryPoints->GetValue( pointIds->GetId( j ) );
-      nodesToCellsFull[globalPtIds->GetValue( pointId )].emplace_back( globalCellIds->GetValue( cellId ) );
+      nodesToCellsFull.try_emplace( globalPtIds->GetValue( pointId )).
+        first->second.emplace_back( globalCellIds->GetValue( cellId ));
     }
   }
 
@@ -488,7 +489,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
       {
         stdVector< vtkIdType > const & tmp = it->second;
         std::set< vtkIdType > const cells{ tmp.cbegin(), tmp.cend() };
-        nodesToCells[n] = cells;
+        nodesToCells.insert( {n, cells} );
       }
     }
   }
@@ -538,7 +539,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
       {
         for( vtkIdType const & c: ncs->second )
         {
-          elem3dToDuplicatedNodes[c].insert( n );
+          elem3dToDuplicatedNodes.try_emplace( c ).first->second.insert( n );
         }
       }
     }

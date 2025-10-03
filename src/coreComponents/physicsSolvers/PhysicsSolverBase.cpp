@@ -257,9 +257,8 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
     setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
     setSystemSetupTimestamp( meshModificationTimestamp );
   }
-
   {
-    Timer timer( m_timers["step setup"] );
+    Timer timer( m_timers.try_emplace( "step setup" ).first->second );
     implicitStepSetup( time_n, dt, domain );
   }
 
@@ -268,7 +267,7 @@ real64 PhysicsSolverBase::solverStep( real64 const & time_n,
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   {
-    Timer timer( m_timers["step complete"] );
+    Timer timer( m_timers.try_emplace( "step complete" ).first->second );
     implicitStepComplete( time_n, dt_return, domain );
   }
 
@@ -521,7 +520,7 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
   implicitStepSetup( time_n, dt, domain );
 
   {
-    Timer timer( m_timers["assemble"] );
+    Timer timer( m_timers.try_emplace( "assemble" ).first->second );
 
     // zero out matrix/rhs before assembly
     m_localMatrix.zero();
@@ -557,10 +556,10 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
   }
 
   {
-    Timer timer( m_timers["linear solver total"] );
+    Timer timer( m_timers.try_emplace( "linear solver total" ).first->second );
 
     {
-      Timer timer_create( m_timers["linear solver create"] );
+      Timer timer_create( m_timers.try_emplace( "linear solver create" ).first->second );
 
       // Compose parallel LA matrix out of local matrix
       m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
@@ -576,14 +575,14 @@ real64 PhysicsSolverBase::linearImplicitStep( real64 const & time_n,
   debugOutputSolution( 0.0, 0, 0, m_solution );
 
   {
-    Timer timer( m_timers["apply solution"] );
+    Timer timer( m_timers.try_emplace( "apply solution" ).first->second );
 
     // apply the system solution to the fields/variables
     applySystemSolution( m_dofManager, m_solution.values(), 1.0, dt, domain );
   }
 
   {
-    Timer timer( m_timers["update state"] );
+    Timer timer( m_timers.try_emplace( "update state" ).first->second );
 
     // update non-primary variables (constitutive models)
     updateState( domain );
@@ -609,7 +608,7 @@ bool PhysicsSolverBase::lineSearch( real64 const & time_n,
                                     real64 const scaleFactor,
                                     real64 & lastResidual )
 {
-  Timer timer( m_timers["line search"] );
+  Timer timer( m_timers.try_emplace( "line search" ).first->second );
 
   integer const maxNumberLineSearchCuts = m_nonlinearSolverParameters.m_lineSearchMaxCuts;
   real64 const lineSearchCutFactor = m_nonlinearSolverParameters.m_lineSearchCutFactor;
@@ -690,7 +689,7 @@ bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & tim
                                                               real64 & lastResidual,
                                                               real64 & residualNormT )
 {
-  Timer timer( m_timers["line search"] );
+  Timer timer( m_timers.try_emplace( "line search" ).first->second );
 
   bool lineSearchSuccess = true;
 
@@ -834,7 +833,7 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
     // reset the solver state, since we are restarting the time step
     if( dtAttempt > 0 )
     {
-      Timer timer( m_timers["reset state"] );
+      Timer timer( m_timers.try_emplace( "reset state" ).first->second );
 
       resetStateToBeginningOfStep( domain );
       resetConfigurationToBeginningOfStep( domain );
@@ -956,7 +955,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
                                      dtAttempt, configurationLoopIter, newtonIter ));
 
     {
-      Timer timer( m_timers["assemble"] );
+      Timer timer( m_timers.try_emplace( "assemble" ).first->second );
 
       // We sync the nonlinear convergence history. The coupled solver parameters are the one being
       // used. We want to propagate the info to subsolvers. It can be important for solvers that
@@ -998,7 +997,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
 
     real64 residualNorm = 0;
     {
-      Timer timer( m_timers["convergence check"] );
+      Timer timer( m_timers.try_emplace( "convergence check" ).first->second );
 
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
@@ -1085,7 +1084,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     {
-      Timer timer( m_timers["linear solver total"] );
+      Timer timer( m_timers.try_emplace( "linear solver total" ).first->second );
 
       // if using adaptive Krylov tolerance scheme, update tolerance.
       LinearSolverParameters::Krylov & krylovParams = m_linearSolverParameters.get().krylov;
@@ -1095,7 +1094,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       }
 
       {
-        Timer timer_setup( m_timers["linear solver create"] );
+        Timer timer_setup( m_timers.try_emplace( "linear solver create" ).first->second );
 
         // Compose parallel LA matrix/rhs out of local LA matrix/rhs
         //
@@ -1122,7 +1121,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     {
-      Timer timer( m_timers["apply solution"] );
+      Timer timer( m_timers.try_emplace( "apply solution" ).first->second );
 
       // Compute the scaling factor for the Newton update
       scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
@@ -1142,7 +1141,7 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     {
-      Timer timer( m_timers["update state"] );
+      Timer timer( m_timers.try_emplace( "update state" ).first->second );
 
       // update non-primary variables (constitutive models)
       updateState( domain );
@@ -1381,7 +1380,7 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
   // Apply physics-based scaling to the linear system if enabled
   if( m_usePhysicsScaling )
   {
-    Timer timer_setup( m_timers["linear solver scaling"] );
+    Timer timer_setup( m_timers.try_emplace( "linear solver scaling" ).first->second );
 
     matrix.computeScalingVector( m_scaling );
     matrix.leftRightScale( m_scaling, m_scaling );
@@ -1398,12 +1397,12 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
 
     if( isSetupNeeded )
     {
-      Timer timer_setup( m_timers["linear solver setup"] );
+      Timer timer_setup( m_timers.try_emplace( "linear solver setup" ).first->second );
       m_linearSolver->setup( matrix );
     }
 
     {
-      Timer timer_setup( m_timers["linear solver solve"] );
+      Timer timer_setup( m_timers.try_emplace( "linear solver solve" ).first->second );
       m_linearSolver->solve( rhs, solution );
     }
 
@@ -1412,12 +1411,12 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
   else
   {
     {
-      Timer timer_setup( m_timers["linear solver setup"] );
+      Timer timer_setup( m_timers.try_emplace( "linear solver setup" ).first->second );
       m_precond->setup( matrix );
     }
     std::unique_ptr< KrylovSolver< ParallelVector > > solver = KrylovSolver< ParallelVector >::create( params, matrix, *m_precond );
     {
-      Timer timer_setup( m_timers["linear solver solve"] );
+      Timer timer_setup( m_timers.try_emplace( "linear solver solve" ).first->second );
       solver->solve( rhs, solution );
     }
     m_linearSolverResult = solver->result();
@@ -1442,7 +1441,7 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
   // Unscale the solution vector if physics-based scaling was applied
   if( m_usePhysicsScaling )
   {
-    Timer timer_setup( m_timers["linear solver scaling"] );
+    Timer timer_setup( m_timers.try_emplace( "linear solver scaling" ).first->second );
 
     solution.pointwiseProduct( m_scaling );
   }

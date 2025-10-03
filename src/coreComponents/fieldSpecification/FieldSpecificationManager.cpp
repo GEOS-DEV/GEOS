@@ -114,7 +114,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
     if( !subRegionFields.empty())
     {
-      allPresentFieldsName[subRegion.getName()] = subRegionFields;
+      allPresentFieldsName.insert( {subRegion.getName(), subRegionFields} );
     }
   } );
 

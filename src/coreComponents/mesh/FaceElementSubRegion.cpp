@@ -548,7 +548,7 @@ stdMap< globalIndex, globalIndex > buildReferenceCollocatedNodes( ArrayOfArrays<
     globalIndex const & refNode = *std::min_element( bucket.cbegin(), bucket.cend() );
     for( globalIndex const & n: bucket )
     {
-      referenceCollocatedNodes[n] = refNode;
+      referenceCollocatedNodes.insert( {n, refNode} );
     }
   }
 
@@ -597,7 +597,7 @@ buildCollocatedEdgeBuckets( stdMap< globalIndex, globalIndex > const & reference
     globalIndex const & gni1 = nl2g[nodes[1]];
     if( hasCollocatedNode( gni0 ) && hasCollocatedNode( gni1 ) )
     {
-      edgesIds[{ gni0, gni1 }] = lei;
+      edgesIds.insert( {{ gni0, gni1 }, lei} );
     }
   }
 
@@ -623,7 +623,7 @@ buildCollocatedEdgeBuckets( stdMap< globalIndex, globalIndex > const & reference
     globalIndex const n1 = it1->second;
 
     std::pair< globalIndex, globalIndex > const edgeHash = std::minmax( n0, n1 );
-    collocatedEdgeBuckets[edgeHash].insert( edge );
+    collocatedEdgeBuckets.try_emplace( edgeHash ).first->second.insert( edge );
   }
 
   return collocatedEdgeBuckets;
@@ -657,7 +657,7 @@ stdMap< localIndex, localIndex > buildReferenceCollocatedEdges( stdMap< std::pai
     localIndex const refEdge = *std::min_element( collocatedEdges.cbegin(), collocatedEdges.cend(), comp );
     for( localIndex const & collocatedEdge: collocatedEdges )
     {
-      referenceCollocatedEdges[collocatedEdge] = refEdge;
+      referenceCollocatedEdges.insert( {collocatedEdge, refEdge} );
     }
   }
 
@@ -817,7 +817,7 @@ void fillMissing2dElemToEdges( ArrayOfArraysView< localIndex const > const elem2
     {
       for( localIndex const & e: nodesToEdges[n] )
       {
-        nodesOfEdgesTouching2dElem[e].push_back( n );
+        nodesOfEdgesTouching2dElem.try_emplace( e ).first->second.push_back( n );
       }
     }
     for( auto const & ens: nodesOfEdgesTouching2dElem )

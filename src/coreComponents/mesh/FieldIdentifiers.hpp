@@ -196,7 +196,7 @@ private:
   {
     for( string const & field : fieldNames )
     {
-      m_fields[key].emplace_back( field );
+      m_fields.try_emplace( key ).first->second.emplace_back( field );
     }
   }
 };

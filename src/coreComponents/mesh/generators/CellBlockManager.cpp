@@ -774,7 +774,7 @@ CellBlock & CellBlockManager::registerCellBlock( string const & cellBlockName,
                                                  integer regionAttribute )
 {
   CellBlock & cb = this->getCellBlocks().registerGroup< CellBlock >( cellBlockName );
-  m_regionAttributesCellBlocks[ regionAttribute ].emplace( cellBlockName );
+  m_regionAttributesCellBlocks.try_emplace( regionAttribute ).first->second.emplace( cellBlockName );
   return cb;
 }
 

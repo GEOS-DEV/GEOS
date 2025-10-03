@@ -94,7 +94,7 @@ void ExternalMeshGeneratorBase::postInputInitialization()
     stdMap< string, string > mapping;
     for( size_t i = 0; i < from.size(); i++ )
     {
-      mapping[from[i]] = to[i];
+      mapping.insert( {from[i], to[i]} );
     }
     return mapping;
   };
