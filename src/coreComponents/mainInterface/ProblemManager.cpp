@@ -86,6 +86,7 @@ ProblemManager::ProblemManager( conduit::Node & root ):
   m_eventManager = &registerGroup< EventManager >( groupKeys.eventManager );
   registerGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager );
   registerGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
+  registerGroup< PartitionerManager >( groupKeys.partitionerManager );
   registerGroup< MeshManager >( groupKeys.meshManager );
   registerGroup< OutputManager >( groupKeys.outputManager );
   m_physicsSolverManager = &registerGroup< PhysicsSolverManager >( groupKeys.physicsSolverManager );
