@@ -3953,7 +3953,7 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
         {
           if( elementsToNodes( ei, n ) == nodeID )
           {
-            real64 temp[3]{};
+            real64 temp[3] {0};
             LvArray::tensorOps::copy< 3 >( xEle, elemCenter[er][esr][ei] ); //For C3D6 element type, elementsToNodes map may include
             // repeated indices and the following may run multiple
             // times for the same element.
@@ -3991,15 +3991,15 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
                 real64 const detJ = FE_TYPE::calcJacobian(q, xLocal, feStack, J);
                 FE_TYPE::calcGradN(q, xLocal, feStack, dNdX);
 
-                temp[0] -= (subregionStress(k, q, 0) * dNdX[n][0] +
-                            subregionStress(k, q, 5) * dNdX[n][1] +
-                            subregionStress(k, q, 4) * dNdX[n][2]) * detJ;
-                temp[1] -= (subregionStress(k, q, 5) * dNdX[n][0] +
-                            subregionStress(k, q, 1) * dNdX[n][1] +
-                            subregionStress(k, q, 3) * dNdX[n][2]) * detJ;
-                temp[2] -= (subregionStress(k, q, 4) * dNdX[n][0] +
-                            subregionStress(k, q, 3) * dNdX[n][1] +
-                            subregionStress(k, q, 2) * dNdX[n][2]) * detJ;
+                temp[0] -= (subregionStress(ei, q, 0) * dNdX[n][0] +
+                            subregionStress(ei, q, 5) * dNdX[n][1] +
+                            subregionStress(ei, q, 4) * dNdX[n][2]) * detJ;
+                temp[1] -= (subregionStress(ei, q, 5) * dNdX[n][0] +
+                            subregionStress(ei, q, 1) * dNdX[n][1] +
+                            subregionStress(ei, q, 3) * dNdX[n][2]) * detJ;
+                temp[2] -= (subregionStress(ei, q, 4) * dNdX[n][0] +
+                            subregionStress(ei, q, 3) * dNdX[n][1] +
+                            subregionStress(ei, q, 2) * dNdX[n][2]) * detJ;
               }
             } );
 
