@@ -27,6 +27,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "physicsSolvers/solidMechanics/contact/SolidMechanicsMortarContact.hpp"
 
 namespace geos
 {
@@ -44,9 +45,6 @@ ContactSolverBase::ContactSolverBase( const string & name,
 
   this->getWrapper< string >( viewKeyStruct::surfaceGeneratorNameString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
-
-  addLogLevel< logInfo::ConfigurationStatistics >();
-  addLogLevel< logInfo::ContactTolerance >();
 }
 
 void ContactSolverBase::postInputInitialization()
@@ -70,10 +68,15 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
   string const labels[3] = { "normal", "tangent1", "tangent2" };
   string const labelsTangent[2] = { "tangent1", "tangent2" };
 
-  forFractureRegionOnMeshTargets( meshBodies, [&] ( SurfaceElementRegion & fractureRegion )
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                    MeshLevel & mesh,
+                                                    string_array const & )
   {
-    fractureRegion.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
+
       subRegion.registerField< contact::dispJump >( getName() ).
         setDimLabels( 1, labels ).
         reference().resizeDimension< 1 >( 3 );
@@ -125,10 +128,14 @@ void ContactSolverBase::setFractureRegions( dataRepository::Group const & meshBo
   } );
 
   // TODO remove once multiple regions are fully supported
-  GEOS_THROW_IF( m_fractureRegionNames.size() > 1,
-                 GEOS_FMT( "{} {}: The number of fracture regions can not be more than one",
-                           this->getCatalogName(), this->getName() ),
-                 InputError );
+  // Disable this check for mortar contact solver
+  if ( m_fractureRegionNames.size() > 1 && !dynamic_cast< SolidMechanicsMortarContact * >( this ) )
+  {
+    GEOS_THROW_IF( m_fractureRegionNames.size() > 1,
+                   GEOS_FMT( "{} {}: The number of fracture regions can not be more than one",
+                             this->getCatalogName(), this->getName() ),
+                   InputError );
+  }
 }
 
 void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
@@ -200,21 +207,24 @@ void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
 
 void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & domain ) const
 {
-  globalIndex numStick = 0;
-  globalIndex numNewSlip  = 0;
-  globalIndex numSlip  = 0;
-  globalIndex numOpen  = 0;
-
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                               MeshLevel const & mesh,
-                                                               string_array const & )
+  if( getLogLevel() >=1 )
   {
-    computeFractureStateStatistics( mesh, numStick, numNewSlip, numSlip, numOpen );
+    globalIndex numStick = 0;
+    globalIndex numNewSlip  = 0;
+    globalIndex numSlip  = 0;
+    globalIndex numOpen  = 0;
 
-    GEOS_LOG_RANK_0( GEOS_FMT( "  Number of element for each fracture state:"
-                               " stick = {:12} | new slip = {:12} | slip =  {:12} | open =  {:12}",
-                               numStick, numNewSlip, numSlip, numOpen ) );
-  } );
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel const & mesh,
+                                                                 string_array const & )
+    {
+      computeFractureStateStatistics( mesh, numStick, numNewSlip, numSlip, numOpen );
+
+      GEOS_LOG_RANK_0( GEOS_FMT( "  Number of element for each fracture state:"
+                                 " stick: {:12} | new slip: {:12} | slip:  {:12} | open:  {:12}",
+                                 numStick, numNewSlip, numSlip, numOpen ) );
+    } );
+  }
 }
 
 real64 ContactSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n ),

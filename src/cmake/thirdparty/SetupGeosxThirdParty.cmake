@@ -376,12 +376,12 @@ else()
     mandatory_tpl_doesnt_exist("{fmt}" FMT_DIR)
 endif()
 
-    set(ENABLE_FMT ON CACHE BOOL "")
-
-    set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt-header-only )
-else()
-    mandatory_tpl_doesnt_exist("{fmt}" FMT_DIR)
-endif()
+#    set(ENABLE_FMT ON CACHE BOOL "")
+#
+#    set(thirdPartyLibs ${thirdPartyLibs} fmt::fmt-header-only )
+#else()
+#    mandatory_tpl_doesnt_exist("{fmt}" FMT_DIR)
+#endif()
 
 ################################
 # Umpire

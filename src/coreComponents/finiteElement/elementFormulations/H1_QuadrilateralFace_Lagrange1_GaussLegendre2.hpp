@@ -298,8 +298,8 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
   for( localIndex a=0; a<numNodes; ++a )
   {
     N[a] = 0.25 *
-           ( 1 + quadratureFactor*coords[0]*parentCoords0( a ) ) *
-           ( 1 + quadratureFactor*coords[1]*parentCoords1( a ) );
+           ( 1 + coords[0]*parentCoords0( a ) ) *
+           ( 1 + coords[1]*parentCoords1( a ) );
   }
 }
 GEOS_HOST_DEVICE
