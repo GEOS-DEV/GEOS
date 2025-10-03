@@ -366,7 +366,6 @@ jobs:
             DOCKER_CERTS_DIR: "/usr/local/share/ca-certificates"
             DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"
             HOST_CONFIG: /spack-generated.cmake
-            USE_SCCACHE: false
           
           - name: Rockylinux CUDA (8, gcc 13.3, cuda 12.9.1)
             BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
@@ -440,6 +439,7 @@ jobs:
       NPROC: ${{ matrix.NPROC }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
       REQUIRED_LABEL: "ci: run CUDA builds"
+      USE_SCCACHE: false
     secrets: inherit
 
   # Convenience job - passes when all other jobs have passed (must pass the CUDA jobs).
