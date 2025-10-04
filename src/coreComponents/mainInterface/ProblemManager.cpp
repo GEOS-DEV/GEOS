@@ -566,11 +566,10 @@ void ProblemManager::postInputInitialization()
     }
     else
     {
-      GEOS_ERROR( "No partitioner defined and no mesh generators found." );
+      GEOS_WARNING( "No partitioner defined and no mesh generators found." );
     }
   }
 
-  PartitionerBase & partitioner = domain.getPartitioner();
 
   // Handle command-line partition overrides
   bool repartition = false;
@@ -592,34 +591,19 @@ void ProblemManager::postInputInitialization()
     repartition = true;
     zpar = zparCL;
   }
-  if( repartition )
+
+  if( !repartition )
   {
-    // Validate that command-line overrides are compatible with partitioner type
-    CartesianPartitioner * cartesianPartitioner = dynamic_cast< CartesianPartitioner * >( &partitioner );
-    if( cartesianPartitioner != nullptr )
-    {
-      int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
-      integer const totalPartitions = xpar * ypar * zpar;
-
-      // Validate that partition counts match MPI size
-      if( totalPartitions != mpiSize )
-      {
-        GEOS_ERROR( GEOS_FMT( "Partition count mismatch: -x {} -y {} -z {} = {} total partitions, "
-                              "but running with {} MPI ranks. "
-                              "For CartesianPartitioner, the product of partition counts must equal the number of MPI ranks.",
-                              xpar, ypar, zpar, totalPartitions, mpiSize ) );
-      }
-
-      cartesianPartitioner->setPartitionCounts( xpar, ypar, zpar );
-    }
-    else
-    {
-      GEOS_WARNING( GEOS_FMT( "Command-line partition counts (-x {} -y {} -z {}) only apply to CartesianPartitioner. "
-                              "Current partitioner '{}' does not support explicit partition counts. "
-                              "These flags will be ignored.",
-                              xpar, ypar, zpar, partitioner.getName() ) );
-    }
+    zpar= MpiWrapper::commSize( MPI_COMM_GEOS );
   }
+
+  integer const totalPartitions = xpar * ypar * zpar;
+  int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
+  GEOS_ERROR_IF( totalPartitions !=mpiSize,
+                 GEOS_FMT( "Partition count mismatch: -x {} -y {} -z {} = {} total partitions, "
+                           "but running with {} MPI ranks. ", xpar, ypar, zpar, totalPartitions, mpiSize ) );
+  PartitionerBase & partitioner = domain.getPartitioner();
+  partitioner.setPartitionCounts( xpar, ypar, zpar );
 }
 
 void ProblemManager::initializationOrder( string_array & order )
