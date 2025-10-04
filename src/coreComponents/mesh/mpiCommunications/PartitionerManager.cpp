@@ -40,7 +40,6 @@ Group * PartitionerManager::createChild( string const & childKey, string const &
   return &this->registerGroup< PartitionerBase >( childName, std::move( partitioner ) );
 }
 
-
 void PartitionerManager::expandObjectCatalogs()
 {
   // During schema generation, register one of each type derived from PartitionerBase here
@@ -58,7 +57,7 @@ bool PartitionerManager::hasPartitioner() const
 PartitionerBase & PartitionerManager::getPartitioner()
 {
   // Get the first (and should be only) partitioner defined in the XML
-  GEOS_ERROR_IF( this->numSubGroups() == 0,
+  GEOS_ERROR_IF( !hasPartitioner(),
                  "No partitioner defined in XML. Please add a <Partitioner> node with a partitioner type (e.g., <Cartesian name=\"partitioner\"/>)" );
 
   GEOS_ERROR_IF( this->numSubGroups() > 1,

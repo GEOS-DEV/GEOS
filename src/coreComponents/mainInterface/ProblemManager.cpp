@@ -46,9 +46,8 @@
 #include "mesh/MeshManager.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "mesh/mpiCommunications/PartitionerBase.hpp"
-#include "mesh/mpiCommunications/CartesianPartitioner.hpp"
 #include "mesh/mpiCommunications/PartitionerManager.hpp"
+#include "mesh/mpiCommunications/PartitionerBase.hpp"
 #include "mesh/generators/InternalMeshGenerator.hpp"
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
@@ -517,13 +516,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
 
 void ProblemManager::postInputInitialization()
 {
-  DomainPartition & domain = getDomainPartition();
-
   Group const & commandLine = getGroup< Group >( groupKeys.commandLine );
-  integer const & xparCL = commandLine.getReference< integer >( viewKeys.xPartitionsOverride );
-  integer const & yparCL = commandLine.getReference< integer >( viewKeys.yPartitionsOverride );
-  integer const & zparCL = commandLine.getReference< integer >( viewKeys.zPartitionsOverride );
-
   integer const & suppressPinned = commandLine.getReference< integer >( viewKeys.suppressPinned );
   setPreferPinned((suppressPinned == 0));
 
@@ -570,40 +563,13 @@ void ProblemManager::postInputInitialization()
     }
   }
 
-
   // Handle command-line partition overrides
-  bool repartition = false;
-  integer xpar = 1;
-  integer ypar = 1;
-  integer zpar = 1;
-  if( xparCL != 0 )
-  {
-    repartition = true;
-    xpar = xparCL;
-  }
-  if( yparCL != 0 )
-  {
-    repartition = true;
-    ypar = yparCL;
-  }
-  if( zparCL != 0 )
-  {
-    repartition = true;
-    zpar = zparCL;
-  }
+  unsigned int const & xparCL = commandLine.getReference< integer >( viewKeys.xPartitionsOverride );
+  unsigned int const & yparCL = commandLine.getReference< integer >( viewKeys.yPartitionsOverride );
+  unsigned int const & zparCL = commandLine.getReference< integer >( viewKeys.zPartitionsOverride );
 
-  if( !repartition )
-  {
-    zpar= MpiWrapper::commSize( MPI_COMM_GEOS );
-  }
-
-  integer const totalPartitions = xpar * ypar * zpar;
-  int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
-  GEOS_ERROR_IF( totalPartitions !=mpiSize,
-                 GEOS_FMT( "Partition count mismatch: -x {} -y {} -z {} = {} total partitions, "
-                           "but running with {} MPI ranks. ", xpar, ypar, zpar, totalPartitions, mpiSize ) );
-  PartitionerBase & partitioner = domain.getPartitioner();
-  partitioner.setPartitionCounts( xpar, ypar, zpar );
+  PartitionerBase & partitioner = getDomainPartition().getPartitioner();
+  partitioner.processCommandLineOverrides( xparCL, yparCL, zparCL );
 }
 
 void ProblemManager::initializationOrder( string_array & order )

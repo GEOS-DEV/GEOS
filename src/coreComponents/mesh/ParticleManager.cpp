@@ -30,7 +30,7 @@ namespace geos
 
 using namespace dataRepository;
 
-class SpatialPartition;
+//class SpatialPartition;
 
 // *********************************************************************************************************************
 /**

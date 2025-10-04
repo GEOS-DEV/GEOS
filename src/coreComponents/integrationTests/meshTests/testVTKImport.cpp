@@ -20,10 +20,13 @@
 #include "LvArray/src/system.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
+#include "mainInterface/ProblemManager.hpp"
+
 #include "mesh/MeshManager.hpp"
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
+#include "mesh/mpiCommunications/PartitionerManager.hpp"
 
 // special CMake-generated include
 #include "tests/meshDirName.hpp"
@@ -53,8 +56,12 @@ using namespace geos::dataRepository;
 template< class V >
 void TestMeshImport( string const & meshFilePath, V const & validate, string const fractureName="" )
 {
-  string const pattern = R"xml(
-    <Mesh>
+  string const pattern =
+    R"xml(
+  <Partitioner>
+    <NoOp name="partitioner"/>
+  </Partitioner>
+  <Mesh>
       <VTKMesh
         name="mesh"
         file="{}"
@@ -66,15 +73,25 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
   string const meshNode = GEOS_FMT( pattern, meshFilePath, fractureName.empty() ? "" : "faceBlocks=\"{" + fractureName + "}\"" );
   xmlWrapper::xmlDocument xmlDocument;
   xmlDocument.loadString( meshNode );
+
   xmlWrapper::xmlNode xmlMeshNode = xmlDocument.getChild( "Mesh" );
+  xmlWrapper::xmlNode xmlPartitionerNode = xmlDocument.getChild( "Partitioner" );
 
   conduit::Node node;
   Group root( "root", node );
 
+  // Create and initialize PartitionerManager
+  PartitionerManager & partitionerManager = root.registerGroup< PartitionerManager >( ProblemManager::groupKeysStruct().partitionerManager.key() );
+  partitionerManager.processInputFileRecursive( xmlDocument, xmlPartitionerNode );
+  partitionerManager.postInputInitializationRecursive();
+
+
+  DomainPartition domain( "domain", &root );
+
   MeshManager meshManager( "mesh", &root );
   meshManager.processInputFileRecursive( xmlDocument, xmlMeshNode );
   meshManager.postInputInitializationRecursive();
-  DomainPartition domain( "domain", &root );
+
   meshManager.generateMeshes( domain );
 
   // TODO Field import is not tested yet. Proper refactoring needs to be done first.
