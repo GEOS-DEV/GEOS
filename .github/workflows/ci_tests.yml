@@ -439,7 +439,6 @@ jobs:
       NPROC: ${{ matrix.NPROC }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
       REQUIRED_LABEL: "ci: run CUDA builds"
-      USE_SCCACHE: false
     secrets: inherit
 
   # Convenience job - passes when all other jobs have passed (must pass the CUDA jobs).
