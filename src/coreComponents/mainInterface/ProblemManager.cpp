@@ -559,17 +559,21 @@ void ProblemManager::postInputInitialization()
     }
     else
     {
-      GEOS_WARNING( "No partitioner defined and no mesh generators found." );
+      GEOS_LOG_RANK_0( "No partitioner defined and no mesh generators found." );
+      // NB: this happens for some unit tests that don't require a mesh
     }
   }
 
-  // Handle command-line partition overrides
-  unsigned int const & xparCL = commandLine.getReference< integer >( viewKeys.xPartitionsOverride );
-  unsigned int const & yparCL = commandLine.getReference< integer >( viewKeys.yPartitionsOverride );
-  unsigned int const & zparCL = commandLine.getReference< integer >( viewKeys.zPartitionsOverride );
+  if( getDomainPartition().hasPartitioner())
+  {
+    // Handle command-line partition overrides
+    unsigned int const & xparCL = commandLine.getReference< integer >( viewKeys.xPartitionsOverride );
+    unsigned int const & yparCL = commandLine.getReference< integer >( viewKeys.yPartitionsOverride );
+    unsigned int const & zparCL = commandLine.getReference< integer >( viewKeys.zPartitionsOverride );
 
-  PartitionerBase & partitioner = getDomainPartition().getPartitioner();
-  partitioner.processCommandLineOverrides( xparCL, yparCL, zparCL );
+    PartitionerBase & partitioner = getDomainPartition().getPartitioner();
+    partitioner.processCommandLineOverrides( xparCL, yparCL, zparCL );
+  }
 }
 
 void ProblemManager::initializationOrder( string_array & order )

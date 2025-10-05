@@ -201,11 +201,11 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
   GEOS_MARK_FUNCTION;
 
 #if defined(GEOS_USE_MPI)
-
-
-  PartitionerBase const & partitioner = getPartitioner();
-  buildNeighborsFromPartitioner( partitioner.getNeighborsRank() );
-
+  if( hasPartitioner())
+  {
+    PartitionerBase const & partitioner = getPartitioner();
+    buildNeighborsFromPartitioner( partitioner.getNeighborsRank() );
+  }
 #endif
 
   forMeshBodies( [&]( MeshBody & meshBody )

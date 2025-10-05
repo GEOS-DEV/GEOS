@@ -68,12 +68,25 @@ void MeshManager::expandObjectCatalogs()
 
 void MeshManager::generateMeshes( DomainPartition & domain )
 {
+  // First, check if there's any work to do at all.
+  // Count the number of mesh generators registered.
+  int numMeshGenerators = 0;
+  forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase const & ) { ++numMeshGenerators; } );
+
+  // If there are no mesh generators, this is a meshless run.
+  // This function has nothing to do, so return immediately.
+  if( numMeshGenerators == 0 )
+  {
+    GEOS_LOG_RANK_0( "No mesh generators found in MeshManager. Assuming meshless simulation." );
+    return;
+  }
+
   // Temporary partitioner manager for unit tests (will be deleted at end of function)
   std::unique_ptr< PartitionerManager > tempPartitionerManager;
 
   // If no partitioner exists, create a default one based on mesh type
   // This might happen in tests where there's no ProblemManager parent
-  if( !domain.hasPartitioner() )
+  if( !domain.hasPartitioner()  )
   {
     // Check if the domain has a parent (ProblemManager)
     PartitionerManager * partitionerManager = nullptr;
@@ -138,7 +151,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     }
     else
     {
-      GEOS_ERROR( "No partitioner defined and no mesh generators found." );
+      GEOS_ERROR( "No partitioner defined." );
     }
   }
 
