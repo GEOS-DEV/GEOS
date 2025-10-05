@@ -567,7 +567,12 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     m_max[1] = m_vertices[1].back();
     m_max[2] = m_vertices[2].back();
 
-    partitioner.partition( m_min, m_max );
+    R1Tensor minTensor;
+    R1Tensor maxTensor;
+    LvArray::tensorOps::copy< 3 >( minTensor.data, m_min );
+    LvArray::tensorOps::copy< 3 >( maxTensor.data, m_max );
+
+    partitioner.initializeDomain( minTensor, maxTensor );
   }
 
   // Make sure that the node manager fields are initialized

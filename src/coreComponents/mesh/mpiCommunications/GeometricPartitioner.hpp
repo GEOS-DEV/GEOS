@@ -51,16 +51,14 @@ public:
    */
   virtual void initializeDomain( const R1Tensor & globalMin, const R1Tensor & globalMax ) = 0;
 
+
   /**
-   * @brief Returns the destination rank for a given coordinate.
+   * @brief Checks if a given coordinate falls within the bounds of this specific rank's partition.
    *
-   * Determine which partition an object belongs to based on its position.
-   *
-   * @param coords The coordinates of the object to be placed.
-   * @return The rank ID of the destination partition, or -1 if the coordinate
-   *         is outside the entire simulation domain.
+   * @param coords The coordinates of the object to check.
+   * @return True if the coordinate is within the local partition's boundaries, false otherwise.
    */
-  virtual int getDestinationRank( const R1Tensor & coords ) const = 0;
+  virtual bool isCoordInLocalPartition( const R1Tensor & coords ) const = 0;
 };
 
 } // namespace geos

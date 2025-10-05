@@ -21,14 +21,14 @@
 #define GEOS_PARTITIONER_CARTESIANPARTITIONER_HPP_
 
 
-#include "PartitionerBase.hpp"
+#include "GeometricPartitioner.hpp"
 #include "common/MpiWrapper.hpp"
 
 
 namespace geos
 {
 
-class CartesianPartitioner : public PartitionerBase
+class CartesianPartitioner : public GeometricPartitioner
 {
 public:
   static constexpr int m_ndim = 3;
@@ -50,7 +50,11 @@ public:
    */
   static string catalogName() { return "Cartesian"; }
 
-  void partition( const real64 (& globalGridMin)[m_ndim], const real64 (& globalGridMax)[m_ndim] );
+  void initializeDomain( const R1Tensor & globalMin, const R1Tensor & globalMax ) override;
+
+  bool isCoordInLocalPartition( const R1Tensor & coords ) const override;
+
+  bool isCoordInPartition( const real64 & coord, const int dir ) const;
 
   void processCommandLineOverrides( unsigned int xPartitionsCL,
                                     unsigned int yPartitionsCL,
@@ -62,8 +66,6 @@ public:
 
   void setNeighborsRank( const std::vector< int > & neighborsRank ) override;
 
-
-  bool isCoordInPartition( const real64 & coord, const int dir ) const;
 
 
   array1d< int > const & getPartitionCounts() const
@@ -112,8 +114,8 @@ private:
   void addNeighbors( const unsigned int idim, int * ncoords, MPI_Comm cartComm );
 
   void validatePartitionSize( int size ) const;
-  void setGlobalGridValues( const real64 (& globalGridMin)[m_ndim], const real64 (& globalGridMax)[m_ndim] );
-  void setLocalPartitionValues( const real64 (& globalGridMin)[m_ndim] );
+  void setGlobalGridValues( const R1Tensor & globalGridMin, const R1Tensor & globalGridMax );
+  void setLocalPartitionValues( const R1Tensor & globalGridMin );
 
 protected:
   /// Periodicity in each dimension (0 = non-periodic, 1 = periodic)

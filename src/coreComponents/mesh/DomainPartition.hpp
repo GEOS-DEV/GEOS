@@ -316,6 +316,11 @@ public:
    */
   PartitionerManager const & getPartitionerManager() const;
 
+  /**
+   * @brief Checks if a partitioner is defined and available for this domain.
+   *
+   * @return True if a partitioner exists, false otherwise.
+   */
   bool hasPartitioner() const;
 
 private:

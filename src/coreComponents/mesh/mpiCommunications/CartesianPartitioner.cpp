@@ -73,7 +73,7 @@ private:
 
 CartesianPartitioner::CartesianPartitioner( string const & name,
                                             Group * const parent ):
-  PartitionerBase( name, parent ),
+  GeometricPartitioner( name, parent ),
   m_periodic( m_ndim ),
   m_coords( m_ndim ),
   m_partitionCounts(),
@@ -90,8 +90,8 @@ CartesianPartitioner::CartesianPartitioner( string const & name,
     setDescription( "Method (library) used to partition the mesh" );
 }
 
-void CartesianPartitioner::partition( real64 const ( &globalGridMin )[ 3 ],
-                                      real64 const ( &globalGridMax )[ 3 ] )
+void CartesianPartitioner::initializeDomain( const R1Tensor & globalGridMin,
+                                             const R1Tensor & globalGridMax )
 {
   ScopedMpiComm cartComm;
   initializeCartesianCommunicator( cartComm );
@@ -238,8 +238,7 @@ void CartesianPartitioner::determineNeighborsRank( MPI_Comm cartComm )
   addNeighbors( 0, ncoords, cartComm );
 }
 
-
-void CartesianPartitioner::setGlobalGridValues( const real64 (& gridMin)[m_ndim], const real64 (& gridMax)[m_ndim] )
+void CartesianPartitioner::setGlobalGridValues( const R1Tensor & gridMin, const R1Tensor & gridMax )
 {
   LvArray::tensorOps::copy< 3 >( m_globalGridMin, gridMin );
   LvArray::tensorOps::copy< 3 >( m_globalGridMax, gridMax );
@@ -248,7 +247,7 @@ void CartesianPartitioner::setGlobalGridValues( const real64 (& gridMin)[m_ndim]
 }
 
 
-void CartesianPartitioner::setLocalPartitionValues( const real64 (& gridMin)[m_ndim] )
+void CartesianPartitioner::setLocalPartitionValues( const R1Tensor & gridMin )
 {
   LvArray::tensorOps::copy< 3 >( m_localSize, m_globalGridSize );
   LvArray::tensorOps::copy< 3 >( m_localMin, gridMin );
@@ -260,6 +259,12 @@ void CartesianPartitioner::setLocalPartitionValues( const real64 (& gridMin)[m_n
   }
 }
 
+bool CartesianPartitioner::isCoordInLocalPartition( const R1Tensor & coords ) const
+{
+  return isCoordInPartition( coords[0], 0 ) &&
+         isCoordInPartition( coords[1], 1 ) &&
+         isCoordInPartition( coords[2], 2 );
+}
 
 bool CartesianPartitioner::isCoordInPartition( const real64 & coord, const int dir ) const
 {
