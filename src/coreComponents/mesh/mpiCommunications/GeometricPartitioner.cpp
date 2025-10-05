@@ -14,28 +14,17 @@
  */
 
 /**
- * @file PartitionerBase.cpp
+ * @file GeometricPartitioner.cpp
  */
 
-
-#include "PartitionerBase.hpp"
-
+#include "GeometricPartitioner.hpp"
 
 namespace geos
 {
 
-PartitionerBase::PartitionerBase( string const & name,
-                                  Group * const parent ):
-  Group( name, parent ),
-  m_numPartitions( 1 ), // Default to a single partition
-  m_numColors( 1 ),     // Default to a single color
-  m_color( 0 )          // Default to color 0
-{}
-
-PartitionerBase::CatalogInterface::CatalogType & PartitionerBase::getCatalog()
-{
-  static PartitionerBase::CatalogInterface::CatalogType catalog;
-  return catalog;
-}
+// GeometricPartitioner is a purely abstract class that defines an interface.
+// As such, it has no functions to implement in its corresponding cpp file.
+// The inherited constructor is handled by the 'using' declaration in the header,
+// and the new methods are pure virtual.
 
 } // namespace geos

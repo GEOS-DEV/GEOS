@@ -14,16 +14,14 @@
  */
 
 /**
- * @file ParMETISInterface.cpp
+ * @file ParMetisPartitioner.cpp
  */
 
-#include "ParMETISInterface.hpp"
-
-#include "common/GEOS_RAJA_Interface.hpp"
-
+#include "ParMetisPartitioner.hpp"
+#include "common/DataTypes.hpp"
 #include <parmetis.h>
+#include <numeric> // For std::accumulate
 
-#include <numeric>
 
 #define GEOS_PARMETIS_CHECK( call ) \
   do { \
@@ -31,18 +29,83 @@
     GEOS_ERROR_IF_NE_MSG( ierr, METIS_OK, "Error in call to:\n" << #call ); \
   } while( false )
 
+
 namespace geos
 {
-namespace parmetis
+using namespace dataRepository;
+using camp::idx_t;
+
+static_assert( std::is_same< idx_t, pmet_idx_t >::value, "Non-matching index types. ParMETIS must be configured with 64-bit indices." );
+
+
+ParMetisPartitioner::ParMetisPartitioner( string const & name, Group * const parent ):
+  GraphPartitioner( name, parent ),
+  m_numRefinements( 0 )
 {
+  registerWrapper( viewKeyStruct::numRefinementsString(), &m_numRefinements ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Number of ParMETIS refinements" );
+}
 
-static_assert( std::is_same< idx_t, pmet_idx_t >::value, "Non-matching index types. ParMETIS must be built with 64-bit indices." );
+array1d< pmet_idx_t >
+ParMetisPartitioner::partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & graph,
+                                arrayView1d< pmet_idx_t const > const & vertDist,
+                                pmet_idx_t const numParts,
+                                MPI_Comm comm,
+                                int const numRefinements )
+{
+  array1d< pmet_idx_t > part( graph.size() );
+  // If only one partition is requested, no partitioning is needed.
+  // All elements are assigned to rank 0.
+  if( numParts == 1 )
+  {
+    part.setValues< serialPolicy >( 0 );
+    return part;
+  }
 
-ArrayOfArrays< idx_t, idx_t >
-meshToDual( ArrayOfArraysView< idx_t const, idx_t > const & elemToNodes,
-            arrayView1d< idx_t const > const & elemDist,
-            MPI_Comm comm,
-            int const minCommonNodes )
+  // Set up ParMETIS parameters
+  idx_t wgtflag = 0; // No weights on vertices or edges
+  idx_t numflag = 0; // C-style numbering (starts at 0)
+  idx_t ncon = 1;    // Number of constraints (1, for vertex count balance)
+  idx_t npart = numParts;
+  idx_t edgecut = 0;
+  real_t ubvec = 1.05; // Imbalance tolerance
+  idx_t options[3] = { 1, 0, 0 }; // Use default options, no seed
+
+  // Set target partition weights for even distribution
+  array1d< real_t > tpwgts( numParts );
+  tpwgts.setValues< serialPolicy >( 1.0f / static_cast< real_t >( numParts ) );
+
+  // ParMETIS has an unusual API that requires non-const pointers for read-only data.
+  // We must cast away constness, which is technically UB but is how the library is used.
+  GEOS_PARMETIS_CHECK( ParMETIS_V3_PartKway( const_cast< idx_t * >( vertDist.data() ),
+                                             const_cast< idx_t * >( graph.getOffsets() ),
+                                             const_cast< idx_t * >( graph.getValues() ),
+                                             nullptr, nullptr, &wgtflag,
+                                             &numflag, &ncon, &npart, tpwgts.data(),
+                                             &ubvec, options, &edgecut, part.data(), &comm ) );
+
+  // Perform refinements if requested.
+  if( numRefinements > 0 )
+  {
+    GEOS_LOG_RANK_0( "ParMETIS is performing " << numRefinements << " refinements." );
+    GEOS_PARMETIS_CHECK( ParMETIS_V3_RefineKway( const_cast< idx_t * >( vertDist.data() ),
+                                                 const_cast< idx_t * >( graph.getOffsets() ),
+                                                 const_cast< idx_t * >( graph.getValues() ),
+                                                 nullptr, nullptr, &wgtflag,
+                                                 &numflag, &ncon, &npart, tpwgts.data(),
+                                                 &ubvec, options, &edgecut, part.data(), &comm ) );
+  }
+
+  return part;
+}
+
+
+ArrayOfArrays< pmet_idx_t, pmet_idx_t >
+ParMetisPartitioner::meshToDual( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & elemToNodes,
+                                 arrayView1d< pmet_idx_t const > const & elemDist,
+                                 MPI_Comm comm,
+                                 int const minCommonNodes )
 {
   idx_t const numElems = elemToNodes.size();
 
@@ -53,18 +116,18 @@ meshToDual( ArrayOfArraysView< idx_t const, idx_t > const & elemToNodes,
                       elemToNodes.valueCapacity(),
                       "Internal error. The element to nodes mapping must be strictly allocated for compatibility with a third party library." );
 
-  idx_t numflag = 0;
-  idx_t ncommonnodes = minCommonNodes;
-  idx_t * xadj;
-  idx_t * adjncy;
+  pmet_idx_t numflag = 0;
+  pmet_idx_t ncommonnodes = minCommonNodes;
+  pmet_idx_t * xadj;
+  pmet_idx_t * adjncy;
 
   // Technical UB if ParMETIS writes into these arrays; in practice we discard them right after
-  GEOS_PARMETIS_CHECK( ParMETIS_V3_Mesh2Dual( const_cast< idx_t * >( elemDist.data() ),
-                                              const_cast< idx_t * >( elemToNodes.getOffsets() ),
-                                              const_cast< idx_t * >( elemToNodes.getValues() ),
+  GEOS_PARMETIS_CHECK( ParMETIS_V3_Mesh2Dual( const_cast< pmet_idx_t * >( elemDist.data() ),
+                                              const_cast< pmet_idx_t * >( elemToNodes.getOffsets() ),
+                                              const_cast< pmet_idx_t * >( elemToNodes.getValues() ),
                                               &numflag, &ncommonnodes, &xadj, &adjncy, &comm ) );
 
-  ArrayOfArrays< idx_t, idx_t > graph;
+  ArrayOfArrays< pmet_idx_t, pmet_idx_t > graph;
   graph.resizeFromOffsets( numElems, xadj );
 
   // There is no way to direct-copy values into ArrayOfArrays without UB (casting away const)
@@ -79,52 +142,8 @@ meshToDual( ArrayOfArraysView< idx_t const, idx_t > const & elemToNodes,
   return graph;
 }
 
-array1d< idx_t >
-partition( ArrayOfArraysView< idx_t const, idx_t > const & graph,
-           arrayView1d< idx_t const > const & vertDist,
-           idx_t const numParts,
-           MPI_Comm comm,
-           int const numRefinements )
-{
-  array1d< idx_t > part( graph.size() ); // all 0 by default
-  if( numParts == 1 )
-  {
-    return part;
-  }
 
-  // Compute tpwgts parameters (target partition weights)
-  array1d< real_t > tpwgts( numParts );
-  tpwgts.setValues< serialPolicy >( 1.0f / static_cast< real_t >( numParts ) );
 
-  // Set other ParMETIS parameters
-  idx_t wgtflag = 0;
-  idx_t numflag = 0;
-  idx_t ncon = 1;
-  idx_t npart = numParts;
-  idx_t options[4] = { 1, 0, 2022, PARMETIS_PSR_UNCOUPLED };
-  idx_t edgecut = 0;
-  real_t ubvec = 1.05;
+REGISTER_CATALOG_ENTRY( PartitionerBase, ParMetisPartitioner, string const &, dataRepository::Group * const )
 
-  // Technical UB if ParMETIS writes into these arrays; in practice we discard them right after
-  GEOS_PARMETIS_CHECK( ParMETIS_V3_PartKway( const_cast< idx_t * >( vertDist.data() ),
-                                             const_cast< idx_t * >( graph.getOffsets() ),
-                                             const_cast< idx_t * >( graph.getValues() ),
-                                             nullptr, nullptr, &wgtflag,
-                                             &numflag, &ncon, &npart, tpwgts.data(),
-                                             &ubvec, options, &edgecut, part.data(), &comm ) );
-
-  for( int iter = 0; iter < numRefinements; ++iter )
-  {
-    GEOS_PARMETIS_CHECK( ParMETIS_V3_RefineKway( const_cast< idx_t * >( vertDist.data() ),
-                                                 const_cast< idx_t * >( graph.getOffsets() ),
-                                                 const_cast< idx_t * >( graph.getValues() ),
-                                                 nullptr, nullptr, &wgtflag,
-                                                 &numflag, &ncon, &npart, tpwgts.data(),
-                                                 &ubvec, options, &edgecut, part.data(), &comm ) );
-  }
-
-  return part;
-}
-
-} // namespace parmetis
 } // namespace geos
