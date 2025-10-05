@@ -100,7 +100,6 @@ set( mesh_headers
      mpiCommunications/MPI_iCommData.hpp
      mpiCommunications/NeighborCommunicator.hpp
      mpiCommunications/NeighborData.hpp
-     mpiCommunications/PartitionBase.hpp
      mpiCommunications/PartitionerManager.hpp
      mpiCommunications/PartitionerBase.hpp
      mpiCommunications/GeometricPartitioner.hpp
@@ -186,7 +185,6 @@ set( mesh_sources
      mpiCommunications/CommunicationTools.cpp
      mpiCommunications/MPI_iCommData.cpp
      mpiCommunications/NeighborCommunicator.cpp
-     mpiCommunications/PartitionBase.cpp
      mpiCommunications/PartitionerManager.cpp
      mpiCommunications/PartitionerBase.cpp
      mpiCommunications/GraphPartitioner.cpp

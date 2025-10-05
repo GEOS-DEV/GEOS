@@ -41,7 +41,6 @@ string const partitionManager( "partitionManager" );
 }
 
 class ObjectManagerBase;
-class PartitionBase;
 class PartitionerBase;
 class PartitionerManager;
 

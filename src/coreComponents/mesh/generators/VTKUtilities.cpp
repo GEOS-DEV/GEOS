@@ -28,10 +28,10 @@
 
 
 #ifdef GEOS_USE_PARMETIS
-#include "mesh/generators/ParMETISInterface.hpp"
+#include "mesh/mpiCommunications/ParMetisPartitioner.hpp"
 #endif
 #ifdef GEOS_USE_SCOTCH
-#include "mesh/generators/PTScotchInterface.hpp"
+#include "mesh/mpiCommunications/PTScotchPartitioner.hpp"
 #endif
 
 #include <vtkArrayDispatch.h>

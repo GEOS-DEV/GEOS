@@ -71,7 +71,7 @@ public:
    * @brief Gets the number of refinement steps configured for this partitioner.
    * @return The number of refinement steps.
    */
-   int getNumRefinements() const override { return 0; }
+  int getNumRefinements() const override { return 0; }
 };
 
 } // namespace geos
