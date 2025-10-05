@@ -27,9 +27,9 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/mpiCommunications/PartitionerManager.hpp"
 #include "mesh/LogLevelsInfo.hpp"
-
+#include "mainInterface/ProblemManager.hpp"
 
 namespace geos
 {
@@ -43,10 +43,6 @@ DomainPartition::DomainPartition( string const & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( false );
 
-  this->registerWrapper< SpatialPartition, PartitionBase >( keys::partitionManager ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setSizedFromParent( false );
-
   registerGroup( groupKeys.meshBodies );
   registerGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
 
@@ -56,6 +52,70 @@ DomainPartition::DomainPartition( string const & name,
 
 DomainPartition::~DomainPartition()
 {}
+
+void DomainPartition::buildNeighborsFromPartitioner( std::vector< int > const & neighborsRank )
+{
+  GEOS_MARK_FUNCTION;
+
+#if defined(GEOS_USE_MPI)
+  // Clear existing neighbors
+  m_neighbors.clear();
+  m_numFirstOrderNeighbors = 0;
+
+  // Build NeighborCommunicator objects from the rank list
+  for( int const neighborRank : neighborsRank )
+  {
+    m_neighbors.emplace_back( neighborRank );
+  }
+  m_numFirstOrderNeighbors = static_cast< int >( m_neighbors.size() );
+
+  // Create an array of the first-order neighbor ranks
+  array1d< int > firstNeighborRanks;
+  for( NeighborCommunicator const & neighbor : m_neighbors )
+  {
+    firstNeighborRanks.emplace_back( neighbor.neighborRank() );
+  }
+
+  int neighborsTag = 54;
+
+  // Send this list of neighbors to all neighbors
+  stdVector< MPI_Request > requests( m_neighbors.size(), MPI_REQUEST_NULL );
+  for( std::size_t i = 0; i < m_neighbors.size(); ++i )
+  {
+    MpiWrapper::iSend( firstNeighborRanks.toView(), m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOS, &requests[ i ] );
+  }
+
+  // This set will contain the second-order (neighbor-of-neighbor) ranks
+  std::set< int > secondNeighborRanks;
+
+  array1d< int > neighborOfNeighborRanks;
+  for( std::size_t i = 0; i < m_neighbors.size(); ++i )
+  {
+    MpiWrapper::recv( neighborOfNeighborRanks, m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOS, MPI_STATUS_IGNORE );
+
+    // Insert the neighbors of the current neighbor into the set of second neighbors
+    secondNeighborRanks.insert( neighborOfNeighborRanks.begin(), neighborOfNeighborRanks.end() );
+  }
+
+  // Remove yourself and all the first neighbors from the second neighbors
+  secondNeighborRanks.erase( MpiWrapper::commRank() );
+  for( NeighborCommunicator const & neighbor : m_neighbors )
+  {
+    secondNeighborRanks.erase( neighbor.neighborRank() );
+  }
+
+  // Append second-order neighbors to the neighbor list
+  for( integer const neighborRank : secondNeighborRanks )
+  {
+    m_neighbors.emplace_back( neighborRank );
+  }
+
+  MpiWrapper::waitAll( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
+
+#endif
+}
+
+
 
 void DomainPartition::initializationOrder( string_array & order )
 {
@@ -80,84 +140,71 @@ void DomainPartition::initializationOrder( string_array & order )
   }
 }
 
+
+PartitionerManager & DomainPartition::getPartitionerManager()
+{
+  GEOS_ERROR_IF( !this->hasParent(), "DomainPartition has no parent to get PartitionerManager from" );
+
+  Group & parent = this->getParent();
+
+  GEOS_ERROR_IF( !parent.hasGroup( ProblemManager::groupKeysStruct().partitionerManager.key() ),
+                 "Parent does not contain a PartitionerManager" );
+
+  return parent.getGroup< PartitionerManager >( ProblemManager::groupKeysStruct().partitionerManager.key() );
+}
+
+PartitionerManager const & DomainPartition::getPartitionerManager() const
+{
+  GEOS_ERROR_IF( !this->hasParent(), "DomainPartition has no parent to get PartitionerManager from" );
+
+  Group const & parent = this->getParent();
+
+  GEOS_ERROR_IF( !parent.hasGroup( ProblemManager::groupKeysStruct().partitionerManager.key() ),
+                 "Parent does not contain a PartitionerManager" );
+
+  return parent.getGroup< PartitionerManager >( ProblemManager::groupKeysStruct().partitionerManager.key() );
+}
+
+bool DomainPartition::hasPartitioner() const
+{
+  // Check if we have a parent
+  Group const * parent = this->hasParent() ? &this->getParent() : nullptr;
+  if( parent == nullptr )
+  {
+    return false;
+  }
+
+  // Check if parent (regardless of type: could be root, ProblemManager, etc.) has a partitionerManager
+  if( parent->hasGroup( ProblemManager::groupKeysStruct().partitionerManager.key() ) )
+  {
+    return getPartitionerManager().hasPartitioner();
+  }
+
+  // No partitioner found
+  return false;
+}
+
+PartitionerBase & DomainPartition::getPartitioner()
+{
+  return getPartitionerManager().getPartitioner();
+}
+
+PartitionerBase const & DomainPartition::getPartitioner() const
+{
+  return getPartitionerManager().getPartitioner();
+}
+
+
+
 void DomainPartition::setupBaseLevelMeshGlobalInfo()
 {
   GEOS_MARK_FUNCTION;
 
 #if defined(GEOS_USE_MPI)
-  PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
-  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
 
-  const std::set< int > metisNeighborList = partition.getMetisNeighborList();
-  if( metisNeighborList.empty() )
-  {
 
-    //get communicator, rank, and coordinates
-    MPI_Comm cartcomm;
-    {
-      int reorder = 0;
-      MpiWrapper::cartCreate( MPI_COMM_GEOS, 3, partition.getPartitions().data(), partition.m_Periodic.data(), reorder, &cartcomm );
-      GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
-    }
-    int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
-
-    MpiWrapper::cartCoords( cartcomm, rank, partition.m_nsdof, partition.m_coords.data() );
-
-    int ncoords[3];
-    addNeighbors( 0, cartcomm, ncoords );
-
-    MpiWrapper::commFree( cartcomm );
-  }
-  else
-  {
-    for( integer const neighborRank : metisNeighborList )
-    {
-      m_neighbors.emplace_back( neighborRank );
-    }
-  }
-
-  // Create an array of the first neighbors.
-  array1d< int > firstNeighborRanks;
-  for( NeighborCommunicator const & neighbor : m_neighbors )
-  {
-    firstNeighborRanks.emplace_back( neighbor.neighborRank() );
-  }
-
-  int neighborsTag = 54;
-
-  // Send this list of neighbors to all neighbors.
-  stdVector< MPI_Request > requests( m_neighbors.size(), MPI_REQUEST_NULL );
-
-  for( std::size_t i = 0; i < m_neighbors.size(); ++i )
-  {
-    MpiWrapper::iSend( firstNeighborRanks.toView(), m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOS, &requests[ i ] );
-  }
-
-  // This set will contain the second (neighbor of) neighbors ranks.
-  std::set< int > secondNeighborRanks;
-
-  array1d< int > neighborOfNeighborRanks;
-  for( std::size_t i = 0; i < m_neighbors.size(); ++i )
-  {
-    MpiWrapper::recv( neighborOfNeighborRanks, m_neighbors[ i ].neighborRank(), neighborsTag, MPI_COMM_GEOS, MPI_STATUS_IGNORE );
-
-    // Insert the neighbors of the current neighbor into the set of second neighbors.
-    secondNeighborRanks.insert( neighborOfNeighborRanks.begin(), neighborOfNeighborRanks.end() );
-  }
-
-  // Remove yourself and all the first neighbors from the second neighbors.
-  secondNeighborRanks.erase( MpiWrapper::commRank() );
-  for( NeighborCommunicator const & neighbor : m_neighbors )
-  {
-    secondNeighborRanks.erase( neighbor.neighborRank() );
-  }
-
-  for( integer const neighborRank : secondNeighborRanks )
-  {
-    m_neighbors.emplace_back( neighborRank );
-  }
-
-  MpiWrapper::waitAll( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
+  PartitionerBase const & partitioner = getPartitioner();
+  buildNeighborsFromPartitioner( partitioner.getNeighborsRank() );
 
 #endif
 
@@ -274,56 +321,6 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
   } );
 }
 
-void DomainPartition::addNeighbors( const unsigned int idim,
-                                    MPI_Comm & cartcomm,
-                                    int * ncoords )
-{
-  PartitionBase & partition1 = getReference< PartitionBase >( keys::partitionManager );
-  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(partition1);
-
-  if( idim == partition.m_nsdof )
-  {
-    bool me = true;
-    for( int i = 0; i < partition.m_nsdof; i++ )
-    {
-      if( ncoords[i] != partition.m_coords( i ))
-      {
-        me = false;
-        break;
-      }
-    }
-    int const neighborRank = MpiWrapper::cartRank( cartcomm, ncoords );
-    if( !me && !std::any_of( m_neighbors.begin(), m_neighbors.end(), [=]( NeighborCommunicator const & nn ) { return nn.neighborRank( ) == neighborRank; } ) )
-    {
-      m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
-    }
-  }
-  else
-  {
-    const int dim = partition.getPartitions()( LvArray::integerConversion< localIndex >( idim ));
-    const bool periodic = partition.m_Periodic( LvArray::integerConversion< localIndex >( idim ));
-    for( int i = -1; i < 2; i++ )
-    {
-      ncoords[idim] = partition.m_coords( LvArray::integerConversion< localIndex >( idim )) + i;
-      bool ok = true;
-      if( periodic )
-      {
-        if( ncoords[idim] < 0 )
-          ncoords[idim] = dim - 1;
-        else if( ncoords[idim] >= dim )
-          ncoords[idim] = 0;
-      }
-      else
-      {
-        ok = ncoords[idim] >= 0 && ncoords[idim] < dim;
-      }
-      if( ok )
-      {
-        addNeighbors( idim + 1, cartcomm, ncoords );
-      }
-    }
-  }
-}
 
 void DomainPartition::outputPartitionInformation() const
 {

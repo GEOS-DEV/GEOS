@@ -25,7 +25,7 @@
 #include "mesh/generators/VTKFaceBlockUtilities.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
-#include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/mpiCommunications/PartitionerBase.hpp"
 #include "mesh/generators/Region.hpp"
 
 #include <vtkXMLUnstructuredGridWriter.h>
@@ -121,7 +121,8 @@ void VTKMeshGenerator::postInputInitialization()
 
 }
 
-void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
+
+void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionerBase & partitioner )
 {
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
   GEOS_MARK_FUNCTION;
@@ -129,8 +130,8 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   MPI_Comm const comm = MPI_COMM_GEOS;
   vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();
   vtkMultiProcessController::SetGlobalController( controller );
-
-  int const numPartZ = m_structuredIndexAttributeName.empty() ? 1 : partition.getPartitions()[2];
+//BDBDBD
+  int const numPartZ = 1;//m_structuredIndexAttributeName.empty() ? 1 : partitioner.getPartitions()[2];
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, "  redistributing mesh..." );
   {
@@ -200,8 +201,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
                                                                   allMeshes.getMainMesh(),
                                                                   allMeshes.getFaceBlocks(),
                                                                   comm,
-                                                                  m_partitionMethod,
-                                                                  m_partitionRefinement,
+                                                                  partitioner,
                                                                   m_useGlobalIds,
                                                                   m_structuredIndexAttributeName,
                                                                   numPartZ );
@@ -209,8 +209,36 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
     m_faceBlockMeshes = redistributedMeshes.getFaceBlocks();
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': finding neighbor ranks...", catalogName(), getName() ) );
     stdVector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, MPI_COMM_GEOS );
+    //stdVector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
+    //partitioner.setNeighborsRank( std::move( neighbors ) );
+
+
+// DEBUG: Check what boxes we got
+    std::cout << "Rank " << MpiWrapper::commRank() << ": Got " << boxes.size() << " bounding boxes" << std::endl;
+    for( size_t i = 0; i < boxes.size(); ++i )
+    {
+      double bounds[6];
+      boxes[i].GetBounds( bounds );
+      std::cout << "  Box[" << i << "]: [" << bounds[0] << "," << bounds[1] << "] ["
+                << bounds[2] << "," << bounds[3] << "] [" << bounds[4] << "," << bounds[5] << "]" << std::endl;
+    }
+
     stdVector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
-    partition.setMetisNeighborList( std::move( neighbors ) );
+
+// DEBUG: Check what neighbors we found
+    std::cout << "Rank " << MpiWrapper::commRank() << ": Found " << neighbors.size() << " neighbors: [";
+    for( size_t i = 0; i < neighbors.size(); ++i )
+    {
+      std::cout << neighbors[i];
+      if( i < neighbors.size() - 1 )
+        std::cout << ", ";
+    }
+    std::cout << "]" << std::endl;
+
+    partitioner.setNeighborsRank( std::move( neighbors ) );
+
+
+
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': done!", catalogName(), getName() ) );
   }
   GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': generating GEOS mesh data structure", catalogName(), getName() ) );

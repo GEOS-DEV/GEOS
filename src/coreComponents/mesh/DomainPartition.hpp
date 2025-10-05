@@ -42,6 +42,8 @@ string const partitionManager( "partitionManager" );
 
 class ObjectManagerBase;
 class PartitionBase;
+class PartitionerBase;
+class PartitionerManager;
 
 /**
  * @brief Partition of the decomposed physical domain. It also manages the connexion information to its neighbors.
@@ -99,23 +101,6 @@ public:
    */
   void setupBaseLevelMeshGlobalInfo();
 
-  /**
-   * @brief Recursively builds neighbors if an MPI cartesian topology is used (i.e. not metis).
-   * @param idim Dimension index in the cartesian.
-   * @param cartcomm Communicator with cartesian structure.
-   * @param ncoords Cartesian coordinates of a process (assumed to be of length 3).
-   *
-   * This recursive function builds the neighbors recursively by increasing
-   * the dimension index of the current DomainPartition until all the dimensions (3) are done.
-   * The relevant values for initiating this functions are therefore @p ibim = 0
-   * and a non-initialized vector @p ncoords of length 3.
-   *
-   * This functions should have been implemented `private`
-   * and an additional functions to initiate the recursion could have been implemented.
-   */
-  void addNeighbors( const unsigned int idim,
-                     MPI_Comm & cartcomm,
-                     int * ncoords );
 
   /**
    * @brief Outputs information about the partitioning of the domain.
@@ -171,6 +156,18 @@ public:
    */
   NumericalMethodsManager & getNumericalMethodManager()
   { return this->getParent().getGroup< NumericalMethodsManager >( "NumericalMethods" ); }
+
+  /**
+   * @brief Get the active partitioner from the PartitionerManager, const version.
+   * @return Reference to const PartitionerBase instance.
+   */
+  PartitionerBase const & getPartitioner() const;
+
+  /**
+   * @brief Get the active partitioner from the PartitionerManager.
+   * @return Reference to PartitionerBase instance.
+   */
+  PartitionerBase & getPartitioner();
 
   /**
    * @brief Get the mesh bodies, const version.
@@ -275,6 +272,15 @@ public:
   { return m_neighbors; };
 
   /**
+   * @brief Get the number of first-order neighbors (excluding neighbors-of-neighbors).
+   * First-order neighbors are stored at indices [0, getNumFirstOrderNeighbors()).
+   * Second-order neighbors are stored at indices [getNumFirstOrderNeighbors(), getNeighbors().size()).
+   * @return Number of first-order neighbors.
+   */
+  int getNumFirstOrderNeighbors() const
+  { return m_numFirstOrderNeighbors; }
+
+  /**
    * @brief Get a list of neighbor ranks.
    * @return Container of neighbor ranks.
    */
@@ -289,12 +295,41 @@ public:
     return ranks;
   }
 
+  /**
+   * @brief Build neighbor communicators from a partitioner's neighbor rank list.
+   * @param neighborsRank Vector of first-order neighbor rank IDs from the partitioner.
+   *
+   * This method builds NeighborCommunicator objects from the lightweight neighbor rank list
+   * provided by the partitioner, then computes second-order neighbors (neighbors-of-neighbors)
+   * and appends them to the neighbor list.
+   */
+  void buildNeighborsFromPartitioner( std::vector< int > const & neighborsRank );
+
+  /**
+   * @brief Get the PartitionerManager.
+   * @return Reference to the PartitionerManager.
+   */
+  PartitionerManager & getPartitionerManager();
+
+  /**
+   * @brief Get the PartitionerManager (const version).
+   * @return Const reference to the PartitionerManager.
+   */
+  PartitionerManager const & getPartitionerManager() const;
+
+  bool hasPartitioner() const;
+
 private:
 
   /**
    * @brief Contains all the communicators from this DomainPartition to its neighbors.
    */
   stdVector< NeighborCommunicator > m_neighbors;
+
+  /**
+   * @brief Number of first-order neighbors (before second-order neighbors are appended).
+   */
+  int m_numFirstOrderNeighbors = 0;
 };
 
 } /* namespace geos */

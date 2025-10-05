@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
+#include "mesh/mpiCommunications/PartitionerBase.hpp"
 
 #include <vtkDataSet.h>
 #include <vtkMultiProcessController.h>
@@ -150,7 +151,7 @@ findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes );
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
  * @param[in] namesToFractures the fracture meshes
  * @param[in] comm the MPI communicator
- * @param[in] method the partitioning method
+ * @param[in] partitioner the partitioning method
  * @param[in] partitionRefinement number of graph partitioning refinement cycles
  * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
  * @param[in] structuredIndexAttributeName VTK array name for structured index attribute, if present
@@ -162,8 +163,7 @@ redistributeMeshes( integer const logLevel,
                     vtkSmartPointer< vtkDataSet > loadedMesh,
                     std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                     MPI_Comm const comm,
-                    PartitionMethod const method,
-                    int const partitionRefinement,
+                    PartitionerBase & partitioner,
                     int const useGlobalIds,
                     string const & structuredIndexAttributeName,
                     int const numPartZ );
