@@ -23,6 +23,7 @@
 
 namespace geos
 {
+using namespace dataRepository;
 
 PartitionerBase::PartitionerBase( string const & name,
                                   Group * const parent ):
@@ -30,7 +31,9 @@ PartitionerBase::PartitionerBase( string const & name,
   m_numPartitions( 1 ), // Default to a single partition
   m_numColors( 1 ),     // Default to a single color
   m_color( 0 )          // Default to color 0
-{}
+{
+  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE ); // needed for schema generation
+}
 
 PartitionerBase::CatalogInterface::CatalogType & PartitionerBase::getCatalog()
 {
