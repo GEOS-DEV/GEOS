@@ -228,8 +228,8 @@
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
       nx="{ 20 }"
-      ny="{ 18 }"
-      nz="{ 18 }"
+      ny="{ 12 }"
+      nz="{ 12 }"
       cellBlockNames="{ cb2 }"/>
 
   </Mesh>

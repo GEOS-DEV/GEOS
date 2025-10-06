@@ -150,12 +150,7 @@ private:
 
   // coordinates of triangle gauss points (they are private in the triangle class)
   constexpr static localIndex nGPtri = feTriangleCell::numQuadraturePoints;
-  constexpr static real64 qCoords[nGPtri][2] = {
-    { 0.333333333333333, 0.333333333333333 },
-    { 0.600000000000000, 0.200000000000000 },
-    { 0.200000000000000, 0.600000000000000 },
-    { 0.200000000000000, 0.200000000000000 }
-  };
+
 
   void addBubbleCouplingNumNonzeros( DofManager & dofManager,
                                      arrayView1d< localIndex > const & rowLengths ) const;
@@ -256,9 +251,6 @@ private:
 
   template<ElementShape shape>
   bool checkInFE(real64 xi0, real64 xi1);
-
-  template<localIndex numNodeElement>
-  void calcGradN( real64 const (& xi)[2], real64 (& dN)[2][numNodeElement] );
 
   template<localIndex numNodes>
   void permuteN(real64 (& N)[numNodes]);

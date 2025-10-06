@@ -418,8 +418,8 @@ void SolidMechanicsMortarContact::assembleMortarBubbles( DofManager const & dofM
 
     int permutation[numNodesPerElem];
     feType.getPermutation( permutation );
-    
-    forAll< parallelHostPolicy >( elementList.size(), [=] ( localIndex const kk )
+
+    forAll< parallelDevicePolicy<> >( elementList.size(), [=] ( localIndex const kk )
     {
       localIndex const k = elementList[kk];
       localIndex const kf0 = elemsToFaces[k][0];
@@ -579,15 +579,12 @@ void SolidMechanicsMortarContact::assembleMortar( real64 const dt,
   finiteElement::FiniteElementBase const & feSlave = *(m_faceTypeToMortarFiniteElements.at( shpS ));
   finiteElement::FiniteElementBase const & feMaster = *(m_faceTypeToMortarFiniteElements.at( shpM ));
 
-  arrayView1d< real64 const> detPlus = m_triCellsDet.at(std::make_pair(shpS, shpM)).toView();
+  array1d< real64 const> detPlus = m_triCellsDet.at(std::make_pair(shpS, shpM));
   // arrayView1d< real64 > detMinus =  m_triCellsDet.at(std::make_pair(shpS, shpM)).toView();
   localIndex const nTri = detPlus.size();
   array1d< real64 > detMinus( nTri );
 
-  for (localIndex i=0; i<nTri; ++i)
-  {
-    detMinus[i] = -detPlus[i];
-  }
+  LvArray::tensorOps::scaledCopy< nTri >( detMinus, detPlus, -1.0 );
 
   arrayView1d< localIndex const > list1 =  m_triCells.at(MortarSide::Slave).at(std::make_pair(shpS, shpM)).toView();
   arrayView1d< localIndex const > list2 =  m_triCells.at(MortarSide::Master).at(std::make_pair(shpS, shpM)).toView();
@@ -1457,12 +1454,27 @@ void SolidMechanicsMortarContact::computeMortarInterpolation( ArrayOfArrays<loca
   ArrayOfArraysView< localIndex const > const & faceToNodeMapSlave = faceManagerSlave.nodeList().toViewConst();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const coordsSlave =  nodeManagerSlave.referencePosition();
 
-  localIndex k = 0;
-  localIndex totTri = 0;
-
+  array1d<localIndex> numConnectionsPerMaster(faceListMaster.size());
   for (localIndex im = 0; im < faceListMaster.size(); ++im)
   {
+    numConnectionsPerMaster[im] = connections.sizeOfArray(im);
+  }
+  
+  array1d<localIndex> pairOffsets(faceListMaster.size());
+  pairOffsets[0] = 0;
+  for (localIndex i = 1; i < faceListMaster.size(); ++i)
+  {
+    pairOffsets[i] = pairOffsets[i-1] + numConnectionsPerMaster[i-1];
+  }
+
+  RAJA::ReduceSum<ReducePolicy<parallelHostPolicy>, localIndex> totTriSum(0);
+  localIndex totTri = 0;
+
+
+  forAll<parallelHostPolicy>(faceListMaster.size(), [&](localIndex im) 
+  {
     localIndex masterFaceId = faceListMaster[im];
+    localIndex k = pairOffsets[im];
 
     for (localIndex is = 0; is < connections.sizeOfArray(im); ++is)
     {
@@ -1488,10 +1500,12 @@ void SolidMechanicsMortarContact::computeMortarInterpolation( ArrayOfArrays<loca
                                                                           );
 
       numbTrianglesInPairs[k] = nTriPair;
-      totTri += nTriPair;
+      totTriSum += nTriPair;
       ++k;
     }
-  }
+  });
+
+  totTri += totTriSum.get();
 
   // allocate and populate member maps with segment based preprocessed info
   array1d<localIndex> triCellsListSlave(totTri);
@@ -1860,9 +1874,8 @@ void SolidMechanicsMortarContact::projectGP( real64 const (& coordsTri)[3][2],
     real64 xiProj[2] = {0.0, 0.0};
 
     real64 Ntri[3];
-    real64 xiq[2] = {qCoords[i][0], qCoords[i][1]};
  
-    feTriangleCell::calcN( xiq, Ntri );
+    feTriangleCell::calcN( i, Ntri );
     real64 coordGP[2];
     LvArray::tensorOps::Ri_eq_AjiBj<2, 3>(coordGP, coordsTri, Ntri);  
  
@@ -1879,12 +1892,12 @@ void SolidMechanicsMortarContact::projectGP( real64 const (& coordsTri)[3][2],
     while (LvArray::tensorOps::l2Norm<2>(rhs) > tol && iter < itMax)
     {
       iter = iter + 1;
-      real64 dN[2][numNodes]= {{}};
-      calcGradN< numNodes >(xiProj, dN);
+      real64 dN[numNodes][2]= {{}};
+      FE.calcGradN(xiProj, dN);
 
       real64 Jt[2][2] = {{}};
       real64 J[2][2] = {{}};
-      LvArray::tensorOps::Rij_eq_AikBkj<2, 2, numNodes>(Jt, dN, coordsElem);
+      LvArray::tensorOps::Rij_eq_AkiBkj<2, 2, numNodes>(Jt, dN, coordsElem);
       LvArray::tensorOps::transpose<2,2>(J,Jt);
 
       real64 dxi[2];
@@ -2018,36 +2031,6 @@ void SolidMechanicsMortarContact::clip( array2d<real64> & poly,
   }
 }
 
-template<localIndex numNodeElement>
-void SolidMechanicsMortarContact::calcGradN( real64 const (& xi)[2], real64 (& dN)[2][numNodeElement] )
-{
-  // provisional method here, to be moved in Element classes
-  // for the gradients permutation has already been applied!
-  if constexpr ( numNodeElement == 3)
-  {
-    dN[0][0] = -1.0;
-    dN[0][1] = 1.0;
-    dN[0][2] = 0.0;
-    dN[1][0] = -1.0;
-    dN[1][1] = 0.0;
-    dN[1][2] = 1.0;
-  }
-  else if constexpr ( numNodeElement == 4)
-  {
-    dN[0][0] = -0.25 * (1.0 - xi[1]);
-    dN[0][1] =  0.25 * (1.0 - xi[1]);
-    dN[0][2] =  0.25 * (1.0 + xi[1]);
-    dN[0][3] = -0.25 * (1.0 + xi[1]);
-    dN[1][0] = -0.25 * (1.0 - xi[0]);
-    dN[1][1] = -0.25 * (1.0 + xi[0]);
-    dN[1][2] =  0.25 * (1.0 + xi[0]);
-    dN[1][3] =  0.25 * (1.0 - xi[0]);
-  }
-  else
-  {
-    GEOS_ERROR("SolidMechanicsMortarContact:: invalid number of nodes for computing gradient of basis functions");
-  }
-}
 
 template<localIndex numNodes>
 void SolidMechanicsMortarContact::permuteN(real64 (& N)[numNodes])
