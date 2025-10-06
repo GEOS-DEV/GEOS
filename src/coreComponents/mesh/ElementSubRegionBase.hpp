@@ -279,24 +279,45 @@ protected:
 
     forAll< parallelHostPolicy >( size(), [=]( localIndex const k )
     {
-      localIndex const n0 = e2n( k, 0 );
-      LvArray::tensorOps::copy< 3 >( elementCenters[k], X[n0] );
-
-      std::set< std::array< real64, 3 > > uniqueNodes;
-      uniqueNodes.insert( {X( n0, 0 ), X( n0, 1 ), X( n0, 2 )} );
-
+      // collect node coordinates for element k
       localIndex const numNodes = this->numNodesPerElement( k );
-      for( localIndex a = 1; a < numNodes; ++a )
+      std::vector< std::array< real64, 3 > > nodes;
+      nodes.reserve( numNodes );
+      for( localIndex a = 0; a < numNodes; ++a )
       {
         localIndex const nA = e2n( k, a );
-        auto const [it, inserted] = uniqueNodes.insert( {X[nA][0], X[nA][1], X[nA][2]} );
-        if( inserted )
-        {
-          LvArray::tensorOps::add< 3 >( elementCenters[k], X[nA] );
-        }
+        nodes.push_back( { X( nA, 0 ), X( nA, 1 ), X( nA, 2 ) } );
       }
 
-      LvArray::tensorOps::scale< 3 >( elementCenters[k], 1.0 / uniqueNodes.size() );
+      // sort + unique with tolerance to remove near-duplicates (stable and robust for floating point)
+      auto cmpLex = []( auto const & A, auto const & B )
+      {
+        return std::tie( A[0], A[1], A[2] ) < std::tie( B[0], B[1], B[2] );
+      };
+      const real64 tol = 1e-10;
+      auto almostEqual = [tol]( auto const & A, auto const & B )
+      {
+        return ( std::abs( A[0] - B[0] ) < tol ) &&
+        ( std::abs( A[1] - B[1] ) < tol ) &&
+        ( std::abs( A[2] - B[2] ) < tol );
+      };
+
+      std::sort( nodes.begin(), nodes.end(), cmpLex );
+      nodes.erase( std::unique( nodes.begin(), nodes.end(), almostEqual ), nodes.end() );
+
+      // compute average (center) of unique nodes
+      std::array< real64, 3 > centre = { 0.0, 0.0, 0.0 };
+      for( auto const & p : nodes )
+      {
+        centre[0] += p[0];
+        centre[1] += p[1];
+        centre[2] += p[2];
+      }
+      const real64 inv = 1.0 / static_cast< real64 >( nodes.size() );
+
+      elementCenters[k][0] = centre[0] * inv;
+      elementCenters[k][1] = centre[1] * inv;
+      elementCenters[k][2] = centre[2] * inv;
     } );
   }
 };

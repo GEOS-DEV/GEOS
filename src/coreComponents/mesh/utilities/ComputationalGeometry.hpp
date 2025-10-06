@@ -444,28 +444,50 @@ bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITI
  * @return whether the point is inside
  */
 template< typename POLYGON_TYPE, typename POINT_TYPE >
-bool isPointInPolygon2d( POLYGON_TYPE const & polygon, integer n, POINT_TYPE const & point, real64 const tol = 1e-10 )
+bool isPointInPolygon2d( POLYGON_TYPE const & polygon,
+                         integer n,
+                         POINT_TYPE const & point,
+                         real64 const tol = 1e-10 )
 {
   integer count = 0;
 
-  for( integer i = 0; i < n; i++ )
+  for( integer i = 0; i < n; ++i )
   {
     auto const & p1 = polygon[i];
     auto const & p2 = polygon[(i + 1) % n];
 
-    if((point[1] > std::min( p1[1], p2[1] )) &&
-       (point[1] <= std::max( p1[1], p2[1] )) &&
-       (point[0] <= std::max( p1[0], p2[0] )))
+    real64 y1 = p1[1], y2 = p2[1];
+    real64 x1 = p1[0], x2 = p2[0];
+    real64 py = point[1], px = point[0];
+
+    // quick reject in y with tolerance
+    if( py + tol < std::min( y1, y2 ) || py - tol > std::max( y1, y2 ) )
+      continue;
+
+    // check if point is (approximately) on the segment
+    // parametric t for projection on segment in y (if segment vertical-ish use x)
+    if( std::abs( (x2 - x1) * (py - y1) - (px - x1) * (y2 - y1) ) < tol *
+        ( std::hypot( x2 - x1, y2 - y1 ) + 1.0 ) )
     {
-      real64 const xIntersect = (point[1] - p1[1]) * (p2[0] - p1[0]) / (p2[1] - p1[1]) + p1[0];
-      if( std::abs( p1[0] - p2[0] ) < tol || point[0] <= xIntersect )
-      {
-        count++;
-      }
+      // ensure px is between x1,x2 and py between y1,y2 (with tol)
+      if( px + tol >= std::min( x1, x2 ) && px - tol <= std::max( x1, x2 ) &&
+          py + tol >= std::min( y1, y2 ) && py - tol <= std::max( y1, y2 ) )
+        return true; // on boundary -> consider inside
     }
+
+    // ignore nearly-horizontal edges for intersection counting
+    if( std::abs( y2 - y1 ) < tol )
+      continue;
+
+    // compute x coordinate of intersection of horizontal line py with segment p1-p2
+    real64 xIntersect = x1 + (py - y1) * (x2 - x1) / (y2 - y1);
+
+    // count crossing where intersection is strictly to the right of point (robust with tol)
+    if( px < xIntersect - tol )
+      ++count;
   }
 
-  return count % 2 == 1;
+  return (count % 2) == 1;
 }
 
 /**
@@ -479,7 +501,10 @@ bool isPointInPolygon2d( POLYGON_TYPE const & polygon, integer n, POINT_TYPE con
  * @return whether the point is inside
  */
 template< typename POLYGON_TYPE, typename POINT_TYPE >
-bool isPointInPolygon3d( POLYGON_TYPE const & polygon, integer const n, POINT_TYPE const & point, real64 const tol = 1e-10 )
+bool isPointInPolygon3d( POLYGON_TYPE const & polygon,
+                         integer const n,
+                         POINT_TYPE const & point,
+                         real64 const tol = 1e-10 )
 {
   // Check if the point lies in the plane of the polygon
   auto const & p0 = polygon[0];

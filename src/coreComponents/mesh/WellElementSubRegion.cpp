@@ -22,6 +22,7 @@
 #include "LvArray/src/output.hpp"
 
 #include <unordered_set>
+#include <tuple>
 
 namespace geos
 {
@@ -225,11 +226,19 @@ bool isPointInsideElement( SurfaceElementSubRegion const & subRegion,
   }
 
   // remove duplicates
-  std::unordered_set< Point3d, PointHash< Point3d >, PointsEqual< Point3d > >
-  unique_points( 0, PointHash< Point3d >(), PointsEqual< Point3d >( geomTol ));
-  unique_points.insert( polygon.begin(), polygon.end());
-  polygon.clear();
-  std::copy( unique_points.begin(), unique_points.end(), std::back_inserter( polygon ));
+  auto cmpLex = []( Point3d const & a, Point3d const & b )
+  {
+    return std::tie( a[0], a[1], a[2] ) < std::tie( b[0], b[1], b[2] );
+  };
+
+  auto almostEqual = [geomTol]( Point3d const & a, Point3d const & b )
+  {
+    return (std::abs( a[0]-b[0] ) < geomTol) && (std::abs( a[1]-b[1] ) < geomTol) && (std::abs( a[2]-b[2] ) < geomTol);
+  };
+
+  std::sort( polygon.begin(), polygon.end(), cmpLex );
+  auto it = std::unique( polygon.begin(), polygon.end(), almostEqual );
+  polygon.erase( it, polygon.end() );
 
   return computationalGeometry::isPointInPolygon3d( polygon, polygon.size(), location, geomTol );
 }
