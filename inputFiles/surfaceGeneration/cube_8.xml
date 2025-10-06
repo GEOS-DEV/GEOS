@@ -24,11 +24,14 @@
       mpiCommOrder="1" />
   </Solvers>
 
+  <Partitioner>
+    <NoOp name="partitioner">
+  </Partitioner>
+
   <Mesh>
     <VTKMesh
       name="cube8"
-      file="cube_8.vtu"
-      partitionRefinement="0"/>
+      file="cube_8.vtu"/>
 
     <!-- <InternalMesh
       name="mesh1"

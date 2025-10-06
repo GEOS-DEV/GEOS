@@ -62,7 +62,6 @@
       file="staircase3d_tet_with_properties.vtu"
       fieldsToImport="{ FluidComposition, PERM, PORO }"
       fieldNamesInGEOS="{ globalCompFraction, rockPerm_permeability, rockPorosity_referencePorosity }"
-      partitionRefinement="1"
       logLevel="2">
 
       <InternalWell

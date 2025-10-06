@@ -16,11 +16,17 @@
     </SinglePhaseFVM>
   </Solvers>
 
+  <Partitioner>
+    <ParMetis
+        name="partitioner"
+        refinement="2">
+  </Partitioner>
+
+
   <Mesh>
     <VTKMesh
       name="mesh"
       logLevel="5"	
-      partitionRefinement="3"
       useGlobalIds="1"
       fieldsToImport="{ PERM, PORO, NTG }"
       fieldNamesInGEOS="{ rockPerm_permeability, rockPorosity_referencePorosity, netToGross }"

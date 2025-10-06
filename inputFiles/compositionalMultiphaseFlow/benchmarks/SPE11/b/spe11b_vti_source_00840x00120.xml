@@ -5,13 +5,17 @@
   <Included>
     <File name="spe11b_vti_source_base.xml" />
   </Included>
+  <Partitioner>
+    <ParMetis 
+      name="partitioner"
+      refinement="4">
+  </Partitioner>
 
   <Mesh>
     <VTKMesh
       name="mesh"
       file="mesh/spe11b_00840x00120.vti"
       regionAttribute="faciesIndex"
-      partitionRefinement="5"
       logLevel="5">
     </VTKMesh>
   </Mesh>
