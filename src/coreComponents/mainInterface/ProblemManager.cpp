@@ -49,6 +49,7 @@
 #include "mesh/mpiCommunications/PartitionerManager.hpp"
 #include "mesh/mpiCommunications/PartitionerBase.hpp"
 #include "mesh/generators/InternalMeshGenerator.hpp"
+#include "mesh/generators/ParticleMeshGenerator.hpp"
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
@@ -526,13 +527,18 @@ void ProblemManager::postInputInitialization()
   {
     MeshManager const & meshManager = getGroup< MeshManager >( groupKeys.meshManager );
 
+    bool hasParticleMesh = false;
     bool hasInternalMesh = false;
     bool hasExternalMesh = false;
 
     // Check what type of mesh generators are being used
     meshManager.forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase const & meshGen )
     {
-      if( dynamic_cast< InternalMeshGenerator const * >( &meshGen ) != nullptr )
+      if( dynamic_cast< ParticleMeshGenerator const * >( &meshGen ) != nullptr )
+      {
+        hasParticleMesh = true;
+      }
+      else if( dynamic_cast< InternalMeshGenerator const * >( &meshGen ) != nullptr )
       {
         hasInternalMesh = true;
       }
@@ -546,6 +552,11 @@ void ProblemManager::postInputInitialization()
     if( hasInternalMesh && hasExternalMesh )
     {
       GEOS_ERROR( "Both internal and external meshes detected." );
+    }
+    else if( hasParticleMesh )
+    {
+      GEOS_LOG_RANK_0( "No partitioner specified in XML. Creating default ParticleCartesianPartitioner for particle mesh." );
+      partitionerManager.createChild( "ParticleCartesian", "defaultPartitioner" );
     }
     else if( hasInternalMesh )
     {
