@@ -21,6 +21,7 @@
 #include "SolidMechanicsLagrangeContact.hpp"
 
 #include "common/TimingMacros.hpp"
+#include "constitutive/solid/SolidFields.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
@@ -212,26 +213,13 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
 
 }
 
-void SolidMechanicsLagrangeContact::setupSystem( DomainPartition & domain,
-                                                 DofManager & dofManager,
-                                                 CRSMatrix< real64, globalIndex > & localMatrix,
-                                                 ParallelVector & rhs,
-                                                 ParallelVector & solution,
-                                                 bool const GEOS_UNUSED_PARAM( setSparsity ) )
+void SolidMechanicsLagrangeContact::setSparsityPattern( DomainPartition & domain,
+                                                        DofManager & dofManager,
+                                                        CRSMatrix< real64, globalIndex > & localMatrix,
+                                                        SparsityPattern< globalIndex > & pattern )
 {
-  if( m_precond )
-  {
-    m_precond->clear();
-  }
-
-  // setup monolithic coupled system
-  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, true ); // "true" is to force setSparsity
-
-  if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
-  {
-    createPreconditioner( domain );
-  }
-
+  // avoid calling SolidMechanicsLagrangianFEM::setSparsityPattern
+  PhysicsSolverBase::setSparsityPattern( domain, dofManager, localMatrix, pattern );
 }
 
 void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,
@@ -321,10 +309,10 @@ void SolidMechanicsLagrangeContact::computeTolerances( DomainPartition & domain 
 
     // Bulk modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString() );
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::bulkModulus::key() );
     // Shear modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
-      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString() );
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::shearModulus::key() );
 
     using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
     ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
@@ -1779,10 +1767,10 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
 
   // Bulk modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-    elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString() );
+    elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::bulkModulus::key() );
   // Shear modulus accessor
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
-    elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString() );
+    elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::shearModulus::key() );
 
   using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
   ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =

@@ -103,6 +103,10 @@ public:
       setApplyDefaultValue( 1.0 ).
       setInputFlag( dataRepository::InputFlags::OPTIONAL ).
       setDescription( "Constant multiplier of stabilization strength" );
+
+    LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
+    linearSolverParameters.dofsPerNode = 3;
+    linearSolverParameters.multiscale.label = "poro";
   }
 
   virtual void postInputInitialization() override

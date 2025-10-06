@@ -21,6 +21,7 @@
 #include "CellBlockManager.hpp"
 
 #include "common/DataTypes.hpp"
+#include "mesh/MeshFields.hpp"
 
 #include <cmath>
 
@@ -561,9 +562,19 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   // Make sure that the node manager fields are initialized
   auto & nodeSets = cellBlockManager.getNodeSets();
 
-  real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
-  LvArray::tensorOps::subtract< 3 >( size, m_min );
-  cellBlockManager.setGlobalLength( LvArray::tensorOps::l2Norm< 3 >( size ) );
+  // global length
+  {
+    real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
+    LvArray::tensorOps::subtract< 3 >( size, m_min );
+    cellBlockManager.setGlobalLength( LvArray::tensorOps::l2Norm< 3 >( size ) );
+  }
+  // global offset
+  {
+    real64 offset[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_min );
+    LvArray::tensorOps::add< 3 >( offset, m_max );
+    LvArray::tensorOps::scale< 3 >( offset, 0.5 );
+    cellBlockManager.setGlobalOffset( LvArray::tensorOps::l2Norm< 3 >( offset ) );
+  }
 
 //  bool isRadialWithOneThetaPartition = false;
 
@@ -836,6 +847,9 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
           arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = cellBlock.getElemToNode();
           arrayView1d< globalIndex > const & elemLocalToGlobal = cellBlock.localToGlobalMap();
 
+          cellBlock.addProperty< fields::StructuredIndex::type >( fields::StructuredIndex::key() ).resizeDimension< 1 >( m_dim );
+          auto const cartIndex = cellBlock.getReference< fields::StructuredIndex::type >( fields::StructuredIndex::key() ).toView();
+
           integer numElemsInDirForBlock[3] =
           { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,
             lastElemIndexForBlockInPartition[1][jblock] - firstElemIndexForBlockInPartition[1][jblock] + 1,
@@ -920,6 +934,13 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
                   {
                     elemsToNodes[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
+
+                  // Store original cartesian IJK indices for later use
+                  for( int dim = 0; dim < m_dim; ++dim )
+                  {
+                    cartIndex[localElemIndex][dim] = globalIJK[dim];
+                  }
+
                   ++localElemIndex;
                 }
               }
