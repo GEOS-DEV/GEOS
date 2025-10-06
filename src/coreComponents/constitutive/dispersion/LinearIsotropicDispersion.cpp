@@ -36,13 +36,6 @@ LinearIsotropicDispersion::LinearIsotropicDispersion( string const & name, Group
     setDescription( "Longitudinal dispersivity [m]" );
 }
 
-std::unique_ptr< ConstitutiveBase >
-LinearIsotropicDispersion::deliverClone( string const & name,
-                                         Group * const parent ) const
-{
-  return DispersionBase::deliverClone( name, parent );
-}
-
 void LinearIsotropicDispersion::postInputInitialization()
 {
   GEOS_THROW_IF( m_longitudinalDispersivity < 0,

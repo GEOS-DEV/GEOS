@@ -35,43 +35,43 @@
   <Geometry>
     <Box
       name="source"
-      xMin="{ -0.01, 26.99, -0.01 }"
-      xMax="{ 3.01, 30.01, 10.01 }"/>
+      xMin="{ 0.0, 27.0, 0.0 }"
+      xMax="{ 3.0, 30.0, 10.0 }"/>
 
     <Box
       name="sink1"
-      xMin="{ 26.99, -0.01, -0.01 }"
-      xMax="{ 30.01, 30.01, 30.01 }"/>
+      xMin="{ 27.0, 0.0, 0.0 }"
+      xMax="{ 30.0, 30.0, 30.0 }"/>
 
     <Box
       name="sink2"
-      xMin="{ -0.01, -0.01, 26.99 }"
-      xMax="{ 30.01, 30.01, 30.01 }"/>
+      xMin="{ 0.0, 0.0, 27.0 }"
+      xMax="{ 30.0, 30.0, 30.0 }"/>
 
     <Box
       name="barrier"
-      xMin="{ -0.01, 20.99, 20.99 }"
-      xMax="{ 12.01, 30.01, 21.01 }"/>
+      xMin="{ 0.0, 21.0, 21.0 }"
+      xMax="{ 12.0, 30.0, 21.0 }"/>
 
     <Box
       name="aquifer1Part1"
-      xMin="{ 14.99, -0.01, 14.99 }"
-      xMax="{ 18.01,  0.01, 18.01 }"/> 
+      xMin="{ 15.0, 0.0, 15.0 }"
+      xMax="{ 18.0, 0.0, 18.0 }"/>
 
     <Box
       name="aquifer1Part2"
-      xMin="{ 17.99, -0.01, 17.99 }"
-      xMax="{ 21.01,  0.01, 24.01 }"/> 
+      xMin="{ 18.0, 0.0, 18.0 }"
+      xMax="{ 21.0, 0.0, 24.0 }"/>
 
     <Box
       name="aquifer2Part1"
-      xMin="{ 14.99, 29.99, 14.99 }"
-      xMax="{ 18.01, 30.01, 18.01 }"/> 
+      xMin="{ 15.0, 30.0, 15.0 }"
+      xMax="{ 18.0, 30.0, 18.0 }"/> 
 
     <Box
       name="aquifer2Part2"
-      xMin="{ 17.99, 29.99, 17.99 }"
-      xMax="{ 21.01, 30.01, 24.01 }"/> 
+      xMin="{ 18.0, 30.0, 18.0 }"
+      xMax="{ 21.0, 30.0, 24.0 }"/>
 
     
   </Geometry>
@@ -231,7 +231,6 @@
 
     <Aquifer
       name="aquiferBC1"
-      logLevel="1"	
       aquiferPorosity="1e-1"
       aquiferPermeability="1e-13"
       aquiferInitialPressure="8e6"
@@ -248,7 +247,6 @@
 
     <Aquifer
       name="aquiferBC2"
-      logLevel="1"	
       aquiferPorosity="1e-1"
       aquiferPermeability="1e-13"
       aquiferInitialPressure="8e6"

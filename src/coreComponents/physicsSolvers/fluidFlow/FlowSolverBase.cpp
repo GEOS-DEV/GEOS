@@ -23,10 +23,8 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
-#include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
@@ -146,8 +144,6 @@ FlowSolverBase::FlowSolverBase( string const & name,
 
   // allow the user to select a norm
   getNonlinearSolverParameters().getWrapper< physicsSolverBaseKernels::NormType >( NonlinearSolverParameters::viewKeysStruct::normTypeString() ).setInputFlag( InputFlags::OPTIONAL );
-
-  addLogLevel< logInfo::Convergence >();
 }
 
 void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
@@ -834,7 +830,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
   {
     localIndex const aquiferIndex = aquiferNameToAquiferId.at( bc.getName() );
 
-    GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+    GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                     GEOS_FMT( "{} {}: at time {} s, the boundary condition produces a volume of {} m3.",
                                               bc.getCatalogName(), bc.getName(),
                                               time + dt, dt * globalSumFluxes[aquiferIndex] ),

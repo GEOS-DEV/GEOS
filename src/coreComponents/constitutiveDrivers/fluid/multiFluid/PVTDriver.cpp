@@ -96,8 +96,7 @@ PVTDriver::PVTDriver( const string & name,
     setApplyDefaultValue( "none" ).
     setDescription( "Baseline file" );
 
-  addLogLevel< logInfo::Initialisation >();
-  addLogLevel< logInfo::Results >();
+  addLogLevel< logInfo::LogOutput >();
 }
 
 void PVTDriver::postInputInitialization()
@@ -212,19 +211,19 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 
   // depending on logLevel, print some useful info
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "Launching PVT Driver" );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Fluid .................. " << m_fluidName );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Type ................... " << baseFluid.getCatalogName() );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Phases .......... " << m_numPhases );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  No. of Components ...... " << m_numComponents );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Pressure Control ....... " << m_pressureFunctionName );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Temperature Control .... " << m_temperatureFunctionName );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Steps .................. " << m_numSteps );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output ................. " << m_outputFile );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Baseline ............... " << m_baselineFile );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output Mass Density .... " << m_outputMassDensity );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output Compressibility . " << m_outputCompressibility );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Initialisation, "  Output Phase Comp. ..... " << m_outputPhaseComposition );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "Launching PVT Driver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Fluid .................. " << m_fluidName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Type ................... " << baseFluid.getCatalogName() );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  No. of Phases .......... " << m_numPhases );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  No. of Components ...... " << m_numComponents );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Pressure Control ....... " << m_pressureFunctionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Temperature Control .... " << m_temperatureFunctionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Steps .................. " << m_numSteps );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output ................. " << m_outputFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Baseline ............... " << m_baselineFile );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output Mass Density .... " << m_outputMassDensity );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output Compressibility . " << m_outputCompressibility );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Output Phase Comp. ..... " << m_outputPhaseComposition );
 
   // create a dummy discretization with one quadrature point for
   // storing constitutive data
@@ -386,7 +385,7 @@ void PVTDriver::compareWithBaseline()
 
   // success
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::Results, "  Comparison ............. Internal results consistent with baseline." );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Comparison ............. Internal results consistent with baseline." );
 
   file.close();
 }

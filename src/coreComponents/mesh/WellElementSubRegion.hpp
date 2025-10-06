@@ -42,12 +42,21 @@ public:
   /**
    * @brief enumeration for values in segmentStatusList parameter of Generate()
    */
-  enum WellElemStatus : unsigned
+  enum WellElemParallelStatus : unsigned
   {
-    UNOWNED = 0,             // there are no perforations on this element
+    UNOWNED = 0,             // there are no perforations on this mesh partition
     REMOTE = 1,              // all perforations are remote
     LOCAL  = 2,              // all perforations are local
     SHARED = REMOTE | LOCAL  // both remote and local perforations
+  };
+
+  /**
+   * @brief enumeration for values element state
+   */
+  enum WellElemStatus : unsigned
+  {
+    CLOSED = 0,            //  no flow in element
+    OPEN = 1
   };
 
   /**
@@ -171,6 +180,41 @@ public:
   }
 
   /**
+   * @brief Get status for local well elements
+   * @return reference to status array
+   */
+  array1d< integer > & getWellLocalElementStatus()
+  {
+    return m_wellLocalElementStatus;
+  }
+
+  /**
+   * @copydoc getWellLocalElementStatus()
+   */
+  array1d< integer > const & getLocalWellElementStatus() const
+  {
+    return m_wellLocalElementStatus;
+  }
+
+
+  /**
+   * @brief Get status for all well elements
+   * @return reference to status array
+   */
+  array1d< integer > & getWellElementStatus()
+  {
+    return m_wellElementStatus;
+  }
+
+  /**
+   * @copydoc getWellElementStatus()
+   */
+  array1d< integer > const & getWellElementStatus() const
+  {
+    return m_wellElementStatus;
+  }
+
+  /**
    * @brief Set for the MPI rank that owns this well (i.e. the top segment).
    * @param[in] rank MPI rank of the owner process
    */
@@ -274,6 +318,10 @@ public:
     static constexpr char const * topRankString() { return "topRank"; }
     /// @return String key for the well radius
     static constexpr char const * radiusString() { return "radius"; }
+    /// @return String key for the well element status
+    static constexpr char const * wellLocalElementGlobalIndexString() { return "wellLocalElementGlobalIndex"; }
+    /// @return String key for the well element status
+    static constexpr char const * wellLocalElementStatusString() { return "wellLocalElementStatus"; }
 
     /// ViewKey for the well control name
     dataRepository::ViewKey wellControlsName     = { wellControlsString() };
@@ -289,6 +337,10 @@ public:
     dataRepository::ViewKey topRank            = { topRankString() };
     /// ViewKey for the well radius
     dataRepository::ViewKey radius             = { radiusString() };
+    /// ViewKey for the global element index
+    dataRepository::ViewKey wellLocalElementGlobalIndex = { wellLocalElementGlobalIndexString() };
+    /// ViewKey for the well element status
+    dataRepository::ViewKey wellLocalElementStatus   = { wellLocalElementStatusString() };
   }
   /// ViewKey struct for the WellElementSubRegion class
   viewKeysWellElementSubRegion;
@@ -309,7 +361,28 @@ public:
   /// groupKey struct for the WellElementSubRegion class
   groupKeysWellElementSubRegion;
 
+  /**
+   * @brief Get number of local elements
+   * @return number of elements
+   */
+  integer const & getNumLocalElements() const { return m_numLocalElements;}
 
+  /**
+   * @brief Setup offset arrays needed for MPI comm of perforatin sttus
+   */
+  void setupCommArrays();
+
+  /**
+   * @brief Set status (Open/Closed) for locally owned elements
+   * @param[in] localElemPerfStatus Array containing status
+   */
+  void setElementStatus( arrayView1d< integer >  const & localElemPerfStatus );
+
+  /**
+   * @brief Get global element index for all elements
+   * @return list of indicies
+   */
+  array1d< globalIndex > const & getGlobalElementIndex() const { return m_globalElementIndex; }
 private:
 
   /**
@@ -408,8 +481,11 @@ private:
   /// Element-to-node relation is one to one relation.
   NodeMapType m_toNodesRelation;
 
-  /// Local indices of the next well element (used in solvers)
+  /// Global indices (sized by local indices (used in solvers)
   array1d< globalIndex > m_globalWellElementIndex;
+
+  /// Global indices of elements (all elements)
+  array1d< globalIndex > m_globalElementIndex;
 
   /// Local indices of the next well element (used in solvers)
   array1d< localIndex > m_nextWellElementIndex;
@@ -432,6 +508,20 @@ private:
   /// Depth of the local search to match perforation to reservoir elements
   localIndex m_searchDepth;
 
+  /// Number of local elements, excludes ghosting
+  integer m_numLocalElements;
+
+  /// Well element status
+  array1d< integer > m_wellElementStatus; // (sized total number of segments)
+
+  /// Well element local status
+  array1d< integer > m_wellLocalElementStatus; // (sized number of local segments)
+
+  /// Segment offsets required for mpiallgatherv (sized total number of segments)
+  array1d< integer > m_mpiElementOffset;
+
+  /// Number of  segment per rank
+  array1d< localIndex > m_elementPerRank;
 };
 
 } /* namespace geos */

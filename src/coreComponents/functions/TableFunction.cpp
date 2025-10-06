@@ -25,6 +25,7 @@
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
 
 #include <algorithm>
 
@@ -67,9 +68,10 @@ TableFunction::TableFunction( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "When set to 1, write the table into a CSV file" );
+    setDescription( "When set to 1, write PVT tables into a CSV file.\n "
+                    "if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0." );
 
-  addLogLevel< logInfo::TableDataOutput >();
+  addLogLevel< logInfo::TableLogOutput >();
 }
 
 void TableFunction::readFile( string const & filename, array1d< real64 > & target )
@@ -401,9 +403,10 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
 void TableFunction::initializePostSubGroups()
 {
   // Output user defined tables (not generated PVT tables)
+  bool const writeLog = isLogLevelActive< logInfo::TableLogOutput >( getLogLevel() );
   outputTableData( OutputOptions{
-      m_writeCSV != 0,   // writeCSV
-      isLogLevelActive< logInfo::TableDataOutput >( getLogLevel() )   // writeInLog
+      m_writeCSV != 0, // writeCSV
+      writeLog         // writeLog
     } );
 }
 

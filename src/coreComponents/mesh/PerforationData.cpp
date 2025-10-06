@@ -36,15 +36,26 @@ PerforationData::PerforationData( string const & name, Group * const parent )
 {
   registerWrapper( viewKeyStruct::numPerforationsGlobalString(), &m_numPerforationsGlobal );
 
-  registerField( fields::perforation::reservoirElementRegion{}, &m_toMeshElements.m_toElementRegion );
-  registerField( fields::perforation::reservoirElementSubRegion{}, &m_toMeshElements.m_toElementSubRegion );
-  registerField( fields::perforation::reservoirElementIndex{}, &m_toMeshElements.m_toElementIndex );
-  registerField( fields::perforation::reservoirElementGlobalIndex{}, &m_reservoirElementGlobalIndex );
+  registerField< fields::perforation::reservoirElementRegion >( &m_toMeshElements.m_toElementRegion );
+  registerField< fields::perforation::reservoirElementSubRegion >( &m_toMeshElements.m_toElementSubRegion );
+  registerField< fields::perforation::reservoirElementIndex >( &m_toMeshElements.m_toElementIndex );
+  registerField< fields::perforation::reservoirElementGlobalIndex >( &m_reservoirElementGlobalIndex );
 
-  registerField( fields::perforation::wellElementIndex{}, &m_wellElementIndex );
-  registerField( fields::perforation::location{}, &m_location );
-  registerField( fields::perforation::wellTransmissibility{}, &m_wellTransmissibility );
-  registerField( fields::perforation::wellSkinFactor{}, &m_wellSkinFactor );
+  registerField< fields::perforation::wellElementIndex >( &m_wellElementIndex );
+  registerField< fields::perforation::location >( &m_location );
+  registerField< fields::perforation::wellTransmissibility >( &m_wellTransmissibility );
+  registerField< fields::perforation::wellSkinFactor >( &m_wellSkinFactor );
+  registerField< fields::perforation::perforationStatus >( &m_localPerfStatus );
+
+  registerWrapper( viewKeyStruct::perforationStatusTableName(), &m_perfStatusTableName ).
+    setInputFlag( InputFlags::INVALID ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Perforation status table name" );
+
+  registerWrapper( viewKeyStruct::perforationName(), &m_perfName ).
+    setInputFlag( InputFlags::INVALID ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Perforation name" );
 }
 
 PerforationData::~PerforationData()
@@ -124,19 +135,21 @@ void PerforationData::computeWellTransmissibility( MeshLevel const & mesh,
   // for all the local perforations on this well
   for( localIndex iperf = 0; iperf < size(); ++iperf )
   {
-
     // if the well transmissibility has been read from the XML
     // then skip the computation of the well transmissibility carried out below
     if( m_wellTransmissibility[iperf] >= 0 )
     {
-      WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
-      GEOS_UNUSED_VAR( wellRegion ); // unused if geos_error_if is nulld
-      GEOS_LOG_RANK_IF( isZero( m_wellTransmissibility[iperf] ),
-                        "\n \nWarning! Perforation " << wellRegion.getWellGeneratorName() <<
-                        " is defined with a zero transmissibility.\n" <<
-                        "The simulation is going to proceed with this zero transmissibility,\n" <<
-                        "but a better strategy to shut down a perforation is to remove the " <<
-                        "<Perforation> block from the XML\n \n" );
+      bool const close_perf = isZero( m_wellTransmissibility[iperf] );
+      if( close_perf )
+      {
+        m_localPerfStatus[iperf] = PerforationStatus::CLOSED;
+        WellElementRegion const & wellRegion = dynamicCast< WellElementRegion const & >( wellElemSubRegion.getParent().getParent() );
+        GEOS_LOG_RANK( "\n \nWarning! Perforation " << wellRegion.getWellGeneratorName() <<
+                       " is defined with a zero transmissibility.\n" <<
+                       "The simulation is going to proceed with this zero transmissibility,\n" <<
+                       "but a better strategy to shut down a perforation is to remove the " <<
+                       "<Perforation> block from the XML\n \n" );
+      }
       continue;
     }
 

@@ -312,6 +312,7 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
+  virtual void postRestartInitialization() override final;
   /*
    * @brief Utility function that checks the consistency of the constitutive models
    * @param[in] domain the domain partition
@@ -340,10 +341,17 @@ protected:
    * @param time_n the time at the beginning of the time step
    * @param dt the time step dt
    * @param subRegion the well subRegion
+   * @param elemManager the element manager
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion ) override;
+                                        WellElementSubRegion const & subRegion,
+                                        ElementRegionManager const & elemManager ) override;
+
+  /**
+   * @brief Create well separator
+   */
+  void createSeparator();
 
   void printRates( real64 const & time_n,
                    real64 const & dt,
