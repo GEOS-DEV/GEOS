@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version="1.0"?>
 
 <Problem>
   <Solvers
@@ -7,7 +7,7 @@
       name="lagSolve"
       discretization="FE1"
       targetRegions="{ Region2 }"
-      >
+    >
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
         maxAllowedResidualNorm="1e10"
@@ -25,13 +25,13 @@
   </Solvers>
 
   <Partitioner>
-    <NoOp name="partitioner">
+    <NoOp name="partitioner" />
   </Partitioner>
 
   <Mesh>
     <VTKMesh
       name="cube8"
-      file="cube_8.vtu"/>
+      file="cube_8.vtu" />
 
     <!-- <InternalMesh
       name="mesh1"
@@ -49,47 +49,47 @@
     <Box
       name="fracPlaneX"
       xMin="{ -0.1, -1e3, -1e3 }"
-      xMax="{ 0.1, 1e3, 1e3 }"/>
+      xMax="{ 0.1, 1e3, 1e3 }" />
 
     <Box
       name="fracPlaneY"
       xMin="{ -1e3, -0.1, -1e3 }"
-      xMax="{ 1e3, 0.1, 1e3 }"/>
+      xMax="{ 1e3, 0.1, 1e3 }" />
 
     <Box
       name="fracPlaneZ"
       xMin="{ -1e3, -1e3, -0.1 }"
-      xMax="{ 1e3, 1e3, 0.1 }"/>
+      xMax="{ 1e3, 1e3, 0.1 }" />
 
     <Box
       name="xneg"
       xMin="{ -1e3, -1e3, -1e3 }"
-      xMax="{ -0.9, 1e3, 1e3 }"/>
+      xMax="{ -0.9, 1e3, 1e3 }" />
 
     <Box
       name="xpos"
       xMin="{ 0.9, -1e3, -1e3 }"
-      xMax="{ 1e3, 1e3, 1e3 }"/>
+      xMax="{ 1e3, 1e3, 1e3 }" />
 
     <Box
       name="zneg"
       xMin="{ -1e3, -1e3, -1e3 }"
-      xMax="{ 1e3, 1e3, -0.9 }"/>
+      xMax="{ 1e3, 1e3, -0.9 }" />
 
-    <Box  
+    <Box
       name="zpos"
       xMin="{ -1e3, -1e3, 0.9 }"
-      xMax="{ 1e3, 1e3, 1e3 }"/>
+      xMax="{ 1e3, 1e3, 1e3 }" />
 
     <Box
       name="yneg"
       xMin="{ -1e3, -1e3, -1e3 }"
-      xMax="{ 1e3, -0.9, 1e3 }"/>
+      xMax="{ 1e3, -0.9, 1e3 }" />
 
     <Box
       name="ypos"
       xMin="{ -1e3, 0.9, -1e3 }"
-      xMax="{ 1e3, 1e3, 1e3 }"/>
+      xMax="{ 1e3, 1e3, 1e3 }" />
   </Geometry>
 
   <Events
@@ -97,18 +97,18 @@
 
     <SoloEvent
       name="initialPlot"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/siloOutput" />
 
     <SoloEvent
       name="fracture1"
-      target="/Solvers/SurfaceGen"/>
+      target="/Solvers/SurfaceGen" />
 
     <PeriodicEvent
       name="solverApplications1"
       forceDt="1.0"
       beginTime="0.0"
       endTime="4.0"
-      target="/Solvers/lagSolve"/>
+      target="/Solvers/lagSolve" />
 
 
     <!--SoloEvent
@@ -127,7 +127,7 @@
       name="outputs"
       timeFrequency="1.0"
       targetExactTimestep="0"
-      target="/Outputs/siloOutput"/>
+      target="/Outputs/siloOutput" />
 
   </Events>
 
@@ -135,7 +135,7 @@
     <FiniteElements>
       <FiniteElementSpace
         name="FE1"
-        order="1"/>
+        order="1" />
     </FiniteElements>
   </NumericalMethods>
 
@@ -143,12 +143,12 @@
     <CellElementRegion
       name="Region2"
       cellBlocks="{ 3_hexahedra }"
-      materialList="{ granite }"/>
+      materialList="{ granite }" />
 
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-4"
-      materialList="{ granite }"/>
+      materialList="{ granite }" />
   </ElementRegions>
 
   <Constitutive>
@@ -156,7 +156,7 @@
       name="granite"
       defaultDensity="2700"
       defaultBulkModulus="5.5556e9"
-      defaultShearModulus="4.16667e9"/>
+      defaultShearModulus="4.16667e9" />
   </Constitutive>
 
   <FieldSpecifications>
@@ -166,7 +166,7 @@
       setNames="{ fracPlaneX, fracPlaneY, fracPlaneZ }"
       objectPath="faceManager"
       fieldName="ruptureState"
-      scale="1"/>
+      scale="1" />
 
     <FieldSpecification
       name="xneg"
@@ -174,7 +174,7 @@
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       scale="-0.2"
-      setNames="{ xneg }"/>
+      setNames="{ xneg }" />
 
     <FieldSpecification
       name="xpos"
@@ -182,7 +182,7 @@
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       scale="0.2"
-      setNames="{ xpos }"/>
+      setNames="{ xpos }" />
 
     <FieldSpecification
       name="zneg"
@@ -190,7 +190,7 @@
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       scale="-0.2"
-      setNames="{ zneg }"/>
+      setNames="{ zneg }" />
 
     <FieldSpecification
       name="zpos"
@@ -198,7 +198,7 @@
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       scale="0.2"
-      setNames="{ zpos }"/>
+      setNames="{ zpos }" />
 
     <FieldSpecification
       name="bot"
@@ -206,7 +206,7 @@
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       scale="-0.2"
-      setNames="{ yneg }"/>
+      setNames="{ yneg }" />
 
     <FieldSpecification
       name="top"
@@ -214,7 +214,7 @@
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       scale="0.2"
-      setNames="{ ypos }"/>
+      setNames="{ ypos }" />
   </FieldSpecifications>
 
   <Functions>
@@ -222,17 +222,18 @@
       name="timeFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0, 1.0e9 }"
-      values="{ 0.0, 1.0, 1.0 }"/>
+      values="{ 0.0, 1.0, 1.0 }" />
   </Functions>
 
   <Outputs>
     <Silo
       name="siloOutput"
-      plotLevel="3"/>
+      plotLevel="3" />
 
     <Restart
-      name="restartOutput"/>
+      name="restartOutput" />
   </Outputs>
 
-  <!-- <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf" initialRockToughness="1e6" separableSet="all"/> -->
+  <!-- <Fracture failCriterion="1" failGap="0.0004" fractureFlag="100" preFractureSetName="perf"
+  initialRockToughness="1e6" separableSet="all"/> -->
 </Problem>

@@ -1,4 +1,4 @@
-<?xml version="1.0" ?>
+<?xml version="1.0"?>
 
 <Problem>
   <Solvers
@@ -10,28 +10,27 @@
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
-        newtonMaxIter="8"/>
+        newtonMaxIter="8" />
       <LinearSolverParameters
-        directParallel="0"/>
+        directParallel="0" />
     </SinglePhaseFVM>
   </Solvers>
 
   <Partitioner>
     <ParMetis
-        name="partitioner"
-        refinement="2">
+      name="partitioner"
+      refinement="2" />
   </Partitioner>
 
 
   <Mesh>
     <VTKMesh
       name="mesh"
-      logLevel="5"	
+      logLevel="5"
       useGlobalIds="1"
       fieldsToImport="{ PERM, PORO, NTG }"
       fieldNamesInGEOS="{ rockPerm_permeability, rockPorosity_referencePorosity, netToGross }"
-	
-      file="pebi3d_with_properties.vtu"/>
+      file="pebi3d_with_properties.vtu" />
   </Mesh>
 
   <Geometry>
@@ -50,24 +49,24 @@
     <PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
-      target="/Outputs/vtkOutput"/>
+      target="/Outputs/vtkOutput" />
 
     <PeriodicEvent
       name="solverApplications"
       forceDt="1.0"
-      target="/Solvers/SinglePhaseFlow"/>
+      target="/Solvers/SinglePhaseFlow" />
 
     <PeriodicEvent
       name="restarts"
       timeFrequency="1.0"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput" />
   </Events>
 
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"/>
+        name="singlePhaseTPFA" />
     </FiniteVolume>
   </NumericalMethods>
 
@@ -75,7 +74,7 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ * }"
-      materialList="{ water, rock }"/>
+      materialList="{ water, rock }" />
   </ElementRegions>
 
   <Constitutive>
@@ -85,26 +84,26 @@
       defaultViscosity="0.001"
       referencePressure="0.0"
       compressibility="0.0"
-      viscosibility="0.0"/>
+      viscosibility="0.0" />
 
     <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPerm" />
 
     <NullModel
-      name="nullSolid"/>
+      name="nullSolid" />
 
     <PressurePorosity
       name="rockPorosity"
       defaultReferencePorosity="0.05"
       referencePressure="0.0"
-      compressibility="0.0"/>
+      compressibility="0.0" />
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }" />
   </Constitutive>
 
   <FieldSpecifications>
@@ -115,28 +114,28 @@
       setNames="{ all }"
       objectPath="ElementRegions/Domain"
       fieldName="pressure"
-      scale="0.0"/>
+      scale="0.0" />
 
-   <FieldSpecification
+    <FieldSpecification
       name="sourceTerm"
       objectPath="ElementRegions/Domain"
       fieldName="pressure"
       scale="5e6"
-      setNames="{ source }"/>
+      setNames="{ source }" />
 
-   <FieldSpecification
+    <FieldSpecification
       name="sinkTerm"
       objectPath="ElementRegions/Domain"
       fieldName="pressure"
       scale="-5e6"
-      setNames="{ sink }"/>
+      setNames="{ sink }" />
   </FieldSpecifications>
 
   <Outputs>
     <VTK
-      name="vtkOutput"/>
+      name="vtkOutput" />
 
     <Restart
-      name="restartOutput"/>
+      name="restartOutput" />
   </Outputs>
 </Problem>
