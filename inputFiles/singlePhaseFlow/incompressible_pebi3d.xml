@@ -19,7 +19,7 @@
   <Partitioner>
     <ParMetis
       name="partitioner"
-      refinement="2" />
+      mumRefinements="2" />
   </Partitioner>
 
 

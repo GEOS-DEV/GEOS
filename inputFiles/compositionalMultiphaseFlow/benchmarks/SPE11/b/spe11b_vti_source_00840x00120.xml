@@ -8,7 +8,7 @@
   <Partitioner>
     <ParMetis
       name="partitioner"
-      refinement="4" />
+      numRefinements="4" />
   </Partitioner>
 
   <Mesh>
