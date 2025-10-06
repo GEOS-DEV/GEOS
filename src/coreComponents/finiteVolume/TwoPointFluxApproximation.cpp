@@ -900,7 +900,7 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
 
   fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
   {
-    aquiferNameToAquiferId[bc.getName()] = aquiferCounter;
+    aquiferNameToAquiferId.insert( {bc.getName(), aquiferCounter} );
     aquiferCounter++;
   } );
 

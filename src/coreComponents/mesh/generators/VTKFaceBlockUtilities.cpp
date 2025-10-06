@@ -58,12 +58,12 @@ public:
       for( auto l = 0; l < l2g.size(); ++l )
       {
         globalIndex const & g = l2g[l];
-        m_elementToCellBlock[g] = c;
+        m_elementToCellBlock.insert( {g, c} );
         g2l.insert( {g, l} );
       }
 
       m_cbe.insert( {c, g2l} );
-      m_cbf[c] = cb.getElemToFacesConstView();
+      m_cbf.insert( {c, cb.getElemToFacesConstView()} );
     }
   }
 
@@ -288,7 +288,7 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
     {
       es.push_back( nodeToEdges[i][j] );
     }
-    n2e.at( globalPtIds->GetValue( i )) = es;
+    n2e.insert( { globalPtIds->GetValue( i ), es} );
   }
 
   auto const comp = []( std::pair< vtkIdType, int > const & l, std::pair< vtkIdType, int > const & r ) { return l.second < r.second; };
@@ -317,7 +317,8 @@ array1d< localIndex > buildFace2dToEdge( vtkIdTypeArray const * globalPtIds,
       {
         for( localIndex const & val: n2e.at( dd ) )
         {
-          edgeCount.at( val )++;
+          auto [it, inserted] = edgeCount.try_emplace( val, 0 );
+          it->second++;
         }
       }
     }

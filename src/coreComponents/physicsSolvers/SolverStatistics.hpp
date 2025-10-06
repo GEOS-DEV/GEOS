@@ -274,7 +274,7 @@ public:
                          integer const newtonIter );
 
   void setResidualValue( string const & key, real64 const value )
-  { if( m_csvOutputEnabled ) m_residuals[key] = value; }
+  { if( m_csvOutputEnabled ) m_residuals.insert( {key, value} ); }
 
   /**
    * @brief Set the filename output file.
