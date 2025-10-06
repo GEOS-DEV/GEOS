@@ -389,13 +389,9 @@
  * @param lhs The left side of the operation.
  * @param rhs The right side of the operation.
  */
-#if !defined(GEOS_DEVICE_COMPILE)
 #define GEOS_ERROR_LHS_RHS_DECLS( lhs, rhs ) \
-  auto const lhsResult = (lhs); \
-  auto const rhsResult = (rhs)
-#elif __CUDA_ARCH__
-#define GEOS_ERROR_LHS_RHS_DECLS( lhs, rhs )
-#endif
+  GEOS_MAYBE_UNUSED auto const lhsResult = (lhs); \
+  GEOS_MAYBE_UNUSED auto const rhsResult = (rhs)
 
 /**
  * @brief Abort execution if @p lhs @p OP @p rhs.
