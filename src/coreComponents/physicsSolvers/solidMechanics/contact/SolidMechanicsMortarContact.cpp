@@ -579,15 +579,17 @@ void SolidMechanicsMortarContact::assembleMortar( real64 const dt,
   finiteElement::FiniteElementBase const & feSlave = *(m_faceTypeToMortarFiniteElements.at( shpS ));
   finiteElement::FiniteElementBase const & feMaster = *(m_faceTypeToMortarFiniteElements.at( shpM ));
 
-  array1d< real64 const> detPlus = m_triCellsDet.at(std::make_pair(shpS, shpM));
-  // arrayView1d< real64 > detMinus =  m_triCellsDet.at(std::make_pair(shpS, shpM)).toView();
+  arrayView1d< real64 const> detPlus = m_triCellsDet.at(std::make_pair(shpS, shpM)).toView();
   localIndex const nTri = detPlus.size();
   array1d< real64 > detMinus( nTri );
 
-  LvArray::tensorOps::scaledCopy< nTri >( detMinus, detPlus, -1.0 );
+  for (localIndex i=0; i<nTri; ++i)
+  {
+    detMinus[i] = -detPlus[i];
+  }
 
-  arrayView1d< localIndex const > list1 =  m_triCells.at(MortarSide::Slave).at(std::make_pair(shpS, shpM)).toView();
-  arrayView1d< localIndex const > list2 =  m_triCells.at(MortarSide::Master).at(std::make_pair(shpS, shpM)).toView();
+  arrayView1d< localIndex const > listSlave =  m_triCells.at(MortarSide::Slave).at(std::make_pair(shpS, shpM)).toView();
+  arrayView1d< localIndex const > listMaster =  m_triCells.at(MortarSide::Master).at(std::make_pair(shpS, shpM)).toView();
   arrayView3d< real64 const > gpLocalCoordsSlave = m_gpLocalCoords.at(MortarSide::Slave).at(std::make_pair(shpS, shpM)).toView();
   arrayView3d< real64 const > gpLocalCoordsMaster = m_gpLocalCoords.at(MortarSide::Master).at(std::make_pair(shpS, shpM)).toView();
 
@@ -598,18 +600,19 @@ void SolidMechanicsMortarContact::assembleMortar( real64 const dt,
                       localRhs,
                       dt,
                       subRegionSlave,
-                      list1,
-                      list1,
+                      subRegionSlave,
+                      listSlave,
+                      listSlave,
                       detPlus,
                       gpLocalCoordsSlave,
                       tractionDofKey );
 
-  real64 maxTraction1 = solidMechanicsMortarContactKernels::
-                        interfaceBasedMortarKernelApplication
+  real64 maxTraction1 = finiteElement::
+                        interfaceBasedKernelApplication
                         < parallelDevicePolicy< >,
                         FrictionBase >( meshSlave,
-                                        subRegionSlave,
-                                        nTri,
+                                        m_slaveName,
+                                        listSlave,
                                         feSlave,
                                         viewKeyStruct::frictionLawNameString(),
                                         kernelFactorySlave );
@@ -621,19 +624,20 @@ void SolidMechanicsMortarContact::assembleMortar( real64 const dt,
                        localMatrix,
                        localRhs,
                        dt,
+                       subRegionSlave,
                        subRegionMaster,
-                       list1,
-                       list2,
+                       listSlave,
+                       listMaster,
                        detMinus.toView(),
                        gpLocalCoordsMaster,
                        tractionDofKey );
 
-  real64 maxTraction2 = solidMechanicsMortarContactKernels::
-                        interfaceBasedMortarKernelApplication
+  real64 maxTraction2 = finiteElement::
+                        interfaceBasedKernelApplication
                         < parallelDevicePolicy< >,
                         FrictionBase >( meshMaster,
-                                        subRegionSlave,
-                                        nTri,
+                                        m_masterName,
+                                        listSlave,
                                         feMaster,
                                         viewKeyStruct::frictionLawNameString(),
                                         kernelFactoryMaster );

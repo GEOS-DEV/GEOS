@@ -84,7 +84,7 @@ public:
                         EdgeManager const & edgeManager,
                         FaceManager const & faceManager,
                         localIndex const targetRegionIndex,
-                        FaceElementSubRegion & slaveRegion,
+                        FaceElementSubRegion & subRegion,
                         FE_TYPE const & finiteElementSpace,
                         CONSTITUTIVE_TYPE & inputConstitutiveType,
                         arrayView1d< globalIndex const > const uDofNumber,
@@ -92,17 +92,18 @@ public:
                         CRSMatrixView< real64, globalIndex const > const inputMatrix,
                         arrayView1d< real64 > const inputRhs,
                         real64 const inputDt,
-                        FaceElementSubRegion const & subRegion,
+                        FaceElementSubRegion const & multipliersRegion,
+                        FaceElementSubRegion const & primaryVarRegion,
                         arrayView1d< localIndex const > const faceElementList1,
                         arrayView1d< localIndex const > const faceElementList2,
                         arrayView1d< real64 const > const subTriangleDeterminants,
-                        arrayView3d< real64 const > const localCoords,
+                        arrayView3d< real64 const > const gpLocalCoords,
                         string const tractionDofKey):
     Base( nodeManager,
           edgeManager,
           faceManager,
           targetRegionIndex,
-          slaveRegion,
+          subRegion,
           finiteElementSpace,
           inputConstitutiveType,
           uDofNumber,
@@ -112,15 +113,15 @@ public:
           inputDt ),
     //m_X( nodeManager.referencePosition()),
     m_faceToNodes( faceManager.nodeList().toViewConst()),
-    m_elemsToFaces( subRegion.faceList().toViewConst()),
+    m_elemsToFaces( primaryVarRegion.faceList().toViewConst()),
     m_faceElementList1( faceElementList1 ),
     m_faceElementList2( faceElementList2 ),
     m_subTriangleDeterminants( subTriangleDeterminants ),
-    m_localCoords( localCoords ),
-    m_traction( slaveRegion.getField< fields::contact::traction >().toViewConst() ),
-    m_tDofNumber( slaveRegion.getReference< globalIndex_array >( tractionDofKey ).toViewConst() ),
+    m_gpLocalCoords( gpLocalCoords ),
+    m_traction( multipliersRegion.getField< fields::contact::traction >().toViewConst() ),
+    m_tDofNumber( multipliersRegion.getReference< globalIndex_array >( tractionDofKey ).toViewConst() ),
     m_displacement( nodeManager.getField< fields::solidMechanics::totalDisplacement >() ),
-    m_rotationMatrix( slaveRegion.getField< fields::contact::rotationMatrix >().toViewConst())
+    m_rotationMatrix( multipliersRegion.getField< fields::contact::rotationMatrix >().toViewConst())
   {}
 
   //***************************************************************************
@@ -283,12 +284,12 @@ public:
 
     //constexpr int nUdof = numNodesPerElem*3;
 
-    real64 localCoords[2];
-    localCoords[0] = m_localCoords(k, q, 0);
-    localCoords[1] = m_localCoords(k, q, 1);
+    real64 gpLocalCoords[2];
+    gpLocalCoords[0] = m_gpLocalCoords(k, q, 0);
+    gpLocalCoords[1] = m_gpLocalCoords(k, q, 1);
 
     real64 Nu[ numNodesPerElem ];
-    m_finiteElementSpace.calcN( localCoords, Nu );
+    m_finiteElementSpace.calcN( gpLocalCoords, Nu );
 
     // accumulate local stack matrix
     for( int a=0; a < numNodesPerElem; ++a )  
@@ -403,7 +404,7 @@ protected:
   arrayView1d< real64 const > const m_subTriangleDeterminants;
 
   /// The array containing the local gauss point coordinates projected on the displacement side
-  arrayView3d< real64 const > const m_localCoords;
+  arrayView3d< real64 const > const m_gpLocalCoords;
 
   /// The array containing the traction field
   arrayView2d< real64 const > const m_traction;
@@ -427,133 +428,13 @@ using MortarFactory = finiteElement::InterfaceKernelFactory< MortarContactKernel
                                                              arrayView1d< real64 > const,
                                                              real64 const,
                                                              FaceElementSubRegion const &,
+                                                             FaceElementSubRegion const &,
                                                              arrayView1d< localIndex const > const &,
                                                              arrayView1d< localIndex const > const &,
                                                              arrayView1d< real64 const > const &,
                                                              arrayView3d< real64 const > const &,
                                                              string const >;
 
-
-//START_interfaceBasedKernelApplication
-/**
- * @brief Performs a loop over FaceElementSubRegion and calls a kernel launch
- *   with compile time knowledge of sub-loop bounds such as number of nodes and
- *   quadrature points per element.
- * @tparam POLICY The RAJA launch policy to pass to the kernel launch.
- * @tparam CONSTITUTIVE_BASE The common base class for constitutive pass-thru/dispatch which gives the kernel
- *   launch compile time knowledge of the constitutive model.
- * @tparam KERNEL_FACTORY The type of @p interfaceKernelFactory, typically an instantiation of @c InterfaceKernelFactory, and
- *   must adhere to that interface.
- * @param mesh1 The MeshLevel object where the primary field is located.
- * @param mesh2 The MeshLevel object where the multipliers are located.
- * @param targetRegionName The name of the target region to apply the @p KERNEL_TEMPLATE.
- * @param nMortarPairs The number of Mortar integration subcells to loop on.
- * @param subRegionFE Finite element object.
- * @param constitutiveStringName Key string used to retrieve the constitutive model.
- * @param interfaceKernelFactory The object used to construct the kernel.
- * @return The maximum contribution to the residual, which may be used to scale the residual.
- *
- * @details Loops over all regions Applies/Launches a kernel specified by the @p KERNEL_TEMPLATE through
- * #::geos::finiteElement::KernelBase::kernelLaunch().
- */
-template< typename POLICY,
-          typename CONSTITUTIVE_BASE,
-          typename KERNEL_FACTORY >
-static
-real64 interfaceBasedMortarKernelApplication( MeshLevel & mesh,
-                                              FaceElementSubRegion & subRegion,
-                                              localIndex const nMortarPairs,
-                                              finiteElement::FiniteElementBase const & subRegionFE,
-                                              string const & constitutiveStringName,
-                                              KERNEL_FACTORY & interfaceKernelFactory )
-{
-  GEOS_MARK_FUNCTION;
-
-
-  // save the maximum residual contribution for scaling residuals for convergence criteria.
-  real64 maxResidualContribution = 0;
-
-  NodeManager & nodeManager = mesh.getNodeManager();
-  EdgeManager & edgeManager = mesh.getEdgeManager();
-  FaceManager & faceManager = mesh.getFaceManager();
-
-  // ElementRegionManager & elementManager = mesh2.getElemManager();
-
-  // SurfaceElementRegion & region = elementManager.getRegion< SurfaceElementRegion >( targetRegionName );
-  // FaceElementSubRegion & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
-  localIndex const targetRegionIndex = 0;
-
-  // Get the constitutive model...and allocate a null constitutive model if required.
-  constitutive::ConstitutiveBase * constitutiveRelation = nullptr;
-  constitutive::NullModel * nullConstitutiveModel = nullptr;
-  if( subRegion.template hasWrapper< string >( constitutiveStringName ) )
-  {
-    string const & constitutiveName = subRegion.template getReference< string >( constitutiveStringName );
-    constitutiveRelation = &subRegion.getConstitutiveModel( constitutiveName );
-  }
-  else
-  {
-    nullConstitutiveModel = &subRegion.template registerGroup< constitutive::NullModel >( "nullModelGroup" );
-    constitutiveRelation = nullConstitutiveModel;
-  }
-
-  localIndex const numElems = nMortarPairs;
-
-  // Call the constitutive dispatch which converts the type of constitutive model into a compile time constant.
-  constitutive::ConstitutivePassThru< CONSTITUTIVE_BASE >::execute( *constitutiveRelation,
-                                                                    [&maxResidualContribution,
-                                                                     &nodeManager,
-                                                                     &edgeManager,
-                                                                     &faceManager,
-                                                                     targetRegionIndex,
-                                                                     &interfaceKernelFactory,
-                                                                     &subRegion,
-                                                                     &subRegionFE,
-                                                                     numElems]
-                                                                      ( auto & castedConstitutiveRelation )
-  {
-
-    finiteElement::FiniteElementDispatchHandler< SELECTED_FE_TYPES_2D >::dispatch2D( subRegionFE,
-                                                                                     [&maxResidualContribution,
-                                                                                      &nodeManager,
-                                                                                      &edgeManager,
-                                                                                      &faceManager,
-                                                                                      targetRegionIndex,
-                                                                                      &interfaceKernelFactory,
-                                                                                      &subRegion,
-                                                                                      numElems,
-                                                                                      &castedConstitutiveRelation] ( auto const finiteElement )
-
-    {
-      auto kernel = interfaceKernelFactory.createKernel( nodeManager,
-                                                         edgeManager,
-                                                         faceManager,
-                                                         targetRegionIndex,
-                                                         subRegion,
-                                                         finiteElement,
-                                                         castedConstitutiveRelation );
-
-      using KERNEL_TYPE = decltype( kernel );
-
-
-      // Call the kernelLaunch function, and store the maximum contribution to the residual.
-      maxResidualContribution =
-        std::max( maxResidualContribution,
-                  KERNEL_TYPE::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernel ) );
-
-    } );
-  } );
-
-  // Remove the null constitutive model (not required, but cleaner)
-  if( nullConstitutiveModel )
-  {
-    subRegion.deregisterGroup( "nullModelGroup" );
-  }
-
-  return maxResidualContribution;
-}
-//END_interfaceBasedKernelApplication                              
-           
 
 } // namespace solidMechanicsMortarContactKernels
 
