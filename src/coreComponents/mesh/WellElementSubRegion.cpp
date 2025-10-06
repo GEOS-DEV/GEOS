@@ -22,7 +22,6 @@
 #include "LvArray/src/output.hpp"
 
 #include <unordered_set>
-#include <tuple>
 
 namespace geos
 {
