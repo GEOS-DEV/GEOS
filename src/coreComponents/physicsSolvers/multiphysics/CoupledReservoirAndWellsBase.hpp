@@ -127,7 +127,7 @@ public:
                bool const setSparsity = true ) override
   {
     GEOS_MARK_FUNCTION;
-
+std::cout << "CoupledReservoirAndWellsBase::setupSystem" << std::endl;
     // call reservoir solver setup (needed in case of SinglePhasePoromechanicsConformingFractures)
     reservoirSolver()->setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 

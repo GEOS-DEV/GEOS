@@ -236,15 +236,13 @@ assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
   } );
 }
 
-
 template class MultiphasePoromechanicsConformingFractures<>;
-//template class MultiphasePoromechanicsConformingFractures< MultiphaseReservoirAndWells<> >;
+template class MultiphasePoromechanicsConformingFractures< CompositionalMultiphaseReservoirAndWells<> >;
 
 namespace
 {
-//typedef MultiphasePoromechanicsConformingFractures< MultiphaseReservoirAndWells<> >
-// MultiphasePoromechanicsConformingFractures;
-//REGISTER_CATALOG_ENTRY( PhysicsSolverBase, MultiphasePoromechanicsConformingFractures, string const &, Group * const )
+typedef MultiphasePoromechanicsConformingFractures< CompositionalMultiphaseReservoirAndWells<> > MultiphaseReservoirPoromechanicsConformingFractures;
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase, MultiphaseReservoirPoromechanicsConformingFractures, string const &, Group * const )
 typedef MultiphasePoromechanicsConformingFractures<> MultiphasePoromechanicsConformingFractures;
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, MultiphasePoromechanicsConformingFractures, string const &, Group * const )
 }

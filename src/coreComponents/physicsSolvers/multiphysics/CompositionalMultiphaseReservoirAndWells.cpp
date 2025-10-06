@@ -24,6 +24,7 @@
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "physicsSolvers/multiphysics/CoupledReservoirAndWellKernels.hpp"
+#include "physicsSolvers/multiphysics/MultiphasePoromechanicsConformingFractures.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
@@ -71,6 +72,14 @@ flowSolver() const
 }
 
 template<>
+CompositionalMultiphaseBase *
+CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsConformingFractures<> >::
+flowSolver() const
+{
+  return this->reservoirSolver()->flowSolver();
+}
+
+template<>
 void
 CompositionalMultiphaseReservoirAndWells<>::
 setMGRStrategy()
@@ -111,9 +120,9 @@ setMGRStrategy()
                                    EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
-template<>
+template< typename RESERVOIR_SOLVER >
 void
-CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics<> >::
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
 setMGRStrategy()
 {
   LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
@@ -134,7 +143,7 @@ setMGRStrategy()
     linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanicsReservoirFVM;
   }
   GEOS_LOG_LEVEL_RANK_0( logInfo::LinearSolver,
-                         GEOS_FMT( "{}: MGR strategy set to {}", getName(),
+                         GEOS_FMT( "{}: MGR strategy set to {}", this->getName(),
                                    EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
@@ -399,13 +408,16 @@ assembleCouplingTerms( real64 const time_n,
 
 template class CompositionalMultiphaseReservoirAndWells<>;
 template class CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics<> >;
+template class CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsConformingFractures<> >;
 
 namespace
 {
-typedef CompositionalMultiphaseReservoirAndWells<> CompositionalMultiphaseFlowAndWells;
-typedef CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics<> > CompositionalMultiphasePoromechanicsAndWells;
+using CompositionalMultiphaseFlowAndWells = CompositionalMultiphaseReservoirAndWells<>;
+using CompositionalMultiphasePoromechanicsAndWells = CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics<> >;
+using CompositionalMultiphasePoromechanicsConformingFracturesAndWells = CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsConformingFractures<> >;
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphaseFlowAndWells, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphasePoromechanicsAndWells, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphasePoromechanicsConformingFracturesAndWells, string const &, Group * const )
 }
 
 } /* namespace geos */
