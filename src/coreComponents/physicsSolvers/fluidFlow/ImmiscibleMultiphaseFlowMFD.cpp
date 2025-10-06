@@ -83,7 +83,7 @@ ImmiscibleMultiphaseFlowMFD::ImmiscibleMultiphaseFlowMFD( const string & name,
 
   // number of dofs per cell = num phases (pressure + (numPhases-1) saturations OR total+components)
   m_numDofPerCell = m_numPhases;
-  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::immiscibleMultiphaseFVM; // placeholder
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::immiscibleMultiphaseMFD;
 }
 
 void ImmiscibleMultiphaseFlowMFD::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
