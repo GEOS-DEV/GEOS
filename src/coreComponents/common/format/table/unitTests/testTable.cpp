@@ -64,15 +64,12 @@ TEST( testTable, tableEmptyRow )
                                   "CoordZ",
                                   "Prev\nelement",
                                   "Next\nelement"} );
-  std::cout << "nyan"<<std::endl;
   TableData tableData;
   tableData.addRow( "value1", "[30.21543]", "3.0", 54, 0 );
   tableData.addRow( "", " ", "", "", "" );
   tableData.addRow( "Duis fringilla, ligula sed porta fringilla, ligula wisi commodo felis,ut adipiscing felis dui in enim.", "[30.21543]", "30.45465142",
                     787442, 10 );
-  std::cout << "nyan2"<<std::endl;
   TableTextFormatter const tableText( tableLayout );
-  std::cout << "nyan3"<<std::endl;
   EXPECT_EQ( tableText.toString( tableData ),
              "\n"
              "-------------------------------------------------------------------------------------------------------------------------------------------------------------------\n"
@@ -420,7 +417,6 @@ TEST( testTable, subColumnsWithNotEnoughValues )
   tableData.addRow( "6193", "7481", "1305", "9037", "4306.1", "6157", "1849", "2753", "910", "2369", "9992", "6", "7" );
   tableData.addRow( "8012", "5729.2112", "6975", "3201.213", "9448", "1820", "4125", "182.12", "7453", "5069", "3912", "6", "7" );
   tableData.addRow( "4381", "6728", "5204", "8663", "2035", "7804", "6310", "9621", "4158", "789", "2537", "6", "7" );
-  std::cout << "yo"<< std::endl;
   TableTextFormatter tableText( tableLayout );
   EXPECT_EQ( tableText.toString(
                tableData ),
