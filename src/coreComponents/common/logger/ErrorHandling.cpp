@@ -261,7 +261,7 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
     GEOS_LOG_RANK( GEOS_FMT( "The error file {} was appended.", m_filename ) );
   }
 
-  ErrorLogger::formatMsgToAscii( errorMsg, ::geos::logger::internal::rankString, std::cout );
+  ErrorLogger::formatMsgToAscii( errorMsg, std::cout );
 
 }
 

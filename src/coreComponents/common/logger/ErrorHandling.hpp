@@ -21,6 +21,7 @@
 #define INITIALIZATION_ERROR_LOGGER_HPP
 
 #include "common/DataTypes.hpp"
+#include "common/format/StringUtilities.hpp"
 
 namespace geos
 {
@@ -208,13 +209,12 @@ private:
     bool m_isValidStackTrace = false;
   };
 
-  static void formatMsgToAscii( ErrorLogger::ErrorMsg const & errMsg, string const & rank,
-                                std::ostream & output )
+  static void formatMsgToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostream & output )
   {
     output << "***** EXCEPTION\n";
     output << "***** LOCATION: " LOCATION "\n";
     output << "***** " << errMsg.m_cause << "\n";
-    output << "***** Rank " << rank << ": " << errMsg.m_msg << "\n";
+    output << "***** Rank " <<stringutilities::join(errMsg.m_ranksInfo,", ") << ": " << errMsg.m_msg << "\n";
     output << errMsg.m_stringCallStack;
   }
 
