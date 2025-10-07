@@ -15,8 +15,6 @@
 
 // forcefully enable asserts macros for this unit test
 #define GEOS_ASSERT_ENABLED
-
-#define GEOS_ERROR_LOGGER_INSTANCE testErrorLogger
 #include "common/logger/ErrorHandling.hpp"
 
 #include "common/logger/Logger.hpp"
@@ -30,6 +28,10 @@ using namespace geos;
 using namespace dataRepository;
 
 namespace fs = std::filesystem;
+
+// redeging logger instance to test macros with a local instance (to prevent any side effect)
+#undef GEOS_ERROR_LOGGER_INSTANCE
+#define GEOS_ERROR_LOGGER_INSTANCE testErrorLogger
 
 // declare a constant which value is the source file line (to predict the error file output).
 #define GET_LINE( lineVar ) static size_t constexpr lineVar = __LINE__
@@ -262,7 +264,6 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
   } );
 }
 
-#ifdef GEOS_ASSERT_ENABLED
 TEST( ErrorHandling, testYamlFileAssertOutput )
 {
   ErrorLogger testErrorLogger;
@@ -303,7 +304,6 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
     "- frame2: "
   } );
 }
-#endif
 
 int main( int ac, char * av[] )
 {
