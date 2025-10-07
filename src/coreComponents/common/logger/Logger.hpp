@@ -137,7 +137,7 @@
  * @note - Currently not available on GPU.
  *       - Possible to pre-define it in any source file (e.g. for unit tests)
  */
-#if !defined(GEOS_DEVICE_COMPILE)
+#if !defined(GEOS_DEVICE_COMPILE) && !defined(GEOS_ERROR_LOGGER_INSTANCE)
 #define GEOS_ERROR_LOGGER_INSTANCE ErrorLogger::global()
 #endif
 
