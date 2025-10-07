@@ -253,6 +253,51 @@ public:
     this->setupCoupling( domain, dofManager );
   }
 
+  void assembleSystem( real64 const time,
+                       real64 const dt,
+                       DomainPartition & domain,
+                       DofManager const & dofManager,
+                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                       arrayView1d< real64 > const & localRhs )
+  {
+    GEOS_MARK_FUNCTION;
+
+    // Steps 1 and 2: compute element-based terms (mechanics and local flow terms)
+    assembleElementBasedTerms( time,
+                               dt,
+                               domain,
+                               dofManager,
+                               localMatrix,
+                               localRhs );
+
+    // Step 3: compute the fluxes (face-based contributions)
+
+    if( m_stabilizationType == stabilization::StabilizationType::Global ||
+        m_stabilizationType == stabilization::StabilizationType::Local )
+    {
+      this->flowSolver()->assembleStabilizedFluxTerms( dt,
+                                                       domain,
+                                                       dofManager,
+                                                       localMatrix,
+                                                       localRhs );
+    }
+    else
+    {
+      this->flowSolver()->assembleFluxTerms( dt,
+                                             domain,
+                                             dofManager,
+                                             localMatrix,
+                                             localRhs );
+    }
+  }
+
+  virtual void assembleElementBasedTerms( real64 const time_n,
+                                          real64 const dt,
+                                          DomainPartition & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs ) = 0;
+
   virtual bool checkSequentialConvergence( integer const cycleNumber,
                                            integer const iter,
                                            real64 const & time_n,

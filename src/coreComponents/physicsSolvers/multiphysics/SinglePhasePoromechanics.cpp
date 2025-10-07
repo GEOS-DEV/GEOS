@@ -46,7 +46,6 @@ namespace geos
 using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
-using namespace stabilization;
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::SinglePhasePoromechanics( const string & name,
@@ -193,43 +192,6 @@ void SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLag
                                    EnumStrings< LinearSolverParameters::MGR::StrategyType >::toString( linearSolverParameters.mgr.strategy )));
 }
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleSystem( real64 const time_n,
-                                                                                real64 const dt,
-                                                                                DomainPartition & domain,
-                                                                                DofManager const & dofManager,
-                                                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                                arrayView1d< real64 > const & localRhs )
-{
-  GEOS_MARK_FUNCTION;
-
-  // Steps 1 and 2: compute element-based terms (mechanics and local flow terms)
-  assembleElementBasedTerms( time_n,
-                             dt,
-                             domain,
-                             dofManager,
-                             localMatrix,
-                             localRhs );
-
-  // Step 3: compute the fluxes (face-based contributions)
-  if( m_stabilizationType == StabilizationType::Global || m_stabilizationType == StabilizationType::Local )
-  {
-    this->flowSolver()->assembleStabilizedFluxTerms( dt,
-                                                     domain,
-                                                     dofManager,
-                                                     localMatrix,
-                                                     localRhs );
-  }
-  else
-  {
-    this->flowSolver()->assembleFluxTerms( dt,
-                                           domain,
-                                           dofManager,
-                                           localMatrix,
-                                           localRhs );
-  }
-}
-
 template<>
 void SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLagrangianFEM >::assembleSystem( real64 const time_n,
                                                                                                               real64 const dt,
@@ -240,36 +202,11 @@ void SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLag
 {
   GEOS_MARK_FUNCTION;
 
-  // Steps 1 and 2: compute element-based terms (mechanics and local flow terms)
-  assembleElementBasedTerms( time_n,
-                             dt,
-                             domain,
-                             dofManager,
-                             localMatrix,
-                             localRhs );
+  Base::assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
 
-  // Step 3: compute the fluxes (face-based contributions)
-  if( m_stabilizationType == StabilizationType::Global || m_stabilizationType == StabilizationType::Local )
-  {
-    this->flowSolver()->assembleStabilizedFluxTerms( dt,
-                                                     domain,
-                                                     dofManager,
-                                                     localMatrix,
-                                                     localRhs );
-  }
-  else
-  {
-    this->flowSolver()->assembleFluxTerms( dt,
-                                           domain,
-                                           dofManager,
-                                           localMatrix,
-                                           localRhs );
-  }
-
-  // step 4: assemble well contributions
-
-  this->flowSolver()->wellSolver()->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
-  this->flowSolver()->assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  // assemble well contributions
+  flowSolver()->wellSolver()->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+  flowSolver()->assembleCouplingTerms( time_n, dt, domain, dofManager, localMatrix, localRhs );
 }
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
