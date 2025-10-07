@@ -263,7 +263,9 @@ bool MsrsbLevelBuilderCoupled< LAI >::updateProlongation( Matrix const & fineMat
       {
         auto const blockVals = block.getEntries( localRow );
         auto const coupledVals = prolongation.getEntries( rowOffset + localRow );
-        GEOS_ASSERT_EQ( blockVals.size(), coupledVals.size() );
+        auto const blocksCount = blockVals.size();
+        auto const coupledCount = coupledVals.size();
+        GEOS_ASSERT_EQ( blocksCount, coupledCount );
         std::copy( blockVals.dataIfContiguous(),
                    blockVals.dataIfContiguous() + blockVals.size(),
                    coupledVals.dataIfContiguous() );
