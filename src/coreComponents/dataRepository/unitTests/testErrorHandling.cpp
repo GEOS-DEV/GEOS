@@ -16,7 +16,9 @@
 // forcefully enable asserts macros for this unit test
 #define GEOS_ASSERT_ENABLED
 
+#define GEOS_ERROR_LOGGER_INSTANCE testErrorLogger
 #include "common/logger/ErrorHandling.hpp"
+
 #include "common/logger/Logger.hpp"
 #include "dataRepository/DataContext.hpp"
 #include "common/initializeEnvironment.hpp"
@@ -99,12 +101,9 @@ void endLocalLoggerTest( ErrorLogger & errorLogger,
 
 TEST( ErrorHandling, testYamlFileWarningOutput )
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow"
-  ErrorLogger g_errorLogger; // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
-#pragma GCC diagnostic pop
+  ErrorLogger testErrorLogger;
 
-  beginLocalLoggerTest( g_errorLogger, "warningTestOutput.yaml" );
+  beginLocalLoggerTest( testErrorLogger, "warningTestOutput.yaml" );
 
   GET_LINE( line1 ); GEOS_WARNING( "Conflicting pressure boundary conditions" );
 
@@ -114,7 +113,7 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
                                       context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision );
   GET_LINE( line3 ); GEOS_WARNING_IF( testValue == 5, warningMsg, context, additionalContext );
 
-  endLocalLoggerTest( g_errorLogger, {
+  endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
 
     GEOS_FMT(
@@ -164,12 +163,9 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
 
 TEST( ErrorHandling, testYamlFileExceptionOutput )
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow"
-  ErrorLogger g_errorLogger; // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
-#pragma GCC diagnostic pop
+  ErrorLogger testErrorLogger;
 
-  beginLocalLoggerTest( g_errorLogger, "exceptionTestOutput.yaml" );
+  beginLocalLoggerTest( testErrorLogger, "exceptionTestOutput.yaml" );
   size_t line1;
 
   // Stacked exception test (contexts must appear sorted by priority)
@@ -180,14 +176,14 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
   catch( std::domain_error const & ex )
   {
     string const errorMsg = "Table input error.\n";
-    g_errorLogger.currentErrorMsg()
+    testErrorLogger.currentErrorMsg()
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
       .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
   }
-  g_errorLogger.flushErrorMsg( g_errorLogger.currentErrorMsg() );
+  testErrorLogger.flushErrorMsg( testErrorLogger.currentErrorMsg() );
 
-  endLocalLoggerTest( g_errorLogger, {
+  endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
 
     GEOS_FMT(
@@ -221,12 +217,9 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
 
 TEST( ErrorHandling, testYamlFileErrorOutput )
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow"
-  ErrorLogger g_errorLogger; // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
-#pragma GCC diagnostic pop
+  ErrorLogger testErrorLogger;
 
-  beginLocalLoggerTest( g_errorLogger, "errorTestOutput.yaml" );
+  beginLocalLoggerTest( testErrorLogger, "errorTestOutput.yaml" );
 
   EXPECT_EXIT( GEOS_ERROR_IF_GT_MSG( testValue, testMaxPrecision,
                                      GEOS_FMT( "{}: option should be lower than {}.",
@@ -237,7 +230,7 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
                ::testing::ExitedWithCode( 1 ),
                ".*" );
 
-  endLocalLoggerTest( g_errorLogger, {
+  endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
 
     // we won't test the line index for this test as it cannot be a one-liner.
@@ -272,12 +265,9 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
 #ifdef GEOS_ASSERT_ENABLED
 TEST( ErrorHandling, testYamlFileAssertOutput )
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow"
-  ErrorLogger g_errorLogger; // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
-#pragma GCC diagnostic pop
+  ErrorLogger testErrorLogger;
 
-  beginLocalLoggerTest( g_errorLogger, "assertTestOutput.yaml" );
+  beginLocalLoggerTest( testErrorLogger, "assertTestOutput.yaml" );
 
   EXPECT_EXIT( GEOS_ASSERT_MSG( testValue > testMinPrecision && testValue < testMaxPrecision,
                                 GEOS_FMT( "{}: value should be between {} and {}, but is {}.",
@@ -287,7 +277,7 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
                ::testing::ExitedWithCode( 1 ),
                ".*" );
 
-  endLocalLoggerTest( g_errorLogger, {
+  endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
 
     // we won't test the line index for this test as it cannot be a one-liner.

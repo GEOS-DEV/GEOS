@@ -119,9 +119,10 @@ public:
     std::vector< std::string > m_sourceCallStack;
 
     /**
-     * @brief Construct a default Error Message without field specification
+     * @brief Construct a default Error Message
      */
-    ErrorMsg() {};
+    ErrorMsg()
+    {}
 
     /**
      * @brief Construct a new Error Message from parameters
@@ -213,6 +214,16 @@ private:
   };
 
   /**
+   * @brief Global instance of the ErrorLogger class used for error/warning reporting.
+   * @details This global instance is used across the codebase to log errors, warnings, and exceptions,
+   *          and to write structured output of errors. It is used through the logging macros.
+   * @note - cannot be a "extern" or "static" variable because of a clang compiler error.
+   *       - local instances are possible for more specialized logging.
+   *       - currently not available on GPU.
+   */
+  GEOS_HOST static ErrorLogger & global();
+
+  /**
    * @return true if the YAML file output is enabled
    */
   bool isOutputFileEnabled() const
@@ -284,14 +295,6 @@ private:
   void streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile,
                                      std::string_view indent );
 };
-
-/**
- * @brief Global instance of the ErrorLogger class used for error/warning reporting.
- * @details This global variable is used across the codebase to log errors, warnings, and exceptions,
- *          and to write structured output to a YAML file when enabled. It is used through the logging macros.
- */
-extern ErrorLogger g_errorLogger;
-
 
 /// @cond DO_NOT_DOCUMENT
 

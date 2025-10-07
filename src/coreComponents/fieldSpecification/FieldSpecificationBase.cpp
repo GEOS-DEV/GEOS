@@ -104,7 +104,7 @@ void FieldSpecificationBase::setMeshObjectPath( Group const & meshBodies )
   }
   catch( std::exception const & e )
   {
-    g_errorLogger.currentErrorMsg()
+    ErrorLogger::global().currentErrorMsg()
       .addToMsg( getWrapperDataContext( viewKeyStruct::objectPathString() ).toString() +
                  " is a wrong objectPath: " + m_objectPath + "\n" )
       .addContextInfo( getWrapperDataContext( viewKeyStruct::objectPathString() ).getContextInfo()

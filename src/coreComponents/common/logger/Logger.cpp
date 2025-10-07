@@ -69,16 +69,19 @@ namespace logger
 namespace internal
 {
 
-int rank = 0;
-std::string rankString = "0";
+int g_rank = 0;
+int g_n_ranks = 1;
+std::string g_rankString = "0";
+std::ostream * g_rankStream = nullptr;
 
-int n_ranks = 1;
+int rank()
+{ return g_rank; }
 
-std::ostream * rankStream = nullptr;
+string_view rankString()
+{ return g_rankString; }
 
-#ifdef GEOS_USE_MPI
-MPI_Comm comm;
-#endif
+std::ostream * rankStream()
+{ return g_rankStream; }
 
 } // namespace internal
 
@@ -86,26 +89,25 @@ MPI_Comm comm;
 
 void InitializeLogger( MPI_Comm mpi_comm, const std::string & rankOutputDir )
 {
-  internal::comm = mpi_comm;
-  MPI_Comm_rank( mpi_comm, &internal::rank );
-  MPI_Comm_size( mpi_comm, &internal::n_ranks );
+ MPI_Comm_rank( mpi_comm, &internal::g_rank );
+  MPI_Comm_size( mpi_comm, &internal::g_n_ranks );
 
-  internal::rankString = std::to_string( internal::rank );
+  internal::g_rankString = std::to_string( internal::g_rank );
 
   if( rankOutputDir != "" )
   {
-    if( internal::rank == 0 )
+    if( internal::g_rank == 0 )
     {
       makeDirsForPath( rankOutputDir );
     }
 
     MPI_Barrier( mpi_comm );
-    std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
-    internal::rankStream = new std::ofstream( outputFilePath );
+    std::string outputFilePath = rankOutputDir + "/rank_" + internal::g_rankString + ".out";
+    internal::g_rankStream = new std::ofstream( outputFilePath );
   }
   else
   {
-    internal::rankStream = &std::cout;
+    internal::g_rankStream = &std::cout;
   }
 }
 
@@ -117,23 +119,23 @@ void InitializeLogger( const std::string & rankOutputDir )
   {
     makeDirsForPath( rankOutputDir );
 
-    std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
-    internal::rankStream = new std::ofstream( outputFilePath );
+    std::string outputFilePath = rankOutputDir + "/rank_" + internal::g_rankString + ".out";
+    internal::g_rankStream = new std::ofstream( outputFilePath );
   }
   else
   {
-    internal::rankStream = &std::cout;
+    internal::g_rankStream = &std::cout;
   }
 }
 
 void FinalizeLogger()
 {
-  if( internal::rankStream != &std::cout )
+  if( internal::g_rankStream != &std::cout )
   {
-    delete internal::rankStream;
+    delete internal::g_rankStream;
   }
 
-  internal::rankStream = nullptr;
+  internal::g_rankStream = nullptr;
 }
 
 } // namespace logger

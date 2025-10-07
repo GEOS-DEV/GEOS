@@ -15,6 +15,7 @@
 
 #include "BlackOilFluidBase.hpp"
 
+#include "common/logger/ErrorHandling.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "functions/FunctionManager.hpp"
@@ -257,7 +258,7 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
     {
       string const msg = GEOS_FMT( errorMsg, getCatalogName(), getDataContext(),
                                    "formation volume factor", iph );
-      g_errorLogger.currentErrorMsg()
+      ErrorLogger::global().currentErrorMsg()
         .addToMsg( msg )
         .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
       throw SimulationError( ex, msg );
@@ -270,7 +271,7 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
     {
       string const msg = GEOS_FMT( errorMsg, getCatalogName(), getDataContext(),
                                    "viscosity", iph );
-      g_errorLogger.currentErrorMsg()
+      ErrorLogger::global().currentErrorMsg()
         .addToMsg( msg )
         .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
       throw SimulationError( ex, msg );

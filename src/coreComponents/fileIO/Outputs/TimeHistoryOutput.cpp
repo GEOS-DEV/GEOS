@@ -145,7 +145,7 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
     {
       string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
                                         getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ) );
-      g_errorLogger.currentErrorMsg()
+      ErrorLogger::global().currentErrorMsg()
         .addToMsg( errorMsg )
         .addContextInfo( getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ).getContextInfo()
                            .setPriority( 1 ) );
