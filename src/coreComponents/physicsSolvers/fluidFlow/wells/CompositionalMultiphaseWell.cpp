@@ -404,7 +404,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
                                                            WellElementSubRegion const & subRegion,
                                                            ElementRegionManager const & elemManager )
 {
-  GEOS_UNUSED_VAR(time_n);
+  GEOS_UNUSED_VAR( time_n );
   WellControls & wellControls = getWellControls( subRegion );
   if( !wellControls.useSurfaceConditions() )
   {
@@ -445,7 +445,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
   // tjb
-  wellControls.forSubGroups< PhaseProductionConstraint, PhaseInjectionConstraint >( [&]( auto & constraint )
+  wellControls.forSubGroups< PhaseConstraint< InjectionConstraint >, PhaseConstraint< ProductionConstraint > >( [&]( auto & constraint )
   {
     constraint.validatePhaseType( fluid );
   } );
@@ -1355,7 +1355,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
       {
         // tjb needed for backward compatibility
         //wellControls.forSubGroups< MaximumBHPConstraint >( [&]( auto & constraint )
-        wellControls.forSubGroups< TotalVolInjectionConstraint >( [&]( auto & constraint )
+        wellControls.forSubGroups< TotalVolConstraint< InjectionConstraint > >( [&]( auto & constraint )
         {
           constraint.setBHP ( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
           constraint.setPhaseVolumeRates ( wellControls.getReference< array1d< real64 > >(
@@ -2638,41 +2638,40 @@ void CompositionalMultiphaseWell::assembleWellConstraintTerms( real64 const & ti
   }
   WellControls & wellControls = getWellControls( subRegion );
 
+
+  wellControls.forSubGroups< MinimumBHPConstraint, PhaseConstraint< ProductionConstraint >, MassConstraint< ProductionConstraint >, TotalVolConstraint< ProductionConstraint >,
+                             LiquidConstraint< ProductionConstraint >, MaximumBHPConstraint, PhaseConstraint< InjectionConstraint >, MassConstraint< InjectionConstraint >,
+                             TotalVolConstraint< InjectionConstraint >,
+                             LiquidConstraint< InjectionConstraint >
+                             >( [&]( auto & constraint )
   {
-    wellControls.forSubGroups< BHPConstraint, PhaseConstraint, MassConstraint, TotalVolConstraint, LiquidConstraint >( [&]( auto & constraint )
+    if( constraint.getName() == wellControls.getCurrentConstraint()->getName())
     {
-      using ConstraintType = std::remove_reference_t< decltype(constraint) >;
-      if( constraint.getName() == wellControls.getCurrentConstraint()->getName())
+      // found limiting constraint
+
+      // fluid data
+      constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
+      integer isThermal = fluidSeparator.isThermal();
+      integer const numComp = fluidSeparator.numFluidComponents();
+      geos::internal::kernelLaunchSelectorCompThermSwitch( numComp, isThermal, [&] ( auto NC, auto ISTHERMAL )
       {
-        // found limiting constraint
+        integer constexpr NUM_COMP = NC();
+        integer constexpr IS_THERMAL = ISTHERMAL();
 
-        // fluid data
-        constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
-        integer isThermal = fluidSeparator.isThermal();
-        integer const numComp = fluidSeparator.numFluidComponents();
-        geos::internal::kernelLaunchSelectorCompThermSwitch( numComp, isThermal, [&] ( auto NC, auto ISTHERMAL )
-        {
-          integer constexpr NUM_COMP = NC();
-          integer constexpr IS_THERMAL = ISTHERMAL();
-
-          wellConstraintKernels::ConstraintHelper< NUM_COMP, IS_THERMAL, ConstraintType >::assembleConstraintEquation( time_n,
-                                                                                                                       wellControls,
-                                                                                                                       constraint,
-                                                                                                                       subRegion,
-                                                                                                                       dofManager.getKey( wellElementDofName() ),
-                                                                                                                       dofManager.rankOffset(),
-                                                                                                                       localMatrix,
-                                                                                                                       localRhs );
-        } );
-      }
-
-    } );
-  }
-
+        wellConstraintKernels::ConstraintHelper< NUM_COMP, IS_THERMAL >::assembleConstraintEquation( time_n,
+                                                                                                     wellControls,
+                                                                                                     constraint,
+                                                                                                     subRegion,
+                                                                                                     dofManager.getKey( wellElementDofName() ),
+                                                                                                     dofManager.rankOffset(),
+                                                                                                     localMatrix,
+                                                                                                     localRhs );
+      } );
+    }
+  } );
 }
 
-
-void CompositionalMultiphaseWell::assembleWellPressureRelations( real64 const & GEOS_UNUSED_PARAM(time_n),
+void CompositionalMultiphaseWell::assembleWellPressureRelations( real64 const & GEOS_UNUSED_PARAM( time_n ),
                                                                  real64 const & GEOS_UNUSED_PARAM( dt ),
                                                                  WellElementSubRegion const & subRegion,
                                                                  DofManager const & dofManager,

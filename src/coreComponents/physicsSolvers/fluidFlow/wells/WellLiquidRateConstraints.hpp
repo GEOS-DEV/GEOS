@@ -32,10 +32,11 @@ namespace geos
 
 /**
  * @class LiquidConstraint
- * @brief This class describes a Liquid rate constraint used to control a production well.
+ * @brief This class describes a Liquid rate constraint used to control of type WellConstraintType
  */
 
-class LiquidConstraint : public WellConstraintBase
+template< typename WellConstraintType >
+class LiquidConstraint : public WellConstraintType
 {
 public:
 
@@ -85,6 +86,21 @@ public:
    */
   LiquidConstraint & operator=( LiquidConstraint && ) = delete;
 
+  /**
+   * @brief name of the node manager in the object catalog
+   * @return string that contains the catalog name to generate a new Constraint object through the object catalog.
+   */
+  static string catalogName()
+  {
+    if constexpr ( std::is_same_v< WellConstraintType, InjectionConstraint > )    // special case
+    {
+      return "LiquidInjectionConstraint";
+    }
+    else   // default
+    {
+      return "LiquidProductionConstraint";
+    }
+  }
   ///@}
 
   /**
@@ -125,11 +141,26 @@ public:
   // Temp interface - tjb
   virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::LIQUIDRATE; };
 
+  virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
 
 protected:
 
   virtual void postInputInitialization() override;
 
+  template< typename T >
+  void  validateLiquidType( T const & fluidModel )
+  {
+    m_phaseIndices.resize( m_phaseNames.size());
+    for( size_t ip =0; ip<m_phaseNames.size(); ip++ )
+    {
+      integer phaseIndex = fluidModel.getPhaseIndex( m_phaseNames[ip] );
+      GEOS_THROW_IF( phaseIndex == -1,
+                     "LiquidProductionConstraint " <<  viewKeyStruct::liquidRateString()    <<
+                     ": Invalid Liquid type for simulation fluid model " << m_phaseNames[ip],
+                     InputError );
+      m_phaseIndices[ip]=phaseIndex;
+    }
+  }
 protected:
 
   /// Name of the targeted phase
@@ -139,102 +170,6 @@ protected:
 
 };
 
-/**
- * @class LiquidProductionConstraint
- * @brief This class describes a Liquid rate constraint used to control a production well.
- */
-
-class LiquidProductionConstraint : public LiquidConstraint
-{
-public:
-
-
-  /**
-   * @name Constructor / Destructor
-   */
-  ///@{
-
-  /**
-   * @brief Constructor for WellControls Objects.
-   * @param[in] name the name of this instantiation of WellControls in the repository
-   * @param[in] parent the parent group of this instantiation of WellControls
-   */
-  explicit LiquidProductionConstraint( string const & name, dataRepository::Group * const parent );
-
-
-  /**
-   * @brief Default destructor.
-   */
-  ~LiquidProductionConstraint() override;
-
-  /**
-   * @brief Deleted default constructor.
-   */
-  LiquidProductionConstraint() = delete;
-
-  /**
-   * @brief Deleted copy constructor.
-   */
-  LiquidProductionConstraint( LiquidProductionConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move constructor.
-   */
-  LiquidProductionConstraint( LiquidProductionConstraint && ) = delete;
-
-  /**
-   * @brief Deleted assignment operator.
-   * @return a reference to a constraint object
-   */
-  LiquidProductionConstraint & operator=( LiquidProductionConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move operator.
-   * @return a reference to a constraint object
-   */
-  LiquidProductionConstraint & operator=( LiquidProductionConstraint && ) = delete;
-
-  ///@}
-
-  /**
-   * @name Getters / Setters
-   */
-  ///@{
-
-  /**
-   * @brief Get name of constraint
-   * @return constraint key
-   */
-  virtual std::string getConstraintKey( ) const override { return "LiquidProductionConstraint"; };
-
-
-  virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
-  ///@}
-
-  /**
-   * @brief Validate Liquid type is consistent with fluidmodel
-   */
-  template< typename T > void validateLiquidType( T const & fluidModel );
-protected:
-
-  virtual void postInputInitialization() override;
-
-};
-
-template< typename T >
-void LiquidProductionConstraint::validateLiquidType( T const & fluidModel )
-{
-  m_phaseIndices.resize( m_phaseNames.size());
-  for( size_t ip =0; ip<m_phaseNames.size(); ip++ )
-  {
-    integer phaseIndex = fluidModel.getPhaseIndex( m_phaseNames[ip] );
-    GEOS_THROW_IF( phaseIndex == -1,
-                   "LiquidProductionConstraint " << getReference< string >( LiquidConstraint::viewKeyStruct::liquidRateString())   <<
-                   ": Invalid Liquid type for simulation fluid model " << m_phaseNames[ip],
-                   InputError );
-    m_phaseIndices[ip]=phaseIndex;
-  }
-}
 
 
 } //namespace geos

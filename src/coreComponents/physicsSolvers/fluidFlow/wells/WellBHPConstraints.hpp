@@ -92,17 +92,6 @@ public:
   // Temp interface - tjb
   virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::BHP; };
 
-  /**
-   * @name Getters / Setters
-   */
-  ///@{
-  /**
-   * @brief Get name of constraint
-   * @return constraint key
-   */
-  virtual std::string getConstraintKey( ) const override { return "BHPConstraint"; };
-  ///@}
-
   ///@}
   /**
    * @brief Struct to serve as a container for variable strings and keys.
@@ -215,14 +204,7 @@ public:
    */
   ///@{
 
-  // Temp interface - tjb
-  virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::BHP; };
-  /**
-   * @brief Get name of constraint
-   * @return constraint key
-   */
-  virtual std::string  getConstraintKey( ) const override { return "MinimumBHPConstraint"; };
-  ///@}
+
   /**
    * @brief Struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
@@ -305,11 +287,7 @@ public:
   ///@{
   // Temp interface - tjb
   virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::BHP; };
-  /**
-   * @brief Get name of constraint
-   * @return constraint key
-   */
-  virtual std::string getConstraintKey( ) const override { return "MaximumBHPConstraint"; };
+
 
   ///@}
   /**

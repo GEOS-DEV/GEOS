@@ -191,15 +191,20 @@ public:
     if( m_isProducer )
     {
       m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
+      if( m_currentControl == WellControls::Control::PHASEVOLRATE )
+      {
+        m_targetPhaseIndex = dynamic_cast< const PhaseConstraint< ProductionConstraint > * >( wellControls.getCurrentConstraint() )->getPhaseIndex();
+      }
     }
     else
     {
       m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
+      if( m_currentControl == WellControls::Control::PHASEVOLRATE )
+      {
+        m_targetPhaseIndex = dynamic_cast< const PhaseConstraint< InjectionConstraint > * >( wellControls.getCurrentConstraint() )->getPhaseIndex();
+      }
     }
-    if( m_currentControl == WellControls::Control::PHASEVOLRATE )
-    {
-      m_targetPhaseIndex = dynamic_cast< const PhaseConstraint * >( wellControls.getCurrentConstraint() )->getPhaseIndex();
-    }
+
   }
 
 

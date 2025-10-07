@@ -529,7 +529,7 @@ public:
       m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
       if( m_currentControl == WellControls::Control::PHASEVOLRATE )
       {
-        m_targetPhaseIndex = dynamic_cast< const PhaseConstraint1< ProductionConstraint > * >( wellControls.getCurrentConstraint() )->getPhaseIndex();
+        m_targetPhaseIndex = dynamic_cast< const PhaseConstraint< ProductionConstraint > * >( wellControls.getCurrentConstraint() )->getPhaseIndex();
       }
     }
     else
@@ -537,7 +537,7 @@ public:
       m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
       if( m_currentControl == WellControls::Control::PHASEVOLRATE )
       {
-        m_targetPhaseIndex = dynamic_cast< const PhaseConstraint1< InjectionConstraint > * >( wellControls.getCurrentConstraint() )->getPhaseIndex();
+        m_targetPhaseIndex = dynamic_cast< const PhaseConstraint< InjectionConstraint > * >( wellControls.getCurrentConstraint() )->getPhaseIndex();
       }
     }
 

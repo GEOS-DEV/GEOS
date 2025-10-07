@@ -41,7 +41,6 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_rateSign( -1.0 ),
   m_statusTable( nullptr ),
   m_wellOpen( false ),
-  m_estimateSolution( 0 ),
   m_constraintSwitch( true ),
   m_currentConstraint( nullptr ),
   m_wellStatus( WellControls::Status::OPEN ),
@@ -129,46 +128,45 @@ Group * WellControls::createChild( string const & childKey, string const & child
   }
   else if( childKey == viewKeyStruct::phaseProductionConstraintString() )
   {
-    //PhaseProductionConstraint & phaseConstraint = registerGroup< PhaseProductionConstraint >( childName );
-    PhaseProductionConstraint1 & phaseConstraint = registerGroup< PhaseProductionConstraint1 >( childName );
+    PhaseConstraint< ProductionConstraint > & phaseConstraint = registerGroup< PhaseConstraint< ProductionConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &phaseConstraint );
     constraint = &phaseConstraint;
   }
   else if( childKey == viewKeyStruct::phaseInjectionConstraintString() )
   {
-    //PhaseInjectionConstraint & phaseConstraint = registerGroup< PhaseInjectionConstraint >( childName );
-    PhaseInjectionConstraint1 & phaseConstraint = registerGroup< PhaseInjectionConstraint1 >( childName );
+
+    PhaseConstraint< InjectionConstraint > & phaseConstraint = registerGroup< PhaseConstraint< InjectionConstraint > >( childName );
     m_injectionRateConstraintList.emplace_back( &phaseConstraint );
     constraint = &phaseConstraint;
   }
   else if( childKey == viewKeyStruct::totalVolProductionConstraintString() )
   {
-    TotalVolProductionConstraint & volConstraint = registerGroup< TotalVolProductionConstraint >( childName );
+    TotalVolConstraint< ProductionConstraint > & volConstraint = registerGroup< TotalVolConstraint< ProductionConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &volConstraint );
     constraint = &volConstraint;
   }
   else if( childKey == viewKeyStruct::totalVolInjectionConstraintString() )
   {
-    TotalVolInjectionConstraint & volConstraint = registerGroup< TotalVolInjectionConstraint >( childName );
+    TotalVolConstraint< InjectionConstraint > & volConstraint = registerGroup< TotalVolConstraint< InjectionConstraint > >( childName );
     m_injectionRateConstraintList.emplace_back( &volConstraint );
     constraint = &volConstraint;
   }
   else if( childKey == viewKeyStruct::massProductionConstraintString() )
   {
-    MassProductionConstraint & massConstraint = registerGroup< MassProductionConstraint >( childName );
+    MassConstraint< ProductionConstraint > & massConstraint = registerGroup< MassConstraint< ProductionConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &massConstraint );
     constraint = &massConstraint;
 
   }
   else if( childKey == viewKeyStruct::massInjectionConstraintString() )
   {
-    MassInjectionConstraint & massConstraint = registerGroup< MassInjectionConstraint >( childName );
+    MassConstraint< InjectionConstraint > & massConstraint = registerGroup< MassConstraint< InjectionConstraint > >( childName );
     m_injectionRateConstraintList.emplace_back( &massConstraint );
     constraint = &massConstraint;
   }
   else if( childKey == viewKeyStruct::liquidProductionConstraintString() )
   {
-    LiquidProductionConstraint & liquidConstraint = registerGroup< LiquidProductionConstraint >( childName );
+    LiquidConstraint< ProductionConstraint > & liquidConstraint = registerGroup< LiquidConstraint< ProductionConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &liquidConstraint );
     constraint = &liquidConstraint;
   }
@@ -265,12 +263,31 @@ void WellControls::setWellStatus( real64 const & currentTime, WellControls::Stat
   m_wellStatus = status;
   if( m_wellStatus == WellControls::Status::OPEN )
   {
-
-    if( isZero( getTargetTotalRate( currentTime ) ) && isZero( getTargetPhaseRate( currentTime ) )
-        && isZero( getTargetMassRate( currentTime ) ) )
+    if( isProducer())
     {
-      m_wellStatus =  WellControls::Status::CLOSED;
+      std::vector< WellConstraintBase * >  const constraints =  getProdRateConstraints();
+      for( auto const & constraint : constraints )
+      {
+        if( isZero( constraint->getConstraintValue( currentTime ) ) )
+        {
+          m_wellStatus =  WellControls::Status::CLOSED;
+          break;
+        }
+      }
     }
+    else
+    {
+      std::vector< WellConstraintBase * >  const constraints =  getInjRateConstraints();
+      for( auto const & constraint : constraints )
+      {
+        if( isZero( constraint->getConstraintValue( currentTime ) ) )
+        {
+          m_wellStatus =  WellControls::Status::CLOSED;
+          break;
+        }
+      }
+    }
+
     if( m_statusTable->evaluate( &currentTime ) < LvArray::NumericLimits< real64 >::epsilon )
     {
       m_wellStatus =  WellControls::Status::CLOSED;

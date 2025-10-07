@@ -29,6 +29,16 @@ namespace geos
 
 using namespace dataRepository;
 
+// Provide a properly-typed static catalog for WellConstraintBase so that
+// CatalogInterface< WellConstraintBase, ... >::getCatalog() can return
+// a catalog of CatalogInterface<WellConstraintBase,...> objects instead of
+// inheriting Group::getCatalog() which returns a catalog of Group entries.
+WellConstraintBase::CatalogInterface::CatalogType & WellConstraintBase::getCatalog()
+{
+  static WellConstraintBase::CatalogInterface::CatalogType catalog;
+  return catalog;
+}
+
 namespace
 {
 
@@ -89,7 +99,7 @@ void WellConstraintBase::postInputInitialization()
 
 
   GEOS_THROW_IF( ((m_constraintValue > 0.0 && !m_constraintScheduleTableName.empty())),
-                 getConstraintKey() << " " << getDataContext() << ": You have provided redundant information for well constraint value ." <<
+                 getName() << " " << getDataContext() << ": You have provided redundant information for well constraint value ." <<
                  " A constraint value and table of constraint values cannot be specified together",
                  InputError );
 
@@ -100,14 +110,14 @@ void WellConstraintBase::postInputInitialization()
     m_constraintScheduleTable = &(functionManager.getGroup< TableFunction const >( m_constraintScheduleTableName ));
 
     GEOS_THROW_IF( m_constraintScheduleTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                   getConstraintKey() << " " << getDataContext() << ": The interpolation method for the schedule table "
-                                      << m_constraintScheduleTable->getName() << " should be TableFunction::InterpolationType::Lower",
+                   getName() << " " << getDataContext() << ": The interpolation method for the schedule table "
+                             << m_constraintScheduleTable->getName() << " should be TableFunction::InterpolationType::Lower",
                    InputError );
   }
 
 
   GEOS_THROW_IF  ((m_constraintValue <= 0.0 && m_constraintScheduleTableName.empty()),
-                  getConstraintKey() << " " << getDataContext() << ": You need to specify a volume rate constraint. \n" <<
+                  getName() << " " << getDataContext() << ": You need to specify a volume rate constraint. \n" <<
                   "The  rate constraint can be specified using " <<
                   "either " << constraintViewStruct::constraintValueKey::constraintValueString() <<
                   " or " << constraintViewStruct::constraintValueKey::constraintScheduleTableNameString(),
@@ -180,6 +190,13 @@ void InjectionConstraint::postInputInitialization()
 
 void InjectionConstraint::validateInjectionStream( )
 {
+  GEOS_THROW_IF( (m_injectionStream.empty()  && m_injectionTemperature >= 0) ||
+                 (!m_injectionStream.empty() && m_injectionTemperature < 0),
+                 getName() << " "  <<  getDataContext() << ": Both "
+                           << constraintViewStruct::injectionStreamKey::injectionStreamString() << " and " <<  injectionStreamKey::injectionTemperatureString()
+                           << " must be specified for multiphase simulations",
+                 InputError );
+
   if( !m_injectionStream.empty())
   {
     real64 sum = 0.0;

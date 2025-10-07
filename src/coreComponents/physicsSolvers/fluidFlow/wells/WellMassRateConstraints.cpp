@@ -29,81 +29,44 @@ namespace geos
 
 using namespace dataRepository;
 
-
-MassConstraint::MassConstraint( string const & name, Group * const parent )
-  : WellConstraintBase( name, parent )
+template< typename WellConstraintType >
+MassConstraint< WellConstraintType >::MassConstraint( string const & name, Group * const parent )
+  : WellConstraintType( name, parent )
 {
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-}
+  this->setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
-MassConstraint::~MassConstraint()
+  this->registerWrapper( constraintViewStruct::constraintValueKey::constraintValueString(), &this->m_constraintValue ).
+    setDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Maximum mass rate (kg/s)" );
+}
+template< typename WellConstraintType >
+MassConstraint< WellConstraintType >::~MassConstraint()
 {}
 
-void MassConstraint::postInputInitialization()
+template< typename WellConstraintType >
+void MassConstraint< WellConstraintType >::postInputInitialization()
 {
   // Validate value and table options
   WellConstraintBase::postInputInitialization();
 
 }
 
-MassProductionConstraint::MassProductionConstraint( string const & name, Group * const parent )
-  : MassConstraint( name, parent )
+template< typename WellConstraintType >
+bool MassConstraint< WellConstraintType >::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const
 {
-  m_rateSign = -1.0;
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-  registerWrapper( constraintViewStruct::constraintValueKey::constraintValueString(), &m_constraintValue ).
-    setDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Maximum mass injection rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
-
+  // isViolated is defined as a static method on the specific WellConstraintType (Injection/Production)
+  return WellConstraintType::isViolated( currentConstraint.massRate(), this->getConstraintValue( currentTime ));
 }
 
+typedef MassConstraint< InjectionConstraint > MassInjectionConstraint;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, MassInjectionConstraint, string const &, Group * const )
+typedef MassConstraint< ProductionConstraint > MassProductionConstraint;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, MassProductionConstraint, string const &, Group * const )
 
-MassProductionConstraint::~MassProductionConstraint()
-{}
-
-void MassProductionConstraint::postInputInitialization()
-{
-  // Validate value and table options
-  MassConstraint::postInputInitialization();
-
-}
-
-bool MassProductionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
-{
-  return currentConstraint.massRate() < getConstraintValue( currentTime );
-}
-
-
-MassInjectionConstraint::MassInjectionConstraint( string const & name, Group * const parent )
-  : MassConstraint( name, parent )
-{
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
-  registerWrapper( constraintViewStruct::constraintValueKey::constraintValueString(), &m_constraintValue ).
-    setDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Maximum mass injection rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])" );
-}
-
-MassInjectionConstraint::~MassInjectionConstraint()
-{}
-
-void MassInjectionConstraint::postInputInitialization()
-{
-  // Validate value and table options
-  MassConstraint::postInputInitialization();
-
-// Validate the injection stream and temperature
-  validateInjectionStream( m_injectionStream, m_injectionTemperature, getConstraintKey(), *this );
-}
-
-bool MassInjectionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const
-{
-  return currentConstraint.massRate() >  getConstraintValue( currentTime );
-}
-
+// Explicit template instantiations to ensure symbols are emitted for the concrete types
+template class MassConstraint< InjectionConstraint >;
+template class MassConstraint< ProductionConstraint >;
 
 } //namespace geos

@@ -128,7 +128,7 @@ set( fluidFlowSolvers_headers
      wells/kernels/SinglePhaseWellKernels.hpp
      wells/kernels/CompositionalMultiphaseWellKernels.hpp
      wells/kernels/WellConstraintKernels.hpp
-
+     wells/kernels/SinglePhaseWellConstraintKernels.hpp
      proppantTransport/ProppantTransport.hpp
      proppantTransport/ProppantTransportFields.hpp
      proppantTransport/ProppantTransportKernels.hpp )

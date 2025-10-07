@@ -32,8 +32,8 @@ namespace geos
  * @class MassConstraint
  * @brief This class describes a mass rate constraint used to control a  well.
  */
-
-class MassConstraint : public WellConstraintBase
+template< typename WellConstraintType >
+class MassConstraint : public WellConstraintType
 {
 public:
 
@@ -82,6 +82,21 @@ public:
    */
   MassConstraint & operator=( MassConstraint && ) = delete;
 
+  /**
+   * @brief name of the node manager in the object catalog
+   * @return string that contains the catalog name to generate a new Constraint object through the object catalog.
+   */
+  static string catalogName()
+  {
+    if constexpr ( std::is_same_v< WellConstraintType, InjectionConstraint > )    // special case
+    {
+      return "MassInjectionConstraint";
+    }
+    else   // default
+    {
+      return "MassProductionConstraint";
+    }
+  }
   ///@}
 
   /**
@@ -92,180 +107,13 @@ public:
   virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::MASSRATE; };
   ///@}
 
-
-protected:
-
-  virtual void postInputInitialization() override;
-
-
-
-};
-
-
-/**
- * @class MassProductionConstraint
- * @brief This class describes a mass rate constraint used to control a production well.
- */
-
-class MassProductionConstraint : public MassConstraint
-{
-public:
-
-  /**
-   * @name Constructor / Destructor
-   */
-  ///@{
-
-  /**
-   * @brief Constructor for WellControls Objects.
-   * @param[in] name the name of this instantiation of WellControls in the repository
-   * @param[in] parent the parent group of this instantiation of WellControls
-   */
-  explicit MassProductionConstraint( string const & name, dataRepository::Group * const parent );
-
-
-  /**
-   * @brief Default destructor.
-   */
-  ~MassProductionConstraint() override;
-
-  /**
-   * @brief Deleted default constructor.
-   */
-  MassProductionConstraint() = delete;
-
-  /**
-   * @brief Deleted copy constructor.
-   */
-  MassProductionConstraint( MassProductionConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move constructor.
-   */
-  MassProductionConstraint( MassProductionConstraint && ) = delete;
-
-  /**
-   * @brief Deleted assignment operator.
-   * @return a reference to a constraint object
-   */
-  MassProductionConstraint & operator=( MassProductionConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move operator.
-   * @return a reference to a constraint object
-   */
-  MassProductionConstraint & operator=( MassProductionConstraint && ) = delete;
-
-  ///@}
-
-  /**
-   * @name Getters / Setters
-   */
-
-  /**
-   * @brief Get name of constraint
-   * @return constraint key
-   */
-  virtual std::string  getConstraintKey( ) const override { return "MassProductionConstraint"; };
-  ///@}
-
   virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
 
 protected:
 
   virtual void postInputInitialization() override;
 
-
-
 };
-
-/**
- * @class MassInjectionConstraint
- * @brief This class describes a Mass rate constraint used to control a injection well.
- */
-
-class MassInjectionConstraint : public MassConstraint
-{
-public:
-
-
-  /**
-   * @name Constructor / Destructor
-   */
-  ///@{
-
-  /**
-   * @brief Constructor for MassInjectionConstraint Objects.
-   * @param[in] name the name of this instantiation of WellControls in the repository
-   * @param[in] parent the parent group of this instantiation of WellControls
-   */
-  explicit MassInjectionConstraint( string const & name, dataRepository::Group * const parent );
-
-
-  /**
-   * @brief Default destructor.
-   */
-  ~MassInjectionConstraint() override;
-
-  /**
-   * @brief Deleted default constructor.
-   */
-  MassInjectionConstraint() = delete;
-
-  /**
-   * @brief Deleted copy constructor.
-   */
-  MassInjectionConstraint( MassInjectionConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move constructor.
-   */
-  MassInjectionConstraint( MassInjectionConstraint && ) = delete;
-
-  /**
-   * @brief Deleted assignment operator.
-   * @return a reference to a constraint object
-   */
-  MassInjectionConstraint & operator=( MassInjectionConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move operator.
-   * @return a reference to a constraint object
-   */
-  MassInjectionConstraint & operator=( MassInjectionConstraint && ) = delete;
-
-  ///@}
-
-  /**
-   * @name Getters / Setters
-   */
-  ///@{
-  /**
-   * @brief Get name of constraint
-   * @return constraint key
-   */
-  virtual std::string getConstraintKey( ) const override { return "MassInjectionConstraint"; };
-  ///@}
-
-  // Injection stream definition keys
-  constraintViewStruct::injectionStreamKey viewKeysInjectionStream;
-
-  virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
-
-protected:
-
-  virtual void postInputInitialization() override;
-
-private:
-
-  /// Vector with global component fractions at the injector
-  array1d< real64 > m_injectionStream;
-
-  /// Temperature at the injector
-  real64 m_injectionTemperature;
-
-};
-
 
 
 } //namespace geos

@@ -27,22 +27,15 @@
 #include "WellConstraintsBase.hpp"
 namespace geos
 {
-namespace dataRepository
-{
-namespace keys
-{
-static constexpr auto totalVolProductionConstraint = "TotalVolProductionConstraint";
-static constexpr auto totalVolInjectionConstraint = "TotalVolInjectionConstraint";
-}
-}
+
 
 
 /**
  * @class TotalVolConstraint
  * @brief This class describes a volume rate constraint used to control a well.
  */
-
-class TotalVolConstraint : public WellConstraintBase
+template< typename WellConstraintType >
+class TotalVolConstraint : public WellConstraintType
 {
 public:
 
@@ -91,6 +84,21 @@ public:
    */
   TotalVolConstraint & operator=( TotalVolConstraint && ) = delete;
 
+  /**
+   * @brief name of the node manager in the object catalog
+   * @return string that contains the catalog name to generate a new Constraint object through the object catalog.
+   */
+  static string catalogName()
+  {
+    if constexpr ( std::is_same_v< WellConstraintType, InjectionConstraint > )    // special case
+    {
+      return "TotalVolInjectionConstraint";
+    }
+    else   // default
+    {
+      return "TotalVolProductionConstraint";
+    }
+  }
   ///@}
   /**
    * @brief Struct to serve as a container for variable strings and keys.
@@ -105,88 +113,9 @@ public:
    * @name Getters / Setters
    */
   ///@{
-  /**
-   * @brief Get name of constraint
-   * @return constraint key
-   */
-  virtual std::string getConstraintKey( ) const override { return "TotalVolInjectionConstraint"; };
-  ///@}
 
   // Temp interface - tjb
   virtual ConstraintTypeId getControl() const override { return ConstraintTypeId::TOTALVOLRATE; };
-
-protected:
-
-  virtual void postInputInitialization() override;
-
-};
-
-
-/**
- * @class TotalVolProductionConstraint
- * @brief This class describes a volume rate constraint used to control a production well.
- */
-
-class TotalVolProductionConstraint : public TotalVolConstraint
-{
-public:
-
-  /**
-   * @name Constructor / Destructor
-   */
-  ///@{
-
-  /**
-   * @brief Constructor for WellControls Objects.
-   * @param[in] name the name of this instantiation of WellControls in the repository
-   * @param[in] parent the parent group of this instantiation of WellControls
-   */
-  explicit TotalVolProductionConstraint( string const & name, dataRepository::Group * const parent );
-
-
-  /**
-   * @brief Default destructor.
-   */
-  ~TotalVolProductionConstraint() override;
-
-  /**
-   * @brief Deleted default constructor.
-   */
-  TotalVolProductionConstraint() = delete;
-
-  /**
-   * @brief Deleted copy constructor.
-   */
-  TotalVolProductionConstraint( TotalVolProductionConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move constructor.
-   */
-  TotalVolProductionConstraint( TotalVolProductionConstraint && ) = delete;
-
-  /**
-   * @brief Deleted assignment operator.
-   * @return a reference to a constraint object
-   */
-  TotalVolProductionConstraint & operator=( TotalVolProductionConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move operator.
-   * @return a reference to a constraint object
-   */
-  TotalVolProductionConstraint & operator=( TotalVolProductionConstraint && ) = delete;
-
-  ///@}
-
-  /**
-   * @name Getters / Setters
-   */
-  ///@{
-  /**
-   * @brief Get name of constraint
-   * @return constraint key
-   */
-  virtual std::string getConstraintKey( ) const override { return "TotalVolProductionConstraint"; };
   ///@}
 
   virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
@@ -195,90 +124,6 @@ protected:
   virtual void postInputInitialization() override;
 
 };
-
-/**
- * @class TotalVolInjectionConstraint
- * @brief This class describes a volume rate constraint used to control a injection well.
- */
-
-class TotalVolInjectionConstraint : public TotalVolConstraint
-{
-public:
-
-
-  /**
-   * @name Constructor / Destructor
-   */
-  ///@{
-
-  /**
-   * @brief Constructor for TotalVolInjectionConstraint Objects.
-   * @param[in] name the name of this instantiation of WellControls in the repository
-   * @param[in] parent the parent group of this instantiation of WellControls
-   */
-  explicit TotalVolInjectionConstraint( string const & name, dataRepository::Group * const parent );
-
-
-  /**
-   * @brief Default destructor.
-   */
-  ~TotalVolInjectionConstraint() override;
-
-  /**
-   * @brief Deleted default constructor.
-   */
-  TotalVolInjectionConstraint() = delete;
-
-  /**
-   * @brief Deleted copy constructor.
-   */
-  TotalVolInjectionConstraint( TotalVolInjectionConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move constructor.
-   */
-  TotalVolInjectionConstraint( TotalVolInjectionConstraint && ) = delete;
-
-  /**
-   * @brief Deleted assignment operator.
-   * @return a reference to a constraint object
-   */
-  TotalVolInjectionConstraint & operator=( TotalVolInjectionConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move operator.
-   * @return a reference to a constraint object
-   */
-  TotalVolInjectionConstraint & operator=( TotalVolInjectionConstraint && ) = delete;
-
-  ///@}
-
-  /**
-   * @name Getters / Setters
-   */
-  ///@{
-
-
-  ///@}
-
-  // Injection stream definition keys
-  constraintViewStruct::injectionStreamKey viewKeysInjectionStream;
-
-  virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
-protected:
-
-  virtual void postInputInitialization() override;
-
-private:
-
-  /// Vector with global component fractions at the injector
-  array1d< real64 > m_injectionStream;
-
-  /// Temperature at the injector
-  real64 m_injectionTemperature;
-
-};
-
 
 
 } //namespace geos

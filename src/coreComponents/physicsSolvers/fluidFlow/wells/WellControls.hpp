@@ -32,7 +32,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraints.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-
+#include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 namespace geos
 {
 namespace dataRepository
@@ -216,7 +216,18 @@ public:
       }
     return injectionStream;
   }
-
+  /**
+   * @brief Return the reference elvation where pressure constraint is measured
+   * @return  vertical location of constraint
+   */
+  real64 getReferenceElevation() const
+  {
+    if( isProducer () )
+    {
+      return getMinBHPConstraint()->getReferenceElevation();
+    }
+    return getMaxBHPConstraint()->getReferenceElevation();
+  }
   /**
    * @brief Getter for the flag specifying whether we check rates at surface or reservoir conditions
    * @return 1 if we use surface conditions, and 0 otherwise
@@ -301,6 +312,13 @@ public:
    * @return reference to separator
    */
   constitutive::MultiFluidBase & getMultiFluidSeparator()  { return dynamicCast< constitutive::MultiFluidBase & >( *m_fluidSeparatorPtr ); }
+
+  /**
+   * @brief Getter for single fluid separator
+   * @return reference to separator
+   */
+  constitutive::SingleFluidBase & getSingleFluidSeparator()  { return dynamicCast< constitutive::SingleFluidBase & >( *m_fluidSeparatorPtr ); }
+
 
   /**
    * @brief Getter for the reservoir average pressure when m_useSurfaceConditions == 0

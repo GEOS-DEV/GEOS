@@ -38,11 +38,11 @@ namespace wellConstraintKernels
 {
 
 /******************************** ControlEquationHelper ********************************/
-template< integer NC, integer IS_THERMAL, typename T >
-struct ConstraintHelper {};
+//template< integer NC, integer IS_THERMAL, typname S, typename T  >
+//struct ConstraintHelper< NC, IS_THERMAL   > {};
 
-template< integer NC, integer IS_THERMAL >
-struct ConstraintHelper< NC, IS_THERMAL, BHPConstraint >
+template< integer NC, integer IS_THERMAL, typename CONSTRAINT = BHPConstraint >
+struct ConstraintHelper
 {
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
@@ -115,14 +115,12 @@ struct ConstraintHelper< NC, IS_THERMAL, BHPConstraint >
                                                               dControlEqn,
                                                               COFFSET_WJ::nDer );
   }
-};
 
-template< integer NC, integer IS_THERMAL >
-struct ConstraintHelper< NC, IS_THERMAL, PhaseConstraint >
-{
+
+  template< typename T >
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
-                                          PhaseConstraint & constraint,
+                                          PhaseConstraint< T > & constraint,
                                           WellElementSubRegion const & subRegion,
                                           string const & wellDofKey,
                                           localIndex const & rankOffset,
@@ -225,14 +223,11 @@ struct ConstraintHelper< NC, IS_THERMAL, PhaseConstraint >
                                                               dControlEqn,
                                                               COFFSET_WJ::nDer );
   }
-};
 
-template< integer NC, integer IS_THERMAL >
-struct ConstraintHelper< NC, IS_THERMAL, LiquidConstraint >
-{
+  template< typename T >
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
-                                          LiquidConstraint & constraint,
+                                          LiquidConstraint< T > & constraint,
                                           WellElementSubRegion const & subRegion,
                                           string const & wellDofKey,
                                           localIndex const & rankOffset,
@@ -346,14 +341,10 @@ struct ConstraintHelper< NC, IS_THERMAL, LiquidConstraint >
                                                               dControlEqn,
                                                               COFFSET_WJ::nDer );
   }
-};
-
-template< integer NC, integer IS_THERMAL >
-struct ConstraintHelper< NC, IS_THERMAL, TotalVolConstraint >
-{
+  template< typename T >
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
-                                          TotalVolConstraint & constraint,
+                                          TotalVolConstraint< T > & constraint,
                                           WellElementSubRegion const & subRegion,
                                           string const & wellDofKey,
                                           localIndex const & rankOffset,
@@ -450,14 +441,10 @@ struct ConstraintHelper< NC, IS_THERMAL, TotalVolConstraint >
                                                               dControlEqn,
                                                               COFFSET_WJ::nDer );
   }
-};
-
-template< integer NC, integer IS_THERMAL >
-struct ConstraintHelper< NC, IS_THERMAL, MassConstraint >
-{
+  template< typename T >
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
-                                          MassConstraint & constraint,
+                                          MassConstraint< T > & constraint,
                                           WellElementSubRegion const & subRegion,
                                           string const & wellDofKey,
                                           localIndex const & rankOffset,

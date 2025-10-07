@@ -198,7 +198,7 @@ public:
                                       WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ),
                                       DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                       CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
-                                      arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) {};
+                                      arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) = 0;
 
 
   /**
@@ -219,12 +219,12 @@ public:
 
 
 
-  virtual void assembleWellAccumulationTerms( real64 const & GEOS_UNUSED_PARAM( time ),
-                                              real64 const & GEOS_UNUSED_PARAM( dt ),
-                                              WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ),
-                                              DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                              CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
-                                              arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) {};
+  virtual void assembleWellAccumulationTerms( real64 const & time,
+                                              real64 const & dt,
+                                              WellElementSubRegion & subRegion,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs ) = 0;
 
 
   /**
@@ -246,16 +246,17 @@ public:
                                             WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ),
                                             DofManager const & GEOS_UNUSED_PARAM( dofManager ),
                                             CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
-                                            arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) {};
+                                            arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) = 0;
 
-  virtual void assembleWellPressureRelations( real64 const & GEOS_UNUSED_PARAM( time ),
-                                              real64 const & GEOS_UNUSED_PARAM( dt ),
-                                              WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ),
-                                              DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                              CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
-                                              arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) {};
+  virtual void assembleWellPressureRelations ( real64 const & GEOS_UNUSED_PARAM( time ),
+                                               real64 const & GEOS_UNUSED_PARAM( dt ),
+                                               WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ),
+                                               DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                               CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                               arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) = 0;
   /**
-   * @brief assembles the pressure relations at all connections between well elements except at the well head
+   * @brief assembles the pressure relations at all connections between well elements except at
+   * the well head
    * @param time_n time at the beginning of the time step
    * @param dt the time step size
    * @param domain the physical domain object
@@ -271,15 +272,18 @@ public:
                                           arrayView1d< real64 > const & localRhs ) = 0;
 
   /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @brief Recompute all dependent quantities from primary variables (including constitutive
+   * models)
    * @param domain the domain containing the mesh and fields
    */
-  virtual real64 updateWellState( WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ) ){return 0.0;};
+  virtual real64 updateWellState( WellElementSubRegion & subRegion ) = 0;
   virtual void updateState( DomainPartition & domain ) override;
 
   /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param subRegion the well subRegion containing the well elements and their associated fields
+   * @brief Recompute all dependent quantities from primary variables (including constitutive
+   * models)
+   * @param subRegion the well subRegion containing the well elements and their associated
+   * fields
    */
   virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
 
@@ -302,26 +306,26 @@ public:
                              real64 const & GEOS_UNUSED_PARAM( dt ),
                              WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ),
                              DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localRhs ) ) {return std::numeric_limits< real64 >::max();};
+                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localRhs ) ) = 0;
 
   virtual real64
-  scalingForWellSystemSolution( ElementSubRegionBase & GEOS_UNUSED_PARAM( subRegion ),
-                                DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ) ) {return std::numeric_limits< real64 >::max();};
+    scalingForWellSystemSolution( ElementSubRegionBase & GEOS_UNUSED_PARAM( subRegion ),
+                                  DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                  arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ) ) = 0;
 
   virtual bool
-  checkWellSystemSolution( ElementSubRegionBase & GEOS_UNUSED_PARAM( subRegion ),
-                           DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                           arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
-                           real64 const GEOS_UNUSED_PARAM( scalingFactor ) ) {return false;};
+    checkWellSystemSolution( ElementSubRegionBase & GEOS_UNUSED_PARAM( subRegion ),
+                             DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
+                             real64 const GEOS_UNUSED_PARAM( scalingFactor ) ) = 0;
   virtual void
-  applyWellSystemSolution( DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                           arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
-                           real64 const GEOS_UNUSED_PARAM( scalingFactor ),
-                           real64 const GEOS_UNUSED_PARAM( dt ),
-                           DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                           MeshLevel & GEOS_UNUSED_PARAM( mesh ),
-                           WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ) ) {};
+    applyWellSystemSolution( DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
+                             real64 const GEOS_UNUSED_PARAM( scalingFactor ),
+                             real64 const GEOS_UNUSED_PARAM( dt ),
+                             DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                             MeshLevel & GEOS_UNUSED_PARAM( mesh ),
+                             WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ) ) = 0;
 
   /**
    * @brief Function to perform line search
@@ -334,10 +338,12 @@ public:
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
    * @param scaleFactor the scaling factor to apply to the solution
-   * @param lastResidual (in) target value below which to reduce residual norm, (out) achieved residual norm
+   * @param lastResidual (in) target value below which to reduce residual norm, (out) achieved
+   * residual norm
    * @return return true if line search succeeded, false otherwise
    *
-   * This function implements a nonlinear newton method for implicit problems. It requires that the
+   * This function implements a nonlinear newton method for implicit problems. It requires that
+   * the
    * other functions in the solver interface are implemented in the derived physics solver. The
    * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
    * convergence is not achieved according to the parameters in linearSolverParameters member.
@@ -368,9 +374,12 @@ public:
                             DomainPartition & domain ) override;
 
   /**
-   * @brief Utility function to keep the well variables during a time step (used in poromechanics simulations)
-   * @param[in] keepVariablesConstantDuringInitStep flag to tell the solver to freeze its primary variables during a time step
-   * @detail This function is meant to be called by a specific task before/after the initialization step
+   * @brief Utility function to keep the well variables during a time step (used in
+   * poromechanics simulations)
+   * @param[in] keepVariablesConstantDuringInitStep flag to tell the solver to freeze its
+   * primary variables during a time step
+   * @detail This function is meant to be called by a specific task before/after the
+   * initialization step
    */
   void setKeepVariablesConstantDuringInitStep( bool const keepVariablesConstantDuringInitStep )
   { m_keepVariablesConstantDuringInitStep = keepVariablesConstantDuringInitStep; }

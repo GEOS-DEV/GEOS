@@ -133,40 +133,6 @@ void validateSurfaceConditions( integer useSurfaceConditions,
 }
 
 
-/**
- * @brief Validate the injection stream and temperature.
- * @param[in] injectionStream the injection stream vector
- * @param[in] injectionTemperature the injection temperature
- * @param[in] dataContext context for error messages
- */
-template< typename T >
-void validateInjectionStream( array1d< real64 > const & injectionStream,
-                              real64 const & injectionTemperature,
-                              std::string const & className,
-                              T const & context )
-{
-  GEOS_THROW_IF( (injectionStream.empty()  && injectionTemperature >= 0) ||
-                 (!injectionStream.empty() && injectionTemperature < 0),
-                 className << " "  << context.getDataContext() << ": Both "
-                           << constraintViewStruct::injectionStreamKey::injectionStreamString() << " and " << constraintViewStruct::injectionStreamKey::injectionTemperatureString()
-                           << " must be specified for multiphase simulations",
-                 InputError );
-
-  if( !injectionStream.empty())
-  {
-    real64 sum = 0.0;
-    for( localIndex ic = 0; ic < injectionStream.size(); ++ic )
-    {
-      GEOS_ERROR_IF( injectionStream[ic] < 0.0 || injectionStream[ic] > 1.0,
-                     context.getWrapperDataContext( constraintViewStruct::injectionStreamKey::injectionStreamString() ) << ": Invalid injection stream" );
-      sum += injectionStream[ic];
-    }
-    GEOS_THROW_IF( LvArray::math::abs( 1.0 - sum ) > std::numeric_limits< real64 >::epsilon(),
-                   context.getWrapperDataContext( constraintViewStruct::injectionStreamKey::injectionStreamString() ) << ": Invalid injection stream",
-                   InputError );
-  }
-}
-
 
 enum class ConstraintTypeId : integer
 {
@@ -199,7 +165,13 @@ enum class ConstraintTypeId : integer
 class WellConstraintBase : public dataRepository::Group
 {
 public:
+  friend class WellControls;
 
+  /// Catalog interface specific to WellConstraintBase
+  using CatalogInterface = dataRepository::CatalogInterface< WellConstraintBase, string const &, dataRepository::Group * const >;
+
+  /// Get the singleton catalog for WellConstraintBase
+  static CatalogInterface::CatalogType & getCatalog();
 
   /**
    * @name Constructor / Destructor
@@ -256,12 +228,6 @@ public:
 
   // Temp interface - tjb
   virtual ConstraintTypeId getControl() const = 0;
-
-  /**
-   * @brief Get name of constraint
-   * @return constraint key
-   */
-  virtual std::string getConstraintKey( ) const = 0;
 
   /**
    * @brief Defines whether the constraint should be evaluated or not
@@ -473,7 +439,8 @@ protected:
 
   virtual void postInputInitialization() override;
 
-
+  static bool isViolated( const real64 & currentValue, const real64 & constraintValue )
+  { return currentValue < constraintValue; }
 };
 
 /**
@@ -553,6 +520,8 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
+  static bool isViolated( const real64 & currentValue, const real64 & constraintValue )
+  { return currentValue > constraintValue; }
 
   void validateInjectionStream();
 private:

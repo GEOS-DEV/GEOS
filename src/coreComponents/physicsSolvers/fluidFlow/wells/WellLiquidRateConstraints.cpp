@@ -29,57 +29,51 @@ namespace geos
 
 using namespace dataRepository;
 
-// *** Liquid Constraint for Production Well  ***************************************************************
-LiquidConstraint::LiquidConstraint( string const & name, Group * const parent )
-  : WellConstraintBase( name, parent )
+template< typename WellConstraintType >
+LiquidConstraint< WellConstraintType >::LiquidConstraint( string const & name, Group * const parent )
+  : WellConstraintType( name, parent )
 {
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-  registerWrapper( viewKeyStruct::liquidRateString(), &m_constraintValue ).
+  this->registerWrapper( viewKeyStruct::liquidRateString(), &this->m_constraintValue ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Phase rate,  (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s]) " );
+    setDescription( "Phase rate,  (if useSurfaceCondSitions: [surface m^3/s]; else [reservoir m^3/s]) " );
 
-  registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
+  this->registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setDefaultValue( "" ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Name of the target phase" );
 }
-
-LiquidConstraint::~LiquidConstraint()
+template< typename WellConstraintType >
+LiquidConstraint< WellConstraintType >::~LiquidConstraint()
 {}
-
-void LiquidConstraint::postInputInitialization()
+template< typename WellConstraintType >
+void LiquidConstraint< WellConstraintType >::postInputInitialization()
 {
   // Validate value and table options
   WellConstraintBase::postInputInitialization();
 }
 
-
-// *** Liquid Constraint for Production Well  ***************************************************************
-LiquidProductionConstraint::LiquidProductionConstraint( string const & name, Group * const parent )
-  : LiquidConstraint( name, parent )
+template< typename WellConstraintType >
+bool LiquidConstraint< WellConstraintType >::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
 {
-  m_rateSign=-1.0;
+  return WellConstraintType::isViolated( currentConstraint.liquidRate(), this->getConstraintValue( currentTime ));
 }
 
-LiquidProductionConstraint::~LiquidProductionConstraint()
-{}
-
-void LiquidProductionConstraint::postInputInitialization()
+namespace
 {
-  // Validate value and table options
-  LiquidConstraint::postInputInitialization();
+
+typedef LiquidConstraint< InjectionConstraint > LiquidInjectionConstraint;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, LiquidInjectionConstraint, string const &, Group * const )
+typedef LiquidConstraint< ProductionConstraint > LiquidProductionConstraint;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, LiquidProductionConstraint, string const &, Group * const )
 
 }
 
-bool LiquidProductionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
-{
-  return currentConstraint.liquidRate() < getConstraintValue( currentTime );
-}
-
-
+// Explicit template instantiations to ensure constructors are emitted for registration
+template class LiquidConstraint< InjectionConstraint >;
+template class LiquidConstraint< ProductionConstraint >;
 
 } //namespace geos

@@ -29,11 +29,13 @@ namespace geos
 
 using namespace dataRepository;
 
-TotalVolConstraint::TotalVolConstraint( string const & name, Group * const parent )
-  : WellConstraintBase( name, parent )
+template< typename WellConstraintType >
+TotalVolConstraint< WellConstraintType >::TotalVolConstraint( string const & name, Group * const parent )
+  : WellConstraintType( name, parent )
 {
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-  registerWrapper( viewKeyStruct::volumeRateString(), &m_constraintValue ).
+  this->setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+
+  this->registerWrapper( viewKeyStruct::volumeRateString(), &this->m_constraintValue ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
@@ -41,59 +43,30 @@ TotalVolConstraint::TotalVolConstraint( string const & name, Group * const paren
 
 }
 
-
-TotalVolConstraint::~TotalVolConstraint()
+template< typename WellConstraintType >
+TotalVolConstraint< WellConstraintType >::~TotalVolConstraint()
 {}
 
-void TotalVolConstraint::postInputInitialization()
+template< typename WellConstraintType >
+void TotalVolConstraint< WellConstraintType >::postInputInitialization()
 {
   WellConstraintBase::postInputInitialization();
-
 }
 
-
-TotalVolProductionConstraint::TotalVolProductionConstraint( string const & name, Group * const parent )
-  : TotalVolConstraint( name, parent )
+template< typename WellConstraintType >
+bool TotalVolConstraint< WellConstraintType >::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const
 {
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
+  return WellConstraintType::isViolated( currentConstraint.totalVolumeRate(), this->getConstraintValue( currentTime ));
 }
 
-
-TotalVolProductionConstraint::~TotalVolProductionConstraint()
-{}
-
-void TotalVolProductionConstraint::postInputInitialization()
-{
-  TotalVolConstraint::postInputInitialization();
-
-}
-
-bool TotalVolProductionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const
-{
-  return currentConstraint.totalVolumeRate() <  getConstraintValue( currentTime );
-}
+typedef TotalVolConstraint< InjectionConstraint > TotalVolInjectionConstraint;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, TotalVolInjectionConstraint, string const &, Group * const )
+typedef TotalVolConstraint< ProductionConstraint > TotalVolProductionConstraint;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, TotalVolProductionConstraint, string const &, Group * const )
 
 
-TotalVolInjectionConstraint::TotalVolInjectionConstraint( string const & name, Group * const parent )
-  : TotalVolConstraint( name, parent )
-{
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
-
-}
-
-
-TotalVolInjectionConstraint::~TotalVolInjectionConstraint()
-{}
-
-void TotalVolInjectionConstraint::postInputInitialization()
-{
-  TotalVolConstraint::postInputInitialization();
-}
-
-bool TotalVolInjectionConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime )const
-{
-  return currentConstraint.totalVolumeRate() >  getConstraintValue( currentTime );
-}
+// Explicit template instantiations to ensure constructors are emitted for registration
+template class TotalVolConstraint< InjectionConstraint >;
+template class TotalVolConstraint< ProductionConstraint >;
 
 } //namespace geos
