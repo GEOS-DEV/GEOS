@@ -77,16 +77,19 @@ public:
     KernelWrapper( KernelWrapper const & ) = default;
     KernelWrapper( KernelWrapper && ) = default;
     KernelWrapper & operator=( KernelWrapper const & ) = default;
-
+    KernelWrapper & operator=( KernelWrapper && ) = default;
+    ~KernelWrapper() = default;
+    
     /// Note: move assignment not deleted, not defaulted on purpose!
     /// This is needed to avoid a compilation warning with CUDA
-    KernelWrapper & operator=( KernelWrapper && other )
+/*    KernelWrapper & operator=( KernelWrapper && other )
     {
       m_coordinates = std::move( other.m_coordinates );
       m_values = std::move( other.m_values );
       m_interpolationMethod = other.m_interpolationMethod;
       return *this;
     }
+*/
 
     /// @endcond
 
