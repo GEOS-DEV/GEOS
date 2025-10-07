@@ -519,7 +519,6 @@ public:
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_isProducer( wellControls.isProducer() ),
     m_currentControl( wellControls.getControl() ),
-    m_constraintValue ( wellControls.getCurrentConstraint()->getConstraintValue( time )),
     m_volume( subRegion.getElementVolume() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_totalDens_n( fluid.totalDensity_n() )
@@ -527,18 +526,25 @@ public:
     if( m_isProducer )
     {
       m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
-      if( m_currentControl == WellControls::Control::PHASEVOLRATE )
-      {
-        m_targetPhaseIndex = dynamic_cast< const PhaseConstraint< ProductionConstraint > * >( wellControls.getCurrentConstraint() )->getPhaseIndex();
-      }
+      // Note this assumes that there is only one   rate constraint
+      // This is a normalizer for the balance equations.  The normalizaer should be the current rate not the constraint value!!
+      // This is one of the reasons for restricting  constraint type for a production well
+      // another pr will remove fix this (so the cause for difference results is isolated to one change)
+      m_targetPhaseIndex =   dynamic_cast< PhaseConstraint< ProductionConstraint > * >(wellControls.getProdRateConstraints()[0])->getPhaseIndex(  );
+      m_constraintValue =  wellControls.getProdRateConstraints()[0]->getConstraintValue( time );
+
     }
     else
     {
       m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
-      if( m_currentControl == WellControls::Control::PHASEVOLRATE )
-      {
-        m_targetPhaseIndex = dynamic_cast< const PhaseConstraint< InjectionConstraint > * >( wellControls.getCurrentConstraint() )->getPhaseIndex();
-      }
+
+      // Note this assumes that there is only one     rate constraint
+      // This is a normalizer for the balance equations.  The normalizaer should be the current rate not the constraint value!!
+      // This is one of the reasons for restricting  constraint type for a production well
+      // another pr will remove fix this (so the cause for difference results is isolated to one change)
+      m_targetPhaseIndex = -1;
+      m_constraintValue =  wellControls.getInjRateConstraints()[0]->getConstraintValue( time );
+
     }
 
 
@@ -684,7 +690,7 @@ protected:
 
   /// Controls
   WellControls::Control const m_currentControl;
-  real64 const m_constraintValue;
+  real64 m_constraintValue;
   real64 m_targetBHP;
 
 

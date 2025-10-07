@@ -228,6 +228,7 @@ public:
     }
     return getMaxBHPConstraint()->getReferenceElevation();
   }
+
   /**
    * @brief Getter for the flag specifying whether we check rates at surface or reservoir conditions
    * @return 1 if we use surface conditions, and 0 otherwise

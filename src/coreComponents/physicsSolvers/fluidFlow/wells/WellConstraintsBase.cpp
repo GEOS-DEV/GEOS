@@ -144,10 +144,13 @@ void WellConstraintBase::setNextDtFromTable( TableFunction const * table, real64
   }
 }
 
-// *** Phase Constraint for Injection Well  ***************************************************************
+// *** Phase Constraint for Production Well  ***************************************************************
 ProductionConstraint::ProductionConstraint( string const & name, Group * const parent )
   : WellConstraintBase( name, parent )
-{}
+{
+  // set rate sign for producers (base class member)
+  m_rateSign = -1.0;
+}
 
 ProductionConstraint::~ProductionConstraint()
 {}
@@ -163,6 +166,8 @@ void ProductionConstraint::postInputInitialization()
 InjectionConstraint::InjectionConstraint( string const & name, Group * const parent )
   : WellConstraintBase( name, parent )
 {
+  // set rate sign for injectors (base class member)
+  m_rateSign = 1.0;
   registerWrapper( injectionStreamKey::injectionStreamString(), &m_injectionStream ).
     setDefaultValue( -1 ).
     setSizedFromParent( 0 ).
