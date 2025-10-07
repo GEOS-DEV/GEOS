@@ -385,6 +385,15 @@
 #define GEOS_INFO( msg ) LVARRAY_INFO( msg )
 
 /**
+ * @brief Declares variables for "assertion" evaluation only on CPU; no-op on GPU to avoid device compilation errors.
+ * @param lhs The left side of the operation.
+ * @param rhs The right side of the operation.
+ */
+#define GEOS_ERROR_LHS_RHS_DECLS( lhs, rhs ) \
+  GEOS_MAYBE_UNUSED auto const lhsResult = (lhs); \
+  GEOS_MAYBE_UNUSED auto const rhsResult = (rhs)
+
+/**
  * @brief Abort execution if @p lhs @p OP @p rhs.
  * @param lhs The left side of the operation.
  * @param OP The operation to apply.
@@ -395,9 +404,13 @@
  *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_ERROR_IF_OP_MSG( lhs, OP, NOP, rhs, ... ) \
-  GEOS_ERROR_IF_CAUSE( lhs OP rhs, \
-                       "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = " << lhs << "\n* " #rhs " = " << rhs << "\n", \
-                       __VA_ARGS__ )
+  do { \
+    GEOS_ERROR_LHS_RHS_DECLS( lhs, rhs ); \
+    GEOS_ERROR_IF_CAUSE( lhsResult OP rhsResult, \
+                         "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = " << lhsResult << "\n* " #rhs " = " << rhsResult << "\n", \
+                         __VA_ARGS__ ); \
+  } while(false)
+
 
 /**
  * @brief Raise a hard error if two values are equal.
@@ -513,9 +526,13 @@
  *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_WARNING_IF_OP_MSG( lhs, OP, NOP, rhs, ... ) \
-  GEOS_WARNING_IF_CAUSE( lhs OP rhs, \
-                         "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = " << lhs << "\n* " #rhs " = " << rhs << "\n", \
-                         __VA_ARGS__ )
+  do { \
+    GEOS_ERROR_LHS_RHS_DECLS( lhs, rhs ); \
+    GEOS_WARNING_IF_CAUSE( lhsResult OP rhsResult, \
+                           "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = " << lhsResult << "\n* " #rhs " = " << rhsResult << "\n", \
+                           __VA_ARGS__ ); \
+  } while(false)
+
 
 /**
  * @brief Log a warning if two values are equal.
@@ -631,9 +648,13 @@
  *            - Optional following parameters, context information on the current error (DataContext)
  */
 #define GEOS_THROW_IF_OP_MSG( lhs, OP, NOP, rhs, MSG, ... ) \
-  GEOS_THROW_IF_CAUSE( lhs OP rhs, \
-                       "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = " << lhs << "\n* " #rhs " = " << rhs << "\n", \
-                       MSG, __VA_ARGS__ )
+  do { \
+    GEOS_ERROR_LHS_RHS_DECLS( lhs, rhs ); \
+    GEOS_THROW_IF_CAUSE( lhsResult OP rhsResult, \
+                         "Expected: " #lhs " " #NOP " " #rhs "\n* " #lhs " = " << lhsResult << "\n* " #rhs " = " << rhsResult << "\n", \
+                         MSG, __VA_ARGS__ ); \
+  } while(false)
+
 
 
 /**
@@ -795,11 +816,10 @@
  */
 #define GEOS_ASSERT_OP_MSG( lhs, OP, rhs, ... ) \
   { \
-    auto const lhsResult = (lhs); \
-    auto const rhsResult = (rhs); \
-    GEOS_ERROR_IF_CAUSE( !( lhs OP rhs ), \
-                        "Expected: " #lhs " " #OP " " #rhs "\n* " #lhs " = " << lhsResult << "\n* " #rhs " = " << rhsResult << "\n", \
-                        __VA_ARGS__ ) \
+    GEOS_ERROR_LHS_RHS_DECLS( lhs, rhs ); \
+    GEOS_ERROR_IF_CAUSE( !( lhsResult OP rhsResult ), \
+                         "Expected: " #lhs " " #OP " " #rhs "\n* " #lhs " = " << lhsResult << "\n* " #rhs " = " << rhsResult << "\n", \
+                         __VA_ARGS__ ); \
   }
 
 #else
