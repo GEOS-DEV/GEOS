@@ -208,6 +208,8 @@ public:
     real64 BuoyantFlux[NUM_FACE]{};
     real64 dBuoyantFlux_dPres[NUM_FACE]{};
     real64 dBuoyantFlux_dS[NUM_FACE]{};
+    // Buoyancy driven PPU fluxes (one-sided per face i)
+    real64 BuoyantPPUFlux[NUM_FACE][2]{};
     // Saturation equation: divergence of upwinded transported saturation with mass flux
     real64 divSatFluxes = 0.0;
     real64 dDivSatFluxes_dP = 0.0;
@@ -272,6 +274,37 @@ public:
         s.BuoyantFlux[i] += T_ij * gravTerm;
         s.dBuoyantFlux_dPres[i] += T_ij * (dGravTerm_dP);
         s.dBuoyantFlux_dS[i] += T_ij * (dGravTerm_dS);
+      }
+    }
+  }
+  
+  GEOS_HOST_DEVICE
+  void computeBuoyancyDrivenPPUFluxes( localIndex const ei, StackVariables & s ) const
+  {
+//    using Deriv = DerivMob; // alias for readability
+    
+    // Compute delta_rho and its pressure derivative
+    integer const dep = 1 - m_indep;
+    
+    real64 const ccGravCoef = m_elemGravCoef[ei];
+    real64 const ccPres = m_elemPres[ei];
+    
+    std::vector<integer> phase_idxs = {m_indep,dep};
+    for(integer const phase_idx : phase_idxs){
+      real64 const rho = m_phaseDens[ei][0][phase_idx];
+      for( integer i=0; i<NUM_FACE; ++i )
+      {
+        real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][i]];
+        real64 const fPres = m_facePres[m_elemToFaces[ei][i]];
+        
+        // Potential difference and its derivatives
+        real64 const presDif = ccPres - fPres;
+        real64 const gravCoefDif = ccGravCoef - fGravCoef;
+        real64 const gravTerm = rho * gravCoefDif;
+        
+        // Potential difference associated with phase gamma
+        real64 const potDif = presDif - gravTerm;
+        s.BuoyantPPUFlux[i][phase_idx] = potDif;
       }
     }
   }
@@ -384,6 +417,7 @@ public:
   GEOS_HOST_DEVICE
   void computeSaturationTransport( localIndex const ei, StackVariables & s ) const
   {
+    bool const PPU_Q = true;
     // local fractional flow components for independent phase
     auto fracFlow = [this] GEOS_HOST_DEVICE ( localIndex const er,
                                               localIndex const esr,
@@ -411,7 +445,7 @@ public:
         real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
         real64 const dlambda_dS = sgnS * dlambda_dS_raw;
         
-        // accumulate total mobility derivatives for rho_mix denominator
+        // accumulate total mobility derivatives for fractional flow denominator
         Lambda += lambda;
         dLambda_dP += dlambda_dP;
         dLambda_dS += dlambda_dS;
@@ -486,18 +520,10 @@ public:
       
       // buoyant flux and derivatives for this one-sided face i (from cell to face)
       real64 const B = s.BuoyantFlux[i];
+      real64 const Phi_indep = s.BuoyantPPUFlux[i][m_indep];
+      real64 const Phi_dep = s.BuoyantPPUFlux[i][1-m_indep];
       real64 const dB_dP = s.dBuoyantFlux_dPres[i];
       real64 const dB_dS = s.dBuoyantFlux_dS[i];
-
-//      if (true){
-//        if (i == 0){
-//          std::cout << "ei: " << ei << std::endl;
-//        }
-//        std::cout << "(F, B): (" << F << ", " << B << ")" << std::endl;
-//        if (i == 5){
-//          std::cout << std::endl;
-//        }
-//      }
       
       // Arithmetic average of fractional flow between local and neighbor (if any)
       real64 f_nei = f_loc;
@@ -529,7 +555,10 @@ public:
       }
 
       // Upwind convex combination: beta = 1 if F >= 0 (use local), else 0 (use neighbor)
-      real64 const beta_v = ( F >= 0.0 ) ? 1.0 : 0.0;
+      real64 beta_v = ( F >= 0.0 ) ? 1.0 : 0.0;
+      if (PPU_Q) {
+        beta_v = ( Phi_indep >= 0.0 ) ? 1.0 : 0.0;
+      }
       real64 const f_int = beta_v * f_loc + ( 1.0 - beta_v ) * f_nei;
 
       // residual contribution and local Jacobians
@@ -547,33 +576,39 @@ public:
       if( hasNeighbor )
       {
         
-        // Upwind convex combination: beta = 1 if F >= 0 (use local), else 0 (use neighbor)
-        real64 const beta_g = ( B >= 0.0 ) ? 1.0 : 0.0;
-        real64 const f_indep = beta_g * f_loc + ( 1.0 - beta_g ) * f_nei;
-        real64 const f_dep = ( 1.0 - beta_g ) * f_dep_loc + beta_g * f_dep_nei;
+        // Upwind convex combination: beta = 1 if B >= 0 (use local), else 0 (use neighbor)
+        real64 beta_gamma_g = ( B >= 0.0 ) ? 1.0 : 0.0;
+        real64 beta_delta_g = ( B >= 0.0 ) ? 0.0 : 1.0;
+        if (PPU_Q) {
+            beta_gamma_g = ( Phi_indep >= 0.0 ) ? 1.0 : 0.0;
+            beta_delta_g = ( Phi_dep >= 0.0 ) ? 1.0 : 0.0;
+        }
+
+        real64 const f_indep = beta_gamma_g * f_loc + (1-beta_gamma_g) * f_nei;
+        real64 const f_dep = beta_delta_g * f_dep_loc + (1-beta_delta_g) * f_dep_nei;
         
-        real64 const l_indep = beta_g * l_loc + ( 1.0 - beta_g ) * l_nei;
-        real64 const l_dep = ( 1.0 - beta_g ) * l_dep_loc + beta_g * l_dep_nei;
+        real64 const l_indep = beta_gamma_g * l_loc + (1-beta_gamma_g) * l_nei;
+        real64 const l_dep = beta_delta_g * l_dep_loc + (1-beta_delta_g) * l_dep_nei;
         
         // derivatives of convex combinations local
-        real64 const df_indep_dP_loc = beta_g * df_loc_dP;
-        real64 const df_indep_dS_loc = beta_g * df_loc_dS;
-        real64 const df_dep_dP_loc = ( 1.0 - beta_g ) * df_dep_loc_dP;
-        real64 const df_dep_dS_loc = ( 1.0 - beta_g ) * df_dep_loc_dS;
-        real64 const dl_indep_dP_loc = beta_g * dl_loc_dP;
-        real64 const dl_indep_dS_loc = beta_g * dl_loc_dS;
-        real64 const dl_dep_dP_loc = ( 1.0 - beta_g ) * dl_dep_loc_dP;
-        real64 const dl_dep_dS_loc = ( 1.0 - beta_g ) * dl_dep_loc_dS;
+        real64 const df_indep_dP_loc = beta_gamma_g * df_loc_dP;
+        real64 const df_indep_dS_loc = beta_gamma_g * df_loc_dS;
+        real64 const df_dep_dP_loc = beta_delta_g * df_dep_loc_dP;
+        real64 const df_dep_dS_loc = beta_delta_g * df_dep_loc_dS;
+        real64 const dl_indep_dP_loc = beta_gamma_g * dl_loc_dP;
+        real64 const dl_indep_dS_loc = beta_gamma_g * dl_loc_dS;
+        real64 const dl_dep_dP_loc = beta_delta_g * dl_dep_loc_dP;
+        real64 const dl_dep_dS_loc = beta_delta_g * dl_dep_loc_dS;
         
         // derivatives of convex combinations neighbor
-        real64 const df_indep_dP_nei = ( 1.0 - beta_g ) * df_nei_dP;
-        real64 const df_indep_dS_nei = ( 1.0 - beta_g ) * df_nei_dS;
-        real64 const df_dep_dP_nei = beta_g * df_dep_nei_dP;
-        real64 const df_dep_dS_nei = beta_g * df_dep_nei_dS;
-        real64 const dl_indep_dP_nei = ( 1.0 - beta_g ) * dl_nei_dP;
-        real64 const dl_indep_dS_nei = ( 1.0 - beta_g ) * dl_nei_dS;
-        real64 const dl_dep_dP_nei = beta_g * dl_dep_nei_dP;
-        real64 const dl_dep_dS_nei = beta_g * dl_dep_nei_dS;
+        real64 const df_indep_dP_nei = (1-beta_gamma_g) * df_nei_dP;
+        real64 const df_indep_dS_nei = (1-beta_gamma_g) * df_nei_dS;
+        real64 const df_dep_dP_nei = (1-beta_delta_g) * df_dep_nei_dP;
+        real64 const df_dep_dS_nei = (1-beta_delta_g) * df_dep_nei_dS;
+        real64 const dl_indep_dP_nei = (1-beta_gamma_g) * dl_nei_dP;
+        real64 const dl_indep_dS_nei = (1-beta_gamma_g) * dl_nei_dS;
+        real64 const dl_dep_dP_nei = (1-beta_delta_g) * dl_dep_nei_dP;
+        real64 const dl_dep_dS_nei = (1-beta_delta_g) * dl_dep_nei_dS;
         
         real64 const db_flux_dP_loc = (
                 (df_indep_dP_loc * f_dep + f_indep * df_dep_dP_loc) * (l_indep + l_dep) * B
@@ -634,6 +669,7 @@ public:
       
       // saturation equation
       computeBuoyancyDrivenFlux(ei, s);
+      computeBuoyancyDrivenPPUFluxes(ei, s);
       computeSaturationTransport( ei, s );
     }
   }
