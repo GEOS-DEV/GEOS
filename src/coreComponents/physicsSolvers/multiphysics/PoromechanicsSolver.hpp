@@ -253,12 +253,12 @@ public:
     this->setupCoupling( domain, dofManager );
   }
 
-  void assembleSystem( real64 const time,
-                       real64 const dt,
-                       DomainPartition & domain,
-                       DofManager const & dofManager,
-                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                       arrayView1d< real64 > const & localRhs )
+  virtual void assembleSystem( real64 const time,
+                               real64 const dt,
+                               DomainPartition & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) override
   {
     GEOS_MARK_FUNCTION;
 
