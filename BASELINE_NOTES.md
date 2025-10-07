@@ -6,9 +6,13 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #3193 (2025-10-03) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3193-13999-6bca95d.tar.gz>
+PR #3193 (2025-10-XX) <>
 =====================
 Enable geothermal gradient in HydrostaticEquilibrium for single-phase flow.
+
+PR #3359 (2025-10-07) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3359-14024-3c9ebb4.tar.gz>
+=====================
+Add functions to connect well perforation to surface elements.
 
 PR #3843 (2025-10-02) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3843-13975-76d125d.tar.gz>
 =====================
