@@ -55,12 +55,15 @@ public:
   ElasticIsotropicUpdates( arrayView1d< real64 const > const & bulkModulus,
                            arrayView1d< real64 const > const & shearModulus,
                            arrayView1d< real64 const > const & thermalExpansionCoefficient,
-                           arrayView1d< real64 const > const & anelasticStrainMagnitude,
+                           arrayView1d< real64 const > const & anelasticStrainIncrement,
+                           arrayView1d< real64 > const & newAnelasticStrainMagnitude,
+                           arrayView1d< real64 > const & oldAnelasticStrainMagnitude,
                            arrayView3d< real64, solid::STRESS_USD > const & newStress,
                            arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                            const bool & disableInelasticity,
                            const integer & enableAnelasticStrain ):
-    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity, anelasticStrainMagnitude, enableAnelasticStrain ),
+    SolidBaseUpdates( newStress, oldStress, thermalExpansionCoefficient, disableInelasticity, anelasticStrainIncrement, newAnelasticStrainMagnitude, oldAnelasticStrainMagnitude,
+                      enableAnelasticStrain ),
     m_bulkModulus( bulkModulus ),
     m_shearModulus( shearModulus )
   {}
@@ -397,10 +400,12 @@ void ElasticIsotropicUpdates::stressModificationByAnelasticStain( localIndex con
   real64 const anelasticStrainDirection[6] = { 0.0, 1.0, 0.0,
                                                0.0, 0.0, 0.0 }; // To make it an input
 
+  m_newAnelasticStrainMagnitude[k] = m_oldAnelasticStrainMagnitude[k] + getAnelasticStrainIncrement( k );
+
   real64 anelasticStrain[6];
   for( integer i = 0; i < 6; ++i )
   {
-    anelasticStrain[i] = getAnelasticStrainMagnitude( k ) * anelasticStrainDirection[i];
+    anelasticStrain[i] = m_newAnelasticStrainMagnitude[k] * anelasticStrainDirection[i];
   }
 
   smallStrainNoStateUpdate_StressOnly( k, q, anelasticStrain, stressModifier );
@@ -565,7 +570,9 @@ public:
       return ElasticIsotropicUpdates( m_bulkModulus,
                                       m_shearModulus,
                                       m_thermalExpansionCoefficient,
-                                      m_anelasticStrainMagnitude,
+                                      m_anelasticStrainIncrement,
+                                      m_newAnelasticStrainMagnitude,
+                                      m_oldAnelasticStrainMagnitude,
                                       m_newStress,
                                       m_oldStress,
                                       m_disableInelasticity,
@@ -576,7 +583,9 @@ public:
       return ElasticIsotropicUpdates( m_bulkModulus,
                                       m_shearModulus,
                                       m_thermalExpansionCoefficient,
-                                      m_anelasticStrainMagnitude,
+                                      m_anelasticStrainIncrement,
+                                      m_newAnelasticStrainMagnitude,
+                                      m_oldAnelasticStrainMagnitude,
                                       arrayView3d< real64, solid::STRESS_USD >(),
                                       arrayView3d< real64, solid::STRESS_USD >(),
                                       m_disableInelasticity,
@@ -599,7 +608,9 @@ public:
                           m_bulkModulus,
                           m_shearModulus,
                           m_thermalExpansionCoefficient,
-                          m_anelasticStrainMagnitude,
+                          m_anelasticStrainIncrement,
+                          m_newAnelasticStrainMagnitude,
+                          m_oldAnelasticStrainMagnitude,
                           m_newStress,
                           m_oldStress,
                           m_disableInelasticity,

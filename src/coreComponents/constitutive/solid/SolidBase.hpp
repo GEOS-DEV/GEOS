@@ -62,13 +62,17 @@ protected:
                     arrayView3d< real64, solid::STRESS_USD > const & oldStress,
                     arrayView1d< real64 const > const & thermalExpansionCoefficient,
                     const bool & disableInelasticity,
-                    arrayView1d< real64 const > const & anelasticStrainMagnitude,
+                    arrayView1d< real64 const > const & anelasticStrainIncrement,
+                    arrayView1d< real64 > const & newAnelasticStrainMagnitude,
+                    arrayView1d< real64 > const & oldAnelasticStrainMagnitude,
                     const integer enableAnelasticStrain ):
     m_newStress( newStress ),
     m_oldStress( oldStress ),
     m_thermalExpansionCoefficient( thermalExpansionCoefficient ),
     m_disableInelasticity ( disableInelasticity ),
-    m_anelasticStrainMagnitude( anelasticStrainMagnitude ),
+    m_anelasticStrainIncrement( anelasticStrainIncrement ),
+    m_newAnelasticStrainMagnitude( newAnelasticStrainMagnitude ),
+    m_oldAnelasticStrainMagnitude( oldAnelasticStrainMagnitude ),
     m_enableAnelasticStrain( enableAnelasticStrain )
   {}
 
@@ -108,7 +112,10 @@ public:
   const bool m_disableInelasticity;
 
   /// The anelastic strain magnitude (i.e. chemistry, electrochemistry, etc.)
-  arrayView1d< real64 const > const m_anelasticStrainMagnitude;
+  arrayView1d< real64 const > const m_anelasticStrainIncrement;
+
+  arrayView1d< real64 > const m_newAnelasticStrainMagnitude;
+  arrayView1d< real64 > const m_oldAnelasticStrainMagnitude;
 
   /// Flag to enable stress modification due to anelastic strain
   const integer m_enableAnelasticStrain;
@@ -139,14 +146,14 @@ public:
   }
 
   /**
-   * @brief Get anelasticStrainMagnitude
+   * @brief Get anelasticStrainIncrement
    * @param[in] k Element index.
-   * @return the nelasticStrainMagnitude of element k
+   * @return the anelasticStrainIncrement of element k
    */
   GEOS_HOST_DEVICE
-  real64 getAnelasticStrainMagnitude( localIndex const k ) const
+  real64 getAnelasticStrainIncrement( localIndex const k ) const
   {
-    return m_anelasticStrainMagnitude[k];
+    return m_anelasticStrainIncrement[k];
   }
 
   /**
@@ -611,7 +618,7 @@ public:
     // Default drained linear thermal expansion coefficient key
     static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultDrainedLinearTEC"; }
     // Default anelastic strain magnitude key
-    static constexpr char const * defaultAnelasticStrainMagnitudeString() { return "defaultAnelasticStrainMagnitude"; }
+    static constexpr char const * defaultAnelasticStrainIncrementString() { return "defaultAnelasticStrainIncrement"; }
     // Enable stress modification due to anelastic strain key
     static constexpr char const * enableAnelasticStrainString() { return "enableAnelasticStrain"; }
   };
@@ -742,11 +749,14 @@ protected:
   /// Flag to disable inelasticity (plasticity, damage, etc.)
   bool m_disableInelasticity = false;
 
-  /// The anelastic strain magnitude (i.e. chemistry, electrochemistry, etc.)
-  array1d< real64 > m_anelasticStrainMagnitude;
+  /// The anelastic strain rate magnitude (i.e. chemistry, electrochemistry, etc.)
+  array1d< real64 > m_anelasticStrainIncrement;
 
-  /// The default value of the anelastic strain magnitude
-  real64 m_defaultAnelasticStrainMagnitude;
+  array1d< real64 > m_newAnelasticStrainMagnitude;
+  array1d< real64 > m_oldAnelasticStrainMagnitude;
+
+  /// The default value of the anelastic strain rate magnitude
+  real64 m_defaultAnelasticStrainIncrement;
 
   /// Flag to enable stress modification due to anelastic strain
   integer m_enableAnelasticStrain;
