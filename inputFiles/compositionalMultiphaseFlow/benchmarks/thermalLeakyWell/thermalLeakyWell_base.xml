@@ -21,6 +21,11 @@
       timeFrequency="4.32e5"
       target="/Tasks/compOutfluxCollection"/>
     <PeriodicEvent
+      name="restarts"
+      timeFrequency="4.32e5"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+    <PeriodicEvent
       name="solverApplications"
       target="/Solvers/compflow"/>
   </Events>
@@ -247,6 +252,8 @@
       name="timeHistoryOutput"
       sources="{ /Tasks/compOutfluxCollection }"
       filename="compOutfluxHistory"/>
+    <Restart
+      name="restartOutput"/>    
   </Outputs>
 
   <Tasks>
