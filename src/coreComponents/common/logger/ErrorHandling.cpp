@@ -22,6 +22,7 @@
 #include "common/format/StringUtilities.hpp"
 
 #include <fstream>
+#include <regex>
 #include <string_view>
 
 // signal management
@@ -39,6 +40,9 @@ static constexpr std::string_view g_level3Start = "      - ";
 static constexpr std::string_view g_level3Next =  "        ";
 
 ErrorLogger g_errorLogger{};
+
+ErrorLogger & ErrorLogger::global()
+{ return g_errorLogger; }
 
 void ErrorLogger::createFile()
 {
@@ -296,7 +300,7 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
   else
   {
     GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing.\n- Error file: {}\n- Error file enabled = {}.\n",
-                             m_filename, g_errorLogger.isOutputFileEnabled() ) );
+                             m_filename, isOutputFileEnabled() ) );
   }
 }
 

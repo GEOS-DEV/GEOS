@@ -16,6 +16,7 @@
 #include "PhysicsSolverBase.hpp"
 #include "PhysicsSolverManager.hpp"
 
+#include "common/MpiWrapper.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "common/format/LogPart.hpp"
 #include "common/TimingMacros.hpp"
@@ -758,7 +759,7 @@ bool PhysicsSolverBase::lineSearchWithParabolicInterpolation( real64 const & tim
     applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
     rhs.close();
 
-    if( logger::internal::rank==0 )
+    if( MpiWrapper::commRank()==0 )
     {
       GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
                              GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale ) );
@@ -1201,7 +1202,7 @@ void PhysicsSolverBase::setupSystem( DomainPartition & domain,
   if( setSparsity )
   {
     SparsityPattern< globalIndex > pattern;
-    dofManager.setSparsityPattern( pattern );
+    setSparsityPattern( domain, dofManager, localMatrix, pattern );
     localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
   }
   localMatrix.setName( this->getName() + "/matrix" );
@@ -1211,6 +1212,14 @@ void PhysicsSolverBase::setupSystem( DomainPartition & domain,
 
   solution.setName( this->getName() + "/solution" );
   solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+}
+
+void PhysicsSolverBase::setSparsityPattern( DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                            DofManager & dofManager,
+                                            CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                                            SparsityPattern< globalIndex > & pattern )
+{
+  dofManager.setSparsityPattern( pattern );
 }
 
 void PhysicsSolverBase::setSystemSetupTimestamp( Timestamp timestamp )

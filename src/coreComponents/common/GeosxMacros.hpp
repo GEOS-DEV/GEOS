@@ -154,6 +154,8 @@ void i_g_n_o_r_e( ARGS const & ... ) {}
                                        true, true, true, true, true, true, true, true, \
                                        true, true, true, true, true, true, true, false, false )
 
+/// @cond DO_NOT_DOCUMENT
+
 /// internal macros for GEOS_DETAIL_FIRST_ARG
 #define GEOS_DETAIL_FIRST_ARG_false( FIRST ) FIRST
 #define GEOS_DETAIL_FIRST_ARG_true( FIRST, ... ) FIRST
@@ -171,6 +173,8 @@ void i_g_n_o_r_e( ARGS const & ... ) {}
 #define GEOS_DETAIL_REST_PREP_ARGS_true( FIRST, ... ) , __VA_ARGS__
 #define GEOS_DETAIL_REST_PREP_ARGS_FUNC( COND ) GEOS_DETAIL_REST_PREP_ARGS_ ## COND
 #define GEOS_DETAIL_REST_PREP_ARGS_DISPATCH( COND, ... ) GEOS_DETAIL_REST_PREP_ARGS_FUNC( COND )(__VA_ARGS__)
+
+/// @endcond
 
 /**
  * @return Return the first parameter of the variadic parameters (__VA_ARGS__).

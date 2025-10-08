@@ -257,13 +257,13 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       break;
       case ERRORSOUTPUT:
       {
-        g_errorLogger.enableFileOutput( true );
+        ErrorLogger::global().enableFileOutput( true );
         if( options[ERRORSOUTPUT].arg != nullptr )
         {
           std::string_view filename =  options[ERRORSOUTPUT].arg;
-          g_errorLogger.setOutputFilename( filename );
+          ErrorLogger::global().setOutputFilename( filename );
         }
-        g_errorLogger.createFile();
+        ErrorLogger::global().createFile();
       }
       break;
     }
