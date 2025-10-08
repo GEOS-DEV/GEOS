@@ -177,6 +177,7 @@
                                          __FILE__, \
                                          __LINE__ ); \
         msgStruct.setCause( cause ); \
+        msgStruct.setRank( ::geos::logger::internal::rank() ); \
         msgStruct.addCallStackInfo( stackHistory ); \
         msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
         GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \

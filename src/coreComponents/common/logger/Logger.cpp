@@ -71,7 +71,7 @@ namespace internal
 
 int g_rank = 0;
 int g_n_ranks = 1;
-std::string g_rankString = "0";
+std::string g_rankString = "?";
 std::ostream * g_rankStream = nullptr;
 
 int rank()
@@ -89,7 +89,7 @@ std::ostream * rankStream()
 
 void InitializeLogger( MPI_Comm mpi_comm, const std::string & rankOutputDir )
 {
- MPI_Comm_rank( mpi_comm, &internal::g_rank );
+  MPI_Comm_rank( mpi_comm, &internal::g_rank );
   MPI_Comm_size( mpi_comm, &internal::g_n_ranks );
 
   internal::g_rankString = std::to_string( internal::g_rank );
