@@ -20,6 +20,7 @@
 #include "LvArray/src/system.hpp"
 #include "common/LifoStorageCommon.hpp"
 #include "common/MemoryInfos.hpp"
+#include "logger/ErrorHandling.hpp"
 #include "logger/ExternalErrorHandler.hpp"
 #include <umpire/TypedAllocator.hpp>
 // TPL includes
@@ -95,17 +96,17 @@ void setupLogger()
                           "***** LOCATION: (external error, detected {})\n"
                           "{}\n{}",
                           detectionLocation, errorMsg, stackHistory ) );
-      if( g_errorLogger.isOutputFileEnabled() )
+      if( ErrorLogger::global().isOutputFileEnabled() )
       {
         ErrorLogger::ErrorMsg error;
         error.setType( ErrorLogger::MsgType::Error );
         error.addToMsg( errorMsg );
-        error.setRank( ::geos::logger::internal::rank );
+        error.setRank( ::geos::logger::internal::rank() );
         error.addCallStackInfo( stackHistory );
         error.addContextInfo(
           ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( detectionLocation ) } } } );
 
-        g_errorLogger.flushErrorMsg( error );
+        ErrorLogger::global().flushErrorMsg( error );
       }
 
       // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
@@ -132,16 +133,16 @@ void setupLogger()
                           "{}\n{}",
                           signal, error.m_msg, stackHistory ) );
 
-      if( g_errorLogger.isOutputFileEnabled() )
+      if( ErrorLogger::global().isOutputFileEnabled() )
       {
         error.setType( ErrorLogger::MsgType::Error );
-        error.setRank( ::geos::logger::internal::rank );
+        error.setRank( ::geos::logger::internal::rank() );
         error.addCallStackInfo( stackHistory );
         error.addContextInfo(
           ErrorContext{ { { ErrorContext::Attribute::Signal, std::to_string( signal ) } }, 1 },
           ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( "signal handler" ) } }, 0 } );
 
-        g_errorLogger.flushErrorMsg( error );
+        ErrorLogger::global().flushErrorMsg( error );
       }
 
       // call program termination
