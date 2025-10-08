@@ -208,8 +208,8 @@ public:
     real64 BuoyantFlux[NUM_FACE]{};
     real64 dBuoyantFlux_dPres[NUM_FACE]{};
     real64 dBuoyantFlux_dS[NUM_FACE]{};
-    // Buoyancy driven PPU fluxes (one-sided per face i)
-    real64 BuoyantPPUFlux[NUM_FACE][2]{};
+    // PhaseMass (PPU) fluxes (one-sided per face i)
+    real64 PhaseMassFlux[NUM_FACE][2]{};
     // Saturation equation: divergence of upwinded transported saturation with mass flux
     real64 divSatFluxes = 0.0;
     real64 dDivSatFluxes_dP = 0.0;
@@ -274,37 +274,6 @@ public:
         s.BuoyantFlux[i] += T_ij * gravTerm;
         s.dBuoyantFlux_dPres[i] += T_ij * (dGravTerm_dP);
         s.dBuoyantFlux_dS[i] += T_ij * (dGravTerm_dS);
-      }
-    }
-  }
-  
-  GEOS_HOST_DEVICE
-  void computeBuoyancyDrivenPPUFluxes( localIndex const ei, StackVariables & s ) const
-  {
-//    using Deriv = DerivMob; // alias for readability
-    
-    // Compute delta_rho and its pressure derivative
-    integer const dep = 1 - m_indep;
-    
-    real64 const ccGravCoef = m_elemGravCoef[ei];
-    real64 const ccPres = m_elemPres[ei];
-    
-    std::vector<integer> phase_idxs = {m_indep,dep};
-    for(integer const phase_idx : phase_idxs){
-      real64 const rho = m_phaseDens[ei][0][phase_idx];
-      for( integer i=0; i<NUM_FACE; ++i )
-      {
-        real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][i]];
-        real64 const fPres = m_facePres[m_elemToFaces[ei][i]];
-        
-        // Potential difference and its derivatives
-        real64 const presDif = ccPres - fPres;
-        real64 const gravCoefDif = ccGravCoef - fGravCoef;
-        real64 const gravTerm = rho * gravCoefDif;
-        
-        // Potential difference associated with phase gamma
-        real64 const potDif = presDif - gravTerm;
-        s.BuoyantPPUFlux[i][phase_idx] = potDif;
       }
     }
   }
@@ -391,6 +360,33 @@ public:
     }
   }
 
+  GEOS_HOST_DEVICE
+  void computePhaseMassFlux( localIndex const ei, StackVariables & s ) const
+  {
+    // PhaseMass (PPU) fluxes for each phase (one-sided per face i)
+    // References:
+    // [1] Brenier, Y., & Jaffré, J. (1991). SIAM Journal on Numerical Analysis. DOI:10.1137/0728036
+    // [2] Kwok, F., & Tchelepi, H. A. (2008). SIAM Journal on Numerical Analysis. DOI:10.1137/070703922
+    integer const dep = 1 - m_indep;
+    // Local (cell-centered) mass mobilities and fractional flows
+    real64 const lambda_ind = m_phaseMobAll[m_er][m_esr][ei][m_indep];
+    real64 const lambda_dep = m_phaseMobAll[m_er][m_esr][ei][dep];
+    real64 const lambda_tot = lambda_ind + lambda_dep + 1e-32; // tiny guard
+    real64 const f_ind = lambda_ind / lambda_tot;
+    real64 const f_dep = lambda_dep / lambda_tot;
+    real64 const l_sum = lambda_tot; // shorthand
+    real64 const buoyancy_factor = f_ind * f_dep * l_sum; // matches earlier saturation treatment
+
+    for( integer i=0; i<NUM_FACE; ++i )
+    {
+      real64 const F = s.MassFlux[i];      // total mass flux (one-sided cell->face)
+      real64 const B = s.BuoyantFlux[i];   // buoyancy transmissibility (delta_rho * T * gravCoefDiff)
+      // Phase indep
+      s.PhaseMassFlux[i][m_indep] = f_ind * F + buoyancy_factor * B;
+      // Phase dep
+      s.PhaseMassFlux[i][dep]     = f_dep * F - buoyancy_factor * B;
+    }
+  }
   
   GEOS_HOST_DEVICE
   void computeOverallMassFluxDivergence( localIndex const ei, StackVariables & s ) const
@@ -414,13 +410,12 @@ public:
     }
   }
 
-  // Refactored computeSaturationTransport: generic eta/beta upwinding with loc/nei notation
   GEOS_HOST_DEVICE
   void computeSaturationTransport(localIndex const ei, StackVariables & s) const
   {
     // Upwind options
     enum UpwindScheme : int { HU = 0, PPU = 1 };
-    UpwindScheme const scheme = UpwindScheme::HU; // expose later if needed
+    UpwindScheme const scheme = UpwindScheme::PPU; // expose later if needed
 
     using Deriv = DerivMob; // keep your existing derivative enum
 
@@ -507,8 +502,12 @@ public:
     {
       // face / neighbor bookkeeping (loc cell is `ei`)
       localIndex const lf = m_elemToFaces[ei][i];
-      localIndex const er0 = m_elemRegionList[lf][0]; localIndex const esr0 = m_elemSubRegionList[lf][0]; localIndex const ei0 = m_elemList[lf][0];
-      localIndex const er1 = m_elemRegionList[lf][1]; localIndex const esr1 = m_elemSubRegionList[lf][1]; localIndex const ei1 = m_elemList[lf][1];
+      localIndex const er0 = m_elemRegionList[lf][0];
+      localIndex const esr0 = m_elemSubRegionList[lf][0];
+      localIndex const ei0 = m_elemList[lf][0];
+      localIndex const er1 = m_elemRegionList[lf][1];
+      localIndex const esr1 = m_elemSubRegionList[lf][1];
+      localIndex const ei1 = m_elemList[lf][1];
 
       localIndex ner = -1, nesr = -1, nei = -1;
       if (er0 == m_er && esr0 == m_esr && ei0 == ei) { ner = er1; nesr = esr1; nei = ei1; }
@@ -516,10 +515,14 @@ public:
       bool const hasNeighbor = (ner >= 0);
 
       // fluxes and their derivatives
-      real64 const F = s.MassFlux[i];                 real64 const dF_dP = s.dMassFlux_dPres[i];   real64 const dF_dS = s.dMassFlux_dS[i];
-      real64 const B = s.BuoyantFlux[i];              real64 const dB_dP = s.dBuoyantFlux_dPres[i];real64 const dB_dS = s.dBuoyantFlux_dS[i];
-      real64 const Phi_indep = s.BuoyantPPUFlux[i][m_indep];
-      real64 const Phi_dep   = s.BuoyantPPUFlux[i][1 - m_indep];
+      real64 const F = s.MassFlux[i];
+      real64 const dF_dP = s.dMassFlux_dPres[i];
+      real64 const dF_dS = s.dMassFlux_dS[i];
+      real64 const B = s.BuoyantFlux[i];
+      real64 const dB_dP = s.dBuoyantFlux_dPres[i];
+      real64 const dB_dS = s.dBuoyantFlux_dS[i];
+      real64 const F_indep = s.PhaseMassFlux[i][m_indep];
+      real64 const F_dep   = s.PhaseMassFlux[i][1 - m_indep];
 
       // build eta data for independent and dependent phases (loc values)
       EtaData f_indep = buildFracFlow(m_er, m_esr, ei, m_indep);
@@ -543,7 +546,7 @@ public:
       }
 
       // ----- Convective term (use chosen advecting scalar for convective upwinding) -----
-      real64 const beta_conv = (scheme == UpwindScheme::PPU ? Phi_indep : F);
+      real64 const beta_conv = (scheme == UpwindScheme::PPU ? F_indep : F);
       UpwindedEta f_conv = applyUpwind(f_indep, beta_conv);
 
       s.divSatFluxes += m_dt * F * f_conv.value;
@@ -555,8 +558,8 @@ public:
         s.dDivSatFluxes_dFaceVars[j] += m_dt * s.dMassFlux_dFacePres[i][j] * f_conv.value;
 
       // ----- Buoyancy terms (use different betas to choose upwind direction) -----
-      real64 const beta_indep = (scheme == UpwindScheme::PPU ? Phi_indep : B);
-      real64 const beta_dep   = (scheme == UpwindScheme::PPU ? Phi_dep   : -B);
+      real64 const beta_indep = (scheme == UpwindScheme::PPU ? F_indep : B);
+      real64 const beta_dep   = (scheme == UpwindScheme::PPU ? F_dep   : -B);
 
       UpwindedEta f_up_indep = applyUpwind(f_indep, beta_indep);
       UpwindedEta f_up_dep   = applyUpwind(f_dep,   beta_dep);
@@ -566,9 +569,9 @@ public:
       real64 const f_ind = f_up_indep.value;
       real64 const f_dep_v = f_up_dep.value;
       real64 const l_sum = l_up_indep.value + l_up_dep.value;
-      real64 const buoy_factor = f_ind * f_dep_v * l_sum;
+      real64 const buoyancy_factor = f_ind * f_dep_v * l_sum;
 
-      s.divSatFluxes += m_dt * buoy_factor * B;
+      s.divSatFluxes += m_dt * buoyancy_factor * B;
 
       // local contribution derivative helper (derivative wrt local P or S)
       auto dBuoy_dLocal = [&](bool dP) -> real64 {
@@ -578,7 +581,7 @@ public:
         real64 dl_dep = dP ? l_up_dep.dP_Loc    : l_up_dep.dS_Loc;
         real64 dB = dP ? dB_dP : dB_dS;
         // product rule: B * d(buoy_factor) + buoy_factor * dB
-        return m_dt * ( B * ( (df_ind * f_dep_v + f_ind * df_dep) * l_sum + f_ind * f_dep_v * (dl_ind + dl_dep) ) + buoy_factor * dB );
+        return m_dt * ( B * ( (df_ind * f_dep_v + f_ind * df_dep) * l_sum + f_ind * f_dep_v * (dl_ind + dl_dep) ) + buoyancy_factor * dB );
       };
 
       s.dDivSatFluxes_dP += dBuoy_dLocal(true);
@@ -604,8 +607,12 @@ public:
 
         globalIndex const neiP = m_elemDofNumber[ner][nesr][nei];
         globalIndex const neiS = neiP + 1;
-        s.neiCols[s.numNeiCols] = neiP; s.neiVals[s.numNeiCols] += conv_dP_nei + buoy_dP_nei; s.numNeiCols += 1;
-        s.neiCols[s.numNeiCols] = neiS; s.neiVals[s.numNeiCols] += conv_dS_nei + buoy_dS_nei; s.numNeiCols += 1;
+        s.neiCols[s.numNeiCols] = neiP;
+        s.neiVals[s.numNeiCols] += conv_dP_nei + buoy_dP_nei;
+        s.numNeiCols += 1;
+        s.neiCols[s.numNeiCols] = neiS;
+        s.neiVals[s.numNeiCols] += conv_dS_nei + buoy_dS_nei;
+        s.numNeiCols += 1;
       }
     } // end face loop
   }
@@ -625,7 +632,7 @@ public:
       
       // saturation equation
       computeBuoyancyDrivenFlux(ei, s);
-      computeBuoyancyDrivenPPUFluxes(ei, s);
+      computePhaseMassFlux( ei, s );
       computeSaturationTransport( ei, s );
     }
   }
