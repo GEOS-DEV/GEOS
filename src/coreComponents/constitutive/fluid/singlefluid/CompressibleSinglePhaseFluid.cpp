@@ -108,14 +108,15 @@ void CompressibleSinglePhaseFluid::postInputInitialization()
   checkPositive( m_referenceViscosity, viewKeyStruct::referenceViscosityString() );
 
   // Due to the way update wrapper is currently implemented, we can only support one model type
-  auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
+  auto const checkModelType = [&]( ExponentApproximationType const value, ExponentApproximationType const expectedValue, auto const & attribute )
   {
-    GEOS_THROW_IF( value != ExponentApproximationType::Full,
-                   GEOS_FMT( "{}: invalid model type in attribute '{}' (only fully exponential currently supported)", getFullName(), attribute ),
+    GEOS_THROW_IF( value != expectedValue,
+                   GEOS_FMT( "{}: invalid model type in attribute '{}' (only {} currently supported)",
+                             getFullName(), attribute, EnumStrings< ExponentApproximationType >::toString( expectedValue ) ),
                    InputError );
   };
-  checkModelType( m_densityModelType, viewKeyStruct::densityModelTypeString() );
-  checkModelType( m_viscosityModelType, viewKeyStruct::viscosityModelTypeString() );
+  checkModelType( m_densityModelType, ExponentApproximationType::Full, viewKeyStruct::densityModelTypeString() );
+  checkModelType( m_viscosityModelType, ExponentApproximationType::Linear, viewKeyStruct::viscosityModelTypeString() );
 
   // Set default values for derivatives (cannot be done in base class)
   // TODO: reconsider the necessity of this
