@@ -7,6 +7,7 @@ set( solidMechanicsSolvers_headers
      contact/SolidMechanicsEmbeddedFractures.hpp
      contact/SolidMechanicsLagrangeContact.hpp
      contact/SolidMechanicsLagrangeContactBubbleStab.hpp
+     contact/SolidMechanicsLagrangeContactNew.hpp
      contact/SolidMechanicsAugmentedLagrangianContact.hpp
      contact/kernels/SolidMechanicsConformingContactKernelsBase.hpp
      contact/kernels/SolidMechanicsDisplacementJumpUpdateKernels.hpp
@@ -29,5 +30,6 @@ set( solidMechanicsSolvers_sources
      contact/SolidMechanicsEmbeddedFractures.cpp
      contact/SolidMechanicsLagrangeContact.cpp
      contact/SolidMechanicsLagrangeContactBubbleStab.cpp
+     contact/SolidMechanicsLagrangeContactNew.cpp
      contact/SolidMechanicsAugmentedLagrangianContact.cpp
      PARENT_SCOPE )
