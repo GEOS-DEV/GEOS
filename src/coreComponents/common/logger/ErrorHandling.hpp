@@ -214,12 +214,11 @@ private:
   };
 
   /**
-   * @brief Global instance of the ErrorLogger class used for error/warning reporting.
+   * @return Global instance of the ErrorLogger class used for error/warning reporting.
    * @details This global instance is used across the codebase to log errors, warnings, and exceptions,
    *          and to write structured output of errors. It is used through the logging macros.
-   * @note - cannot be a "extern" or "static" variable because of a clang compiler error.
-   *       - local instances are possible for more specialized logging.
-   *       - currently not available on GPU.
+   * @note - local instances are possible for more specialized logging.
+   *       - currently not available on GPU, use GEOS_WARNING/ERROR/ASSERT macros for this usecase.
    */
   GEOS_HOST static ErrorLogger & global();
 
