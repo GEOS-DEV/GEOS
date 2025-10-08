@@ -265,64 +265,7 @@ bool MsrsbLevelBuilderCoupled< LAI >::updateProlongation( Matrix const & fineMat
         auto const coupledVals = prolongation.getEntries( rowOffset + localRow );
         GEOS_MAYBE_UNUSED auto const blocksCount = blockVals.size();
         GEOS_MAYBE_UNUSED auto const coupledCount = coupledVals.size();
-        // GEOS_ASSERT_EQ( blocksCount, coupledCount );
-#if !defined(GEOS_DEVICE_COMPILE)
-        {
-          GEOS_MAYBE_UNUSED auto const lhsResult = (blocksCount);
-          GEOS_MAYBE_UNUSED auto const rhsResult = (coupledCount);
-          do
-          {
-            if( !( lhsResult == rhsResult ) )
-            {
-              std::ostringstream __msgoss;
-              __msgoss << GEOS_DETAIL_FIRST_ARG( "" );
-              std::string message =  __msgoss.str();
-              __msgoss = std::ostringstream();
-              __msgoss << "Expected: " "blocksCount" " " "==" " " "coupledCount" "\n* " "blocksCount" " = " << lhsResult << "\n* " "coupledCount" " = " << rhsResult << "\n";
-              std::string cause =  __msgoss.str();
-              std::ostringstream __oss;
-              __oss << "***** ERROR\n";
-              __oss << "***** LOCATION: " LOCATION "\n";
-              __oss << "***** " << cause << "\n";
-              __oss << "***** Rank " << ::geos::logger::internal::rankString() << ": " << message << "\n";
-              std::string stackHistory = LvArray::system::stackTrace( true );
-              __oss << stackHistory;
-              std::cout << __oss.str() << std::endl;
-              if( GEOS_ERROR_LOGGER_INSTANCE.isOutputFileEnabled() )
-              {
-                ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error,
-                                                 message,
-                                                 __FILE__,
-                                                 __LINE__ );
-                msgStruct.setCause( cause );
-                msgStruct.addCallStackInfo( stackHistory );
-                msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( "" ) );
-                GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct );
-              }
-              LvArray::system::callErrorHandler();
-            }
-          }
-          while( false );
-        }
-#elif __CUDA_ARCH__
-        do
-        {
-          if( !( lhsResult == rhsResult ) )
-          {
-            static char const formatString[] = "***** ERROR\n"
-                                               "***** LOCATION" LOCATION "\n"
-                                                                         "***** BLOCK:  [%u, %u, %u]\n"
-                                                                         "***** THREAD: [%u, %u, %u]\n"
-                                                                         "***** " STRINGIZE(
-              "Expected: " "blocksCount" " " "==" " " "coupledCount" "\n* " "blocksCount" " = " << lhsResult << "\n* " "coupledCount" " = " << rhsResult << "\n" ) "\n"
-                                                                                                                                                                   "***** "
-                                               STRINGIZE( GEOS_DETAIL_FIRST_ARG( "" ) ) "\n\n";
-            printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z );
-            asm ( "trap;" );
-          }
-        }
-        while( false );
-#endif
+        GEOS_ASSERT_EQ( blocksCount, coupledCount );
         std::copy( blockVals.dataIfContiguous(),
                    blockVals.dataIfContiguous() + blockVals.size(),
                    coupledVals.dataIfContiguous() );
