@@ -1231,6 +1231,29 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
       m_nextDt=43200;
     }
     wellControls.setWellState( true );
+    if( wellControls.getCurrentConstraint() == nullptr )
+    {
+      if( wellControls.isProducer() )
+      {
+        wellControls.forSubGroups< MinimumBHPConstraint >( [&]( auto & constraint )
+                                                           //wellControls.forSubGroups< PhaseProductionConstraint >( [&]( auto & constraint
+                                                           // )
+        {
+          wellControls.setCurrentConstraint( &constraint );
+          wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );    // tjb old
+        } );
+      }
+      else
+      {
+        // tjb needed for backward compatibility
+        //wellControls.forSubGroups< MaximumBHPConstraint >( [&]( auto & constraint )
+        wellControls.forSubGroups< TotalVolConstraint< InjectionConstraint > >( [&]( auto & constraint )
+        {
+          wellControls.setCurrentConstraint( &constraint );
+          wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );   // tjb old
+        } );
+      }
+    }
     // get well primary variables on well elements
     arrayView1d< real64 > const & wellElemPressure = subRegion.getField< well::pressure >();
     arrayView1d< real64 > const & wellElemTemp = subRegion.getField< well::temperature >();
@@ -1317,7 +1340,14 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
               connRate );
 
     updateVolRatesForConstraint( subRegion );
-
+    //  Since this is a well manager class the rates need to be pushed into the WellControls class, which represnets the well
+    WellConstraintBase * constraint =  wellControls.getCurrentConstraint();
+    constraint->setBHP ( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
+    constraint->setPhaseVolumeRates ( wellControls.getReference< array1d< real64 > >(
+                                        CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
+    constraint->setTotalVolumeRate ( wellControls.getReference< real64 >(
+                                       CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
+    constraint->setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
     // 7) Copy well / fluid dofs to "prop"_n variables
     saveState( subRegion );
   }
@@ -1329,45 +1359,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
   else
   {
     wellControls.setWellState( true );
-  }
-  // Initialize well with pressure constraint
-  if( wellControls.getWellState( ) )
-  {
-    if( wellControls.getCurrentConstraint() == nullptr )
-    {
-      if( wellControls.isProducer() )
-      {
-        wellControls.forSubGroups< MinimumBHPConstraint >( [&]( auto & constraint )
-                                                           //wellControls.forSubGroups< PhaseProductionConstraint >( [&]( auto & constraint
-                                                           // )
-        {
-          constraint.setBHP ( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
-          constraint.setPhaseVolumeRates ( wellControls.getReference< array1d< real64 > >(
-                                             CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
-          constraint.setTotalVolumeRate ( wellControls.getReference< real64 >(
-                                            CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
-          constraint.setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
-          wellControls.setCurrentConstraint( &constraint );
-          wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );    // tjb old
-        } );
-      }
-      else
-      {
-        // tjb needed for backward compatibility
-        //wellControls.forSubGroups< MaximumBHPConstraint >( [&]( auto & constraint )
-        wellControls.forSubGroups< TotalVolConstraint< InjectionConstraint > >( [&]( auto & constraint )
-        {
-          constraint.setBHP ( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
-          constraint.setPhaseVolumeRates ( wellControls.getReference< array1d< real64 > >(
-                                             CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
-          constraint.setTotalVolumeRate ( wellControls.getReference< real64 >(
-                                            CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
-          constraint.setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
-          wellControls.setCurrentConstraint( &constraint );
-          wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );   // tjb old
-        } );
-      }
-    }
+
   }
 }
 

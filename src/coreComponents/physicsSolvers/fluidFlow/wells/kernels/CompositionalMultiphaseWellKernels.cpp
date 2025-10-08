@@ -691,7 +691,7 @@ RateInitializationKernel::
     {
       forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
       {
-        connRate[iwelem] = LvArray::math::max( 0.1 * constraintVal * totalDens[iwelem][0], 1e3 );
+        connRate[iwelem] =  constraintVal * totalDens[iwelem][0];
       } );
     }
     else if( controlType == ConstraintTypeId::MASSRATE )
