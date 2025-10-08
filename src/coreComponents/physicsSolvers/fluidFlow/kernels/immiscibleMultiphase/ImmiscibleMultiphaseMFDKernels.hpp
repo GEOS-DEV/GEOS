@@ -561,8 +561,9 @@ public:
       s.divSatFluxes += m_dt * F * f_conv;
       s.dDivSatFluxes_dP += m_dt * ( dF_dP * f_conv + F * dfconv_dP_loc );
       s.dDivSatFluxes_dS += m_dt * ( dF_dS * f_conv + F * dfconv_dS_loc );
-      for( integer j=0; j<NUM_FACE; ++j )
+      for( integer j=0; j<NUM_FACE; ++j ){
         s.dDivSatFluxes_dFaceVars[j] += m_dt * s.dMassFlux_dFacePres[i][j] * f_conv;
+      }
 
       // ---------------- Buoyancy term ----------------
       // Phase-specific beta for buoyancy selection
