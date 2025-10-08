@@ -654,10 +654,11 @@ partitionByCellGraph( AllMeshes & input,
     default:
     {
       GEOS_THROW( "Unknown partition method", InputError );
+      return{};
     }
   }
 
-  return{};
+
 }
 
 /**
