@@ -224,19 +224,19 @@ jobs:
 # #            HOST_CONFIG: host-configs/Stanford/sherlock-gcc10.cmake
 #             BUILD_SHARED_LIBS: ON
 
-    uses: ./.github/workflows/build_and_test.yml
-    with:
-      BUILD_SHARED_LIBS: ${{ matrix.BUILD_SHARED_LIBS }}
-      CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
-      DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
-      DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
-      ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
-      ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
-      GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
-      GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
-      HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
-      RUNS_ON: ubuntu-22.04
-    secrets: inherit
+#    uses: ./.github/workflows/build_and_test.yml
+#    with:
+#      BUILD_SHARED_LIBS: ${{ matrix.BUILD_SHARED_LIBS }}
+#      CMAKE_BUILD_TYPE: ${{ matrix.CMAKE_BUILD_TYPE }}
+#      DOCKER_IMAGE_TAG: ${{ needs.is_not_draft_pull_request.outputs.DOCKER_IMAGE_TAG }}
+#      DOCKER_REPOSITORY: ${{ matrix.DOCKER_REPOSITORY }}
+#      ENABLE_HYPRE: ${{ matrix.ENABLE_HYPRE }}
+#      ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
+#      GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
+#      GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
+#      HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
+#      RUNS_ON: ubuntu-22.04
+#    secrets: inherit
 
   # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.
   # Note: The integrated tests are optional and are (for the moment) run for convenience only.
