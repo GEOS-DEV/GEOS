@@ -238,7 +238,7 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
     // Receive local chunk into host buffer and then copy to hypre local vector (host/device)
     array1d< real64 > recvBuf( myLocal );
 
-    MPI_CHECK_ERROR( MPI_Scatterv( sendBuf,
+    MPI_CHECK_ERROR( MPI_Scatterv( const_cast< real64 * >( sendBuf ),
                                    counts.data(),
                                    displs.data(),
                                    MPI_DOUBLE,
