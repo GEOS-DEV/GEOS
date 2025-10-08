@@ -63,23 +63,6 @@ SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::SinglePhasePoromechan
 }
 
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::postInputInitialization()
-{
-  Base::postInputInitialization();
-
-  setMGRStrategy();
-}
-
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
-                                                                               DofManager & dofManager ) const
-{
-  dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
-                          SinglePhaseBase::viewKeyStruct::elemDofFieldString(),
-                          DofManager::Connector::Elem );
-}
-
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupSystem( DomainPartition & domain,
                                                                              DofManager & dofManager,
                                                                              CRSMatrix< real64, globalIndex > & localMatrix,
@@ -105,19 +88,6 @@ template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePostInitialConditionsPreSubGroups()
 {
   Base::initializePostInitialConditionsPreSubGroups();
-
-  string_array const & poromechanicsTargetRegionNames =
-    this->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
-  string_array const & flowTargetRegionNames =
-    this->flowSolver()->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
-  for( size_t i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
-  {
-    GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
-                   == flowTargetRegionNames.end(),
-                   GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
-                             getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], this->flowSolver()->getDataContext() ),
-                   InputError );
-  }
 
   // Populate sub-block solver parameters for block preconditioner
   LinearSolverParameters & linParams = this->m_linearSolverParameters.get();

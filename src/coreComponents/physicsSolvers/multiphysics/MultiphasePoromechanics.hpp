@@ -82,11 +82,6 @@ public:
    */
   /**@{*/
 
-  virtual void postInputInitialization() override;
-
-  virtual void setupCoupling( DomainPartition const & domain,
-                              DofManager & dofManager ) const override;
-
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
@@ -106,8 +101,6 @@ public:
 
 protected:
 
-  virtual void initializePostInitialConditionsPreSubGroups() override;
-
   virtual void setMGRStrategy()
   {
     if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
@@ -119,6 +112,8 @@ protected:
    * @param[in] subRegion the element subRegion
    */
   virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) override;
+
+  virtual string getFlowDofKey() const override { return CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(); }
 
 };
 

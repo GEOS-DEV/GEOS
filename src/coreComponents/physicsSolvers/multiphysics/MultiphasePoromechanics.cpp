@@ -48,23 +48,6 @@ MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::MultiphasePoromechanic
   : Base( name, parent )
 { }
 
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::postInputInitialization()
-{
-  Base::postInputInitialization();
-
-  setMGRStrategy();
-}
-
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
-                                                                              DofManager & dofManager ) const
-{
-  dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
-                          CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(),
-                          DofManager::Connector::Elem );
-}
-
 template<>
 void MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<>, SolidMechanicsLagrangianFEM >::assembleSystem( real64 const time,
                                                                                                                          real64 const dt,
@@ -186,34 +169,6 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::assembleElementBa
 
 
   this->solidMechanicsSolver()->getMaxForce() = LvArray::math::max( mechanicsMaxForce, poromechanicsMaxForce );
-}
-
-template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
-void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePostInitialConditionsPreSubGroups()
-{
-  Base::initializePostInitialConditionsPreSubGroups();
-
-  string_array const & poromechanicsTargetRegionNames =
-    this->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
-  string_array const & solidMechanicsTargetRegionNames =
-    this->solidMechanicsSolver()->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
-  string_array const & flowTargetRegionNames =
-    this->flowSolver()->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
-  for( size_t i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
-  {
-    GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(),
-                              poromechanicsTargetRegionNames[i] )
-                   == solidMechanicsTargetRegionNames.end(),
-                   GEOS_FMT( "{} {}: region {} must be a target region of {}",
-                             getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i],
-                             this->solidMechanicsSolver()->getDataContext() ),
-                   InputError );
-    GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
-                   == flowTargetRegionNames.end(),
-                   GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
-                             getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], this->flowSolver()->getDataContext() ),
-                   InputError );
-  }
 }
 
 template<>

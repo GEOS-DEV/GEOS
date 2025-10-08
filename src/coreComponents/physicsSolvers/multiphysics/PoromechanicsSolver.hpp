@@ -25,6 +25,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -125,6 +126,8 @@ public:
                              this->solidMechanicsSolver()->getName(),
                              EnumStrings< SolidMechanicsLagrangianFEM::TimeIntegrationOption >::toString( SolidMechanicsLagrangianFEM::TimeIntegrationOption::QuasiStatic ) ),
                    InputError );
+
+    setMGRStrategy();
   }
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final
@@ -251,6 +254,14 @@ public:
     solidMechanicsSolver()->setupDofs( domain, dofManager );
     flowSolver()->setupDofs( domain, dofManager );
     this->setupCoupling( domain, dofManager );
+  }
+
+  void setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+                      DofManager & dofManager ) const
+  {
+    dofManager.addCoupling( fields::solidMechanics::totalDisplacement::key(),
+                            getFlowDofKey(),
+                            DofManager::Connector::Elem );
   }
 
   virtual void assembleSystem( real64 const time,
@@ -448,6 +459,33 @@ public:
   }
 
 protected:
+
+  void initializePostInitialConditionsPreSubGroups()
+  {
+    Base::initializePostInitialConditionsPreSubGroups();
+
+    string_array const & poromechanicsTargetRegionNames =
+      this->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
+    string_array const & solidMechanicsTargetRegionNames =
+      this->solidMechanicsSolver()->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
+    string_array const & flowTargetRegionNames =
+      this->flowSolver()->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
+    for( size_t i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
+    {
+      GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(),
+                                poromechanicsTargetRegionNames[i] )
+                     == solidMechanicsTargetRegionNames.end(),
+                     GEOS_FMT( "{} {}: region {} must be a target region of {}",
+                               this->getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i],
+                               this->solidMechanicsSolver()->getDataContext() ),
+                     InputError );
+      GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
+                     == flowTargetRegionNames.end(),
+                     GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
+                               this->getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], this->flowSolver()->getDataContext() ),
+                     InputError );
+    }
+  }
 
   template< typename TYPE_LIST,
             typename KERNEL_WRAPPER,
@@ -699,7 +737,11 @@ protected:
     } );
   }
 
+  virtual void setMGRStrategy() = 0;
+
   virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) = 0;
+
+  virtual string getFlowDofKey() const = 0;
 
   virtual void validateNonlinearAcceleration() override
   {
