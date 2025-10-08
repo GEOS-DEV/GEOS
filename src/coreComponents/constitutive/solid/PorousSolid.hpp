@@ -128,6 +128,8 @@ public:
       dPorosity_dTemperature = 0.0;
     }
 
+    updateMatrixPermeability( k );
+
     // Save the derivative of solid density wrt pressure for the computation of the body force
     dSolidDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure( k );
   }
@@ -239,6 +241,31 @@ private:
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
 
     m_porosityUpdate.updateThermalExpansionCoefficient( k, thermalExpansionCoefficient );
+  }
+
+  GEOS_HOST_DEVICE
+  void updateMatrixPermeability( localIndex const k ) const
+  {
+    // Use the averaged volumetric strain from all quadrature points to get the cell-centered permeability
+    real64 const avgStrain[6] = m_solidUpdate.m_avgStrain[k];
+
+    real64 const volStrain = avgStrain[0] + avgStrain[1] + avgStrain[2];
+
+    // Use the averaged porosity from all quadrature points to get the cell-centered permeability
+    integer const numQuad = m_solidUpdate.m_strain[k].size();
+
+    real64 avgPorosity = 0.0;
+
+    for( localIndex q = 0; q < numQuad; ++q )
+    {
+      avgPorosity += m_porosityUpdate.getPorosity( k, q );
+    }
+
+    avgPorosity = avgPorosity/numQuad;
+    
+    m_permUpdate.updateFromPorosityAndStrain( k,                                                                               
+                                              volStrain,
+                                              avgPorosity );
   }
 
   GEOS_HOST_DEVICE

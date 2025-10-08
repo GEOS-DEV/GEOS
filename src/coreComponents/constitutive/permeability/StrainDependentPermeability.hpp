@@ -21,6 +21,7 @@
 #define GEOS_CONSTITUTIVE_PERMEABILITY_STRAINDEPENDENTPERMEABILITY_HPP_
 
 #include "constitutive/permeability/PermeabilityBase.hpp"
+#include "LvArray/src/tensorOps.hpp"
 
 
 namespace geos
@@ -58,7 +59,6 @@ public:
 
   GEOS_HOST_DEVICE
   virtual void updateFromPorosityAndStrain( localIndex const k,
-                                            localIndex const q,
                                             real64 const & volStrain,
                                             real64 const & porosity ) const override
   {
@@ -74,9 +74,9 @@ public:
              referencePermeability,
              m_strainDependenceConstants,
              volStrain,
-             m_permeability[k][q],
-             m_dPerm_dPorosity[k][q],
-             m_dPerm_dVolStrain[k][q] );
+             m_permeability[k][0],
+             m_dPerm_dPorosity[k][0],
+             m_dPerm_dVolStrain[k][0] );
   }
 
 private:
@@ -182,6 +182,8 @@ void StrainDependentPermeabilityUpdate::compute( real64 const & referencePorosit
                                                  arraySlice1d< real64 > const & dPerm_dVolStrain ) const
 { 
   (void)dPerm_dPorosity;
+
+  std::cout << "volStrain = " << volStrain << std::endl;
 
   real64 const por = 1 - (1 - referencePorosity) * LvArray::math::exp(-volStrain);
   
