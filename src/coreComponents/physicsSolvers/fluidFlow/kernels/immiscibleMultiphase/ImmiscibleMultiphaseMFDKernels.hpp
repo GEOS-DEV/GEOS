@@ -414,246 +414,202 @@ public:
     }
   }
 
+  // Refactored computeSaturationTransport: generic eta/beta upwinding with loc/nei notation
   GEOS_HOST_DEVICE
-  void computeSaturationTransport( localIndex const ei, StackVariables & s ) const
+  void computeSaturationTransport(localIndex const ei, StackVariables & s) const
   {
-    bool const PPU_Q = true;
-    // local fractional flow components for independent phase
-    auto fracFlow = [this] GEOS_HOST_DEVICE ( localIndex const er,
-                                              localIndex const esr,
-                                              localIndex const ei_local,
-                                              integer const indep,
-                                              real64 & f,
-                                              real64 & df_dP,
-                                              real64 & df_dS )
-    {
-      using Deriv = DerivMob;
-      
-      // Keep pressure and saturation derivatives since lambda depends on both
-      real64 Lambda = 0.0;   // == massLambda (before sign mapping)
-      real64 dLambda_dP = 0.0;
-      real64 dLambda_dS = 0.0; // derivative w.r.t. independent saturation (apply sign map below)
-      
-      // two-phase for now
-      for( integer ip=0; ip<2; ++ip )
-      {
-        real64 const lambda = m_phaseMobAll[er][esr][ei_local][ip];
-        real64 const dlambda_dP = m_dPhaseMobAll[er][esr][ei_local][ip][Deriv::dP];
-        real64 dlambda_dS_raw = m_dPhaseMobAll[er][esr][ei_local][ip][Deriv::dS];
+    // Upwind options
+    enum UpwindScheme : int { HU = 0, PPU = 1 };
+    UpwindScheme const scheme = UpwindScheme::HU; // expose later if needed
 
-        // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
-        real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
-        real64 const dlambda_dS = sgnS * dlambda_dS_raw;
-        
-        // accumulate total mobility derivatives for fractional flow denominator
-        Lambda += lambda;
-        dLambda_dP += dlambda_dP;
-        dLambda_dS += dlambda_dS;
-      }
-      
-      // Phase mobilities
-      real64 const lambda = m_phaseMobAll[er][esr][ei_local][indep];
-      real64 const dlambda_dP = m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dP];
-      // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
-      real64 const sgnS = ( indep == 0 ? 1.0 : -1.0 );
-      real64 const dlambda_dS = sgnS * m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dS];
+    using Deriv = DerivMob; // keep your existing derivative enum
 
-      // Fractional flow (mass based)
-      f = lambda/ Lambda;
-      df_dP = (dlambda_dP * Lambda - lambda * dLambda_dP) / (Lambda * Lambda);
-      df_dS = (dlambda_dS * Lambda - lambda * dLambda_dS) / (Lambda * Lambda);
-    };
-    
-    // local fractional flow components for independent phase
-    auto lambdaMob = [this] GEOS_HOST_DEVICE ( localIndex const er,
-                                              localIndex const esr,
-                                              localIndex const ei_local,
-                                              integer const indep,
-                                              real64 & lambda,
-                                              real64 & dlambda_dP,
-                                              real64 & dlambda_dS )
-    {
-      using Deriv = DerivMob;    
-      lambda = m_phaseMobAll[er][esr][ei_local][indep];
-      dlambda_dP = m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dP];
-      real64 const dlambda_dS_raw = m_dPhaseMobAll[er][esr][ei_local][indep][Deriv::dS];
-      // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
-      real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
-      dlambda_dS = sgnS * dlambda_dS_raw;
+    // --- Small types to hold eta and upwinded data (using loc/nei naming) ---
+    struct EtaData {
+      real64 valLoc;   real64 dP_Loc;   real64 dS_Loc;
+      real64 valNei;   real64 dP_Nei;   real64 dS_Nei;
     };
 
-    // Precompute local f and derivatives
-    real64 f_loc = 0.0, df_loc_dP = 0.0, df_loc_dS = 0.0;
-    fracFlow( m_er, m_esr, ei, m_indep, f_loc, df_loc_dP, df_loc_dS );
-    
-    // Precompute local f and derivatives
-    real64 f_dep_loc = 0.0, df_dep_loc_dP = 0.0, df_dep_loc_dS = 0.0;
-    fracFlow( m_er, m_esr, ei, 1-m_indep, f_dep_loc, df_dep_loc_dP, df_dep_loc_dS );
-    
-    real64 l_loc = 0.0, dl_loc_dP = 0.0, dl_loc_dS = 0.0;
-    lambdaMob( m_er, m_esr, ei, m_indep, l_loc, dl_loc_dP, dl_loc_dS );
-    
-    real64 l_dep_loc = 0.0, dl_dep_loc_dP = 0.0, dl_dep_loc_dS = 0.0;
-    lambdaMob( m_er, m_esr, ei, 1-m_indep, l_dep_loc, dl_dep_loc_dP, dl_dep_loc_dS );
+    struct UpwindedEta {
+      real64 alpha;    // upwind coefficient (1 -> loc, 0 -> nei)
+      real64 value;
+      real64 dP_Loc;   real64 dS_Loc;
+      real64 dP_Nei;   real64 dS_Nei;
+    };
 
-    for( integer i=0; i<NUM_FACE; ++i )
+    // ------------------------------
+    // 1) mobility builder: eta = lambda_gamma for a given phase
+    // ------------------------------
+    auto buildMobility = [this] GEOS_HOST_DEVICE (localIndex er, localIndex esr, localIndex ei_local, integer phase) -> EtaData {
+      EtaData out{};
+      out.valLoc = m_phaseMobAll[er][esr][ei_local][phase];
+      out.dP_Loc = m_dPhaseMobAll[er][esr][ei_local][phase][Deriv::dP];
+      real64 const dlambda_dS_raw = m_dPhaseMobAll[er][esr][ei_local][phase][Deriv::dS];
+      real64 const sgnS = (m_indep == 0 ? 1.0 : -1.0);
+      out.dS_Loc = sgnS * dlambda_dS_raw;
+      // initialize neighbor to equal local; caller will overwrite valNei/dNei if neighbor exists
+      out.valNei = out.valLoc;
+      out.dP_Nei = out.dP_Loc;
+      out.dS_Nei = out.dS_Loc;
+      return out;
+    };
+
+    // ------------------------------
+    // 2) fractional flow builder: eta = f_gamma = lambda_gamma / Lambda
+    //    uses buildMobility for each phase and computes derivatives for local cell
+    // ------------------------------
+    auto buildFracFlow = [buildMobility] GEOS_HOST_DEVICE (localIndex er, localIndex esr, localIndex ei_local, integer phase) -> EtaData {
+      EtaData mob0 = buildMobility(er, esr, ei_local, 0);
+      EtaData mob1 = buildMobility(er, esr, ei_local, 1);
+
+      real64 const Lambda     = mob0.valLoc + mob1.valLoc;
+      real64 const dLambda_dP = mob0.dP_Loc + mob1.dP_Loc;
+      real64 const dLambda_dS = mob0.dS_Loc + mob1.dS_Loc;
+
+      EtaData out{};
+      EtaData const & target = (phase == 0 ? mob0 : mob1);
+
+      real64 const lambda = target.valLoc;
+      real64 const dl_dP  = target.dP_Loc;
+      real64 const dl_dS  = target.dS_Loc;
+
+      // value and local derivatives (neigh init to local)
+      out.valLoc = lambda / Lambda;
+      out.dP_Loc = ( dl_dP * Lambda - lambda * dLambda_dP ) / ( Lambda * Lambda );
+      out.dS_Loc = ( dl_dS * Lambda - lambda * dLambda_dS ) / ( Lambda * Lambda );
+
+      out.valNei = out.valLoc;
+      out.dP_Nei = out.dP_Loc;
+      out.dS_Nei = out.dS_Loc;
+      return out;
+    };
+
+    // ------------------------------
+    // 3) generic applyUpwind helper:
+    //    given eta data and scalar beta, produce upwinded value and derivative partitions
+    //    alpha = 1 if beta >= 0 (use loc), alpha = 0 otherwise (use nei)
+    // ------------------------------
+    auto applyUpwind = [] GEOS_HOST_DEVICE (EtaData const & eta, real64 beta) -> UpwindedEta {
+      UpwindedEta u{};
+      u.alpha = (beta >= 0.0 ? 1.0 : 0.0); // simple step upwinding (HU/PPU use different betas)
+      u.value = u.alpha * eta.valLoc + (1.0 - u.alpha) * eta.valNei;
+      u.dP_Loc = u.alpha * eta.dP_Loc;
+      u.dS_Loc = u.alpha * eta.dS_Loc;
+      u.dP_Nei = (1.0 - u.alpha) * eta.dP_Nei;
+      u.dS_Nei = (1.0 - u.alpha) * eta.dS_Nei;
+      return u;
+    };
+
+    // ------------------------------
+    // 4) main face loop (almost identical structure but clearer naming)
+    // ------------------------------
+    for (integer i = 0; i < NUM_FACE; ++i)
     {
-      // Determine neighbor across face i
+      // face / neighbor bookkeeping (loc cell is `ei`)
       localIndex const lf = m_elemToFaces[ei][i];
-      // face-adjacent elements
-      localIndex const er0 = m_elemRegionList[lf][0];
-      localIndex const esr0 = m_elemSubRegionList[lf][0];
-      localIndex const ei0 = m_elemList[lf][0];
-      localIndex const er1 = m_elemRegionList[lf][1];
-      localIndex const esr1 = m_elemSubRegionList[lf][1];
-      localIndex const ei1 = m_elemList[lf][1];
+      localIndex const er0 = m_elemRegionList[lf][0]; localIndex const esr0 = m_elemSubRegionList[lf][0]; localIndex const ei0 = m_elemList[lf][0];
+      localIndex const er1 = m_elemRegionList[lf][1]; localIndex const esr1 = m_elemSubRegionList[lf][1]; localIndex const ei1 = m_elemList[lf][1];
 
-      // identify neighbor indices
       localIndex ner = -1, nesr = -1, nei = -1;
-      if( er0 == m_er && esr0 == m_esr && ei0 == ei ) { ner = er1; nesr = esr1; nei = ei1; }
-      else if( er1 == m_er && esr1 == m_esr && ei1 == ei ) { ner = er0; nesr = esr0; nei = ei0; }
-
-      // mass flux and derivatives for this one-sided face i (from cell to face)
-      real64 const F = s.MassFlux[i];
-      real64 const dF_dP = s.dMassFlux_dPres[i];
-      real64 const dF_dS = s.dMassFlux_dS[i];
-      
-      // buoyant flux and derivatives for this one-sided face i (from cell to face)
-      real64 const B = s.BuoyantFlux[i];
-      real64 const Phi_indep = s.BuoyantPPUFlux[i][m_indep];
-      real64 const Phi_dep = s.BuoyantPPUFlux[i][1-m_indep];
-      real64 const dB_dP = s.dBuoyantFlux_dPres[i];
-      real64 const dB_dS = s.dBuoyantFlux_dS[i];
-      
-      // Arithmetic average of fractional flow between local and neighbor (if any)
-      real64 f_nei = f_loc;
-      real64 df_nei_dP = df_loc_dP;
-      real64 df_nei_dS = df_loc_dS;
-      
-      real64 f_dep_nei = f_dep_loc;
-      real64 df_dep_nei_dP = df_dep_loc_dP;
-      real64 df_dep_nei_dS = df_dep_loc_dS;
-      
-      real64 l_nei = l_loc;
-      real64 dl_nei_dP = dl_loc_dP;
-      real64 dl_nei_dS = dl_loc_dS;
-      
-      real64 l_dep_nei = l_dep_loc;
-      real64 dl_dep_nei_dP = dl_dep_loc_dP;
-      real64 dl_dep_nei_dS = dl_dep_loc_dS;
-      
+      if (er0 == m_er && esr0 == m_esr && ei0 == ei) { ner = er1; nesr = esr1; nei = ei1; }
+      else if (er1 == m_er && esr1 == m_esr && ei1 == ei) { ner = er0; nesr = esr0; nei = ei0; }
       bool const hasNeighbor = (ner >= 0);
-      if( hasNeighbor )
-      {
-      
-        // compute neighbor fractional flow and its derivatives
-        fracFlow( ner, nesr, nei, m_indep, f_nei, df_nei_dP, df_nei_dS );
-        fracFlow( ner, nesr, nei, 1-m_indep, f_dep_nei, df_dep_nei_dP, df_dep_nei_dS );
-        
-        lambdaMob( ner, nesr, nei, m_indep, l_nei, dl_nei_dP, dl_nei_dS );
-        lambdaMob( ner, nesr, nei, 1-m_indep, l_dep_nei, dl_dep_nei_dP, dl_dep_nei_dS );
+
+      // fluxes and their derivatives
+      real64 const F = s.MassFlux[i];                 real64 const dF_dP = s.dMassFlux_dPres[i];   real64 const dF_dS = s.dMassFlux_dS[i];
+      real64 const B = s.BuoyantFlux[i];              real64 const dB_dP = s.dBuoyantFlux_dPres[i];real64 const dB_dS = s.dBuoyantFlux_dS[i];
+      real64 const Phi_indep = s.BuoyantPPUFlux[i][m_indep];
+      real64 const Phi_dep   = s.BuoyantPPUFlux[i][1 - m_indep];
+
+      // build eta data for independent and dependent phases (loc values)
+      EtaData f_indep = buildFracFlow(m_er, m_esr, ei, m_indep);
+      EtaData f_dep   = buildFracFlow(m_er, m_esr, ei, 1 - m_indep);
+      EtaData l_indep = buildMobility(m_er, m_esr, ei, m_indep);
+      EtaData l_dep   = buildMobility(m_er, m_esr, ei, 1 - m_indep);
+
+      // if neighbor exists, fetch neighbor loc-values and store them into .valNei/.d*_Nei
+      if (hasNeighbor) {
+        EtaData f_indep_nei = buildFracFlow(ner, nesr, nei, m_indep);
+        f_indep.valNei = f_indep_nei.valLoc; f_indep.dP_Nei = f_indep_nei.dP_Loc; f_indep.dS_Nei = f_indep_nei.dS_Loc;
+
+        EtaData f_dep_nei   = buildFracFlow(ner, nesr, nei, 1 - m_indep);
+        f_dep.valNei = f_dep_nei.valLoc; f_dep.dP_Nei = f_dep_nei.dP_Loc; f_dep.dS_Nei = f_dep_nei.dS_Loc;
+
+        EtaData l_indep_nei = buildMobility(ner, nesr, nei, m_indep);
+        l_indep.valNei = l_indep_nei.valLoc; l_indep.dP_Nei = l_indep_nei.dP_Loc; l_indep.dS_Nei = l_indep_nei.dS_Loc;
+
+        EtaData l_dep_nei   = buildMobility(ner, nesr, nei, 1 - m_indep);
+        l_dep.valNei = l_dep_nei.valLoc; l_dep.dP_Nei = l_dep_nei.dP_Loc; l_dep.dS_Nei = l_dep_nei.dS_Loc;
       }
 
-      // Upwind convex combination: beta = 1 if F >= 0 (use local), else 0 (use neighbor)
-      real64 beta_v = ( F >= 0.0 ) ? 1.0 : 0.0;
-      if (PPU_Q) {
-        beta_v = ( Phi_indep >= 0.0 ) ? 1.0 : 0.0;
-      }
-      real64 const f_int = beta_v * f_loc + ( 1.0 - beta_v ) * f_nei;
+      // ----- Convective term (use chosen advecting scalar for convective upwinding) -----
+      real64 const beta_conv = (scheme == UpwindScheme::PPU ? Phi_indep : F);
+      UpwindedEta f_conv = applyUpwind(f_indep, beta_conv);
 
-      // residual contribution and local Jacobians
-      s.divSatFluxes += m_dt * F * f_int;
-      // d/dP (local): dF/dP * f_int + F * beta_v * df_loc/dP (neighbor f has no local P dependence)
-      s.dDivSatFluxes_dP += m_dt * (dF_dP * f_int + F * beta_v * df_loc_dP);
-      // d/dS (local): dF/dS * f_int + F * beta_v * df_loc/dS (neighbor f has no local S dependence)
-      s.dDivSatFluxes_dS += m_dt * (dF_dS * f_int + F * beta_v * df_loc_dS);
-      // face pressure derivatives
-      for( integer j=0; j<NUM_FACE; ++j ){
-        s.dDivSatFluxes_dFaceVars[j] += m_dt * ( s.dMassFlux_dFacePres[i][j] * f_int );
-      }
-            
-      // neighbor Jacobian contributions on neighbor columns when applicable
-      if( hasNeighbor )
-      {
-        
-        // Upwind convex combination: beta = 1 if B >= 0 (use local), else 0 (use neighbor)
-        real64 beta_gamma_g = ( B >= 0.0 ) ? 1.0 : 0.0;
-        real64 beta_delta_g = ( B >= 0.0 ) ? 0.0 : 1.0;
-        if (PPU_Q) {
-            beta_gamma_g = ( Phi_indep >= 0.0 ) ? 1.0 : 0.0;
-            beta_delta_g = ( Phi_dep >= 0.0 ) ? 1.0 : 0.0;
-        }
+      s.divSatFluxes += m_dt * F * f_conv.value;
+      s.dDivSatFluxes_dP += m_dt * (dF_dP * f_conv.value + F * f_conv.dP_Loc);
+      s.dDivSatFluxes_dS += m_dt * (dF_dS * f_conv.value + F * f_conv.dS_Loc);
 
-        real64 const f_indep = beta_gamma_g * f_loc + (1-beta_gamma_g) * f_nei;
-        real64 const f_dep = beta_delta_g * f_dep_loc + (1-beta_delta_g) * f_dep_nei;
-        
-        real64 const l_indep = beta_gamma_g * l_loc + (1-beta_gamma_g) * l_nei;
-        real64 const l_dep = beta_delta_g * l_dep_loc + (1-beta_delta_g) * l_dep_nei;
-        
-        // derivatives of convex combinations local
-        real64 const df_indep_dP_loc = beta_gamma_g * df_loc_dP;
-        real64 const df_indep_dS_loc = beta_gamma_g * df_loc_dS;
-        real64 const df_dep_dP_loc = beta_delta_g * df_dep_loc_dP;
-        real64 const df_dep_dS_loc = beta_delta_g * df_dep_loc_dS;
-        real64 const dl_indep_dP_loc = beta_gamma_g * dl_loc_dP;
-        real64 const dl_indep_dS_loc = beta_gamma_g * dl_loc_dS;
-        real64 const dl_dep_dP_loc = beta_delta_g * dl_dep_loc_dP;
-        real64 const dl_dep_dS_loc = beta_delta_g * dl_dep_loc_dS;
-        
-        // derivatives of convex combinations neighbor
-        real64 const df_indep_dP_nei = (1-beta_gamma_g) * df_nei_dP;
-        real64 const df_indep_dS_nei = (1-beta_gamma_g) * df_nei_dS;
-        real64 const df_dep_dP_nei = (1-beta_delta_g) * df_dep_nei_dP;
-        real64 const df_dep_dS_nei = (1-beta_delta_g) * df_dep_nei_dS;
-        real64 const dl_indep_dP_nei = (1-beta_gamma_g) * dl_nei_dP;
-        real64 const dl_indep_dS_nei = (1-beta_gamma_g) * dl_nei_dS;
-        real64 const dl_dep_dP_nei = (1-beta_delta_g) * dl_dep_nei_dP;
-        real64 const dl_dep_dS_nei = (1-beta_delta_g) * dl_dep_nei_dS;
-        
-        real64 const db_flux_dP_loc = (
-                (df_indep_dP_loc * f_dep + f_indep * df_dep_dP_loc) * (l_indep + l_dep) * B
-              + f_indep * f_dep * (dl_indep_dP_loc + dl_dep_dP_loc) * B
-              + f_indep * f_dep * (l_indep + l_dep) * dB_dP
-            );
+      // chain rule contributions to face-pres DOFs
+      for (integer j = 0; j < NUM_FACE; ++j)
+        s.dDivSatFluxes_dFaceVars[j] += m_dt * s.dMassFlux_dFacePres[i][j] * f_conv.value;
 
-        real64 const db_flux_dS_loc = (
-                (df_indep_dS_loc * f_dep + f_indep * df_dep_dS_loc) * (l_indep + l_dep) * B
-              + f_indep * f_dep * (dl_indep_dS_loc + dl_dep_dS_loc) * B
-              + f_indep * f_dep * (l_indep + l_dep) * dB_dS
-            );
+      // ----- Buoyancy terms (use different betas to choose upwind direction) -----
+      real64 const beta_indep = (scheme == UpwindScheme::PPU ? Phi_indep : B);
+      real64 const beta_dep   = (scheme == UpwindScheme::PPU ? Phi_dep   : -B);
 
-        
-        real64 const db_flux_dP_nei = (
-                (df_indep_dP_nei * f_dep + f_indep * df_dep_dP_nei) * (l_indep + l_dep) * B
-              + f_indep * f_dep * (dl_indep_dP_nei + dl_dep_dP_nei) * B
-            );
+      UpwindedEta f_up_indep = applyUpwind(f_indep, beta_indep);
+      UpwindedEta f_up_dep   = applyUpwind(f_dep,   beta_dep);
+      UpwindedEta l_up_indep = applyUpwind(l_indep, beta_indep);
+      UpwindedEta l_up_dep   = applyUpwind(l_dep,   beta_dep);
 
-        real64 const db_flux_dS_nei = (
-                (df_indep_dS_nei * f_dep + f_indep * df_dep_dS_nei) * (l_indep + l_dep) * B
-              + f_indep * f_dep * (dl_indep_dS_nei + dl_dep_dS_nei) * B
-            );
-        
+      real64 const f_ind = f_up_indep.value;
+      real64 const f_dep_v = f_up_dep.value;
+      real64 const l_sum = l_up_indep.value + l_up_dep.value;
+      real64 const buoy_factor = f_ind * f_dep_v * l_sum;
 
-        // residual contribution and local Jacobians
-        s.divSatFluxes += m_dt * f_indep * f_dep *  (l_indep + l_dep) * B;
-        s.dDivSatFluxes_dP += m_dt * db_flux_dP_loc;
-        s.dDivSatFluxes_dS += m_dt * db_flux_dS_loc;
-        
-        // Neighbor global dof indices: pressure and saturation of independent phase
+      s.divSatFluxes += m_dt * buoy_factor * B;
+
+      // local contribution derivative helper (derivative wrt local P or S)
+      auto dBuoy_dLocal = [&](bool dP) -> real64 {
+        real64 df_ind = dP ? f_up_indep.dP_Loc : f_up_indep.dS_Loc;
+        real64 df_dep = dP ? f_up_dep.dP_Loc   : f_up_dep.dS_Loc;
+        real64 dl_ind = dP ? l_up_indep.dP_Loc  : l_up_indep.dS_Loc;
+        real64 dl_dep = dP ? l_up_dep.dP_Loc    : l_up_dep.dS_Loc;
+        real64 dB = dP ? dB_dP : dB_dS;
+        // product rule: B * d(buoy_factor) + buoy_factor * dB
+        return m_dt * ( B * ( (df_ind * f_dep_v + f_ind * df_dep) * l_sum + f_ind * f_dep_v * (dl_ind + dl_dep) ) + buoy_factor * dB );
+      };
+
+      s.dDivSatFluxes_dP += dBuoy_dLocal(true);
+      s.dDivSatFluxes_dS += dBuoy_dLocal(false);
+
+      // neighbor contributions (if neighbor exists) -- place in neighbor columns
+      if (hasNeighbor) {
+        // convective neighbor contribution
+        real64 const conv_dP_nei = m_dt * F * f_conv.dP_Nei;
+        real64 const conv_dS_nei = m_dt * F * f_conv.dS_Nei;
+
+        // buoyancy neighbor contribution: derivative of buoy_factor with respect to neighbor P/S
+        auto dBuoy_dNei = [&](bool dP) -> real64 {
+          real64 df_ind = dP ? f_up_indep.dP_Nei : f_up_indep.dS_Nei;
+          real64 df_dep = dP ? f_up_dep.dP_Nei   : f_up_dep.dS_Nei;
+          real64 dl_ind = dP ? l_up_indep.dP_Nei  : l_up_indep.dS_Nei;
+          real64 dl_dep = dP ? l_up_dep.dP_Nei    : l_up_dep.dS_Nei;
+          return m_dt * B * ( (df_ind * f_dep_v + f_ind * df_dep) * l_sum + f_ind * f_dep_v * (dl_ind + dl_dep) );
+        };
+
+        real64 const buoy_dP_nei = dBuoy_dNei(true);
+        real64 const buoy_dS_nei = dBuoy_dNei(false);
+
         globalIndex const neiP = m_elemDofNumber[ner][nesr][nei];
         globalIndex const neiS = neiP + 1;
-        
-        s.neiCols[s.numNeiCols] = neiP;
-        s.neiVals[s.numNeiCols] += m_dt * F * ( 1.0 - beta_v ) * df_nei_dP;
-        s.neiVals[s.numNeiCols] += m_dt * db_flux_dP_nei;
-        s.numNeiCols += 1;
-        s.neiCols[s.numNeiCols] = neiS;
-        s.neiVals[s.numNeiCols] += m_dt * F * ( 1.0 - beta_v ) * df_nei_dS;
-        s.neiVals[s.numNeiCols] += m_dt * db_flux_dS_nei;
-        s.numNeiCols += 1;
+        s.neiCols[s.numNeiCols] = neiP; s.neiVals[s.numNeiCols] += conv_dP_nei + buoy_dP_nei; s.numNeiCols += 1;
+        s.neiCols[s.numNeiCols] = neiS; s.neiVals[s.numNeiCols] += conv_dS_nei + buoy_dS_nei; s.numNeiCols += 1;
       }
-    }
+    } // end face loop
   }
+
 
   GEOS_HOST_DEVICE
   void compute( localIndex const ei, StackVariables & s) const
