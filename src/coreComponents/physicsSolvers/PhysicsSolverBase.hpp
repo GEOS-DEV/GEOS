@@ -52,6 +52,9 @@ class PhysicsSolverBase : public ExecutableGroup
 {
 public:
 
+  /**
+   * @brief Type of the stat output
+   */
   enum class StatsOutputType : int
   {
     none, iteration, convergence, all
@@ -1269,6 +1272,9 @@ void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, s
                                                      getDataContext(), constitutiveType, subRegion.getName() ) );
 }
 
+/**
+ * @brief String for the stats output type
+ */
 ENUM_STRINGS( PhysicsSolverBase::StatsOutputType,
               "none",
               "iteration",
