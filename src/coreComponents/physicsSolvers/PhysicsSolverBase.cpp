@@ -106,7 +106,9 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setApplyDefaultValue( StatsOutputType::none ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "When set to 1, output iterations information to a csv\nWhen set to 2 also output convergence information to a csv" );
+    setDescription( "When set to `iteration`, output iterations information to a csv\n"
+                    "When set to `convergence`, output convergence information to a csv\n"
+                    "When set to `all` output both convergence & iteration information to a csv" );
 
   addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::Fields >();
