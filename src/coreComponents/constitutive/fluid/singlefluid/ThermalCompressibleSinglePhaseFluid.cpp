@@ -32,7 +32,6 @@ namespace constitutive
 ThermalCompressibleSinglePhaseFluid::ThermalCompressibleSinglePhaseFluid( string const & name, Group * const parent ):
   CompressibleSinglePhaseFluid( name, parent )
 {
-  m_densityModelType = ExponentApproximationType::Full;
   m_numDOF=2;
   registerWrapper( viewKeyStruct::thermalExpansionCoeffString(), &m_thermalExpansionCoeff ).
     setApplyDefaultValue( 0.0 ).
