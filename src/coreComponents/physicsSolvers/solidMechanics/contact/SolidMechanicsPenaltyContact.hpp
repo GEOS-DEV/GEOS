@@ -37,8 +37,6 @@ public:
   SolidMechanicsPenaltyContact( const string & name,
                                 Group * const parent );
 
-  ~SolidMechanicsPenaltyContact() override;
-
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
@@ -55,13 +53,9 @@ public:
   /// String used to form the solverName used to register single-physics solvers in CoupledSolver
   static string coupledSolverAttributePrefix() { return "PenaltyContact"; }
 
-  virtual void
-  setupSystem( DomainPartition & domain,
-               DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
-               ParallelVector & rhs,
-               ParallelVector & solution,
-               bool const setSparsity = true ) override final;
+  virtual void setSparsityPattern( DofManager & dofManager,
+                                   DomainPartition & domain,
+                                   SparsityPattern< globalIndex > & pattern ) override final;
 
   virtual void
   assembleSystem( real64 const time,
