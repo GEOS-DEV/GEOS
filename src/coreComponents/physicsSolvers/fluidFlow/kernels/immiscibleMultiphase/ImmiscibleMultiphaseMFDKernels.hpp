@@ -419,7 +419,7 @@ public:
     // Buoyancy term uses product (lambda_ind * lambda_dep)/(lambda_ind + lambda_dep) * B.
 
     enum UpwindScheme : int { HU = 0, PPU = 1 };
-    UpwindScheme const scheme = UpwindScheme::PPU; // fixed for now
+    UpwindScheme const scheme = UpwindScheme::HU; // fixed for now
 
     using Deriv = DerivMob;
 
