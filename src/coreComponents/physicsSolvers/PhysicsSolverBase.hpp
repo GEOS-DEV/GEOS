@@ -55,7 +55,7 @@ public:
   /**
    * @brief Type of the stat output
    */
-  enum class StatsOutputType : int
+  enum class StatsOutputType : integer
   {
     none, iteration, convergence, all
   };
