@@ -154,7 +154,7 @@ public:
                                          localIndex const numPts ) override;
 
   /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
-  using KernelWrapper = CompressibleSinglePhaseUpdate< ExponentApproximationType::Full, ExponentApproximationType::Linear >;
+  using KernelWrapper = CompressibleSinglePhaseUpdate< ExponentApproximationType::Linear, ExponentApproximationType::Linear >;
 
   /**
    * @brief Create an update kernel wrapper.

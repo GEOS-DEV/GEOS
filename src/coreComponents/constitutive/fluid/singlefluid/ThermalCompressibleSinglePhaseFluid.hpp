@@ -205,7 +205,7 @@ public:
   using CompressibleSinglePhaseFluid::m_densityModelType;
 
   /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
-  using KernelWrapper = ThermalCompressibleSinglePhaseUpdate< ExponentApproximationType::Full, ExponentApproximationType::Linear, ExponentApproximationType::Linear >;
+  using KernelWrapper = ThermalCompressibleSinglePhaseUpdate< ExponentApproximationType::Linear, ExponentApproximationType::Linear, ExponentApproximationType::Linear >;
 
   /**
    * @brief Create an update kernel wrapper.
