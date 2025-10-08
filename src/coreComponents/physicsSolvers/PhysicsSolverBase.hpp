@@ -52,6 +52,11 @@ class PhysicsSolverBase : public ExecutableGroup
 {
 public:
 
+  enum class StatsOutputType : int
+  {
+    none, iteration, convergence, all
+  };
+
   /**
    * @brief Constructor for PhysicsSolverBase
    * @param name the name of this instantiation of PhysicsSolverBase
@@ -1155,7 +1160,7 @@ protected:
 
   /// When set to 1 output to log iterations information
   /// When set to 2 additionnaly output csv files containing iterations & convergence information
-  integer m_writeStatisticsCSV;
+  StatsOutputType m_writeStatisticsCSV;
 
   /// Linear solver parameters
   LinearSolverParametersInput m_linearSolverParameters;
@@ -1263,6 +1268,12 @@ void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, s
   GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{}: {} constitutive model not found on subregion {}",
                                                      getDataContext(), constitutiveType, subRegion.getName() ) );
 }
+
+ENUM_STRINGS( PhysicsSolverBase::StatsOutputType,
+              "none",
+              "iteration",
+              "convergence",
+              "all" );
 
 } // namespace geos
 
