@@ -256,8 +256,8 @@ public:
     this->setupCoupling( domain, dofManager );
   }
 
-  void setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
-                      DofManager & dofManager ) const
+  virtual void setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+                              DofManager & dofManager ) const override
   {
     dofManager.addCoupling( fields::solidMechanics::totalDisplacement::key(),
                             getFlowDofKey(),
