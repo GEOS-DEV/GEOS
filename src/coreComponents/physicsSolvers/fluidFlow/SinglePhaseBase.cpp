@@ -602,9 +602,9 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     arrayView1d< real64 > const temp = subRegion.getField< flow::temperature >();
 
 
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
+    RAJA::ReduceMin< parallelHostReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
-    forAll< parallelDevicePolicy< > >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+    forAll< parallelHostPolicy >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
