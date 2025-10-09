@@ -460,7 +460,7 @@ public:
 
 protected:
 
-  void initializePostInitialConditionsPreSubGroups()
+  virtual void initializePostInitialConditionsPreSubGroups() override
   {
     Base::initializePostInitialConditionsPreSubGroups();
 
