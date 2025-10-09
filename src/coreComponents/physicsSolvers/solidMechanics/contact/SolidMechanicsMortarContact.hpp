@@ -332,7 +332,7 @@ class TreeNodeMortar
   };
   
 
-}; /* namespace geos */
+} /* namespace geos */
 
 
 
