@@ -431,8 +431,8 @@ protected:
                            real64 const & dt,
                            DomainPartition & domain ) = 0;
 
-  virtual bool evaluateConstraints( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                    WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion )) { return false;};
+  virtual bool evaluateConstraints( real64 const & time_n,
+                                    WellElementSubRegion & subRegion ) = 0;
 
 
   /// name of the flow solver

@@ -165,7 +165,7 @@ public:
    * @brief Recompute the volumetric rate that are used in the well constraints
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual void updateVolRateForConstraint( WellElementSubRegion & subRegion );
+  virtual void calculateReferenceElementRates( WellElementSubRegion & subRegion );
 
   /**
    * @brief Recompute the BHP pressure that is used in the well constraints
@@ -178,6 +178,11 @@ public:
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
   virtual void updateFluidModel( WellElementSubRegion & subRegion ) const;
+  /**
+   * @brief Update separator model state
+   * @param subRegion the well subRegion containing the separator
+   */
+  void updateSeparator( WellElementSubRegion & subRegion );
 
   /**
    * @brief Recompute the perforation rates for all the wells
@@ -338,6 +343,10 @@ public:
 
 protected:
 
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  void saveState( WellElementSubRegion & subRegion );
+
   void printRates( real64 const & time_n,
                    real64 const & dt,
                    DomainPartition & domain ) override;
@@ -366,6 +375,14 @@ private:
                                         real64 const & dt,
                                         WellElementSubRegion const & subRegion,
                                         ElementRegionManager const & elemManager ) override;
+
+  virtual bool evaluateConstraints( real64 const & time_n,
+                                    WellElementSubRegion & subRegion ) override;
+
+  /**
+   * @brief Create well separator
+   */
+  void createSeparator();
 
 };
 
