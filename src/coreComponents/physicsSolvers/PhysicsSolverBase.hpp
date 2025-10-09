@@ -914,7 +914,7 @@ public:
    * @brief return the name of the discretization object
    * @return the name of the discretization object
    */
-  virtual string getDiscretizationName() const {return m_discretizationName;}
+  string getDiscretizationName() const {return m_discretizationName;}
 
   /**
    * @brief function to set the value of m_assemblyCallback

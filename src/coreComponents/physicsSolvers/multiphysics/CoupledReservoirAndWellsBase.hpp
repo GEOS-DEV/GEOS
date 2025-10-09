@@ -181,6 +181,9 @@ public:
   {
     Base::postInputInitialization();
 
+    // assume that reservoir solver discretization is the primary one
+    this->m_discretizationName = reservoirSolver()->getDiscretizationName();
+
     setMGRStrategy();
   }
 
@@ -243,9 +246,6 @@ public:
 
   virtual void saveSequentialIterationState( DomainPartition & domain ) override
   { reservoirSolver()->saveSequentialIterationState( domain ); }
-
-  virtual string getDiscretizationName() const override
-  { return reservoirSolver()->getDiscretizationName(); }
 
 protected:
 
