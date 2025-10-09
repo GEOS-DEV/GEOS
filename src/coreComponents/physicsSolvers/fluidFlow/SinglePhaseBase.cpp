@@ -523,6 +523,8 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
       tempTableWrapper = tempTable.createKernelWrapper();
     }
 
+    printf("here1\n");
+
     // filter out region not in target
     Group const & region = subRegion.getParent().getParent();
     auto it = regionFilter.find( region.getName() );
@@ -582,6 +584,8 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
                      std::runtime_error );
     } );
 
+    printf("here2\n");
+
     // Step 3.4: create hydrostatic pressure table
 
     string const tableName = fs.getName() + "_" + subRegion.getName() + "_table";
@@ -611,6 +615,8 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
       }
       minPressure.min( pres[k] );
     } );
+
+    printf("here3\n");
 
     // For single phase flow, just issue a warning, because the simulation can proceed with a negative pressure
     GEOS_WARNING_IF( minPressure.get() <= 0.0,
