@@ -642,7 +642,7 @@ void DofManager::addCoupling( string const & rowFieldName,
   else
   {
     CouplingDescription & coupling = m_coupling.try_emplace( { rowFieldIndex, colFieldIndex } ).first->second;
-    addNewSupports( processSupportList, m_coupling[ { rowFieldIndex, colFieldIndex } ].support );
+    addNewSupports( processSupportList, coupling.support );
 
     // Set connectivity with active symmetry flag
     if( symmetric && colFieldIndex != rowFieldIndex )
