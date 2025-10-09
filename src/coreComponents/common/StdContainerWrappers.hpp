@@ -18,8 +18,26 @@ namespace geos
 #endif
 
 
+/**
+ * @file StdContainerWrappers.hpp
+ * 
+ * @warning: 
+ * It is prohibited to use `std::map` or `std::unordered_map` in the geos repos.
+ *
+ * @section Usage
+ * There are two ways to declare a map or unordered_map:
+ * 
+ * 1. **stdMap** / **stdUnorderedMap**:
+ *    - These types replace `std::map` with an overridden `operator[]` for bounds checking.
+ *    - We cannot use the operator[] for the insertion.
+ *
+ * 2. **geos::map** / **geos::unordered_map**:
+ *    - Use these types to ensure the compatibility with the geos packing, as `stdMap` is not yet compatible.
+ */
 namespace internal
 {
+
+  
 
 /**
  * Default allocator type for std::vector.
