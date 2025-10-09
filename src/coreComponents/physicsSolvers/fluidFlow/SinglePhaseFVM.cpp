@@ -28,6 +28,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
+#include "linearAlgebra/multiscale/MultiscalePreconditioner.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseFields.hpp"
@@ -58,7 +59,11 @@ template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
                                         dataRepository::Group * const parent ):
   BASE( name, parent )
-{ }
+{
+  LinearSolverParameters & linParams = m_linearSolverParameters.get();
+  linParams.multiscale.fieldName = BASE::viewKeyStruct::elemDofFieldString();
+  linParams.multiscale.label = "flow";
+}
 
 template< typename BASE >
 void SinglePhaseFVM< BASE >::initializePreSubGroups()
@@ -118,9 +123,12 @@ std::unique_ptr< PreconditionerBase< LAInterface > >
 SinglePhaseFVM< BASE >::createPreconditioner( DomainPartition & domain ) const
 {
   LinearSolverParameters const & linParams = m_linearSolverParameters.get();
-  GEOS_UNUSED_VAR( domain );
   switch( linParams.preconditionerType )
   {
+    case LinearSolverParameters::PreconditionerType::multiscale:
+    {
+      return std::make_unique< MultiscalePreconditioner< LAInterface > >( linParams, domain );
+    }
     default:
     {
       return PhysicsSolverBase::createPreconditioner( domain );

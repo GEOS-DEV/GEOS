@@ -479,13 +479,6 @@ public:
 
     /// string/key for default Young's modulus
     static constexpr char const * defaultYoungModulusString() { return "defaultYoungModulus"; }
-
-    /// string/key for bulk modulus
-    static constexpr char const * bulkModulusString() { return "bulkModulus"; }
-
-    /// string/key for shear modulus
-    static constexpr char const * shearModulusString() { return "shearModulus"; }
-
   };
 
   /**

@@ -22,6 +22,7 @@
 #include "SinglePhasePoromechanics.hpp"
 
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "linearAlgebra/multiscale/MultiscalePreconditioner.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
 #include "physicsSolvers/multiphysics/poromechanicsKernels/SinglePhasePoromechanicsDamage.hpp"
@@ -380,6 +381,10 @@ SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::createPreconditioner(
                            this->flowSolver()->createPreconditioner( domain ) );
 
       return precond;
+    }
+    case LinearSolverParameters::PreconditionerType::multiscale:
+    {
+      return std::make_unique< MultiscalePreconditioner< LAInterface > >( linParams, domain );
     }
     default:
     {

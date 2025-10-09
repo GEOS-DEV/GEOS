@@ -32,8 +32,6 @@ public:
   SolidMechanicsEmbeddedFractures( const string & name,
                                    Group * const parent );
 
-  ~SolidMechanicsEmbeddedFractures() override;
-
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
@@ -52,12 +50,10 @@ public:
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
-  virtual void setupSystem( DomainPartition & domain,
-                            DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution,
-                            bool const setSparsity = true ) override;
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override;
 
   virtual void implicitStepComplete( real64 const & time_n,
                                      real64 const & dt,
