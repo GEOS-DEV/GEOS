@@ -252,7 +252,7 @@ public:
     real64 const rho_indep = m_phaseDens[ei][0][m_indep];
     real64 const drho_dep_dP = m_dPhaseDens[ei][0][dep][Deriv::dP];
     real64 const drho_indep_dP = m_dPhaseDens[ei][0][m_indep][Deriv::dP];
-
+   
     real64 const delta_rho = rho_dep - rho_indep;
     real64 const ddelta_rho_dP = drho_dep_dP - drho_indep_dP;
     
@@ -525,9 +525,9 @@ public:
       real64 const F  = s.MassFlux[i];
       real64 const dF_dP = s.dMassFlux_dPres[i];
       real64 const dF_dS = s.dMassFlux_dS[i];
-      real64 const B  = s.BuoyantFlux[i];
-      real64 const dB_dP = s.dBuoyantFlux_dPres[i];
-      real64 const dB_dS = s.dBuoyantFlux_dS[i];
+      real64 B  = s.BuoyantFlux[i];
+      real64 dB_dP = s.dBuoyantFlux_dPres[i];
+      real64 dB_dS = s.dBuoyantFlux_dS[i];
       // phase potentials (PPU) stored previously
       real64 const F_ind = (scheme==PPU) ? s.PhaseMassFlux[i][m_indep]     : 0.0;
       real64 const F_dep = (scheme==PPU) ? s.PhaseMassFlux[i][1-m_indep]   : 0.0;
@@ -541,6 +541,10 @@ public:
         mob_ind.valNei = mob_ind_nei.valLoc; mob_ind.dP_Nei = mob_ind_nei.dP_Loc; mob_ind.dS_Nei = mob_ind_nei.dS_Loc;
         MobData mob_dep_nei = buildMobility( ner, nesr, nei, 1-m_indep );
         mob_dep.valNei = mob_dep_nei.valLoc; mob_dep.dP_Nei = mob_dep_nei.dP_Loc; mob_dep.dS_Nei = mob_dep_nei.dS_Loc;
+      }
+      else{
+        // this translate to no-buoynacy flow boundary for saturation transport
+        B = 0.0; dB_dP = 0.0; dB_dS = 0.0; // no buoyancy without neighbor
       }
 
       // ---------------- Convective term ----------------
