@@ -285,6 +285,26 @@ struct ConstitutivePassThru< DamageBase >
 };
 
 
+template<>
+struct ConstitutivePassThru< PorousSolid<ElasticIsotropic, ConstantPermeability>>
+{
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase& constitutiveRelation, LAMBDA&& lambda)
+  {
+    if (auto * const ptr = dynamic_cast<PorousSolid<ElasticIsotropic, ConstantPermeability>*>( &constitutiveRelation))
+    {
+      lambda(*ptr);
+   
+    }
+    else {
+      GEOS_ERROR("ConstitutivePassThru< PorousSolid<ElasticIsotropic>>::execute failed on constitutive relation");
+    }
+  }
+
+
+};
+
 
 /**
  * Specialization for the PorousSolid models.
@@ -295,14 +315,15 @@ struct ConstitutivePassThru< PorousSolidBase >
   template< typename LAMBDA >
   static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
-    ConstitutivePassThruHandler< PorousSolid< DruckerPragerExtended, ConstantPermeability >,
+    ConstitutivePassThruHandler< 
+                                 PorousSolid< ElasticIsotropic, ConstantPermeability >,
+                                 PorousSolid< DruckerPragerExtended, ConstantPermeability >,
                                  PorousSolid< ModifiedCamClay, ConstantPermeability >,
                                  PorousSolid< DelftEgg, ConstantPermeability >,
                                  PorousSolid< DruckerPrager, ConstantPermeability >,
                                  PorousSolid< DuvautLionsSolid< DruckerPrager >, ConstantPermeability >,
                                  PorousSolid< DuvautLionsSolid< DruckerPragerExtended >, ConstantPermeability >,
                                  PorousSolid< DuvautLionsSolid< ModifiedCamClay >, ConstantPermeability >,
-                                 PorousSolid< ElasticIsotropic, ConstantPermeability >,
                                  PorousSolid< ElasticTransverseIsotropic, ConstantPermeability >,
                                  PorousSolid< ElasticIsotropicPressureDependent, ConstantPermeability >,
                                  PorousSolid< ElasticOrthotropic, ConstantPermeability >,
@@ -457,7 +478,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< DuvautLionsSolid< DruckerPrager >, ConstantPermeability >,
                                  PorousSolid< DuvautLionsSolid< DruckerPragerExtended >, ConstantPermeability >,
                                  PorousSolid< DuvautLionsSolid< ModifiedCamClay >, ConstantPermeability >,
-                                 PorousSolid< ElasticIsotropic, ConstantPermeability >,
+                                //  PorousSolid< ElasticIsotropic, ConstantPermeability >,
                                  PorousSolid< ElasticTransverseIsotropic, ConstantPermeability >,
                                  PorousSolid< ElasticIsotropicPressureDependent, ConstantPermeability >,
                                  PorousSolid< ElasticOrthotropic, ConstantPermeability >,

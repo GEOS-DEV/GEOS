@@ -656,6 +656,9 @@ partitionByCellGraph( AllMeshes & input,
       GEOS_THROW( "Unknown partition method", InputError );
     }
   }
+
+  return {};
+  // __builtin_unreachable();
 }
 
 /**
