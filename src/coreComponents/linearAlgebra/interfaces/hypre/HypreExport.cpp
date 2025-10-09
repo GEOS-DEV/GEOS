@@ -238,15 +238,13 @@ void HypreExport::importVector( arrayView1d< real64 const > const & values,
     // Receive local chunk into host buffer and then copy to hypre local vector (host/device)
     array1d< real64 > recvBuf( myLocal );
 
-    MPI_CHECK_ERROR( MPI_Scatterv( sendBuf,
-                                   counts.data(),
-                                   displs.data(),
-                                   MPI_DOUBLE,
-                                   recvBuf.data(),
-                                   myLocal,
-                                   MPI_DOUBLE,
-                                   /*root*/ 0,
-                                   m_subComm ) );
+    MPI_CHECK_ERROR( MpiWrapper::scatterv( sendBuf,
+                                           counts.data(),
+                                           displs.data(),
+                                           recvBuf.data(),
+                                           myLocal,
+                                           /*root*/ 0,
+                                           m_subComm ) );
 
     hypre_TMemcpy( hypre_VectorData( localVector ),
                    recvBuf.data(),
