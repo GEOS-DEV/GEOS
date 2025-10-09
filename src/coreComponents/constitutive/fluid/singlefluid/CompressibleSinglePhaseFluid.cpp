@@ -66,7 +66,7 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
     setDescription( "Reference fluid viscosity" );
 
   registerWrapper( viewKeyStruct::densityModelTypeString(), &m_densityModelType ).
-    setApplyDefaultValue( ExponentApproximationType::Linear ).
+    setApplyDefaultValue( ExponentApproximationType::Full ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Type of density model. Valid options:\n* " + EnumStrings< ExponentApproximationType >::concat( "\n* " ) );
 
@@ -115,7 +115,7 @@ void CompressibleSinglePhaseFluid::postInputInitialization()
                              getFullName(), attribute, EnumStrings< ExponentApproximationType >::toString( expectedValue ) ),
                    InputError );
   };
-  checkModelType( m_densityModelType, ExponentApproximationType::Linear, viewKeyStruct::densityModelTypeString() );
+  checkModelType( m_densityModelType, ExponentApproximationType::Full, viewKeyStruct::densityModelTypeString() );
   checkModelType( m_viscosityModelType, ExponentApproximationType::Linear, viewKeyStruct::viscosityModelTypeString() );
 
   // Set default values for derivatives (cannot be done in base class)
