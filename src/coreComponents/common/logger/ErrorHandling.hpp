@@ -107,12 +107,12 @@ public:
     std::string m_msg;
     /// the cause of the error (erroneous condition, failed assertion...) if identified (optional)
     std::string m_cause;
+    /// the rank(s) on which the error occured
+    std::set< int > m_ranksInfo;
     /// the source location file corresponding to the error in the code
     std::string m_file;
     /// the source location line corresponding to the error in the code (default is 0)
     integer m_line = 0;
-    /// the rank(s) on which the error occured
-    std::vector< int > m_ranksInfo;
     /// Additional information about the error in the input file
     std::vector< ErrorContext > m_contextsInfo;
     /// the stack trace
@@ -128,11 +128,16 @@ public:
      * @brief Construct a new Error Message from parameters
      * @param msgType the type of the message (error or warning)
      * @param msgContent the error/warning message content
+     * @param rank the rank where the error occcured
      * @param msgFile the source file name where the error occcured
      * @param msgLine the line where the error occured
      */
-    ErrorMsg( MsgType msgType, std::string_view msgContent, std::string_view msgFile, integer msgLine )
-      : m_type( msgType ), m_msg( msgContent ), m_file( msgFile ), m_line( msgLine ) {}
+    ErrorMsg( MsgType msgType,
+              std::string_view msgContent,
+              integer rank,
+              std::string_view msgFile,
+              integer msgLine )
+      : m_type( msgType ), m_msg( msgContent ), m_ranksInfo( {rank} ), m_file( msgFile ), m_line( msgLine ) {}
 
     /**
      * @brief Add text to the current error msg
@@ -175,11 +180,11 @@ public:
     ErrorMsg & setCause( std::string_view cause );
 
     /**
-     * @brief Set the rank on which the error is raised
-     * @param rank The value to asign
+     * @brief Add a rank on which the error has been raised
+     * @param rank The value to add
      * @return Reference to the current instance for method chaining.
      */
-    ErrorMsg & setRank( int rank );
+    ErrorMsg & addRank( int rank );
 
     /**
      * @brief Add stack trace information about the error

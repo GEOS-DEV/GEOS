@@ -122,9 +122,9 @@ void ErrorLogger::ErrorMsg::addContextInfoImpl( ErrorLogger::ErrorContext && ctx
   m_contextsInfo.emplace_back( std::move( ctxInfo ) );
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setRank( int rank )
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addRank( int rank )
 {
-  m_ranksInfo.push_back( rank );
+  m_ranksInfo.emplace( rank );
   return *this;
 }
 
@@ -195,11 +195,7 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
   {
     // General errors info (type, rank on which the error occured)
     yamlFile << g_level1Start << "type: " << ErrorLogger::toString( errorMsg.m_type ) << "\n";
-    yamlFile << g_level1Next << "rank: ";
-    for( auto const & info: errorMsg.m_ranksInfo )
-    {
-      yamlFile << info;
-    }
+    yamlFile << g_level1Next << "rank: " << stringutilities::join( errorMsg.m_ranksInfo, "," );
     yamlFile << "\n";
 
     // Error message
