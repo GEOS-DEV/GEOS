@@ -115,7 +115,6 @@ JFunctionCapillaryPressure::JFunctionCapillaryPressure( std::string const & name
                     toString( PermeabilityDirection::Y ) + " - only use the permeability in the y direction,\n" +
                     toString( PermeabilityDirection::Z ) + " - only use the permeability in the z direction." );
 
-<<<<<<< HEAD
   registerField( fields::cappres::jFuncMultiplier{}, &m_jFuncMultiplier );
 
   registerWrapper( viewKeyStruct::jFunctionWrappersString(), &m_jFuncKernelWrappers ).
@@ -126,9 +125,6 @@ JFunctionCapillaryPressure::JFunctionCapillaryPressure( std::string const & name
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
-=======
-  registerField< fields::cappres::jFuncMultiplier >( &m_jFuncMultiplier );
->>>>>>> develop
 }
 
 void JFunctionCapillaryPressure::postInputInitialization()
