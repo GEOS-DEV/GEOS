@@ -94,15 +94,6 @@ public:
    */
   virtual bool isCoordInPartition( R1Tensor const & coords ) const = 0;
 
-  /**
-   * @brief Compute graph coloring for communication scheduling
-   *
-   * @pre m_neighborsRank must be set (via computeNeighborsFromTopology)
-   * @post m_color and m_numColors are set
-   *
-   */
-  virtual void color() = 0;
-
 protected:
 
   /**
