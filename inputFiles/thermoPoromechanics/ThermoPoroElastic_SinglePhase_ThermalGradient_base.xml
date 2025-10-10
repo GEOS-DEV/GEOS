@@ -160,7 +160,8 @@
             name="INITIALISATION"
             datumElevation="-3250"
             datumPressure="3.763746e7"
-            objectPath="ElementRegions"/>
+            objectPath="ElementRegions"
+            temperatureVsElevationTableName="initTempTable"/>
 
         <FieldSpecification
             name="xRoller"
