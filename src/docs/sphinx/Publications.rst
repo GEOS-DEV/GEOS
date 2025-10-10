@@ -4,7 +4,7 @@ Publications
 
 Last updated 10-October-2025
 
-Primary Theory  
+Referencing GEOS  
 =========================
 
 .. list-table::
