@@ -4,6 +4,19 @@ Publications
 
 Last updated 10-October-2025
 
+Primary Theory  
+=========================
+
+.. list-table::
+   :widths: 100
+   :header-rows: 0
+
+   * - | **GEOS: A performance portable multi-physics simulation framework for subsurface applications**
+       | RR Settgast, et al. 
+       | Journal of Open Source Software
+       | `doi:10.21105/joss.06973 <https://doi.org/10.21105/joss.06973>`_
+
+
 Preprints and Early-Views
 =========================
 
