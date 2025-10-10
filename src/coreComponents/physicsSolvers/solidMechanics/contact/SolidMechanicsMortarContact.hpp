@@ -13,7 +13,8 @@
       {
         GEOS_UNUSED_VAR( masterElementList );
         finiteElement::FiniteElementBase const & slaveFE = *(m_faceTypeToFiniteElements.at( slaveShape ));
-        finiteElement::FiniteElementBase const & masterFE = *(m_faceTypeToFiniteElements.at( masterShape ));Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+        finiteElement::FiniteElementBase const & masterFE = *(m_faceTypeToFiniteElements.at( masterShape ));Copyright (c) 2016-2024 Lawrence
+         *Livermore National Security LLC
  * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
@@ -47,15 +48,15 @@ using feTriangleCell = finiteElement::H1_TriangleFace_Lagrange1_Gauss4;
 
 struct MortarSurface
 {
-  MeshLevel* mesh = nullptr;
-  SurfaceElementRegion* surface = nullptr;
+  MeshLevel * mesh = nullptr;
+  SurfaceElementRegion * surface = nullptr;
 };
 
 class SolidMechanicsMortarContact : public ContactSolverBase
 {
 public:
   SolidMechanicsMortarContact( const string & name,
-                                            Group * const parent );
+                               Group * const parent );
 
   ~SolidMechanicsMortarContact() override;
 
@@ -72,15 +73,15 @@ public:
    */
   string getCatalogName() const override {return catalogName(); }
 
-  using connectivityMapType = std::map< std::pair< ElementShape, ElementShape >, ArrayOfArrays < localIndex > >;
+  using connectivityMapType = std::map< std::pair< ElementShape, ElementShape >, ArrayOfArrays< localIndex > >;
 
- 
+
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
   void registerMortarDataOnMesh( );
 
   void setupDofs( DomainPartition const & domain,
-                  DofManager & dofManager) const;
+                  DofManager & dofManager ) const  override;
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -126,9 +127,9 @@ public:
 
   void createBubbleCellList( ) const;
 
-  void setMortarSurfaces( DomainPartition & domain);
+  void setMortarSurfaces( DomainPartition & domain );
 
-  
+
 
 private:
 
@@ -174,8 +175,8 @@ private:
                         DofManager const & dofManager,
                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                         arrayView1d< real64 > const & localRhs );
-  
-  template< ElementShape shape>
+
+  template< ElementShape shape >
   void assembleMortarBubbles( DofManager const & dofManager,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs );
@@ -207,16 +208,16 @@ private:
 
   };
 
-  void computeMortarInterpolation ( connectivityMapType & connectivityMap);
+  void computeMortarInterpolation ( connectivityMapType & connectivityMap );
 
   template< ElementShape slaveShape, ElementShape masterShape >
-  void computeMortarInterpolation( ArrayOfArrays<localIndex> const & connections );
+  void computeMortarInterpolation( ArrayOfArrays< localIndex > const & connections );
 
   template< ElementShape slaveShape, ElementShape masterShape >
-  localIndex processMortarPair( localIndex const slaveFaceId, 
+  localIndex processMortarPair( localIndex const slaveFaceId,
                                 localIndex const masterFaceId,
                                 arraySlice1d< localIndex const > const & nodesSlave,
-                                arraySlice1d< localIndex const > const & nodesMaster, 
+                                arraySlice1d< localIndex const > const & nodesMaster,
                                 arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & coordsSlave,
                                 arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & coordsMaster,
                                 arrayView2d< localIndex > & cellPairs,
@@ -224,71 +225,71 @@ private:
                                 arrayView3d< real64 > & localCoordsSlave,
                                 arrayView3d< real64 > & localCoordsMaster,
                                 localIndex const & kPair );
-      
 
-  template< MortarSide side >                         
-  void projectPointInPlane( real64 const (& coord3d)[3],
-                            real64 const (& normal)[3],
-                            real64 const (& origin)[3],
-                            real64 (& proj2d)[2]);
 
-  template< localIndex sizePoly, localIndex sizeClipper>
-  void polygonClipping( array2d<real64> & poly, array2d<real64> & clipPoly);
+  template< MortarSide side >
+  void projectPointInPlane( real64 const (&coord3d)[3],
+                            real64 const (&normal)[3],
+                            real64 const (&origin)[3],
+                            real64 ( &proj2d )[2] );
 
-  void intersect(real64 x1, real64 y1,real64 x2, real64 y2,
-                 real64 x3, real64 y3,real64 x4, real64 y4,
-                 real64 & xInt, real64 & yInt);
+  template< localIndex sizePoly, localIndex sizeClipper >
+  void polygonClipping( array2d< real64 > & poly, array2d< real64 > & clipPoly );
 
-  void clip( array2d<real64> & poly,
-             real64 xc1, real64 yc1, real64 xc2, real64 yc2);
+  void intersect( real64 x1, real64 y1, real64 x2, real64 y2,
+                  real64 x3, real64 y3, real64 x4, real64 y4,
+                  real64 & xInt, real64 & yInt );
 
-  bool validateClip( array2d< real64 > & clipPoly);
+  void clip( array2d< real64 > & poly,
+             real64 xc1, real64 yc1, real64 xc2, real64 yc2 );
+
+  bool validateClip( array2d< real64 > & clipPoly );
 
   template< ElementShape shape >
-  void projectGP( real64 const (& coordsTri)[3][2],
-                  arrayView2d<real64 const> const & coordsElem,
-                  real64 (& xi)[nGPtri][2]);
+  void projectGP( real64 const (&coordsTri)[3][2],
+                  arrayView2d< real64 const > const & coordsElem,
+                  real64 ( &xi )[nGPtri][2] );
 
-  template<ElementShape shape>
-  bool checkInFE(real64 xi0, real64 xi1);
+  template< ElementShape shape >
+  bool checkInFE( real64 xi0, real64 xi1 );
 
-  template<localIndex numNodes>
-  void permuteN(real64 (& N)[numNodes]);
+  template< localIndex numNodes >
+  void permuteN( real64 ( &N )[numNodes] );
 
   void getConnectivityMap( connectivityMapType & connectivityMap );
 
-  void getMortarConnections( ElementShape slaveShape, ElementShape masterShape, ArrayOfArrays<localIndex> & connections);
+  void getMortarConnections( ElementShape slaveShape, ElementShape masterShape, ArrayOfArrays< localIndex > & connections );
 
   // Tandem traversal contact search between master and slave nodes
-  void contactSearch(std::unique_ptr<TreeNodeMortar> const & nodeMaster,
-                     std::unique_ptr<TreeNodeMortar> const & nodeSlave,
-                     ArrayOfArrays<localIndex> & connections);
+  void contactSearch( std::unique_ptr< TreeNodeMortar > const & nodeMaster,
+                      std::unique_ptr< TreeNodeMortar > const & nodeSlave,
+                      ArrayOfArrays< localIndex > & connections );
 
   // Check intersection between two bounding boxes using polytops primitives
-  bool checkIntersection(std::unique_ptr<TreeNodeMortar> const & nodeMaster,
-                         std::unique_ptr<TreeNodeMortar> const & nodeSlave);
+  bool checkIntersection( std::unique_ptr< TreeNodeMortar > const & nodeMaster,
+                          std::unique_ptr< TreeNodeMortar > const & nodeSlave );
 
   // retrieve finite element type from templated element shape
-  template<ElementShape S>
-  decltype(auto) getFE() 
+  template< ElementShape S >
+  decltype(auto) getFE()
   {
-    auto & femTypePtr = m_faceTypeToMortarFiniteElements.at(S); // unique_ptr<FiniteElementBase>
+    auto & femTypePtr = m_faceTypeToMortarFiniteElements.at( S ); // unique_ptr<FiniteElementBase>
 
-    if constexpr (S == ElementShape::Triangle) 
+    if constexpr (S == ElementShape::Triangle)
     {
-        using femType = finiteElement::H1_TriangleFace_Lagrange1_Gauss4;
-        
-        return *static_cast<femType*>(femTypePtr.get()); 
-    } 
-    else if constexpr (S == ElementShape::Quadrilateral) 
+      using femType = finiteElement::H1_TriangleFace_Lagrange1_Gauss4;
+
+      return *static_cast< femType * >(femTypePtr.get());
+    }
+    else if constexpr (S == ElementShape::Quadrilateral)
     {
-        using femType = finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2;
-        return *static_cast<femType*>(femTypePtr.get()); 
-    } 
-    else 
+      using femType = finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2;
+      return *static_cast< femType * >(femTypePtr.get());
+    }
+    else
     {
-        static_assert(S == ElementShape::Triangle || S == ElementShape::Quadrilateral,
-                      "Unsupported ElementShape");
+      static_assert( S == ElementShape::Triangle || S == ElementShape::Quadrilateral,
+                     "Unsupported ElementShape" );
     }
   }
 
@@ -296,41 +297,41 @@ private:
 
 // binary tree for efficient contact search
 class TreeNodeMortar
+{
+public:
+  std::unique_ptr< TreeNodeMortar > left = nullptr;
+  std::unique_ptr< TreeNodeMortar > right = nullptr;
+  bool isLeaf = false;
+
+  // primitives of polytopal bounding box
+  real64 polytop[18] =
   {
-  public:
-    std::unique_ptr<TreeNodeMortar> left = nullptr;
-    std::unique_ptr<TreeNodeMortar> right = nullptr;
-    bool isLeaf = false;
-
-     // primitives of polytopal bounding box 
-     real64 polytop[18] =
-    {
-      1e100, -1e100, 1e100, -1e100, 1e100,
-      -1e100, 1e100, -1e100, 1e100, -1e100,
-      1e100, -1e100, 1e100, -1e100, 1e100,
-      -1e100, 1e100, -1e100
-    }; 
-
-    static constexpr real64 boundingBoxExpansion = 0.025;
-
-    static constexpr localIndex  polytopPrimitives[3][9] = 
-    {
-      {  1,  0,  0,  1,  1,  0,  1,  1,  0 },
-      {  0,  1,  0,  1,  0,  1, -1,  0,  1 },
-      {  0,  0,  1,  0,  1,  1,  0, -1, -1 }
-    };
-
-     // id of face corresponding to leaf nodes  
-    localIndex leafId;  
-    
-    // populate a tree node (use recursion)
-    void createNode( MeshLevel const & mesh, 
-                     FaceElementSubRegion const & surf, 
-                     arrayView1d<localIndex> & surfId, 
-                     array1d<localIndex> & surfList );
-
+    1e100, -1e100, 1e100, -1e100, 1e100,
+    -1e100, 1e100, -1e100, 1e100, -1e100,
+    1e100, -1e100, 1e100, -1e100, 1e100,
+    -1e100, 1e100, -1e100
   };
-  
+
+  static constexpr real64 boundingBoxExpansion = 0.025;
+
+  static constexpr localIndex polytopPrimitives[3][9] =
+  {
+    {  1, 0, 0, 1, 1, 0, 1, 1, 0 },
+    {  0, 1, 0, 1, 0, 1, -1, 0, 1 },
+    {  0, 0, 1, 0, 1, 1, 0, -1, -1 }
+  };
+
+  // id of face corresponding to leaf nodes
+  localIndex leafId;
+
+  // populate a tree node (use recursion)
+  void createNode( MeshLevel const & mesh,
+                   FaceElementSubRegion const & surf,
+                   arrayView1d< localIndex > & surfId,
+                   array1d< localIndex > & surfList );
+
+};
+
 
 } /* namespace geos */
 

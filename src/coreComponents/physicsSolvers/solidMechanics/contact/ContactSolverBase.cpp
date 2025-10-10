@@ -129,7 +129,7 @@ void ContactSolverBase::setFractureRegions( dataRepository::Group const & meshBo
 
   // TODO remove once multiple regions are fully supported
   // Disable this check for mortar contact solver
-  if ( m_fractureRegionNames.size() > 1 && !dynamic_cast< SolidMechanicsMortarContact * >( this ) )
+  if( m_fractureRegionNames.size() > 1 && !dynamic_cast< SolidMechanicsMortarContact * >( this ) )
   {
     GEOS_THROW_IF( m_fractureRegionNames.size() > 1,
                    GEOS_FMT( "{} {}: The number of fracture regions can not be more than one",

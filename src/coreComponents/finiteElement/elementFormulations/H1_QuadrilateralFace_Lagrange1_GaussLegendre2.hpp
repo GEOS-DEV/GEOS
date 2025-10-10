@@ -152,7 +152,7 @@ public:
   GEOS_HOST_DEVICE
   inline
   static void calcGradN( real64 const (&coords)[2],
-                         real64 (& gradN)[numNodes][2] );
+                         real64 ( &gradN )[numNodes][2] );
 
   /**
    * @brief Calculate shape bubble functions values at a given point in the parent space.
@@ -343,19 +343,19 @@ void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 GEOS_HOST_DEVICE
 inline
 void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
-calcGradN( real64 const (&coords)[2],
-           real64 (& gradN)[numNodes][2] )
+  calcGradN( real64 const (&coords)[2],
+             real64 (& gradN)[numNodes][2] )
 {
   GEOS_UNUSED_VAR( coords );
 
-    gradN[0][0] = -0.25 * (1.0 - coords[1]);
-    gradN[1][0] =  0.25 * (1.0 - coords[1]);
-    gradN[2][0] =  0.25 * (1.0 + coords[1]);
-    gradN[3][0] = -0.25 * (1.0 + coords[1]);
-    gradN[0][1] = -0.25 * (1.0 - coords[0]);
-    gradN[1][1] = -0.25 * (1.0 + coords[0]);
-    gradN[2][1] =  0.25 * (1.0 + coords[0]);
-    gradN[3][1] =  0.25 * (1.0 - coords[0]);
+  gradN[0][0] = -0.25 * (1.0 - coords[1]);
+  gradN[1][0] =  0.25 * (1.0 - coords[1]);
+  gradN[2][0] =  0.25 * (1.0 + coords[1]);
+  gradN[3][0] = -0.25 * (1.0 + coords[1]);
+  gradN[0][1] = -0.25 * (1.0 - coords[0]);
+  gradN[1][1] = -0.25 * (1.0 + coords[0]);
+  gradN[2][1] =  0.25 * (1.0 + coords[0]);
+  gradN[3][1] =  0.25 * (1.0 - coords[0]);
 }
 
 //*************************************************************************************************

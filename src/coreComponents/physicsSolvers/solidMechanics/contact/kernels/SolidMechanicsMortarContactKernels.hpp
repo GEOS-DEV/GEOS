@@ -65,9 +65,9 @@ public:
 
   /// Ready to use gauss point weights for triangle integration cell (parent area already applied)
   constexpr static real64 gpWeights[numQuadraturePointsPerElem] = {-0.281250000000000,
-                                                                    0.260416666666667,
-                                                                    0.260416666666667,
-                                                                    0.260416666666667};
+                                                                   0.260416666666667,
+                                                                   0.260416666666667,
+                                                                   0.260416666666667};
 
 
   using Base::m_dofNumber;
@@ -98,7 +98,7 @@ public:
                         arrayView1d< localIndex const > const faceElementList2,
                         arrayView1d< real64 const > const subTriangleDeterminants,
                         arrayView3d< real64 const > const gpLocalCoords,
-                        string const tractionDofKey):
+                        string const tractionDofKey ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -132,9 +132,9 @@ public:
   {
 
 public:
-  
+
     GEOS_HOST_DEVICE
-    StackVariables(): 
+    StackVariables():
       dispEqnRowIndices{},
       dispColIndices{},
       tEqnRowIndices{},
@@ -180,8 +180,8 @@ public:
 
     /// C-array storage for rotation matrix
     real64 localRotationMatrix[3][3];
-  
-  
+
+
   };
 
   //***************************************************************************
@@ -223,7 +223,7 @@ public:
   //END_kernelLauncher
 
 
-    /**
+  /**
    * @brief Copy global values from primary field to a local stack array.
    * @copydoc ::geos::finiteElement::InterfaceKernelBase::setup
    */
@@ -264,14 +264,14 @@ public:
       stack.tColIndices[i] = m_tDofNumber[kt] + i;
     }
 
-    for (int i=0; i<numQuadraturePointsPerElem; ++i)
+    for( int i=0; i<numQuadraturePointsPerElem; ++i )
     {
       stack.det[i] = m_subTriangleDeterminants[k]*gpWeights[i];
     }
 
   }
 
-  
+
   GEOS_HOST_DEVICE
   inline
   void quadraturePointKernel( localIndex const k,
@@ -285,16 +285,16 @@ public:
     //constexpr int nUdof = numNodesPerElem*3;
 
     real64 gpLocalCoords[2];
-    gpLocalCoords[0] = m_gpLocalCoords(k, q, 0);
-    gpLocalCoords[1] = m_gpLocalCoords(k, q, 1);
+    gpLocalCoords[0] = m_gpLocalCoords( k, q, 0 );
+    gpLocalCoords[1] = m_gpLocalCoords( k, q, 1 );
 
     real64 Nu[ numNodesPerElem ];
     m_finiteElementSpace.calcN( gpLocalCoords, Nu );
 
     // accumulate local stack matrix
-    for( int a=0; a < numNodesPerElem; ++a )  
+    for( int a=0; a < numNodesPerElem; ++a )
     {
-    for( int i=0; i < 3; ++i )
+      for( int i=0; i < 3; ++i )
       {
         stack.localAtu[i][ a*3 + i ] += Nu[ permutation[ a ] ] * stack.det[q];
       }
@@ -303,7 +303,7 @@ public:
   }
 
 
-  GEOS_HOST_DEVICE   
+  GEOS_HOST_DEVICE
   inline
   real64 complete( localIndex const k,
                    StackVariables & stack ) const

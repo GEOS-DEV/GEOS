@@ -161,7 +161,7 @@ public:
   GEOS_HOST_DEVICE
   inline
   static void calcGradN( real64 const (&coords)[2],
-                         real64 (& gradN)[numNodes][2] );
+                         real64 ( &gradN )[numNodes][2] );
 
   /**
    * @brief Calculate shape bubble functions values at a given point in the parent space.
