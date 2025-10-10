@@ -56,28 +56,6 @@
   </NumericalMethods>
 <!-- SPHINX_FIELD_CASE_NUMERICAL_END -->
 
-<!-- SPHINX_FIELD_CASE_SOLVER -->
-  <Solvers>
-    <SinglePhaseFVM
-      name="SinglePhaseFlow"
-      discretization="singlePhaseTPFA"
-      targetRegions="{ Reservoir }"
-      logLevel="1">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="8"
-        lineSearchAction="None"
-        logLevel="1"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"
-        amgSmootherType="l1jacobi"
-        krylovTol="1.0e-10"
-        logLevel="1"/>
-    </SinglePhaseFVM>
-  </Solvers>
-<!-- SPHINX_FIELD_CASE_SOLVER_END -->
-
 <!-- SPHINX_FIELD_CASE_GEOMETRY -->
   <Geometry>
     <Box
