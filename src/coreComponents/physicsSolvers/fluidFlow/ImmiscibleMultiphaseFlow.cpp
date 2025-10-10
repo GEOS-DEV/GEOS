@@ -1170,10 +1170,10 @@ real64 ImmiscibleMultiphaseFlow::calculateResidualNorm( real64 const & GEOS_UNUS
     physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm[0], localResidualNormalizer[0], residualNorm );
   }
 
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-  {
-    std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
+                                                              coupledSolverAttributePrefix(), residualNorm ))
+
+  getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), residualNorm );
 
   return residualNorm;
 }
@@ -1207,7 +1207,7 @@ void ImmiscibleMultiphaseFlow::applySystemSolution( DofManager const & dofManage
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
   {
-    std::vector< string > fields{ fields::flow::pressure::key(), fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() };
+    stdVector< string > fields{ fields::flow::pressure::key(), fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() };
 
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( fields, regionNames );
@@ -1336,6 +1336,7 @@ void ImmiscibleMultiphaseFlow::implicitStepComplete( real64 const & time,
       }
     } );
   } );
+
 }
 
 void ImmiscibleMultiphaseFlow::saveConvergedState( ElementSubRegionBase & subRegion ) const

@@ -22,7 +22,6 @@
 #include "common/TimingMacros.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "SurfaceElementRegion.hpp"
-#include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/MeshLevel.hpp"
@@ -65,8 +64,7 @@ void ElementRegionManager::setMaxGlobalIndex()
   {
     m_localMaxGlobalIndex = std::max( m_localMaxGlobalIndex, subRegion.maxGlobalIndex() );
   } );
-
-  m_maxGlobalIndex = MpiWrapper::max( m_localMaxGlobalIndex, MPI_COMM_GEOS );
+  ObjectManagerBase::setMaxGlobalIndex();
 }
 
 auto const & getUserAvailableKeys()
@@ -205,7 +203,11 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
     // generate the local data (well elements, nodes, perforations) on this well
     // note: each MPI rank knows the global info on the entire well (constructed earlier in InternalWellGenerator)
     // so we only need node and element offsets to construct the local-to-global maps in each wellElemSubRegion
-    wellRegion.generateWell( meshLevel, lineBlock, nodeOffsetGlobal + wellNodeCount, elemOffsetGlobal + wellElemCount );
+    wellRegion.generateWell( meshLevel,
+                             lineBlock,
+                             nodeOffsetGlobal + wellNodeCount,
+                             elemOffsetGlobal + wellElemCount,
+                             cellBlockManager.getGlobalLength() );
 
     // increment counters with global number of nodes and elements
     wellElemCount += lineBlock.numElements();

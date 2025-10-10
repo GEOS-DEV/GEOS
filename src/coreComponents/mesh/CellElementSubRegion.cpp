@@ -23,7 +23,6 @@
 namespace geos
 {
 using namespace dataRepository;
-using namespace constitutive;
 
 CellElementSubRegion::CellElementSubRegion( string const & name, Group * const parent ):
   ElementSubRegionBase( name, parent )
@@ -31,11 +30,6 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation );
   registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
   registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation );
-
-  registerWrapper( viewKeyStruct::constitutiveGroupingString(), &m_constitutiveGrouping ).
-    setSizedFromParent( 0 );
-
-  registerWrapper( viewKeyStruct::constitutivePointVolumeFractionString(), &m_constitutivePointVolumeFraction );
 
   registerWrapper( viewKeyStruct::dNdXString(), &m_dNdX ).setSizedFromParent( 1 ).reference().resizeDimension< 3 >( 3 );
 
@@ -101,7 +95,10 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
     {
       using ArrayType = camp::first< decltype( tupleOfTypes ) >;
       auto const src = Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
-      this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >( &src ) );
+      ArrayType & dst = this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >() ).reference();
+      // This is a hack since Array's copy ctor does not accept ArrayView source
+      dst.resize( ArrayType::NDIM, src.dims() );
+      std::copy( src.data(), src.data() + src.size(), dst.data() );
     }, wrapper );
   } );
 }
