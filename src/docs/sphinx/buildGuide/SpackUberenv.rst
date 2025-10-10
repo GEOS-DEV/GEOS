@@ -14,7 +14,7 @@ GEOS is transitioning to a new `Uberenv <https://github.com/LLNL/uberenv>`_ and 
 Building the dependencies with Uberenv involves running:
 
 .. code-block:: console
-ß
+
     ./scripts/uberenv/uberenv.py --spack-env-file=/path/to/your/spack.yaml --spec="%clang-14" --prefix=/output/path/to/third-party/GEOS/libraries
 
 The Uberenv command **requires** the ``--spack-env-file`` option to pass in a ``spack.yaml`` configuration file, also known in Spack as an environment file, to tell Spack where pre-installed system libraries and compilers are located. See :ref:`SpackYaml` for more on how to create a ``spack.yaml`` file.
