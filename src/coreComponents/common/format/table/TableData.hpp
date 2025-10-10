@@ -298,7 +298,7 @@ void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T co
 {
   static_assert( has_formatter_v< decltype(value) >, "Argument passed in addCell cannot be converted to string" );
   m_columnValues.insert( columnValue );
-  m_data.try_emplace( rowValue ).first->second.try_emplace( columnValue, GEOS_FMT( "{}", value ) );
+  m_data.get_inserted( rowValue ).get_inserted( columnValue ) =  GEOS_FMT( "{}", value );
 }
 
 }

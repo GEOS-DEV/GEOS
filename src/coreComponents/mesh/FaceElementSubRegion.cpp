@@ -626,7 +626,7 @@ buildCollocatedEdgeBuckets( stdMap< globalIndex, globalIndex > const & reference
     globalIndex const n1 = it1->second;
 
     std::pair< globalIndex, globalIndex > const edgeHash = std::minmax( n0, n1 );
-    collocatedEdgeBuckets.try_emplace( edgeHash ).first->second.insert( edge );
+    collocatedEdgeBuckets.get_inserted( edgeHash ).insert( edge );
   }
 
   return collocatedEdgeBuckets;
@@ -820,7 +820,7 @@ void fillMissing2dElemToEdges( ArrayOfArraysView< localIndex const > const elem2
     {
       for( localIndex const & e: nodesToEdges[n] )
       {
-        nodesOfEdgesTouching2dElem.try_emplace( e ).first->second.push_back( n );
+        nodesOfEdgesTouching2dElem.get_inserted( e ).push_back( n );
       }
     }
     for( auto const & ens: nodesOfEdgesTouching2dElem )

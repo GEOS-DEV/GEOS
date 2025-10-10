@@ -20,13 +20,13 @@ namespace geos
 
 /**
  * @file StdContainerWrappers.hpp
- * 
- * @warning: 
+ *
+ * @warning:
  * It is prohibited to use `std::map` or `std::unordered_map` in the geos repos.
  *
  * @section Usage
  * There are two ways to declare a map or unordered_map:
- * 
+ *
  * 1. **stdMap** / **stdUnorderedMap**:
  *    - These types replace `std::map` with an overridden `operator[]` for bounds checking.
  *    - We cannot use the operator[] for the insertion.
@@ -37,7 +37,7 @@ namespace geos
 namespace internal
 {
 
-  
+
 
 /**
  * Default allocator type for std::vector.
@@ -184,7 +184,7 @@ public:
   /**
    * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
    * Otherwise, uses operator[] for unchecked access.
-   * @param index Index of the element to access.
+   * @param index Index of the element tn o access.
    * @return Const reference to the element at the specified index.
    * @throws std::out_of_range if index is out of bounds.
    */
@@ -218,6 +218,29 @@ public:
       return Base::operator[]( key );
     }
   }
+
+  /**
+   * @brief If a key equivalent to k already exists in the container
+   * Otherwise, inserts a new element into the container with key k
+   * @param k The key used both to look up and to insert if not found
+   * @return A reference to the mapped value
+   */
+  auto & get_inserted( KeyType && k )
+  {
+    return this->try_emplace( k ).first->second;
+  }
+
+  /**
+   * @brief If a key equivalent to k already exists in the container
+   * Otherwise, inserts a new element into the container with key k
+   * @param k The key used both to look up and to insert if not found
+   * @return A reference to the mapped value
+   */
+  auto & get_inserted( KeyType const & k )
+  {
+    return this->try_emplace( k ).first->second;
+  }
+
 };
 
 } //namespace internal

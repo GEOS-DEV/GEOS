@@ -623,7 +623,7 @@ void DofManager::addCoupling( string const & rowFieldName,
 
   if( m_coupling.count( {rowFieldIndex, colFieldIndex} ) == 0 )
   {
-    CouplingDescription & coupling = m_coupling.try_emplace( { rowFieldIndex, colFieldIndex } ).first->second;
+    CouplingDescription & coupling = m_coupling.get_inserted( { rowFieldIndex, colFieldIndex } );
     coupling.connector = connectivity;
     if( connectivity == Connector::None && rowFieldIndex == colFieldIndex )
     {
@@ -641,7 +641,7 @@ void DofManager::addCoupling( string const & rowFieldName,
   }
   else
   {
-    CouplingDescription & coupling = m_coupling.try_emplace( { rowFieldIndex, colFieldIndex } ).first->second;
+    CouplingDescription & coupling = m_coupling.get_inserted( { rowFieldIndex, colFieldIndex } );
     addNewSupports( processSupportList, coupling.support );
 
     // Set connectivity with active symmetry flag
@@ -660,7 +660,7 @@ void DofManager::addCoupling( string const & fieldName,
 
   GEOS_ERROR_IF( field.location != FieldLocation::Elem, "Field must be supported on elements in order to use stencil sparsity" );
 
-  CouplingDescription & coupling = m_coupling.try_emplace( { fieldIndex, fieldIndex} ).first->second;
+  CouplingDescription & coupling = m_coupling.get_inserted( { fieldIndex, fieldIndex} );
   coupling.connector = Connector::Stencil;
   coupling.support = field.support;
   coupling.stencils = &stencils;
@@ -1627,13 +1627,13 @@ void DofManager::reorderByRank()
 
         if( field.location == FieldLocation::Elem )
         {
-          fieldsToBeSync.try_emplace( { body.getName(), mesh.getName() } ).first->second.
+          fieldsToBeSync.get_inserted( { body.getName(), mesh.getName() } ).
             addElementFields( {field.key}, regions );
 
         }
         else
         {
-          fieldsToBeSync.try_emplace( { body.getName(), mesh.getName() } ).first->second.
+          fieldsToBeSync.get_inserted( { body.getName(), mesh.getName() } ).
             addFields( field.location, {field.key} );
         }
 

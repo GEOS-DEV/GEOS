@@ -468,8 +468,8 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
     for( int j = 0; j < pointIds->GetNumberOfIds(); ++j )
     {
       vtkIdType const pointId = boundaryPoints->GetValue( pointIds->GetId( j ) );
-      nodesToCellsFull.try_emplace( globalPtIds->GetValue( pointId )).
-        first->second.emplace_back( globalCellIds->GetValue( cellId ));
+      nodesToCellsFull.get_inserted( globalPtIds->GetValue( pointId )).
+        emplace_back( globalCellIds->GetValue( cellId ));
     }
   }
 
@@ -540,7 +540,7 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
       {
         for( vtkIdType const & c: ncs->second )
         {
-          elem3dToDuplicatedNodes.try_emplace( c ).first->second.insert( n );
+          elem3dToDuplicatedNodes.get_inserted( c ).insert( n );
         }
       }
     }

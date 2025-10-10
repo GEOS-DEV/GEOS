@@ -189,7 +189,7 @@ MeshObjectPath::fillPathTokens( string const & path,
 template< typename SUBNODE >
 static SUBNODE & insertPathNode( stdMap< string, SUBNODE > & node, string const & name )
 {
-  return node.try_emplace( name ).first->second;
+  return node.get_inserted( name );
 }
 
 static string & insertPathNode( stdVector< string > & node, string & name )

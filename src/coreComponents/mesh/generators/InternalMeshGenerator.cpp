@@ -585,18 +585,14 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName );
     cellBlock.setElementType( EnumStrings< ElementType >::fromString( m_elementType[aa++] ) );
   }
-  nodeSets = {
-    {"xneg", {}}, {"xpos", {}}, {"yneg", {}},
-    {"ypos", {}}, {"zneg", {}}, {"zpos", {}}, {"all", {}}
-  };
 
-  SortedArray< localIndex > & xnegNodes = nodeSets["xneg"];
-  SortedArray< localIndex > & xposNodes = nodeSets["xpos"];
-  SortedArray< localIndex > & ynegNodes = nodeSets["yneg"];
-  SortedArray< localIndex > & yposNodes = nodeSets["ypos"];
-  SortedArray< localIndex > & znegNodes = nodeSets["zneg"];
-  SortedArray< localIndex > & zposNodes = nodeSets["zpos"];
-  SortedArray< localIndex > & allNodes = nodeSets["all"];
+  SortedArray< localIndex > & xnegNodes = nodeSets.get_inserted( "xneg" );
+  SortedArray< localIndex > & xposNodes = nodeSets.get_inserted( "xpos" );
+  SortedArray< localIndex > & ynegNodes = nodeSets.get_inserted( "yneg" );
+  SortedArray< localIndex > & yposNodes = nodeSets.get_inserted( "ypos" );
+  SortedArray< localIndex > & znegNodes = nodeSets.get_inserted( "zneg" );
+  SortedArray< localIndex > & zposNodes = nodeSets.get_inserted( "zpos" );
+  SortedArray< localIndex > & allNodes = nodeSets.get_inserted( "all" );
 
   // Find elemCenters for even uniform element sizes
   array1d< array1d< real64 > > elemCenterCoords( 3 );

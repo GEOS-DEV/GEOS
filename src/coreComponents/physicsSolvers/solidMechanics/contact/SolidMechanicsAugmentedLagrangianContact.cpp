@@ -1137,8 +1137,8 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
         slipList_v[kfe] = vals_v[nStick+kfe];
       } );
 
-      m_faceTypesToFaceElementsStick.try_emplace( meshName ).first->second.try_emplace( finiteElementName ).first->second = stickList;
-      m_faceTypesToFaceElementsSlip.try_emplace( meshName ).first->second.try_emplace( finiteElementName ).first->second = slipList;
+      m_faceTypesToFaceElementsStick.get_inserted( meshName ).get_inserted( finiteElementName ) = stickList;
+      m_faceTypesToFaceElementsSlip.get_inserted( meshName ).get_inserted( finiteElementName ) = slipList;
 
       GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
@@ -1221,8 +1221,8 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
       quadList_v[kfe] = vals_v[nTri+kfe];
     } );
 
-    m_faceTypesToFaceElements.try_emplace( meshName ).first->second.try_emplace( "Quadrilateral" ).first->second = quadList;
-    m_faceTypesToFaceElements.try_emplace( meshName ).first->second.try_emplace( "Triangle" ).first->second = triList;
+    m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Quadrilateral" ) = quadList;
+    m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Triangle" ) = triList;
   } );
 
 }

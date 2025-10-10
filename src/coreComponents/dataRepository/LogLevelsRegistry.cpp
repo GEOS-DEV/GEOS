@@ -22,7 +22,7 @@ namespace geos
 void LogLevelsRegistry::addEntry( integer condition, std::string_view description )
 {
 
-  auto & targetValues = m_logLevelsDescriptions.try_emplace( condition ).first->second;
+  auto & targetValues = m_logLevelsDescriptions.get_inserted( condition );
 
   if( !(std::find( targetValues.begin(), targetValues.end(), description ) != targetValues.end()))
   {

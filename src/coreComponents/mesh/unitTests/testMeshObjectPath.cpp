@@ -74,57 +74,19 @@ private:
 void TestMesh::createTestMesh()
 {
 
-  m_pathPermutations.try_emplace( "body0" ).first->second
-    .try_emplace( "level0" ).first->second
-    .try_emplace( "region1" ).first->second = {"subreg0", "subreg1"};
-
-  m_pathPermutations.try_emplace( "body0" ).first->second
-    .try_emplace( "level0" ).first->second
-    .try_emplace( "region0" ).first->second = {"subreg0", "subreg1"};
-
-  m_pathPermutations.try_emplace( "body0" ).first->second
-    .try_emplace( "level1" ).first->second
-    .try_emplace( "region0" ).first->second = {"subreg0", "subreg1"};
-
-  m_pathPermutations.try_emplace( "body0" ).first->second
-    .try_emplace( "level1" ).first->second
-    .try_emplace( "region1" ).first->second = {"subreg0", "subreg1"};
-
-  m_pathPermutations.try_emplace( "body1" ).first->second
-    .try_emplace( "level0" ).first->second
-    .try_emplace( "region0" ).first->second = {"subreg0", "subreg1"};
-
-  m_pathPermutations.try_emplace( "body1" ).first->second
-    .try_emplace( "level0" ).first->second
-    .try_emplace( "region1" ).first->second = {"subreg0", "subreg1"};
-
-  m_pathPermutations.try_emplace( "body1" ).first->second
-    .try_emplace( "level1" ).first->second
-    .try_emplace( "region0" ).first->second = {"subreg0", "subreg1"};
-
-  m_pathPermutations.try_emplace( "body1" ).first->second
-    .try_emplace( "level1" ).first->second
-    .try_emplace( "region1" ).first->second = {"subreg0", "subreg1"};
-
-  m_pathPermutations.try_emplace( "body1" ).first->second
-    .try_emplace( "level1" ).first->second
-    .try_emplace( "region2" ).first->second = {"subreg0", "subreg2"};
-
-  m_pathPermutations.try_emplace( "body3" ).first->second
-    .try_emplace( "level0" ).first->second
-    .try_emplace( "region0" ).first->second = {"subreg0", "subreg1"};
-
-  m_pathPermutations.try_emplace( "body3" ).first->second
-    .try_emplace( "level0" ).first->second
-    .try_emplace( "region1" ).first->second = {"subreg0", "subreg1"};
-
-  m_pathPermutations.try_emplace( "body3" ).first->second
-    .try_emplace( "level2" ).first->second
-    .try_emplace( "region0" ).first->second = {"subreg0", "subreg1"};
-
-  m_pathPermutations.try_emplace( "body3" ).first->second
-    .try_emplace( "level2" ).first->second
-    .try_emplace( "region1" ).first->second = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body0" ).get_inserted( "level0" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body0" ).get_inserted( "level0" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body0" ).get_inserted( "level1" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body0" ).get_inserted( "level1" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body1" ).get_inserted( "level0" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body1" ).get_inserted( "level0" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body1" ).get_inserted( "level1" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body1" ).get_inserted( "level1" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body1" ).get_inserted( "level1" ).get_inserted( "region2" ) = {"subreg0", "subreg2"};
+  m_pathPermutations.get_inserted( "body3" ).get_inserted( "level0" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body3" ).get_inserted( "level0" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body3" ).get_inserted( "level2" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body3" ).get_inserted( "level2" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
 
 
   for( auto const & meshBodyPair : m_pathPermutations )
