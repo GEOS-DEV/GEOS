@@ -741,7 +741,7 @@
          RelativePermeabilityBase  * relPerm1 = &getConstitutiveModel< RelativePermeabilityBase >( subRegion, relPermName );
          BrooksCoreyRelativePermeability::KernelWrapper relPermWrapper = relPerm.createKernelWrapper();
  
-         // fluid
+        //  // fluid
          string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
          TwoPhaseImmiscibleFluid * fluid = &getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
  
@@ -749,6 +749,7 @@
          // m_interfaceConstitutivePairs[0][1] = std::make_tuple( relPerm1, capPressure1, fluid );
  
          auto interfaceConstitutivePairs_temp = std::make_tuple( relPerm1, capPressure1, fluid );
+
  
          fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
          {

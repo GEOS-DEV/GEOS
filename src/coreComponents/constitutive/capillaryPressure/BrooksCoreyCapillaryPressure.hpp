@@ -196,12 +196,13 @@ BrooksCoreyCapillaryPressureUpdate::
 
 
   // compute first gas-oil capillary pressure as a function of gas-phase vol fraction
-  integer const ip_gas = m_phaseOrder[CapillaryPressureBase::PhaseType::OIL];
-  if( ip_gas >= 0 )
+  integer const ip_gas = m_phaseOrder[CapillaryPressureBase::PhaseType::GAS];
+  integer const ip_oil = m_phaseOrder[CapillaryPressureBase::PhaseType::OIL];
+  if( ip_oil >= 0 )
   {
-    real64 const volFracScaled = (phaseVolFraction[ip_gas] - m_phaseMinVolumeFraction[ip_gas]) * volFracScaleInv;
-    real64 const exponentInv   = m_phaseCapPressureExponentInv[ip_gas];
-    real64 const entryPressure = -m_phaseEntryPressure[ip_gas]; // for gas capillary pressure, take the opposite of the
+    real64 const volFracScaled = (phaseVolFraction[ip_oil] - m_phaseMinVolumeFraction[ip_oil]) * volFracScaleInv;
+    real64 const exponentInv   = m_phaseCapPressureExponentInv[ip_oil];
+    real64 const entryPressure = -m_phaseEntryPressure[ip_oil]; // for gas capillary pressure, take the opposite of the
                                                                 // BC function
 
     real64 const wettingVolFracScaled           = 1-volFracScaled;
@@ -212,8 +213,8 @@ BrooksCoreyCapillaryPressureUpdate::
                                  exponentInv,
                                  entryPressure,
                                  eps,
-                                 phaseCapPres[ip_gas],
-                                 dPhaseCapPres_dPhaseVolFrac[ip_gas][ip_gas] );
+                                 phaseCapPres[ip_oil],
+                                 dPhaseCapPres_dPhaseVolFrac[ip_oil][ip_oil] );
   }
 }
 
@@ -236,6 +237,7 @@ BrooksCoreyCapillaryPressureUpdate::
 
   // compute first water-oil capillary pressure as a function of water-phase vol fraction
   integer const ip_water = m_phaseOrder[CapillaryPressureBase::PhaseType::WATER];
+  integer const ip_gas = m_phaseOrder[CapillaryPressureBase::PhaseType::GAS];
   if( ip_water >= 0 )
   {
     real64 const volFracScaled_eps = (eps - m_phaseMinVolumeFraction[ip_water]) * volFracScaleInv;
@@ -266,45 +268,46 @@ BrooksCoreyCapillaryPressureUpdate::
                                     m_phaseOrder,
                                     phaseVolFraction[ip_water],
                                     dPhaseCapPres_dPhaseVolFrac[ip_water][ip_water] );
-
+  phaseVolFraction[ip_gas] = 1.0 - phaseVolFraction[ip_water];
   }
 
 
   // compute first gas-oil capillary pressure as a function of gas-phase vol fraction
-  integer const ip_gas = m_phaseOrder[CapillaryPressureBase::PhaseType::OIL];
 
-  if( ip_gas >= 0 )
-  {
-    real64 const volFracScaled_eps = (eps - m_phaseMinVolumeFraction[ip_gas]) * volFracScaleInv;
-    real64 const exponentInv   = m_phaseCapPressureExponentInv[ip_gas];
-    real64 const entryPressure = -m_phaseEntryPressure[ip_gas]; // for gas capillary pressure, take the opposite of the
-                                                                // BC function
 
-    real64 const wettingVolFracScaled_eps           = 1-volFracScaled_eps;
-    real64 const dWettingVolFracScaled_dVolFrac =  -volFracScaleInv;
+  // if( ip_gas >= 0 )
+  // {
+  //   real64 const volFracScaled_eps = (eps - m_phaseMinVolumeFraction[ip_gas]) * volFracScaleInv;
+  //   real64 const exponentInv   = m_phaseCapPressureExponentInv[ip_gas];
+  //   real64 const entryPressure = -m_phaseEntryPressure[ip_gas]; // for gas capillary pressure, take the opposite of the
+  //                                                               // BC function
 
-    real64 maxCapPres_eps = 0.0;
-    real64 max_dpc_eps = 0.0;
+  //   real64 const wettingVolFracScaled_eps           = 1-volFracScaled_eps;
+  //   real64 const dWettingVolFracScaled_dVolFrac =  -volFracScaleInv;
 
-    evaluateBrooksCoreyFunction( wettingVolFracScaled_eps,
-                                 dWettingVolFracScaled_dVolFrac,
-                                 exponentInv,
-                                 entryPressure,
-                                 eps,
-                                 maxCapPres_eps,
-                                 max_dpc_eps );
+  //   real64 maxCapPres_eps = 0.0;
+  //   real64 max_dpc_eps = 0.0;
 
-    evaluateBrooksCoreyFunctionInv( phaseCapPres[ip_gas],
-                                    ip_gas,
-                                    volFracScaleInv,
-                                    exponentInv,
-                                    entryPressure,
-                                    maxCapPres_eps,
-                                    m_phaseMinVolumeFraction[ip_gas],
-                                    m_phaseOrder,
-                                    phaseVolFraction[ip_gas],
-                                    dPhaseCapPres_dPhaseVolFrac[ip_gas][ip_gas] );
-  }
+  //   evaluateBrooksCoreyFunction( wettingVolFracScaled_eps,
+  //                                dWettingVolFracScaled_dVolFrac,
+  //                                exponentInv,
+  //                                entryPressure,
+  //                                eps,
+  //                                maxCapPres_eps,
+  //                                max_dpc_eps );
+
+  //   evaluateBrooksCoreyFunctionInv( phaseCapPres[ip_gas],
+  //                                   ip_gas,
+  //                                   volFracScaleInv,
+  //                                   exponentInv,
+  //                                   entryPressure,
+  //                                   maxCapPres_eps,
+  //                                   m_phaseMinVolumeFraction[ip_gas],
+  //                                   m_phaseOrder,
+  //                                   phaseVolFraction[ip_gas],
+  //                                   dPhaseCapPres_dPhaseVolFrac[ip_gas][ip_gas] );
+  //  phaseVolFraction[ip_water] = 1.0 - phaseVolFraction[ip_gas];                                 
+  // }
 }
 
 GEOS_HOST_DEVICE
@@ -359,26 +362,26 @@ BrooksCoreyCapillaryPressureUpdate::
   phaseVolFraction           = 0.0;
   real64 value               = 0.0;
   dPhaseCapPressure_dVolFrac = 0.0;
-  integer const ip_gas = phaseOrder[CapillaryPressureBase::PhaseType::OIL];
+  integer const ip_oil = phaseOrder[CapillaryPressureBase::PhaseType::OIL];
 
-  real64 const dScaledWettingPhaseVolFrac_dVolFrac = (ip == ip_gas)
+  real64 const dScaledWettingPhaseVolFrac_dVolFrac = (ip == ip_oil)
   ? -volFracScaleInv : volFracScaleInv;
 
-  if( phaseCapPressure <= maxCapPres_eps && phaseCapPressure > entryPressure )
+  if( phaseCapPressure <= maxCapPres_eps && phaseCapPressure >= entryPressure )
   {
     // intermediate value
     real64 const val =  pow( entryPressure, exponentInv) / pow( phaseCapPressure , exponentInv + 1 );
 
     value           = (phaseCapPressure  * val) * volFracScaleInv + phaseMinVolumeFraction; // entryPressure * (S_w)^( - 1 / exponentInv )
     dPhaseCapPressure_dVolFrac = -dScaledWettingPhaseVolFrac_dVolFrac * val * exponentInv;
-    phaseVolFraction = (ip == ip_gas) ? 1.0 - value : value;
+    phaseVolFraction = (ip == ip_oil) ? 1.0 - value : value;
   }
   else // enforce a constant and bounded capillary pressure
   {
     real64 const val = (phaseCapPressure > maxCapPres_eps)
                      ? pow( entryPressure, exponentInv) / pow( maxCapPres_eps , exponentInv) : 1.0;
     value           = val * volFracScaleInv + phaseMinVolumeFraction;
-    phaseVolFraction = (ip == ip_gas) ? 1.0 - value : value;
+    phaseVolFraction = (ip == ip_oil) ? 1.0 - value : value;
   }
 
 }

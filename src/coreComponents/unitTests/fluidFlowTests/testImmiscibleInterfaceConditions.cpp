@@ -12,6 +12,14 @@
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
+#define phase0MinSat1 0.0
+#define phase1MinSat1 0.0
+#define phase0MinSat2 0.0
+#define phase1MinSat2 0.0
+
+
+#include <chrono>
+#include <iostream>
 
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
@@ -27,6 +35,8 @@
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 
 #include <conduit.hpp>
+
+
 
 using namespace geos;
 using namespace geos::dataRepository;
@@ -149,43 +159,8 @@ CapillaryPressureBase & makeJFunctionCapPressureTwoPhase( string const & name, G
 
   // 1) First, define the tables
 
-  // 1D table, various interpolation methods
-  localIndex const Naxis = 12;
-
-  // Setup table
-  array1d< real64_array > coordinates;
-  coordinates.resize( 1 );
-  coordinates[0].resize( Naxis );
-
-  coordinates[0][0] = 0.0;
-  coordinates[0][1] = 0.05;
-  coordinates[0][2] = 0.15;
-  coordinates[0][3] = 0.25;
-  coordinates[0][4] = 0.35;
-  coordinates[0][5] = 0.45;
-  coordinates[0][6] = 0.55;
-  coordinates[0][7] = 0.65;
-  coordinates[0][8] = 0.75;
-  coordinates[0][9] = 0.85;
-  coordinates[0][10] = 0.95;
-  coordinates[0][11] = 1.0;
-
-  real64_array values( Naxis );
-  values[0] = 4.331729359;
-  values[1] = 3.523266264;
-  values[2] = 2.677103439;
-  values[3] = 2.356150157;
-  values[4] = 2.166062360;
-  values[5] = 2.034158727;
-  values[6] = 1.934627222;
-  values[7] = 1.855494313;
-  values[8] = 1.790286970;
-  values[9] = 1.735134860;
-  values[10] = 1.687551617;
-  values[11] = 1.666049754;
-
-
-  // localIndex const Naxis = 2;
+  // // 1D table, various interpolation methods
+  // localIndex const Naxis = 12;
 
   // // Setup table
   // array1d< real64_array > coordinates;
@@ -193,11 +168,46 @@ CapillaryPressureBase & makeJFunctionCapPressureTwoPhase( string const & name, G
   // coordinates[0].resize( Naxis );
 
   // coordinates[0][0] = 0.0;
-  // coordinates[0][1] = 1.0;
+  // coordinates[0][1] = 0.05;
+  // coordinates[0][2] = 0.15;
+  // coordinates[0][3] = 0.25;
+  // coordinates[0][4] = 0.35;
+  // coordinates[0][5] = 0.45;
+  // coordinates[0][6] = 0.55;
+  // coordinates[0][7] = 0.65;
+  // coordinates[0][8] = 0.75;
+  // coordinates[0][9] = 0.85;
+  // coordinates[0][10] = 0.95;
+  // coordinates[0][11] = 1.0;
 
   // real64_array values( Naxis );
   // values[0] = 4.331729359;
-  // values[1] = 1.666049754;
+  // values[1] = 3.523266264;
+  // values[2] = 2.677103439;
+  // values[3] = 2.356150157;
+  // values[4] = 2.166062360;
+  // values[5] = 2.034158727;
+  // values[6] = 1.934627222;
+  // values[7] = 1.855494313;
+  // values[8] = 1.790286970;
+  // values[9] = 1.735134860;
+  // values[10] = 1.687551617;
+  // values[11] = 1.666049754;
+
+
+  localIndex const Naxis = 2;
+
+  // Setup table
+  array1d< real64_array > coordinates;
+  coordinates.resize( 1 );
+  coordinates[0].resize( Naxis );
+
+  coordinates[0][0] = 0.0;
+  coordinates[0][1] = 1.0;
+
+  real64_array values( Naxis );
+  values[0] = 4.331729359;
+  values[1] = 1.666049754;
 
 
   TableFunction & table_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_jFunction" ) );
@@ -232,7 +242,7 @@ CapillaryPressureBase & makeJFunctionCapPressureTwoPhase( string const & name, G
   return capPressure;
 }
 
-CapillaryPressureBase & makeTableCapPressureTwoPhase( string const & name, Group & parent )
+CapillaryPressureBase & makeTableCapPressureTwoPhase1( string const & name, Group & parent )
 {
   FunctionManager & functionManager = FunctionManager::getInstance();
 
@@ -259,18 +269,110 @@ CapillaryPressureBase & makeTableCapPressureTwoPhase( string const & name, Group
   coordinates[0][11] = 1.0;
 
   real64_array values( Naxis );
-  values[0] = 129999.999994362;
-  values[1] = 105737.126293106;
-  values[2] = 80342.8419025813;
-  values[3] = 70710.6781175791;
-  values[4] = 65005.9326081244;
-  values[5] = 61047.3583602598;
-  values[6] = 58060.3075597394;
-  values[7] = 55685.4412380058;
-  values[8] = 53728.4965890932;
-  values[9] = 52073.3206292211;
-  values[10] = 50645.2947584729;
-  values[11] = 50000.0000139914;
+  values[0] = 130000.0;
+  values[1] = 90572.79;
+  values[2] = 49307.11;
+  values[3] = 33654.85;
+  values[4] = 24384.64;
+  values[5] = 17951.96;
+  values[6] = 13098;
+  values[7] = 9238.84;
+  values[8] = 6058.81;
+  values[9] = 3369.14;
+  values[10] = 1048.6;
+  values[11] = 0.0;
+
+  // localIndex const Naxis = 2;
+
+  // // Setup table
+  // array1d< real64_array > coordinates;
+  // coordinates.resize( 1 );
+  // coordinates[0].resize( Naxis );
+
+  // coordinates[0][0] = 0.0;
+  // coordinates[0][1] = 1.0;
+
+  // real64_array values( Naxis );
+  // values[0] = 129999.999994362;
+  // values[1] = 50000.0000139914;
+
+
+  TableFunction & table_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_pc" ) );
+  table_w.setTableCoordinates( coordinates, { units::Dimensionless } );
+  table_w.setTableValues( values, units::Pressure );
+  table_w.reInitializeFunction();
+
+  table_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+  // 2) Then set up the constitutive model
+
+  TableCapillaryPressure & capPressure = parent.registerGroup< TableCapillaryPressure >( name );
+
+  string_array & phaseNames = capPressure.getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString() );
+  phaseNames.resize( 2 );
+  phaseNames[0] = "water"; phaseNames[1] = "gas";
+
+  auto & waterTableName = capPressure.getReference< string >( TableCapillaryPressure::viewKeyStruct::wettingNonWettingCapPresTableNameString() );
+  waterTableName = "water_pc";
+
+  capPressure.postInputInitializationRecursive();
+  capPressure.initialize(); // to test all the checks
+  return capPressure;
+}
+
+CapillaryPressureBase & makeTableCapPressureTwoPhase2( string const & name, Group & parent )
+{
+  FunctionManager & functionManager = FunctionManager::getInstance();
+
+  // 1) First, define the tables
+
+  // 1D table, various interpolation methods
+  localIndex Naxis = 12;
+
+  // Setup table
+  array1d< real64_array > coordinates;
+  coordinates.resize( 1 );
+  coordinates[0].resize( Naxis );
+  coordinates[0][0] = 0.0;
+  coordinates[0][1] = 0.05;
+  coordinates[0][2] = 0.15;
+  coordinates[0][3] = 0.25;
+  coordinates[0][4] = 0.35;
+  coordinates[0][5] = 0.45;
+  coordinates[0][6] = 0.55;
+  coordinates[0][7] = 0.65;
+  coordinates[0][8] = 0.75;
+  coordinates[0][9] = 0.85;
+  coordinates[0][10] = 0.95;
+  coordinates[0][11] = 1.0;
+
+  real64_array values( Naxis );
+  values[0] = 195000.0;
+  values[1] = 135859.25;
+  values[2] = 73960.67;
+  values[3] = 50482.28;
+  values[4] = 36576.96;
+  values[5] = 26927.94;
+  values[6] = 19647;
+  values[7] = 13858.26;
+  values[8] = 9088.2;
+  values[9] = 5053.72;
+  values[10] = 1572.9;
+  values[11] = 0.0;
+
+  // localIndex const Naxis = 2;
+
+  // // Setup table
+  // array1d< real64_array > coordinates;
+  // coordinates.resize( 1 );
+  // coordinates[0].resize( Naxis );
+
+  // coordinates[0][0] = 0.0;
+  // coordinates[0][1] = 1.0;
+
+  // real64_array values( Naxis );
+  // values[0] = 129999.999994362;
+  // values[1] = 50000.0000139914;
 
 
   TableFunction & table_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_pc" ) );
@@ -306,7 +408,7 @@ CapillaryPressureBase & makeBrooksCoreyCapPressureTwoPhase1( string const & name
 
   array1d< real64 > & phaseMinSat = capPressure.getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseMinVolumeFractionString() );
   phaseMinSat.resize( 2 );
-  phaseMinSat[0] = 0.0; phaseMinSat[1] = 0.0;
+  phaseMinSat[0] = phase0MinSat1; phaseMinSat[1] = phase1MinSat1;
 
   array1d< real64 > & phaseCapPressureExpInv =
     capPressure.getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseCapPressureExponentInvString() );
@@ -315,10 +417,10 @@ CapillaryPressureBase & makeBrooksCoreyCapPressureTwoPhase1( string const & name
 
   array1d< real64 > & phaseEntryPressure = capPressure.getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseEntryPressureString() );
   phaseEntryPressure.resize( 2 );
-  phaseEntryPressure[0] = 1.5e5; phaseEntryPressure[1] = 0;
+  phaseEntryPressure[0] = 0.75e5; phaseEntryPressure[1] = 0;
 
   real64 & capPressureEpsilon = capPressure.getReference< real64 >( BrooksCoreyCapillaryPressure::viewKeyStruct::capPressureEpsilonString() );
-  capPressureEpsilon = 1.5e-8;
+  capPressureEpsilon = 1.0e-8;
 
   capPressure.postInputInitializationRecursive();
   return capPressure;
@@ -334,7 +436,7 @@ CapillaryPressureBase & makeBrooksCoreyCapPressureTwoPhase2( string const & name
 
   array1d< real64 > & phaseMinSat = capPressure.getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseMinVolumeFractionString() );
   phaseMinSat.resize( 2 );
-  phaseMinSat[0] = 0.0; phaseMinSat[1] = 0.0;
+  phaseMinSat[0] = phase0MinSat2; phaseMinSat[1] = phase1MinSat2;
 
   array1d< real64 > & phaseCapPressureExpInv =
     capPressure.getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseCapPressureExponentInvString() );
@@ -343,7 +445,7 @@ CapillaryPressureBase & makeBrooksCoreyCapPressureTwoPhase2( string const & name
 
   array1d< real64 > & phaseEntryPressure = capPressure.getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseEntryPressureString() );
   phaseEntryPressure.resize( 2 );
-  phaseEntryPressure[0] = 1.0e5; phaseEntryPressure[1] = 0;
+  phaseEntryPressure[0] = 0.5e5; phaseEntryPressure[1] = 0;
 
   real64 & capPressureEpsilon = capPressure.getReference< real64 >( BrooksCoreyCapillaryPressure::viewKeyStruct::capPressureEpsilonString() );
   capPressureEpsilon = 1e-8;
@@ -362,11 +464,11 @@ RelativePermeabilityBase & makeBrooksCoreyRelPerm( string const & name, Group & 
 
   array1d< real64 > & phaseMinSat = relPerm.getReference< array1d< real64 > >( BrooksCoreyRelativePermeability::viewKeyStruct::phaseMinVolumeFractionString() );
   phaseMinSat.resize( 2 );
-  phaseMinSat[0] = 0.0; phaseMinSat[1] = 0.0;
+  phaseMinSat[0] = phase0MinSat1; phaseMinSat[1] = phase1MinSat1;
 
   array1d< real64 > & phaseRelPermExp = relPerm.getReference< array1d< real64 > >( BrooksCoreyRelativePermeability::viewKeyStruct::phaseRelPermExponentString() );
   phaseRelPermExp.resize( 2 );
-  phaseRelPermExp[0] = 1.0; phaseRelPermExp[1] = 1.0;
+  phaseRelPermExp[0] = 2.0; phaseRelPermExp[1] = 2.0;
 
   array1d< real64 > & phaseRelPermMaxVal = relPerm.getReference< array1d< real64 > >( BrooksCoreyRelativePermeability::viewKeyStruct::phaseRelPermMaxValueString() );
   phaseRelPermMaxVal.resize( 2 );
@@ -415,22 +517,28 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalNonlinearSolverConvergence )
     // CapillaryPressureBase & capPressure0 =  makeJFunctionCapPressureTwoPhase( "capPressure0", this->m_parent );
     // CapillaryPressureBase * capPressurePtr0 = &capPressure0;
 
-    // CapillaryPressureBase & capPressure1 =  makeTableCapPressureTwoPhase( "capPressure1", this->m_parent );
-    // CapillaryPressureBase * capPressurePtr1 = &capPressure1;
-    CapillaryPressureBase & capPressure0 =  makeBrooksCoreyCapPressureTwoPhase1( "capPressure0", this->m_parent );
+    CapillaryPressureBase & capPressure0 =  makeTableCapPressureTwoPhase1( "capPressure0", this->m_parent );
     CapillaryPressureBase * capPressurePtr0 = &capPressure0;
 
-    CapillaryPressureBase & capPressure1 =  makeBrooksCoreyCapPressureTwoPhase2( "capPressure1", this->m_parent );
+    CapillaryPressureBase & capPressure1 =  makeTableCapPressureTwoPhase2( "capPressure1", this->m_parent );
     CapillaryPressureBase * capPressurePtr1 = &capPressure1;
+    // CapillaryPressureBase & capPressure0 =  makeBrooksCoreyCapPressureTwoPhase1( "capPressure0", this->m_parent );
+    // CapillaryPressureBase * capPressurePtr0 = &capPressure0;
+
+    // CapillaryPressureBase & capPressure1 =  makeBrooksCoreyCapPressureTwoPhase2( "capPressure1", this->m_parent );
+    // CapillaryPressureBase * capPressurePtr1 = &capPressure1;
     
   std::vector< RelativePermeabilityBase * > relPerms = {relPermPtr, relPermPtr};
   std::vector< CapillaryPressureBase * > capPressures = {capPressurePtr0, capPressurePtr1};
   std::vector< TwoPhaseImmiscibleFluid * > fluids = { &fluid, &fluid };
     // real64 uT = 3.2864545889999906e-05;
   
-  real64 uT = 3.3e-5;
-// real64 uT = 1e-17;
+  // real64 uT = -3.3e-5;
+ real64 uT = 1e-17;
+// real64 uT = 1e-7;
   stdVector< real64 > saturations = {0.2, 0.4};
+  stdVector< real64 > trappedSats1 = {phase0MinSat1, phase1MinSat1};
+  stdVector< real64 > trappedSats2 = {phase0MinSat2, phase1MinSat2};
   stdVector< real64 > pressures = {1e7, 1e7};
   stdVector< real64 > JFMultipliers = {45016.662822296035, 30011.108548197357};
   stdVector< real64 > transHats = {1.9738466000000002e-12, 4.4411548500000007e-12};
@@ -454,6 +562,8 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalNonlinearSolverConvergence )
           outFile << ",";
           outFile << "Fn_alpha";
           outFile << ",";
+          outFile << "Residual_initial";
+          outFile << ",";
           outFile << "Pc_int";
           outFile << ",";
           outFile << "Residual";
@@ -464,37 +574,46 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalNonlinearSolverConvergence )
           real64 const start_sat = 0.0;
           real64 const end_sat   = 1.0;
           real64 const dS        = 1e-2;
-            // real64 Si = 0.98;
-            // real64 Sj = 0.98;
+              real64 Si = 0.0;
+               real64 Sj = 0.9;
           
-          for( real64 Si = start_sat; Si <= end_sat + 1e-8; Si += dS )
-          {
-            for( real64 Sj = start_sat; Sj <= end_sat + 1e-8; Sj += dS )
-            {
+          // for( real64 Si = start_sat; Si <= end_sat + 1e-8; Si += dS )
+          // {
+          //   for( real64 Sj = start_sat; Sj <= end_sat + 1e-8; Sj += dS )
+          //   {
               saturations[0] = Si;
               saturations[1] = Sj;
 
-    geos::immiscibleMultiphaseKernels::local_solver( uT, saturations, pressures, JFMultipliers, transHats, dTransHats_dP, gravCoefHats, gravCoefs,
+              auto t0 = std::chrono::high_resolution_clock::now();
+
+// Call the GEOS local solver
+    geos::immiscibleMultiphaseKernels::local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, transHats, dTransHats_dP, gravCoefHats, gravCoefs,
       relPerms, capPressures, fluids, phi, grad_phi );
+
+auto t1 = std::chrono::high_resolution_clock::now();
+std::chrono::duration<double> elapsed = t1 - t0;
+std::cout << "Local solver time: " << elapsed.count() << " s" << std::endl;
 
 
                   // Write data to the file
                   outFile << GEOS_FMT( "{:10.10e}", saturations[0] );
                   outFile << GEOS_FMT( ",{:10.10e}", saturations[1] );
                   outFile << GEOS_FMT( ",{:10.10e}", phi[0] );
+                  outFile << GEOS_FMT( ",{:10.10e}", phi[1] );
                   outFile << GEOS_FMT( ",{:10.10e}", grad_phi[0] );
                   outFile << GEOS_FMT( ",{:10.10e}", grad_phi[1] );
                   outFile << GEOS_FMT( ",{:10.10e}", grad_phi[2] );
                   outFile << GEOS_FMT( ",{:10.10e}", grad_phi[3] );
                   outFile << std::endl;
                   phi[0] = 0;
+                  phi[1] = 0;
                   grad_phi[0] = 0;
                   grad_phi[1] = 0;
                   grad_phi[2] = 0;
                   grad_phi[3] = 0;
 
-  }
-}
+//   }
+// }
 
   outFile.close();
 
