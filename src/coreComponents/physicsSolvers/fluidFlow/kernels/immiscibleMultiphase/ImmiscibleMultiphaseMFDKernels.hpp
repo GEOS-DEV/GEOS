@@ -514,11 +514,21 @@ public:
     {
       // neighbor identification
       localIndex const lf = m_elemToFaces[ei][i];
-      localIndex const er0 = m_elemRegionList[lf][0]; localIndex const esr0 = m_elemSubRegionList[lf][0]; localIndex const ei0 = m_elemList[lf][0];
-      localIndex const er1 = m_elemRegionList[lf][1]; localIndex const esr1 = m_elemSubRegionList[lf][1]; localIndex const ei1 = m_elemList[lf][1];
+      localIndex const er0 = m_elemRegionList[lf][0];
+      localIndex const esr0 = m_elemSubRegionList[lf][0];
+      localIndex const ei0 = m_elemList[lf][0];
+      localIndex const er1 = m_elemRegionList[lf][1];
+      localIndex const esr1 = m_elemSubRegionList[lf][1];
+      localIndex const ei1 = m_elemList[lf][1];
       localIndex ner=-1, nesr=-1, nei=-1;
-      if( er0==m_er && esr0==m_esr && ei0==ei ){ ner=er1; nesr=esr1; nei=ei1; }
-      else if( er1==m_er && esr1==m_esr && ei1==ei ){ ner=er0; nesr=esr0; nei=ei0; }
+      if( er0==m_er && esr0==m_esr && ei0==ei )
+      {
+        ner=er1; nesr=esr1; nei=ei1;
+      }
+      else if( er1==m_er && esr1==m_esr && ei1==ei )
+      {
+        ner=er0; nesr=esr0; nei=ei0;
+      }
       bool const hasNei = (ner>=0);
 
       // flux quantities
