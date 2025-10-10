@@ -41,7 +41,7 @@ string const partitionManager( "partitionManager" );
 }
 
 class ObjectManagerBase;
-class PartitionerBase;
+class DomainPartitioner;
 class PartitionerManager;
 
 /**
@@ -158,15 +158,15 @@ public:
 
   /**
    * @brief Get the active partitioner from the PartitionerManager, const version.
-   * @return Reference to const PartitionerBase instance.
+   * @return Reference to const DomainPartitioner instance.
    */
-  PartitionerBase const & getPartitioner() const;
+  DomainPartitioner const & getPartitioner() const;
 
   /**
    * @brief Get the active partitioner from the PartitionerManager.
-   * @return Reference to PartitionerBase instance.
+   * @return Reference to DomainPartitioner instance.
    */
-  PartitionerBase & getPartitioner();
+  DomainPartitioner & getPartitioner();
 
   /**
    * @brief Get the mesh bodies, const version.

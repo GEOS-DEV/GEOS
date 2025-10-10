@@ -20,7 +20,7 @@
 #ifndef GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 #define GEOS_MESH_GENERATORS_MESHGENERATORBASE_HPP
 
-#include "mesh/mpiCommunications/PartitionerBase.hpp"
+#include "mesh/mpiCommunications/DomainPartitioner.hpp"
 #include "mesh/generators/ParticleBlockManager.hpp"
 #include "mesh/ParticleManager.hpp"
 #include "mesh/MeshBody.hpp"
@@ -81,7 +81,7 @@ public:
    * @param parent The parent group of the CellBlockManager.
    * @param[in] partitioner The reference to partitioner
    */
-  void generateMesh( Group & parent, PartitionerBase & partitioner );
+  void generateMesh( Group & parent, DomainPartitioner & partitioner );
 
   /**
    * @brief Describe which kind of block must be considered.
@@ -141,7 +141,7 @@ private:
    * @param[in] partitioner The reference to spatial partition
    */
 
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionerBase & partitioner )
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, DomainPartitioner & partitioner )
   {
     GEOS_UNUSED_VAR( cellBlockManager );
     GEOS_UNUSED_VAR( partitioner );
@@ -157,7 +157,7 @@ private:
    * @param[in] partitioner The reference to spatial partition
    */
   virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager,
-                                         ParticleManager & particleManager, PartitionerBase & partitioner )
+                                         ParticleManager & particleManager, DomainPartitioner & partitioner )
   {
     GEOS_UNUSED_VAR( particleBlockManager );
     GEOS_UNUSED_VAR( particleManager );

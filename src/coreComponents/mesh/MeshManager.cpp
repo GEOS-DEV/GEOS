@@ -86,7 +86,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
 
   // If no partitioner exists, create a default one based on mesh type
   // This might happen in tests where there's no ProblemManager parent
-  if( !domain.hasPartitioner()  )
+  if( !domain.hasPartitioner() )
   {
     // Check if the domain has a parent (ProblemManager)
     PartitionerManager * partitionerManager = nullptr;
@@ -96,62 +96,18 @@ void MeshManager::generateMeshes( DomainPartition & domain )
       Group & problemManager = domain.getParent();
       if( problemManager.hasGroup( ProblemManager::groupKeysStruct().partitionerManager.key() ) )
       {
-        partitionerManager = &problemManager.getGroup< PartitionerManager >( ProblemManager::groupKeysStruct().partitionerManager.key() );
+        partitionerManager = &problemManager.getGroup< PartitionerManager >(
+          ProblemManager::groupKeysStruct().partitionerManager.key() );
       }
     }
 
     // If no PartitionerManager found, create a temporary one (for unit tests)
     if( partitionerManager == nullptr )
     {
-      GEOS_LOG_RANK_0( "No PartitionerManager available (likely a unit test). Creating temporary PartitionerManager." );
+      GEOS_LOG_RANK_0( "No PartitionerManager available (likely a unit test). "
+                       "Creating temporary PartitionerManager." );
       tempPartitionerManager = std::make_unique< PartitionerManager >( "tempPartitionerManager", &domain );
       partitionerManager = tempPartitionerManager.get();
-    }
-
-    bool hasInternalMesh = false;
-    bool hasExternalMesh = false;
-    bool hasParticleMesh = false;
-
-    // Check what type of mesh generators are being used
-    forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase const & meshGen )
-    {
-      if( dynamic_cast< InternalMeshGenerator const * >( &meshGen ) != nullptr )
-      {
-        hasInternalMesh = true;
-      }
-      else if( dynamic_cast< ExternalMeshGeneratorBase const * >( &meshGen ) != nullptr )
-      {
-        hasExternalMesh = true;
-      }
-      else if( dynamic_cast< ParticleMeshGenerator const * >( &meshGen ) != nullptr )
-      {
-        hasParticleMesh = true;
-      }
-    } );
-
-    // Create default partitioner based on mesh type
-    if( hasParticleMesh )
-    {
-      GEOS_LOG_RANK_0( "No partitioner specified. Creating default ParticleCartesianPartitioner for particle mesh." );
-      partitionerManager->createChild( "ParticleCartesian", "defaultPartitioner" );
-    }
-    else if( hasInternalMesh && hasExternalMesh )
-    {
-      GEOS_ERROR( "Both internal and external meshes detected, but no partitioner specified." );
-    }
-    else if( hasInternalMesh )
-    {
-      GEOS_LOG_RANK_0( "No partitioner specified. Creating default CartesianPartitioner for internal mesh." );
-      partitionerManager->createChild( "Cartesian", "defaultPartitioner" );
-    }
-    else if( hasExternalMesh )
-    {
-      GEOS_LOG_RANK_0( "No partitioner specified. Creating default ParMetisPartitioner for external mesh." );
-      partitionerManager->createChild( "ParMetis", "defaultPartitioner" );
-    }
-    else
-    {
-      GEOS_ERROR( "No partitioner defined." );
     }
   }
 
@@ -161,7 +117,7 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     meshBody.createMeshLevel( 0 );
 
     // Get the partitioner (either from ProblemManager or temporary)
-    PartitionerBase * partitioner = nullptr;
+    DomainPartitioner * partitioner = nullptr;
     if( domain.hasPartitioner() )
     {
       partitioner = &domain.getPartitioner();
@@ -184,10 +140,12 @@ void MeshManager::generateMeshes( DomainPartition & domain )
     {
       CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
-      meshBody.setGlobalLengthScale( std::max( cellBlockManager.getGlobalLength(), cellBlockManager.getGlobalOffset() ) );
+      meshBody.setGlobalLengthScale( std::max( cellBlockManager.getGlobalLength(),
+                                               cellBlockManager.getGlobalOffset() ) );
     }
   } );
 }
+
 void MeshManager::generateMeshLevels( DomainPartition & domain )
 {
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
@@ -302,6 +260,77 @@ void MeshManager::importFields( MeshGeneratorBase const & generator,
 
     bool const isMaterialField = materialWrapperNames.count( geosFieldName ) > 0 && wrapper.numArrayDims() > 1;
     generator.importFieldOnArray( block, subRegion.getName(), meshFieldName, isMaterialField, wrapper );
+  }
+}
+
+
+void MeshManager::createDefaultPartitioner( PartitionerManager & partitionerManager,
+                                            MeshManager const & meshManager )
+{
+  if( partitionerManager.hasPartitioner() )
+  {
+    return;
+  }
+
+  bool hasParticleMesh = false;
+  bool hasInternalMesh = false;
+  bool hasExternalMesh = false;
+
+  meshManager.forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase const & meshGen )
+  {
+    if( dynamic_cast< ParticleMeshGenerator const * >( &meshGen ) != nullptr )
+    {
+      hasParticleMesh = true;
+    }
+    else if( dynamic_cast< InternalMeshGenerator const * >( &meshGen ) != nullptr )
+    {
+      hasInternalMesh = true;
+    }
+    else if( dynamic_cast< ExternalMeshGeneratorBase const * >( &meshGen ) != nullptr )
+    {
+      hasExternalMesh = true;
+    }
+  } );
+
+  // Check for incompatible combination FIRST
+  if( hasInternalMesh && hasExternalMesh )
+  {
+    GEOS_ERROR( "Both internal and external meshes detected, but no partitioner specified." );
+  }
+
+  // Create default partitioner based on mesh type
+  if( hasParticleMesh )
+  {
+    GEOS_LOG_RANK_0( "No partitioner specified. "
+                     "Creating default ParticleCartesianPartitioner for particle mesh." );
+    partitionerManager.createChild( "ParticleCartesianPartitioner", "defaultPartitioner" );
+  }
+  else if( hasInternalMesh )
+  {
+    GEOS_LOG_RANK_0( "No partitioner specified. "
+                     "Creating default CartesianPartitioner for internal mesh." );
+    partitionerManager.createChild( "CartesianPartitioner", "defaultPartitioner" );
+  }
+  else if( hasExternalMesh )
+  {
+    GEOS_LOG_RANK_0( "No partitioner specified. "
+                     "Creating default CellGraphPartitioner for external mesh." );
+    partitionerManager.createChild( "CellGraphPartitioner", "defaultPartitioner" );
+  }
+  else
+  {
+    // No mesh generators found - this is OK for some unit tests
+    GEOS_LOG_RANK_0( "No partitioner defined and no mesh generators found (likely a unit test)." );
+    return;
+  }
+
+  // Initialize the newly created default partitioner
+  if( partitionerManager.hasPartitioner() )
+  {
+    DomainPartitioner & defaultPartitioner = partitionerManager.getPartitioner();
+    GEOS_LOG_RANK_0( "Initializing default partitioner: " << defaultPartitioner.getCatalogName() );
+    defaultPartitioner.postInputInitialization();
+    GEOS_LOG_RANK_0( "Finished initializing default partitioner" );
   }
 }
 

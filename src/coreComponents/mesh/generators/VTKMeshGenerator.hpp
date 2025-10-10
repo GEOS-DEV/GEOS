@@ -23,7 +23,6 @@
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 #include "mesh/generators/VTKHierarchicalDataSource.hpp"
-#include "mesh/mpiCommunications/PartitionerBase.hpp"
 
 class vtkDataSet;
 
@@ -89,7 +88,7 @@ public:
    * surfaces of interest, with triangles and/or quads holding an attribute value
    * of 1, 2 or 3, three node sets named "1", "2" and "3" will be instantiated by this method
    */
-  void fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionerBase & partitioner ) override;
+  void fillCellBlockManager( CellBlockManager & cellBlockManager, DomainPartitioner & partitioner ) override;
 
   void importFieldOnArray( Block block,
                            string const & blockName,
@@ -102,7 +101,19 @@ public:
 protected:
   void postInputInitialization() override;
 
+
 private:
+
+  /**
+   * @brief Load mesh from data source (merges multiple regions)
+   *
+   * Rank 0 loads all regions from data source and merges them.
+   * Other ranks start with empty mesh.
+   *
+   * @param allMeshes Output: loaded and merged meshes
+   */
+  void loadFromDataSource( vtk::AllMeshes & allMeshes );
+
 
   ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
@@ -181,6 +192,33 @@ private:
   VTKHierarchicalDataSource * m_dataSource;
 
 };
+
+/**
+ * @brief Redistribute VTK mesh using configured partitioner
+ *
+ * This is the main entry point for VTK mesh redistribution. It:
+ * 1. Validates that a mesh-based partitioner is provided
+ * 2. Manages global IDs
+ * 3. Performs initial redistribution if needed (KdTree, empty rank handling)
+ * 4. Delegates to the partitioner for final partitioning
+ *
+ * @param logLevel Logging verbosity level
+ * @param loadedMesh Main volumetric mesh loaded from file
+ * @param namesToFractures Map of fracture name to fracture mesh
+ * @param comm MPI communicator
+ * @param partitioner Domain partitioner (must be MeshPartitioner subclass)
+ * @param useGlobalIds How to handle global IDs (0=auto, 1=required, -1=generate)
+ * @return Redistributed meshes
+ *
+ * @throws If partitioner is not a MeshPartitioner (e.g., CartesianPartitioner)
+ */
+vtk::AllMeshes redistributeMeshes( integer logLevel,
+                                   vtkSmartPointer< vtkDataSet > loadedMesh,
+                                   std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
+                                   MPI_Comm comm,
+                                   DomainPartitioner & partitioner,
+                                   int useGlobalIds );
+
 
 } // namespace geos
 

@@ -14,31 +14,20 @@
  */
 
 /**
- * @file PartitionerBase.cpp
+ * @file GeometricPartitioner.cpp
  */
 
-
-#include "PartitionerBase.hpp"
-
+#include "GeometricPartitioner.hpp"
 
 namespace geos
 {
 using namespace dataRepository;
 
-PartitionerBase::PartitionerBase( string const & name,
-                                  Group * const parent ):
-  Group( name, parent ),
-  m_numPartitions( 1 ), // Default to a single partition
-  m_numColors( 1 ),     // Default to a single color
-  m_color( 0 )          // Default to color 0
-{
-  setInputFlags( InputFlags::OPTIONAL_NONUNIQUE ); // needed for schema generation
-}
+GeometricPartitioner::GeometricPartitioner( string const & name, Group * const parent )
+  : DomainPartitioner( name, parent )
+{}
 
-PartitionerBase::CatalogInterface::CatalogType & PartitionerBase::getCatalog()
-{
-  static PartitionerBase::CatalogInterface::CatalogType catalog;
-  return catalog;
-}
+GeometricPartitioner::~GeometricPartitioner()
+{}
 
 } // namespace geos

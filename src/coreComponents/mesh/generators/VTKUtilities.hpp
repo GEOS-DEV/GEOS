@@ -23,11 +23,13 @@
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
-#include "mesh/mpiCommunications/PartitionerBase.hpp"
+#include "mesh/mpiCommunications/DomainPartitioner.hpp"
+#include "mesh/mpiCommunications/GraphPartitionEngine.hpp"
 
 #include <vtkDataSet.h>
 #include <vtkMultiProcessController.h>
 #include <vtkSmartPointer.h>
+#include <vtkUnstructuredGrid.h>
 
 #include <numeric>
 #include <unordered_set>
@@ -91,6 +93,15 @@ public:
   {
     return m_main;
   }
+  /**
+   * @brief Get the main 3D mesh (const version)
+   * @return Pointer to main mesh
+   */
+  vtkSmartPointer< vtkDataSet > getMainMesh() const
+  {
+    return m_main;
+  }
+
 
   /**
    * @return a mapping linking the name of each face block to its mesh.
@@ -118,6 +129,8 @@ public:
     m_faceBlocks = faceBlocks;
   }
 
+
+
 private:
   /// The main 3d mesh (namely the matrix).
   vtkSmartPointer< vtkDataSet > m_main;
@@ -138,34 +151,104 @@ AllMeshes loadAllMeshes( Path const & filePath,
                          string_array const & faceBlockNames );
 
 /**
+ * @brief Manage global IDs for points and cells in a VTK mesh
+ * @param[in] mesh a vtk grid
+ * @param[in] useGlobalIds flag to control global ID handling:
+ *            > 0: strictly require existing global IDs (error if missing)
+ *            = 0: use existing global IDs if available, generate if missing
+ *            < 0: always generate new global IDs
+ * @param[in] isFractured whether the mesh contains fractures
+ * @return the vtk grid with properly configured global IDs
+ */
+vtkSmartPointer< vtkDataSet >
+manageGlobalIds( vtkSmartPointer< vtkDataSet > mesh,
+                 int useGlobalIds,
+                 bool isFractured );
+
+/**
+ * @brief Redistributes the mesh using a Kd-Tree
+ * @param[in] mesh a vtk grid
+ * @return the vtk grid redistributed across MPI ranks
+ */
+vtkSmartPointer< vtkDataSet >
+redistributeByKdTree( vtkDataSet & mesh );
+
+/**
+ * @brief Ensure that no MPI rank is empty by redistributing elements
+ * @param[in] mesh a vtk grid
+ * @param[in] comm the MPI communicator
+ * @return the vtk grid redistributed to guarantee all ranks have at least one element
+ */
+vtkSmartPointer< vtkDataSet >
+ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
+                   MPI_Comm const comm );
+
+
+
+/**
+ * @brief Partition meshes by cell graph
+ *
+ * @param input Input meshes
+ * @param engine Graph partitioning engine
+ * @param comm MPI communicator
+ * @param numParts Number of partitions
+ * @return Partition array
+ */
+array1d< int64_t > partitionByCellGraph( AllMeshes & input,
+                                         GraphPartitionEngine & engine,
+                                         MPI_Comm comm,
+                                         pmet_idx_t numParts );
+
+/**
+ * @brief Partition meshes by area and layer
+ *
+ * @param input Input meshes
+ * @param indexArrayName Name of the structured index array
+ * @param engine Graph partitioning engine
+ * @param numPartZ Number of partitions in Z direction
+ * @param comm MPI communicator
+ * @return Partition array
+ */
+array1d< int64_t > partitionByAreaAndLayer( AllMeshes & input,
+                                            string const & indexArrayName,
+                                            GraphPartitionEngine & engine,
+                                            int numPartZ,
+                                            MPI_Comm comm );
+
+/**
+ * @brief Apply partitioning to meshes and redistribute across MPI ranks
+ *
+ * Takes a partition assignment for each element and redistributes the meshes
+ * accordingly using VTK's redistribution utilities.
+ *
+ * @param input Input meshes (main mesh + fractures)
+ * @param partitioning Partition assignment for each element.
+ *                     Size must match total number of elements (3D + fractures).
+ *                     Format: [3D cells][fracture1 cells][fracture2 cells]...
+ * @param comm MPI communicator
+ * @return Redistributed meshes after applying partitioning
+ */
+AllMeshes applyPartitioning( AllMeshes & input,
+                             arrayView1d< int64_t const > partitioning,
+                             MPI_Comm comm );
+
+/**
+ * @brief Exchange bounding boxes between MPI ranks
+ *
+ * @param mesh The mesh to compute and exchange bounding boxes for
+ * @param comm MPI communicator
+ * @return Vector of bounding boxes from all ranks
+ */
+stdVector< vtkBoundingBox > exchangeBoundingBoxes( vtkDataSet & mesh, MPI_Comm comm );
+
+
+/**
  * @brief Compute the rank neighbor candidate list.
  * @param[in] boundingBoxes the bounding boxes used by the VTK partitioner for all ranks
  * @return the list of neighboring MPI ranks, will be updated
  */
 stdVector< int >
 findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes );
-
-/**
- * @brief Generate global point/cell IDs and redistribute the mesh among MPI ranks.
- * @param[in] logLevel the log level
- * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
- * @param[in] namesToFractures the fracture meshes
- * @param[in] comm the MPI communicator
- * @param[in] partitioner the partitioning method
- * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
- * @param[in] structuredIndexAttributeName VTK array name for structured index attribute, if present
- * @param[in] numPartZ number of MPI partitions in Z direction (only if @p structuredIndexAttributeName is used)
- * @return the vtk grid redistributed
- */
-AllMeshes
-redistributeMeshes( integer const logLevel,
-                    vtkSmartPointer< vtkDataSet > loadedMesh,
-                    std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
-                    MPI_Comm const comm,
-                    PartitionerBase & partitioner,
-                    int const useGlobalIds,
-                    string const & structuredIndexAttributeName,
-                    int const numPartZ );
 
 /**
  * @brief Collect lists of VTK cell indices organized by type and attribute value.

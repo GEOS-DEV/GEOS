@@ -51,7 +51,7 @@ MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog
   return catalog;
 }
 
-void MeshGeneratorBase::generateMesh( Group & parent, PartitionerBase & partitioner )
+void MeshGeneratorBase::generateMesh( Group & parent, DomainPartitioner & partitioner )
 {
   MeshBody & meshBody = dynamic_cast< MeshBody & >( parent );
   if( meshBody.hasParticles() )

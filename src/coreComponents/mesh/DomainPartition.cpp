@@ -184,12 +184,12 @@ bool DomainPartition::hasPartitioner() const
   return false;
 }
 
-PartitionerBase & DomainPartition::getPartitioner()
+DomainPartitioner & DomainPartition::getPartitioner()
 {
   return getPartitionerManager().getPartitioner();
 }
 
-PartitionerBase const & DomainPartition::getPartitioner() const
+DomainPartitioner const & DomainPartition::getPartitioner() const
 {
   return getPartitionerManager().getPartitioner();
 }
@@ -203,7 +203,7 @@ void DomainPartition::setupBaseLevelMeshGlobalInfo()
 #if defined(GEOS_USE_MPI)
   if( hasPartitioner())
   {
-    PartitionerBase const & partitioner = getPartitioner();
+    DomainPartitioner const & partitioner = getPartitioner();
     buildNeighborsFromPartitioner( partitioner.getNeighborsRank() );
   }
 #endif

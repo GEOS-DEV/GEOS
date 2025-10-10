@@ -21,12 +21,12 @@
 
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
-#include "mesh/mpiCommunications/PartitionerBase.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
+#include "mesh/mpiCommunications/DomainPartitioner.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
@@ -464,7 +464,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                                                 MeshLevel & meshLevel,
                                                                 string_array const & )
   {
-    PartitionerBase & partitioner = domain.getPartitioner();
+    DomainPartitioner & partitioner = domain.getPartitioner();
 
     rval = separationDriver( domain,
                              meshLevel,

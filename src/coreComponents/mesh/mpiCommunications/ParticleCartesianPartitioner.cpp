@@ -807,6 +807,6 @@ void ParticleCartesianPartitioner::sendParticlesToNeighbor( ParticleSubRegionBas
 
 }
 
-REGISTER_CATALOG_ENTRY( PartitionerBase, ParticleCartesianPartitioner, string const &, Group * const )
-
+REGISTER_CATALOG_ENTRY( DomainPartitioner, ParticleCartesianPartitioner,
+                        string const &, Group * const )
 }

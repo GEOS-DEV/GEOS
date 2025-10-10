@@ -62,7 +62,7 @@ public:
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager,
-                                         ParticleManager & particleManager, PartitionerBase & partitioner ) override;
+                                         ParticleManager & particleManager, DomainPartitioner & partitioner ) override;
 
   void importFieldOnArray( Block block,
                            string const & blockName,

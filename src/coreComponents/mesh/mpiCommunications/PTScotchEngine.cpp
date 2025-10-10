@@ -14,11 +14,23 @@
  */
 
 /**
- * @file PTScotchPartitioner.cpp
+ * @file PTScotchEngine.cpp
  */
 
-#include "PTScotchPartitioner.hpp"
+#include "PTScotchEngine.hpp"
+#include "common/MpiWrapper.hpp"
+#include "common/TimingMacros.hpp"
+
+#ifdef GEOS_USE_PARMETIS
+  #include "ParMetisEngine.hpp"  // For fallback
+#endif
+
+
+#ifdef GEOS_USE_PTSCOTCH
+extern "C"
+{
 #include <ptscotch.h>
+}
 
 #define GEOS_SCOTCH_CHECK( call ) \
   do { \
@@ -26,32 +38,57 @@
     GEOS_ERROR_IF_NE_MSG( ierr, 0, "Error in call to PT-Scotch library:\n" << #call ); \
   } while( false )
 
-
 namespace geos
 {
+
 using namespace dataRepository;
 
 static_assert( std::is_same< int64_t, SCOTCH_Num >::value,
                "Non-matching index types. Scotch must be configured with 64-bit indices (SCOTCH_Num)." );
 static_assert( std::is_same< pmet_idx_t, SCOTCH_Num >::value,
-               "pmet_idx_t must match SCOTCH_Num when using PTScotchPartitioner." );
+               "pmet_idx_t must match SCOTCH_Num when using PTScotchEngine." );
 
-PTScotchPartitioner::PTScotchPartitioner( string const & name,
-                                          Group * const parent ):
-  GraphPartitioner( name, parent )
+#else
+
+namespace geos
+{
+
+using namespace dataRepository;
+
+#endif // GEOS_USE_PTSCOTCH
+
+PTScotchEngine::PTScotchEngine( string const & name,
+                                dataRepository::Group * const parent )
+  : GraphPartitionEngine( name, parent ),
+  m_strategy( "default" )
+{
+  registerWrapper( viewKeyStruct::strategyString(), &m_strategy ).
+    setApplyDefaultValue( "default" ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "PT-Scotch partitioning strategy. "
+                    "Options: 'default', 'quality', 'speed', 'balance'. "
+                    "Default: 'default'." );
+}
+
+PTScotchEngine::~PTScotchEngine()
 {}
 
-// NOTE: processCommandLineOverrides, setPartitionCounts, setNeighborsRank, and color
-// are now implemented in the parent GraphPartitioner class and have been removed from here.
-
-array1d< pmet_idx_t > PTScotchPartitioner::partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & graph,
-                                                      arrayView1d< pmet_idx_t const > const & vertDist,
-                                                      pmet_idx_t const numParts,
-                                                      MPI_Comm comm,
-                                                      int const numRefinements )
+array1d< pmet_idx_t >
+PTScotchEngine::partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & graph,
+                           arrayView1d< pmet_idx_t const > const & vertDist,
+                           pmet_idx_t const numParts,
+                           MPI_Comm comm )
 {
+  GEOS_MARK_FUNCTION;
+
+#ifndef GEOS_USE_PTSCOTCH
+  GEOS_UNUSED_VAR( graph, vertDist, numParts, comm );
+  GEOS_ERROR( "GEOS was not built with PT-Scotch support. "
+              "Reconfigure with -DENABLE_PTSCOTCH=ON" );
+  return array1d< pmet_idx_t >();
+#else
+
   GEOS_UNUSED_VAR( vertDist );
-  GEOS_WARNING_IF( numRefinements > 0, "Partition refinement is not supported by the PTScotch partitioner and will be ignored." );
 
   SCOTCH_Num const numLocalVerts = graph.size();
   array1d< SCOTCH_Num > part( numLocalVerts );
@@ -74,6 +111,9 @@ array1d< pmet_idx_t > PTScotchPartitioner::partition( ArrayOfArraysView< pmet_id
   // We must cast away constness, which is technically UB but is how the library is used.
   SCOTCH_Num * const offsets = const_cast< SCOTCH_Num * >( graph.getOffsets() );
   SCOTCH_Num * const edges = const_cast< SCOTCH_Num * >( graph.getValues() );
+
+  GEOS_LOG_RANK_0( GEOS_FMT( "PTScotchEngine: Partitioning {} local vertices into {} parts (strategy: {})",
+                             numLocalVerts, numParts, m_strategy ) );
 
   // Build the distributed graph from the local CSR representation.
   GEOS_SCOTCH_CHECK( SCOTCH_dgraphBuild( gr,           // graphptr
@@ -105,9 +145,42 @@ array1d< pmet_idx_t > PTScotchPartitioner::partition( ArrayOfArraysView< pmet_id
   SCOTCH_stratExit( strategy );
   SCOTCH_dgraphExit( gr );
 
+  GEOS_LOG_RANK_0( "PTScotchEngine: Partition complete" );
+
   return part;
+
+#endif // GEOS_USE_PTSCOTCH
 }
 
-REGISTER_CATALOG_ENTRY( PartitionerBase, PTScotchPartitioner, string const &, dataRepository::Group * const )
+
+
+ArrayOfArrays< pmet_idx_t, pmet_idx_t >
+PTScotchEngine::meshToDual( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & elemToNodes,
+                            arrayView1d< pmet_idx_t const > const & elemDist,
+                            MPI_Comm comm,
+                            int const minCommonNodes )
+{
+#ifdef GEOS_USE_PARMETIS
+
+  // Fallback to ParMETIS implementation
+  return ParMetisEngine::parmetisMeshToDual( elemToNodes, elemDist, comm, minCommonNodes );
+
+#else
+
+  GEOS_UNUSED_VAR( elemToNodes );
+  GEOS_UNUSED_VAR( elemDist );
+  GEOS_UNUSED_VAR( comm );
+  GEOS_UNUSED_VAR( minCommonNodes );
+
+  GEOS_ERROR( "PTScotchEngine::meshToDual requires ParMETIS for mesh-to-dual conversion. "
+              "Either build with GEOS_USE_PARMETIS=ON or provide the dual graph directly." );
+  return ArrayOfArrays< pmet_idx_t, pmet_idx_t >();
+
+#endif
+}
+
+// Register in the GraphPartitionEngine catalog
+REGISTER_CATALOG_ENTRY( GraphPartitionEngine, PTScotchEngine,
+                        string const &, dataRepository::Group * const )
 
 } // namespace geos

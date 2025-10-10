@@ -59,7 +59,7 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
   string const pattern =
     R"xml(
   <Partitioner>
-    <NoOp name="partitioner"/>
+    <CellGraphPartitioner name="partitioner" engine="noop"/>
   </Partitioner>
   <Mesh>
       <VTKMesh

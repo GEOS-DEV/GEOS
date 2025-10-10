@@ -264,7 +264,7 @@ private:
 
 
 
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionerBase & partitioner ) override;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, DomainPartitioner & partitioner ) override;
 
 private:
 

@@ -25,7 +25,7 @@
 #include "mesh/generators/VTKFaceBlockUtilities.hpp"
 #include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
-#include "mesh/mpiCommunications/PartitionerBase.hpp"
+#include "mesh/mpiCommunications/MeshPartitioner.hpp"
 #include "mesh/generators/Region.hpp"
 
 #include <vtkXMLUnstructuredGridWriter.h>
@@ -121,8 +121,8 @@ void VTKMeshGenerator::postInputInitialization()
 
 }
 
-
-void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionerBase & partitioner )
+void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager,
+                                             DomainPartitioner & partitioner )
 {
   // TODO refactor void MeshGeneratorBase::generateMesh( DomainPartition & domain )
   GEOS_MARK_FUNCTION;
@@ -130,8 +130,6 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   MPI_Comm const comm = MPI_COMM_GEOS;
   vtkSmartPointer< vtkMultiProcessController > controller = vtk::getController();
   vtkMultiProcessController::SetGlobalController( controller );
-//BDBDBD
-  int const numPartZ = 1;//m_structuredIndexAttributeName.empty() ? 1 : partitioner.getPartitions()[2];
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, "  redistributing mesh..." );
   {
@@ -139,110 +137,33 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': reading the dataset...", catalogName(), getName() ) );
 
-    if( !m_filePath.empty())
+    if( !m_filePath.empty() )
     {
       GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
       allMeshes = vtk::loadAllMeshes( m_filePath, m_mainBlockName, m_faceBlockNames );
     }
-    else if( !m_dataSourceName.empty())
+    else if( !m_dataSourceName.empty() )
     {
-      if( MpiWrapper::commRank() == 0 )
-      {
-        stdVector< vtkSmartPointer< vtkPartitionedDataSet > > partitions;
-        vtkNew< vtkAppendFilter > appender;
-        appender->MergePointsOn();
-        for( auto & [key, value] : this->getSubGroups())
-        {
-          Region const & region = this->getGroup< Region >( key );
-
-          string path = region.getWrapper< string >( Region::viewKeyStruct::pathInRepositoryString()).reference();
-          integer region_id = region.getWrapper< integer >( Region::viewKeyStruct::idString()).reference();
-
-          GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading partition from {}", catalogName(), getName(), path ) );
-          vtkPartitionedDataSet * p = m_dataSource->search( path );
-
-          //load the grid
-          vtkDataObject * block = p->GetPartition( 0 );
-          if( block->IsA( "vtkDataSet" ) )
-          {
-            vtkSmartPointer< vtkDataSet > dataset = vtkDataSet::SafeDownCast( block );
-
-            vtkIntArray * arr = vtkIntArray::New();
-            arr->SetName( m_regionAttributeName.c_str());
-            arr->SetNumberOfComponents( 1 );
-            arr->SetNumberOfTuples( dataset->GetNumberOfCells());
-
-            arr->FillValue( region_id );
-
-            dataset->GetCellData()->AddArray( arr );
-            appender->AddInputDataObject( dataset );
-          }
-        }
-        appender->Update();
-        vtkUnstructuredGrid * result = vtkUnstructuredGrid::SafeDownCast( appender->GetOutputDataObject( 0 ) );
-        allMeshes.setMainMesh( result );
-
-        //DEBUG code
-        vtkNew< vtkXMLUnstructuredGridWriter > writer;
-        writer->SetFileName( "tmp_output.vtu" );
-        writer->SetInputData( result );
-        writer->Write();
-      }
-      else
-      {
-        vtkUnstructuredGrid * result = vtkUnstructuredGrid::New();
-        allMeshes.setMainMesh( result );
-      }
+      loadFromDataSource( allMeshes );
     }
 
     GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps,
                            GEOS_FMT( "{} '{}': redistributing mesh...", catalogName(), getName() ) );
-    vtk::AllMeshes redistributedMeshes = vtk::redistributeMeshes( getLogLevel(),
-                                                                  allMeshes.getMainMesh(),
-                                                                  allMeshes.getFaceBlocks(),
-                                                                  comm,
-                                                                  partitioner,
-                                                                  m_useGlobalIds,
-                                                                  m_structuredIndexAttributeName,
-                                                                  numPartZ );
+
+    vtk::AllMeshes redistributedMeshes = redistributeMeshes(
+      getLogLevel(),
+      allMeshes.getMainMesh(),
+      allMeshes.getFaceBlocks(),
+      comm,
+      partitioner,
+      m_useGlobalIds
+      );
+
     m_vtkMesh = redistributedMeshes.getMainMesh();
     m_faceBlockMeshes = redistributedMeshes.getFaceBlocks();
-    GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': finding neighbor ranks...", catalogName(), getName() ) );
-    stdVector< vtkBoundingBox > boxes = vtk::exchangeBoundingBoxes( *m_vtkMesh, MPI_COMM_GEOS );
-    //stdVector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
-    //partitioner.setNeighborsRank( std::move( neighbors ) );
-
-
-// DEBUG: Check what boxes we got
-    std::cout << "Rank " << MpiWrapper::commRank() << ": Got " << boxes.size() << " bounding boxes" << std::endl;
-    for( size_t i = 0; i < boxes.size(); ++i )
-    {
-      double bounds[6];
-      boxes[i].GetBounds( bounds );
-      std::cout << "  Box[" << i << "]: [" << bounds[0] << "," << bounds[1] << "] ["
-                << bounds[2] << "," << bounds[3] << "] [" << bounds[4] << "," << bounds[5] << "]" << std::endl;
-    }
-
-    stdVector< int > const neighbors = vtk::findNeighborRanks( std::move( boxes ) );
-
-// DEBUG: Check what neighbors we found
-    std::cout << "Rank " << MpiWrapper::commRank() << ": Found " << neighbors.size() << " neighbors: [";
-    for( size_t i = 0; i < neighbors.size(); ++i )
-    {
-      std::cout << neighbors[i];
-      if( i < neighbors.size() - 1 )
-        std::cout << ", ";
-    }
-    std::cout << "]" << std::endl;
-
-    partitioner.setNeighborsRank( std::move( neighbors ) );
-
-
-
-    GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': done!", catalogName(), getName() ) );
   }
-  GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': generating GEOS mesh data structure", catalogName(), getName() ) );
 
+  GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': generating GEOS mesh data structure", catalogName(), getName() ) );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': preprocessing...", catalogName(), getName() ) );
   m_cellMap = vtk::buildCellMap( *m_vtkMesh, m_regionAttributeName );
@@ -271,6 +192,58 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': done!", catalogName(), getName() ) );
   vtk::printMeshStatistics( *m_vtkMesh, m_cellMap, MPI_COMM_GEOS );
 }
+
+void VTKMeshGenerator::loadFromDataSource( vtk::AllMeshes & allMeshes )
+{
+  if( MpiWrapper::commRank() == 0 )
+  {
+    vtkNew< vtkAppendFilter > appender;
+    appender->MergePointsOn();
+
+    for( auto & [key, value] : this->getSubGroups() )
+    {
+      Region const & region = this->getGroup< Region >( key );
+
+      string path = region.getWrapper< string >( Region::viewKeyStruct::pathInRepositoryString() ).reference();
+      integer region_id = region.getWrapper< integer >( Region::viewKeyStruct::idString() ).reference();
+
+      GEOS_LOG_RANK_0( GEOS_FMT( "{} '{}': reading partition from {}", catalogName(), getName(), path ) );
+      vtkPartitionedDataSet * p = m_dataSource->search( path );
+
+      // Load the grid
+      vtkDataObject * block = p->GetPartition( 0 );
+      if( block->IsA( "vtkDataSet" ) )
+      {
+        vtkSmartPointer< vtkDataSet > dataset = vtkDataSet::SafeDownCast( block );
+
+        vtkIntArray * arr = vtkIntArray::New();
+        arr->SetName( m_regionAttributeName.c_str() );
+        arr->SetNumberOfComponents( 1 );
+        arr->SetNumberOfTuples( dataset->GetNumberOfCells() );
+        arr->FillValue( region_id );
+
+        dataset->GetCellData()->AddArray( arr );
+        appender->AddInputDataObject( dataset );
+      }
+    }
+
+    appender->Update();
+    vtkUnstructuredGrid * result = vtkUnstructuredGrid::SafeDownCast( appender->GetOutputDataObject( 0 ) );
+    allMeshes.setMainMesh( result );
+
+    // DEBUG code
+    vtkNew< vtkXMLUnstructuredGridWriter > writer;
+    writer->SetFileName( "tmp_output.vtu" );
+    writer->SetInputData( result );
+    writer->Write();
+  }
+  else
+  {
+    vtkUnstructuredGrid * result = vtkUnstructuredGrid::New();
+    allMeshes.setMainMesh( result );
+  }
+}
+
 
 void VTKMeshGenerator::importVolumicFieldOnArray( string const & cellBlockName,
                                                   string const & meshFieldName,
@@ -358,6 +331,113 @@ void VTKMeshGenerator::freeResources()
   m_cellMap.clear();
   m_faceBlockMeshes.clear();
 }
+
+
+vtk::AllMeshes redistributeMeshes( integer const logLevel,
+                                   vtkSmartPointer< vtkDataSet > loadedMesh,
+                                   std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
+                                   MPI_Comm const comm,
+                                   DomainPartitioner & partitioner,
+                                   int const useGlobalIds )
+{
+  GEOS_MARK_FUNCTION;
+
+  // ====================================================================
+  // STEP 1: Validate that we have a MeshPartitioner
+  // ====================================================================
+  MeshPartitioner * meshPartitioner = dynamic_cast< MeshPartitioner * >( &partitioner );
+
+  GEOS_ERROR_IF( meshPartitioner == nullptr,
+                 "VTK mesh import requires a mesh-based partitioner (CellGraphPartitioner or LayeredMeshPartitioner). "
+                 "Partitioner type '" << partitioner.getCatalogName()
+                                      << "' cannot partition imported VTK meshes." );
+
+  // ====================================================================
+  // STEP 2: Prepare fracture list for global ID generation
+  // ====================================================================
+  stdVector< vtkSmartPointer< vtkDataSet > > fractures;
+  for( auto & nameToFracture: namesToFractures )
+  {
+    fractures.push_back( nameToFracture.second );
+  }
+
+  // ====================================================================
+  // STEP 3: Generate global IDs for vertices and cells, if needed
+  // ====================================================================
+  vtkSmartPointer< vtkDataSet > mesh =
+    vtk::manageGlobalIds( loadedMesh, useGlobalIds, !std::empty( fractures ) );
+
+  // ====================================================================
+  // STEP 4: Verify fractures are on the last rank only
+  // ====================================================================
+  if( MpiWrapper::commRank( comm ) != ( MpiWrapper::commSize( comm ) - 1 ) )
+  {
+    for( auto const & nameToFracture: namesToFractures )
+    {
+      GEOS_UNUSED_VAR( nameToFracture );
+      GEOS_ASSERT_EQ( nameToFracture.second->GetNumberOfCells(), 0 );
+    }
+  }
+
+  // ====================================================================
+  // STEP 5: Initial KdTree redistribution if some ranks are empty
+  // ====================================================================
+  vtkIdType const minCellsOnAnyRank = MpiWrapper::min( mesh->GetNumberOfCells(), comm );
+
+  if( minCellsOnAnyRank == 0 )
+  {
+    mesh = vtk::redistributeByKdTree( *mesh );
+
+    std::cout << "Rank " << MpiWrapper::commRank()
+              << ": After KdTree redistribution - Cells: " << mesh->GetNumberOfCells()<<std::endl;
+  }
+
+  // ====================================================================
+  // STEP 6: Ensure no rank is empty after initial redistribution
+  // ====================================================================
+  if( MpiWrapper::min( mesh->GetNumberOfCells(), comm ) == 0 )
+  {
+    GEOS_WARNING( "Empty ranks detected after kdtree - redistributing to ensure all ranks have cells" );
+    mesh = vtk::ensureNoEmptyRank( mesh, comm );
+
+    std::cout << "Rank " << MpiWrapper::commRank()
+              << ": After ensureNoEmptyRank - Cells: " << mesh->GetNumberOfCells()<<std::endl;
+  }
+
+  // ====================================================================
+  // STEP 7: Final partitioning using the configured partitioner
+  // ====================================================================
+  std::cout << "Rank " << MpiWrapper::commRank()
+            << ": Before final partitioning - Cells: " << mesh->GetNumberOfCells()<<std::endl;
+
+  vtk::AllMeshes input( mesh, namesToFractures );
+  vtk::AllMeshes result = meshPartitioner->partitionMeshes( input, comm );
+
+  std::cout << "Rank " << MpiWrapper::commRank()
+            << ": After final partitioning - Cells: "
+            << result.getMainMesh()->GetNumberOfCells()<<std::endl;
+
+  // ====================================================================
+  // STEP 8: Log redistribution statistics
+  // ====================================================================
+  if( logLevel >= 5 )
+  {
+    string const pattern = "{}: {}";
+    stdVector< string > messages;
+    messages.push_back( GEOS_FMT( pattern, "Local mesh size",
+                                  result.getMainMesh()->GetNumberOfCells() ) );
+
+    for( auto const & [faceName, faceMesh]: result.getFaceBlocks() )
+    {
+      messages.push_back( GEOS_FMT( pattern, faceName, faceMesh->GetNumberOfCells() ) );
+    }
+
+    GEOS_LOG_RANK( stringutilities::join( messages, ", " ) );
+  }
+
+  return result;
+}
+
 
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, VTKMeshGenerator, string const &, Group * const )

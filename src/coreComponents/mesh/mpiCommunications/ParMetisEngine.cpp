@@ -14,14 +14,20 @@
  */
 
 /**
- * @file ParMetisPartitioner.cpp
+ * @file ParMetisEngine.cpp
  */
 
-#include "ParMetisPartitioner.hpp"
-#include "common/DataTypes.hpp"
-#include <parmetis.h>
-#include <numeric> // For std::accumulate
+#include "ParMetisEngine.hpp"
+#include "common/MpiWrapper.hpp"
+#include "common/TimingMacros.hpp"
+#include <numeric>
 
+#ifdef GEOS_USE_PARMETIS
+extern "C"
+{
+#include <parmetis.h>
+}
+#endif
 
 #define GEOS_PARMETIS_CHECK( call ) \
   do { \
@@ -29,32 +35,47 @@
     GEOS_ERROR_IF_NE_MSG( ierr, METIS_OK, "Error in call to:\n" << #call ); \
   } while( false )
 
-
 namespace geos
 {
+
 using namespace dataRepository;
 using camp::idx_t;
 
-static_assert( std::is_same< idx_t, pmet_idx_t >::value, "Non-matching index types. ParMETIS must be configured with 64-bit indices." );
+static_assert( std::is_same< idx_t, pmet_idx_t >::value,
+               "Non-matching index types. ParMETIS must be configured with 64-bit indices." );
 
-
-ParMetisPartitioner::ParMetisPartitioner( string const & name, Group * const parent ):
-  GraphPartitioner( name, parent ),
+ParMetisEngine::ParMetisEngine( string const & name,
+                                dataRepository::Group * const parent )
+  : GraphPartitionEngine( name, parent ),
   m_numRefinements( 0 )
 {
   registerWrapper( viewKeyStruct::numRefinementsString(), &m_numRefinements ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Number of ParMETIS refinements" );
+    setApplyDefaultValue( 0 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Number of ParMETIS refinement iterations. "
+                    "Default: 0 (no refinement)." );
 }
 
+ParMetisEngine::~ParMetisEngine()
+{}
+
 array1d< pmet_idx_t >
-ParMetisPartitioner::partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & graph,
-                                arrayView1d< pmet_idx_t const > const & vertDist,
-                                pmet_idx_t const numParts,
-                                MPI_Comm comm,
-                                int const numRefinements )
+ParMetisEngine::partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & graph,
+                           arrayView1d< pmet_idx_t const > const & vertDist,
+                           pmet_idx_t const numParts,
+                           MPI_Comm comm )
 {
+  GEOS_MARK_FUNCTION;
+
+#ifndef GEOS_USE_PARMETIS
+  GEOS_UNUSED_VAR( graph, vertDist, numParts, comm );
+  GEOS_ERROR( "GEOS was not built with ParMETIS support. "
+              "Reconfigure with -DENABLE_PARMETIS=ON" );
+  return array1d< pmet_idx_t >();
+#else
+
   array1d< pmet_idx_t > part( graph.size() );
+
   // If only one partition is requested, no partitioning is needed.
   // All elements are assigned to rank 0.
   if( numParts == 1 )
@@ -76,6 +97,9 @@ ParMetisPartitioner::partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t 
   array1d< real_t > tpwgts( numParts );
   tpwgts.setValues< serialPolicy >( 1.0f / static_cast< real_t >( numParts ) );
 
+  GEOS_LOG_RANK_0( GEOS_FMT( "ParMetisEngine: Partitioning {} local vertices into {} parts",
+                             graph.size(), numParts ) );
+
   // ParMETIS has an unusual API that requires non-const pointers for read-only data.
   // We must cast away constness, which is technically UB but is how the library is used.
   GEOS_PARMETIS_CHECK( ParMETIS_V3_PartKway( const_cast< idx_t * >( vertDist.data() ),
@@ -86,9 +110,9 @@ ParMetisPartitioner::partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t 
                                              &ubvec, options, &edgecut, part.data(), &comm ) );
 
   // Perform refinements if requested.
-  if( numRefinements > 0 )
+  if( m_numRefinements > 0 )
   {
-    GEOS_LOG_RANK_0( "ParMETIS is performing " << numRefinements << " refinements." );
+    GEOS_LOG_RANK_0( GEOS_FMT( "ParMetisEngine: Performing {} refinements", m_numRefinements ) );
     GEOS_PARMETIS_CHECK( ParMETIS_V3_RefineKway( const_cast< idx_t * >( vertDist.data() ),
                                                  const_cast< idx_t * >( graph.getOffsets() ),
                                                  const_cast< idx_t * >( graph.getValues() ),
@@ -97,16 +121,37 @@ ParMetisPartitioner::partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t 
                                                  &ubvec, options, &edgecut, part.data(), &comm ) );
   }
 
+  GEOS_LOG_RANK_0( GEOS_FMT( "ParMetisEngine: Partition complete, edge-cut = {}", edgecut ) );
+
   return part;
+
+#endif // GEOS_USE_PARMETIS
 }
 
+ArrayOfArrays< pmet_idx_t, pmet_idx_t >
+ParMetisEngine::meshToDual( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & elemToNodes,
+                            arrayView1d< pmet_idx_t const > const & elemDist,
+                            MPI_Comm comm,
+                            int const minCommonNodes )
+{
+  return parmetisMeshToDual( elemToNodes, elemDist, comm, minCommonNodes );
+}
 
 ArrayOfArrays< pmet_idx_t, pmet_idx_t >
-ParMetisPartitioner::meshToDual( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & elemToNodes,
-                                 arrayView1d< pmet_idx_t const > const & elemDist,
-                                 MPI_Comm comm,
-                                 int const minCommonNodes )
+ParMetisEngine::parmetisMeshToDual( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & elemToNodes,
+                                    arrayView1d< pmet_idx_t const > const & elemDist,
+                                    MPI_Comm comm,
+                                    int const minCommonNodes )
 {
+  GEOS_MARK_FUNCTION;
+
+#ifndef GEOS_USE_PARMETIS
+  GEOS_UNUSED_VAR( elemToNodes, elemDist, comm, minCommonNodes );
+  GEOS_ERROR( "GEOS was not built with ParMETIS support. "
+              "Reconfigure with -DENABLE_PARMETIS=ON" );
+  return ArrayOfArrays< pmet_idx_t, pmet_idx_t >();
+#else
+
   idx_t const numElems = elemToNodes.size();
 
   // `parmetis` awaits the arrays to be allocated as two continuous arrays: one for values, the other for offsets.
@@ -120,6 +165,9 @@ ParMetisPartitioner::meshToDual( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t
   pmet_idx_t ncommonnodes = minCommonNodes;
   pmet_idx_t * xadj;
   pmet_idx_t * adjncy;
+
+  GEOS_LOG_RANK_0( GEOS_FMT( "ParMetisEngine: Converting mesh to dual graph ({} local elements, min common nodes = {})",
+                             numElems, minCommonNodes ) );
 
   // Technical UB if ParMETIS writes into these arrays; in practice we discard them right after
   GEOS_PARMETIS_CHECK( ParMETIS_V3_Mesh2Dual( const_cast< pmet_idx_t * >( elemDist.data() ),
@@ -140,10 +188,12 @@ ParMetisPartitioner::meshToDual( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t
   METIS_Free( adjncy );
 
   return graph;
+
+#endif // GEOS_USE_PARMETIS
 }
 
-
-
-REGISTER_CATALOG_ENTRY( PartitionerBase, ParMetisPartitioner, string const &, dataRepository::Group * const )
+// Register in the GraphPartitionEngine catalog
+REGISTER_CATALOG_ENTRY( GraphPartitionEngine, ParMetisEngine,
+                        string const &, dataRepository::Group * const )
 
 } // namespace geos

@@ -91,6 +91,14 @@ public:
                             std::map< string, string > const & fieldsMapping,
                             FieldIdentifiers & fieldsToBeSync );
 
+/**
+ * @brief Create a default partitioner based on the mesh types present
+ * @param partitionerManager The partitioner manager to create the partitioner in
+ * @param meshManager The mesh manager to inspect for mesh types
+ */
+  static void createDefaultPartitioner( PartitionerManager & partitionerManager,
+                                        MeshManager const & meshManager );
+
 private:
 
   /**

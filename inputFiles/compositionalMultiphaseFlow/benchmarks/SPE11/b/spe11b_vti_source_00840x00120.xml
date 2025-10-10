@@ -6,8 +6,9 @@
     <File name="spe11b_vti_source_base.xml" />
   </Included>
   <Partitioner>
-    <ParMetis
+    <CellGraphPartitioner
       name="partitioner"
+      engine="parmetis"
       numRefinements="4" />
   </Partitioner>
 

@@ -66,11 +66,11 @@ Group * ParticleMeshGenerator::createChild( string const & GEOS_UNUSED_PARAM( ch
 
 
 void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & particleBlockManager,
-                                                      ParticleManager & particleManager, PartitionerBase & partitionerBase )
+                                                      ParticleManager & particleManager, DomainPartitioner & domainPartitioner )
 {
   GEOS_MARK_FUNCTION;
 
-  ParticleCartesianPartitioner & partitioner = dynamic_cast< ParticleCartesianPartitioner & >(partitionerBase);
+  ParticleCartesianPartitioner & partitioner = dynamic_cast< ParticleCartesianPartitioner & >(domainPartitioner);
 
   // This should probably handled elsewhere:
   int aa = 0;

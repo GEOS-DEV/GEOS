@@ -25,7 +25,7 @@
   </Solvers>
 
   <Partitioner>
-    <NoOp name="partitioner" />
+    <CellGraphPartitioner name="partitioner" engine="noop"/>
   </Partitioner>
 
   <Mesh>

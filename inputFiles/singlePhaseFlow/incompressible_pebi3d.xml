@@ -17,8 +17,9 @@
   </Solvers>
 
   <Partitioner>
-    <ParMetis
+    <CellGraphPartitioner
       name="partitioner"
+      engine="parmetis"
       numRefinements="2" />
   </Partitioner>
 

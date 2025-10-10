@@ -100,13 +100,15 @@ set( mesh_headers
      mpiCommunications/MPI_iCommData.hpp
      mpiCommunications/NeighborCommunicator.hpp
      mpiCommunications/NeighborData.hpp
+     mpiCommunications/GraphPartitionEngine.hpp
+     mpiCommunications/NoOpEngine.hpp
      mpiCommunications/PartitionerManager.hpp
-     mpiCommunications/PartitionerBase.hpp
+     mpiCommunications/DomainPartitioner.hpp
+     mpiCommunications/MeshPartitioner.hpp
+     mpiCommunications/CellGraphPartitioner.hpp
      mpiCommunications/GeometricPartitioner.hpp
-     mpiCommunications/GraphPartitioner.hpp
      mpiCommunications/CartesianPartitioner.hpp
      mpiCommunications/ParticleCartesianPartitioner.hpp
-     mpiCommunications/NoOpPartitioner.hpp
      simpleGeometricObjects/Rectangle.hpp
      simpleGeometricObjects/Disc.hpp
      simpleGeometricObjects/CustomPolarObject.hpp
@@ -185,12 +187,16 @@ set( mesh_sources
      mpiCommunications/CommunicationTools.cpp
      mpiCommunications/MPI_iCommData.cpp
      mpiCommunications/NeighborCommunicator.cpp
+     mpiCommunications/GraphPartitionEngine.cpp
+     mpiCommunications/NoOpEngine.cpp
      mpiCommunications/PartitionerManager.cpp
-     mpiCommunications/PartitionerBase.cpp
-     mpiCommunications/GraphPartitioner.cpp
+     mpiCommunications/DomainPartitioner.cpp
+     mpiCommunications/MeshPartitioner.cpp
+     mpiCommunications/CellGraphPartitioner.cpp
+     mpiCommunications/GeometricPartitioner.cpp     
      mpiCommunications/CartesianPartitioner.cpp
      mpiCommunications/ParticleCartesianPartitioner.cpp
-     mpiCommunications/NoOpPartitioner.cpp
+     mpiCommunications/NoOpEngine.cpp
      simpleGeometricObjects/Rectangle.cpp
      simpleGeometricObjects/Disc.cpp
      simpleGeometricObjects/CustomPolarObject.cpp
@@ -241,14 +247,14 @@ if( ENABLE_VTK )
 endif()
 
 if( ENABLE_PARMETIS )
-    set( mesh_headers ${mesh_headers} mpiCommunications/ParMetisPartitioner.hpp )
-    set( mesh_sources ${mesh_sources} mpiCommunications/ParMetisPartitioner.cpp )
+    set( mesh_headers ${mesh_headers} mpiCommunications/ParMetisEngine.hpp )
+    set( mesh_sources ${mesh_sources} mpiCommunications/ParMetisEngine.cpp )    
     list( APPEND tplDependencyList parmetis metis )
 endif()
 
 if( ENABLE_SCOTCH )
-    set( mesh_headers ${mesh_headers} mpiCommunications/PTScotchPartitioner.hpp )
-    set( mesh_sources ${mesh_sources} mpiCommunications/PTScotchPartitioner.cpp )
+    set( mesh_headers ${mesh_headers} mpiCommunications/PTScotchEngine.hpp )
+    set( mesh_sources ${mesh_sources} mpiCommunications/PTScotchEngine.cpp )    
     list( APPEND tplDependencyList SCOTCH::ptscotch SCOTCH::scotcherr )
 endif()
 

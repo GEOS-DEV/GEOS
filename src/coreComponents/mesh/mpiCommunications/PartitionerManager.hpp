@@ -15,73 +15,127 @@
 
 /**
  * @file PartitionerManager.hpp
+ * @brief Manager for domain partitioning strategies
  */
 
 #ifndef GEOS_PARTITIONER_PARTITIONERMANAGER_HPP_
 #define GEOS_PARTITIONER_PARTITIONERMANAGER_HPP_
 
-#include "PartitionerBase.hpp"
 #include "dataRepository/Group.hpp"
-
+#include "DomainPartitioner.hpp"
 
 namespace geos
 {
 
 /**
  * @class PartitionerManager
- * @brief This class manages the partitioner objects in GEOSX (Cartesian, ParMetis, PTScotch, etc.)
+ * @brief Manager for domain partitioning strategies
+ *
+ * PartitionerManager is a container for a single partitioner instance.
+ *
+ * The manager supports multiple partitioner types:
+ * - Geometric partitioners (CartesianPartitioner, ParticleCartesianPartitioner)
+ * - Mesh partitioners (CellGraphPartitioner, LayeredGraphPartitioner)
+ *
+ * Only one partitioner can be active at a time.
+ *
+ * XML Structure:
+ * @code{.xml}
+ * <Partitioner>
+ *   <CellGraphPartitioner name="cellPartitioner"
+ *                         engine="parmetis"
+ *                         numRefinements="5" />
+ * </Partitioner>
+ * @endcode
+ *
+ * or
+ *
+ * @code{.xml}
+ * <Partitioner>
+ *   <CartesianPartitioner name="cartPartitioner"
+ *                         partitionCounts="{ 4, 4, 2 }" />
+ * </Partitioner>
+ * @endcode
+ *
+ * Usage:
+ * @code
+ * PartitionerManager & partMgr = problemManager.getGroup<PartitionerManager>("Partitioner");
+ *
+ * if( partMgr.hasPartitioner() )
+ * {
+ *   DomainPartitioner & part = partMgr.getPartitioner();
+ *
+ *   // Query partitioner type
+ *   if( auto* meshPart = dynamic_cast<MeshPartitioner*>(&part) )
+ *   {
+ *     // Use mesh partitioner
+ *   }
+ *   else if( auto* geomPart = dynamic_cast<GeometricPartitioner*>(&part) )
+ *   {
+ *     // Use geometric partitioner
+ *   }
+ * }
+ * @endcode
  */
 class PartitionerManager : public dataRepository::Group
 {
 public:
 
   /**
-   * @brief Constructor for the PartitionerManager object.
-   * @param[in] name the name of the PartitionerManager object in the repository
-   * @param[in] parent the parent group of the PartitionerManager object being constructed
+   * @brief Constructor
+   * @param name The name of this manager (typically "Partitioner")
+   * @param parent The parent group
    */
   PartitionerManager( string const & name,
-                      Group * const parent );
-
-  virtual ~PartitionerManager() override;
-
+                      dataRepository::Group * const parent );
 
   /**
-   * @brief Create a new sub-mesh.
-   * @param[in] childKey the key of the new object in the ObjectCatalog
-   * @param[in] childName the name of the new object in the collection of sub-meshes
-   * @return A pointer to the Group node in the dataRepository of the new object created
+   * @brief Destructor
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  ~PartitionerManager() override;
 
-  /// This function is used to expand any catalogs in the data structure
+  /**
+   * @brief Create a child partitioner from XML
+   *
+   * Called by the XML parser when it encounters a partitioner element.
+   * Uses the DomainPartitioner catalog to create the appropriate concrete type.
+   *
+   * @param childKey The catalog key (partitioner type, e.g., "CellGraphPartitioner")
+   * @param childName The instance name (e.g., "cellPartitioner")
+   * @return Pointer to the created partitioner
+   */
+  virtual Group * createChild( string const & childKey,
+                               string const & childName ) override;
+
+  /**
+   * @brief Expand catalogs for schema generation
+   *
+   * During schema generation, this creates one instance of each registered
+   * partitioner type to document available options.
+   */
   virtual void expandObjectCatalogs() override;
 
   /**
    * @brief Check if a partitioner has been defined
-   * @return True if a partitioner exists, false otherwise
+   * @return true if a partitioner exists
    */
   bool hasPartitioner() const;
 
   /**
-   * @brief Get the active partitioner (assumes only one partitioner is defined in XML)
-   * @return Reference to the active partitioner
+   * @brief Get the active partitioner
+   *
+   * Returns the single partitioner defined in the XML.
+   *
+   * @return Reference to the partitioner
    */
-  PartitionerBase & getPartitioner();
+  DomainPartitioner & getPartitioner();
 
   /**
    * @brief Get the active partitioner (const version)
-   * @return Const reference to the active partitioner
+   *
+   * @return Const reference to the partitioner
    */
-  PartitionerBase const & getPartitioner() const;
-
-private:
-
-  /**
-   * @brief Deleted default constructor of the PartitionerManager
-   */
-  PartitionerManager() = delete;
-
+  DomainPartitioner const & getPartitioner() const;
 };
 
 } // namespace geos

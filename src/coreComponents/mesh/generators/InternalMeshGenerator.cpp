@@ -542,12 +542,12 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
 }
 
 
-void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, PartitionerBase & partitionerBase )
+void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, DomainPartitioner & domainPartitioner )
 {
   GEOS_MARK_FUNCTION;
 
   // InternalMeshGenerator requires CartesianPartitioner
-  CartesianPartitioner * cartesianPartitioner = dynamic_cast< CartesianPartitioner * >( &partitionerBase );
+  CartesianPartitioner * cartesianPartitioner = dynamic_cast< CartesianPartitioner * >( &domainPartitioner );
 
   GEOS_ERROR_IF( cartesianPartitioner == nullptr,
                  GEOS_FMT( "InternalMeshGenerator '{}' requires CartesianPartitioner. "
