@@ -14,7 +14,7 @@
         GEOS_UNUSED_VAR( masterElementList );
         finiteElement::FiniteElementBase const & slaveFE = *(m_faceTypeToFiniteElements.at( slaveShape ));
         finiteElement::FiniteElementBase const & masterFE = *(m_faceTypeToFiniteElements.at( masterShape ));Copyright (c) 2016-2024 Lawrence
-         *Livermore National Security LLC
+ * Livermore National Security LLC
  * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
@@ -81,7 +81,7 @@ public:
   void registerMortarDataOnMesh( );
 
   void setupDofs( DomainPartition const & domain,
-                  DofManager & dofManager ) const  override;
+                  DofManager & dofManager ) const override;
 
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
@@ -270,28 +270,46 @@ private:
                           std::unique_ptr< TreeNodeMortar > const & nodeSlave );
 
   // retrieve finite element type from templated element shape
+  // template< ElementShape S >
+  // decltype(auto) getFE()
+  // {
+  //   auto & femTypePtr = m_faceTypeToMortarFiniteElements.at( S ); // unique_ptr<FiniteElementBase>
+
+  //   if constexpr (S == ElementShape::Triangle)
+  //   {
+  //     using femType = finiteElement::H1_TriangleFace_Lagrange1_Gauss4;
+
+  //     return *static_cast< femType * >(femTypePtr.get());
+  //   }
+  //   else if constexpr (S == ElementShape::Quadrilateral)
+  //   {
+  //     using femType = finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2;
+  //     return *static_cast< femType * >(femTypePtr.get());
+  //   }
+  //   else
+  //   {
+  //     static_assert( S == ElementShape::Triangle || S == ElementShape::Quadrilateral,
+  //                    "Unsupported ElementShape" );
+  //   }
+  // }
+
+
   template< ElementShape S >
-  decltype(auto) getFE()
+  struct selectFE
   {
-    auto & femTypePtr = m_faceTypeToMortarFiniteElements.at( S ); // unique_ptr<FiniteElementBase>
+    static auto getTypeImpl()
+    {
+      if constexpr (S == ElementShape::Triangle)
+        return finiteElement::H1_TriangleFace_Lagrange1_Gauss4{};
+      else if constexpr (S == ElementShape::Quadrilateral)
+        return finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2{};
+      else
+        static_assert( S == ElementShape::Triangle || S == ElementShape::Quadrilateral,
+                       "Unsupported ElementShape" );
+    }
 
-    if constexpr (S == ElementShape::Triangle)
-    {
-      using femType = finiteElement::H1_TriangleFace_Lagrange1_Gauss4;
-
-      return *static_cast< femType * >(femTypePtr.get());
-    }
-    else if constexpr (S == ElementShape::Quadrilateral)
-    {
-      using femType = finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2;
-      return *static_cast< femType * >(femTypePtr.get());
-    }
-    else
-    {
-      static_assert( S == ElementShape::Triangle || S == ElementShape::Quadrilateral,
-                     "Unsupported ElementShape" );
-    }
-  }
+    using type = decltype(getTypeImpl());
+  };
 
 };
 

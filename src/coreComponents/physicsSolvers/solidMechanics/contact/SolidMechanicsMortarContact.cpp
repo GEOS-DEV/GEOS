@@ -392,9 +392,9 @@ void SolidMechanicsMortarContact::assembleMortarBubbles( DofManager const & dofM
   if( elementList.size() == 0 )
     return;
 
-  auto const & feType = getFE< shape >();
-  localIndex constexpr numQuadraturePoints = feType.numQuadraturePoints;
-  localIndex constexpr numNodesPerElem = feType.numNodes;
+  using FEType = typename selectFE< shape >::type;
+  localIndex constexpr numQuadraturePoints = FEType::numQuadraturePoints;
+  localIndex constexpr numNodesPerElem = FEType::numNodes;
 
   MeshLevel & mesh = *m_mortarSide.at( MortarSide::Slave ).mesh;
   NodeManager const & nodeManager = mesh.getNodeManager();
@@ -418,7 +418,7 @@ void SolidMechanicsMortarContact::assembleMortarBubbles( DofManager const & dofM
   arrayView1d< globalIndex const > const tractionDofNumber = surfRegion.getReference< globalIndex_array >( tractionDofKey );
 
   int permutation[numNodesPerElem];
-  feType.getPermutation( permutation );
+  FEType::getPermutation( permutation );
 
   forAll< parallelDevicePolicy<> >( elementList.size(), [=] ( localIndex const kk )
   {
@@ -452,8 +452,8 @@ void SolidMechanicsMortarContact::assembleMortarBubbles( DofManager const & dofM
     real64 N[1];
     for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
-      feType.calcBubbleN( q, N );
-      real64 detJ = feType.transformedQuadratureWeight( q, X );
+      FEType::calcBubbleN( q, N );
+      real64 detJ = FEType::transformedQuadratureWeight( q, X );
       abt += N[0] * detJ;
     }
 
@@ -936,9 +936,9 @@ void SolidMechanicsMortarContact::addBubbleCouplingSparsityPattern( DofManager c
   NodeManager const & nodeManagerSlave = mesh.getNodeManager();
   FaceManager const & faceManagerSlave = mesh.getFaceManager();
 
-  FaceElementSubRegion const & surfRegionSlave = m_mortarSide.at( MortarSide::Slave ).surface->getUniqueSubRegion< FaceElementSubRegion >();
-  arrayView2d< localIndex const > const elemsToFace = surfRegionSlave.faceList().toViewConst();
-
+  //FaceElementSubRegion const & surfRegionSlave = m_mortarSide.at( MortarSide::Slave ).surface->getUniqueSubRegion< FaceElementSubRegion
+  // >();
+  //arrayView2d< localIndex const > const elemsToFace = surfRegionSlave.faceList().toViewConst();
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -1417,10 +1417,12 @@ void SolidMechanicsMortarContact::computeMortarInterpolation( ArrayOfArrays< loc
   }
 
   // allocate mortar quantities
-  auto const & slaveFE = getFE< slaveShape >();
-  auto const & masterFE = getFE< masterShape >();
-  localIndex constexpr nNodeMaster = masterFE.numNodes;
-  localIndex constexpr nNodeSlave = slaveFE.numNodes;
+  // auto const & slaveFE = getFE< slaveShape >();
+  // auto const & masterFE = getFE< masterShape >();
+  using FETypeMaster = typename selectFE< masterShape >::type;
+  using FETypeSlave = typename selectFE< slaveShape >::type;
+  localIndex constexpr nNodeMaster = FETypeMaster::numNodes;
+  localIndex constexpr nNodeSlave = FETypeSlave::numNodes;
   // maximum number of expected subtriangles for each mortar pair
   localIndex constexpr maxSubTri = nNodeMaster + nNodeSlave - 2;
   localIndex nSubTriangles = maxSubTri * numbConnections;
@@ -1431,7 +1433,7 @@ void SolidMechanicsMortarContact::computeMortarInterpolation( ArrayOfArrays< loc
   array3d< real64 > localCoordsSlave( nSubTriangles, nGPtri, 2 );
   array3d< real64 > localCoordsMaster( nSubTriangles, nGPtri, 2 );
   // get views
-  arrayView1d< real64 > numbTrianglesInPairs_v = numbTrianglesInPairs.toView();
+  //arrayView1d< real64 > numbTrianglesInPairs_v = numbTrianglesInPairs.toView();
   arrayView2d< localIndex > cellPairs_v = cellPairs.toView();
   arrayView1d< real64 > subTriDeterminants_v = subTriDeterminants.toView();
   arrayView3d< real64 > localCoordsSlave_v = localCoordsSlave.toView();
@@ -1597,12 +1599,11 @@ localIndex SolidMechanicsMortarContact::processMortarPair( localIndex const slav
 
   std::cout << "Processing mortar pair slave/master: " << slaveFaceId << " - " << masterFaceId << std::endl;
 
-  auto const & slaveFE = getFE< slaveShape >();
-  auto const & masterFE = getFE< masterShape >();
+  using FETypeMaster = typename selectFE< masterShape >::type;
+  using FETypeSlave = typename selectFE< slaveShape >::type;
 
-  // compile time knowledge ?
-  constexpr static localIndex numNodeMaster = masterFE.numNodes;
-  constexpr static localIndex numNodeSlave = slaveFE.numNodes;
+  constexpr static localIndex numNodeMaster = FETypeMaster::numNodes;
+  constexpr static localIndex numNodeSlave = FETypeSlave::numNodes;
 
   // STEPS FOR THE SEGMENT BASED SCHEME
   // 1. find auxiliary plane on the slave element (use computational geometry)
@@ -1849,7 +1850,7 @@ bool SolidMechanicsMortarContact::validateClip( array2d< real64 > & clipPoly )
   }
 
   // remove last vertex if it is duplicate of the first (closed polygon)
-  if( static_cast<int>(filtered.size()) > 1 )
+  if( static_cast< int >(filtered.size()) > 1 )
   {
     real64 dx = filtered.front()[0] - filtered.back()[0];
     real64 dy = filtered.front()[1] - filtered.back()[1];
@@ -1859,14 +1860,14 @@ bool SolidMechanicsMortarContact::validateClip( array2d< real64 > & clipPoly )
     }
   }
 
-  if( static_cast<int>(filtered.size()) < 3 )
+  if( static_cast< int >(filtered.size()) < 3 )
     return false;                        // polygon is degenerate
 
   clipPoly.resize( filtered.size(), 2 );
 
   for( size_t i = 0; i < filtered.size(); ++i )
   {
-    int ii = static_cast<int>(i);
+    int ii = static_cast< int >(i);
     clipPoly( ii, 0 ) = filtered[i][0];
     clipPoly( ii, 1 ) = filtered[i][1];
   }
@@ -1883,7 +1884,9 @@ void SolidMechanicsMortarContact::projectGP( real64 const (&coordsTri)[3][2],
 
   constexpr localIndex numNodes = (shape == ElementShape::Triangle) ? 3 : 4;
 
-  auto const & FE = getFE< shape >();
+  //auto const & FE = getFE< shape >();
+
+  using FEType = typename selectFE< shape >::type;
 
   // newton params
   localIndex itMax = 3;
@@ -1900,7 +1903,7 @@ void SolidMechanicsMortarContact::projectGP( real64 const (&coordsTri)[3][2],
     LvArray::tensorOps::Ri_eq_AjiBj< 2, 3 >( coordGP, coordsTri, Ntri );
 
     real64 Nq[numNodes];
-    FE.calcN( xiProj, Nq );
+    FEType::calcN( xiProj, Nq );
     permuteN< numNodes >( Nq );
 
     real64 rhs[2] = {0.0, 0.0};
@@ -1913,7 +1916,7 @@ void SolidMechanicsMortarContact::projectGP( real64 const (&coordsTri)[3][2],
     {
       iter = iter + 1;
       real64 dN[numNodes][2]= {{}};
-      FE.calcGradN( xiProj, dN );
+      FEType::calcGradN( xiProj, dN );
 
       real64 Jt[2][2] = {{}};
       real64 J[2][2] = {{}};
@@ -1934,7 +1937,7 @@ void SolidMechanicsMortarContact::projectGP( real64 const (&coordsTri)[3][2],
         GEOS_ERROR( "Failed to solve linear system in GP projection algorithm" );
       }
 
-      FE.calcN( xiProj, Nq );
+      FEType::calcN( xiProj, Nq );
       permuteN< numNodes >( Nq );
 
       LvArray::tensorOps::Ri_eq_AjiBj< 2, numNodes >( rhs, coordsElem, Nq );
