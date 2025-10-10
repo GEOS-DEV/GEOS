@@ -39,7 +39,7 @@ set( physicsSolversBase_sources
      PhysicsSolverBase.cpp
      SolverStatistics.cpp )
 
-set( dependencyList ${parallelDeps} fileIO discretizationMethods events linearAlgebra )
+set( dependencyList ${parallelDeps} common fileIO discretizationMethods events linearAlgebra )
 
 if( ENABLE_PYGEOSX )
   list( APPEND physicsSolversBase_headers
