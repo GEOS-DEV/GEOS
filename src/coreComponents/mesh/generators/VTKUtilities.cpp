@@ -1454,7 +1454,7 @@ splitCellsByType( vtkDataSet & mesh )
       case 2:
       {
         // Merge all 2D elements together as polygons (we don't track their shapes).
-        stdVector< vtkIdType > & surfaceCells = typeToCells.try_emplace( ElementType::Polygon ).first->second;
+        stdVector< vtkIdType > & surfaceCells = typeToCells.get_inserted( ElementType::Polygon );
         surfaceCells.insert( surfaceCells.end(), cellListsByType[t].begin(), cellListsByType[t].end() );
         break;
       }
@@ -1490,7 +1490,7 @@ splitCellsByTypeAndAttribute( stdMap< ElementType, stdVector< vtkIdType > > & ty
   {
     ElementType const elemType = t2c.first;
     stdVector< vtkIdType > & cells = t2c.second;
-    stdUnorderedMap< int, stdVector< vtkIdType > > & attributeToCells = typeToAttributeToCells.try_emplace( elemType ).first->second;
+    stdUnorderedMap< int, stdVector< vtkIdType > > & attributeToCells = typeToAttributeToCells.get_inserted( elemType );
 
     if( attributeDataArray == nullptr )
     {
@@ -1512,12 +1512,12 @@ splitCellsByTypeAndAttribute( stdMap< ElementType, stdVector< vtkIdType > > & ty
         }
         for( auto const & count : cellCounts )
         {
-          attributeToCells.try_emplace( count.first ).first->second.reserve( count.second );
+          attributeToCells.get_inserted( count.first ).reserve( count.second );
         }
         for( vtkIdType c: cells )
         {
           int const region = static_cast< int >( attribute.Get( c, 0 ) );
-          attributeToCells.try_emplace( region ).first->second.push_back( c );
+          attributeToCells.get_inserted( region ).push_back( c );
         }
       } );
     }
@@ -1552,7 +1552,7 @@ void extendCellMapWithRemoteKeys( CellMapType & cellMap )
       for( int attrValue: allCellAttributes )
       {
         // This code inserts an empty element list if one was not present
-        cellMap.try_emplace( elemType ).first->second.try_emplace( attrValue );
+        cellMap.get_inserted( elemType ).get_inserted( attrValue );
       }
     }
   }
@@ -1564,7 +1564,7 @@ void extendCellMapWithRemoteKeys( CellMapType & cellMap )
   stdVector< int > allSurfaceAttributes = collectUniqueValues( surfaceAttributes );
   for( int attrValue: allSurfaceAttributes )
   {
-    cellMap.try_emplace( ElementType::Polygon ).first->second.try_emplace( attrValue );
+    cellMap.get_inserted( ElementType::Polygon ).get_inserted( attrValue );
   }
 }
 
@@ -2323,7 +2323,7 @@ void importNodesets( integer const logLevel,
                    InputError );
     vtkTypeInt64Array const & nodesetMask = *vtkTypeInt64Array::FastDownCast( curArray );
 
-    SortedArray< localIndex > & targetNodeset = nodeSets.try_emplace( nodesetNames[i] ).first->second;
+    SortedArray< localIndex > & targetNodeset = nodeSets.get_inserted( nodesetNames[i] );
     for( localIndex j=0; j < numPoints; ++j )
     {
       if( nodesetMask.GetValue( j ) == 1 )
@@ -2374,7 +2374,7 @@ void writeNodes( integer const logLevel,
   // Generate the "all" set
   array1d< localIndex > allNodes( numPts );
   std::iota( allNodes.begin(), allNodes.end(), 0 );
-  SortedArray< localIndex > & allNodeSet = cellBlockManager.getNodeSets().try_emplace( "all" ).first->second;
+  SortedArray< localIndex > & allNodeSet = cellBlockManager.getNodeSets().get_inserted( "all" );
   allNodeSet.insert( allNodes.begin(), allNodes.end() );
 
   // Import remaining nodesets
@@ -2467,7 +2467,7 @@ void writeSurfaces( integer const logLevel,
     GEOS_LOG_RANK_0_IF( logLevel >= 1, "Importing surface " << surfaceName );
 
     // Get or create all surfaces (even those which are empty in this rank)
-    SortedArray< localIndex > & curNodeSet = nodeSets.try_emplace( surfaceName ).first->second;
+    SortedArray< localIndex > & curNodeSet = nodeSets.get_inserted( surfaceName );
 
     for( vtkIdType const c : cellIds )
     {
