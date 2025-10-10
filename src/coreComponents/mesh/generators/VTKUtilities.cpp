@@ -565,8 +565,6 @@ AllMeshes loadAllMeshes( Path const & filePath,
   return AllMeshes( main, faces );
 }
 
-
-
 /**
  * @brief Scatter the mesh by blocks  (no geometric information involved, assumes rank 0 has the full mesh)
  *
