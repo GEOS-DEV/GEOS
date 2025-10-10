@@ -603,7 +603,7 @@ private:
   /// The name of a function used to turn on and off the boundary condition.
   string m_bcApplicationFunctionName;
 
-  /// Value indicating whether we converts an error into a warning
+  /// Enum containing the possible output modes when an error occur
   SetErrorMode m_emptySetErrorMode;
 };
 

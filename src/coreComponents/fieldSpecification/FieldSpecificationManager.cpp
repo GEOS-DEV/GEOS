@@ -120,10 +120,10 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       //       - FieldSpecification that do not target a field, like Aquifer, Traction, Equilibrium, etc. For these, the check is not
       // necessary (the user cannot mess up)
       //       - Face boundary conditions that target cell-based quantities, like the face BC of the flow solvers
-      if( targetGroup.hasWrapper( fieldName ) ||flag == InputFlags::FALSE ||
-          targetGroup.getName() == MeshLevel::groupStructKeys::faceManagerString() )     // the field names of the face BCs are not always
-                                                                                         // registered on
-                                                                                         // the faceManager...
+      if( targetGroup.hasWrapper( fieldName ) || flag == InputFlags::FALSE ||
+          targetGroup.getName() == MeshLevel::groupStructKeys::faceManagerString() ) // the field names of the face BCs are not always
+                                                                                     // registered on
+                                                                                     // the faceManager...
       {
         isFieldNameFound = 1;
       }
@@ -177,8 +177,8 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
       }
 
       std::set< string > registeredSets;
-      Group const & meshBody = domain.getMeshBodies();
-      objectPath.forObjectsInPath( meshBody,
+
+      objectPath.forObjectsInPath( meshBodies,
                                    [&]( Group const & targetGroup )
       {
         string_array availableRegions;

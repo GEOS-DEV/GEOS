@@ -289,7 +289,8 @@ void Group::printDataHierarchy( integer const indent ) const
   for( auto & view : wrappers() )
   {
     GEOS_LOG( string( indent, '\t' ) << "-> " << view.second->getName() << " : "
-                                     << LvArray::system::demangleType( *view.second ) << " size : "<<view.second->size());
+                                     << LvArray::system::demangleType( *view.second )
+                                     << " size : "<<view.second->size());
   }
   GEOS_LOG( string( indent, '\t' ) );
 

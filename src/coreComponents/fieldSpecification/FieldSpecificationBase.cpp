@@ -85,11 +85,13 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
   registerWrapper( viewKeyStruct::errorSetModeString(), &m_emptySetErrorMode ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( SetErrorMode::error ).
-    setDescription( "Set the log state when we a “set” does not target any region\n"
-                    "When set to \"silent\", no output\n"
-                    "When set to \"warning\", output an error\n"
-                    "When set to \"error\", output a throw\n" );
-
+    setDescription( GEOS_FMT( "Set the log state when a “set” does not target any region\n"
+                              "When set to \"{}\", no output.\n"
+                              "When set to \"{}\", output a warning.\n"
+                              "When set to \"{}\", output a throw.\n",
+                              EnumStrings< SetErrorMode >::toString( SetErrorMode::silent ),
+                              EnumStrings< SetErrorMode >::toString( SetErrorMode::warning ),
+                              EnumStrings< SetErrorMode >::toString( SetErrorMode::error )  ));
 }
 
 
