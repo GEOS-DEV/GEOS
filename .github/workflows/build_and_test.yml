@@ -42,6 +42,9 @@ on:
       ENABLE_HYPRE_DEVICE:
         required: false
         type: string
+      ENABLE_PYGEOSX:
+        required: false
+        type: string
       ENABLE_TRILINOS:
         required: false
         type: string
@@ -228,6 +231,12 @@ jobs:
         ENABLE_HYPRE_DEVICE=${{ inputs.ENABLE_HYPRE_DEVICE }}
         if [ ! -z "${{ inputs.ENABLE_HYPRE_DEVICE }}" ]; then
           script_args+=(--enable-hypre-device "${{ inputs.ENABLE_HYPRE_DEVICE }}")
+        fi
+
+
+        # pygeosx testing
+        if [ "${{ inputs.ENABLE_PYGEOSX }}" == 'ON' ]; then
+          script_args+=(--run-pygeosx-tests)
         fi
 
         docker_args+=(--cap-add=SYS_PTRACE --rm)
