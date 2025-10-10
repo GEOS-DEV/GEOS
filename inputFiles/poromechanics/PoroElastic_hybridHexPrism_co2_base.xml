@@ -11,7 +11,7 @@
       scale="{ 50, 50, 50 }"
       fieldsToImport="{ PORO, NTG, DENSITY, BULKMOD }"
       fieldNamesInGEOS="{ rockPorosity_referencePorosity, netToGross, skeleton_density, skeleton_bulkModulus }"
-      file="../singlePhaseFlow/pebi3d_with_properties.vtu"/>
+      file="pebi3d_with_properties.vtu"/>
 
   </Mesh>
 
@@ -44,7 +44,7 @@
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="5e3"
+      timeFrequency="1e4"
       target="/Outputs/vtkOutput"/>
     <PeriodicEvent
       name="linearElasticityStatistics"
