@@ -47,7 +47,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "Map to the faces attached to each FaceElement." ).
     reference().resize( 0, 2 );
 
-  registerWrapper( viewKeyStruct::edgesTofractureConnectorsEdgesString(), &m_edgesTo2dFaces ).
+  registerWrapper( viewKeyStruct::edgesToFractureConnectorsEdgesString(), &m_edgesTo2dFaces ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of edge local indices to the fracture connector local indices." ).
     setSizedFromParent( 0 );
@@ -230,7 +230,7 @@ void FaceElementSubRegion::calculateSingleElementGeometricQuantities( localIndex
   m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
 }
 
-void FaceElementSubRegion::calculateElementGeometricQuantities( NodeManager const & GEOS_UNUSED_PARAM( nodeManager ),
+void FaceElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                                 FaceManager const & faceManager )
 {
   arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
@@ -239,6 +239,9 @@ void FaceElementSubRegion::calculateElementGeometricQuantities( NodeManager cons
   {
     calculateSingleElementGeometricQuantities( k, faceArea );
   } );
+
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  calculateElementCenters( X );
 }
 
 ElementType FaceElementSubRegion::getElementType( localIndex ei ) const

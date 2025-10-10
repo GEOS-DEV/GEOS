@@ -1,0 +1,96 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./PoroElastic_CarmanKozenyPermeability_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhasePoromechanics
+      name="PoroelasticitySolver"
+      solidSolverName="LinearElasticitySolver"
+      flowSolverName="SinglePhaseFlowSolver"
+      logLevel="1"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonMaxIter="2"
+        newtonTol="1.0e-2"
+        couplingType="Sequential"  
+        lineSearchAction="None"
+        subcycling="1"
+        maxTimeStepCuts="1"
+        lineSearchMaxCuts="0"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhasePoromechanics>
+
+    <SolidMechanicsLagrangianFEM
+      name="LinearElasticitySolver"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }"/>
+
+    <SinglePhaseFVM
+      name="SinglePhaseFlowSolver"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Domain }"/>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 24 }"
+      ny="{ 2 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+
+  <Events
+    maxTime="90.0">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="10.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplication0"
+      endTime="1.e-5"
+      forceDt="1.e-5"
+      target="/Solvers/PoroelasticitySolver"/>
+
+    <PeriodicEvent
+      name="solverApplication1"
+      beginTime="1.e-5"
+      endTime="1.0"
+      forceDt="0.99999"
+      target="/Solvers/PoroelasticitySolver"/>
+
+    <PeriodicEvent
+      name="solverApplication2"
+      beginTime="1.0"
+      endTime="90.0"
+      forceDt="1.0"
+      target="/Solvers/PoroelasticitySolver"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="50"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

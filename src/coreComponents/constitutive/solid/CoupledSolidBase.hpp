@@ -44,9 +44,6 @@ public:
    */
   CoupledSolidBase( string const & name, dataRepository::Group * const parent );
 
-  /// Destructor
-  virtual ~CoupledSolidBase() override;
-
   struct viewKeyStruct
   {
     static constexpr char const * solidModelNameString() { return "solidModelName"; }

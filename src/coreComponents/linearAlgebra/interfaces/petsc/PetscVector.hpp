@@ -26,7 +26,7 @@
  * @name PETSc forward declarations.
  *
  * Forward declare PETSc's vector struct and pointer aliases in order
- * to avoid including PETSc headers and leaking into the rest of GEOSX.
+ * to avoid including PETSc headers and leaking into the rest of GEOS.
  */
 ///@{
 
@@ -134,8 +134,9 @@ public:
                       PetscVector const & x,
                       real64 const beta ) override;
 
-  virtual void pointwiseProduct( PetscVector const & x,
-                                 PetscVector & y ) const override;
+  virtual void pointwiseProduct( PetscVector const & x ) override;
+
+  virtual void pointwiseDivide( PetscVector const & x ) override;
 
   /**
    * @copydoc VectorBase<PetscVector>::norm1

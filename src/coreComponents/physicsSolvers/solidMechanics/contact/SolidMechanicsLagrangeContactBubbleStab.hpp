@@ -54,7 +54,7 @@ public:
 
   real64 solverStep( real64 const & time_n,
                      real64 const & dt,
-                     const integer cycleNumber,
+                     integer const cycleNumber,
                      DomainPartition & domain ) override final;
 
   virtual void
@@ -68,6 +68,11 @@ public:
                ParallelVector & rhs,
                ParallelVector & solution,
                bool const setSparsity = true ) override final;
+
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override final;
 
   virtual void
   implicitStepSetup( real64 const & time_n,

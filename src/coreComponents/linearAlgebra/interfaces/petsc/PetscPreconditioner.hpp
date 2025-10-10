@@ -28,7 +28,7 @@
  * @name PETSc forward declarations.
  *
  * Forward declare PETSc's solver structs and pointer aliases in order
- * to avoid including PETSc headers and leaking into the rest of GEOSX.
+ * to avoid including PETSc headers and leaking into the rest of GEOS.
  */
 ///@{
 
@@ -68,7 +68,8 @@ public:
    * @param params preconditioner parameters
    * @param nearNullKernel the user-provided near null kernel
    */
-  PetscPreconditioner( LinearSolverParameters params, array1d< Vector > const & nearNullKernel );
+  PetscPreconditioner( LinearSolverParameters params,
+                       arrayView1d< Vector const > nearNullKernel );
 
   /**
    * @brief Destructor.

@@ -115,6 +115,7 @@ JFunctionCapillaryPressure::JFunctionCapillaryPressure( std::string const & name
                     toString( PermeabilityDirection::Y ) + " - only use the permeability in the y direction,\n" +
                     toString( PermeabilityDirection::Z ) + " - only use the permeability in the z direction." );
 
+<<<<<<< HEAD
   registerField( fields::cappres::jFuncMultiplier{}, &m_jFuncMultiplier );
 
   registerWrapper( viewKeyStruct::jFunctionWrappersString(), &m_jFuncKernelWrappers ).
@@ -125,6 +126,9 @@ JFunctionCapillaryPressure::JFunctionCapillaryPressure( std::string const & name
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
 
+=======
+  registerField< fields::cappres::jFuncMultiplier >( &m_jFuncMultiplier );
+>>>>>>> develop
 }
 
 void JFunctionCapillaryPressure::postInputInitialization()
@@ -390,11 +394,11 @@ JFunctionCapillaryPressure::createKernelWrapper()
                         m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
-void JFunctionCapillaryPressure::allocateConstitutiveData( dataRepository::Group & parent,
-                                                           localIndex const numConstitutivePointsPerParentIndex )
+void JFunctionCapillaryPressure::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  m_jFuncMultiplier.resize( parent.size(), numFluidPhases()-1 );
-  CapillaryPressureBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_jFuncMultiplier.resize( 0, numFluidPhases()-1 );
+
+  CapillaryPressureBase::allocateConstitutiveData( parent, numPts );
 }
 
 
