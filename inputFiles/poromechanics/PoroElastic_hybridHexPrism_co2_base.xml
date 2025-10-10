@@ -11,7 +11,7 @@
       scale="{ 50, 50, 50 }"
       fieldsToImport="{ PORO, NTG, DENSITY, BULKMOD }"
       fieldNamesInGEOS="{ rockPorosity_referencePorosity, netToGross, skeleton_density, skeleton_bulkModulus }"
-      file="pebi3d_with_properties.vtu"/>
+      file="../singlePhaseFlow/pebi3d_with_properties.vtu"/>
 
   </Mesh>
 
