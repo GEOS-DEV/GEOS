@@ -55,6 +55,7 @@ public:
 public:
 
     KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & capPresKernelWrappers,
+                   arrayView1d< TableFunction::KernelWrapper const > const & inverseCapPresWrappers,
                    arrayView1d< integer const > const & phaseTypes,
                    arrayView1d< integer const > const & phaseOrder,
                    arrayView3d< real64, cappres::USD_CAPPRES > const & phaseCapPres,
@@ -67,8 +68,8 @@ public:
 
     GEOS_HOST_DEVICE
     void computeInv( arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                  arraySlice1d< real64 const, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
-                  arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;
+                     arraySlice1d< real64 const, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+                     arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;
 
 
     GEOS_HOST_DEVICE
@@ -81,6 +82,7 @@ private:
     /// Array of kernel wrappers for the capillary pressures
     /// Is of size 1 for two-phase flow, and of size 2 for three-phase flow
     arrayView1d< TableFunction::KernelWrapper const > const m_capPresKernelWrappers;
+    arrayView1d< TableFunction::KernelWrapper const > const m_inverseCapPresWrappers;
 
   };
 
@@ -97,6 +99,7 @@ private:
     static constexpr char const * wettingIntermediateCapPresTableNameString() { return "wettingIntermediateCapPressureTableName"; }
     static constexpr char const * nonWettingIntermediateCapPresTableNameString() { return "nonWettingIntermediateCapPressureTableName"; }
     static constexpr char const * capPresWrappersString() { return "capPresWrappers"; }
+    static constexpr char const * inverseCapPresWrappersString() { return "inverseCapPresWrappers"; }
 
   };
 
@@ -122,6 +125,9 @@ private:
 
   /// Capillary pressure kernel wrapper for the first pair (wetting-intermediate if NP=3, wetting-non-wetting otherwise)
   array1d< TableFunction::KernelWrapper > m_capPresKernelWrappers;
+  array1d< TableFunction::KernelWrapper > m_inverseCapPresWrappers;
+
+  std::vector< std::shared_ptr<TableFunction> > m_inverseTables;
 
 };
 
@@ -183,23 +189,32 @@ GEOS_HOST_DEVICE
 inline void
 TableCapillaryPressure::KernelWrapper::
   computeInv( arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-           arraySlice1d< real64 const, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
-           arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const
+              arraySlice1d< real64 const, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+              arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const
 {
   LvArray::forValuesInSlice( dPhaseCapPres_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 
   using PT = CapillaryPressureBase::PhaseType;
   integer const ipWater = m_phaseOrder[PT::WATER];
-  // integer const ipOil   = m_phaseOrder[PT::OIL];
-  // integer const ipGas   = m_phaseOrder[PT::GAS];
+  integer const ipOil   = m_phaseOrder[PT::OIL];
+  integer const ipGas   = m_phaseOrder[PT::GAS];
 
-    // put capillary pressure on the wetting phase
+  // put capillary pressure on the wetting phase
+  real64 capPresWater = phaseCapPres[ipWater];
+  array1d<real64> input(1);
+  input[0] = capPresWater;
+  auto inputSlice = input.toSliceConst();
 
-    phaseVolFraction[ipWater] =
-      m_capPresKernelWrappers[0].compute( &(phaseCapPres)[ipWater],
-                                          &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
+  phaseVolFraction[ipWater] =
+    m_capPresKernelWrappers[0].compute( &(phaseCapPres)[ipWater],
+                                        &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
+  phaseVolFraction[ipWater] =
+          m_inverseCapPresWrappers[0].compute( inputSlice,
+                                            &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );                                 
+          phaseVolFraction[ipGas] = 1.0 - phaseVolFraction[ipWater];                                      
 
 }
+
 
 GEOS_HOST_DEVICE
 inline void

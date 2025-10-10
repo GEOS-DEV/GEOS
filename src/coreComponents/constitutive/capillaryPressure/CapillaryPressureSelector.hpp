@@ -36,24 +36,24 @@ template< typename LAMBDA >
 void constitutiveUpdatePassThru( CapillaryPressureBase const & capPres,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< 
-                               BrooksCoreyCapillaryPressure,
-                               JFunctionCapillaryPressure,
-                               TableCapillaryPressure,
-                               VanGenuchtenCapillaryPressure 
-                               >::execute( capPres, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler<
+    BrooksCoreyCapillaryPressure,
+    JFunctionCapillaryPressure,
+    TableCapillaryPressure,
+    VanGenuchtenCapillaryPressure
+    >::execute( capPres, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
 void constitutiveUpdatePassThru( CapillaryPressureBase & capPres,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< 
-                               BrooksCoreyCapillaryPressure,
-                               JFunctionCapillaryPressure,
-                               TableCapillaryPressure,
-                               VanGenuchtenCapillaryPressure 
-                               >::execute( capPres, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler<
+    BrooksCoreyCapillaryPressure,
+    JFunctionCapillaryPressure,
+    TableCapillaryPressure,
+    VanGenuchtenCapillaryPressure
+    >::execute( capPres, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

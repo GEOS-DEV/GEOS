@@ -35,7 +35,7 @@ template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
 FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::FluidModelTest():
   m_parent( "parent", m_node )
 {
-  createFunctionManager();
+  // createFunctionManager();
 }
 
 template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >

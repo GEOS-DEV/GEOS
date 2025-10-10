@@ -109,10 +109,10 @@ public:
 
   GEOS_HOST_DEVICE
   void computeHalfWeights( localIndex const iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                       real64 ( &weight )[1][2],
-                       real64 ( &dWeight_dVar )[1][2] ) const;
+                           CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                           CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                           real64 ( &weight )[1][2],
+                           real64 ( &dWeight_dVar )[1][2] ) const;
 
   /**
    * @brief Compute weigths and derivatives w.r.t to one variable without coefficient
@@ -263,10 +263,10 @@ GEOS_HOST_DEVICE
 inline void
 EmbeddedSurfaceToCellStencilWrapper::
   computeHalfWeights( localIndex iconn,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                  real64 ( & weight )[1][2],
-                  real64 ( & dWeight_dVar )[1][2] ) const
+                      CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                      CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                      real64 ( & weight )[1][2],
+                      real64 ( & dWeight_dVar )[1][2] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];

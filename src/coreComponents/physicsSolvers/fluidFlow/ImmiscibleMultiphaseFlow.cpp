@@ -24,12 +24,9 @@
 #include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/ImmiscibleMultiphaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/kernels/immiscibleMultiphase/CapillaryPressureUpdateKernel.hpp"
-#include "physicsSolvers/fluidFlow/kernels/compositional/ThermalAccumulationKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
-#include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
@@ -268,8 +265,7 @@ void ImmiscibleMultiphaseFlow::updateCapPressureModel( ObjectManagerBase & dataG
     {
       typename TYPEOFREF( castedCapPres ) ::KernelWrapper capPresWrapper = castedCapPres.createKernelWrapper();
 
-      // isothermalCompositionalMultiphaseBaseKernels::
-        immiscibleMultiphaseKernels::
+      isothermalCompositionalMultiphaseBaseKernels::
         CapillaryPressureUpdateKernel::
         launch< parallelDevicePolicy<> >( dataGroup.size(),
                                           capPresWrapper,
@@ -586,7 +582,7 @@ void ImmiscibleMultiphaseFlow::assembleAccumulationTerm( DomainPartition & domai
 }
 
 void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
-                                                  DomainPartition & domain,
+                                                  DomainPartition const & domain,
                                                   DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs ) const
@@ -599,75 +595,30 @@ void ImmiscibleMultiphaseFlow::assembleFluxTerms( real64 const dt,
 
   string const & dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
+                                                                MeshLevel const & mesh,
+                                                                string_array const & )
   {
-    if( m_hasCapPressure )
+    fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
     {
-      mesh.getElemManager().forElementSubRegions( regionNames,
-                                                  [&]( localIndex const,
-                                                       ElementSubRegionBase & subRegion ) // Check if you need this.
-      {      
-        // Capillary pressure wrapper
-        string const & cappresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
-        JFunctionCapillaryPressure & capPressure = getConstitutiveModel< JFunctionCapillaryPressure >( subRegion, cappresName );
-        JFunctionCapillaryPressure::KernelWrapper capPresWrapper = capPressure.createKernelWrapper(); 
-
-        // Relative permeability wrapper
-        string const & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
-        BrooksCoreyRelativePermeability & relPerm = getConstitutiveModel< BrooksCoreyRelativePermeability >( subRegion, relPermName );
-        BrooksCoreyRelativePermeability::KernelWrapper relPermWrapper = relPerm.createKernelWrapper();
-
-          fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
-          {
-            typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-            immiscibleMultiphaseKernels::
-            FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                                                                         dofManager.rankOffset(),
-                                                                                         dofKey,
-                                                                                         m_hasCapPressure,
-                                                                                         m_useTotalMassEquation,
-                                                                                         m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
-                                                                                         getName(),
-                                                                                         mesh.getElemManager(),
-                                                                                         stencilWrapper,
-                                                                                         capPresWrapper,
-                                                                                         relPermWrapper,
-                                                                                         subRegion,
-                                                                                         dt,
-                                                                                         localMatrix.toViewConstSizes(),
-                                                                                         localRhs.toView() );
-          } );
-        } );
-    }
-    else
-    {
-      fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
-      {
-        typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-        immiscibleMultiphaseKernels::
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+      immiscibleMultiphaseKernels::
         FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                                                                     dofManager.rankOffset(),
-                                                                                     dofKey,
-                                                                                     m_hasCapPressure,
-                                                                                     m_useTotalMassEquation,
-                                                                                     m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
-                                                                                     getName(),
-                                                                                     mesh.getElemManager(),
-                                                                                     stencilWrapper,
-                                                                                     dt,
-                                                                                     localMatrix.toViewConstSizes(),
-                                                                                     localRhs.toView() );
-      } );
-    }
-
+                                                                             dofManager.rankOffset(),
+                                                                             dofKey,
+                                                                             m_hasCapPressure,
+                                                                             m_useTotalMassEquation,
+                                                                             m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
+                                                                             getName(),
+                                                                             mesh.getElemManager(),
+                                                                             stencilWrapper,
+                                                                             dt,
+                                                                             localMatrix.toViewConstSizes(),
+                                                                             localRhs.toView() );
+    } );
   } );
 }
 
-// Ryan: Looks like this will need to be overwritten as well...
-// I have left the CompositionalMultiphaseFVM implementation for reference
 void ImmiscibleMultiphaseFlow::setupDofs( DomainPartition const & domain,
                                           DofManager & dofManager ) const
 {

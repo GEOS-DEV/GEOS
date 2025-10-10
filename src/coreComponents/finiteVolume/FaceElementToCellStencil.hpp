@@ -107,19 +107,19 @@ public:
                        real64 ( &dWeight_dVar )[1][2] ) const;
 
 /**
-   * @brief Compute half weigths and derivatives w.r.t to one variable.
-   * @param[in] iconn connection index
-   * @param[in] coefficient view accessor to the coefficient used to compute the weights
-   * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
-   * @param[out] weight view weights
-   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
-   */
+ * @brief Compute half weigths and derivatives w.r.t to one variable.
+ * @param[in] iconn connection index
+ * @param[in] coefficient view accessor to the coefficient used to compute the weights
+ * @param[in] dCoeff_dVar view accessor to the derivative of the coefficient w.r.t to the variable
+ * @param[out] weight view weights
+ * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+ */
   GEOS_HOST_DEVICE
   void computeHalfWeights( localIndex iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                       CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                       real64 ( &weight )[1][2],
-                       real64 ( &dWeight_dVar )[1][2] ) const;
+                           CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                           CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                           real64 ( &weight )[1][2],
+                           real64 ( &dWeight_dVar )[1][2] ) const;
 
   /**
    * @brief Compute weigths and derivatives w.r.t to one variable without coefficient
@@ -307,10 +307,10 @@ inline void FaceElementToCellStencilWrapper::
 GEOS_HOST_DEVICE
 inline void FaceElementToCellStencilWrapper::
   computeHalfWeights( localIndex const iconn,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                  real64 ( & weight )[1][2],
-                  real64 ( & dWeight_dVar )[1][2] ) const
+                      CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                      CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                      real64 ( & weight )[1][2],
+                      real64 ( & dWeight_dVar )[1][2] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];

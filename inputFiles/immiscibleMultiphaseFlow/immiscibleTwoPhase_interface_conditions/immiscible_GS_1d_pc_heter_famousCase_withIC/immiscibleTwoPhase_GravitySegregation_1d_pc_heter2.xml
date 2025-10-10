@@ -2,18 +2,22 @@
 
 <Problem>
   <Solvers
-    gravityVector="{ 0.0, 0.0, -10 }">
+    gravityVector="{ 0.0, 0.0, -9.81 }">
     <ImmiscibleMultiphaseFlow
       name="FlowSolver"
       discretization="TPFA"
       targetRegions="{ Domain }"
-      writeLinearSystem="0"
+      logLevel="4"
       temperature="300"
-      initialDt="0.001">
+      initialDt="1"
+      writeLinearSystem="2"
+      useTotalMassEquation="0">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-5"
         lineSearchAction="None"
-        newtonMaxIter="10" />
+        newtonMaxIter="1"
+        maxTimeStepCuts="1"
+        maxSubSteps="2000" />
       <LinearSolverParameters
         directParallel="0" />
     </ImmiscibleMultiphaseFlow>
@@ -23,12 +27,12 @@
     <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 10 }"
+      xCoords="{ 0, 10 }"
+      yCoords="{ 0, 10 }"
+      zCoords="{ 0, 100 }"
       nx="{ 1 }"
       ny="{ 1 }"
-      nz="{ 10 }"
+      nz="{ 20 }"
       cellBlockNames="{ block1 }" />
   </Mesh>
   
@@ -40,21 +44,21 @@
   </Geometry>
 
   <Events
-    maxTime="0.4">
+    maxTime="86.4e+06">
     <PeriodicEvent
       name="outputs"
-      timeFrequency="0.01"
+      timeFrequency="86400"
       target="/Outputs/vtkOutput" />
 
     <PeriodicEvent
-      name="solverApplications"
+      name="solverApplications"  
       target="/Solvers/FlowSolver" />
 
-    <PeriodicEvent
+<!--    <PeriodicEvent
       name="restarts"
-      timeFrequency="0.1"
+      timeFrequency="86400"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"/>-->
   </Events>
 
   <NumericalMethods>
@@ -68,29 +72,29 @@
     <CellElementRegion
       name="Domain"
       cellBlocks="{ block1 }"
-      materialList="{ fluid, rock, relperm }" />
+      materialList="{ fluid, rock, relperm, capPressure }" />
   </ElementRegions>
 
   <Functions>
     <TableFunction
       name="densityTablePhase1"
       coordinates="{ 0.0}"
-      values="{ 10 }" />
+      values="{ 1000 }" />
 
     <TableFunction
       name="densityTablePhase2"
       coordinates="{ 0.0 }"
-      values="{ 1 }" />
+      values="{ 100 }" />
 
     <TableFunction
       name="viscosityTablePhase1"
       coordinates="{ 0.0 }"
-      values="{ 1.0 }" />
+      values="{ 0.001 }" />
 
     <TableFunction
       name="viscosityTablePhase2"
       coordinates="{ 0.0 }"
-      values="{ 1.0 }" />
+      values="{ 0.001 }" />
 
     <TableFunction
       name="saturationTable1"
@@ -112,6 +116,31 @@
       coordinateFiles="{ x.txt, y.txt, z.txt }"
       voxelFile="initialPressure.txt"
       interpolation="nearest" />
+  <TableFunction
+      name="jFunctionTable"
+      coordinateFiles="{ phaseVolumeFraction_water_linear.txt }"
+      voxelFile="jFunction_linear.txt"/>
+
+    <TableFunction 
+      name="permxFunc"
+      inputVarNames="{elementCenter}"
+      coordinateFiles="{x.txt,y.txt,z.txt}"
+      voxelFile="permx.geos"
+      interpolation="nearest" />
+    <TableFunction 
+      name="permyFunc"
+      inputVarNames="{elementCenter}"
+      coordinateFiles="{x.txt,y.txt,z.txt}"
+      voxelFile="permy.geos"
+      interpolation="nearest" />
+    <TableFunction 
+      name="permzFunc"
+      inputVarNames="{elementCenter}"
+      coordinateFiles="{x.txt,y.txt,z.txt}"
+      voxelFile="permz.geos"
+      interpolation="nearest" />
+
+
   </Functions>
 
   <Constitutive>
@@ -132,9 +161,9 @@
 
     <PressurePorosity
       name="rockPorosity"
-      defaultReferencePorosity="1.0"
-      referencePressure="0.0"
-      compressibility="1e-9" />
+      defaultReferencePorosity="0.25"
+      referencePressure="1e7"
+      compressibility="0.0" />
 
     <ConstantPermeability
       name="rockPerm"
@@ -142,10 +171,27 @@
 
     <BrooksCoreyRelativePermeability
       name="relperm"
-      phaseNames="{ water, oil }"
+      phaseNames="{ water, gas }"
       phaseMinVolumeFraction="{ 0.0, 0.0 }"
-      phaseRelPermExponent="{ 1.0, 1.0 }"
+      phaseRelPermExponent="{ 2.5, 2.0 }"
       phaseRelPermMaxValue="{ 1.0, 1.0 }" />
+
+<!--   <BrooksCoreyCapillaryPressure
+      name="capPressure"
+      phaseNames="{ water, gas }"
+      phaseMinVolumeFraction="{ 0.0, 0.0 }"
+      phaseCapPressureExponentInv="{ 4 , 1 }"
+      phaseEntryPressure="{ 50.0, 0 }"
+      capPressureEpsilon="1e-8" />-->
+
+<JFunctionCapillaryPressure
+      name="capPressure"
+      phaseNames="{ water, gas }"	
+      wettingNonWettingJFunctionTableName="jFunctionTable"
+      wettingNonWettingSurfaceTension="0.02"
+      permeabilityDirection="XY"/>
+
+
   </Constitutive>
 
   <FieldSpecifications>
@@ -155,7 +201,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Domain/block1"
       fieldName="rockPorosity_referencePorosity"
-      scale="1.0" />
+      scale="0.25" />
 
     <FieldSpecification
       name="initialPressure"
@@ -186,12 +232,43 @@
       scale="1.0"
       functionName="saturationTable2" />
 
+   <FieldSpecification
+      name="permx"
+      component="0"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1"
+      fieldName="rockPerm_permeability"
+      functionName="permxFunc"
+      scale="9.869233e-16"/>
+
     <FieldSpecification
+      name="permy"
+      component="1"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1"
+      fieldName="rockPerm_permeability"
+      functionName="permyFunc"
+      scale="9.869233e-16"/>
+
+    <FieldSpecification
+      name="permz"
+      component="2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/block1"
+      fieldName="rockPerm_permeability"
+      functionName="permzFunc"
+      scale="9.869233e-16"/>
+
+
+ <!--   <FieldSpecification
       name="sinkTermP"
       objectPath="ElementRegions/Domain/block1"
       fieldName="pressure"
       scale="500.0"
-      setNames="{ sink }" />
+      setNames="{ sink }" /> -->
   </FieldSpecifications>
 
   <Outputs>
