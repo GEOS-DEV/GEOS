@@ -268,17 +268,48 @@ public:
         
         // Potential difference and its derivatives
         real64 const gravCoefDif = ccGravCoef - fGravCoef;
-        real64 const gravTerm = delta_rho * gravCoefDif;
         real64 const T_ij = s.transMatrix[i][j];
-        cell_BuoyantFlux += T_ij * gravTerm;
+        cell_BuoyantFlux += T_ij * gravCoefDif;
       }
-          
-      // Local gravity terms (cell-centered and face values associated to i)
-//      real64 const T_ij = s.transMatrix[i][i];
+
       integer sign = integer(cell_BuoyantFlux > 0.0) - integer(cell_BuoyantFlux < 0.0);
       real64 const Topt_grav = sign * m_transEffective[m_elemToFaces[ei][i]];
       s.BuoyantFlux[i] += Topt_grav * delta_rho;
       s.dBuoyantFlux_dPres[i] += Topt_grav * (ddelta_rho_dP);
+    }
+  }
+  
+  GEOS_HOST_DEVICE
+  void computeBuoyancyDrivenFluxDisc( localIndex const ei, StackVariables & s ) const
+  {
+    using Deriv = DerivMob; // alias for readability
+    
+    // Compute delta_rho and its pressure derivative
+    integer const dep = 1 - m_indep;
+    real64 const rho_dep = m_phaseDens[ei][0][dep];
+    real64 const rho_indep = m_phaseDens[ei][0][m_indep];
+    real64 const drho_dep_dP = m_dPhaseDens[ei][0][dep][Deriv::dP];
+    real64 const drho_indep_dP = m_dPhaseDens[ei][0][m_indep][Deriv::dP];
+   
+    real64 const delta_rho = rho_dep - rho_indep;
+    real64 const ddelta_rho_dP = drho_dep_dP - drho_indep_dP;
+    
+    for( integer i=0; i<NUM_FACE; ++i )
+    {
+      for( integer j=0; j<NUM_FACE; ++j )
+      {
+        // Local gravity terms (cell-centered and face values associated to j)
+        real64 const ccGravCoef = m_elemGravCoef[ei];
+        real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
+        
+        // Potential difference and its derivatives
+        real64 const gravCoefDif = ccGravCoef - fGravCoef;
+        real64 const gravTerm = delta_rho * gravCoefDif;
+        real64 const dGravTerm_dP = ddelta_rho_dP * gravCoefDif;
+        real64 const T_ij = s.transMatrix[i][j];
+        s.BuoyantFlux[i] += T_ij * gravTerm;
+        s.dBuoyantFlux_dPres[i] += T_ij * (dGravTerm_dP);
+      }
     }
   }
   
@@ -955,11 +986,13 @@ public:
       for( integer i=0; i<NUM_FACE; ++i )
       {
         localIndex const kf = m_elemToFaces[ei][i];
+        
         real64 T_g_delta_z = 0.0;
         for( integer j=0; j<NUM_FACE; ++j )
         {
           real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
-          T_g_delta_z += s.T[i][j] * (ccGravCoef - fGravCoef);
+          real64 const gravCoefDif = ccGravCoef - fGravCoef;
+          T_g_delta_z += s.T[i][j] * gravCoefDif;
         }
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_faceInvSum[kf], 1.0 / std::fabs(T_g_delta_z) );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &m_faceCount[kf], 1 );
