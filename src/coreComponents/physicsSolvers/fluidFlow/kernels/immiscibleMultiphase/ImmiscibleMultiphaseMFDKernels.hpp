@@ -243,43 +243,6 @@ public:
   }
   
   GEOS_HOST_DEVICE
-  void computeBuoyancyDrivenFluxOld( localIndex const ei, StackVariables & s ) const
-  {
-    using Deriv = DerivMob; // alias for readability
-    
-    // Compute delta_rho and its pressure derivative
-    integer const dep = 1 - m_indep;
-    real64 const rho_dep = m_phaseDens[ei][0][dep];
-    real64 const rho_indep = m_phaseDens[ei][0][m_indep];
-    real64 const drho_dep_dP = m_dPhaseDens[ei][0][dep][Deriv::dP];
-    real64 const drho_indep_dP = m_dPhaseDens[ei][0][m_indep][Deriv::dP];
-   
-    real64 const delta_rho = rho_dep - rho_indep;
-    real64 const ddelta_rho_dP = drho_dep_dP - drho_indep_dP;
-    
-    for( integer i=0; i<NUM_FACE; ++i )
-    {
-      for( integer j=0; j<NUM_FACE; ++j )
-      {
-        // Local gravity terms (cell-centered and face values associated to j)
-        real64 const ccGravCoef = m_elemGravCoef[ei];
-        real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
-
-        // Potential difference and its derivatives
-        real64 const gravCoefDif = ccGravCoef - fGravCoef;
-        real64 const gravTerm = delta_rho * gravCoefDif;
-        real64 const dGravTerm_dP = ddelta_rho_dP * gravCoefDif;
-        real64 const dGravTerm_dS = 0.0;
-
-        real64 const T_ij = s.transMatrix[i][j];
-        s.BuoyantFlux[i] += T_ij * gravTerm;
-        s.dBuoyantFlux_dPres[i] += T_ij * (dGravTerm_dP);
-        s.dBuoyantFlux_dS[i] += T_ij * (dGravTerm_dS);
-      }
-    }
-  }
-  
-  GEOS_HOST_DEVICE
   void computeBuoyancyDrivenFlux( localIndex const ei, StackVariables & s ) const
   {
     using Deriv = DerivMob; // alias for readability
@@ -296,21 +259,26 @@ public:
     
     for( integer i=0; i<NUM_FACE; ++i )
     {
+      real64 cell_BuoyantFlux = 0.0;
+      for( integer j=0; j<NUM_FACE; ++j )
+      {
+        // Local gravity terms (cell-centered and face values associated to j)
+        real64 const ccGravCoef = m_elemGravCoef[ei];
+        real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
+        
+        // Potential difference and its derivatives
+        real64 const gravCoefDif = ccGravCoef - fGravCoef;
+        real64 const gravTerm = delta_rho * gravCoefDif;
+        real64 const T_ij = s.transMatrix[i][j];
+        cell_BuoyantFlux += T_ij * gravTerm;
+      }
+          
       // Local gravity terms (cell-centered and face values associated to i)
-      real64 const ccGravCoef = m_elemGravCoef[ei];
-      real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][i]];
-      
-
-      // Potential difference and its derivatives
-      real64 const gravCoefDif = ccGravCoef - fGravCoef;
-      real64 const gravTerm = delta_rho * gravCoefDif;
-      real64 const dGravTerm_dP = ddelta_rho_dP * gravCoefDif;
-      real64 const dGravTerm_dS = 0.0;
-      
-      real64 const T_harmonic = m_transEffective[m_elemToFaces[ei][i]];
-      s.BuoyantFlux[i] += T_harmonic * gravTerm;
-      s.dBuoyantFlux_dPres[i] += T_harmonic * (dGravTerm_dP);
-      s.dBuoyantFlux_dS[i] += T_harmonic * (dGravTerm_dS);
+//      real64 const T_ij = s.transMatrix[i][i];
+      integer sign = integer(cell_BuoyantFlux > 0.0) - integer(cell_BuoyantFlux < 0.0);
+      real64 const Topt_grav = sign * m_transEffective[m_elemToFaces[ei][i]];
+      s.BuoyantFlux[i] += Topt_grav * delta_rho;
+      s.dBuoyantFlux_dPres[i] += Topt_grav * (ddelta_rho_dP);
     }
   }
   
@@ -965,12 +933,15 @@ public:
                              arrayView2d< localIndex const > const & elemToFaces,
                              arrayView2d< real64 const > const & elemCenter,
                              arrayView1d< real64 const > const & elemVolume,
+                             arrayView1d< real64 const > const & elemGravCoef,
+                             arrayView1d< real64 const > const & faceGravCoef,
                              arrayView3d< real64 const > const & elemPerm,
                              real64 const & lengthTol,
                              arrayView1d< real64 > const & faceInvSum,
                              arrayView1d< integer > const & faceCount )
       : m_nodePosition( nodePos ), m_transMultiplier( transMultiplier ), m_faceToNodes( faceToNodes ),
-        m_elemToFaces( elemToFaces ), m_elemCenter( elemCenter ), m_elemVolume( elemVolume ), m_elemPerm( elemPerm ),
+        m_elemToFaces( elemToFaces ), m_elemCenter( elemCenter ), m_elemVolume( elemVolume ),
+        m_elemGravCoef( elemGravCoef ), m_faceGravCoef( faceGravCoef ), m_elemPerm( elemPerm ),
         m_lengthTolerance( lengthTol ), m_faceInvSum( faceInvSum ), m_faceCount( faceCount ) {}
 
     struct Stack { GEOS_HOST_DEVICE Stack(): T(NUM_FACE, NUM_FACE) {} stackArray2d< real64, NUM_FACE*NUM_FACE > T; };
@@ -979,15 +950,19 @@ public:
     {
       real64 const permVec[3] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
       IP::template compute< NUM_FACE >( m_nodePosition, m_transMultiplier, m_faceToNodes, m_elemToFaces[ei], m_elemCenter[ei], m_elemVolume[ei], permVec, m_lengthTolerance, s.T );
+    
+      real64 const ccGravCoef = m_elemGravCoef[ei];
       for( integer i=0; i<NUM_FACE; ++i )
       {
         localIndex const kf = m_elemToFaces[ei][i];
-        real64 const Tii = s.T[i][i];
-        if( Tii > 0.0 )
+        real64 T_g_delta_z = 0.0;
+        for( integer j=0; j<NUM_FACE; ++j )
         {
-          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_faceInvSum[kf], 1.0 / Tii );
-          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_faceCount[kf], 1 );
+          real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
+          T_g_delta_z += s.T[i][j] * (ccGravCoef - fGravCoef);
         }
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_faceInvSum[kf], 1.0 / std::fabs(T_g_delta_z) );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_faceCount[kf], 1 );
       }
     }
   private:
@@ -997,6 +972,8 @@ public:
     arrayView2d< localIndex const > const m_elemToFaces;
     arrayView2d< real64 const > const m_elemCenter;
     arrayView1d< real64 const > const m_elemVolume;
+    arrayView1d< real64 const > const m_elemGravCoef;
+    arrayView1d< real64 const > const m_faceGravCoef;
     arrayView3d< real64 const > const m_elemPerm;
     real64 const m_lengthTolerance;
     arrayView1d< real64 > const m_faceInvSum;
@@ -1020,6 +997,8 @@ public:
     auto const & elemCenter = subRegion.getElementCenter();
     auto const & elemVolume = subRegion.getElementVolume();
     auto const & elemPerm = permeability.permeability();
+    auto const & elemGravCoef = subRegion.getField< fields::flow::gravityCoefficient >();
+    auto const & faceGravCoef = faceManager.getField< fields::flow::gravityCoefficient >();
     // Materialize ghost rank view to avoid capturing subRegion (non-copyable) in device lambda
     auto const & ghostRank = subRegion.ghostRank();
 
@@ -1029,7 +1008,7 @@ public:
       internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NF )
       {
         using K = Kernel< NF, IPType >;
-        K kern( nodePos, transMult, faceToNodes, elemToFaces, elemCenter, elemVolume, elemPerm, lengthTolerance, faceInvSum, faceCount );
+        K kern( nodePos, transMult, faceToNodes, elemToFaces, elemCenter, elemVolume, elemGravCoef, faceGravCoef, elemPerm, lengthTolerance, faceInvSum, faceCount );
         forAll< POLICY >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
         {
           if( ghostRank[ei] >= 0 ) return;
