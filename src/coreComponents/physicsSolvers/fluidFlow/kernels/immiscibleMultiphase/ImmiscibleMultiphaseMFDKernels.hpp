@@ -264,8 +264,6 @@ public:
         // Local gravity terms (cell-centered and face values associated to j)
         real64 const ccGravCoef = m_elemGravCoef[ei];
         real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
-        
-        real64 const T_harmonic = m_transEffective[m_elemToFaces[ei][j]];
 
         // Potential difference and its derivatives
         real64 const gravCoefDif = ccGravCoef - fGravCoef;
