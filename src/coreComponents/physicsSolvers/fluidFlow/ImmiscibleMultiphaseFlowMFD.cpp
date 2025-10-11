@@ -377,7 +377,7 @@ void ImmiscibleMultiphaseFlowMFD::assembleSystem( real64 const time_n,
     } );
   } );
 
-  // Pre-compute and initialize face transGgradZ (stored in transEffective): consistent mimetic operator applied to the gravitational potential using mimetic inner product information
+  // Pre-compute and initialize face transGgradZ: consistent mimetic operator applied to the gravitational potential using mimetic inner product information
   {
     NumericalMethodsManager const & nm = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = nm.getFiniteVolumeManager();
@@ -410,7 +410,7 @@ void ImmiscibleMultiphaseFlowMFD::assembleSystem( real64 const time_n,
       } );
 
       // Reduce to effective value per face and write to field
-      arrayView1d< real64 > transEff = faceManager.getField< flow::transEffective >();
+      arrayView1d< real64 > transEff = faceManager.getField< flow::transGgradZ >();
       arrayView1d< integer const > ghost = faceManager.ghostRank();
       forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const kf )
       {
