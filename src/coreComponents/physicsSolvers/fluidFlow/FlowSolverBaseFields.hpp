@@ -225,8 +225,8 @@ DECLARE_FIELD( transMultiplier,
                WRITE_AND_READ,
                "Permeability transmissibility multipliers" );
 
-DECLARE_FIELD( transEffective,
-               "permeabilityTransEffective",
+DECLARE_FIELD( transGgradZ,
+               "transGgradZ",
                array1d< real64 >,
                0,
                LEVEL_0,
