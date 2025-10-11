@@ -102,7 +102,7 @@ protected:
    * @post m_neighborsRank is populated
    *
    */
-  virtual void computeNeighborsFromTopology() = 0;
+  virtual void computeNeighborsFromTopology( MPI_Comm & comm ) = 0;
 };
 
 } // namespace geos

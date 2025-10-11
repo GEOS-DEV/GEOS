@@ -94,7 +94,7 @@ void CartesianPartitioner::initializeDomain( R1Tensor const & globalGridMin,
   initializeCartesianCommunicator( cartComm );
 
   // Compute neighbors from Cartesian topology
-  computeNeighborsFromTopology();
+  computeNeighborsFromTopology( cartComm );
 
   // Compute checkerboard coloring
   color();
@@ -111,6 +111,7 @@ void CartesianPartitioner::initializeCartesianCommunicator( MPI_Comm & cartComm 
 
   int const size = MpiWrapper::commSize( MPI_COMM_GEOS );
   validatePartitionSize( size );
+
 
   int const reorder = 0;
   MpiWrapper::cartCreate( MPI_COMM_GEOS, m_ndim, m_partitionCounts.data(),
@@ -221,7 +222,12 @@ void CartesianPartitioner::addNeighbors( unsigned int const idim,
     if( !me )
     {
       int const rank = MpiWrapper::cartRank( cartComm, ncoords );
-      m_neighborsRank.push_back( rank );
+
+      if( std::find( m_neighborsRank.begin(), m_neighborsRank.end(), rank )
+          == m_neighborsRank.end() )
+      {
+        m_neighborsRank.push_back( rank );
+      }
     }
   }
   else
@@ -251,17 +257,11 @@ void CartesianPartitioner::addNeighbors( unsigned int const idim,
   }
 }
 
-void CartesianPartitioner::computeNeighborsFromTopology()
+void CartesianPartitioner::computeNeighborsFromTopology( MPI_Comm & cartComm )
 {
-  // Implementation of GeometricPartitioner::computeNeighborsFromTopology()
-
   m_neighborsRank.clear();
 
   int ncoords[3];
-
-  // Create temporary Cartesian communicator for neighbor determination
-  ScopedMpiComm cartComm;
-  initializeCartesianCommunicator( cartComm );
 
   // Recursively find all neighbors in 3×3×3 stencil
   addNeighbors( 0, ncoords, cartComm );

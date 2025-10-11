@@ -226,9 +226,11 @@ protected:
    *
    * Handles periodic boundaries.
    *
+   * @param[in] comm Cartesian communicator
+   *
    * @post m_neighborsRank is populated
    */
-  void computeNeighborsFromTopology() override;
+  void computeNeighborsFromTopology( MPI_Comm & comm ) override;
 
 
 private:
