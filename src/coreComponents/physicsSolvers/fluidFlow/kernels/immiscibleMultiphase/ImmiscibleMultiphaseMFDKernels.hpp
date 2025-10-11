@@ -260,7 +260,7 @@ public:
     
     for( integer i=0; i<NUM_FACE; ++i )
     {
-      real64 cell_BuoyantFlux = 0.0;
+      real64 buoyantFlux_i = 0.0;
       real64 const ccGravCoef = m_elemGravCoef[ei];
       for( integer j=0; j<NUM_FACE; ++j )
       {
@@ -269,10 +269,10 @@ public:
         real64 const fGravCoef = m_faceGravCoef[fj];
         real64 const gravCoefDif = ccGravCoef - fGravCoef;
         real64 const T_ij = s.transMatrix[i][j];
-        cell_BuoyantFlux += T_ij * gravCoefDif;
+        buoyantFlux_i += T_ij * gravCoefDif;
       }
 
-      integer const sign = integer(cell_BuoyantFlux > 0.0) - integer(cell_BuoyantFlux < 0.0);
+      integer const sign = integer(buoyantFlux_i > 0.0) - integer(buoyantFlux_i < 0.0);
       real64 const Tgrav_consistent = sign * m_transGgradZ[m_elemToFaces[ei][i]];
       s.BuoyantFlux[i] += Tgrav_consistent * delta_rho;
       s.dBuoyantFlux_dPres[i] += Tgrav_consistent * (ddelta_rho_dP);
