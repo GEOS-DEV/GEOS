@@ -149,13 +149,14 @@ private:
                           DofManager const & dofManager,
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs ) const;
-  template< typename OBJECT_TYPE >
-  void applyFieldValue( real64 const & time_n,
-                        real64 const & dt,
-                        MeshLevel & mesh,
-                        char const logMessage[],
-                        string const fieldKey,
-                        string const boundaryFieldKey ) const;
+
+  // Dedup helpers (no behavior change)
+  void copyPressureToPrev( ElementSubRegionBase & subRegion ) const;
+  void copyPhaseStateToPrev( ElementSubRegionBase & subRegion ) const;
+  void restoreStateFromPrev( ElementSubRegionBase & subRegion ) const;
+  void copyFacePressureToPrev( MeshLevel & mesh ) const;
+  void restoreFacePressureFromPrev( MeshLevel & mesh ) const;
+
   // multiphase state
   integer m_numPhases;
   bool m_hasCapPressure;
@@ -169,6 +170,9 @@ private:
   // region filter & tolerance already present
   SortedArray< localIndex > m_regionFilter;
   real64 m_areaRelTol;
+
+  // Small helper: independent phase index (0 or 1) when one phase is dependent
+  GEOS_HOST_DEVICE inline integer indepPhaseIndex() const { return 1 - m_dependentPhaseIndex; }
 };
 
 } // namespace geos

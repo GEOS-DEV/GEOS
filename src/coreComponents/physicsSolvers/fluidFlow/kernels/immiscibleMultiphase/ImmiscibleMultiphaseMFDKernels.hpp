@@ -188,7 +188,8 @@ public:
       m_phaseDens( fluid.phaseDensity() ), m_dPhaseDens( fluid.dPhaseDensity() ),
       m_phaseMobAll( phaseMobAccessor.toNestedViewConst() ), m_dPhaseMobAll( dPhaseMobAccessor.toNestedViewConst() ),
       m_assembleCellEquation( assembleCellEq ), m_indep( indepPhaseIndex ),
-      m_localMatrix( localMatrix ), m_localRhs( localRhs )
+      m_localMatrix( localMatrix ), m_localRhs( localRhs ),
+      m_sgnS( indepPhaseIndex == 0 ? 1.0 : -1.0 )
   {}
 
   struct StackVariables
@@ -260,19 +261,18 @@ public:
     for( integer i=0; i<NUM_FACE; ++i )
     {
       real64 cell_BuoyantFlux = 0.0;
+      real64 const ccGravCoef = m_elemGravCoef[ei];
       for( integer j=0; j<NUM_FACE; ++j )
       {
         // Local gravity terms (cell-centered and face values associated to j)
-        real64 const ccGravCoef = m_elemGravCoef[ei];
-        real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
-        
-        // Potential difference and its derivatives
+        localIndex const fj = m_elemToFaces[ei][j];
+        real64 const fGravCoef = m_faceGravCoef[fj];
         real64 const gravCoefDif = ccGravCoef - fGravCoef;
         real64 const T_ij = s.transMatrix[i][j];
         cell_BuoyantFlux += T_ij * gravCoefDif;
       }
 
-      integer sign = integer(cell_BuoyantFlux > 0.0) - integer(cell_BuoyantFlux < 0.0);
+      integer const sign = integer(cell_BuoyantFlux > 0.0) - integer(cell_BuoyantFlux < 0.0);
       real64 const Tgrav_consistent = sign * m_transGgradZ[m_elemToFaces[ei][i]];
       s.BuoyantFlux[i] += Tgrav_consistent * delta_rho;
       s.dBuoyantFlux_dPres[i] += Tgrav_consistent * (ddelta_rho_dP);
@@ -283,6 +283,7 @@ public:
   void computeOverallMassFlux( localIndex const ei, StackVariables & s ) const
   {
     using Deriv = DerivMob; // alias for readability
+    constexpr real64 eps = 1e-32;
     
     // Keep pressure and saturation derivatives since lambda depends on both
     real64 Lambda = 0.0;   // == massLambda (before sign mapping)
@@ -295,17 +296,15 @@ public:
       // this mobility are mass mobilities (rho * kr / mu).
       real64 const lambda = m_phaseMobAll[m_er][m_esr][ei][ip];
       real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dP];
-      real64 dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
-
-      // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
-      real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
-      real64 const dlambda_dS = sgnS * dlambda_dS_raw;
+      real64 const dlambda_dS = m_sgnS * m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
       
       // accumulate total mobility derivatives for rho_mix denominator
       Lambda += lambda;
       dLambda_dP += dlambda_dP;
       dLambda_dS += dlambda_dS;
     }
+    // Prevent division by zero downstream
+    Lambda = (Lambda == 0.0) ? eps : Lambda;
     
     // Mixture density rho_hat = (sum_i rho_i * (lambda_i / (sum_i lambda_i))
     real64 rho_hat = 0.0;
@@ -315,31 +314,26 @@ public:
     {
       real64 const rho = m_phaseDens[ei][0][ip];
       real64 const drho_dP = m_dPhaseDens[ei][0][ip][Deriv::dP];
-      real64 const drho_dS = 0.0;
       real64 const lambda = m_phaseMobAll[m_er][m_esr][ei][ip];
       real64 const dlambda_dP = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dP];
-      real64 dlambda_dS_raw = m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
-
-      // Map derivatives to configured independent saturation: if indep=1, d/dS1 = - d/dS0
-      real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
-      real64 const dlambda_dS = sgnS * dlambda_dS_raw;
+      real64 const dlambda_dS = m_sgnS * m_dPhaseMobAll[m_er][m_esr][ei][ip][Deriv::dS];
 
       rho_hat += rho * (lambda / Lambda);
       drho_hat_dP += (drho_dP * lambda * Lambda +
                       rho * (dlambda_dP * Lambda - lambda * dLambda_dP)) / (Lambda * Lambda);
-      drho_hat_dS += (drho_dS * lambda * Lambda +
-                      rho * (dlambda_dS * Lambda - lambda * dLambda_dS)) / (Lambda * Lambda);
+      drho_hat_dS += (rho * (dlambda_dS * Lambda - lambda * dLambda_dS)) / (Lambda * Lambda);
     }
     
     for( integer i=0; i<NUM_FACE; ++i )
     {
+      real64 const ccPres = m_elemPres[ei];
+      real64 const ccGravCoef = m_elemGravCoef[ei];
       for( integer j=0; j<NUM_FACE; ++j )
       {
         // Local pressure and gravity terms (cell-centered and face values associated to j)
-        real64 const ccPres = m_elemPres[ei];
-        real64 const fPres = m_facePres[m_elemToFaces[ei][j]];
-        real64 const ccGravCoef = m_elemGravCoef[ei];
-        real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
+        localIndex const fj = m_elemToFaces[ei][j];
+        real64 const fPres = m_facePres[fj];
+        real64 const fGravCoef = m_faceGravCoef[fj];
 
         // Potential difference and its derivatives
         real64 const presDif = ccPres - fPres;
@@ -424,29 +418,20 @@ public:
 
     using Deriv = DerivMob;
 
-    struct MobData {
-      real64 valLoc; real64 dP_Loc; real64 dS_Loc; // local cell mobility and derivatives (w.r.t local primary vars)
-      real64 valNei; real64 dP_Nei; real64 dS_Nei; // neighbor cell (if exists) mobility and derivatives (w.r.t neighbor vars)
-    };
+    struct MobData { real64 valLoc; real64 dP_Loc; real64 dS_Loc; real64 valNei; real64 dP_Nei; real64 dS_Nei; };
 
     auto buildMobility = [this] GEOS_HOST_DEVICE ( localIndex er, localIndex esr, localIndex ei_local, integer phase ) -> MobData
     {
       MobData m{};
       m.valLoc  = m_phaseMobAll[er][esr][ei_local][phase];
       m.dP_Loc  = m_dPhaseMobAll[er][esr][ei_local][phase][Deriv::dP];
-      real64 const dlambda_dS_raw = m_dPhaseMobAll[er][esr][ei_local][phase][Deriv::dS];
-      real64 const sgnS = ( m_indep == 0 ? 1.0 : -1.0 );
-      m.dS_Loc  = sgnS * dlambda_dS_raw;
+      m.dS_Loc  = m_sgnS * m_dPhaseMobAll[er][esr][ei_local][phase][Deriv::dS];
       // init neighbor same; overwrite if neighbor present
       m.valNei = m.valLoc; m.dP_Nei = m.dP_Loc; m.dS_Nei = m.dS_Loc;
       return m;
     };
 
-    struct UpMob {
-      real64 alpha; real64 val; // upwinded value
-      real64 dP_Loc; real64 dS_Loc; // derivatives wrt local variables
-      real64 dP_Nei; real64 dS_Nei; // derivatives wrt neighbor variables
-    };
+    struct UpMob { real64 alpha; real64 val; real64 dP_Loc; real64 dS_Loc; real64 dP_Nei; real64 dS_Nei; };
 
     auto upwindMobility = [] GEOS_HOST_DEVICE ( MobData const & m, real64 beta ) -> UpMob
     {
@@ -458,38 +443,18 @@ public:
       return u;
     };
 
-    // Small helper: given upwinded mobilities for two phases, compute fractional flow of phase 0 or 1 and derivatives
     auto fractionalFlowFromUpwind = [] GEOS_HOST_DEVICE (
         UpMob const & L0, UpMob const & L1, integer phase, bool local, bool dP ) -> real64
     {
       real64 const eps = 1e-32;
       real64 const a = L0.val; real64 const b = L1.val; real64 const S = a + b + eps;
-      // derivatives of a,b selected for context
       real64 da = 0.0, db = 0.0;
-      if( local )
-      {
-        if( dP ) { da = L0.dP_Loc; db = L1.dP_Loc; }
-        else     { da = L0.dS_Loc; db = L1.dS_Loc; }
-      }
-      else
-      {
-        if( dP ) { da = L0.dP_Nei; db = L1.dP_Nei; }
-        else     { da = L0.dS_Nei; db = L1.dS_Nei; }
-      }
-      // f0 = a/S, f1 = b/S
-      if( phase == 0 )
-      {
-        // df0 = (da*S - a*(da+db))/S^2 = (da*(S - a) - a*db)/S^2 = (da*b - a*db)/S^2
-        return (da * b - a * db) / (S * S);
-      }
-      else
-      {
-        // f1 = b/S -> df1 = (db*S - b*(da+db))/S^2 = (db*a - b*da)/S^2
-        return (db * a - b * da) / (S * S);
-      }
+      if( local ) { if( dP ) { da = L0.dP_Loc; db = L1.dP_Loc; } else { da = L0.dS_Loc; db = L1.dS_Loc; } }
+      else        { if( dP ) { da = L0.dP_Nei; db = L1.dP_Nei; } else { da = L0.dS_Nei; db = L1.dS_Nei; } }
+      if( phase == 0 ) { return (da * b - a * db) / (S * S); }
+      else             { return (db * a - b * da) / (S * S); }
     };
 
-    // buoyancy factor g(a,b) = a*b/(a+b); derivatives dg/da = b^2/(a+b)^2 ; dg/db = a^2/(a+b)^2
     auto buoyancyFactorDerivative = [] GEOS_HOST_DEVICE (
         UpMob const & L0, UpMob const & L1, bool local, bool dP ) -> real64
     {
@@ -498,16 +463,8 @@ public:
       real64 const dg_da = (b*b)/(S*S);
       real64 const dg_db = (a*a)/(S*S);
       real64 da = 0.0, db = 0.0;
-      if( local )
-      {
-        if( dP ) { da = L0.dP_Loc; db = L1.dP_Loc; }
-        else     { da = L0.dS_Loc; db = L1.dS_Loc; }
-      }
-      else
-      {
-        if( dP ) { da = L0.dP_Nei; db = L1.dP_Nei; }
-        else     { da = L0.dS_Nei; db = L1.dS_Nei; }
-      }
+      if( local ) { if( dP ) { da = L0.dP_Loc; db = L1.dP_Loc; } else { da = L0.dS_Loc; db = L1.dS_Loc; } }
+      else        { if( dP ) { da = L0.dP_Nei; db = L1.dP_Nei; } else { da = L0.dS_Nei; db = L1.dS_Nei; } }
       return dg_da * da + dg_db * db;
     };
 
@@ -522,14 +479,8 @@ public:
       localIndex const esr1 = m_elemSubRegionList[lf][1];
       localIndex const ei1 = m_elemList[lf][1];
       localIndex ner=-1, nesr=-1, nei=-1;
-      if( er0==m_er && esr0==m_esr && ei0==ei )
-      {
-        ner=er1; nesr=esr1; nei=ei1;
-      }
-      else if( er1==m_er && esr1==m_esr && ei1==ei )
-      {
-        ner=er0; nesr=esr0; nei=ei0;
-      }
+      if( er0==m_er && esr0==m_esr && ei0==ei ) { ner=er1; nesr=esr1; nei=ei1; }
+      else if( er1==m_er && esr1==m_esr && ei1==ei ) { ner=er0; nesr=esr0; nei=ei0; }
       bool const hasNei = (ner>=0);
 
       // flux quantities
@@ -553,14 +504,10 @@ public:
         MobData mob_dep_nei = buildMobility( ner, nesr, nei, 1-m_indep );
         mob_dep.valNei = mob_dep_nei.valLoc; mob_dep.dP_Nei = mob_dep_nei.dP_Loc; mob_dep.dS_Nei = mob_dep_nei.dS_Loc;
       }
-      else{
-        // this translate to no-buoynacy flow boundary for saturation transport
-        B = 0.0; dB_dP = 0.0; dB_dS = 0.0; // no buoyancy without neighbor
-      }
+      else { B = 0.0; dB_dP = 0.0; dB_dS = 0.0; }
 
       // ---------------- Convective term ----------------
-      // Use a single donor selection for both phase mobilities so reconstructed f matches prior behavior.
-      real64 beta_conv = ( scheme==PPU ? F_ind : F );
+      real64 const beta_conv = ( scheme==PPU ? F_ind : F );
       UpMob L_ind_conv = upwindMobility( mob_ind, beta_conv );
       UpMob L_dep_conv = upwindMobility( mob_dep, beta_conv );
       real64 const eps = 1e-32;
@@ -581,9 +528,8 @@ public:
       }
 
       // ---------------- Buoyancy term ----------------
-      // Phase-specific beta for buoyancy selection
-      real64 beta_ind = (scheme==PPU) ? F_ind : B;          // HU: both phases use B (with sign adjustment for dep)
-      real64 beta_dep = (scheme==PPU) ? F_dep : -B;         // sign flip for dependent in HU
+      real64 const beta_ind = (scheme==PPU) ? F_ind : B;          // HU: both phases use B (with sign adjustment for dep)
+      real64 const beta_dep = (scheme==PPU) ? F_dep : -B;         // sign flip for dependent in HU
       UpMob L_ind_b = upwindMobility( mob_ind, beta_ind );
       UpMob L_dep_b = upwindMobility( mob_dep, beta_dep );
 
@@ -600,10 +546,8 @@ public:
       // Neighbor contributions
       if( hasNei )
       {
-        // convective neighbor part
         real64 const conv_dP_nei = m_dt * F * dfconv_dP_nei;
         real64 const conv_dS_nei = m_dt * F * dfconv_dS_nei;
-        // buoyancy neighbor derivatives (B treated local)
         real64 const dG_dP_nei = buoyancyFactorDerivative( L_ind_b, L_dep_b, false, true );
         real64 const dG_dS_nei = buoyancyFactorDerivative( L_ind_b, L_dep_b, false, false );
         real64 const buoy_dP_nei = m_dt * B * dG_dP_nei;
@@ -689,6 +633,8 @@ private:
   bool const m_assembleCellEquation;
   integer const m_indep;
   CRSMatrixView< real64, globalIndex const > const m_localMatrix; arrayView1d< real64 > const m_localRhs;
+  // Precomputed sign to map saturation derivatives to the configured independent phase
+  real64 const m_sgnS;
 };
 
 // Free function launcher for ElementBasedAssemblyKernel (avoids needing a static member)
