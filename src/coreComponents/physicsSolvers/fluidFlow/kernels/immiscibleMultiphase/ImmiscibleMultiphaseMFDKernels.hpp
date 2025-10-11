@@ -280,40 +280,6 @@ public:
   }
   
   GEOS_HOST_DEVICE
-  void computeBuoyancyDrivenFluxDisc( localIndex const ei, StackVariables & s ) const
-  {
-    using Deriv = DerivMob; // alias for readability
-    
-    // Compute delta_rho and its pressure derivative
-    integer const dep = 1 - m_indep;
-    real64 const rho_dep = m_phaseDens[ei][0][dep];
-    real64 const rho_indep = m_phaseDens[ei][0][m_indep];
-    real64 const drho_dep_dP = m_dPhaseDens[ei][0][dep][Deriv::dP];
-    real64 const drho_indep_dP = m_dPhaseDens[ei][0][m_indep][Deriv::dP];
-   
-    real64 const delta_rho = rho_dep - rho_indep;
-    real64 const ddelta_rho_dP = drho_dep_dP - drho_indep_dP;
-    
-    for( integer i=0; i<NUM_FACE; ++i )
-    {
-      for( integer j=0; j<NUM_FACE; ++j )
-      {
-        // Local gravity terms (cell-centered and face values associated to j)
-        real64 const ccGravCoef = m_elemGravCoef[ei];
-        real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
-        
-        // Potential difference and its derivatives
-        real64 const gravCoefDif = ccGravCoef - fGravCoef;
-        real64 const gravTerm = delta_rho * gravCoefDif;
-        real64 const dGravTerm_dP = ddelta_rho_dP * gravCoefDif;
-        real64 const T_ij = s.transMatrix[i][j];
-        s.BuoyantFlux[i] += T_ij * gravTerm;
-        s.dBuoyantFlux_dPres[i] += T_ij * (dGravTerm_dP);
-      }
-    }
-  }
-  
-  GEOS_HOST_DEVICE
   void computeOverallMassFlux( localIndex const ei, StackVariables & s ) const
   {
     using Deriv = DerivMob; // alias for readability
