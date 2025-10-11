@@ -190,6 +190,57 @@ void ImmiscibleMultiphaseFlowMFD::initializePostInitialConditionsPreSubGroups()
     ElementRegionManager const & erm = mesh.getElemManager();
     for( auto const & r : regionNames ) m_regionFilter.insert( erm.getRegions().getIndex( r ) );
   } );
+
+  // Pre-compute and initialize face transGgradZ once (only for HybridMimetic discretization)
+  {
+    NumericalMethodsManager const & nm = domain.getNumericalMethodManager();
+    FiniteVolumeManager const & fvManager = nm.getFiniteVolumeManager();
+    if( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ) )
+    {
+      return; // Not using hybrid mimetic discretization; nothing to precompute
+    }
+    HybridMimeticDiscretization const & hm = fvManager.getHybridMimeticDiscretization( m_discretizationName );
+    mimeticInnerProduct::MimeticInnerProductBase const & ip = hm.getReference< mimeticInnerProduct::MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString() );
+    real64 const lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * m_areaRelTol;
+
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
+    {
+      FaceManager & faceManager = mesh.getFaceManager();
+      // Temporary accumulators
+      array1d< real64 > invSum( faceManager.size() ); invSum.setValues< parallelDevicePolicy<> >( 0.0 );
+      array1d< integer > count( faceManager.size() ); count.setValues< parallelDevicePolicy<> >( 0 );
+
+      NodeManager const & nodeManager = mesh.getNodeManager();
+      mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames, [&]( localIndex const, localIndex const er, localIndex const esr, ElementRegionBase const &, CellElementSubRegion const & subRegion )
+      {
+        GEOS_UNUSED_VAR( er );
+        GEOS_UNUSED_VAR( esr );
+        string const & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
+        PermeabilityBase const & permeability = getConstitutiveModel< PermeabilityBase >( subRegion, permName );
+        TransGgradZKernelFactory::createAndLaunch< parallelDevicePolicy<> >( ip,
+                                                                                nodeManager,
+                                                                                faceManager,
+                                                                                subRegion,
+                                                                                permeability,
+                                                                                lengthTolerance,
+                                                                                invSum.toView(),
+                                                                                count.toView() );
+      } );
+
+      // Reduce to effective value per face and write to field
+      arrayView1d< real64 > transEff = faceManager.getField< flow::transGgradZ >();
+      arrayView1d< integer const > ghost = faceManager.ghostRank();
+      forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const kf )
+      {
+        if( ghost[kf] >= 0 ) {
+          return;
+        }
+        real64 const s = invSum[kf];
+        integer const c = count[kf];
+        transEff[kf] = (c > 0 && s > 0.0) ? static_cast< real64 >( c ) / s : 0.0;
+      } );
+    } );
+  }
 }
 
 void ImmiscibleMultiphaseFlowMFD::implicitStepSetup( real64 const & time_n,
@@ -376,53 +427,6 @@ void ImmiscibleMultiphaseFlowMFD::assembleSystem( real64 const time_n,
       updateFluidState(subRegion);
     } );
   } );
-
-  // Pre-compute and initialize face transGgradZ: consistent mimetic operator applied to the gravitational potential using mimetic inner product information
-  {
-    NumericalMethodsManager const & nm = domain.getNumericalMethodManager();
-    FiniteVolumeManager const & fvManager = nm.getFiniteVolumeManager();
-    HybridMimeticDiscretization const & hm = fvManager.getHybridMimeticDiscretization( m_discretizationName );
-    mimeticInnerProduct::MimeticInnerProductBase const & ip = hm.getReference< mimeticInnerProduct::MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString() );
-    real64 const lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * m_areaRelTol;
-
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel & mesh, string_array const & regionNames )
-    {
-      FaceManager & faceManager = mesh.getFaceManager();
-      // Temporary accumulators
-      array1d< real64 > invSum( faceManager.size() ); invSum.setValues< parallelDevicePolicy<> >( 0.0 );
-      array1d< integer > count( faceManager.size() ); count.setValues< parallelDevicePolicy<> >( 0 );
-
-      NodeManager const & nodeManager = mesh.getNodeManager();
-      mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames, [&]( localIndex const, localIndex const er, localIndex const esr, ElementRegionBase const &, CellElementSubRegion const & subRegion )
-      {
-        GEOS_UNUSED_VAR( er );
-        GEOS_UNUSED_VAR( esr );
-        string const & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
-        PermeabilityBase const & permeability = getConstitutiveModel< PermeabilityBase >( subRegion, permName );
-        TransGgradZKernelFactory::createAndLaunch< parallelDevicePolicy<> >( ip,
-                                                                                nodeManager,
-                                                                                faceManager,
-                                                                                subRegion,
-                                                                                permeability,
-                                                                                lengthTolerance,
-                                                                                invSum.toView(),
-                                                                                count.toView() );
-      } );
-
-      // Reduce to effective value per face and write to field
-      arrayView1d< real64 > transEff = faceManager.getField< flow::transGgradZ >();
-      arrayView1d< integer const > ghost = faceManager.ghostRank();
-      forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const kf )
-      {
-        if( ghost[kf] >= 0 ) {
-          return;
-        }
-        real64 const s = invSum[kf];
-        integer const c = count[kf];
-        transEff[kf] = (c > 0 && s > 0.0) ? static_cast< real64 >( c ) / s : 0.0;
-      } );
-    } );
-  }
 
   assembleAccumulationTerm( domain, dofManager, localMatrix, localRhs );
   assembleFluxTermsHybrid( dt, domain, dofManager, localMatrix, localRhs );
