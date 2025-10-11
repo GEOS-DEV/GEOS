@@ -377,7 +377,7 @@ void ImmiscibleMultiphaseFlowMFD::assembleSystem( real64 const time_n,
     } );
   } );
 
-  // Pre-compute and initialize face transEffective using mimetic inner product information
+  // Pre-compute and initialize face transGgradZ (stored in transEffective): consistent mimetic operator applied to the gravitational potential using mimetic inner product information
   {
     NumericalMethodsManager const & nm = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = nm.getFiniteVolumeManager();
