@@ -399,7 +399,7 @@ void ImmiscibleMultiphaseFlowMFD::assembleSystem( real64 const time_n,
         GEOS_UNUSED_VAR( esr );
         string const & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
         PermeabilityBase const & permeability = getConstitutiveModel< PermeabilityBase >( subRegion, permName );
-        TransEffectiveKernelFactory::createAndLaunch< parallelDevicePolicy<> >( ip,
+        TransGgradZKernelFactory::createAndLaunch< parallelDevicePolicy<> >( ip,
                                                                                 nodeManager,
                                                                                 faceManager,
                                                                                 subRegion,

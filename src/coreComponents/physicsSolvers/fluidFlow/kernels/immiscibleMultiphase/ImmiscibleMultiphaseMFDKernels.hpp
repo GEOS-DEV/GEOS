@@ -913,11 +913,11 @@ public:
 };
 
 /**
- * TransEffectiveKernelFactory
+ * TransGgradZKernelFactory
  * Computes per-element diagonal inner-product entries and accumulates inverse sums and counts per face for harmonic averaging.
  * Mirrors the IP compute usage pattern.
  */
-class TransEffectiveKernelFactory
+class TransGgradZKernelFactory
 {
 public:
   template< integer NUM_FACE, typename IP >
