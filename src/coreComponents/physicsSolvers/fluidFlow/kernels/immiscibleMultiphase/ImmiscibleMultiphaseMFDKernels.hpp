@@ -183,7 +183,7 @@ public:
       m_faceToNodes( faceManager.nodeList().toViewConst() ), m_faceGravCoef( faceManager.getField< fields::flow::gravityCoefficient >() ), m_regionFilter( regionFilter ),
       m_nodePosition( nodeManager.referencePosition() ), m_elemRegionList( faceManager.elementRegionList() ), m_elemSubRegionList( faceManager.elementSubRegionList() ), m_elemList( faceManager.elementList() ),
       m_elemPerm( permeability.permeability() ), m_transMultiplier( faceManager.getField< fields::flow::transMultiplier >() ),
-      m_transEffective( faceManager.getField< fields::flow::transEffective >() ),
+      m_transGgradZ( faceManager.getField< fields::flow::transEffective >() ),
       m_elemPres( subRegion.getField< fields::flow::pressure >() ), m_facePres( faceManager.getField< fields::flow::facePressure >() ),
       m_phaseDens( fluid.phaseDensity() ), m_dPhaseDens( fluid.dPhaseDensity() ),
       m_phaseMobAll( phaseMobAccessor.toNestedViewConst() ), m_dPhaseMobAll( dPhaseMobAccessor.toNestedViewConst() ),
@@ -273,9 +273,9 @@ public:
       }
 
       integer sign = integer(cell_BuoyantFlux > 0.0) - integer(cell_BuoyantFlux < 0.0);
-      real64 const Topt_grav = sign * m_transEffective[m_elemToFaces[ei][i]];
-      s.BuoyantFlux[i] += Topt_grav * delta_rho;
-      s.dBuoyantFlux_dPres[i] += Topt_grav * (ddelta_rho_dP);
+      real64 const Tgrav_consistent = sign * m_transGgradZ[m_elemToFaces[ei][i]];
+      s.BuoyantFlux[i] += Tgrav_consistent * delta_rho;
+      s.dBuoyantFlux_dPres[i] += Tgrav_consistent * (ddelta_rho_dP);
     }
   }
   
@@ -715,7 +715,7 @@ private:
   ArrayOfArraysView< localIndex const > const m_faceToNodes; arrayView1d< real64 const > const m_faceGravCoef; SortedArrayView< localIndex const > const m_regionFilter;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodePosition; arrayView2d< localIndex const > const m_elemRegionList; arrayView2d< localIndex const > const m_elemSubRegionList; arrayView2d< localIndex const > const m_elemList;
   arrayView3d< real64 const > const m_elemPerm; arrayView1d< real64 const > const m_transMultiplier;
-  arrayView1d< real64 const > const m_transEffective;
+  arrayView1d< real64 const > const m_transGgradZ;
   arrayView1d< real64 const > const m_elemPres; arrayView1d< real64 const > const m_facePres;
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const m_phaseDens; arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const m_dPhaseDens;
   ElementRegionManager::ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_phaseMobAll;
