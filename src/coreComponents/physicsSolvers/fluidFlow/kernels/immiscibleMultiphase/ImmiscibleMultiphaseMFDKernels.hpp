@@ -183,6 +183,7 @@ public:
       m_faceToNodes( faceManager.nodeList().toViewConst() ), m_faceGravCoef( faceManager.getField< fields::flow::gravityCoefficient >() ), m_regionFilter( regionFilter ),
       m_nodePosition( nodeManager.referencePosition() ), m_elemRegionList( faceManager.elementRegionList() ), m_elemSubRegionList( faceManager.elementSubRegionList() ), m_elemList( faceManager.elementList() ),
       m_elemPerm( permeability.permeability() ), m_transMultiplier( faceManager.getField< fields::flow::transMultiplier >() ),
+      m_transEffective( faceManager.getField< fields::flow::transEffective >() ),
       m_elemPres( subRegion.getField< fields::flow::pressure >() ), m_facePres( faceManager.getField< fields::flow::facePressure >() ),
       m_phaseDens( fluid.phaseDensity() ), m_dPhaseDens( fluid.dPhaseDensity() ),
       m_phaseMobAll( phaseMobAccessor.toNestedViewConst() ), m_dPhaseMobAll( dPhaseMobAccessor.toNestedViewConst() ),
@@ -242,7 +243,7 @@ public:
   }
   
   GEOS_HOST_DEVICE
-  void computeBuoyancyDrivenFlux( localIndex const ei, StackVariables & s ) const
+  void computeBuoyancyDrivenFluxOld( localIndex const ei, StackVariables & s ) const
   {
     using Deriv = DerivMob; // alias for readability
     
@@ -263,6 +264,8 @@ public:
         // Local gravity terms (cell-centered and face values associated to j)
         real64 const ccGravCoef = m_elemGravCoef[ei];
         real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][j]];
+        
+        real64 const T_harmonic = m_transEffective[m_elemToFaces[ei][j]];
 
         // Potential difference and its derivatives
         real64 const gravCoefDif = ccGravCoef - fGravCoef;
@@ -275,6 +278,41 @@ public:
         s.dBuoyantFlux_dPres[i] += T_ij * (dGravTerm_dP);
         s.dBuoyantFlux_dS[i] += T_ij * (dGravTerm_dS);
       }
+    }
+  }
+  
+  GEOS_HOST_DEVICE
+  void computeBuoyancyDrivenFlux( localIndex const ei, StackVariables & s ) const
+  {
+    using Deriv = DerivMob; // alias for readability
+    
+    // Compute delta_rho and its pressure derivative
+    integer const dep = 1 - m_indep;
+    real64 const rho_dep = m_phaseDens[ei][0][dep];
+    real64 const rho_indep = m_phaseDens[ei][0][m_indep];
+    real64 const drho_dep_dP = m_dPhaseDens[ei][0][dep][Deriv::dP];
+    real64 const drho_indep_dP = m_dPhaseDens[ei][0][m_indep][Deriv::dP];
+   
+    real64 const delta_rho = rho_dep - rho_indep;
+    real64 const ddelta_rho_dP = drho_dep_dP - drho_indep_dP;
+    
+    for( integer i=0; i<NUM_FACE; ++i )
+    {
+      // Local gravity terms (cell-centered and face values associated to i)
+      real64 const ccGravCoef = m_elemGravCoef[ei];
+      real64 const fGravCoef = m_faceGravCoef[m_elemToFaces[ei][i]];
+      
+
+      // Potential difference and its derivatives
+      real64 const gravCoefDif = ccGravCoef - fGravCoef;
+      real64 const gravTerm = delta_rho * gravCoefDif;
+      real64 const dGravTerm_dP = ddelta_rho_dP * gravCoefDif;
+      real64 const dGravTerm_dS = 0.0;
+      
+      real64 const T_harmonic = m_transEffective[m_elemToFaces[ei][i]];
+      s.BuoyantFlux[i] += T_harmonic * gravTerm;
+      s.dBuoyantFlux_dPres[i] += T_harmonic * (dGravTerm_dP);
+      s.dBuoyantFlux_dS[i] += T_harmonic * (dGravTerm_dS);
     }
   }
   
@@ -680,6 +718,7 @@ private:
   ArrayOfArraysView< localIndex const > const m_faceToNodes; arrayView1d< real64 const > const m_faceGravCoef; SortedArrayView< localIndex const > const m_regionFilter;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodePosition; arrayView2d< localIndex const > const m_elemRegionList; arrayView2d< localIndex const > const m_elemSubRegionList; arrayView2d< localIndex const > const m_elemList;
   arrayView3d< real64 const > const m_elemPerm; arrayView1d< real64 const > const m_transMultiplier;
+  arrayView1d< real64 const > const m_transEffective;
   arrayView1d< real64 const > const m_elemPres; arrayView1d< real64 const > const m_facePres;
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const m_phaseDens; arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const m_dPhaseDens;
   ElementRegionManager::ElementViewConst< arrayView2d< real64 const, immiscibleFlow::USD_PHASE > > const m_phaseMobAll;
@@ -764,7 +803,7 @@ public:
 class AccumulationMFDKernel
 {
 public:
-  static constexpr integer numEqn = 2; // total mass and independent phase mass
+  static constexpr integer numEqn = 2; // total mass and independent phase
   static constexpr integer numDof = 2; // pressure and s_indep
 
   using Deriv = immiscibleFlow::DerivativeOffset;
@@ -907,6 +946,99 @@ public:
   {
     AccumulationMFDKernel kernel( indep, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
     AccumulationMFDKernel::template launch< POLICY >( subRegion.size(), kernel );
+  }
+};
+
+/**
+ * TransEffectiveKernelFactory
+ * Computes per-element diagonal inner-product entries and accumulates inverse sums and counts per face for harmonic averaging.
+ * Mirrors the IP compute usage pattern.
+ */
+class TransEffectiveKernelFactory
+{
+public:
+  template< integer NUM_FACE, typename IP >
+  class Kernel
+  {
+  public:
+    GEOS_HOST_DEVICE Kernel( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePos,
+                             arrayView1d< real64 const > const & transMultiplier,
+                             ArrayOfArraysView< localIndex const > const & faceToNodes,
+                             arrayView2d< localIndex const > const & elemToFaces,
+                             arrayView2d< real64 const > const & elemCenter,
+                             arrayView1d< real64 const > const & elemVolume,
+                             arrayView3d< real64 const > const & elemPerm,
+                             real64 const & lengthTol,
+                             arrayView1d< real64 > const & faceInvSum,
+                             arrayView1d< integer > const & faceCount )
+      : m_nodePosition( nodePos ), m_transMultiplier( transMultiplier ), m_faceToNodes( faceToNodes ),
+        m_elemToFaces( elemToFaces ), m_elemCenter( elemCenter ), m_elemVolume( elemVolume ), m_elemPerm( elemPerm ),
+        m_lengthTolerance( lengthTol ), m_faceInvSum( faceInvSum ), m_faceCount( faceCount ) {}
+
+    struct Stack { GEOS_HOST_DEVICE Stack(): T(NUM_FACE, NUM_FACE) {} stackArray2d< real64, NUM_FACE*NUM_FACE > T; };
+
+    GEOS_HOST_DEVICE void compute( localIndex const ei, Stack & s ) const
+    {
+      real64 const permVec[3] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
+      IP::template compute< NUM_FACE >( m_nodePosition, m_transMultiplier, m_faceToNodes, m_elemToFaces[ei], m_elemCenter[ei], m_elemVolume[ei], permVec, m_lengthTolerance, s.T );
+      for( integer i=0; i<NUM_FACE; ++i )
+      {
+        localIndex const kf = m_elemToFaces[ei][i];
+        real64 const Tii = s.T[i][i];
+        if( Tii > 0.0 )
+        {
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_faceInvSum[kf], 1.0 / Tii );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_faceCount[kf], 1 );
+        }
+      }
+    }
+  private:
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodePosition;
+    arrayView1d< real64 const > const m_transMultiplier;
+    ArrayOfArraysView< localIndex const > const m_faceToNodes;
+    arrayView2d< localIndex const > const m_elemToFaces;
+    arrayView2d< real64 const > const m_elemCenter;
+    arrayView1d< real64 const > const m_elemVolume;
+    arrayView3d< real64 const > const m_elemPerm;
+    real64 const m_lengthTolerance;
+    arrayView1d< real64 > const m_faceInvSum;
+    arrayView1d< integer > const m_faceCount;
+  };
+
+  template< typename POLICY >
+  static void createAndLaunch( mimeticInnerProduct::MimeticInnerProductBase const & ipBase,
+                               NodeManager const & nodeManager,
+                               FaceManager const & faceManager,
+                               CellElementSubRegion const & subRegion,
+                               constitutive::PermeabilityBase const & permeability,
+                               real64 const & lengthTolerance,
+                               arrayView1d< real64 > const & faceInvSum,
+                               arrayView1d< integer > const & faceCount )
+  {
+    auto const & nodePos = nodeManager.referencePosition();
+    auto const & transMult = faceManager.getField< fields::flow::transMultiplier >();
+    auto const & faceToNodes = faceManager.nodeList().toViewConst();
+    auto const & elemToFaces = subRegion.faceList().toViewConst();
+    auto const & elemCenter = subRegion.getElementCenter();
+    auto const & elemVolume = subRegion.getElementVolume();
+    auto const & elemPerm = permeability.permeability();
+    // Materialize ghost rank view to avoid capturing subRegion (non-copyable) in device lambda
+    auto const & ghostRank = subRegion.ghostRank();
+
+    mimeticInnerProductDispatch( ipBase, [&] ( auto const ip )
+    {
+      using IPType = TYPEOFREF( ip );
+      internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&] ( auto NF )
+      {
+        using K = Kernel< NF, IPType >;
+        K kern( nodePos, transMult, faceToNodes, elemToFaces, elemCenter, elemVolume, elemPerm, lengthTolerance, faceInvSum, faceCount );
+        forAll< POLICY >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+        {
+          if( ghostRank[ei] >= 0 ) return;
+          typename K::Stack s; kern.compute( ei, s );
+        } );
+      } );
+    } );
   }
 };
 

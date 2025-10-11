@@ -210,6 +210,7 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
       faceManager.registerField< flow::facePressure >( getName() );
       faceManager.registerField< flow::gravityCoefficient >( getName() );
       faceManager.registerField< flow::transMultiplier >( getName() );
+      faceManager.registerField< flow::transEffective >( getName() );
     }
 
   } );

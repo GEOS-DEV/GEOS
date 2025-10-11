@@ -225,6 +225,14 @@ DECLARE_FIELD( transMultiplier,
                WRITE_AND_READ,
                "Permeability transmissibility multipliers" );
 
+DECLARE_FIELD( transEffective,
+               "permeabilityTransEffective",
+               array1d< real64 >,
+               0,
+               LEVEL_0,
+               WRITE_AND_READ,
+               "Face-effective transmissibility (harmonic average of element inner-product diagonals)" );
+
 DECLARE_FIELD( pressureScalingFactor,
                "pressureScalingFactor",
                array1d< real64 >,
