@@ -1219,8 +1219,6 @@ FluxKernel::
   {
     // transmissibility matrix
     stackArray2d< real64, NF *NF > transMatrix( NF, NF );
-    stackArray2d< real64, NF *NF > transMatrixGrav( NF, NF );
-
     real64 const perm[ 3 ] = { elemPerm[ei][0][0], elemPerm[ei][0][1], elemPerm[ei][0][2] };
 
     // recompute the local transmissibility matrix at each iteration
