@@ -173,6 +173,7 @@ protected:
    */
   virtual void declarePeriodicBoundaries( CartesianPartitioner & partitioner )
   {
+    GEOS_UNUSED_VAR( partitioner );
     // Default implementation: no periodic boundaries
     // Derived classes (e.g., InternalWellboreGenerator) override this as needed
   }
