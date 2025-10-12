@@ -616,7 +616,7 @@ AssemblerKernelHelper::
                           arrayView2d< localIndex const > const & elemList,
                           SortedArrayView< localIndex const > const & regionFilter,
                           arrayView1d< globalIndex const > const & faceDofNumber,
-                          arrayView1d< real64 const > const & mimFaceGravCoef,
+                          arrayView1d< real64 const > const & mimeticTransGgradZ,
                           arraySlice1d< localIndex const > const & elemToFaces,
                           real64 const & elemGravCoef,
                           integer const useTotalMassEquation,
@@ -630,7 +630,6 @@ AssemblerKernelHelper::
                           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
                           ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
                           ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-                          arraySlice2d< real64 const > const & transMatrixGrav,
                           real64 const (&oneSidedVolFlux)[ NF ],
                           real64 const (&dOneSidedVolFlux_dPres)[ NF ],
                           real64 const (&dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
@@ -731,8 +730,7 @@ AssemblerKernelHelper::
 
     // 3) *************** Assemble buoyancy terms ******************
 
-    real64 const transGravCoef = (localIds[0] != neighborIds[0] || localIds[1] != neighborIds[1] || localIds[2] != neighborIds[2])
-                                 * transMatrixGrav[ifaceLoc][ifaceLoc] * (elemGravCoef - mimFaceGravCoef[elemToFaces[ifaceLoc]]);
+    real64 const transGravCoef = mimeticTransGgradZelemToFaces[ifaceLoc];
 
     // 3.a) Compute the upwinded x_{c, \ell} \rho_{\ell} \frac{\lambda_{\ell}\lambda_m}{\lambda_T}
     //      and (\rho_{\ell} - \rho_m) g \Delta z for each phase at this face

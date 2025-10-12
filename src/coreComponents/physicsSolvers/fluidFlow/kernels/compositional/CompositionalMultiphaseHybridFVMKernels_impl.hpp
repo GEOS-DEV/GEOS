@@ -615,7 +615,7 @@ AssemblerKernelHelper::
                           arrayView2d< localIndex const > const & elemList,
                           SortedArrayView< localIndex const > const & regionFilter,
                           arrayView1d< globalIndex const > const & faceDofNumber,
-                          arrayView1d< real64 const > const & mimFaceGravCoef,
+                          arrayView1d< real64 const > const & mimeticTransGgradZ,
                           arraySlice1d< localIndex const > const & elemToFaces,
                           real64 const & elemGravCoef,
                           integer const useTotalMassEquation,
@@ -629,7 +629,6 @@ AssemblerKernelHelper::
                           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
                           ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
                           ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-                          arraySlice2d< real64 const > const & transMatrixGrav,
                           real64 const (&oneSidedVolFlux)[ NF ],
                           real64 const (&dOneSidedVolFlux_dPres)[ NF ],
                           real64 const (&dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
@@ -730,8 +729,7 @@ AssemblerKernelHelper::
 
     // 3) *************** Assemble buoyancy terms ******************
 
-    real64 const transGravCoef = (localIds[0] != neighborIds[0] || localIds[1] != neighborIds[1] || localIds[2] != neighborIds[2])
-                                 * transMatrixGrav[ifaceLoc][ifaceLoc] * (elemGravCoef - mimFaceGravCoef[elemToFaces[ifaceLoc]]);
+    real64 const transGravCoef = mimeticTransGgradZ[elemToFaces[ifaceLoc]];
 
     // 3.a) Compute the upwinded x_{c, \ell} \rho_{\ell} \frac{\lambda_{\ell}\lambda_m}{\lambda_T}
     //      and (\rho_{\ell} - \rho_m) g \Delta z for each phase at this face
@@ -1041,7 +1039,7 @@ AssemblerKernel::
            arrayView1d< integer const > const & faceGhostRank,
            arrayView1d< real64 const > const & facePres,
            arrayView1d< real64 const > const & faceGravCoef,
-           arrayView1d< real64 const > const & mimFaceGravCoef,
+           arrayView1d< real64 const > const & mimeticTransGgradZ,
            arraySlice1d< localIndex const > const & elemToFaces,
            real64 const & elemPres,
            real64 const & elemGravCoef,
@@ -1060,7 +1058,6 @@ AssemblerKernel::
            globalIndex const rankOffset,
            real64 const & dt,
            arraySlice2d< real64 const > const & transMatrix,
-           arraySlice2d< real64 const > const & transMatrixGrav,
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs )
 {
@@ -1116,7 +1113,7 @@ AssemblerKernel::
                                                                  elemList,
                                                                  regionFilter,
                                                                  faceDofNumber,
-                                                                 mimFaceGravCoef,
+                                                                 mimeticTransGgradZ,
                                                                  elemToFaces,
                                                                  elemGravCoef,
                                                                  useTotalMassEquation,
@@ -1130,7 +1127,6 @@ AssemblerKernel::
                                                                  phaseCompFrac,
                                                                  dPhaseCompFrac,
                                                                  elemDofNumber,
-                                                                 transMatrixGrav,
                                                                  oneSidedVolFlux,
                                                                  dOneSidedVolFlux_dPres,
                                                                  dOneSidedVolFlux_dFacePres,
@@ -1239,19 +1235,6 @@ FluxKernel::
                                      lengthTolerance,
                                      transMatrix );
 
-    // currently the gravity term in the transport scheme is treated as in MRST, that is, always with TPFA
-    // this is why below we have to recompute the TPFA transmissibility in addition to the transmissibility matrix above
-    // TODO: treat the gravity term with a consistent inner product
-    mimeticInnerProduct::TPFAInnerProduct::compute< NF >( nodePosition,
-                                                          transMultiplier,
-                                                          faceToNodes,
-                                                          elemToFaces[ei],
-                                                          elemCenter[ei],
-                                                          elemVolume[ei],
-                                                          perm,
-                                                          lengthTolerance,
-                                                          transMatrixGrav );
-
     // perform flux assembly in this element
     compositionalMultiphaseHybridFVMKernels::AssemblerKernel::compute< NF, NC, NP >( er, esr, ei,
                                                                                      regionFilter,
@@ -1281,7 +1264,6 @@ FluxKernel::
                                                                                      rankOffset,
                                                                                      dt,
                                                                                      transMatrix,
-                                                                                     transMatrixGrav,
                                                                                      localMatrix,
                                                                                      localRhs );
   } );

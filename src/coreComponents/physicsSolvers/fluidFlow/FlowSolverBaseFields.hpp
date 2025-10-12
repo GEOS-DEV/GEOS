@@ -177,13 +177,13 @@ DECLARE_FIELD( gravityCoefficient,
                WRITE_AND_READ,
                "Gravity coefficient (dot product of gravity acceleration by gravity vector)" );
 
-DECLARE_FIELD( mimGravityCoefficient,
-               "mimGravityCoefficient",
+DECLARE_FIELD( mimeticTransGgradZ,
+               "mimeticTransGgradZ",
                array1d< real64 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Mimetic gravity coefficient" );
+               "Consistent mimetic operator applied to g grad(z) (harmonic average of element contributions)" );
 
 DECLARE_FIELD( macroElementIndex,
                "macroElementIndex",
@@ -224,14 +224,6 @@ DECLARE_FIELD( transMultiplier,
                LEVEL_0,
                WRITE_AND_READ,
                "Permeability transmissibility multipliers" );
-
-DECLARE_FIELD( mimeticTransGgradZ,
-               "mimeticTransGgradZ",
-               array1d< real64 >,
-               0,
-               LEVEL_0,
-               WRITE_AND_READ,
-               "Face field mimeticTransGgradZ: consistent mimetic operator applied to the gravitational potential (harmonic average of element contributions)" );
 
 DECLARE_FIELD( pressureScalingFactor,
                "pressureScalingFactor",

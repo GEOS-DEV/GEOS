@@ -584,7 +584,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  string const faceDofKey = dofManager.getKey( flow::facePressure::key() );
+  string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
 
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel & mesh,

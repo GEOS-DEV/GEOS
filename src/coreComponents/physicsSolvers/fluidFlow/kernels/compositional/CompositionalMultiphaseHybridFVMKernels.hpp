@@ -58,13 +58,6 @@ void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
     case 4:  lambda( std::integral_constant< T, 4 >() ); return;
     case 5:  lambda( std::integral_constant< T, 5 >() ); return;
     case 6:  lambda( std::integral_constant< T, 6 >() ); return;
-    case 7:  lambda( std::integral_constant< T, 7 >() ); return;
-    case 8:  lambda( std::integral_constant< T, 8 >() ); return;
-    case 9:  lambda( std::integral_constant< T, 9 >() ); return;
-    case 10: lambda( std::integral_constant< T, 10 >() ); return;
-    case 11: lambda( std::integral_constant< T, 11 >() ); return;
-    case 12: lambda( std::integral_constant< T, 12 >() ); return;
-    case 13: lambda( std::integral_constant< T, 13 >() ); return;
     default: GEOS_ERROR( "Unknown numFacesInElem value: " << value );
   }
 }
@@ -360,7 +353,7 @@ struct AssemblerKernelHelper
                           arrayView2d< localIndex const > const & elemList,
                           SortedArrayView< localIndex const > const & regionFilter,
                           arrayView1d< globalIndex const > const & faceDofNumber,
-                          arrayView1d< real64 const > const & mimFaceGravCoef,
+                          arrayView1d< real64 const > const & mimeticTransGgradZ,
                           arraySlice1d< localIndex const > const & elemToFaces,
                           real64 const & elemGravCoef,
                           integer const useTotalMassEquation,
@@ -374,7 +367,6 @@ struct AssemblerKernelHelper
                           ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
                           ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
                           ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-                          arraySlice2d< real64 const > const & transMatrixGrav,
                           real64 const (&oneSidedVolFlux)[ NF ],
                           real64 const (&dOneSidedVolFlux_dPres)[ NF ],
                           real64 const (&dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
@@ -547,7 +539,7 @@ struct AssemblerKernel
            arrayView1d< integer const > const & faceGhostRank,
            arrayView1d< real64 const > const & facePres,
            arrayView1d< real64 const > const & faceGravCoef,
-           arrayView1d< real64 const > const & mimFaceGravCoef,
+           arrayView1d< real64 const > const & mimeticTransGgradZ,
            arraySlice1d< localIndex const > const & elemToFaces,
            real64 const & elemPres,
            real64 const & elemGravCoef,
@@ -566,7 +558,6 @@ struct AssemblerKernel
            globalIndex const rankOffset,
            real64 const & dt,
            arraySlice2d< real64 const > const & transMatrix,
-           arraySlice2d< real64 const > const & transMatrixGrav,
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs );
 };
@@ -652,7 +643,7 @@ struct FluxKernel
           arrayView1d< integer const > const & faceGhostRank,
           arrayView1d< real64 const > const & facePres,
           arrayView1d< real64 const > const & faceGravCoef,
-          arrayView1d< real64 const > const & mimFaceGravCoef,
+          arrayView1d< real64 const > const & mimeticTransGgradZ,
           arrayView1d< real64 const > const & transMultiplier,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
