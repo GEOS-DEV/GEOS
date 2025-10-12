@@ -31,6 +31,7 @@
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/PropertyKernelBase.hpp"
@@ -43,6 +44,32 @@ namespace geos
 
 namespace compositionalMultiphaseHybridFVMKernels
 {
+
+namespace internal
+{
+
+template< typename T, typename LAMBDA >
+void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
+{
+  static_assert( std::is_integral< T >::value, "KernelLaunchSelectorFaceSwitch: type should be integral" );
+
+  switch( value )
+  {
+    case 4:  lambda( std::integral_constant< T, 4 >() ); return;
+    case 5:  lambda( std::integral_constant< T, 5 >() ); return;
+    case 6:  lambda( std::integral_constant< T, 6 >() ); return;
+    case 7:  lambda( std::integral_constant< T, 7 >() ); return;
+    case 8:  lambda( std::integral_constant< T, 8 >() ); return;
+    case 9:  lambda( std::integral_constant< T, 9 >() ); return;
+    case 10: lambda( std::integral_constant< T, 10 >() ); return;
+    case 11: lambda( std::integral_constant< T, 11 >() ); return;
+    case 12: lambda( std::integral_constant< T, 12 >() ); return;
+    case 13: lambda( std::integral_constant< T, 13 >() ); return;
+    default: GEOS_ERROR( "Unknown numFacesInElem value: " << value );
+  }
+}
+
+} // namespace internal
 
 // struct to specify local and neighbor derivatives
 struct Pos
@@ -1140,8 +1167,8 @@ struct PrecomputeMimeticTransGgradZKernel
   {
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
     ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
-    arrayView1d< real64 const > const & transMultiplier = faceManager.getField< flow::transMultiplier >();
-    arrayView1d< real64 const > const & faceGravCoef = faceManager.getField< flow::gravityCoefficient >();
+    arrayView1d< real64 const > const & transMultiplier = faceManager.getField< fields::flow::transMultiplier >();
+    arrayView1d< real64 const > const & faceGravCoef = faceManager.getField< fields::flow::gravityCoefficient >();
     
     arrayView2d< real64 const > const & elemCenter = subRegion.getElementCenter();
     arrayView1d< real64 const > const & elemVolume = subRegion.getElementVolume();
@@ -1173,32 +1200,6 @@ struct PrecomputeMimeticTransGgradZKernel
 };
 
 /******************************** Kernel switches ********************************/
-
-namespace internal
-{
-
-template< typename T, typename LAMBDA >
-void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
-{
-  static_assert( std::is_integral< T >::value, "KernelLaunchSelectorFaceSwitch: type should be integral" );
-
-  switch( value )
-  {
-    case 4:  lambda( std::integral_constant< T, 4 >() ); return;
-    case 5:  lambda( std::integral_constant< T, 5 >() ); return;
-    case 6:  lambda( std::integral_constant< T, 6 >() ); return;
-    case 7:  lambda( std::integral_constant< T, 7 >() ); return;
-    case 8:  lambda( std::integral_constant< T, 8 >() ); return;
-    case 9:  lambda( std::integral_constant< T, 9 >() ); return;
-    case 10: lambda( std::integral_constant< T, 10 >() ); return;
-    case 11: lambda( std::integral_constant< T, 11 >() ); return;
-    case 12: lambda( std::integral_constant< T, 12 >() ); return;
-    case 13: lambda( std::integral_constant< T, 13 >() ); return;
-    default: GEOS_ERROR( "Unknown numFacesInElem value: " << value );
-  }
-}
-
-} // namespace internal
 
 template< typename KERNELWRAPPER, typename INNER_PRODUCT, typename ... ARGS >
 void simpleKernelLaunchSelector( localIndex numFacesInElem, ARGS && ... args )
