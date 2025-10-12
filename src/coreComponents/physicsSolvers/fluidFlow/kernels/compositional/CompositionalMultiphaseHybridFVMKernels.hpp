@@ -1140,8 +1140,8 @@ struct PrecomputeMimeticTransGgradZKernel
   {
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
     ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
-    arrayView1d< real64 const > const & transMultiplier = faceManager.getField< fields::flow::transMultiplier >();
-    arrayView1d< real64 const > const & faceGravCoef = faceManager.getField< fields::flow::gravityCoefficient >();
+    arrayView1d< real64 const > const & transMultiplier = faceManager.getField< flow::transMultiplier >();
+    arrayView1d< real64 const > const & faceGravCoef = faceManager.getField< flow::gravityCoefficient >();
     
     arrayView2d< real64 const > const & elemCenter = subRegion.getElementCenter();
     arrayView1d< real64 const > const & elemVolume = subRegion.getElementVolume();
