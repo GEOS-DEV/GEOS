@@ -617,6 +617,7 @@ AssemblerKernelHelper::
                           SortedArrayView< localIndex const > const & regionFilter,
                           arrayView1d< globalIndex const > const & faceDofNumber,
                           arrayView1d< real64 const > const & mimeticTransGgradZ,
+                          arrayView1d< real64 const > const & faceGravCoef,
                           arraySlice1d< localIndex const > const & elemToFaces,
                           real64 const & elemGravCoef,
                           integer const useTotalMassEquation,
@@ -630,6 +631,7 @@ AssemblerKernelHelper::
                           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
                           ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
                           ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
+                          arraySlice2d< real64 const > const & transMatrix,
                           real64 const (&oneSidedVolFlux)[ NF ],
                           real64 const (&dOneSidedVolFlux_dPres)[ NF ],
                           real64 const (&dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
@@ -730,7 +732,21 @@ AssemblerKernelHelper::
 
     // 3) *************** Assemble buoyancy terms ******************
 
-    real64 const transGravCoef = mimeticTransGgradZelemToFaces[ifaceLoc];
+    // The sign of gFlux_i determines direction for buoyancy w.r.t the consistent inner product.
+    real64 gFlux_i = 0.0;
+    for( integer jfaceLoc=0; jfaceLoc<NF; ++jfaceLoc )
+    {
+      // Local gravity terms (cell-centered and face values associated to j)
+      real64 const fGravCoef = faceGravCoef[elemToFaces[jfaceLoc]];
+      real64 const gravCoefDif = elemGravCoef - fGravCoef;
+      real64 const T_ij = transMatrix[ifaceLoc][jfaceLoc];            // local mimetic coupling (i,j)
+      gFlux_i += T_ij * gravCoefDif;
+    }
+    integer const sign = integer(gFlux_i > 0.0) - integer(gFlux_i < 0.0);
+    
+    // Buoyancy transmissibility applied on ifaceLoc face. The boolean comparison acts
+    // as a 0/1 mask that disables the buoyancy flux for domain boundaries.
+    real64 const transGravCoef = sign * (localIds[0] != neighborIds[0] || localIds[1] != neighborIds[1] || localIds[2] != neighborIds[2]) * mimeticTransGgradZ[elemToFaces[ifaceLoc]];
 
     // 3.a) Compute the upwinded x_{c, \ell} \rho_{\ell} \frac{\lambda_{\ell}\lambda_m}{\lambda_T}
     //      and (\rho_{\ell} - \rho_m) g \Delta z for each phase at this face
