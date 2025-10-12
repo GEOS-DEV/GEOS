@@ -93,7 +93,14 @@
       "NFACES": [
         4,
         5,
-        6
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
       ],
       "NCOMPS": [
         1,
@@ -122,7 +129,14 @@
       "NFACES": [
         4,
         5,
-        6
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
       ],
       "NCOMPS": [
         1,
@@ -137,6 +151,9 @@
       ],
       "IP_TYPE": [
         "mimeticInnerProduct::TPFAInnerProduct",
+        "mimeticInnerProduct::QuasiTPFAInnerProduct",
+        "mimeticInnerProduct::QuasiRTInnerProduct",
+        "mimeticInnerProduct::SimpleInnerProduct",
         "mimeticInnerProduct::BdVLMInnerProduct"
       ]
     },
