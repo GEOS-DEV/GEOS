@@ -165,6 +165,18 @@ protected:
 
   void postInputInitialization() override;
 
+  /**
+   * @brief Allow derived classes to declare periodic boundaries before partition initialization.
+   * @param partitioner The Cartesian partitioner to configure
+   * @note This is called BEFORE initializeDomain() to ensure periodicity is set correctly
+   *       for neighbor computation and ghost node identification.
+   */
+  virtual void declarePeriodicBoundaries( CartesianPartitioner & partitioner )
+  {
+    // Default implementation: no periodic boundaries
+    // Derived classes (e.g., InternalWellboreGenerator) override this as needed
+  }
+
   /// Mesh number of dimension
   int m_dim;
 

@@ -111,6 +111,22 @@ InternalWellboreGenerator::InternalWellboreGenerator( string const & name,
 
 }
 
+void InternalWellboreGenerator::declarePeriodicBoundaries( CartesianPartitioner & partitioner )
+{
+  if( m_isFullAnnulus )
+  {
+    // For full 360-degree wellbores, theta direction is periodic
+    // Only set periodicity for multi-partition case
+    // Single partition case is handled by reducing node count in reduceNumNodesForPeriodicBoundary
+    if( partitioner.getPartitionCounts()[1] > 1 )
+    {
+      partitioner.setPeriodicity( 1, 1 );
+
+      GEOS_LOG_RANK_0( "InternalWellboreGenerator: Theta direction set to periodic (multi-partition)" );
+    }
+  }
+}
+
 void InternalWellboreGenerator::postInputInitialization()
 {
 
@@ -310,10 +326,10 @@ void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( CartesianPart
     {
       numNodesInDir[1] -= 1;
     }
-    else if( partitioner.getPartitionCounts()[1] > 1 )
-    {
-      partitioner.setPeriodicity( 1, 1 );
-    }
+    //else if( partitioner.getPartitionCounts()[1] > 1 )
+    //{
+    //  partitioner.setPeriodicity( 1, 1 );
+    //}
   }
 }
 

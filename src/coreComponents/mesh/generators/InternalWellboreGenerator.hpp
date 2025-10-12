@@ -90,6 +90,7 @@ protected:
   /// @endcond
 
   void postInputInitialization() override final;
+  void declarePeriodicBoundaries( CartesianPartitioner & partitioner ) override;
 
 private:
 

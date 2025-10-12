@@ -556,6 +556,10 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   CartesianPartitioner & partitioner = *cartesianPartitioner;
 
+  // Declare periodic boundaries BEFORE initializing domain
+  // This ensures neighbor computation and ghost identification are correct
+  declarePeriodicBoundaries( partitioner );
+
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
   {

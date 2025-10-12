@@ -223,6 +223,7 @@ void CartesianPartitioner::addNeighbors( unsigned int const idim,
     {
       int const rank = MpiWrapper::cartRank( cartComm, ncoords );
 
+      // Prevent duplication
       if( std::find( m_neighborsRank.begin(), m_neighborsRank.end(), rank )
           == m_neighborsRank.end() )
       {
