@@ -35,6 +35,7 @@
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/PropertyKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/KernelLaunchSelectors.hpp"
+#include "finiteVolume/MimeticInnerProductDispatch.hpp"
 
 
 namespace geos
@@ -312,7 +313,7 @@ struct AssemblerKernelHelper
    * @param[in] dPhaseMob the derivatives of the phase mobilities in the element
    * @param[in] dCompFrac_dCompDens the derivatives of the component fractions wrt component density
    * @param[in] phaseCompFrac the phase component fractions in the domain
-   * @param[in] dPhaseCompFrac the derivatives of the phase component fractions wrt pressure and component fractions
+   * @param[in] dPhaseCompFrac the derivatives of the phase component fractions in the domain wrt pressure and component fractions
    * @param[in] elemDofNumber the dof numbers of the element in the domain
    * @param[in] oneSidedVolFlux the volumetric fluxes at this element's faces
    * @param[in] dOneSidedVolFlux_dPres the derivatives of the vol fluxes wrt to this element's cell centered pressure
@@ -605,6 +606,7 @@ struct FluxKernel
    * @param[in] rankOffset the offset of this rank
    * @param[in] lengthTolerance tolerance used in the transmissibility matrix computation
    * @param[in] dt time step size
+   * @param[in] transMatrix the transmissibility matrix in this element
    * @param[inout] matrix the system matrix
    * @param[inout] rhs the system right-hand side vector
    */
@@ -875,7 +877,7 @@ public:
   ResidualNormKernel( globalIndex const rankOffset,
                       arrayView1d< real64 const > const & localResidual,
                       arrayView1d< globalIndex const > const & dofNumber,
-                      arrayView1d< localIndex const > const & ghostRank,
+                      arrayView1d< integer const > const & ghostRank,
                       SortedArrayView< localIndex const > const & regionFilter,
                       FaceManager const & faceManager,
                       CompFlowAccessors const & compFlowAccessors,
@@ -1070,33 +1072,32 @@ struct SolutionCheckKernel
 
 };
 
-/******************************** PrecomputeKernel ********************************/
+/******************************** PrecomputeMimeticTransGgradZKernel ********************************/
 
-struct PrecomputeKernel
+struct PrecomputeMimeticTransGgradZKernel
 {
 
   template< typename IP_TYPE, integer NF >
   static void
   launch( localIndex const subRegionSize,
-          localIndex const faceManagerSize,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
           ArrayOfArraysView< localIndex const > const & faceToNodes,
           arrayView2d< real64 const > const & elemCenter,
           arrayView1d< real64 const > const & elemVolume,
           arrayView3d< real64 const > const & elemPerm,
           arrayView1d< real64 const > const & elemGravCoef,
+          arrayView1d< real64 const > const & faceGravCoef,
           arrayView2d< localIndex const > const & elemToFaces,
           arrayView1d< real64 const > const & transMultiplier,
           real64 const & lengthTolerance,
-          arrayView1d< RAJA::ReduceSum< serialReduce, real64 > > const & mimFaceGravCoefNumerator,
-          arrayView1d< RAJA::ReduceSum< serialReduce, real64 > > const & mimFaceGravCoefDenominator,
-          arrayView1d< real64 > const & mimFaceGravCoef )
+          arrayView1d< real64 > const & faceInvSum,
+          arrayView1d< integer > const & faceCount )
   {
-    forAll< serialPolicy >( subRegionSize, [=] ( localIndex const ei )
+    forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
-      stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+      stackArray2d< real64, NF * NF > transMatrix( NF, NF );
 
-      real64 const perm[ 3 ] = { elemPerm[ei][0][0], elemPerm[ei][0][1], elemPerm[ei][0][2] };
+      real64 const perm[3] = { elemPerm[ei][0][0], elemPerm[ei][0][1], elemPerm[ei][0][2] };
 
       IP_TYPE::template compute< NF >( nodePosition,
                                        transMultiplier,
@@ -1108,19 +1109,65 @@ struct PrecomputeKernel
                                        lengthTolerance,
                                        transMatrix );
 
-      for( integer ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
+      real64 const ccGravCoef = elemGravCoef[ei];
+      for( integer i = 0; i < NF; ++i )
       {
-        mimFaceGravCoefNumerator[elemToFaces[ei][ifaceLoc]] += elemGravCoef[ei] * transMatrix[ifaceLoc][ifaceLoc];
-        mimFaceGravCoefDenominator[elemToFaces[ei][ifaceLoc]] += transMatrix[ifaceLoc][ifaceLoc];
+        localIndex const kf = elemToFaces[ei][i];
+        
+        real64 T_g_delta_z = 0.0;
+        for( integer j = 0; j < NF; ++j )
+        {
+          real64 const fGravCoef = faceGravCoef[elemToFaces[ei][j]];
+          real64 const gravCoefDif = ccGravCoef - fGravCoef;
+          T_g_delta_z += transMatrix[i][j] * gravCoefDif;
+        }
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &faceInvSum[kf], 1.0 / LvArray::math::abs(T_g_delta_z) );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &faceCount[kf], 1 );
       }
     } );
+  }
 
-    forAll< serialPolicy >( faceManagerSize, [=] ( localIndex const iface )
+  template< typename POLICY >
+  static void
+  createAndLaunch( mimeticInnerProduct::MimeticInnerProductBase const & ip,
+                   NodeManager const & nodeManager,
+                   FaceManager const & faceManager,
+                   CellElementSubRegion const & subRegion,
+                   constitutive::PermeabilityBase const & permeability,
+                   real64 const lengthTolerance,
+                   arrayView1d< real64 > const & faceInvSum,
+                   arrayView1d< integer > const & faceCount )
+  {
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+    ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
+    arrayView1d< real64 const > const & transMultiplier = faceManager.getField< fields::flow::transMultiplier >();
+    arrayView1d< real64 const > const & faceGravCoef = faceManager.getField< fields::flow::gravityCoefficient >();
+    
+    arrayView2d< real64 const > const & elemCenter = subRegion.getElementCenter();
+    arrayView1d< real64 const > const & elemVolume = subRegion.getElementVolume();
+    arrayView3d< real64 const > const & elemPerm = permeability.permeability();
+    arrayView1d< real64 const > const & elemGravCoef = subRegion.getField< fields::flow::gravityCoefficient >();
+    arrayView2d< localIndex const > const & elemToFaces = subRegion.faceList();
+
+    mimeticInnerProductDispatch( ip, [&]( auto const & innerProduct )
     {
-      if( !isZero( mimFaceGravCoefDenominator[iface].get() ) )
+      using IP_TYPE = std::remove_const_t< TYPEOFREF( innerProduct ) >;
+      internal::kernelLaunchSelectorFaceSwitch( subRegion.numFacesPerElement(), [&]( auto NF )
       {
-        mimFaceGravCoef[iface] = mimFaceGravCoefNumerator[iface].get() / mimFaceGravCoefDenominator[iface].get();
-      }
+        PrecomputeMimeticTransGgradZKernel::launch< IP_TYPE, NF() >( subRegion.size(),
+                                                                     nodePosition,
+                                                                     faceToNodes,
+                                                                     elemCenter,
+                                                                     elemVolume,
+                                                                     elemPerm,
+                                                                     elemGravCoef,
+                                                                     faceGravCoef,
+                                                                     elemToFaces,
+                                                                     transMultiplier,
+                                                                     lengthTolerance,
+                                                                     faceInvSum,
+                                                                     faceCount );
+      } );
     } );
   }
 };
@@ -1137,12 +1184,16 @@ void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 
   switch( value )
   {
-    case 4:
-    { lambda( std::integral_constant< T, 4 >() ); return;}
-    case 5:
-    { lambda( std::integral_constant< T, 5 >() ); return;}
-    case 6:
-    { lambda( std::integral_constant< T, 6 >() ); return;}
+    case 4:  lambda( std::integral_constant< T, 4 >() ); return;
+    case 5:  lambda( std::integral_constant< T, 5 >() ); return;
+    case 6:  lambda( std::integral_constant< T, 6 >() ); return;
+    case 7:  lambda( std::integral_constant< T, 7 >() ); return;
+    case 8:  lambda( std::integral_constant< T, 8 >() ); return;
+    case 9:  lambda( std::integral_constant< T, 9 >() ); return;
+    case 10: lambda( std::integral_constant< T, 10 >() ); return;
+    case 11: lambda( std::integral_constant< T, 11 >() ); return;
+    case 12: lambda( std::integral_constant< T, 12 >() ); return;
+    case 13: lambda( std::integral_constant< T, 13 >() ); return;
     default: GEOS_ERROR( "Unknown numFacesInElem value: " << value );
   }
 }
