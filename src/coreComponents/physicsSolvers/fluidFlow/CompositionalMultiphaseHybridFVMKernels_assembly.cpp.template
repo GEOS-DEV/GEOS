@@ -42,7 +42,7 @@ namespace compositionalMultiphaseHybridFVMKernels
                                           arrayView2d< localIndex const > const & elemList,
                                           SortedArrayView< localIndex const > const & regionFilter,
                                           arrayView1d< globalIndex const > const & faceDofNumber,
-                                          arrayView1d< real64 const > const & mimFaceGravCoef,
+                                          arrayView1d< real64 const > const & mimeticTransGgradZ,
                                           arraySlice1d< localIndex const > const & elemToFaces,
                                           real64 const & elemGravCoef,
                                           integer const useTotalMassEquation,
@@ -56,7 +56,6 @@ namespace compositionalMultiphaseHybridFVMKernels
                                           ElementViewConst< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
                                           ElementViewConst< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
                                           ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
-                                          arraySlice2d< real64 const > const & transMatrixGrav,
                                           real64 const (&oneSidedVolFlux)[ NF ],
                                           real64 const (&dOneSidedVolFlux_dPres)[ NF ],
                                           real64 const (&dOneSidedVolFlux_dFacePres)[ NF ][ NF ],
@@ -134,7 +133,7 @@ namespace compositionalMultiphaseHybridFVMKernels
                            arrayView1d< integer const > const & faceGhostRank,
                            arrayView1d< real64 const > const & facePres,
                            arrayView1d< real64 const > const & faceGravCoef,
-                           arrayView1d< real64 const > const & mimFaceGravCoef,
+                           arrayView1d< real64 const > const & mimeticTransGgradZ,
                            arraySlice1d< localIndex const > const & elemToFaces,
                            real64 const & elemPres,
                            real64 const & elemGravCoef,
@@ -153,7 +152,6 @@ namespace compositionalMultiphaseHybridFVMKernels
                            globalIndex const rankOffset,
                            real64 const & dt,
                            arraySlice2d< real64 const > const & transMatrix,
-                           arraySlice2d< real64 const > const & transMatrixGrav,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
 

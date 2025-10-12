@@ -27,7 +27,7 @@ namespace compositionalMultiphaseHybridFVMKernels
                                    arrayView1d< integer const > const & faceGhostRank,
                                    arrayView1d< real64 const > const & facePres,
                                    arrayView1d< real64 const > const & faceGravCoef,
-                                   arrayView1d< real64 const > const & mimFaceGravCoef,
+                                   arrayView1d< real64 const > const & mimeticTransGgradZ,
                                    arrayView1d< real64 const > const & transMultiplier,
                                    ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
                                    ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
