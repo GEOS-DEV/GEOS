@@ -73,9 +73,6 @@ void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group & meshBodies )
 
     faceManager.registerField< flow::facePressure_n >( getName() );
 
-    // auxiliary data for the buoyancy coefficient
-    faceManager.registerField< flow::mimGravityCoefficient >( getName() );
-
     // precomputed mimetic gravity-driven trans coefficient on faces
     faceManager.registerField< flow::mimeticTransGgradZ >( getName() );
     
