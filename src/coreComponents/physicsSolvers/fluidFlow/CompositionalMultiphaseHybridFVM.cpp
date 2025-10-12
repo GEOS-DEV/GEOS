@@ -173,10 +173,7 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, string_
     DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
     NumericalMethodsManager const & nm = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = nm.getFiniteVolumeManager();
-    if( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ) )
-    {
-      return; // Not using hybrid mimetic discretization; nothing to precompute
-    }
+
     HybridMimeticDiscretization const & hm = fvManager.getHybridMimeticDiscretization( m_discretizationName );
     mimeticInnerProduct::MimeticInnerProductBase const & ip = hm.getReference< mimeticInnerProduct::MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString() );
     real64 const lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * m_lengthTolerance;
