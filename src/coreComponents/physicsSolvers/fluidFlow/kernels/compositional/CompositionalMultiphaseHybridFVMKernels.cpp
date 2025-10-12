@@ -1040,7 +1040,7 @@ AssemblerKernel::
            arrayView1d< integer const > const & faceGhostRank,
            arrayView1d< real64 const > const & facePres,
            arrayView1d< real64 const > const & faceGravCoef,
-           arrayView1d< real64 const > const & mimFaceGravCoef,
+           arrayView1d< real64 const > const & mimeticTransGgradZ,
            arraySlice1d< localIndex const > const & elemToFaces,
            real64 const & elemPres,
            real64 const & elemGravCoef,
@@ -1059,7 +1059,6 @@ AssemblerKernel::
            globalIndex const rankOffset,
            real64 const & dt,
            arraySlice2d< real64 const > const & transMatrix,
-           arraySlice2d< real64 const > const & transMatrixGrav,
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
            arrayView1d< real64 > const & localRhs )
 {
@@ -1115,7 +1114,7 @@ AssemblerKernel::
                                                                  elemList,
                                                                  regionFilter,
                                                                  faceDofNumber,
-                                                                 mimFaceGravCoef,
+                                                                 mimeticTransGgradZ,
                                                                  elemToFaces,
                                                                  elemGravCoef,
                                                                  useTotalMassEquation,
@@ -1129,7 +1128,6 @@ AssemblerKernel::
                                                                  phaseCompFrac,
                                                                  dPhaseCompFrac,
                                                                  elemDofNumber,
-                                                                 transMatrixGrav,
                                                                  oneSidedVolFlux,
                                                                  dOneSidedVolFlux_dPres,
                                                                  dOneSidedVolFlux_dFacePres,
@@ -1172,7 +1170,7 @@ FluxKernel::
           arrayView1d< integer const > const & faceGhostRank,
           arrayView1d< real64 const > const & facePres,
           arrayView1d< real64 const > const & faceGravCoef,
-          arrayView1d< real64 const > const & mimFaceGravCoef,
+          arrayView1d< real64 const > const & mimeticTransGgradZ,
           arrayView1d< real64 const > const & transMultiplier,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob,
@@ -1222,7 +1220,6 @@ FluxKernel::
   {
     // transmissibility matrix
     stackArray2d< real64, NF *NF > transMatrix( NF, NF );
-    stackArray2d< real64, NF *NF > transMatrixGrav( NF, NF );
 
     real64 const perm[ 3 ] = { elemPerm[ei][0][0], elemPerm[ei][0][1], elemPerm[ei][0][2] };
 
@@ -1238,19 +1235,6 @@ FluxKernel::
                                      lengthTolerance,
                                      transMatrix );
 
-    // currently the gravity term in the transport scheme is treated as in MRST, that is, always with TPFA
-    // this is why below we have to recompute the TPFA transmissibility in addition to the transmissibility matrix above
-    // TODO: treat the gravity term with a consistent inner product
-    mimeticInnerProduct::TPFAInnerProduct::compute< NF >( nodePosition,
-                                                          transMultiplier,
-                                                          faceToNodes,
-                                                          elemToFaces[ei],
-                                                          elemCenter[ei],
-                                                          elemVolume[ei],
-                                                          perm,
-                                                          lengthTolerance,
-                                                          transMatrixGrav );
-
     // perform flux assembly in this element
     compositionalMultiphaseHybridFVMKernels::AssemblerKernel::compute< NF, NC, NP >( er, esr, ei,
                                                                                      regionFilter,
@@ -1261,7 +1245,7 @@ FluxKernel::
                                                                                      faceGhostRank,
                                                                                      facePres,
                                                                                      faceGravCoef,
-                                                                                     mimFaceGravCoef,
+                                                                                     mimeticTransGgradZ,
                                                                                      elemToFaces[ei],
                                                                                      elemPres[ei],
                                                                                      elemGravCoef[ei],
@@ -1280,7 +1264,6 @@ FluxKernel::
                                                                                      rankOffset,
                                                                                      dt,
                                                                                      transMatrix,
-                                                                                     transMatrixGrav,
                                                                                      localMatrix,
                                                                                      localRhs );
   } );

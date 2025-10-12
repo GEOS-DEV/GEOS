@@ -341,8 +341,8 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
     // get the face-centered depth
     arrayView1d< real64 const > const & faceGravCoef =
       faceManager.getField< flow::gravityCoefficient >();
-    arrayView1d< real64 const > const & mimFaceGravCoef =
-      faceManager.getField< flow::mimGravityCoefficient >();
+    arrayView1d< real64 const > const & mimeticTransGgradZ =
+      faceManager.getField< flow::mimeticTransGgradZ >();
 
     // get the face-centered transMultiplier
     arrayView1d< real64 const > const & transMultiplier =
@@ -391,7 +391,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                          faceGhostRank,
                                          facePres,
                                          faceGravCoef,
-                                         mimFaceGravCoef,
+                                         mimeticTransGgradZ,
                                          transMultiplier,
                                          compFlowAccessors.get( flow::phaseMobility{} ),
                                          compFlowAccessors.get( flow::dPhaseMobility{} ),
