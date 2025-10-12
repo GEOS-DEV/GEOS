@@ -904,7 +904,7 @@ public:
   ResidualNormKernel( globalIndex const rankOffset,
                       arrayView1d< real64 const > const & localResidual,
                       arrayView1d< globalIndex const > const & dofNumber,
-                      arrayView1d< integer const > const & ghostRank,
+                      arrayView1d< localIndex const > const & ghostRank,
                       SortedArrayView< localIndex const > const & regionFilter,
                       FaceManager const & faceManager,
                       CompFlowAccessors const & compFlowAccessors,
