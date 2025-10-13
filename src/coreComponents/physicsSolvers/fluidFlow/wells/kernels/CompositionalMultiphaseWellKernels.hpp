@@ -40,7 +40,7 @@
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
 
 namespace geos
 {
@@ -530,7 +530,7 @@ public:
       // This is a normalizer for the balance equations.  The normalizaer should be the current rate not the constraint value!!
       // This is one of the reasons for restricting  constraint type for a production well
       // another pr will remove fix this (so the cause for difference results is isolated to one change)
-      m_targetPhaseIndex =   dynamic_cast< PhaseConstraint< ProductionConstraint > * >(wellControls.getProdRateConstraints()[0])->getPhaseIndex(  );
+      m_targetPhaseIndex =   wellControls.getConstraintPhaseIndex(  );
       m_constraintValue =  wellControls.getProdRateConstraints()[0]->getConstraintValue( time );
 
     }

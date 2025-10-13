@@ -14,7 +14,7 @@
  */
 
 /**
- * @file WellConstraintKernels.hpp
+ * @file CompositionalMultiphaseWellConstraintKernels.hpp
  */
 
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTRAINTKERNELS_HPP
@@ -27,10 +27,10 @@
 
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellTotalVolRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 namespace geos
 {
 
@@ -117,10 +117,10 @@ struct ConstraintHelper
   }
 
 
-  template< typename T >
+  template< template< typename U > class T, typename U=PhaseVolumeRateConstraint >
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
-                                          PhaseConstraint< T > & constraint,
+                                          T< PhaseVolumeRateConstraint > & constraint,
                                           WellElementSubRegion const & subRegion,
                                           string const & wellDofKey,
                                           localIndex const & rankOffset,
@@ -224,10 +224,10 @@ struct ConstraintHelper
                                                               COFFSET_WJ::nDer );
   }
 
-  template< typename T >
+  template< template< typename U > class T, typename U=LiquidRateConstraint >
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
-                                          LiquidConstraint< T > & constraint,
+                                          T< LiquidRateConstraint > & constraint,
                                           WellElementSubRegion const & subRegion,
                                           string const & wellDofKey,
                                           localIndex const & rankOffset,
@@ -341,10 +341,10 @@ struct ConstraintHelper
                                                               dControlEqn,
                                                               COFFSET_WJ::nDer );
   }
-  template< typename T >
+  template< template< typename U > class T, typename U=VolumeRateConstraint >
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
-                                          TotalVolConstraint< T > & constraint,
+                                          T< VolumeRateConstraint > & constraint,
                                           WellElementSubRegion const & subRegion,
                                           string const & wellDofKey,
                                           localIndex const & rankOffset,
@@ -441,10 +441,10 @@ struct ConstraintHelper
                                                               dControlEqn,
                                                               COFFSET_WJ::nDer );
   }
-  template< typename T >
+  template< template< typename U > class T, typename U=MassRateConstraint >
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
-                                          MassConstraint< T > & constraint,
+                                          T< MassRateConstraint > & constraint,
                                           WellElementSubRegion const & subRegion,
                                           string const & wellDofKey,
                                           localIndex const & rankOffset,

@@ -14,12 +14,12 @@
  */
 
 /*
- * @file WellPhaseRateConstraints.hpp
+ * @file WellPhaseVolumeRateConstraint.hpp
  */
 
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLPHASERATECONSTRAINTS_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLPHASERATECONSTRAINTS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLPHASEVOLUMERATECONSTRAINT_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLPHASEVOLUMERATECONSTRAINT_HPP
 
 #include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
@@ -47,11 +47,11 @@ localIndex getPhaseIndexFromFluidModel( T const & fluidModel, std::string const 
 };
 
 /**
- * @class PhaseConstraint
+ * @class PhaseVolumeRateConstraint
  * @brief This class describes a phase rate constraint used to control a well of WellConstraintType type (Injection or Production).
  */
-template< typename WellConstraintType >
-class PhaseConstraint : public WellConstraintType
+
+class PhaseVolumeRateConstraint : public WellConstraintBase
 {
 public:
 
@@ -66,39 +66,39 @@ public:
    * @param[in] name the name of this instantiation of WellControls in the repository
    * @param[in] parent the parent group of this instantiation of WellControls
    */
-  explicit PhaseConstraint( string const & name, dataRepository::Group * const parent );
+  explicit PhaseVolumeRateConstraint( string const & name, dataRepository::Group * const parent );
 
   /**
    * @brief Default destructor.
    */
-  ~PhaseConstraint() override;
+  ~PhaseVolumeRateConstraint() override;
 
   /**
    * @brief Deleted default constructor.
    */
-  PhaseConstraint() = delete;
+  PhaseVolumeRateConstraint() = delete;
 
   /**
    * @brief Deleted copy constructor.
    */
-  PhaseConstraint( PhaseConstraint const & ) = delete;
+  PhaseVolumeRateConstraint( PhaseVolumeRateConstraint const & ) = delete;
 
   /**
    * @brief Deleted move constructor.
    */
-  PhaseConstraint( PhaseConstraint && ) = delete;
+  PhaseVolumeRateConstraint( PhaseVolumeRateConstraint && ) = delete;
 
   /**
    * @brief Deleted assignment operator.
    * @return a reference to a constraint object
    */
-  PhaseConstraint & operator=( PhaseConstraint const & ) = delete;
+  PhaseVolumeRateConstraint & operator=( PhaseVolumeRateConstraint const & ) = delete;
 
   /**
    * @brief Deleted move operator.
    * @return a reference to a constraint object
    */
-  PhaseConstraint & operator=( PhaseConstraint && ) = delete;
+  PhaseVolumeRateConstraint & operator=( PhaseVolumeRateConstraint && ) = delete;
 
   ///@}
 
@@ -108,14 +108,7 @@ public:
    */
   static string catalogName()
   {
-    if constexpr ( std::is_same_v< WellConstraintType, InjectionConstraint > )    // special case
-    {
-      return "PhaseInjectionConstraint";
-    }
-    else   // default
-    {
-      return "PhaseProductionConstraint";
-    }
+    return "PhaseVolumeRateConstraint";
   }
 
   /**
@@ -169,19 +162,18 @@ private:
 
 };
 
-template< typename WellConstraintType >
 template< typename T >
-void PhaseConstraint< WellConstraintType >::validatePhaseType( T const & fluidModel )
+void PhaseVolumeRateConstraint::validatePhaseType( T const & fluidModel )
 {
   // Find target phase index for phase rate constraint
   m_phaseIndex = getPhaseIndexFromFluidModel( fluidModel, this->template getReference< string >( viewKeyStruct::phaseNameString()));
 
   GEOS_THROW_IF( m_phaseIndex == -1,
-                 "PhaseConstraint " << this->template getReference< string >( viewKeyStruct::phaseNameString())   <<
+                 "PhaseVolumeRateConstraint " << this->template getReference< string >( viewKeyStruct::phaseNameString())   <<
                  ": Invalid phase type for simulation fluid model",
                  InputError );
 }
 
 } //namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTRAINT_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLPHASEVOLUMERATECONSTRAINT_HPP

@@ -14,123 +14,19 @@
  */
 
 /*
- * @file WellControls.hpp
+ * @file WellConstraintBase.hpp
  */
 
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTRAINT_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTRAINT_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTRAINTBASE_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTRAINTBASE_HPP
 
 #include "common/format/EnumStrings.hpp"
-#include "dataRepository/Group.hpp"
-#include "functions/TableFunction.hpp"
 
+#include "functions/TableFunction.hpp"
+#include "dataRepository/Group.hpp"
 namespace geos
 {
-namespace dataRepository
-{
-namespace keys
-{
-static constexpr auto wellConstraintBase = "WellConstraintBase";
-}
-}
-
-namespace constraintViewStruct
-{
-
-struct constraintValueKey
-{
-  /// String key for the well constraint value
-  static constexpr char const * constraintValueString() { return "constraintValue"; }
-  /// string key for constraint values entered table name
-  static constexpr char const * constraintScheduleTableNameString() { return "constraintScheduleTableName"; }
-};
-
-struct surfaceConditionsKey
-{
-  /// String key for checking the rates at surface conditions
-  static constexpr char const * useSurfaceConditionsString() { return "useSurfaceConditions"; }
-  /// String key for the surface pressure
-  static constexpr char const * surfacePressureString() { return "surfacePressure"; }
-  /// String key for the surface temperature
-  static constexpr char const * surfaceTemperatureString() { return "surfaceTemperature"; }
-};
-
-struct injectionStreamKey
-{
-  /// String key for the well injection stream
-  static constexpr char const * injectionStreamString() { return "injectionStream"; }
-  /// String key for the well injection temperature
-  static constexpr char const * injectionTemperatureString() { return "injectionTemperature"; }
-};
-
-}
-/**
- * @brief Register fields required to define surface conditions for constraint
- * @param[in] useSurfaceConditions 0 - use reservoir conditions, 1 use specified P &  T
- * @param[in] surfacePres surface pressure
- * @param[in] surfaceTemp surface pressure
- */
-template< typename T >
-void registerSurfaceConditions( integer & useSurfaceConditions,
-                                real64 & surfacePres,
-                                real64 & surfaceTemp,
-                                T & context )
-{
-  context.registerWrapper( constraintViewStruct::surfaceConditionsKey::useSurfaceConditionsString(), &useSurfaceConditions ).
-    setDefaultValue( 0 ).
-    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "Flag to specify whether rates are checked at surface or reservoir conditions.\n"
-                    "Equal to 1 for surface conditions, and to 0 for reservoir conditions" );
-
-  context.registerWrapper( constraintViewStruct::surfaceConditionsKey::surfacePressureString(), &surfacePres ).
-    setDefaultValue( 0 ).
-    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "Surface pressure used to compute volumetric rates when surface conditions are used [Pa]" );
-
-  context.registerWrapper( constraintViewStruct::surfaceConditionsKey::surfaceTemperatureString(), &surfaceTemp ).
-    setDefaultValue( 0 ).
-    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "Surface temperature used to compute volumetric rates when surface conditions are used [K]" );
-}
-
-/**
- * @brief Register fields required to define an injection stream.
- * @param[in] injectionStream the injection stream vector
- * @param[in] injectionTemperature the injection temperature
- * @param[in] context class needing fields
- */
-template< typename T >
-void registerInjectionStream( array1d< real64 > & injectionStream,
-                              real64 & injectionTemperature,
-                              T & context )
-{
-  context.registerWrapper( constraintViewStruct::injectionStreamKey::injectionStreamString(), &injectionStream ).
-    setDefaultValue( -1 ).
-    setSizedFromParent( 0 ).
-    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "Global component densities of the injection stream [moles/m^3 or kg/m^3]" );
-
-  context.registerWrapper( constraintViewStruct::injectionStreamKey::injectionTemperatureString(), &injectionTemperature ).
-    setDefaultValue( -1 ).
-    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "Temperature of the injection stream [K]" );
-}
-/**
- * @brief Validate the surface conditions
- * @param[in] useSurfaceConditions 0 - use reservoir conditions, 1 use specified P &  T
- * @param[in] className owner of fields
- * @param[in] dataContext context for error messages
- */
-template< typename T >
-void validateSurfaceConditions( integer useSurfaceConditions,
-                                std::string const & className,
-                                T const & context )
-{
-  GEOS_THROW_IF( useSurfaceConditions != 0 &&  useSurfaceConditions != 1,
-                 className << " "  << context.getDataContext()  << ": The flag to select surface/reservoir conditions must be equal to 0 or 1",
-                 InputError );
-}
 
 
 
@@ -236,7 +132,7 @@ public:
    * @brief rate constraints to evaluated WHP constraints.
    * @return true if the constraint is active, false otherwise
    */
-  bool isConstraintActive( ) { return m_isConstraintActive; }
+  bool isConstraintActive( ) const { return m_isConstraintActive; }
 
   /**
    * @brief Sets constraint active status
@@ -269,9 +165,6 @@ public:
 
   ///@}
 
-  // Phase constraint defintion keys
-  constraintViewStruct::constraintValueKey viewKeysConstraintValue;
-
   /**
    * @brief Struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
@@ -280,6 +173,10 @@ public:
   {
     /// string key for schedule table name
     static constexpr char const * constraintScheduleTableNameString() { return "constraintScheduleTableName"; }
+
+    /// String key for the well constraint value
+    static constexpr char const * constraintValueString() { return "constraintValue"; }
+
 
   }
   /// ViewKey struct for the WellControls class
@@ -381,160 +278,7 @@ protected:
   real64 m_rateSign;
 };
 
-/**
- * @class ProductionConstraint
- * @brief This class describes constraint used to control a production well.
- */
-
-class ProductionConstraint : public WellConstraintBase
-{
-public:
-  /**
-   * @name Constructor / Destructor
-   */
-  ///@{
-
-  /**
-   * @brief Constructor for WellControls Objects.
-   * @param[in] name the name of this instantiation of WellControls in the repository
-   * @param[in] parent the parent group of this instantiation of WellControls
-   */
-  explicit ProductionConstraint( string const & name, dataRepository::Group * const parent );
-
-  /**
-   * @brief Default destructor.
-   */
-  ~ProductionConstraint() override;
-
-  /**
-   * @brief Deleted default constructor.
-   */
-  ProductionConstraint() = delete;
-
-  /**
-   * @brief Deleted copy constructor.
-   */
-  ProductionConstraint( ProductionConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move constructor.
-   */
-  ProductionConstraint( ProductionConstraint && ) = delete;
-
-  /**
-   * @brief Deleted assignment operator.
-   * @return a reference to a constraint object
-   */
-  ProductionConstraint & operator=( ProductionConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move operator.
-   * @return a reference to a constraint object
-   */
-  ProductionConstraint & operator=( ProductionConstraint && ) = delete;
-
-  ///@}
-
-protected:
-
-  virtual void postInputInitialization() override;
-
-  static bool isViolated( const real64 & currentValue, const real64 & constraintValue )
-  { return currentValue < constraintValue; }
-};
-
-/**
- * @class InjectionConstraint
- * @brief This class describes   constraint used to control a injection well.
- */
-
-class InjectionConstraint : public WellConstraintBase
-{
-public:
-  /**
-   * @name Constructor / Destructor
-   */
-  ///@{
-
-  /**
-   * @brief Constructor for WellControls Objects.
-   * @param[in] name the name of this instantiation of WellControls in the repository
-   * @param[in] parent the parent group of this instantiation of WellControls
-   */
-  explicit InjectionConstraint( string const & name, dataRepository::Group * const parent );
-
-  /**
-   * @brief Default destructor.
-   */
-  ~InjectionConstraint() override;
-
-  /**
-   * @brief Deleted default constructor.
-   */
-  InjectionConstraint() = delete;
-
-  /**
-   * @brief Deleted copy constructor.
-   */
-  InjectionConstraint( InjectionConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move constructor.
-   */
-  InjectionConstraint( InjectionConstraint && ) = delete;
-
-  /**
-   * @brief Deleted assignment operator.
-   * @return a reference to a constraint object
-   */
-  InjectionConstraint & operator=( InjectionConstraint const & ) = delete;
-
-  /**
-   * @brief Deleted move operator.
-   * @return a reference to a constraint object
-   */
-  InjectionConstraint & operator=( InjectionConstraint && ) = delete;
-
-  ///@}
-
-  struct injectionStreamKey
-  {
-    /// String key for the well injection stream
-    static constexpr char const * injectionStreamString() { return "injectionStream"; }
-    /// String key for the well injection temperature
-    static constexpr char const * injectionTemperatureString() { return "injectionTemperature"; }
-  };
-
-  /**
-   * @brief Const accessor for the composition of the injection stream
-   * @return a global component fraction vector
-   */
-  arrayView1d< real64 const > getInjectionStream() const { return m_injectionStream; }
-
-  /**
-   * @brief Const accessor for the temperature of the injection stream
-   * @return the temperature of the injection stream
-   */
-  real64 getInjectionTemperature() const { return m_injectionTemperature; }
-
-protected:
-
-  virtual void postInputInitialization() override;
-  static bool isViolated( const real64 & currentValue, const real64 & constraintValue )
-  { return currentValue > constraintValue; }
-
-  void validateInjectionStream();
-private:
-
-  /// Vector with global component fractions at the injector
-  array1d< real64 > m_injectionStream;
-
-  /// Temperature at the injector
-  real64 m_injectionTemperature;
-
-};
-
 
 } //namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTRAINT_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTRAINTBASE_HPP

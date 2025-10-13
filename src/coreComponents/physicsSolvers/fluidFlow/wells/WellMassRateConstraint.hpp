@@ -14,12 +14,12 @@
  */
 
 /*
- * @file WellMassRateConstraints.hpp
+ * @file WellMassRateConstraint.hpp
  */
 
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLMASSRATECONSTRAINTS_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLMASSRATECONSTRAINTS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLMASSRATECONSTRAINT_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLMASSRATECONSTRAINT_HPP
 
 #include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
@@ -29,11 +29,11 @@ namespace geos
 {
 
 /**
- * @class MassConstraint
+ * @class MassRateConstraint
  * @brief This class describes a mass rate constraint used to control a  well.
  */
-template< typename WellConstraintType >
-class MassConstraint : public WellConstraintType
+
+class MassRateConstraint : public WellConstraintBase
 {
 public:
 
@@ -47,40 +47,40 @@ public:
    * @param[in] name the name of this instantiation of WellControls in the repository
    * @param[in] parent the parent group of this instantiation of WellControls
    */
-  explicit MassConstraint( string const & name, dataRepository::Group * const parent );
+  explicit MassRateConstraint( string const & name, dataRepository::Group * const parent );
 
 
   /**
    * @brief Default destructor.
    */
-  ~MassConstraint() override;
+  ~MassRateConstraint() override;
 
   /**
    * @brief Deleted default constructor.
    */
-  MassConstraint() = delete;
+  MassRateConstraint() = delete;
 
   /**
    * @brief Deleted copy constructor.
    */
-  MassConstraint( MassConstraint const & ) = delete;
+  MassRateConstraint( MassRateConstraint const & ) = delete;
 
   /**
    * @brief Deleted move constructor.
    */
-  MassConstraint( MassConstraint && ) = delete;
+  MassRateConstraint( MassRateConstraint && ) = delete;
 
   /**
    * @brief Deleted assignment operator.
    * @return a reference to a constraint object
    */
-  MassConstraint & operator=( MassConstraint const & ) = delete;
+  MassRateConstraint & operator=( MassRateConstraint const & ) = delete;
 
   /**
    * @brief Deleted move operator.
    * @return a reference to a constraint object
    */
-  MassConstraint & operator=( MassConstraint && ) = delete;
+  MassRateConstraint & operator=( MassRateConstraint && ) = delete;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -88,16 +88,15 @@ public:
    */
   static string catalogName()
   {
-    if constexpr ( std::is_same_v< WellConstraintType, InjectionConstraint > )    // special case
-    {
-      return "MassInjectionConstraint";
-    }
-    else   // default
-    {
-      return "MassProductionConstraint";
-    }
+    return "MassRateConstraint";
   }
   ///@}
+
+  struct viewKeyStruct
+  {
+    /// String key for the well target  rate
+    static constexpr char const * massRateString() { return "massRate"; }
+  };
 
   /**
    * @name Getters / Setters
@@ -118,4 +117,4 @@ protected:
 
 } //namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTRAINT_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLMASSRATECONSTRAINT_HPP

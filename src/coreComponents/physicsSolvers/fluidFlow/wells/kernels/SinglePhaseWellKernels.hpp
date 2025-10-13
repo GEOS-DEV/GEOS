@@ -20,18 +20,21 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 
+#include "common/DataTypes.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
+#include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
+
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
-#include "common/DataTypes.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
+
 #include "mesh/ElementRegionManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellFields.hpp"
-#include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
+
 #include "physicsSolvers/KernelLaunchSelectors.hpp"
 
 namespace geos

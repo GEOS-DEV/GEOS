@@ -23,7 +23,7 @@
 #include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/PhysicsSolverBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellConstraintsBase.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
 
 namespace geos
 {
@@ -190,10 +190,11 @@ public:
   {
     if( m_isProducer )
     {
+      // tjb This needs to be fixed  should use current constraint rate for normalization
       m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
       if( m_currentControl == WellControls::Control::PHASEVOLRATE )
       {
-        m_targetPhaseIndex = dynamic_cast< const PhaseConstraint< ProductionConstraint > * >( wellControls.getCurrentConstraint() )->getPhaseIndex();
+        m_targetPhaseIndex = wellControls.getConstraintPhaseIndex();
       }
     }
     else
@@ -201,7 +202,7 @@ public:
       m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
       if( m_currentControl == WellControls::Control::PHASEVOLRATE )
       {
-        m_targetPhaseIndex = dynamic_cast< const PhaseConstraint< InjectionConstraint > * >( wellControls.getCurrentConstraint() )->getPhaseIndex();
+        m_targetPhaseIndex = wellControls.getConstraintPhaseIndex();
       }
     }
 
@@ -658,8 +659,7 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    isothermalCompositionalMultiphaseBaseKernels::
-      internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
+    isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&]( auto NC )
     {
       localIndex constexpr NUM_COMP = NC();
 

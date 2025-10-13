@@ -92,14 +92,8 @@ WellConstraintBase::~WellConstraintBase()
 void WellConstraintBase::postInputInitialization()
 {
 
-  // check constraint value
-  GEOS_THROW_IF( m_constraintValue < 0,
-                 getWrapperDataContext( constraintViewStruct::constraintValueKey::constraintValueString() ) << ": Target value is negative",
-                 InputError );
-
-
-  GEOS_THROW_IF( ((m_constraintValue > 0.0 && !m_constraintScheduleTableName.empty())),
-                 getName() << " " << getDataContext() << ": You have provided redundant information for well constraint value ." <<
+  GEOS_THROW_IF( ((m_constraintValue > 0.0 && !m_constraintScheduleTableName.empty())|| (!(m_constraintValue > 0.0) &&  m_constraintScheduleTableName.empty())),
+                 this->getName() << " " << this->getDataContext() << ": You have provided redundant information for well constraint value ." <<
                  " A constraint value and table of constraint values cannot be specified together",
                  InputError );
 
@@ -110,18 +104,10 @@ void WellConstraintBase::postInputInitialization()
     m_constraintScheduleTable = &(functionManager.getGroup< TableFunction const >( m_constraintScheduleTableName ));
 
     GEOS_THROW_IF( m_constraintScheduleTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                   getName() << " " << getDataContext() << ": The interpolation method for the schedule table "
-                             << m_constraintScheduleTable->getName() << " should be TableFunction::InterpolationType::Lower",
+                   this->getName() << " " << this->getDataContext() << ": The interpolation method for the schedule table "
+                                   << m_constraintScheduleTable->getName() << " should be TableFunction::InterpolationType::Lower",
                    InputError );
   }
-
-
-  GEOS_THROW_IF  ((m_constraintValue <= 0.0 && m_constraintScheduleTableName.empty()),
-                  getName() << " " << getDataContext() << ": You need to specify a volume rate constraint. \n" <<
-                  "The  rate constraint can be specified using " <<
-                  "either " << constraintViewStruct::constraintValueKey::constraintValueString() <<
-                  " or " << constraintViewStruct::constraintValueKey::constraintScheduleTableNameString(),
-                  InputError );
 
 }
 
@@ -141,79 +127,6 @@ void WellConstraintBase::setNextDtFromTable( TableFunction const * table, real64
     {
       nextDt = dtLimit;
     }
-  }
-}
-
-// *** Phase Constraint for Production Well  ***************************************************************
-ProductionConstraint::ProductionConstraint( string const & name, Group * const parent )
-  : WellConstraintBase( name, parent )
-{
-  // set rate sign for producers (base class member)
-  m_rateSign = -1.0;
-}
-
-ProductionConstraint::~ProductionConstraint()
-{}
-
-void ProductionConstraint::postInputInitialization()
-{
-  // Validate value and table options
-  WellConstraintBase::postInputInitialization();
-
-}
-
-// *** Phase Constraint for Injection Well  ***************************************************************
-InjectionConstraint::InjectionConstraint( string const & name, Group * const parent )
-  : WellConstraintBase( name, parent )
-{
-  // set rate sign for injectors (base class member)
-  m_rateSign = 1.0;
-  registerWrapper( injectionStreamKey::injectionStreamString(), &m_injectionStream ).
-    setDefaultValue( -1 ).
-    setSizedFromParent( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Global component densities of the injection stream [moles/m^3 or kg/m^3]" );
-
-  registerWrapper( injectionStreamKey::injectionTemperatureString(), &m_injectionTemperature ).
-    setDefaultValue( -1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Temperature of the injection stream [K]" );
-}
-
-InjectionConstraint::~InjectionConstraint()
-{}
-
-void InjectionConstraint::postInputInitialization()
-{
-  // Validate value and table options
-  WellConstraintBase::postInputInitialization();
-
-// Validate the injection stream and temperature
-  validateInjectionStream(  );
-
-}
-
-void InjectionConstraint::validateInjectionStream( )
-{
-  GEOS_THROW_IF( (m_injectionStream.empty()  && m_injectionTemperature >= 0) ||
-                 (!m_injectionStream.empty() && m_injectionTemperature < 0),
-                 getName() << " "  <<  getDataContext() << ": Both "
-                           << constraintViewStruct::injectionStreamKey::injectionStreamString() << " and " <<  injectionStreamKey::injectionTemperatureString()
-                           << " must be specified for multiphase simulations",
-                 InputError );
-
-  if( !m_injectionStream.empty())
-  {
-    real64 sum = 0.0;
-    for( localIndex ic = 0; ic < m_injectionStream.size(); ++ic )
-    {
-      GEOS_ERROR_IF( m_injectionStream[ic] < 0.0 || m_injectionStream[ic] > 1.0,
-                     getWrapperDataContext( injectionStreamKey::injectionStreamString() ) << ": Invalid injection stream" );
-      sum += m_injectionStream[ic];
-    }
-    GEOS_THROW_IF( LvArray::math::abs( 1.0 - sum ) > std::numeric_limits< real64 >::epsilon(),
-                   getWrapperDataContext( injectionStreamKey::injectionStreamString() ) << ": Invalid injection stream",
-                   InputError );
   }
 }
 

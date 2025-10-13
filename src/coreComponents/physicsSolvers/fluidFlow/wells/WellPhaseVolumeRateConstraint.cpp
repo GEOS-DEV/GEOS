@@ -14,11 +14,11 @@
  */
 
 /*
- * @file WellConstraint.cpp
+ * @file WellPhaseVolumeRateConstraint.cpp
  */
 
 #include "LogLevelsInfo.hpp"
-#include "WellPhaseRateConstraints.hpp"
+#include "WellPhaseVolumeRateConstraint.hpp"
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
@@ -30,9 +30,8 @@ namespace geos
 using namespace dataRepository;
 
 
-template< typename WellConstraintType >
-PhaseConstraint< WellConstraintType >::PhaseConstraint( string const & name, Group * const parent )
-  : WellConstraintType( name, parent )
+PhaseVolumeRateConstraint::PhaseVolumeRateConstraint( string const & name, Group * const parent )
+  : WellConstraintBase( name, parent )
 {
   this->setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -50,34 +49,40 @@ PhaseConstraint< WellConstraintType >::PhaseConstraint( string const & name, Gro
     setDescription( "Name of the target phase" );
 }
 
-template< typename WellConstraintType >
-PhaseConstraint< WellConstraintType >::~PhaseConstraint()
+PhaseVolumeRateConstraint::~PhaseVolumeRateConstraint()
 {}
 
-template< typename WellConstraintType >
-void PhaseConstraint< WellConstraintType >::postInputInitialization()
+void PhaseVolumeRateConstraint::postInputInitialization()
 {
-  // Validate value and table options
-  WellConstraintType::postInputInitialization();
+  // Validate table options
+  WellConstraintBase::postInputInitialization();
+
+  // check constraint value
+  GEOS_THROW_IF( m_constraintValue < 0,
+                 getWrapperDataContext( viewKeyStruct::phaseRateString() ) << ": Target value is negative",
+                 InputError );
+
+
+  GEOS_THROW_IF  ((m_constraintValue <= 0.0 && m_constraintScheduleTableName.empty()),
+                  getName() << " " << getDataContext() << ": You need to specify a phase rate constraint. \n" <<
+                  "The  rate constraint can be specified using " <<
+                  "either " <<  viewKeyStruct::phaseRateString() <<
+                  " or " <<  WellConstraintBase::viewKeyStruct::constraintScheduleTableNameString(),
+                  InputError );
 }
 
-template< typename WellConstraintType >
-bool PhaseConstraint< WellConstraintType >::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
+bool PhaseVolumeRateConstraint::checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const
 {
-  return this->isViolated( currentConstraint.phaseVolumeRates()[this->m_phaseIndex], this->getConstraintValue( currentTime ));
+  real64 const currentValue = currentConstraint.phaseVolumeRates()[m_phaseIndex];
+  real64 const constraintValue =  getConstraintValue( currentTime );
+  if( m_rateSign < 0.0 )
+  {
+    return currentValue < constraintValue;
+  }
+  else
+  {
+    return currentValue > constraintValue;
+  }
 }
-
-namespace
-{
-
-typedef PhaseConstraint< InjectionConstraint > PhaseInjectionConstraint;
-REGISTER_CATALOG_ENTRY( WellConstraintBase, PhaseInjectionConstraint, string const &, Group * const )
-typedef PhaseConstraint< ProductionConstraint > PhaseProductionConstraint;
-REGISTER_CATALOG_ENTRY( WellConstraintBase, PhaseProductionConstraint, string const &, Group * const )
-
-}
-// Explicit template instantiations to ensure constructors are emitted for registration
-template class PhaseConstraint< InjectionConstraint >;
-template class PhaseConstraint< ProductionConstraint >;
 
 } //namespace geos

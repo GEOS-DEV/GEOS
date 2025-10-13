@@ -128,45 +128,45 @@ Group * WellControls::createChild( string const & childKey, string const & child
   }
   else if( childKey == viewKeyStruct::phaseProductionConstraintString() )
   {
-    PhaseConstraint< ProductionConstraint > & phaseConstraint = registerGroup< PhaseConstraint< ProductionConstraint > >( childName );
+    ProductionConstraint< PhaseVolumeRateConstraint > & phaseConstraint = registerGroup< ProductionConstraint< PhaseVolumeRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &phaseConstraint );
     constraint = &phaseConstraint;
   }
   else if( childKey == viewKeyStruct::phaseInjectionConstraintString() )
   {
 
-    PhaseConstraint< InjectionConstraint > & phaseConstraint = registerGroup< PhaseConstraint< InjectionConstraint > >( childName );
+    InjectionConstraint< PhaseVolumeRateConstraint > & phaseConstraint = registerGroup< InjectionConstraint< PhaseVolumeRateConstraint > >( childName );
     m_injectionRateConstraintList.emplace_back( &phaseConstraint );
     constraint = &phaseConstraint;
   }
   else if( childKey == viewKeyStruct::totalVolProductionConstraintString() )
   {
-    TotalVolConstraint< ProductionConstraint > & volConstraint = registerGroup< TotalVolConstraint< ProductionConstraint > >( childName );
+    ProductionConstraint< VolumeRateConstraint > & volConstraint = registerGroup< ProductionConstraint< VolumeRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &volConstraint );
     constraint = &volConstraint;
   }
   else if( childKey == viewKeyStruct::totalVolInjectionConstraintString() )
   {
-    TotalVolConstraint< InjectionConstraint > & volConstraint = registerGroup< TotalVolConstraint< InjectionConstraint > >( childName );
+    InjectionConstraint< VolumeRateConstraint > & volConstraint = registerGroup< InjectionConstraint< VolumeRateConstraint > >( childName );
     m_injectionRateConstraintList.emplace_back( &volConstraint );
     constraint = &volConstraint;
   }
   else if( childKey == viewKeyStruct::massProductionConstraintString() )
   {
-    MassConstraint< ProductionConstraint > & massConstraint = registerGroup< MassConstraint< ProductionConstraint > >( childName );
+    ProductionConstraint< MassRateConstraint > & massConstraint = registerGroup< ProductionConstraint< MassRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &massConstraint );
     constraint = &massConstraint;
 
   }
   else if( childKey == viewKeyStruct::massInjectionConstraintString() )
   {
-    MassConstraint< InjectionConstraint > & massConstraint = registerGroup< MassConstraint< InjectionConstraint > >( childName );
+    InjectionConstraint< MassRateConstraint > & massConstraint = registerGroup< InjectionConstraint< MassRateConstraint > >( childName );
     m_injectionRateConstraintList.emplace_back( &massConstraint );
     constraint = &massConstraint;
   }
   else if( childKey == viewKeyStruct::liquidProductionConstraintString() )
   {
-    LiquidConstraint< ProductionConstraint > & liquidConstraint = registerGroup< LiquidConstraint< ProductionConstraint > >( childName );
+    ProductionConstraint< LiquidRateConstraint > & liquidConstraint = registerGroup< ProductionConstraint< LiquidRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &liquidConstraint );
     constraint = &liquidConstraint;
   }
@@ -204,21 +204,15 @@ TableFunction * createWellTable( string const & tableName,
 void WellControls::postInputInitialization()
 {
 
-  // 1.c) Set the multiplier for the rates
-  if( isProducer() )
-  {
-    m_rateSign = -1.0;
-  }
-  else
-  {
-    m_rateSign = 1.0;
-  }
-
   // 3) check the flag for surface / reservoir conditions
   GEOS_THROW_IF( m_useSurfaceConditions != 0 && m_useSurfaceConditions != 1,
                  getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) << ": The flag to select surface/reservoir conditions must be equal to 0 or 1",
                  InputError );
 
+  // tjb add more constraint validation
+  // 1) liquid rate - phase names consistent with fluild model
+  // 2) at least one bhp and one rate constraint defined
+  // 3) constraint type and well type compatibility
 
   //GEOS_THROW_IF( ((m_targetMassRate > 0.0 &&  m_useSurfaceConditions==0)),
   //               "WellControls " << getDataContext() << ": Option only valid if useSurfaceConditions set to 1",
@@ -357,4 +351,80 @@ void WellControls::setNextDtFromTable( TableFunction const * table, real64 const
   }
 }
 
+real64 WellControls::getTargetBHP( real64 const & targetTime ) const
+{
+  if( isProducer())
+  {
+    return m_minBHPConstraint->getConstraintValue( targetTime );
+  }
+  return m_maxBHPConstraint->getConstraintValue( targetTime );
+}
+
+
+real64 WellControls::getInjectionTemperature() const
+{
+  real64 injectionTemperature = 0.0;
+  this->forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint > >( [&] ( auto & constraint )
+  {
+    if( constraint.isConstraintActive())
+    {
+      injectionTemperature =  constraint.getInjectionTemperature();
+      return;
+    }
+  } );
+  return injectionTemperature;
+}
+
+
+arrayView1d< real64 const > WellControls::getInjectionStream() const
+{
+  arrayView1d< real64 const > injectionStream;
+  forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint > >( [&] ( auto & constraint )
+  {
+    if( constraint.isConstraintActive() )
+    {
+      injectionStream = constraint.getInjectionStream();
+      return;
+    }
+  } );
+
+  return injectionStream;
+}
+
+integer WellControls::getConstraintPhaseIndex() const
+{
+  integer phaseIndex = -1;
+
+  if( isProducer() )
+  {
+    forProductionConstraints< ProductionConstraint< PhaseVolumeRateConstraint > >( [&] ( auto & constraint )
+    {
+      if( constraint.isConstraintActive() )
+      {
+        phaseIndex = constraint.getPhaseIndex();
+      }
+    } );
+  }
+  else
+  {
+    forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint > >( [&] ( auto & constraint )
+    {
+      if( constraint.isConstraintActive() )
+      {
+        phaseIndex = constraint.getPhaseIndex();
+      }
+    } );
+  }
+
+  return phaseIndex;
+}
+
+real64 WellControls::getReferenceElevation() const
+{
+  if( isProducer () )
+  {
+    return getMinBHPConstraint()->getReferenceElevation();
+  }
+  return getMaxBHPConstraint()->getReferenceElevation();
+}
 } //namespace geos

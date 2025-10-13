@@ -31,11 +31,11 @@ namespace geos
 
 
 /**
- * @class TotalVolConstraint
+ * @class VolumeRateConstraint
  * @brief This class describes a volume rate constraint used to control a well.
  */
-template< typename WellConstraintType >
-class TotalVolConstraint : public WellConstraintType
+
+class VolumeRateConstraint : public WellConstraintBase
 {
 public:
 
@@ -49,40 +49,40 @@ public:
    * @param[in] name the name of this instantiation of WellControls in the repository
    * @param[in] parent the parent group of this instantiation of WellControls
    */
-  explicit TotalVolConstraint( string const & name, dataRepository::Group * const parent );
+  explicit VolumeRateConstraint( string const & name, dataRepository::Group * const parent );
 
 
   /**
    * @brief Default destructor.
    */
-  ~TotalVolConstraint() override;
+  ~VolumeRateConstraint() override;
 
   /**
    * @brief Deleted default constructor.
    */
-  TotalVolConstraint() = delete;
+  VolumeRateConstraint() = delete;
 
   /**
    * @brief Deleted copy constructor.
    */
-  TotalVolConstraint( TotalVolConstraint const & ) = delete;
+  VolumeRateConstraint( VolumeRateConstraint const & ) = delete;
 
   /**
    * @brief Deleted move constructor.
    */
-  TotalVolConstraint( TotalVolConstraint && ) = delete;
+  VolumeRateConstraint( VolumeRateConstraint && ) = delete;
 
   /**
    * @brief Deleted assignment operator.
    * @return a reference to a constraint object
    */
-  TotalVolConstraint & operator=( TotalVolConstraint const & ) = delete;
+  VolumeRateConstraint & operator=( VolumeRateConstraint const & ) = delete;
 
   /**
    * @brief Deleted move operator.
    * @return a reference to a constraint object
    */
-  TotalVolConstraint & operator=( TotalVolConstraint && ) = delete;
+  VolumeRateConstraint & operator=( VolumeRateConstraint && ) = delete;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -90,14 +90,7 @@ public:
    */
   static string catalogName()
   {
-    if constexpr ( std::is_same_v< WellConstraintType, InjectionConstraint > )    // special case
-    {
-      return "TotalVolInjectionConstraint";
-    }
-    else   // default
-    {
-      return "TotalVolProductionConstraint";
-    }
+    return "VolumeRateConstraint";
   }
   ///@}
   /**

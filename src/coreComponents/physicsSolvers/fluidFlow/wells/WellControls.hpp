@@ -26,11 +26,13 @@
 #include "functions/TableFunction.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 
+#include "physicsSolvers/fluidFlow/wells/WellInjectionConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellProductionConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellTotalVolRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 namespace geos
@@ -141,7 +143,112 @@ public:
 
   virtual void expandObjectCatalogs() override;
 
+  /**
+   * @brief Apply a given functor to a container if the container can be
+   *        cast to one of the specified types.
+   * @tparam CASTTYPE      the first type that will be used in the attempted casting of container
+   * @tparam CASTTYPES     a variadic list of types that will be used in the attempted casting of container
+   * @tparam CONTAINERTYPE the type of container
+   * @tparam LAMBDA        the type of lambda function to call in the function
+   * @param[in] container  a pointer to the container which will be passed to the lambda function
+   * @param[in] lambda     the lambda function to call in the function
+   * @return               a boolean to indicate whether the lambda was successfully applied to the container.
+   */
+  template< typename T0, typename T1, typename ... CASTTYPES, typename CONTAINERTYPE, typename LAMBDA >
+  static bool applyLambdaToContainer( CONTAINERTYPE container, LAMBDA && lambda )
+  {
+    using Pointee = std::remove_pointer_t< std::remove_reference_t< CONTAINERTYPE > >;
+    using T = std::conditional_t< std::is_const< Pointee >::value, T0 const, T0 >;
+    T * const castedContainer = dynamic_cast< T * >( container );
 
+    if( castedContainer != nullptr )
+    {
+      lambda( *castedContainer );
+      return true;
+    }
+
+    return applyLambdaToContainer< T1, CASTTYPES... >( container, std::forward< LAMBDA >( lambda ) );
+  }
+
+  // Base case: no more types to try
+  template< typename CONTAINERTYPE, typename LAMBDA >
+  static bool applyLambdaToContainer( CONTAINERTYPE /*container*/, LAMBDA && /*lambda*/ )
+  {
+    return false;
+  }
+
+  // Single-type overload: try only T0 and stop
+  template< typename T0, typename CONTAINERTYPE, typename LAMBDA >
+  static bool applyLambdaToContainer( CONTAINERTYPE container, LAMBDA && lambda )
+  {
+    using Pointee = std::remove_pointer_t< std::remove_reference_t< CONTAINERTYPE > >;
+    using T = std::conditional_t< std::is_const< Pointee >::value, T0 const, T0 >;
+    T * const castedContainer = dynamic_cast< T * >( container );
+
+    if( castedContainer != nullptr )
+    {
+      lambda( *castedContainer );
+      return true;
+    }
+
+    return false;
+  }
+
+
+  /**
+   * @copydoc forInjectionConstraints(LAMBDA &&)
+   */
+  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
+  void forInjectionConstraints( LAMBDA && lambda ) const
+  {
+    for( auto const * constraintIter : m_injectionRateConstraintList )
+    {
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( constraintIter, [&]( auto const & castedSubGroup )
+      {
+        lambda( castedSubGroup );
+      } );
+    }
+  }
+
+  // non-const overload
+  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
+  void forInjectionConstraints( LAMBDA && lambda )
+  {
+    for( auto * constraintIter : m_injectionRateConstraintList )
+    {
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( constraintIter, [&]( auto & castedSubGroup )
+      {
+        lambda( castedSubGroup );
+      } );
+    }
+  }
+  /**
+   * @copydoc forProductionConstraints(LAMBDA &&)
+   */
+  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
+  void forProductionConstraints( LAMBDA && lambda ) const
+  {
+    for( auto const * constraintIter : m_productionRateConstraintList )
+    {
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( constraintIter, [&]( auto const & castedSubGroup )
+      {
+        lambda( castedSubGroup );
+      } );
+    }
+  }
+
+  // non-const overload
+  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
+  void forProductionConstraints( LAMBDA && lambda )
+  {
+    for( auto * constraintIter : m_productionRateConstraintList )
+    {
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( constraintIter, [&]( auto & castedSubGroup )
+      {
+        lambda( castedSubGroup );
+      } );
+    }
+  }
   /**
    * @name Getters / Setters
    */
@@ -177,57 +284,34 @@ public:
    * @param[in] targetTime time at which to evaluate the constraint
    * @return the injector maximum bottom hole pressure or producer minimum bottom hole pressure
    */
-  real64 getTargetBHP( real64 const & targetTime ) const
-  {
-    if( isProducer())
-    {
-      return m_minBHPConstraint->getConstraintValue( targetTime );
-    }
-    return m_maxBHPConstraint->getConstraintValue( targetTime );
-  }
+  real64 getTargetBHP( real64 const & targetTime ) const;
+
 
   /**
    * @brief Const accessor for the temperature of the injection stream
    * @return the temperature of the injection stream
    */
-  real64 getInjectionTemperature() const
-  {
-    real64 injectionTemperature = 0.0;
-    for( auto c : m_injectionRateConstraintList )
-      if( c->isConstraintActive())
-      {
-        injectionTemperature =  dynamic_cast< InjectionConstraint * >(c)->getInjectionTemperature();
-        break;
-      }
-    return injectionTemperature;
-  }
+  real64 getInjectionTemperature() const;
+
   /**
    * @brief Const accessor for the  injection stream
    * @return the injection stream
    */
-  arrayView1d< real64 const > getInjectionStream() const
-  {
-    arrayView1d< real64 const > injectionStream;
-    for( auto c : m_injectionRateConstraintList )
-      if( c->isConstraintActive())
-      {
-        injectionStream =  dynamic_cast< InjectionConstraint * >(c)->getInjectionStream();
-        break;
-      }
-    return injectionStream;
-  }
+  arrayView1d< real64 const > getInjectionStream() const;
+
+
+  /**
+   * @brief Const accessor for the phase constraint index
+   * @return phase index associated with phase constraint
+   */
+  integer getConstraintPhaseIndex() const;
+
   /**
    * @brief Return the reference elvation where pressure constraint is measured
    * @return  vertical location of constraint
    */
-  real64 getReferenceElevation() const
-  {
-    if( isProducer () )
-    {
-      return getMinBHPConstraint()->getReferenceElevation();
-    }
-    return getMaxBHPConstraint()->getReferenceElevation();
-  }
+  real64 getReferenceElevation() const;
+
 
   /**
    * @brief Getter for the flag specifying whether we check rates at surface or reservoir conditions
@@ -525,11 +609,15 @@ private:
 
 };
 
-ENUM_STRINGS( WellControls::Type,
+
+// Use local aliases to avoid accidental macro expansion of the tokens 'Type' or 'Control'
+using WellControls_Type = WellControls::Type;
+ENUM_STRINGS( WellControls_Type,
               "producer",
               "injector" );
 
-ENUM_STRINGS( WellControls::Control,
+using WellControls_Control = WellControls::Control;
+ENUM_STRINGS( WellControls_Control,
               "BHP",
               "phaseVolRate",
               "totalVolRate",

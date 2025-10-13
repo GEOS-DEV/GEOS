@@ -14,15 +14,15 @@
  */
 
 /*
- * @file WellLiquidRateConstraints.hpp
+ * @file WellLiquidRateConstraint.hpp
  */
 
 
-#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLLIQUIDRATECONSTRAINTS_HPP
-#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLLIQUIDRATECONSTRAINTS_HPP
+#ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLLIQUIDRATECONSTRAINT_HPP
+#define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLLIQUIDRATECONSTRAINT_HPP
 
 #include "common/format/EnumStrings.hpp"
-#include "dataRepository/Group.hpp"
+
 #include "functions/TableFunction.hpp"
 #include "WellConstraintsBase.hpp"
 
@@ -31,12 +31,12 @@ namespace geos
 
 
 /**
- * @class LiquidConstraint
+ * @class LiquidRateConstraint
  * @brief This class describes a Liquid rate constraint used to control of type WellConstraintType
  */
 
-template< typename WellConstraintType >
-class LiquidConstraint : public WellConstraintType
+
+class LiquidRateConstraint : public WellConstraintBase
 {
 public:
 
@@ -51,40 +51,40 @@ public:
    * @param[in] name the name of this instantiation of WellControls in the repository
    * @param[in] parent the parent group of this instantiation of WellControls
    */
-  explicit LiquidConstraint( string const & name, dataRepository::Group * const parent );
+  explicit LiquidRateConstraint( string const & name, dataRepository::Group * const parent );
 
 
   /**
    * @brief Default destructor.
    */
-  ~LiquidConstraint() override;
+  ~LiquidRateConstraint() override;
 
   /**
    * @brief Deleted default constructor.
    */
-  LiquidConstraint() = delete;
+  LiquidRateConstraint() = delete;
 
   /**
    * @brief Deleted copy constructor.
    */
-  LiquidConstraint( LiquidConstraint const & ) = delete;
+  LiquidRateConstraint( LiquidRateConstraint const & ) = delete;
 
   /**
    * @brief Deleted move constructor.
    */
-  LiquidConstraint( LiquidConstraint && ) = delete;
+  LiquidRateConstraint( LiquidRateConstraint && ) = delete;
 
   /**
    * @brief Deleted assignment operator.
    * @return a reference to a constraint object
    */
-  LiquidConstraint & operator=( LiquidConstraint const & ) = delete;
+  LiquidRateConstraint & operator=( LiquidRateConstraint const & ) = delete;
 
   /**
    * @brief Deleted move operator.
    * @return a reference to a constraint object
    */
-  LiquidConstraint & operator=( LiquidConstraint && ) = delete;
+  LiquidRateConstraint & operator=( LiquidRateConstraint && ) = delete;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -92,14 +92,7 @@ public:
    */
   static string catalogName()
   {
-    if constexpr ( std::is_same_v< WellConstraintType, InjectionConstraint > )    // special case
-    {
-      return "LiquidInjectionConstraint";
-    }
-    else   // default
-    {
-      return "LiquidProductionConstraint";
-    }
+    return "LiquidRateConstraint";
   }
   ///@}
 
@@ -174,4 +167,4 @@ protected:
 
 } //namespace geos
 
-#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONSTRAINT_HPP
+#endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLLiquidRateConstraint_HPP

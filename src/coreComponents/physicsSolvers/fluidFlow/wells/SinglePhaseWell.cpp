@@ -407,6 +407,7 @@ void SinglePhaseWell::updateSeparator( WellElementSubRegion & subRegion )
     geos::internal::kernelLaunchSelectorThermalSwitch( isThermal(), [&] ( auto ISTHERMAL )
     {
       integer constexpr IS_THERMAL = ISTHERMAL();
+      GEOS_UNUSED_VAR(IS_THERMAL);
       // bring everything back to host, capture the scalars by reference
       forAll< serialPolicy >( 1, [fluidSeparatorWrapper,
                                   pres,
@@ -532,7 +533,7 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
       {
         // tjb needed for backward compatibility
         //wellControls.forSubGroups< MaximumBHPConstraint >( [&]( auto & constraint )
-        wellControls.forSubGroups< TotalVolConstraint< InjectionConstraint > >( [&]( auto & constraint )
+        wellControls.forSubGroups< InjectionConstraint< VolumeRateConstraint > >( [&]( auto & constraint )
         {
           wellControls.setCurrentConstraint( &constraint );
           wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );   // tjb old
@@ -871,8 +872,8 @@ void SinglePhaseWell::assembleWellConstraintTerms( real64 const & time_n,
   WellControls & wellControls = getWellControls( subRegion );
 
   {
-    // tjb wellControls.forSubGroups< BHPConstraint, MassConstraint, TotalVolConstraint >( [&]( auto & constraint )
-    wellControls.forSubGroups< BHPConstraint, TotalVolConstraint< InjectionConstraint >, TotalVolConstraint< ProductionConstraint > >( [&]( auto & constraint )
+    // tjb wellControls.forSubGroups< BHPConstraint, MassConstraint, VolumeRateConstraint >( [&]( auto & constraint )
+    wellControls.forSubGroups< BHPConstraint, InjectionConstraint< VolumeRateConstraint >, ProductionConstraint< VolumeRateConstraint > >( [&]( auto & constraint )
     {
       if( constraint.getName() == wellControls.getCurrentConstraint()->getName())
       {

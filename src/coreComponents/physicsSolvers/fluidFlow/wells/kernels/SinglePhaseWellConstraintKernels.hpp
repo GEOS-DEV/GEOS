@@ -27,10 +27,9 @@
 
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellTotalVolRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraints.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
+
+
 namespace geos
 {
 
@@ -112,10 +111,10 @@ struct ConstraintHelper
                                                               dControlEqn,
                                                               COFFSET_WJ::nDer );
   }
-  template< typename T >
+  template< template< typename U > class T, typename U=VolumeRateConstraint >
   static void assembleConstraintEquation( real64 const & time_n,
                                           WellControls & wellControls,
-                                          TotalVolConstraint< T > & constraint,
+                                          T< VolumeRateConstraint > & constraint,
                                           WellElementSubRegion const & subRegion,
                                           string const & wellDofKey,
                                           localIndex const & rankOffset,

@@ -14,7 +14,7 @@
  */
 
 /*
- * @file WellControls.hpp
+ * @file WellBHPConstraints.hpp
  */
 
 

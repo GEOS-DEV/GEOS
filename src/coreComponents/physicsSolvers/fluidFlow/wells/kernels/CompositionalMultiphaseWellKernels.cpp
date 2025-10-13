@@ -650,7 +650,7 @@ RateInitializationKernel::
     ConstraintTypeId const controlType = constraints[0]->getControl();
     if( controlType == ConstraintTypeId::PHASEVOLRATE )
     {
-      integer const targetPhaseIndex = dynamic_cast< const PhaseConstraint< ProductionConstraint > * >( constraints[0] )->getPhaseIndex();
+      integer const targetPhaseIndex = wellControls.getConstraintPhaseIndex();
 
       forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
       {
@@ -680,7 +680,7 @@ RateInitializationKernel::
     ConstraintTypeId const controlType = constraints[0]->getControl();
     if( controlType == ConstraintTypeId::PHASEVOLRATE )
     {
-      integer const targetPhaseIndex = dynamic_cast< const PhaseConstraint< InjectionConstraint > * >( constraints[0] )->getPhaseIndex();
+      integer const targetPhaseIndex =   wellControls.getConstraintPhaseIndex();
 
       forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
       {

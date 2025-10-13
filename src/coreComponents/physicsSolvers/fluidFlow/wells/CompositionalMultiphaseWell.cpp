@@ -52,11 +52,11 @@
 
 #include "physicsSolvers/fluidFlow/wells/WellBHPConstraints.hpp"
 
-#include "physicsSolvers/fluidFlow/wells/WellTotalVolRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellPhaseRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraints.hpp"
-#include "physicsSolvers/fluidFlow/wells/kernels/WellConstraintKernels.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellVolumeRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/kernels/CompositionalMultiphaseWellConstraintKernels.hpp"
 
 
 
@@ -445,7 +445,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
   // tjb
-  wellControls.forSubGroups< PhaseConstraint< InjectionConstraint >, PhaseConstraint< ProductionConstraint > >( [&]( auto & constraint )
+  wellControls.forSubGroups< InjectionConstraint< PhaseVolumeRateConstraint >, ProductionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
   {
     constraint.validatePhaseType( fluid );
   } );
@@ -1117,7 +1117,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
       {
         // tjb needed for backward compatibility
         //wellControls.forSubGroups< MaximumBHPConstraint >( [&]( auto & constraint )
-        wellControls.forSubGroups< TotalVolConstraint< InjectionConstraint > >( [&]( auto & constraint )
+        wellControls.forSubGroups< InjectionConstraint< VolumeRateConstraint > >( [&]( auto & constraint )
         {
           wellControls.setCurrentConstraint( &constraint );
           wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );   // tjb old
@@ -2500,37 +2500,69 @@ void CompositionalMultiphaseWell::assembleWellConstraintTerms( real64 const & ti
   }
   WellControls & wellControls = getWellControls( subRegion );
 
-
-  wellControls.forSubGroups< MinimumBHPConstraint, PhaseConstraint< ProductionConstraint >, MassConstraint< ProductionConstraint >, TotalVolConstraint< ProductionConstraint >,
-                             LiquidConstraint< ProductionConstraint >, MaximumBHPConstraint, PhaseConstraint< InjectionConstraint >, MassConstraint< InjectionConstraint >,
-                             TotalVolConstraint< InjectionConstraint >,
-                             LiquidConstraint< InjectionConstraint >
-                             >( [&]( auto & constraint )
+  if( wellControls.isProducer() )
   {
-    if( constraint.getName() == wellControls.getCurrentConstraint()->getName())
+    wellControls.forSubGroups< MinimumBHPConstraint, ProductionConstraint< PhaseVolumeRateConstraint >, ProductionConstraint< MassRateConstraint >, ProductionConstraint< VolumeRateConstraint >,
+                               ProductionConstraint< LiquidRateConstraint >
+                               >( [&]( auto & constraint )
     {
-      // found limiting constraint
-
-      // fluid data
-      constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
-      integer isThermal = fluidSeparator.isThermal();
-      integer const numComp = fluidSeparator.numFluidComponents();
-      geos::internal::kernelLaunchSelectorCompThermSwitch( numComp, isThermal, [&] ( auto NC, auto ISTHERMAL )
+      if( constraint.getName() == wellControls.getCurrentConstraint()->getName())
       {
-        integer constexpr NUM_COMP = NC();
-        integer constexpr IS_THERMAL = ISTHERMAL();
+        // found limiting constraint
 
-        wellConstraintKernels::ConstraintHelper< NUM_COMP, IS_THERMAL >::assembleConstraintEquation( time_n,
-                                                                                                     wellControls,
-                                                                                                     constraint,
-                                                                                                     subRegion,
-                                                                                                     dofManager.getKey( wellElementDofName() ),
-                                                                                                     dofManager.rankOffset(),
-                                                                                                     localMatrix,
-                                                                                                     localRhs );
-      } );
-    }
-  } );
+        // fluid data
+        constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
+        integer isThermal = fluidSeparator.isThermal();
+        integer const numComp = fluidSeparator.numFluidComponents();
+        geos::internal::kernelLaunchSelectorCompThermSwitch( numComp, isThermal, [&] ( auto NC, auto ISTHERMAL )
+        {
+          integer constexpr NUM_COMP = NC();
+          integer constexpr IS_THERMAL = ISTHERMAL();
+
+          wellConstraintKernels::ConstraintHelper< NUM_COMP, IS_THERMAL >::assembleConstraintEquation( time_n,
+                                                                                                       wellControls,
+                                                                                                       constraint,
+                                                                                                       subRegion,
+                                                                                                       dofManager.getKey( wellElementDofName() ),
+                                                                                                       dofManager.rankOffset(),
+                                                                                                       localMatrix,
+                                                                                                       localRhs );
+        } );
+      }
+    } );
+  }
+  else
+  {
+    wellControls.forSubGroups< MaximumBHPConstraint, InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< MassRateConstraint >,
+                               InjectionConstraint< VolumeRateConstraint >,
+                               InjectionConstraint< LiquidRateConstraint >
+                               >( [&]( auto & constraint )
+    {
+      if( constraint.getName() == wellControls.getCurrentConstraint()->getName())
+      {
+        // found limiting constraint
+
+        // fluid data
+        constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
+        integer isThermal = fluidSeparator.isThermal();
+        integer const numComp = fluidSeparator.numFluidComponents();
+        geos::internal::kernelLaunchSelectorCompThermSwitch( numComp, isThermal, [&] ( auto NC, auto ISTHERMAL )
+        {
+          integer constexpr NUM_COMP = NC();
+          integer constexpr IS_THERMAL = ISTHERMAL();
+
+          wellConstraintKernels::ConstraintHelper< NUM_COMP, IS_THERMAL >::assembleConstraintEquation( time_n,
+                                                                                                       wellControls,
+                                                                                                       constraint,
+                                                                                                       subRegion,
+                                                                                                       dofManager.getKey( wellElementDofName() ),
+                                                                                                       dofManager.rankOffset(),
+                                                                                                       localMatrix,
+                                                                                                       localRhs );
+        } );
+      }
+    } );
+  }
 }
 
 void CompositionalMultiphaseWell::assembleWellPressureRelations( real64 const & GEOS_UNUSED_PARAM( time_n ),
