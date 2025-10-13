@@ -71,13 +71,6 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "For multi-block files, names of the face mesh block." );
 
-  registerWrapper( viewKeyStruct::partitionRefinementString(), &m_partitionRefinement ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 1 ).
-    setDescription( "Number of partitioning refinement iterations (defaults to 1, recommended value)."
-                    "A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). "
-                    "Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns." );
-
   registerWrapper( viewKeyStruct::partitionMethodString(), &m_partitionMethod ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Method (library) used to partition the mesh" );

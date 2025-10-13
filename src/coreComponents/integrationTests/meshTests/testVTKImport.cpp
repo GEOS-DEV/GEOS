@@ -65,7 +65,6 @@ void TestMeshImport( string const & meshFilePath, V const & validate, string con
       <VTKMesh
         name="mesh"
         file="{}"
-        partitionRefinement="0"
         useGlobalIds="0"
         {} />
     </Mesh>

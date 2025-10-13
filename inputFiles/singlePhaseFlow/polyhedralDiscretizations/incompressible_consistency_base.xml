@@ -1,32 +1,35 @@
-<?xml version="1.0" ?>
+<?xml version="1.0"?>
 
 <Problem>
+
+  <Partitioner>
+    <CellGraphPartitioner name="partitioner" engine="noop" />
+  </Partitioner>
 
   <Mesh>
     <VTKMesh
       name="mesh"
-      logLevel="5"  
-      partitionRefinement="0"
+      logLevel="5"
       useGlobalIds="0"
-      file="polyhedral_voronoi_lattice.vtu"/>
+      file="polyhedral_voronoi_lattice.vtu" />
   </Mesh>
 
   <Geometry>
-      <Box
+    <Box
       name="westBC"
       xMin="{ -0.001, 0.0, 0.0}"
-      xMax="{ +0.001, 1.0, 1.0}"/>
-      <Box
+      xMax="{ +0.001, 1.0, 1.0}" />
+    <Box
       name="eastBC"
       xMin="{ +0.999, 0.0, 0.0}"
-      xMax="{ +1.001, 1.0, 1.0}"/>
+      xMax="{ +1.001, 1.0, 1.0}" />
   </Geometry>
 
   <ElementRegions>
     <CellElementRegion
       name="Domain"
       cellBlocks="{ * }"
-      materialList="{rock, fluid }"/>
+      materialList="{rock, fluid }" />
   </ElementRegions>
 
   <Solvers gravityVector="{ 0.0, 0.0, 0.0}"> </Solvers>
@@ -42,26 +45,26 @@
       referencePressure="0.0"
       compressibility="0.0"
       viscosibility="0.0"
-      densityModelType="linear"/>
+      densityModelType="linear" />
 
     <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPerm" />
 
     <NullModel
-      name="nullSolid"/>
+      name="nullSolid" />
 
     <PressurePorosity
       name="rockPorosity"
       defaultReferencePorosity="0.1"
       referencePressure="0.0"
-      compressibility="0.0"/>
+      compressibility="0.0" />
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }" />
 
   </Constitutive>
 
@@ -72,7 +75,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Domain"
       fieldName="pressure"
-      scale="1.0e7"/>    
+      scale="1.0e7" />
   </FieldSpecifications>
-  
+
 </Problem>

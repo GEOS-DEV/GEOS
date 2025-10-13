@@ -1151,7 +1151,7 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
   }
 
   GEOS_WARNING_IF( donorRanks.size() < recipientRanks.size(),
-                   "We strongly encourage the use of partitionRefinement > 5 for this number of MPI ranks" );
+                   "We strongly encourage the use of partitioner numRefinements > 4 for this number of MPI ranks" );
 
   vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( mesh, numProcs, newParts.toViewConst() );
   return vtk::redistribute( *splitMesh, MPI_COMM_GEOS );
@@ -2307,7 +2307,7 @@ void writeNodes( integer const logLevel,
     //       and make launch policy parallel again
     GEOS_ERROR_IF( nodeGlobalIds.count( pointGlobalID ) > 0,
                    GEOS_FMT( "At least one duplicate point detected (globalID = {}).\n"
-                             "Potential fixes :\n- Make sure partitionRefinement is set to 1 or higher.\n"
+                             "Potential fixes :\n- Make sure a partitioner such as ParMetis is used.\n"
                              "- {}",
                              pointGlobalID, generalMeshErrorAdvice ) );
     nodeGlobalIds.insert( pointGlobalID );

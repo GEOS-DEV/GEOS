@@ -123,7 +123,6 @@ private:
     constexpr static char const * mainBlockNameString() { return "mainBlockName"; }
     constexpr static char const * faceBlockNamesString() { return "faceBlocks"; }
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
-    constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
     constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
     constexpr static char const * dataSourceString() { return "dataSourceName"; }
@@ -169,9 +168,6 @@ private:
 
   /// Names of VTK nodesets to import
   string_array m_nodesetNames;
-
-  /// Number of graph partitioning refinement iterations
-  integer m_partitionRefinement = 0;
 
   /// Whether global id arrays should be used, if available
   integer m_useGlobalIds = 0;

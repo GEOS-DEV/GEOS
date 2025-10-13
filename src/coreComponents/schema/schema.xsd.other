@@ -517,7 +517,7 @@
 		<!--fractureStencil => (no description available)-->
 		<xsd:attribute name="fractureStencil" type="geos_SurfaceElementStencil" />
 		<!--targetRegions => List of regions to build the stencil for-->
-		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-geos_internal_StdVectorWrapper_lt_string_cm_-std_allocator_lt_string-_gt__cm_-false_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
+		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-geos_internal_StdVectorWrapper_lt_string_cm_-std_allocator_lt_string-_gt__cm_-true_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -550,17 +550,13 @@
 	<xsd:complexType name="ParameterType" />
 	<xsd:complexType name="PartitionerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="Cartesian" type="CartesianType" />
-			<xsd:element name="NoOp" type="NoOpType" />
-			<xsd:element name="PTScotch" type="PTScotchType" />
-			<xsd:element name="ParMetis" type="ParMetisType" />
+			<xsd:element name="CartesianPartitioner" type="CartesianPartitionerType" />
+			<xsd:element name="CellGraphPartitioner" type="CellGraphPartitionerType" />
 			<xsd:element name="ParticleCartesian" type="ParticleCartesianType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="CartesianType" />
-	<xsd:complexType name="NoOpType" />
-	<xsd:complexType name="PTScotchType" />
-	<xsd:complexType name="ParMetisType" />
+	<xsd:complexType name="CartesianPartitionerType" />
+	<xsd:complexType name="CellGraphPartitionerType" />
 	<xsd:complexType name="ParticleCartesianType" />
 	<xsd:complexType name="SolversType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1517,7 +1513,7 @@
 			<xsd:element name="MeshBodies" type="MeshBodiesType" />
 		</xsd:choice>
 		<!--Neighbors => (no description available)-->
-		<xsd:attribute name="Neighbors" type="geos_internal_StdVectorWrapper_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt__cm_-false_gt_" />
+		<xsd:attribute name="Neighbors" type="geos_internal_StdVectorWrapper_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt__cm_-true_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

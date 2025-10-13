@@ -102,12 +102,16 @@ static constexpr auto BdVLM     = "beiraoDaVeigaLipnikovManzini";
 std::string generateXmlInputTPFA( std::string const & meshFile )
 {
   std::ostringstream oss;
-  oss << R"xml(
+  oss <<
+    R"xml(
   <Problem>
+    <Partitioner>
+      <CellGraphPartitioner name="partitioner" engine="noop"/>
+    </Partitioner>
+
     <Mesh>
       <VTKMesh
         name="mesh"  
-        partitionRefinement="0"
         useGlobalIds="0"
         file=")xml" << meshFile <<
     R"xml("/>
@@ -256,14 +260,17 @@ std::string generateXmlInputMFD( std::string const & innerProductType,
                                  std::string const & meshFile )
 {
   std::ostringstream oss;
-  oss << R"xml(
+  oss <<
+    R"xml(
   <Problem>
+  <Partitioner>
+    <CellGraphPartitioner name="partitioner" engine="noop"/>
+  </Partitioner>
 
   <Mesh>
     <VTKMesh
       name="mesh"
       logLevel="5"  
-      partitionRefinement="0"
       useGlobalIds="0"
       file=")xml" << meshFile <<
     R"xml("/>
