@@ -92,8 +92,12 @@
         "CellElementSubRegion"
       ],
       "CONSTITUTIVE_TYPE": [
-        "PorousSolid<ElasticIsotropic>",
-        "PorousSolid<ModifiedCamClay>"
+        "PorousSolid<ElasticIsotropic, ConstantPermeability>",
+        "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>",
+        "PorousSolid<ModifiedCamClay, ConstantPermeability>",
+        "PorousSolid<ModifiedCamClay, CarmanKozenyPermeability>",
+        "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, ConstantPermeability>",
+        "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, CarmanKozenyPermeability>"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",
@@ -129,7 +133,8 @@
         "CellElementSubRegion"
       ],
       "CONSTITUTIVE_TYPE": [
-        "PorousSolid<ElasticIsotropic>"
+        "PorousSolid<ElasticIsotropic, ConstantPermeability>",
+        "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",

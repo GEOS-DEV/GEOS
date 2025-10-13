@@ -128,14 +128,6 @@ void CompositionalMultiphaseFVM::postInputInitialization()
 {
   CompositionalMultiphaseBase::postInputInitialization();
 
-  if( m_scalingType == ScalingType::Local &&
-      m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None )
-  {
-    GEOS_ERROR( GEOS_FMT( "{}: line search is not supported for {} = {}",
-                          getName(), viewKeyStruct::scalingTypeString(),
-                          EnumStrings< ScalingType >::toString( ScalingType::Local )) );
-  }
-
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
     string const formulationName = EnumStrings< CompositionalMultiphaseFormulationType >::toString( CompositionalMultiphaseFormulationType::OverallComposition );
@@ -193,6 +185,14 @@ void CompositionalMultiphaseFVM::registerDataForCFL( Group & meshBodies )
 void CompositionalMultiphaseFVM::initializePreSubGroups()
 {
   CompositionalMultiphaseBase::initializePreSubGroups();
+
+  if( m_scalingType == ScalingType::Local &&
+      m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None )
+  {
+    GEOS_ERROR( GEOS_FMT( "{}: line search is not supported for {} = {}",
+                          getName(), viewKeyStruct::scalingTypeString(),
+                          EnumStrings< ScalingType >::toString( ScalingType::Local )) );
+  }
 
   m_linearSolverParameters.get().mgr.strategy = m_isThermal
                                                 ? LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM
@@ -572,7 +572,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1]  + globalResidualNorm[2] * globalResidualNorm[2] );
 
-    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence,
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
                                GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
                                          globalResidualNorm[0], globalResidualNorm[1], globalResidualNorm[2] ));
 
@@ -616,7 +616,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
   else
   {
     string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-    real64 scalingFactor = 1.0;
+    real64 scalingFactor = CompositionalMultiphaseBase::scalingForSystemSolution( domain, dofManager, localSolution );
     real64 minPresScalingFactor = 1.0, minCompDensScalingFactor = 1.0, minTempScalingFactor = 1.0;
 
     stdVector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaPresMaxLoc;

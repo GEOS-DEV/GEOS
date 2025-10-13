@@ -34,10 +34,6 @@ DamageSpectral< BASE >::DamageSpectral( string const & name, Group * const paren
   Damage< BASE >( name, parent )
 {}
 
-template< typename BASE >
-DamageSpectral< BASE >::~DamageSpectral()
-{}
-
 typedef DamageSpectral< ElasticIsotropic > DamageSpectralElasticIsotropic;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, DamageSpectralElasticIsotropic, string const &, Group * const )

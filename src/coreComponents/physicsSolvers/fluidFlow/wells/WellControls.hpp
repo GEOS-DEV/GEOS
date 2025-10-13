@@ -24,6 +24,7 @@
 #include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "functions/TableFunction.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 
 namespace geos
 {
@@ -53,6 +54,14 @@ public:
     INJECTOR   /**< An injection well */
   };
 
+  /** Status of wells
+   * Either open or closed
+   */
+  enum class Status : integer
+  {
+    OPEN,  /**< flowing well */
+    CLOSED   /**< shutin well */
+  };
 
   /** Types of well controls
    * Used to specifiy a well's operating conditions
@@ -270,11 +279,10 @@ public:
   bool isProducer() const { return ( m_type == Type::PRODUCER ); }
 
   /**
-   * @brief Is the well open (or shut) at @p currentTime?
-   * @param[in] currentTime the current time
+   * @brief Is the well open (or shut) at currentTime, status initalized in WellSolverBase::implicitStepSetup
    * @return a boolean
    */
-  bool isWellOpen( real64 const & currentTime ) const;
+  bool isWellOpen() const;
 
   /**
    * @brief Getter for the flag to enable crossflow
@@ -293,7 +301,18 @@ public:
    * @param[in] currentTime the current time
    * @param[inout] nextDt the time step
    */
-  void setNextDtFromTables( real64 const currentTime, real64 & nextDt );
+  void setNextDtFromTables( real64 const & currentTime, real64 & nextDt );
+
+  /**
+   * @brief setter for multi fluid separator
+   * @param[in] fluidSeparatorPtr single or multiphase separator
+   */
+  void setFluidSeparator( std::unique_ptr< constitutive::ConstitutiveBase > fluidSeparatorPtr )  {  m_fluidSeparatorPtr = std::move( fluidSeparatorPtr );}
+  /**
+   * @brief Getter for multi fluid separator
+   * @return reference to separator
+   */
+  constitutive::MultiFluidBase & getMultiFluidSeparator()  { return dynamicCast< constitutive::MultiFluidBase & >( *m_fluidSeparatorPtr ); }
 
   /**
    * @brief Getter for the reservoir average pressure when m_useSurfaceConditions == 0
@@ -319,6 +338,18 @@ public:
    */
   void setRegionAverageTemperature( real64 regionAverageTemperature ) { m_regionAverageTemperature = regionAverageTemperature; }
 
+  /**
+   * @brief Set well status from time and internal action, eg. all perfs closed
+   * @param[in] currentTime the current time
+   * @param[in] status
+   */
+  void setWellStatus ( real64 const & currentTime, WellControls::Status status );
+
+  /**
+   * @brief Is the well open (or shut) based on internal action
+   * @return a Status
+   */
+  WellControls::Status getWellStatus () const { return m_wellStatus; }
   ///@}
 
   /**
@@ -367,6 +398,8 @@ public:
     static constexpr char const * targetBHPTableNameString() { return "targetBHPTableName"; }
     /// string key for status table name
     static constexpr char const * statusTableNameString() { return "statusTableName"; }
+    /// string key for perforation status table name
+    static constexpr char const * perfStatusTableNameString() { return "perfStatusTableName"; }
     /// string key for the crossflow flag
     static constexpr char const * enableCrossflowString() { return "enableCrossflow"; }
     /// string key for the initial pressure coefficient
@@ -376,11 +409,13 @@ public:
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
 
+  static void setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt );
+
 protected:
 
   virtual void postInputInitialization() override;
 
-  void setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt );
+
 
 private:
 
@@ -423,6 +458,9 @@ private:
   /// Flag to decide whether rates are controlled at rates or surface conditions
   integer m_useSurfaceConditions;
 
+  // Fuild model to compute properties for constraint equation user specified conditions
+  std::unique_ptr< constitutive::ConstitutiveBase >  m_fluidSeparatorPtr;
+
   /// Reservoir region associated with reservoir volume constraint
   string m_referenceReservoirRegion;
 
@@ -444,8 +482,11 @@ private:
   /// BHP table name
   string m_targetBHPTableName;
 
-  /// Status table name
+  /// Well status table name
   string m_statusTableName;
+
+  /// Perforation status table name
+  string m_perfStatusTableName;
 
   /// Flag to enable crossflow
   integer m_isCrossflowEnabled;
@@ -470,6 +511,10 @@ private:
 
   /// Status table
   TableFunction const * m_statusTable;
+
+  /// Well status
+  WellControls::Status m_wellStatus;
+
 
   /// Region average pressure used in volume rate constraint calculations
   real64 m_regionAveragePressure;

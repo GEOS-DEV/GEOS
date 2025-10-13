@@ -135,16 +135,6 @@ private:
    */
   KernelWrapper createKernelWrapper() const;
 
-  /**
-   * @brief Initialize the fluid model with specified number of cells and quadrature points
-   * @param[in] numCells Number of cells/elements
-   * @param[in] numPoints Number of quadrature points per cell
-   */
-  void initialize( localIndex const numCells, localIndex const numPoints )
-  {
-    resizeFields( numCells, numPoints );
-  }
-
 protected:
   virtual void postInputInitialization() override;
 

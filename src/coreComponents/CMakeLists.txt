@@ -57,8 +57,8 @@ foreach( lib ${subdirs} )
   endif()
 endforeach()
 
-foreach( lib ${subdirs} )
-  add_subdirectory( ${lib} )
+foreach( subdir ${subdirs} )
+  add_subdirectory( ${subdir} )
 endforeach()
 
 add_library(geosx_core INTERFACE)
@@ -82,6 +82,5 @@ if( ENABLE_UNCRUSTIFY )
 endif()
 
 if( GEOS_ENABLE_TESTS )
-  add_subdirectory( unitTests )
+  add_subdirectory( integrationTests )
 endif( )
-

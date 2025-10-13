@@ -193,20 +193,18 @@ class ThermalCompressibleSinglePhaseFluid : public CompressibleSinglePhaseFluid
 {
 public:
 
-  ThermalCompressibleSinglePhaseFluid( string const & name, Group * const parent );
-
-  virtual ~ThermalCompressibleSinglePhaseFluid() override;
+  ThermalCompressibleSinglePhaseFluid( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "ThermalCompressibleSinglePhaseFluid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   using CompressibleSinglePhaseFluid::m_densityModelType;
 
-  /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
+  /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT combinations, not just this combination)
   using KernelWrapper = ThermalCompressibleSinglePhaseUpdate< ExponentApproximationType::Full, ExponentApproximationType::Linear, ExponentApproximationType::Linear >;
 
   /**

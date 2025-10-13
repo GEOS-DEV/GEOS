@@ -17,7 +17,6 @@
  * SolidMechanicsAugmentedLagrangianContact.cpp
  */
 
-#include "mesh/DomainPartition.hpp"
 #include "SolidMechanicsAugmentedLagrangianContact.hpp"
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
@@ -33,8 +32,9 @@
 #include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
-
 #include "constitutive/contact/FrictionSelector.hpp"
+#include "constitutive/solid/SolidFields.hpp"
+#include "mesh/DomainPartition.hpp"
 
 namespace geos
 {
@@ -118,11 +118,11 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
     FaceManager & faceManager = meshLevel.getFaceManager();
 
     // Register the total bubble displacement
-    faceManager.registerField< contact::totalBubbleDisplacement >( this->getName() ).
+    faceManager.registerField< contact::totalBubbleDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
 
     // Register the incremental bubble displacement
-    faceManager.registerField< contact::incrementalBubbleDisplacement >( this->getName() ).
+    faceManager.registerField< contact::incrementalBubbleDisplacement >( getName() ).
       reference().resizeDimension< 1 >( 3 );
   } );
 
@@ -216,7 +216,6 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
 {
 
   GEOS_MARK_FUNCTION;
-  GEOS_UNUSED_VAR( setSparsity );
 
   // Create the lists of interface elements that have same type.
   createFaceTypeList( domain );
@@ -227,48 +226,40 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
   // Create the list of cell elements that they are enriched with bubble functions.
   createBubbleCellList( domain );
 
-  dofManager.setDomain( domain );
-  setupDofs( domain, dofManager );
-  dofManager.reorderByRank();
+  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+}
 
+void SolidMechanicsAugmentedLagrangianContact::setSparsityPattern( DomainPartition & domain,
+                                                                   DofManager & dofManager,
+                                                                   CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                                                                   SparsityPattern< globalIndex > & pattern )
+{
   // Set the sparsity pattern without the Abu and Aub blocks.
   SparsityPattern< globalIndex > patternDiag;
   dofManager.setSparsityPattern( patternDiag );
 
   // Get the original row lengths (diagonal blocks only)
-  array1d< localIndex > rowLengths( patternDiag.numRows() );
+  array1d< localIndex > rowLengths( patternDiag.numRows());
   for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
   {
     rowLengths[localRow] = patternDiag.numNonZeros( localRow );
   }
 
   // Add the number of nonzeros induced by coupling
-  this->addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
+  addCouplingNumNonzeros( domain, dofManager, rowLengths.toView());
 
   // Create a new pattern with enough capacity for coupled matrix
-  SparsityPattern< globalIndex > pattern;
-  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data() );
+  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data());
 
   // Copy the original nonzeros
   for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
   {
     globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
+    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ));
   }
 
   // Add the nonzeros from coupling
-  this->addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
-
-  // Finally, steal the pattern into a CRS matrix
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  localMatrix.setName( this->getName() + "/localMatrix" );
-
-  rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-
-  solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-
+  addCouplingSparsityPattern( domain, dofManager, pattern.toView());
 }
 
 void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const & time_n,
@@ -437,7 +428,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
 
-    string const & fractureRegionName = this->getUniqueFractureRegionName();
+    string const & fractureRegionName = getUniqueFractureRegionName();
 
     forFiniteElementOnStickFractureSubRegions( meshName, [&] ( string const &,
                                                                finiteElement::FiniteElementBase const & subRegionFE,
@@ -890,7 +881,7 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
 
-    string const & fractureRegionName = this->getUniqueFractureRegionName();
+    string const & fractureRegionName = getUniqueFractureRegionName();
 
     CRSMatrix< real64, globalIndex > const voidMatrix;
     array1d< real64 > const voidRhs;
@@ -951,7 +942,8 @@ void SolidMechanicsAugmentedLagrangianContact::updateState( DomainPartition & do
   GEOS_UNUSED_VAR( domain );
 }
 
-bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartition & domain )
+bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartition & domain,
+                                                                    integer const GEOS_UNUSED_PARAM( configurationLoopIter ) )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1264,8 +1256,8 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
         slipList_v[kfe] = vals_v[nStick+kfe];
       } );
 
-      this->m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
-      this->m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
+      m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
+      m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
 
       GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
@@ -1348,8 +1340,8 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
       quadList_v[kfe] = vals_v[nTri+kfe];
     } );
 
-    this->m_faceTypesToFaceElements[meshName]["Quadrilateral"] =  quadList;
-    this->m_faceTypesToFaceElements[meshName]["Triangle"] =  triList;
+    m_faceTypesToFaceElements[meshName]["Quadrilateral"] =  quadList;
+    m_faceTypesToFaceElements[meshName]["Triangle"] =  triList;
   } );
 
 }
@@ -1833,10 +1825,10 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
 
     // Bulk modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString() );
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::bulkModulus::key() );
     // Shear modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
-      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString() );
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::shearModulus::key() );
 
     using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
     ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =

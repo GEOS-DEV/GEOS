@@ -265,7 +265,7 @@ def _build_PoroElasticPEBICO2FIM_cases():
         "Francois Hamon", True)
     restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
     return _build_poro_elastic_coupling_case(
-        "PoroElastic_hybridHexPrism_co2_fim_3d.xml", (10, 20),
+        "PoroElastic_hybridHexPrism_co2_fim_3d.xml", (5, 10),
         ((1, 1, 1), (2, 2, 1)), description, restartcheck_params)
 
 
@@ -275,7 +275,7 @@ def _build_PoroElasticPEBICO2Sequential_cases():
         "auto", "Francois Hamon", True)
     restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
     return _build_poro_elastic_coupling_case(
-        "PoroElastic_hybridHexPrism_co2_sequential_3d.xml", (10, 20),
+        "PoroElastic_hybridHexPrism_co2_sequential_3d.xml", (5, 10),
         ((1, 1, 1), (2, 2, 1)), description, restartcheck_params)
 
 
@@ -286,6 +286,26 @@ def _build_PoroElasticGravity_cases():
     return _build_poro_elastic_coupling_case("PoroElastic_gravity.xml",
                                              (5, 10), ((1, 1, 1), (1, 1, 2)),
                                              description, restartcheck_params)
+
+
+def _build_PoroElasticCarmanKozenyFIM_cases():
+    description = Description(
+        "Poroelastic problem with CarmanKozeny permeability model (fim) ", "auto",
+        "Jian Huang", True)
+    restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
+    return _build_poro_elastic_coupling_case(
+        "PoroElastic_CarmanKozenyPermeability_fim_smoke.xml", (0, 50),
+        ((1, 1, 1), (2, 2, 1)), description, restartcheck_params)
+
+
+def _build_PoroElasticCarmanKozenySequential_cases():
+    description = Description(
+        "Poroelastic problem with CarmanKozeny permeability model (Sequential) ", "auto",
+        "Jian Huang", True)
+    restartcheck_params = {"atol": 1.0e-5, "rtol": 2.0e-7}
+    return _build_poro_elastic_coupling_case(
+        "PoroElastic_CarmanKozenyPermeability_sequential_smoke.xml", (0, 50),
+        ((1, 1, 1), (2, 2, 1)), description, restartcheck_params)
 
 
 def test_poro_elastic_coupling_cases():
@@ -308,7 +328,9 @@ def test_poro_elastic_coupling_cases():
         _build_PoroStaircaseCO2PeacemanWell_sequential_cases(),
         _build_PoroElasticPEBICO2FIM_cases(),
         _build_PoroElasticPEBICO2Sequential_cases(),
-        _build_PoroElasticGravity_cases()
+        _build_PoroElasticGravity_cases(),
+        _build_PoroElasticCarmanKozenyFIM_cases(),
+        _build_PoroElasticCarmanKozenySequential_cases()
     ]
 
     generate_geos_tests(deck_instances)
