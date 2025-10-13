@@ -35,7 +35,7 @@ GroupContext::GroupContext( Group & group ):
 
 string GroupContext::toString() const
 {
-  std::vector< ToStringInfo > parentsInfo;
+  stdVector< ToStringInfo > parentsInfo;
   for( Group const * group = &m_group; group->hasParent(); group = &group->getParent() )
   {
     parentsInfo.push_back( group->getDataContext().getToStringInfo() );

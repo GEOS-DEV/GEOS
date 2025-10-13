@@ -142,7 +142,7 @@ string concat( S const & delim, T const & v, Ts const & ... vs )
 
 /**
  * @brief Subdivide the string in substrings by the specified delimiters.
- * @tparam CONTAINER The templated class of the results container (std::vector by default).
+ * @tparam CONTAINER The templated class of the results container (stdVector by default).
  * @param str The string to subdivide.
  * @param delimiters String that contains the list of possible delimiters.
  * @param treatConsecutiveDelimAsOne If enabled, consecutive delimiters will be treated as one.
@@ -151,9 +151,9 @@ string concat( S const & delim, T const & v, Ts const & ... vs )
  *                   If not enabled, those delimiters will result in in empty entries.
  * @return The container of the divided substrings.
  */
-template< template< class ... > class CONTAINER = std::vector >
-CONTAINER< string > tokenize( string const & str,
-                              string const & delimiters,
+template< template< class ... > class CONTAINER = stdVector >
+CONTAINER< string > tokenize( string_view str,
+                              string_view delimiters,
                               bool const treatConsecutiveDelimAsOne = true,
                               bool const preTrimStr = false )
 {
@@ -192,12 +192,12 @@ CONTAINER< string > tokenize( string const & str,
 /**
  * @brief Subdivide the string in substrings by whitespaces separators (see std::isspace()).
  *        Do not create any empty substrings.
- * @tparam CONTAINER The templated class of the results container (std::vector by default).
+ * @tparam CONTAINER The templated class of the results container (stdVector by default).
  * @param str The string to subdivide.
- * @return CONTAINER< string > The list of the subdivided substrings (std::vector< string > for instance).
+ * @return CONTAINER< string > The list of the subdivided substrings (stdVector< string > for instance).
  */
-template< template< class ... > class CONTAINER = std::vector >
-CONTAINER< string > tokenizeBySpaces( string const & str )
+template< template< class ... > class CONTAINER = stdVector >
+CONTAINER< string > tokenizeBySpaces( string_view str )
 {
   return tokenize< CONTAINER >( str, " \f\n\r\t\v", true, true );
 }
@@ -252,7 +252,7 @@ string addCommaSeparators( T const & num );
  * @return A vector of STRING_T objects, each containing a single line from the input
  */
 template< typename STRING_T >
-std::vector< STRING_T > divideLines( size_t & linesWidth, string_view value );
+stdVector< STRING_T > divideLines( size_t & linesWidth, string_view value );
 
 /**
  * @brief Format all the lines by detecting spaces and by dividing each lines with maximum length specified.
@@ -264,8 +264,19 @@ std::vector< STRING_T > divideLines( size_t & linesWidth, string_view value );
  * @return A vector containing the lines wrapped.
  */
 template< typename STRING_T >
-std::vector< STRING_T > wrapTextToMaxLength( std::vector< STRING_T > const & lines,
-                                             size_t & maxLineLength );
+stdVector< STRING_T > wrapTextToMaxLength( stdVector< STRING_T > const & lines,
+                                           size_t & maxLineLength );
+
+/**
+ * @brief Format all the lines by detecting spaces and by dividing each lines with maximum length specified.
+ * If a word has a greater size than maxLength, it will be cut in one or many parts.
+ * @param text The input text to wrap
+ * @param maxLineLength [inout] The max length a line can have.
+ *                      The value is then set to the effective maximum line length
+ * @tparam STRING_T The type of the string (string or string_view)
+ * @return A vector containing the lines wrapped.
+ */
+string wrapTextToMaxLength( string_view text, size_t maxLineLength );
 
 /**
  * @brief Take a string, and return a array1d with the cast values

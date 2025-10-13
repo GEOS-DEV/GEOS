@@ -779,11 +779,11 @@ public:
   void addBlueprintField( conduit::Node & fields,
                           string const & name,
                           string const & topology,
-                          std::vector< string > const & componentNames = {} ) const override
+                          stdVector< string > const & componentNames = {} ) const override
   { wrapperHelpers::addBlueprintField( reference(), fields, name, topology, componentNames ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  void populateMCArray( conduit::Node & node, std::vector< string > const & componentNames = {} ) const override
+  void populateMCArray( conduit::Node & node, stdVector< string > const & componentNames = {} ) const override
   { wrapperHelpers::populateMCArray( reference(), node, componentNames ); }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////

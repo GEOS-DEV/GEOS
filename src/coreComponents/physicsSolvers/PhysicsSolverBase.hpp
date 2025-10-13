@@ -22,7 +22,9 @@
 
 #include "codingUtilities/traits.hpp"
 #include "common/DataTypes.hpp"
+#include "common/format/LogPart.hpp"
 #include "dataRepository/ExecutableGroup.hpp"
+#include "dataRepository/RestartFlags.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/utilities/LinearSolverResult.hpp"
 #include "linearAlgebra/DofManager.hpp"
@@ -49,6 +51,14 @@ class DomainPartition;
 class PhysicsSolverBase : public ExecutableGroup
 {
 public:
+
+  /**
+   * @brief Type of the stat output
+   */
+  enum class StatsOutputType : integer
+  {
+    none, iteration, convergence, all
+  };
 
   /**
    * @brief Constructor for PhysicsSolverBase
@@ -276,6 +286,7 @@ public:
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
    * @param cycleNumber the current cycle number
+   * @param newtonIter the current newton iteration
    * @param domain the domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param localMatrix the system matrix
@@ -294,6 +305,7 @@ public:
   lineSearch( real64 const & time_n,
               real64 const & dt,
               integer const cycleNumber,
+              integer const newtonIter,
               DomainPartition & domain,
               DofManager const & dofManager,
               CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -307,6 +319,7 @@ public:
    * @param time_n time at the beginning of the step
    * @param dt the prescribed timestep
    * @param cycleNumber the current cycle number
+   * @param newtonIter the current newton iteration
    * @param domain the domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param localMatrix the system matrix
@@ -322,6 +335,7 @@ public:
   lineSearchWithParabolicInterpolation ( real64 const & time_n,
                                          real64 const & dt,
                                          integer const cycleNumber,
+                                         integer const newtonIter,
                                          DomainPartition & domain,
                                          DofManager const & dofManager,
                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -397,6 +411,27 @@ public:
                bool const setSparsity = true );
 
   /**
+   * @brief Set the sparsity pattern of the linear system matrix
+   * @param domain the domain containing the mesh and fields
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the system matrix
+   * @param pattern the sparsity pattern to be filled
+   */
+  virtual void
+  setSparsityPattern( DomainPartition & domain,
+                      DofManager & dofManager,
+                      CRSMatrix< real64, globalIndex > & localMatrix,
+                      SparsityPattern< globalIndex > & pattern );
+
+  /**
+   * @brief Create a preconditioner for this solver's linear system.
+   * @param domain the domain containing the mesh and fields
+   * @return the newly created preconditioner object
+   */
+  virtual std::unique_ptr< PreconditionerBase< LAInterface > >
+  createPreconditioner( DomainPartition & domain ) const;
+
+  /**
    * @brief function to assemble the linear system matrix and rhs
    * @param time the time at the beginning of the step
    * @param dt the desired timestep
@@ -469,6 +504,19 @@ public:
                        integer const cycleNumber,
                        integer const nonlinearIteration,
                        ParallelVector const & solution ) const;
+
+  /**
+   * @brief Update the convergence information and write then into a CSV file
+   * @param time_n the time at the beginning of the step
+   * @param dt the desired timestep
+   * @param cycleNumber event cycle number
+   * @param iteration current iteration
+   */
+  virtual void
+  updateAndWriteConvergenceStep( real64 const & time_n,
+                                 real64 const & dt,
+                                 integer const cycleNumber,
+                                 integer const iteration );
 
   /**
    * @brief calculate the norm of the global system residual
@@ -569,9 +617,11 @@ public:
   /**
    * @brief updates the configuration (if needed) based on the state after a converged Newton loop.
    * @param domain the domain containing the mesh and fields
+   * @param configurationLoopIter current configuration iteration number
    * @return a bool that states whether the configuration used to solve the nonlinear loop is still valid or not.
    */
-  virtual bool updateConfiguration( DomainPartition & domain );
+  virtual bool updateConfiguration( DomainPartition & domain,
+                                    integer configurationLoopIter );
 
   /**
    * @brief
@@ -680,20 +730,26 @@ public:
     /// @return string for the minDtIncreaseInterval wrapper
     static constexpr char const * minDtIncreaseIntervalString() { return "minDtIncreaseInterval"; }
 
-    /// @return string for the maxStableDt wrapper
-    static constexpr char const * maxStableDtString() { return "maxStableDt"; }
-
     /// @return string for the discretization wrapper
     static constexpr char const * discretizationString() { return "discretization"; }
 
     /// @return string for the nextDt targetRegions wrapper
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
 
-    /// @return string for the meshTargets wrapper
-    static constexpr char const * meshTargetsString() { return "meshTargets"; }
-
     /// @return string for the writeLinearSystem wrapper
     static constexpr char const * writeLinearSystemString() { return "writeLinearSystem"; }
+
+    /// @return string for the usePhysicsScaling wrapper
+    static constexpr char const * usePhysicsScalingString() { return "usePhysicsScaling"; }
+
+    /// @return string for the allowNonConvergedLinearSolverSolution wrapper
+    static constexpr char const * allowNonConvergedLinearSolverSolutionString() { return "allowNonConvergedLinearSolverSolution"; }
+
+    /// @return string for the writeStatistics wrapper
+    static constexpr char const * writeStatisticsCSVString() { return "writeStatistics"; }
+
+    /// @return string for the numTimestepsSinceLastDtCut wrapper
+    static constexpr char const * numTimestepsSinceLastDtCutString() { return "numTimestepsSinceLastDtCut"; }
   };
 
   /**
@@ -728,7 +784,7 @@ public:
    * @brief set the timestamp of the system setup
    * @param[in] timestamp the new timestamp of system setup
    */
-  void setSystemSetupTimestamp( Timestamp timestamp ) { m_systemSetupTimestamp = timestamp; }
+  void setSystemSetupTimestamp( Timestamp timestamp );
 
   /**
    * @brief return the value of the gravity vector specified in PhysicsSolverManager
@@ -790,7 +846,7 @@ public:
   }
 
   /**
-   * @brief syncronize the nonlinear solver parameters.
+   * @brief synchronize the nonlinear solver parameters.
    */
   virtual void
   synchronizeNonlinearSolverParameters()
@@ -803,6 +859,11 @@ public:
    */
   localIndex targetRegionIndex( string const & regionName ) const;
 
+  /**
+   * @brief return the list of target regions
+   * @return the array of region names
+   */
+  string_array const & getTargetRegionNames() const {return m_targetRegionNames;}
 
 
   /**
@@ -874,6 +935,38 @@ public:
   virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
 
   /**
+   * @return An IterationsStatistics for the "root" solver.
+   * Otherwise return an empty IterationsStatistics
+   */
+  IterationsStatistics & getIterationStats()
+  {
+    return m_solverStatistics.m_iterationsStats;
+  }
+  /**
+   * @return An IterationsStatistics for the "root" solver.
+   * Otherwise return an empty IterationsStatistics
+   * (const version)
+   */
+  IterationsStatistics const & getIterationStats() const
+  {
+    return m_solverStatistics.m_iterationsStats;
+  }
+  /**
+   * @return A ConvergenceStatistics for all sub-solvers
+   */
+  ConvergenceStatistics & getConvergenceStats()
+  {
+    return m_solverStatistics.m_convergenceStats;
+  }
+  /**
+   * @return A ConvergenceStatistics for all sub-solvers (const version)
+   */
+  ConvergenceStatistics const & getConvergenceStats() const
+  {
+    return m_solverStatistics.m_convergenceStats;
+  }
+
+  /**
    * @brief accessor for the solver statistics.
    * @return reference to m_solverStatistics
    */
@@ -901,7 +994,16 @@ public:
   {
     return m_meshTargets;
   }
+
+  /**
+   * @brief Detect oscillations in the solution
+   * @return true if oscillations are detected, false otherwise
+   */
+  bool detectOscillations() const;
+
 protected:
+
+  virtual void postInputInitialization() override;
 
   /**
    * @brief Eisenstat-Walker adaptive tolerance
@@ -953,6 +1055,17 @@ protected:
   static string getConstitutiveName( ParticleSubRegionBase const & subRegion ); // particle overload
 
   /**
+   * @brief Register wrapper with given name and store constitutive model name on the subregion
+   *
+   * @tparam CONSTITUTIVE the base type of the constitutive model.
+   * @param subRegion the subregion on which the constitutive model is registered.
+   * @param wrapperName the wrapper name to register.
+   * @param constitutiveType the type description of the constitutive model.
+   */
+  template< typename CONSTITUTIVE >
+  void setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const;
+
+  /**
    * @brief This function sets constitutive name fields on an
    *  ElementSubRegionBase, and calls the base function it overrides.
    * @param subRegion The ElementSubRegionBase that will have constitutive
@@ -991,16 +1104,26 @@ protected:
     return constitutiveModels.getGroup< BASETYPE >( key );
   }
 
-
+  /**
+   * @brief Get the Constitutive Model object
+   * @tparam CONSTITUTIVE_TYPE the base type of the constitutive model.
+   * @param subRegion the element subregion on which the constitutive model is registered.
+   * @return the constitutive model of type @p CONSTITUTIVE_TYPE registered on the @p subRegion.
+   */
+  template< typename CONSTITUTIVE_TYPE >
+  static CONSTITUTIVE_TYPE & getConstitutiveModel( ElementSubRegionBase & subRegion )
+  {
+    return getConstitutiveModel< CONSTITUTIVE_TYPE >( subRegion, getConstitutiveName< CONSTITUTIVE_TYPE >( subRegion ) );
+  }
 
   /// Courant–Friedrichs–Lewy factor for the timestep
   real64 m_cflFactor;
 
-  /// maximum stable time step
-  real64 m_maxStableDt;
-
   /// timestep of the next cycle
   real64 m_nextDt;
+
+  /// behavior in case of linear solver failure
+  integer m_allowNonConvergedLinearSolverSolution;
 
   /// Number of cycles since last timestep cut
   integer m_numTimestepsSinceLastDtCut;
@@ -1020,8 +1143,17 @@ protected:
   /// System solution vector
   ParallelVector m_solution;
 
+  /// Diagonal scaling vector D (Ahat = D * A * D, bhat = D * b, x = D * xhat)
+  ParallelVector m_scaling;
+
+  /// Flag to decide whether to apply physics-based scaling to the linear system
+  integer m_usePhysicsScaling;
+
   /// Local system matrix and rhs
   CRSMatrix< real64, globalIndex > m_localMatrix;
+
+  /// Custom linear solver for the "native" solver type
+  std::unique_ptr< LinearSolverBase< LAInterface > > m_linearSolver;
 
   /// Custom preconditioner for the "native" iterative solver
   std::unique_ptr< PreconditionerBase< LAInterface > > m_precond;
@@ -1029,10 +1161,14 @@ protected:
   /// flag for debug output of matrix, rhs, and solution
   integer m_writeLinearSystem;
 
+  /// When set to 1 output to log iterations information
+  /// When set to 2 additionnaly output csv files containing iterations & convergence information
+  StatsOutputType m_writeStatisticsCSV;
+
   /// Linear solver parameters
   LinearSolverParametersInput m_linearSolverParameters;
 
-  /// Result of the last linear solve
+  /// Result of the last linear solver
   LinearSolverResult m_linearSolverResult;
 
   /// Nonlinear solver parameters
@@ -1049,6 +1185,9 @@ protected:
 
   /// Timers for the aggregate profiling of the solver
   std::map< std::string, std::chrono::system_clock::duration > m_timers;
+
+  /// History of the solution vector, used for oscillation detection
+  ArrayOfArrays< real64 > m_solutionHistory;
 
 private:
   /// List of names of regions the solver will be applied to
@@ -1082,13 +1221,13 @@ private:
    * @brief output information about the cycle to the log
    * @param cycleNumber the current cycle number
    * @param numOfSubSteps the number of substeps taken
-   * @param subStepDt the time step size for each substep
+   * @param subStepDts the time step size for each substep
    */
   void logEndOfCycleInformation( integer const cycleNumber,
                                  integer const numOfSubSteps,
-                                 std::vector< real64 > const & subStepDt ) const;
-
+                                 stdVector< real64 > const & subStepDts ) const;
 };
+
 
 template< typename CONSTITUTIVE_BASE_TYPE >
 string PhysicsSolverBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
@@ -1101,6 +1240,7 @@ string PhysicsSolverBase::getConstitutiveName( ElementSubRegionBase const & subR
     GEOS_ERROR_IF( !validName.empty(), "A valid constitutive model was already found." );
     validName = model.getName();
   } );
+
   return validName;
 }
 
@@ -1118,6 +1258,28 @@ string PhysicsSolverBase::getConstitutiveName( ParticleSubRegionBase const & sub
   return validName;
 }
 
+template< typename CONSTITUTIVE >
+void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const
+{
+  subRegion.registerWrapper< string >( wrapperName ).
+    setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
+    setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & constitutiveName = subRegion.getReference< string >( wrapperName );
+  constitutiveName = getConstitutiveName< CONSTITUTIVE >( subRegion );
+  GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{}: {} constitutive model not found on subregion {}",
+                                                     getDataContext(), constitutiveType, subRegion.getName() ) );
+}
+
+/**
+ * @brief String for the stats output type
+ */
+ENUM_STRINGS( PhysicsSolverBase::StatsOutputType,
+              "none",
+              "iteration",
+              "convergence",
+              "all" );
 
 } // namespace geos
 

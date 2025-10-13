@@ -56,7 +56,7 @@ ENUM_STRINGS( PartitionMethod,
  * This should be an unordered_map, but some outdated standard libraries on some systems
  * do not provide std::hash specialization for enums. This is not performance critical though.
  */
-using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector< vtkIdType > > >;
+using CellMapType = std::map< ElementType, std::unordered_map< int, stdVector< vtkIdType > > >;
 
 /**
  * @brief Return a VTK controller for multiprocessing.
@@ -141,8 +141,8 @@ AllMeshes loadAllMeshes( Path const & filePath,
  * @param[in] boundingBoxes the bounding boxes used by the VTK partitioner for all ranks
  * @return the list of neighboring MPI ranks, will be updated
  */
-std::vector< int >
-findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
+stdVector< int >
+findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes );
 
 /**
  * @brief Generate global point/cell IDs and redistribute the mesh among MPI ranks.
@@ -150,9 +150,11 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes );
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
  * @param[in] namesToFractures the fracture meshes
  * @param[in] comm the MPI communicator
- * @param[in] method the partitionning method
+ * @param[in] method the partitioning method
  * @param[in] partitionRefinement number of graph partitioning refinement cycles
  * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
+ * @param[in] structuredIndexAttributeName VTK array name for structured index attribute, if present
+ * @param[in] numPartZ number of MPI partitions in Z direction (only if @p structuredIndexAttributeName is used)
  * @return the vtk grid redistributed
  */
 AllMeshes
@@ -162,7 +164,9 @@ redistributeMeshes( integer const logLevel,
                     MPI_Comm const comm,
                     PartitionMethod const method,
                     int const partitionRefinement,
-                    int const useGlobalIds );
+                    int const useGlobalIds,
+                    string const & structuredIndexAttributeName,
+                    int const numPartZ );
 
 /**
  * @brief Collect lists of VTK cell indices organized by type and attribute value.
@@ -217,7 +221,7 @@ string buildCellBlockName( ElementType const type, int const regionId );
  * @param vtkArray The source.
  * @param wrapper The destination.
  */
-void importMaterialField( std::vector< vtkIdType > const & cellIds,
+void importMaterialField( stdVector< vtkIdType > const & cellIds,
                           vtkDataArray * vtkArray,
                           dataRepository::WrapperBase & wrapper );
 
@@ -227,7 +231,7 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
  * @param vtkArray The source.
  * @param wrapper The destination.
  */
-void importRegularField( std::vector< vtkIdType > const & cellIds,
+void importRegularField( stdVector< vtkIdType > const & cellIds,
                          vtkDataArray * vtkArray,
                          dataRepository::WrapperBase & wrapper );
 
@@ -250,25 +254,26 @@ void importRegularField( vtkDataArray * vtkArray,
  * @param[in] cellBlockManager The instance that stores the vertex blocks.
  * @param[in] translate translate the dataset
  * @param[in] scale scale the dataset
- * @return size of the dataset on x-axis
  */
-real64 writeNodes( integer const logLevel,
-                   vtkDataSet & mesh,
-                   string_array & nodesetNames,
-                   CellBlockManager & cellBlockManager,
-                   const geos::R1Tensor & translate,
-                   const geos::R1Tensor & scale );
+void writeNodes( integer const logLevel,
+                 vtkDataSet & mesh,
+                 string_array & nodesetNames,
+                 CellBlockManager & cellBlockManager,
+                 const geos::R1Tensor & translate,
+                 const geos::R1Tensor & scale );
 
 /**
  * @brief Build all the cell blocks.
  * @param[in] logLevel the log level
  * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
  * @param[in] cellMap Map from the surfaces index to the list of cells in this surface in this rank.
+ * @param[in] structuredIndexAttributeName name of the VTK cell array to use as "structured index" attribute (if non-empty)
  * @param[in] cellBlockManager The instance that stores the cell blocks.
  */
 void writeCells( integer const logLevel,
                  vtkDataSet & mesh,
-                 const geos::vtk::CellMapType & cellMap,
+                 vtk::CellMapType const & cellMap,
+                 string const & structuredIndexAttributeName,
                  CellBlockManager & cellBlockManager );
 
 /**
@@ -284,6 +289,13 @@ void writeSurfaces( integer const logLevel,
                     vtkDataSet & mesh,
                     const geos::vtk::CellMapType & cellMap,
                     CellBlockManager & cellBlockManager );
+
+/**
+ * @brief Compute the global length of the mesh and its offset.
+ * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
+ * @return A pair containing the global length and the offset of the mesh.
+ */
+std::pair< real64, real64 > getGlobalLengthAndOffset( vtkDataSet & mesh );
 
 } // namespace geos
 

@@ -131,6 +131,41 @@ public:
                           dViscosity_dPressure );
   }
 
+  template< typename FLUIDWRAPPER >
+  GEOS_HOST_DEVICE
+  static void computeThermalValues( FLUIDWRAPPER const fluidWrapper,
+                                    real64 const pressure,
+                                    real64 const temperature,
+                                    real64 & density,
+                                    real64 & viscosity )
+  {
+    real64 dDensity_dPressure = 0.0;
+    real64 dViscosity_dPressure = 0.0;
+    real64 dDensity_dTemperature = 0.0;
+    real64 dViscosity_dTemperature = 0.0;
+    real64 internalEnergy = 0.0;
+    real64 dInternalEnergy_dPressure = 0.0;
+    real64 dInternalEnergy_dTemperature = 0.0;
+    real64 enthalpy = 0.0;
+    real64 dEnthalpy_dPressure = 0.0;
+    real64 dEnthalpy_dTemperature = 0.0;
+
+    fluidWrapper.compute( pressure,
+                          temperature,
+                          density,
+                          dDensity_dPressure,
+                          dDensity_dTemperature,
+                          viscosity,
+                          dViscosity_dPressure,
+                          dViscosity_dTemperature,
+                          internalEnergy,
+                          dInternalEnergy_dPressure,
+                          dInternalEnergy_dTemperature,
+                          enthalpy,
+                          dEnthalpy_dPressure,
+                          dEnthalpy_dTemperature );
+  }
+
 //START_SPHINX_INCLUDE_02
 private:
   /**
@@ -222,7 +257,10 @@ public:
    * @param name name of the group
    * @param parent pointer to parent group
    */
-  SingleFluidBase( string const & name, Group * const parent );
+  SingleFluidBase( string const & name, dataRepository::Group * const parent );
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   /**
    * @brief Initialize the model
@@ -230,11 +268,6 @@ public:
   void initializeState() const;
 
   virtual void saveConvergedState() const override;
-
-  // *** ConstitutiveBase interface
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   // *** SingleFluid-specific interface
 

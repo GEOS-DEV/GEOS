@@ -122,10 +122,10 @@ std::pair< std::string, std::string > splitPath( std::string const & path )
   return parts;
 }
 
-std::vector< std::string > readDirectory( std::string const & path )
+stdVector< std::string > readDirectory( std::string const & path )
 {
   // Taken from http://www.martinbroadhurst.com/list-the-files-in-a-directory-in-c.html
-  std::vector< std::string > files;
+  stdVector< std::string > files;
   DIR * dirp = opendir( path.c_str() );
   struct dirent * dp;
   while( (dp = readdir( dirp )) != nullptr )

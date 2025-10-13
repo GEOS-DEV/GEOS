@@ -1,0 +1,180 @@
+{
+  "doc" :
+  {
+    "comment" : "All kernel template instantiation specs need all dict keys except 'comment' and 'explicit'",
+    "vars" :
+    [
+      "This is a list of the keys in the combinations dict (keys aren't queryable in cmake)",
+      "they are also the names of the CMAKE variables which will be set to one of the values specified",
+      "in the combinations dict just prior to cmake calling configure_file() on the template file"
+    ],
+    "constants" :
+    [
+      [ "key", "value" ],
+      [ "note", "All constants will be set for cmake to configure_file() for every instantiation." ]
+    ],
+    "combinations" :
+    {
+      "vars" : [ "each value in this list will be used to generate kernel template files",
+                 "combinatorally with all other value lists" ]
+    },
+    "explicit" : [ "specify a specific combination of the variables to generate",
+                   "specify by choosing one value from each variable you want generated",
+                   "and concating them with '#' (this can by modified internally at the",
+                   "generation call). Duplicate entries are unified internally" ]
+  },
+
+  "PoromechanicsKernels": {
+    "vars": [
+      "SUBREGION_TYPE",
+      "CONSTITUTIVE_TYPE",
+      "FE_TYPE"
+    ],
+    "constants": [
+      [ "SinglePhasePoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "MultiphasePoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+    ],
+    "combinations": {
+      "SUBREGION_TYPE": [
+        "CellElementSubRegion"
+      ],
+      "CONSTITUTIVE_TYPE": [
+        "PorousSolid<DruckerPragerExtended, ConstantPermeability>",
+        "PorousSolid<ModifiedCamClay, ConstantPermeability>",
+        "PorousSolid<DelftEgg, ConstantPermeability>",
+        "PorousSolid<DruckerPrager, ConstantPermeability>",
+        "PorousSolid<ElasticIsotropic, ConstantPermeability>",
+        "PorousSolid<ElasticTransverseIsotropic, ConstantPermeability>",
+        "PorousSolid<ElasticIsotropicPressureDependent, ConstantPermeability>",
+        "PorousSolid<ElasticOrthotropic, ConstantPermeability>",
+        "PorousSolid<DuvautLionsSolid<DruckerPrager>, ConstantPermeability>",
+        "PorousSolid<DuvautLionsSolid<DruckerPragerExtended>, ConstantPermeability>",
+        "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, ConstantPermeability>",
+        "PorousSolid<DruckerPragerExtended, CarmanKozenyPermeability>",
+        "PorousSolid<ModifiedCamClay, CarmanKozenyPermeability>",
+        "PorousSolid<DelftEgg, CarmanKozenyPermeability>",
+        "PorousSolid<DruckerPrager, CarmanKozenyPermeability>",
+        "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>",
+        "PorousSolid<ElasticTransverseIsotropic, CarmanKozenyPermeability>",
+        "PorousSolid<ElasticIsotropicPressureDependent, CarmanKozenyPermeability>",
+        "PorousSolid<ElasticOrthotropic, CarmanKozenyPermeability>",
+        "PorousSolid<DuvautLionsSolid<DruckerPrager>, CarmanKozenyPermeability>",
+        "PorousSolid<DuvautLionsSolid<DruckerPragerExtended>, CarmanKozenyPermeability>",
+        "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, CarmanKozenyPermeability>",
+        "PorousDamageSolid<Damage<ElasticIsotropic>>",
+        "PorousDamageSolid<DamageSpectral<ElasticIsotropic>>",
+        "PorousDamageSolid<DamageVolDev<ElasticIsotropic>>"
+      ],
+      "FE_TYPE": [
+        "H1_Hexahedron_Lagrange1_GaussLegendre2",
+        "H1_Wedge_Lagrange1_Gauss6",
+        "H1_Tetrahedron_Lagrange1_Gauss1",
+        "H1_Tetrahedron_Lagrange1_Gauss14",
+        "H1_Pyramid_Lagrange1_Gauss5"
+      ]
+    },
+    "explicit": [ "CellElementSubRegion#PorousSolid<ElasticIsotropic, ConstantPermeability>#H1_Tetrahedron_VEM_Gauss1",
+                  "CellElementSubRegion#PorousSolid<ElasticIsotropic, ConstantPermeability>#H1_Prism5_VEM_Gauss1",
+                  "CellElementSubRegion#PorousSolid<ElasticIsotropic, ConstantPermeability>#H1_Prism6_VEM_Gauss1",
+                  "CellElementSubRegion#PorousSolid<ElasticIsotropic, ConstantPermeability>#H1_Prism7_VEM_Gauss1",
+                  "CellElementSubRegion#PorousSolid<ElasticIsotropic, ConstantPermeability>#H1_Prism8_VEM_Gauss1",
+                  "CellElementSubRegion#PorousSolid<ElasticIsotropic, ConstantPermeability>#H1_Prism9_VEM_Gauss1",
+                  "CellElementSubRegion#PorousSolid<ElasticIsotropic, ConstantPermeability>#H1_Prism10_VEM_Gauss1",
+                  "CellElementSubRegion#PorousSolid<ElasticIsotropic, ConstantPermeability>#H1_Hexahedron_VEM_Gauss1",
+                  "CellElementSubRegion#PorousSolid<ElasticIsotropic, ConstantPermeability>#H1_Wedge_VEM_Gauss1",
+                  "CellElementSubRegion#PorousSolid<ElasticIsotropic, ConstantPermeability>#H1_Prism11_VEM_Gauss1" ]
+  },
+
+  "PoromechanicsEFEMKernels": {
+    "vars": [
+      "SUBREGION_TYPE",
+      "CONSTITUTIVE_TYPE",
+      "FE_TYPE"
+    ],
+    "constants": [
+      [ "SinglePhasePoromechanicsEFEMPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+    ],
+    "combinations": {
+      "SUBREGION_TYPE": [
+        "CellElementSubRegion"
+      ],
+      "CONSTITUTIVE_TYPE": [
+        "PorousSolid<ElasticIsotropic, ConstantPermeability>",
+        "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>"
+      ],
+      "FE_TYPE": [
+        "H1_Hexahedron_Lagrange1_GaussLegendre2",
+        "H1_Wedge_Lagrange1_Gauss6",
+        "H1_Tetrahedron_Lagrange1_Gauss1",
+        "H1_Tetrahedron_Lagrange1_Gauss14",
+        "H1_Pyramid_Lagrange1_Gauss5"
+      ]
+    },
+    "explicit": []
+  },
+
+  "ThermoPoromechanicsKernels": {
+    "vars": [
+      "SUBREGION_TYPE",
+      "CONSTITUTIVE_TYPE",
+      "FE_TYPE"
+    ],
+    "constants": [
+      [ "ThermalMultiphasePoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ThermalSinglePhasePoromechanicsPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ],
+      [ "ThermalSinglePhasePoromechanicsEFEMPolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+    ],
+    "combinations": {
+      "SUBREGION_TYPE": [
+        "CellElementSubRegion"
+      ],
+      "CONSTITUTIVE_TYPE": [
+        "PorousSolid<ElasticIsotropic, ConstantPermeability>",
+        "PorousSolid<DruckerPrager, ConstantPermeability>",
+        "PorousSolid<DruckerPragerExtended, ConstantPermeability>",
+        "PorousSolid<ModifiedCamClay, ConstantPermeability>",
+        "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>",
+        "PorousSolid<DruckerPrager, CarmanKozenyPermeability>",
+        "PorousSolid<DruckerPragerExtended, CarmanKozenyPermeability>",
+        "PorousSolid<ModifiedCamClay, CarmanKozenyPermeability>"
+      ],
+      "FE_TYPE": [
+        "H1_Hexahedron_Lagrange1_GaussLegendre2",
+        "H1_Wedge_Lagrange1_Gauss6",
+        "H1_Tetrahedron_Lagrange1_Gauss1",
+        "H1_Pyramid_Lagrange1_Gauss5",
+        "H1_Tetrahedron_Lagrange1_Gauss14"
+      ]
+    },
+    "explicit": []
+  },
+
+  "PoromechanicsDamageKernels": {
+    "vars": [
+      "SUBREGION_TYPE",
+      "CONSTITUTIVE_TYPE",
+      "FE_TYPE"
+    ],
+    "constants": [
+      [ "SinglePhasePoromechanicsDamagePolicy", "geos::parallelDevicePolicy< GEOS_BLOCK_SIZE >" ]
+    ],
+    "combinations": {
+      "SUBREGION_TYPE": [
+        "CellElementSubRegion"
+      ],
+      "CONSTITUTIVE_TYPE": [
+        "PorousDamageSolid<Damage<ElasticIsotropic>>",
+        "PorousDamageSolid<DamageSpectral<ElasticIsotropic>>",
+        "PorousDamageSolid<DamageVolDev<ElasticIsotropic>>"
+      ],
+      "FE_TYPE": [
+        "H1_Hexahedron_Lagrange1_GaussLegendre2",
+        "H1_Wedge_Lagrange1_Gauss6",
+        "H1_Tetrahedron_Lagrange1_Gauss1",
+        "H1_Tetrahedron_Lagrange1_Gauss14",
+        "H1_Pyramid_Lagrange1_Gauss5"
+      ]
+    },
+    "explicit": []
+  }
+}

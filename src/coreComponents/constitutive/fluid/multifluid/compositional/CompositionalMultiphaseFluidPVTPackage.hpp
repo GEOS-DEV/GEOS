@@ -197,7 +197,7 @@ CompositionalMultiphaseFluidPVTPackage::KernelWrapper::
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
 
-  std::vector< double > compMoleFrac( numComp );
+  stdVector< double > compMoleFrac( numComp );
   real64 dCompMoleFrac_dCompMassFrac[maxNumComp][maxNumComp]{};
 
   if( m_useMass )
