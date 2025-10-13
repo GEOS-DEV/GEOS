@@ -58,7 +58,6 @@ public:
     this->getWrapper< string >( PhysicsSolverBase::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
 
-    static_cast< PhysicsSolverManager & >( this->getParent() ).setHasCoupledsSolver( true );
     addLogLevel< logInfo::Coupling >();
   }
 

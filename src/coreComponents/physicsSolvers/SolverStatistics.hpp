@@ -74,10 +74,16 @@ public:
 
   /**
    * @brief Set the csv state output
-   * @param state The csv state
+   * @param state The CSV state for the corresponding statistics
    */
   void setCSVOutputState( bool state )
   { m_csvOutputEnabled = state; }
+
+  /**
+   * @return The state of the CSV statistics
+   */
+  bool getCSVOutputState()
+  { return m_csvOutputEnabled; }
 
   /**
    * @brief Set the log state output
@@ -172,6 +178,12 @@ public:
   void closeFile()
   { if( m_csvOutputOpened ) { m_logStream.close(); m_csvOutputOpened = false; } }
 
+  /**
+   * @return The CSV state for the iteration statistics
+   */
+  bool getCSVOutputOpened() const
+  { return m_csvOutputOpened; }
+
 protected:
 
   /// Number of time steps
@@ -251,10 +263,16 @@ public:
 
   /**
    * @brief Set the csv state output
-   * @param state csv state
+   * @param state The CSV state for the corresponding statistics
    */
   void setCSVOutputState( bool state )
   { m_csvOutputEnabled = state; }
+
+  /**
+   * @return The state of the CSV statistics
+   */
+  bool getCSVOutputState()
+  { return m_csvOutputEnabled; }
 
   /**
    * @brief Write all the convergence statistics into the ouput stream
@@ -306,7 +324,13 @@ public:
    * @brief Close the stream output file
    */
   void closeFile()
-  {  if( m_csvOutputOpened ) { m_logStream.close(); m_csvOutputOpened = false; } }
+  { if( m_csvOutputOpened ) { m_logStream.close(); m_csvOutputOpened = false; } }
+
+  /**
+   * @return The CSV state for the convergence statistics
+   */
+  bool getCSVOutputOpened() const
+  { return m_csvOutputOpened; }
 
 private:
   /// The time at the beginning of the step

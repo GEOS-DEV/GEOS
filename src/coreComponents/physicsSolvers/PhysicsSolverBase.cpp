@@ -144,18 +144,6 @@ void PhysicsSolverBase::postInputInitialization()
                                          m_writeStatisticsCSV == StatsOutputType::all );
   getConvergenceStats().setCSVOutputState( m_writeStatisticsCSV == StatsOutputType::convergence ||
                                            m_writeStatisticsCSV == StatsOutputType::all );
-
-  bool const managerHasCoupledSolver = static_cast< PhysicsSolverManager & >( getParent() ).getHasCoupledsSolver();
-
-  bool canOutputIteration = m_writeStatisticsCSV == PhysicsSolverBase::StatsOutputType::iteration &&
-                            managerHasCoupledSolver;
-  GEOS_WARNING_IF( canOutputIteration,
-                   GEOS_FMT( "The {} solver cannot output iteration statistics\n"
-                             "You can set {} to `{}` or `{}`\n",
-                             getName(),
-                             PhysicsSolverBase::viewKeyStruct::writeStatisticsCSVString(),
-                             EnumStrings< StatsOutputType >::toString( StatsOutputType::convergence ),
-                             EnumStrings< StatsOutputType >::toString( StatsOutputType::all )) );
 }
 
 PhysicsSolverBase::~PhysicsSolverBase() = default;
@@ -1568,6 +1556,26 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
   {
     getIterationStats().outputStatistics();
   }
+
+  bool canOutputIteration = getIterationStats().getCSVOutputState() && !getIterationStats().getCSVOutputOpened();
+  bool canOutputConvergence= getConvergenceStats().getCSVOutputState() && !getConvergenceStats().getCSVOutputOpened();
+
+  GEOS_WARNING_IF( canOutputIteration,
+                   GEOS_FMT( "The {} solver cannot output iteration statistics\n"
+                             "You can set {} to `{}` or `{}`\n",
+                             getName(),
+                             PhysicsSolverBase::viewKeyStruct::writeStatisticsCSVString(),
+                             EnumStrings< StatsOutputType >::toString( StatsOutputType::convergence ),
+                             EnumStrings< StatsOutputType >::toString( StatsOutputType::all )) );
+
+  GEOS_WARNING_IF( canOutputConvergence,
+                   GEOS_FMT( "The {} solver cannot output iteration statistics\n"
+                             "You can set {} to `{}` or `{}`\n",
+                             getName(),
+                             PhysicsSolverBase::viewKeyStruct::writeStatisticsCSVString(),
+                             EnumStrings< StatsOutputType >::toString( StatsOutputType::iteration ),
+                             EnumStrings< StatsOutputType >::toString( StatsOutputType::all )) );
+
   getIterationStats().closeFile();
   getConvergenceStats().closeFile();
 
