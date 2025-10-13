@@ -293,6 +293,14 @@ void TableData::addRow( Args const &... args )
   addRow( cells );
 }
 
+/**
+ * @brief Add a cell to the table.
+ *
+ * @tparam T The value type to insert.
+ * @param rowValue The row key.
+ * @param columnValue The column key.
+ * @param value The value to store in the cell.
+ */
 template< typename T >
 void TableData2D::addCell( real64 const rowValue, real64 const columnValue, T const & value )
 {

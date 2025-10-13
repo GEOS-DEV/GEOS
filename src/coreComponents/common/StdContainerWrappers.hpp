@@ -11,6 +11,10 @@
 namespace geos
 {
 
+/**
+ * @def USE_STD_CONTAINER_BOUNDS_CHECKING
+ * @brief Compile-time flag that enables or disables runtime bounds checking in GEOS container wrappers.
+ */
 #ifdef GEOS_USE_BOUNDS_CHECK
 #define USE_STD_CONTAINER_BOUNDS_CHECKING true
 #else
