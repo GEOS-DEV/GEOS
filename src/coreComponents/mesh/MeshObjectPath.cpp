@@ -233,7 +233,7 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
       }
     }
     GEOS_THROW_IF( !foundMatch,
-                   GEOS_FMT( "{0} has no child named {1}.\n"
+                   GEOS_FMT( "{0} has no child named '{1}'.\n"
                              "{0} has the following children: {{ {2} }}",
                              parentGroup.getDataContext().toString(),
                              inputEntry,
