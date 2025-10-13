@@ -23,8 +23,7 @@
         maxTimeStepCuts="4"
         maxAllowedResidualNorm="1e+15"
         maxNumConfigurationAttempts="10"
-        lineSearchInterpolationType="Parabolic"
-        maxAllowedResidualNorm="1e+15"/>
+        lineSearchInterpolationType="Parabolic"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="mgr"
@@ -46,8 +45,7 @@
         maxTimeStepCuts="4"
         maxAllowedResidualNorm="1e+15"
         maxNumConfigurationAttempts="10"
-        lineSearchInterpolationType="Parabolic"
-        maxAllowedResidualNorm="1e+15"/>
+        lineSearchInterpolationType="Parabolic"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="mgr"

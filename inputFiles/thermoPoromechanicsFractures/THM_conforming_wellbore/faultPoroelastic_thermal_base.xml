@@ -235,7 +235,6 @@
   <Outputs>
     <VTK 
       name="vtkOutput"
-      parallelThreads="1"
       plotFileRoot="faultModel"/>
 
     <TimeHistory
