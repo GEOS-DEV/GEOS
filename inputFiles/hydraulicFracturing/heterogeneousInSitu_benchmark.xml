@@ -7,69 +7,6 @@
       name="./heterogeneousInSitu_base.xml"/>
   </Included>
 
-  <!-- SPHINX_HYDROFRACTURE_INCLUDED_END -->
-  <!-- SPHINX_HYDROFRACTURE_PARAMETERS -->
-  <Parameters>
-    <!-- Use the swarm upscaling law -->
-    <Parameter
-      name="Nperf"
-      value="5"/>
-
-    <Parameter
-      name="Nswarm"
-      value="5"/>
-
-    <Parameter
-      name="mu_init"
-      value="0.001"/>
-
-    <Parameter
-      name="K_init"
-      value="1e6"/>
-
-    <Parameter
-      name="mu_upscaled"
-      value="`$mu_init$*($Nswarm$**2)`"/>
-
-    <Parameter
-      name="K_upscaled"
-      value="`$K_init$*($Nswarm$**0.5)`"/>
-
-    <Parameter
-      name="ContactStiffness"
-      value="1e10"/>
-
-    <!-- Event timing -->
-    <Parameter
-      name="pump_start"
-      value="1 [min]"/>
-
-    <Parameter
-      name="pump_ramp"
-      value="5 [s]"/>
-
-    <Parameter
-      name="pump_ramp_dt_limit"
-      value="0.2 [s]"/>
-
-    <Parameter
-      name="dt_max"
-      value="30 [s]"/>
-
-    <Parameter
-      name="t_max"
-      value="20 [min]"/>
-
-    <!-- Etc. -->
-    <Parameter
-      name="table_root"
-      value="./tables"/>
-
-    <Parameter
-      name="t_allocation"
-      value="28 [min]"/>
-  </Parameters>
-
   <!-- SPHINX_HYDROFRACTURE_PARAMETERS_END -->
   <!-- SPHINX_HYDROFRACTURE_MESH -->
   <Mesh>
@@ -142,7 +79,7 @@
     <SourceFlux
       name="sourceTerm"
       objectPath="ElementRegions/Fracture"
-      scale="`-1000.0/$Nperf$`"
+      scale="-200.0"
       functionName="flow_rate"
       setNames="{ source_a }"/>
   </FieldSpecifications>

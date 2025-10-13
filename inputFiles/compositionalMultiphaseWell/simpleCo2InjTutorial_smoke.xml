@@ -13,9 +13,9 @@
       xCoords="{ 0, 1000 }"
       yCoords="{ 450, 550 }"
       zCoords="{ 6500, 7700 }"
-      nx="{ 50 }"
+      nx="{ 200 }"
       ny="{ 1 }"
-      nz="{ 150 }"
+      nz="{ 600 }"
       cellBlockNames="{ cellBlock }">
 
       <InternalWell
@@ -43,7 +43,7 @@
       name="outputs"
       timeFrequency="1e7"
       targetExactTimestep="1"
-      target="/Outputs/simpleReservoirViz"/>
+      target="/Outputs/simpleReservoirVizSilo"/>
 
     <PeriodicEvent
       name="restarts"

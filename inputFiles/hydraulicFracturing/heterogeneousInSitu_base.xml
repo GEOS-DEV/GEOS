@@ -52,7 +52,7 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      initialRockToughness="$K_upscaled$"
+      initialRockToughness="2.236e6"
       nodeBasedSIF="1"
       mpiCommOrder="1"/>
   </Solvers>
@@ -71,7 +71,7 @@
 
   <!-- SPHINX_HYDROFRACTURE_EVENTS -->
   <Events
-    maxTime="$t_max$"
+    maxTime="1200"
     logLevel="1">
     <!-- Generate the initial fractures -->
     <SoloEvent
@@ -81,28 +81,28 @@
     <!-- Primary outputs -->
     <PeriodicEvent
       name="outputs_vtk"
-      timeFrequency="1 [min]"
+      timeFrequency="60"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="outputs_silo"
-      timeFrequency="1 [min]"
+      timeFrequency="60"
       targetExactTimestep="0"
       target="/Outputs/siloOutput"/>
 
     <!-- Apply the hydrofracture solver -->
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="$dt_max$"
+      maxEventDt="30"
       target="/Solvers/hydrofracture"/>
 
     <!-- Limit dt during the pump ramp-up -->
     <PeriodicEvent
       name="pumpStart"
-      beginTime="$pump_start$"
-      endTime="`$pump_start$+$pump_ramp$`"
-      maxEventDt="$pump_ramp_dt_limit$"/>
+      beginTime="60"
+      endTime="65"
+      maxEventDt="0.2"/>
 
     <!-- Watch the wall-clock, write a restart, and exit gracefully if necessary -->
     <!-- <HaltEvent
@@ -128,10 +128,10 @@
     <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
-      defaultViscosity="$mu_upscaled$"
+      defaultViscosity="0.025"
       referencePressure="0.0"
       compressibility="5e-10"
-      referenceViscosity="$mu_upscaled$"
+      referenceViscosity="0.025"
       viscosibility="0.0"/>
 
     <ElasticIsotropic
@@ -186,50 +186,50 @@
     <TableFunction
       name="flow_rate"
       inputVarNames="{ time }"
-      coordinateFiles="{ $table_root$/flowRate_time.csv }"
-      voxelFile="$table_root$/flowRate.csv"/>
+      coordinateFiles="{ ./tables/flowRate_time.csv }"
+      voxelFile="./tables/flowRate.csv"/>
 
     <!-- Geologic Model -->
     <TableFunction
       name="sigma_xx"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
-      voxelFile="$table_root$/sigma_xx.csv"
+      coordinateFiles="{ ./tables/x.csv, ./tables/y.csv, ./tables/z.csv }"
+      voxelFile="./tables/sigma_xx.csv"
       interpolation="upper"/>
 
     <TableFunction
       name="sigma_yy"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
-      voxelFile="$table_root$/sigma_yy.csv"
+      coordinateFiles="{ ./tables/x.csv, ./tables/y.csv, ./tables/z.csv }"
+      voxelFile="./tables/sigma_yy.csv"
       interpolation="upper"/>
 
     <TableFunction
       name="sigma_zz"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
-      voxelFile="$table_root$/sigma_zz.csv"
+      coordinateFiles="{ ./tables/x.csv, ./tables/y.csv, ./tables/z.csv }"
+      voxelFile="./tables/sigma_zz.csv"
       interpolation="upper"/>
 
     <TableFunction
       name="init_pressure"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
-      voxelFile="$table_root$/porePressure.csv"
+      coordinateFiles="{ ./tables/x.csv, ./tables/y.csv, ./tables/z.csv }"
+      voxelFile="./tables/porePressure.csv"
       interpolation="upper"/>
 
     <TableFunction
       name="bulk_modulus"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
-      voxelFile="$table_root$/bulkModulus.csv"
+      coordinateFiles="{ ./tables/x.csv, ./tables/y.csv, ./tables/z.csv }"
+      voxelFile="./tables/bulkModulus.csv"
       interpolation="upper"/>
 
     <TableFunction
       name="shear_modulus"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
-      voxelFile="$table_root$/shearModulus.csv"
+      coordinateFiles="{ ./tables/x.csv, ./tables/y.csv, ./tables/z.csv }"
+      voxelFile="./tables/shearModulus.csv"
       interpolation="upper"/>
 
     <TableFunction

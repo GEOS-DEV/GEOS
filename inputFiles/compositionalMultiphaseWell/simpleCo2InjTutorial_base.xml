@@ -180,6 +180,9 @@
     <VTK
       name="simpleReservoirViz"/>
 
+    <Silo
+      name="simpleReservoirVizSilo"/>
+
     <Restart
       name="restartOutput"/>
 

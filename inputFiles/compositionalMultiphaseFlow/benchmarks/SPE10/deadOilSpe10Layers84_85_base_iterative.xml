@@ -30,14 +30,29 @@
 
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS -->
   <Events
-    maxTime="2e6">
+    maxTime="1e8">
+
+   <!-- <PeriodicEvent
+      name="outputs"
+      timeFrequency="1e6"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput"/> -->
 
    <PeriodicEvent
-      name="outputs"
-      timeFrequency="5e5"
+      name="outputs0"
+      timeFrequency="1e4"
+      endTime="1e6"
+      targetExactTimestep="0"
+      target="/Outputs/siloOutput"/>
+
+   <PeriodicEvent
+      name="outputs1"
+      timeFrequency="1e6"
+      beginTime="1e6"
       targetExactTimestep="1"
-      target="/Outputs/vtkOutput"/>
-    
+      target="/Outputs/siloOutput"/>
+
+
     <PeriodicEvent
       name="solverApplications"
       maxEventDt="5e5"
@@ -47,11 +62,11 @@
       timeFrequency="5e5"
       target="/Tasks/fluxesStats" />
 
-    <PeriodicEvent
+    <!-- <PeriodicEvent
       name="restarts"
       timeFrequency="1e6"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"/> -->
 
   </Events>
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS_END -->  
@@ -108,7 +123,7 @@
     <BrooksCoreyRelativePermeability
       name="relperm"
       phaseNames="{ oil, water }"
-      phaseMinVolumeFraction="{ 0.0, 0.0 }"
+      phaseMinVolumeFraction="{ 0.2, 0.2 }"
       phaseRelPermExponent="{ 2.0, 2.0 }"
       phaseRelPermMaxValue="{ 1.0, 1.0 }"/>
 
@@ -269,6 +284,9 @@
   <Outputs>
     <VTK
       name="vtkOutput"/>
+
+    <Silo
+      name="siloOutput"/>
 
     <Restart
       name="restartOutput"/>

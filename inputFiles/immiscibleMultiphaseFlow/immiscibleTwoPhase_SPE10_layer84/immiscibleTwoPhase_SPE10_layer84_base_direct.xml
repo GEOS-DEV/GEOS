@@ -22,11 +22,11 @@
   </Solvers>
 
   <Events
-    maxTime="8e7">
+    maxTime="1e8">
 
    <PeriodicEvent
       name="outputs"
-      timeFrequency="4e7"
+      timeFrequency="5e6"
       targetExactTimestep="1"
       target="/Outputs/vtkOutput_direct"/>
     
@@ -233,6 +233,9 @@
   <Outputs>
     <VTK
       name="vtkOutput_direct"/>
+
+    <Silo
+      name="siloOutput_direct"/>
   </Outputs>
   
 </Problem>
