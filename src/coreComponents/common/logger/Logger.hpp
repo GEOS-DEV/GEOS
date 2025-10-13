@@ -174,10 +174,10 @@
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
                                          message, \
+                                         ::geos::logger::internal::rank(), \
                                          __FILE__, \
                                          __LINE__ ); \
         msgStruct.setCause( cause ); \
-        msgStruct.setRank( ::geos::logger::internal::rank() ); \
         msgStruct.addCallStackInfo( stackHistory ); \
         msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
         GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \
@@ -257,7 +257,7 @@
             .setType( ErrorLogger::MsgType::Exception ) \
             .setCodeLocation( __FILE__, __LINE__ ) \
             .setCause( cause ) \
-            .setRank( ::geos::logger::internal::rank() ) \
+            .addRank( ::geos::logger::internal::rank() ) \
             .addCallStackInfo( stackHistory ); \
         } \
         GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg() \
@@ -335,9 +335,9 @@
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
                                          message, \
+                                         ::geos::logger::internal::rank(), \
                                          __FILE__, \
                                          __LINE__ ); \
-        msgStruct.setRank( ::geos::logger::internal::rank() ); \
         msgStruct.setCause( cause ); \
         msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
         GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \

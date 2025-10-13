@@ -93,12 +93,6 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
 void EquilibriumInitialCondition::postInputInitialization()
 {
 
-  GEOS_THROW_IF( ( m_temperatureVsElevationTableName.empty() != m_componentFractionVsElevationTableNames.empty() ),
-                 getCatalogName() << " " << getDataContext() << ": both " <<
-                 viewKeyStruct::componentFractionVsElevationTableNamesString() << " and " <<
-                 viewKeyStruct::temperatureVsElevationTableNameString() << " must be provided for a multiphase simulation",
-                 InputError, getDataContext() );
-
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
   if( !m_componentFractionVsElevationTableNames.empty() )
