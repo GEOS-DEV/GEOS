@@ -27,6 +27,7 @@
 #include "fileIO/python/PyVTKOutputType.hpp"
 #include "mainInterface/initialization.hpp"
 #include "LvArray/src/python/PyArray.hpp"
+#include "mainInterface/version.hpp"
 
 // System includes
 #pragma GCC diagnostic push
@@ -86,6 +87,8 @@ PyObject * init( PyObject * const pyArgv, bool const performSetup, long const py
   {
     basicSetup( argv.size() - 1, argv.data(), false );
     g_alreadyInitialized = true;
+
+    outputVersionInfo();
 
     // Verify that the ranks match, there is no recovering from this if incorrect.
     GEOS_ERROR_IF_NE( pythonMPIRank, MpiWrapper::commRank() );
