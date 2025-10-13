@@ -1,6 +1,6 @@
 <Problem>
   <Included>
-    <File name="./singlePhasePoromechanics_FaultModel_well_base.xml"/>
+    <File name="./singlePhasePoromechanics_WellInFault_base.xml"/>
   </Included>
 
   <Solvers
@@ -20,7 +20,8 @@
         newtonMaxIter="20"
         maxAllowedResidualNorm="1e+25"/>
       <LinearSolverParameters
-        solverType="direct"/> 
+        solverType="direct"
+        directParallel="1"/> 
     </SinglePhasePoromechanicsConformingFracturesReservoir>
 
     <SinglePhasePoromechanicsConformingFractures
@@ -56,7 +57,7 @@
         control="BHP"
         referenceElevation="-2500"
         targetBHP="1e7"
-        targetTotalRate="1e10" />
+        targetTotalRate="1e-3" />
       <WellControls
         name="wellControls2"
         logLevel="2"
@@ -64,7 +65,7 @@
         control="BHP"
         referenceElevation="-2500"
         targetBHP="10e7"
-        targetTotalRate="1e10" />
+        targetTotalRate="1e-3" />
     </SinglePhaseWell>
   </Solvers>
 
