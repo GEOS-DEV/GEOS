@@ -68,83 +68,49 @@ void MeshManager::expandObjectCatalogs()
 
 void MeshManager::generateMeshes( DomainPartition & domain )
 {
-  // First, check if there's any work to do at all.
-  // Count the number of mesh generators registered.
+  // Early return if no work to do
   int numMeshGenerators = 0;
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase const & ) { ++numMeshGenerators; } );
 
-  // If there are no mesh generators, this is a meshless run.
-  // This function has nothing to do, so return immediately.
   if( numMeshGenerators == 0 )
   {
     GEOS_LOG_RANK_0( "No mesh generators found in MeshManager. Assuming meshless simulation." );
     return;
   }
 
-  // Temporary partitioner manager for unit tests (will be deleted at end of function)
+  // Get partitioner (create temporary if needed for unit tests)
   std::unique_ptr< PartitionerManager > tempPartitionerManager;
+  DomainPartitioner * partitioner = nullptr;
 
-  // If no partitioner exists, create a default one based on mesh type
-  // This might happen in tests where there's no ProblemManager parent
-  if( !domain.hasPartitioner() )
+  if( domain.hasPartitioner() )
   {
-    // Check if the domain has a parent (ProblemManager)
-    PartitionerManager * partitionerManager = nullptr;
-
-    if( domain.hasParent() )
-    {
-      Group & problemManager = domain.getParent();
-      if( problemManager.hasGroup( ProblemManager::groupKeysStruct().partitionerManager.key() ) )
-      {
-        partitionerManager = &problemManager.getGroup< PartitionerManager >(
-          ProblemManager::groupKeysStruct().partitionerManager.key() );
-      }
-    }
-
-    // If no PartitionerManager found, create a temporary one (for unit tests)
-    if( partitionerManager == nullptr )
-    {
-      GEOS_LOG_RANK_0( "No PartitionerManager available (likely a unit test). "
-                       "Creating temporary PartitionerManager." );
-      tempPartitionerManager = std::make_unique< PartitionerManager >( "tempPartitionerManager", &domain );
-      partitionerManager = tempPartitionerManager.get();
-    }
+    partitioner = &domain.getPartitioner();
+  }
+  else
+  {
+    GEOS_LOG_RANK_0( "No PartitionerManager available (likely a unit test). "
+                     "Creating temporary PartitionerManager." );
+    tempPartitionerManager = std::make_unique< PartitionerManager >( "tempPartitionerManager", &domain );
+    partitioner = &tempPartitionerManager->getPartitioner();
   }
 
+  // Generate all meshes
   forSubGroups< MeshGeneratorBase >( [&]( MeshGeneratorBase & meshGen )
   {
     MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( meshGen.getName() );
     meshBody.createMeshLevel( 0 );
 
-    // Get the partitioner (either from ProblemManager or temporary)
-    DomainPartitioner * partitioner = nullptr;
-    if( domain.hasPartitioner() )
-    {
-      partitioner = &domain.getPartitioner();
-    }
-    else if( tempPartitionerManager != nullptr )
-    {
-      partitioner = &tempPartitionerManager->getPartitioner();
-    }
-
-    if( partitioner != nullptr )
-    {
-      meshGen.generateMesh( meshBody, *partitioner );
-    }
-    else
-    {
-      GEOS_ERROR( "No partitioner available for mesh generation" );
-    }
+    meshGen.generateMesh( meshBody, *partitioner );
 
     if( !meshBody.hasParticles() )
     {
       CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
-
       meshBody.setGlobalLengthScale( std::max( cellBlockManager.getGlobalLength(),
                                                cellBlockManager.getGlobalOffset() ) );
     }
   } );
 }
+
 
 void MeshManager::generateMeshLevels( DomainPartition & domain )
 {
@@ -292,7 +258,7 @@ void MeshManager::createDefaultPartitioner( PartitionerManager & partitionerMana
     }
   } );
 
-  // Check for incompatible combination FIRST
+  // Check for incompatible combination
   if( hasInternalMesh && hasExternalMesh )
   {
     GEOS_ERROR( "Both internal and external meshes detected, but no partitioner specified." );
