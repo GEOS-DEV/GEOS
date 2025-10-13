@@ -605,7 +605,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
                                           FaceManager & targetGroup,
                                           string const & )
     {
-
+      GEOS_UNUSED_VAR( setName );
       // Using the field specification functions to apply the boundary conditions to the system
       fs.applyFieldValue< FieldSpecificationEqual,
                           parallelDevicePolicy<> >( targetSet,
