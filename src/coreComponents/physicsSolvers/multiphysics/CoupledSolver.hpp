@@ -23,6 +23,7 @@
 
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
+#include "physicsSolvers/PhysicsSolverManager.hpp"
 
 #include <tuple>
 
@@ -57,6 +58,7 @@ public:
     this->getWrapper< string >( PhysicsSolverBase::viewKeyStruct::discretizationString() ).
       setInputFlag( dataRepository::InputFlags::FALSE );
 
+    static_cast< PhysicsSolverManager & >( this->getParent() ).setHasCoupledsSolver( true );
     addLogLevel< logInfo::Coupling >();
   }
 
@@ -697,6 +699,14 @@ protected:
     setSubSolvers();
 
     PhysicsSolverBase::postInputInitialization();
+
+    bool canOutputConvergance = m_writeStatisticsCSV == PhysicsSolverBase::StatsOutputType::convergence;
+    GEOS_WARNING_IF( canOutputConvergance,
+                     GEOS_FMT( "The coupled solver cannot output convergance statistics\n"
+                               "You can set {} to `{}` or `{}`\n",
+                               PhysicsSolverBase::viewKeyStruct::writeStatisticsCSVString(),
+                               EnumStrings< StatsOutputType >::toString( StatsOutputType::iteration ),
+                               EnumStrings< StatsOutputType >::toString( StatsOutputType::all )) );
 
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;

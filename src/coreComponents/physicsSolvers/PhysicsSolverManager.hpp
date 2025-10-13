@@ -42,10 +42,27 @@ public:
   R1Tensor const & gravityVector() const { return m_gravityVector; }
   R1Tensor & gravityVector()       { return m_gravityVector; }
 
+  /**
+ * @brief Sets the state of a coupled solver.
+ * @param hasCoupledSolver Indicates if a coupled solver is present (true) or not (false).
+ */
+  void setHasCoupledsSolver( bool hasCoupledSolver )
+  {  m_hasCoupledSolver = hasCoupledSolver;}
+
+  /**
+ * @brief Retrieves the state of the coupled solver.
+ * @return true if a coupled solver is present, otherwise false.
+ */
+  bool getHasCoupledsSolver() const
+  { return m_hasCoupledSolver;}
+
 private:
   PhysicsSolverManager() = delete;
 
   R1Tensor m_gravityVector;
+
+  /// Boolean indicating if the physics solver manager contains  a coupled solver
+  bool m_hasCoupledSolver = false;
 };
 
 } /* namespace geos */
