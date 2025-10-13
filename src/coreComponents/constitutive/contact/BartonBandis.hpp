@@ -99,11 +99,6 @@ public:
   BartonBandis( string const & name,
                 Group * const parent );
 
-  /**
-   * @brief default destructor
-   */
-  virtual ~BartonBandis() override;
-
   static string catalogName() { return "BartonBandis"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -118,17 +113,18 @@ public:
    */
   KernelWrapper createKernelWrapper() const;
 
+  struct viewKeyStruct : public HydraulicApertureBase::viewKeyStruct
+  {
+    /// string/key for reference normal stress
+    static constexpr char const * referenceNormalStressString() { return "referenceNormalStress"; }
+  };
+
 protected:
 
   virtual void postInputInitialization() override;
 
 private:
 
-  struct viewKeyStruct : public HydraulicApertureBase::viewKeyStruct
-  {
-    /// string/key for reference normal stress
-    static constexpr char const * referenceNormalStressString() { return "referenceNormalStress"; }
-  };
   /// Reference normal stress
   real64 m_referenceNormalStress;
 };
@@ -143,7 +139,7 @@ real64 BartonBandisUpdates::computeHydraulicAperture( real64 const aperture,
 {
   using namespace fields::contact;
 
-  // Note: compressive 
+  // Note: compressive
   real64 const hydraulicAperture = ( fractureState == FractureState::Open ) ? (aperture + m_aperture0) : m_aperture0 / ( 1.0 - 9.0 * normalTraction /m_referenceNormalStress );
   dHydraulicAperture_dNormalTraction =
     ( fractureState == FractureState::Open ) ? 0.0 : hydraulicAperture / ( 1.0 - 9.0 * normalTraction /m_referenceNormalStress ) * 9.0/m_referenceNormalStress;

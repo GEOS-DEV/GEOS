@@ -59,6 +59,11 @@ public:
                             ParallelVector & solution,
                             bool const setSparsity = true ) override final;
 
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override final;
+
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & dt,
                                   DomainPartition & domain ) override final;
@@ -88,7 +93,8 @@ public:
 
   void updateState( DomainPartition & domain ) override final;
 
-  virtual bool updateConfiguration( DomainPartition & domain ) override final;
+  virtual bool updateConfiguration( DomainPartition & domain,
+                                    integer configurationLoopIter ) override final;
 
 
   /**

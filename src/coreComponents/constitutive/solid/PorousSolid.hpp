@@ -24,7 +24,7 @@
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
-#include "constitutive/permeability/PressurePermeability.hpp"
+#include "constitutive/permeability/ConstantPermeability.hpp"
 
 namespace geos
 {
@@ -37,8 +37,9 @@ namespace constitutive
  *
  * @tparam SOLID_TYPE type of the porosity model
  */
-template< typename SOLID_TYPE >
-class PorousSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PressurePermeability >
+template< typename SOLID_TYPE,
+          typename PERM_TYPE >
+class PorousSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PERM_TYPE >
 {
 public:
 
@@ -49,8 +50,8 @@ public:
    */
   PorousSolidUpdates( SOLID_TYPE const & solidModel,
                       BiotPorosity const & porosityModel,
-                      PressurePermeability const & permModel ):
-    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PressurePermeability >( solidModel, porosityModel, permModel )
+                      PERM_TYPE const & permModel ):
+    CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PERM_TYPE >( solidModel, porosityModel, permModel )
   {}
 
   GEOS_HOST_DEVICE
@@ -79,7 +80,7 @@ public:
                                        real64 const & timeIncrement,
                                        real64 const & pressure,
                                        real64 const & pressure_n,
-                                       real64 const & temperature,
+                                       real64 const & deltaTemperature,
                                        real64 const & deltaTemperatureFromLastStep,
                                        real64 const ( &strainIncrement )[6],
                                        real64 ( & totalStress )[6],
@@ -99,7 +100,7 @@ public:
                         q,
                         timeIncrement,
                         pressure,
-                        temperature,
+                        deltaTemperature,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure,
@@ -145,6 +146,7 @@ public:
                                                   real64 const & pressure_n,
                                                   real64 const & temperature,
                                                   real64 const & temperature_n,
+                                                  real64 const & referenceTemperature,
                                                   real64 const ( &strainIncrement )[6],
                                                   real64 ( & totalStress )[6],
                                                   DiscretizationOps & stiffness ) const
@@ -153,11 +155,12 @@ public:
     real64 dTotalStress_dTemperature[6]{};
 
     // Compute total stress increment and its derivative
+    real64 const deltaTemperature = temperature - referenceTemperature;
     computeTotalStress( k,
                         q,
                         timeIncrement,
                         pressure,
-                        temperature,
+                        deltaTemperature,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure, // To pass something here
@@ -220,9 +223,9 @@ public:
 
 private:
 
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PressurePermeability >::m_solidUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PressurePermeability >::m_porosityUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PressurePermeability >::m_permUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PERM_TYPE >::m_solidUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PERM_TYPE >::m_porosityUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, BiotPorosity, PERM_TYPE >::m_permUpdate;
 
 
   GEOS_HOST_DEVICE
@@ -277,7 +280,7 @@ private:
                            localIndex const q,
                            real64 const & timeIncrement,
                            real64 const & pressure,
-                           real64 const & temperature,
+                           real64 const & deltaTemperature,
                            real64 const ( &strainIncrement )[6],
                            real64 ( & totalStress )[6],
                            real64 ( & dTotalStress_dPressure )[6],
@@ -300,7 +303,7 @@ private:
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
     real64 const thermalExpansionCoefficientTimesBulkModulus = thermalExpansionCoefficient * bulkModulus;
 
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * temperature );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * deltaTemperature );
 
     // Compute derivatives of total stress
     dTotalStress_dPressure[0] = -biotCoefficient;
@@ -318,6 +321,7 @@ private:
     dTotalStress_dTemperature[5] = 0;
 
   }
+
 };
 
 /**
@@ -332,13 +336,14 @@ class PorousSolidBase
  *
  * @tparam SOLID_TYPE type of solid model
  */
-template< typename SOLID_TYPE >
-class PorousSolid : public CoupledSolid< SOLID_TYPE, BiotPorosity, PressurePermeability >
+template< typename SOLID_TYPE,
+          typename PERM_TYPE >
+class PorousSolid : public CoupledSolid< SOLID_TYPE, BiotPorosity, PERM_TYPE >
 {
 public:
 
   /// Alias for ElasticIsotropicUpdates
-  using KernelWrapper = PorousSolidUpdates< SOLID_TYPE >;
+  using KernelWrapper = PorousSolidUpdates< SOLID_TYPE, PERM_TYPE >;
 
   /**
    * @brief Constructor
@@ -347,14 +352,21 @@ public:
    */
   PorousSolid( string const & name, dataRepository::Group * const parent );
 
-  /// Destructor
-  virtual ~PorousSolid() override;
-
   /**
    * @brief Catalog name
    * @return Static catalog string
    */
-  static string catalogName() { return string( "Porous" ) + SOLID_TYPE::catalogName(); }
+  static string catalogName()
+  {
+    if constexpr ( std::is_same_v< PERM_TYPE, ConstantPermeability > )   // default case
+    {
+      return string( "Porous" ) + SOLID_TYPE::catalogName();
+    }
+    else   // special cases
+    {
+      return string( "Porous" ) + SOLID_TYPE::catalogName() + PERM_TYPE::catalogName();
+    }
+  }
 
   /**
    * @brief Get catalog name
@@ -417,9 +429,9 @@ public:
 
 
 private:
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, PressurePermeability >::getSolidModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, PressurePermeability >::getPorosityModel;
-  using CoupledSolid< SOLID_TYPE, BiotPorosity, PressurePermeability >::getPermModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, PERM_TYPE >::getSolidModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, PERM_TYPE >::getPorosityModel;
+  using CoupledSolid< SOLID_TYPE, BiotPorosity, PERM_TYPE >::getPermModel;
 };
 
 

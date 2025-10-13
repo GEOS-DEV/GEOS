@@ -84,17 +84,17 @@ class CarmanKozenyPermeability : public PermeabilityBase
 {
 public:
 
-  CarmanKozenyPermeability( string const & name, Group * const parent );
+  CarmanKozenyPermeability( string const & name, dataRepository::Group * const parent );
 
   std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                                    dataRepository::Group * const parent ) const override;
 
   static string catalogName() { return "CarmanKozenyPermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = CarmanKozenyPermeabilityUpdate;
@@ -120,7 +120,13 @@ public:
     static constexpr char const * particleDiameterString() { return "particleDiameter"; }
     static constexpr char const * sphericityString() { return "sphericity"; }
     static constexpr char const * anisotropyString() { return "anisotropy"; }
-  } viewKeys;
+  };
+
+  virtual void initializeState() const override final;
+
+protected:
+
+  virtual void postInputInitialization() override;
 
 private:
 
@@ -144,7 +150,7 @@ void CarmanKozenyPermeabilityUpdate::compute( real64 const & porosity,
                                               arraySlice1d< real64 > const & permeability,
                                               arraySlice1d< real64 > const & dPerm_dPorosity ) const
 {
-  real64 const constant = pow( m_sphericity*m_particleDiameter, 2 ) / 180;
+  real64 const constant = pow( m_sphericity*m_particleDiameter, 2 ) / 150;
 
   real64 const permValue = constant * pow( porosity, 3 )/ pow( (1 - porosity), 2 );
 

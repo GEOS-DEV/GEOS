@@ -63,15 +63,18 @@ public:
   using exec_policy = parallelDevicePolicy<>;
 
 public:
-  CompositionalMultiphaseFluid( string const & name, Group * const parent );
+  CompositionalMultiphaseFluid( string const & name, dataRepository::Group * const parent );
 
   virtual std::unique_ptr< ConstitutiveBase >
   deliverClone( string const & name,
-                Group * const parent ) const override;
+                dataRepository::Group * const parent ) const override;
 
   static string catalogName();
 
   virtual string getCatalogName() const override { return catalogName(); }
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   static constexpr bool isThermalType(){ return false; }
 
@@ -84,8 +87,7 @@ public:
     GEOS_UNUSED_VAR( pressure, temperature );
   }
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void initializeState() const override;
 
   virtual integer getWaterPhaseIndex() const override final;
 
@@ -113,20 +115,11 @@ protected:
 
   virtual void initializePostSubGroups() override;
 
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
-
-  enum PhaseType : integer
-  {
-    LIQUID = 0,
-    VAPOUR = 1,
-    AQUEOUS = 2,
-  };
-
 private:
   // Create the fluid models
   void createModels();
 
-  integer findPhaseIndex( string names ) const;
+  array1d< integer > getPhaseTypes() const;
 
   static std::unique_ptr< compositional::ModelParameters > createModelParameters();
 
@@ -134,7 +127,8 @@ private:
   std::unique_ptr< FLASH > m_flash{};
 
   // Phase ordering
-  array1d< integer > m_phaseOrder;
+  array1d< integer > m_phaseOrder{};
+  array1d< integer > m_phaseType{};
 
   // Phase models
   std::unique_ptr< PHASE1 > m_phase1{};

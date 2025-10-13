@@ -19,7 +19,6 @@
 
     <SolidMechanicsLagrangianFEM
       name="solidMechSolver"
-      timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ casing, cement, rock }">
@@ -254,7 +253,7 @@
       objectPath="ElementRegions/casing/casing"
       fieldName="casingSolid_stress"
       component="0"
-      scale="573913043.5"/>
+      scale="0.0"/>
     <FieldSpecification
       name="initialSigma_y_casing"
       initialCondition="1"
@@ -262,7 +261,7 @@
       objectPath="ElementRegions/casing/casing"
       fieldName="casingSolid_stress"
       component="1"
-      scale="573913043.5"/>
+      scale="0.0"/>
     <FieldSpecification
       name="initialSigma_z_casing"
       initialCondition="1"
@@ -270,7 +269,7 @@
       objectPath="ElementRegions/casing/casing"
       fieldName="casingSolid_stress"
       component="2"
-      scale="573913043.5"/>
+      scale="0.0"/>
     <!-- SPHINX_StressCasingInitEnd -->
 
     <FieldSpecification
@@ -280,7 +279,7 @@
       objectPath="ElementRegions/cement/cement"
       fieldName="cementSolid_stress"
       component="0"
-      scale="13793103.45"/>
+      scale="0.0"/>
     <FieldSpecification
       name="initialSigma_y_cement"
       initialCondition="1"
@@ -288,7 +287,7 @@
       objectPath="ElementRegions/cement/cement"
       fieldName="cementSolid_stress"
       component="1"
-      scale="13793103.45"/>
+      scale="0.0"/>
     <FieldSpecification
       name="initialSigma_z_cement"
       initialCondition="1"
@@ -296,7 +295,7 @@
       objectPath="ElementRegions/cement/cement"
       fieldName="cementSolid_stress"
       component="2"
-      scale="13793103.45"/>
+      scale="0.0"/>
 
     <FieldSpecification
       name="initialSigma_x_rock"
@@ -305,7 +304,7 @@
       objectPath="ElementRegions/rock/rock"
       fieldName="rockSolid_stress"
       component="0"
-      scale="33214285.71"/>
+      scale="0.0"/>
     <FieldSpecification
       name="initialSigma_y_rock"
       initialCondition="1"
@@ -313,7 +312,7 @@
       objectPath="ElementRegions/rock/rock"
       fieldName="rockSolid_stress"
       component="1"
-      scale="33214285.71"/>
+      scale="0.0"/>
     <FieldSpecification
       name="initialSigma_z_rock"
       initialCondition="1"
@@ -321,7 +320,7 @@
       objectPath="ElementRegions/rock/rock"
       fieldName="rockSolid_stress"
       component="2"
-      scale="33214285.71"/>
+      scale="0.0"/>
 
     <!-- SPHINX_ZeroPorePressureBC -->
     <FieldSpecification

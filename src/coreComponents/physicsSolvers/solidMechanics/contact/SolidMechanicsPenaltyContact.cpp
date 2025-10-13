@@ -32,10 +32,8 @@
 namespace geos
 {
 
-using namespace constitutive;
 using namespace dataRepository;
 using namespace fields;
-using namespace finiteElement;
 
 SolidMechanicsPenaltyContact::SolidMechanicsPenaltyContact( const string & name,
                                                             Group * const parent ):
@@ -46,24 +44,13 @@ SolidMechanicsPenaltyContact::SolidMechanicsPenaltyContact( const string & name,
     setDescription( "Value of the penetration penalty stiffness. Units of Pressure/length" );
 }
 
-SolidMechanicsPenaltyContact::~SolidMechanicsPenaltyContact()
+void SolidMechanicsPenaltyContact::setSparsityPattern( DofManager & dofManager,
+                                                       DomainPartition & domain,
+                                                       SparsityPattern< globalIndex > & pattern )
 {
-  // TODO Auto-generated destructor stub
-}
-
-void SolidMechanicsPenaltyContact::setupSystem( DomainPartition & domain,
-                                                DofManager & dofManager,
-                                                CRSMatrix< real64, globalIndex > & localMatrix,
-                                                ParallelVector & rhs,
-                                                ParallelVector & solution,
-                                                bool const setSparsity )
-{
-  GEOS_MARK_FUNCTION;
-  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, false );
-
-  SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
-                                                  dofManager.numGlobalDofs(),
-                                                  8*8*3*1.2 );
+  pattern.resize( dofManager.numLocalDofs(),
+                  dofManager.numGlobalDofs(),
+                  8*8*3*1.2 );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -72,7 +59,6 @@ void SolidMechanicsPenaltyContact::setupSystem( DomainPartition & domain,
     NodeManager const & nodeManager = mesh.getNodeManager();
     arrayView1d< globalIndex const > const
     dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( solidMechanics::totalDisplacement::key() ) );
-
 
     ElementRegionManager const & elemManager = mesh.getElemManager();
     string_array allFaceElementRegions;
@@ -88,7 +74,7 @@ void SolidMechanicsPenaltyContact::setupSystem( DomainPartition & domain,
                                                                                           this->getDiscretizationName(),
                                                                                           dofNumber,
                                                                                           dofManager.rankOffset(),
-                                                                                          sparsityPattern );
+                                                                                          pattern );
 
     finiteElement::fillSparsity< CellElementSubRegion,
                                  solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
@@ -96,13 +82,12 @@ void SolidMechanicsPenaltyContact::setupSystem( DomainPartition & domain,
                                                                                                        this->getDiscretizationName(),
                                                                                                        dofNumber,
                                                                                                        dofManager.rankOffset(),
-                                                                                                       sparsityPattern );
+                                                                                                       pattern );
 
 
   } );
 
-  sparsityPattern.compress();
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );
+  pattern.compress();
 }
 
 void SolidMechanicsPenaltyContact::assembleSystem( real64 const time,

@@ -51,9 +51,6 @@ public:
   SinglePhasePoromechanics( const string & name,
                             dataRepository::Group * const parent );
 
-  /// Destructor for the class
-  ~SinglePhasePoromechanics() override {}
-
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new SinglePhasePoromechanics object through the object catalog.
@@ -94,6 +91,9 @@ public:
                             ParallelVector & solution,
                             bool const setSparsity = true ) override;
 
+  virtual std::unique_ptr< PreconditionerBase< LAInterface > >
+  createPreconditioner( DomainPartition & domain ) const override;
+
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
@@ -133,9 +133,6 @@ protected:
    * @param[in] subRegion the element subRegion
    */
   virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) override;
-
-  void createPreconditioner();
-
 };
 
 } /* namespace geos */

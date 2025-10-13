@@ -25,20 +25,16 @@
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidFields.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidSelector.hpp"
-#include "constitutive/permeability/PermeabilityFields.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "constitutive/thermalConductivity/SinglePhaseThermalConductivitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
 #include "physicsSolvers/fluidFlow/SourceFluxStatistics.hpp"
-#include "finiteVolume/FiniteVolumeManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/KernelLaunchSelectors.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
@@ -48,6 +44,7 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionScalingKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/StatisticsKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/HydrostaticPressureKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalHydrostaticPressureKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp"
 
@@ -57,6 +54,7 @@ namespace geos
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace fields;
 using namespace singlePhaseBaseKernels;
 
 SinglePhaseBase::SinglePhaseBase( const string & name,
@@ -75,15 +73,12 @@ SinglePhaseBase::SinglePhaseBase( const string & name,
                                  "For the energy balance equation, the mass flux is multiplied by the enthalpy in the cell from which the fluid is being produced.",
                                  viewKeyStruct::isThermalString() ) );
 
-  addLogLevel< logInfo::Solution >();
-  addLogLevel< logInfo::SourceFluxFailure >();
+  addLogLevel< logInfo::BoundaryConditions >();
 }
 
 
 void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 {
-  using namespace fields::flow;
-
   FlowSolverBase::registerDataOnMesh( meshBodies );
 
   m_numDofPerCell = m_isThermal ? 2 : 1;
@@ -99,35 +94,33 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
-      subRegion.registerField< mobility >( getName() );
-      subRegion.registerField< dMobility >( getName()).reference().resizeDimension< 1 >( m_numDofPerCell );
+      subRegion.registerField< flow::mobility >( getName() );
+      subRegion.registerField< flow::dMobility >( getName()).reference().resizeDimension< 1 >( m_numDofPerCell );
 
-      subRegion.registerField< mass >( getName() );
-      subRegion.registerField< mass_n >( getName() );
-      subRegion.registerField< dMass >( getName() ).reference().resizeDimension< 1 >( m_numDofPerCell );
+      subRegion.registerField< flow::mass >( getName() );
+      subRegion.registerField< flow::mass_n >( getName() );
+      subRegion.registerField< flow::dMass >( getName() ).reference().resizeDimension< 1 >( m_numDofPerCell );
 
       if( m_isThermal )
       {
-        subRegion.registerField< dEnergy >( getName() ).reference().resizeDimension< 1 >( m_numDofPerCell );
+        subRegion.registerField< flow::dEnergy >( getName() ).reference().resizeDimension< 1 >( m_numDofPerCell );
       }
 
-      subRegion.registerField< wellBoreVolume >( getName() );
+      subRegion.registerField< flow::wellBoreVolume >( getName() );
     } );
 
     elemManager.forElementSubRegions< SurfaceElementSubRegion >( regionNames,
                                                                  [&]( localIndex const,
                                                                       SurfaceElementSubRegion & subRegion )
     {
-      subRegion.registerField< massCreated >( getName() );
+      subRegion.registerField< flow::massCreated >( getName() );
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
     {
-      faceManager.registerField< facePressure >( getName() );
-
       if( m_isThermal )
       {
-        faceManager.registerField< faceTemperature >( getName() );
+        faceManager.registerField< flow::faceTemperature >( getName() );
       }
     }
   } );
@@ -166,12 +159,6 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
                                                                   ElementSubRegionBase & subRegion )
     {
       string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
-      GEOS_THROW_IF( fluidName.empty(),
-                     GEOS_FMT( "SingleFluidBase {}: Fluid model not found on subregion {}",
-                               getDataContext(), subRegion.getName() ),
-                     InputError );
-
       SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
@@ -209,7 +196,7 @@ void SinglePhaseBase::initializePreSubGroups()
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
-      arrayView1d< real64 > const temp = subRegion.getField< fields::flow::temperature >();
+      arrayView1d< real64 > const temp = subRegion.getField< flow::temperature >();
       temp.setValues< parallelHostPolicy >( m_inputTemperature );
     } );
   } );
@@ -222,8 +209,8 @@ void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
 {
   GEOS_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const pres = dataGroup.getField< fields::flow::pressure >();
-  arrayView1d< real64 const > const temp = dataGroup.getField< fields::flow::temperature >();
+  arrayView1d< real64 const > const pres = dataGroup.getField< flow::pressure >();
+  arrayView1d< real64 const > const temp = dataGroup.getField< flow::temperature >();
 
   SingleFluidBase & fluid =
     getConstitutiveModel< SingleFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
@@ -269,8 +256,8 @@ void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
 
   SingleFluidBase & fluid =
     getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString()));
-  arrayView2d< real64 const, singlefluid::USD_FLUID > const density = fluid.density();
-  arrayView2d< real64 const, singlefluid::USD_FLUID > const density_n = fluid.density_n();
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const density = fluid.density();
+  arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const density_n = fluid.density_n();
   arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const dDensity = fluid.dDensity();
 
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
@@ -301,11 +288,11 @@ void SinglePhaseBase::updateEnergy( ElementSubRegionBase & subRegion ) const
 
   using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
 
-  arrayView1d< real64 > const energy = subRegion.getField< fields::flow::energy >();
-  arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const dEnergy = subRegion.getField< fields::flow::dEnergy >();
+  arrayView1d< real64 > const energy = subRegion.getField< flow::energy >();
+  arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const dEnergy = subRegion.getField< flow::dEnergy >();
 
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-  arrayView1d< real64 const > const deltaVolume = subRegion.getField< fields::flow::deltaVolume >();
+  arrayView1d< real64 const > const deltaVolume = subRegion.getField< flow::deltaVolume >();
 
   CoupledSolidBase const & porousSolid =
     getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
@@ -344,7 +331,7 @@ void SinglePhaseBase::updateEnergy( ElementSubRegionBase & subRegion ) const
 
 void SinglePhaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
 {
-  arrayView1d< real64 const > const temperature = dataGroup.getField< fields::flow::temperature >();
+  arrayView1d< real64 const > const temperature = dataGroup.getField< flow::temperature >();
 
   string const & solidInternalEnergyName = dataGroup.getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
   SolidInternalEnergy & solidInternalEnergy = getConstitutiveModel< SolidInternalEnergy >( dataGroup, solidInternalEnergyName );
@@ -360,7 +347,7 @@ void SinglePhaseBase::updateThermalConductivity( ElementSubRegionBase & subRegio
   SinglePhaseThermalConductivityBase const & conductivityMaterial =
     getConstitutiveModel< SinglePhaseThermalConductivityBase >( subRegion, thermalConductivityName );
 
-  arrayView1d< real64 const > const & temperature = subRegion.template getField< fields::flow::temperature >();
+  arrayView1d< real64 const > const & temperature = subRegion.template getField< flow::temperature >();
   conductivityMaterial.updateFromTemperature( temperature );
 }
 
@@ -377,14 +364,15 @@ void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup ) const
   GEOS_MARK_FUNCTION;
 
   // output
-  arrayView1d< real64 > const mob = dataGroup.getField< fields::flow::mobility >();
-  arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const dMobility = dataGroup.getField< fields::flow::dMobility >();
+  arrayView1d< real64 > const mob = dataGroup.getField< flow::mobility >();
+  arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const dMobility = dataGroup.getField< flow::dMobility >();
 
   // input
   SingleFluidBase & fluid =
     getConstitutiveModel< SingleFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
-  geos::internal::kernelLaunchSelectorThermalSwitch( m_isThermal, [&] ( auto ISTHERMAL ) {
+  geos::internal::kernelLaunchSelectorThermalSwitch( m_isThermal, [&] ( auto ISTHERMAL )
+  {
     integer constexpr NUMDOF = ISTHERMAL() + 1;
     singlePhaseBaseKernels::MobilityKernel::compute_value_and_derivatives< parallelDevicePolicy<>, NUMDOF >( dataGroup.size(),
                                                                                                              fluid.density(),
@@ -407,7 +395,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  FlowSolverBase::initializeState( domain );
+  initializeState( domain );
 }
 
 void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
@@ -436,6 +424,26 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
                    "used in this simulation. To proceed, you can either: \n" <<
                    "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
                    "   - Remove the hydrostatic equilibrium initial condition from the XML file",
+                   InputError );
+
+    // ensure that the temperature tables are defined for thermal simulations
+    GEOS_THROW_IF( m_isThermal && bc.getTemperatureVsElevationTableName().empty(),
+                   getCatalogName() << " " << bc.getDataContext()
+                                    << ": " << EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString()
+                                    << " must be provided for a thermal simulation",
+                   InputError );
+
+    //ensure that compositions are empty
+    GEOS_THROW_IF( !bc.getComponentFractionVsElevationTableNames().empty(),
+                   getCatalogName() << " " << bc.getDataContext()
+                                    << ": " << EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString()
+                                    << " must not be provided for a single phase simulation.",
+                   InputError );
+
+    GEOS_THROW_IF( !bc.getComponentNames().empty(),
+                   getCatalogName() << " " << bc.getDataContext()
+                                    << ": " << EquilibriumInitialCondition::viewKeyStruct::componentNamesString()
+                                    << " must not be provided for a single phase simulation.",
                    InputError );
   } );
 
@@ -508,6 +516,16 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     // Step 3.2: retrieve the fluid model to compute densities
     // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
 
+    FunctionManager & functionManager = FunctionManager::getInstance();
+    TableFunction::KernelWrapper tempTableWrapper;
+    // Creation of Wrapper in case of TemperatureVsElevationTableName
+    if( m_isThermal )
+    {
+      string const tempTableName = fs.getTemperatureVsElevationTableName();
+      TableFunction const & tempTable = functionManager.getGroup< TableFunction >( tempTableName );
+      tempTableWrapper = tempTable.createKernelWrapper();
+    }
+
     // filter out region not in target
     Group const & region = subRegion.getParent().getParent();
     auto it = regionFilter.find( region.getName() );
@@ -534,18 +552,32 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
       typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
       // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
-      bool const equilHasConverged =
-        HydrostaticPressureKernel::launch( numPointsInTable,
-                                           maxNumEquilIterations,
-                                           equilTolerance,
-                                           gravVector,
-                                           minElevation,
-                                           elevationIncrement,
-                                           datumElevation,
-                                           datumPressure,
-                                           fluidWrapper,
-                                           elevationValues.toNestedView(),
-                                           pressureValues.toView() );
+      bool const equilHasConverged = m_isThermal ?
+                                     thermalSinglePhaseBaseKernels::
+                                       HydrostaticPressureKernel::launch( numPointsInTable,
+                                                                          maxNumEquilIterations,
+                                                                          equilTolerance,
+                                                                          gravVector,
+                                                                          minElevation,
+                                                                          elevationIncrement,
+                                                                          datumElevation,
+                                                                          datumPressure,
+                                                                          fluidWrapper,
+                                                                          tempTableWrapper,
+                                                                          elevationValues.toNestedView(),
+                                                                          pressureValues.toView() ) :
+                                     singlePhaseBaseKernels::
+                                       HydrostaticPressureKernel::launch( numPointsInTable,
+                                                                          maxNumEquilIterations,
+                                                                          equilTolerance,
+                                                                          gravVector,
+                                                                          minElevation,
+                                                                          elevationIncrement,
+                                                                          datumElevation,
+                                                                          datumPressure,
+                                                                          fluidWrapper,
+                                                                          elevationValues.toNestedView(),
+                                                                          pressureValues.toView() );
 
       GEOS_THROW_IF( !equilHasConverged,
                      getCatalogName() << " " << getDataContext() <<
@@ -554,8 +586,6 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     } );
 
     // Step 3.4: create hydrostatic pressure table
-
-    FunctionManager & functionManager = FunctionManager::getInstance();
 
     string const tableName = fs.getName() + "_" + subRegion.getName() + "_table";
     TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
@@ -567,15 +597,21 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     // Step 4: assign pressure as a function of elevation
     // TODO: this last step should probably be delayed to wait for the creation of FaceElements
     arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
-    arrayView1d< real64 > const pres = subRegion.getField< fields::flow::pressure >();
+    arrayView1d< real64 > const pres = subRegion.getField< flow::pressure >();
+    arrayView1d< real64 > const temp = subRegion.getField< flow::temperature >();
 
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
-    forAll< parallelDevicePolicy< > >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+    RAJA::ReduceMin< parallelHostReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
+
+    forAll< parallelHostPolicy >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
       pres[k] = presTableWrapper.compute( &elevation );
+      if( m_isThermal )
+      {
+        temp[k] = tempTableWrapper.compute( &elevation );
+      }
       minPressure.min( pres[k] );
     } );
 
@@ -657,8 +693,8 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_
     mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                              SurfaceElementSubRegion & subRegion )
     {
-      arrayView1d< real64 const > const aper = subRegion.getField< fields::flow::hydraulicAperture >();
-      arrayView1d< real64 > const aper0 = subRegion.getField< fields::flow::aperture0 >();
+      arrayView1d< real64 const > const aper = subRegion.getField< flow::hydraulicAperture >();
+      arrayView1d< real64 > const aper0 = subRegion.getField< flow::aperture0 >();
       aper0.setValues< parallelDevicePolicy<> >( aper );
 
       // Needed coz faceElems don't exist when initializing.
@@ -698,9 +734,9 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
                                                                   ElementSubRegionBase & subRegion )
     {
       // update deltaPressure
-      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const initPres = subRegion.getField< fields::flow::initialPressure >();
-      arrayView1d< real64 > const deltaPres = subRegion.getField< fields::flow::deltaPressure >();
+      arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
+      arrayView1d< real64 const > const initPres = subRegion.getField< flow::initialPressure >();
+      arrayView1d< real64 > const deltaPres = subRegion.getField< flow::deltaPressure >();
       singlePhaseBaseKernels::StatisticsKernel::
         saveDeltaPressure( subRegion.size(), pres, initPres, deltaPres );
 
@@ -738,7 +774,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
     {
       arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-      arrayView1d< real64 > const creationMass = subRegion.getField< fields::flow::massCreated >();
+      arrayView1d< real64 > const creationMass = subRegion.getField< flow::massCreated >();
 
       SingleFluidBase const & fluid =
         getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
@@ -926,12 +962,12 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
                                                                 string_array const & )
   {
     applyAndSpecifyFieldValue( time_n, dt, mesh, rankOffset, dofKey, isFirstNonlinearIteration,
-                               0, fields::flow::pressure::key(), fields::flow::bcPressure::key(),
+                               0, flow::pressure::key(), flow::bcPressure::key(),
                                localMatrix, localRhs );
     if( m_isThermal )
     {
       applyAndSpecifyFieldValue( time_n, dt, mesh, rankOffset, dofKey, isFirstNonlinearIteration,
-                                 1, fields::flow::temperature::key(), fields::flow::bcTemperature::key(),
+                                 1, flow::temperature::key(), flow::bcTemperature::key(),
                                  localMatrix, localRhs );
     }
   } );
@@ -1001,9 +1037,9 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
       }
       if( !subRegion.hasWrapper( dofKey ) )
       {
-        GEOS_LOG_LEVEL_BY_RANK_ON_GROUP( logInfo::SourceFluxFailure,
-                                         GEOS_FMT( "{}: trying to apply SourceFlux, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
-                                                   getDataContext(), setName, subRegion.getName() ),
+        GEOS_LOG_LEVEL_BY_RANK_ON_GROUP( logInfo::BoundaryConditions,
+                                         GEOS_FMT( "{}: trying to apply {}, but its targetSet named '{}' intersects with non-simulated region named '{}'.",
+                                                   getDataContext(), SourceFluxBoundaryCondition::catalogName(), setName, subRegion.getName() ),
                                          fs );
         return;
       }
@@ -1155,8 +1191,8 @@ void SinglePhaseBase::keepVariablesConstantDuringInitStep( real64 const time,
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
-      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
+      arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
+      arrayView1d< real64 const > const temp = subRegion.getField< flow::temperature >();
 
       integer const isThermal = m_isThermal;
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
@@ -1228,14 +1264,14 @@ void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
     {
-      arrayView1d< real64 > const pres = subRegion.template getField< fields::flow::pressure >();
-      arrayView1d< real64 const > const pres_n = subRegion.template getField< fields::flow::pressure_n >();
+      arrayView1d< real64 > const pres = subRegion.template getField< flow::pressure >();
+      arrayView1d< real64 const > const pres_n = subRegion.template getField< flow::pressure_n >();
       pres.setValues< parallelDevicePolicy<> >( pres_n );
 
       if( m_isThermal )
       {
-        arrayView1d< real64 > const temp = subRegion.template getField< fields::flow::temperature >();
-        arrayView1d< real64 const > const temp_n = subRegion.template getField< fields::flow::temperature_n >();
+        arrayView1d< real64 > const temp = subRegion.template getField< flow::temperature >();
+        arrayView1d< real64 const > const temp_n = subRegion.template getField< flow::temperature_n >();
         temp.setValues< parallelDevicePolicy<> >( temp_n );
       }
 
@@ -1313,7 +1349,7 @@ bool SinglePhaseBase::checkSystemSolution( DomainPartition & domain,
       globalIndex const rankOffset = dofManager.rankOffset();
       arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
-      arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+      arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
 
       auto const statistics =
         singlePhaseBaseKernels::SolutionCheckKernel::
@@ -1337,14 +1373,14 @@ void SinglePhaseBase::saveConvergedState( ElementSubRegionBase & subRegion ) con
 {
   FlowSolverBase::saveConvergedState( subRegion );
 
-  arrayView1d< real64 const > const mass = subRegion.template getField< fields::flow::mass >();
-  arrayView1d< real64 > const mass_n = subRegion.template getField< fields::flow::mass_n >();
+  arrayView1d< real64 const > const mass = subRegion.template getField< flow::mass >();
+  arrayView1d< real64 > const mass_n = subRegion.template getField< flow::mass_n >();
   mass_n.setValues< parallelDevicePolicy<> >( mass );
 }
 
 void SinglePhaseBase::applyDeltaVolume( ElementSubRegionBase & subRegion ) const
 {
-  arrayView1d< real64 > const dVol = subRegion.template getField< fields::flow::deltaVolume >();
+  arrayView1d< real64 > const dVol = subRegion.template getField< flow::deltaVolume >();
   arrayView1d< real64 > const vol = subRegion.template getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString());
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {

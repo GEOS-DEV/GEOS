@@ -131,9 +131,6 @@ public:
    */
   CompressibleSolid( string const & name, dataRepository::Group * const parent );
 
-  /// Destructor
-  virtual ~CompressibleSolid() override;
-
   /**
    * @brief Catalog name
    * @return Static catalog string

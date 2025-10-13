@@ -15,13 +15,11 @@
 
 // Source includes
 #include "Group.hpp"
-#include "ConduitRestart.hpp"
 #include "common/format/StringUtilities.hpp"
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
 #include "codingUtilities/Utilities.hpp"
-#include "common/TimingMacros.hpp"
 #include "GroupContext.hpp"
 #if defined(GEOS_USE_PYGEOSX)
 #include "python/PyGroupType.hpp"
@@ -291,7 +289,8 @@ void Group::printDataHierarchy( integer const indent ) const
   for( auto & view : wrappers() )
   {
     GEOS_LOG( string( indent, '\t' ) << "-> " << view.second->getName() << " : "
-                                     << LvArray::system::demangleType( *view.second ) );
+                                     << LvArray::system::demangleType( *view.second )
+                                     << " size : "<<view.second->size());
   }
   GEOS_LOG( string( indent, '\t' ) );
 

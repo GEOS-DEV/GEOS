@@ -167,17 +167,14 @@ class PressurePermeability : public PermeabilityBase
 {
 public:
 
-  PressurePermeability( string const & name, Group * const parent );
-
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  PressurePermeability( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "PressurePermeability"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = PressurePermeabilityUpdate;

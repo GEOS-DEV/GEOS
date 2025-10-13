@@ -20,7 +20,6 @@
     <SolidMechanicsEmbeddedFractures
       name="fractureMechSolver"
       targetRegions="{ Domain, Fracture }"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       contactPenaltyStiffness="0.0e8"/>
 
