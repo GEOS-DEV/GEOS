@@ -1562,19 +1562,17 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
 
   GEOS_WARNING_IF( canOutputIteration,
                    GEOS_FMT( "The {} solver cannot output iteration statistics\n"
-                             "You can set {} to `{}` or `{}`\n",
+                             "You can set {} to `{}`\n",
                              getName(),
                              PhysicsSolverBase::viewKeyStruct::writeStatisticsCSVString(),
-                             EnumStrings< StatsOutputType >::toString( StatsOutputType::convergence ),
-                             EnumStrings< StatsOutputType >::toString( StatsOutputType::all )) );
+                             EnumStrings< StatsOutputType >::toString( StatsOutputType::convergence )));
 
   GEOS_WARNING_IF( canOutputConvergence,
-                   GEOS_FMT( "The {} solver cannot output iteration statistics\n"
-                             "You can set {} to `{}` or `{}`\n",
+                   GEOS_FMT( "The {} solver cannot output convergence statistics\n"
+                             "You can set {} to `{}`\n",
                              getName(),
                              PhysicsSolverBase::viewKeyStruct::writeStatisticsCSVString(),
-                             EnumStrings< StatsOutputType >::toString( StatsOutputType::iteration ),
-                             EnumStrings< StatsOutputType >::toString( StatsOutputType::all )) );
+                             EnumStrings< StatsOutputType >::toString( StatsOutputType::iteration ) ));
 
   getIterationStats().closeFile();
   getConvergenceStats().closeFile();
