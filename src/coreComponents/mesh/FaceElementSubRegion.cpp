@@ -1016,7 +1016,7 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
         if( nodesOfFace.size() == LvArray::integerConversion< std::size_t >( nodes.size() ) )
         {
           stdVector< localIndex > const ns( nodes.begin(), nodes.end() );
-          faceRefNodesToElems[nodesOfFace].insert( ElemPath{ er, esr, ei, face, ns } );
+          faceRefNodesToElems.get_inserted( nodesOfFace ).insert( ElemPath{ er, esr, ei, face, ns } );
         }
       }
     }

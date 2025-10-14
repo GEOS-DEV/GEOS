@@ -708,7 +708,7 @@ redistributeByCellGraph( AllMeshes & input,
   {
     vtkSmartPointer< vtkPartitionedDataSet > const splitFracMesh = splitMeshByPartition( fracture, numRanks, newFracturePartitions[fractureName].toViewConst() );
     vtkSmartPointer< vtkUnstructuredGrid > const finalFracMesh = vtk::redistribute( *splitFracMesh, MPI_COMM_GEOS );
-    finalFractures[fractureName] = finalFracMesh;
+    finalFractures.insert( {fractureName, finalFracMesh} );
   }
 
   return AllMeshes( finalMesh, finalFractures );
