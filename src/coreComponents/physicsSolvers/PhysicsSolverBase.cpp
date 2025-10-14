@@ -1557,20 +1557,20 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
     getIterationStats().outputStatistics();
   }
 
-  bool wrongIterationOutputRequest = getIterationStats().getCSVOutputRequest() &&
-                                     !getIterationStats().getCSVOutputOpened();
-  bool wrongIterationConvergenceRequest= getConvergenceStats().getCSVOutputRequest() &&
+  bool wrongIterationCSVOutputRequest = getIterationStats().getCSVOutputRequest() &&
+                                        !getIterationStats().getCSVOutputOpened();
+  bool wrongConvergenceCSVOutputRequest= getConvergenceStats().getCSVOutputRequest() &&
                                          !getConvergenceStats().getCSVOutputOpened();
 
-  GEOS_WARNING_IF( wrongIterationOutputRequest,
-                   GEOS_FMT( "The {} solver cannot output iteration statistics\n"
+  GEOS_WARNING_IF( wrongIterationCSVOutputRequest,
+                   GEOS_FMT( "The {} solver requests to output a CSV iteration but nothing was written\n"
                              "You can set {} to `{}`\n",
                              getName(),
                              PhysicsSolverBase::viewKeyStruct::writeStatisticsCSVString(),
                              EnumStrings< StatsOutputType >::toString( StatsOutputType::convergence )));
 
-  GEOS_WARNING_IF( wrongIterationConvergenceRequest,
-                   GEOS_FMT( "The {} solver cannot output convergence statistics\n"
+  GEOS_WARNING_IF( wrongConvergenceCSVOutputRequest,
+                   GEOS_FMT( "The {} solver requests to output a CSV convergence but nothing was written\n"
                              "You can set {} to `{}`\n",
                              getName(),
                              PhysicsSolverBase::viewKeyStruct::writeStatisticsCSVString(),
