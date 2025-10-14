@@ -104,8 +104,6 @@ set( mesh_headers
      mpiCommunications/NoOpEngine.hpp
      mpiCommunications/PartitionerManager.hpp
      mpiCommunications/DomainPartitioner.hpp
-     mpiCommunications/MeshPartitioner.hpp
-     mpiCommunications/CellGraphPartitioner.hpp
      mpiCommunications/GeometricPartitioner.hpp
      mpiCommunications/CartesianPartitioner.hpp
      mpiCommunications/ParticleCartesianPartitioner.hpp
@@ -191,8 +189,6 @@ set( mesh_sources
      mpiCommunications/NoOpEngine.cpp
      mpiCommunications/PartitionerManager.cpp
      mpiCommunications/DomainPartitioner.cpp
-     mpiCommunications/MeshPartitioner.cpp
-     mpiCommunications/CellGraphPartitioner.cpp
      mpiCommunications/GeometricPartitioner.cpp     
      mpiCommunications/CartesianPartitioner.cpp
      mpiCommunications/ParticleCartesianPartitioner.cpp
@@ -230,6 +226,9 @@ if( ENABLE_VTK )
          generators/VTKMeshGeneratorTools.hpp
          generators/VTKWellGenerator.hpp
          generators/VTKUtilities.hpp
+         mpiCommunications/MeshPartitioner.hpp
+         mpiCommunications/CellGraphPartitioner.hpp
+         mpiCommunications/LayeredMeshPartitioner.hpp
          )
     set( mesh_sources ${mesh_sources}
          generators/CollocatedNodes.cpp
@@ -239,6 +238,9 @@ if( ENABLE_VTK )
          generators/VTKMeshGeneratorTools.cpp
          generators/VTKWellGenerator.cpp
          generators/VTKUtilities.cpp
+         mpiCommunications/MeshPartitioner.cpp
+         mpiCommunications/CellGraphPartitioner.cpp
+         mpiCommunications/LayeredMeshPartitioner.cpp
          )
     list( APPEND tplDependencyList VTK::IOLegacy VTK::FiltersParallelDIY2 )
     if( ENABLE_MPI )

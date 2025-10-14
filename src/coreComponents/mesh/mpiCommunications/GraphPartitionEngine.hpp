@@ -15,7 +15,6 @@
 
 /**
  * @file GraphPartitionEngine.hpp
- * @brief Low-level graph partitioning algorithms - NOT user-facing
  */
 
 #ifndef GEOS_PARTITIONER_GRAPHPARTITIONENGINE_HPP_

@@ -279,9 +279,20 @@ void MeshManager::createDefaultPartitioner( PartitionerManager & partitionerMana
   }
   else if( hasExternalMesh )
   {
-    GEOS_LOG_RANK_0( "No partitioner specified. "
-                     "Creating default CellGraphPartitioner for external mesh." );
-    partitionerManager.createChild( "CellGraphPartitioner", "defaultPartitioner" );
+    // Check if CellGraphPartitioner is available in the DomainPartitioner catalog, proxy for VTK availability
+    auto const & catalog = DomainPartitioner::getCatalog();
+    bool const hasCellGraphPartitioner = catalog.count( "CellGraphPartitioner" ) > 0;
+
+    if( hasCellGraphPartitioner )
+    {
+      GEOS_LOG_RANK_0( "No partitioner specified. "
+                       "Creating default CellGraphPartitioner for external mesh." );
+      partitionerManager.createChild( "CellGraphPartitioner", "defaultPartitioner" );
+    }
+    else
+    {
+      GEOS_ERROR( "External mesh detected but VTK is not available. " );
+    }
   }
   else
   {

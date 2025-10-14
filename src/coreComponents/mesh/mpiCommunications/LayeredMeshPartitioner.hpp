@@ -16,6 +16,15 @@
 /**
  * @class LayeredMeshPartitioner
  */
+
+#ifndef GEOS_PARTITIONER_LAYEREDMESHPARTITIONER_HPP_
+#define GEOS_PARTITIONER_LAYEREDMESHPARTITIONER_HPP_
+
+#include "MeshPartitioner.hpp"
+
+namespace geos
+{
+
 class LayeredMeshPartitioner : public MeshPartitioner
 {
 public:
@@ -38,12 +47,6 @@ public:
    * @return The catalog key
    */
   static string catalogName() { return "LayeredMeshPartitioner"; }
-
-  /**
-   * @brief Get the catalog name
-   * @return The catalog key
-   */
-  virtual string getCatalogName() const override { return catalogName(); }
 
   /**
    * @brief Process command-line partition count overrides
@@ -95,3 +98,8 @@ private:
   /// Number of partitions in layer Z-direction
   int m_numPartZ;
 };
+
+} // namespace geos
+
+
+#endif // GEOS_PARTITIONER_LAYEREDMESHPARTITIONER_HPP_

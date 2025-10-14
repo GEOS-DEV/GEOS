@@ -552,11 +552,13 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="CartesianPartitioner" type="CartesianPartitionerType" />
 			<xsd:element name="CellGraphPartitioner" type="CellGraphPartitionerType" />
+			<xsd:element name="LayeredMeshPartitioner" type="LayeredMeshPartitionerType" />
 			<xsd:element name="ParticleCartesian" type="ParticleCartesianType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="CartesianPartitionerType" />
 	<xsd:complexType name="CellGraphPartitionerType" />
+	<xsd:complexType name="LayeredMeshPartitionerType" />
 	<xsd:complexType name="ParticleCartesianType" />
 	<xsd:complexType name="SolversType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

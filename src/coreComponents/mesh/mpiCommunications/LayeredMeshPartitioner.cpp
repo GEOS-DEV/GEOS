@@ -12,7 +12,8 @@
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
  */
-#include "LayeredMeshPartitioner.hpp"
+
+ #include "LayeredMeshPartitioner.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
 
 namespace geos
@@ -43,16 +44,15 @@ void LayeredMeshPartitioner::postInputInitialization()
   MeshPartitioner::postInputInitialization();
 
   // Validate LayeredMeshPartitioner-specific parameters
-  GEOS_ERROR_IF( m_indexArrayName.empty(),
-                 "LayeredMeshPartitioner requires 'indexArrayName' to be specified" );
+  GEOS_THROW_IF( m_indexArrayName.empty(),
+                 "LayeredMeshPartitioner requires 'indexArrayName' to be specified", InputError );
 
-  GEOS_ERROR_IF_LE( m_numPartZ, 0,
-                    "LayeredMeshPartitioner requires 'numPartZ' > 0, got " << m_numPartZ );
+  GEOS_THROW_IF_LE_MSG( m_numPartZ, 0,
+                        GEOS_FMT( "LayeredMeshPartitioner requires 'numPartZ' > 0, got {}", m_numPartZ ), InputError );
 
   int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
-  GEOS_ERROR_IF_NE( mpiSize % m_numPartZ, 0,
-                    "Total MPI ranks (" << mpiSize << ") must be evenly divisible by "
-                                        << "numPartZ (" << m_numPartZ << ")" );
+  GEOS_THROW_IF_NE_MSG( mpiSize % m_numPartZ, 0,
+                        GEOS_FMT( "Total MPI ranks ( {} ) must be evenly divisible by numPartZ ({})", mpiSize, m_numPartZ ), InputError );
 
   GEOS_LOG_RANK_0( GEOS_FMT( "LayeredMeshPartitioner: {} ranks will be partitioned into {} area partitions x {} layer partitions",
                              mpiSize, mpiSize / m_numPartZ, m_numPartZ ) );
@@ -90,9 +90,8 @@ void LayeredMeshPartitioner::processCommandLineOverrides( unsigned int const xpa
     // Default: partition into commSize parts
     int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
 
-    GEOS_ERROR_IF_NE( mpiSize % m_numPartZ, 0,
-                      "Total MPI ranks (" << mpiSize << ") must be evenly divisible by "
-                                          << "numPartZ (" << m_numPartZ << ")" );
+    GEOS_THROW_IF_NE_MSG( mpiSize % m_numPartZ, 0,
+                          GEOS_FMT( "Total MPI ranks ({}) must be evenly divisible by numPartZ ({})", mpiSize, m_numPartZ ), InputError );
 
     int const areaPartitions = mpiSize / m_numPartZ;
     setPartitionCounts( 1, areaPartitions, m_numPartZ );

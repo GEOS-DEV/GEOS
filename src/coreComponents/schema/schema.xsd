@@ -327,6 +327,10 @@
 					<xsd:selector xpath="CellGraphPartitioner" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="PartitionerLayeredMeshPartitionerUniqueName">
+					<xsd:selector xpath="LayeredMeshPartitioner" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="PartitionerParticleCartesianUniqueName">
 					<xsd:selector xpath="ParticleCartesian" />
 					<xsd:field xpath="@name" />
@@ -2678,6 +2682,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="CartesianPartitioner" type="CartesianPartitionerType" />
 			<xsd:element name="CellGraphPartitioner" type="CellGraphPartitionerType" />
+			<xsd:element name="LayeredMeshPartitioner" type="LayeredMeshPartitionerType" />
 			<xsd:element name="ParticleCartesian" type="ParticleCartesianType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -2690,6 +2695,18 @@ Information output from lower logLevels is added with the desired log level
 	<xsd:complexType name="CellGraphPartitionerType">
 		<!--engine => Graph partitioning engine (parmetis, ptscotch, or noop)-->
 		<xsd:attribute name="engine" type="string" default="parmetis" />
+		<!--numRefinements => Number of refinement iterations for graph partitioning (ParMETIS only, ignored by other engines)-->
+		<xsd:attribute name="numRefinements" type="integer" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="LayeredMeshPartitionerType">
+		<!--engine => Graph partitioning engine (parmetis, ptscotch, or noop)-->
+		<xsd:attribute name="engine" type="string" default="parmetis" />
+		<!--indexArrayName => Name of VTK cell data array containing [area, layer] indices-->
+		<xsd:attribute name="indexArrayName" type="string" use="required" />
+		<!--numPartZ => Number of partitions in layer Z-direction-->
+		<xsd:attribute name="numPartZ" type="integer" default="1" />
 		<!--numRefinements => Number of refinement iterations for graph partitioning (ParMETIS only, ignored by other engines)-->
 		<xsd:attribute name="numRefinements" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->

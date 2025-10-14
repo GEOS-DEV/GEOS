@@ -233,16 +233,6 @@ AllMeshes applyPartitioning( AllMeshes & input,
                              MPI_Comm comm );
 
 /**
- * @brief Exchange bounding boxes between MPI ranks
- *
- * @param mesh The mesh to compute and exchange bounding boxes for
- * @param comm MPI communicator
- * @return Vector of bounding boxes from all ranks
- */
-stdVector< vtkBoundingBox > exchangeBoundingBoxes( vtkDataSet & mesh, MPI_Comm comm );
-
-
-/**
  * @brief Compute the rank neighbor candidate list.
  * @param[in] boundingBoxes the bounding boxes used by the VTK partitioner for all ranks
  * @return the list of neighboring MPI ranks, will be updated

@@ -380,9 +380,6 @@ vtk::AllMeshes redistributeMeshes( integer const logLevel,
   if( minCellsOnAnyRank == 0 )
   {
     mesh = vtk::redistributeByKdTree( *mesh );
-
-    std::cout << "Rank " << MpiWrapper::commRank()
-              << ": After KdTree redistribution - Cells: " << mesh->GetNumberOfCells()<<std::endl;
   }
 
   // ====================================================================
@@ -392,23 +389,13 @@ vtk::AllMeshes redistributeMeshes( integer const logLevel,
   {
     GEOS_WARNING( "Empty ranks detected after kdtree - redistributing to ensure all ranks have cells" );
     mesh = vtk::ensureNoEmptyRank( mesh, comm );
-
-    std::cout << "Rank " << MpiWrapper::commRank()
-              << ": After ensureNoEmptyRank - Cells: " << mesh->GetNumberOfCells()<<std::endl;
   }
 
   // ====================================================================
   // STEP 7: Final partitioning using the configured partitioner
   // ====================================================================
-  std::cout << "Rank " << MpiWrapper::commRank()
-            << ": Before final partitioning - Cells: " << mesh->GetNumberOfCells()<<std::endl;
-
   vtk::AllMeshes input( mesh, namesToFractures );
   vtk::AllMeshes result = meshPartitioner->partitionMeshes( input, comm );
-
-  std::cout << "Rank " << MpiWrapper::commRank()
-            << ": After final partitioning - Cells: "
-            << result.getMainMesh()->GetNumberOfCells()<<std::endl;
 
   // ====================================================================
   // STEP 8: Log redistribution statistics

@@ -22,6 +22,7 @@
 #include "MeshPartitioner.hpp"
 #include "GraphPartitionEngine.hpp"
 
+#include "mesh/generators/VTKMeshGeneratorTools.hpp"
 #include <vtkBoundingBox.h>
 
 #ifdef GEOS_USE_TRILINOS
