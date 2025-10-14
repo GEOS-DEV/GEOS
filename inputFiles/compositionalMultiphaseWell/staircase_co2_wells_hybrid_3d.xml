@@ -1,228 +1,235 @@
-<?xml version="1.0" ?>
-
 <Problem>
   <Solvers>
     <CompositionalMultiphaseReservoir
-      name="reservoirSystem"
-      flowSolverName="compositionalMultiphaseFlow"
-      wellSolverName="compositionalMultiphaseWell"
-      logLevel="1"
-      initialDt="5e2"
-      targetRegions="{ Channel, wellRegion1, wellRegion2 }">
+        name="reservoirSystem"
+        flowSolverName="compositionalMultiphaseFlow"
+        wellSolverName="compositionalMultiphaseWell"
+        logLevel="1"
+        initialDt="5e2"
+        targetRegions="{Channel, wellRegion1, wellRegion2}">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="40"/>
+          newtonTol="1.0e-6"
+          newtonMaxIter="40">
+      </NonlinearSolverParameters>
       <LinearSolverParameters
-        directParallel="0"/>
+          directParallel="0">
+      </LinearSolverParameters>
     </CompositionalMultiphaseReservoir>
-
     <CompositionalMultiphaseHybridFVM
-      name="compositionalMultiphaseFlow"
-      logLevel="1"
-      discretization="fluidHM"
-      targetRegions="{ Channel }"
-      temperature="368.15"
-      targetRelativePressureChangeInTimeStep="1"
-      targetPhaseVolFractionChangeInTimeStep="1"
-      maxCompFractionChange="0.2"
-      maxRelativePressureChange="0.2"
-      useMass="1"/>
-
+        name="compositionalMultiphaseFlow"
+        logLevel="1"
+        discretization="fluidHM"
+        targetRegions="{Channel}"
+        temperature="368.15"
+        targetRelativePressureChangeInTimeStep="1"
+        targetPhaseVolFractionChangeInTimeStep="1"
+        maxCompFractionChange="0.2"
+        maxRelativePressureChange="0.2"
+        useMass="1">
+    </CompositionalMultiphaseHybridFVM>
     <CompositionalMultiphaseWell
-      name="compositionalMultiphaseWell"
-      logLevel="1"
-      targetRegions="{ wellRegion1, wellRegion2 }"
-      maxCompFractionChange="0.2"
-      maxRelativePressureChange="0.2"
-      useMass="1">
+        name="compositionalMultiphaseWell"
+        logLevel="1"
+        targetRegions="{wellRegion1, wellRegion2}"
+        maxCompFractionChange="0.2"
+        maxRelativePressureChange="0.2"
+        useMass="1"
+        writeCSV="1">
       <WellControls
-        name="wellControls1"
-        type="producer"
-        control="BHP"
-        referenceElevation="12"
-        targetBHP="2e6"
-        targetPhaseRate="1e-7"
-        targetPhaseName="water"/>
+          name="wellControls1"
+          type="producer">
+        <PhaseProductionConstraint
+            name="maxwaterprod"
+            phaseName="water"
+            phaseRate="1e-7">
+        </PhaseProductionConstraint>
+        <MinimumBHPConstraint
+            name="minbhp"
+            targetBHP="2e6"
+            referenceElevation="12">
+        </MinimumBHPConstraint>
+      </WellControls>
       <WellControls
-        name="wellControls2"
-        type="injector"
-        control="totalVolRate"
-        referenceElevation="12"
-        targetBHP="2e7"
-        targetTotalRateTableName="totalRateTable"
-        injectionTemperature="368.15"
-        injectionStream="{ 0.995, 0.005 }"/>
+          name="wellControls2"
+          type="injector">
+        <MaximumBHPConstraint
+            name="maxbhp"
+            targetBHP="2e7"
+            referenceElevation="12">
+        </MaximumBHPConstraint>
+        <TotalVolInjectionConstraint
+            constraintScheduleTableName="totalRateTable"
+            injectionStream="{0.995, 0.005}"
+            injectionTemperature="368.15">
+        </TotalVolInjectionConstraint>
+      </WellControls>
     </CompositionalMultiphaseWell>
   </Solvers>
-
   <Mesh>
-
     <VTKMesh
-      name="mesh1"
-      file="staircase3d_tet_with_properties.vtu"
-      fieldsToImport="{ FluidComposition, PERM, PORO }"
-      fieldNamesInGEOS="{ globalCompFraction, rockPerm_permeability, rockPorosity_referencePorosity }"
-      partitionRefinement="1"
-      logLevel="2">
-
+        name="mesh1"
+        file="staircase3d_tet_with_properties.vtu"
+        fieldsToImport="{FluidComposition, PERM, PORO}"
+        fieldNamesInGEOS="{globalCompFraction, rockPerm_permeability, rockPorosity_referencePorosity}"
+        partitionRefinement="1"
+        logLevel="2">
       <InternalWell
-        name="well_producer1"
-        wellRegionName="wellRegion1"
-        wellControlsName="wellControls1"
-        polylineNodeCoords="{ { 9.5, 0.5, 12 },
-                              { 9.5, 0.5, 0.05 } }"
-        polylineSegmentConn="{ { 0, 1 } }"
-        radius="0.1"
-        numElementsPerSegment="20">
+          name="well_producer1"
+          wellRegionName="wellRegion1"
+          wellControlsName="wellControls1"
+          polylineNodeCoords="{{9.5, 0.5, 12}, {9.5, 0.5, 0.05}}"
+          polylineSegmentConn="{{0, 1}}"
+          radius="0.1"
+          numElementsPerSegment="20">
         <Perforation
-          name="producer1_perf1"
-          distanceFromHead="11.95"/>
+            name="producer1_perf1"
+            distanceFromHead="11.95">
+        </Perforation>
       </InternalWell>
-
       <InternalWell
-        name="well_injector1"
-        wellRegionName="wellRegion2"
-        wellControlsName="wellControls2"
-        polylineNodeCoords="{ { 9.5, 0.2, 12 },
-                              { 9.5, 0.2, 9.5 } }"
-        polylineSegmentConn="{ { 0, 1 } }"
-        radius="0.1"
-        numElementsPerSegment="30">
+          name="well_injector1"
+          wellRegionName="wellRegion2"
+          wellControlsName="wellControls2"
+          polylineNodeCoords="{{9.5, 0.2, 12}, {9.5, 0.2, 9.5}}"
+          polylineSegmentConn="{{0, 1}}"
+          radius="0.1"
+          numElementsPerSegment="30">
         <Perforation
-          name="injector1_perf1"
-          distanceFromHead="2.45"/>
+            name="injector1_perf1"
+            distanceFromHead="2.45">
+        </Perforation>
       </InternalWell>
     </VTKMesh>
   </Mesh>
-
   <Events
-    maxTime="2.5e5">
+      maxTime="2.5e5">
     <PeriodicEvent
-      name="outputs"
-      timeFrequency="5e4"
-      target="/Outputs/vtkOutput"/>
-
+        name="outputs"
+        timeFrequency="5e4"
+        target="/Outputs/vtkOutput">
+    </PeriodicEvent>
     <PeriodicEvent
-      name="solverApplications"
-      maxEventDt="5e4"
-      target="/Solvers/reservoirSystem"/>
-
+        name="solverApplications"
+        maxEventDt="5e4"
+        target="/Solvers/reservoirSystem">
+    </PeriodicEvent>
     <PeriodicEvent
-      name="restarts"
-      timeFrequency="1.5e4"
-      targetExactTimestep="0"
-      target="/Outputs/restartOutput"/>
+        name="restarts"
+        timeFrequency="1.5e4"
+        targetExactTimestep="0"
+        target="/Outputs/restartOutput">
+    </PeriodicEvent>
   </Events>
-
   <ElementRegions>
     <CellElementRegion
-      name="Channel"
-      cellBlocks="{ * }"
-      materialList="{ fluid1, rock, relperm }"/>
-
+        name="Channel"
+        cellBlocks="{*}"
+        materialList="{fluid1, rock, relperm}">
+    </CellElementRegion>
     <WellElementRegion
-      name="wellRegion1"
-      materialList="{ fluid1 }"/>
-
+        name="wellRegion1"
+        materialList="{fluid1}">
+    </WellElementRegion>
     <WellElementRegion
-      name="wellRegion2"
-      materialList="{ fluid1 }"/>
+        name="wellRegion2"
+        materialList="{fluid1}">
+    </WellElementRegion>
   </ElementRegions>
-
   <NumericalMethods>
     <FiniteVolume>
       <HybridMimeticDiscretization
-        name="fluidHM"
-        innerProductType="beiraoDaVeigaLipnikovManzini"/>
+          name="fluidHM"
+          innerProductType="beiraoDaVeigaLipnikovManzini">
+      </HybridMimeticDiscretization>
     </FiniteVolume>
   </NumericalMethods>
-
   <Constitutive>
     <CO2BrinePhillipsFluid
-      name="fluid1"
-      phaseNames="{ gas, water }"
-      componentNames="{ co2, water }"
-      componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
-      flashModelParaFile="co2flash.txt"/>
-
+        name="fluid1"
+        phaseNames="{gas, water}"
+        componentNames="{co2, water}"
+        componentMolarWeight="{44e-3, 18e-3}"
+        phasePVTParaFiles="{pvtgas.txt, pvtliquid.txt}"
+        flashModelParaFile="co2flash.txt">
+    </CO2BrinePhillipsFluid>
     <CompressibleSolidConstantPermeability
-      name="rock"
-      solidModelName="nullSolid"
-      porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
-
+        name="rock"
+        solidModelName="nullSolid"
+        porosityModelName="rockPorosity"
+        permeabilityModelName="rockPerm">
+    </CompressibleSolidConstantPermeability>
     <NullModel
-      name="nullSolid"/>
-
+        name="nullSolid">
+    </NullModel>
     <PressurePorosity
-      name="rockPorosity"
-      defaultReferencePorosity="0.1"
-      referencePressure="0.0"
-      compressibility="1.0e-9"/>
-
+        name="rockPorosity"
+        defaultReferencePorosity="0.1"
+        referencePressure="0.0"
+        compressibility="1.0e-9">
+    </PressurePorosity>
     <BrooksCoreyRelativePermeability
-      name="relperm"
-      phaseNames="{ gas, water }"
-      phaseMinVolumeFraction="{ 0.05, 0.05 }"
-      phaseRelPermExponent="{ 2, 1.5 }"
-      phaseRelPermMaxValue="{ 0.8, 0.9 }"/>
-
+        name="relperm"
+        phaseNames="{gas, water}"
+        phaseMinVolumeFraction="{0.05, 0.05}"
+        phaseRelPermExponent="{2, 1.5}"
+        phaseRelPermMaxValue="{0.8, 0.9}">
+    </BrooksCoreyRelativePermeability>
     <ConstantPermeability
-      name="rockPerm"
-      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+        name="rockPerm"
+        permeabilityComponents="{2.0e-16, 2.0e-16, 2.0e-16}">
+    </ConstantPermeability>
   </Constitutive>
-
   <FieldSpecifications>
     <FieldSpecification
-      name="initialPressure_channel"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="pressure"
-      scale="9e6"/>
-
+        name="initialPressure_channel"
+        initialCondition="1"
+        setNames="{all}"
+        objectPath="ElementRegions/Channel"
+        fieldName="pressure"
+        scale="9e6">
+    </FieldSpecification>
     <FieldSpecification
-      name="initialFacePressure_channel"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="faceManager"
-      fieldName="facePressure"
-      scale="9e6"/>
-
+        name="initialFacePressure_channel"
+        initialCondition="1"
+        setNames="{all}"
+        objectPath="faceManager"
+        fieldName="facePressure"
+        scale="9e6">
+    </FieldSpecification>
     <FieldSpecification
-      name="initialComposition_co2"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="globalCompFraction"
-      component="0"
-      scale="0.005"/>
-
+        name="initialComposition_co2"
+        initialCondition="1"
+        setNames="{all}"
+        objectPath="ElementRegions/Channel"
+        fieldName="globalCompFraction"
+        component="0"
+        scale="0.005">
+    </FieldSpecification>
     <FieldSpecification
-      name="initialComposition_water"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="globalCompFraction"
-      component="1"
-      scale="0.995"/>
+        name="initialComposition_water"
+        initialCondition="1"
+        setNames="{all}"
+        objectPath="ElementRegions/Channel"
+        fieldName="globalCompFraction"
+        component="1"
+        scale="0.995">
+    </FieldSpecification>
   </FieldSpecifications>
-
   <Functions>
     <TableFunction
-      name="totalRateTable"
-      inputVarNames="{time}"
-      coordinates="{0, 1.001e3, 3.5001e3, 5.001e3, 2.041e5, 1e6}"
-      values="{5e-7, 1e-7, 2e-7, 5e-7, 0, 0}" 
-      interpolation="lower"/>
+        name="totalRateTable"
+        inputVarNames="{time}"
+        coordinates="{0, 1.001e3, 3.5001e3, 5.001e3, 2.041e5, 1e6}"
+        values="{5e-7, 1e-7, 2e-7, 5e-7, 0, 0}"
+        interpolation="lower">
+    </TableFunction>
   </Functions>
-  
   <Outputs>
     <VTK
-      name="vtkOutput"/>
-
+        name="vtkOutput">
+    </VTK>
     <Restart
-      name="restartOutput"/>
+        name="restartOutput">
+    </Restart>
   </Outputs>
 </Problem>
