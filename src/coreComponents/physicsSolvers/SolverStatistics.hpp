@@ -294,8 +294,13 @@ public:
                          integer const cycleNumber,
                          integer const newtonIter );
 
+  /**
+   * @brief Set a residual value given a key ( column ib the CSV )
+   * @param key The corresponding column
+   * @param value The residual value
+   */
   void setResidualValue( string const & key, real64 const value )
-  { if( m_CSVOutputRequest ) m_residuals[key] = value; }
+  { if( m_CSVOutputRequest ) m_residuals.insert( {key, value} ); }
 
 
   /**
@@ -313,7 +318,7 @@ public:
   { m_tableConvergenceName = name; }
 
   /**
-   * @return  A const convergence filename
+   * @return A const string convergence filename
    */
   string const & getFilename() const
   { return m_convergenceFilename;  }
@@ -325,7 +330,7 @@ public:
   { return m_convergenceFilename;  }
 
   /**
-   * @brief Close the stream output file
+   * @brief Close the stream output file if a file was created
    */
   void closeFile()
   { if( m_CSVOutputOpened ) { m_logStream.close(); m_CSVOutputOpened = false; } }
