@@ -165,6 +165,15 @@ public:
                              DomainPartition & domain );
 
 
+                             void setupWellDofs( DomainPartition & domain );
+       
+    void setupWellSystem ( DomainPartition & domain,
+                         DofManager & dofManager,
+                         CRSMatrix< real64, globalIndex > & localMatrix,
+                         ParallelVector & rhs,
+                         ParallelVector & solution,
+                         bool const setSparsity = true );
+
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
@@ -183,8 +192,33 @@ public:
                                         CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
                                         arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) override {}
 
+  virtual void applyWellBoundaryConditions( real64 const GEOS_UNUSED_PARAM( time_n ),
+                                            real64 const GEOS_UNUSED_PARAM( dt ),
+                                            ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
+                                            WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ),
+                                            DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                            arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ),
+                                            CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ) )  {}
 
   /**@}*/
+
+  /**
+   * @brief function to assemble the linear system matrix and rhs
+   * @param time the time at the beginning of the step
+   * @param dt the desired timestep
+   * @param domain the domain partition
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+
+  void assembleWellSystem( real64 const time,
+                           real64 const dt,
+                           ElementRegionManager const & elementRegionManager,
+                           WellElementSubRegion & subRegion,
+                           DofManager const & dofManager,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs );
 
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
@@ -327,6 +361,14 @@ public:
                              MeshLevel & GEOS_UNUSED_PARAM( mesh ),
                              WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ) ) = 0;
 
+  bool solveNonlinearSystem( real64 const & time_n,
+                             real64 const & stepDt,
+                             integer const cycleNumber,
+                             DomainPartition & domain,
+                             MeshLevel & mesh,
+                             ElementRegionManager & elementRegionManager,
+                             WellElementSubRegion & subregion,
+                             DofManager const & dofManager );
   /**
    * @brief Function to perform line search
    * @param time_n time at the beginning of the step
@@ -431,8 +473,16 @@ protected:
                            real64 const & dt,
                            DomainPartition & domain ) = 0;
 
-  virtual bool evaluateConstraints( real64 const & time_n,
-                                    WellElementSubRegion & subRegion ) = 0;
+ virtual bool evaluateConstraints( real64 const & GEOS_UNUSED_PARAM(  time_n  ) ,
+                                    real64 const & GEOS_UNUSED_PARAM( stepDt ),
+                                    integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                    integer const GEOS_UNUSED_PARAM( coupledIterationNumber ),
+                                    DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                    MeshLevel & GEOS_UNUSED_PARAM( mesh ),
+                                    ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
+                                    WellElementSubRegion &  GEOS_UNUSED_PARAM(  subRegion ) ,
+                                    DofManager const & GEOS_UNUSED_PARAM( dofManager ) ) { return false;};
+
 
 
   /// name of the flow solver
@@ -470,8 +520,15 @@ protected:
   integer m_estimateSolution;
 
 
-  integer m_useNewCode;
+  /// @brief  DofManagers for each wells estimator
+  /// @details This DofManager is used to store the DOF numbers for the estimator
+  /// @note This DofManager is used in the assembly of the estimators linear system
+  std::map< std::string, DofManager >   m_estimatorDoFManager;
 
+
+
+  integer m_useNewCode;
+  integer my_ctime; //tjb
 };
 
 }

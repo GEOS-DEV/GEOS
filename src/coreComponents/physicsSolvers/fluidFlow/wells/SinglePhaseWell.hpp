@@ -376,8 +376,16 @@ private:
                                         WellElementSubRegion const & subRegion,
                                         ElementRegionManager const & elemManager ) override;
 
-  virtual bool evaluateConstraints( real64 const & time_n,
-                                    WellElementSubRegion & subRegion ) override;
+ virtual bool evaluateConstraints( real64 const &   time_n ,
+                                    real64 const & GEOS_UNUSED_PARAM( stepDt ),
+                                    integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                    integer const GEOS_UNUSED_PARAM( coupledIterationNumber ),
+                                    DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                    MeshLevel & GEOS_UNUSED_PARAM( mesh ),
+                                    ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
+                                    WellElementSubRegion &   subRegion  ,
+                                    DofManager const & GEOS_UNUSED_PARAM( dofManager ) ) override;
+
 
   /**
    * @brief Create well separator

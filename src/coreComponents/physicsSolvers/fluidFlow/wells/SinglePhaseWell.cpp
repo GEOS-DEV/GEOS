@@ -407,7 +407,7 @@ void SinglePhaseWell::updateSeparator( WellElementSubRegion & subRegion )
     geos::internal::kernelLaunchSelectorThermalSwitch( isThermal(), [&] ( auto ISTHERMAL )
     {
       integer constexpr IS_THERMAL = ISTHERMAL();
-      GEOS_UNUSED_VAR(IS_THERMAL);
+      GEOS_UNUSED_VAR( IS_THERMAL );
       // bring everything back to host, capture the scalars by reference
       forAll< serialPolicy >( 1, [fluidSeparatorWrapper,
                                   pres,
@@ -1767,8 +1767,15 @@ void SinglePhaseWell::printRates( real64 const & time_n,
   } );
 }
 
-bool SinglePhaseWell::evaluateConstraints( real64 const & time_n,
-                                           WellElementSubRegion & subRegion )
+bool SinglePhaseWell::evaluateConstraints(real64 const &  time_n   ,
+                                    real64 const & GEOS_UNUSED_PARAM( stepDt ),
+                                    integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                    integer const GEOS_UNUSED_PARAM( coupledIterationNumber ),
+                                    DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                    MeshLevel & GEOS_UNUSED_PARAM( mesh ),
+                                    ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
+                                    WellElementSubRegion &   subRegion  ,
+                                    DofManager const & GEOS_UNUSED_PARAM( dofManager ) )
 {
   WellControls & wellControls = getWellControls( subRegion );
   // create list of all constraints to process

@@ -41,6 +41,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_rateSign( -1.0 ),
   m_statusTable( nullptr ),
   m_wellOpen( false ),
+  m_estimateSolution( false ),
   m_constraintSwitch( true ),
   m_currentConstraint( nullptr ),
   m_wellStatus( WellControls::Status::OPEN ),
@@ -98,6 +99,10 @@ WellControls::WellControls( string const & name, Group * const parent )
                     " - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) \n"
                     " - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) " );
 
+this->registerWrapper( viewKeyStruct::estimateWellSolutionString(), &m_estimateSolution ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to esitmate well solution prior to coupled reservoir and well solve." );
 
   addLogLevel< logInfo::WellControl >();
 }

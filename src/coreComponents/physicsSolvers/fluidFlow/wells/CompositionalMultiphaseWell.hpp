@@ -304,13 +304,21 @@ public:
                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                             arrayView1d< real64 > const & localRhs ) override;
 
+  virtual void applyWellBoundaryConditions( real64 const time_n,
+                                            real64 const dt,
+                                            ElementRegionManager & elemManager,
+                                            WellElementSubRegion & subRegion,
+                                            DofManager const & dofManager,
+                                            arrayView1d< real64 > const & localRhs,
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix ) override;
 
-  virtual void assembleWellPressureRelations( real64 const & time_n,
-                                              real64 const & dt,
-                                              WellElementSubRegion const & subRegion,
-                                              DofManager const & dofManager,
-                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                              arrayView1d< real64 > const & localRhs ) override;
+  virtual void applyBoundaryConditions( real64 const GEOS_UNUSED_PARAM( time_n ),
+                                        real64 const GEOS_UNUSED_PARAM( dt ),
+                                        DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                        DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                        CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                        arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) override;
+
 
   /**
    * @brief assembles the pressure relations at all connections between well elements except at the well head
@@ -321,12 +329,20 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
+    virtual void assembleWellPressureRelations( real64 const & time_n,
+                                              real64 const & dt,
+                                              WellElementSubRegion const & subRegion,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs ) override;
+
   virtual void assemblePressureRelations( real64 const & time_n,
                                           real64 const & dt,
                                           DomainPartition const & domain,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
+
 
   /**
    * @brief Sets all the negative component densities (if any) to zero.
@@ -441,7 +457,14 @@ protected:
                    DomainPartition & domain ) override;
 
   virtual bool evaluateConstraints( real64 const & time_n,
-                                    WellElementSubRegion & subRegion ) override;
+                                    real64 const & stepDt,
+                                    integer const cycleNumber,
+                                    integer const coupledIterationNumber,
+                                    DomainPartition & domain,
+                                    MeshLevel & mesh,
+                                    ElementRegionManager & elemManager,
+                                    WellElementSubRegion & subRegion,
+                                    DofManager const & dofManager ) override;
 
 private:
 
@@ -458,7 +481,7 @@ private:
   template< typename ... GROUPTYPES >
   void selectLimitingConstraint( real64 const & time_n, integer const coupledIterationNumber, WellElementSubRegion & subRegion );
 
-  void solveConstraint( std::shared_ptr< WellConstraintBase > constraint,
+  void solveConstraint(  WellConstraintBase * constraint,
                         real64 const & time_n,
                         real64 const & dt,
                         integer const cycleNumber,

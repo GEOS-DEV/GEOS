@@ -1292,7 +1292,8 @@ void PhysicsSolverBase::debugOutputSystem( real64 const & time,
                                            integer const cycleNumber,
                                            integer const nonlinearIteration,
                                            ParallelMatrix const & matrix,
-                                           ParallelVector const & rhs ) const
+                                           ParallelVector const & rhs,
+                                           string const & tag ) const
 {
   // special case when flag value > 2
   if( m_writeLinearSystem > 2 && cycleNumber < m_writeLinearSystem )
@@ -1302,7 +1303,7 @@ void PhysicsSolverBase::debugOutputSystem( real64 const & time,
                        time,
                        cycleNumber,
                        nonlinearIteration,
-                       getName() + "_mat",
+                       getName() + "_mat"+tag,
                        "System matrix",
                        m_writeLinearSystem == 1,
                        m_writeLinearSystem >= 2 );
@@ -1311,7 +1312,7 @@ void PhysicsSolverBase::debugOutputSystem( real64 const & time,
                        time,
                        cycleNumber,
                        nonlinearIteration,
-                       getName() + "_rhs",
+                       getName() + "_rhs"+tag,
                        "System right-hand side",
                        m_writeLinearSystem == 1,
                        m_writeLinearSystem >= 2 );
@@ -1320,7 +1321,8 @@ void PhysicsSolverBase::debugOutputSystem( real64 const & time,
 void PhysicsSolverBase::debugOutputSolution( real64 const & time,
                                              integer const cycleNumber,
                                              integer const nonlinearIteration,
-                                             ParallelVector const & solution ) const
+                                             ParallelVector const & solution,
+                                             string const & tag ) const
 {
   // special case when flag value > 2
   if( m_writeLinearSystem > 2 && cycleNumber < m_writeLinearSystem )
@@ -1330,7 +1332,7 @@ void PhysicsSolverBase::debugOutputSolution( real64 const & time,
                        time,
                        cycleNumber,
                        nonlinearIteration,
-                       getName() + "_sol",
+                       getName() + "_sol"+tag,
                        "System solution",
                        m_writeLinearSystem == 1,
                        m_writeLinearSystem >= 2 );

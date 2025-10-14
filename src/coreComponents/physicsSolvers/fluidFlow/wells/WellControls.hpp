@@ -267,6 +267,12 @@ public:
    */
   void setControl( Control const & newControl )  {  m_currentControl = newControl; }
 
+    /**
+   * @brief getter for esitmator switch
+   * @return True if estimate well solution
+   */
+  integer estimateSolution() const { return m_estimateSolution; }
+
   /**
    * @brief Getter for the reference gravity coefficient
    * @return the reference gravity coefficient
@@ -578,7 +584,8 @@ private:
 
   bool m_wellOpen;
 
-
+  /// flag to use the estimator
+  integer m_estimateSolution;
 
   /// List of constraints
   //constraint_array m_ConstraintList;

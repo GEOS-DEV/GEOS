@@ -18,7 +18,7 @@
  */
 
 #include "WellSolverBase.hpp"
-
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "mesh/WellElementRegion.hpp"
@@ -307,6 +307,45 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
   }
 
 }
+void WellSolverBase::setupWellDofs( DomainPartition & domain )
+{
+  if( m_estimatorDoFManager.empty() )
+  {
+
+    map< std::pair< string, string >, string_array > meshTargets;
+    string_array regions;
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                                 MeshLevel & meshLevel,
+                                                                 string_array const & regionNames )
+    {
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                   [&]( localIndex const,
+                                                                        WellElementRegion & region )
+      {
+        meshTargets.clear();
+        regions.clear();
+        regions.emplace_back( region.getName() );
+        auto const key = std::make_pair( meshBodyName, meshLevel.getName());
+        meshTargets[key] = std::move( regions );
+
+        DofManager regionDoFManager( region.getName());
+        regionDoFManager.setDomain( domain );
+        regionDoFManager.addField( wellElementDofName(),
+                                   FieldLocation::Elem,
+                                   numDofPerWellElement(),
+                                   meshTargets );
+
+        regionDoFManager.addCoupling( wellElementDofName(),
+                                      wellElementDofName(),
+                                      DofManager::Connector::Node );
+
+        regionDoFManager.reorderByRank();
+        m_estimatorDoFManager.emplace( region.getName(), std::move( regionDoFManager ));
+      } );
+    } );
+  }
+}
 
 void WellSolverBase::selectWellConstraint( real64 const & time_n,
                                            real64 const & dt,
@@ -317,6 +356,8 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
   GEOS_UNUSED_VAR( dt );
   GEOS_UNUSED_VAR( coupledIterationNumber );
 
+   setupWellDofs( domain );
+  integer cycleNumber=0; 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
                                                                MeshLevel & meshLevel,
                                                                string_array const & regionNames )
@@ -347,10 +388,40 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
 
       if( wellControls.getWellState())
       {
+        //GEOS_LOG_RANK( "**** Estimate Well Solution - Start **** " << subRegion.getName() );
+        auto it = m_estimatorDoFManager.find( region.getName());
+        if( it == m_estimatorDoFManager.end())
+        {
+          throw std::runtime_error( "DofManager for region " + region.getName() + " not found." );
+        }
+        DofManager & dofManager = it->second;
+
+// Only build the sparsity pattern if the mesh has changed
+        Timestamp const meshModificationTimestamp = getMeshModificationTimestamp( domain );
+
+        if( meshModificationTimestamp > getSystemSetupTimestamp() )
+        {
+          // These are esitmator matrices
+          setupWellSystem( domain, dofManager, m_localMatrix, m_rhs, m_solution );
+          //setSystemSetupTimestamp( meshModificationTimestamp );
+
+          //std::ostringstream oss;
+          //m_dofManager.printFieldInfo( oss );
+          //GEOS_LOG_LEVEL( logInfo::Fields, oss.str())
+        }
+
+
         wellControls.setConstraintSwitch( false );
 
         evaluateConstraints( time_n,
-                             subRegion );
+                             dt,
+                             cycleNumber,
+                             coupledIterationNumber,
+                             domain,
+                             meshLevel,
+                             elementRegionManager,
+                             subRegion,
+                             dofManager );
 
         // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
         // the well initialization code requires control type to by synced
@@ -370,6 +441,31 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
 
 }
 
+void WellSolverBase::setupWellSystem( DomainPartition & domain,
+                                      DofManager & dofManager,
+                                      CRSMatrix< real64, globalIndex > & localMatrix,
+                                      ParallelVector & rhs,
+                                      ParallelVector & solution,
+                                      bool const setSparsity )
+{
+  GEOS_MARK_FUNCTION;
+
+  setupWellDofs( domain );
+
+  if( setSparsity )
+  {
+    SparsityPattern< globalIndex > pattern;
+    dofManager.setSparsityPattern( pattern );
+    localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+  }
+  localMatrix.setName( this->getName() + "/matrix" );
+
+  rhs.setName( this->getName() + "/rhs" );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+
+  solution.setName( this->getName() + "/solution" );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+}
 void WellSolverBase::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
@@ -382,6 +478,35 @@ void WellSolverBase::updateState( DomainPartition & domain )
                                                                                           WellElementSubRegion & subRegion )
     { updateSubRegionState( subRegion ); } );
   } );
+}
+
+void WellSolverBase::assembleWellSystem( real64 const time_n,
+                                         real64 const dt,
+                                         ElementRegionManager const & elementRegionManager,
+                                         WellElementSubRegion & subRegion,
+                                         DofManager const & dofManager,
+                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                         arrayView1d< real64 > const & localRhs )
+{
+  assembleWellAccumulationTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+  WellControls & wellControls = getWellControls( subRegion );
+  if( !wellControls.getConstraintSwitch() )
+  {
+
+    assembleWellConstraintTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+  }
+  assembleWellPressureRelations( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+  computeWellPerforationRates( time_n, dt, elementRegionManager, subRegion );
+  assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+  my_ctime=my_ctime+1;
+  /*
+     if ( !m_useNewCode )
+     {
+     auto iterInfo = currentIter( time_n, dt );
+     outputWellDebug( time_n, dt, std::get< 0 >( iterInfo ), std::get< 1 >( iterInfo ), std::get< 2 >( iterInfo ),
+                    domain, dofManager, localMatrix, localRhs );
+     }
+   */
 }
 
 void WellSolverBase::assembleSystem( real64 const time,
@@ -517,6 +642,11 @@ real64 WellSolverBase::setNextDt( real64 const & currentTime, const real64 & cur
   FunctionManager & functionManager = FunctionManager::getInstance();
   real64 nextDt = PhysicsSolverBase::setNextDt( currentTime, currentDt, domain );
 
+  if( m_nextDt > 0 )
+  {
+    nextDt = m_nextDt;
+    m_nextDt=-1;
+  }
   if( m_timeStepFromTables )
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -549,6 +679,339 @@ real64 WellSolverBase::setNextDt( real64 const & currentTime, const real64 & cur
   }
 
   return nextDt;
+}
+
+
+bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
+                                           real64 const & stepDt,
+                                           integer const cycleNumber,
+                                           DomainPartition & domain,
+                                           MeshLevel & mesh,
+                                           ElementRegionManager & elemManager,
+                                           WellElementSubRegion & subRegion,
+                                           DofManager const & dofManager )
+{
+  integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
+  integer dtAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
+  integer configurationLoopIter = m_nonlinearSolverParameters.m_numConfigurationAttempts;
+  integer const minNewtonIter = m_nonlinearSolverParameters.m_minIterNewton;
+  real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
+
+// keep residual from previous iteration in case we need to do a line search
+  real64 lastResidual = 1e99;
+  integer newtonIter = 0;
+  real64 scaleFactor = 1.0;
+
+  bool isNewtonConverged = false;
+
+  for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
+  {
+
+    GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
+                           GEOS_FMT( " Well: {}   Est Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", subRegion.getName(), dtAttempt, configurationLoopIter, newtonIter ));
+
+    {
+      Timer timer( m_timers["assemble"] );
+
+// We sync the nonlinear convergence history. The coupled solver parameters are the one being
+// used. We want to propagate the info to subsolvers. It can be important for solvers that
+// have special treatment for specific iterations.
+      synchronizeNonlinearSolverParameters();
+
+// zero out matrix/rhs before assembly
+      m_localMatrix.zero();
+      m_rhs.zero();
+
+      arrayView1d< real64 > const localRhs = m_rhs.open();
+
+// call assemble to fill the matrix and the rhs
+      assembleWellSystem( time_n,
+                          stepDt,
+                          elemManager,
+                          subRegion,
+                          dofManager,
+                          m_localMatrix.toViewConstSizes(),
+                          localRhs );
+
+// apply boundary conditions to system
+      applyWellBoundaryConditions( time_n,
+                                   stepDt,
+                                   elemManager,
+                                   subRegion,
+                                   dofManager,
+                                   localRhs,
+                                   m_localMatrix.toViewConstSizes() );
+
+      m_rhs.close();
+
+      if( m_assemblyCallback )
+      {
+// Make a copy of LA objects and ship off to the callback
+        array1d< real64 > localRhsCopy( m_rhs.localSize() );
+        localRhsCopy.setValues< parallelDevicePolicy<> >( m_rhs.values() );
+        m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
+      }
+    }
+   // outputSingleWellDebug( time_n, stepDt, 0, newtonIter, 0,
+   //                        mesh, subRegion, dofManager, m_localMatrix.toViewConstSizes(), m_rhs.values()  );
+    real64 residualNorm = 0;
+    {
+      Timer timer( m_timers["convergence check"] );
+
+// get residual norm
+      residualNorm = calculateWellResidualNorm( time_n, stepDt, subRegion, dofManager, m_rhs.values() );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
+                             GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
+    }
+    //auto iterInfo = currentIter( time_n, dt );
+    //outputSingleWellDebug( time_n, stepDt, 0, newtonIter, 0,
+    //                       mesh, subRegion, dofManager, m_localMatrix.toViewConstSizes(), m_rhs.values()  );
+// if the residual norm is less than the Newton tolerance we denote that we have
+// converged and break from the Newton loop immediately.
+    if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
+    {
+      isNewtonConverged = true;
+      break;
+    }
+
+// if the residual norm is above the max allowed residual norm, we break from
+// the Newton loop to avoid crashes due to Newton divergence
+    if( residualNorm > m_nonlinearSolverParameters.m_maxAllowedResidualNorm )
+    {
+      string const maxAllowedResidualNormString = NonlinearSolverParameters::viewKeysStruct::maxAllowedResidualNormString();
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
+                             GEOS_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
+                                       maxAllowedResidualNormString,
+                                       m_nonlinearSolverParameters.m_maxAllowedResidualNorm )  );
+      isNewtonConverged = false;
+      break;
+    }
+
+
+    // do line search in case residual has increased
+
+    if( false && m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
+        && residualNorm > lastResidual * m_nonlinearSolverParameters.m_lineSearchResidualFactor
+        && newtonIter >= m_nonlinearSolverParameters.m_lineSearchStartingIteration )
+    {
+      bool lineSearchSuccess = false;
+      if( m_nonlinearSolverParameters.m_lineSearchInterpType == NonlinearSolverParameters::LineSearchInterpolationType::Linear )
+      {
+        residualNorm = lastResidual;
+        lineSearchSuccess = lineSearch1( time_n,
+                                         stepDt,
+                                         cycleNumber,
+                                         domain,
+                                         elemManager,
+                                         subRegion,
+                                         mesh,
+                                         dofManager,
+                                         m_localMatrix.toViewConstSizes(),
+                                         m_rhs,
+                                         m_solution,
+                                         scaleFactor,
+                                         residualNorm );
+      }
+      else
+      {
+        lineSearchSuccess = lineSearchWithParabolicInterpolation( time_n,
+                                                                  stepDt,
+                                                                  cycleNumber,
+                                                                  newtonIter,
+                                                                  domain,
+                                                                  dofManager,
+                                                                  m_localMatrix.toViewConstSizes(),
+                                                                  m_rhs,
+                                                                  m_solution,
+                                                                  scaleFactor,
+                                                                  lastResidual,
+                                                                  residualNorm );
+      }
+
+      if( !lineSearchSuccess )
+      {
+        if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Attempt )
+        {
+          GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
+                                 "        Line search failed to produce reduced residual. Accepting iteration." );
+        }
+        else if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Require )
+        {
+// if line search failed, then break out of the main Newton loop. Timestep will be cut.
+          GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
+                                 "        Line search failed to produce reduced residual. Exiting Newton Loop." );
+          break;
+        }
+      }
+    }
+
+    {
+      Timer timer( m_timers["linear solver total"] );
+
+// if using adaptive Krylov tolerance scheme, update tolerance.
+      LinearSolverParameters::Krylov & krylovParams = m_linearSolverParameters.get().krylov;
+      if( krylovParams.useAdaptiveTol )
+      {
+        krylovParams.relTolerance = newtonIter > 0 ? eisenstatWalker( residualNorm, lastResidual, krylovParams ) : krylovParams.weakestTol;
+      }
+
+// TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
+      if( m_precond )
+      {
+        m_precond->clear();
+      }
+
+      {
+        Timer timer_setup( m_timers["linear solver create"] );
+
+// Compose parallel LA matrix/rhs out of local LA matrix/rhs
+//
+        m_matrix.create( m_localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
+      }
+
+// Output the linear system matrix/rhs for debugging purposes
+      string tag = "_"+std::to_string( my_ctime );
+      debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs, tag );
+
+// Solve the linear system
+      solveLinearSystem( dofManager, m_matrix, m_rhs, m_solution );
+
+// Increment the solver statistics for reporting purposes
+      getIterationStats().updateNonlinearIteration( m_linearSolverResult.numIterations );
+
+// Output the linear system solution for debugging purposes
+      debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution, tag );
+    }
+
+    {
+      Timer timer( m_timers["apply solution"] );
+
+// Compute the scaling factor for the Newton update
+      scaleFactor = scalingForWellSystemSolution( subRegion, dofManager, m_solution.values() );
+
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                             GEOS_FMT( "        {}: Global solution scaling factor = {}", getName(), scaleFactor ) );
+
+      if( !checkWellSystemSolution( subRegion, dofManager, m_solution.values(), scaleFactor ) )
+      {
+// TODO try chopping (similar to line search)
+        GEOS_LOG_RANK_0( GEOS_FMT( "    {}: Solution check failed. Newton loop terminated.", getName()) );
+        break;
+      }
+
+// apply the system solution to the fields/variables
+      applyWellSystemSolution( dofManager, m_solution.values(), scaleFactor, stepDt, domain, mesh, subRegion );
+    }
+
+    {
+      Timer timer( m_timers["update state"] );
+
+// update non-primary variables (constitutive models)
+
+      updateWellState( subRegion );
+    }
+
+    lastResidual = residualNorm;
+  }
+
+  return isNewtonConverged;
+}
+
+bool WellSolverBase::lineSearch1( real64 const & time_n,
+                                  real64 const & dt,
+                                  integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                  DomainPartition & domain,
+                                  ElementRegionManager & elemManager,
+                                  WellElementSubRegion & subRegion,
+                                  MeshLevel & mesh,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  ParallelVector & rhs,
+                                  ParallelVector & solution,
+                                  real64 const scaleFactor,
+                                  real64 & lastResidual )
+{
+  Timer timer( m_timers["line search"] );
+
+  integer const maxNumberLineSearchCuts = m_nonlinearSolverParameters.m_lineSearchMaxCuts;
+  real64 const lineSearchCutFactor = m_nonlinearSolverParameters.m_lineSearchCutFactor;
+
+  // flag to determine if we should solve the system and apply the solution. If the line
+  // search fails we just bail.
+  bool lineSearchSuccess = false;
+
+  real64 residualNorm = lastResidual;
+
+  // scale factor is value applied to the previous solution. In this case we want to
+  // subtract a portion of the previous solution.
+  real64 localScaleFactor = -scaleFactor;
+  real64 cumulativeScale = scaleFactor;
+
+  // main loop for the line search.
+  for( integer lineSearchIteration = 0; lineSearchIteration < maxNumberLineSearchCuts; ++lineSearchIteration )
+  {
+    // cut the scale factor by half. This means that the scale factors will
+    // have values of -0.5, -0.25, -0.125, ...
+    localScaleFactor *= lineSearchCutFactor;
+    cumulativeScale += localScaleFactor;
+
+    if( !checkWellSystemSolution( subRegion, dofManager, m_solution.values(), localScaleFactor ) )
+    {
+      GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
+                             GEOS_FMT( "        Line search {}, solution check failed", lineSearchIteration ) );
+      continue;
+    }
+
+
+    applyWellSystemSolution( dofManager, solution.values(), localScaleFactor, dt, domain, mesh, subRegion );
+    // update non-primary variables (constitutive models)
+
+    updateWellState( subRegion );
+    // re-assemble system
+    localMatrix.zero();
+    rhs.zero();
+
+    arrayView1d< real64 > const localRhs = rhs.open();
+
+    // call assemble to fill the matrix and the rhs
+    assembleWellSystem( time_n,
+                        dt,
+                        elemManager,
+                        subRegion,
+                        dofManager,
+                        localMatrix,
+                        localRhs );
+
+// apply boundary conditions to system
+    applyWellBoundaryConditions( time_n,
+                                 dt,
+                                 elemManager,
+                                 subRegion,
+                                 dofManager,
+                                 localRhs,
+                                 localMatrix );
+
+    rhs.close();
+
+    GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
+                           GEOS_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale ));
+
+    // get residual norm
+    residualNorm = calculateWellResidualNorm( time_n, dt, subRegion, dofManager, rhs.values() );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::LineSearch,
+                           GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
+
+    // if the residual norm is less than the last residual, we can proceed to the
+    // solution step
+    if( residualNorm < lastResidual )
+    {
+      lineSearchSuccess = true;
+      break;
+    }
+  }
+
+  lastResidual = residualNorm;
+  return lineSearchSuccess;
 }
 
 } // namespace geos
