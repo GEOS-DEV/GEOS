@@ -90,7 +90,7 @@ public:
   /**
    * @return true if the CSV statistics file output is requested.
    */
-  bool getCSVOutputState()
+  bool getCSVOutputRequest()
   { return m_CSVOutputRequest; }
 
   /**
@@ -268,7 +268,7 @@ public:
   /**
    * @return true if the CSV statistics file output is requested, false otherwise.
    */
-  bool getCSVOutputState()
+  bool getCSVOutputRequest()
   { return m_CSVOutputRequest; }
 
   /**
