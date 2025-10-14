@@ -49,7 +49,7 @@ public:
    * @brief Return the name of the VTKMeshGenerator in object Catalog.
    * @return string that contains the key name to VTKMeshGenerator in the Catalog
    */
-  static string catalogName() { return "ParticleCartesian"; }
+  static string catalogName() { return "ParticleCartesianPartitioner"; }
 
 
   void updateSizes( arrayView1d< real64 > const domainL,

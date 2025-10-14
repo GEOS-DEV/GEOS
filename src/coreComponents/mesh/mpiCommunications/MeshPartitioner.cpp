@@ -121,7 +121,6 @@ vtk::AllMeshes MeshPartitioner::partitionMeshes( vtk::AllMeshes & mesh, MPI_Comm
   // ====================================================================
   // STEP 1: Compute partitioning, specific to subclass
   // ====================================================================
-  std::cout<<"Inthere"<<std::endl;
   array1d< int64_t > const partitioning = computePartitioning( mesh, comm );
 
   // ====================================================================

@@ -331,8 +331,8 @@
 					<xsd:selector xpath="LayeredMeshPartitioner" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
-				<xsd:unique name="PartitionerParticleCartesianUniqueName">
-					<xsd:selector xpath="ParticleCartesian" />
+				<xsd:unique name="PartitionerParticleCartesianPartitionerUniqueName">
+					<xsd:selector xpath="ParticleCartesianPartitioner" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 			</xsd:element>
@@ -2683,7 +2683,7 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="CartesianPartitioner" type="CartesianPartitionerType" />
 			<xsd:element name="CellGraphPartitioner" type="CellGraphPartitionerType" />
 			<xsd:element name="LayeredMeshPartitioner" type="LayeredMeshPartitionerType" />
-			<xsd:element name="ParticleCartesian" type="ParticleCartesianType" />
+			<xsd:element name="ParticleCartesianPartitioner" type="ParticleCartesianPartitionerType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="CartesianPartitionerType">
@@ -2712,7 +2712,7 @@ Information output from lower logLevels is added with the desired log level
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="ParticleCartesianType">
+	<xsd:complexType name="ParticleCartesianPartitionerType">
 		<!--partitionCounts => Number of partitions in each direction [nx, ny, nz]-->
 		<xsd:attribute name="partitionCounts" type="integer_array" default="{0}" />
 		<!--name => A name is required for any non-unique nodes-->

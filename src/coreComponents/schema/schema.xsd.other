@@ -553,13 +553,13 @@
 			<xsd:element name="CartesianPartitioner" type="CartesianPartitionerType" />
 			<xsd:element name="CellGraphPartitioner" type="CellGraphPartitionerType" />
 			<xsd:element name="LayeredMeshPartitioner" type="LayeredMeshPartitionerType" />
-			<xsd:element name="ParticleCartesian" type="ParticleCartesianType" />
+			<xsd:element name="ParticleCartesianPartitioner" type="ParticleCartesianPartitionerType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="CartesianPartitionerType" />
 	<xsd:complexType name="CellGraphPartitionerType" />
 	<xsd:complexType name="LayeredMeshPartitionerType" />
-	<xsd:complexType name="ParticleCartesianType" />
+	<xsd:complexType name="ParticleCartesianPartitionerType" />
 	<xsd:complexType name="SolversType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="AcousticDG" type="AcousticDGType" />
