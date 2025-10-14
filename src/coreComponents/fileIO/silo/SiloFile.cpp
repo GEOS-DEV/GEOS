@@ -1239,7 +1239,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
       {
         // the field name is the key to the map
         string const & fieldName = wrapper.getName();
-        viewPointers[esr][fieldName] = &wrapper;
+        viewPointers[esr].get_inserted( fieldName ) = &wrapper;
 
         types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
         {
