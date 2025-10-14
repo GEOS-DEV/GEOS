@@ -70,55 +70,6 @@ void FieldSpecificationManager::expandObjectCatalogs()
 
 void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) const
 {
-  string invalidRegion = "";
-  stdMap< std::string, std::vector< string > > allPresentFieldsName;
-  std::set< string > allPresentSets;
-
-  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
-  {
-    std::vector< string > subRegionFields;
-    ObjectManagerBase const * targetOMB = dynamic_cast< ObjectManagerBase const * >( &subRegion );
-    if( targetOMB )
-    {   // filter anything that is not an ObjectManagerBase type
-        // show to the user all fields which are registered under the field-specification object path
-      subRegionFields.insert( subRegionFields.end(),
-                              targetOMB->getRegisteredFields().begin(),
-                              targetOMB->getRegisteredFields().end() );
-    }
-
-    subRegion.forSubGroups< Group >( [&]( Group const & constitutiveModel )
-    {
-      if( constitutiveModel.getName() == ConstitutiveManager::groupKeyStruct::constitutiveModelsString())
-      {
-        constitutiveModel.forSubGroups< Group >( [&]( Group const & constitutive )
-        {
-          ConstitutiveBase const * constitutiveBase = dynamic_cast< ConstitutiveBase const * >(&constitutive);
-          auto const constitutiveFields = constitutiveBase->getUserFields();
-          constitutive.forWrappers(
-            [&] ( dataRepository::WrapperBase const & wrapper )
-          {
-            if( std::find( constitutiveFields.begin(), constitutiveFields.end(),
-                           wrapper.getName()) != constitutiveFields.end())
-              subRegionFields.insert( subRegionFields.end(),
-                                      ConstitutiveBase::makeFieldName( constitutive.getName(),
-                                                                       wrapper.getName()));
-
-          } );
-        } );
-      }
-    } );
-
-    subRegion.sets().forWrappers( [&] ( dataRepository::WrapperBase const & wrapper )
-    {
-      allPresentSets.insert( wrapper.getName());
-    } );
-
-    if( !subRegionFields.empty())
-    {
-      allPresentFieldsName.insert( {subRegion.getName(), subRegionFields} );
-    }
-  } );
-
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   Group const & meshBodies = domain.getMeshBodies();
   // loop over all the FieldSpecification of the XML file
