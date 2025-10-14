@@ -236,7 +236,6 @@ jobs:
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       RUNS_ON: ubuntu-22.04
-      USE_SCCACHE: false
     secrets: inherit
 
   # If the 'ci: run integrated tests' PR label is found, the integrated tests will be run immediately after the cpu jobs.
@@ -265,7 +264,6 @@ jobs:
       REQUIRED_LABEL: "ci: run integrated tests"
       LOCAL_BASELINE_DIR: /data/GEOS/baselines
       HOST_CONFIG: /spack-generated.cmake
-      USE_SCCACHE: false
 
   baseline_log:
     needs: [is_not_draft_pull_request]
@@ -299,7 +297,6 @@ jobs:
       RUNS_ON: Runner_4core_16GB
       REQUIRED_LABEL: "ci: run code coverage"
       HOST_CONFIG: /spack-generated.cmake
-      USE_SCCACHE: false
 
   # mac_builds:
   #   needs:
@@ -442,7 +439,6 @@ jobs:
       NPROC: ${{ matrix.NPROC }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
       REQUIRED_LABEL: "ci: run CUDA builds"
-      USE_SCCACHE: false
     secrets: inherit
 
   # Convenience job - passes when all other jobs have passed (must pass the CUDA jobs).
