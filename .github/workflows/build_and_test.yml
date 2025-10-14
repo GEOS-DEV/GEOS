@@ -78,6 +78,18 @@ on:
       GEOS_ENABLE_BOUNDS_CHECK:
         required: false
         type: string
+      PUBLISH_DOCKER_IMAGE:
+        required: false
+        type: boolean
+        default: false
+      APP_IMAGE_REPO:
+        required: false
+        type: string
+        # Example: geosx/geosx  (org/repo on Docker Hub)
+      PUSH_ON:
+        required: false
+        type: string
+        default: 'develop' # which branch to publish from; tags are handled too
     secrets:
       GOOGLE_CLOUD_GCP:
         required: false
@@ -127,6 +139,38 @@ jobs:
 
     - name: Print environment
       run: printenv
+
+
+
+    - name: Docker meta (tags/labels)
+      if: ${{ inputs.PUBLISH_DOCKER_IMAGE && github.event_name != 'pull_request' && inputs.APP_IMAGE_REPO }}
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          docker.io/${{ inputs.APP_IMAGE_REPO }}
+        tags: |
+          # publish on branch = PUSH_ON
+          type=ref,event=branch,branch=${{ inputs.PUSH_ON }}
+          # publish on version tags like v1.2.3
+          type=ref,event=tag
+          # always include short SHA
+          type=sha,format=short
+          # optional latest: only on default branch (if you later switch to main)
+          # type=raw,value=latest,enable={{is_default_branch}}
+        labels: |
+          org.opencontainers.image.source=${{ github.repository }}
+          org.opencontainers.image.revision=${{ github.sha }}
+
+    - name: Log in to Docker Hub
+      if: ${{ steps.meta.outcome == 'success' }}
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+
+
 
     - name: Setup QEMU for ${{ inputs.HOST_ARCH }} emulation
       if: ${{ inputs.HOST_ARCH }}

@@ -21,6 +21,7 @@ set( simplePDESolvers_headers
      LaplaceBaseH1.hpp
      LaplaceFEM.hpp
      LaplaceFEMKernels.hpp
+     LaplaceExample.hpp
      PhaseFieldDamageFEM.hpp
      PhaseFieldDamageFEMKernels.hpp
      PhaseFieldPressurizedDamageFEMKernels.hpp )
@@ -29,6 +30,7 @@ set( simplePDESolvers_headers
 set( simplePDESolvers_sources
      LaplaceBaseH1.cpp
      LaplaceFEM.cpp
+     LaplaceExample.cpp
      PhaseFieldDamageFEM.cpp )
 
 set( dependencyList ${parallelDeps} physicsSolversBase )
