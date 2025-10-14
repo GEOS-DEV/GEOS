@@ -221,11 +221,11 @@ void testPlugBottomUpPerfCheck( CompositionalMultiphaseReservoirAndWells<> & sol
 
   typedef stdMap< real64, std::vector< int > > map_type;
   map_type refVal;
-  refVal[4800.0] =  { 1, 1, 1, 1, 1};
-  refVal[14800.0] = { 1, 1, 1, 1, 0};
-  refVal[19600.0] = { 1, 1, 1, 0, 0};
-  refVal[32400.0] = { 1, 1, 0, 0, 0};
-  refVal[39800.0] = { 0, 0, 0, 0, 0};
+  refVal.insert( {4800.0, { 1, 1, 1, 1, 1}} );
+  refVal.insert( {14800.0, { 1, 1, 1, 1, 0}} );
+  refVal.insert( {19600.0, { 1, 1, 1, 0, 0}} );
+  refVal.insert( {32400.0, { 1, 1, 0, 0, 0}} );
+  refVal.insert( {39800.0, { 0, 0, 0, 0, 0}} );
 
   map_type::iterator it = refVal.begin();
   while( it != refVal.end() )
