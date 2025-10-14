@@ -73,7 +73,7 @@ public:
   };
 
   /**
-   * @brief Set the csv state output
+   * @brief Set the csv output state. Set this to true when a CSV output is requested.
    * @param state The CSV state for the corresponding statistics
    */
   void setCSVOutputState( bool state )
