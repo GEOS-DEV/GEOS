@@ -139,11 +139,11 @@ void PhysicsSolverBase::postInputInitialization()
   m_solverStatistics.makeDir( m_writeStatisticsCSV !=  StatsOutputType::none );
 
   getIterationStats().setTableName( getName() );
-  getIterationStats().setLogOutputState( true );
-  getIterationStats().setCSVOutputState( m_writeStatisticsCSV == StatsOutputType::iteration ||
-                                         m_writeStatisticsCSV == StatsOutputType::all );
-  getConvergenceStats().setCSVOutputState( m_writeStatisticsCSV == StatsOutputType::convergence ||
+  getIterationStats().setLogOutputRequest( true );
+  getIterationStats().setCSVOutputRequest( m_writeStatisticsCSV == StatsOutputType::iteration ||
                                            m_writeStatisticsCSV == StatsOutputType::all );
+  getConvergenceStats().setCSVOutputRequest( m_writeStatisticsCSV == StatsOutputType::convergence ||
+                                             m_writeStatisticsCSV == StatsOutputType::all );
 }
 
 PhysicsSolverBase::~PhysicsSolverBase() = default;

@@ -73,25 +73,31 @@ public:
   };
 
   /**
+   * @brief Set the log state state request
+   * @param state True for requesting the iteration information into a file, false otherwise
+   */
+  void setLogOutputRequest( bool state )
+  { m_logOutputRequest = state; }
+
+
+  /**
    * @brief Set the csv output state. Set this to true when a CSV output is requested.
    * @param state The CSV state for the corresponding statistics
    */
-  void setCSVOutputState( bool state )
-  { m_csvOutputEnabled = state; }
+  void setCSVOutputRequest( bool state )
+  { m_CSVOutputRequest = state; }
 
   /**
    * @return true if the CSV statistics file output is requested.
    */
   bool getCSVOutputState()
-  { return m_csvOutputEnabled; }
+  { return m_CSVOutputRequest; }
 
   /**
-   * @brief Set the log state output
-   * @param state The log state
+   * @return true if the CSV statistics file has been opened for any effective output.
    */
-  void setLogOutputState( bool state )
-  { m_logOutput = state; }
-
+  bool getCSVOutputOpened() const
+  { return m_CSVOutputOpened; }
 
   /**
    * @brief Reset the counters used for an individual time step
@@ -148,7 +154,7 @@ public:
 
 
   /**
-   * @return  A const iteration filename
+   * @return  A const string iteration filename
    */
   string const & getFilename() const
   { return m_iterationsFilename;  }
@@ -173,16 +179,10 @@ public:
   void outputStatistics() const;
 
   /**
-   * @brief Close the stream output file
+   * @brief Close the stream output file if a file was created
    */
   void closeFile()
-  { if( m_csvOutputOpened ) { m_logStream.close(); m_csvOutputOpened = false; } }
-
-  /**
-   * @return true if the CSV statistics file has been opened for any effective output.
-   */
-  bool getCSVOutputOpened() const
-  { return m_csvOutputOpened; }
+  { if( m_CSVOutputOpened ) { m_logStream.close(); m_CSVOutputOpened = false; } }
 
 protected:
 
@@ -226,12 +226,12 @@ protected:
   real64 m_solveTime = 0.0;
 
 private:
-  /// State of log output. True when writeStatistics is set to 1
-  bool m_logOutput = false;
-  /// State of csv output. True when writeStatistics is set to 2
-  bool m_csvOutputEnabled = false;
-  /// A boolean indicating whether the CSV file is open or not
-  bool m_csvOutputOpened  = false;
+  /// State of iteration log output request.
+  bool m_logOutputRequest = false;
+  /// State of iteration CSV output request.
+  bool m_CSVOutputRequest = false;
+  /// A boolean indicating whether the iteration CSV file was opened or not
+  bool m_CSVOutputOpened  = false;
   /// Stream output for the iteration statistics
   std::ofstream m_logStream;
   /// Table Layout contenaning header for both CSV and log
@@ -258,21 +258,24 @@ public:
    */
   ConvergenceStatistics();
 
-  /// State of csv output. True when writeSolver is set to 2
-  bool m_csvOutputEnabled = false;
-
   /**
    * @brief Set the csv output state. Set this to true when a CSV output is requested.
    * @param state The CSV state for the corresponding statistics
    */
-  void setCSVOutputState( bool state )
-  { m_csvOutputEnabled = state; }
+  void setCSVOutputRequest( bool state )
+  { m_CSVOutputRequest = state; }
 
   /**
-   * @return true if the CSV statistics file output is requested.
+   * @return true if the CSV statistics file output is requested, false otherwise.
    */
   bool getCSVOutputState()
-  { return m_csvOutputEnabled; }
+  { return m_CSVOutputRequest; }
+
+  /**
+   * @return true if the CSV statistics file has been opened for any effective output, false otherwise.
+   */
+  bool getCSVOutputOpened() const
+  { return m_CSVOutputOpened; }
 
   /**
    * @brief Write all the convergence statistics into the ouput stream
@@ -292,7 +295,8 @@ public:
                          integer const newtonIter );
 
   void setResidualValue( string const & key, real64 const value )
-  { if( m_csvOutputEnabled ) m_residuals[key] = value; }
+  { if( m_CSVOutputRequest ) m_residuals[key] = value; }
+
 
   /**
    * @brief Set the filename output file.
@@ -324,13 +328,7 @@ public:
    * @brief Close the stream output file
    */
   void closeFile()
-  { if( m_csvOutputOpened ) { m_logStream.close(); m_csvOutputOpened = false; } }
-
-  /**
-   * @return true if the CSV statistics file output is requested.
-   */
-  bool getCSVOutputOpened() const
-  { return m_csvOutputOpened; }
+  { if( m_CSVOutputOpened ) { m_logStream.close(); m_CSVOutputOpened = false; } }
 
 private:
   /// The time at the beginning of the step
@@ -348,8 +346,10 @@ private:
   /// Residuals with their names
   std::map< string, real64 > m_residuals;
 
-  /// A boolean indicating whether the CSV file is open or not
-  bool m_csvOutputOpened  = false;
+  /// State of CSV output request.
+  bool m_CSVOutputRequest = false;
+  /// A boolean indicating whether the CSV file was opened or not
+  bool m_CSVOutputOpened  = false;
   /// Stream output for the convergence statistics
   std::ofstream m_logStream;
   /// Contain the layout for both the CSV and log output.
