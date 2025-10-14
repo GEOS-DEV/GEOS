@@ -80,7 +80,7 @@ public:
   { m_csvOutputEnabled = state; }
 
   /**
-   * @return The state of the CSV statistics
+   * @return true if the CSV statistics file output is requested.
    */
   bool getCSVOutputState()
   { return m_csvOutputEnabled; }
