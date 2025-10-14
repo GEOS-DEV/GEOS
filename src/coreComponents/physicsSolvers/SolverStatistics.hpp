@@ -179,7 +179,7 @@ public:
   { if( m_csvOutputOpened ) { m_logStream.close(); m_csvOutputOpened = false; } }
 
   /**
-   * @return The CSV state for the iteration statistics
+   * @return true if the CSV statistics file has been opened for any effective output.
    */
   bool getCSVOutputOpened() const
   { return m_csvOutputOpened; }
@@ -262,14 +262,14 @@ public:
   bool m_csvOutputEnabled = false;
 
   /**
-   * @brief Set the csv state output
+   * @brief Set the csv output state. Set this to true when a CSV output is requested.
    * @param state The CSV state for the corresponding statistics
    */
   void setCSVOutputState( bool state )
   { m_csvOutputEnabled = state; }
 
   /**
-   * @return The state of the CSV statistics
+   * @return true if the CSV statistics file output is requested.
    */
   bool getCSVOutputState()
   { return m_csvOutputEnabled; }
@@ -327,7 +327,7 @@ public:
   { if( m_csvOutputOpened ) { m_logStream.close(); m_csvOutputOpened = false; } }
 
   /**
-   * @return The CSV state for the convergence statistics
+   * @return true if the CSV statistics file output is requested.
    */
   bool getCSVOutputOpened() const
   { return m_csvOutputOpened; }

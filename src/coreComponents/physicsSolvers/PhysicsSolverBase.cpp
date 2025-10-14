@@ -1557,17 +1557,17 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
     getIterationStats().outputStatistics();
   }
 
-  bool canOutputIteration = getIterationStats().getCSVOutputState() && !getIterationStats().getCSVOutputOpened();
-  bool canOutputConvergence= getConvergenceStats().getCSVOutputState() && !getConvergenceStats().getCSVOutputOpened();
+  bool wrongIterationOutputRequest = getIterationStats().getCSVOutputState() && !getIterationStats().getCSVOutputOpened();
+  bool wrongIterationConvergenceRequest= getConvergenceStats().getCSVOutputState() && !getConvergenceStats().getCSVOutputOpened();
 
-  GEOS_WARNING_IF( canOutputIteration,
+  GEOS_WARNING_IF( wrongIterationOutputRequest,
                    GEOS_FMT( "The {} solver cannot output iteration statistics\n"
                              "You can set {} to `{}`\n",
                              getName(),
                              PhysicsSolverBase::viewKeyStruct::writeStatisticsCSVString(),
                              EnumStrings< StatsOutputType >::toString( StatsOutputType::convergence )));
 
-  GEOS_WARNING_IF( canOutputConvergence,
+  GEOS_WARNING_IF( wrongIterationConvergenceRequest,
                    GEOS_FMT( "The {} solver cannot output convergence statistics\n"
                              "You can set {} to `{}`\n",
                              getName(),
