@@ -295,7 +295,7 @@ public:
                          integer const newtonIter );
 
   /**
-   * @brief Set a residual value given a key ( column ib the CSV )
+   * @brief Set a residual value given a key ( column in the CSV )
    * @param key The corresponding column
    * @param value The residual value
    */

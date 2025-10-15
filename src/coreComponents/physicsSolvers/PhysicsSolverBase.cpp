@@ -1559,7 +1559,7 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
 
   bool wrongIterationCSVOutputRequest = getIterationStats().getCSVOutputRequest() &&
                                         !getIterationStats().getCSVOutputOpened();
-  bool wrongConvergenceCSVOutputRequest= getConvergenceStats().getCSVOutputRequest() &&
+  bool wrongConvergenceCSVOutputRequest = getConvergenceStats().getCSVOutputRequest() &&
                                          !getConvergenceStats().getCSVOutputOpened();
 
   GEOS_WARNING_IF( wrongIterationCSVOutputRequest,
