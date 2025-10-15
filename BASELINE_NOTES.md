@@ -6,9 +6,13 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3851 (2025-10-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3851-14171-9d950d6.tar.gz>
+=====================
+Enable `FullyImplicit` for `SinglePhaseReservoirPoromechanicsConformingFractures`.
+
 PR #3808 (2025-10-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3808-14160-03c20b2.tar.gz>
 =====================
-Add errorSetMode for the FiedSpecification
+Add errorSetMode for the FieldSpecification.
 
 PR #3193 (2025-10-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3193-14118-8ee1c34.tar.gz>
 =====================

@@ -188,7 +188,7 @@ public:
   /**
    * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
    * Otherwise, uses operator[] for unchecked access.
-   * @param index Index of the element tn o access.
+   * @param index Index of the element to access.
    * @return Const reference to the element at the specified index.
    * @throws std::out_of_range if index is out of bounds.
    */
