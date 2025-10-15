@@ -42,7 +42,7 @@ scatterGraphData( const std::vector< size_t > & xadj,
 
   std::vector< int > sendCounts;
   std::vector< int > displacements;
-  std::vector< camp::idx_t > xadjToScatter;
+  std::vector< size_t > xadjToScatter;
 
   if( rank == 0 )
   {
