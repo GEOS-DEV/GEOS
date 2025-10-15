@@ -38,6 +38,7 @@ set( fluidFlowSolvers_headers
      SinglePhaseFVM.hpp
      SinglePhaseHybridFVM.hpp
      SinglePhaseProppantBase.hpp
+     SinglePhaseStressPathDrivenFVM.hpp
      StencilAccessors.hpp
      StencilDataCollection.hpp
      LogLevelsInfo.hpp
@@ -139,6 +140,7 @@ set( fluidFlowSolvers_sources
      SinglePhaseFVM.cpp
      SinglePhaseHybridFVM.cpp
      SinglePhaseProppantBase.cpp
+     SinglePhaseStressPathDrivenFVM.cpp
      SourceFluxStatistics.cpp
      StencilDataCollection.cpp
      kernels/singlePhase/proppant/ProppantFluxKernels.cpp
@@ -154,7 +156,7 @@ set( fluidFlowSolvers_sources
      proppantTransport/ProppantTransport.cpp
      proppantTransport/ProppantTransportKernels.cpp )
 
-set( dependencyList ${parallelDeps} physicsSolversBase )
+set( dependencyList ${parallelDeps} physicsSolversBase prescribedStressPathGeomechanics )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 

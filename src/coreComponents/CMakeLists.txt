@@ -16,6 +16,7 @@ set( subdirs
      events
      constitutiveDrivers
      fileIO
+     prescribedStressPathGeomechanics 
      physicsSolvers
      mainInterface )
 

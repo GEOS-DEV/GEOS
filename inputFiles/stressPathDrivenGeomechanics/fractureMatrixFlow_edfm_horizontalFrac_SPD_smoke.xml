@@ -1,0 +1,121 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./fractureMatrixFlow_edfm_SPD_base.xml" />
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 51 }"
+      yCoords="{ 0, 51 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 51 }"
+      ny="{ 51 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+  
+  <FaceSubRegion name="xneg">
+      <VolumeRegionName>
+          cb1
+     </VolumeRegionName>
+     <SurfaceNormal> 
+         { -1, 0, 0 } 
+      </SurfaceNormal>
+      <Tolerance>
+          1e-8
+      </Tolerance>
+ </FaceSubRegion>
+ 
+  <FaceSubRegion name="xpos">
+      <VolumeRegionName>
+          cb1
+     </VolumeRegionName>
+     <SurfaceNormal> 
+         { 1, 0, 0 } 
+      </SurfaceNormal>
+      <Tolerance>
+          1e-8
+      </Tolerance>
+ </FaceSubRegion>
+
+  <Geometry>
+    <Rectangle
+      name="FracturePlane"
+      normal="{ 0, 1, 0 }"
+      origin="{ 25.5, 25.5, 0.5 }"
+      lengthVector="{ 1, 0, 0 }"
+      widthVector="{ 0, 0, 1 }"
+      dimensions="{ 21, 1 }"/>
+  </Geometry>
+
+  <!-- NEW -->
+  <Tasks>
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      fieldName="pressure"/> 
+    <PackCollection
+      name="apertureCollection"
+      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+      fieldName="hydraulicAperture"/>           
+  </Tasks>
+  
+  <Events
+    maxTime="50"
+    logLevel="3">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGenerator"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1"
+      target="/Solvers/SinglePhaseFlow"/>
+
+    <PeriodicEvent
+      name="outputs"
+      target="/Outputs/vtkOutput"/>
+	  
+	<!-- NEW -->
+    <PeriodicEvent
+      name="pressureHistoryCollection"
+      target="/Tasks/pressureCollection" />
+    <PeriodicEvent
+      name="pressureHistoryOutput"
+      targetExactTimestep="0"
+      target="/Outputs/pressureHistoryOutput"/> 
+    <PeriodicEvent
+      name="apertureHistoryCollection"
+      target="/Tasks/apertureCollection" />
+    <PeriodicEvent
+      name="apertureHistoryOutput"
+      targetExactTimestep="0"
+      target="/Outputs/apertureHistoryOutput"/> 
+  </Events>
+ 
+ 
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="fractureMatrixFlow_edfm_horizontalFrac_stressPathDriven"
+      plotLevel="2"
+      format="ascii"/>
+
+    <Restart
+      name="sidreRestart"/>
+	  
+	<!-- NEW -->
+    <TimeHistory
+      name="pressureHistoryOutput"
+      sources="{/Tasks/pressureCollection}"
+      filename="fracPressure_history" />
+    <TimeHistory
+      name="apertureHistoryOutput"
+      sources="{/Tasks/apertureCollection}"
+      filename="fracAperture_history" />
+  </Outputs>
+</Problem>
