@@ -16,6 +16,9 @@
 #include "PhysicsSolverBase.hpp"
 #include "PhysicsSolverManager.hpp"
 
+#include "codingUtilities/RTTypes.hpp"
+#include "common/format/EnumStrings.hpp"
+#include "dataRepository/Group.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "common/format/LogPart.hpp"
 #include "common/TimingMacros.hpp"
@@ -106,9 +109,12 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setApplyDefaultValue( StatsOutputType::none ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "When set to `iteration`, output iterations information to a csv\n"
-                    "When set to `convergence`, output convergence information to a csv\n"
-                    "When set to `all` output both convergence & iteration information to a csv." );
+    setDescription( GEOS_FMT( "When set to `{}`, output iterations information to a csv\n"
+                              "When set to `{}`, output convergence information to a csv\n"
+                              "When set to `{}` output both convergence & iteration information to a csv.",
+                              EnumStrings< StatsOutputType >::toString( StatsOutputType::iteration ),
+                              EnumStrings< StatsOutputType >::toString( StatsOutputType::convergence ),
+                              EnumStrings< StatsOutputType >::toString( StatsOutputType::all ) ));
 
   addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::Fields >();
@@ -133,11 +139,11 @@ void PhysicsSolverBase::postInputInitialization()
   m_solverStatistics.makeDir( m_writeStatisticsCSV !=  StatsOutputType::none );
 
   getIterationStats().setTableName( getName() );
-  getIterationStats().setLogOutputState( true );
-  getIterationStats().setCSVOutputState( m_writeStatisticsCSV == StatsOutputType::iteration  ||
-                                         m_writeStatisticsCSV == StatsOutputType::all );
-  getConvergenceStats().setCSVOutputState( m_writeStatisticsCSV == StatsOutputType::convergence  ||
+  getIterationStats().setLogOutputRequest( true );
+  getIterationStats().setCSVOutputRequest( m_writeStatisticsCSV == StatsOutputType::iteration ||
                                            m_writeStatisticsCSV == StatsOutputType::all );
+  getConvergenceStats().setCSVOutputRequest( m_writeStatisticsCSV == StatsOutputType::convergence ||
+                                             m_writeStatisticsCSV == StatsOutputType::all );
 }
 
 PhysicsSolverBase::~PhysicsSolverBase() = default;
@@ -1549,6 +1555,26 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
   {
     getIterationStats().outputStatistics();
   }
+
+  bool wrongIterationCSVOutputRequest = getIterationStats().getCSVOutputRequest() &&
+                                        !getIterationStats().getCSVOutputOpened();
+  bool wrongConvergenceCSVOutputRequest = getConvergenceStats().getCSVOutputRequest() &&
+                                          !getConvergenceStats().getCSVOutputOpened();
+
+  GEOS_WARNING_IF( wrongIterationCSVOutputRequest,
+                   GEOS_FMT( "The {} solver requests to output a CSV iteration but nothing was written\n"
+                             "You can set {} to `{}`\n",
+                             getName(),
+                             PhysicsSolverBase::viewKeyStruct::writeStatisticsCSVString(),
+                             EnumStrings< StatsOutputType >::toString( StatsOutputType::convergence )));
+
+  GEOS_WARNING_IF( wrongConvergenceCSVOutputRequest,
+                   GEOS_FMT( "The {} solver requests to output a CSV convergence but nothing was written\n"
+                             "You can set {} to `{}`\n",
+                             getName(),
+                             PhysicsSolverBase::viewKeyStruct::writeStatisticsCSVString(),
+                             EnumStrings< StatsOutputType >::toString( StatsOutputType::iteration ) ));
+
   getIterationStats().closeFile();
   getConvergenceStats().closeFile();
 
