@@ -38,6 +38,7 @@ set( fluidFlowSolvers_headers
      SinglePhaseFVM.hpp
      SinglePhaseHybridFVM.hpp
      SinglePhaseProppantBase.hpp
+     SinglePhaseStressPathDrivenFVM.hpp
      StencilAccessors.hpp
      SolutionCheckHelpers.hpp
      StencilDataCollection.hpp
