@@ -12,7 +12,7 @@ Enable `FullyImplicit` for `SinglePhaseReservoirPoromechanicsConformingFractures
 
 PR #3808 (2025-10-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3808-14160-03c20b2.tar.gz>
 =====================
-Add errorSetMode for the FieldSpecification.
+Add errorSetMode for the FiedSpecification.
 
 PR #3193 (2025-10-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3193-14118-8ee1c34.tar.gz>
 =====================
