@@ -72,7 +72,7 @@
  */
 #define GEOS_LOG_RANK_0_IF( EXP, msg ) \
   do { \
-    if( ::geos::logger::internal::rank() == 0 && EXP ) \
+    if( ::geos::logger::internal::g_rank == 0 && EXP ) \
     { \
       std::ostringstream oss; \
       oss << msg; \
@@ -87,7 +87,7 @@
  */
 #define GEOS_LOG_RANK_0_IF_NLR( EXP, msg ) \
   do { \
-    if( ::geos::logger::internal::rank() == 0 && EXP ) \
+    if( ::geos::logger::internal::g_rank == 0 && EXP ) \
     { \
       std::ostringstream oss; \
       oss << msg; \
@@ -114,8 +114,8 @@
     if( EXP ) \
     { \
       std::ostringstream oss; \
-      oss << "Rank " << ::geos::logger::internal::rankString() << ": " << msg; \
-      *logger::internal::rankStream() << oss.str() << std::endl; \
+      oss << "Rank " << ::geos::logger::internal::g_rankString << ": " << msg; \
+      *logger::internal::g_rankStream << oss.str() << std::endl; \
     } \
   } while( false )
 #endif
@@ -166,7 +166,7 @@
       __oss << "***** ERROR\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** " << __cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::rankString() << ": " << __message << "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::g_rankString << ": " << __message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
       std::cout << __oss.str() << std::endl; \
@@ -174,7 +174,7 @@
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
                                          __message, \
-                                         ::geos::logger::internal::rank(), \
+                                         ::geos::logger::internal::g_rank, \
                                          __FILE__, \
                                          __LINE__ ); \
         msgStruct.setCause( __cause ); \
@@ -246,7 +246,7 @@
       __oss << "***** EXCEPTION\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** " << __cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::rankString() << ": " << __message << "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::g_rankString << ": " << __message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
       if( GEOS_ERROR_LOGGER_INSTANCE.isOutputFileEnabled() ) \
@@ -257,7 +257,7 @@
             .setType( ErrorLogger::MsgType::Exception ) \
             .setCodeLocation( __FILE__, __LINE__ ) \
             .setCause( __cause ) \
-            .addRank( ::geos::logger::internal::rank() ) \
+            .addRank( ::geos::logger::internal::g_rank ) \
             .addCallStackInfo( stackHistory ); \
         } \
         GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg() \
@@ -329,13 +329,13 @@
       __oss << "***** WARNING\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
       __oss << "***** " << __cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::rankString() << ": " << __message << "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::g_rankString << ": " << __message << "\n"; \
       std::cout << __oss.str() << std::endl; \
       if( GEOS_ERROR_LOGGER_INSTANCE.isOutputFileEnabled() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
                                          __message, \
-                                         ::geos::logger::internal::rank(), \
+                                         ::geos::logger::internal::g_rank, \
                                          __FILE__, \
                                          __LINE__ ); \
         msgStruct.setCause( __cause ); \
@@ -1037,11 +1037,11 @@ namespace logger
 namespace internal
 {
 
-int rank();
+extern int g_rank;
 
-string_view rankString();
+extern std::string g_rankString;
 
-std::ostream * rankStream();
+extern std::ostream * g_rankStream;
 
 } // namespace internal
 
