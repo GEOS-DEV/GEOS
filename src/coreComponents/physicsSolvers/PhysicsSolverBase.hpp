@@ -1161,8 +1161,7 @@ protected:
   /// flag for debug output of matrix, rhs, and solution
   integer m_writeLinearSystem;
 
-  /// When set to 1 output to log iterations information
-  /// When set to 2 additionnaly output csv files containing iterations & convergence information
+  /// Parameter for outputing statistics information
   StatsOutputType m_writeStatisticsCSV;
 
   /// Linear solver parameters
