@@ -1,7 +1,7 @@
 # Specify list of tests
 set( gtest_geosx_tests
      testAquiferBoundaryCondition.cpp
-     testIncorrectFieldSpecification.cpp
+     testFieldSpecification.cpp
      testRecursiveFieldApplication.cpp )
 
 

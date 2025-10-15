@@ -103,10 +103,12 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ );
 
   registerWrapper( viewKeyStruct::writeStatisticsCSVString(), &m_writeStatisticsCSV ).
-    setApplyDefaultValue( 0 ).
+    setApplyDefaultValue( StatsOutputType::none ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "When set to 1, output iterations information to a csv\nWhen set to 2 also output convergence information to a csv" );
+    setDescription( "When set to `iteration`, output iterations information to a csv\n"
+                    "When set to `convergence`, output convergence information to a csv\n"
+                    "When set to `all` output both convergence & iteration information to a csv." );
 
   addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::Fields >();
@@ -127,12 +129,15 @@ PhysicsSolverBase::PhysicsSolverBase( string const & name,
 void PhysicsSolverBase::postInputInitialization()
 {
   m_solverStatistics.setOutputFilesName( getName() );
-  m_solverStatistics.makeDir( m_writeStatisticsCSV >= 1 );
+
+  m_solverStatistics.makeDir( m_writeStatisticsCSV !=  StatsOutputType::none );
 
   getIterationStats().setTableName( getName() );
   getIterationStats().setLogOutputState( true );
-  getIterationStats().setCSVOutputState( m_writeStatisticsCSV >= 1 );
-  getConvergenceStats().setCSVOutputState( m_writeStatisticsCSV >= 2 );
+  getIterationStats().setCSVOutputState( m_writeStatisticsCSV == StatsOutputType::iteration  ||
+                                         m_writeStatisticsCSV == StatsOutputType::all );
+  getConvergenceStats().setCSVOutputState( m_writeStatisticsCSV == StatsOutputType::convergence  ||
+                                           m_writeStatisticsCSV == StatsOutputType::all );
 }
 
 PhysicsSolverBase::~PhysicsSolverBase() = default;
@@ -1197,7 +1202,7 @@ void PhysicsSolverBase::setupSystem( DomainPartition & domain,
   if( setSparsity )
   {
     SparsityPattern< globalIndex > pattern;
-    dofManager.setSparsityPattern( pattern );
+    setSparsityPattern( domain, dofManager, localMatrix, pattern );
     localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
   }
   localMatrix.setName( this->getName() + "/matrix" );
@@ -1207,6 +1212,14 @@ void PhysicsSolverBase::setupSystem( DomainPartition & domain,
 
   solution.setName( this->getName() + "/solution" );
   solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
+}
+
+void PhysicsSolverBase::setSparsityPattern( DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                            DofManager & dofManager,
+                                            CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                                            SparsityPattern< globalIndex > & pattern )
+{
+  dofManager.setSparsityPattern( pattern );
 }
 
 void PhysicsSolverBase::setSystemSetupTimestamp( Timestamp timestamp )

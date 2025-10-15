@@ -835,40 +835,80 @@
 					<xsd:selector xpath="PorousDelftEgg" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousDelftEggCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousDelftEggCarmanKozenyPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousDruckerPragerUniqueName">
 					<xsd:selector xpath="PorousDruckerPrager" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousDruckerPragerCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousDruckerPragerCarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousElasticIsotropicUniqueName">
 					<xsd:selector xpath="PorousElasticIsotropic" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousElasticIsotropicCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousElasticIsotropicCarmanKozenyPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousElasticOrthotropicUniqueName">
 					<xsd:selector xpath="PorousElasticOrthotropic" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousElasticOrthotropicCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousElasticOrthotropicCarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousElasticTransverseIsotropicUniqueName">
 					<xsd:selector xpath="PorousElasticTransverseIsotropic" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousElasticTransverseIsotropicCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousElasticTransverseIsotropicCarmanKozenyPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousExtendedDruckerPragerUniqueName">
 					<xsd:selector xpath="PorousExtendedDruckerPrager" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousExtendedDruckerPragerCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousExtendedDruckerPragerCarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousModifiedCamClayUniqueName">
 					<xsd:selector xpath="PorousModifiedCamClay" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousModifiedCamClayCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousModifiedCamClayCarmanKozenyPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousViscoDruckerPragerUniqueName">
 					<xsd:selector xpath="PorousViscoDruckerPrager" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousViscoDruckerPragerCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousViscoDruckerPragerCarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousViscoExtendedDruckerPragerUniqueName">
 					<xsd:selector xpath="PorousViscoExtendedDruckerPrager" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousViscoExtendedDruckerPragerCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousViscoExtendedDruckerPragerCarmanKozenyPermeability" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutivePorousViscoModifiedCamClayUniqueName">
 					<xsd:selector xpath="PorousViscoModifiedCamClay" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="domainConstitutivePorousViscoModifiedCamClayCarmanKozenyPermeabilityUniqueName">
+					<xsd:selector xpath="PorousViscoModifiedCamClayCarmanKozenyPermeability" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="domainConstitutivePressurePermeabilityUniqueName">
@@ -1231,6 +1271,12 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--errorSetMode => Set the log state when a “set” does not target any region
+When set to "silent", no output.
+When set to "warning", output a warning.
+When set to "error", output a throw.
+-->
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
@@ -1247,6 +1293,11 @@ A set can be created by a 'Geometry' component, or correspond to imported sets i
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_FieldSpecificationBase_SetErrorMode">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|silent|error|warning" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="DirichletType">
 		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
 		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
@@ -1259,6 +1310,12 @@ The component must use the order in which the phaseNames have been defined in th
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--errorSetMode => Set the log state when a “set” does not target any region
+When set to "silent", no output.
+When set to "warning", output a warning.
+When set to "error", output a throw.
+-->
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--fieldName => Name of field that boundary condition is applied to.
 A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
@@ -1289,6 +1346,12 @@ The component must use the order in which the phaseNames have been defined in th
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--errorSetMode => Set the log state when a “set” does not target any region
+When set to "silent", no output.
+When set to "warning", output a warning.
+When set to "error", output a throw.
+-->
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--fieldName => Name of field that boundary condition is applied to.
 A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
@@ -1328,6 +1391,12 @@ A set can be created by a 'Geometry' component, or correspond to imported sets i
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--equilibrationTolerance => Tolerance in the fixed-point iteration scheme used for hydrostatic initialization-->
 		<xsd:attribute name="equilibrationTolerance" type="real64" default="0.001" />
+		<!--errorSetMode => Set the log state when a “set” does not target any region
+When set to "silent", no output.
+When set to "warning", output a warning.
+When set to "error", output a throw.
+-->
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialPhaseName => Name of the phase initially saturating the reservoir-->
@@ -1355,6 +1424,12 @@ The component must use the order in which the phaseNames have been defined in th
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--errorSetMode => Set the log state when a “set” does not target any region
+When set to "silent", no output.
+When set to "warning", output a warning.
+When set to "error", output a throw.
+-->
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--objectPath => Path to the target field-->
@@ -1394,6 +1469,12 @@ The component must use the order in which the phaseNames have been defined in th
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--errorSetMode => Set the log state when a “set” does not target any region
+When set to "silent", no output.
+When set to "warning", output a warning.
+When set to "error", output a throw.
+-->
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--functionName => Name of a function that specifies the variation of the production rate variations of this SourceFlux.Multiplied by scale. If no function is provided, a constant value of 1 is used.The produced fluid rate unit is in kg by default, or in mole if the flow solver uses moles.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
@@ -1418,6 +1499,12 @@ A set can be created by a 'Geometry' component, or correspond to imported sets i
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--errorSetMode => Set the log state when a “set” does not target any region
+When set to "silent", no output.
+When set to "warning", output a warning.
+When set to "error", output a throw.
+-->
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
@@ -1464,6 +1551,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="functionNames" type="string_array" default="{}" />
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
+		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
+		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
 		<!--variableNames => List of variables in expression-->
 		<xsd:attribute name="variableNames" type="groupNameRef_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1472,6 +1561,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 	<xsd:complexType name="MultivariableTableFunctionType">
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
+		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
+		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -1480,6 +1571,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="expression" type="string" use="required" />
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
+		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
+		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
 		<!--variableNames => List of variables in expression.  The order must match the evaluate argument-->
 		<xsd:attribute name="variableNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1492,6 +1585,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="coordinates" type="real64_array" default="{0}" />
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
+		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
+		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
 		<!--interpolation => Interpolation method. Valid options:
 * linear
 * nearest
@@ -1530,6 +1625,8 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BoxType">
+		<!--epsilon => Absolute tolerance for coordinate checks. If not specified, default value of 1e-6 * GlobalLengthScale will be used, where GlobalLengthScale is the length scale of the domain.-->
+		<xsd:attribute name="epsilon" type="real64" default="-1" />
 		<!--strike => The strike angle of the box-->
 		<xsd:attribute name="strike" type="real64" default="-90" />
 		<!--xMax => Maximum (x,y,z) coordinates of the box-->
@@ -1544,6 +1641,8 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="center" type="R1Tensor" use="required" />
 		<!--coefficients => Coefficients of the CustomPolarObject function relating the localradius to the angle theta.-->
 		<xsd:attribute name="coefficients" type="real64_array" use="required" />
+		<!--epsilon => Absolute tolerance for coordinate checks. If not specified, default value of 1e-6 * GlobalLengthScale will be used, where GlobalLengthScale is the length scale of the domain.-->
+		<xsd:attribute name="epsilon" type="real64" default="-1" />
 		<!--lengthVector => Tangent vector defining the orthonormal basis along with the normal.-->
 		<xsd:attribute name="lengthVector" type="R1Tensor" use="required" />
 		<!--normal => Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)-->
@@ -1556,6 +1655,8 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CylinderType">
+		<!--epsilon => Absolute tolerance for coordinate checks. If not specified, default value of 1e-6 * GlobalLengthScale will be used, where GlobalLengthScale is the length scale of the domain.-->
+		<xsd:attribute name="epsilon" type="real64" default="-1" />
 		<!--firstFaceCenter => Center point of the first face of the cylinder-->
 		<xsd:attribute name="firstFaceCenter" type="R1Tensor" use="required" />
 		<!--innerRadius => Inner radius of the annulus-->
@@ -1570,6 +1671,8 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 	<xsd:complexType name="DiscType">
 		<!--center => (x,y,z) coordinates of the center of the disc-->
 		<xsd:attribute name="center" type="R1Tensor" use="required" />
+		<!--epsilon => Absolute tolerance for coordinate checks. If not specified, default value of 1e-6 * GlobalLengthScale will be used, where GlobalLengthScale is the length scale of the domain.-->
+		<xsd:attribute name="epsilon" type="real64" default="-1" />
 		<!--lengthVector => Tangent vector defining the orthonormal basis along with the normal.-->
 		<xsd:attribute name="lengthVector" type="R1Tensor" use="required" />
 		<!--normal => Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)-->
@@ -1586,6 +1689,8 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 	<xsd:complexType name="RectangleType">
 		<!--dimensions => Length and width of the bounded plane-->
 		<xsd:attribute name="dimensions" type="real64_array" use="required" />
+		<!--epsilon => Absolute tolerance for coordinate checks. If not specified, default value of 1e-6 * GlobalLengthScale will be used, where GlobalLengthScale is the length scale of the domain.-->
+		<xsd:attribute name="epsilon" type="real64" default="-1" />
 		<!--lengthVector => Tangent vector defining the orthonormal basis along with the normal.-->
 		<xsd:attribute name="lengthVector" type="R1Tensor" use="required" />
 		<!--normal => Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)-->
@@ -1600,6 +1705,8 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ThickPlaneType">
+		<!--epsilon => Absolute tolerance for coordinate checks. If not specified, default value of 1e-6 * GlobalLengthScale will be used, where GlobalLengthScale is the length scale of the domain.-->
+		<xsd:attribute name="epsilon" type="real64" default="-1" />
 		<!--normal => Normal (n_x,n_y,n_z) to the plane (will be normalized automatically)-->
 		<xsd:attribute name="normal" type="R1Tensor" use="required" />
 		<!--origin => Origin point (x,y,z) of the plane (basically, any point on the plane)-->
@@ -1902,6 +2009,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="regionAttribute" type="groupNameRef" default="attribute" />
 		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
 		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
+		<!--structuredIndexAttribute => Name of the VTK cell attribute containing structured cell index (e.g. Cartesian IJK)-->
+		<xsd:attribute name="structuredIndexAttribute" type="string" default="" />
 		<!--surfacicFieldsInGEOS => Names of the surfacic fields in GEOS to import into-->
 		<xsd:attribute name="surfacicFieldsInGEOS" type="groupNameRef_array" default="{}" />
 		<!--surfacicFieldsToImport => Surfacic fields to be imported from the external mesh file-->
@@ -1965,6 +2074,7 @@ Information output from lower logLevels is added with the desired log level
 	<xsd:complexType name="LinearSolverParametersType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Block" type="BlockType" maxOccurs="1" />
+			<xsd:element name="Multiscale" type="MultiscaleType" maxOccurs="1" />
 		</xsd:choice>
 		<!--adaptiveExponent => Exponent parameter for adaptive method-->
 		<xsd:attribute name="adaptiveExponent" type="real64" default="1" />
@@ -2044,7 +2154,7 @@ Information output from lower logLevels is added with the desired log level
 1
  - Linear solver information-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--preconditionerType => Preconditioner type. Available options are: ``none``, ``jacobi``, ``l1jacobi``, ``fgs``, ``sgs``, ``l1sgs``, ``chebyshev``, ``iluk``, ``ilut``, ``ick``, ``ict``, ``amg``, ``mgr``, ``block``, ``direct``, ``bgs``-->
+		<!--preconditionerType => Preconditioner type. Available options are: ``none``, ``jacobi``, ``l1jacobi``, ``fgs``, ``sgs``, ``l1sgs``, ``chebyshev``, ``iluk``, ``ilut``, ``ick``, ``ict``, ``amg``, ``mgr``, ``block``, ``direct``, ``bgs``, ``multiscale``-->
 		<xsd:attribute name="preconditionerType" type="geos_LinearSolverParameters_PreconditionerType" default="iluk" />
 		<!--relaxationWeight => Relaxation weight (omega) for stationary iterations-->
 		<xsd:attribute name="relaxationWeight" type="real64" default="0.666667" />
@@ -2076,6 +2186,130 @@ Information output from lower logLevels is added with the desired log level
 	<xsd:simpleType name="geos_LinearSolverParameters_Block_Shape">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|D|DU|LD|LDU" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="MultiscaleType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Coarsening" type="CoarseningType" maxOccurs="1" />
+			<xsd:element name="Coupled" type="CoupledType" maxOccurs="1" />
+			<xsd:element name="MsRSB" type="MsRSBType" maxOccurs="1" />
+			<xsd:element name="Smoother" type="SmootherType" maxOccurs="1" />
+		</xsd:choice>
+		<!--basisType => Multiscale basis type. Available options are: ``msrsb``-->
+		<xsd:attribute name="basisType" type="geos_LinearSolverParameters_Multiscale_BasisType" default="msrsb" />
+		<!--boundarySets => List of node set names that denote global domain boundaries, improves interpolation when provided.-->
+		<xsd:attribute name="boundarySets" type="string_array" default="{}" />
+		<!--coarseType => Coarsest level solver type. Available options are: ``none``, ``jacobi``, ``l1jacobi``, ``fgs``, ``sgs``, ``l1sgs``, ``chebyshev``, ``iluk``, ``ilut``, ``ick``, ``ict``, ``amg``, ``mgr``, ``block``, ``direct``, ``bgs``, ``multiscale``-->
+		<xsd:attribute name="coarseType" type="geos_LinearSolverParameters_PreconditionerType" default="direct" />
+		<!--debugLevel => Debug level (0 - no debug, 1 - basic progress messages, 2 - detailed output and matrix dumps)-->
+		<xsd:attribute name="debugLevel" type="integer" default="0" />
+		<!--droptol => Dropping tolerance for coarse matrix values (relative to row max)-->
+		<xsd:attribute name="droptol" type="real64" default="0" />
+		<!--galerkin => Whether to use a Galerkin coarse grid (with R = P^T) or not (R = P_0^T)-->
+		<xsd:attribute name="galerkin" type="integer" default="1" />
+		<!--maxLevels => Maximum number of multiscale grid levels (including fine)-->
+		<xsd:attribute name="maxLevels" type="integer" default="5" />
+		<!--separateComponents => Whether to use a separate component approximation prior to constructing multiscale-->
+		<xsd:attribute name="separateComponents" type="integer" default="0" />
+	</xsd:complexType>
+	<xsd:complexType name="CoarseningType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Graph" type="GraphType" maxOccurs="1" />
+			<xsd:element name="Structured" type="StructuredType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxCoarseDof => limit of coarsening across all ranks (i.e. trim the grid hierarchy globally)-->
+		<xsd:attribute name="maxCoarseDof" type="globalIndex" default="0" />
+		<!--partitionType => Partition type for generating coarse aggregates, valid options: ``graph``, ``cartesian``, ``semistructured``-->
+		<xsd:attribute name="partitionType" type="geos_LinearSolverParameters_Multiscale_Coarsening_PartitionType" default="graph" />
+		<!--ratio => Coarsening ratio (number of fine cells per coarse cell)-->
+		<xsd:attribute name="ratio" type="real64_array" default="{0}" />
+	</xsd:complexType>
+	<xsd:complexType name="GraphType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Metis" type="MetisType" maxOccurs="1" />
+		</xsd:choice>
+		<!--matrixWeights => If >0, specifies matrix weight multiplier when building graph edge weights-->
+		<xsd:attribute name="matrixWeights" type="integer" default="0" />
+		<!--method => Graph partitioning method, valid options: ``metis``, ``scotch``-->
+		<xsd:attribute name="method" type="geos_LinearSolverParameters_Multiscale_Coarsening_Graph_Method" default="metis" />
+		<!--minCommonNodes => Minimum number of nodes shared between two cells when constructing the connectivity graph-->
+		<xsd:attribute name="minCommonNodes" type="integer" default="3" />
+		<!--preserveRegions => Attempt to keep cells from the same region in one aggregate-->
+		<xsd:attribute name="preserveRegions" type="integer" default="0" />
+	</xsd:complexType>
+	<xsd:complexType name="MetisType">
+		<!--method => METIS partitioning method, valid options: ``kway``, ``recursive``-->
+		<xsd:attribute name="method" type="geos_LinearSolverParameters_Multiscale_Coarsening_Graph_Metis_Method" default="kway" />
+		<!--seed => METIS seed parameter-->
+		<xsd:attribute name="seed" type="integer" default="2020" />
+		<!--ufactor => METIS ufactor parameter, affects partitioning balance/edgecut tradeoff-->
+		<xsd:attribute name="ufactor" type="integer" default="30" />
+	</xsd:complexType>
+	<xsd:simpleType name="geos_LinearSolverParameters_Multiscale_Coarsening_Graph_Metis_Method">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|kway|recursive" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_LinearSolverParameters_Multiscale_Coarsening_Graph_Method">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|metis|scotch" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="StructuredType">
+		<!--semicoarsening => Enable semi-coarsening in z-direction, followed by xy-plane-->
+		<xsd:attribute name="semicoarsening" type="integer" default="0" />
+	</xsd:complexType>
+	<xsd:simpleType name="geos_LinearSolverParameters_Multiscale_Coarsening_PartitionType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|graph|cartesian|semistructured" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="CoupledType">
+		<!--useBlockSmoother => Whether to use block smoother-->
+		<xsd:attribute name="useBlockSmoother" type="integer" default="1" />
+	</xsd:complexType>
+	<xsd:complexType name="MsRSBType">
+		<!--checkFrequency => MsRSB basis smoothing convergence check frequency-->
+		<xsd:attribute name="checkFrequency" type="integer" default="10" />
+		<!--maxIter => Maximum number of MsRSB basis smoothing iterations-->
+		<xsd:attribute name="maxIter" type="integer" default="100" />
+		<!--numLayers => Number of extra layers in support region (for supportType = layers)-->
+		<xsd:attribute name="numLayers" type="integer" default="3" />
+		<!--relaxation => MsRSB basis smoothing iteration relaxation parameter-->
+		<xsd:attribute name="relaxation" type="real64" default="0.666667" />
+		<!--supportType => Type of support region construction algorithm-->
+		<xsd:attribute name="supportType" type="geos_LinearSolverParameters_Multiscale_MsRSB_SupportType" default="matching" />
+		<!--tolerance => MsRSB basis smoothing iteration tolerance-->
+		<xsd:attribute name="tolerance" type="real64" default="0.001" />
+		<!--updateFrequency => MsRSB basis smoothing coarse operator update frequency-->
+		<xsd:attribute name="updateFrequency" type="integer" default="10" />
+	</xsd:complexType>
+	<xsd:simpleType name="geos_LinearSolverParameters_Multiscale_MsRSB_SupportType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|layers|matching" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:complexType name="SmootherType">
+		<!--numSweeps => Number of smoothing sweeps-->
+		<xsd:attribute name="numSweeps" type="integer" default="1" />
+		<!--preOrPost => Pre and/or post smoothing, valid options:``pre``, ``post``, ``both``-->
+		<xsd:attribute name="preOrPost" type="geos_LinearSolverParameters_AMG_PreOrPost" default="both" />
+		<!--type => Smoother type, valid options (not all supported): ``none``, ``jacobi``, ``l1jacobi``, ``fgs``, ``sgs``, ``l1sgs``, ``chebyshev``, ``iluk``, ``ilut``, ``ick``, ``ict``, ``amg``, ``mgr``, ``block``, ``direct``, ``bgs``, ``multiscale``-->
+		<xsd:attribute name="type" type="geos_LinearSolverParameters_PreconditionerType" default="sgs" />
+	</xsd:complexType>
+	<xsd:simpleType name="geos_LinearSolverParameters_AMG_PreOrPost">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|pre|post|both" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_LinearSolverParameters_PreconditionerType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|ick|ict|amg|mgr|block|direct|bgs|multiscale" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_LinearSolverParameters_Multiscale_BasisType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|msrsb" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_LinearSolverParameters_AMG_AggInterpType">
@@ -2116,11 +2350,6 @@ Information output from lower logLevels is added with the desired log level
 	<xsd:simpleType name="geos_LinearSolverParameters_Direct_RowPerm">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|none|mc64" />
-		</xsd:restriction>
-	</xsd:simpleType>
-	<xsd:simpleType name="geos_LinearSolverParameters_PreconditionerType">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|ick|ict|amg|mgr|block|direct|bgs" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_LinearSolverParameters_SolverType">
@@ -2600,9 +2829,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2614,6 +2844,11 @@ When set to 2 also output convergence information to a csv-->
 	<xsd:simpleType name="geos_WaveSolverUtils_DASType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|none|dipole|strainIntegration" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_PhysicsSolverBase_StatsOutputType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|none|iteration|convergence|all" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="AcousticElasticSEMType">
@@ -2651,9 +2886,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2739,9 +2975,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2828,9 +3065,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -2916,9 +3154,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3024,9 +3263,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3132,9 +3372,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3173,9 +3414,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3224,9 +3466,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3288,9 +3531,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3453,9 +3697,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3549,9 +3794,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useVTI" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3592,9 +3838,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3634,9 +3881,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3674,9 +3922,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3714,9 +3963,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3782,9 +4032,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="useQuasiNewton" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3846,9 +4097,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3890,9 +4142,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3932,9 +4185,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3975,9 +4229,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4031,9 +4286,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4082,9 +4338,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4123,9 +4380,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4163,9 +4421,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4212,9 +4471,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4262,9 +4522,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4302,9 +4563,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4363,9 +4625,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4430,9 +4693,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4475,9 +4739,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4529,9 +4794,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4583,9 +4849,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4636,9 +4903,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4689,9 +4957,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4729,9 +4998,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4782,9 +5052,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4822,9 +5093,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4876,9 +5148,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4916,9 +5189,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -4969,9 +5243,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5022,9 +5297,10 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5067,9 +5343,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5143,9 +5420,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5210,9 +5488,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useStaticCondensation" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5278,9 +5557,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5338,9 +5618,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5400,9 +5681,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5482,9 +5764,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5540,9 +5823,10 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
-		<xsd:attribute name="writeStatistics" type="integer" default="0" />
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
+		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -5958,15 +6242,25 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="PorousDamageSpectralElasticIsotropic" type="PorousDamageSpectralElasticIsotropicType" />
 			<xsd:element name="PorousDamageVolDevElasticIsotropic" type="PorousDamageVolDevElasticIsotropicType" />
 			<xsd:element name="PorousDelftEgg" type="PorousDelftEggType" />
+			<xsd:element name="PorousDelftEggCarmanKozenyPermeability" type="PorousDelftEggCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousDruckerPrager" type="PorousDruckerPragerType" />
+			<xsd:element name="PorousDruckerPragerCarmanKozenyPermeability" type="PorousDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousElasticIsotropic" type="PorousElasticIsotropicType" />
+			<xsd:element name="PorousElasticIsotropicCarmanKozenyPermeability" type="PorousElasticIsotropicCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousElasticOrthotropic" type="PorousElasticOrthotropicType" />
+			<xsd:element name="PorousElasticOrthotropicCarmanKozenyPermeability" type="PorousElasticOrthotropicCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousElasticTransverseIsotropic" type="PorousElasticTransverseIsotropicType" />
+			<xsd:element name="PorousElasticTransverseIsotropicCarmanKozenyPermeability" type="PorousElasticTransverseIsotropicCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousExtendedDruckerPrager" type="PorousExtendedDruckerPragerType" />
+			<xsd:element name="PorousExtendedDruckerPragerCarmanKozenyPermeability" type="PorousExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousModifiedCamClay" type="PorousModifiedCamClayType" />
+			<xsd:element name="PorousModifiedCamClayCarmanKozenyPermeability" type="PorousModifiedCamClayCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousViscoDruckerPrager" type="PorousViscoDruckerPragerType" />
+			<xsd:element name="PorousViscoDruckerPragerCarmanKozenyPermeability" type="PorousViscoDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousViscoExtendedDruckerPrager" type="PorousViscoExtendedDruckerPragerType" />
+			<xsd:element name="PorousViscoExtendedDruckerPragerCarmanKozenyPermeability" type="PorousViscoExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousViscoModifiedCamClay" type="PorousViscoModifiedCamClayType" />
+			<xsd:element name="PorousViscoModifiedCamClayCarmanKozenyPermeability" type="PorousViscoModifiedCamClayCarmanKozenyPermeabilityType" />
 			<xsd:element name="PressurePermeability" type="PressurePermeabilityType" />
 			<xsd:element name="PressurePorosity" type="PressurePorosityType" />
 			<xsd:element name="ProppantPermeability" type="ProppantPermeabilityType" />
@@ -6633,8 +6927,6 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageElasticIsotropicType">
-		<!--biotCoefficient => Biot coefficient-->
-		<xsd:attribute name="biotCoefficient" type="real64_array" default="{0}" />
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
 		<xsd:attribute name="criticalStrainEnergy" type="real64" use="required" />
 		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
@@ -6675,8 +6967,6 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageSpectralElasticIsotropicType">
-		<!--biotCoefficient => Biot coefficient-->
-		<xsd:attribute name="biotCoefficient" type="real64_array" default="{0}" />
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
 		<xsd:attribute name="criticalStrainEnergy" type="real64" use="required" />
 		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
@@ -6709,8 +6999,6 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageVolDevElasticIsotropicType">
-		<!--biotCoefficient => Biot coefficient-->
-		<xsd:attribute name="biotCoefficient" type="real64_array" default="{0}" />
 		<!--criticalStrainEnergy => Critical stress in a 1d tension test-->
 		<xsd:attribute name="criticalStrainEnergy" type="real64" use="required" />
 		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
@@ -7198,7 +7486,31 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousDelftEggCarmanKozenyPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PorousDruckerPragerType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousDruckerPragerCarmanKozenyPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
@@ -7222,7 +7534,31 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousElasticIsotropicCarmanKozenyPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PorousElasticOrthotropicType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousElasticOrthotropicCarmanKozenyPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
@@ -7246,7 +7582,31 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousElasticTransverseIsotropicCarmanKozenyPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PorousExtendedDruckerPragerType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousExtendedDruckerPragerCarmanKozenyPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
@@ -7270,7 +7630,31 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousModifiedCamClayCarmanKozenyPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PorousViscoDruckerPragerType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousViscoDruckerPragerCarmanKozenyPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->
@@ -7294,7 +7678,31 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="PorousViscoExtendedDruckerPragerCarmanKozenyPermeabilityType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="PorousViscoModifiedCamClayType">
+		<!--permeabilityModelName => Name of the permeability model.-->
+		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
+		<!--porosityModelName => Name of the porosity model.-->
+		<xsd:attribute name="porosityModelName" type="groupNameRef" use="required" />
+		<!--solidInternalEnergyModelName => Name of the solid internal energy model.-->
+		<xsd:attribute name="solidInternalEnergyModelName" type="groupNameRef" default="" />
+		<!--solidModelName => Name of the solid model.-->
+		<xsd:attribute name="solidModelName" type="groupNameRef" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="PorousViscoModifiedCamClayCarmanKozenyPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="groupNameRef" use="required" />
 		<!--porosityModelName => Name of the porosity model.-->

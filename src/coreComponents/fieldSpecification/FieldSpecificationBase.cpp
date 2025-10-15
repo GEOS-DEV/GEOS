@@ -85,6 +85,17 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setApplyDefaultValue( 1.0e99 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Time at which the boundary condition will stop being applied." );
+
+  registerWrapper( viewKeyStruct::errorSetModeString(), &m_emptySetErrorMode ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( SetErrorMode::error ).
+    setDescription( GEOS_FMT( "Set the log state when a “set” does not target any region\n"
+                              "When set to \"{}\", no output.\n"
+                              "When set to \"{}\", output a warning.\n"
+                              "When set to \"{}\", output a throw.\n",
+                              EnumStrings< SetErrorMode >::toString( SetErrorMode::silent ),
+                              EnumStrings< SetErrorMode >::toString( SetErrorMode::warning ),
+                              EnumStrings< SetErrorMode >::toString( SetErrorMode::error )  ));
 }
 
 
