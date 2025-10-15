@@ -1560,7 +1560,7 @@ void PhysicsSolverBase::cleanup( real64 const GEOS_UNUSED_PARAM( time_n ),
   bool wrongIterationCSVOutputRequest = getIterationStats().getCSVOutputRequest() &&
                                         !getIterationStats().getCSVOutputOpened();
   bool wrongConvergenceCSVOutputRequest = getConvergenceStats().getCSVOutputRequest() &&
-                                         !getConvergenceStats().getCSVOutputOpened();
+                                          !getConvergenceStats().getCSVOutputOpened();
 
   GEOS_WARNING_IF( wrongIterationCSVOutputRequest,
                    GEOS_FMT( "The {} solver requests to output a CSV iteration but nothing was written\n"
