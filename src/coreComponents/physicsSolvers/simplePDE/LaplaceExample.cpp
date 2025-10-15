@@ -115,7 +115,7 @@ void LaplaceExample::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
 
         // this is the kernel launch
-        for( localIndex k=0; k<numElems; ++k )
+        forall< parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const k )
         {
           // gather data from mesh and store in local stack arrays
           real64 xLocal[numSupportPointsPerElem][3];
@@ -177,7 +177,7 @@ void LaplaceExample::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
           }
 
 
-        } // end of kernel
+        }); // end of kernel
 
 
       } );

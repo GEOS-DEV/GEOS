@@ -3,6 +3,9 @@
 <Problem>
 
   <Solvers>
+
+    <
+
     <ImmiscibleMultiphaseFlow
       name="FlowSolver"
       logLevel="1"
@@ -26,9 +29,9 @@
 
    <PeriodicEvent
       name="outputs"
-      timeFrequency="5e6"
+      timeFrequency="2e6"
       targetExactTimestep="1"
-      target="/Outputs/vtkOutput_direct"/>
+      target="/Outputs/siloOutput_direct"/>
     
     <PeriodicEvent
       name="solverApplications"
