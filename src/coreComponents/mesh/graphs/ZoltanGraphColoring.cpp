@@ -20,6 +20,7 @@
 #include "ZoltanGraphColoring.hpp"
 #include "GraphToolsMPI.hpp"
 #include <algorithm>
+#include <limits>
 
 
 #define GEOS_ZOLTAN_CHECK( call ) \
@@ -71,10 +72,21 @@ std::vector< int > ZoltanGraphColoring::colorGraph( const std::vector< size_t > 
 {
   int const rank = MpiWrapper::commRank( m_comm );
 
+  // Convert size_t to int with overflow checking for Zoltan
+  auto safeConvert = []( size_t value ) -> int {
+    GEOS_ERROR_IF( value > static_cast< size_t >( std::numeric_limits< int >::max()),
+                   "Value " << value << " exceeds maximum int value for Zoltan interface" );
+    return static_cast< int >( value );
+  };
+
   ZoltanGraph graph;
-  graph.m_xadj.assign( xadj.begin(), xadj.end());
-  graph.m_adjncy.assign( adjncy.begin(), adjncy.end());
-  graph.m_numVertices = xadj.size() - 1;
+  graph.m_xadj.reserve( xadj.size());
+  std::transform( xadj.begin(), xadj.end(), std::back_inserter( graph.m_xadj ), safeConvert );
+
+  graph.m_adjncy.reserve( adjncy.size());
+  std::transform( adjncy.begin(), adjncy.end(), std::back_inserter( graph.m_adjncy ), safeConvert );
+
+  graph.m_numVertices = safeConvert( xadj.size() - 1 );
   graph.m_rank = rank;
 
   std::vector< int > vertexGID = createVertexGlobalID( xadj, m_comm );
