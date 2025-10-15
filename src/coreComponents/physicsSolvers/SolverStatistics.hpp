@@ -302,7 +302,6 @@ public:
   void setResidualValue( string const & key, real64 const value )
   { if( m_CSVOutputRequest ) m_residuals.insert( {key, value} ); }
 
-
   /**
    * @brief Set the filename output file.
    * @param filename The filename as a string_view.
@@ -349,7 +348,7 @@ private:
   integer m_iteration = 0;
 
   /// Residuals with their names
-  std::map< string, real64 > m_residuals;
+  stdMap< string, real64 > m_residuals;
 
   /// State of CSV output request.
   bool m_CSVOutputRequest = false;
