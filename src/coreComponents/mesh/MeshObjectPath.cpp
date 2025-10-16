@@ -187,9 +187,9 @@ MeshObjectPath::fillPathTokens( string const & path,
 
 
 template< typename SUBNODE >
-static SUBNODE & insertPathNode( std::map< string, SUBNODE > & node, string const & name )
+static SUBNODE & insertPathNode( stdMap< string, SUBNODE > & node, string const & name )
 {
-  return node[ name ];
+  return node.get_inserted( name );
 }
 
 static string & insertPathNode( stdVector< string > & node, string & name )
@@ -233,7 +233,7 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
       }
     }
     GEOS_THROW_IF( !foundMatch,
-                   GEOS_FMT( "{0} has no child named '{1}'.\n"
+                   GEOS_FMT( "{0} has no child named {1}.\n"
                              "{0} has the following children: {{ {2} }}",
                              parentGroup.getDataContext().toString(),
                              inputEntry,
@@ -251,14 +251,14 @@ void MeshObjectPath::processPathTokens( stdVector< string > const & pathTokens,
                                      pathTokens[0],
                                      m_pathPermutations,
                                      [this, &pathTokens] ( MeshBody const & meshBody,
-                                                           std::map< string, std::map< string, stdVector< string > > > & meshBodyNode )
+                                                           stdMap< string, stdMap< string, stdVector< string > > > & meshBodyNode )
   {
     dataRepository::Group const & meshLevels = meshBody.getMeshLevels();
     processTokenRecursive< MeshLevel >( meshLevels,
                                         pathTokens[1],
                                         meshBodyNode,
                                         [this, &pathTokens]( MeshLevel const & meshLevel,
-                                                             std::map< string, stdVector< string > > & meshLevelNode )
+                                                             stdMap< string, stdVector< string > > & meshLevelNode )
     {
       if( m_objectType == ObjectTypes::elems )
       {

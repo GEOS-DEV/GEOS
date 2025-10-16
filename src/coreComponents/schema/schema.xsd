@@ -6792,7 +6792,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 * exponential
 * linear
 * quadratic-->
-		<xsd:attribute name="densityModelType" type="geos_constitutive_ExponentApproximationType" default="linear" />
+		<xsd:attribute name="densityModelType" type="geos_constitutive_ExponentApproximationType" default="exponential" />
 		<!--referenceDensity => Reference fluid density-->
 		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
 		<!--referencePressure => Reference pressure [Pa]-->
@@ -8005,7 +8005,7 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 * exponential
 * linear
 * quadratic-->
-		<xsd:attribute name="densityModelType" type="geos_constitutive_ExponentApproximationType" default="linear" />
+		<xsd:attribute name="densityModelType" type="geos_constitutive_ExponentApproximationType" default="exponential" />
 		<!--internalEnergyModelType => Type of internal energy model. Valid options:
 * exponential
 * linear
