@@ -209,19 +209,19 @@ This component computes specific statistics for defined regions in a mesh during
 
   Mass or number of moles of fluid present for each phase.
 
-- **Trapped phase mass (metric 1, [2]_) [kg or mol]:**
+- **Trapped phase mass (metric 1 [2]_) [kg or mol]:**
 
   For each phase, mass or number of moles that are immobile because they are trapped in the porous structure.
 
-- **Non-trapped phase mass (metric 1, [2]_)) [kg or mol]:**
+- **Non-trapped phase mass (metric 1 [2]_)) [kg or mol]:**
 
   For each phase, potentially mobile mass or number of moles (not trapped, but not necessarily in motion).
 
-- **Immobile phase mass (metric 2, [3]_) [kg or mol]:**
+- **Immobile phase mass (metric 2 [3]_) [kg or mol]:**
 
   For each phase, mass or number of moles that do not move in the simulation (for example due to trapping, viscosity, or pressure thresholds).
 
-- **Mobile phase mass (metric 2, [3]_) [kg or mol]:**
+- **Mobile phase mass (metric 2 [3]_) [kg or mol]:**
 
   For each phase, mass or number of moles that is in motion or can move depending on simulation conditions.
 
