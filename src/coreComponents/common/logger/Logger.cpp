@@ -74,15 +74,6 @@ int g_n_ranks = 1;
 std::string g_rankString = "?";
 std::ostream * g_rankStream = nullptr;
 
-int rank()
-{ return g_rank; }
-
-string_view rankString()
-{ return g_rankString; }
-
-std::ostream * rankStream()
-{ return g_rankStream; }
-
 } // namespace internal
 
 #ifdef GEOS_USE_MPI

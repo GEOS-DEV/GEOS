@@ -72,7 +72,7 @@
  */
 #define GEOS_LOG_RANK_0_IF( EXP, msg ) \
   do { \
-    if( ::geos::logger::internal::rank() == 0 && EXP ) \
+    if( ::geos::logger::internal::g_rank == 0 && EXP ) \
     { \
       std::ostringstream oss; \
       oss << msg; \
@@ -87,7 +87,7 @@
  */
 #define GEOS_LOG_RANK_0_IF_NLR( EXP, msg ) \
   do { \
-    if( ::geos::logger::internal::rank() == 0 && EXP ) \
+    if( ::geos::logger::internal::g_rank == 0 && EXP ) \
     { \
       std::ostringstream oss; \
       oss << msg; \
@@ -114,8 +114,8 @@
     if( EXP ) \
     { \
       std::ostringstream oss; \
-      oss << "Rank " << ::geos::logger::internal::rankString() << ": " << msg; \
-      *logger::internal::rankStream() << oss.str() << std::endl; \
+      oss << "Rank " << ::geos::logger::internal::g_rankString << ": " << msg; \
+      *logger::internal::g_rankStream << oss.str() << std::endl; \
     } \
   } while( false )
 #endif
@@ -158,26 +158,26 @@
     { \
       std::ostringstream __msgoss; \
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
-      std::string message =  __msgoss.str(); \
+      std::string __message =  __msgoss.str(); \
       __msgoss = std::ostringstream(); \
       __msgoss << CAUSE_MESSAGE; \
-      std::string cause =  __msgoss.str(); \
+      std::string __cause =  __msgoss.str(); \
       std::ostringstream __oss; \
       __oss << "***** ERROR\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::rankString() << ": " << message << "\n"; \
+      __oss << "***** " << __cause << "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::g_rankString << ": " << __message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
       std::cout << __oss.str() << std::endl; \
       if( GEOS_ERROR_LOGGER_INSTANCE.isOutputFileEnabled() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
-                                         message, \
-                                         ::geos::logger::internal::rank(), \
+                                         __message, \
+                                         ::geos::logger::internal::g_rank, \
                                          __FILE__, \
                                          __LINE__ ); \
-        msgStruct.setCause( cause ); \
+        msgStruct.setCause( __cause ); \
         msgStruct.addCallStackInfo( stackHistory ); \
         msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
         GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \
@@ -238,15 +238,15 @@
     { \
       std::ostringstream __msgoss; \
       __msgoss << MSG; \
-      std::string message =  __msgoss.str(); \
+      std::string __message =  __msgoss.str(); \
       __msgoss = std::ostringstream(); \
       __msgoss << CAUSE_MESSAGE; \
-      std::string cause =  __msgoss.str(); \
+      std::string __cause =  __msgoss.str(); \
       std::ostringstream __oss; \
       __oss << "***** EXCEPTION\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::rankString() << ": " << message << "\n"; \
+      __oss << "***** " << __cause << "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::g_rankString << ": " << __message << "\n"; \
       std::string stackHistory = LvArray::system::stackTrace( true ); \
       __oss << stackHistory; \
       if( GEOS_ERROR_LOGGER_INSTANCE.isOutputFileEnabled() ) \
@@ -256,12 +256,12 @@
           GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg() \
             .setType( ErrorLogger::MsgType::Exception ) \
             .setCodeLocation( __FILE__, __LINE__ ) \
-            .setCause( cause ) \
-            .addRank( ::geos::logger::internal::rank() ) \
+            .setCause( __cause ) \
+            .addRank( ::geos::logger::internal::g_rank ) \
             .addCallStackInfo( stackHistory ); \
         } \
         GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg() \
-          .addToMsg( message ) \
+          .addToMsg( __message ) \
           .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
       } \
       throw GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )( __oss.str() ); \
@@ -321,24 +321,24 @@
     { \
       std::ostringstream __msgoss; \
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
-      std::string message = __msgoss.str(); \
+      std::string __message = __msgoss.str(); \
       __msgoss = std::ostringstream(); \
       __msgoss << CAUSE_MESSAGE; \
-      std::string cause =  __msgoss.str(); \
+      std::string __cause =  __msgoss.str(); \
       std::ostringstream __oss; \
       __oss << "***** WARNING\n"; \
       __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::rankString() << ": " << message << "\n"; \
+      __oss << "***** " << __cause << "\n"; \
+      __oss << "***** Rank " << ::geos::logger::internal::g_rankString << ": " << __message << "\n"; \
       std::cout << __oss.str() << std::endl; \
       if( GEOS_ERROR_LOGGER_INSTANCE.isOutputFileEnabled() ) \
       { \
         ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
-                                         message, \
-                                         ::geos::logger::internal::rank(), \
+                                         __message, \
+                                         ::geos::logger::internal::g_rank, \
                                          __FILE__, \
                                          __LINE__ ); \
-        msgStruct.setCause( cause ); \
+        msgStruct.setCause( __cause ); \
         msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
         GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \
       } \
@@ -1037,11 +1037,11 @@ namespace logger
 namespace internal
 {
 
-int rank();
+extern int g_rank;
 
-string_view rankString();
+extern std::string g_rankString;
 
-std::ostream * rankStream();
+extern std::ostream * g_rankStream;
 
 } // namespace internal
 
