@@ -30,6 +30,7 @@
 
 namespace geos
 {
+using namespace dataRepository;
 
 template< typename ConstraintRateType >
 InjectionConstraint< ConstraintRateType >::InjectionConstraint( string const & name, Group * const parent )
@@ -87,21 +88,21 @@ void InjectionConstraint< ConstraintRateType >::validateInjectionStream( )
 }
 
 // Register concrete wrapper constraint types and instantiate templates.
-
-using LiquidInjectionConstraint = InjectionConstraint< LiquidRateConstraint >;
-REGISTER_CATALOG_ENTRY( WellConstraintBase, LiquidInjectionConstraint, string const &, Group * const )
 template class InjectionConstraint< LiquidRateConstraint >;
+using InjectionLiquidRateConstraint = InjectionConstraint< LiquidRateConstraint >;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, InjectionLiquidRateConstraint, string const &, Group * const )
 
-using MassInjectionConstraint = InjectionConstraint< MassRateConstraint >;
-REGISTER_CATALOG_ENTRY( WellConstraintBase, MassInjectionConstraint, string const &, Group * const )
 template class InjectionConstraint< MassRateConstraint >;
+using InjectionMassRateConstraint = InjectionConstraint< MassRateConstraint >;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, InjectionMassRateConstraint, string const &, Group * const )
 
-using PhaseInjectionConstraint = InjectionConstraint< PhaseVolumeRateConstraint >;
-REGISTER_CATALOG_ENTRY( WellConstraintBase, PhaseInjectionConstraint, string const &, Group * const )
 template class InjectionConstraint< PhaseVolumeRateConstraint >;
+using InjectionPhaseVolumeRateConstraint = InjectionConstraint< PhaseVolumeRateConstraint >;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, InjectionPhaseVolumeRateConstraint, string const &, Group * const )
 
-using TotalVolInjectionConstraint = InjectionConstraint< VolumeRateConstraint >;
-REGISTER_CATALOG_ENTRY( WellConstraintBase, TotalVolInjectionConstraint, string const &, Group * const )
 template class InjectionConstraint< VolumeRateConstraint >;
+using InjectionVolumeRateConstraint = InjectionConstraint< VolumeRateConstraint >;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, InjectionVolumeRateConstraint, string const &, Group * const )
+
 
 }

@@ -70,6 +70,11 @@ public:
   static CatalogInterface::CatalogType & getCatalog();
 
   /**
+   * @brief function to return the catalog name of the derived class
+   * @return a string that contains the catalog name of the derived class
+   */
+  virtual string getCatalogName() const = 0;
+  /**
    * @name Constructor / Destructor
    */
   ///@{

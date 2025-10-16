@@ -222,16 +222,8 @@
 				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="Functions" type="FunctionsType" maxOccurs="1">
-				<xsd:unique name="FunctionsCompositeFunctionUniqueName">
-					<xsd:selector xpath="CompositeFunction" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 				<xsd:unique name="FunctionsMultivariableTableFunctionUniqueName">
 					<xsd:selector xpath="MultivariableTableFunction" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="FunctionsSymbolicFunctionUniqueName">
-					<xsd:selector xpath="SymbolicFunction" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="FunctionsTableFunctionUniqueName">
@@ -1433,43 +1425,15 @@ stress - traction is applied to the faces as specified by the inner product of i
 	</xsd:simpleType>
 	<xsd:complexType name="FunctionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="CompositeFunction" type="CompositeFunctionType" />
 			<xsd:element name="MultivariableTableFunction" type="MultivariableTableFunctionType" />
-			<xsd:element name="SymbolicFunction" type="SymbolicFunctionType" />
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="CompositeFunctionType">
-		<!--expression => Composite math expression-->
-		<xsd:attribute name="expression" type="string" default="" />
-		<!--functionNames => List of source functions. The order must match the variableNames argument.-->
-		<xsd:attribute name="functionNames" type="string_array" default="{}" />
-		<!--inputVarNames => Name of fields are input to function.-->
-		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
-		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
-		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
-		<!--variableNames => List of variables in expression-->
-		<xsd:attribute name="variableNames" type="groupNameRef_array" default="{}" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MultivariableTableFunctionType">
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
 		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
 		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="SymbolicFunctionType">
-		<!--expression => Symbolic math expression-->
-		<xsd:attribute name="expression" type="string" use="required" />
-		<!--inputVarNames => Name of fields are input to function.-->
-		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
-		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
-		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
-		<!--variableNames => List of variables in expression.  The order must match the evaluate argument-->
-		<xsd:attribute name="variableNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3362,7 +3326,44 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="WellControls" type="WellControlsType" />
+			<xsd:element name="WellControls" type="WellControlsType">
+				<xsd:unique name="SolversCompositionalMultiphaseWellWellControlsInjectionMassRateConstraintUniqueName">
+					<xsd:selector xpath="InjectionMassRateConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversCompositionalMultiphaseWellWellControlsInjectionPhaseVolumeRateConstraintUniqueName">
+					<xsd:selector xpath="InjectionPhaseVolumeRateConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversCompositionalMultiphaseWellWellControlsInjectionVolumeRateConstraintUniqueName">
+					<xsd:selector xpath="InjectionVolumeRateConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversCompositionalMultiphaseWellWellControlsMaximumBHPConstraintUniqueName">
+					<xsd:selector xpath="MaximumBHPConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversCompositionalMultiphaseWellWellControlsMinimumBHPConstraintUniqueName">
+					<xsd:selector xpath="MinimumBHPConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversCompositionalMultiphaseWellWellControlsProductionLiquidRateConstraintUniqueName">
+					<xsd:selector xpath="ProductionLiquidRateConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversCompositionalMultiphaseWellWellControlsProductionMassRateConstraintUniqueName">
+					<xsd:selector xpath="ProductionMassRateConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversCompositionalMultiphaseWellWellControlsProductionPhaseVolumeRateConstraintUniqueName">
+					<xsd:selector xpath="ProductionPhaseVolumeRateConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversCompositionalMultiphaseWellWellControlsProductionVolumeRateConstraintUniqueName">
+					<xsd:selector xpath="ProductionVolumeRateConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
 		</xsd:choice>
 		<!--allowLocalCompDensityChopping => Flag indicating whether local (cell-wise) chopping of negative compositions is allowed-->
 		<xsd:attribute name="allowLocalCompDensityChopping" type="integer" default="1" />
@@ -3420,6 +3421,17 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="WellControlsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="InjectionMassRateConstraint" type="InjectionMassRateConstraintType" />
+			<xsd:element name="InjectionPhaseVolumeRateConstraint" type="InjectionPhaseVolumeRateConstraintType" />
+			<xsd:element name="InjectionVolumeRateConstraint" type="InjectionVolumeRateConstraintType" />
+			<xsd:element name="MaximumBHPConstraint" type="MaximumBHPConstraintType" />
+			<xsd:element name="MinimumBHPConstraint" type="MinimumBHPConstraintType" />
+			<xsd:element name="ProductionLiquidRateConstraint" type="ProductionLiquidRateConstraintType" />
+			<xsd:element name="ProductionMassRateConstraint" type="ProductionMassRateConstraintType" />
+			<xsd:element name="ProductionPhaseVolumeRateConstraint" type="ProductionPhaseVolumeRateConstraintType" />
+			<xsd:element name="ProductionVolumeRateConstraint" type="ProductionVolumeRateConstraintType" />
+		</xsd:choice>
 		<!--enableCrossflow => Flag to enable crossflow. Currently only supported for injectors: 
  - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
  - If the flag is set to 0, we only allow well-to-reservoir flow at the perforations.-->
@@ -3449,6 +3461,109 @@ Setting cycleFrequency='1' will update the pressure every timestep, note that is
 Equal to 1 for surface conditions, and to 0 for reservoir conditions.
 See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="useSurfaceConditions" type="integer" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="InjectionMassRateConstraintType">
+		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
+-->
+		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
+		<!--injectionStream => Global component densities of the injection stream [moles/m^3 or kg/m^3]-->
+		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
+		<!--injectionTemperature => Temperature of the injection stream [K]-->
+		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
+		<!--massRate => Maximum mass rate (kg/s)-->
+		<xsd:attribute name="massRate" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="InjectionPhaseVolumeRateConstraintType">
+		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
+-->
+		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
+		<!--injectionStream => Global component densities of the injection stream [moles/m^3 or kg/m^3]-->
+		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
+		<!--injectionTemperature => Temperature of the injection stream [K]-->
+		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
+		<!--phaseName => Name of the target phase-->
+		<xsd:attribute name="phaseName" type="groupNameRef" default="" />
+		<!--phaseRate => Phase rate,  (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s]) -->
+		<xsd:attribute name="phaseRate" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="InjectionVolumeRateConstraintType">
+		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
+-->
+		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
+		<!--injectionStream => Global component densities of the injection stream [moles/m^3 or kg/m^3]-->
+		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
+		<!--injectionTemperature => Temperature of the injection stream [K]-->
+		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
+		<!--volumeRate => Volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])-->
+		<xsd:attribute name="volumeRate" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="MaximumBHPConstraintType">
+		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
+-->
+		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
+		<!--referenceElevation => Reference elevation where BHP control is enforced [m]-->
+		<xsd:attribute name="referenceElevation" type="real64" use="required" />
+		<!--targetBHP => Minimun bottom-hole production pressure [Pa]-->
+		<xsd:attribute name="targetBHP" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="MinimumBHPConstraintType">
+		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
+-->
+		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
+		<!--referenceElevation => Reference elevation where BHP control is enforced [m]-->
+		<xsd:attribute name="referenceElevation" type="real64" use="required" />
+		<!--targetBHP => Minimun bottom-hole production pressure [Pa]-->
+		<xsd:attribute name="targetBHP" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ProductionLiquidRateConstraintType">
+		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
+-->
+		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
+		<!--liquidRate => Phase rate,  (if useSurfaceCondSitions: [surface m^3/s]; else [reservoir m^3/s]) -->
+		<xsd:attribute name="liquidRate" type="real64" default="0" />
+		<!--phaseNames => Name of the target phases-->
+		<xsd:attribute name="phaseNames" type="groupNameRef" default="{}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ProductionMassRateConstraintType">
+		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
+-->
+		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
+		<!--massRate => Maximum mass rate (kg/s)-->
+		<xsd:attribute name="massRate" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ProductionPhaseVolumeRateConstraintType">
+		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
+-->
+		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
+		<!--phaseName => Name of the target phase-->
+		<xsd:attribute name="phaseName" type="groupNameRef" default="" />
+		<!--phaseRate => Phase rate,  (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s]) -->
+		<xsd:attribute name="phaseRate" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ProductionVolumeRateConstraintType">
+		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
+-->
+		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
+		<!--volumeRate => Volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])-->
+		<xsd:attribute name="volumeRate" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3846,7 +3961,7 @@ Information output from lower logLevels is added with the desired log level
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--newFractureInitializationType => Type of new fracture element initialization. Can be Pressure or Displacement. -->
-		<xsd:attribute name="newFractureInitializationType" type="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt_-_gt__InitializationType" default="Pressure" />
+		<xsd:attribute name="newFractureInitializationType" type="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt__gt__InitializationType" default="Pressure" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--stabilizationMultiplier => Constant multiplier of stabilization strength-->
@@ -3874,7 +3989,7 @@ When set to 2 also output convergence information to a csv-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt_-_gt__InitializationType">
+	<xsd:simpleType name="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt__gt__InitializationType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Pressure|Displacement" />
 		</xsd:restriction>
@@ -5118,7 +5233,44 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="WellControls" type="WellControlsType" />
+			<xsd:element name="WellControls" type="WellControlsType">
+				<xsd:unique name="SolversSinglePhaseWellWellControlsInjectionMassRateConstraintUniqueName">
+					<xsd:selector xpath="InjectionMassRateConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversSinglePhaseWellWellControlsInjectionPhaseVolumeRateConstraintUniqueName">
+					<xsd:selector xpath="InjectionPhaseVolumeRateConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversSinglePhaseWellWellControlsInjectionVolumeRateConstraintUniqueName">
+					<xsd:selector xpath="InjectionVolumeRateConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversSinglePhaseWellWellControlsMaximumBHPConstraintUniqueName">
+					<xsd:selector xpath="MaximumBHPConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversSinglePhaseWellWellControlsMinimumBHPConstraintUniqueName">
+					<xsd:selector xpath="MinimumBHPConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversSinglePhaseWellWellControlsProductionLiquidRateConstraintUniqueName">
+					<xsd:selector xpath="ProductionLiquidRateConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversSinglePhaseWellWellControlsProductionMassRateConstraintUniqueName">
+					<xsd:selector xpath="ProductionMassRateConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversSinglePhaseWellWellControlsProductionPhaseVolumeRateConstraintUniqueName">
+					<xsd:selector xpath="ProductionPhaseVolumeRateConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+				<xsd:unique name="SolversSinglePhaseWellWellControlsProductionVolumeRateConstraintUniqueName">
+					<xsd:selector xpath="ProductionVolumeRateConstraint" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
+			</xsd:element>
 		</xsd:choice>
 		<!--allowNegativePressure => Flag indicating if negative pressure is allowed-->
 		<xsd:attribute name="allowNegativePressure" type="integer" default="1" />

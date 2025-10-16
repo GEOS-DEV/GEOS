@@ -89,8 +89,9 @@ public:
    */
   static string catalogName()
   {
-    return "ProductionConstraint"+ConstraintType::catalogName();
+    return "Production"+ConstraintType::catalogName();
   }
+  virtual string getCatalogName() const override { return catalogName(); }
 protected:
 
   virtual void postInputInitialization() override;

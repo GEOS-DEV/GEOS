@@ -407,7 +407,7 @@ void SinglePhaseWell::updateSeparator( WellElementSubRegion & subRegion )
     geos::internal::kernelLaunchSelectorThermalSwitch( isThermal(), [&] ( auto ISTHERMAL )
     {
       integer constexpr IS_THERMAL = ISTHERMAL();
-      GEOS_UNUSED_VAR(IS_THERMAL);
+      GEOS_UNUSED_VAR( IS_THERMAL );
       // bring everything back to host, capture the scalars by reference
       forAll< serialPolicy >( 1, [fluidSeparatorWrapper,
                                   pres,

@@ -110,4 +110,7 @@ bool MaximumBHPConstraint::checkViolation( WellConstraintBase const & currentCon
   return currentConstraint.bottomHolePressure() > getConstraintValue( currentTime );
 }
 
+REGISTER_CATALOG_ENTRY( WellConstraintBase, MinimumBHPConstraint, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( WellConstraintBase, MaximumBHPConstraint, string const &, Group * const )
+
 } //namespace geos

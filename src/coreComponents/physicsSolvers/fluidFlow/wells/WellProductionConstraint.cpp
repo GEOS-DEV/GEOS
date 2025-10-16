@@ -51,19 +51,20 @@ void ProductionConstraint< ConstraintRateType >::postInputInitialization()
 }
 // Register concrete wrapper constraint types and instantiate templates.
 
-using LiquidProductionConstraint = ProductionConstraint< LiquidRateConstraint >;
-REGISTER_CATALOG_ENTRY( WellConstraintBase, LiquidProductionConstraint, string const &, Group * const )
 template class ProductionConstraint< LiquidRateConstraint >;
+using ProductionLiquidRateConstraint = ProductionConstraint< LiquidRateConstraint >;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, ProductionLiquidRateConstraint, string const &, Group * const )
 
-using MassProductionConstraint = ProductionConstraint< MassRateConstraint >;
-REGISTER_CATALOG_ENTRY( WellConstraintBase, MassProductionConstraint, string const &, Group * const )
 template class ProductionConstraint< MassRateConstraint >;
+using ProductionMassRateConstraint = ProductionConstraint< MassRateConstraint >;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, ProductionMassRateConstraint, string const &, Group * const )
 
-using PhaseProductionConstraint = ProductionConstraint< PhaseVolumeRateConstraint >;
-REGISTER_CATALOG_ENTRY( WellConstraintBase, PhaseProductionConstraint, string const &, Group * const )
 template class ProductionConstraint< PhaseVolumeRateConstraint >;
+using ProductionPhaseVolumeRateConstraint = ProductionConstraint< PhaseVolumeRateConstraint >;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, ProductionPhaseVolumeRateConstraint, string const &, Group * const )
 
-using TotalVolProductionConstraint = ProductionConstraint< VolumeRateConstraint >;
-REGISTER_CATALOG_ENTRY( WellConstraintBase, TotalVolProductionConstraint, string const &, Group * const )
 template class ProductionConstraint< VolumeRateConstraint >;
+using ProductionVolumeRateConstraint = ProductionConstraint< VolumeRateConstraint >;
+REGISTER_CATALOG_ENTRY( WellConstraintBase, ProductionVolumeRateConstraint, string const &, Group * const )
+
 } //namespace geos

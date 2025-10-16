@@ -83,7 +83,6 @@ public:
 
   ///@}
 
-
   /**
    * @name Getters / Setters
    */
@@ -198,7 +197,15 @@ public:
 
   ///@}
 
-
+  /**
+   * @brief name of the node manager in the object catalog
+   * @return string that contains the catalog name to generate a new Constraint object through the object catalog.
+   */
+  static string catalogName()
+  {
+    return "MinimumBHPConstraint";
+  }
+  virtual string getCatalogName() const override { return catalogName(); }
   /**
    * @name Getters / Setters
    */
@@ -280,7 +287,15 @@ public:
 
   ///@}
 
-
+  /**
+   * @brief name of the node manager in the object catalog
+   * @return string that contains the catalog name to generate a new Constraint object through the object catalog.
+   */
+  static string catalogName()
+  {
+    return "MaximumBHPConstraint";
+  }
+  virtual string getCatalogName() const override { return catalogName(); }
   /**
    * @name Getters / Setters
    */

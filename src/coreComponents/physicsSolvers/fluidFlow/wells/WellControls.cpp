@@ -126,45 +126,45 @@ Group * WellControls::createChild( string const & childKey, string const & child
     m_maxBHPConstraint =  &bhpConstraint;
     constraint = &bhpConstraint;
   }
-  else if( childKey == viewKeyStruct::phaseProductionConstraintString() )
+  else if( childKey == viewKeyStruct::productionPhaseVolumeRateConstraintString() )
   {
     ProductionConstraint< PhaseVolumeRateConstraint > & phaseConstraint = registerGroup< ProductionConstraint< PhaseVolumeRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &phaseConstraint );
     constraint = &phaseConstraint;
   }
-  else if( childKey == viewKeyStruct::phaseInjectionConstraintString() )
+  else if( childKey == viewKeyStruct::injectionPhaseVolumeRateConstraint() )
   {
 
     InjectionConstraint< PhaseVolumeRateConstraint > & phaseConstraint = registerGroup< InjectionConstraint< PhaseVolumeRateConstraint > >( childName );
     m_injectionRateConstraintList.emplace_back( &phaseConstraint );
     constraint = &phaseConstraint;
   }
-  else if( childKey == viewKeyStruct::totalVolProductionConstraintString() )
+  else if( childKey == viewKeyStruct::productionVolumeRateConstraint() )
   {
     ProductionConstraint< VolumeRateConstraint > & volConstraint = registerGroup< ProductionConstraint< VolumeRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &volConstraint );
     constraint = &volConstraint;
   }
-  else if( childKey == viewKeyStruct::totalVolInjectionConstraintString() )
+  else if( childKey == viewKeyStruct::injectionVolumeRateConstraint() )
   {
     InjectionConstraint< VolumeRateConstraint > & volConstraint = registerGroup< InjectionConstraint< VolumeRateConstraint > >( childName );
     m_injectionRateConstraintList.emplace_back( &volConstraint );
     constraint = &volConstraint;
   }
-  else if( childKey == viewKeyStruct::massProductionConstraintString() )
+  else if( childKey == viewKeyStruct::productionMassRateConstraint() )
   {
     ProductionConstraint< MassRateConstraint > & massConstraint = registerGroup< ProductionConstraint< MassRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &massConstraint );
     constraint = &massConstraint;
 
   }
-  else if( childKey == viewKeyStruct::massInjectionConstraintString() )
+  else if( childKey == viewKeyStruct::injectionMassRateConstraint() )
   {
     InjectionConstraint< MassRateConstraint > & massConstraint = registerGroup< InjectionConstraint< MassRateConstraint > >( childName );
     m_injectionRateConstraintList.emplace_back( &massConstraint );
     constraint = &massConstraint;
   }
-  else if( childKey == viewKeyStruct::liquidProductionConstraintString() )
+  else if( childKey == viewKeyStruct::productionLiquidRateConstraint() )
   {
     ProductionConstraint< LiquidRateConstraint > & liquidConstraint = registerGroup< ProductionConstraint< LiquidRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &liquidConstraint );
@@ -175,7 +175,11 @@ Group * WellControls::createChild( string const & childKey, string const & child
 
 void WellControls::expandObjectCatalogs()
 {
-  //createChild( keys::wellControls, keys::wellControls );
+  // During schema generation, register one of each type derived from ConstitutiveBase here
+  for( auto & catalogIter: WellConstraintBase::getCatalog())
+  {
+    createChild( catalogIter.first, catalogIter.first );
+  }
 }
 
 namespace
