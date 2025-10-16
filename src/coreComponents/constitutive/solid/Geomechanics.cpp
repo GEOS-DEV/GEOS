@@ -75,6 +75,7 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_creepD( 1.0 ),
   m_creepE( 0.0 ),
   m_creepF( 1.0 ),
+  m_creepG( 1.0 ),
   m_strainHardeningN( 0.0 ),
   m_strainHardeningK( 0.0 ),
   m_plasticStrainTolerance( 1.0e-10 ),
@@ -292,6 +293,10 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::creepFString(), &m_creepF ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Creep F parameter" );
+
+  registerWrapper( viewKeyStruct::creepGString(), &m_creepG ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Creep G parameter" );
 
   registerWrapper( viewKeyStruct::strainHardeningNString(), &m_strainHardeningN ).
     setInputFlag( InputFlags::OPTIONAL ).

@@ -152,10 +152,10 @@ public:
     m_shearModulusA( shearModulusA ),
     m_shearModulusB( shearModulusB ),
     m_shearModulusT0( shearModulusT0 ),
-    m_defaultYieldStrength(defaultYieldStrength ),
-    m_yieldStrengthA(yieldStrengthA ),
-    m_yieldStrengthB(yieldStrengthB ),
-    m_yieldStrengthT0(yieldStrengthT0 ),
+    m_defaultYieldStrength( defaultYieldStrength ),
+    m_yieldStrengthA( yieldStrengthA ),
+    m_yieldStrengthB( yieldStrengthB ),
+    m_yieldStrengthT0( yieldStrengthT0 ),
     m_strainHardeningSlope( strainHardeningSlope ),
     m_strainHardeningSlopeA( strainHardeningSlopeA ),
     m_strainHardeningSlopeB( strainHardeningSlopeB ),
@@ -432,6 +432,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdate_StressOnly( localIndex con
   
   scale = StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_shearModulusT0, m_shearModulusA, m_shearModulusB);      // This will actually be some function:   m_bulkModulus[k] = m_defaultBulkModulus + A*f(m_temperature[k]), etc.
   m_shearModulus[k] = m_defaultShearModulus *  scale; // This will actually be some function of m_temperature[k]
+  //std::cout<< "bulk: " << m_bulkModulus[k] << " shear: " << m_shearModulus[k] << std::endl;
 
   ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, 
                                                          q, 
@@ -514,6 +515,8 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     
     // Stretch to failure at current temperature:
     real64 failureStretch = m_maximumStretch * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_maximumStretchT0, m_maximumStretchA, m_maximumStretchB );     
+    //real64 failureStretch = m_maximumStretch*(1.0 + m_maximumStretchA * ( 1.0 / (1.0 + std::exp(m_maximumStretchB*(m_temperature[k] - m_maximumStretchT0))) - 0.5 ));
+    //std::cout << "failureStretch " << failureStretch << std::endl; //r0
 
     // Maximum principal stretch:
     real64 maximumStretch = 0.0;  
@@ -521,11 +524,16 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     {
         maximumStretch = std::max( stretch[i], maximumStretch );
     }
-
-    if(maximumStretch > failureStretch)
+    if (maximumStretch > failureStretch)
     {
         m_damage[k][q] = 1.0;
     }
+    //std::cout << std::fixed << std::setprecision(5)
+    //          << "eps_true=" << std::log(maximumStretch)
+    //          << " lam_max=" << maximumStretch
+    //          << " fail=" << failureStretch
+    //          << " damage=" << m_damage[k][q]
+    //          << "\n";
 
     // Return to yield surface requires iterative solution
     // Implemented fixed points, however a newton solver may be more efficient and applicable
@@ -549,7 +557,11 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     // Where each of the 3 terms on the right hace parameters modified by temperature with 3 parameters.
     real64 yield0 = m_defaultYieldStrength * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_yieldStrengthT0, m_yieldStrengthA, m_yieldStrengthB ); 
     real64 strainHardeningSlope = m_strainHardeningSlope * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_strainHardeningSlopeT0, m_strainHardeningSlopeA, m_strainHardeningSlopeB ); 
-    real64 shearSofteningMagnitude = m_shearSofteningMagnitude * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_shearSofteningMagnitudeT0, m_shearSofteningMagnitudeA, m_shearSofteningMagnitudeB );     
+    real64 shearSofteningMagnitude = m_shearSofteningMagnitude * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_shearSofteningMagnitudeT0, m_shearSofteningMagnitudeA, m_shearSofteningMagnitudeB ); 
+    //std::cout << "yield0 " << yield0 << std::endl; //yield strength
+    //std::cout << "strainHardeningSlope " << strainHardeningSlope << std::endl; //Gr
+    //std::cout << "shearSofteningMagnitude " << shearSofteningMagnitude << std::endl; //r0
+    //std::cout << "m_temperature " << m_temperature[k] << std::endl; //T
     
     real64 unrotatedTempPlasticStrain[6] = { 0 };
     real64 plasticStrainIncrement[6] = { 0 };
@@ -576,6 +588,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
       real64 plasticSoftening = shearSofteningMagnitude * std::exp( std::max( -1.0 * gamma_by_r1_to_r2, -16.0 ) );
 
       // Stretch hardening
+      //std::cout << "maximumStretch " << maximumStretch << std::endl; //r0
       real64 stretchHardening = strainHardeningSlope * ( maximumStretch * maximumStretch - 1.0 / maximumStretch );
 
       // Flow stress after temp, hardening, and softening modifications
