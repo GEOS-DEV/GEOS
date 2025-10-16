@@ -209,21 +209,17 @@ This component computes specific statistics for defined regions in a mesh during
 
   Mass or number of moles of fluid present for each phase.
 
-- **Trapped phase mass (metric 1) [kg or mol]:**
+- **Metric 1 (based on the fluid's ability to be trapped or not, regardless of its actual mobility)**
 
-  For each phase, mass or number of moles that are immobile because they are trapped in the porous structure. See footnote [2]_ for metric details.
+  - **Trapped phase mass [kg or mol]:** For each phase, mass or number of moles that are immobile because they are trapped in the porous structure.
 
-- **Non-trapped phase mass (metric 1) [kg or mol]:**
+  - **Non-trapped phase mass [kg or mol]:** For each phase, potentially mobile mass or number of moles (not trapped, but not necessarily in motion).
 
-  For each phase, potentially mobile mass or number of moles (not trapped, but not necessarily in motion). See footnote [2]_ for metric details.
+- **Metric 2 (based on the effective mobility of the fluid in the system)**
 
-- **Immobile phase mass (metric 2) [kg or mol]:**
+  - **Immobile phase mass [kg or mol]:** For each phase, mass or number of moles that do not move in the simulation (for example due to trapping, viscosity, or pressure thresholds).
 
-  For each phase, mass or number of moles that do not move in the simulation (for example due to trapping, viscosity, or pressure thresholds). See footnote [3]_ for metric details.
-
-- **Mobile phase mass (metric 2) [kg or mol]:**
-
-  For each phase, mass or number of moles that is in motion or can move depending on simulation conditions. See footnote [3]_ for metric details.
+  - **Mobile phase mass [kg or mol]:** For each phase, mass or number of moles that is in motion or can move depending on simulation conditions.
 
 - **Component mass [kg or mol]:**
 
@@ -231,9 +227,7 @@ This component computes specific statistics for defined regions in a mesh during
 
 The output can be saved in the log file and/or a CSV file if these options are specified (as mentioned `here <#how-to-generate-these-outputs>`__) when the program is run. More information about log and CSV options is available `here <https://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/datastructure/CompositionalMultiphaseStatistics.html>`__.
 
-.. [2] Metric 1 is based on the fluid's ability to be trapped or not, regardless of its actual mobility.
 
-.. [3] Metric 2 is based on the effective mobility of the fluid in the system.
 
 SourceFluxStatistics
 --------------------
