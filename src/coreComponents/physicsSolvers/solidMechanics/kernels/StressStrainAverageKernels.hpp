@@ -67,17 +67,17 @@ public:
    * @param avgStress the stress averaged over quadrature points
    */
   AverageStressStrainOverQuadraturePoints( NodeManager & nodeManager,
-                                     EdgeManager const & edgeManager,
-                                     FaceManager const & faceManager,
-                                     CellElementSubRegion const & elementSubRegion,
-                                     FE_TYPE const & finiteElementSpace,
-                                     SOLID_TYPE const & solidModel,
-                                     fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
-                                     fields::solidMechanics::arrayViewConst2dLayoutIncrDisplacement const displacementInc,
-                                     fields::solidMechanics::arrayView2dLayoutStrain const avgStrain,
-                                     fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain,
-                                     arrayView3d< real64 const, solid::STRESS_USD > const stress,
-                                     fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress ):
+                                           EdgeManager const & edgeManager,
+                                           FaceManager const & faceManager,
+                                           CellElementSubRegion const & elementSubRegion,
+                                           FE_TYPE const & finiteElementSpace,
+                                           SOLID_TYPE const & solidModel,
+                                           fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
+                                           fields::solidMechanics::arrayViewConst2dLayoutIncrDisplacement const displacementInc,
+                                           fields::solidMechanics::arrayView2dLayoutStrain const avgStrain,
+                                           fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain,
+                                           arrayView3d< real64 const, solid::STRESS_USD > const stress,
+                                           fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress ):
     Base( nodeManager,
           edgeManager,
           faceManager,
