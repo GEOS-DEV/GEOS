@@ -261,7 +261,7 @@ public:
   {
     AverageStressStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >
     kernel( nodeManager, edgeManager, faceManager, elementSubRegion, finiteElementSpace,
-            solidModel, displacement, displacementInc, avgStrain, avgPlasticStrain );
+            solidModel, displacement, displacementInc, avgStrain, avgPlasticStrain, stress, avgStress );
 
     AverageStressStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >::template
     kernelLaunch< POLICY >( elementSubRegion.size(), kernel );
