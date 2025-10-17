@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -43,16 +43,8 @@ class LinearSolverParametersInput : public dataRepository::Group
 {
 public:
 
-  LinearSolverParametersInput() = delete;
-
   /// Constructor
   LinearSolverParametersInput( string const & name, Group * const parent );
-
-  /// Copy constructor
-  LinearSolverParametersInput( LinearSolverParametersInput && ) = default;
-
-  /// Destructor
-  virtual ~LinearSolverParametersInput() override = default;
 
   /// Catalog name
   static string catalogName() { return "LinearSolverParameters"; }
@@ -61,6 +53,8 @@ public:
   virtual void postInputInitialization() override;
 
   void print();
+
+  virtual Group * createChild( string const & childKey, string const & childName ) override final;
 
   LinearSolverParameters const & get() const
   { return m_parameters; }
@@ -92,6 +86,8 @@ public:
     static constexpr char const * directIterRefString() { return "directIterRef"; }
     /// direct solver parallelism key
     static constexpr char const * directParallelString() { return "directParallel"; }
+    /// reuse factorization key
+    static constexpr char const * reuseFactorizationString() { return "reuseFactorization"; }
 
     /// Krylov max iterations key
     static constexpr char const * krylovMaxIterString() { return "krylovMaxIter"; }
@@ -103,7 +99,23 @@ public:
     static constexpr char const * krylovAdaptiveTolString() { return "krylovAdaptiveTol"; }
     /// Krylov weakest tolerance key
     static constexpr char const * krylovWeakTolString() { return "krylovWeakestTol"; }
+    /// Krylov strongest tolerance key
+    static constexpr char const * krylovStrongTolString() { return "krylovStrongestTol"; }
+    /// Adaptive gamma parameter key
+    static constexpr char const * adaptiveGammaString() { return "adaptiveGamma"; }
+    /// Adaptive exponent parameter key
+    static constexpr char const * adaptiveExponentString() { return "adaptiveExponent"; }
 
+    /// Relaxation weight key
+    static constexpr char const * relaxationWeightString() { return "relaxationWeight"; }
+
+    /// Chebyshev order key
+    static constexpr char const * chebyshevOrderString() { return "chebyshevOrder"; }
+    /// Number of eigenvalue estimation CG iterations key
+    static constexpr char const * chebyshevEigNumIterString() { return "chebyshevEigNumIter"; }
+
+    /// AMG number of sweeps key
+    static constexpr char const * amgNumCyclesString() { return "amgNumCycles"; }
     /// AMG number of sweeps key
     static constexpr char const * amgNumSweepsString() { return "amgNumSweeps"; }
     /// AMG smoother type key
@@ -132,11 +144,20 @@ public:
     static constexpr char const * amgAggressiveInterpTypeString() { return "amgAggressiveInterpType"; }
     /// AMG separate components flag
     static constexpr char const * amgSeparateComponentsString() { return "amgSeparateComponents"; }
+    /// AMG coarse grid threshold key
+    static constexpr char const * amgMaxCoarseSizeString() { return "amgMaxCoarseSize"; }
 
     /// ILU fill key
     static constexpr char const * iluFillString() { return "iluFill"; }
     /// ILU threshold key
     static constexpr char const * iluThresholdString() { return "iluThreshold"; }
+  };
+
+  /// Keys appearing in XML
+  struct groupKeyStruct
+  {
+    static constexpr char const * blockString() { return "Block"; }
+    static constexpr char const * multiscaleString() { return "Multiscale"; }
   };
 
 private:

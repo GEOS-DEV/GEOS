@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -26,7 +26,7 @@
  * @name Hypre forward declarations.
  *
  * Forward declare hypre's vector structs and pointer aliases in order
- * to avoid including hypre headers and leaking into the rest of GEOSX.
+ * to avoid including hypre headers and leaking into the rest of GEOS.
  */
 ///@{
 
@@ -140,8 +140,15 @@ public:
                       HypreVector const & x,
                       real64 const beta ) override;
 
-  virtual void pointwiseProduct( HypreVector const & x,
-                                 HypreVector & y ) const override;
+  /**
+   * @copydoc VectorBase<HypreVector>::pointwiseProduct
+   */
+  virtual void pointwiseProduct( HypreVector const & x ) override;
+
+  /**
+   * @copydoc VectorBase<HypreVector>::pointwiseDivide
+   */
+  virtual void pointwiseDivide( HypreVector const & x ) override;
 
   /**
    * @copydoc VectorBase<HypreVector>::norm1

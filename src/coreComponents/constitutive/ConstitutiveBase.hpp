@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -99,21 +99,26 @@ public:
   /**
    * @brief Allocate constitutive data and make views to data on parent objects
    * @param[in] parent reference to the group that holds the constitutive relation
-   * @param[in] numConstitutivePointsPerParentIndex number of quadrature points
+   * @param[in] numPts number of quadrature points
    *
    * This function does 2 things:
-   *   1) Allocate data according to the size of parent and numConstitutivePointsPerParentIndex
+   *   1) Allocate data according to the size of parent and numPts
    *   2) Create wrappers to the constitutive data in the parent for easier access
    */
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex );
+                                         localIndex const numPts );
 
   struct viewKeyStruct
   {};
 
   localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }
 
-  virtual std::vector< string > getSubRelationNames() const { return {}; }
+  /**
+   * @return true if the instance has been produced with deliverClone()
+   */
+  bool isClone()  const { return m_isClone; }
+
+  virtual stdVector< string > getSubRelationNames() const { return {}; }
 
   /**
    * @brief Helper function to register field on a constitutive model
@@ -124,11 +129,13 @@ public:
    * TODO: Remove duplicated code with ObjectManagerBase
    */
   template< typename FIELD_TRAIT >
-  dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( FIELD_TRAIT const & fieldTrait,
-                                                                         typename FIELD_TRAIT::type * newObject )
+  dataRepository::Wrapper< typename FIELD_TRAIT::type > & registerField( typename FIELD_TRAIT::type * newObject )
   {
-    return registerWrapper( fieldTrait.key(), newObject ).
-             setApplyDefaultValue( fieldTrait.defaultValue() ).
+    if( FIELD_TRAIT::plotLevel != dataRepository::PlotLevel::NOPLOT )
+      m_userFields.emplace_back( FIELD_TRAIT::key() );
+
+    return registerWrapper( FIELD_TRAIT::key(), newObject ).
+             setApplyDefaultValue( FIELD_TRAIT::defaultValue() ).
              setPlotLevel( FIELD_TRAIT::plotLevel ).
              setRestartFlags( FIELD_TRAIT::restartFlag ).
              setDescription( FIELD_TRAIT::description );
@@ -160,9 +167,29 @@ public:
     return this->getWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() );
   }
 
+  /**
+   * @return A const vector containing all fields
+   */
+  std::vector< std::string > const & getUserFields() const
+  {
+    return m_userFields;
+  }
+
 private:
 
+  /**
+   * @brief Set a isClone state boolean
+   * @param newState The state of the new constitutive model
+   */
+  void setIsClone( bool const newState );
+
   localIndex m_numQuadraturePoints;
+
+  /// Indicate if this constitutive model a clone
+  bool m_isClone;
+
+  // Vector containing all fields registered with `registerField()`
+  std::vector< std::string > m_userFields;
 };
 
 }

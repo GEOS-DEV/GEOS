@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -87,7 +87,7 @@ private:
    * @return (void)
    *
    * This function evaluates the relperm function and its derivative at a given phase saturation
-   * Reference: Eclipse technical description and Petrowiki
+   * Reference: Petrowiki
    */
   GEOS_HOST_DEVICE
   inline
@@ -140,6 +140,20 @@ public:
   };
 
   arrayView1d< real64 const > getPhaseMinVolumeFraction() const override { return m_phaseMinVolumeFraction; };
+
+  real64  getWettingPhaseMinVolumeFraction() const override
+  {
+    integer ipWetting;
+    std::tie( ipWetting, std::ignore ) = wettingAndNonWettingPhaseIndices();
+    return m_phaseMinVolumeFraction[ipWetting];
+  }
+
+  real64 getNonWettingMinVolumeFraction() const override
+  {
+    integer ipNonWetting;
+    std::tie( std::ignore, ipNonWetting ) = wettingAndNonWettingPhaseIndices();
+    return m_phaseMinVolumeFraction[ipNonWetting];
+  }
 
 protected:
 
@@ -266,16 +280,7 @@ VanGenuchtenStone2RelativePermeabilityUpdate::
   {
     real64 const shiftedWaterVolFrac = (phaseVolFraction[ipWater] - m_phaseMinVolumeFraction[ipWater]);
 
-    // TODO: change name of the class and add template to choose interpolation
-//    relpermInterpolators::Stone2::compute( shiftedWaterVolFrac,
-//                                          phaseVolFraction[ipGas],
-//                                          m_phaseOrder,
-//                                          oilRelPerm_wo,
-//                                          dOilRelPerm_wo_dOilVolFrac,
-//                                          oilRelPerm_go,
-//                                          dOilRelPerm_go_dOilVolFrac,
-//                                          phaseRelPerm[ipOil],
-//                                          dPhaseRelPerm_dPhaseVolFrac[ipOil] );
+
 
     relpermInterpolators::Stone2::compute( shiftedWaterVolFrac,
                                            phaseVolFraction[ipGas],

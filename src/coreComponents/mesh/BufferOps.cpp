@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -94,7 +94,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   valuesToReplace.reserve( numIndicesUnpacked );
   valuesToReplace.reserveValues( numIndicesUnpacked * 12 ); // guesstimate
 
-  std::vector< ElementID > values;
+  stdVector< ElementID > values;
   for( localIndex a=0; a<packList.size(); ++a )
   {
     values.clear();
@@ -307,58 +307,91 @@ localIndex Unpack( buffer_unit_type const * & buffer,
     sizeOfUnpackedChars += bufferOps::Unpack( buffer, numSubIndicesUnpacked );
     GEOS_ERROR_IF( numSubIndicesUnpacked != var.m_toElementRegion.size( 1 ), "" );
 
+    stdVector< localIndex > recvElemRegionIndices( numSubIndicesUnpacked );
+    stdVector< localIndex > recvElemSubRegionIndices( numSubIndicesUnpacked );
+    stdVector< globalIndex > globalElementIndices( numSubIndicesUnpacked );
+    stdVector< localIndex > recvElemIndices( numSubIndicesUnpacked );
+    stdVector< localIndex > existingGlobalIndices( numSubIndicesUnpacked );
+    stdVector< int > mapEntryProcessed( numSubIndicesUnpacked );
+
+    // read in all the received indices
     for( localIndex b=0; b<numSubIndicesUnpacked; ++b )
     {
-      localIndex recvElemRegionIndex;
-      localIndex recvElemSubRegionIndex;
-      globalIndex globalElementIndex;
+      mapEntryProcessed[b] = false;
 
-      sizeOfUnpackedChars += bufferOps::Unpack( buffer, recvElemRegionIndex );
-      sizeOfUnpackedChars += bufferOps::Unpack( buffer, recvElemSubRegionIndex );
-      sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndex );
+      sizeOfUnpackedChars += bufferOps::Unpack( buffer, recvElemRegionIndices[b] );
+      sizeOfUnpackedChars += bufferOps::Unpack( buffer, recvElemSubRegionIndices[b] );
+      sizeOfUnpackedChars += bufferOps::Unpack( buffer, globalElementIndices[b] );
 
-      if( recvElemRegionIndex!=-1 && recvElemSubRegionIndex!=-1 && globalElementIndex!=-1 )
+      if( recvElemRegionIndices[b]!=-1 && recvElemSubRegionIndices[b]!=-1 && globalElementIndices[b]!=-1 )
       {
-        ElementRegionBase const & elemRegion = elementRegionManager->getRegion( recvElemRegionIndex );
+        ElementRegionBase const & elemRegion = elementRegionManager->getRegion( recvElemRegionIndices[b] );
+        ElementSubRegionBase const & elemSubRegion = elemRegion.getSubRegion( recvElemSubRegionIndices[b] );
+        recvElemIndices[b] = softMapLookup( elemSubRegion.globalToLocalMap(),
+                                            globalElementIndices[b],
+                                            localIndex( -1 ) );
 
-        ElementSubRegionBase const & elemSubRegion = elemRegion.getSubRegion( recvElemSubRegionIndex );
-
-        localIndex const recvElemIndex = softMapLookup( elemSubRegion.globalToLocalMap(),
-                                                        globalElementIndex,
-                                                        localIndex( -1 ) );
-
-        for( localIndex c=0; c<var.m_toElementRegion.size( 1 ); ++c )
-        {
-          localIndex & elemRegionIndex = var.m_toElementRegion[index][c];
-          localIndex & elemSubRegionIndex = var.m_toElementSubRegion[index][c];
-          localIndex & elemIndex = var.m_toElementIndex[index][c];
-          if( ( elemRegionIndex==recvElemRegionIndex &&
-                elemSubRegionIndex==recvElemSubRegionIndex &&
-                elemIndex==recvElemIndex ) )
-          {
-            break;
-          }
-          else if( ( elemRegionIndex==-1 || elemSubRegionIndex==-1 || elemIndex==-1 ) )
-          {
-            elemRegionIndex = recvElemRegionIndex;
-            elemSubRegionIndex = recvElemSubRegionIndex;
-            elemIndex = recvElemIndex;
-            break;
-          }
-          else
-          {
-            //TODO need a better criteria and an error check here
-          }
-        }
       }
-      else if( clearFlag )
+      else
       {
-        var.m_toElementRegion[index][b] = -1;
-        var.m_toElementSubRegion[index][b] = -1;
-        var.m_toElementIndex[index][b] = -1;
+        recvElemIndices[b] = -1;
       }
     }
-  }
+
+
+    // now process the received indices
+    for( localIndex b=0; b<numSubIndicesUnpacked; ++b )
+    {
+      localIndex const recvElemRegionIndex = recvElemRegionIndices[b];
+      localIndex const recvElemSubRegionIndex = recvElemSubRegionIndices[b];
+      globalIndex const globalElementIndex = globalElementIndices[b];
+      localIndex const recvElemIndex = recvElemIndices[b];
+
+      // if clearFlag then just overwrite it. simple.
+      if( clearFlag )
+      {
+        var.m_toElementRegion[index][b] = recvElemRegionIndex;
+        var.m_toElementSubRegion[index][b] = recvElemSubRegionIndex;
+        var.m_toElementIndex[index][b] = recvElemIndex;
+        mapEntryProcessed[b] = true;
+      }
+      // else peform unique insertions...without reordering?? I am not sure this is what we would want
+      else
+      {
+        // only perform insertions if the received indices are valid
+        if( recvElemRegionIndex!=-1 && recvElemSubRegionIndex!=-1 && globalElementIndex!=-1 )
+        {
+          // loop over existing indices to figure out if we are to do an insertion
+          for( localIndex c=0; c<var.m_toElementRegion.size( 1 ); ++c )
+          {
+            localIndex & elemRegionIndex = var.m_toElementRegion[index][c];
+            localIndex & elemSubRegionIndex = var.m_toElementSubRegion[index][c];
+            localIndex & elemIndex = var.m_toElementIndex[index][c];
+
+            // if the received "b" indices match the existing "c" indices,
+            // do nothing and break out of "c" loop
+            if( ( elemRegionIndex==recvElemRegionIndex &&
+                  elemSubRegionIndex==recvElemSubRegionIndex &&
+                  elemIndex==recvElemIndex ) )
+            {
+              mapEntryProcessed[b] = true;
+              break;
+            }
+            // if the existing indices are invalid, then insert in this location,
+            // and break out of the "c" loop.
+            else if( ( elemRegionIndex==-1 || elemSubRegionIndex==-1 || elemIndex==-1 ) )
+            {
+              elemRegionIndex = recvElemRegionIndex;
+              elemSubRegionIndex = recvElemSubRegionIndex;
+              elemIndex = recvElemIndex;
+              mapEntryProcessed[b] = true;
+              break;
+            }
+          } // "c" loop
+        }
+      }
+    } // "b" loop
+  } // "a" loop
 
   return sizeOfUnpackedChars;
 }

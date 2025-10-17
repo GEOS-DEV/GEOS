@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron 
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -26,8 +26,8 @@
 /// Enables floating point exceptions
 #cmakedefine GEOS_USE_FPE
 
-/// Enables bounds check in LvArray classes (CMake option ARRAY_BOUNDS_CHECK)
-#cmakedefine GEOS_USE_ARRAY_BOUNDS_CHECK
+/// Enables bounds check in LvArray classes (CMake option GEOS_ENABLE_BOUNDS_CHECK)
+#cmakedefine GEOS_USE_BOUNDS_CHECK
 
 /// Enables use of Caliper (CMake option ENABLE_CALIPER)
 #cmakedefine GEOS_USE_CALIPER
@@ -52,6 +52,9 @@
 
 /// Enables use of CUDA NVToolsExt (CMake option ENABLE_CUDA_NVTOOLSEXT)
 #cmakedefine GEOS_USE_CUDA_NVTOOLSEXT
+
+/// Sets the CUDA stack size in KB (CMake option CUDA_STACK_SIZE)
+#cmakedefine GEOS_CUDA_STACK_SIZE @GEOS_CUDA_STACK_SIZE@
 
 /// Enables use of HIP (CMake option ENABLE_HIP)
 #cmakedefine GEOS_USE_HIP
@@ -97,6 +100,12 @@
 
 /// Enables use of PETSc library (CMake option ENABLE_PETSC)
 #cmakedefine GEOS_USE_PETSC
+
+///  Enables use of METIS library (CMake option ENABLE_METIS)
+#cmakedefine GEOS_USE_METIS
+
+///  Enables use of ParMETIS library (CMake option ENABLE_PARMETIS)
+#cmakedefine GEOS_USE_PARMETIS
 
 /// Enables use of Scotch library (CMake option ENABLE_SCOTCH)
 #cmakedefine GEOS_USE_SCOTCH
@@ -200,4 +209,3 @@
 #endif
 
 #endif  /* GEOS_CONFIG_HPP */
-

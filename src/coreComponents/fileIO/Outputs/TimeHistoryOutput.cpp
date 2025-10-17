@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -16,6 +16,7 @@
 #include "TimeHistoryOutput.hpp"
 
 #include "fileIO/timeHistory/HDFFile.hpp"
+#include "fileIO/LogLevelsInfo.hpp"
 
 #if defined(GEOS_USE_PYGEOSX)
 #include "fileIO/python/PyHistoryOutputType.hpp"
@@ -34,8 +35,6 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
   m_recordCount( 0 ),
   m_io( )
 {
-  enableLogLevelInput();
-
   registerWrapper( viewKeys::timeHistoryOutputTargetString(), &m_collectorPaths ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -57,12 +56,12 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "The current history record to be written, on restart from an earlier time allows use to remove invalid future history." );
 
+  addLogLevel< logInfo::DataCollectorInitialization >();
+  addLogLevel< logInfo::HDF5Writing >();
 }
 
 void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, HistoryCollection & collector )
 {
-  GEOS_ASSERT( m_io.empty() );
-
   bool const freshInit = ( m_recordCount == 0 );
 
   string const outputDirectory = getOutputDirectory();
@@ -86,6 +85,7 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
         m_io[idx]->updateCollectingCount( count );
         return m_io[idx]->getBufferHead();
       } );
+
       m_io.back()->init( !freshInit );
     }
   };
@@ -131,7 +131,8 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
   }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  GEOS_LOG_LEVEL_BY_RANK( 3, GEOS_FMT( "TimeHistory: '{}' initializing data collectors.", this->getName() ) );
+  GEOS_LOG_LEVEL_BY_RANK( logInfo::DataCollectorInitialization,
+                          GEOS_FMT( "TimeHistory: '{}' initializing data collectors.", this->getName() ) );
   for( auto collectorPath : m_collectorPaths )
   {
     try
@@ -168,12 +169,18 @@ bool TimeHistoryOutput::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_MARK_FUNCTION;
-  localIndex newBuffered = m_io.front()->getBufferedCount( );
-  for( auto & th_io : m_io )
+
   {
-    th_io->write( );
+    Timer timer( m_outputTimer );
+
+    localIndex newBuffered = m_io.front()->getBufferedCount( );
+    for( auto & th_io : m_io )
+    {
+      th_io->write( );
+    }
+    m_recordCount += newBuffered;
   }
-  m_recordCount += newBuffered;
+
   return false;
 }
 

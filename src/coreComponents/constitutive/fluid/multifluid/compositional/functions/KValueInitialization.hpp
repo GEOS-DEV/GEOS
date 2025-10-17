@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -21,7 +21,9 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_COMPOSITIONAL_FUNCTIONS_KVALUEINITIALIZATION_HPP_
 
 #include "common/DataTypes.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/ComponentProperties.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ComponentProperties.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ComponentType.hpp"
 
 namespace geos
 {
@@ -64,12 +66,61 @@ public:
     }
   }
 
-/**
- * @brief Calculate water-gas k-value
- * @param[in] pressure pressure
- * @param[in] temperature temperature
- * @return The water component k-value
- **/
+  /**
+   * @brief Initialise k-values for the Soreide-Whitson equation of state
+   * @param[in] numComps number of components
+   * @param[in] pressure pressure
+   * @param[in] temperature temperature
+   * @param[in] componentProperties The compositional component properties
+   * @param[in] composition The composition of the fluid
+   * @param[out] kValues the calculated k-values
+   **/
+  template< integer USD >
+  GEOS_HOST_DEVICE
+  static void
+  computeSoreideWhitsonKvalue( integer const numComps,
+                               real64 const pressure,
+                               real64 const temperature,
+                               ComponentProperties::KernelWrapper const & componentProperties,
+                               arraySlice1d< real64 const > const & composition,
+                               arraySlice1d< real64, USD > const & kValues )
+  {
+    integer waterIndex = -1;
+    auto const & componentType = componentProperties.m_componentType;
+    for( integer ic = 0; ic < numComps; ++ic )
+    {
+      if( MultiFluidConstants::epsilon < composition[ic] && isComponentType( componentType[ic], ComponentType::Water ))
+      {
+        waterIndex = ic;
+        break;
+      }
+    }
+    // If water is not present default to Wilson k-values
+    if( waterIndex < 0 )
+    {
+      computeWilsonGasLiquidKvalue( numComps,
+                                    pressure,
+                                    temperature,
+                                    componentProperties,
+                                    kValues );
+    }
+    else
+    {
+      real64 const waterKValue = computeWaterGasKvalue( pressure, temperature );
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        kValues[ic] = 1.0 / waterKValue;
+      }
+      kValues[waterIndex] = waterKValue;
+    }
+  }
+
+  /**
+   * @brief Calculate water-gas k-value
+   * @param[in] pressure pressure
+   * @param[in] temperature temperature
+   * @return The water component k-value
+   **/
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   static double
@@ -78,7 +129,6 @@ public:
   {
     return exp( -4844.168051 / temperature + 12.93022442 ) * 1.0e5 / pressure;
   }
-
 };
 
 } // namespace compositional

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -35,7 +35,7 @@ namespace timingHelpers
   {
     std::string input(prettyFunction);
     std::string::size_type const end = input.find_first_of( '(' );
-    std::string::size_type const beg = input.find_last_of( ' ', end)+1;
+    std::string::size_type const beg = input.find_last_of( ' ', end ) + 1;
     return input.substr( beg, end-beg );
   }
 }
@@ -43,7 +43,7 @@ namespace timingHelpers
 
 #if defined( GEOS_USE_CUDA ) && defined( GEOS_USE_CUDA_NVTOOLSEXT )
 
-#include "nvToolsExt.h"
+#include "nvtx3/nvToolsExt.h"
 
 namespace timingHelpers
 {
@@ -79,11 +79,14 @@ namespace timingHelpers
 #  define GEOS_NVTX_MARK_SCOPE_COLORED(name, color) timingHelpers::NVTXScopeTracer __FILE__ ## _ ## __LINE__ ## _ ## scopeTracer = timingHelpers::NVTXScopeTracer(name, color)
 /// Mark a scope with NVTX with a given name and color purple
 #  define GEOS_NVTX_MARK_SCOPE(name) GEOS_NVTX_MARK_SCOPE_COLORED(STRINGIZE_NX(name), timingHelpers::PURPLE)
+/// Mark a scope with NVTX with a given runtime string and color purple
+#  define GEOS_NVTX_MARK_SCOPE_STR(name) GEOS_NVTX_MARK_SCOPE_COLORED(name, timingHelpers::PURPLE)
 /// Mark a function with NVTX using function name and color blue
 #  define GEOS_NVTX_MARK_FUNCTION GEOS_NVTX_MARK_SCOPE_COLORED(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str(), timingHelpers::BLUE)
 #else
 /// @cond DO_NOT_DOCUMENT
 #  define GEOS_NVTX_MARK_SCOPE(name)
+#  define GEOS_NVTX_MARK_SCOPE_STR(name)
 #  define GEOS_NVTX_MARK_FUNCTION
 /// @endcond
 #endif /* USE_CUDA */
@@ -96,10 +99,13 @@ namespace timingHelpers
 #include <iostream>
 
 /// Mark a function or scope for timing with a given name
-#define GEOS_CALIPER_MARK_SCOPE(name) cali::Function __cali_ann##__LINE__(STRINGIZE_NX(name))
+#define GEOS_CALIPER_MARK_SCOPE(name) cali::Function GEOS_CONCAT(_cali_ann, __LINE__)(STRINGIZE_NX(name))
+
+/// Mark a function or scope for timing with a given runtime string
+#define GEOS_CALIPER_MARK_SCOPE_STR(name) cali::Function GEOS_CONCAT(_cali_ann, __LINE__)(name)
 
 /// Mark a function for timing using a compiler-provided name
-#define GEOS_CALIPER_MARK_FUNCTION cali::Function __cali_ann##__func__(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str())
+#define GEOS_CALIPER_MARK_FUNCTION cali::Function _cali_ann_func(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str())
 
 /// Mark the beginning of timed statement group
 #define GEOS_CALIPER_MARK_BEGIN(name) CALI_MARK_BEGIN(STRINGIZE(name))
@@ -117,6 +123,7 @@ namespace timingHelpers
 
 /// @cond DO_NOT_DOCUMENT
 #define GEOS_CALIPER_MARK_SCOPE(name)
+#define GEOS_CALIPER_MARK_SCOPE_STR(name)
 #define GEOS_CALIPER_MARK_FUNCTION
 
 #define GEOS_CALIPER_MARK_BEGIN(name)
@@ -130,6 +137,8 @@ namespace timingHelpers
 
 /// Mark scope with both Caliper and NVTX if enabled
 #define GEOS_MARK_SCOPE(name) GEOS_CALIPER_MARK_SCOPE(name); GEOS_NVTX_MARK_SCOPE(name)
+/// Mark scope with both Caliper and NVTX if enabled
+#define GEOS_MARK_SCOPE_STR(name) GEOS_CALIPER_MARK_SCOPE_STR(name); GEOS_NVTX_MARK_SCOPE_STR(name)
 /// Mark function with both Caliper and NVTX if enabled
 #define GEOS_MARK_FUNCTION GEOS_CALIPER_MARK_FUNCTION; GEOS_NVTX_MARK_FUNCTION
 /// Mark the beginning of function, only useful when you don't want to or can't mark the whole function.

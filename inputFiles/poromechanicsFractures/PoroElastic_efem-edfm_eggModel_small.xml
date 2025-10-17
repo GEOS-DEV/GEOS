@@ -16,15 +16,12 @@
         newtonMaxIter="10"/>
       <LinearSolverParameters
         directParallel="1"
-        solverType="direct"
-        preconditionerType="mgr"
-        logLevel="1"/>
+        solverType="direct"/>
     </SinglePhasePoromechanicsEmbeddedFractures>
 
     <SolidMechanicsEmbeddedFractures
       name="fractureMechSolver"
       targetRegions="{ Reservoir, Overburden, Underburden, Sideburden, Fracture }"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       contactPenaltyStiffness="1e12">
       <NonlinearSolverParameters
@@ -173,22 +170,22 @@
   <ElementRegions>
     <CellElementRegion
       name="Reservoir"
-      cellBlocks="{ 1_hexahedra }"
+      cellBlocks="{ 1 }"
       materialList="{ porousRock, water }"/>
 
     <CellElementRegion
       name="Overburden"
-      cellBlocks="{ 3_hexahedra }"
+      cellBlocks="{ 3 }"
       materialList="{ porousRock, water }"/> 
     
     <CellElementRegion
       name="Underburden"
-      cellBlocks="{ 2_hexahedra }"
+      cellBlocks="{ 2 }"
       materialList="{ porousRock, water }"/>
       
     <CellElementRegion
       name="Sideburden"
-      cellBlocks="{ 0_hexahedra }"
+      cellBlocks="{ 0 }"
       materialList="{ porousRock, water }"/>  
 
     <SurfaceElementRegion

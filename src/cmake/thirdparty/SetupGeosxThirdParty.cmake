@@ -211,6 +211,28 @@ else()
 endif()
 
 ################################
+# ZLIB 
+################################
+if(DEFINED ZLIB_DIR)
+  list(PREPEND CMAKE_PREFIX_PATH "${ZLIB_DIR}")
+endif()
+
+find_package(ZLIB REQUIRED)
+
+# Print ZLIB info after finding it
+message(STATUS "----> ZLIB version: ${ZLIB_VERSION}")
+message(STATUS "----> ZLIB include dirs: ${ZLIB_INCLUDE_DIRS}")
+message(STATUS "----> ZLIB library: ${ZLIB_LIBRARIES}")
+
+blt_convert_to_system_includes(TARGET ZLIB::ZLIB)
+
+set(ENABLE_ZLIB ON CACHE BOOL "")
+
+unset(_ZLIB_FIND_OPTIONS)
+
+
+
+################################
 # HDF5
 ################################
 if(DEFINED HDF5_DIR)
@@ -229,6 +251,8 @@ if(DEFINED HDF5_DIR)
 else()
     mandatory_tpl_doesnt_exist("hdf5" HDF5_DIR)
 endif()
+
+target_link_libraries(HDF5::HDF5 INTERFACE ZLIB::ZLIB)
 
 ################################
 # SILO
@@ -557,27 +581,17 @@ endif()
 if(DEFINED SCOTCH_DIR)
     message(STATUS "SCOTCH_DIR = ${SCOTCH_DIR}")
 
-    find_and_import(NAME scotch
-                      INCLUDE_DIRECTORIES ${SCOTCH_DIR}/include
-                      LIBRARY_DIRECTORIES ${SCOTCH_DIR}/lib
-                      HEADER scotch.h
-                      LIBRARIES scotch scotcherr )
+    find_package(SCOTCH REQUIRED
+                 PATHS ${SCOTCH_DIR}
+                 NO_DEFAULT_PATH)
 
-    find_and_import(NAME ptscotch
-                      INCLUDE_DIRECTORIES ${SCOTCH_DIR}/include
-                      LIBRARY_DIRECTORIES ${SCOTCH_DIR}/lib
-                      DEPENDS scotch
-                      HEADER ptscotch.h
-                      LIBRARIES ptscotch ptscotcherr )
+    message( " ----> scotch_VERSION = ${SCOTCH_VERSION}")
 
-    extract_version_from_header( NAME scotch
-                                 HEADER "${SCOTCH_DIR}/include/scotch.h"
-                                 MAJOR_VERSION_STRING "SCOTCH_VERSION"
-                                 MINOR_VERSION_STRING "SCOTCH_RELEASE"
-                                 PATCH_VERSION_STRING "SCOTCH_PATCHLEVEL")
-
-    set(ENABLE_SCOTCH ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} scotch ptscotch)
+    foreach(_scotch_target SCOTCH::scotch SCOTCH::ptscotch SCOTCH::scotcherr )
+        get_target_property(SCOTCH_INCLUDE_DIRS ${_scotch_target} INTERFACE_INCLUDE_DIRECTORIES)
+        set_target_properties(${_scotch_target} PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${SCOTCH_INCLUDE_DIRS}")
+        set(thirdPartyLibs ${thirdPartyLibs} ${_scotch_target})
+    endforeach()
 else()
     if(ENABLE_SCOTCH)
         message(WARNING "ENABLE_SCOTCH is ON but SCOTCH_DIR isn't defined.")
@@ -670,7 +684,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
         find_package( rocsolver REQUIRED )
         find_package( rocsparse REQUIRED )
         find_package( rocrand REQUIRED )
-        append( APPEND HYPRE_DEPENDS roc::rocblas roc::rocsparse roc::rocsolver roc::rocrand )
+        list( APPEND HYPRE_DEPENDS roc::rocblas roc::rocsparse roc::rocsolver roc::rocrand )
     endif( )
 
     find_and_import( NAME hypre
@@ -726,7 +740,13 @@ endif()
 if(DEFINED TRILINOS_DIR AND ENABLE_TRILINOS)
     message(STATUS "TRILINOS_DIR = ${TRILINOS_DIR}")
 
-    include(${TRILINOS_DIR}/lib64/cmake/Trilinos/TrilinosConfig.cmake)
+    if(EXISTS "${TRILINOS_DIR}/lib64/cmake/Trilinos/TrilinosConfig.cmake")
+      include(${TRILINOS_DIR}/lib64/cmake/Trilinos/TrilinosConfig.cmake)
+    endif()
+
+    if(EXISTS "${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake")
+      include(${TRILINOS_DIR}/lib/cmake/Trilinos/TrilinosConfig.cmake)
+    endif()
 
     list(REMOVE_ITEM Trilinos_LIBRARIES "gtest")
     list(REMOVE_DUPLICATES Trilinos_LIBRARIES)
@@ -867,7 +887,7 @@ if( ${CMAKE_VERSION} VERSION_LESS "3.19" )
     set( PYTHON_AND_VERSION Python3 )
     set( PYTHON_OPTIONAL_COMPONENTS)
 else()
-    set( PYTHON_AND_VERSION Python3 3.6.0...3.12.2 )
+    set( PYTHON_AND_VERSION Python3 3.6.0...<4 )
     set( PYTHON_OPTIONAL_COMPONENTS OPTIONAL_COMPONENTS Development NumPy)
 endif()
 if(ENABLE_PYGEOSX)

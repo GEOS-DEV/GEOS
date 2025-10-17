@@ -2,10 +2,11 @@
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
- * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
- * Copyright (c) 2019-     GEOSX Contributors
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
@@ -23,8 +24,10 @@
 #include "finiteVolume/TwoPointFluxApproximation.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/permeability/PermeabilityFields.hpp"
+#include "mesh/MeshLevel.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
-#include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "common/format/table/TableFormatter.hpp"
 
 namespace geos
@@ -32,16 +35,12 @@ namespace geos
 
 using namespace constitutive;
 using namespace dataRepository;
-
+using namespace fields;
 
 StencilDataCollection::StencilDataCollection( const string & name,
                                               Group * const parent ):
   Base( name, parent )
 {
-  enableLogLevelInput();
-  getWrapperBase( Group::viewKeyStruct::logLevelString() ).
-    setDescription( "When higher than 1: Display store events details." );
-
   registerWrapper( viewKeyStruct::solverNameString(), &m_solverName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
@@ -56,6 +55,9 @@ StencilDataCollection::StencilDataCollection( const string & name,
   registerWrapper( viewKeyStruct::cellBGlobalIdString(), &m_cellBGlobalId );
   registerWrapper( viewKeyStruct::transmissibilityABString(), &m_transmissibilityAB );
   registerWrapper( viewKeyStruct::transmissibilityBAString(), &m_transmissibilityBA );
+
+  addLogLevel< logInfo::StencilConnection >();
+  addLogLevel< logInfo::StencilInitialization >();
 }
 
 void StencilDataCollection::postInputInitialization()
@@ -106,12 +108,15 @@ void StencilDataCollection::initializePostInitialConditionsPostSubGroups()
     m_cellBGlobalId.resize( connCount );
     m_transmissibilityAB.resize( connCount );
     m_transmissibilityBA.resize( connCount );
-    GEOS_LOG_LEVEL_BY_RANK( 1, GEOS_FMT( "{}: initialized {} connection buffer for '{}'.",
-                                         getName(), connCount, m_discretization->getName() ) );
+    GEOS_LOG_LEVEL_BY_RANK( logInfo::StencilInitialization,
+                            GEOS_FMT( "{}: initialized {} connection buffer for '{}'.",
+                                      getName(), connCount, m_discretization->getName() ) );
     ++supportedStencilCount;
   } );
-  GEOS_ERROR_IF( supportedStencilCount == 0, GEOS_FMT( "{}: No compatible discretization was found.", getDataContext() ) );
-  GEOS_ERROR_IF( supportedStencilCount > 1, GEOS_FMT( "{}: Multiple discretization was found.", getDataContext() ) );
+  GEOS_ERROR_IF( supportedStencilCount == 0,
+                 GEOS_FMT( "{}: No compatible discretization was found.", getDataContext() ) );
+  GEOS_ERROR_IF( supportedStencilCount > 1,
+                 GEOS_FMT( "{}: Multiple discretization was found.", getDataContext() ) );
 }
 
 
@@ -145,7 +150,7 @@ public:
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using PermeabilityAccessors = StencilMaterialAccessors< PermeabilityBase,
-                                                          fields::permeability::permeability >;
+                                                          permeability::permeability >;
 
 
   /**
@@ -203,7 +208,7 @@ StencilDataCollection::gatherConnectionData( STENCILWRAPPER_T const & stencilWra
   typename Kernel::PermeabilityAccessors accessor( elemManager, m_solver->getName() );
 
   Kernel::launch< parallelDevicePolicy<> >( kernelData.toView(), stencilWrapper,
-                                            accessor.get< fields::permeability::permeability >() );
+                                            accessor.get< permeability::permeability >() );
 
   return kernelData;
 }
@@ -236,10 +241,8 @@ string formatKernelDataExtract( arrayView1d< StencilDataCollection::KernelConnec
                       kernelIterator->m_transmissibility[0],
                       kernelIterator->m_transmissibility[1] );
   }
-  TableLayout const tableLayout{
-    { "regionId A/B", "subRegionId A/B", "elementId A/B", "transmissibilityAB", "transmissibilityBA" },
-    GEOS_FMT( "Kernel data (real row count = {})", kernelData.size() )
-  };
+  TableLayout const tableLayout = TableLayout( GEOS_FMT( "Kernel data (real row count = {})", kernelData.size() ),
+                                               {"regionId A/B", "subRegionId A/B", "elementId A/B", "transmissibilityAB", "transmissibilityBA"} );
   TableTextFormatter const tableFormatter{ tableLayout };
   return tableFormatter.toString( tableData );
 }
@@ -283,8 +286,8 @@ void StencilDataCollection::storeConnectionData( string_view stencilName,
 void StencilDataCollection::logStoredConnections( string_view stencilName )
 {
   integer const connCount = MpiWrapper::sum( m_cellAGlobalId.size() );
-  GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "{}: {} connections stored for '{}'.",
-                                      getName(), connCount, stencilName ) );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::StencilConnection, GEOS_FMT( "{}: {} connections stored for '{}'.",
+                                                               getName(), connCount, stencilName ) );
 }
 
 

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -47,6 +47,10 @@ public:
   /// Accessor for the catalog name
   static string catalogName() { return "CompositionalMultiphaseStatistics"; }
 
+  /// Accessor for the region statistics catalog name
+  static string regionStatisticsName() { return "regionStatistics"; }
+
+
   /**
    * @defgroup Tasks Interface Functions
    *
@@ -62,25 +66,6 @@ public:
                         DomainPartition & domain ) override;
 
   /**@}*/
-
-private:
-
-  using Base = FieldStatisticsBase< CompositionalMultiphaseBase >;
-
-  /**
-   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
-   */
-  struct viewKeyStruct
-  {
-    /// String for the flag deciding the computation of the CFL numbers
-    constexpr static char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
-    /// String for the flag deciding the computation of the region statistics
-    constexpr static char const * computeRegionStatisticsString() { return "computeRegionStatistics"; }
-    /// String for the region statistics
-    constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
-    /// String for the relperm threshold
-    constexpr static char const * relpermThresholdString() { return "relpermThreshold"; }
-  };
 
   struct RegionStatistics
   {
@@ -118,9 +103,27 @@ private:
     array1d< real64 > immobilePhaseMass;
     /// region component mass
     array2d< real64 > componentMass;
-
-
   };
+private:
+
+  using Base = FieldStatisticsBase< CompositionalMultiphaseBase >;
+
+  /**
+   * @struct viewKeyStruct holds char strings and viewKeys for fast lookup
+   */
+  struct viewKeyStruct
+  {
+    /// String for the flag deciding the computation of the CFL numbers
+    constexpr static char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
+    /// String for the flag deciding the computation of the region statistics
+    constexpr static char const * computeRegionStatisticsString() { return "computeRegionStatistics"; }
+    /// String for the region statistics
+    constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
+    /// String for the relperm threshold
+    constexpr static char const * relpermThresholdString() { return "relpermThreshold"; }
+  };
+
+
 
   /**
    * @brief Compute some statistics on the reservoir (average field pressure, etc)
@@ -130,7 +133,7 @@ private:
    */
   void computeRegionStatistics( real64 const time,
                                 MeshLevel & mesh,
-                                arrayView1d< string const > const & regionNames ) const;
+                                string_array const & regionNames ) const;
 
   /**
    * @brief Compute CFL numbers

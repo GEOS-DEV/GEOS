@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -134,17 +134,13 @@ public:
    */
   void setNumPerforations( globalIndex numPerforations ) { m_numPerforations = numPerforations; }
 
-  arrayView2d< real64 const > getPerfCoords() const override final { return m_perfCoords; }
-
-
   /**
    * @brief Set the locations of the perforations.
    * @param  perfCoords list of locations of all the perforations on the well
    */
   void setPerfCoords( arrayView2d< real64 const > perfCoords ) { m_perfCoords = perfCoords; }
 
-  arrayView1d< real64 const > getPerfTransmissibility() const override final { return m_perfTransmissibility; }
-
+  arrayView2d< real64 const > getPerfCoords() const override final { return m_perfCoords; }
 
   /**
    * @brief Set the well transmissibility at the perforations.
@@ -152,8 +148,7 @@ public:
    */
   void setPerfTransmissibility( arrayView1d< real64 const > perfTransmissibility ) { m_perfTransmissibility = perfTransmissibility; }
 
-  arrayView1d< real64 const > getPerfSkinFactor() const override final { return m_perfSkinFactor; }
-
+  arrayView1d< real64 const > getPerfTransmissibility() const override final { return m_perfTransmissibility; }
 
   /**
    * @brief Set the well skin factor at the perforations.
@@ -161,7 +156,15 @@ public:
    */
   void setPerfSkinFactor( arrayView1d< real64 const > perfSkinFactor ) { m_perfSkinFactor = perfSkinFactor; }
 
-  arrayView1d< globalIndex const > getPerfElemIndex() const override final { return m_perfElemId; }
+  arrayView1d< real64 const > getPerfSkinFactor() const override final { return m_perfSkinFactor; }
+
+  /**
+   * @brief Set the target region for the perforations.
+   * @param perfTargetRegion list of target regions for all the perforations on the well
+   */
+  void setPerfTargetRegion( string_array const & perfTargetRegion ) { m_perfTargetRegion = perfTargetRegion; }
+
+  string_array const & getPerfTargetRegion() const override final { return m_perfTargetRegion; }
 
   /**
    * @brief Set the global indices of the well elements connected to each perforation.
@@ -169,11 +172,29 @@ public:
    */
   void setPerfElemIndex( arrayView1d< globalIndex const > perfElemId ) { m_perfElemId = perfElemId; }
 
+  arrayView1d< globalIndex const > getPerfElemIndex() const override final { return m_perfElemId; }
+
+  /**
+   * @brief Set the perforation status table name array
+   * @param perfStatusTable perforation status table names
+   */
+  void setPerfStatusTableName ( string_array perfStatusTable ) { m_perforationStatusTableList = perfStatusTable; }
+  string_array const & getPerfStatusTableName() const override final { return m_perforationStatusTableList; }
+
+  /**
+   * @brief Set the perforation name array
+   * @param perfName perforation names
+   */
+  void setPerfName ( string_array perfName ) { m_perforationList = perfName; }
+
+  string_array const & getPerfName() const override final { return m_perforationList; }
+
   /**
    * @brief Set the well controls name
    * @param wellControlsName The well controls name
    */
   void setWellControlsName( string const & wellControlsName ) { m_wellControlsName = wellControlsName; }
+
   string const & getWellControlsName( ) const override final { return m_wellControlsName; }
 
   /**
@@ -181,6 +202,7 @@ public:
    * @param wellGeneratorName The well genrator name
    */
   void setWellGeneratorName( string const & wellGeneratorName ) { m_wellGeneratorName = wellGeneratorName; }
+
   string const & getWellGeneratorName( ) const override final { return m_wellGeneratorName; }
 
   ///@}
@@ -242,12 +264,15 @@ private:
   /// Well skin factor at the perforation
   array1d< real64 > m_perfSkinFactor;
 
+  /// Target region for the perforation
+  string_array m_perfTargetRegion;
+
   /// Global index of the well element
   array1d< globalIndex > m_perfElemId;
-
-
-
   // Perforation data
+
+  /// List of perforation status table names
+  string_array m_perforationStatusTableList;
 
   /// List of perforation names
   string_array m_perforationList;

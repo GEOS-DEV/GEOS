@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -74,6 +74,22 @@ DECLARE_FIELD( StiffnessVector_q,
                WRITE_AND_READ,
                "Stiffness vector contains R_h*Pressure_n." );
 
+DECLARE_FIELD( StiffnessVectorA_p,
+               "stiffnessVectorA_p",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "P-type acoustic attenuation stiffness vector." );
+
+DECLARE_FIELD( StiffnessVectorA_q,
+               "stiffnessVectorA_q",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Q-type acoustic attenuation stiffness vector." );
+
 DECLARE_FIELD( Pressure_p_nm1,
                "pressure_p_nm1",
                array1d< real32 >,
@@ -121,6 +137,22 @@ DECLARE_FIELD( Pressure_q_np1,
                LEVEL_0,
                WRITE_AND_READ,
                "Scalar auxiliary pressure q at time n+1." );
+
+DECLARE_FIELD( DivPsi_p,
+               "divpsi_p",
+               array2d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "p-type memory variable for acoustic VTI attenuation." );
+
+DECLARE_FIELD( DivPsi_q,
+               "divpsi_q",
+               array2d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "q-type memory variable for acoustic VTI attenuation." );
 
 DECLARE_FIELD( DampingVector_p,
                "dampingVector_p",

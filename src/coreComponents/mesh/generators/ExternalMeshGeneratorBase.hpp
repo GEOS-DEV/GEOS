@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -67,16 +67,16 @@ protected:
   R1Tensor m_scale;
 
   /// Names of the fields to be copied from an external reader into GEOS data structure
-  array1d< string > m_volumicFieldsToImport;
+  string_array m_volumicFieldsToImport;
 
   /// String array of the GEOS user declared volumic fields
-  array1d< string > m_volumicFieldsInGEOS;
+  string_array m_volumicFieldsInGEOS;
 
   /// Names of the surfacic fields to be copied from an external reader into GEOS data structure
-  array1d< string > m_surfacicFieldsToImport;
+  string_array m_surfacicFieldsToImport;
 
   /// String array of the GEOS user declared surfacic fields
-  array1d< string > m_surfacicFieldsInGEOS;
+  string_array m_surfacicFieldsInGEOS;
 };
 
 } // namespace geos

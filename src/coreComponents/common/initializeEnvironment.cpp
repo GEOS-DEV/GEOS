@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -18,7 +18,6 @@
 #include "TimingMacros.hpp"
 #include "Path.hpp"
 #include "LvArray/src/system.hpp"
-#include "common/format/table/TableFormatter.hpp"
 #include "common/LifoStorageCommon.hpp"
 #include "common/MemoryInfos.hpp"
 #include <umpire/TypedAllocator.hpp>
@@ -98,6 +97,9 @@ void setupLvArray()
 #else
   LvArray::system::disableFloatingPointExceptions( FE_ALL_EXCEPT );
 #endif
+
+  /* Disable chai callbacks by default */
+  chai::ArrayManager::getInstance()->disableCallbacks();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -138,6 +140,20 @@ void finalizeMPI()
 {
   MpiWrapper::commFree( MPI_COMM_GEOS );
   MpiWrapper::finalize();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void setupCUDA()
+{
+#if defined( GEOS_USE_CUDA ) && defined( GEOS_CUDA_STACK_SIZE )
+  size_t const stackSize = (GEOS_CUDA_STACK_SIZE) * 1024;
+  if( 0 < stackSize )
+  {
+    cudaError_t status = cudaDeviceSetLimit( cudaLimitStackSize, stackSize );
+    GEOS_ERROR_IF( status != cudaSuccess,
+                   "Failed to set CUDA stack size. Error " << status << ": " << cudaGetErrorString( status ) );
+  }
+#endif
 }
 
 #if defined( GEOS_USE_CALIPER )
@@ -245,117 +261,10 @@ void finalizeCaliper()
 #endif
 }
 
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/**
- * @brief For each Umpire::Allocator compute the total high water mark across all ranks
- *        and if using Adiak add statistics about the high water mark.
- */
-static void addUmpireHighWaterMarks()
-{
-  umpire::ResourceManager & rm = umpire::ResourceManager::getInstance();
-  integer size;
-  MPI_Comm_size( MPI_COMM_WORLD, &size );
-  size_t nbRank = (std::size_t)size;
-  // Get a list of all the allocators and sort it so that it's in the same order on each rank.
-  std::vector< string > allocatorNames = rm.getAllocatorNames();
-  std::sort( allocatorNames.begin(), allocatorNames.end() );
-
-  // If each rank doesn't have the same number of allocators you can't aggregate them.
-  std::size_t const numAllocators = allocatorNames.size();
-  std::size_t const minNumAllocators = MpiWrapper::min( numAllocators );
-
-  if( numAllocators != minNumAllocators )
-  {
-    GEOS_WARNING( "Not all ranks have created the same number of umpire allocators, cannot compute high water marks." );
-    return;
-  }
-
-  // Loop over the allocators.
-  unsigned MAX_NAME_LENGTH = 100;
-
-  TableData tableData;
-  for( string const & allocatorName : allocatorNames )
-  {
-    // Skip umpire internal allocators.
-    if( allocatorName.rfind( "__umpire_internal", 0 ) == 0 )
-      continue;
-
-    GEOS_ERROR_IF_GT( allocatorName.size(), MAX_NAME_LENGTH );
-    string allocatorNameFixedSize = allocatorName;
-    allocatorNameFixedSize.resize( MAX_NAME_LENGTH, '\0' );
-    string allocatorNameMinChars = string( MAX_NAME_LENGTH, '\0' );
-
-    // Make sure that each rank is looking at the same allocator.
-    MpiWrapper::allReduce( allocatorNameFixedSize.c_str(), &allocatorNameMinChars.front(), MAX_NAME_LENGTH, MPI_MIN, MPI_COMM_GEOS );
-    if( allocatorNameFixedSize != allocatorNameMinChars )
-    {
-      GEOS_WARNING( "Not all ranks have an allocator named " << allocatorNameFixedSize << ", cannot compute high water mark." );
-      continue;
-    }
-
-    umpire::Allocator allocator = rm.getAllocator( allocatorName );
-    umpire::strategy::AllocationStrategy const * allocationStrategy = allocator.getAllocationStrategy();
-    umpire::MemoryResourceTraits const traits = allocationStrategy->getTraits();
-    umpire::MemoryResourceTraits::resource_type resourceType = traits.resource;
-    MemoryInfos const memInfos( resourceType );
-
-    if( !memInfos.isPhysicalMemoryHandled() )
-    {
-      continue;
-    }
-
-    // Get the total number of bytes allocated with this allocator across ranks.
-    // This is a little redundant since
-    std::size_t const mark = allocator.getHighWatermark();
-    std::size_t const minMark = MpiWrapper::min( mark );
-    std::size_t const maxMark = MpiWrapper::max( mark );
-    std::size_t const sumMark = MpiWrapper::sum( mark );
-
-    string percentage;
-    if( memInfos.getTotalMemory() == 0 )
-    {
-      percentage = 0.0;
-      GEOS_WARNING( "umpire memory percentage could not be resolved" );
-    }
-    else
-    {
-      percentage = GEOS_FMT( "({:.1f}%)", ( 100.0f * (float)mark ) / (float)memInfos.getTotalMemory() );
-    }
-
-    string const minMarkValue = GEOS_FMT( "{} {:>8}",
-                                          LvArray::system::calculateSize( minMark ), percentage );
-    string const maxMarkValue = GEOS_FMT( "{} {:>8}",
-                                          LvArray::system::calculateSize( maxMark ), percentage );
-    string const avgMarkValue = GEOS_FMT( "{} {:>8}",
-                                          LvArray::system::calculateSize( sumMark / nbRank ), percentage );
-    string const sumMarkValue = GEOS_FMT( "{} {:>8}",
-                                          LvArray::system::calculateSize( sumMark ), percentage );
-
-    tableData.addRow( allocatorName,
-                      minMarkValue,
-                      maxMarkValue,
-                      avgMarkValue,
-                      sumMarkValue );
-
-    pushStatsIntoAdiak( allocatorName + " sum across ranks", mark );
-    pushStatsIntoAdiak( allocatorName + " rank max", mark );
-  }
-
-  TableLayout const memoryStatLayout ( {"Umpire Memory Pool\n(reserved / % over total)",
-                                        "Min over ranks",
-                                        "Max  over ranks",
-                                        "Avg  over ranks",
-                                        "Sum over ranks" } );
-  TableTextFormatter const memoryStatLog( memoryStatLayout );
-
-  GEOS_LOG_RANK_0( memoryStatLog.toString( tableData ));
-}
-
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setupEnvironment( int argc, char * argv[] )
 {
+  setupCUDA();
   setupMPI( argc, argv );
   setupLogger();
   setupLvArray();
@@ -366,9 +275,9 @@ void setupEnvironment( int argc, char * argv[] )
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void cleanupEnvironment()
 {
+  MemoryLogging::getInstance().memoryStatsReport();
   LvArray::system::resetSignalHandling();
   finalizeLogger();
-  addUmpireHighWaterMarks();
   finalizeCaliper();
   finalizeMPI();
 }

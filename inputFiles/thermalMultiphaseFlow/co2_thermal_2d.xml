@@ -83,7 +83,7 @@
   <ElementRegions>
     <CellElementRegion
       name="region"
-      cellBlocks="{ cb }"
+      cellBlocks="{ * }"
       materialList="{ fluid, rock, relperm, thermalCond, diffusion }"/>
   </ElementRegions>
 
@@ -202,7 +202,6 @@
 
     <FieldSpecification
       name="sourcePressure"
-      logLevel="1"
       setNames="{ source1, source2 }"     
       objectPath="faceManager"
       fieldName="pressure"

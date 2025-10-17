@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -96,9 +96,6 @@ class PressurePorosity : public PorosityBase
 public:
   PressurePorosity( string const & name, Group * const parent );
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
   static string catalogName() { return "PressurePorosity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
@@ -107,7 +104,7 @@ public:
   {
     static constexpr char const * referencePressureString() { return "referencePressure"; }
     static constexpr char const * compressibilityString() { return "compressibility"; }
-  } viewKeys;
+  };
 
   using KernelWrapper = PressurePorosityUpdates;
 
@@ -129,7 +126,6 @@ public:
 
 
 private:
-  virtual void postInputInitialization() override;
 
   real64 m_referencePressure;
 

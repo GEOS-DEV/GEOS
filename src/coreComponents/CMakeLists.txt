@@ -9,9 +9,9 @@ set( subdirs
      schema
      finiteElement
      mesh
-     linearAlgebra
      fieldSpecification
      finiteVolume
+     linearAlgebra
      discretizationMethods
      events
      constitutiveDrivers
@@ -57,13 +57,17 @@ foreach( lib ${subdirs} )
   endif()
 endforeach()
 
-foreach( lib ${subdirs} )
-  add_subdirectory( ${lib} )
+foreach( subdir ${subdirs} )
+  add_subdirectory( ${subdir} )
 endforeach()
 
 add_library(geosx_core INTERFACE)
+
 if( GEOS_BUILD_SHARED_LIBS)
   target_link_libraries(geosx_core INTERFACE mainInterface )
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_link_options(geosx_core INTERFACE -Wl,--no-as-needed)
+  endif()
 else()
   target_link_libraries(geosx_core INTERFACE $<LINK_LIBRARY:WHOLE_ARCHIVE,mainInterface> )
 endif()
@@ -78,6 +82,5 @@ if( ENABLE_UNCRUSTIFY )
 endif()
 
 if( GEOS_ENABLE_TESTS )
-  add_subdirectory( unitTests )
+  add_subdirectory( integrationTests )
 endif( )
-

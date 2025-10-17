@@ -21,7 +21,6 @@
     <SolidMechanicsEmbeddedFractures
       name="fractureMechSolver"
       targetRegions="{ Domain, Fracture }"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       contactPenaltyStiffness="2.0e11"/>
 
@@ -57,7 +56,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ cb1 }"
+      cellBlocks="{ * }"
       materialList="{ porousRock, water }"/>
 
     <SurfaceElementRegion
@@ -65,7 +64,7 @@
       faceBlock="embeddedSurfaceSubRegion"
       subRegionType="embeddedElement"
       materialList="{ water, fractureFilling, fractureContact, hApertureModel}"
-      defaultAperture="1e-3"/>
+      defaultAperture="1.0e-3"/>
   </ElementRegions>
   
   <Constitutive>
@@ -132,7 +131,7 @@
     <TableFunction
         name="aperTable"
         coordinates="{ -1.0e-3, 0.0 }"
-        values="{ 1.0e-6, 1.0e-4 }"/>    
+        values="{ 1.0e-6, 1.0e-3 }"/>    
   </Functions>
 
   <FieldSpecifications>

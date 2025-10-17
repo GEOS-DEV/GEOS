@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -128,6 +128,8 @@ struct ElasticTimeSchemeSEM
    * @param[in] rhsy the right-hand-side for displacement in y-direction
    * @param[in] rhsz the right-hand-side for displacement in z-direction
    * @param[in] solverTargetNodesSet the targetted nodeset (useful in particular when we do elasto-acoustic simulation )
+   * @param[in] referenceFrequencies the reference frequencies for each SLS
+   * @param[in] anelasticityCoefficients the coefficients of anelasticity for each SLS
    */
   static void AttenuationLeapFrog( real64 const dt,
                                    arrayView1d< real32 > const ux_np1,

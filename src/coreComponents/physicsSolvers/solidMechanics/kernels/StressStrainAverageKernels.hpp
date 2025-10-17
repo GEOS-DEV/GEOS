@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
+#include "constitutive/ConstitutivePassThru.hpp"
 #include "mesh/CellElementSubRegion.hpp"
 #include "mesh/utilities/AverageOverQuadraturePointsKernel.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
@@ -35,17 +36,18 @@ namespace geos
  * @class AverageStressStrainOverQuadraturePoints
  * @tparam SUBREGION_TYPE the subRegion type
  * @tparam FE_TYPE the finite element type
+ * @tparam SOLID_TYPE the solid mechanics constitutuve type
  */
-template< typename SUBREGION_TYPE,
-          typename FE_TYPE >
+template< typename FE_TYPE,
+          typename SOLID_TYPE >
 class AverageStressStrainOverQuadraturePoints :
-  public AverageOverQuadraturePointsBase< SUBREGION_TYPE,
+  public AverageOverQuadraturePointsBase< CellElementSubRegion,
                                           FE_TYPE >
 {
 public:
 
   /// Alias for the base class;
-  using Base = AverageOverQuadraturePointsBase< SUBREGION_TYPE,
+  using Base = AverageOverQuadraturePointsBase< CellElementSubRegion,
                                                 FE_TYPE >;
 
   using Base::m_elementVolume;
@@ -67,10 +69,13 @@ public:
   AverageStressStrainOverQuadraturePoints( NodeManager & nodeManager,
                                      EdgeManager const & edgeManager,
                                      FaceManager const & faceManager,
-                                     SUBREGION_TYPE const & elementSubRegion,
+                                     CellElementSubRegion const & elementSubRegion,
                                      FE_TYPE const & finiteElementSpace,
+                                     SOLID_TYPE const & solidModel,
                                      fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
+                                     fields::solidMechanics::arrayViewConst2dLayoutIncrDisplacement const displacementInc,
                                      fields::solidMechanics::arrayView2dLayoutStrain const avgStrain,
+                                     fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain,
                                      arrayView3d< real64 const, solid::STRESS_USD > const stress,
                                      fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress ):
     Base( nodeManager,
@@ -78,8 +83,11 @@ public:
           faceManager,
           elementSubRegion,
           finiteElementSpace ),
+    m_solidUpdate( solidModel.createKernelUpdates()),
     m_displacement( displacement ),
+    m_displacementInc( displacementInc ),
     m_avgStrain( avgStrain ),
+    m_avgPlasticStrain( avgPlasticStrain ),
     m_stress( stress ),
     m_avgStress( avgStress )
   {}
@@ -88,7 +96,8 @@ public:
    * @copydoc finiteElement::KernelBase::StackVariables
    */
   struct StackVariables : Base::StackVariables
-  {real64 uLocal[FE_TYPE::maxSupportPoints][3]; };
+  {real64 uLocal[FE_TYPE::maxSupportPoints][3];
+   real64 uHatLocal[FE_TYPE::maxSupportPoints][3]; };
 
   /**
    * @brief Performs the setup phase for the kernel.
@@ -107,6 +116,7 @@ public:
       for( int i = 0; i < 3; ++i )
       {
         stack.uLocal[a][i] = m_displacement[localNodeIndex][i];
+        stack.uHatLocal[a][i] = m_displacementInc[localNodeIndex][i];
       }
     }
 
@@ -133,12 +143,27 @@ public:
     real64 dNdX[ FE_TYPE::maxSupportPoints ][3];
     real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, stack.feStack, dNdX );
     real64 strain[6] = {0.0};
+    real64 strainInc[6] = {0.0};
     FE_TYPE::symmetricGradient( dNdX, stack.uLocal, strain );
+    FE_TYPE::symmetricGradient( dNdX, stack.uHatLocal, strainInc );
+
+    real64 elasticStrainInc[6] = {0.0};
+    m_solidUpdate.getElasticStrainInc( k, q, elasticStrainInc );
+
+    real64 conversionFactor[6] = {1.0, 1.0, 1.0, 0.5, 0.5, 0.5}; // used for converting from engineering shear to tensor shear
 
     for( int icomp = 0; icomp < 6; ++icomp )
     {
-      m_avgStrain[k][icomp] += detJxW*strain[icomp]/m_elementVolume[k];
+      m_avgStrain[k][icomp] += conversionFactor[icomp]*detJxW*strain[icomp]/m_elementVolume[k];
       m_avgStress[k][icomp] += detJxW*m_stress[k][q][icomp]/m_elementVolume[k];
+
+      // This is a hack to handle boundary conditions such as those seen in plane-strain wellbore problems
+      // Essentially, if bcs are constraining the strain (and thus total displacement), we do not accumulate any plastic strain (regardless
+      // of stresses in material law)
+      if( std::abs( strainInc[icomp] ) > 1.0e-8 )
+      {
+        m_avgPlasticStrain[k][icomp] += conversionFactor[icomp]*detJxW*(strainInc[icomp] - elasticStrainInc[icomp])/m_elementVolume[k];
+      }
     }
   }
 
@@ -170,11 +195,20 @@ public:
 
 protected:
 
+  /// The material
+  typename SOLID_TYPE::KernelWrapper const m_solidUpdate;
+
   /// The displacement solution
   fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const m_displacement;
 
+  /// The displacement increment
+  fields::solidMechanics::arrayViewConst2dLayoutIncrDisplacement const m_displacementInc;
+
   /// The average strain
   fields::solidMechanics::arrayView2dLayoutStrain const m_avgStrain;
+
+  /// The average plastic strain
+  fields::solidMechanics::arrayView2dLayoutStrain const m_avgPlasticStrain;
 
   /// The stress solution
   arrayView3d< real64 const, solid::STRESS_USD > const m_stress;
@@ -198,6 +232,7 @@ public:
    * @brief Create a new kernel and launch
    * @tparam SUBREGION_TYPE the subRegion type
    * @tparam FE_TYPE the finite element type
+   * @tparam SOLID_TYPE the constitutive type
    * @tparam POLICY the kernel policy
    * @param nodeManager the node manager
    * @param edgeManager the edge manager
@@ -207,25 +242,28 @@ public:
    * @param property the property at quadrature points
    * @param averageProperty the property averaged over quadrature points
    */
-  template< typename SUBREGION_TYPE,
-            typename FE_TYPE,
+  template< typename FE_TYPE,
+            typename SOLID_TYPE,
             typename POLICY >
   static void
   createAndLaunch( NodeManager & nodeManager,
                    EdgeManager const & edgeManager,
                    FaceManager const & faceManager,
-                   SUBREGION_TYPE const & elementSubRegion,
+                   CellElementSubRegion const & elementSubRegion,
                    FE_TYPE const & finiteElementSpace,
+                   SOLID_TYPE const & solidModel,
                    fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
+                   fields::solidMechanics::arrayViewConst2dLayoutIncrDisplacement const displacementInc,
                    fields::solidMechanics::arrayView2dLayoutStrain const avgStrain,
+                   fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain,
                    arrayView3d< real64 const, solid::STRESS_USD > const stress,
                    fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress )
   {
-    AverageStressStrainOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE >
+    AverageStressStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >
     kernel( nodeManager, edgeManager, faceManager, elementSubRegion, finiteElementSpace,
-            displacement, avgStrain, stress, avgStress );
+            solidModel, displacement, displacementInc, avgStrain, avgPlasticStrain );
 
-    AverageStressStrainOverQuadraturePoints< SUBREGION_TYPE, FE_TYPE >::template
+    AverageStressStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >::template
     kernelLaunch< POLICY >( elementSubRegion.size(), kernel );
   }
 };

@@ -109,13 +109,13 @@ A homogeneous domain with one solid material is assumed, whose mechanical proper
     :end-before: <!-- SPHINX_WELLBORE_MATERIAL_END -->
 
 
-Recall that in the ``SolidMechanics_LagrangianFEM`` section, 
+Recall that in the ``SolidMechanicsLagrangianFEM`` section, 
 ``rock`` is designated as the material in the computational domain. 
 Here, Modified Cam-Clay ``ModifiedCamClay`` is used to simulate the elastoplastic behavior of ``rock``.
 
 The following material parameters should be defined properly to reproduce the analytical example:
 
-.. include:: ../../../../../../../src/coreComponents/schema/docs/ModifiedCamClay.rst
+.. include:: /docs/sphinx/datastructure/ModifiedCamClay.rst
 
 
 The constitutive parameters such as the density, the bulk modulus, and the shear modulus are specified in the International System of Units.

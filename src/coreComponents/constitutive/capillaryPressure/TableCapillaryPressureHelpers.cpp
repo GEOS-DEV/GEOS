@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -70,6 +70,21 @@ TableCapillaryPressureHelpers::validateCapillaryPressureTable( TableFunction con
                      InputError );
     }
   }
+}
+
+
+void
+TableCapillaryPressureHelpers::validateCapillaryPressureTable( geos::TableFunction const & capPresTable,
+                                                               geos::string const & fullConstitutiveName,
+                                                               bool const capPresMustBeIncreasing,
+                                                               geos::real64 & phaseMax, geos::real64 & phaseMin )
+{
+
+  TableCapillaryPressureHelpers::validateCapillaryPressureTable( capPresTable, fullConstitutiveName, capPresMustBeIncreasing );
+  ArrayOfArraysView< real64 const > coords = capPresTable.getCoordinates();
+  arraySlice1d< real64 const > phaseVolFrac = coords[0];
+  phaseMin = phaseVolFrac[0];
+  phaseMax = phaseVolFrac[phaseVolFrac.size()-1];
 }
 
 

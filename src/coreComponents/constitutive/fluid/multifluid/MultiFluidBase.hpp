@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -39,7 +39,7 @@ public:
                   Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   // *** MultiFluid-specific interface
 
@@ -80,7 +80,7 @@ public:
    * @brief Getter for the fluid component names
    * @return an array storing the component names
    */
-  arrayView1d< string const > componentNames() const { return m_componentNames; }
+  string_array const & componentNames() const { return m_componentNames; }
 
   /**
    * @brief Getter for the fluid component molar weights
@@ -97,7 +97,7 @@ public:
    * @brief Getter for the fluid phase names
    * @return an array storing the phase names
    */
-  arrayView1d< string const > phaseNames() const { return m_phaseNames; }
+  string_array const & phaseNames() const { return m_phaseNames; }
 
   /**
    * @brief Getter for the water phase index
@@ -370,7 +370,7 @@ protected:
      * @tparam OUT_ARRAY the type of array storing the component mole fractions
      * @param[in] composition the component mass fractions
      * @param[out] compMoleFrac the newly converted component mole fractions
-     * @detail The template is needed because PVTPackage expects a std::vector
+     * @detail The template is needed because PVTPackage expects a stdVector
      */
     template< integer maxNumComp, typename OUT_ARRAY >
     GEOS_HOST_DEVICE
@@ -385,7 +385,7 @@ protected:
      * @param[in] componentMolarWeight the component molar weight
      * @param[out] compMoleFrac the newly converted component mole fractions
      * @param[out] dCompMoleFrac_dCompMassFrac the derivatives of the newly converted component mole fractions
-     * @detail The template is needed because PVTPackage expects a std::vector
+     * @detail The template is needed because PVTPackage expects a stdVector
      */
     template< integer maxNumComp, typename OUT_ARRAY >
     GEOS_HOST_DEVICE
@@ -650,8 +650,6 @@ private:
 
 private:
 
-
-
   /**
    * @brief Called internally to set array dim labels.
    */
@@ -659,26 +657,19 @@ private:
 
 protected:
 
-  /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  virtual void resizeFields( localIndex const size, localIndex const numPts );
-
   virtual void postInputInitialization() override;
 
   // flag indicating whether input/output component fractions are treated as mass fractions
-  int m_useMass;
+  integer m_useMass;
 
   /// Enable an error when checkTableParameters() is called and the input pressure or temperature of the PVT tables is out of range
   integer m_checkPVTTablesRanges;
 
   // general fluid composition information
 
-  array1d< string > m_componentNames;
+  string_array m_componentNames;
   array1d< real64 > m_componentMolarWeight;
-  array1d< string > m_phaseNames;
+  string_array m_phaseNames;
 
   // constitutive data
 
@@ -783,6 +774,7 @@ MultiFluidBase::KernelWrapper::
   real64 totalMolality = 0.0;
   for( integer ic = 0; ic < numComps; ++ic )
   {
+    // component weight can not be zero, checked in MultiFluidBase::postInputInitialization
     real64 const mwInv = 1.0 / m_componentMolarWeight[ic];
     compMoleFrac[ic] = composition[ic] * mwInv; // this is molality (units of mole/mass)
     dCompMoleFrac_dCompMassFrac[ic][ic] = mwInv;

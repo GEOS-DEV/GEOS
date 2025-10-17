@@ -9,8 +9,9 @@ COMPILED_XML_NAME_OVERRIDE=""
 PARAMETER_ARGS=""
 NEW_ARGS=""
 USE_PYGEOSX=1
-PYGEOS_WARNINGS=0
+PYGEOSX_WARNINGS=0
 SCRIPT_DIR=$(dirname "$0")
+REAL_SCRIPT_DIR=$(dirname $(readlink "$0"))
 PYGEOSX=$SCRIPT_DIR/../lib/PYGEOSX/bin/python
 
 while [[ $# > 0 ]]
@@ -37,7 +38,7 @@ do
         shift
         ;;
         -w|--pygeosx-warnings)
-        PYGEOS_WARNINGS=$2
+        PYGEOSX_WARNINGS=$2
         shift
         ;;
         -h|--help)
@@ -75,12 +76,12 @@ if [ "$USE_PYGEOSX" -eq "1" ]
 then
    if [ -f $PYGEOSX ]
    then
-      if [ "$PYGEOS_WARNINGS" -eq "1" ]
+      if [ "$PYGEOSX_WARNINGS" -eq "1" ]
       then
          echo "Using pygeosx to preprocess the xml file"
       fi
    else
-      if [ "$PYGEOS_WARNINGS" -eq "1" ]
+      if [ "$PYGEOSX_WARNINGS" -eq "1" ]
       then
          echo "Pygeosx installation not found... reverting to non-pygeosx version"
       fi
@@ -92,10 +93,10 @@ fi
 # Preprocess the xml files
 if [ "$USE_PYGEOSX" -eq "1" ]
 then
-   $PYGEOSX $SCRIPT_DIR/pygeosx_preprocess.py $INPUT_ARGS $PARAMETER_ARGS $NEW_ARGS -c $COMPILED_XML_NAME -s $SCRIPT_DIR/../../src/coreComponents/schema/schema.xsd
+   $PYGEOSX $SCRIPT_DIR/pygeosx_preprocess.py $INPUT_ARGS $PARAMETER_ARGS $NEW_ARGS -c $COMPILED_XML_NAME -s $REAL_SCRIPT_DIR/../src/coreComponents/schema/schema.xsd
 else
    # As a backup, manually call the preprocessor and then continue with GEOSX
-   $SCRIPT_DIR/preprocess_xml $INPUT_ARGS $PARAMETER_ARGS -c $COMPILED_XML_NAME -s $SCRIPT_DIR/../../src/coreComponents/schema/schema.xsd
+   $SCRIPT_DIR/preprocess_xml $INPUT_ARGS $PARAMETER_ARGS -c $COMPILED_XML_NAME -s $REAL_SCRIPT_DIR/../src/coreComponents/schema/schema.xsd
    $SCRIPT_DIR/geosx -i $COMPILED_XML_NAME $NEW_ARGS
 fi
 

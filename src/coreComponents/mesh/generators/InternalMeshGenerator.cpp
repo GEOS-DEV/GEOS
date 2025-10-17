@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -21,6 +21,7 @@
 #include "CellBlockManager.hpp"
 
 #include "common/DataTypes.hpp"
+#include "mesh/MeshFields.hpp"
 
 #include <cmath>
 
@@ -96,7 +97,8 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
   registerWrapper( viewKeyStruct::elementTypesString(), &m_elementType ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "Element types of each mesh block" );
+    setDescription( GEOS_FMT( "Element types of each mesh block. Use \"C3D8\" for linear brick element. Possible values are: {}.",
+                              stringutilities::join( EnumStrings< ElementType >::get(), ", " ) ) );
 
   registerWrapper( viewKeyStruct::trianglePatternString(), &m_trianglePattern ).
     setApplyDefaultValue( 0 ).
@@ -160,12 +162,11 @@ void InternalMeshGenerator::postInputInitialization()
 
   m_numElePerBox.resize( m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
 
-  if( m_elementType.size() != m_numElePerBox.size() )
+  if( LvArray::integerConversion< int >( m_elementType.size() ) != m_numElePerBox.size() )
   {
     if( m_elementType.size() == 1 )
     {
-      string const elementType = m_elementType[0];
-      m_elementType.resizeDefault( m_numElePerBox.size(), elementType );
+      m_elementType.resize( m_numElePerBox.size(), m_elementType[0] );
     }
     else
     {
@@ -193,12 +194,11 @@ void InternalMeshGenerator::postInputInitialization()
     {
       numBlocks *= m_nElems[i].size();
     }
-    if( numBlocks != m_regionNames.size() )
+    if( numBlocks != LvArray::integerConversion< localIndex >( m_regionNames.size()) )
     {
       if( m_regionNames.size() == 1 )
       {
-        string const regionName = m_regionNames[0];
-        m_regionNames.resizeDefault( numBlocks, regionName );
+        m_regionNames.resize( numBlocks, m_regionNames[0] );
       }
       else
       {
@@ -562,9 +562,19 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   // Make sure that the node manager fields are initialized
   auto & nodeSets = cellBlockManager.getNodeSets();
 
-  real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
-  LvArray::tensorOps::subtract< 3 >( size, m_min );
-  cellBlockManager.setGlobalLength( LvArray::tensorOps::l2Norm< 3 >( size ) );
+  // global length
+  {
+    real64 size[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_max );
+    LvArray::tensorOps::subtract< 3 >( size, m_min );
+    cellBlockManager.setGlobalLength( LvArray::tensorOps::l2Norm< 3 >( size ) );
+  }
+  // global offset
+  {
+    real64 offset[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_min );
+    LvArray::tensorOps::add< 3 >( offset, m_max );
+    LvArray::tensorOps::scale< 3 >( offset, 0.5 );
+    cellBlockManager.setGlobalOffset( LvArray::tensorOps::l2Norm< 3 >( offset ) );
+  }
 
 //  bool isRadialWithOneThetaPartition = false;
 
@@ -576,13 +586,13 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     cellBlock.setElementType( EnumStrings< ElementType >::fromString( m_elementType[aa++] ) );
   }
 
-  SortedArray< localIndex > & xnegNodes = nodeSets["xneg"];
-  SortedArray< localIndex > & xposNodes = nodeSets["xpos"];
-  SortedArray< localIndex > & ynegNodes = nodeSets["yneg"];
-  SortedArray< localIndex > & yposNodes = nodeSets["ypos"];
-  SortedArray< localIndex > & znegNodes = nodeSets["zneg"];
-  SortedArray< localIndex > & zposNodes = nodeSets["zpos"];
-  SortedArray< localIndex > & allNodes = nodeSets["all"];
+  SortedArray< localIndex > & xnegNodes = nodeSets.get_inserted( "xneg" );
+  SortedArray< localIndex > & xposNodes = nodeSets.get_inserted( "xpos" );
+  SortedArray< localIndex > & ynegNodes = nodeSets.get_inserted( "yneg" );
+  SortedArray< localIndex > & yposNodes = nodeSets.get_inserted( "ypos" );
+  SortedArray< localIndex > & znegNodes = nodeSets.get_inserted( "zneg" );
+  SortedArray< localIndex > & zposNodes = nodeSets.get_inserted( "zpos" );
+  SortedArray< localIndex > & allNodes = nodeSets.get_inserted( "all" );
 
   // Find elemCenters for even uniform element sizes
   array1d< array1d< real64 > > elemCenterCoords( 3 );
@@ -602,13 +612,11 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     {
       elemCenterCoordsLocal[k] = m_min[dim] + ( m_max[dim] - m_min[dim] ) * ( k + 0.5 ) / m_numElemsTotal[dim];
     }
-    MpiWrapper::allReduce( elemCenterCoordsLocal.data(),
-                           elemCenterCoords[dim].data(),
-                           m_numElemsTotal[dim],
-                           MPI_MAX,
+    MpiWrapper::allReduce( elemCenterCoordsLocal,
+                           elemCenterCoords[dim],
+                           MpiWrapper::Reduction::Max,
                            MPI_COMM_GEOS );
   }
-
   // Find starting/ending index
   // Get the first and last indices in this partition each direction
   integer firstElemIndexInPartition[3] = { -1, -1, -1 };
@@ -642,8 +650,8 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
   // Calculate number of elements in this partition from each region, and the
   // total number of nodes
 
-  std::map< string, int > numElemsInRegions;
-  std::map< string, ElementType > elemTypeInRegions;
+  stdMap< string, int > numElemsInRegions;
+  stdMap< string, ElementType > elemTypeInRegions;
 
   array1d< integer > firstElemIndexForBlockInPartition[3];
   array1d< integer > lastElemIndexForBlockInPartition[3];
@@ -683,8 +691,8 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     {
       for( integer iblock = 0; iblock < m_nElems[0].size(); ++iblock, ++regionOffset )
       {
-        numElemsInRegions[ m_regionNames[ regionOffset ] ] = 0;
-        elemTypeInRegions[ m_regionNames[ regionOffset ] ] = ElementType::Quadrilateral;
+        numElemsInRegions.insert( { m_regionNames[ regionOffset ], 0 } );
+        elemTypeInRegions.insert( { m_regionNames[ regionOffset ], ElementType::Quadrilateral } );
       }
     }
   }
@@ -795,21 +803,20 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   {
     array1d< integer > numElements;
-    array1d< string > elementRegionNames;
-    std::map< string, localIndex > localElemIndexInRegion;
+    string_array elementRegionNames;
+    stdMap< string, localIndex > localElemIndexInRegion;
 
     for( auto const & numElemsInRegion : numElemsInRegions )
     {
       numElements.emplace_back( numElemsInRegion.second );
       elementRegionNames.emplace_back( numElemsInRegion.first );
-      localElemIndexInRegion[numElemsInRegion.first] = 0;
+      localElemIndexInRegion.insert( { numElemsInRegion.first, 0 } );
     }
 
     cellBlockManager.resize( numElements, elementRegionNames );
 
     // Assign global numbers to elements
     regionOffset = 0;
-    SortedArray< string > processedRegionNames;
     localIndex iR = 0;
 
     // Reset the number of nodes in each dimension in case of periodic BCs so the element firstNodeIndex
@@ -838,6 +845,9 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
           arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = cellBlock.getElemToNode();
           arrayView1d< globalIndex > const & elemLocalToGlobal = cellBlock.localToGlobalMap();
+
+          cellBlock.addProperty< fields::StructuredIndex::type >( fields::StructuredIndex::key() ).resizeDimension< 1 >( m_dim );
+          auto const cartIndex = cellBlock.getReference< fields::StructuredIndex::type >( fields::StructuredIndex::key() ).toView();
 
           integer numElemsInDirForBlock[3] =
           { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,
@@ -923,6 +933,13 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
                   {
                     elemsToNodes[localElemIndex][iN] = nodeOfBox[nodeIDInBox[iN]];
                   }
+
+                  // Store original cartesian IJK indices for later use
+                  for( int dim = 0; dim < m_dim; ++dim )
+                  {
+                    cartIndex[localElemIndex][dim] = globalIJK[dim];
+                  }
+
                   ++localElemIndex;
                 }
               }

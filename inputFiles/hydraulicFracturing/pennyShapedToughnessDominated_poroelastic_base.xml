@@ -5,7 +5,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ cb1 }"
+      cellBlocks="{ * }"
       materialList="{ water, porousRock }"/>
 
     <SurfaceElementRegion
@@ -183,8 +183,7 @@
     <VTK
       name="vtkOutput"
       plotFileRoot="zeroViscosity_poroelastic"
-      plotLevel="3"
-      parallelThreads="48"/>
+      plotLevel="3"/>
 
     <TimeHistory
       name="timeHistoryOutput"

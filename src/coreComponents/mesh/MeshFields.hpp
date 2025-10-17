@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -53,7 +53,7 @@
     /** The actual type to be registered. */ \
     using type = TYPE; \
     /** The template type T for registration of a container<T>. */ \
-    using dataType = internal::typeHelper_t< TYPE >; \
+    using dataType = ::geos::fields::internal::typeHelper_t< TYPE >; \
     /** @brief @return The default data value for NAME. */ \
     static constexpr dataType defaultValue() \
     { return DEFAULT; } \
@@ -90,6 +90,14 @@ struct typeHelper< TYPE, false >
 template< typename T >
 using typeHelper_t = typename typeHelper< T >::type;
 }
+
+DECLARE_FIELD( StructuredIndex,
+               "structuredIndex",
+               array2d< integer >,
+               -1,
+               NOPLOT,
+               NO_WRITE,
+               "Structured cell index provided by mesh generator" );
 
 DECLARE_FIELD( ghostRank,
                "ghostRank",

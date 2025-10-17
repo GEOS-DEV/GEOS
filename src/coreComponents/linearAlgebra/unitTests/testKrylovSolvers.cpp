@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -53,6 +53,16 @@ LinearSolverParameters params_GMRES()
   parameters.krylov.maxIterations = 500;
   parameters.krylov.maxRestart = 100;
   parameters.solverType = geos::LinearSolverParameters::SolverType::gmres;
+  return parameters;
+}
+
+LinearSolverParameters params_Richardson()
+{
+  LinearSolverParameters parameters;
+  parameters.krylov.relTolerance = 1e-4;
+  parameters.krylov.maxIterations = 500;
+  parameters.solverType = geos::LinearSolverParameters::SolverType::richardson;
+  parameters.relaxation.weight = 0.2;
   return parameters;
 }
 
@@ -155,10 +165,16 @@ TYPED_TEST_P( KrylovSolverTest, GMRES )
   this->test( params_GMRES() );
 }
 
+TYPED_TEST_P( KrylovSolverTest, Richardson )
+{
+  this->test( params_Richardson() );
+}
+
 REGISTER_TYPED_TEST_SUITE_P( KrylovSolverTest,
                              CG,
                              BiCGSTAB,
-                             GMRES );
+                             GMRES,
+                             Richardson );
 
 #ifdef GEOS_USE_TRILINOS
 INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, KrylovSolverTest, TrilinosInterface, );
@@ -245,10 +261,17 @@ TYPED_TEST_P( KrylovSolverBlockTest, GMRES )
   this->test( params_GMRES() );
 }
 
+TYPED_TEST_P( KrylovSolverBlockTest, Richardson )
+{
+  this->test( params_Richardson() );
+}
+
+
 REGISTER_TYPED_TEST_SUITE_P( KrylovSolverBlockTest,
                              CG,
                              BiCGSTAB,
-                             GMRES );
+                             GMRES,
+                             Richardson );
 
 #ifdef GEOS_USE_TRILINOS
 INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, KrylovSolverBlockTest, TrilinosInterface, );

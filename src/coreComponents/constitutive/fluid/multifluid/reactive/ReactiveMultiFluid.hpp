@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -21,7 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_REACTIVE_REACTIVEMULTIFLUID_HPP_
 
 
-#include "codingUtilities/EnumStrings.hpp"
+#include "common/format/EnumStrings.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/reactive/chemicalReactions/EquilibriumReactions.hpp"
 #include "constitutive/fluid/multifluid/reactive/chemicalReactions/KineticReactions.hpp"
@@ -41,11 +41,14 @@ public:
   using exec_policy = serialPolicy;
 
   ReactiveMultiFluid( string const & name,
-                      Group * const parent );
+                      dataRepository::Group * const parent );
 
   virtual std::unique_ptr< ConstitutiveBase >
   deliverClone( string const & name,
-                Group * const parent ) const override;
+                dataRepository::Group * const parent ) const override;
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   virtual bool isThermal() const override;
 
@@ -175,8 +178,6 @@ protected:
   virtual void postInputInitialization() override;
 
   void createChemicalReactions();
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
   /// Reaction related terms
   integer m_numPrimarySpecies;

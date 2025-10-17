@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -22,6 +22,7 @@
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/TableCapillaryPressureHelpers.hpp"
 #include "functions/FunctionManager.hpp"
+#include "common/Units.hpp"
 
 namespace geos
 {
@@ -114,11 +115,7 @@ JFunctionCapillaryPressure::JFunctionCapillaryPressure( std::string const & name
                     toString( PermeabilityDirection::Y ) + " - only use the permeability in the y direction,\n" +
                     toString( PermeabilityDirection::Z ) + " - only use the permeability in the z direction." );
 
-  registerField( fields::cappres::jFuncMultiplier{}, &m_jFuncMultiplier );
-
-  registerWrapper( viewKeyStruct::jFunctionWrappersString(), &m_jFuncKernelWrappers ).
-    setSizedFromParent( 0 ).
-    setRestartFlags( RestartFlags::NO_WRITE );
+  registerField< fields::cappres::jFuncMultiplier >( &m_jFuncMultiplier );
 }
 
 void JFunctionCapillaryPressure::postInputInitialization()
@@ -250,6 +247,8 @@ void JFunctionCapillaryPressure::saveConvergedRockState( arrayView2d< real64 con
     {
       permeability = convergedPermeability[ei][0][2];
     }
+    // multiply epsilon by Darcy to sq m factor
+    GEOS_ERROR_IF( permeability < LvArray::NumericLimits< real64 >::epsilon * units::DarcyToSqM, "Zero permeability in J-function capillary pressure" );
 
     // here we compute an average of the porosity over quadrature points
     // this average is exact for tets, regular pyramids/wedges/hexes, or for VEM
@@ -337,11 +336,11 @@ JFunctionCapillaryPressure::createKernelWrapper()
                         m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
-void JFunctionCapillaryPressure::allocateConstitutiveData( dataRepository::Group & parent,
-                                                           localIndex const numConstitutivePointsPerParentIndex )
+void JFunctionCapillaryPressure::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  m_jFuncMultiplier.resize( parent.size(), numFluidPhases()-1 );
-  CapillaryPressureBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_jFuncMultiplier.resize( 0, numFluidPhases()-1 );
+
+  CapillaryPressureBase::allocateConstitutiveData( parent, numPts );
 }
 
 

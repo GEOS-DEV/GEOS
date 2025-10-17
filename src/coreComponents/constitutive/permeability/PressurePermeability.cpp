@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -60,38 +60,31 @@ PressurePermeability::PressurePermeability( string const & name, Group * const p
     setDescription( "Type of the pressure dependence model. " );
 }
 
-std::unique_ptr< ConstitutiveBase >
-PressurePermeability::deliverClone( string const & name,
-                                    Group * const parent ) const
-{
-  return PermeabilityBase::deliverClone( name, parent );
-}
-
 void PressurePermeability::postInputInitialization()
 {
   for( localIndex i=0; i < 3; i++ )
   {
-    GEOS_ERROR_IF( fabs( m_pressureDependenceConstants[i] ) < 1e-15 && m_presModelType == PressureModelType::Hyperbolic,
+    GEOS_ERROR_IF( std::abs( m_pressureDependenceConstants[i] ) < 1e-15 && m_presModelType == PressureModelType::Hyperbolic,
                    getDataContext() << ": the pressure dependent constant at component " << i << " is too close to zero, which is not allowed for the hyperbolic model." );
   }
 }
 
-void PressurePermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                     localIndex const numConstitutivePointsPerParentIndex )
+void PressurePermeability::allocateConstitutiveData( Group & parent,
+                                                     localIndex const numPts )
 {
-  m_referencePermeability.resize( 0, 1, 3 );
+  m_referencePermeability.resize( 0, 1, 3 ); // 0 to resize and assign default value later
 
-  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  PermeabilityBase::allocateConstitutiveData( parent, numPts );
 
-  integer const numQuad = 1; // NOTE: enforcing 1 quadrature point
+  integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
 
   for( localIndex ei = 0; ei < parent.size(); ++ei )
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {
-      m_referencePermeability[ei][q][0] =  m_referencePermeabilityComponents[0];
-      m_referencePermeability[ei][q][1] =  m_referencePermeabilityComponents[1];
-      m_referencePermeability[ei][q][2] =  m_referencePermeabilityComponents[2];
+      m_referencePermeability[ei][q][0] = m_referencePermeabilityComponents[0];
+      m_referencePermeability[ei][q][1] = m_referencePermeabilityComponents[1];
+      m_referencePermeability[ei][q][2] = m_referencePermeabilityComponents[2];
     }
   }
 }
@@ -115,7 +108,7 @@ void PressurePermeability::initializeState() const
         // The default value is -1 so if it still -1 it needs to be set to something physical
         if( permView[ei][q][dim] < 0 )
         {
-          permView[ei][q][dim] =  permComponents[dim];
+          permView[ei][q][dim] = permComponents[dim];
         }
       }
     }

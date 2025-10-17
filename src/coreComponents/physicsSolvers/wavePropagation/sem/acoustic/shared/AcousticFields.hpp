@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -59,13 +59,37 @@ DECLARE_FIELD( Pressure_np1,
                WRITE_AND_READ,
                "Scalar pressure at time n+1." );
 
-DECLARE_FIELD( PressureDoubleDerivative,
-               "pressureDoubleDerivative",
+DECLARE_FIELD( DivPsi,
+               "divpsi",
+               array2d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "memory variable for acoustic attenuation." );
+
+DECLARE_FIELD( DivPsi_p,
+               "divpsi_p",
+               array2d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "p-type memory variable for acoustic VTI attenuation." );
+
+DECLARE_FIELD( DivPsi_q,
+               "divpsi_q",
+               array2d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "q-type memory variable for acoustic VTI attenuation." );
+
+DECLARE_FIELD( PressureForward,
+               "pressureForward",
                array1d< real32 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Double derivative of the pressure for each node to compute the gradient" );
+               "Pressure field from forward pass on each node to compute the gradient" );
 
 DECLARE_FIELD( Velocity_x,
                "velocity_x",
@@ -97,7 +121,15 @@ DECLARE_FIELD( PartialGradient,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Partiel gradient computed during backward propagation" );
+               "Partial gradient or imaging condition computed during backward propagation" );
+
+DECLARE_FIELD( PartialGradient2,
+               "partialGradient2",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Partial gradient for density/velocity computed during backward propagation" );
 
 DECLARE_FIELD( ForcingRHS,
                "rhs",
@@ -123,6 +155,14 @@ DECLARE_FIELD( StiffnessVector,
                WRITE_AND_READ,
                "Stiffness vector contains R_h*Pressure_n." );
 
+DECLARE_FIELD( StiffnessVectorA,
+               "stiffnessVectorA",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Acoustic attenuation stiffness vector." );
+
 DECLARE_FIELD( DampingVector,
                "dampingVector",
                array1d< real32 >,
@@ -146,6 +186,14 @@ DECLARE_FIELD( AcousticDensity,
                NOPLOT,
                WRITE_AND_READ,
                "Medium density of the cell" );
+
+DECLARE_FIELD( AcousticQualityFactor,
+               "acousticQualityFactor",
+               array1d< real32 >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Quality factor for acoustic wave attenuation in the cell" );
 
 DECLARE_FIELD( AcousticFreeSurfaceFaceIndicator,
                "acousticFreeSurfaceFaceIndicator",
@@ -194,7 +242,6 @@ DECLARE_FIELD( AuxiliaryVar4PML,
                NOPLOT,
                WRITE_AND_READ,
                "PML scalar auxiliary variable 4." );
-
 }
 
 }

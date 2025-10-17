@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -33,7 +33,7 @@ namespace geos
 namespace trilinos
 {
 
-// Check matching requirements on index/value types between GEOSX and PETSc
+// Check matching requirements on index/value types between GEOS and PETSc
 
 static_assert( sizeof( long long ) == sizeof( geos::globalIndex ),
                "long long and geos::globalIndex must have the same size" );
@@ -53,7 +53,7 @@ using EpetraComm = Epetra_SerialComm;
 #endif
 
 /**
- * @brief Converts a non-const array from GEOSX globalIndex type to Epetra long long
+ * @brief Converts a non-const array from GEOS globalIndex type to Epetra long long
  * @param[in] index the input array
  * @return the converted array
  */
@@ -63,7 +63,7 @@ inline long long * toEpetraLongLong( globalIndex * const index )
 }
 
 /**
- * @brief Converts a const array from GEOSX globalIndex type to Epetra long long
+ * @brief Converts a const array from GEOS globalIndex type to Epetra long long
  * @param[in] index the input array
  * @return the converted array
  */

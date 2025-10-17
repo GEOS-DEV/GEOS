@@ -17,7 +17,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ cb1 }"
+      cellBlocks="{ * }"
       materialList="{ rock, water, thermalCond }"/>
   </ElementRegions>
 
@@ -73,9 +73,9 @@
       name="rockPerm"
       permeabilityComponents="{ 4.0e-9, 4.0e-9, 4.0e-9 }"/>
     
-    <SinglePhaseConstantThermalConductivity
+    <SinglePhaseThermalConductivity
       name="thermalCond"
-      thermalConductivityComponents="{ 836, 836, 836 }"/>
+      defaultThermalConductivityComponents="{ 836, 836, 836 }"/>
     <!-- SPHINX_PERMEABILITY_CONDUCTIVITY_END -->
     
   </Constitutive>
@@ -106,7 +106,7 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="rockSolid_stress"
       component="0"
-      scale="2.457"/>
+      scale="0.0"/>
     <FieldSpecification
       name="initialSigma_y"
       initialCondition="1"
@@ -114,7 +114,7 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="rockSolid_stress"
       component="1"
-      scale="2.457"/>
+      scale="0.0"/>
     <FieldSpecification
       name="initialSigma_z"
       initialCondition="1"
@@ -122,7 +122,7 @@
       objectPath="ElementRegions/Domain/cb1"
       fieldName="rockSolid_stress"
       component="2"
-      scale="2.457"/>
+      scale="0.0"/>
     <!-- SPHINX_IC_END -->            
 
     <!-- SPHINX_ZERO_DISPLACEMENT_BC -->    

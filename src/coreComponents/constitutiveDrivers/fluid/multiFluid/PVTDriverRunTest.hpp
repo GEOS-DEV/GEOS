@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -21,7 +21,7 @@
 #define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_PVTDRIVERRUNTEST_HPP_
 
 #include "PVTDriver.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidConstants.hpp"
 
 namespace geos
 {
@@ -67,23 +67,26 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
   bool const outputMassDensity = (m_outputMassDensity != 0);
   bool const outputCompressibility = (m_outputCompressibility != 0);
   bool const outputPhaseComposition = (m_outputPhaseComposition != 0);
+  bool const outputEnthalpy = fluid.isThermal();
 
   integer const numSteps = m_numSteps;
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
   forAll< ExecPolicy >( composition.size( 0 ),
-                        [outputMassDensity, outputCompressibility, outputPhaseComposition,
+                        [outputMassDensity, outputCompressibility, outputPhaseComposition, outputEnthalpy,
                          numPhases, numComponents, numSteps, kernelWrapper,
                          table, composition]
                         GEOS_HOST_DEVICE ( localIndex const i )
   {
     // Index for start of phase properties
-    integer const PHASE_FRACTION = outputCompressibility ? TEMP + 3 : TEMP + 2;
+    integer const PHASE_FRACTION = TEMP + 2 + (outputCompressibility ? 1 : 0);
     integer const PHASE_DENSITY = PHASE_FRACTION + numPhases;
-    integer const PHASE_VISCOSITY = outputMassDensity ? PHASE_DENSITY + 2*numPhases : PHASE_DENSITY + numPhases;
-    integer const PHASE_COMP = PHASE_VISCOSITY + numPhases;
+    integer const PHASE_MASS_DENSITY = PHASE_DENSITY + numPhases;
+    integer const PHASE_VISCOSITY = PHASE_MASS_DENSITY + (outputMassDensity ? numPhases : 0);
+    integer const PHASE_ENTHALPY = PHASE_VISCOSITY + numPhases;
+    integer const PHASE_COMP = PHASE_ENTHALPY + (outputEnthalpy ? numPhases : 0);
 
     // Temporary space for phase mole fractions
-    stackArray1d< real64, constitutive::MultiFluidBase::MAX_NUM_COMPONENTS > phaseComposition( numComponents );
+    stackArray1d< real64, constitutive::MultiFluidConstants::MAX_NUM_COMPONENTS > phaseComposition( numComponents );
 
     for( integer n = 0; n <= numSteps; ++n )
     {
@@ -105,7 +108,14 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table
       {
         for( integer p = 0; p < numPhases; ++p )
         {
-          table( n, PHASE_DENSITY + numPhases + p ) = kernelWrapper.phaseMassDensity()( i, 0, p );
+          table( n, PHASE_MASS_DENSITY + p ) = kernelWrapper.phaseMassDensity()( i, 0, p );
+        }
+      }
+      if( outputEnthalpy )
+      {
+        for( integer p = 0; p < numPhases; ++p )
+        {
+          table( n, PHASE_ENTHALPY + p ) = kernelWrapper.phaseEnthalpy()( i, 0, p );
         }
       }
       if( outputPhaseComposition )

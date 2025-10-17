@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -58,6 +58,14 @@ DECLARE_FIELD( reservoirElementIndex,
                WRITE_AND_READ,
                "For each perforation, element index of the perforated element" );
 
+DECLARE_FIELD( reservoirElementGlobalIndex,
+               "reservoirElementGlobalIndex",
+               array1d< globalIndex >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "For each perforation, global element index of the perforated element" );
+
 DECLARE_FIELD( wellElementIndex,
                "wellElementIndex",
                array1d< localIndex >,
@@ -81,6 +89,14 @@ DECLARE_FIELD( wellSkinFactor,
                NOPLOT,
                WRITE_AND_READ,
                "For each perforation, well skin factor" );
+
+DECLARE_FIELD( perforationStatus,
+               "perforationStatus",
+               array1d< integer >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Table of time vs perforation open/close status" );
 
 DECLARE_FIELD( location,
                "location",
