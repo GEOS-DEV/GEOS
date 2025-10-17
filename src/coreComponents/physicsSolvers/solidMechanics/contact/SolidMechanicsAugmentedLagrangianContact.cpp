@@ -677,8 +677,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
                                                                                      localRhs,
                                                                                      dt );
 
-    // constitutive::PorousSolid< ElasticIsotropic , ConstantPermeability> m_test("test", this);
-    // m_test.getBiotCoefficient();
+
     real64 maxTraction = finiteElement::regionBasedKernelApplication
                          < parallelDevicePolicy< >,
                            PorousSolid<ElasticIsotropic,ConstantPermeability>,
@@ -776,16 +775,6 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
     FaceManager const & faceManager = mesh.getFaceManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
     
-    // identify the void regions
-  //   localIndex voidRegionIndex = -1;
-  //   elemManager.forElementRegionsComplete( [&]( localIndex const elemRegionIndex,
-  //                                                   ElementRegionBase const & elemRegion )
-  // {
-  //   if( elemRegion.getName() == "void" )
-  //   {
-  //     voidRegionIndex = elemRegionIndex;
-  //   }
-  // } );
   auto const& toElemRelation = faceManager.toElementRelation();
   auto const& faceToElementRegionIndex = toElemRelation.m_toElementRegion.toViewConst();
 
