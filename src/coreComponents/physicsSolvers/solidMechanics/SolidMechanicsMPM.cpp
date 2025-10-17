@@ -147,6 +147,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   m_stressControlLastError(),
   m_stressControlITerm(),
   m_boxAverageHistory( 0 ),
+  m_boxAverageResizeWithDomain(0),
   m_boxAverageWriteInterval( 0.0 ),
   m_reactionHistory( 0 ),
   m_reactionWriteInterval( 0.0 ),
@@ -284,6 +285,13 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setApplyDefaultValue( m_boxAverageHistory ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Flag for whether to output box average history" );
+
+  registerWrapper( "boxAverageResizeWithDomain", &m_boxAverageResizeWithDomain ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_boxAverageResizeWithDomain ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Flag for whether to output box average integration domain updates with domainL" );
+
 
   registerWrapper( "boxAverageWriteInterval", &m_boxAverageWriteInterval ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1085,8 +1093,11 @@ void SolidMechanicsMPM::postRestartInitialization()
     // Initialize box average extent
     if(  m_boxAverageMin.size() == 0  )
     {
+      // No box was specified, use entire domain extents, common for mesoscale simulations
+      // and set flag to autoUpdate if domain size changes with domainL for BC Ftable
       m_boxAverageMin.resize( 3 );
       LvArray::tensorOps::copy< 3 >( m_boxAverageMin, m_xGlobalMin );
+      m_boxAverageResizeWithDomain = 1;
     }
     else
     {
@@ -1097,6 +1108,7 @@ void SolidMechanicsMPM::postRestartInitialization()
     {
       m_boxAverageMax.resize( 3 );
       LvArray::tensorOps::copy< 3 >( m_boxAverageMax, m_xGlobalMax );
+      m_boxAverageResizeWithDomain = 1;
     }
     else
     {
@@ -2143,6 +2155,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     {
       m_boxAverageMin.resize( 3 );
       LvArray::tensorOps::copy< 3 >( m_boxAverageMin, m_xGlobalMin );
+      m_boxAverageResizeWithDomain = 1;
     }
     else
     {
@@ -2153,6 +2166,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     {
       m_boxAverageMax.resize( 3 );
       LvArray::tensorOps::copy< 3 >( m_boxAverageMax, m_xGlobalMax );
+      m_boxAverageResizeWithDomain = 1;  
     }
     else
     {
@@ -5022,6 +5036,15 @@ void SolidMechanicsMPM::resizeGrid( SpatialPartition & partition,
     m_xGlobalMax[i] *= ratio[i];
     m_partitionExtent[i] *= ratio[i];
     m_domainExtent[i] *= ratio[i];
+
+    if (m_boxAverageResizeWithDomain == 1 )
+    {
+      // update the limits for box average integration.
+      // TODO: make this an option so we can have a fixed Eulerian box or one that scales with
+      // The whole domain for BC F-table driven problems.
+      m_boxAverageMin[i] *= ratio[i];
+      m_boxAverageMax[i] *= ratio[i];
+    }
   }
 
   // Update nodal positions

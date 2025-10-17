@@ -533,16 +533,9 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     int maxEvals = 100; // Same cas above
 
 
-    // In initialization, yieldStrength is set to defaultYieldStrenght, but we will generally want it to be modified by temp
-    //
-
-      // Here we would update the m_bulkModulus[k] and m_shearModulus[k] with temperature dependent values:
-  // These will be input paramters:
-  
-
-
-
-
+    // In initialization, yieldStrength is set to defaultYieldStrength, but we will generally want it to be modified by temp
+    // Here we would update the m_bulkModulus[k] and m_shearModulus[k] with temperature dependent values:
+    // These will be input paramters:
     real64 oldYieldStrength = m_yieldStrength[k];
 
     // Compute change in yield strength: yieldStrength = m_initialYield + plasticSoftening + stretchHardening;
@@ -698,7 +691,7 @@ real64 StrainHardeningPolymerUpdates::thermalSoftening( const real64 & T,
 { 
   if (std::abs(A) > 1.e-16)
   {
-    return 1. + A / (1. +std::exp( B * (T-T0) ) );
+    return 1. + A / (1. + std::exp( B * (T-T0) ) );
   }
   else
   {
