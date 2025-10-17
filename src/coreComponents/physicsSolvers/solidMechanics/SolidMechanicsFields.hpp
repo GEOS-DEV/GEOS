@@ -91,8 +91,8 @@ DECLARE_FIELD( averageStress,
                WRITE_AND_READ,
                "Quadrature averaged stress components in cell" );
 
-DECLARE_FIELD( plasticStrain,
-               "plasticStrain",
+DECLARE_FIELD( averagePlasticStrain,
+               "averagePlasticStrain",
                array2dLayoutStrain,
                0,
                LEVEL_0,
