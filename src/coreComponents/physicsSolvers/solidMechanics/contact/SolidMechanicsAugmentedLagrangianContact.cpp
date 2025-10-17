@@ -1083,7 +1083,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                    globalCondConv[0], globalCondConv[1], globalCondConv[2],
                                    globalCondConv[3], globalCondConv[4] ));
 
-  if( ! hasConfigurationConvergedGlobally )
+  if( !hasConfigurationConvergedGlobally )
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,
