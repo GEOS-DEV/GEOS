@@ -169,7 +169,7 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
                                                                    ElementSubRegionBase & subRegion )
     {
       subRegion.registerField< solidMechanics::averageStrain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
-      subRegion.registerField< solidMechanics::plasticStrain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
+      subRegion.registerField< solidMechanics::averagePlasticStrain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
       subRegion.registerField< solidMechanics::averageStress >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
     } );
 
