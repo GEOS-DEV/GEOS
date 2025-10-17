@@ -104,7 +104,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   this->registerWrapper( viewKeyStruct::targetRelativePresChangeString(), &m_targetRelativePresChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0.2 ).
+    setApplyDefaultValue( 0.2 ).  
     setDescription( "Target (relative) change in pressure in a time step (expected value between 0 and 1)" );
   this->registerWrapper( viewKeyStruct::targetRelativeTempChangeString(), &m_targetRelativeTempChange ).
     setSizedFromParent( 0 ).
@@ -115,7 +115,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.2 ).
-    setDescription( "Target (absolute) allowable change in the phase volume fraction within a single time step." );
+    setDescription( "Target (absolute) change in the phase volume fraction within a single time step." );
   this->registerWrapper( viewKeyStruct::targetRelativeCompDensChangeString(), &m_targetRelativeCompDensChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
