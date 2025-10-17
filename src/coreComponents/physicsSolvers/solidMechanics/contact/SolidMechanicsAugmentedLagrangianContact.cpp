@@ -162,17 +162,6 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
         setRegisteringObjects( getName()).
         setDescription( "An array that stores the displacement jumps used to update the penalty coefficients." ).
         reference().resizeDimension< 1 >( 3 );
-
-      // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
-      // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
-      subRegion.registerField< flow::pressure >( getName() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName());
-
-      subRegion.registerField< flow::pressure_n >( getName() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName());
-
     } );
   } );
 
