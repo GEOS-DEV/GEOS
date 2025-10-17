@@ -33,6 +33,7 @@
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
+#include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/solid/SolidFields.hpp"
 #include "mesh/DomainPartition.hpp"
 
