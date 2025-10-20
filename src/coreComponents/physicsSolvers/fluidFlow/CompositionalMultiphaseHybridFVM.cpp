@@ -25,7 +25,6 @@
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -73,6 +72,9 @@ void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group & meshBodies )
     // primary variables: face pressure changes
 
     faceManager.registerField< flow::facePressure_n >( getName() );
+    
+    // Register the bc face data
+    faceManager.registerField< flow::bcPressure >( getName() );
 
     // auxiliary data for the buoyancy coefficient
     faceManager.registerField< flow::mimGravityCoefficient >( getName() );
@@ -577,15 +579,6 @@ void CompositionalMultiphaseHybridFVM::applyBoundaryConditions( real64 const tim
   }
 }
 
-namespace
-{
-char const faceBcLogMessage[] =
-  "CompositionalMultiphaseHybridFVM {}: at time {}s, "
-  "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. "
-  "\nThe total number of target faces (including ghost faces) is {}. "
-  "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.";
-}
-
 void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
                                                              real64 const dt,
                                                              DofManager const & dofManager,
@@ -607,6 +600,8 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
 
     arrayView1d< real64 const > const presFace =
       faceManager.getField< flow::facePressure >();
+    arrayView1d< real64 const > const presFaceBC =
+      faceManager.getField< flow::bcPressure >();
     arrayView1d< globalIndex const > const faceDofNumber =
       faceManager.getReference< array1d< globalIndex > >( faceDofKey );
     arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
@@ -615,7 +610,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
 
     fsManager.apply< FaceManager >( time_n + dt,
                                     mesh,
-                                    flow::pressure::key(),
+                                    flow::bcPressure::key(),
                                     [&] ( FieldSpecificationBase const & fs,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const & targetSet,
@@ -623,23 +618,12 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
                                           string const & )
     {
 
-      // report at the first nonlinear iteration
-      if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-      {
-        globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
-                                        GEOS_FMT( faceBcLogMessage,
-                                                  this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                                  setName, targetGroup.getName(), numTargetFaces ),
-                                        fs );
-      }
-
       // Using the field specification functions to apply the boundary conditions to the system
       fs.applyFieldValue< FieldSpecificationEqual,
                           parallelDevicePolicy<> >( targetSet,
                                                     time_n + dt,
                                                     targetGroup,
-                                                    flow::facePressure::key() );
+                                                    flow::bcPressure::key() );
 
       forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
@@ -660,7 +644,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
                                                     rankOffset,
                                                     localMatrix,
                                                     rhsValue,
-                                                    presFace[kf],
+                                                    presFaceBC[kf],
                                                     presFace[kf] );
         localRhs[localRow] = rhsValue;
       } );
