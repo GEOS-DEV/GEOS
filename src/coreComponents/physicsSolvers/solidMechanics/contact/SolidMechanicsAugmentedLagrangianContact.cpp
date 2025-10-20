@@ -44,8 +44,8 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
   ContactSolverBase( name, parent )
 {
 
-  m_faceTypeToFiniteElements["Quadrilateral"] =  std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
-  m_faceTypeToFiniteElements["Triangle"] =  std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >();
+  m_faceTypeToFiniteElements.insert( {"Quadrilateral", std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >()} );
+  m_faceTypeToFiniteElements.insert( {"Triangle", std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >()} );
 
   registerWrapper( viewKeyStruct::simultaneousString(), &m_simultaneous ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1137,8 +1137,8 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
         slipList_v[kfe] = vals_v[nStick+kfe];
       } );
 
-      m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
-      m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
+      m_faceTypesToFaceElementsStick.get_inserted( meshName ).get_inserted( finiteElementName ) = stickList;
+      m_faceTypesToFaceElementsSlip.get_inserted( meshName ).get_inserted( finiteElementName ) = slipList;
 
       GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
@@ -1221,8 +1221,8 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
       quadList_v[kfe] = vals_v[nTri+kfe];
     } );
 
-    m_faceTypesToFaceElements[meshName]["Quadrilateral"] =  quadList;
-    m_faceTypesToFaceElements[meshName]["Triangle"] =  triList;
+    m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Quadrilateral" ) = quadList;
+    m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Triangle" ) = triList;
   } );
 
 }
