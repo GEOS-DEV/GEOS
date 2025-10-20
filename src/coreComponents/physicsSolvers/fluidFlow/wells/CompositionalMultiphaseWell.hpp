@@ -143,7 +143,7 @@ public:
    * @param elemManager the well region manager containing the well
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void updateVolRatesForConstraint( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion );
+  void updateVolRatesForConstraint( ElementRegionManager const & elemManager, WellElementSubRegion const & subRegion );
 
   /**
    * @brief Recompute the current BHP pressure
