@@ -293,6 +293,7 @@ public:
     m_elemGravCoef( subRegion.getField< fields::flow::gravityCoefficient >() ),
     m_faceToNodes( faceManager.nodeList().toViewConst() ),
     m_faceGravCoef( faceManager.getField< fields::flow::gravityCoefficient >() ),
+    m_faceArea( faceManager.faceArea() ),
     m_regionFilter( regionFilter ),
     m_nodePosition( nodeManager.referencePosition() ),
     m_elemRegionList( faceManager.elementRegionList() ),
@@ -325,9 +326,9 @@ public:
 
     stackArray2d< real64, NUM_FACE *NUM_FACE > transMatrix;
 
-    real64 oneSidedVolFlux[NUM_FACE]{};
-    real64 dOneSidedVolFlux_dPres[NUM_FACE]{};
-    real64 dOneSidedVolFlux_dFacePres[NUM_FACE][NUM_FACE]{};
+    real64 massFlux[NUM_FACE]{};
+    real64 dmassFlux_dPres[NUM_FACE]{};
+    real64 dmassFlux_dFacePres[NUM_FACE][NUM_FACE]{};
 
     real64 divMassFluxes = 0;
     real64 dDivMassFluxes_dElemVars[NUM_FACE+1]{};
@@ -357,22 +358,27 @@ public:
     }
   }
 
+
   /**
-   * @brief In a given element, compute the one-sided volumetric fluxes at this element's faces
+   * @brief In a given element, compute the one-sided mass flux at this element's faces
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
   GEOS_HOST_DEVICE
-  void computeGradient( localIndex const ei,
+  void computeMassFlux( localIndex const ei,
                         StackVariables & stack ) const
   {
+    // local (cell-centered) mobility and its derivative w.r.t. pressure
+    real64 const massMobility = m_mob[m_er][m_esr][ei];
+    real64 const dmassMobility_dPres = m_dMob[m_er][m_esr][ei][DerivOffset::dP];
+
     for( integer iFaceLoc = 0; iFaceLoc < NUM_FACE; ++iFaceLoc )
     {
       // now in the following nested loop,
-      // we compute the contribution of face jFaceLoc to the one sided total volumetric flux at face iFaceLoc
+      // we compute the contribution of face jFaceLoc to the one sided total mass flux at face iFaceLoc
       for( integer jFaceLoc = 0; jFaceLoc < NUM_FACE; ++jFaceLoc )
       {
-        // 1) compute the potential diff between the cell center and the face center
+        // Compute the potential diff between the cell center and the face center
         real64 const ccPres = m_elemPres[ei];
         real64 const fPres = m_facePres[m_elemToFaces[ei][jFaceLoc]];
 
@@ -397,80 +403,48 @@ public:
         real64 const potDif = presDif - gravTerm;
         real64 const dPotDif_dPres = dPresDif_dPres - dGravTerm_dPres;
         real64 const dPotDif_dFacePres = dPresDif_dFacePres;
+        real64 const T_ij = stack.transMatrix[iFaceLoc][jFaceLoc];
 
-        // this is going to store T \sum_p \lambda_p (\nabla p - \rho_p g \nabla d)
-        stack.oneSidedVolFlux[iFaceLoc] = stack.oneSidedVolFlux[iFaceLoc]
-                                          + stack.transMatrix[iFaceLoc][jFaceLoc] * potDif;
-        stack.dOneSidedVolFlux_dPres[iFaceLoc] = stack.dOneSidedVolFlux_dPres[iFaceLoc]
-                                                 + stack.transMatrix[iFaceLoc][jFaceLoc] * dPotDif_dPres;
-        stack.dOneSidedVolFlux_dFacePres[iFaceLoc][jFaceLoc] = stack.dOneSidedVolFlux_dFacePres[iFaceLoc][jFaceLoc]
-                                                               + stack.transMatrix[iFaceLoc][jFaceLoc] * dPotDif_dFacePres;
+        // T * lambda * (\nabla p - rho * g * \nabla d)
+        stack.massFlux[iFaceLoc] = stack.massFlux[iFaceLoc] + m_dt * T_ij * massMobility * potDif;
+
+        // derivatives w.r.t. element-centered pressure
+        stack.dmassFlux_dPres[iFaceLoc] = stack.dmassFlux_dPres[iFaceLoc] + m_dt * T_ij * ( dmassMobility_dPres * potDif + massMobility * dPotDif_dPres );
+
+        // derivatives w.r.t. face-centered pressures
+        stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc] = stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc] + m_dt * T_ij * massMobility * dPotDif_dFacePres;
       }
     }
   }
 
   /**
-   * @brief In a given element, assemble the mass conservation equation
+   * @brief In a given element, assemble the mass conservation equation using mass fluxes
    * @param[in] ei the element index
    * @param[in] stack the stack variables
    */
   GEOS_HOST_DEVICE
   inline
-  void computeFluxDivergence( localIndex const ei,
-                              StackVariables & stack ) const
+  void computeMassFluxDivergence( localIndex const ei,
+                                  StackVariables & stack ) const
   {
-    // upwinded mobility
-    real64 upwMobility = 0.0;
-    real64 dUpwMobility_dPres = 0.0;
-    globalIndex upwDofNumber = 0;
+    GEOS_UNUSED_VAR( ei );
+    // use only local-cell information (no upwinding, no neighbor access)
+    globalIndex const localDofNumber = m_elemDofNumber[m_er][m_esr][ei];
 
     // for each element, loop over the one-sided faces
     for( integer iFaceLoc = 0; iFaceLoc < NUM_FACE; ++iFaceLoc )
     {
+      // accumulate the mass flux divergence and its derivatives using the actual mass flux
+      stack.divMassFluxes = stack.divMassFluxes + stack.massFlux[iFaceLoc];
+      stack.dDivMassFluxes_dElemVars[0] = stack.dDivMassFluxes_dElemVars[0] + stack.dmassFlux_dPres[iFaceLoc];
 
-      // 1) Find if there is a neighbor, and if there is, grab the indices of the neighbor element
-      localIndex local[3] = { m_er, m_esr, ei };
-      localIndex neighbor[3] = { m_er, m_esr, ei };
-      bool const isNeighborFound =
-        hybridFVMKernels::CellConnectivity::
-          isNeighborFound( local,
-                           iFaceLoc,
-                           m_elemRegionList,
-                           m_elemSubRegionList,
-                           m_elemList,
-                           m_regionFilter,
-                           m_elemToFaces[ei],
-                           neighbor );
-
-      // 2) Upwind the mobility at this face
-      if( stack.oneSidedVolFlux[iFaceLoc] >= 0 || !isNeighborFound )
-      {
-        upwMobility = m_mob[m_er][m_esr][ei];
-        dUpwMobility_dPres = m_dMob[m_er][m_esr][ei][DerivOffset::dP];
-        upwDofNumber = m_elemDofNumber[m_er][m_esr][ei];
-      }
-      else
-      {
-        upwMobility = m_mob[neighbor[0]][neighbor[1]][neighbor[2]];
-        dUpwMobility_dPres = m_dMob[neighbor[0]][neighbor[1]][neighbor[2]][DerivOffset::dP];
-        upwDofNumber = m_elemDofNumber[neighbor[0]][neighbor[1]][neighbor[2]];
-      }
-
-      // 3) Add to the flux divergence
-      real64 const dt_upwMobility = m_dt * upwMobility;
-
-      // compute the mass flux at the one-sided face plus its derivatives and add the newly computed flux to the sum
-      stack.divMassFluxes = stack.divMassFluxes + dt_upwMobility * stack.oneSidedVolFlux[iFaceLoc];
-      stack.dDivMassFluxes_dElemVars[0] = stack.dDivMassFluxes_dElemVars[0] + m_dt * upwMobility * stack.dOneSidedVolFlux_dPres[iFaceLoc];
-      stack.dDivMassFluxes_dElemVars[iFaceLoc+1] = m_dt * dUpwMobility_dPres * stack.oneSidedVolFlux[iFaceLoc];
       for( integer jFaceLoc = 0; jFaceLoc < NUM_FACE; ++jFaceLoc )
       {
-        stack.dDivMassFluxes_dFaceVars[jFaceLoc] = stack.dDivMassFluxes_dFaceVars[jFaceLoc]
-                                                   + dt_upwMobility * stack.dOneSidedVolFlux_dFacePres[iFaceLoc][jFaceLoc];
+        stack.dDivMassFluxes_dFaceVars[jFaceLoc] = stack.dDivMassFluxes_dFaceVars[jFaceLoc] + stack.dmassFlux_dFacePres[iFaceLoc][jFaceLoc];
       }
 
-      // collect the relevant dof numbers
-      stack.elemDofColIndices[iFaceLoc+1] = upwDofNumber;
+      // collect the relevant dof numbers (always local)
+      stack.elemDofColIndices[iFaceLoc+1] = localDofNumber;
     }
   }
 
@@ -492,7 +466,6 @@ public:
     real64 const perm[ 3 ] = { m_elemPerm[ei][0][0], m_elemPerm[ei][0][1], m_elemPerm[ei][0][2] };
 
     // recompute the local transmissibility matrix at each iteration
-    // we can decide later to precompute transMatrix if needed
     IP::template compute< NUM_FACE >( m_nodePosition,
                                       m_transMultiplier,
                                       m_faceToNodes,
@@ -503,30 +476,19 @@ public:
                                       m_lengthTolerance,
                                       stack.transMatrix );
 
-    /*
-     * compute auxiliary quantities at the one sided faces of this element:
-     * 1) One-sided volumetric fluxes
-     * 2) Upwinded mobilities
-     */
+    // compute the one-sided mass fluxes and their derivatives
+    computeMassFlux( ei, stack );
 
-    // for each one-sided face of the elem,
-    // compute the volumetric flux using transMatrix
-    computeGradient( ei, stack );
-
-    // at this point, we know the local flow direction in the element
-    // so we can upwind the transport coefficients (mobilities) at the one sided faces
     if( m_elemGhostRank[ei] < 0 )
     {
-
       /*
        * perform assembly in this element in two steps:
        * 1) mass conservation equations
        * 2) face constraints
        */
 
-      // use the computed one sided vol fluxes and the upwinded mobilities
-      // to assemble the upwinded mass fluxes in the mass conservation eqn of the elem
-      computeFluxDivergence( ei, stack );
+      // assemble the mass flux divergence using the mass flux arrays
+      computeMassFluxDivergence( ei, stack );
     }
 
   }
@@ -568,27 +530,28 @@ public:
     }
 
     // Step 2: assemble face-centered residuals and their derivatives
-
     globalIndex const dofColIndexElemPres = stack.elemDofColIndices[0];
 
     // for each element, loop over the local (one-sided) faces
     for( integer iFaceLoc = 0; iFaceLoc < NUM_FACE; ++iFaceLoc )
     {
+
       if( m_faceGhostRank[m_elemToFaces[ei][iFaceLoc]] < 0 )
       {
-        // residual
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[stack.faceCenteredEqnRowIndex[iFaceLoc]], stack.oneSidedVolFlux[iFaceLoc] );
 
-        // jacobian -- derivative wrt local cell centered pressure term
+        // residual (LM face constraint) continuity of mass flux
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[stack.faceCenteredEqnRowIndex[iFaceLoc]], stack.massFlux[iFaceLoc] );
+
+        // jacobian -- derivative wrt local cell centered pressure
         m_localMatrix.addToRow< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
                                                         &dofColIndexElemPres,
-                                                        &stack.dOneSidedVolFlux_dPres[iFaceLoc],
+                                                        &stack.dmassFlux_dPres[iFaceLoc],
                                                         1 );
 
         // jacobian -- derivatives wrt face pressure terms
         m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( stack.faceCenteredEqnRowIndex[iFaceLoc],
                                                                             &stack.faceDofColIndices[0],
-                                                                            stack.dOneSidedVolFlux_dFacePres[iFaceLoc],
+                                                                            stack.dmassFlux_dFacePres[iFaceLoc],
                                                                             NUM_FACE );
       }
     }
@@ -646,6 +609,7 @@ protected:
   arrayView1d< real64 const > const m_elemGravCoef;
   ArrayOfArraysView< localIndex const > const m_faceToNodes;
   arrayView1d< real64 const > const m_faceGravCoef;
+  arrayView1d< real64 const > const m_faceArea;
 
   SortedArrayView< localIndex const > const m_regionFilter;
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_nodePosition;
@@ -826,13 +790,15 @@ public:
       // if not on boundary, increment the normalizer
       if( !onBoundary && isInTarget )
       {
-        massNormalizer += m_density_n[er][esr][ei][0] * m_porosity_n[er][esr][ei][0] * m_volume[er][esr][ei];
-        multiplier += m_density_n[er][esr][ei][0];
+        massNormalizer = massNormalizer + m_density_n[er][esr][ei][0] * m_porosity_n[er][esr][ei][0] * m_volume[er][esr][ei];
         elemCounter++;
       }
     }
-    massNormalizer /= elemCounter; // average mass in the adjacent cells at the previous converged time step
-    multiplier *= m_dt / elemCounter / m_defaultViscosity;  // average dt * mobility at the previous converged time step
+    // average mass in the adjacent cells at the previous converged time step
+    massNormalizer /= elemCounter;
+
+    // LM face residuals are mass fluxes; choose a dt-invariant multiplier
+    multiplier = 1.0;
   }
 
   GEOS_HOST_DEVICE
@@ -846,7 +812,7 @@ public:
       computeMassNormalizer( kf, massNormalizer, multiplier );
 
       // scaled residual to be in mass units (needed because element and face residuals are blended in a single norm)
-      stack.localValue[0] += LvArray::math::abs( m_localResidual[stack.localRow] * multiplier ) / LvArray::math::max( m_minNormalizer, massNormalizer );
+      stack.localValue[0] = stack.localValue[0] + LvArray::math::abs( m_localResidual[stack.localRow] * multiplier ) / LvArray::math::max( m_minNormalizer, massNormalizer );
     }
   }
 
@@ -862,8 +828,8 @@ public:
 
       // scaled residual to be in mass units (needed because element and face residuals are blended in a single norm)
       real64 const valMass = m_localResidual[stack.localRow] * multiplier;
-      stack.localValue[0] += valMass * valMass;
-      stack.localNormalizer[0] += massNormalizer;
+      stack.localValue[0] = stack.localValue[0] + valMass * valMass;
+      stack.localNormalizer[0] = stack.localNormalizer[0] + massNormalizer;
     }
   }
 

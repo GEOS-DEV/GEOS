@@ -840,22 +840,30 @@ void HypreMatrix::rescaleRows( arrayView1d< globalIndex const > const & rowIndic
   {
     case RowSumType::SumValues:
     {
-      hypre::rescaleMatrixRows( unwrapped(), rowIndices, hypre::ops::identity< HYPRE_Real >, hypre::ops::plus< HYPRE_Real > );
+      hypre::rescaleMatrixRows( unwrapped(), rowIndices,
+                                [] GEOS_HYPRE_DEVICE ( auto x ){ return x; },
+                                [] GEOS_HYPRE_DEVICE ( auto a, auto b ){ return a + b; } );
       break;
     }
     case RowSumType::SumAbsValues:
     {
-      hypre::rescaleMatrixRows( unwrapped(), rowIndices, LvArray::math::abs< HYPRE_Real >, hypre::ops::plus< HYPRE_Real > );
+      hypre::rescaleMatrixRows( unwrapped(), rowIndices,
+                                [] GEOS_HYPRE_DEVICE ( auto x ){ return LvArray::math::abs( x ); },
+                                [] GEOS_HYPRE_DEVICE ( auto a, auto b ){ return a + b; } );
       break;
     }
     case RowSumType::SumSqrValues:
     {
-      hypre::rescaleMatrixRows( unwrapped(), rowIndices, LvArray::math::square< HYPRE_Real >, hypre::ops::plus< HYPRE_Real > );
+      hypre::rescaleMatrixRows( unwrapped(), rowIndices,
+                                [] GEOS_HYPRE_DEVICE ( auto x ){ return LvArray::math::square( x ); },
+                                [] GEOS_HYPRE_DEVICE ( auto a, auto b ){ return a + b; } );
       break;
     }
     case RowSumType::MaxAbsValues:
     {
-      hypre::rescaleMatrixRows( unwrapped(), rowIndices, LvArray::math::abs< HYPRE_Real >, LvArray::math::max< HYPRE_Real > );
+      hypre::rescaleMatrixRows( unwrapped(), rowIndices,
+                                [] GEOS_HYPRE_DEVICE ( auto x ){ return LvArray::math::abs( x ); },
+                                [] GEOS_HYPRE_DEVICE ( auto a, auto b ){ return LvArray::math::max( a, b ); } );
       break;
     }
   }

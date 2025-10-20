@@ -269,9 +269,6 @@ public:
   {
     /// string/key for default yield stress
     static constexpr char const * defaultYieldStressString() { return "defaultYieldStress"; }
-
-    /// string/key for elemental yield stress
-    static constexpr char const * yieldStressString() { return "yieldStress"; }
   };
 
   /**
