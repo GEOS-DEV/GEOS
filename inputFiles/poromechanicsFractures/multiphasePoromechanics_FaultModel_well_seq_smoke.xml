@@ -21,8 +21,6 @@
         newtonMaxIter="20"
         maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
-        solverType="fgmres"
-        preconditionerType="direct"
         directParallel="0"/>       
     </CompositionalMultiphaseReservoirPoromechanicsConformingFractures>
 
@@ -43,8 +41,7 @@
         lineSearchAction="None"
         maxTimeStepCuts="10"
         newtonTol="1e-2"
-        newtonMaxIter="20"
-        maxAllowedResidualNorm="1e+15" />
+        newtonMaxIter="20" />
       <LinearSolverParameters
         solverType="fgmres"
         preconditionerType="mgr"/>          
@@ -57,10 +54,7 @@
       scalingType="Local"
       discretization="TPFA"
       targetRegions="{ Region, Fault}"
-      temperature="368.15">
-      <NonlinearSolverParameters
-        lineSearchAction="None" />
-    </CompositionalMultiphaseFVM>
+      temperature="368.15" />
 
     <CompositionalMultiphaseWell
       name="wellSolver"
