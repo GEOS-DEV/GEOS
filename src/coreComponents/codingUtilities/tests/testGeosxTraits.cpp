@@ -52,11 +52,11 @@ TEST( testGeosxTraits, HasMemberFunction_at )
   static_assert( HasMemberFunction_at< string >, "Should be true." );
   static_assert( HasMemberFunction_at< stdVector< int > >, "Should be true." );
   static_assert( HasMemberFunction_at< stdVector< double > >, "Should be true." );
-  static_assert( HasMemberFunction_at< std::map< int, string > >, "Should be true." );
+  static_assert( HasMemberFunction_at< stdMap< int, string > >, "Should be true." );
   static_assert( HasMemberFunction_at< std::unordered_map< int, string > >, "Should be true." );
 
   static_assert( !HasMemberFunction_at< int >, "Should be false." );
-  static_assert( !HasMemberFunction_at< std::map< string, string > >, "Should be false." );
+  static_assert( !HasMemberFunction_at< stdMap< string, string > >, "Should be false." );
   static_assert( !HasMemberFunction_at< array1d< localIndex > >, "Should be false." );
 }
 
@@ -66,7 +66,7 @@ HAS_MEMBER_FUNCTION_NO_RTYPE( insert,
 TEST( testGeosxTraits, HasMemberFunction_insert )
 {
   static_assert( HasMemberFunction_insert< stdVector< int > >, "Should be true." );
-  static_assert( HasMemberFunction_insert< std::map< string, int > >, "Should be true." );
+  static_assert( HasMemberFunction_insert< stdMap< string, int > >, "Should be true." );
   static_assert( HasMemberFunction_insert< std::list< stdVector< int > > >, "Should be true." );
 
   static_assert( !HasMemberFunction_insert< int >, "Should be false." );
@@ -79,7 +79,7 @@ TEST( testGeosxTraits, HasAlias_value_type )
   static_assert( HasAlias_value_type< array1d< double > >, "Should be true." );
   static_assert( HasAlias_value_type< array5d< array1d< R1Tensor > > >, "Should be true." );
   static_assert( HasAlias_value_type< stdVector< int > >, "Should be true." );
-  static_assert( HasAlias_value_type< std::map< string, string > >, "Should be true." );
+  static_assert( HasAlias_value_type< stdMap< string, string > >, "Should be true." );
 
   static_assert( !HasAlias_value_type< int >, "Should be false." );
   static_assert( !HasAlias_value_type< double >, "Should be false." );
@@ -108,7 +108,7 @@ TEST( testGeosxTraits, HasMemberFunction_data )
   static_assert( HasMemberFunction_data< array5d< array1d< R1Tensor > > >, "Should be true." );
   static_assert( HasMemberFunction_data< stdVector< int > >, "Should be true." );
 
-  static_assert( !HasMemberFunction_data< std::map< string, string > >, "Should be false." );
+  static_assert( !HasMemberFunction_data< stdMap< string, string > >, "Should be false." );
   static_assert( !HasMemberFunction_data< int >, "Should be false." );
   static_assert( !HasMemberFunction_data< double >, "Should be false." );
 }
@@ -118,7 +118,7 @@ TEST( testGeosxTraits, HasMemberFunction_size )
   static_assert( HasMemberFunction_size< array1d< double > >, "Should be true." );
   static_assert( HasMemberFunction_size< array5d< array1d< R1Tensor > > >, "Should be true." );
   static_assert( HasMemberFunction_size< stdVector< int > >, "Should be true." );
-  static_assert( HasMemberFunction_size< std::map< string, string > >, "Should be true." );
+  static_assert( HasMemberFunction_size< stdMap< string, string > >, "Should be true." );
 
   static_assert( !HasMemberFunction_size< int >, "Should be false." );
   static_assert( !HasMemberFunction_size< double >, "Should be false." );
@@ -132,7 +132,7 @@ TEST( testGeosxTraits, HasMemberFunction_resize )
   static_assert( HasMemberFunction_resize< ArrayOfArrays< int > >, "Should be true." );
   static_assert( HasMemberFunction_resize< ArrayOfSets< int > >, "Should be true." );
 
-  static_assert( !HasMemberFunction_resize< std::map< string, string > >, "Should be false." );
+  static_assert( !HasMemberFunction_resize< stdMap< string, string > >, "Should be false." );
   static_assert( !HasMemberFunction_resize< int >, "Should be false." );
   static_assert( !HasMemberFunction_resize< double >, "Should be false." );
 

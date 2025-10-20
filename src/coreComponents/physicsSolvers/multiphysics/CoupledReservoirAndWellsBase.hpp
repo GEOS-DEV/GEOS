@@ -181,6 +181,9 @@ public:
   {
     Base::postInputInitialization();
 
+    // assume that reservoir solver discretization is the primary one
+    this->m_discretizationName = reservoirSolver()->getDiscretizationName();
+
     setMGRStrategy();
   }
 
