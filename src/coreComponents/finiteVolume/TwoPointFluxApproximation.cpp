@@ -108,8 +108,10 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   arrayView2d< localIndex const > const & elemList = faceManager.elementList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
-  arrayView1d< real64 const > const & transMultiplier =
-    faceManager.getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() );
+  string const transMultName = m_coeffName + viewKeyStruct::transMultiplierString();
+  arrayView1d< real64 const > const transMultiplier = faceManager.hasWrapper( transMultName )
+                                                    ? faceManager.getReference< array1d< real64 > >( transMultName )
+                                                    : arrayView1d< real64 const >{};
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
@@ -143,7 +145,8 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
     // Filter out faces that are not surrounded by matrix cells on this rank
     // This means that if either element associated with a face is not present, it is excluded from the stencil.
     // Similarly if an element is not present in the faceElement, it is excluded from the faceToMatrix stencil.
-    if( elemList[kf][0] < 0 || elemList[kf][1] < 0 || isZero( transMultiplier[kf] ) )
+    real64 const transMult = !transMultiplier.empty() ? transMultiplier[kf] : 1.0;
+    if( elemList[kf][0] < 0 || elemList[kf][1] < 0 || isZero( transMult ) )
     {
       return;
     }
@@ -219,7 +222,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
                  stencilWeights.data(),
                  kf );
 
-    stencil.addVectors( transMultiplier[kf], sumStabilizationWeight, faceNormal, cellToFaceVec );
+    stencil.addVectors( transMult, sumStabilizationWeight, faceNormal, cellToFaceVec );
   } );
 }
 
@@ -750,8 +753,10 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   arrayView2d< localIndex const > const & elemList           = faceManager.elementList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
-  arrayView1d< real64 const > const & transMultiplier =
-    faceManager.getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() );
+  string const transMultName = m_coeffName + viewKeyStruct::transMultiplierString();
+  arrayView1d< real64 const > const transMultiplier = faceManager.hasWrapper( transMultName )
+                                                    ? faceManager.getReference< array1d< real64 > >( transMultName )
+                                                    : arrayView1d< real64 const >{};
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
@@ -847,7 +852,8 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
                    stencilWeights.data(),
                    kf );
 
-      stencil.addVectors( transMultiplier[kf], faceNormal, cellToFaceVec );
+      real64 const transMult = !transMultiplier.empty() ? transMultiplier[kf] : 1.0;
+      stencil.addVectors( transMult, faceNormal, cellToFaceVec );
     }
   }
 }
@@ -889,12 +895,12 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
 
   // Step 1: count individual aquifers
 
-  std::map< string, localIndex > aquiferNameToAquiferId;
+  stdMap< string, localIndex > aquiferNameToAquiferId;
   localIndex aquiferCounter = 0;
 
   fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
   {
-    aquiferNameToAquiferId[bc.getName()] = aquiferCounter;
+    aquiferNameToAquiferId.insert( {bc.getName(), aquiferCounter} );
     aquiferCounter++;
   } );
 

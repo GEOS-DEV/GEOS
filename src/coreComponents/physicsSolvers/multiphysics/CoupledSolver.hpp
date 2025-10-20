@@ -250,12 +250,10 @@ public:
   updateAndWriteConvergenceStep( real64 const & time_n, real64 const & dt,
                                  integer const cycleNumber, integer const iteration ) override
   {
+    PhysicsSolverBase::updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iteration );
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      if( m_writeStatisticsCSV >= 2 )
-      {
-        solver->updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iteration );
-      }
+      solver->updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iteration );
     } );
   }
 
@@ -398,6 +396,16 @@ public:
       result &= solver->resetConfigurationToDefault( domain );
     } );
     return result;
+  }
+
+  virtual void
+  synchronizeNonlinearSolverParameters() override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->getNonlinearSolverParameters() = getNonlinearSolverParameters();
+      solver->synchronizeNonlinearSolverParameters();
+    } );
   }
 
 protected:
@@ -701,11 +709,6 @@ protected:
                              EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
                    InputError );
 
-    if( !isSequential )
-    {
-      synchronizeNonlinearSolverParameters();
-    }
-
     if( m_nonlinearSolverParameters.m_nonlinearAccelerationType != NonlinearSolverParameters::NonlinearAccelerationType::None )
     {
       validateNonlinearAcceleration();
@@ -721,13 +724,15 @@ protected:
                  InputError );
   }
 
-  virtual void
-  synchronizeNonlinearSolverParameters() override
+  virtual void initializePreSubGroups() override
   {
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    PhysicsSolverBase::initializePreSubGroups();
+
+    bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
+    if( !isSequential )
     {
-      solver->getNonlinearSolverParameters() = getNonlinearSolverParameters();
-    } );
+      synchronizeNonlinearSolverParameters();
+    }
   }
 
   virtual void startSequentialIteration( integer const & iter,

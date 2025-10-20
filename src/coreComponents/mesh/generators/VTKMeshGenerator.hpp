@@ -24,7 +24,8 @@
 #include "mesh/generators/VTKUtilities.hpp"
 #include "mesh/generators/VTKHierarchicalDataSource.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include <vtkDataSet.h>
+
+class vtkDataSet;
 
 namespace geos
 {
@@ -107,6 +108,7 @@ private:
   struct viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
+    constexpr static char const * structuredIndexAttributeString() { return "structuredIndexAttribute"; }
     constexpr static char const * mainBlockNameString() { return "mainBlockName"; }
     constexpr static char const * faceBlockNamesString() { return "faceBlocks"; }
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
@@ -140,7 +142,10 @@ private:
   vtkSmartPointer< vtkDataSet > m_vtkMesh;
 
   /// Name of VTK dataset attribute used to mark regions
-  string m_attributeName;
+  string m_regionAttributeName;
+
+  /// Name of VTK cell attribute storing (semi-)structured cell index, if available
+  string m_structuredIndexAttributeName;
 
   /// Name of the main block to be imported (for multi-block files).
   string m_mainBlockName;
@@ -149,7 +154,7 @@ private:
   string_array m_faceBlockNames;
 
   /// Maps the face block name to its vtk mesh instance.
-  std::map< string, vtkSmartPointer< vtkDataSet > > m_faceBlockMeshes;
+  stdMap< string, vtkSmartPointer< vtkDataSet > > m_faceBlockMeshes;
 
   /// Names of VTK nodesets to import
   string_array m_nodesetNames;

@@ -43,7 +43,7 @@ namespace timingHelpers
 
 #if defined( GEOS_USE_CUDA ) && defined( GEOS_USE_CUDA_NVTOOLSEXT )
 
-#include "nvToolsExt.h"
+#include "nvtx3/nvToolsExt.h"
 
 namespace timingHelpers
 {
@@ -79,11 +79,14 @@ namespace timingHelpers
 #  define GEOS_NVTX_MARK_SCOPE_COLORED(name, color) timingHelpers::NVTXScopeTracer __FILE__ ## _ ## __LINE__ ## _ ## scopeTracer = timingHelpers::NVTXScopeTracer(name, color)
 /// Mark a scope with NVTX with a given name and color purple
 #  define GEOS_NVTX_MARK_SCOPE(name) GEOS_NVTX_MARK_SCOPE_COLORED(STRINGIZE_NX(name), timingHelpers::PURPLE)
+/// Mark a scope with NVTX with a given runtime string and color purple
+#  define GEOS_NVTX_MARK_SCOPE_STR(name) GEOS_NVTX_MARK_SCOPE_COLORED(name, timingHelpers::PURPLE)
 /// Mark a function with NVTX using function name and color blue
 #  define GEOS_NVTX_MARK_FUNCTION GEOS_NVTX_MARK_SCOPE_COLORED(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str(), timingHelpers::BLUE)
 #else
 /// @cond DO_NOT_DOCUMENT
 #  define GEOS_NVTX_MARK_SCOPE(name)
+#  define GEOS_NVTX_MARK_SCOPE_STR(name)
 #  define GEOS_NVTX_MARK_FUNCTION
 /// @endcond
 #endif /* USE_CUDA */
@@ -97,6 +100,9 @@ namespace timingHelpers
 
 /// Mark a function or scope for timing with a given name
 #define GEOS_CALIPER_MARK_SCOPE(name) cali::Function GEOS_CONCAT(_cali_ann, __LINE__)(STRINGIZE_NX(name))
+
+/// Mark a function or scope for timing with a given runtime string
+#define GEOS_CALIPER_MARK_SCOPE_STR(name) cali::Function GEOS_CONCAT(_cali_ann, __LINE__)(name)
 
 /// Mark a function for timing using a compiler-provided name
 #define GEOS_CALIPER_MARK_FUNCTION cali::Function _cali_ann_func(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str())
@@ -117,6 +123,7 @@ namespace timingHelpers
 
 /// @cond DO_NOT_DOCUMENT
 #define GEOS_CALIPER_MARK_SCOPE(name)
+#define GEOS_CALIPER_MARK_SCOPE_STR(name)
 #define GEOS_CALIPER_MARK_FUNCTION
 
 #define GEOS_CALIPER_MARK_BEGIN(name)
@@ -130,6 +137,8 @@ namespace timingHelpers
 
 /// Mark scope with both Caliper and NVTX if enabled
 #define GEOS_MARK_SCOPE(name) GEOS_CALIPER_MARK_SCOPE(name); GEOS_NVTX_MARK_SCOPE(name)
+/// Mark scope with both Caliper and NVTX if enabled
+#define GEOS_MARK_SCOPE_STR(name) GEOS_CALIPER_MARK_SCOPE_STR(name); GEOS_NVTX_MARK_SCOPE_STR(name)
 /// Mark function with both Caliper and NVTX if enabled
 #define GEOS_MARK_FUNCTION GEOS_CALIPER_MARK_FUNCTION; GEOS_NVTX_MARK_FUNCTION
 /// Mark the beginning of function, only useful when you don't want to or can't mark the whole function.
