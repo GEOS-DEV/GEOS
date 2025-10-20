@@ -75,6 +75,7 @@ set( fluidFlowSolvers_headers
      kernels/compositional/CompositionalMultiphaseHybridFVMKernels_impl.hpp
      kernels/compositional/DiffusionDispersionFluxComputeKernel.hpp
      kernels/compositional/DirichletFluxComputeKernel.hpp
+     kernels/compositional/DirichletMFDFluxComputeKernel.hpp
      kernels/compositional/DissipationFluxComputeKernel.hpp
      kernels/compositional/FluidUpdateKernel.hpp
      kernels/compositional/FluidUpdateKernel.hpp
