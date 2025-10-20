@@ -101,7 +101,7 @@ void setupLogger()
         ErrorLogger::ErrorMsg error;
         error.setType( ErrorLogger::MsgType::Error );
         error.addToMsg( errorMsg );
-        error.setRank( ::geos::logger::internal::rank() );
+        error.addRank( ::geos::logger::internal::g_rank );
         error.addCallStackInfo( stackHistory );
         error.addContextInfo(
           ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( detectionLocation ) } } } );
@@ -136,7 +136,7 @@ void setupLogger()
       if( ErrorLogger::global().isOutputFileEnabled() )
       {
         error.setType( ErrorLogger::MsgType::Error );
-        error.setRank( ::geos::logger::internal::rank() );
+        error.addRank( ::geos::logger::internal::g_rank );
         error.addCallStackInfo( stackHistory );
         error.addContextInfo(
           ErrorContext{ { { ErrorContext::Attribute::Signal, std::to_string( signal ) } }, 1 },
