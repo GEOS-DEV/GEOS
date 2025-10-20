@@ -90,7 +90,7 @@ public:
   integer useTotalMassEquation() const { return flowSolver()->useTotalMassEquation(); }
   integer numFluidPhases() { return flowSolver()->numFluidPhases(); }
   integer numFluidComponents() { return flowSolver()->numFluidComponents(); }
-  
+
   void
   assembleHydrofracFluxTerms( real64 const time_n,
                               real64 const dt,
