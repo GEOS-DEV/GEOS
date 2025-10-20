@@ -1,6 +1,8 @@
 #ifndef GEOS_COMMON_STD_CONTAINER_WRAPPERS_HPP
 #define GEOS_COMMON_STD_CONTAINER_WRAPPERS_HPP
 
+#include <array>
+#include <cstddef>
 #include <vector>
 #include <map>
 #include <unordered_map>
@@ -345,6 +347,77 @@ class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std:
   using std::unordered_map< TKEY, TVAL >::unordered_map; // enable list initialization
 };
 /// @endcond
+
+namespace internal
+{
+
+/**
+ * Wrapper for the underlying std::aray that allows toggling between bounds-checked access
+ * (using at()) and unchecked access (using operator[]).
+ * @tparam T Type of elements in std::array
+ * @tparam N The number of fixed element in the array
+ * @tparam USE_STD_CONTAINER_BOUNDS_CHECKING A boolean flag to enable or disable bounds checking.
+ */
+template< class T,
+          std::size_t N,
+          bool USE_BOUNDS_CHECKING = false >
+class StdArrayWrapper : public std::array< T, N >
+{
+public:
+  /// Type alias for the base class (i.e., std::array)
+  using Base = std::array< T, N >;
+
+  /// Inherit constructors
+  using Base::Base;
+
+  /**
+   * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
+   * Otherwise, uses operator[] for unchecked access.
+   * @param index Index of the element to access.
+   * @return Const reference to the element at the specified index.
+   * @throws std::out_of_range if index is out of bounds.
+   */
+  Base & operator[]( T const & key )
+  {
+    if constexpr (USE_BOUNDS_CHECKING)
+    {
+      return this->at( key );  // Throws std::out_of_range if key is missing
+    }
+    else
+    {
+      return Base::operator[]( key );  // Inserts default-constructed value if missing
+    }
+  }
+
+  /**
+   * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
+   * Otherwise, uses operator[] for unchecked access.
+   * @param index Index of the element to access.
+   * @return Const reference to the element at the specified index.
+   * @throws std::out_of_range if index is out of bounds.
+   */
+  Base const & operator[]( T const & key ) const
+  {
+    if constexpr (USE_BOUNDS_CHECKING)
+    {
+      return this->at( key );
+    }
+    else
+    {
+      return Base::operator[]( key );
+    }
+  }
+
+};
+} //namespace internal
+
+/**
+ * type alias for std::array
+ * @tparam T Type of elements in the array.
+ * @tparam N The number of fixed element in the array.
+ */
+template< class T, std::size_t N >
+using stdArray = internal::StdArrayWrapper< T, N, USE_STD_CONTAINER_BOUNDS_CHECKING >;
 
 } // namespace geos
 
