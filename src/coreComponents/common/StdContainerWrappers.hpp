@@ -11,6 +11,10 @@
 namespace geos
 {
 
+/**
+ * @def USE_STD_CONTAINER_BOUNDS_CHECKING
+ * @brief Compile-time flag that enables or disables runtime bounds checking in GEOS container wrappers.
+ */
 #ifdef GEOS_USE_BOUNDS_CHECK
 #define USE_STD_CONTAINER_BOUNDS_CHECKING true
 #else
@@ -18,8 +22,26 @@ namespace geos
 #endif
 
 
+/**
+ * @file StdContainerWrappers.hpp
+ *
+ * @warning:
+ * It is prohibited to use `std::map` or `std::unordered_map` in the geos repos.
+ *
+ * @section Usage
+ * There are two ways to declare a map or unordered_map:
+ *
+ * 1. **stdMap** / **stdUnorderedMap**:
+ *    - These types replace `std::map` with an overridden `operator[]` for bounds checking.
+ *    - We cannot use the operator[] for the insertion.
+ *
+ * 2. **geos::map** / **geos::unordered_map**:
+ *    - Use these types to ensure the compatibility with the geos packing, as `stdMap` is not yet compatible.
+ */
 namespace internal
 {
+
+
 
 /**
  * Default allocator type for std::vector.
@@ -145,7 +167,7 @@ namespace internal
 /**
  * Wrapper for the underlying map that allows toggling between bounds-checked access
  * (using at()) and unchecked access (using operator[]).
- * @tparam MapType The type of the underlying map (e.g., std::map).
+ * @tparam MapType The type of the underlying map (e.g., stdMap).
  * @tparam Allocator Allocator type for the vector.
  * @tparam USE_STD_CONTAINER_BOUNDS_CHECKING A boolean flag to enable or disable bounds checking.
  */
@@ -154,7 +176,7 @@ template< typename MapType,
 class StdMapWrapper : public MapType
 {
 public:
-  /// Type alias for the base class (i.e., std::map)
+  /// Type alias for the base class (i.e., stdMap)
   using Base = MapType;
   using KeyType = typename Base::key_type;
   using MappedType = typename Base::mapped_type;
@@ -200,14 +222,37 @@ public:
       return Base::operator[]( key );
     }
   }
+
+  /**
+   * @brief If a key equivalent to k already exists in the container
+   * Otherwise, inserts a new element into the container with key k
+   * @param k The key used both to look up and to insert if not found
+   * @return A reference to the mapped value
+   */
+  auto & get_inserted( KeyType && k )
+  {
+    return this->try_emplace( k ).first->second;
+  }
+
+  /**
+   * @brief If a key equivalent to k already exists in the container
+   * Otherwise, inserts a new element into the container with key k
+   * @param k The key used both to look up and to insert if not found
+   * @return A reference to the mapped value
+   */
+  auto & get_inserted( KeyType const & k )
+  {
+    return this->try_emplace( k ).first->second;
+  }
+
 };
 
 } //namespace internal
 
 /**
- * type alias for std::map
- * @tparam Key The unique std::map key.
- * @tparam T Type of elements in the std::map.
+ * type alias for stdMap
+ * @tparam Key The unique stdMap key.
+ * @tparam T Type of elements in the stdMap.
  * @tparam Compare The comparison function used to order the keys. Defaults to std::less<Key>.
  * @tparam Allocator Allocator type for the map. Defaults to std::allocator<std::pair<const Key, T>>
  */

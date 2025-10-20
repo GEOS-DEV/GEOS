@@ -1279,6 +1279,12 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--errorSetMode => Set the log state when a “set” does not target any region
+When set to "silent", no output.
+When set to "warning", output a warning.
+When set to "error", output a throw.
+-->
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
@@ -1293,6 +1299,11 @@ This keyword is ignored for single-phase flow simulations-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_FieldSpecificationBase_SetErrorMode">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|silent|error|warning" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="DirichletType">
 		<!--bcApplicationTableName => Name of table that specifies the on/off application of the boundary condition.-->
 		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
@@ -1304,6 +1315,12 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--errorSetMode => Set the log state when a “set” does not target any region
+When set to "silent", no output.
+When set to "warning", output a warning.
+When set to "error", output a throw.
+-->
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
@@ -1330,6 +1347,12 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--errorSetMode => Set the log state when a “set” does not target any region
+When set to "silent", no output.
+When set to "warning", output a warning.
+When set to "error", output a throw.
+-->
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--fieldName => Name of field that boundary condition is applied to.-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
@@ -1366,6 +1389,12 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
 		<!--equilibrationTolerance => Tolerance in the fixed-point iteration scheme used for hydrostatic initialization-->
 		<xsd:attribute name="equilibrationTolerance" type="real64" default="0.001" />
+		<!--errorSetMode => Set the log state when a “set” does not target any region
+When set to "silent", no output.
+When set to "warning", output a warning.
+When set to "error", output a throw.
+-->
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialPhaseName => Name of the phase initially saturating the reservoir-->
@@ -1392,6 +1421,12 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--errorSetMode => Set the log state when a “set” does not target any region
+When set to "silent", no output.
+When set to "warning", output a warning.
+When set to "error", output a throw.
+-->
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--objectPath => Path to the target field-->
@@ -1428,6 +1463,12 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--errorSetMode => Set the log state when a “set” does not target any region
+When set to "silent", no output.
+When set to "warning", output a warning.
+When set to "error", output a throw.
+-->
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--functionName => Name of a function that specifies the variation of the production rate variations of this SourceFlux.Multiplied by scale. If no function is provided, a constant value of 1 is used.The produced fluid rate unit is in kg by default, or in mole if the flow solver uses moles.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
@@ -1450,6 +1491,12 @@ This keyword is ignored for single-phase flow simulations-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
 		<!--endTime => Time at which the boundary condition will stop being applied.-->
 		<xsd:attribute name="endTime" type="real64" default="1e+99" />
+		<!--errorSetMode => Set the log state when a “set” does not target any region
+When set to "silent", no output.
+When set to "warning", output a warning.
+When set to "error", output a throw.
+-->
+		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
 		<!--initialCondition => Boundary condition is applied as an initial condition.-->
@@ -2771,8 +2818,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -2827,8 +2875,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -2915,8 +2964,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3004,8 +3054,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3092,8 +3143,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3200,8 +3252,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3308,8 +3361,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3349,8 +3403,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3400,8 +3455,9 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3464,8 +3520,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3629,8 +3686,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTaper" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3725,8 +3783,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useVTI" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3768,8 +3827,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3810,8 +3870,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3850,8 +3911,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3890,8 +3952,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3958,8 +4021,9 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="useQuasiNewton" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4022,8 +4086,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4066,8 +4131,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4108,8 +4174,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4151,8 +4218,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4207,8 +4275,9 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4258,8 +4327,9 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4299,8 +4369,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4339,8 +4410,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4388,8 +4460,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4438,8 +4511,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4478,8 +4552,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4539,8 +4614,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4606,8 +4682,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4651,8 +4728,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4705,8 +4783,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4759,8 +4838,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4812,8 +4892,9 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4865,8 +4946,9 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4905,8 +4987,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4958,8 +5041,9 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -4998,8 +5082,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5052,8 +5137,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5092,8 +5178,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="wellSolverName" type="groupNameRef" use="required" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5145,8 +5232,9 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5198,8 +5286,9 @@ Local- Add jump stabilization on interior of macro elements-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5243,8 +5332,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5319,8 +5409,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5386,8 +5477,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useStaticCondensation" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5454,8 +5546,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5514,8 +5607,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5576,8 +5670,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5658,8 +5753,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -5716,8 +5812,9 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
-		<!--writeStatistics => When set to 1, output iterations information to a csv
-When set to 2 also output convergence information to a csv-->
+		<!--writeStatistics => When set to `iteration`, output iterations information to a csv
+When set to `convergence`, output convergence information to a csv
+When set to `all` output both convergence & iteration information to a csv.-->
 		<xsd:attribute name="writeStatistics" type="geos_PhysicsSolverBase_StatsOutputType" default="none" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -6772,7 +6869,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 * exponential
 * linear
 * quadratic-->
-		<xsd:attribute name="densityModelType" type="geos_constitutive_ExponentApproximationType" default="linear" />
+		<xsd:attribute name="densityModelType" type="geos_constitutive_ExponentApproximationType" default="exponential" />
 		<!--referenceDensity => Reference fluid density-->
 		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
 		<!--referencePressure => Reference pressure-->
@@ -7985,7 +8082,7 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 * exponential
 * linear
 * quadratic-->
-		<xsd:attribute name="densityModelType" type="geos_constitutive_ExponentApproximationType" default="linear" />
+		<xsd:attribute name="densityModelType" type="geos_constitutive_ExponentApproximationType" default="exponential" />
 		<!--internalEnergyModelType => Type of internal energy model. Valid options:
 * exponential
 * linear
