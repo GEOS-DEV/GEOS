@@ -1092,14 +1092,14 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
   // Step 1: count individual equilibriums (there may be multiple ones)
 
-  std::map< string, localIndex > equilNameToEquilId;
+  stdMap< string, localIndex > equilNameToEquilId;
   localIndex equilCounter = 0;
 
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
   {
 
     // collect all the equilibrium names to idx
-    equilNameToEquilId[bc.getName()] = equilCounter;
+    equilNameToEquilId.insert( {bc.getName(), equilCounter} );
     equilCounter++;
 
     // check that the gravity vector is aligned with the z-axis
@@ -1391,7 +1391,6 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & time_n,
                                                                                 auto & subRegion )
     {
       saveConvergedState( subRegion );
-
       // update porosity, permeability
       updatePorosityAndPermeability( subRegion );
       // update all fluid properties
@@ -1529,13 +1528,13 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
   // Step 1: count individual source flux boundary conditions
 
-  std::map< string, localIndex > bcNameToBcId;
+  stdMap< string, localIndex > bcNameToBcId;
   localIndex bcCounter = 0;
 
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
     // collect all the bc names to idx
-    bcNameToBcId[bc.getName()] = bcCounter;
+    bcNameToBcId.insert( {bc.getName(), bcCounter} );
     bcCounter++;
   } );
 

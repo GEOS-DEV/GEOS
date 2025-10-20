@@ -107,7 +107,7 @@ TEST( testGroupPath, testGlobalPaths )
   catch( const std::domain_error & e )
   {
     static constexpr auto expectedMsg = "***** Error cause: child == nullptr\n"
-                                        "***** Rank 0: Group Mesh (CodeIncludedXML0, l.10) has no child named 'mesh2'\n"
+                                        "***** Rank 0: Group Mesh (CodeIncludedXML0, l.10) has no child named mesh2\n"
                                         "The children of Mesh are: { mesh1 }";
     // checks if the exception contains the expected message
     GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg ), string::npos,
