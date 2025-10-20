@@ -408,16 +408,13 @@ assembleCouplingTerms( real64 const time_n,
 
 template class CompositionalMultiphaseReservoirAndWells<>;
 template class CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics<> >;
-template class CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsConformingFractures<> >;
 
 namespace
 {
 using CompositionalMultiphaseFlowAndWells = CompositionalMultiphaseReservoirAndWells<>;
 using CompositionalMultiphasePoromechanicsAndWells = CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics<> >;
-using CompositionalMultiphasePoromechanicsConformingFracturesAndWells = CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanicsConformingFractures<> >;
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphaseFlowAndWells, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphasePoromechanicsAndWells, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphasePoromechanicsConformingFracturesAndWells, string const &, Group * const )
 }
 
 } /* namespace geos */
