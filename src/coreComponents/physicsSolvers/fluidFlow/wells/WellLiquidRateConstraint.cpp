@@ -39,11 +39,9 @@ LiquidRateConstraint::LiquidRateConstraint( string const & name, Group * const p
     setDescription( "Phase rate,  (if useSurfaceCondSitions: [surface m^3/s]; else [reservoir m^3/s]) " );
 
   this->registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setDefaultValue( "" ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Name of the target phases" );
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "List of fluid phase names defining the liquid" );
 }
 
 LiquidRateConstraint::~LiquidRateConstraint()
