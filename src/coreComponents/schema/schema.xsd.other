@@ -516,7 +516,7 @@
 		<!--fractureStencil => (no description available)-->
 		<xsd:attribute name="fractureStencil" type="geos_SurfaceElementStencil" />
 		<!--targetRegions => List of regions to build the stencil for-->
-		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-geos_internal_StdVectorWrapper_lt_string_cm_-std_allocator_lt_string-_gt__cm_-false_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
+		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-geos_internal_StdVectorWrapper_lt_string_cm_-std_allocator_lt_string-_gt__cm_-true_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1502,7 +1502,7 @@
 			<xsd:element name="MeshBodies" type="MeshBodiesType" />
 		</xsd:choice>
 		<!--Neighbors => (no description available)-->
-		<xsd:attribute name="Neighbors" type="geos_internal_StdVectorWrapper_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt__cm_-false_gt_" />
+		<xsd:attribute name="Neighbors" type="geos_internal_StdVectorWrapper_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt__cm_-true_gt_" />
 		<!--partitionManager => (no description available)-->
 		<xsd:attribute name="partitionManager" type="geos_PartitionBase" />
 	</xsd:complexType>
@@ -1566,15 +1566,25 @@
 			<xsd:element name="PorousDamageSpectralElasticIsotropic" type="PorousDamageSpectralElasticIsotropicType" />
 			<xsd:element name="PorousDamageVolDevElasticIsotropic" type="PorousDamageVolDevElasticIsotropicType" />
 			<xsd:element name="PorousDelftEgg" type="PorousDelftEggType" />
+			<xsd:element name="PorousDelftEggCarmanKozenyPermeability" type="PorousDelftEggCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousDruckerPrager" type="PorousDruckerPragerType" />
+			<xsd:element name="PorousDruckerPragerCarmanKozenyPermeability" type="PorousDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousElasticIsotropic" type="PorousElasticIsotropicType" />
+			<xsd:element name="PorousElasticIsotropicCarmanKozenyPermeability" type="PorousElasticIsotropicCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousElasticOrthotropic" type="PorousElasticOrthotropicType" />
+			<xsd:element name="PorousElasticOrthotropicCarmanKozenyPermeability" type="PorousElasticOrthotropicCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousElasticTransverseIsotropic" type="PorousElasticTransverseIsotropicType" />
+			<xsd:element name="PorousElasticTransverseIsotropicCarmanKozenyPermeability" type="PorousElasticTransverseIsotropicCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousExtendedDruckerPrager" type="PorousExtendedDruckerPragerType" />
+			<xsd:element name="PorousExtendedDruckerPragerCarmanKozenyPermeability" type="PorousExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousModifiedCamClay" type="PorousModifiedCamClayType" />
+			<xsd:element name="PorousModifiedCamClayCarmanKozenyPermeability" type="PorousModifiedCamClayCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousViscoDruckerPrager" type="PorousViscoDruckerPragerType" />
+			<xsd:element name="PorousViscoDruckerPragerCarmanKozenyPermeability" type="PorousViscoDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousViscoExtendedDruckerPrager" type="PorousViscoExtendedDruckerPragerType" />
+			<xsd:element name="PorousViscoExtendedDruckerPragerCarmanKozenyPermeability" type="PorousViscoExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 			<xsd:element name="PorousViscoModifiedCamClay" type="PorousViscoModifiedCamClayType" />
+			<xsd:element name="PorousViscoModifiedCamClayCarmanKozenyPermeability" type="PorousViscoModifiedCamClayCarmanKozenyPermeabilityType" />
 			<xsd:element name="PressurePermeability" type="PressurePermeabilityType" />
 			<xsd:element name="PressurePorosity" type="PressurePorosityType" />
 			<xsd:element name="ProppantPermeability" type="ProppantPermeabilityType" />
@@ -2741,15 +2751,25 @@
 	<xsd:complexType name="PorousDamageSpectralElasticIsotropicType" />
 	<xsd:complexType name="PorousDamageVolDevElasticIsotropicType" />
 	<xsd:complexType name="PorousDelftEggType" />
+	<xsd:complexType name="PorousDelftEggCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="PorousDruckerPragerType" />
+	<xsd:complexType name="PorousDruckerPragerCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="PorousElasticIsotropicType" />
+	<xsd:complexType name="PorousElasticIsotropicCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="PorousElasticOrthotropicType" />
+	<xsd:complexType name="PorousElasticOrthotropicCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="PorousElasticTransverseIsotropicType" />
+	<xsd:complexType name="PorousElasticTransverseIsotropicCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="PorousExtendedDruckerPragerType" />
+	<xsd:complexType name="PorousExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="PorousModifiedCamClayType" />
+	<xsd:complexType name="PorousModifiedCamClayCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="PorousViscoDruckerPragerType" />
+	<xsd:complexType name="PorousViscoDruckerPragerCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="PorousViscoExtendedDruckerPragerType" />
+	<xsd:complexType name="PorousViscoExtendedDruckerPragerCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="PorousViscoModifiedCamClayType" />
+	<xsd:complexType name="PorousViscoModifiedCamClayCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="PressurePermeabilityType">
 		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />

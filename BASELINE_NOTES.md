@@ -6,6 +6,22 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3851 (2025-10-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3851-14171-9d950d6.tar.gz>
+=====================
+Enable `FullyImplicit` for `SinglePhaseReservoirPoromechanicsConformingFractures`.
+
+PR #3808 (2025-10-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3808-14160-03c20b2.tar.gz>
+=====================
+Add errorSetMode for the FiedSpecification.
+
+PR #3193 (2025-10-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3193-14118-8ee1c34.tar.gz>
+=====================
+Enable geothermal gradient in HydrostaticEquilibrium for single-phase flow.
+
+PR #3359 (2025-10-07) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3359-14024-3c9ebb4.tar.gz>
+=====================
+Add functions to connect well perforation to surface elements.
+
 PR #3843 (2025-10-02) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3843-13975-76d125d.tar.gz>
 =====================
 Fix linear solver issues.
@@ -73,7 +89,6 @@ Add hydrofrac verification cases for leak-off.
 PR #3587 (2025-09-08) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3587-13389-99ac8e4.tar.gz>
 =====================
 Perforation status option. Updates for schema changes and well quantities not being compute if well is closed
-
 PR #3788 (2025-09-07) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3788-13372-e0a1d67.tar.gz>
 =====================
 Updating txt files for class09_pb3_hystRelperm.
