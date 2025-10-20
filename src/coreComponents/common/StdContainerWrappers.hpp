@@ -385,7 +385,7 @@ public:
     }
     else
     {
-      return Base::operator[]( key );  // Inserts default-constructed value if missing
+      return Base::operator[]( key );
     }
   }
 
