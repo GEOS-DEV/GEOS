@@ -13,6 +13,9 @@ or by importing meshes from various common mesh file formats.
 This latter options allows one to work with more complex geometries,
 such as unstructured meshes comprised of a variety of element types (polyhedral elements).
 
+.. note::
+  GEOS is a right-handed coordinate system: x: right, y: forward, z: upward.
+
 ************************
 Internal Mesh Generation
 ************************
