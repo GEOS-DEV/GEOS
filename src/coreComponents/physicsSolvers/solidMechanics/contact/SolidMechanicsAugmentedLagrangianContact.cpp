@@ -33,6 +33,7 @@
 #include "physicsSolvers/solidMechanics/contact/ContactFields.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
+#include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/solid/SolidFields.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -49,8 +50,8 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
   ContactSolverBase( name, parent )
 {
 
-  m_faceTypeToFiniteElements["Quadrilateral"] =  std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
-  m_faceTypeToFiniteElements["Triangle"] =  std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >();
+  m_faceTypeToFiniteElements.insert( {"Quadrilateral", std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >()} );
+  m_faceTypeToFiniteElements.insert( {"Triangle", std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >()} );
 
   registerWrapper( viewKeyStruct::simultaneousString(), &m_simultaneous ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -162,17 +163,6 @@ void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepositor
         setRegisteringObjects( getName()).
         setDescription( "An array that stores the displacement jumps used to update the penalty coefficients." ).
         reference().resizeDimension< 1 >( 3 );
-
-      // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
-      // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
-      subRegion.registerField< flow::pressure >( getName() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName());
-
-      subRegion.registerField< flow::pressure_n >( getName() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRegisteringObjects( this->getName());
-
     } );
   } );
 
@@ -386,11 +376,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleSystem( real64 const time
                                                localMatrix,
                                                localRhs );
 
-
-  //ParallelMatrix parallel_matrix;
-  //parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
-  //parallel_matrix.write("mech.mtx");
-
   assembleContact( time, dt, domain, dofManager, localMatrix, localRhs );
 
   // for sequential: add (fixed) pressure force contribution into residual (no derivatives)
@@ -593,8 +578,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
 
   GEOS_MARK_FUNCTION;
 
-  //GEOS_UNUSED_VAR( domain, dofManager, localMatrix, localRhs );
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -611,7 +594,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
 
     string const & fractureRegionName = this->getUniqueFractureRegionName();
 
-    //GEOS_UNUSED_VAR( fractureRegionName, meshName, dt, localMatrix, localRhs );
     forFiniteElementOnFractureSubRegions( meshName, [&] ( string const &,
                                                           finiteElement::FiniteElementBase const & subRegionFE,
                                                           arrayView1d< localIndex const > const & faceElementList )
@@ -641,7 +623,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
     } );
 
     set< string > poromechanicsRegions;
-    set< string > mechanicsRegions;
     ElementRegionManager const & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                        [&]
@@ -651,10 +632,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
       {
         poromechanicsRegions.insert( regionNames[regionIndex] );
       }
-      else
-      {
-        mechanicsRegions.insert( regionNames[regionIndex] );
-      }
     } );
 
     string_array poromechanicsRegionNames;
@@ -662,12 +639,6 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
     for( auto const & region : poromechanicsRegions )
     {
       poromechanicsRegionNames.emplace_back( region );
-    }
-    string_array mechanicsRegionNames;
-    mechanicsRegionNames.reserve( mechanicsRegions.size());
-    for( auto const & region : mechanicsRegions )
-    {
-      mechanicsRegionNames.emplace_back( region );
     }
 
     solidMechanicsConformingContactKernels::PressureFaceBubbleFactory kernelFactory( dispDofNumber,
@@ -1266,8 +1237,8 @@ void SolidMechanicsAugmentedLagrangianContact::updateStickSlipList( DomainPartit
         slipList_v[kfe] = vals_v[nStick+kfe];
       } );
 
-      m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
-      m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
+      m_faceTypesToFaceElementsStick.get_inserted( meshName ).get_inserted( finiteElementName ) = stickList;
+      m_faceTypesToFaceElementsSlip.get_inserted( meshName ).get_inserted( finiteElementName ) = slipList;
 
       GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
@@ -1350,8 +1321,8 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
       quadList_v[kfe] = vals_v[nTri+kfe];
     } );
 
-    m_faceTypesToFaceElements[meshName]["Quadrilateral"] =  quadList;
-    m_faceTypesToFaceElements[meshName]["Triangle"] =  triList;
+    m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Quadrilateral" ) = quadList;
+    m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Triangle" ) = triList;
   } );
 
 }
@@ -1466,19 +1437,6 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
 
       arrayView2d< localIndex > const faceElemsList_v = faceElemsList.toView();
 
-//////////////////////////////////////////////////////////////////////////////////////////
-/*
-      FaceManager const & faceManager = mesh.getFaceManager();
-      ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
-      NodeManager const & nodeManager = mesh.getNodeManager();
-
-      arrayView2d< localIndex const > const elemsToNodeMap = cellElementSubRegion.nodeList().toViewConst();
-      arrayView2d< real64 const > const elemsCenter = cellElementSubRegion.getElementCenter().toViewConst();
-
-      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePosition = nodeManager.referencePosition();
- */
-//////////////////////////////////////////////////////////////////////////////////////////
-
       forAll< parallelDevicePolicy<> >( nBubElems,
                                         [ = ]
                                         GEOS_HOST_DEVICE ( localIndex const k )
@@ -1486,57 +1444,6 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         localIndex const kfe =  bubbleElemsList_v[k];
         faceElemsList_v[k][0] = elemsToFaces[kfe][keys_v[k]];
         faceElemsList_v[k][1] = keys_v[k];
-//////////////////////////////////////////////////////////////////////////////////////////
-/*
-        std::cout << "GlobID: " << faceElemsList_v[k][0] << " LocalID: " << faceElemsList_v[k][1] << std::endl;
-        std::cout << "FACE NODES: " << std::endl;
-        real64 x = 0;
-        real64 y = 0;
-        real64 z = 0;
-        for (int nod=0; nod<3; ++nod)
-        {
-          std::cout << faceToNodeMap( faceElemsList_v[k][0], nod) << " ";
-          x +=  nodePosition[faceToNodeMap( faceElemsList_v[k][0], nod)][0];
-          y +=  nodePosition[faceToNodeMap( faceElemsList_v[k][0], nod)][1];
-          z +=  nodePosition[faceToNodeMap( faceElemsList_v[k][0], nod)][2];
-        }
-        std::cout << std::endl;
-        std::cout << "FACE CENTERS: " << std::endl;
-        std::cout << x/3 << " " << y/3 << " " << z/3 << std::endl;
-        std::cout << "ELEMENT CENTERS: " << kfe << std::endl;
-        std::cout << elemsCenter[kfe][0] << " " << elemsCenter[kfe][1] << " " << elemsCenter[kfe][2] << std::endl;
-        std::cout << "ELMENT NODES: " << std::endl;
-        if (faceElemsList_v[k][1] == 0)
-        {
-          std::cout << elemsToNodeMap(kfe, 0) << " ";
-          std::cout << elemsToNodeMap(kfe, 1) << " ";
-          std::cout << elemsToNodeMap(kfe, 3) << " ";
-          std::cout << std::endl;
-        }
-        else if (faceElemsList_v[k][1] == 1)
-        {
-          std::cout << elemsToNodeMap(kfe, 0) << " ";
-          std::cout << elemsToNodeMap(kfe, 2) << " ";
-          std::cout << elemsToNodeMap(kfe, 1) << " ";
-          std::cout << std::endl;
-        }
-        else if (faceElemsList_v[k][1] == 2)
-        {
-          std::cout << elemsToNodeMap(kfe, 0) << " ";
-          std::cout << elemsToNodeMap(kfe, 3) << " ";
-          std::cout << elemsToNodeMap(kfe, 2) << " ";
-          std::cout << std::endl;
-        }
-        else if (faceElemsList_v[k][1] == 3)
-        {
-          std::cout << elemsToNodeMap(kfe, 1) << " ";
-          std::cout << elemsToNodeMap(kfe, 2) << " ";
-          std::cout << elemsToNodeMap(kfe, 3) << " ";
-          std::cout << std::endl;
-        }
-        std::cout << std::endl;
- */
-//////////////////////////////////////////////////////////////////////////////////////////
       } );
       cellElementSubRegion.setFaceElementsList( faceElemsList.toViewConst());
 
@@ -1954,10 +1861,6 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
                                           pow( rotatedInvStiffApprox[ 2 ][ 2 ], 2 )) * averageYoungModulus * m_tolJumpDispTFac;
             normalTractionTolerance[kfe] = m_tolNormalTracFac * (averageConstrainedModulus / averageBoxSize0) *
                                            (normalDisplacementTolerance[kfe]);
-
-            //GEOS_LOG_LEVEL( logInfo::ContactTolerance,
-            //                GEOS_FMT( "kfe: {}, normalDisplacementTolerance: {}, slidingTolerance: {}, normalTractionTolerance: {}",
-            //                          kfe, normalDisplacementTolerance[kfe], slidingTolerance[kfe], normalTractionTolerance[kfe] ));
 
             iterativePenalty[kfe][0] = m_iterPenaltyNFac*averageConstrainedModulus/(averageBoxSize0);
             iterativePenalty[kfe][1] = m_iterPenaltyTFac*averageConstrainedModulus/(averageBoxSize0);

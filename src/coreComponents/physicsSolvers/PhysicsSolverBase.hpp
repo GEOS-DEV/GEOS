@@ -1161,8 +1161,7 @@ protected:
   /// flag for debug output of matrix, rhs, and solution
   integer m_writeLinearSystem;
 
-  /// When set to 1 output to log iterations information
-  /// When set to 2 additionnaly output csv files containing iterations & convergence information
+  /// Parameter for outputing statistics information
   StatsOutputType m_writeStatisticsCSV;
 
   /// Linear solver parameters
@@ -1184,7 +1183,7 @@ protected:
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
   /// Timers for the aggregate profiling of the solver
-  std::map< std::string, std::chrono::system_clock::duration > m_timers;
+  stdMap< std::string, std::chrono::system_clock::duration > m_timers;
 
   /// History of the solution vector, used for oscillation detection
   ArrayOfArrays< real64 > m_solutionHistory;
