@@ -29,7 +29,7 @@
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
-#include "mesh/cell/CellElementSubRegion.hpp"
+#include "mesh/CellElementSubRegion.hpp"
 #include "mesh/FaceManager.hpp"
 #include "mesh/NodeManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
@@ -153,7 +153,7 @@ public:
                                  real64 const dt,
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs,
-                                 BitFlags< KernelFlags > kernelFlags )
+                                 BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags )
     : Base( numPhases,
             rankOffset,
             stencilWrapper,
@@ -504,7 +504,7 @@ public:
   createAndLaunch( integer const numComps,
                    integer const numPhases,
                    globalIndex const rankOffset,
-                   BitFlags< KernelFlags > kernelFlags,
+                   BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags,
                    string const & dofKey,
                    string const & solverName,
                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
@@ -532,12 +532,12 @@ public:
       ElementSubRegionBase const & subRegionBase = elemManager.getRegion( er ).getSubRegion( esr );
 
       // Element geometry/connectivity arrays
-      ElementRegionManager::ElementViewConst< arrayView2d< real64 const > > elemCenter =
-        elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() ).toViewConst();
-      ElementRegionManager::ElementViewConst< arrayView1d< real64 const > > elemVolume =
-        elemManager.constructArrayViewAccessor< real64, 1 >( CellElementSubRegion::viewKeyStruct::elementVolumeString() ).toViewConst();
-      ElementRegionManager::ElementViewConst< arrayView2d< localIndex const > > elemToFaces =
-        elemManager.constructArrayViewAccessor< localIndex, 2 >( CellElementSubRegion::viewKeyStruct::faceListString() ).toViewConst();
+      ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > elemCenter =
+        elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
+      ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > elemVolume =
+        elemManager.constructArrayViewAccessor< real64, 1 >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
+      ElementRegionManager::ElementViewAccessor< arrayView2d< localIndex const > > elemToFaces =
+        elemManager.constructArrayViewAccessor< localIndex, 2 >( CellElementSubRegion::viewKeyStruct::faceListString() );
 
       // Face connectivity and multipliers
       ArrayOfArraysView< localIndex const > faceToNodes = faceManager.nodeList().toViewConst();
@@ -549,21 +549,24 @@ public:
       typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
+      typename kernelType::DofNumberAccessor dofNumberAccessor =
+        elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+
       kernelType kernel( numPhases,
                          rankOffset,
                          faceManager,
                          stencilWrapper,
                          fluidWrapper,
-                         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey ),
+                         dofNumberAccessor,
                          compFlowAccessors,
                          multiFluidAccessors,
                          capPressureAccessors,
                          permeabilityAccessors,
                          nodePosition,
                          faceToNodes,
-                         elemCenter,
-                         elemVolume,
-                         elemToFaces,
+                         elemCenter.toNestedViewConst(),
+                         elemVolume.toNestedViewConst(),
+                         elemToFaces.toNestedViewConst(),
                          transMultiplier,
                          lengthTolerance,
                          dt,

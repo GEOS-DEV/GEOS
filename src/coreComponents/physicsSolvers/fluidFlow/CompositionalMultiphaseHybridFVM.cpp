@@ -27,6 +27,8 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteVolume/HybridMimeticDiscretization.hpp"
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
+#include "finiteVolume/BoundaryStencil.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
@@ -35,6 +37,8 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionCheckKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/ResidualNormKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/DirichletMFDFluxComputeKernel.hpp"
+#include "mesh/CellElementSubRegion.hpp"
 
 /**
  * @namespace the geos namespace that encapsulates the majority of the code
@@ -588,20 +592,119 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
 {
   GEOS_MARK_FUNCTION;
 
+  using namespace isothermalCompositionalMultiphaseFVMKernels;
+  using namespace mimeticInnerProduct;
+
+  // Build kernel flags (capillary pressure not supported here)
+  BitFlags< isothermalCompositionalMultiphaseFVMKernels::KernelFlags > kernelFlags;
+  if( m_useTotalMassEquation )
+  {
+    kernelFlags.set( isothermalCompositionalMultiphaseFVMKernels::KernelFlags::TotalMassEquation );
+  }
+
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
+  // Log message similar to the cell-centered FVM version
+  static char const faceBcLogMessage[] =
+    "CompositionalMultiphaseHybridFVM {}: at time {}s, "
+    "the <{}> boundary condition '{}' is applied to the face set '{}' in '{}'. "
+    "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). "
+    "\nThe total number of target faces (including ghost faces) is {}."
+    "\nNote that if this number is equal to zero, the boundary condition will not be applied on this face set.";
+
+  // For each mesh target, first apply face fields and assemble MFD Dirichlet fluxes, then keep strong enforcement of face bcPressure
   this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                       MeshLevel & mesh,
                                                                       string_array const & )
   {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager & faceManager = mesh.getFaceManager();
 
+    // 1) Apply boundary field values to face-centered fields (pressure, composition, temperature)
+    applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
+                                    flow::pressure::key(), flow::facePressure::key() );
+    applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
+                                    flow::globalCompFraction::key(), flow::faceGlobalCompFraction::key() );
+    // NOTE: current MFD compositional implementation is isothermal; thermal support will be added later.
+    applyFieldValue< FaceManager >( time_n, dt, mesh, faceBcLogMessage,
+                                    flow::temperature::key(), flow::faceTemperature::key() );
+
+    // 2) Launch MFD Dirichlet flux kernel per BC face set using the selected inner product
+    fsManager.apply< FaceManager >( time_n + dt,
+                                    mesh,
+                                    flow::pressure::key(),
+                                    [&] ( FieldSpecificationBase const &,
+                                          string const & setName,
+                                          SortedArrayView< localIndex const > const &,
+                                          FaceManager &,
+                                          string const & )
+    {
+      BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+      if( stencil.size() == 0 )
+      {
+        return;
+      }
+
+      // Select fluid model from first cell adjacent to this face set (same approach as in FVM Dirichlet)
+      localIndex const er  = stencil.getElementRegionIndices()( 0, BoundaryStencil::Order::ELEM );
+      localIndex const esr = stencil.getElementSubRegionIndices()( 0, BoundaryStencil::Order::ELEM );
+      ElementSubRegionBase & subRegion = elemManager.getRegion( er ).getSubRegion( esr );
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase & multiFluidBase = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
+
+      BoundaryStencilWrapper const stencilWrapper = stencil.createKernelWrapper();
+      string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+      // Inner product selection and NF dispatch
+      HybridMimeticDiscretization const & hmDiscretization = fvManager.getHybridMimeticDiscretization( m_discretizationName );
+      MimeticInnerProductBase const & mimIP =
+        hmDiscretization.getReference< MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString() );
+
+      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+      integer const numFacesInElem = elemManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr ).numFacesPerElement();
+
+      mimeticInnerProductReducedDispatch( mimIP, [&] ( auto const ipType )
+      {
+        using IP_T = std::remove_const_t< TYPEOFREF( ipType ) >;
+        if( numFacesInElem == 4 )
+        {
+          DirichletMFDFluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<>, IP_T, 4 >(
+            m_numComponents, m_numPhases, dofManager.rankOffset(), kernelFlags,
+            elemDofKey, getName(), nodePosition, faceManager, elemManager, stencilWrapper,
+            multiFluidBase, m_lengthTolerance, dt, localMatrix, localRhs );
+        }
+        else if( numFacesInElem == 5 )
+        {
+          DirichletMFDFluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<>, IP_T, 5 >(
+            m_numComponents, m_numPhases, dofManager.rankOffset(), kernelFlags,
+            elemDofKey, getName(), nodePosition, faceManager, elemManager, stencilWrapper,
+            multiFluidBase, m_lengthTolerance, dt, localMatrix, localRhs );
+        }
+        else if( numFacesInElem == 6 )
+        {
+          DirichletMFDFluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<>, IP_T, 6 >(
+            m_numComponents, m_numPhases, dofManager.rankOffset(), kernelFlags,
+            elemDofKey, getName(), nodePosition, faceManager, elemManager, stencilWrapper,
+            multiFluidBase, m_lengthTolerance, dt, localMatrix, localRhs );
+        }
+        else
+        {
+          GEOS_ERROR( GEOS_FMT( "Unsupported number of faces per element: {}", numFacesInElem ) );
+        }
+      } );
+    } );
+
+    // 3) Keep strong enforcement that the face pressure equals the informed bcPressure value (original behavior)
     arrayView1d< real64 const > const presFace =
       faceManager.getField< flow::facePressure >();
     arrayView1d< real64 const > const presFaceBC =
       faceManager.getField< flow::bcPressure >();
+    string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
     arrayView1d< globalIndex const > const faceDofNumber =
       faceManager.getReference< array1d< globalIndex > >( faceDofKey );
     arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
@@ -617,7 +720,6 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
                                           FaceManager & targetGroup,
                                           string const & )
     {
-
       // Using the field specification functions to apply the boundary conditions to the system
       fs.applyFieldValue< FieldSpecificationEqual,
                           parallelDevicePolicy<> >( targetSet,
@@ -652,9 +754,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
     } );
 
   } );
-
 }
-
 void CompositionalMultiphaseHybridFVM::applyAquiferBC( real64 const time,
                                                        real64 const dt,
                                                        DofManager const & dofManager,
