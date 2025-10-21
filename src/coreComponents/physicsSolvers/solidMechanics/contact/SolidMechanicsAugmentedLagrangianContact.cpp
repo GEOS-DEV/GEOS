@@ -647,6 +647,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
                                                                                      localRhs,
                                                                                      dt );
 
+
     real64 maxTraction = finiteElement::regionBasedKernelApplication
                          < parallelDevicePolicy< >,
                            PorousSolid< ElasticIsotropic, ConstantPermeability >,
@@ -733,12 +734,16 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
   // globalResidualNorm[1]: max of max force of each rank. Basically max force globally
   real64 globalResidualNorm[2] = {0, 0};
 
+
+
   // Bubble residual
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
                                                                 string_array const & )
   {
+
     FaceManager const & faceManager = mesh.getFaceManager();
+    auto const & fGhost = faceManager.ghostRank();
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
@@ -761,9 +766,13 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
         {
           localIndex const k = elemsToFaces[kfe][kk];
           localIndex const localRow = LvArray::integerConversion< localIndex >( bubbleDofNumber[k] - rankOffset );
-          for( localIndex i = 0; i < 3; ++i )
+          if( fGhost[k] < 0 )
           {
-            localSum += localRhs[localRow + i] * localRhs[localRow + i];
+
+            for( localIndex i = 0; i < 3; ++i )
+            {
+              localSum += localRhs[localRow + i] * localRhs[localRow + i];
+            }
           }
         }
       }
