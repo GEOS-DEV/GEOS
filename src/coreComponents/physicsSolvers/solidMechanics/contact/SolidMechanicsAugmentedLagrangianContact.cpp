@@ -764,36 +764,25 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
   // globalResidualNorm[0]: the sum of all the local sum(rhs^2).
   // globalResidualNorm[1]: max of max force of each rank. Basically max force globally
   real64 globalResidualNorm[2] = {0, 0};
-  
-  
+
+
 
   // Bubble residual
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel const & mesh,
                                                                 string_array const & )
-  {  
-    
+  {
+
     FaceManager const & faceManager = mesh.getFaceManager();
+    auto const & fGhost = faceManager.ghostRank();
     ElementRegionManager const & elemManager = mesh.getElemManager();
-    
-    // identify the void regions
-  //   localIndex voidRegionIndex = -1;
-  //   elemManager.forElementRegionsComplete( [&]( localIndex const elemRegionIndex,
-  //                                                   ElementRegionBase const & elemRegion )
-  // {
-  //   if( elemRegion.getName() == "void" )
-  //   {
-  //     voidRegionIndex = elemRegionIndex;
-  //   }
-  // } );
-  auto const& toElemRelation = faceManager.toElementRelation();
-  auto const& faceToElementRegionIndex = toElemRelation.m_toElementRegion.toViewConst();
 
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
+    //
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
@@ -807,27 +796,16 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
       {
         for( int kk=0; kk<2; ++kk )
         {
-          localIndex const k = elemsToFaces[kfe][kk];//cell ID
-
-          // GEOS_LOG_RANK(GEOS_FMT("Entering guarded k {} ghostRankE {} | ghostRank[k] {} ", k, ghostRankE.size(), ghostRankE[k]));
-
-          // if(ghostRankE[k]<0){
+          localIndex const k = elemsToFaces[kfe][kk];//
           localIndex const localRow = LvArray::integerConversion< localIndex >( bubbleDofNumber[k] - rankOffset );
-          GEOS_LOG_RANK(GEOS_FMT("SUCEED : localRhs {} | k cell, {}, localRow {}, rankOffset {}, bbubleDofNumber {}", 
-                              localRhs.size(), 
-                              k, localRow, rankOffset, bubbleDofNumber[k]));
-          if( !(localRow<0 || localRow > localRhs.size() )){
-          for( localIndex i = 0; i < 3; ++i )
+          if( fGhost[k] < 0 )
           {
-            localSum += localRhs[localRow + i] * localRhs[localRow + i];
+
+            for( localIndex i = 0; i < 3; ++i )
+            {
+              localSum += localRhs[localRow + i] * localRhs[localRow + i];
+            }
           }
-        }
-        else {
-          GEOS_LOG_RANK(GEOS_FMT("FAILED : localRhs {} | k cell, {}, localRow {}, rankOffset {}, bbubleDofNumber {}", 
-                              localRhs.size(), 
-                              k, localRow, rankOffset, bubbleDofNumber[k]));
-        
-        }
         }
       }
 
