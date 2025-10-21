@@ -108,7 +108,7 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( -1 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Defines the global component densities of the injected fluid in the reservoir as a fraction of its components [moles/m^3 or kg/m^3]" );
+    setDescription( "Defines the global component fractions of the injected fluid." );
 
   registerWrapper( viewKeyStruct::injectionTemperatureString(), &m_injectionTemperature ).
     setDefaultValue( -1 ).
