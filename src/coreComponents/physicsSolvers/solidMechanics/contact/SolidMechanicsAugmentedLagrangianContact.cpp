@@ -35,7 +35,6 @@
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/solid/SolidFields.hpp"
-#include "constitutive/solid/PorousSolid.hpp"
 #include "mesh/DomainPartition.hpp"
 
 namespace geos
@@ -765,7 +764,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
       {
         for( int kk=0; kk<2; ++kk )
         {
-          localIndex const k = elemsToFaces[kfe][kk];//
+          localIndex const k = elemsToFaces[kfe][kk];
           localIndex const localRow = LvArray::integerConversion< localIndex >( bubbleDofNumber[k] - rankOffset );
           if( fGhost[k] < 0 )
           {
