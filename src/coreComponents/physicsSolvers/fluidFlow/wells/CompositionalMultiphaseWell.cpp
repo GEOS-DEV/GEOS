@@ -729,7 +729,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( ElementRegionMana
     if( !wellControls.referenceReservoirRegion().empty() )
     {
       ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion());
-      GEOS_ERROR_IF ( region.getWrapperPointer< CompositionalMultiphaseStatistics::RegionStatistics >( CompositionalMultiphaseStatistics::regionStatisticsName() ) == nullptr,
+      GEOS_ERROR_IF ( !region.hasWrapper( CompositionalMultiphaseStatistics::regionStatisticsName() ),
                       GEOS_FMT( "{}: WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be configured for region {} ",
                                 getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ) );
 
