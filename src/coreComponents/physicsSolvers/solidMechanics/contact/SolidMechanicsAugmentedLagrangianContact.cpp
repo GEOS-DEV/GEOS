@@ -677,8 +677,7 @@ void SolidMechanicsAugmentedLagrangianContact::assembleForceResidualPressureCont
                                                                                      localRhs,
                                                                                      dt );
 
-    // constitutive::PorousSolid< ElasticIsotropic , ConstantPermeability> m_test("test", this);
-    // m_test.getBiotCoefficient();
+
     real64 maxTraction = finiteElement::regionBasedKernelApplication
                          < parallelDevicePolicy< >,
                            PorousSolid< ElasticIsotropic, ConstantPermeability >,
@@ -782,7 +781,6 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
 
     arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-    //
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
