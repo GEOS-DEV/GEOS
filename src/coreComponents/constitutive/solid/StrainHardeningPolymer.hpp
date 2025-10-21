@@ -692,7 +692,8 @@ void StrainHardeningPolymerUpdates::computePlasticStrainIncrement ( localIndex c
     }
     if (m_shearModulus[k] > 1.0e-12)
     {
-      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * sqrt(2/3) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
+      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * sqrt(2.0/3.0) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
+      //MM updated sqrt 2/3 to be 2. /3.
     }
   }
 

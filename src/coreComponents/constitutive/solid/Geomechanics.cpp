@@ -360,7 +360,7 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setDescription( "Array of quadrature point damage values" );
 
   registerWrapper( viewKeyStruct::temperatureString(), &m_temperature ).
-    setApplyDefaultValue( 0.0 ).
+    setApplyDefaultValue( 300.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Array of quadrature point temperature values" );
 
