@@ -774,7 +774,7 @@ CellBlock & CellBlockManager::registerCellBlock( string const & cellBlockName,
                                                  integer regionAttribute )
 {
   CellBlock & cb = this->getCellBlocks().registerGroup< CellBlock >( cellBlockName );
-  m_regionAttributesCellBlocks[ regionAttribute ].emplace( cellBlockName );
+  m_regionAttributesCellBlocks.get_inserted( regionAttribute ).emplace( cellBlockName );
   return cb;
 }
 
@@ -816,12 +816,12 @@ arrayView1d< globalIndex > CellBlockManager::getNodeLocalToGlobal()
   return m_nodeLocalToGlobal.toView();
 }
 
-std::map< string, SortedArray< localIndex > > const & CellBlockManager::getNodeSets() const
+stdMap< string, SortedArray< localIndex > > const & CellBlockManager::getNodeSets() const
 {
   return m_nodeSets;
 }
 
-std::map< string, SortedArray< localIndex > > & CellBlockManager::getNodeSets()
+stdMap< string, SortedArray< localIndex > > & CellBlockManager::getNodeSets()
 {
   return m_nodeSets;
 }

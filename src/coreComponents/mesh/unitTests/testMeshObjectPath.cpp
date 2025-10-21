@@ -74,19 +74,19 @@ private:
 void TestMesh::createTestMesh()
 {
 
-  m_pathPermutations["body0"]["level0"]["region1"]={"subreg0", "subreg1"};
-  m_pathPermutations["body0"]["level0"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body0"]["level1"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body0"]["level1"]["region1"]={"subreg0", "subreg1"};
-  m_pathPermutations["body1"]["level0"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body1"]["level0"]["region1"]={"subreg0", "subreg1"};
-  m_pathPermutations["body1"]["level1"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body1"]["level1"]["region1"]={"subreg0", "subreg1"};
-  m_pathPermutations["body1"]["level1"]["region2"]={"subreg0", "subreg2"};
-  m_pathPermutations["body3"]["level0"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body3"]["level0"]["region1"]={"subreg0", "subreg1"};
-  m_pathPermutations["body3"]["level2"]["region0"]={"subreg0", "subreg1"};
-  m_pathPermutations["body3"]["level2"]["region1"]={"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body0" ).get_inserted( "level0" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body0" ).get_inserted( "level0" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body0" ).get_inserted( "level1" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body0" ).get_inserted( "level1" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body1" ).get_inserted( "level0" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body1" ).get_inserted( "level0" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body1" ).get_inserted( "level1" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body1" ).get_inserted( "level1" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body1" ).get_inserted( "level1" ).get_inserted( "region2" ) = {"subreg0", "subreg2"};
+  m_pathPermutations.get_inserted( "body3" ).get_inserted( "level0" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body3" ).get_inserted( "level0" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body3" ).get_inserted( "level2" ).get_inserted( "region0" ) = {"subreg0", "subreg1"};
+  m_pathPermutations.get_inserted( "body3" ).get_inserted( "level2" ).get_inserted( "region1" ) = {"subreg0", "subreg1"};
 
 
   for( auto const & meshBodyPair : m_pathPermutations )
