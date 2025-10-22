@@ -192,8 +192,31 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numCom
   integer numPressurePoints = 0;
   integer numTemperaturePoints = 0;
 
-  // If the pressure coordinates or temperature coordinates are not provided, collect all the values
-  // from the tables.
+  // This code block performs the initial setup for the pressure and temperature (P/T)
+  // coordinate systems that define the bounds and grid points of the 4D K-value
+  // hypercube. The system must determine the total number of unique P/T points and
+  // gather the actual coordinate values.
+  //
+  // The logic follows two primary paths:
+  //
+  // 1.  If the user has *not* explicitly provided global coordinate arrays
+  // (`m_pressureCoordinates` or `m_temperatureCoordinates` are empty), we inspect every
+  // underlying `TableFunction` used to define the K-values. Extract the P/T coordinates
+  // from each table, and inserts them into `std::set` containers to get a list of
+  // pressure and temperature values.
+  //
+  // 2. In case of a single point (i.e. the user has provided tables with a single
+  // pressure and/or temperature point). Since bilinear interpolation requires
+  // at least two points to define an interval, a crucial check is performed.
+  // If only a single unique pressure or temperature point is found, a second,
+  // artificial point is added with a small offset (`1.0e7` for pressure, `1.0`
+  // for temperature). This should not make a difference because the underlying
+  // function will be constant anyway.
+  //
+  // 3. If the global coordinates *were* provided, the routine bypasses the dynamic
+  // collection and simply uses the size of the provided arrays to set the total
+  // number of pressure and temperature points.
+
   std::set< real64, UniqueFloats > pressurePoints;
   std::set< real64, UniqueFloats > temperaturePoints;
 
@@ -214,10 +237,10 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numCom
 
         auto const [pIndex, tIndex] = getVariableIndices( tableFunction );
 
-        ArrayOfArraysView< real64 const > coordinates = tableFunction->getCoordinates();
+        ArrayOfArraysView< real64 const > const coordinates = tableFunction->getCoordinates();
 
-        pressurePoints.insert( coordinates[pIndex].begin(), coordinates[pIndex].end());
-        temperaturePoints.insert( coordinates[tIndex].begin(), coordinates[tIndex].end());
+        pressurePoints.insert( coordinates[pIndex].begin(), coordinates[pIndex].end() );
+        temperaturePoints.insert( coordinates[tIndex].begin(), coordinates[tIndex].end() );
       }
     }
 
@@ -246,11 +269,11 @@ void KValueFlashParameters< NUM_PHASE >::generateHyperCube( integer const numCom
 
   GEOS_THROW_IF_EQ_MSG( numPressurePoints, 0,
                         GEOS_FMT( "Failed to calculate number of pressure points for k-value interpolation. "
-                                  "Provide values for {}.", KValueFlashParameters::viewKeyStruct::pressureCoordinatesString() ),
+                                  "Provide values for {}.", viewKeyStruct::pressureCoordinatesString() ),
                         InputError );
   GEOS_THROW_IF_EQ_MSG( numTemperaturePoints, 0,
                         GEOS_FMT( "Failed to calculate number of temperature points for k-value interpolation. "
-                                  "Provide values for {}.", KValueFlashParameters::viewKeyStruct::temperatureCoordinatesString() ),
+                                  "Provide values for {}.", viewKeyStruct::temperatureCoordinatesString() ),
                         InputError );
 
   // Create the pressure index lookup table

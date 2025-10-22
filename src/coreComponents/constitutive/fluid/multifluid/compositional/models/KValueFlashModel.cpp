@@ -33,26 +33,16 @@ namespace constitutive
 namespace compositional
 {
 
-// Naming conventions
-namespace
+template< >
+string KValueFlashModel< 2 >::catalogName()
 {
-template< integer NUM_PHASE >
-struct KValueFlashName
-{
-  static constexpr char const * name = "KValue";
-};
-
-template<>
-struct KValueFlashName< 3 >
-{
-  static constexpr char const * name = "ThreePhaseKValue";
-};
+  return "KValue";
 }
 
-template< integer NUM_PHASE >
-string KValueFlashModel< NUM_PHASE >::catalogName()
+template< >
+string KValueFlashModel< 3 >::catalogName()
 {
-  return KValueFlashName< NUM_PHASE >::name;
+  return "ThreePhaseKValue";
 }
 
 template< integer NUM_PHASE >
@@ -66,7 +56,7 @@ KValueFlashModel< NUM_PHASE >::KValueFlashModel( string const & name,
   m_parameters = modelParameters.get< KValueFlashParameters< NUM_PHASE > >();
   integer const numComps = m_componentProperties.getNumberOfComponents();
   m_presentComponents.resize( numComps );
-  for( integer ic =0; ic < numComps; ++ic )
+  for( integer ic = 0; ic < numComps; ++ic )
   {
     m_presentComponents[ic] = ic;
   }
@@ -116,8 +106,8 @@ KValueFlashModelUpdate< NUM_PHASE >::KValueFlashModelUpdate( integer const numCo
   m_vapourIndex( vapourIndex ),
   m_aquoesIndex( aqueousIndex ),
   m_numComponents( numComponents ),
-  m_numPressurePoints( pressureTable.getCoordinates()[0].size()),
-  m_numTemperaturePoints( temperatureTable.getCoordinates()[0].size()),
+  m_numPressurePoints( pressureTable.getCoordinates()[0].size() ),
+  m_numTemperaturePoints( temperatureTable.getCoordinates()[0].size() ),
   m_pressureTable( pressureTable.createKernelWrapper()),
   m_temperatureTable( temperatureTable.createKernelWrapper()),
   m_presentComponents( presentComponents ),
