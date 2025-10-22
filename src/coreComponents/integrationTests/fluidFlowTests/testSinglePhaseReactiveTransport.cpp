@@ -192,7 +192,196 @@ char const * xmlInputCarbonate =
         fieldName="water_primarySpeciesAggregateConcentration"
         component="6"
         scale="7.817e-4"/>
+      
+      <FieldSpecification
+        name="initialAggregate_H_source"
+        initialCondition="1"
+        setNames="{ source }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_primarySpeciesAggregateConcentration"
+        component="0"
+        scale="1.585e-7"/>
 
+      <FieldSpecification
+        name="initialAggregate_HCO3_source"
+        initialCondition="1"
+        setNames="{ source }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_primarySpeciesAggregateConcentration"
+        component="1"
+        scale="7.317e-2"/>
+
+      <FieldSpecification
+        name="initialAggregate_Ca_source"
+        initialCondition="1"
+        setNames="{ source }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_primarySpeciesAggregateConcentration"
+        component="2"
+        scale="1.517e-2"/>
+
+      <FieldSpecification
+        name="initialAggregate_SO4_source"
+        initialCondition="1"
+        setNames="{ source }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_primarySpeciesAggregateConcentration"
+        component="3"
+        scale="1.666e-6"/>
+
+      <FieldSpecification
+        name="initialAggregate_Cl_source"
+        initialCondition="1"
+        setNames="{ source }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_primarySpeciesAggregateConcentration"
+        component="4"
+        scale="2.821e-5"/>
+
+      <FieldSpecification
+        name="initialAggregate_Mg_source"
+        initialCondition="1"
+        setNames="{ source }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_primarySpeciesAggregateConcentration"
+        component="5"
+        scale="1.605e-3"/>
+      
+      <FieldSpecification
+        name="initialAggregate_Na_source"
+        initialCondition="1"
+        setNames="{ source }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_primarySpeciesAggregateConcentration"
+        component="6"
+        scale="7.817e-4"/>
+
+      <FieldSpecification
+        name="initialPrimary_H_all"
+        initialCondition="1"
+        setNames="{ all }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_initialPrimarySpeciesConcentration"
+        component="0"
+        scale="1.585e-7"/>
+
+      <FieldSpecification
+        name="initialPrimary_HCO3_all"
+        initialCondition="1"
+        setNames="{ all }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_initialPrimarySpeciesConcentration"
+        component="1"
+        scale="8.293e-3"/>
+
+      <FieldSpecification
+        name="initialPrimary_Ca_all"
+        initialCondition="1"
+        setNames="{ all }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_initialPrimarySpeciesConcentration"
+        component="2"
+        scale="2.171e-3"/>
+
+      <FieldSpecification
+        name="initialPrimary_SO4_all"
+        initialCondition="1"
+        setNames="{ all }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_initialPrimarySpeciesConcentration"
+        component="3"
+        scale="1.666e-6"/>
+
+      <FieldSpecification
+        name="initialPrimary_Cl_all"
+        initialCondition="1"
+        setNames="{ all }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_initialPrimarySpeciesConcentration"
+        component="4"
+        scale="2.821e-5"/>
+
+      <FieldSpecification
+        name="initialPrimary_Mg_all"
+        initialCondition="1"
+        setNames="{ all }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_initialPrimarySpeciesConcentration"
+        component="5"
+        scale="1.605e-3"/>
+      
+      <FieldSpecification
+        name="initialPrimary_Na_all"
+        initialCondition="1"
+        setNames="{ all }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_initialPrimarySpeciesConcentration"
+        component="6"
+        scale="7.817e-4"/>
+
+      <FieldSpecification
+        name="initialPrimary_H_source"
+        initialCondition="1"
+        setNames="{ source }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_initialPrimarySpeciesConcentration"
+        component="0"
+        scale="1.585e-7"/>
+
+      <FieldSpecification
+        name="initialPrimary_HCO3_source"
+        initialCondition="1"
+        setNames="{ source }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_initialPrimarySpeciesConcentration"
+        component="1"
+        scale="7.317e-2"/>
+
+      <FieldSpecification
+        name="initialPrimary_Ca_source"
+        initialCondition="1"
+        setNames="{ source }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_initialPrimarySpeciesConcentration"
+        component="2"
+        scale="1.517e-2"/>
+
+      <FieldSpecification
+        name="initialPrimary_SO4_source"
+        initialCondition="1"
+        setNames="{ source }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_initialPrimarySpeciesConcentration"
+        component="3"
+        scale="1.666e-6"/>
+
+      <FieldSpecification
+        name="initialPrimary_Cl_source"
+        initialCondition="1"
+        setNames="{ source }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_initialPrimarySpeciesConcentration"
+        component="4"
+        scale="2.821e-5"/>
+
+      <FieldSpecification
+        name="initialPrimary_Mg_source"
+        initialCondition="1"
+        setNames="{ source }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_initialPrimarySpeciesConcentration"
+        component="5"
+        scale="1.605e-3"/>
+      
+      <FieldSpecification
+        name="initialPrimary_Na_source"
+        initialCondition="1"
+        setNames="{ source }"
+        objectPath="ElementRegions/region/cb"
+        fieldName="water_initialPrimarySpeciesConcentration"
+        component="6"
+        scale="7.817e-4"/>
+      
       <FieldSpecification
         name="log_H_source"
         setNames="{ source }"
