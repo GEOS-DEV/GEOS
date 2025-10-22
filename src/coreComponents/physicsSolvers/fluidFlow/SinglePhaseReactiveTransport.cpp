@@ -130,7 +130,7 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
       if( m_reactiveFluidModelName.empty() )
       {
         m_reactiveFluidModelName = m_isThermal? getConstitutiveName< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion ):
-                                                getConstitutiveName< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion );
+                                   getConstitutiveName< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion );
       }
 
       // If at least one region has a diffusion model, consider it enabled for all
@@ -148,7 +148,8 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
   {
     if( m_isThermal )
     {
-      reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid const & reactiveFluid = cm.getConstitutiveRelation< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( m_reactiveFluidModelName );
+      reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid const & reactiveFluid = cm.getConstitutiveRelation< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >(
+        m_reactiveFluidModelName );
       m_numPrimarySpecies = reactiveFluid.numPrimarySpecies();
       m_numKineticReactions = reactiveFluid.numKineticReactions();
     }
@@ -203,15 +204,15 @@ void SinglePhaseReactiveTransport::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerField< bcLogPrimarySpeciesConcentration >( getName() ).
         reference().resizeDimension< 1 >( m_numPrimarySpecies );
-      
+
       subRegion.registerField< kineticReactionMolarIncrements >( getName() ).
         reference().resizeDimension< 1 >( m_numKineticReactions );
 
       subRegion.registerField< surfaceArea >( getName() ).
-        reference().resizeDimension< 1 >( m_numKineticReactions ); 
-        
+        reference().resizeDimension< 1 >( m_numKineticReactions );
+
       subRegion.registerField< initialSurfaceArea >( getName() ).
-        reference().resizeDimension< 1 >( m_numKineticReactions ); 
+        reference().resizeDimension< 1 >( m_numKineticReactions );
     } );
   } );
 }
@@ -281,7 +282,7 @@ void SinglePhaseReactiveTransport::resetStateToBeginningOfStep( DomainPartition 
       logPrimarySpeciesConc.setValues< parallelDevicePolicy<> >( logPrimarySpeciesConc_n );
     } );
   } );
-  
+
   SinglePhaseBase::resetStateToBeginningOfStep( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -304,7 +305,7 @@ void SinglePhaseReactiveTransport::implicitStepSetup( real64 const & time_n,
   GEOS_MARK_FUNCTION;
 
   SinglePhaseBase::implicitStepSetup( time_n, dt, domain );
-  
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
@@ -459,7 +460,7 @@ void SinglePhaseReactiveTransport::assembleFluxTerms( real64 const dt,
       mobilePrimarySpeciesFlags[immobileSpeciesIndex] = 0;
     }
   }
-  
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel const & mesh,
                                                                string_array const & )
@@ -522,7 +523,7 @@ void SinglePhaseReactiveTransport::updateState( DomainPartition & domain )
                                                                                                                    auto & subRegion )
     {
       updateMixedReactionSystem( subRegion );
-      
+
       updateSpeciesAmount( subRegion );
     } );
   } );
@@ -546,7 +547,7 @@ void SinglePhaseReactiveTransport::updateSpeciesAmount( ElementSubRegionBase & s
   if( m_isThermal )
   {
     reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid & fluid =
-    getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+      getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration = fluid.primarySpeciesAggregateConcentration();
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration_n = fluid.primarySpeciesAggregateConcentration_n();
 
@@ -564,7 +565,7 @@ void SinglePhaseReactiveTransport::updateSpeciesAmount( ElementSubRegionBase & s
   else
   {
     reactivefluid::ReactiveCompressibleSinglePhaseFluid & fluid =
-    getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+      getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration = fluid.primarySpeciesAggregateConcentration();
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration_n = fluid.primarySpeciesAggregateConcentration_n();
 
@@ -591,7 +592,7 @@ void SinglePhaseReactiveTransport::updateKineticReactionMolarIncrements( real64 
   if( m_isThermal )
   {
     reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid & fluid =
-    getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+      getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const kineticReactionRates = fluid.kineticReactionRates();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
@@ -605,7 +606,7 @@ void SinglePhaseReactiveTransport::updateKineticReactionMolarIncrements( real64 
   else
   {
     reactivefluid::ReactiveCompressibleSinglePhaseFluid & fluid =
-    getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
+      getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView3d< real64 const, reactivefluid::USD_SPECIES > const kineticReactionRates = fluid.kineticReactionRates();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
@@ -750,14 +751,14 @@ void SinglePhaseReactiveTransport::initializeFluidState( MeshLevel & mesh, strin
     {
       reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid const & fluid =
         getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, fluidName );
-      
+
       fluid.initializeState();
     }
     else
     {
       reactivefluid::ReactiveCompressibleSinglePhaseFluid const & fluid =
         getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, fluidName );
-      
+
       fluid.initializeState();
     }
 
@@ -988,7 +989,9 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
           getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
         arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration = fluid.primarySpeciesAggregateConcentration();
-        arrayView4d< real64 const, reactivefluid::USD_SPECIES_DC > const dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations = fluid.dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations();
+        arrayView4d< real64 const,
+                     reactivefluid::USD_SPECIES_DC > const dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations =
+          fluid.dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations();
         arrayView2d< real64 const, singlefluid::USD_FLUID > const density = fluid.density();
         arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const dDensity = fluid.dDensity();
         arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const enthalpy = fluid.enthalpy();
@@ -1014,7 +1017,7 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
           singlePhaseReactiveBaseKernels::internal::kernelLaunchSelectorCompSwitch( numPrimarySpecies, [&] ( auto NS )
           {
             integer constexpr NUM_SPECIES = NS();
-            
+
             // we need to filter out ghosts here, because targetSet may contain them
             localIndex const ei = targetSet[a];
             if( ghostRank[ei] >= 0 )
@@ -1026,11 +1029,13 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
             globalIndex const massRowIndex   = dofNumber[ei] - rankOffset;
             globalIndex const energyRowIndex = massRowIndex + 1;
             globalIndex const speciesRowBeginIndex = massRowIndex + 2;
-            real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
+            real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor
+                                                                                     // here!
             localRhs[massRowIndex] += rhsValue;
             massProd += rhsValue;
 
-            // add the value to the energy balance equation and species mass balance equations if the flux is positive (i.e., it's a producer)
+            // add the value to the energy balance equation and species mass balance equations if the flux is positive (i.e., it's a
+            // producer)
             if( rhsContributionArrayView[a] > 0.0 )
             {
               globalIndex const pressureDofIndex    = dofNumber[ei] - rankOffset;
@@ -1038,28 +1043,28 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
 
               globalIndex dofIndices[2+NUM_SPECIES]{};
 
-              dofIndices[0] = pressureDofIndex; 
-              dofIndices[1] = temperatureDofIndex; 
+              dofIndices[0] = pressureDofIndex;
+              dofIndices[1] = temperatureDofIndex;
 
               for( integer i = 0; i < NUM_SPECIES; ++i )
               {
-                dofIndices[i+2] = pressureDofIndex + i + 2; 
-              } 
+                dofIndices[i+2] = pressureDofIndex + i + 2;
+              }
 
               // add the value to the energy balance equation
               localRhs[energyRowIndex] += enthalpy[ei][0] * rhsValue;
 
               real64 jacobianEnergyFlux[2+NUM_SPECIES]{0.0};
-              
+
               jacobianEnergyFlux[0] = rhsValue * dEnthalpy[ei][0][DerivOffset::dP];
               jacobianEnergyFlux[1] = rhsValue * dEnthalpy[ei][0][DerivOffset::dT];
 
               localMatrix.template addToRow< serialAtomic >( energyRowIndex,
-                                                            dofIndices,
-                                                            jacobianEnergyFlux,
-                                                            2+NUM_SPECIES );
-              
-              // add the value to the species mass balance equations                                                
+                                                             dofIndices,
+                                                             jacobianEnergyFlux,
+                                                             2+NUM_SPECIES );
+
+              // add the value to the species mass balance equations
               for( integer i = 0; i < NUM_SPECIES; ++i )
               {
                 localRhs[speciesRowBeginIndex + i] += primarySpeciesAggregateConcentration[ei][0][i] / density[ei][0] * rhsValue;
@@ -1074,9 +1079,9 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
                 }
 
                 localMatrix.template addToRow< serialAtomic >( speciesRowBeginIndex + i,
-                                                              dofIndices,
-                                                              jacobianSpeciesFlux,
-                                                              2+NUM_SPECIES );
+                                                               dofIndices,
+                                                               jacobianSpeciesFlux,
+                                                               2+NUM_SPECIES );
               }
             }
           } );
@@ -1089,7 +1094,9 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
           getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
         arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration = fluid.primarySpeciesAggregateConcentration();
-        arrayView4d< real64 const, reactivefluid::USD_SPECIES_DC > const dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations = fluid.dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations();
+        arrayView4d< real64 const,
+                     reactivefluid::USD_SPECIES_DC > const dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations =
+          fluid.dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations();
         arrayView2d< real64 const, singlefluid::USD_FLUID > const density = fluid.density();
         arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const dDensity = fluid.dDensity();
 
@@ -1122,7 +1129,8 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
             // add the value to the mass balance equation
             globalIndex const massRowIndex = dofNumber[ei] - rankOffset;
             globalIndex const speciesRowBeginIndex = massRowIndex + 1;
-            real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
+            real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor
+                                                                                     // here!
             localRhs[massRowIndex] += rhsValue;
             massProd += rhsValue;
 
@@ -1133,12 +1141,12 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
 
               globalIndex dofIndices[1+NUM_SPECIES]{};
 
-              dofIndices[0] = pressureDofIndex; 
+              dofIndices[0] = pressureDofIndex;
 
               for( integer i = 0; i < NUM_SPECIES; ++i )
               {
-                dofIndices[i+1] = pressureDofIndex + i + 1; 
-              } 
+                dofIndices[i+1] = pressureDofIndex + i + 1;
+              }
 
               for( integer i = 0; i < NUM_SPECIES; ++i )
               {
@@ -1153,12 +1161,12 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
                 }
 
                 localMatrix.template addToRow< serialAtomic >( speciesRowBeginIndex + i,
-                                                              dofIndices,
-                                                              jacobian,
-                                                              1+NUM_SPECIES );
+                                                               dofIndices,
+                                                               jacobian,
+                                                               1+NUM_SPECIES );
               }
             }
-          } ); 
+          } );
         } );
       }
 
@@ -1639,19 +1647,19 @@ void SinglePhaseReactiveTransport::applyFaceDirichletBC( real64 const time_n,
         BoundaryStencilWrapper const stencilWrapper = stencil.createKernelWrapper();
 
         thermalSinglePhaseReactiveFVMKernels::
-            DirichletFluxComputeKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
-                                                       mobilePrimarySpeciesFlags,
-                                                       dofManager.rankOffset(),
-                                                       dofKey,
-                                                       this->getName(),
-                                                       faceManager,
-                                                       elemManager,
-                                                       stencilWrapper,
-                                                       reactiveFluid,
-                                                       dt,
-                                                       localMatrix,
-                                                       localRhs );
+          DirichletFluxComputeKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
+                                                     mobilePrimarySpeciesFlags,
+                                                     dofManager.rankOffset(),
+                                                     dofKey,
+                                                     this->getName(),
+                                                     faceManager,
+                                                     elemManager,
+                                                     stencilWrapper,
+                                                     reactiveFluid,
+                                                     dt,
+                                                     localMatrix,
+                                                     localRhs );
       } );
     }
     else
@@ -1690,19 +1698,19 @@ void SinglePhaseReactiveTransport::applyFaceDirichletBC( real64 const time_n,
         BoundaryStencilWrapper const stencilWrapper = stencil.createKernelWrapper();
 
         singlePhaseReactiveFVMKernels::
-            DirichletFluxComputeKernelFactory::
-            createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
-                                                       mobilePrimarySpeciesFlags,
-                                                       dofManager.rankOffset(),
-                                                       dofKey,
-                                                       this->getName(),
-                                                       faceManager,
-                                                       elemManager,
-                                                       stencilWrapper,
-                                                       reactiveFluid,
-                                                       dt,
-                                                       localMatrix,
-                                                       localRhs );
+          DirichletFluxComputeKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
+                                                     mobilePrimarySpeciesFlags,
+                                                     dofManager.rankOffset(),
+                                                     dofKey,
+                                                     this->getName(),
+                                                     faceManager,
+                                                     elemManager,
+                                                     stencilWrapper,
+                                                     reactiveFluid,
+                                                     dt,
+                                                     localMatrix,
+                                                     localRhs );
       } );
     }
   } );

@@ -158,13 +158,13 @@ public:
      */
     GEOS_HOST_DEVICE
     localIndex numElems() const { return m_secondarySpeciesConcentration.size( 0 ); }
-    
+
     GEOS_HOST_DEVICE
     void updateEquilibriumReaction( localIndex const k,
                                     real64 const pressure,
                                     real64 const temperature,
                                     arraySlice1d< real64, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration ) const;
-    
+
     GEOS_HOST_DEVICE
     void enforceEquilibrium( real64 const pressure,
                              real64 const temperature,
@@ -172,15 +172,15 @@ public:
                              arraySlice1d< real64 const, reactivefluid::USD_SPECIES - 2 > const & initialPrimarySpeciesConcentration,
                              arraySlice1d< real64, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
                              arraySlice1d< real64 > const & logSecondarySpeciesConcentration ) const;
-    
-    GEOS_HOST_DEVICE                        
+
+    GEOS_HOST_DEVICE
     void updateMixedReactionSystem( localIndex const k,
                                     real64 const pressure,
                                     real64 const temperature,
                                     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
                                     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & surfaceArea ) const;
 
-    GEOS_HOST_DEVICE                               
+    GEOS_HOST_DEVICE
     void computeAggregateConcentrationsAndRates( real64 const pressure,
                                                  real64 const temperature,
                                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & logPrimarySpeciesConcentration,
@@ -201,7 +201,7 @@ protected:
 
     integer m_numSecondarySpecies;
 
-    integer m_numKineticReactions; 
+    integer m_numKineticReactions;
 
     arrayView3d< real64, reactivefluid::USD_SPECIES >  m_primarySpeciesAggregateConcentration;
 
@@ -253,7 +253,7 @@ protected:
                                                               m_numSecondarySpecies,
                                                               m_numKineticReactions,
                                                               ultramaficSystem );
-      
+
       case ChemicalSystemType::carbonate:
         return ReactionKernelWrapper< carbonateSystemType >( m_primarySpeciesAggregateConcentration,
                                                              m_primarySpeciesMobileAggregateConcentration,
@@ -342,7 +342,7 @@ protected:
 
   integer m_numSecondarySpecies;
 
-  integer m_numKineticReactions; 
+  integer m_numKineticReactions;
 
   array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES >  m_initialPrimarySpeciesConcentration;
 
@@ -418,7 +418,7 @@ enforceEquilibrium( real64 const pressure,
   GEOS_UNUSED_VAR( pressure );
 
   integer const numPrimarySpecies = m_numPrimarySpecies;
-  
+
   stackArray1d< real64, MAX_NUM_SPECIES > logPrimarySpeciesConcentration0( numPrimarySpecies );
   stackArray1d< real64, MAX_NUM_SPECIES > targetPrimarySpeciesAggregateConc( numPrimarySpecies );
 
@@ -427,7 +427,7 @@ enforceEquilibrium( real64 const pressure,
     targetPrimarySpeciesAggregateConc[i] = targetPrimarySpeciesAggregateConcentration[i];
     logPrimarySpeciesConcentration0[i] = LvArray::math::log( initialPrimarySpeciesConcentration[i] );
   }
-  
+
   // 1. We enforce equilibrium
   EquilibriumReactionsType::enforceEquilibrium_Aggregate( temperature, m_params, targetPrimarySpeciesAggregateConc, logPrimarySpeciesConcentration0, logPrimarySpeciesConcentration );
 
@@ -451,11 +451,11 @@ updateMixedReactionSystem( localIndex const k,
   integer const numPrimarySpecies = m_numPrimarySpecies;
   integer const numSecondarySpecies = m_numSecondarySpecies;
   integer const numKineticReactions = m_numKineticReactions;
-  
+
   stackArray1d< real64, MAX_NUM_SPECIES > logSecondarySpeciesConcentration( numSecondarySpecies );
   stackArray2d< real64, MAX_NUM_KINETIC_REACTIONS * MAX_NUM_SPECIES > dReactionRates_dLogPrimarySpeciesConcentrations( numKineticReactions, numPrimarySpecies );
-  
-  computeAggregateConcentrationsAndRates( pressure, 
+
+  computeAggregateConcentrationsAndRates( pressure,
                                           temperature,
                                           logPrimarySpeciesConcentration,
                                           surfaceArea,

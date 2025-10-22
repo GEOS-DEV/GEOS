@@ -494,7 +494,7 @@ class SinglePhaseReactiveTransportTest : public ::testing::Test
 {
 public:
 
-SinglePhaseReactiveTransportTest():
+  SinglePhaseReactiveTransportTest():
     state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) )
   {}
 

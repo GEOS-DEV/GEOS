@@ -74,13 +74,13 @@ void ReactivePorosity::postInputInitialization()
   PorosityBase::postInputInitialization();
 
   GEOS_THROW_IF_NE_MSG( m_molarWeights.size(), m_defaultInitialVolumeFractions.size(),
-                        GEOS_FMT( "{}: mismatch in number of components in porosity model attribute '{}' and '{}", 
-                        getFullName(), viewKeyStruct::molarWeightsString(), viewKeyStruct::initialVolumeFractionsString() ),
+                        GEOS_FMT( "{}: mismatch in number of components in porosity model attribute '{}' and '{}",
+                                  getFullName(), viewKeyStruct::molarWeightsString(), viewKeyStruct::initialVolumeFractionsString() ),
                         InputError );
 
   GEOS_THROW_IF_NE_MSG( m_mineralDensities.size(), m_defaultInitialVolumeFractions.size(),
-                        GEOS_FMT( "{}: mismatch in number of components in porosity model attribute '{}' and '{}", 
-                        getFullName(), viewKeyStruct::mineralDensitiesString(), viewKeyStruct::initialVolumeFractionsString() ),
+                        GEOS_FMT( "{}: mismatch in number of components in porosity model attribute '{}' and '{}",
+                                  getFullName(), viewKeyStruct::mineralDensitiesString(), viewKeyStruct::initialVolumeFractionsString() ),
                         InputError );
 
   m_numKineticReactions = m_defaultInitialVolumeFractions.size();
@@ -112,7 +112,7 @@ void ReactivePorosity::saveConvergedState() const
 }
 
 void ReactivePorosity::initializeState() const
-{  
+{
   integer const numKineticReactions = this->numKineticReactions();
 
   for( localIndex ei = 0; ei < m_newPorosity.size( 0 ); ++ei )
@@ -131,9 +131,9 @@ void ReactivePorosity::initializeState() const
     {
       for( integer r = 0; r < numKineticReactions; ++r )
       {
-        m_volumeFractions[ei][q][r] = m_defaultInitialVolumeFractions[r]; 
-        m_initialVolumeFractions[ei][q][r] = m_defaultInitialVolumeFractions[r]; 
-        m_volumeFractions_n[ei][q][r] = m_defaultInitialVolumeFractions[r]; 
+        m_volumeFractions[ei][q][r] = m_defaultInitialVolumeFractions[r];
+        m_initialVolumeFractions[ei][q][r] = m_defaultInitialVolumeFractions[r];
+        m_volumeFractions_n[ei][q][r] = m_defaultInitialVolumeFractions[r];
       }
     }
   }

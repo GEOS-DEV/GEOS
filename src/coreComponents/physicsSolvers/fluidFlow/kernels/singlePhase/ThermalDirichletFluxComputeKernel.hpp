@@ -205,7 +205,7 @@ public:
                                            real64 const & dDens_dP_up )
     {
       GEOS_UNUSED_VAR( dens_up, dDens_dP_up );
-      
+
       // Compute the derivatives of the density wrt temperature
 
       real64 const dDens_dT = 0.5 * m_dDens[er][esr][ei][0][DerivOffset::dT];

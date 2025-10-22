@@ -68,22 +68,22 @@ public:
                         integer const & numKineticReactions,
                         arrayView1d< real64 const > const & molarWeights,
                         arrayView1d< real64 const > const & mineralDensities ) const
-  { 
-    real64 porosityIncrement = 0.0; 
+  {
+    real64 porosityIncrement = 0.0;
 
     for( integer r=0; r < numKineticReactions; ++r )
     {
       real64 const volumeFractionIncrement = kineticReactionMolarIncrements[r] * molarWeights[r]/mineralDensities[r];
-      volumeFractions[r] = volumeFractions_n[r] + volumeFractionIncrement; 
+      volumeFractions[r] = volumeFractions_n[r] + volumeFractionIncrement;
 
-      porosityIncrement += volumeFractionIncrement; 
+      porosityIncrement += volumeFractionIncrement;
     }
 
-    porosity = porosity_n + porosityIncrement; // To check if it should be plus or minus 
+    porosity = porosity_n + porosityIncrement; // To check if it should be plus or minus
 
-    if( porosity < 0)
+    if( porosity < 0 )
     {
-      porosity = 0; 
+      porosity = 0;
     }
     else if( porosity > 1.0 )
     {
@@ -131,8 +131,8 @@ protected:
   arrayView3d< real64 const, reactivefluid::USD_SPECIES > m_initialVolumeFractions;
   arrayView3d< real64 const, reactivefluid::USD_SPECIES > const m_volumeFractions_n;
 
-  integer const m_numKineticReactions; 
-  arrayView1d< real64 const > const m_molarWeights; 
+  integer const m_numKineticReactions;
+  arrayView1d< real64 const > const m_molarWeights;
   arrayView1d< real64 const > const m_mineralDensities;
 };
 
@@ -203,9 +203,9 @@ private:
   array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES > m_volumeFractions;
   array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES > m_initialVolumeFractions;
   array3d< real64, constitutive::reactivefluid::LAYOUT_SPECIES > m_volumeFractions_n;
-  
-  integer m_numKineticReactions; 
-  array1d< real64 > m_molarWeights; 
+
+  integer m_numKineticReactions;
+  array1d< real64 > m_molarWeights;
   array1d< real64 > m_mineralDensities;
 
 };

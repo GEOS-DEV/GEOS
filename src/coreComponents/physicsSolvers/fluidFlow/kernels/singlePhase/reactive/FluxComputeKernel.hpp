@@ -153,7 +153,8 @@ public:
     m_logPrimarySpeciesConc( reactiveSinglePhaseFlowAccessors.get( fields::flow::logPrimarySpeciesConcentration {} ) ),
     m_dMob_dLogPrimaryConc( reactiveSinglePhaseFlowAccessors.get( fields::flow::dMobility_dLogPrimaryConc {} ) ),
     m_primarySpeciesMobileAggregateConc( reactiveSinglePhaseFluidAccessors.get( fields::reactivefluid::primarySpeciesMobileAggregateConcentration {} ) ),
-    m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc( reactiveSinglePhaseFluidAccessors.get( fields::reactivefluid::dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations {} ) ),
+    m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc( reactiveSinglePhaseFluidAccessors.get(
+                                                            fields::reactivefluid::dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations {} ) ),
     m_diffusivity( diffusionAccessors.get( fields::diffusion::diffusivity {} ) ),
     m_dDiffusivity_dTemp( diffusionAccessors.get( fields::diffusion::dDiffusivity_dTemperature {} ) ),
     m_referencePorosity( porosityAccessors.get( fields::porosity::referencePorosity {} ) ),
@@ -342,7 +343,7 @@ public:
           //***** calculation of flux *****
           // loop over primary species
           for( integer is = 0; is < numSpecies; ++is )
-          { 
+          {
             // real64 dSpeciesGrad_i_dP[numFluxSupportPoints]{}; // Turn on if speciesGrad is pressure-dependent
             real64 dSpeciesGrad_i_dLogConc[numFluxSupportPoints][numSpecies]{};
 

@@ -224,7 +224,7 @@ public:
     real64 const mobility_up = mobility[k_up];
     real64 const dMobility_dP_up = dMobility_dP[k_up];
 
-    // Upwind density 
+    // Upwind density
     real64 const dens_up = ( potDif >= 0 ) ? m_dens[er][esr][ei][0] : faceDens;
     real64 const dDens_dP_up = ( potDif >= 0 ) ? m_dDens[er][esr][ei][0][Deriv::dP] : 0.0;
 

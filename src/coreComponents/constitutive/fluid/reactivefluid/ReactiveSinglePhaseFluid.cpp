@@ -42,14 +42,16 @@ ReactiveSinglePhaseFluid( string const & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Chemical System type. Available options are: "
                     "``" + EnumStrings< ChemicalSystemType >::concat( "|" ) + "``" );
-  
+
   this->template registerField< fields::reactivefluid::initialPrimarySpeciesConcentration >( &m_initialPrimarySpeciesConcentration );
   this->template registerField< fields::reactivefluid::secondarySpeciesConcentration >( &m_secondarySpeciesConcentration );
   this->template registerField< fields::reactivefluid::primarySpeciesAggregateConcentration >( &m_primarySpeciesAggregateConcentration );
   this->template registerField< fields::reactivefluid::primarySpeciesAggregateConcentration_n >( &m_primarySpeciesAggregateConcentration_n );
   this->template registerField< fields::reactivefluid::primarySpeciesMobileAggregateConcentration >( &m_primarySpeciesMobileAggregateConcentration );
-  this->template registerField< fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations >( &m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations );
-  this->template registerField< fields::reactivefluid::dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations >( &m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations );
+  this->template registerField< fields::reactivefluid::dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations >(
+    &m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations );
+  this->template registerField< fields::reactivefluid::dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations >(
+    &m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations );
   this->template registerField< fields::reactivefluid::kineticReactionRates >( &m_kineticReactionRates );
   this->template registerField< fields::reactivefluid::aggregateSpeciesRates >( &m_aggregateSpeciesRates );
   this->template registerField< fields::reactivefluid::dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations >( &m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations );
@@ -63,10 +65,10 @@ deliverClone( string const & name, Group * const parent ) const
 
   ReactiveSinglePhaseFluid & newConstitutiveRelation = dynamicCast< ReactiveSinglePhaseFluid & >( *clone );
 
-  newConstitutiveRelation.m_chemicalSystemType = m_chemicalSystemType; 
-  newConstitutiveRelation.m_numPrimarySpecies = m_numPrimarySpecies; 
-  newConstitutiveRelation.m_numSecondarySpecies = m_numSecondarySpecies; 
-  newConstitutiveRelation.m_numKineticReactions = m_numKineticReactions; 
+  newConstitutiveRelation.m_chemicalSystemType = m_chemicalSystemType;
+  newConstitutiveRelation.m_numPrimarySpecies = m_numPrimarySpecies;
+  newConstitutiveRelation.m_numSecondarySpecies = m_numSecondarySpecies;
+  newConstitutiveRelation.m_numKineticReactions = m_numKineticReactions;
 
   return clone;
 }
@@ -79,20 +81,20 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
   switch( m_chemicalSystemType )
   {
     case ChemicalSystemType::ultramafic:
-      m_numPrimarySpecies = 9; 
-      m_numSecondarySpecies = 16; 
+      m_numPrimarySpecies = 9;
+      m_numSecondarySpecies = 16;
       m_numKineticReactions = 5;
       break;
 
     case ChemicalSystemType::carbonate:
-      m_numPrimarySpecies = 7; 
-      m_numSecondarySpecies = 10; 
+      m_numPrimarySpecies = 7;
+      m_numSecondarySpecies = 10;
       m_numKineticReactions = 1;
       break;
 
     case ChemicalSystemType::carbonateAllEquilibrium:
-      m_numPrimarySpecies = 7; 
-      m_numSecondarySpecies = 11; 
+      m_numPrimarySpecies = 7;
+      m_numSecondarySpecies = 11;
       m_numKineticReactions = 0;
       break;
 
@@ -103,14 +105,14 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
       break;
 
     case ChemicalSystemType::momasMedium:
-      m_numPrimarySpecies = 5; 
-      m_numSecondarySpecies = 9; 
+      m_numPrimarySpecies = 5;
+      m_numSecondarySpecies = 9;
       m_numKineticReactions = 1;
       break;
 
     default:
-      m_numPrimarySpecies = 5; 
-      m_numSecondarySpecies = 7; 
+      m_numPrimarySpecies = 5;
+      m_numSecondarySpecies = 7;
       m_numKineticReactions = 0;
       break;
   }

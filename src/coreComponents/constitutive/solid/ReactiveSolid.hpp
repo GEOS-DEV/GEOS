@@ -49,8 +49,8 @@ public:
    * @brief Constructor
    */
   ReactiveSolidUpdates( NullModel const & solidModel,
-                            PORO_TYPE const & porosityModel,
-                            PERM_TYPE const & permModel ):
+                        PORO_TYPE const & porosityModel,
+                        PERM_TYPE const & permModel ):
     CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >( solidModel, porosityModel, permModel )
   {}
 
@@ -78,11 +78,11 @@ public:
     {
       real64 const volumeFraction_r = m_porosityUpdate.getVolumeFractionForMineral( k, q, r );
       real64 const initialVolumeFraction_r = m_porosityUpdate.getInitialVolumeFractionForMineral( k, q, r );
-      surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 ) 
-                                             * pow( porosity / initialPorosity, 2.0/3.0 );
+      surfaceArea[r] = initialSurfaceArea[r] * pow( volumeFraction_r / initialVolumeFraction_r, 2.0/3.0 )
+                       * pow( porosity / initialPorosity, 2.0/3.0 );
     }
   }
-  
+
 private:
   using CoupledSolidUpdates< NullModel, ReactivePorosity, PERM_TYPE >::m_solidUpdate;
   using CoupledSolidUpdates< NullModel, ReactivePorosity, PERM_TYPE >::m_porosityUpdate;

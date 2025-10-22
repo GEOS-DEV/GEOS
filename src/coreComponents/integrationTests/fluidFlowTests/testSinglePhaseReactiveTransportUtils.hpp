@@ -103,7 +103,7 @@ void fillCellCenteredNumericalJacobian( SINGLE_REACTIVE_TRANSPORT_SOLVER & solve
                                         LAMBDA assembleFunction )
 {
   integer const numSpecies = solver.numPrimarySpecies();
-  
+
   DofManager const & dofManager = solver.getDofManager();
   string const elemDofKey = dofManager.getKey( SINGLE_REACTIVE_TRANSPORT_SOLVER::viewKeyStruct::elemDofFieldString() );
 
@@ -189,23 +189,23 @@ void fillCellCenteredNumericalJacobian( SINGLE_REACTIVE_TRANSPORT_SOLVER & solve
         }
 
         // Step 3: compute numerical derivatives wrt log primary species concentration
-        for( integer is = 0; is < numSpecies; ++is ) 
+        for( integer is = 0; is < numSpecies; ++is )
         {
           solver.resetStateToBeginningOfStep( domain );
 
           logPrimaryConc.move( hostMemorySpace, true ); // to get the correct logPrimaryConc after reset
           real64 const dConc = perturbParameter * ( logPrimaryConc[ei][is] + perturbParameter );
-          logPrimaryConc[ei][is] += dConc; 
+          logPrimaryConc[ei][is] += dConc;
 #if defined(GEOS_USE_CUDA)
           logPrimaryConc.move( parallelDeviceMemorySpace, false );
-#endif    
+#endif
           solver.updateState( domain );
 
           residual.zero();
           jacobian.zero();
           assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
 
-          integer const speciesIndexShift = (isThermal)? 2:1; 
+          integer const speciesIndexShift = (isThermal)? 2:1;
 
           fillNumericalJacobian( residual.toViewConst(),
                                  residualOrig.toViewConst(),

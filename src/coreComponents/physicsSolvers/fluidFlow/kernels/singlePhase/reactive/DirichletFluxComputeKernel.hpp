@@ -133,7 +133,8 @@ public:
             localRhs ),
     m_dMob_dLogPrimaryConc( reactiveSinglePhaseFlowAccessors.get( fields::flow::dMobility_dLogPrimaryConc {} ) ),
     m_primarySpeciesMobileAggregateConc( reactiveSinglePhaseFluidAccessors.get( fields::reactivefluid::primarySpeciesMobileAggregateConcentration {} ) ),
-    m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc( reactiveSinglePhaseFluidAccessors.get( fields::reactivefluid::dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations {} ) ),
+    m_dPrimarySpeciesMobileAggregateConc_dLogPrimaryConc( reactiveSinglePhaseFluidAccessors.get(
+                                                            fields::reactivefluid::dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations {} ) ),
     m_mobilePrimarySpeciesFlags( mobilePrimarySpeciesFlags )
   {}
 
@@ -190,9 +191,9 @@ public:
       real64 speciesFlux[numSpecies]{};
       real64 dSpeciesFlux_dP[numSpecies]{};
       real64 dSpeciesFlux_dLogConc[numSpecies][numSpecies]{};
-      
+
       for( integer is = 0; is < numSpecies; ++is )
-      {        
+      {
         real64 const aggregateConc_i = m_primarySpeciesMobileAggregateConc[seri][sesri][sei][0][is];
         speciesFlux[is] = aggregateConc_i / dens_up * fluxVal * mobility_up;
 
@@ -238,7 +239,7 @@ public:
     {
       for( integer is = 0; is < numSpecies; ++is )
       {
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn - numSpecies + is], 
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn - numSpecies + is],
                          stack.localFlux[numEqn - numSpecies + is] );
 
         AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
@@ -249,7 +250,7 @@ public:
       }
 
       assemblyKernelOp( localRow );
-    } );   
+    } );
   }
 
 protected:
@@ -318,7 +319,7 @@ public:
         integer constexpr NUM_DOF = 1+NS();
         integer constexpr NUM_EQN = 1+NS();
 
-        using kernelType = DirichletFluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, typename FluidType::KernelWrapper, 
+        using kernelType = DirichletFluxComputeKernel< NUM_SPECIES, NUM_EQN, NUM_DOF, typename FluidType::KernelWrapper,
                                                        constitutive::CompressibleSinglePhaseFluid >;
 
         ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
@@ -333,19 +334,19 @@ public:
         typename kernelType::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
         kernelType kernel( rankOffset,
-                          faceManager,
-                          stencilWrapper,
-                          fluidWrapper,
-                          dofNumberAccessor,
-                          singlePhaseFlowAccessors,
-                          reactiveFlowAccessors,
-                          singlePhaseFluidAccessors,
-                          reactiveFluidAccessors,
-                          permeabilityAccessors,
-                          mobilePrimarySpeciesFlags,
-                          dt,
-                          localMatrix,
-                          localRhs );
+                           faceManager,
+                           stencilWrapper,
+                           fluidWrapper,
+                           dofNumberAccessor,
+                           singlePhaseFlowAccessors,
+                           reactiveFlowAccessors,
+                           singlePhaseFluidAccessors,
+                           reactiveFluidAccessors,
+                           permeabilityAccessors,
+                           mobilePrimarySpeciesFlags,
+                           dt,
+                           localMatrix,
+                           localRhs );
 
         kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
       } );

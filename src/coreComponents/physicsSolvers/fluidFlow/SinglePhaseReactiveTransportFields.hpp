@@ -97,15 +97,15 @@ DECLARE_FIELD( surfaceArea,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Surface area for surface reactions." );   
-               
+               "Surface area for surface reactions." );
+
 DECLARE_FIELD( initialSurfaceArea,
                "initialSurfaceArea",
                array2dLayoutComp,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Initial surface area for surface reactions." );    
+               "Initial surface area for surface reactions." );
 
 }
 

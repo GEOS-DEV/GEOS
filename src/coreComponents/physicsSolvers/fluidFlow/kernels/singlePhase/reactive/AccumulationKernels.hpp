@@ -172,7 +172,9 @@ public:
     // stack.dPoreVolume_dLogPrimaryConc[is] * m_density[ei][0];
     //   }
 
-    arraySlice2d< real64 const, constitutive::reactivefluid::USD_SPECIES_DC - 2 > dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations = m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[ei][0];
+    arraySlice2d< real64 const,
+                  constitutive::reactivefluid::USD_SPECIES_DC -
+                  2 > dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations = m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[ei][0];
     arraySlice2d< real64 const, constitutive::reactivefluid::USD_SPECIES_DC - 2 > dPrimarySpeciesAggregateKineticRate_dLogPrimaryConc = m_dPrimarySpeciesAggregateKineticRate_dLogPrimaryConc[ei][0];
 
     for( integer is = 0; is < numSpecies; ++is )
@@ -199,13 +201,13 @@ public:
       {
         stack.localJacobian[is+numEqn-numSpecies][js+numDof-numSpecies] = /* stack.dPoreVolume_dLogPrimaryConc[js] *
                                                                               m_primarySpeciesAggregateConcentration[ei][0][is]
-                                                                            + */stack.poreVolume * dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[is][js]; // To
-                                                                                                                                                                  // check
-                                                                                                                                                                  // if
-                                                                                                                                                                  // the
-                                                                                                                                                                  // permutation
-                                                                                                                                                                  // is
-                                                                                                                                                                  // consistent
+                                                                           + */stack.poreVolume * dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[is][js];  // To
+        // check
+        // if
+        // the
+        // permutation
+        // is
+        // consistent
 
         stack.localJacobian[is+numEqn-numSpecies][js+numDof-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * dPrimarySpeciesAggregateKineticRate_dLogPrimaryConc[is][js];
       }

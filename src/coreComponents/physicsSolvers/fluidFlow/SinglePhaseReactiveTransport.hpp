@@ -292,7 +292,7 @@ protected:
   /// the number of primary species in the fluid
   integer m_numPrimarySpecies;
 
-  /// the number of kinetic reactions 
+  /// the number of kinetic reactions
   integer m_numKineticReactions;
 
   /// name of the reactive fluid constitutive model
@@ -308,7 +308,7 @@ protected:
   integer m_isUpdateSurfaceArea;
 
   /// array to store the indices of immobile primary species
-  array1d< integer > m_immobilePrimarySpeciesIndices; 
+  array1d< integer > m_immobilePrimarySpeciesIndices;
 
 private:
 

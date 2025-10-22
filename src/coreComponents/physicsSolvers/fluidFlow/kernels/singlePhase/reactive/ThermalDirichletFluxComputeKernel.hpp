@@ -214,7 +214,7 @@ public:
                                            real64 const & dF_dP,
                                            real64 const & mobility_up,
                                            real64 const & dMobility_dP_up )
-    {      
+    {
       // Compute the derivatives of the density wrt temperature
 
       real64 const dDens_dT = 0.5 * m_dDens[er][esr][ei][0][DerivOffset::dT];
@@ -282,7 +282,7 @@ public:
   {
     Base::complete( iconn, stack, [&] ( localIndex const localRow )
     {
-      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn - numSpecies - 1], 
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &AbstractBase::m_localRhs[localRow + numEqn - numSpecies - 1],
                        stack.localFlux[numEqn - numSpecies - 1] );
 
       AbstractBase::m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >

@@ -327,7 +327,7 @@ public:
 
         // Step 2.2: compute speciesFlux derivative wrt temperature
         for( integer is = 0; is < numSpecies; ++is )
-        { 
+        {
           real64 const aggregateConc_i = m_primarySpeciesMobileAggregateConc[er_up][esr_up][ei_up][0][is];
 
           // real64 const dAggregateConc_i_dTemp = m_dPrimarySpeciesMobileAggregateConcentration_dTemp[er_up][esr_up][ei_up][is];
