@@ -44,7 +44,6 @@ template< typename FLOW_SOLVER >
 void MultiphasePoromechanicsConformingFractures< FLOW_SOLVER >::initializePreSubGroups()
 {
   Base::initializePreSubGroups();
-
   if( this->flowSolver()->isThermal() )
   {
     GEOS_ERROR( "Thermal flow is not yet supported for multiphase poromechanics conforming fractures" );
