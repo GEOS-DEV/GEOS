@@ -33,6 +33,7 @@ DomainPartitioner::DomainPartitioner( string const & name,
 {
   {
     setInputFlags( InputFlags::OPTIONAL_NONUNIQUE ); // needed for schema generation
+    setRestartFlags( RestartFlags::NO_WRITE ); // partitioners are configuration-only, not simulation state
   }
 
 }

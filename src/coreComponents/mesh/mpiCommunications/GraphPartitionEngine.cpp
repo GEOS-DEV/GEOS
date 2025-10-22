@@ -23,6 +23,7 @@
 #endif
 namespace geos
 {
+using namespace dataRepository;
 
 GraphPartitionEngine::GraphPartitionEngine( string const & name,
                                             dataRepository::Group * const parent )
@@ -34,6 +35,7 @@ GraphPartitionEngine::GraphPartitionEngine( string const & name,
   if( parent != nullptr )
   {
     setInputFlags( dataRepository::InputFlags::FALSE );
+    setRestartFlags( RestartFlags::NO_WRITE );
   }
 }
 
