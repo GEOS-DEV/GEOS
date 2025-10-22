@@ -143,6 +143,39 @@
     "explicit": []
   },
 
+  "CompositionalMultiphaseHybridFVMKernels_dirichlet": {
+    "vars": [
+      "NFACES",
+      "NCOMPS",
+      "NPHASES",
+      "IP_TYPE"
+    ],
+    "constants": [],
+    "combinations": {
+      "NFACES": [
+        4,
+        5,
+        6
+      ],
+      "NCOMPS": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "NPHASES": [
+        2,
+        3
+      ],
+      "IP_TYPE": [
+        "mimeticInnerProduct::TPFAInnerProduct",
+        "mimeticInnerProduct::BdVLMInnerProduct"
+      ]
+    },
+    "explicit": []
+  },  
+
   "ReactiveCompositionalMultiphaseOBLKernels": {
     "vars": [
       "NAME",

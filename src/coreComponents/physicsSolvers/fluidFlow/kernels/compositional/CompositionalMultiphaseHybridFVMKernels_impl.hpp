@@ -26,6 +26,8 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/kernels/HybridFVMHelperKernels.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 
 namespace geos
 {
@@ -446,7 +448,7 @@ UpwindingHelper::
                                        localIndex ( & totalMobIds )[ NP ][ 3 ],
                                        localIndex ( & totalMobPos )[ NP ] )
 {
-  if( NP == 2 )
+  if constexpr( NP == 2 )
   {
     if( gravTerm[0][0] > 0 )
     {
@@ -471,7 +473,7 @@ UpwindingHelper::
       totalMobPos[1] = Pos::LOCAL;
     }
   }
-  else if( NP == 3 )
+  else if constexpr( NP == 3 )
   {
     // TODO Francois: this should be improved
     // currently this implements the algorithm proposed by SH Lee
@@ -1286,6 +1288,531 @@ FluxKernel::
                                                                                      localRhs );
   } );
 }
+
+/******************************** DirichletFluxKernel ********************************/
+
+template< integer NF, integer NC, integer NP, typename IP_TYPE >
+void
+DirichletFluxKernel::
+  launch( integer const numPhases,
+          localIndex const er,
+          localIndex const esr,
+          CellElementSubRegion const & subRegion,
+          constitutive::PermeabilityBase const & permeabilityModel,
+          FaceManager const & faceManager,
+          SortedArrayView< localIndex const > const & boundaryFaceSet,
+          arrayView1d< real64 const > const & facePres,
+          arrayView1d< real64 const > const & faceTemp,
+          arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & facePhaseMob,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & facePhaseMassDens,
+          arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & facePhaseCompFrac,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+          ArrayOfArraysView< localIndex const > const & faceToNodes,
+          arrayView2d< localIndex const > const & elemRegionList,
+          arrayView2d< localIndex const > const & elemSubRegionList,
+          arrayView2d< localIndex const > const & elemList,
+          arrayView1d< globalIndex const > const & faceDofNumber,
+          arrayView1d< real64 const > const & faceGravCoef,
+          arrayView1d< real64 const > const & transMultiplier,
+          real64 const lengthTolerance,
+          real64 const dt,
+          globalIndex const rankOffset,
+          integer const useTotalMassEquation,
+          CompFlowAccessors const & compFlowAccessors,
+          MultiFluidAccessors const & multiFluidAccessors,
+          ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
+          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          arrayView1d< real64 > const & localRhs )
+{
+  using Deriv = multifluid::DerivativeOffset;
+
+  // Get element data
+  arrayView2d< localIndex const > const & elemToFaces = subRegion.faceList();
+  arrayView1d< real64 const > const & elemPres = subRegion.getField< fields::flow::pressure >();
+  arrayView1d< real64 const > const & elemGravCoef = subRegion.getField< fields::flow::gravityCoefficient >();
+  arrayView2d< real64 const > const & elemCenter = subRegion.getReference< array2d< real64 > >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
+  arrayView1d< real64 const > const & elemVolume = subRegion.getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
+  arrayView3d< real64 const > const & elemPerm = permeabilityModel.permeability();
+  arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+
+  // Get compositional flow fields
+  auto phaseMob = compFlowAccessors.get( fields::flow::phaseMobility{} );
+  auto dPhaseMob = compFlowAccessors.get( fields::flow::dPhaseMobility{} );
+  auto dCompFrac_dCompDens = compFlowAccessors.get( fields::flow::dGlobalCompFraction_dGlobalCompDensity{} );
+
+  // Get multifluid fields
+  auto phaseMassDens = multiFluidAccessors.get( fields::multifluid::phaseMassDensity{} );
+  auto dPhaseMassDens = multiFluidAccessors.get( fields::multifluid::dPhaseMassDensity{} );
+  auto phaseCompFrac = multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} );
+  auto dPhaseCompFrac = multiFluidAccessors.get( fields::multifluid::dPhaseCompFraction{} );
+
+  // Loop over boundary faces
+  forAll< parallelDevicePolicy<> >( boundaryFaceSet.size(), [=] GEOS_DEVICE ( localIndex const iset )
+  {
+    localIndex const kf = boundaryFaceSet[iset];
+
+    // Find the element adjacent to this boundary face
+    localIndex erAdj = -1, esrAdj = -1, eiAdj = -1;
+    for( integer ke = 0; ke < elemRegionList.size( 1 ); ++ke )
+    {
+      if( elemRegionList[kf][ke] == er && elemSubRegionList[kf][ke] == esr )
+      {
+        erAdj = elemRegionList[kf][ke];
+        esrAdj = elemSubRegionList[kf][ke];
+        eiAdj = elemList[kf][ke];
+        break;
+      }
+    }
+
+    // Skip if no adjacent element in target region
+    if( eiAdj < 0 || elemGhostRank[eiAdj] >= 0 )
+    {
+      return;
+    }
+
+    // Compute one-sided transmissibility
+    stackArray2d< real64, NF * NF > transMatrix( NF, NF );
+    real64 const perm[3] = { elemPerm[eiAdj][0][0], elemPerm[eiAdj][0][1], elemPerm[eiAdj][0][2] };
+
+    IP_TYPE::template compute< NF >( nodePosition,
+                                     transMultiplier,
+                                     faceToNodes,
+                                     elemToFaces[eiAdj],
+                                     elemCenter[eiAdj],
+                                     elemVolume[eiAdj],
+                                     perm,
+                                     lengthTolerance,
+                                     transMatrix );
+
+    // Find local face index
+    integer ifaceLoc = -1;
+    for( integer j = 0; j < NF; ++j )
+    {
+      if( elemToFaces[eiAdj][j] == kf )
+      {
+        ifaceLoc = j;
+        break;
+      }
+    }
+    if( ifaceLoc < 0 ) return;
+
+    real64 const transmissibility = transMatrix[ifaceLoc][ifaceLoc];
+
+    // Component fluxes
+    real64 compFlux[NC]{};
+    real64 dCompFlux_dP[NC]{};
+    real64 dCompFlux_dC[NC][NC]{};
+
+    // Loop over phases to compute component fluxes
+    // Use face-based properties for boundary conditions (upwinding)
+    for( integer ip = 0; ip < numPhases; ++ip )
+    {
+      real64 dDensMean_dC[NC]{};
+      real64 dF_dC[NC]{};
+      real64 dProp_dC[NC]{};
+
+      // Use average of element and face phase mass density for gravity term
+      real64 const elemDens = phaseMassDens[erAdj][esrAdj][eiAdj][0][ip];
+      real64 const faceDens = facePhaseMassDens[kf][ip];
+      real64 const densMean = 0.5 * (elemDens + faceDens);
+      
+      applyChainRule( NC,
+                      dCompFrac_dCompDens[erAdj][esrAdj][eiAdj],
+                      dPhaseMassDens[erAdj][esrAdj][eiAdj][0][ip],
+                      dProp_dC,
+                      Deriv::dC );
+
+      real64 const dDensMean_dP = 0.5 * dPhaseMassDens[erAdj][esrAdj][eiAdj][0][ip][Deriv::dP];
+      for( integer jc = 0; jc < NC; ++jc )
+      {
+        dDensMean_dC[jc] = 0.5 * dProp_dC[jc];
+      }
+
+      // Potential difference
+      real64 const gravTimesDz = elemGravCoef[eiAdj] - faceGravCoef[kf];
+      real64 const potDif = elemPres[eiAdj] - facePres[kf] - densMean * gravTimesDz;
+      real64 const f = transmissibility * potDif;
+      real64 const dF_dP = transmissibility * ( 1.0 - dDensMean_dP * gravTimesDz );
+      for( integer jc = 0; jc < NC; ++jc )
+      {
+        dF_dC[jc] = -transmissibility * dDensMean_dC[jc] * gravTimesDz;
+      }
+
+      // Use element mobility (simplified upwinding for Dirichlet BC)
+      // need to upwind the following:
+      // Upwind phase component fraction based on flow direction
+      real64 const beta = (potDif > 0.0) ? 1.0  : 0.0;
+      real64 const facePhaseMobility = facePhaseMob[kf][ip];
+      real64 const phaseMobility = beta * phaseMob[erAdj][esrAdj][eiAdj][ip] + (1.0 - beta) * facePhaseMobility;
+      real64 const phaseFlux = phaseMobility * f;
+      real64 const dPhaseFlux_dP = phaseMobility * dF_dP + beta * dPhaseMob[erAdj][esrAdj][eiAdj][ip][Deriv::dP] * f;
+      real64 dPhaseFlux_dC[NC];
+      for( integer jc = 0; jc < NC; ++jc )
+      {
+        dPhaseFlux_dC[jc] = phaseMob[erAdj][esrAdj][eiAdj][ip] * dF_dC[jc] + dPhaseMob[erAdj][esrAdj][eiAdj][ip][Deriv::dC+jc] * f;
+      }
+
+      // Use face-based phase composition for boundary conditions when flow is INTO the domain (potDif < 0)
+      // Use element phase composition when flow is OUT of the domain (potDif > 0)
+      for( integer ic = 0; ic < NC; ++ic )
+      {
+        real64 const ycpElem = phaseCompFrac[erAdj][esrAdj][eiAdj][0][ip][ic];
+        real64 const ycpFace = facePhaseCompFrac[kf][ip][ic];
+        
+        // Upwind phase component fraction based on flow direction
+        real64 const ycp = beta * ycpElem + (1.0 - beta) * ycpFace;
+        
+        compFlux[ic] += ycp * phaseFlux;
+        
+        // For derivatives, use element properties (simplified for boundary conditions)
+        dCompFlux_dP[ic] += dPhaseFlux_dP * ycp + beta * phaseFlux * dPhaseCompFrac[erAdj][esrAdj][eiAdj][0][ip][ic][Deriv::dP];
+
+        applyChainRule( NC,
+                        dCompFrac_dCompDens[erAdj][esrAdj][eiAdj],
+                        dPhaseCompFrac[erAdj][esrAdj][eiAdj][0][ip][ic],
+                        dProp_dC,
+                        Deriv::dC );
+        for( integer jc = 0; jc < NC; ++jc )
+        {
+          dCompFlux_dC[ic][jc] += dPhaseFlux_dC[jc] * ycp + beta * phaseFlux * dProp_dC[jc];
+        }
+      }
+    }
+
+    // Assemble into residual and Jacobian
+    real64 localFlux[NC];
+    real64 localFluxJacobian[NC][NC+1];
+
+    for( integer ic = 0; ic < NC; ++ic )
+    {
+      localFlux[ic] = dt * compFlux[ic];
+      localFluxJacobian[ic][0] = dt * dCompFlux_dP[ic];
+      for( integer jc = 0; jc < NC; ++jc )
+      {
+        localFluxJacobian[ic][jc+1] = dt * dCompFlux_dC[ic][jc];
+      }
+    }
+
+    // Apply total mass equation transformation if needed
+    if( useTotalMassEquation )
+    {
+      real64 work[NC+1]{};
+      compositionalMultiphaseUtilities::shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC+1, localFluxJacobian, work );
+      compositionalMultiphaseUtilities::shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, localFlux );
+    }
+
+    // Add to global system
+    globalIndex const elemDof = elemDofNumber[erAdj][esrAdj][eiAdj];
+    localIndex const localRow = LvArray::integerConversion< localIndex >( elemDof - rankOffset );
+
+    for( integer ic = 0; ic < NC; ++ic )
+    {
+      RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow + ic], localFlux[ic] );
+      
+      globalIndex dofColIndices[NC+1];
+      dofColIndices[0] = elemDof;
+      for( integer jc = 0; jc < NC; ++jc )
+      {
+        dofColIndices[jc+1] = elemDof + jc + 1;
+      }
+      
+      localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + ic,
+                                                                        dofColIndices,
+                                                                        localFluxJacobian[ic],
+                                                                        NC+1 );
+    }
+  } );
+}
+
+/******************************** EvaluateBCFacePropertiesKernel ********************************/
+
+/**
+ * @brief Evaluate constitutive properties at BC face conditions
+ * @tparam NC number of components
+ * @tparam NP number of phases
+ * @param numPhases number of phases
+ * @param boundaryFaceSet set of boundary faces
+ * @param facePres face pressures at BC
+ * @param faceTemp face temperatures at BC
+ * @param faceCompFrac face component fractions at BC
+ * @param elemRegionList face to element region list
+ * @param elemSubRegionList face to element subregion list
+ * @param elemList face to element list
+ * @param er target element region index
+ * @param esr target element subregion index
+ * @param fluid multifluid model
+ * @param relperm relative permeability model
+ * @param facePhaseMob output: face phase mobility at BC
+ * @param facePhaseMassDens output: face phase mass density at BC
+ * @param facePhaseCompFrac output: face phase component fraction at BC
+ */
+template< integer NC, integer NP >
+void
+evaluateBCFaceProperties( integer const numPhases,
+                          SortedArrayView< localIndex const > const & boundaryFaceSet,
+                          arrayView1d< real64 const > const & facePres,
+                          arrayView1d< real64 const > const & faceTemp,
+                          arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
+                          arrayView2d< localIndex const > const & elemRegionList,
+                          arrayView2d< localIndex const > const & elemSubRegionList,
+                          arrayView2d< localIndex const > const & elemList,
+                          localIndex const er,
+                          localIndex const esr,
+                          constitutive::MultiFluidBase & fluid,
+                          constitutive::RelativePermeabilityBase & relperm,
+                          arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
+                          arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
+                          arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac )
+{
+  // Use constitutiveUpdatePassThru to dispatch to concrete fluid and relperm types
+  constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+  {
+    using FluidType = TYPEOFREF( castedFluid );
+    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+
+    constitutive::constitutiveUpdatePassThru( relperm, [&] ( auto & castedRelperm )
+    {
+      using RelPermType = TYPEOFREF( castedRelperm );
+      typename RelPermType::KernelWrapper relPermWrapper = castedRelperm.createKernelWrapper();
+
+      // Loop over BC faces and evaluate properties at BC conditions
+      forAll< serialPolicy >( boundaryFaceSet.size(), [=, &facePhaseMob, &facePhaseMassDens, &facePhaseCompFrac] ( localIndex const iset )
+    {
+      localIndex const kf = boundaryFaceSet[iset];
+
+      // Find adjacent element in target region
+      localIndex eiAdj = -1;
+      for( integer ke = 0; ke < elemRegionList.size( 1 ); ++ke )
+      {
+        if( elemRegionList[kf][ke] == er && elemSubRegionList[kf][ke] == esr )
+        {
+          eiAdj = elemList[kf][ke];
+          break;
+        }
+      }
+      if( eiAdj < 0 ) return;
+
+      // Allocate temporary storage for face constitutive properties
+      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseFrac( 1, 1, numPhases );
+      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseDens( 1, 1, numPhases );
+      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseMassDensLocal( 1, 1, numPhases );
+      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseVisc( 1, 1, numPhases );
+      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseEnthalpy( 1, 1, numPhases );
+      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseInternalEnergy( 1, 1, numPhases );
+      StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES * NC,
+                  constitutive::multifluid::LAYOUT_PHASE_COMP > facePhaseCompFracLocal( 1, 1, numPhases, NC );
+      real64 faceTotalDens = 0.0;
+
+      // Evaluate fluid properties at BC face conditions using flash calculation
+      constitutive::MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
+                                                                  facePres[kf],
+                                                                  faceTemp[kf],
+                                                                  faceCompFrac[kf],
+                                                                  facePhaseFrac[0][0],
+                                                                  facePhaseDens[0][0],
+                                                                  facePhaseMassDensLocal[0][0],
+                                                                  facePhaseVisc[0][0],
+                                                                  facePhaseEnthalpy[0][0],
+                                                                  facePhaseInternalEnergy[0][0],
+                                                                  facePhaseCompFracLocal[0][0],
+                                                                  faceTotalDens );
+
+      // Evaluate relative permeability at face saturation from flash calculation
+//      relPermWrapper.compute( facePhaseFrac[0][0], 0, 0 );
+      
+      // Store computed properties in output arrays
+      for( integer ip = 0; ip < numPhases; ++ip )
+      {
+        // Store phase mass density from flash calculation
+        facePhaseMassDens[kf][ip] = facePhaseMassDensLocal[0][0][ip];
+        
+        // Compute mobility from relative permeability evaluated at face conditions
+        real64 const faceKr = facePhaseFrac[0][0][ip]; // phaseRelPerm[eiAdj][0][ip];
+        real64 const mu = facePhaseVisc[0][0][ip];
+        facePhaseMob[kf][ip] = (mu > 0) ? faceKr / mu : 0.0;
+        
+        // Store phase composition from flash calculation
+        for( integer ic = 0; ic < NC; ++ic )
+        {
+          facePhaseCompFrac[kf][ip][ic] = facePhaseCompFracLocal[0][0][ip][ic];
+        }
+      }
+    } );
+    } ); // end nested constitutiveUpdatePassThru for relperm
+  } ); // end constitutiveUpdatePassThru for fluid
+}
+
+// Explicit template instantiations
+template void
+evaluateBCFaceProperties< 1, 2 >( integer const numPhases,
+                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
+                                  arrayView1d< real64 const > const & facePres,
+                                  arrayView1d< real64 const > const & faceTemp,
+                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
+                                  arrayView2d< localIndex const > const & elemRegionList,
+                                  arrayView2d< localIndex const > const & elemSubRegionList,
+                                  arrayView2d< localIndex const > const & elemList,
+                                  localIndex const er,
+                                  localIndex const esr,
+                                  constitutive::MultiFluidBase & fluid,
+                                  constitutive::RelativePermeabilityBase & relperm,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
+                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
+
+template void
+evaluateBCFaceProperties< 2, 2 >( integer const numPhases,
+                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
+                                  arrayView1d< real64 const > const & facePres,
+                                  arrayView1d< real64 const > const & faceTemp,
+                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
+                                  arrayView2d< localIndex const > const & elemRegionList,
+                                  arrayView2d< localIndex const > const & elemSubRegionList,
+                                  arrayView2d< localIndex const > const & elemList,
+                                  localIndex const er,
+                                  localIndex const esr,
+                                  constitutive::MultiFluidBase & fluid,
+                                  constitutive::RelativePermeabilityBase & relperm,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
+                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
+
+template void
+evaluateBCFaceProperties< 3, 2 >( integer const numPhases,
+                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
+                                  arrayView1d< real64 const > const & facePres,
+                                  arrayView1d< real64 const > const & faceTemp,
+                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
+                                  arrayView2d< localIndex const > const & elemRegionList,
+                                  arrayView2d< localIndex const > const & elemSubRegionList,
+                                  arrayView2d< localIndex const > const & elemList,
+                                  localIndex const er,
+                                  localIndex const esr,
+                                  constitutive::MultiFluidBase & fluid,
+                                  constitutive::RelativePermeabilityBase & relperm,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
+                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
+
+template void
+evaluateBCFaceProperties< 4, 2 >( integer const numPhases,
+                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
+                                  arrayView1d< real64 const > const & facePres,
+                                  arrayView1d< real64 const > const & faceTemp,
+                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
+                                  arrayView2d< localIndex const > const & elemRegionList,
+                                  arrayView2d< localIndex const > const & elemSubRegionList,
+                                  arrayView2d< localIndex const > const & elemList,
+                                  localIndex const er,
+                                  localIndex const esr,
+                                  constitutive::MultiFluidBase & fluid,
+                                  constitutive::RelativePermeabilityBase & relperm,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
+                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
+
+template void
+evaluateBCFaceProperties< 5, 2 >( integer const numPhases,
+                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
+                                  arrayView1d< real64 const > const & facePres,
+                                  arrayView1d< real64 const > const & faceTemp,
+                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
+                                  arrayView2d< localIndex const > const & elemRegionList,
+                                  arrayView2d< localIndex const > const & elemSubRegionList,
+                                  arrayView2d< localIndex const > const & elemList,
+                                  localIndex const er,
+                                  localIndex const esr,
+                                  constitutive::MultiFluidBase & fluid,
+                                  constitutive::RelativePermeabilityBase & relperm,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
+                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
+
+template void
+evaluateBCFaceProperties< 1, 3 >( integer const numPhases,
+                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
+                                  arrayView1d< real64 const > const & facePres,
+                                  arrayView1d< real64 const > const & faceTemp,
+                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
+                                  arrayView2d< localIndex const > const & elemRegionList,
+                                  arrayView2d< localIndex const > const & elemSubRegionList,
+                                  arrayView2d< localIndex const > const & elemList,
+                                  localIndex const er,
+                                  localIndex const esr,
+                                  constitutive::MultiFluidBase & fluid,
+                                  constitutive::RelativePermeabilityBase & relperm,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
+                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
+
+template void
+evaluateBCFaceProperties< 2, 3 >( integer const numPhases,
+                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
+                                  arrayView1d< real64 const > const & facePres,
+                                  arrayView1d< real64 const > const & faceTemp,
+                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
+                                  arrayView2d< localIndex const > const & elemRegionList,
+                                  arrayView2d< localIndex const > const & elemSubRegionList,
+                                  arrayView2d< localIndex const > const & elemList,
+                                  localIndex const er,
+                                  localIndex const esr,
+                                  constitutive::MultiFluidBase & fluid,
+                                  constitutive::RelativePermeabilityBase & relperm,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
+                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
+
+template void
+evaluateBCFaceProperties< 3, 3 >( integer const numPhases,
+                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
+                                  arrayView1d< real64 const > const & facePres,
+                                  arrayView1d< real64 const > const & faceTemp,
+                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
+                                  arrayView2d< localIndex const > const & elemRegionList,
+                                  arrayView2d< localIndex const > const & elemSubRegionList,
+                                  arrayView2d< localIndex const > const & elemList,
+                                  localIndex const er,
+                                  localIndex const esr,
+                                  constitutive::MultiFluidBase & fluid,
+                                  constitutive::RelativePermeabilityBase & relperm,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
+                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
+
+template void
+evaluateBCFaceProperties< 4, 3 >( integer const numPhases,
+                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
+                                  arrayView1d< real64 const > const & facePres,
+                                  arrayView1d< real64 const > const & faceTemp,
+                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
+                                  arrayView2d< localIndex const > const & elemRegionList,
+                                  arrayView2d< localIndex const > const & elemSubRegionList,
+                                  arrayView2d< localIndex const > const & elemList,
+                                  localIndex const er,
+                                  localIndex const esr,
+                                  constitutive::MultiFluidBase & fluid,
+                                  constitutive::RelativePermeabilityBase & relperm,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
+                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
+
+template void
+evaluateBCFaceProperties< 5, 3 >( integer const numPhases,
+                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
+                                  arrayView1d< real64 const > const & facePres,
+                                  arrayView1d< real64 const > const & faceTemp,
+                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
+                                  arrayView2d< localIndex const > const & elemRegionList,
+                                  arrayView2d< localIndex const > const & elemSubRegionList,
+                                  arrayView2d< localIndex const > const & elemList,
+                                  localIndex const er,
+                                  localIndex const esr,
+                                  constitutive::MultiFluidBase & fluid,
+                                  constitutive::RelativePermeabilityBase & relperm,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
+                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
+                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
 
 } // namespace compositionalMultiphaseHybridFVMKernels
 
