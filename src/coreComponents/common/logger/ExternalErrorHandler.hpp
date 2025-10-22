@@ -30,6 +30,9 @@
 namespace geos
 {
 
+/**
+ * @brief This class implements pipe redirection to allow to capture and process externally streamed messages
+ */
 class OutputStreamDeviation
 {
 public:
@@ -88,6 +91,11 @@ private:
   std::string m_unprocessedData;
 };
 
+/**
+ * @brief Class to handle external error capture.
+ *        This class role is to capture and process external error messages, using the geos logger for
+*         better tracing, logging and handling of messages.
+ */
 class ExternalErrorHandler
 {
 public:
