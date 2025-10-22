@@ -354,7 +354,7 @@ namespace internal
 /**
  * Wrapper for the underlying std::aray that allows toggling between bounds-checked access
  * (using at()) and unchecked access (using operator[]).
- * @tparam T Type of elements in std::array
+ * @tparam T Type of elements in stdArray
  * @tparam N The number of fixed element in the array
  * @tparam USE_STD_CONTAINER_BOUNDS_CHECKING A boolean flag to enable or disable bounds checking.
  */
@@ -364,11 +364,8 @@ template< class T,
 class StdArrayWrapper : public std::array< T, N >
 {
 public:
-  /// Type alias for the base class (i.e., std::array)
+  /// Type alias for the base class (i.e., stdArray)
   using Base = std::array< T, N >;
-
-  /// Inherit constructors
-  using Base::Base;
 
   /**
    * Access element at index with bounds checking if USE_STD_CONTAINER_BOUNDS_CHECKING is true.
@@ -377,15 +374,15 @@ public:
    * @return Const reference to the element at the specified index.
    * @throws std::out_of_range if index is out of bounds.
    */
-  Base & operator[]( T const & key )
+  constexpr T & operator[]( size_t const index )
   {
     if constexpr (USE_BOUNDS_CHECKING)
     {
-      return this->at( key );  // Throws std::out_of_range if key is missing
+      return this->at( index );
     }
     else
     {
-      return Base::operator[]( key );
+      return Base::operator[]( index );
     }
   }
 
@@ -396,15 +393,15 @@ public:
    * @return Const reference to the element at the specified index.
    * @throws std::out_of_range if index is out of bounds.
    */
-  Base const & operator[]( T const & key ) const
+  constexpr T const & operator[]( size_t const index ) const
   {
     if constexpr (USE_BOUNDS_CHECKING)
     {
-      return this->at( key );
+      return this->at( index );
     }
     else
     {
-      return Base::operator[]( key );
+      return Base::operator[]( index );
     }
   }
 
@@ -412,12 +409,40 @@ public:
 } //namespace internal
 
 /**
- * type alias for std::array
  * @tparam T Type of elements in the array.
  * @tparam N The number of fixed element in the array.
+ * @note we use a struct rather than an alias for taking advantage of deduction guide
  */
 template< class T, std::size_t N >
-using stdArray = internal::StdArrayWrapper< T, N, USE_STD_CONTAINER_BOUNDS_CHECKING >;
+struct stdArray : public internal::StdArrayWrapper< T, N, true >
+{};
+
+template< typename _Tp, typename ... _Up >
+stdArray( _Tp, _Up ... )
+  ->stdArray< std::enable_if_t< (std::is_same_v< _Tp, _Up > && ...), _Tp >,
+              1 + sizeof...(_Up) >;
+
+
+template< typename T, std::size_t N, std::size_t... Is >
+constexpr stdArray< T, N > to_stdArray_impl( std::array< T, N > const & arr, std::index_sequence< Is... > )
+{
+  return {{arr[Is] ...}};
+}
+
+/**
+ * @brief Convert an std::array to an stdArray.
+ * @tparam T Type of elements in stdArray
+ * @tparam N The number of fixed element in the array
+ * @param arr The std::array to convert
+ * @return A stdArraycons
+   @note we don't want implicitly convert an std::array into a stdArray.
+ */
+template< typename T, std::size_t N >
+constexpr stdArray< T, N > to_stdArray( std::array< T, N > const & arr )
+{
+  return to_stdArray_impl( arr, std::make_index_sequence< N >{} );
+}
+
 
 } // namespace geos
 
