@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<Problem>
+    <Included>
+        <File name="dome_soreide_whitson_base.xml" />
+    </Included>
+      
+    <Mesh>
+        <VTKMesh
+            name="mesh"
+            file="dome_smoke.vti"
+            logLevel="2">
+            <Included>
+                <File name="dome_wells.xml" />
+            </Included>
+        </VTKMesh>
+    </Mesh>
+</Problem>
