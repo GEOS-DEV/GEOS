@@ -19,9 +19,9 @@
         maxTimeStepCuts="10"
         newtonTol="1e-2"
         newtonMaxIter="20"
-        maxAllowedResidualNorm="1e+15"/>
+        maxAllowedResidualNorm="1e+15" />
       <LinearSolverParameters
-        directParallel="0"/>       
+        directParallel="0" />       
     </CompositionalMultiphaseReservoirPoromechanicsConformingFractures>
 
     <SolidMechanicsLagrangeContact
@@ -93,38 +93,6 @@
     </VTKMesh>    
   </Mesh>
 
-  <Geometry>
-    <Box
-      name="xposFace"
-      xMin="{ 5999.99,  -6000.01,  -4000.01 }"
-      xMax="{ 6000.01,   6000.01,      0.01 }"/>
-
-    <Box
-      name="xnegFace"
-      xMin="{-6000.01,  -6000.01,  -4000.01 }"
-      xMax="{-5999.99,   6000.01,      0.01 }"/>
-
-    <Box
-      name="yposFace"
-      xMin="{-6000.01,   5999.99,  -4000.01 }"
-      xMax="{ 6000.01,   6000.01,      0.01 }"/>
-
-    <Box
-      name="ynegFace"
-      xMin="{-6000.01,  -6000.01,  -4000.01 }"
-      xMax="{ 6000.01,  -5999.99,      0.01 }"/>
-
-    <Box
-      name="zposFace"
-      xMin="{-6000.01,  -6000.01,     -0.01 }"
-      xMax="{ 6000.01,   6000.01,      0.01 }"/>
-
-    <Box
-      name="znegFace"
-      xMin="{-6000.01,  -6000.01,  -4000.01 }"
-      xMax="{ 6000.01,   6000.01,  -3999.99 }"/>
-  </Geometry>
-
   <Events
     minTime="-1e11"
     maxTime="111600">
@@ -141,7 +109,7 @@
       name="outputPostEquilibrationStep1"
       targetTime="0"
       targetExactTimestep="1"
-      target="/Outputs/vtkOutput"/>
+      target="/Outputs/vtkOutput" />
 
     <PeriodicEvent
       name="solverApplication"
@@ -154,13 +122,13 @@
       beginTime="0.0"
       endTime="1.0e5"
       timeFrequency="1.0e5"
-      target="/Outputs/vtkOutput"/>
+      target="/Outputs/vtkOutput" />
 
     <PeriodicEvent
       name="restarts"
       beginTime="0.0"
       timeFrequency="1.0e5"
       endTime="1.0e5"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput" />
   </Events>
 </Problem>
