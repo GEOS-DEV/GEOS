@@ -328,7 +328,7 @@ void VTKMeshGenerator::freeResources()
 
 vtk::AllMeshes redistributeMeshes( integer const logLevel,
                                    vtkSmartPointer< vtkDataSet > loadedMesh,
-                                   std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
+                                   stdMap< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                                    MPI_Comm const comm,
                                    DomainPartitioner & partitioner,
                                    int const useGlobalIds )

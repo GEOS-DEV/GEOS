@@ -164,7 +164,7 @@ private:
   string_array m_faceBlockNames;
 
   /// Maps the face block name to its vtk mesh instance.
-  std::map< string, vtkSmartPointer< vtkDataSet > > m_faceBlockMeshes;
+  stdMap< string, vtkSmartPointer< vtkDataSet > > m_faceBlockMeshes;
 
   /// Names of VTK nodesets to import
   string_array m_nodesetNames;
@@ -210,7 +210,7 @@ private:
  */
 vtk::AllMeshes redistributeMeshes( integer logLevel,
                                    vtkSmartPointer< vtkDataSet > loadedMesh,
-                                   std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
+                                   stdMap< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                                    MPI_Comm comm,
                                    DomainPartitioner & partitioner,
                                    int useGlobalIds );

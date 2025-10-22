@@ -59,7 +59,7 @@ ENUM_STRINGS( PartitionMethod,
  * This should be an unordered_map, but some outdated standard libraries on some systems
  * do not provide std::hash specialization for enums. This is not performance critical though.
  */
-using CellMapType = std::map< ElementType, std::unordered_map< int, stdVector< vtkIdType > > >;
+using CellMapType = stdMap< ElementType, stdUnorderedMap< int, stdVector< vtkIdType > > >;
 
 /**
  * @brief Return a VTK controller for multiprocessing.
@@ -81,7 +81,7 @@ public:
    * @param faceBlocks The fractures meshes.
    */
   AllMeshes( vtkSmartPointer< vtkDataSet > const & main,
-             std::map< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
+             stdMap< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
     : m_main( main ),
     m_faceBlocks( faceBlocks )
   { }
@@ -106,7 +106,7 @@ public:
   /**
    * @return a mapping linking the name of each face block to its mesh.
    */
-  std::map< string, vtkSmartPointer< vtkDataSet > > & getFaceBlocks()
+  stdMap< string, vtkSmartPointer< vtkDataSet > > & getFaceBlocks()
   {
     return m_faceBlocks;
   }
@@ -124,7 +124,7 @@ public:
    * @brief Defines the face blocks/fractures.
    * @param faceBlocks A map which connects each name of the face block to its mesh.
    */
-  void setFaceBlocks( std::map< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
+  void setFaceBlocks( stdMap< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
   {
     m_faceBlocks = faceBlocks;
   }
@@ -136,7 +136,7 @@ private:
   vtkSmartPointer< vtkDataSet > m_main;
 
   /// The face meshes (namely the fractures).
-  std::map< string, vtkSmartPointer< vtkDataSet > > m_faceBlocks;
+  stdMap< string, vtkSmartPointer< vtkDataSet > > m_faceBlocks;
 };
 
 /**
