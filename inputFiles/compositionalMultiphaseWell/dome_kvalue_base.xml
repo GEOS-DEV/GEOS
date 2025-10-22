@@ -56,7 +56,7 @@
                 control="totalVolRate"
                 enableCrossflow="0"
                 targetPhaseName="oil"
-                targetBHP="5.0e+07"
+                targetBHP="4.5e+07"
                 injectionTemperature="344.15"
                 injectionStream="{ 0.00, 0.00, 0.00, 1.00 }"
                 targetTotalRateTableName="WATER.INJECTOR.RATE"
@@ -71,7 +71,7 @@
                 control="totalVolRate"
                 enableCrossflow="0"
                 targetPhaseName="gas"
-                targetBHP="5.0e+07"
+                targetBHP="4.5e+07"
                 injectionTemperature="344.15"
                 injectionStream="{ 0.15, 0.85, 0.00, 0.00 }"
                 targetTotalRateTableName="GAS.INJECTOR.RATE"
@@ -87,7 +87,7 @@
                 enableCrossflow="1"
                 targetPhaseName="gas"
                 targetPhaseRateTableName="PRODUCER.RATE"
-                targetBHP="1.0e+06"
+                targetBHP="5.0e+06"
                 referenceElevation="-4235.0"
                 logLevel="2" />
         </CompositionalMultiphaseWell>
@@ -140,7 +140,7 @@
             solidModelName="NULL.SOLID"
             porosityModelName="ROCK.POROSITY"
             permeabilityModelName="ROCK.PERMEABILITY" />
-        <CompositionalTwoPhaseFluidPhillipsBrine
+        <CompositionalKValueFluidPhillipsBrine
             name="FLUID"
             phaseNames="{ gas, water }"
             equationsOfState="{ PengRobinson, SoreideWhitson }"
@@ -156,17 +156,9 @@
                 { 0.0000, 0.0000, 0.0000, 0.1353 },
                 { 0.4850, 0.1896, 0.1353, 0.0000 }
             }"
-            pressureCoordinates="{
-                1.000e+05, 1.704e+05, 2.904e+05, 4.949e+05, 8.434e+05,
-                1.437e+06, 2.449e+06, 4.174e+06, 7.114e+06, 1.212e+07,
-                2.066e+07, 3.521e+07, 6.000e+07
-            }"
-            temperatureCoordinates="{ 283.15, 334.15, 342.15, 346.15, 354.15 }"
+            kValueTables="{ KV_CH4, KV_CO2, KV_H2S, KV_H2O }"
             waterCompressibility="4.1483E-10"
-            salinity="2.3"
-            stabilityTolerance="1.0e-5"
-            flashTolerance="1.0e-4"
-            stabilityThreshold="-1.0e-3" />            
+            salinity="2.3" />       
         <TableRelativePermeability
             name="RELPERM.SAND"
             phaseNames="{ gas, water }"
@@ -235,6 +227,31 @@
             interpolation="linear"
             coordinates="{ 0.23000,0.28000,0.32312,0.36625,0.40938,0.45250,0.49562,0.53875,0.58188,0.62500,0.66812,0.71125,0.75438,0.79750,0.84062,0.88000,0.92688,0.97000 }"
             values="{ 6.13141e+01,5.91753e+01,5.70544e+01,5.46673e+01,5.20482e+01,4.92216e+01,4.62081e+01,4.30281e+01,3.97023e+01,3.62512e+01,3.26953e+01,2.89654e+01,2.49159e+01,2.04791e+01,1.57120e+01,1.11278e+01,5.41541e+00,0.00000e+00 }" />
+
+        <TableFunction
+            name="KV_CH4"
+            inputVarNames="{ pressure, temperature }"
+            interpolation="linear"
+            coordinateFiles="{ tables/kv_pressure.txt, tables/kv_temperature.txt }"
+            voxelFile="tables/kv_CH4.txt" />
+        <TableFunction
+            name="KV_CO2"
+            inputVarNames="{ pressure, temperature }"
+            interpolation="linear"
+            coordinateFiles="{ tables/kv_pressure.txt, tables/kv_temperature.txt }"
+            voxelFile="tables/kv_CO2.txt" />
+        <TableFunction
+            name="KV_H2S"
+            inputVarNames="{ pressure, temperature }"
+            interpolation="linear"
+            coordinateFiles="{ tables/kv_pressure.txt, tables/kv_temperature.txt }"
+            voxelFile="tables/kv_H2S.txt" />
+        <TableFunction
+            name="KV_H2O"
+            inputVarNames="{ pressure, temperature }"
+            interpolation="linear"
+            coordinateFiles="{ tables/kv_pressure.txt, tables/kv_temperature.txt }"
+            voxelFile="tables/kv_H2O.txt" />
 
         <TableFunction
             name="GAS.INJECTOR.RATE"
