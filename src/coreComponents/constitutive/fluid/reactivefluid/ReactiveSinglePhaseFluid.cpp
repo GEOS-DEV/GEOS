@@ -96,6 +96,12 @@ void ReactiveSinglePhaseFluid< BASE >::postInputInitialization()
       m_numKineticReactions = 0;
       break;
 
+    case ChemicalSystemType::chainSerialAllKinetic:
+      m_numPrimarySpecies = 3;
+      m_numSecondarySpecies = 0;
+      m_numKineticReactions = 3;
+      break;
+
     case ChemicalSystemType::momasMedium:
       m_numPrimarySpecies = 5; 
       m_numSecondarySpecies = 9; 

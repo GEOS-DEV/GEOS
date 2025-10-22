@@ -29,6 +29,7 @@
 
 #include "constitutive/HPCReact/src/reactions/geochemistry/GeochemicalSystems.hpp"
 #include "constitutive/HPCReact/src/reactions/exampleSystems/BulkGeneric.hpp"
+#include "constitutive/HPCReact/src/reactions/exampleSystems/ChainGeneric.hpp"
 #include "constitutive/HPCReact/src/reactions/exampleSystems/MoMasBenchmark.hpp"
 #include "constitutive/HPCReact/src/reactions/reactionsSystems/EquilibriumReactions.hpp"
 #include "constitutive/HPCReact/src/reactions/reactionsSystems/MixedEquilibriumKineticReactions.hpp"
@@ -52,7 +53,8 @@ enum class ChemicalSystemType : integer
   carbonateAllEquilibrium,
   ultramafic,
   momasEasy,
-  momasMedium
+  momasMedium,
+  chainSerialAllKinetic
 };
 
 template< typename BASE >
@@ -226,6 +228,7 @@ protected:
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::ultramaficSystemType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::carbonateSystemType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::geochemistry::carbonateSystemAllEquilibriumType >,
+    typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::ChainGeneric::serialAllKineticType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MoMasBenchmark::mediumCaseType >,
     typename ReactiveSinglePhaseFluid< BASE >::template ReactionKernelWrapper< hpcReact::MoMasBenchmark::easyCaseType > >
   createReactionKernelWrapper() const
@@ -233,6 +236,7 @@ protected:
     using namespace hpcReact::geochemistry;
     using namespace hpcReact::MoMasBenchmark;
     using namespace hpcReact::bulkGeneric;
+    using namespace hpcReact::ChainGeneric;
     switch( m_chemicalSystemType )
     {
       case ChemicalSystemType::ultramafic:
@@ -278,6 +282,20 @@ protected:
                                                                            m_numSecondarySpecies,
                                                                            m_numKineticReactions,
                                                                            carbonateSystemAllEquilibrium );
+      case ChemicalSystemType::chainSerialAllKinetic:
+        return ReactionKernelWrapper< serialAllKineticType >( m_primarySpeciesAggregateConcentration,
+                                                              m_primarySpeciesMobileAggregateConcentration,
+                                                              m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                              m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                              m_initialPrimarySpeciesConcentration,
+                                                              m_secondarySpeciesConcentration,
+                                                              m_kineticReactionRates,
+                                                              m_aggregateSpeciesRates,
+                                                              m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                                                              m_numPrimarySpecies,
+                                                              m_numSecondarySpecies,
+                                                              m_numKineticReactions,
+                                                              serialAllKineticParams );
       case ChemicalSystemType::momasMedium:
         return ReactionKernelWrapper< mediumCaseType >( m_primarySpeciesAggregateConcentration,
                                                         m_primarySpeciesMobileAggregateConcentration,
@@ -366,13 +384,21 @@ updateEquilibriumReaction( localIndex const k,
 {
   integer const numSecondarySpecies = m_numSecondarySpecies;
 
-  stackArray1d< real64, MAX_NUM_SPECIES > logSecondarySpeciesConcentration( numSecondarySpecies );
-
-  enforceEquilibrium( pressure, temperature, m_primarySpeciesAggregateConcentration[k][0], m_initialPrimarySpeciesConcentration[k][0], logPrimarySpeciesConcentration, logSecondarySpeciesConcentration.toSlice() );
-
-  for( integer i=0; i < numSecondarySpecies; ++i )
+  if( numSecondarySpecies > 0 )
   {
-    m_secondarySpeciesConcentration[k][0][i] =  LvArray::math::exp( logSecondarySpeciesConcentration[i] );
+    stackArray1d< real64, MAX_NUM_SPECIES > logSecondarySpeciesConcentration( numSecondarySpecies );
+
+    enforceEquilibrium( pressure, temperature, m_primarySpeciesAggregateConcentration[k][0], m_initialPrimarySpeciesConcentration[k][0], logPrimarySpeciesConcentration,
+                        logSecondarySpeciesConcentration.toSlice() );
+
+    for( integer i=0; i < numSecondarySpecies; ++i )
+    {
+      m_secondarySpeciesConcentration[k][0][i] =  LvArray::math::exp( logSecondarySpeciesConcentration[i] );
+    }
+  }
+  else
+  {
+    GEOS_UNUSED_VAR( k, pressure, temperature, logPrimarySpeciesConcentration );
   }
 
 }
@@ -491,7 +517,8 @@ ENUM_STRINGS( ChemicalSystemType,
               "carbonateAllEquilibrium",
               "ultramafic",
               "momasEasy",
-              "momasMedium" );
+              "momasMedium",
+              "chainSerialAllKinetic" );
 
 } // namespace reactivefluid
 

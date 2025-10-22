@@ -87,7 +87,7 @@ DECLARE_FIELD( secondarySpeciesConcentration,
                "secondarySpeciesConcentration",
                array3dLayoutSpecies,
                1e-16,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "secondarySpeciesConcentration" );
 
