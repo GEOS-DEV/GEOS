@@ -90,7 +90,7 @@ public:
     static constexpr char const * referenceTotalStressString() { return "referenceTotalStress"; }
   } viewKeys;
 
-  real64 computeFractureStress( real64 const pressure, R1Tensor const & normal ) const;
+  real64 computeFractureStress( real64 const pressure, array1d< real64 > const & normal ) const;
   
 private:
   real64 m_biot;

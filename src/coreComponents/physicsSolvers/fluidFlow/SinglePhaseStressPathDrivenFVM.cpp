@@ -109,9 +109,12 @@ void SinglePhaseStressPathDrivenFVM::updateFractureAperture( SurfaceElementSubRe
   real64 dHydraulicAperture_dNormalTraction = 0.0;
   forAll< parallelDevicePolicy<> >( subRegion.size(), [&] GEOS_DEVICE ( localIndex const k )
   {
-    R1Tensor const normal = { normalVector[k][0], normalVector[k][1], normalVector[k][2] };
+    array1d < real64 > normal(3);
+    normal[0] = normalVector[k][0];
+    normal[1] = normalVector[k][1];
+    normal[2] = normalVector[k][2];
     
-    real64 const sigmaN_N = m_oedometricStressPath.computeFractureStress( pressure[k], normal);
+    real64 const sigmaN_N = m_oedometricStressPath.computeFractureStress( pressure[k], normal );
     // The traction sigmaN_N must be negative
     newHydraulicAperture[k] = hydraulicApertureWrapper.computeHydraulicAperture( 0.0,
                                                     -sigmaN_N,

@@ -17,16 +17,19 @@
 #include "common/logger/Logger.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
-// GEOS_PHYSICSSOLVERS_OEDOMETRICSTRESSPATH_HPP_
+#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+
 namespace geos
 {
 
 using namespace dataRepository;
 
 OedometricStressPath::OedometricStressPath( string const & name,
-                                                      Group * const parent ):
+                                            Group * const parent ):
   Group( name, parent )
 {
+ 
+  GEOS_LOG_RANK_0( "*** OedometricStressPath name "<< name << " parent " <<  parent->getName()  );
   setInputFlags( InputFlags::REQUIRED );
 
   registerWrapper( viewKeysStruct::biotString(), &m_biot ).
@@ -78,19 +81,15 @@ void OedometricStressPath::print() const
 
 
 real64 OedometricStressPath::computeFractureStress( real64 const pressure,
-                                                    R1Tensor const & normal ) const
+                                                    array1d< real64 > const & normal ) const
 {  
-  auto dot_product = [](real64 const (&u)[3], R1Tensor const &v ) -> real64
-  {
-    return u[0]*v[0] + u[1]*v[1] + u[2]*v[2];
-  };
-
-  auto matmul = [](real64 const (&u)[3], R1Tensor const &v, real64 (&r)[3]) -> void
+  auto matmul = [](real64 const (&u)[3], array1d< real64 > const &v, array1d< real64 > &r) -> void
   {
     r[0] = u[0]*v[0];
     r[1] = u[1]*v[1];
     r[2] = u[2]*v[2];
   }; 
+  //GEOS_LOG_RANK_0( "*** normal "<< normal[0] << " "<< normal[1] << " "<< normal[2] );
 
   real64 const deltaSigmaZ = m_biot * (pressure - m_referencePressure);
   real64 const poisson_deltaSigma = deltaSigmaZ * m_poisson/(1.0 - m_poisson);
@@ -98,11 +97,10 @@ real64 OedometricStressPath::computeFractureStress( real64 const pressure,
   real64 effectiveStress[3] = { m_referenceEffectiveStress[0] - poisson_deltaSigma,
                                 m_referenceEffectiveStress[1] - poisson_deltaSigma,
                                 m_referenceEffectiveStress[2] - deltaSigmaZ };
-
-  real64 effectiveStressOnFracture[3] = {0.0, 0.0, 0.0}; // sigma_c
+  array1d< real64 > effectiveStressOnFracture(3); // sigma_c
   matmul(effectiveStress, normal, effectiveStressOnFracture);
-  real64 normalComponentOfStressOnFracture = dot_product(effectiveStressOnFracture, normal); // sigmaN_N
-
+  real64 normalComponentOfStressOnFracture = dot(effectiveStressOnFracture, normal); // sigmaN_N
+  GEOS_LOG_RANK_0( "*** stress "<< normalComponentOfStressOnFracture << " pressure "<< pressure );
   return normalComponentOfStressOnFracture;
 }
 

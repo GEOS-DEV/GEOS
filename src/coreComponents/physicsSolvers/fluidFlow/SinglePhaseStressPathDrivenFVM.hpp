@@ -90,7 +90,6 @@ public:
   {
     /// @return string for the PrescribedStressPathGeomechanicsBase wrapper
     static constexpr char const * oedometricStressPathString() { return "OedometricStressPath"; }
-    static constexpr char const * prescribedStressPathGeomechanicsBaseString() { return "PrescribedStressPathGeomechanicsBase"; }
   };
 
   // The same as in PoromechanicsSolver.hpp
