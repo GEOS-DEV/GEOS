@@ -15,7 +15,7 @@
       setNames="{ all }"
       objectPath="ElementRegions/Source"
       fieldName="rockPorosityA_referencePorosity"
-      scale="1.0"/>
+      scale="0.25"/>
 
     <FieldSpecification
       name="PorosityMediumA"
@@ -91,11 +91,6 @@
 
   <Tasks>
     <PackCollection
-      name="logPrimarySpeciesSourceCollection"
-      objectPath="ElementRegions/Source/cb-0_0_0"
-      fieldName="logPrimarySpeciesConcentration"/>
-
-    <PackCollection
       name="logPrimarySpeciesMediumACollection1"
       objectPath="ElementRegions/MediumA/cb-1_0_0"
       fieldName="logPrimarySpeciesConcentration"/>
@@ -111,7 +106,7 @@
       fieldName="logPrimarySpeciesConcentration"/>
 
     <PackCollection
-      name="logPrimarySpeciesMediumACollection4"
+      name="logPrimarySpeciesSinkCollection"
       objectPath="ElementRegions/MediumA/cb-5_0_0"
       fieldName="logPrimarySpeciesConcentration"/>
 
@@ -122,11 +117,6 @@
   </Tasks>
 
   <Outputs>
-    <TimeHistory
-      name="logPrimarySpeciesSourceHistoryOutput"
-      sources="{ /Tasks/logPrimarySpeciesSourceCollection }"
-      filename="logPrimarySpeciesSourceHistory"/>
-
     <TimeHistory
       name="logPrimarySpeciesMediumAHistoryOutput1"
       sources="{ /Tasks/logPrimarySpeciesMediumACollection1 }"
@@ -143,9 +133,9 @@
       filename="logPrimarySpeciesMediumAHistory3"/>
 
     <TimeHistory
-      name="logPrimarySpeciesMediumAHistoryOutput4"
-      sources="{ /Tasks/logPrimarySpeciesMediumACollection4 }"
-      filename="logPrimarySpeciesMediumAHistory4"/>
+      name="logPrimarySpeciesSinkHistoryOutput"
+      sources="{ /Tasks/logPrimarySpeciesSinkCollection }"
+      filename="logPrimarySpeciesSinkHistory"/>
 
     <TimeHistory
       name="logPrimarySpeciesMediumBHistoryOutput"

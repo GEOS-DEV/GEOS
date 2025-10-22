@@ -184,15 +184,13 @@ public:
       stack.localResidual[is+numEqn-numSpecies] += m_primarySpeciesAggregateConcentration[ei][0][is] * stack.poreVolume;
 
       // Reaction term
-      // stack.localResidual[is+numEqn-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * m_primarySpeciesAggregateKineticRate[ei][0][is];
-      stack.localResidual[is+numEqn-numSpecies] -= m_dt * stack.poreVolume * m_primarySpeciesAggregateKineticRate[ei][0][is];
+      stack.localResidual[is+numEqn-numSpecies] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) * m_primarySpeciesAggregateKineticRate[ei][0][is];
 
       // Step 2.1: jacobian
       // Drivative of primary species amount in pore volume wrt pressure
       stack.localJacobian[is+numEqn-numSpecies][0] += stack.dPoreVolume_dPres * m_primarySpeciesAggregateConcentration[ei][0][is]
                                                       /* + stack.poreVolume * m_dTotalPrimarySpeciesConcentration_dPres[ei][is] */;
       // // Derivative of reaction term wrt pressure
-      stack.localJacobian[is+numEqn-numSpecies][0] -= m_dt * stack.dPoreVolume_dPres * m_primarySpeciesAggregateKineticRate[ei][0][is];
       // stack.localJacobian[is+numEqn-numSpecies][0] -= m_dt * ( m_volume[ei] + m_deltaVolume[ei] ) *
       // m_dPrimarySpeciesTotalKineticRate_dPres[is];
 

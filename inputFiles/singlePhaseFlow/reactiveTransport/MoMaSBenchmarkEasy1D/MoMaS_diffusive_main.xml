@@ -37,10 +37,6 @@
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
-      name="logPrimarySpeciesSourceHistoryCollection"
-      cycleFrequency="5"
-      target="/Tasks/logPrimarySpeciesSourceCollection"/>
-    <PeriodicEvent
       name="logPrimarySpeciesMediumAHistoryCollection1"
       cycleFrequency="5"
       target="/Tasks/logPrimarySpeciesMediumACollection1"/>
@@ -53,13 +49,10 @@
       cycleFrequency="5"
       target="/Tasks/logPrimarySpeciesMediumACollection3"/>
     <PeriodicEvent
-      name="logPrimarySpeciesMediumAHistoryCollection4"
+      name="logPrimarySpeciesSinkHistoryCollection"
       cycleFrequency="5"
-      target="/Tasks/logPrimarySpeciesMediumACollection4"/>
-    <PeriodicEvent
-      name="logPrimarySpeciesSourceTimeHistoryOutput"
-      cycleFrequency="5"
-      target="/Outputs/logPrimarySpeciesSourceHistoryOutput"/>
+      target="/Tasks/logPrimarySpeciesSinkCollection"/>
+
     <PeriodicEvent
       name="logPrimarySpeciesMediumATimeHistoryOutput1"
       cycleFrequency="5"
@@ -73,9 +66,9 @@
       cycleFrequency="5"
       target="/Outputs/logPrimarySpeciesMediumAHistoryOutput3"/>
     <PeriodicEvent
-      name="logPrimarySpeciesMediumATimeHistoryOutput4"
+      name="logPrimarySpeciesSinkTimeHistoryOutput"
       cycleFrequency="5"
-      target="/Outputs/logPrimarySpeciesMediumAHistoryOutput4"/>
+      target="/Outputs/logPrimarySpeciesSinkHistoryOutput"/>
 
     <PeriodicEvent
       name="logPrimarySpeciesMediumBHistoryCollection"
@@ -88,20 +81,8 @@
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="2e-6"
+      maxEventDt="1e-5"
       target="/Solvers/SinglePhaseReactiveFlow"/>
-    
-    <!-- <PeriodicEvent
-      name="solverApplications_0"
-      maxEventDt="0.001"
-      endTime="1"
-      target="/Solvers/SinglePhaseReactiveFlow"/>
-
-    <PeriodicEvent
-      name="solverApplications_1"
-      maxEventDt="0.1"
-      beginTime="1.0"
-      target="/Solvers/SinglePhaseReactiveFlow"/> -->
 
     <PeriodicEvent
       name="restarts"

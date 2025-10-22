@@ -83,7 +83,7 @@
       objectPath="ElementRegions/MediumB"
       fieldName="water_initialPrimarySpeciesConcentration"
       component="3"
-      scale="1.0"/>
+      scale="2.0"/>
 
     <FieldSpecification
       name="initialPrimary_S_mediumb"
@@ -92,7 +92,7 @@
       objectPath="ElementRegions/MediumB"
       fieldName="water_initialPrimarySpeciesConcentration"
       component="4"
-      scale="1.0"/>
+      scale="10.0"/>
 
     <!-- INITIAL PRIMARY CONCENTRATIONS AT SOURCE-->
     <FieldSpecification
@@ -111,7 +111,7 @@
       objectPath="ElementRegions/Source"
       fieldName="water_initialPrimarySpeciesConcentration"
       component="1"
-      scale="0.3"/>
+      scale="1.0"/>
 
     <FieldSpecification
       name="initialPrimary_X3_source"
@@ -120,7 +120,7 @@
       objectPath="ElementRegions/Source"
       fieldName="water_initialPrimarySpeciesConcentration"
       component="2"
-      scale="0.3"/>
+      scale="1.0"/>
 
     <FieldSpecification
       name="initialPrimary_X4_source"

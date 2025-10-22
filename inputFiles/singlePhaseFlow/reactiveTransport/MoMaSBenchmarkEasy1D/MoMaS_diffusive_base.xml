@@ -13,15 +13,15 @@
       logLevel="2">
       <NonlinearSolverParameters
         newtonTol="1.0e-4"
-        maxTimeStepCuts="8"
+        maxTimeStepCuts="20"
         maxSubSteps="200"
-        newtonMaxIter="20"
+        newtonMaxIter="8"
         lineSearchAction="None"
         timeStepIncreaseFactor="1.2"
         logLevel="2"
         maxAllowedResidualNorm="1e100"/>
       <LinearSolverParameters
-        directParallel="1"/>
+        directParallel="0"/>
     </SinglePhaseReactiveTransport>
   </Solvers>
 

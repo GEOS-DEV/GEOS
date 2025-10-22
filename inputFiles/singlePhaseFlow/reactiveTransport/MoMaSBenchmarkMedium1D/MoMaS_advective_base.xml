@@ -10,18 +10,18 @@
       initialDt="1e-12"
       writeLinearSystem="0"
       immobilePrimarySpeciesIndices="{ 4 }"
-      logLevel="2">
+      logLevel="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-3"
+        newtonTol="1.0e-4"
         maxTimeStepCuts="8"
         maxSubSteps="400"
-        newtonMaxIter="40"
+        newtonMaxIter="20"
         lineSearchAction="None"
-        timeStepIncreaseFactor="1.2"
-        logLevel="2"
+        timeStepIncreaseFactor="2"
+        logLevel="1"
         maxAllowedResidualNorm="1e100"/>
       <LinearSolverParameters
-        directParallel="1"/>
+        directParallel="0"/>
     </SinglePhaseReactiveTransport>
   </Solvers>
 

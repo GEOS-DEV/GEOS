@@ -37,10 +37,6 @@
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
-      name="logPrimarySpeciesSourceHistoryCollection"
-      cycleFrequency="5"
-      target="/Tasks/logPrimarySpeciesSourceCollection"/>
-    <PeriodicEvent
       name="logPrimarySpeciesMediumAHistoryCollection1"
       cycleFrequency="5"
       target="/Tasks/logPrimarySpeciesMediumACollection1"/>
@@ -53,9 +49,10 @@
       cycleFrequency="5"
       target="/Tasks/logPrimarySpeciesMediumACollection3"/>
     <PeriodicEvent
-      name="logPrimarySpeciesSourceTimeHistoryOutput"
+      name="logPrimarySpeciesSinkHistoryCollection"
       cycleFrequency="5"
-      target="/Outputs/logPrimarySpeciesSourceHistoryOutput"/>
+      target="/Tasks/logPrimarySpeciesSinkCollection"/>
+
     <PeriodicEvent
       name="logPrimarySpeciesMediumATimeHistoryOutput1"
       cycleFrequency="5"
@@ -68,6 +65,10 @@
       name="logPrimarySpeciesMediumATimeHistoryOutput3"
       cycleFrequency="5"
       target="/Outputs/logPrimarySpeciesMediumAHistoryOutput3"/>
+    <PeriodicEvent
+      name="logPrimarySpeciesSinkTimeHistoryOutput"
+      cycleFrequency="5"
+      target="/Outputs/logPrimarySpeciesSinkHistoryOutput"/>
 
     <PeriodicEvent
       name="logPrimarySpeciesMediumBHistoryCollection"
@@ -80,12 +81,12 @@
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="1e-2"
+      maxEventDt="1e-3"
       target="/Solvers/SinglePhaseReactiveFlow"/>
 
     <PeriodicEvent
       name="restarts"
-      cycleFrequency="50000"
+      cycleFrequency="20000"
       target="/Outputs/restartOutput"/>
   </Events>
 
