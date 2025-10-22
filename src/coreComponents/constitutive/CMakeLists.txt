@@ -37,6 +37,7 @@ set( constitutive_headers
      capillaryPressure/CapillaryPressureSelector.hpp
      capillaryPressure/Layouts.hpp
      contact/BartonBandis.hpp
+     contact/BartonBandisStressPathDriven.hpp
      contact/CoulombFriction.hpp
      contact/FrictionSelector.hpp
      contact/FrictionBase.hpp
@@ -232,6 +233,7 @@ set( constitutive_sources
      capillaryPressure/TableCapillaryPressureHelpers.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      contact/BartonBandis.cpp
+     contact/BartonBandisStressPathDriven.cpp
      contact/CoulombFriction.cpp
      contact/FrictionBase.cpp
      contact/FrictionlessContact.cpp

@@ -36,12 +36,9 @@ using namespace constitutive;
 
 SinglePhaseStressPathDrivenFVM::SinglePhaseStressPathDrivenFVM( const string & name,
                                                                   dataRepository::Group * const parent ):
-  SinglePhaseFVM< SinglePhaseBase >( name, parent ),
-  m_oedometricStressPath( groupKeyStruct::oedometricStressPathString(), this )
+  SinglePhaseFVM< SinglePhaseBase >( name, parent )
 {
-  SinglePhaseFVM< SinglePhaseBase >::template addLogLevel< logInfo::Convergence >();
-
-  registerGroup( groupKeyStruct::oedometricStressPathString(), &m_oedometricStressPath );
+  //SinglePhaseFVM< SinglePhaseBase >::template addLogLevel< logInfo::Convergence >();
 }
 
 void SinglePhaseStressPathDrivenFVM::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
@@ -51,8 +48,8 @@ void SinglePhaseStressPathDrivenFVM::setConstitutiveNamesCallSuper( ElementSubRe
   // To make Barton Bandis constitutive law mandatory
   if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
   {
-    this->template setConstitutiveName< constitutive::BartonBandis >( subRegion,
-                                                                      viewKeyStruct::hydraulicApertureRelationNameString(), "hydraulic aperture" );
+    this->template setConstitutiveName< constitutive::BartonBandisStressPathDriven >( subRegion,
+                          viewKeyStruct::hydraulicApertureRelationNameString(), "hydraulic aperture" );
   }
 }
 
@@ -98,10 +95,10 @@ void SinglePhaseStressPathDrivenFVM::updateFractureAperture( SurfaceElementSubRe
   
   string const & hydraulicApertureRelationName = 
     subRegion.template getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString()  );
-  BartonBandis const & hydraulicApertureModel = 
-    this->template getConstitutiveModel< BartonBandis >( subRegion, hydraulicApertureRelationName );
+  BartonBandisStressPathDriven const & hydraulicApertureModel = 
+    this->template getConstitutiveModel< BartonBandisStressPathDriven >( subRegion, hydraulicApertureRelationName );
 
-  BartonBandisUpdates hydraulicApertureWrapper = hydraulicApertureModel.createKernelWrapper(); 
+  BartonBandisStressPathDrivenUpdates hydraulicApertureWrapper = hydraulicApertureModel.createKernelWrapper(); 
 
   real64 sumAperture = 0.0;
   // not used
@@ -114,7 +111,7 @@ void SinglePhaseStressPathDrivenFVM::updateFractureAperture( SurfaceElementSubRe
     normal[1] = normalVector[k][1];
     normal[2] = normalVector[k][2];
     
-    real64 const sigmaN_N = m_oedometricStressPath.computeFractureStress( pressure[k], normal );
+    real64 const sigmaN_N = hydraulicApertureWrapper.computeFractureStress( pressure[k], normal );
     // The traction sigmaN_N must be negative
     newHydraulicAperture[k] = hydraulicApertureWrapper.computeHydraulicAperture( 0.0,
                                                     -sigmaN_N,

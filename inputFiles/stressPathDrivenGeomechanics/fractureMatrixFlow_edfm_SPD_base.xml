@@ -8,11 +8,6 @@
       logLevel="1"
       discretization="singlePhaseTPFA"
       targetRegions="{ RockMatrix, Fracture }">
-      <OedometricStressPath
-        biot="1.0"
-		poisson="0.3"
-		referencePressure="1e5"
-		referenceTotalStress="{ 85.0e6, 85.0e6, 105.0e6 }"/>
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="10"/>
@@ -105,10 +100,14 @@
       cohesion="0.0"
       frictionCoefficient="0.1"/>
     
-    <BartonBandis
+    <BartonBandisStressPathDriven
       name="hApertureModel"
       referenceNormalStress="1.0844e8"
-	  referenceAperture="1.e-3"/>   
+	  referenceAperture="1.e-3"
+	  biot="1.0"
+	  poisson="0.3"
+	  referencePressure="1e5"
+	  referenceTotalStress="{ 85.0e6, 85.0e6, 105.0e6 }"/>
 	  
   </Constitutive>
 

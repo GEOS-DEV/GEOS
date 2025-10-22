@@ -23,6 +23,7 @@
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/contact/HydraulicApertureTable.hpp"
 #include "constitutive/contact/BartonBandis.hpp"
+#include "constitutive/contact/BartonBandisStressPathDriven.hpp"
 
 namespace geos
 {
@@ -35,7 +36,8 @@ void constitutiveUpdatePassThru( HydraulicApertureBase const & contact,
                                  LAMBDA && lambda )
 {
   ConstitutivePassThruHandler< HydraulicApertureTable,
-                               BartonBandis >::execute( contact, std::forward< LAMBDA >( lambda ) );
+                               BartonBandis, 
+                               BartonBandisStressPathDriven >::execute( contact, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
@@ -43,7 +45,8 @@ void constitutiveUpdatePassThru( HydraulicApertureBase & contact,
                                  LAMBDA && lambda )
 {
   ConstitutivePassThruHandler< HydraulicApertureTable,
-                               BartonBandis >::execute( contact, std::forward< LAMBDA >( lambda ) );
+                               BartonBandis,
+                               BartonBandisStressPathDriven >::execute( contact, std::forward< LAMBDA >( lambda ) );
 }
 
 } /* namespace constitutive */

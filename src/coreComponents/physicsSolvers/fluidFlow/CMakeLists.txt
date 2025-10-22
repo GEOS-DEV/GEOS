@@ -156,7 +156,7 @@ set( fluidFlowSolvers_sources
      proppantTransport/ProppantTransport.cpp
      proppantTransport/ProppantTransportKernels.cpp )
 
-set( dependencyList ${parallelDeps} physicsSolversBase prescribedStressPathGeomechanics )
+set( dependencyList ${parallelDeps} physicsSolversBase )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
 

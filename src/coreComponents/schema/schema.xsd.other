@@ -444,7 +444,6 @@
 			<xsd:element name="FiniteElementSpace" type="FiniteElementSpaceType" />
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="OedometricStressPath" type="OedometricStressPathType" minOccurs="1" maxOccurs="1" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="FiniteElementSpaceType" />
@@ -492,7 +491,6 @@
 			<xsd:pattern value=".*[\[\]`$].*|Linfinity|L2" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:complexType name="OedometricStressPathType" />
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="HybridMimeticDiscretization" type="HybridMimeticDiscretizationType" />
@@ -1265,7 +1263,6 @@
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="OedometricStressPath" type="OedometricStressPathType" minOccurs="1" maxOccurs="1" />
 			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
 		</xsd:choice>
 		<!--numTimestepsSinceLastDtCut => (no description available)-->
@@ -1518,6 +1515,7 @@
 	<xsd:complexType name="ConstitutiveType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="BartonBandis" type="BartonBandisType" />
+			<xsd:element name="BartonBandisStressPathDriven" type="BartonBandisStressPathDrivenType" minOccurs="1" maxOccurs="1" />
 			<xsd:element name="BiotPorosity" type="BiotPorosityType" />
 			<xsd:element name="BlackOilFluid" type="BlackOilFluidType" />
 			<xsd:element name="BrooksCoreyBakerRelativePermeability" type="BrooksCoreyBakerRelativePermeabilityType" />
@@ -1622,6 +1620,7 @@
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BartonBandisType" />
+	<xsd:complexType name="BartonBandisStressPathDrivenType" />
 	<xsd:complexType name="BiotPorosityType">
 		<!--averageMeanTotalStressIncrement_k => Mean total stress increment averaged over quadrature points at the previous sequential iteration-->
 		<xsd:attribute name="averageMeanTotalStressIncrement_k" type="real64_array" />

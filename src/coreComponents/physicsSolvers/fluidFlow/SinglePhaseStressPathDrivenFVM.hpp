@@ -21,7 +21,6 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASESTRESSPATHDRIVENFVM_HPP_
 
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
-#include "prescribedStressPathGeomechanics/OedometricStressPath.hpp"
 
 namespace geos
 {
@@ -86,11 +85,6 @@ public:
     /// Name of the hydraulicApertureRelationName
     static constexpr char const * hydraulicApertureRelationNameString() { return "hydraulicApertureRelationName"; }
   };
-  struct groupKeyStruct //: PhysicsSolverBase::groupKeyStruct
-  {
-    /// @return string for the PrescribedStressPathGeomechanicsBase wrapper
-    static constexpr char const * oedometricStressPathString() { return "OedometricStressPath"; }
-  };
 
   // The same as in PoromechanicsSolver.hpp
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
@@ -103,9 +97,6 @@ private:
   void updateHydraulicAperture( DomainPartition & domain ) const;
   
   void updateFractureAperture( SurfaceElementSubRegion & subRegion ) const;
-
-  /// Just like 'Nonlinear solver parameters' in PhysicsSolverBase.hpp
-  OedometricStressPath m_oedometricStressPath;
 
   real64 m_apertureInSitu;
 
