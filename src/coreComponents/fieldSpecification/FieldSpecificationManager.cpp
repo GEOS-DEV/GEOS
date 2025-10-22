@@ -130,7 +130,8 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
       if( targetSet.size() > 0 )
       {
-        setTypesMap.get_inserted( setNames ).get_inserted( targetElementType ) = 0;
+        // Use the single set name provided by the callback (setName), not the outer array (setNames)
+        setTypesMap.get_inserted( setName ).get_inserted( targetElementType ) = 0;
       }
     } );
 
