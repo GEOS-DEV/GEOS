@@ -98,11 +98,7 @@ public:
                               DofManager const & dofManager,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
-                              CRSMatrixView< real64, localIndex const > const & dR_dAper )
-  {
-    GEOS_UNUSED_VAR( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper );
-    //flowSolver()->assembleHydrofracFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper );
-  }
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper );
 
   template< typename SUBREGION_TYPE >
   void accumulationAssemblyLaunch( DofManager const & dofManager,
@@ -110,20 +106,11 @@ public:
                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                    arrayView1d< real64 > const & localRhs )
   {
-    GEOS_UNUSED_VAR( dofManager, subRegion, localMatrix, localRhs );
-    //flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
+    flowSolver()->accumulationAssemblyLaunch( dofManager, subRegion, localMatrix, localRhs );
   }
 
-  void prepareStencilWeights( DomainPartition & domain ) const
-  {
-    GEOS_UNUSED_VAR( domain );
-    //flowSolver()->prepareStencilWeights( domain );
-  }
-  void updateStencilWeights( DomainPartition & domain ) const
-  {
-    GEOS_UNUSED_VAR( domain );
-    // flowSolver()->updateStencilWeights( domain );
-  }
+  void prepareStencilWeights( DomainPartition & domain ) const;
+  void updateStencilWeights( DomainPartition & domain ) const;
 
 protected:
 
@@ -134,7 +121,6 @@ protected:
 private:
 
   CompositionalMultiphaseBase * flowSolver() const;
-
 };
 
 } /* namespace geos */
