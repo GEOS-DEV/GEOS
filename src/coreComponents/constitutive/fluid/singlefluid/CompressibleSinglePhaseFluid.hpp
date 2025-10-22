@@ -168,8 +168,8 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numPts ) override;
 
-  /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
-  using KernelWrapper = CompressibleSinglePhaseUpdate< ExponentApproximationType::Linear, ExponentApproximationType::Linear >;
+  /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT combinations, not just this combination)
+  using KernelWrapper = CompressibleSinglePhaseUpdate< ExponentApproximationType::Full, ExponentApproximationType::Linear >;
 
   /**
    * @brief Create an update kernel wrapper.

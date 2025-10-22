@@ -143,6 +143,7 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
 
   // Must change default value to avoid being overwritten if attribute not specified in XML
   m_linearSolverParameters.getWrapper< integer >( LinearSolverParametersInput::viewKeyStruct::amgSeparateComponentsString() ).setApplyDefaultValue( true );
+  m_linearSolverParameters.getWrapper< integer >( LinearSolverParametersInput::viewKeyStruct::amgNumFunctionsString() ).setApplyDefaultValue( 3 );
 }
 
 void SolidMechanicsLagrangianFEM::postInputInitialization()
