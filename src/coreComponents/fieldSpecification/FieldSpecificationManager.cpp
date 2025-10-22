@@ -89,7 +89,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     for( size_t i = 0; i < setNames.size(); ++i )
     {
       isTargetSetCreated[setNames[i]] = 0;
-      setTypesMap.get_inserted(setNames[i]).get_inserted(targetElementType) = 1;
+      setTypesMap.get_inserted( setNames[i] ).get_inserted( targetElementType ) = 1;
     }
 
     // We have to make sure that the meshLevel is in the target of the boundary conditions
@@ -130,7 +130,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
 
       if( targetSet.size() > 0 )
       {
-        setTypesMap.get_inserted(setNames).get_inserted(targetElementType) = 0;
+        setTypesMap.get_inserted( setNames ).get_inserted( targetElementType ) = 0;
       }
     } );
 
@@ -218,7 +218,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
                                           NodeManager >( mesh, setName,
                                                          [&setTypesMap]( MeshObjectPath::ObjectTypes managerType,
                                                                          string const & capturedSetName ){
-          setTypesMap.get_inserted(capturedSetName).get_inserted(managerType) = 0;
+          setTypesMap.get_inserted( capturedSetName ).get_inserted( managerType ) = 0;
         } );
         string_array capturedTypes;
         for( auto const & [element, isExisting] : elementsType )
