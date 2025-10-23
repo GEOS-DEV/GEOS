@@ -417,11 +417,12 @@ template< class T, std::size_t N >
 struct stdArray : public internal::StdArrayWrapper< T, N, true >
 {};
 
-/** * @brief Deduction guide for stdArray
- * Allows the element type and array size to be automatically deduced from the initialization list. *
+/** 
+ * @brief Deduction guide for stdArray
+ * Allows the element type and array size to be automatically deduced from the initialization list.
  * @code
  * stdArray a{1, 2, 3}; // deduces stdArray<int, 3>
- * @endcode *
+ * @endcode
  * @tparam _Tp Type of the first element provided.
  * @tparam _Up Types of the other elements provided.
  */
