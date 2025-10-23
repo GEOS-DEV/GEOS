@@ -39,7 +39,7 @@ docker run -it ${PLATFORM:+--platform="${PLATFORM}"} --name "$NAME" --cap-add=SY
 
 
   #   # Build & install using your existing CI script
-    /src/geosx/scripts/ci_build_and_test_in_container.sh --repository /src/geosx --cmake-build-type Release --host-config /spack-generated.cmake --enable-hypre ${ENABLE_HYPRE} --enable-trilinos ${ENABLE_TRILINOS} --geos-enable-bounds-check ${GEOS_ENABLE_BOUNDS_CHECK} --install-dir-basename geosx-install --no-run-unit-tests --nproc 4 --ninja
+    /src/geosx/scripts/ci_build_and_test_in_container.sh --repository /src/geosx --cmake-build-type Release --host-config /spack-generated.cmake --enable-hypre ON --enable-trilinos OFF --geos-enable-bounds-check OFF --install-dir-basename geosx-install --no-run-unit-tests --nproc 4 --ninja
 
   #   # Hygiene: drop git metadata so creds aren't baked into the committed image
   #   rm -rf /src/geosx/.git /src/geosx/.gitmodules || true
