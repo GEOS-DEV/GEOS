@@ -77,7 +77,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
   {
     localIndex isFieldNameFound = 0;
     // map from set name to a flag (1 if targetSet has been created, 0 otherwise)
-    map< string, localIndex > isTargetSetCreated;
+    stdMap< string, localIndex > isTargetSetCreated;
     MeshObjectPath::SetNameToTypesMap setTypesMap;
     // The fieldSpecification target objectType
     MeshObjectPath::ObjectTypes const targetElementType = fs.getMeshObjectPaths().getObjectType();
