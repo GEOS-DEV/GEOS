@@ -88,7 +88,7 @@ void FieldSpecificationManager::validateBoundaryConditions( MeshLevel & mesh ) c
     string_array const & setNames = fs.getSetNames();
     for( size_t i = 0; i < setNames.size(); ++i )
     {
-      isTargetSetCreated[setNames[i]] = 0;
+      isTargetSetCreated.get_inserted( setNames[i] ) = 0;
       setTypesMap.get_inserted( setNames[i] ).get_inserted( targetElementType ) = 1;
     }
 
