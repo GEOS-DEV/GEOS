@@ -23,21 +23,30 @@
     <SinglePhaseWell
       name="singlePhaseWell"
       logLevel="1"
-      targetRegions="{ wellRegion1, wellRegion2 }">
+      targetRegions="{ wellRegion1, wellRegion2 }"
+      writeCSV="1">
       <WellControls
         name="wellControls1"
-        type="producer"
-        control="BHP"
-        referenceElevation="2"
-        targetBHP="5e5"
-        targetTotalRate="1e-4"/>
+        type="producer">
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="5e5"
+          referenceElevation="2"/>
+        <ProductionVolumeRateConstraint
+          name="maxvolrateprod"
+          volumeRate="1e-4"/>
+      </WellControls>
       <WellControls
         name="wellControls2"
-        type="injector"
-        control="totalVolRate"
-        referenceElevation="2"
-        targetBHP="1e7"
-        targetTotalRate="1e-7"/>
+        type="injector">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1e7"
+          referenceElevation="2"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="1e-7"/>
+      </WellControls>
     </SinglePhaseWell>
   </Solvers>
 
@@ -52,7 +61,6 @@
       ny="{ 1 }"
       nz="{ 1 }"
       cellBlockNames="{ cb1 }">
-
       <InternalWell
         name="well_producer1"
         wellRegionName="wellRegion1"
@@ -64,10 +72,9 @@
         numElementsPerSegment="2">
         <Perforation
           name="producer1_perf1"
-	  distanceFromHead="1.45"
-	  skinFactor="1"/>
+          distanceFromHead="1.45"
+          skinFactor="1"/>
       </InternalWell>
-
       <InternalWell
         name="well_injector1"
         wellRegionName="wellRegion2"
