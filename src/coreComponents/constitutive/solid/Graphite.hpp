@@ -689,12 +689,22 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     real64 failureStrength = m_failureStrength * m_strengthScale[k];
 
-    // increment damage, but enforce 0<=d<=1
+    // Increment damage based on max plane-normal stress and crack-speed normalization, but enforce 0<=d<=1
     if ( planeNormalStress > failureStrength )
     {
         real64 timeToFailure = m_lengthScale[k] / m_crackSpeed;
         m_damage[k][q] = std::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
     }
+
+    // If strain-softening is enabled, insert damage once max strain is reached.
+    if ( ( m_distortionStrainHardeningC0 < 0.999 || m_inPlaneStrainHardeningC0 < 0.999 || m_coupledStrainHardeningC0 < 0.999 ) && m_relaxation[k][q] > 0.999 )
+    {
+      m_damage[k][q] = 1.0;
+    }
+
+
+
+
 
     // strength scale factor, combining plastic softening and damage
     real64 damageMultiplier = (1.0 - m_damage[k][q]);
@@ -703,8 +713,8 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // CC: debug
     // GEOS_LOG_RANK( "Particle " << k << ": dmg: " << m_damage[k][q] << ", Fac: " << fac );
 
-    // Enforce damage, no tensile stress on plane, and frictional response to shear.
-    if(m_damage[k][q] >= 1.0) //Some compilers complain about == comparison with floating point numbers (use tolerance check?)
+    // Enforce damage, no tensile stress on plane
+    if(m_damage[k][q] >= 0.9999999) //Some compilers complain about == comparison with floating point numbers (use tolerance check?)
     {
         if ( planeNormalStress > 0 )
         {
@@ -736,6 +746,17 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 distortion_dev[6] = { 0 };
     LvArray::tensorOps::copy< 6 >( distortion_dev, distortion );
     LvArray::tensorOps::subtract< 6 >( distortion_dev, distortion_iso );
+
+    // We don't want spherical tension in-plane for damaged material, so here we force that to be zero if it would otherwise
+    // be tensile.  along with the sigma1 scaling above and the deviatoric scaling below this should give a no-strength damaged
+    // material while still having anisotropic strength in compression.
+    if(m_damage[k][q] >= 0.9999999) //Some compilers complain about == comparison with floating point numbers (use tolerance check?)
+    {
+        if ( distortionMeanStress > 0 )
+        {
+            LvArray::tensorOps::scale< 6 >(distortion_iso, 0.0);
+        }
+    }
 
     // Define 3 pressure-dependent shear strengths for different shear modes.
     real64 inPlaneShearStrength, coupledYieldStrength, totalShearStrength;

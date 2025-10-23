@@ -712,7 +712,7 @@ real64 StrainHardeningPolymerUpdates::thermalSoftening( const real64 & T,
 { 
   if (std::abs(A) > 1.e-16)
   {
-    return 1. + A / (1. +std::exp( B * (T-T0) ) );
+    return 1. + A / (1. + std::exp( B * (T-T0) ) );
   }
   else
   {

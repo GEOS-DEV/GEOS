@@ -825,6 +825,7 @@ protected:
   array1d< real64 > m_stressControlITerm;
 
   int m_boxAverageHistory;
+  int m_boxAverageResizeWithDomain;  // 0 use constant box_average domain, 1: resize with domainL 
   real64 m_boxAverageWriteInterval;
   real64 m_nextBoxAverageWriteTime;
   array1d< real64 > m_boxAverageMin;

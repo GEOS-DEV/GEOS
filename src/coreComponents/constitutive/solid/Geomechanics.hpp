@@ -1125,8 +1125,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     real64 creepRateTemperatureMultiplier = 1.0;
     if (temperature > 1.e-10 and m_referenceTemperature > 1.e-10 )
     {
-    creepRateTemperatureMultiplier = exp(-1.0*m_creepActivationEnergy*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) ); 
-    //std::cout << "creepRateTemperatureMultiplier" << creepRateTemperatureMultiplier << std::endl;
+    creepRateTemperatureMultiplier = exp(-1.0*m_creepActivationEnergy*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) );     //std::cout << "creepRateTemperatureMultiplier" << creepRateTemperatureMultiplier << std::endl;
     }
 
     real64 equilibriumPorosityPressureExponent = m_creepD;  // volumetric creep rate parameter
@@ -3219,16 +3218,16 @@ public:
     /// string/key for creep C parameter
     static constexpr char const * creepCString() { return "creepC"; }
 
-    /// string/key for creep C parameter
+    /// string/key for creep D parameter
     static constexpr char const * creepDString() { return "creepD"; }
 
-    /// string/key for creep C parameter
+    /// string/key for creep E parameter
     static constexpr char const * creepEString() { return "creepE"; }
 
-    /// string/key for creep C parameter
+    /// string/key for creep F parameter
     static constexpr char const * creepFString() { return "creepF"; }
 
-    /// string/key for creep C parameter
+    /// string/key for creep G parameter
     static constexpr char const * creepGString() { return "creepG"; }
 
     /// string/key for strain-hardening N parameter
