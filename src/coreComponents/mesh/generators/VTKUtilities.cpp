@@ -969,7 +969,7 @@ AllMeshes applyPartitioning( AllMeshes & input,
           splitMeshByPartition( fracture, numRanks, fracPartitioning.toViewConst() );
         vtkSmartPointer< vtkUnstructuredGrid > const finalFracMesh =
           redistribute( *splitFracMesh, comm );
-        finalFractures[fractureName] = finalFracMesh;
+        finalFractures.try_emplace( fractureName, finalFracMesh );
 
         offset += numFracCells;
       }
