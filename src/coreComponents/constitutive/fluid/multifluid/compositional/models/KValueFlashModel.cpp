@@ -36,7 +36,7 @@ namespace compositional
 template< >
 string KValueFlashModel< 2 >::catalogName()
 {
-  return "KValue";
+  return "TwoPhaseKValue";
 }
 
 template< >

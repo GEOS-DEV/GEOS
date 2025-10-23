@@ -140,7 +140,7 @@
             solidModelName="NULL.SOLID"
             porosityModelName="ROCK.POROSITY"
             permeabilityModelName="ROCK.PERMEABILITY" />
-        <CompositionalKValueFluidPhillipsBrine
+        <CompositionalTwoPhaseKValueFluidPhillipsBrine
             name="FLUID"
             phaseNames="{ gas, water }"
             equationsOfState="{ PengRobinson, SoreideWhitson }"
