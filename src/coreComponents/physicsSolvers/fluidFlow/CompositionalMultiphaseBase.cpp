@@ -1094,14 +1094,14 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
   // Step 1: count individual equilibriums (there may be multiple ones)
 
-  std::map< string, localIndex > equilNameToEquilId;
+  stdMap< string, localIndex > equilNameToEquilId;
   localIndex equilCounter = 0;
 
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
   {
 
     // collect all the equilibrium names to idx
-    equilNameToEquilId[bc.getName()] = equilCounter;
+    equilNameToEquilId.insert( {bc.getName(), equilCounter} );
     equilCounter++;
 
     // check that the gravity vector is aligned with the z-axis
@@ -1554,10 +1554,12 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 }
 
 void
-CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                                real64 const & GEOS_UNUSED_PARAM( dt ),
+CompositionalMultiphaseBase::implicitStepSetup( real64 const & time_n,
+                                                real64 const & dt,
                                                 DomainPartition & domain )
 {
+  PhysicsSolverBase::implicitStepSetup( time_n, dt, domain );
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
@@ -1568,7 +1570,6 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM
                                                                                 auto & subRegion )
     {
       saveConvergedState( subRegion );
-
       // update porosity, permeability
       updatePorosityAndPermeability( subRegion );
       // update all fluid properties
@@ -1706,13 +1707,13 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
   // Step 1: count individual source flux boundary conditions
 
-  std::map< string, localIndex > bcNameToBcId;
+  stdMap< string, localIndex > bcNameToBcId;
   localIndex bcCounter = 0;
 
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
     // collect all the bc names to idx
-    bcNameToBcId[bc.getName()] = bcCounter;
+    bcNameToBcId.insert( {bc.getName(), bcCounter} );
     bcCounter++;
   } );
 
@@ -2649,6 +2650,8 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
 void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
+
+  PhysicsSolverBase::resetStateToBeginningOfStep( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,

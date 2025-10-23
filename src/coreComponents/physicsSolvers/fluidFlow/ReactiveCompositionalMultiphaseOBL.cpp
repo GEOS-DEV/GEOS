@@ -345,7 +345,9 @@ real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( real64 const &
 
   real64 const residual = m_useDARTSL2Norm ? MpiWrapper::max( localResidualNorm ) : std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
-  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( Rflow ) = ( {:4.2e} )", residual ) );
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( Rflow ) = ( {:4.2e} )", residual ) );
+
+  getConvergenceStats().setResidualValue( "Rflow", residual );
 
   return residual;
 }
@@ -774,13 +776,13 @@ void ReactiveCompositionalMultiphaseOBL::applySourceFluxBC( real64 const time,
 
   // Step 1: count individual source flux boundary conditions
 
-  std::map< string, localIndex > bcNameToBcId;
+  stdMap< string, localIndex > bcNameToBcId;
   localIndex bcCounter = 0;
 
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
     // collect all the bc names to idx
-    bcNameToBcId[bc.getName()] = bcCounter;
+    bcNameToBcId.insert( {bc.getName(), bcCounter} );
     bcCounter++;
   } );
 

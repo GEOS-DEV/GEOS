@@ -86,6 +86,8 @@ public:
     static constexpr char const * directIterRefString() { return "directIterRef"; }
     /// direct solver parallelism key
     static constexpr char const * directParallelString() { return "directParallel"; }
+    /// reuse factorization key
+    static constexpr char const * reuseFactorizationString() { return "reuseFactorization"; }
 
     /// Krylov max iterations key
     static constexpr char const * krylovMaxIterString() { return "krylovMaxIter"; }
@@ -155,6 +157,7 @@ public:
   struct groupKeyStruct
   {
     static constexpr char const * blockString() { return "Block"; }
+    static constexpr char const * multiscaleString() { return "Multiscale"; }
   };
 
 private:

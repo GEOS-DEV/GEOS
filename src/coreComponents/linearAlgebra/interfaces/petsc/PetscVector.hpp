@@ -26,7 +26,7 @@
  * @name PETSc forward declarations.
  *
  * Forward declare PETSc's vector struct and pointer aliases in order
- * to avoid including PETSc headers and leaking into the rest of GEOSX.
+ * to avoid including PETSc headers and leaking into the rest of GEOS.
  */
 ///@{
 

@@ -184,6 +184,7 @@
       name="restartOutput"/>
   </Outputs>
 
+  <!-- SPHINX_FIELD_CASE_LOG_OUTPUT -->
   <Tasks>
     <CompositionalMultiphaseStatistics
       name="compflowStatistics"
@@ -192,6 +193,7 @@
       computeCFLNumbers="1"
       computeRegionStatistics="1"/>
   </Tasks>
+  <!-- SPHINX_FIELD_CASE_LOG_OUTPUT_END -->
   
   <Functions>
     <TableFunction

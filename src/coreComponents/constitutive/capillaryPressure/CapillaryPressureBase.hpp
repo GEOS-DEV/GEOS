@@ -105,7 +105,7 @@ public:
                          dataRepository::Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
   /**
    * @brief Initialize the capillary pressure state (needed when capillary pressure depends on porosity and permeability)
@@ -175,13 +175,6 @@ public:
   };
 
 private:
-
-  /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  void resizeFields( localIndex const size, localIndex const numPts );
 
   /**
    * @brief Called internally to set array dim labels.
