@@ -90,39 +90,6 @@ string getSchemaTypeName( string_view rtTypeName )
   return xmlSafeName;
 }
 
-// void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
-//                        string const & name,
-//                        string const & regex )
-// {
-
-//   ///////////
-//   std::cout << "In AppendSimpleType" << std::endl;
-//   ///////////
-//   string const advanced_match_string = ".*[\\[\\]`$].*|";
-
-//   xmlWrapper::xmlNode newNode = schemaRoot.append_child( "xsd:simpleType" );
-//   newNode.append_attribute( "name" ) = name.c_str();
-//   xmlWrapper::xmlNode restrictionNode = newNode.append_child( "xsd:restriction" );
-//   restrictionNode.append_attribute( "base" ) = "xsd:string";
-//   xmlWrapper::xmlNode patternNode = restrictionNode.append_child( "xsd:pattern" );
-
-//   ///////////
-//   std::cout << "Appending simple type: " << name << " with regex: " << regex << std::endl;
-//   ///////////
-
-//   // Handle the default regex
-//   if( regex.empty() )
-//   {
-//     GEOS_WARNING( "schema regex not defined for " << name );
-//     patternNode.append_attribute( "value" ) = "(?s).*";
-//   }
-//   else
-//   {
-//     string const patternString = advanced_match_string + regex;
-//     patternNode.append_attribute( "value" ) = patternString.c_str();
-//   }
-// }
-
 void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
                        string const & name,
                        string const & regex )
@@ -147,8 +114,6 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
   GEOS_WARNING_IF( regex.empty(), GEOS_FMT( "schema regex not defined for {}", name ) );
   string const patternString = regex.empty() ? "(?s).*" : advanced_match_string + regex;
 
-  // std::cout << "Appending simple type: " << name << " with pattern: " << patternString << std::endl;
-
   // Set attribute
   patternNode.append_attribute( "value" ) = patternString.c_str();
 }
@@ -157,24 +122,11 @@ void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
 {
   auto const regexes = rtTypes::createBasicTypesRegexMap();
 
-  // // --- Debug: print all type names before entering the main loop ---
-  // std::cout << "Type names in regexes:" << std::endl;
-  // for( auto const & [typeName, _] : regexes )
-  // {
-  //   std::cout << " " << typeName << std::endl;
-  // }
-  // std::cout << "**********************" << std::endl; std::cout << "**********************" << std::endl;
-  // // ------------------------------------------------------------------------------------
-
   for( auto const & [typeName, regex] : regexes )
   {
-    ////////////
-    // std::cout << " " << typeName << std::endl;
-    ////////////
     AppendSimpleType( schemaRoot, getSchemaTypeName( typeName ), regex.m_regexStr );
   }
 }
-
 
 void SchemaConstruction( Group & group,
                          xmlWrapper::xmlNode schemaRoot,
