@@ -643,8 +643,14 @@ scatterByBlock( vtkDataSet & mesh )
   }
   else
   {
-    // Other ranks have empty mesh
-    localParts->SetNumberOfPartitions( 0 );
+    // Other ranks have an empty mesh, but we still need to create the
+    // partitioned data set structure.
+    localParts->SetNumberOfPartitions( size );
+    for( int r = 0; r < size; ++r )
+    {
+      vtkNew< vtkUnstructuredGrid > emptyPartition;
+      localParts->SetPartition( r, emptyPartition );
+    }
   }
 
   //Send cells to appropriate ranks
