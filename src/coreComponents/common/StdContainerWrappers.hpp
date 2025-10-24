@@ -3,6 +3,8 @@
 
 #include <array>
 #include <cstddef>
+#include <array>
+#include <cstddef>
 #include <vector>
 #include <map>
 #include <unordered_map>
@@ -361,7 +363,7 @@ namespace internal
 template< class T,
           std::size_t N,
           bool USE_BOUNDS_CHECKING = false >
-class StdArrayWrapper : public std::array< T, N >
+struct StdArrayWrapper : public std::array< T, N >
 {
 public:
   /// Type alias for the base class (i.e., stdArray)
@@ -417,12 +419,28 @@ template< class T, std::size_t N >
 struct stdArray : public internal::StdArrayWrapper< T, N, true >
 {};
 
+/**
+ * @brief Deduction guide for stdArray
+ * Allows the element type and array size to be automatically deduced from the initialization list.
+ * @code
+ * stdArray a{1, 2, 3}; // deduces stdArray<int, 3>
+ * @endcode
+ * @tparam _Tp Type of the first element provided.
+ * @tparam _Up Types of the other elements provided.
+ */
 template< typename _Tp, typename ... _Up >
 stdArray( _Tp, _Up ... )
   ->stdArray< std::enable_if_t< (std::is_same_v< _Tp, _Up > && ...), _Tp >,
               1 + sizeof...(_Up) >;
 
-
+/**
+ * @brief Helper function that convert a std::array into a stdArray by expanding its elements
+ * @tparam T The type of the elements
+ * @tparam N The number of fixed element in the array
+ * @tparam Is An integer parameter pack representing the indices
+ * @param arr The input std::array to be converted.
+ * @return A constexpr stdArray< T, N >
+ */
 template< typename T, std::size_t N, std::size_t... Is >
 constexpr stdArray< T, N > to_stdArray_impl( std::array< T, N > const & arr, std::index_sequence< Is... > )
 {
@@ -434,7 +452,7 @@ constexpr stdArray< T, N > to_stdArray_impl( std::array< T, N > const & arr, std
  * @tparam T Type of elements in stdArray
  * @tparam N The number of fixed element in the array
  * @param arr The std::array to convert
- * @return A stdArraycons
+ * @return A stdArray< T, N >
    @note we don't want implicitly convert an std::array into a stdArray.
  */
 template< typename T, std::size_t N >
