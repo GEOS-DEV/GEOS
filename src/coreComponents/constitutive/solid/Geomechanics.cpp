@@ -55,7 +55,7 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_fractureEnergyReleaseRate( 0.0 ),
   m_fractureSofteningExponent( 1.0 ),
   m_fractureStress( 0.0 ),
-  m_initialTemperature(),
+  m_initialTemperature( 0.0 ),
   m_Q( 0.0 ),
   m_brittleDuctileTransition( 0.0 ),
   m_damageEvolutionCriterion( 0 ),
@@ -88,7 +88,7 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_deformationGradient(),
   m_plasticStrain(),
   m_damage(),
-  m_temperature(0.0),
+  m_temperature(),
   m_lengthScale(),
   m_strengthScale()
 {
@@ -206,7 +206,6 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setDescription( "Fracture stress" );
 
   registerWrapper( viewKeyStruct::initialTemperatureString(), &m_initialTemperature ).
-    //setApplyDefaultValue( 300.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "initial Temperature" );
 
@@ -360,7 +359,7 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setDescription( "Array of quadrature point damage values" );
 
   registerWrapper( viewKeyStruct::temperatureString(), &m_temperature ).
-    //setApplyDefaultValue( 300.0 ).
+    setApplyDefaultValue( 300.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Array of quadrature point temperature values" );
 
