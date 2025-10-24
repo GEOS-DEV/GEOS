@@ -157,6 +157,7 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
 
   std::cout << "Appending simple type: " << name << " with pattern: " << patternString << std::endl;
 
+  // Set attribute
   patternNode.append_attribute( "value" ).set_value( patternString.c_str() );
 }
 
@@ -175,9 +176,9 @@ void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
 
   for( auto const & [typeName, regex] : regexes )
   {
-    // ////////////
-    // std::cout << " " << typeName << std::endl;
-    // ////////////
+    ////////////
+    std::cout << " " << typeName << std::endl;
+    ////////////
     AppendSimpleType( schemaRoot, getSchemaTypeName( typeName ), regex.m_regexStr );
   }
 }
