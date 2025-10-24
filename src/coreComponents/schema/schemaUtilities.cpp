@@ -120,6 +120,9 @@ void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
   auto const regexes = rtTypes::createBasicTypesRegexMap();
   for( auto const & [typeName, regex] : regexes )
   {
+    // Debug output to screen
+    std::cout << "Type name: " << typeName << std::endl;
+    ///////////////
     AppendSimpleType( schemaRoot, getSchemaTypeName( typeName ), regex.m_regexStr );
   }
 }
