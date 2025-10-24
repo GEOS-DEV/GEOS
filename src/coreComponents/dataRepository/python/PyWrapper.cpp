@@ -32,6 +32,16 @@ namespace geos
 namespace python
 {
 
+struct PyWrapper
+{
+  PyObject_HEAD
+
+  static constexpr char const * docString =
+    "A Python interface to geos::dataRepository::WrapperBase.";
+
+  dataRepository::WrapperBase * wrapper;
+};
+
 /**
  *
  */
@@ -104,7 +114,8 @@ bool trySetValue( dataRepository::WrapperBase * base, T const & value )
 }
 
 
-PyObject * PyWrapper_setValue( PyWrapper * const self, PyObject * const args )
+
+static PyObject * PyWrapper_setValue( PyWrapper * const self, PyObject * const args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
@@ -115,52 +126,47 @@ PyObject * PyWrapper_setValue( PyWrapper * const self, PyObject * const args )
     return nullptr;
   }
 
-  try
+  // Get the actual type name
+  std::string const actualType = LvArray::system::demangle( typeid( *(self->wrapper) ).name() );
+
+  if( PyUnicode_Check( pyValue ) )
   {
-    bool success = false;
-
-    if( PyUnicode_Check( pyValue ) )
+    const char * strVal = PyUnicode_AsUTF8( pyValue );
+    if( !trySetValue( self->wrapper, std::string( strVal ) ) )
     {
-      const char * strVal = PyUnicode_AsUTF8( pyValue );
-      success = trySetValue( self->wrapper, std::string( strVal ) );
-      if( !success )
-        PyErr_SetString( PyExc_TypeError, "Wrapper is not a std::string." );
-    }
-    else if( PyFloat_Check( pyValue ) )
-    {
-      double val = PyFloat_AsDouble( pyValue );
-      success = trySetValue( self->wrapper, val );
-      if( !success )
-        PyErr_SetString( PyExc_TypeError, "Wrapper is not a double." );
-    }
-    else if( PyLong_Check( pyValue ) )
-    {
-      long val = PyLong_AsLong( pyValue );
-      success = trySetValue( self->wrapper, static_cast< int >( val ) ) ||
-                trySetValue( self->wrapper, val );
-      if( !success )
-        PyErr_SetString( PyExc_TypeError, "Wrapper is not an int or long." );
-    }
-    else
-    {
-      PyErr_SetString( PyExc_TypeError, "Unsupported Python type for assignment." );
+      std::string errorMsg = "Wrapper type is " + actualType + ", not std::string.";
+      PyErr_SetString( PyExc_TypeError, errorMsg.c_str() );
       return nullptr;
     }
-
-    if( !success )
-    {
-      return nullptr;
-    }
-
-    Py_RETURN_NONE;
   }
-  catch( std::exception const & e )
+  else if( PyFloat_Check( pyValue ) )
   {
-    PyErr_SetString( PyExc_RuntimeError, e.what() );
+    if( !trySetValue( self->wrapper, PyFloat_AsDouble( pyValue ) ) )
+    {
+      std::string errorMsg = "Wrapper type is " + actualType + ", not double.";
+      PyErr_SetString( PyExc_TypeError, errorMsg.c_str() );
+      return nullptr;
+    }
+  }
+  else if( PyLong_Check( pyValue ) )
+  {
+    long val = PyLong_AsLong( pyValue );
+    if( !trySetValue( self->wrapper, static_cast< int >( val ) ) &&
+        !trySetValue( self->wrapper, val ) )
+    {
+      std::string errorMsg = "Wrapper type is " + actualType + ", not int or long.";
+      PyErr_SetString( PyExc_TypeError, errorMsg.c_str() );
+      return nullptr;
+    }
+  }
+  else
+  {
+    PyErr_SetString( PyExc_TypeError, "Unsupported Python type for assignment. Supported types: str, int, float." );
     return nullptr;
   }
-}
 
+  Py_RETURN_NONE;
+}
 
 BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
