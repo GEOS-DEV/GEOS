@@ -21,10 +21,14 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 
+#include "common/format/Format.hpp"
+#include "common/format/StringUtilities.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 
 #include <tuple>
+#include <type_traits>
 
 namespace geos
 {
@@ -86,11 +90,33 @@ public:
       auto const & solverName = m_names[idx()];
       auto const & solverType = LvArray::system::demangleType< SolverType >();
       solver = this->getParent().template getGroupPointer< SolverType >( solverName );
-      GEOS_THROW_IF( solver == nullptr,
-                     GEOS_FMT( "{}: Could not find solver '{}' of type {}",
-                               getDataContext(),
-                               solverName, solverType ),
-                     InputError );
+      if( solver== nullptr )
+      {
+        std::ostringstream errorMessage;
+        errorMessage << GEOS_FMT( "{}: Could not find solver  named '{}'.\n",
+                                  getDataContext(), solverName );
+
+        string_array availableFlowSolvers;
+        this->getParent().forSubGroups( [&]( Group & group )
+        {
+          if( dynamic_cast< FlowSolverBase * >(&group))
+          {
+            availableFlowSolvers.emplace_back( group.getName());
+          }
+        } );
+
+        if( availableFlowSolvers.empty())
+        {
+          errorMessage << "No flow solver has been found.";
+        }
+        else
+        {
+          errorMessage << GEOS_FMT( "Available flow solvers are [ {} ].",
+                                    stringutilities::join( availableFlowSolvers, ", " ) );
+        }
+        GEOS_THROW( errorMessage.str(), InputError );
+      }
+
       GEOS_LOG_LEVEL_RANK_0( logInfo::Coupling,
                              GEOS_FMT( "{}: found {} solver named {}",
                                        getName(), solver->getCatalogName(), solverName ) );
