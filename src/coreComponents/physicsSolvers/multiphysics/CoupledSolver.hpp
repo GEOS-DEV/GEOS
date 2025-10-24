@@ -21,6 +21,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 
+#include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
 #include "common/format/StringUtilities.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
@@ -77,7 +78,68 @@ public:
   /// deleted move operator
   CoupledSolver & operator=( CoupledSolver && ) = delete;
 
+  /**
+   * @brief Retrieves a solver from the tuple by its runtime index
+   * @tparam INDEX Compile time index
+   * @param runtimeIndex The runtime index of the solver being retrieved
+   * @return PhysicsSolverBase* The physics solver base class of the targetted solver, nullptr if out of bounds
+   */
+  template< std::size_t INDEX = 0 >
+  PhysicsSolverBase * getSolverAtRuntimeIndexImpl( std::size_t runtimeIndex )
+  {
+    if constexpr ( INDEX < sizeof...(SOLVERS) )
+    {
+      if( INDEX == runtimeIndex )
+      {
+        using SolverPtrType = std::tuple_element_t< INDEX, decltype(m_solvers) >;
+        using SolverType = std::remove_pointer_t< SolverPtrType >;
+        return this->getParent().template getGroupPointer< SolverType >( m_names[INDEX] );
+      }
+      else
+      {
+        return getSolverAtRuntimeIndexImpl< INDEX + 1 >( runtimeIndex );
+      }
+    }
+    else
+    {
+      return nullptr;
+    }
+  }
 
+  /**
+   * @brief Retrieves a solver from the tuple by its runtime index
+   * @param index The runtime index of the solver being retrieved
+   * @return PhysicsSolverBase* The physics solver base class of the targetted solver, nullptr if out of bounds
+   */
+  PhysicsSolverBase * getSolverAtRuntimeIndex( std::size_t index )
+  {
+    return getSolverAtRuntimeIndexImpl< 0 >( index );
+  }
+
+
+  template< typename T >
+  void throwSolversNotFound( std::ostringstream & errorMessage, string const & solverType )
+  {
+    string_array availableSolvers;
+
+    this->getParent().forSubGroups( [&]( Group & group )
+    {
+      if( dynamic_cast< T * >(&group) )
+      {
+        availableSolvers.emplace_back( group.getName());
+      }
+    } );
+
+    if( availableSolvers.empty() )
+    {
+      errorMessage << GEOS_FMT( "No {} solver has been found.", solverType );
+    }
+    else
+    {
+      errorMessage << GEOS_FMT( "Available {} solvers are: {}. ", solverType,
+                                stringutilities::join( availableSolvers, ", " ) );
+    }
+  }
   /**
    * @brief Utility function to set the subsolvers pointers using the names provided by the user
    */
@@ -89,47 +151,36 @@ public:
       using SolverPtr = TYPEOFREF( solver );
       using SolverType = TYPEOFPTR( SolverPtr {} );
       auto const & solverName = m_names[idx()];
-      auto const & solverType = LvArray::system::demangleType< SolverType >();
+      auto const & solverType = LvArray::system::demangleType< SolverType >(); 
       solver = this->getParent().template getGroupPointer< SolverType >( solverName );
+      integer idxMissingSolver = -1;
+      std::ostringstream errorMessage;
       if( solver== nullptr )
       {
-        std::ostringstream errorMessage;
         errorMessage << GEOS_FMT( "{}: Could not find solver  named '{}'.\n",
                                   getDataContext(), solverName );
+        idxMissingSolver = idx;
+        
+        // if flowSolver base is valid it mean we  have to check valid solver for the wellSolverBase
+        size_t const runtimeValidSolverIdx =  (sizeof...(SOLVERS) - 1) - idxMissingSolver;
+        auto validSolver = getSolverAtRuntimeIndex( runtimeValidSolverIdx );
 
-        string_array availableFlowSolvers;
-        string_array availableWellSolvers;
-        this->getParent().forSubGroups( [&]( Group & group )
+        if( dynamic_cast< FlowSolverBase * >(validSolver) != nullptr )
         {
-          if( dynamic_cast< FlowSolverBase * >(&group))
-          {
-            availableFlowSolvers.emplace_back( group.getName());
-          }
-          if( dynamic_cast< WellSolverBase * >(&group))
-          {
-            availableWellSolvers.emplace_back( group.getName());
-          }
-        } );
-
-        if( availableFlowSolvers.empty() && availableWellSolvers.empty() )
+          throwSolversNotFound< WellSolverBase >( errorMessage, WellSolverBase::coupledSolverAttributePrefix() );
+        }
+        else if( dynamic_cast< WellSolverBase * >(validSolver) != nullptr )
         {
-          errorMessage << "No flow/well solver has been found.";
+          throwSolversNotFound< FlowSolverBase >( errorMessage, FlowSolverBase::coupledSolverAttributePrefix()  );
         }
         else
         {
-          if( !availableFlowSolvers.empty() )
-          {
-            errorMessage << GEOS_FMT( "Available flow solvers are: {}.\n",
-                                      stringutilities::join( availableFlowSolvers, ", " ) );
-          }
-          if( !availableWellSolvers.empty() )
-          {
-            errorMessage << GEOS_FMT( "Available well solvers are: {}. ",
-                                      stringutilities::join( availableWellSolvers, ", " ) );
-          }
+          errorMessage << "No solver found";
         }
+
         GEOS_THROW( errorMessage.str(), InputError );
       }
+
 
       GEOS_LOG_LEVEL_RANK_0( logInfo::Coupling,
                              GEOS_FMT( "{}: found {} solver named {}",
