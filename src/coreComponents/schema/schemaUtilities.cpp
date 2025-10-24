@@ -144,18 +144,10 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
   GEOS_ERROR_IF( ( !patternNode ), GEOS_FMT( "Failed to create xsd:pattern node for {}", name ) );
 
   // Determine pattern string
-  string patternString;
-  if( regex.empty() )
-  {
-    GEOS_WARNING( GEOS_FMT( "schema regex not defined for {}", name ) );
-    patternString = "(?s).*";
-  }
-  else
-  {
-    patternString = advanced_match_string + regex;
-  }
+  GEOS_WARNING_IF( regex.empty(), GEOS_FMT( "schema regex not defined for {}", name ) );
+  string const patternString = regex.empty() ? "(?s).*" : advanced_match_string + regex;
 
-  std::cout << "Appending simple type: " << name << " with pattern: " << patternString << std::endl;
+  // std::cout << "Appending simple type: " << name << " with pattern: " << patternString << std::endl;
 
   // Set attribute
   patternNode.append_attribute( "value" ) = patternString.c_str();
@@ -165,14 +157,14 @@ void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
 {
   auto const regexes = rtTypes::createBasicTypesRegexMap();
 
-  // --- Debug: print all type names before entering the main loop ---
-  std::cout << "Type names in regexes:" << std::endl;
-  for( auto const & [typeName, _] : regexes )
-  {
-    std::cout << " " << typeName << std::endl;
-  }
-  std::cout << "**********************" << std::endl; std::cout << "**********************" << std::endl;
-  // ------------------------------------------------------------------------------------
+  // // --- Debug: print all type names before entering the main loop ---
+  // std::cout << "Type names in regexes:" << std::endl;
+  // for( auto const & [typeName, _] : regexes )
+  // {
+  //   std::cout << " " << typeName << std::endl;
+  // }
+  // std::cout << "**********************" << std::endl; std::cout << "**********************" << std::endl;
+  // // ------------------------------------------------------------------------------------
 
   for( auto const & [typeName, regex] : regexes )
   {
