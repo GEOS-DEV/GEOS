@@ -15,6 +15,7 @@
 
 #include "BlackOilFluidBase.hpp"
 
+#include "common/StdContainerWrappers.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "functions/FunctionManager.hpp"
@@ -172,7 +173,7 @@ void BlackOilFluidBase::postInputInitialization()
 
   auto const toPhaseType = [&]( string const & lookup )
   {
-    static unordered_map< string, integer > const phaseDict =
+    static stdUnorderedMap< string, integer > const phaseDict =
     {
       { "gas", BlackOilFluidBase::PhaseType::GAS },
       { "oil", BlackOilFluidBase::PhaseType::OIL },

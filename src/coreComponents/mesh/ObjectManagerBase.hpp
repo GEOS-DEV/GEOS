@@ -445,7 +445,7 @@ public:
    */
   template< typename TYPE_RELATION >
   static void fixUpDownMaps( TYPE_RELATION & relation,
-                             map< localIndex, array1d< globalIndex > > & unmappedIndices,
+                             stdMap<localIndex, array1d< globalIndex > > & unmappedIndices,
                              bool const clearIfUnmapped );
 
   /**
@@ -457,7 +457,7 @@ public:
    */
   template< typename TYPE_RELATION >
   static void fixUpDownMaps( TYPE_RELATION & relation,
-                             map< localIndex, SortedArray< globalIndex > > & unmappedIndices,
+                             stdMap<localIndex, SortedArray< globalIndex > > & unmappedIndices,
                              bool const clearIfUnmapped );
 
   /**
@@ -468,8 +468,8 @@ public:
    * @param clearIfUnmapped Shall we clear the unmapped indices. Here unused.
    */
   static void fixUpDownMaps( ArrayOfSets< localIndex > & relation,
-                             unordered_map< globalIndex, localIndex > const & globalToLocal,
-                             map< localIndex, SortedArray< globalIndex > > & unmappedIndices,
+                             stdUnorderedMap< globalIndex, localIndex > const & globalToLocal,
+                             stdMap<localIndex, SortedArray< globalIndex > > & unmappedIndices,
                              bool const clearIfUnmapped );
 
   /**
@@ -824,7 +824,7 @@ public:
    * @brief Get global to local map.
    * @return The mapping relationship as a array.
    */
-  unordered_map< globalIndex, localIndex > const & globalToLocalMap() const
+  stdUnorderedMap< globalIndex, localIndex > const & globalToLocalMap() const
   { return m_globalToLocalMap; }
 
   /**
@@ -960,7 +960,7 @@ protected:
   array1d< globalIndex > m_localToGlobalMap;
 
   /// Map from object global index to the local index.
-  unordered_map< globalIndex, localIndex > m_globalToLocalMap;
+  stdUnorderedMap< globalIndex, localIndex > m_globalToLocalMap;
 
   /// Array that holds if an object is external.
   array1d< integer > m_isExternal;
@@ -978,7 +978,7 @@ protected:
   array1d< integer > m_ghostRank;
 
   /// A map from rank to the associated NeighborData object.
-  unordered_map< int, NeighborData > m_neighborData;
+  stdUnorderedMap< int, NeighborData > m_neighborData;
 
   /// Factor by which to overallocate when adding objects.
   real64 m_overAllocationFactor = 1.1;
@@ -996,13 +996,13 @@ protected:
 
 template< typename TYPE_RELATION >
 void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
-                                       map< localIndex, array1d< globalIndex > > & unmappedIndices,
+                                       stdMap<localIndex, array1d< globalIndex > > & unmappedIndices,
                                        bool const )
 {
   GEOS_MARK_FUNCTION;
 
   bool allValuesMapped = true;
-  unordered_map< globalIndex, localIndex > const & globalToLocal = relation.relatedObjectGlobalToLocal();
+  stdUnorderedMap< globalIndex, localIndex > const & globalToLocal = relation.relatedObjectGlobalToLocal();
   for( auto & unmappedIndex: unmappedIndices )
   {
     localIndex const li = unmappedIndex.first;
@@ -1033,13 +1033,13 @@ void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
 
 template< typename TYPE_RELATION >
 void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
-                                       map< localIndex, SortedArray< globalIndex > > & unmappedIndices,
+                                       stdMap<localIndex, SortedArray< globalIndex > > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
   GEOS_MARK_FUNCTION;
 
-  unordered_map< globalIndex, localIndex > const & globalToLocal = relation.RelatedObjectGlobalToLocal();
-  for( map< localIndex, SortedArray< globalIndex > >::iterator iter = unmappedIndices.begin();
+  stdUnorderedMap< globalIndex, localIndex > const & globalToLocal = relation.RelatedObjectGlobalToLocal();
+  for( stdMap<localIndex, SortedArray< globalIndex > >::iterator iter = unmappedIndices.begin();
        iter != unmappedIndices.end();
        ++iter )
   {
@@ -1069,13 +1069,13 @@ void ObjectManagerBase::fixUpDownMaps( TYPE_RELATION & relation,
 
 inline
 void ObjectManagerBase::fixUpDownMaps( ArrayOfSets< localIndex > & relation,
-                                       unordered_map< globalIndex, localIndex > const & globalToLocal,
-                                       map< localIndex, SortedArray< globalIndex > > & unmappedIndices,
+                                       stdUnorderedMap< globalIndex, localIndex > const & globalToLocal,
+                                       stdMap<localIndex, SortedArray< globalIndex > > & unmappedIndices,
                                        bool const clearIfUnmapped )
 {
   GEOS_MARK_FUNCTION;
 
-  for( map< localIndex, SortedArray< globalIndex > >::iterator iter = unmappedIndices.begin();
+  for( stdMap<localIndex, SortedArray< globalIndex > >::iterator iter = unmappedIndices.begin();
        iter != unmappedIndices.end();
        ++iter )
   {

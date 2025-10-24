@@ -129,7 +129,7 @@ TEST( testMeshObjectPath, fillPathTokens )
   TestMesh & testMesh = TestMesh::getTestMesh();
   Group const & meshBodies = testMesh.meshBodies();
 
-  map< string, stdVector< string > >
+ stdMap< string, stdVector< string > >
   entries =
   {
     { "ElementRegions", { "*", "*", "ElementRegions", "*", "*" } },
@@ -161,7 +161,7 @@ TEST( testMeshObjectPath, meshObjectPathConstuction )
   Group const & meshBodies = testMesh.meshBodies();
 
 
-  map< string, MeshObjectPath::permutationMapType > pathsAndResults =
+ stdMap< string, MeshObjectPath::permutationMapType > pathsAndResults =
   {
     { "ElementRegions",
       { { "body0",

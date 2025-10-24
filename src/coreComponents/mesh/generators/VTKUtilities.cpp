@@ -1510,7 +1510,7 @@ splitCellsByTypeAndAttribute( stdMap< ElementType, stdVector< vtkIdType > > & ty
       {
         using ArrayType = TYPEOFPTR( attributeArray );
         vtkDataArrayAccessor< ArrayType > attribute( attributeArray );
-        std::unordered_map< int, size_t > cellCounts;
+        stdUnorderedMap< int, size_t > cellCounts;
         for( vtkIdType c: cells )
         {
           int const region = static_cast< int >( attribute.Get( c, 0 ) );
@@ -1707,7 +1707,7 @@ stdVector< localIndex > getWedgeNodeOrderingFromPolyhedron( vtkCell * const cell
   stdVector< localIndex > nodeOrder( 6 );
 
   // Generate global to local map
-  std::unordered_map< localIndex, localIndex > G2L;
+  stdUnorderedMap< localIndex, localIndex > G2L;
   for( localIndex iPoint = 0; iPoint < 6; ++iPoint )
   {
     G2L[cell->GetPointId( iPoint )] = iPoint;
@@ -1802,7 +1802,7 @@ stdVector< localIndex > getPyramidNodeOrderingFromPolyhedron( vtkCell * const ce
   stdVector< localIndex > nodeOrder( 5 );
 
   // Generate global to local map
-  std::unordered_map< localIndex, localIndex > G2L;
+  stdUnorderedMap< localIndex, localIndex > G2L;
   for( iPoint = 0; iPoint < 5; ++iPoint )
   {
     G2L[cell->GetPointId( iPoint )] = iPoint;
@@ -1876,7 +1876,7 @@ stdVector< localIndex > getPrismNodeOrderingFromPolyhedron( vtkCell * const cell
   stdVector< localIndex > nodeOrder( 2*NUM_SIDES );
 
   // Generate global to local map
-  std::unordered_map< localIndex, localIndex > G2L;
+  stdUnorderedMap< localIndex, localIndex > G2L;
   for( localIndex iPoint = 0; iPoint < cell->GetNumberOfPoints(); ++iPoint )
   {
     G2L[cell->GetPointId( iPoint )] = iPoint;
@@ -2430,7 +2430,7 @@ void writeCells( integer const logLevel,
     {
       continue;
     }
-    std::unordered_map< int, stdVector< vtkIdType > > const & regionIdToCellIds = typeRegions.second;
+    stdUnorderedMap< int, stdVector< vtkIdType > > const & regionIdToCellIds = typeRegions.second;
     for( auto const & regionCells : regionIdToCellIds )
     {
       int const regionId = regionCells.first;

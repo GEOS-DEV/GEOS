@@ -629,7 +629,7 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
     {
       // check to see if the object already exists by checking for the global
       // index in m_globalToLocalMap. If it doesn't, then add the object
-      unordered_map< globalIndex, localIndex >::iterator iterG2L =
+      stdUnorderedMap< globalIndex, localIndex >::iterator iterG2L =
         m_globalToLocalMap.find( globalIndices[a] );
       if( iterG2L == m_globalToLocalMap.end() )
       {

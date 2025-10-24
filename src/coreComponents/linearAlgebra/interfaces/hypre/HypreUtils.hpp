@@ -341,7 +341,7 @@ HYPRE_Int chebyshevDestroy( HYPRE_Solver solver );
  */
 inline HYPRE_Int getAMGCycleType( LinearSolverParameters::AMG::CycleType const & type )
 {
-  static map< LinearSolverParameters::AMG::CycleType, HYPRE_Int > const typeMap =
+  static stdMap<LinearSolverParameters::AMG::CycleType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::AMG::CycleType::V, 1 },
     { LinearSolverParameters::AMG::CycleType::W, 2 },
@@ -356,7 +356,7 @@ inline HYPRE_Int getAMGCycleType( LinearSolverParameters::AMG::CycleType const &
  */
 inline HYPRE_Int getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType const & type )
 {
-  static map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
+  static stdMap<LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::AMG::SmootherType::default_, -1 },
     { LinearSolverParameters::AMG::SmootherType::fgs, 3 },
@@ -377,7 +377,7 @@ inline HYPRE_Int getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType
  */
 inline HYPRE_Int getAMGInterpolationType( LinearSolverParameters::AMG::InterpType const & type )
 {
-  static map< LinearSolverParameters::AMG::InterpType, HYPRE_Int > const typeMap =
+  static stdMap<LinearSolverParameters::AMG::InterpType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::AMG::InterpType::default_, -1 },
     { LinearSolverParameters::AMG::InterpType::modifiedClassical, 0 },
@@ -401,7 +401,7 @@ inline HYPRE_Int getAMGInterpolationType( LinearSolverParameters::AMG::InterpTyp
  */
 inline HYPRE_Int getAMGAggressiveInterpolationType( LinearSolverParameters::AMG::AggInterpType const & type )
 {
-  static map< LinearSolverParameters::AMG::AggInterpType, HYPRE_Int > const typeMap =
+  static stdMap<LinearSolverParameters::AMG::AggInterpType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::AMG::AggInterpType::default_, -1 },
     { LinearSolverParameters::AMG::AggInterpType::extendedIStage2, 1 },
@@ -423,7 +423,7 @@ inline HYPRE_Int getAMGAggressiveInterpolationType( LinearSolverParameters::AMG:
  */
 inline HYPRE_Int getILUType( LinearSolverParameters::AMG::SmootherType const type )
 {
-  static map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
+  static stdMap<LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::AMG::SmootherType::iluk, 0 },
     { LinearSolverParameters::AMG::SmootherType::ilut, 1 },
@@ -438,7 +438,7 @@ inline HYPRE_Int getILUType( LinearSolverParameters::AMG::SmootherType const typ
  */
 inline HYPRE_Int getAMGCoarseType( LinearSolverParameters::AMG::CoarseType const & type )
 {
-  static map< LinearSolverParameters::AMG::CoarseType, HYPRE_Int > const typeMap =
+  static stdMap<LinearSolverParameters::AMG::CoarseType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::AMG::CoarseType::default_, -1 },
     { LinearSolverParameters::AMG::CoarseType::fgs, 3 },
@@ -462,7 +462,7 @@ inline HYPRE_Int getAMGCoarseType( LinearSolverParameters::AMG::CoarseType const
  */
 inline HYPRE_Int getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType const & type )
 {
-  static map< LinearSolverParameters::AMG::CoarseningType, HYPRE_Int > const typeMap =
+  static stdMap<LinearSolverParameters::AMG::CoarseningType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::AMG::CoarseningType::default_, -1 },
     { LinearSolverParameters::AMG::CoarseningType::CLJP, 0 },
@@ -481,7 +481,7 @@ inline HYPRE_Int getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningTy
  */
 inline HYPRE_Int getRelaxationType( LinearSolverParameters::PreconditionerType const type )
 {
-  static map< LinearSolverParameters::PreconditionerType, HYPRE_Int > const typeMap =
+  static stdMap<LinearSolverParameters::PreconditionerType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::fgs, 3 },
     { LinearSolverParameters::PreconditionerType::bgs, 4 },
@@ -501,7 +501,7 @@ inline HYPRE_Int getRelaxationType( LinearSolverParameters::PreconditionerType c
  */
 inline HYPRE_Int getILUType( LinearSolverParameters::PreconditionerType const type )
 {
-  static map< LinearSolverParameters::PreconditionerType, HYPRE_Int > const typeMap =
+  static stdMap<LinearSolverParameters::PreconditionerType, HYPRE_Int > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::iluk, 0 },
     { LinearSolverParameters::PreconditionerType::ilut, 1 },

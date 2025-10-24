@@ -141,7 +141,7 @@ void SolidMechanicsLagrangeContactBubbleStab::setupDofs( DomainPartition const &
 
   SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
 
-  map< std::pair< string, string >, string_array > meshTargets;
+ stdMap< std::pair< string, string >, string_array > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel const & meshLevel,
                                                                 string_array const & regionNames )

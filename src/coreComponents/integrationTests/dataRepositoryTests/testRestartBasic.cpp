@@ -116,10 +116,10 @@ using TestTypes = ::testing::Types< int,
                                     array3d< double >,
                                     array3d< double, RAJA::PERM_KJI >,
                                     SortedArray< int >,
-                                    map< string, int >,
-                                    unordered_map< string, int >,
-                                    map< long, int >,
-                                    unordered_map< long, int >
+                                   stdMap< string, int >,
+                                    stdUnorderedMap< string, int >,
+                                   stdMap< long, int >,
+                                    stdUnorderedMap< long, int >
                                     >;
 TYPED_TEST_SUITE( SingleWrapperTest, TestTypes, );
 

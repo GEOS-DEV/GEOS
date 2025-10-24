@@ -293,7 +293,7 @@ protected:
   string m_coeffName;
 
   /// names of target regions to build the stencil for
-  map< string, string_array > m_targetRegions;
+  stdMap<string, string_array > m_targetRegions;
 
   /// relative tolerance
   real64 m_areaRelTol;

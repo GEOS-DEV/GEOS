@@ -473,7 +473,7 @@ private:
                                  arrayView1d< localIndex const > const & packList ) const;
 
   /// Map of unmapped global indices in the element-to-node map
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInNodelist;
+  stdMap<localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInNodelist;
 
   /// Name of the WellControls object for this well
   string m_wellControlsName;

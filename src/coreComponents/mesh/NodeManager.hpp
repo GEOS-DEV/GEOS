@@ -453,13 +453,13 @@ private:
   ElemMapType m_toElements;
 
   /// map of global to local indices for edges
-  map< localIndex, SortedArray< globalIndex > > m_unmappedGlobalIndicesInToEdges;
+  stdMap<localIndex, SortedArray< globalIndex > > m_unmappedGlobalIndicesInToEdges;
 
   /// map of global to local indices for faces
-  map< localIndex, SortedArray< globalIndex > > m_unmappedGlobalIndicesInToFaces;
+  stdMap<localIndex, SortedArray< globalIndex > > m_unmappedGlobalIndicesInToFaces;
 
   /// map of global to local indices for elements
-  map< localIndex, array1d< array1d< SortedArray< globalIndex > > > > m_unmappedGlobalIndicesInToElems;
+  stdMap<localIndex, array1d< array1d< SortedArray< globalIndex > > > > m_unmappedGlobalIndicesInToElems;
 
 };
 }

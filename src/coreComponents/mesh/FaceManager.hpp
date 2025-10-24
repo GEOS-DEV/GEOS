@@ -464,10 +464,10 @@ private:
   ElemMapType m_toElements;
 
   /// map of global to local indices for nodes
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
+  stdMap<localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
 
   /// map of global  to local  indices for edges
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToEdges;
+  stdMap<localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToEdges;
 
   /// list of faces area
   array1d< real64 > m_faceArea;

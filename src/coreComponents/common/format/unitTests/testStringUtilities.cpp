@@ -75,7 +75,7 @@ TEST( testStringUtilities, tokenize )
 
   // Path tokenizing test
   {
-    map< string, std::pair< stdVector< string >, stdVector< string > > > const
+   stdMap< string, std::pair< stdVector< string >, stdVector< string > > > const
     entries =
     {
       { "//entry0//entry1//entry2", { { "", "entry0", "entry1", "entry2" },

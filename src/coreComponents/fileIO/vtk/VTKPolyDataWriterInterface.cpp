@@ -362,7 +362,7 @@ getSurface( FaceElementSubRegion const & subRegion,
   stdVector< int > cellTypes;
   cellTypes.reserve( subRegion.size() );
 
-  std::unordered_map< localIndex, localIndex > geos2VTKIndexing;
+  stdUnorderedMap< localIndex, localIndex > geos2VTKIndexing;
   geos2VTKIndexing.reserve( subRegion.size() * subRegion.numNodesPerElement() );
   localIndex nodeIndexInVTK = 0;
   // FaceElementSubRegion being heterogeneous, the size of the connectivity vector may vary for each element.

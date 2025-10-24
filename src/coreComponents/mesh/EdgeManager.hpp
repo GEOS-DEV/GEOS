@@ -330,10 +330,10 @@ private:
   FaceMapType m_toFacesRelation;
 
   /// Unmaped edge indices (those that are not in the nodes-to-edges relation map)
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
+  stdMap<localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
 
   /// Unmaped edge indices (those that are not in the faces-to-edges relation map)
-  map< localIndex, SortedArray< globalIndex > > m_unmappedGlobalIndicesInToFaces;
+  stdMap<localIndex, SortedArray< globalIndex > > m_unmappedGlobalIndicesInToFaces;
 
   /**
    * @brief function to pack the upward and downward pointing maps.

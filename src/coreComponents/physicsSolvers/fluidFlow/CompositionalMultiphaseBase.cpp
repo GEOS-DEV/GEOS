@@ -1693,9 +1693,9 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
                                                                string_array const & )
   {
     // map: regionName -> subRegionName -> setName -> numComps to check pressure/comp are present consistent
-    map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcPresCompStatusMap;
+   stdMap< string,stdMap< string,stdMap< string, ComponentMask< MAX_NC > > > > bcPresCompStatusMap;
     // map: regionName -> subRegionName -> setName check to that temperature is present/consistent
-    map< string, map< string, set< string > > > bcTempStatusMap;
+   stdMap< string,stdMap< string, set< string > > > bcTempStatusMap;
 
     // 1. Check pressure Dirichlet BCs
     fsManager.apply< ElementSubRegionBase >( time,

@@ -46,7 +46,7 @@ using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
 
-static localIndex GetOtherFaceEdge( const map< localIndex, std::pair< localIndex, localIndex > > & localFacesToEdges,
+static localIndex GetOtherFaceEdge( const stdMap< localIndex, std::pair< localIndex, localIndex > > & localFacesToEdges,
                                     const localIndex thisFace, const localIndex thisEdge )
 {
   localIndex nextEdge = LOCALINDEX_MAX;
@@ -69,8 +69,8 @@ static localIndex GetOtherFaceEdge( const map< localIndex, std::pair< localIndex
 
 static void checkForAndRemoveDeadEndPath( const localIndex edgeIndex,
                                           arrayView1d< integer const > const & isEdgeExternal,
-                                          map< localIndex, std::set< localIndex > > & edgesToRuptureReadyFaces,
-                                          map< localIndex, std::pair< localIndex, localIndex > > & localVFacesToVEdges,
+                                         stdMap< localIndex, std::set< localIndex > > & edgesToRuptureReadyFaces,
+                                         stdMap< localIndex, std::pair< localIndex, localIndex > > & localVFacesToVEdges,
                                           std::set< localIndex > & nodeToRuptureReadyFaces )
 {
 
@@ -1098,9 +1098,9 @@ bool SurfaceGenerator::processNode( const localIndex nodeID,
 
   {
     std::set< localIndex > facialRupturePath;
-    map< localIndex, int > edgeLocations;
-    map< localIndex, int > faceLocations;
-    map< std::pair< CellElementSubRegion const *, localIndex >, int > elemLocations;
+   stdMap< localIndex, int > edgeLocations;
+   stdMap< localIndex, int > faceLocations;
+   stdMap< std::pair< CellElementSubRegion const *, localIndex >, int > elemLocations;
 
     fracturePlaneFlag = findFracturePlanes( nodeID,
                                             nodeManager,
@@ -1150,9 +1150,9 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
                                            stdVector< std::set< localIndex > > const & nodesToRupturedFaces,
                                            stdVector< std::set< localIndex > > const & edgesToRupturedFaces,
                                            std::set< localIndex > & separationPathFaces,
-                                           map< localIndex, int > & edgeLocations,
-                                           map< localIndex, int > & faceLocations,
-                                           map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
+                                          stdMap< localIndex, int > & edgeLocations,
+                                          stdMap< localIndex, int > & faceLocations,
+                                          stdMap< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
 {
   arrayView1d< localIndex const > const & parentNodeIndices = nodeManager.getField< fields::parentIndex >();
 
@@ -1234,7 +1234,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 
 
   // local map to hold the edgesToRuptureReadyFaces
-  map< localIndex, std::set< localIndex > > edgesToRuptureReadyFaces;
+ stdMap< localIndex, std::set< localIndex > > edgesToRuptureReadyFaces;
   for( localIndex const edgeIndex : m_originalNodetoEdges[ parentNodeIndex ] )
   {
     if( !(edgesToRupturedFaces[edgeIndex].empty()) )
@@ -1243,7 +1243,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 
 
   // need a map from faces to edges that are attached to the node
-  map< localIndex, std::pair< localIndex, localIndex > > nodeLocalFacesToEdges;
+ stdMap< localIndex, std::pair< localIndex, localIndex > > nodeLocalFacesToEdges;
   for( localIndex const kf : m_originalNodetoFaces[ parentNodeIndex ] )
   {
     localIndex edge[2] = { INT_MAX, INT_MAX };
@@ -1363,8 +1363,8 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
     //localIndex lastFace = INT_MAX;
 
     // the seprationPath is used to hold combinations of edge and face
-    map< localIndex, int > facesInPath;
-    map< localIndex, int > edgesInPath;
+   stdMap< localIndex, int > facesInPath;
+   stdMap< localIndex, int > edgesInPath;
 
     int numFacesInPath = 0;
     edgesInPath[thisEdge] = numFacesInPath;
@@ -1411,7 +1411,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
         }
 
         // add faces in the path to separationPathFaces
-        for( map< localIndex, int >::const_iterator kf=facesInPath.begin(); kf!=facesInPath.end(); ++kf )
+        for(stdMap< localIndex, int >::const_iterator kf=facesInPath.begin(); kf!=facesInPath.end(); ++kf )
         {
           separationPathFaces.insert( kf->first );
         }
@@ -1551,7 +1551,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 
 
   // need a map from faces to edges that are attached to the node
-  map< localIndex, std::pair< localIndex, localIndex > > localFacesToEdges;
+ stdMap< localIndex, std::pair< localIndex, localIndex > > localFacesToEdges;
   for( localIndex const kf : nodeToFaceMap[ nodeID ] )
   {
     localIndex edge[2] = { INT_MAX, INT_MAX };
@@ -1683,10 +1683,10 @@ bool SurfaceGenerator::setLocations( std::set< localIndex > const & separationPa
                                      ElementRegionManager const & elemManager,
                                      FaceManager const & faceManager,
                                      stdVector< std::pair< CellElementSubRegion const *, localIndex > > const & nodeToElementMaps,
-                                     map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
-                                     map< localIndex, int > & edgeLocations,
-                                     map< localIndex, int > & faceLocations,
-                                     map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
+                                    stdMap< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
+                                    stdMap< localIndex, int > & edgeLocations,
+                                    stdMap< localIndex, int > & faceLocations,
+                                    stdMap< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
 {
   bool rval = true;
   //  const localIndex separationFace = *(separationPathFaces.begin());
@@ -1721,10 +1721,10 @@ bool SurfaceGenerator::setElemLocations( int const location,
                                          ElementRegionManager const & elemManager,
                                          FaceManager const & faceManager,
                                          stdVector< std::pair< CellElementSubRegion const *, localIndex > > const & nodeToElementMaps,
-                                         map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
-                                         map< localIndex, int > & edgeLocations,
-                                         map< localIndex, int > & faceLocations,
-                                         map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
+                                        stdMap< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
+                                        stdMap< localIndex, int > & edgeLocations,
+                                        stdMap< localIndex, int > & faceLocations,
+                                        stdMap< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
 {
   arrayView1d< localIndex const > const & parentFaceIndices = faceManager.getField< fields::parentIndex >();
 
@@ -1743,7 +1743,7 @@ bool SurfaceGenerator::setElemLocations( int const location,
                                         faceIndex : parentFaceIndices[faceIndex];
 
     // see if we can find the face in the faceLocations array.
-    map< localIndex, int >::iterator iterFace = faceLocations.find( faceIndex );
+   stdMap< localIndex, int >::iterator iterFace = faceLocations.find( faceIndex );
     // if we can find the face in the faceLocations array, then we must process the face, otherwise it is not
     // connected to the node, so we do nothing.
     if( iterFace != faceLocations.end() )
@@ -1754,7 +1754,7 @@ bool SurfaceGenerator::setElemLocations( int const location,
       else if( faceLocations[faceIndex] == INT_MIN )
         faceLocations[faceIndex] = location;
 
-      map< localIndex, std::pair< localIndex, localIndex > >::const_iterator iterF2E = localFacesToEdges.find( faceIndex );
+     stdMap< localIndex, std::pair< localIndex, localIndex > >::const_iterator iterF2E = localFacesToEdges.find( faceIndex );
 
       if( iterF2E != localFacesToEdges.end() )
       {
@@ -1837,9 +1837,9 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
                                         stdVector< std::set< localIndex > > & GEOS_UNUSED_PARAM( nodesToRupturedFaces ),
                                         stdVector< std::set< localIndex > > & GEOS_UNUSED_PARAM( edgesToRupturedFaces ),
                                         const std::set< localIndex > & separationPathFaces,
-                                        const map< localIndex, int > & edgeLocations,
-                                        const map< localIndex, int > & faceLocations,
-                                        const map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
+                                        const stdMap< localIndex, int > & edgeLocations,
+                                        const stdMap< localIndex, int > & faceLocations,
+                                        const stdMap< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
 {
   int const rank = MpiWrapper::commRank( MPI_COMM_WORLD );
 
@@ -1934,9 +1934,9 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
                           GEOS_FMT( "Done splitting node {} into nodes {} and {}", nodeID, nodeID, newNodeIndex ) );
 
   // split edges
-  map< localIndex, localIndex > splitEdges;
+ stdMap< localIndex, localIndex > splitEdges;
   // loop over all edges connected to the node
-  for( map< localIndex, int >::const_iterator iter_edge=edgeLocations.begin(); iter_edge!=edgeLocations.end(); ++iter_edge )
+  for(stdMap< localIndex, int >::const_iterator iter_edge=edgeLocations.begin(); iter_edge!=edgeLocations.end(); ++iter_edge )
   {
     const localIndex & parentEdgeIndex = iter_edge->first;
     const int & location = iter_edge->second;
@@ -1985,18 +1985,18 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
       }
 
     } //    if( location == -1  )
-  } // for( map<localIndex,int>::const_iterator iter_edge...
+  } // for(stdMap<localIndex,int>::const_iterator iter_edge...
 
 
   // split the faces
   array1d< integer > const & ruptureState = faceManager.getField< surfaceGeneration::ruptureState >();
-  map< localIndex, localIndex > splitFaces;
+ stdMap< localIndex, localIndex > splitFaces;
 
 
   SortedArray< localIndex > & externalFaces = faceManager.externalSet();
 
   // loop over all faces attached to the nodeID
-  for( map< localIndex, int >::const_iterator iter_face = faceLocations.begin(); iter_face != faceLocations.end(); ++iter_face )
+  for(stdMap< localIndex, int >::const_iterator iter_face = faceLocations.begin(); iter_face != faceLocations.end(); ++iter_face )
   {
     const localIndex faceIndex = iter_face->first;
 //    localIndex const parentFaceIndex = parentFaceIndices[faceIndex]==faceIndex ? faceIndex :
@@ -2102,7 +2102,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
         }
       } // if( faceManager.SplitObject( faceIndex, newFaceIndex ) )
     } // if( location == -1 )
-  } // for( map<localIndex,int>::const_iterator iter_face
+  } // for(stdMap<localIndex,int>::const_iterator iter_face
 
 
   // ***** now correct all the relations between the objects *****
@@ -2129,7 +2129,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
   array1d< localIndex > const & childFaceIndex = faceManager.getField< fields::childIndex >();
 
   // 1) loop over all elements attached to the nodeID
-  for( map< std::pair< CellElementSubRegion const *, localIndex >, int >::const_iterator iter_elem = elemLocations.begin(); iter_elem != elemLocations.end(); ++iter_elem )
+  for(stdMap< std::pair< CellElementSubRegion const *, localIndex >, int >::const_iterator iter_elem = elemLocations.begin(); iter_elem != elemLocations.end(); ++iter_elem )
   {
     const int & location = iter_elem->second;
 
@@ -2234,7 +2234,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
 
         // set both faceID and newFaceID to the parent face.
         localIndex const faceIndex = elemsToFaces[elemIndex][kf];
-        //        map<localIndex,localIndex>::iterator iterSplitFace = splitFaces.find(faceIndex);
+        //       stdMap<localIndex,localIndex>::iterator iterSplitFace = splitFaces.find(faceIndex);
         bool const isNewFace = (splitFaces.count( faceIndex )>0) ? true : false;
         localIndex const newFaceIndex = isNewFace ? childFaceIndex[faceIndex] : faceIndex;
 
@@ -2482,7 +2482,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
           std::cout<<")"<<std::endl;
       } // for( int kf=0 ; kf<elemRegion.m_numFacesPerElement ; ++kf )
     } // if( location==1 )
-  } // for( map<std::pair<CellBlockSubRegion*, localIndex>, int>::const_iterator iter_elem = elemLocations.begin()
+  } // for(stdMap<std::pair<CellBlockSubRegion*, localIndex>, int>::const_iterator iter_elem = elemLocations.begin()
 }
 
 
@@ -2491,7 +2491,7 @@ void SurfaceGenerator::mapConsistencyCheck( localIndex const GEOS_UNUSED_PARAM( 
                                             EdgeManager const & edgeManager,
                                             FaceManager const & faceManager,
                                             ElementRegionManager const & elementManager,
-                                            map< std::pair< CellElementSubRegion const *, localIndex >, int > const & elemLocations )
+                                           stdMap< std::pair< CellElementSubRegion const *, localIndex >, int > const & elemLocations )
 {
   //**************************************************************************
   // THIS IS ALL JUST CONSISTENCY CHECKING
@@ -2518,7 +2518,7 @@ void SurfaceGenerator::mapConsistencyCheck( localIndex const GEOS_UNUSED_PARAM( 
   {
     std::cout << "CONSISTENCY CHECKING OF THE MAPS" << std::endl;
 
-    for( map< std::pair< CellElementSubRegion const *, localIndex >, int >::const_iterator iter_elem = elemLocations.cbegin(); iter_elem != elemLocations.cend(); ++iter_elem )
+    for(stdMap< std::pair< CellElementSubRegion const *, localIndex >, int >::const_iterator iter_elem = elemLocations.cbegin(); iter_elem != elemLocations.cend(); ++iter_elem )
     {
       const std::pair< CellElementSubRegion const *, localIndex > & elem = iter_elem->first;
 
@@ -4665,7 +4665,7 @@ void SurfaceGenerator::assignNewGlobalIndicesSerial( ObjectManagerBase & object,
 }
 
 void SurfaceGenerator::assignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
-                                                     map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems )
+                                                    stdMap< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems )
 {
   // in serial, we can simply iterate over the entries in newElems and assign new global indices based on
   // the value of the maxGlobalIndex() + 1 for the ElementRegionManager.

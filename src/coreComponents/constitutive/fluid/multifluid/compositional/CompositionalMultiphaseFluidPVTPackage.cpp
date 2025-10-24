@@ -83,7 +83,7 @@ void CompositionalMultiphaseFluidPVTPackage::postInputInitialization()
 
   auto const getPVTPackagePhaseType = [&]( string const & phaseName )
   {
-    static geos::map< string, pvt::PHASE_TYPE > const phaseTypes
+    static geos::stdMap<string, pvt::PHASE_TYPE > const phaseTypes
     {
       { "gas", pvt::PHASE_TYPE::GAS },
       { "oil", pvt::PHASE_TYPE::OIL },
@@ -145,7 +145,7 @@ void CompositionalMultiphaseFluidPVTPackage::createFluid()
 {
   auto const getCompositionalEosType = [&]( string const & name )
   {
-    static map< string, pvt::EOS_TYPE > const eosTypes =
+    static stdMap< string, pvt::EOS_TYPE > const eosTypes =
     {
       { "PR", pvt::EOS_TYPE::PENG_ROBINSON },
       { "SRK", pvt::EOS_TYPE::REDLICH_KWONG_SOAVE }

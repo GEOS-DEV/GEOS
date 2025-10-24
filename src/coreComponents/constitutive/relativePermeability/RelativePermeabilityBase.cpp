@@ -68,7 +68,7 @@ void RelativePermeabilityBase::postInputInitialization()
 
   auto const toPhaseType = [&]( string const & lookup )
   {
-    static unordered_map< string, integer > const phaseDict =
+    static stdUnorderedMap< string, integer > const phaseDict =
     {
       { "gas", PhaseType::GAS },
       { "oil", PhaseType::OIL },

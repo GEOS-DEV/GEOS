@@ -144,7 +144,7 @@ public:
    */
   localIndex unpackFracturedElements( buffer_unit_type const * & buffer,
                                       localIndex_array & packList,
-                                      unordered_map< globalIndex, localIndex > const & embeddedSurfacesGlobalToLocal );
+                                      stdUnorderedMap< globalIndex, localIndex > const & embeddedSurfacesGlobalToLocal );
 
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) final override;
 
@@ -356,13 +356,13 @@ private:
   array2d< real64 > m_detJ;
 
   /// Map of unmapped global indices in the element-to-node map
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInNodelist;
+  stdMap< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInNodelist;
 
   /// Map of unmapped global indices in the element-to-face map
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInEdgelist;
+  stdMap< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInEdgelist;
 
   /// Map of unmapped global indices in the element-to-face map
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInFacelist;
+  stdMap< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInFacelist;
 
   /// List of the fractured elements on this rank
   SortedArray< localIndex > m_fracturedCells;

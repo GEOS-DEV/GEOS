@@ -99,7 +99,7 @@ void SinglePhasePoromechanicsEmbeddedFractures::setupCoupling( DomainPartition c
 {
   Base::setupCoupling( domain, dofManager );
 
-  map< std::pair< string, string >, string_array > meshTargets;
+ stdMap< std::pair< string, string >, string_array > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel const & meshLevel,
                                                                 string_array const & regionNames )

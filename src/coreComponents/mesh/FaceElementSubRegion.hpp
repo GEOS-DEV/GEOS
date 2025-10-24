@@ -272,10 +272,10 @@ public:
   ///@}
 
   /// Unmapped face elements to edges map
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToEdges;
+  stdMap<localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToEdges;
 
   /// Unmapped face elements to faces map
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToFaces;
+  stdMap<localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToFaces;
 
   /// List of the new face elements that have been generated
   SortedArray< localIndex > m_newFaceElements;
@@ -284,7 +284,7 @@ public:
   SortedArray< localIndex > m_recalculateConnectionsFor2dFaces;
 
   /// A map of edge local indices to the fracture connector local indices.
-  map< localIndex, localIndex > m_edgesTo2dFaces;
+  stdMap<localIndex, localIndex > m_edgesTo2dFaces;
 
   /// A map of fracture connector local indices to edge local indices.
   array1d< localIndex > m_2dFaceToEdge;

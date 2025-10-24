@@ -468,7 +468,7 @@ void DofManager::addField( string const & fieldName,
 void DofManager::addField( string const & fieldName,
                            FieldLocation const location,
                            integer const components,
-                           map< std::pair< string, string >, string_array > const & regions )
+                          stdMap< std::pair< string, string >, string_array > const & regions )
 {
   // Convert input into internal format
   stdVector< FieldSupport > support;
@@ -669,7 +669,7 @@ void DofManager::addCoupling( string const & fieldName,
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               DofManager::Connector connectivity,
-                              map< std::pair< string, string >, string_array > const & supports,
+                             stdMap< std::pair< string, string >, string_array > const & supports,
                               bool symmetric )
 {
   // Convert input into internal format

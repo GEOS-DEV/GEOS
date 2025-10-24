@@ -323,7 +323,7 @@ using CRSMatrixView = LvArray::CRSMatrixView< T, COL_INDEX, INDEX_TYPE const, Lv
  */
 template< typename K, typename V, typename SORTED >
 inline
-std::ostream & operator<< ( std::ostream & stream, mapType< K, V, SORTED > const & map )
+std::ostream & operator<< ( std::ostream & stream, mapBase< K, V, SORTED > const & map )
 {
   stream << "{\n";
   for( auto const & pair : map )

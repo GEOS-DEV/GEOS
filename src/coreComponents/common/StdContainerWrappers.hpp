@@ -251,7 +251,7 @@ public:
 
 /**
  * type alias for stdMap
- * @tparam Key The unique stdMap key.
+ * @tparam Key The unique stdMap<key.
  * @tparam T Type of elements in the stdMap.
  * @tparam Compare The comparison function used to order the keys. Defaults to std::less<Key>.
  * @tparam Allocator Allocator type for the map. Defaults to std::allocator<std::pair<const Key, T>>
@@ -291,30 +291,6 @@ using stdUnorderedMap = internal::StdMapWrapper< std::unordered_map< Key, T, Has
  */
 ///@{
 
-/**
- * @brief Base template for ordered and unordered maps.
- * @tparam TKEY key type
- * @tparam TVAL value type
- * @tparam SORTED a @p std::integral_constant<bool> indicating whether map is ordered
- */
-template< typename TKEY, typename TVAL, typename SORTED >
-class mapType
-{};
-
-/// @cond DO_NOT_DOCUMENT
-template< typename TKEY, typename TVAL >
-class mapType< TKEY, TVAL, std::integral_constant< bool, true > > : public stdMap< TKEY, TVAL >
-{
-  using stdMap< TKEY, TVAL >::stdMap; // enable list initialization
-};
-
-template< typename TKEY, typename TVAL >
-class mapType< TKEY, TVAL, std::integral_constant< bool, false > > : public stdUnorderedMap< TKEY, TVAL >
-{
-  using stdUnorderedMap< TKEY, TVAL >::stdUnorderedMap; // enable list initialization
-};
-/// @endcond
-
 
 /**
  * @name Ordered and unordered map types.
@@ -334,15 +310,15 @@ class mapBase
 
 /// @cond DO_NOT_DOCUMENT
 template< typename TKEY, typename TVAL >
-class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public std::map< TKEY, TVAL >
+class mapBase< TKEY, TVAL, std::integral_constant< bool, true > > : public stdMap< TKEY, TVAL >
 {
-  using std::map< TKEY, TVAL >::map; // enable list initialization
+  using stdMap< TKEY, TVAL >::stdMap; // enable list initialization
 };
 
 template< typename TKEY, typename TVAL >
-class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public std::unordered_map< TKEY, TVAL >
+class mapBase< TKEY, TVAL, std::integral_constant< bool, false > > : public stdUnorderedMap< TKEY, TVAL >
 {
-  using std::unordered_map< TKEY, TVAL >::unordered_map; // enable list initialization
+  using stdUnorderedMap< TKEY, TVAL >::stdUnorderedMap; // enable list initialization
 };
 /// @endcond
 

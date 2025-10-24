@@ -220,7 +220,7 @@ localIndex CellElementSubRegion::packFracturedElementsImpl( buffer_unit_type * &
   localIndex packedSize = 0;
 
   // only here to use that packing function
-  map< localIndex, array1d< globalIndex > > unmappedGlobalIndices;
+  stdMap< localIndex, array1d< globalIndex > > unmappedGlobalIndices;
 
   arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
 
@@ -244,7 +244,7 @@ localIndex CellElementSubRegion::packFracturedElementsImpl( buffer_unit_type * &
 
 localIndex CellElementSubRegion::unpackFracturedElements( buffer_unit_type const * & buffer,
                                                           localIndex_array & packList,
-                                                          unordered_map< globalIndex, localIndex > const & embeddedSurfacesGlobalToLocal )
+                                                          stdUnorderedMap< globalIndex, localIndex > const & embeddedSurfacesGlobalToLocal )
 {
   localIndex unPackedSize = 0;
 
@@ -253,7 +253,7 @@ localIndex CellElementSubRegion::unpackFracturedElements( buffer_unit_type const
   GEOS_ERROR_IF_NE( toEmbSurfString, viewKeyStruct::toEmbSurfString() );
 
   // only here to use that packing function
-  map< localIndex, array1d< globalIndex > > unmappedGlobalIndices;
+  stdMap< localIndex, array1d< globalIndex > > unmappedGlobalIndices;
 
   unPackedSize += bufferOps::Unpack( buffer,
                                      m_toEmbeddedSurfaces,

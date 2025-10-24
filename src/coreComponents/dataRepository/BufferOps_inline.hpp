@@ -22,6 +22,7 @@
 #include "codingUtilities/traits.hpp"
 #include "LvArray/src/limits.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "dataRepository/BufferOps.hpp"
 
 #include <type_traits>
 
@@ -174,7 +175,7 @@ localIndex Pack( buffer_unit_type * & buffer,
   return sizeOfPackedChars;
 }
 
-template< bool DO_PACKING, typename MAP_TYPE >
+template< bool DO_PACKING, class MAP_TYPE >
 typename std::enable_if< is_packable_map< MAP_TYPE >, localIndex >::type
 Pack( buffer_unit_type * & buffer, MAP_TYPE const & var )
 {
@@ -324,7 +325,7 @@ localIndex PackByIndex( buffer_unit_type * & buffer,
   return sizeOfPackedChars;
 }
 
-template< bool DO_PACKING, typename MAP_TYPE, typename T_INDICES >
+template< bool DO_PACKING, class MAP_TYPE, typename T_INDICES >
 typename std::enable_if< is_map_packable_by_index< MAP_TYPE >, localIndex >::type
 PackByIndex( buffer_unit_type * & buffer,
              MAP_TYPE const & var,
@@ -481,7 +482,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-template< typename MAP_TYPE >
+template< class MAP_TYPE >
 typename std::enable_if< is_packable_map< MAP_TYPE >, localIndex >::type
 Unpack( buffer_unit_type const * & buffer,
         MAP_TYPE & map )
@@ -658,7 +659,7 @@ UnpackByIndex( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-template< typename MAP_TYPE, typename T_INDICES >
+template< class MAP_TYPE, typename T_INDICES >
 typename std::enable_if< is_map_packable_by_index< MAP_TYPE >, localIndex >::type
 UnpackByIndex( buffer_unit_type const * & buffer,
                MAP_TYPE & map,
@@ -834,12 +835,12 @@ localIndex Pack( buffer_unit_type * & buffer,
   return sizeOfPackedChars;
 }
 
-template< typename SORTED >
+template< template< typename, typename > class MAP >
 inline
 localIndex Unpack( buffer_unit_type const * & buffer,
                    SortedArray< localIndex > & var,
                    SortedArray< globalIndex > & unmappedGlobalIndices,
-                   mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap,
+                   MAP< globalIndex, localIndex > const & globalToLocalMap,
                    bool const clearExistingSet )
 {
   if( clearExistingSet )
@@ -853,7 +854,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   {
     globalIndex temp;
     sizeOfUnpackedChars += Unpack( buffer, temp );
-    typename mapBase< globalIndex, localIndex, SORTED >::const_iterator iter = globalToLocalMap.find( temp );
+    auto iter = globalToLocalMap.find( temp );
     if( iter==globalToLocalMap.end() )
     {
       unmappedGlobalIndices.insert( temp );
@@ -1002,13 +1003,13 @@ localIndex Pack( buffer_unit_type * & buffer,
   return sizeOfPackedChars;
 }
 
-template< typename SORTED >
+template< template< typename, typename > class MAP >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         localIndex_array & var,
         array1d< globalIndex > & unmappedGlobalIndices,
-        mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap )
+        MAP< globalIndex, localIndex > const & globalToLocalMap )
 {
   localIndex length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
@@ -1022,7 +1023,7 @@ Unpack( buffer_unit_type const * & buffer,
     globalIndex unpackedGlobalIndex;
     sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
 
-    typename mapBase< globalIndex, localIndex, SORTED >::const_iterator
+    auto
       iter = globalToLocalMap.find( unpackedGlobalIndex );
     if( iter == globalToLocalMap.end() )
     {
@@ -1047,7 +1048,7 @@ inline
 localIndex
 UnpackSyncList( buffer_unit_type const * & buffer,
                 localIndex_array & var,
-                std::unordered_map< globalIndex, localIndex > const & globalToLocalMap )
+                stdUnorderedMap< globalIndex, localIndex > const & globalToLocalMap )
 {
   localIndex length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
@@ -1063,14 +1064,14 @@ UnpackSyncList( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-template< typename SORTED >
+template< template< typename, typename > class MAP >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         ArrayOfArrays< localIndex > & var,
         localIndex const subArrayIndex,
         array1d< globalIndex > & unmappedGlobalIndices,
-        mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap )
+        MAP< globalIndex, localIndex > const & globalToLocalMap )
 {
   localIndex length;
   localIndex sizeOfUnpackedChars = Unpack( buffer, length );
@@ -1085,8 +1086,7 @@ Unpack( buffer_unit_type const * & buffer,
     globalIndex unpackedGlobalIndex;
     sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
 
-    typename mapBase< globalIndex, localIndex, SORTED >::const_iterator
-      iter = globalToLocalMap.find( unpackedGlobalIndex );
+    auto iter = globalToLocalMap.find( unpackedGlobalIndex );
     if( iter == globalToLocalMap.end() )
     {
       var( subArrayIndex, a ) = unmappedLocalIndexValue;
@@ -1106,14 +1106,14 @@ Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-template< typename SORTED, int USD >
+template< template< typename, typename > class MAP, int USD >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         arraySlice1d< localIndex, USD > & var,
         array1d< globalIndex > & unmappedGlobalIndices,
         localIndex const expectedLength,
-        mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap )
+        MAP< globalIndex, localIndex > const & globalToLocalMap )
 {
   localIndex sizeOfUnpackedChars = 0;
 
@@ -1132,7 +1132,7 @@ Unpack( buffer_unit_type const * & buffer,
     globalIndex unpackedGlobalIndex;
     sizeOfUnpackedChars += Unpack( buffer, unpackedGlobalIndex );
 
-    typename mapBase< globalIndex, localIndex, SORTED >::const_iterator
+    auto
       iter = globalToLocalMap.find( unpackedGlobalIndex );
     if( iter == globalToLocalMap.end() )
     {
@@ -1207,14 +1207,14 @@ Pack( buffer_unit_type * & buffer,
   return sizeOfPackedChars;
 }
 
-template< typename SORTED0, typename SORTED1 >
+template< template< typename, typename > class MAP >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         arrayView1d< localIndex > const & var,
         array1d< localIndex > const & indices,
-        mapBase< globalIndex, localIndex, SORTED0 > const & globalToLocalMap,
-        mapBase< globalIndex, localIndex, SORTED1 > const & relatedObjectGlobalToLocalMap )
+        MAP< globalIndex, localIndex > const & globalToLocalMap,
+        MAP< globalIndex, localIndex > const & relatedObjectGlobalToLocalMap )
 {
   localIndex numIndicesUnpacked;
   localIndex const sizeOfIndicesPassedIn = indices.size();
@@ -1256,11 +1256,11 @@ Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-template< bool DO_PACKING, typename SORTED >
+template< bool DO_PACKING, template< typename, typename > class MAP >
 localIndex
 Pack( buffer_unit_type * & buffer,
       arrayView1d< arrayView1d< localIndex const > const > const & var,
-      mapBase< localIndex, array1d< globalIndex >, SORTED > const & unmappedGlobalIndices,
+      MAP< localIndex, array1d< globalIndex > > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
       arrayView1d< globalIndex const > const & localToGlobalMap,
       arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
@@ -1273,8 +1273,7 @@ Pack( buffer_unit_type * & buffer,
     localIndex const li = indices[a];
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
 
-    typename mapBase< localIndex, array1d< globalIndex >, SORTED >::const_iterator
-      iterUnmappedGI = unmappedGlobalIndices.find( li );
+    auto iterUnmappedGI = unmappedGlobalIndices.find( li );
 
     array1d< globalIndex > junk;
     array1d< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
@@ -1291,15 +1290,15 @@ Pack( buffer_unit_type * & buffer,
   return sizeOfPackedChars;
 }
 
-template< typename SORTED0, typename SORTED1, typename SORTED2 >
+template< template< typename, typename > class MAP, template< typename, typename > class MAP2 >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         arrayView1d< localIndex_array > & var,
         array1d< localIndex > & indices,
-        mapBase< localIndex, array1d< globalIndex >, SORTED0 > & unmappedGlobalIndices,
-        mapBase< globalIndex, localIndex, SORTED1 > const & globalToLocalMap,
-        mapBase< globalIndex, localIndex, SORTED2 > const & relatedObjectGlobalToLocalMap )
+        MAP< localIndex, array1d< globalIndex > > & unmappedGlobalIndices,
+        MAP2< globalIndex, localIndex > const & globalToLocalMap,
+        MAP2< globalIndex, localIndex > const & relatedObjectGlobalToLocalMap )
 {
   localIndex numIndicesUnpacked;
   localIndex const sizeOfIndicesPassedIn = indices.size();
@@ -1343,11 +1342,11 @@ Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-template< bool DO_PACKING, typename SORTED >
+template< bool DO_PACKING, template< typename, typename > class MAP >
 localIndex
 Pack( buffer_unit_type * & buffer,
       ArrayOfArraysView< localIndex const > const & var,
-      mapBase< localIndex, array1d< globalIndex >, SORTED > const & unmappedGlobalIndices,
+      MAP< localIndex, array1d< globalIndex > > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
       arrayView1d< globalIndex const > const & localToGlobalMap,
       arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
@@ -1361,8 +1360,7 @@ Pack( buffer_unit_type * & buffer,
     localIndex const li = indices[a];
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
 
-    typename mapBase< localIndex, array1d< globalIndex >, SORTED >::const_iterator
-      iterUnmappedGI = unmappedGlobalIndices.find( li );
+    auto iterUnmappedGI = unmappedGlobalIndices.find( li );
 
     array1d< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
                                                 junk :
@@ -1378,11 +1376,11 @@ Pack( buffer_unit_type * & buffer,
   return sizeOfPackedChars;
 }
 
-template< bool DO_PACKING, typename SORTED >
+template< bool DO_PACKING, template< typename, typename > class MAP >
 localIndex
 Pack( buffer_unit_type * & buffer,
       ArrayOfArraysView< localIndex const > const & var,
-      mapBase< localIndex, SortedArray< globalIndex >, SORTED > const & unmappedGlobalIndices,
+      MAP< localIndex, SortedArray< globalIndex > > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
       arrayView1d< globalIndex const > const & localToGlobalMap,
       arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
@@ -1396,8 +1394,7 @@ Pack( buffer_unit_type * & buffer,
     localIndex const li = indices[a];
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
 
-    typename mapBase< localIndex, SortedArray< globalIndex >, SORTED >::const_iterator
-      iterUnmappedGI = unmappedGlobalIndices.find( li );
+    auto iterUnmappedGI = unmappedGlobalIndices.find( li );
 
     SortedArray< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
                                                     junk :
@@ -1413,15 +1410,15 @@ Pack( buffer_unit_type * & buffer,
   return sizeOfPackedChars;
 }
 
-template< typename SORTED0, typename SORTED1, typename SORTED2 >
+template< template< typename, typename > class MAP,template< typename, typename > class MAP2 >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         ArrayOfArrays< localIndex > & var,
         array1d< localIndex > & indices,
-        mapBase< localIndex, array1d< globalIndex >, SORTED0 > & unmappedGlobalIndices,
-        mapBase< globalIndex, localIndex, SORTED1 > const & globalToLocalMap,
-        mapBase< globalIndex, localIndex, SORTED2 > const & relatedObjectGlobalToLocalMap )
+        MAP< localIndex, array1d< globalIndex > > & unmappedGlobalIndices,
+        MAP2< globalIndex, localIndex > const & globalToLocalMap,
+        MAP2< globalIndex, localIndex > const & relatedObjectGlobalToLocalMap )
 {
   localIndex numIndicesUnpacked;
   localIndex const sizeOfIndicesPassedIn = indices.size();
@@ -1467,13 +1464,13 @@ Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-template< typename SORTED0 >
+template< template< typename, typename > class MAP >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         ArrayOfArrays< array1d< globalIndex > > & var,
         array1d< localIndex > & indices,
-        mapBase< globalIndex, localIndex, SORTED0 > const & globalToLocalMap )
+        MAP< globalIndex, localIndex > const & globalToLocalMap )
 {
   localIndex numIndicesUnpacked;
   localIndex const sizeOfIndicesPassedIn = indices.size();
@@ -1513,11 +1510,11 @@ Unpack( buffer_unit_type const * & buffer,
 }
 
 
-template< bool DO_PACKING, typename SORTED >
+template< bool DO_PACKING, template< typename, typename > class MAP >
 localIndex
 Pack( buffer_unit_type * & buffer,
       arrayView1d< SortedArray< localIndex > const > const & var,
-      mapBase< localIndex, SortedArray< globalIndex >, SORTED > const & unmappedGlobalIndices,
+      MAP< localIndex, SortedArray< globalIndex > > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
       arrayView1d< globalIndex const > const & localToGlobalMap,
       arrayView1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
@@ -1529,8 +1526,7 @@ Pack( buffer_unit_type * & buffer,
     localIndex li = indices[a];
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
 
-    typename mapBase< localIndex, SortedArray< globalIndex >, SORTED >::const_iterator
-      iterUnmappedGI = unmappedGlobalIndices.find( li );
+    auto iterUnmappedGI = unmappedGlobalIndices.find( li );
 
     SortedArray< globalIndex > junk;
     SortedArray< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
@@ -1547,15 +1543,15 @@ Pack( buffer_unit_type * & buffer,
 }
 
 
-template< typename SORTED0, typename SORTED1, typename SORTED2 >
+template< template< typename, typename > class MAP,template< typename, typename > class MAP2 >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         arrayView1d< SortedArray< localIndex > > & var,
         localIndex_array & indices,
-        mapBase< localIndex, SortedArray< globalIndex >, SORTED0 > & unmappedGlobalIndices,
-        mapBase< globalIndex, localIndex, SORTED1 > const & globalToLocalMap,
-        mapBase< globalIndex, localIndex, SORTED2 > const & relatedObjectGlobalToLocalMap,
+        MAP< localIndex, SortedArray< globalIndex > > & unmappedGlobalIndices,
+        MAP2< globalIndex, localIndex > const & globalToLocalMap,
+        MAP2< globalIndex, localIndex > const & relatedObjectGlobalToLocalMap,
         bool const clearFlag )
 {
   localIndex sizeOfUnpackedChars=0;
@@ -1602,15 +1598,15 @@ Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-template< typename SORTED0, typename SORTED1, typename SORTED2 >
+template< template< typename, typename > class MAP, template< typename, typename > class MAP2 >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         ArrayOfSets< localIndex > & var,
         localIndex_array & indices,
-        mapBase< localIndex, SortedArray< globalIndex >, SORTED0 > & unmappedGlobalIndices,
-        mapBase< globalIndex, localIndex, SORTED1 > const & globalToLocalMap,
-        mapBase< globalIndex, localIndex, SORTED2 > const & relatedObjectGlobalToLocalMap,
+        MAP< localIndex, SortedArray< globalIndex > > & unmappedGlobalIndices,
+        MAP2< globalIndex, localIndex > const & globalToLocalMap,
+        MAP2< globalIndex, localIndex > const & relatedObjectGlobalToLocalMap,
         bool const clearFlag )
 {
   localIndex sizeOfUnpackedChars=0;
@@ -1780,13 +1776,13 @@ Pack( buffer_unit_type * & buffer,
   return sizeOfPackedChars;
 }
 
-template< typename SORTED, int USD >
+template< template< typename, typename > class MAP, int USD >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         arrayView2d< localIndex, USD > const & var,
         array1d< localIndex > & indices,
-        mapBase< globalIndex, localIndex, SORTED > const & globalToLocalMap )
+        MAP< globalIndex, localIndex > const & globalToLocalMap )
 {
   localIndex sizeOfUnpackedChars = 0;
   localIndex const sizeOfIndicesPassedIn = indices.size();
@@ -1824,12 +1820,11 @@ Unpack( buffer_unit_type const * & buffer,
   return sizeOfUnpackedChars;
 }
 
-
-template< bool DO_PACKING, typename SORTED, int USD0 >
+template< bool DO_PACKING, template< typename, typename > class MAP, int USD0 >
 localIndex
 Pack( buffer_unit_type * & buffer,
       arrayView2d< localIndex const, USD0 > const & var,
-      mapBase< localIndex, array1d< globalIndex >, SORTED > const & unmappedGlobalIndices,
+      MAP< localIndex, array1d< globalIndex > > const & unmappedGlobalIndices,
       arrayView1d< localIndex const > const & indices,
       arraySlice1d< globalIndex const > const & localToGlobalMap,
       arraySlice1d< globalIndex const > const & relatedObjectLocalToGlobalMap )
@@ -1847,8 +1842,7 @@ Pack( buffer_unit_type * & buffer,
     localIndex li = indices[a];
     sizeOfPackedChars += Pack< DO_PACKING >( buffer, localToGlobalMap[li] );
 
-    typename mapBase< localIndex, array1d< globalIndex >, SORTED >::const_iterator
-      iterUnmappedGI = unmappedGlobalIndices.find( li );
+    auto iterUnmappedGI = unmappedGlobalIndices.find( li );
 
     array1d< globalIndex > const & unmappedGI = iterUnmappedGI==unmappedGlobalIndices.end() ?
                                                 invalidGlobalIndices :
@@ -1865,15 +1859,15 @@ Pack( buffer_unit_type * & buffer,
 }
 
 
-template< typename SORTED0, typename SORTED1, typename SORTED2, int USD >
+template< template< typename, typename > class MAP,template< typename, typename > class MAP2, int USD >
 inline
 localIndex
 Unpack( buffer_unit_type const * & buffer,
         arrayView2d< localIndex, USD > const & var,
         localIndex_array & indices,
-        mapBase< localIndex, array1d< globalIndex >, SORTED0 > & unmappedGlobalIndices,
-        mapBase< globalIndex, localIndex, SORTED1 > const & globalToLocalMap,
-        mapBase< globalIndex, localIndex, SORTED2 > const & relatedObjectGlobalToLocalMap )
+        MAP< localIndex, array1d< globalIndex > > & unmappedGlobalIndices,
+        MAP2< globalIndex, localIndex > const & globalToLocalMap,
+        MAP2< globalIndex, localIndex > const & relatedObjectGlobalToLocalMap )
 {
   localIndex sizeOfUnpackedChars = 0;
   localIndex const sizeOfIndicesPassedIn = indices.size();

@@ -694,7 +694,7 @@ SortedArray< localIndex > makeSortedArrayIota( localIndex newSize, localIndex va
  * @return The computed mapping.
  */
 ArrayOfArrays< geos::localIndex > build2dFaceTo2dElems( ArrayOfArraysView< localIndex const > const elem2dToEdges,
-                                                        map< localIndex, localIndex > const & edgesTo2dFaces,
+                                                       stdMap< localIndex, localIndex > const & edgesTo2dFaces,
                                                         stdMap< geos::localIndex, geos::localIndex > const & referenceCollocatedEdges )
 {
   ArrayOfArrays< localIndex > face2dTo2dElems;
@@ -747,7 +747,7 @@ ArrayOfArrays< geos::localIndex > build2dFaceTo2dElems( ArrayOfArraysView< local
  * @note This functions is meant to be called after the ghosting has occurred.
  */
 void fillMissing2dElemToNodes( ArrayOfArrays< array1d< globalIndex > > const & elem2dToCollocatedNodesBuckets,
-                               unordered_map< globalIndex, localIndex > const & ng2l,
+                               stdUnorderedMap< globalIndex, localIndex > const & ng2l,
                                ArrayOfArrays< localIndex > & elem2dToNodes )
 {
   auto const num2dElems = elem2dToNodes.size();
@@ -886,9 +886,9 @@ array1d< localIndex > build2dFaceToEdge( stdMap< localIndex, localIndex > const 
  * @param face2dToEdges The mappings to be inverted.
  * @return The mapping
  */
-map< localIndex, localIndex > buildEdgesToFace2d( arrayView1d< localIndex const > const face2dToEdges )
+stdMap<localIndex, localIndex > buildEdgesToFace2d( arrayView1d< localIndex const > const face2dToEdges )
 {
-  map< localIndex, localIndex > edgesToFace2d;
+ stdMap< localIndex, localIndex > edgesToFace2d;
   localIndex const num2dFaces = face2dToEdges.size();
 
   for( localIndex i = 0; i < num2dFaces; ++i )

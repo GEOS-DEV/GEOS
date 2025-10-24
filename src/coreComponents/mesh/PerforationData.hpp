@@ -284,7 +284,7 @@ public:
    * @param[in] elemOffsetGlobal the offset of the first global well element ( = offset of last global mesh elem + 1 )
    */
   void connectToWellElements( LineBlockABC const & lineBlock,
-                              unordered_map< globalIndex, localIndex > const & globalToLocalWellElementMap,
+                              stdUnorderedMap< globalIndex, localIndex > const & globalToLocalWellElementMap,
                               globalIndex elemOffsetGlobal );
 
   ///@}

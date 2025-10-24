@@ -87,7 +87,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & manager,
   // such that the key is the lowest global index of the composition object that make up this object.
   // The value of the map is a pair, with the array being the remaining composition object global indices,
   // and the second being the global index of the object itself.
-  map< globalIndex, stdVector< std::pair< stdVector< globalIndex >, localIndex > > > indexByFirstCompositionIndex;
+ stdMap< globalIndex, stdVector< std::pair< stdVector< globalIndex >, localIndex > > > indexByFirstCompositionIndex;
 
   localIndex bufferSize = 0;
   for( localIndex a = 0; a < objectToCompositionObject.size(); ++a )
@@ -170,7 +170,7 @@ void CommunicationTools::assignGlobalIndices( ObjectManagerBase & manager,
   // this baby is an Array (for each neighbor) of maps, with the key of lowest composition index, and a value
   // containing an array containing the std::pairs of the remaining composition indices, and the globalIndex of the
   // object.
-  stdVector< map< globalIndex, stdVector< std::pair< stdVector< globalIndex >, globalIndex > > > > neighborCompositionObjects( neighbors.size() );
+  stdVector<stdMap< globalIndex, stdVector< std::pair< stdVector< globalIndex >, globalIndex > > > > neighborCompositionObjects( neighbors.size() );
 
   for( std::size_t count=0; count<neighbors.size(); ++count )
   {
@@ -701,7 +701,7 @@ void fixReceiveLists( ObjectManagerBase & objectManager,
     stdVector< localIndex > ghostsToFix;
 
     /// Map from owning MPI rank to an array of local objects we need to fix.
-    std::unordered_map< int, stdVector< localIndex > > ghostsBySecondNeighbor;
+    stdUnorderedMap< int, stdVector< localIndex > > ghostsBySecondNeighbor;
 
     arrayView1d< integer > const & ghostRank = objectManager.ghostRank();
 

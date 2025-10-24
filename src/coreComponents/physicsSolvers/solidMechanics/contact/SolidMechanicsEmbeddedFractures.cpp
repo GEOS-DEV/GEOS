@@ -207,7 +207,7 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
 
   if( !m_useStaticCondensation )
   {
-    map< std::pair< string, string >, string_array > meshTargets;
+   stdMap< std::pair< string, string >, string_array > meshTargets;
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                   MeshLevel const & meshLevel,
                                                                   string_array const & )

@@ -267,7 +267,7 @@ public:
 protected:
 
   /// Unmapped surface elements to nodes map
-  map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
+  stdMap<localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
 
   /// list of nodes
   NodeMapType m_toNodesRelation;

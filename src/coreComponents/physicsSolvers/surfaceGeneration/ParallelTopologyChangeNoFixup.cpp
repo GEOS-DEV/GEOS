@@ -332,7 +332,7 @@ localIndex unpackNewObjectsOnOwningRanks( NeighborCommunicator & neighbor,
   std::set< localIndex > & allNewNodes      = receivedObjects.newNodes;
   std::set< localIndex > & allNewEdges      = receivedObjects.newEdges;
   std::set< localIndex > & allNewFaces      = receivedObjects.newFaces;
-  map< std::pair< localIndex, localIndex >, std::set< localIndex > > & allNewElements = receivedObjects.newElements;
+ stdMap< std::pair< localIndex, localIndex >, std::set< localIndex > > & allNewElements = receivedObjects.newElements;
 
   allNewNodes.insert( newLocalNodes.begin(), newLocalNodes.end() );
   allNewEdges.insert( newLocalEdges.begin(), newLocalEdges.end() );
@@ -611,7 +611,7 @@ localIndex unpackNewAndModifiedObjectsDataOnOwningRanks( MeshLevel * const mesh,
   std::set< localIndex > & allModifiedNodes = receivedObjects.modifiedNodes;
   std::set< localIndex > & allModifiedEdges = receivedObjects.modifiedEdges;
   std::set< localIndex > & allModifiedFaces = receivedObjects.modifiedFaces;
-  map< std::pair< localIndex, localIndex >, std::set< localIndex > > & allModifiedElements = receivedObjects.modifiedElements;
+ stdMap< std::pair< localIndex, localIndex >, std::set< localIndex > > & allModifiedElements = receivedObjects.modifiedElements;
 
   allModifiedNodes.insert( modifiedLocalNodes.begin(), modifiedLocalNodes.end() );
 
@@ -880,7 +880,7 @@ void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements
                                   FaceElementSubRegion & faceElemSubRegion )
 {
   ArrayOfArrays< localIndex > & connectorToElem = faceElemSubRegion.m_2dFaceTo2dElems;
-  map< localIndex, localIndex > & edgesToConnectorEdges = faceElemSubRegion.m_edgesTo2dFaces;
+ stdMap< localIndex, localIndex > & edgesToConnectorEdges = faceElemSubRegion.m_edgesTo2dFaces;
   array1d< localIndex > & connectorEdgesToEdges = faceElemSubRegion.m_2dFaceToEdge;
 
   ArrayOfArraysView< localIndex const > const facesToEdges = faceElemSubRegion.edgeList().toViewConst();

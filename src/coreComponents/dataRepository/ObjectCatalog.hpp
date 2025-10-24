@@ -71,7 +71,7 @@ public:
 
   /// This is the type that will be used for the catalog. The catalog is actually instantiated in the @p BASETYPE.
   //START_SPHINX_1
-  typedef std::unordered_map< std::string,
+  typedef stdUnorderedMap< std::string,
                               std::unique_ptr< CatalogInterface< BASETYPE, ARGS... > > > CatalogType;
   //STOP_SPHINX
 
@@ -426,7 +426,7 @@ class CatalogInterface< BASETYPE >
 public:
 
   /// This is the type that will be used for the catalog. The catalog is actually instantiated in the @p BASETYPE.
-  typedef std::unordered_map< std::string, std::unique_ptr< CatalogInterface< BASETYPE > > > CatalogType;
+  typedef stdUnorderedMap< std::string, std::unique_ptr< CatalogInterface< BASETYPE > > > CatalogType;
 
   /**
    * @brief Default constructor.

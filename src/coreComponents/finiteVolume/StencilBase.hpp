@@ -242,7 +242,7 @@ public:
    * @brief  Const access to stencil connector indices.
    * @return An unordered_map of stencil connector indices
    */
-  unordered_map< localIndex, localIndex > const &
+  stdUnorderedMap< localIndex, localIndex > const &
   getConnectorIndices() const { return m_connectorIndices; }
 
 protected:
@@ -260,7 +260,7 @@ protected:
   typename TRAITS::WeightContainerType m_weights;
 
   /// The map that provides the stencil index given the index of the underlying connector object.
-  unordered_map< localIndex, localIndex > m_connectorIndices;
+  stdUnorderedMap< localIndex, localIndex > m_connectorIndices;
 };
 
 

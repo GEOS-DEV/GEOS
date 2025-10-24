@@ -99,7 +99,7 @@ public:
    * @brief Get the GlobalToLocal mapping from the related object.
    * @return The GlobalToLocal mapping from the related object.
    */
-  unordered_map< globalIndex, localIndex > const & relatedObjectGlobalToLocal() const
+  stdUnorderedMap< globalIndex, localIndex > const & relatedObjectGlobalToLocal() const
   { return this->m_relatedObject->globalToLocalMap(); }
 
 private:

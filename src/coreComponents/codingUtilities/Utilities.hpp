@@ -20,6 +20,7 @@
 #ifndef GEOS_CODINGUTILITIES_UTILITIES_H_
 #define GEOS_CODINGUTILITIES_UTILITIES_H_
 
+#include "common/StdContainerWrappers.hpp"
 #include "common/format/StringUtilities.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/DataTypes.hpp"
@@ -88,26 +89,26 @@ bool isEven( T x )
   return !isOdd( x );
 }
 
-template< typename T1, typename T2, typename SORTED >
-T2 & stlMapLookup( mapBase< T1, T2, SORTED > & Map, const T1 & key )
+template< class MAP, typename T1>
+typename MAP::mapped_type & stlMapLookup( MAP & Map, const T1 & key )
 {
-  typename mapBase< T1, T2, SORTED >::iterator MapIter = Map.find( key );
+  auto MapIter = Map.find( key );
   GEOS_ERROR_IF( MapIter==Map.end(), "Key not found: " << key );
   return MapIter->second;
 }
 
 
-template< typename T1, typename T2, typename SORTED >
-const T2 & stlMapLookup( const mapBase< T1, T2, SORTED > & Map, const T1 & key )
+template< class MAP, typename T1 >
+const typename MAP::mapped_type & stlMapLookup( const MAP & Map, const T1 & key )
 {
-  return (stlMapLookup( const_cast< mapBase< T1, T2, SORTED > & >(Map), key ));
+  return (stlMapLookup( const_cast< MAP & >(Map), key ));
 }
 
-template< typename T1, typename T2, typename SORTED, typename LAMBDA >
-bool executeOnMapValue( mapBase< T1, T2, SORTED > const & Map, const T1 & key, LAMBDA && lambda )
+template< class MAP, typename T1,  typename LAMBDA >
+bool executeOnMapValue( MAP const & Map, const T1 & key, LAMBDA && lambda )
 {
   bool rval = false;
-  typename mapBase< T1, T2, SORTED >::const_iterator MapIter = Map.find( key );
+  auto MapIter = Map.find( key );
   if( MapIter!=Map.end() )
   {
     rval = true;
@@ -117,13 +118,13 @@ bool executeOnMapValue( mapBase< T1, T2, SORTED > const & Map, const T1 & key, L
   return rval;
 }
 
-template< typename T_KEY, typename T_VALUE, typename SORTED >
-T_VALUE softMapLookup( mapBase< T_KEY, T_VALUE, SORTED > const & theMap,
+template< class MAP, typename T_KEY, typename T_VALUE >
+T_VALUE softMapLookup( MAP const & theMap,
                        T_KEY const & key,
                        T_VALUE const failValue )
 {
   T_VALUE rvalue;
-  typename mapBase< T_KEY, T_VALUE, SORTED >::const_iterator iter = theMap.find( key );
+  auto iter = theMap.find( key );
   if( iter==theMap.end() )
   {
     rvalue = failValue;
@@ -198,33 +199,6 @@ void forUniqueValues( ITER first, ITER const last, FUNC && func, COMP && comp = 
   forEqualRanges( first, last, f, std::forward< COMP >( comp ) );
 }
 
-/**
- * @brief Perform lookup in a map of options and throw a user-friendly exception if not found.
- * @tparam KEY map key type
- * @tparam VAL map value type
- * @tparam SORTED whether map is ordered or unordered
- * @param map the option map
- * @param option the lookep key
- * @param optionName name of the option to use in exception error message
- * @param contextName name of the lookup context (e.g. the data repository group)
- */
-template< typename KEY, typename VAL, typename SORTED >
-VAL findOption( mapBase< KEY, VAL, SORTED > const & map,
-                KEY const & option,
-                string const & optionName,
-                string const & contextName )
-{
-  auto const iter = map.find( option );
-  GEOS_THROW_IF( iter == map.end(),
-                 GEOS_FMT( "{}: unsupported option '{}' for {}.\nSupported options are: {}",
-                           contextName,
-                           const_cast< typename std::remove_const< KEY & >::type >( option ),
-                           optionName,
-                           stringutilities::join( mapKeys( map ), ", " ) ),
-                 InputError );
-  return iter->second;
-}
-
 namespace
 {
 
@@ -264,6 +238,60 @@ C< typename MAP::key_type > mapKeys( MAP const & map )
   { return p.first; };
   return mapTransformer< C >( map, transformer );
 }
+
+/**
+ * @brief Perform lookup in a map of options and throw a user-friendly exception if not found.
+ * @tparam KEY map key type
+ * @tparam VAL map value type
+ * @tparam SORTED whether map is ordered or unordered
+ * @param map the option map
+ * @param option the lookep key
+ * @param optionName name of the option to use in exception error message
+ * @param contextName name of the lookup context (e.g. the data repository group)
+ */
+template< class MAP, typename KEY >
+typename MAP::mapped_type findOption( MAP const & map,
+                                      KEY const & option,
+                                      string const & optionName,
+                                      string const & contextName )
+{
+  auto const iter = map.find( option );
+  GEOS_THROW_IF( iter == map.end(),
+                 GEOS_FMT( "{}: unsupported option '{}' for {}.\nSupported options are: {}",
+                           contextName,
+                           const_cast< typename std::remove_const< KEY & >::type >( option ),
+                           optionName,
+                           stringutilities::join( mapKeys( map ), ", " ) ),
+                 InputError );
+  return iter->second;
+}
+
+// /**
+//  * @brief Perform lookup in a map of options and throw a user-friendly exception if not found.
+//  * @tparam KEY map key type
+//  * @tparam VAL map value type
+//  * @tparam SORTED whether map is ordered or unordered
+//  * @param map the option map
+//  * @param option the lookep key
+//  * @param optionName name of the option to use in exception error message
+//  * @param contextName name of the lookup context (e.g. the data repository group)
+//  */
+// template< typename KEY, typename VAL >
+// VAL findOptionInUnorderedMap( stdUnorderedMap< KEY, VAL > const & unordered_map,
+//                               KEY const & option,
+//                               string const & optionName,
+//                               string const & contextName )
+// {
+//   auto const iter = unordered_map.find( option );
+//   GEOS_THROW_IF( iter == unordered_map.end(),
+//                  GEOS_FMT( "{}: unsupported option '{}' for {}.\nSupported options are: {}",
+//                            contextName,
+//                            const_cast< typename std::remove_const< KEY & >::type >( option ),
+//                            optionName,
+//                            stringutilities::join( mapKeys( unordered_map ), ", " ) ),
+//                  InputError );
+//   return iter->second;
+// }
 
 /**
  * @brief Extract the values from the given map.

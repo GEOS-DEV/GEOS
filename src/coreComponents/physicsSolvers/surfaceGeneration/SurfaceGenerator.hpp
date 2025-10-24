@@ -116,7 +116,7 @@ private:
    */
   void
   assignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
-                                map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & indexList );
+                                stdMap<std::pair< localIndex, localIndex >, std::set< localIndex > > const & indexList );
 
   /**
    * @brief Function to identify which faces are ready for rupture
@@ -330,9 +330,9 @@ private:
                            stdVector< std::set< localIndex > > const & nodesToRupturedFaces,
                            stdVector< std::set< localIndex > > const & edgesToRupturedFaces,
                            std::set< localIndex > & separationPathFaces,
-                           map< localIndex, int > & edgeLocations,
-                           map< localIndex, int > & faceLocations,
-                           map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations );
+                           stdMap<localIndex, int > & edgeLocations,
+                           stdMap<localIndex, int > & faceLocations,
+                           stdMap<std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations );
 
 
   /**
@@ -360,16 +360,16 @@ private:
                         stdVector< std::set< localIndex > > & nodesToRupturedFaces,
                         stdVector< std::set< localIndex > > & edgesToRupturedFaces,
                         std::set< localIndex > const & separationPathFaces,
-                        map< localIndex, int > const & edgeLocations,
-                        map< localIndex, int > const & faceLocations,
-                        map< std::pair< CellElementSubRegion const *, localIndex >, int > const & elemLocations );
+                        stdMap<localIndex, int > const & edgeLocations,
+                        stdMap<localIndex, int > const & faceLocations,
+                        stdMap<std::pair< CellElementSubRegion const *, localIndex >, int > const & elemLocations );
 
   void mapConsistencyCheck( localIndex const nodeID,
                             NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
                             ElementRegionManager const & elementManager,
-                            map< std::pair< CellElementSubRegion const *, localIndex >, int > const & elemLocations );
+                            stdMap<std::pair< CellElementSubRegion const *, localIndex >, int > const & elemLocations );
 
   /**
    * @brief function to set which side of the fracture plane all objects are on
@@ -387,10 +387,10 @@ private:
                      ElementRegionManager const & elemManager,
                      FaceManager const & faceManager,
                      stdVector< std::pair< CellElementSubRegion const *, localIndex > > const & nodeToElementMaps,
-                     map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
-                     map< localIndex, int > & edgeLocations,
-                     map< localIndex, int > & faceLocations,
-                     map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations );
+                     stdMap<localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
+                     stdMap<localIndex, int > & edgeLocations,
+                     stdMap<localIndex, int > & faceLocations,
+                     stdMap<std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations );
 
   /**
    * @brief function to set which side of the fracture plane all objects are on
@@ -412,10 +412,10 @@ private:
                          ElementRegionManager const & elemManager,
                          FaceManager const & faceManager,
                          stdVector< std::pair< CellElementSubRegion const *, localIndex > > const & nodesToElements,
-                         map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
-                         map< localIndex, int > & edgeLocations,
-                         map< localIndex, int > & faceLocations,
-                         map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations );
+                         stdMap<localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
+                         stdMap<localIndex, int > & edgeLocations,
+                         stdMap<localIndex, int > & faceLocations,
+                         stdMap<std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations );
 
   /**
    *

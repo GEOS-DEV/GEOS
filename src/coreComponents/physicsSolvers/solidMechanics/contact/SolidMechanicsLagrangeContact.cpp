@@ -591,7 +591,7 @@ void SolidMechanicsLagrangeContact::setupDofs( DomainPartition const & domain,
   SolidMechanicsLagrangianFEM::setupDofs( domain, dofManager );
 
   // restrict coupling to fracture regions only
-  map< std::pair< string, string >, string_array > meshTargets;
+ stdMap< std::pair< string, string >, string_array > meshTargets;
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel const & meshLevel,
                                                                 string_array const & regionNames )

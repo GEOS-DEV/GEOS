@@ -283,7 +283,7 @@ void PerforationData::getReservoirElementDimensions( MeshLevel const & mesh,
 }
 
 void PerforationData::connectToWellElements( LineBlockABC const & lineBlock,
-                                             unordered_map< globalIndex, localIndex > const & globalToLocalWellElemMap,
+                                             stdUnorderedMap< globalIndex, localIndex > const & globalToLocalWellElemMap,
                                              globalIndex elemOffsetGlobal )
 {
   arrayView1d< globalIndex const > const & perfElemIndexGlobal = lineBlock.getPerfElemIndex();
