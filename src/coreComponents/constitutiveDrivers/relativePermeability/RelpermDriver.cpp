@@ -17,7 +17,7 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutiveDrivers/fluid/multiFluid/LogLevelsInfo.hpp"
+#include "constitutiveDrivers/LogLevelsInfo.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 
