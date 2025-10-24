@@ -11,7 +11,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_CO2Brine_testCo2BrinePhillipsMixtureA.txt"
+      output="testPVT_CO2Brine_testCo2BrinePhillipsMixtureA.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2BrinePhillipsMixtureB"
@@ -22,7 +22,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_CO2Brine_testCo2BrinePhillipsMixtureB.txt"
+      output="testPVT_CO2Brine_testCo2BrinePhillipsMixtureB.txt"
       precision="6"
       logLevel="1" />
     <PVTDriver
@@ -34,7 +34,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_CO2Brine_testCo2BrineEzrokhiMixtureA.txt"
+      output="testPVT_CO2Brine_testCo2BrineEzrokhiMixtureA.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2BrineEzrokhiMixtureB"
@@ -45,7 +45,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_CO2Brine_testCo2BrineEzrokhiMixtureB.txt"
+      output="testPVT_CO2Brine_testCo2BrineEzrokhiMixtureB.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2SpycherPruessBrinePhillipsMixtureA"
@@ -56,7 +56,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_CO2Brine_testCo2SpycherPruessBrinePhillipsMixtureA.txt"
+      output="testPVT_CO2Brine_testCo2SpycherPruessBrinePhillipsMixtureA.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2SpycherPruessBrinePhillipsMixtureB"
@@ -67,7 +67,7 @@
       steps="20"
       outputCompressibility="1"
       outputPhaseComposition="1"
-      baseline="testPVT_CO2Brine_testCo2SpycherPruessBrinePhillipsMixtureB.txt"
+      output="testPVT_CO2Brine_testCo2SpycherPruessBrinePhillipsMixtureB.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2BrinePhillipsMixtureThermalA"
@@ -79,7 +79,7 @@
       outputCompressibility="1"
       outputPhaseComposition="1"
       outputMassDensity="1"
-      baseline="testPVT_CO2Brine_testCo2BrinePhillipsMixtureThermalA.txt"
+      output="testPVT_CO2Brine_testCo2BrinePhillipsMixtureThermalA.txt"
       logLevel="1" />
     <PVTDriver
       name="testCo2BrinePhillipsMixtureThermalB"
@@ -91,9 +91,14 @@
       outputCompressibility="1"
       outputPhaseComposition="1"
       outputMassDensity="1"
-      baseline="testPVT_CO2Brine_testCo2BrinePhillipsMixtureThermalB.txt"
+      output="testPVT_CO2Brine_testCo2BrinePhillipsMixtureThermalB.txt"
       logLevel="1" />
   </Tasks>
+  
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
 
   <Events
     maxTime="1">
@@ -121,6 +126,12 @@
     <SoloEvent
       name="eventCo2BrinePhillipsMixtureThermalB"
       target="/Tasks/testCo2BrinePhillipsMixtureThermalB" />
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>      
   </Events>
 
   <Constitutive>

@@ -14,14 +14,6 @@ set( gtest_triaxial_xmls
      testTriaxial_delftEggCase1.xml
      testTriaxial_delftEggCase2.xml )
 
-set( gtest_pvt_xmls
-     testPVT.xml
-     testPVT_CO2Brine.xml
-     testPVT_CO2BrineTables.xml
-     testPVT_PhaseComposition.xml
-     testPVT_ThreePhaseCompositional.xml
-   )
-
 set( gtest_reactivefluid_xmls
      testReactiveFluid.xml )
 
@@ -55,19 +47,6 @@ foreach(test ${gtest_triaxial_xmls})
     geos_add_test( NAME ${test_name}
                    COMMAND testTriaxial -i ${CMAKE_CURRENT_LIST_DIR}/${test} )
 endforeach()
-
-# Add pvtdriver xml based tests
-blt_add_executable( NAME testPVT
-                    SOURCES testPVT.cpp
-                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                    DEPENDS_ON ${dependencyList} "-lz" ${tplDependencyList} )
-
-foreach(test ${gtest_pvt_xmls})
-    get_filename_component( test_name ${test} NAME_WE )
-    geos_add_test( NAME ${test_name}
-                   COMMAND testPVT -i ${CMAKE_CURRENT_LIST_DIR}/${test} )
-endforeach()
-
 
 # Add reactivefluiddriver xml based tests
 blt_add_executable( NAME testReactiveFluid

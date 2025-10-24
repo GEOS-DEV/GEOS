@@ -5932,7 +5932,7 @@ Information output from lower logLevels is added with the desired log level
  - Enable log output-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--output => Output file-->
-		<xsd:attribute name="output" type="string" default="none" />
+		<xsd:attribute name="output" type="string" default="" />
 		<!--outputCompressibility => Flag to indicate that the total compressibility should be output-->
 		<xsd:attribute name="outputCompressibility" type="integer" default="0" />
 		<!--outputMassDensity => Flag to indicate that the mass density of each phase should be output-->

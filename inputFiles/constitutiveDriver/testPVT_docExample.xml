@@ -38,39 +38,31 @@
       feedComposition="{ 1.0, 0.0 }"
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
-      steps="49"
+      steps="50"
       output="pvtOutput.txt"
       logLevel="1"/>
   </Tasks>
-
   <!-- SPHINX_PVTDRIVER_TASKS_END -->
-  <!-- SPHINX_PVTDRIVER_EVENTS_START -->
+
+  <Outputs>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
   <Events
     maxTime="1">
+
+    <!-- SPHINX_PVTDRIVER_EVENTS_START -->
     <SoloEvent
       name="eventA"
       target="/Tasks/testCO2"/>
+    <!-- SPHINX_PVTDRIVER_EVENTS_END -->
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>        
   </Events>
 
-  <!-- SPHINX_PVTDRIVER_EVENTS_END -->
-  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 1 }"
-      ny="{ 1 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cellBlock01 }"/>
-  </Mesh>
-
-  <ElementRegions>
-    <CellElementRegion
-      name="dummy"
-      cellBlocks="{ * }"
-      materialList="{ dummy }"/>
-  </ElementRegions>
 </Problem>
