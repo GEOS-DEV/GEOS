@@ -16,10 +16,9 @@ array1d< int64_t > CellGraphPartitioner::computePartitioning( vtk::AllMeshes & m
                                                               MPI_Comm const comm )
 {
   GEOS_MARK_FUNCTION;
-  GEOS_LOG( getInfoString());
 
   pmet_idx_t const numParts = MpiWrapper::commSize( comm );
-  return vtk::partitionByCellGraph( mesh, *m_engine, comm, numParts );
+  return vtk::partitionByCellGraph( mesh, getEngine(), comm, numParts );
 }
 
 string CellGraphPartitioner::getInfoString() const

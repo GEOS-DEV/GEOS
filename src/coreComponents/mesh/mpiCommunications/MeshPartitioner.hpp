@@ -48,21 +48,21 @@ public:
 
 
   /**
-   * @brief Set the graph partition engine
-   *
-   * @param engine Reference to the engine (ParMETIS or PTScotch)
-   *
-   * @note The engine must outlive this partitioner (typically owned by parent)
-   */
-  void setEngine( GraphPartitionEngine & engine );
-
-  /**
-   * @brief Get the graph partition engine
+   * @brief Get the graph partition engine (non-const version)
    *
    * @return Reference to the engine
    * @throws If engine has not been set
    */
-  GraphPartitionEngine & getEngine() const;
+  GraphPartitionEngine & getEngine();
+
+  /**
+   * @brief Get the graph partition engine (const version)
+   *
+   * @return Const reference to the engine
+   * @throws If engine has not been set
+   */
+  GraphPartitionEngine const & getEngine() const;
+
 
   /**
    * @brief Process command-line overrides for partition counts
@@ -122,15 +122,13 @@ protected:
   void extractNeighborsFromMesh( vtk::AllMeshes const & mesh, MPI_Comm const comm );
 
   /**
-   * @brief Creates a default graph partition engine appropriate for the current MPI configuration
+   * @brief Creates a graph partition engine
+   *
    * @return Pointer to the created engine
    */
-  GraphPartitionEngine * createDefaultEngine();
+  GraphPartitionEngine * createEngine();
 
-  /// Graph partitioning engine (NOT owned)
-  GraphPartitionEngine * m_engine;
-
-  /// Engine type ("parmetis", "ptscotch", or "noop")
+  /// Engine type (e.g., "parmetis", "ptscotch", or "noop")
   string m_engineType;
 
   /// Number of refinement iterations (ParMETIS only, ignored by others)

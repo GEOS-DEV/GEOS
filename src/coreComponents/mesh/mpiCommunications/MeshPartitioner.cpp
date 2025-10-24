@@ -44,7 +44,6 @@ namespace geos
 {
 MeshPartitioner::MeshPartitioner( string const & name, Group * const parent )
   : DomainPartitioner( name, parent ),
-  m_engine( nullptr ),
   m_engineType( "parmetis" ),
   m_numRefinements( 0 )
 {
@@ -62,42 +61,32 @@ MeshPartitioner::MeshPartitioner( string const & name, Group * const parent )
 }
 
 
-void MeshPartitioner::setEngine( GraphPartitionEngine & engine )
+
+GraphPartitionEngine & MeshPartitioner::getEngine()
 {
-  m_engine = &engine;
+  auto * engine = this->getGroupPointer< GraphPartitionEngine >(
+    viewKeyStruct::engineTypeString());
+
+  GEOS_ERROR_IF( engine == nullptr,
+                 "Engine not initialized. Call postInputInitialization() first." );
+  return *engine;
 }
 
-GraphPartitionEngine & MeshPartitioner::getEngine() const
+GraphPartitionEngine const & MeshPartitioner::getEngine() const
 {
-  GEOS_ERROR_IF( m_engine == nullptr,
-                 "Graph partition engine has not been set. "
-                 "Did you forget to call postInputInitialization()?" );
-  return *m_engine;
+  auto const * engine = this->getGroupPointer< GraphPartitionEngine >(
+    viewKeyStruct::engineTypeString());
+
+  GEOS_ERROR_IF( engine == nullptr,
+                 "Engine not initialized. Call postInputInitialization() first." );
+  return *engine;
 }
+
 
 void MeshPartitioner::processCommandLineOverrides( unsigned int const xparCL,
                                                    unsigned int const yparCL,
                                                    unsigned int const zparCL )
 {
-#if 0
-  // If user provided command-line overrides for partition counts...
-  if( xparCL != 0 || yparCL != 0 || zparCL != 0 )
-  {
-    // For mesh partitioners, we can support this by changing target partition count
-    setPartitionCounts( xparCL, yparCL, zparCL );
-
-    GEOS_LOG_RANK_0( GEOS_FMT( "MeshPartitioner: Command-line override - partitioning into {} parts ({} x {} x {})",
-                               m_numPartitions, xparCL, yparCL, zparCL ) );
-  }
-  else
-  {
-    // Default: partition into commSize parts (1 partition per rank)
-    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
-    setPartitionCounts( 1, 1, mpiSize );
-
-    GEOS_LOG_RANK_0( GEOS_FMT( "MeshPartitioner: Partitioning into {} parts (1 per rank)", mpiSize ) );
-  }
-#else
   // If user provided command-line overrides for partition counts...
   if( xparCL != 0 || yparCL != 0 || zparCL != 0 )
   {
@@ -107,11 +96,7 @@ void MeshPartitioner::processCommandLineOverrides( unsigned int const xparCL,
 
   int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
   setPartitionCounts( 1, 1, mpiSize );
-
-#endif
-
 }
-
 
 
 vtk::AllMeshes MeshPartitioner::partitionMeshes( vtk::AllMeshes & mesh, MPI_Comm const comm )
@@ -194,66 +179,48 @@ void MeshPartitioner::postInputInitialization()
 {
   DomainPartitioner::postInputInitialization();
 
-  // Check if an engine was already created as a child group
-  m_engine = this->getGroupPointer< GraphPartitionEngine >( viewKeyStruct::engineTypeString() );
-
-  if( m_engine == nullptr )
+  // Check if engine already exists as child group (from XML deserialization)
+  if( !this->hasGroup( viewKeyStruct::engineTypeString() ) )
   {
-    // Engine not created as child group - create from engineType attribute
-    GEOS_LOG_RANK_0( "Creating '" << m_engineType << "' engine for " << getName() );
-
-    string const engineTypeLower = stringutilities::toLower( m_engineType );
-
-    if( engineTypeLower == "noop" )
-    {
-      m_engine = &this->registerGroup< NoOpEngine >( viewKeyStruct::engineTypeString() );
-    }
-#ifdef GEOS_USE_PARMETIS
-    else if( engineTypeLower == "parmetis" )
-    {
-      m_engine = &this->registerGroup< ParMetisEngine >( viewKeyStruct::engineTypeString() );
-    }
-#endif
-#ifdef GEOS_USE_PTSCOTCH
-    else if( engineTypeLower == "ptscotch" )
-    {
-      m_engine = &this->registerGroup< PTScotchEngine >( viewKeyStruct::engineTypeString() );
-    }
-#endif
-    else
-    {
-      GEOS_THROW( GEOS_FMT( "Unknown graph partitioner engine type: {}'", m_engineType ), InputError );
-    }
+    // Not in XML - create based on m_engineType attribute
+    GraphPartitionEngine * engine = createEngine();
+    GEOS_ERROR_IF( engine == nullptr,
+                   "Failed to create graph partition engine for " << getCatalogName() );
   }
 
-  GEOS_ERROR_IF( m_engine == nullptr,
-                 "Failed to create graph partition engine for " << getCatalogName() );
-
-  // Transfer numRefinements to the engine
-  m_engine->setNumRefinements( m_numRefinements );
+  // Configure the engine (whether from XML or just created)
+  getEngine().setNumRefinements( m_numRefinements );
 }
 
-GraphPartitionEngine * MeshPartitioner::createDefaultEngine()
-{
-  int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
 
-  if( mpiSize == 1 )
+GraphPartitionEngine * MeshPartitioner::createEngine()
+{
+  GEOS_LOG_RANK_0( "Creating '" << m_engineType << "' engine for " << getName() );
+
+  string const engineTypeLower = stringutilities::toLower( m_engineType );
+
+  if( engineTypeLower == "noop" )
   {
-    GEOS_LOG_RANK_0( "Single-rank run: using NoOp engine (no mesh redistribution)" );
     return &this->registerGroup< NoOpEngine >( viewKeyStruct::engineTypeString() );
   }
-
 #ifdef GEOS_USE_PARMETIS
-  GEOS_LOG_RANK_0( "Multi-rank run: using ParMetis engine" );
-  return &this->registerGroup< ParMetisEngine >( viewKeyStruct::engineTypeString() );
-#elif defined(GEOS_USE_PTSCOTCH)
-  GEOS_LOG_RANK_0( "Multi-rank run: using PT-Scotch engine" );
-  return &this->registerGroup< PTScotchEngine >( viewKeyStruct::engineTypeString() );
-#else
-  GEOS_ERROR( getCatalogName() << " requires ParMetis or PT-Scotch for multi-rank runs.\n"
-                               << "Please rebuild with PARMETIS or PTSCOTCH enabled." );
-  return nullptr;
+  else if( engineTypeLower == "parmetis" )
+  {
+    return &this->registerGroup< ParMetisEngine >( viewKeyStruct::engineTypeString() );
+  }
 #endif
+#ifdef GEOS_USE_PTSCOTCH
+  else if( engineTypeLower == "ptscotch" )
+  {
+    return &this->registerGroup< PTScotchEngine >( viewKeyStruct::engineTypeString() );
+  }
+#endif
+  else
+  {
+    GEOS_THROW( GEOS_FMT( "Unknown graph partitioner engine type: '{}'", m_engineType ),
+                InputError );
+  }
 }
+
 
 } // namespace geos
