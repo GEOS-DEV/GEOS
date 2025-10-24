@@ -26,6 +26,7 @@
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 
 #include <tuple>
 #include <type_traits>
@@ -97,22 +98,35 @@ public:
                                   getDataContext(), solverName );
 
         string_array availableFlowSolvers;
+        string_array availableWellSolvers;
         this->getParent().forSubGroups( [&]( Group & group )
         {
           if( dynamic_cast< FlowSolverBase * >(&group))
           {
             availableFlowSolvers.emplace_back( group.getName());
           }
+          if( dynamic_cast< WellSolverBase * >(&group))
+          {
+            availableWellSolvers.emplace_back( group.getName());
+          }
         } );
 
-        if( availableFlowSolvers.empty())
+        if( availableFlowSolvers.empty() && availableWellSolvers.empty() )
         {
-          errorMessage << "No flow solver has been found.";
+          errorMessage << "No flow/well solver has been found.";
         }
         else
         {
-          errorMessage << GEOS_FMT( "Available flow solvers are [ {} ].",
-                                    stringutilities::join( availableFlowSolvers, ", " ) );
+          if( !availableFlowSolvers.empty() )
+          {
+            errorMessage << GEOS_FMT( "Available flow solvers are: {}.\n",
+                                      stringutilities::join( availableFlowSolvers, ", " ) );
+          }
+          if( !availableWellSolvers.empty() )
+          {
+            errorMessage << GEOS_FMT( "Available well solvers are: {}. ",
+                                      stringutilities::join( availableWellSolvers, ", " ) );
+          }
         }
         GEOS_THROW( errorMessage.str(), InputError );
       }
