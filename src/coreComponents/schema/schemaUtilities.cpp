@@ -102,6 +102,10 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
   restrictionNode.append_attribute( "base" ) = "xsd:string";
   xmlWrapper::xmlNode patternNode = restrictionNode.append_child( "xsd:pattern" );
 
+  ///////////
+  std::cout << "Appending simple type: " << name << " with regex: " << regex << std::endl;
+  ///////////
+
   // Handle the default regex
   if( regex.empty() )
   {
