@@ -222,8 +222,7 @@ void MeshPartitioner::postInputInitialization()
 #endif
     else
     {
-      GEOS_ERROR( "Unknown engine type: '" << m_engineType << "'. "
-                                                              "Available engines: noop, parmetis, ptscotch" );
+      GEOS_THROW( GEOS_FMT( "Unknown graph partitioner engine type: {}'", m_engineType ), InputError );
     }
   }
 

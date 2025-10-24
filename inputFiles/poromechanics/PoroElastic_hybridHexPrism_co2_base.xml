@@ -2,12 +2,15 @@
 
 <Problem>
 
+  <Partitioner>
+    <CellGraphPartitioner name="partitioner" engine="ptscotch" />
+  </Partitioner>
+
   <Mesh>
 
     <VTKMesh
       name="mesh"
       logLevel="5"
-      partitionMethod="ptscotch"
       scale="{ 50, 50, 50 }"
       fieldsToImport="{ PORO, NTG, DENSITY, BULKMOD }"
       fieldNamesInGEOS="{ rockPorosity_referencePorosity, netToGross, skeleton_density, skeleton_bulkModulus }"
