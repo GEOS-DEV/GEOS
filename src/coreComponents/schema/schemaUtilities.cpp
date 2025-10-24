@@ -90,37 +90,90 @@ string getSchemaTypeName( string_view rtTypeName )
   return xmlSafeName;
 }
 
-void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
-                       string const & name,
-                       string const & regex )
+// void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
+//                        string const & name,
+//                        string const & regex )
+// {
+
+//   ///////////
+//   std::cout << "In AppendSimpleType" << std::endl;
+//   ///////////
+//   string const advanced_match_string = ".*[\\[\\]`$].*|";
+
+//   xmlWrapper::xmlNode newNode = schemaRoot.append_child( "xsd:simpleType" );
+//   newNode.append_attribute( "name" ) = name.c_str();
+//   xmlWrapper::xmlNode restrictionNode = newNode.append_child( "xsd:restriction" );
+//   restrictionNode.append_attribute( "base" ) = "xsd:string";
+//   xmlWrapper::xmlNode patternNode = restrictionNode.append_child( "xsd:pattern" );
+
+//   ///////////
+//   std::cout << "Appending simple type: " << name << " with regex: " << regex << std::endl;
+//   ///////////
+
+//   // Handle the default regex
+//   if( regex.empty() )
+//   {
+//     GEOS_WARNING( "schema regex not defined for " << name );
+//     patternNode.append_attribute( "value" ) = "(?s).*";
+//   }
+//   else
+//   {
+//     string const patternString = advanced_match_string + regex;
+//     patternNode.append_attribute( "value" ) = patternString.c_str();
+//   }
+// }
+
+void AppendSimpleType(xmlWrapper::xmlNode & schemaRoot,
+                      const std::string & name,
+                      const std::string & regex)
 {
+    const std::string advanced_match_string = ".*[\\[\\]`$].*|";
 
-  ///////////
-  std::cout << "In AppendSimpleType" << std::endl;
-  ///////////
-  string const advanced_match_string = ".*[\\[\\]`$].*|";
+    // Create simpleType node
+    xmlWrapper::xmlNode newNode = schemaRoot.append_child("xsd:simpleType");
+    if (!newNode)
+    {
+        GEOS_ERROR("Failed to create xsd:simpleType node for " << name);
+        return;
+    }
+    newNode.append_attribute("name") = name.c_str();
 
-  xmlWrapper::xmlNode newNode = schemaRoot.append_child( "xsd:simpleType" );
-  newNode.append_attribute( "name" ) = name.c_str();
-  xmlWrapper::xmlNode restrictionNode = newNode.append_child( "xsd:restriction" );
-  restrictionNode.append_attribute( "base" ) = "xsd:string";
-  xmlWrapper::xmlNode patternNode = restrictionNode.append_child( "xsd:pattern" );
+    // Create restriction node
+    xmlWrapper::xmlNode restrictionNode = newNode.append_child("xsd:restriction");
+    if (!restrictionNode)
+    {
+        GEOS_ERROR("Failed to create xsd:restriction node for " << name);
+        return;
+    }
+    restrictionNode.append_attribute("base") = "xsd:string";
 
-  ///////////
-  std::cout << "Appending simple type: " << name << " with regex: " << regex << std::endl;
-  ///////////
+    // Create pattern node
+    xmlWrapper::xmlNode patternNode = restrictionNode.append_child("xsd:pattern");
+    if (!patternNode)
+    {
+        GEOS_ERROR("Failed to create xsd:pattern node for " << name);
+        return;
+    }
 
-  // Handle the default regex
-  if( regex.empty() )
-  {
-    GEOS_WARNING( "schema regex not defined for " << name );
-    patternNode.append_attribute( "value" ) = "(?s).*";
-  }
-  else
-  {
-    string const patternString = advanced_match_string + regex;
-    patternNode.append_attribute( "value" ) = patternString.c_str();
-  }
+    // Determine pattern string
+    std::string patternString;
+    if (regex.empty())
+    {
+        GEOS_WARNING("schema regex not defined for " << name);
+        patternString = "(?s).*";
+    }
+    else
+    {
+        patternString = advanced_match_string + regex;
+    }
+
+    // Debug print
+    std::cout << "Appending simple type: " << name 
+              << " with pattern: " << patternString << std::endl;
+
+    // Assign pattern safely
+    // Make sure to use set_value() or overload that copies string
+    patternNode.append_attribute("value").set_value(patternString.c_str());
 }
 
 void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
