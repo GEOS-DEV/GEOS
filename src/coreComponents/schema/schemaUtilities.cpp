@@ -123,78 +123,47 @@ string getSchemaTypeName( string_view rtTypeName )
 //   }
 // }
 
-void AppendSimpleType(xmlWrapper::xmlNode & schemaRoot,
-                      const std::string & name,
-                      const std::string & regex)
+void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
+                       string const & name,
+                       string const & regex )
 {
-    const std::string advanced_match_string = ".*[\\[\\]`$].*|";
+  const std::string advanced_match_string = ".*[\\[\\]`$].*|";
 
-    // Create simpleType node
-    xmlWrapper::xmlNode newNode = schemaRoot.append_child("xsd:simpleType");
-    if (!newNode)
-    {
-        GEOS_ERROR("Failed to create xsd:simpleType node for " << name);
-        return;
-    }
-    newNode.append_attribute("name") = name.c_str();
+  // Create simpleType node
+  xmlWrapper::xmlNode newNode = schemaRoot.append_child( "xsd:simpleType" );
+  GEOS_ERROR_IF( ( !newNode ), GEOS_FMT( "Failed to create xsd:simpleType node for {}", name ) );
+  newNode.append_attribute( "name" ) = name.c_str();
 
-    // Create restriction node
-    xmlWrapper::xmlNode restrictionNode = newNode.append_child("xsd:restriction");
-    if (!restrictionNode)
-    {
-        GEOS_ERROR("Failed to create xsd:restriction node for " << name);
-        return;
-    }
-    restrictionNode.append_attribute("base") = "xsd:string";
+  // Create restriction node
+  xmlWrapper::xmlNode restrictionNode = newNode.append_child( "xsd:restriction" );
+  GEOS_ERROR_IF( ( !restrictionNode ), GEOS_FMT( "Failed to create xsd:restriction node for {}", name ) );
+  restrictionNode.append_attribute( "base" ) = "xsd:string";
 
-    // Create pattern node
-    xmlWrapper::xmlNode patternNode = restrictionNode.append_child("xsd:pattern");
-    if (!patternNode)
-    {
-        GEOS_ERROR("Failed to create xsd:pattern node for " << name);
-        return;
-    }
+  // Create pattern node
+  xmlWrapper::xmlNode patternNode = restrictionNode.append_child( "xsd:pattern" );
+  GEOS_ERROR_IF( ( !patternNode ), GEOS_FMT( "Failed to create xsd:pattern node for {}", name ) );
 
-    // Determine pattern string
-    std::string patternString;
-    if (regex.empty())
-    {
-        GEOS_WARNING("schema regex not defined for " << name);
-        patternString = "(?s).*";
-    }
-    else
-    {
-        patternString = advanced_match_string + regex;
-    }
+  // Determine pattern string
+  string patternString;
+  if( regex.empty() )
+  {
+    GEOS_WARNING( GEOS_FMT( "schema regex not defined for {}", name ) );
+    patternString = "(?s).*";
+  }
+  else
+  {
+    patternString = advanced_match_string + regex;
+  }
 
-    // Debug print
-    std::cout << "Appending simple type: " << name 
-              << " with pattern: " << patternString << std::endl;
-
-    // Assign pattern safely
-    // Make sure to use set_value() or overload that copies string
-    patternNode.append_attribute("value").set_value(patternString.c_str());
+  patternNode.append_attribute( "value" ).set_value( patternString.c_str());
 }
 
-void BuildSimpleSchemaTypes(xmlWrapper::xmlNode schemaRoot)
+void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
 {
   auto const regexes = rtTypes::createBasicTypesRegexMap();
 
-  // --- Debug: print all type names before entering the main loop ---
-  std::cout << "Type names in regexes:" << std::endl;
-  for (auto const & [typeName, _] : regexes)
-  {
-      std::cout << "  " << typeName << std::endl;
-  }
-  std::cout << "**********************" <<  std::endl;
-  std::cout << "**********************" <<  std::endl;
-  // ---------------------
-
   for( auto const & [typeName, regex] : regexes )
   {
-    ////////////
-    std::cout << "  " << typeName << std::endl;
-    ////////////
     AppendSimpleType( schemaRoot, getSchemaTypeName( typeName ), regex.m_regexStr );
   }
 }
