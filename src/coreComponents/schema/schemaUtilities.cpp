@@ -94,6 +94,10 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
                        string const & name,
                        string const & regex )
 {
+
+  ///////////
+  std::cout << "In AppendSimpleType" << std::endl;
+  ///////////
   string const advanced_match_string = ".*[\\[\\]`$].*|";
 
   xmlWrapper::xmlNode newNode = schemaRoot.append_child( "xsd:simpleType" );
