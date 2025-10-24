@@ -48,13 +48,7 @@ ParMetisEngine::ParMetisEngine( string const & name,
                                 dataRepository::Group * const parent )
   : GraphPartitionEngine( name, parent ),
   m_numRefinements( 0 )
-{
-  registerWrapper( viewKeyStruct::numRefinementsString(), &m_numRefinements ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "Number of ParMETIS refinement iterations. "
-                    "Default: 0 (no refinement)." );
-}
+{}
 
 ParMetisEngine::~ParMetisEngine()
 {}
@@ -89,9 +83,9 @@ ParMetisEngine::partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > con
   idx_t numflag = 0; // C-style numbering (starts at 0)
   idx_t ncon = 1;    // Number of constraints (1, for vertex count balance)
   idx_t npart = numParts;
+  idx_t options[4] = { 1, 0, 2022, PARMETIS_PSR_UNCOUPLED };
   idx_t edgecut = 0;
   real_t ubvec = 1.05; // Imbalance tolerance
-  idx_t options[3] = { 1, 0, 0 }; // Use default options, no seed
 
   // Set target partition weights for even distribution
   array1d< real_t > tpwgts( numParts );

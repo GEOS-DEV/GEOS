@@ -104,6 +104,15 @@ public:
   int getNumRefinements() const override { return 0; }
 
   /**
+   * @brief Set the number of refinement iterations (no-op for PT-Scotch)
+   * @param numRefinements Number of refinement iterations (ignored)
+   */
+  void setNumRefinements( int const numRefinements ) override
+  {
+    GEOS_UNUSED_VAR( numRefinements );
+  }
+
+  /**
    * @brief Set the partitioning strategy
    * @param strategy Strategy string (e.g., "default", "quality", "speed")
    */

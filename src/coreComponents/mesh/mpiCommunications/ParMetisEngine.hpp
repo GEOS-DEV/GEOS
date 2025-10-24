@@ -128,9 +128,9 @@ public:
    * @brief Set the number of refinement iterations
    * @param numRefinements Number of refinement iterations
    */
-  void setNumRefinements( int const numRefinements )
+  void setNumRefinements( int const numRefinements ) override
   {
-    GEOS_ERROR_IF( numRefinements < 0, "Number of refinements must be non-negative" );
+    GEOS_THROW_IF_LT_MSG( numRefinements, 0, "Number of refinements must be non-negative", InputError );
     m_numRefinements = numRefinements;
   }
 

@@ -111,6 +111,13 @@ public:
   virtual int getNumRefinements() const = 0;
 
   /**
+   * @brief Set the number of refinement iterations
+   *
+   * @param numRefinements Number of refinement iterations
+   */
+  virtual void setNumRefinements( int const numRefinements ) = 0;
+
+  /**
    * @brief Accessor for the singleton Catalog object
    *
    * @note This is an INTERNAL catalog, separate from the DomainPartitioner catalog.

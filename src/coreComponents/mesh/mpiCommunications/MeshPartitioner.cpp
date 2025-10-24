@@ -229,6 +229,9 @@ void MeshPartitioner::postInputInitialization()
 
   GEOS_ERROR_IF( m_engine == nullptr,
                  "Failed to create graph partition engine for " << getCatalogName() );
+
+  // Transfer numRefinements to the engine
+  m_engine->setNumRefinements( m_numRefinements );
 }
 
 GraphPartitionEngine * MeshPartitioner::createDefaultEngine()
