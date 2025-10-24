@@ -210,7 +210,7 @@ bool isPointInsideElement( SurfaceElementSubRegion const & subRegion,
                            real64 const (&location)[3],
                            real64 const geomTol )
 {
-  typedef std::array< real64, 3 > Point3d;
+  typedef stdArray< real64, 3 > Point3d;
 
   // collect element nodes
   integer const nV = subRegion.numNodesPerElement( eiLocal );

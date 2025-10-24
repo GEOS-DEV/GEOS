@@ -204,7 +204,7 @@ struct forLocalObjectsImpl< FieldLocation::Elem >
       {
         if( ghostRank[ei] < 0 )
         {
-          lambda( std::array< localIndex, 3 > { er, esr, ei} );
+          lambda( stdArray< localIndex, 3 > { er, esr, ei} );
         }
       }
     } );

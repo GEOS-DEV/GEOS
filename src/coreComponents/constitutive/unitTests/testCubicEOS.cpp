@@ -40,7 +40,7 @@ struct FluidData< 2 >
     return fluid;
   }
 
-  static std::array< Feed< 2 >, 3 > constexpr feeds = {
+  static stdArray< Feed< 2 >, 3 > constexpr feeds = {
     Feed< 2 >{0.995, 0.005},
     Feed< 2 >{0.990, 0.010},
     Feed< 2 >{0.100, 0.900}
@@ -57,7 +57,7 @@ struct FluidData< 4 >
     return fluid;
   }
 
-  static std::array< Feed< 4 >, 4 > constexpr feeds = {
+  static stdArray< Feed< 4 >, 4 > constexpr feeds = {
     Feed< 4 >{0.030933, 0.319683, 0.637861, 0.011523},
     Feed< 4 >{0.000000, 0.349686, 0.637891, 0.012423},
     Feed< 4 >{0.000000, 0.349686, 0.650314, 0.000000},

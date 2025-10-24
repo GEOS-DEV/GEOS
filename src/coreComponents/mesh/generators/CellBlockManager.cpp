@@ -1022,7 +1022,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                   nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(),
                                   numInternalNodesPerEdge, numNodesPerEdge, globalNodeOffset, glCoords, localNodeOffset, order]( localIndex const iter_edge )
   {
-    std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
+    std::unordered_map< stdArray< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
     localIndex edgeHeadNode = edgeToNodesMapSource[ iter_edge ][ 0 ];
     localIndex edgeEndNode = edgeToNodesMapSource[ iter_edge ][ 1 ];
     globalIndex edgeHeadNodeG = nodeLocalToGlobalNew[ edgeHeadNode ];
@@ -1039,7 +1039,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
       localIndex nodeLocalID = localNodeOffset + iter_edge * ( numInternalNodesPerEdge ) + iter_node;
       edgeToNodeMapWork[ iter_node + 2 ] = nodeLocalID;
       nodeIDs[ createNodeKey( edgeHeadNode, edgeEndNode, iter_node + 1, order ) ] = iter_node + 2;
-      std::array< globalIndex, 6 > referenceOrientation = createNodeKey( edgeHeadNodeG, edgeEndNodeG, iter_node + 1, order );
+      stdArray< globalIndex, 6 > referenceOrientation = createNodeKey( edgeHeadNodeG, edgeEndNodeG, iter_node + 1, order );
       int gq = referenceOrientation[4] - 1;
       nodeLocalToGlobalNew[ nodeLocalID ] = globalNodeOffset + edgeLocalToGlobal[ iter_edge ] * numInternalNodesPerEdge + gq;
       localIndex e[2] = { edgeHeadNode, edgeEndNode };
@@ -1086,7 +1086,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                   faceLocalToGlobal=faceLocalToGlobal.toView(),
                                   nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView() ]( localIndex const iter_face )
   {
-    std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
+    std::unordered_map< stdArray< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
     localIndex faceVertID[ numVerticesPerFace ];
     globalIndex faceVertGID[ numVerticesPerFace ];
     array1d< localIndex > const faceToNodeMapWork( numNodesPerFace );
@@ -1122,7 +1122,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
 
       localIndex nodeLocalID = localNodeOffset + iter_face * numInternalNodesPerFace + iter_node;
       faceToNodeMapNew[ iter_face ][ (q2 + 1) * numNodesPerEdge + (q1 + 1) ] = nodeLocalID;
-      std::array< globalIndex, 6 > referenceOrientation = createNodeKey( faceVertGID[ 0 ], faceVertGID[ 1 ], faceVertGID[ 2 ], faceVertGID[ 3 ],
+      stdArray< globalIndex, 6 > referenceOrientation = createNodeKey( faceVertGID[ 0 ], faceVertGID[ 1 ], faceVertGID[ 2 ], faceVertGID[ 3 ],
                                                                          q1 + 1, q2 + 1, order );
       int gq1 = referenceOrientation[4] - 1;
       int gq2 = referenceOrientation[5] - 1;
@@ -1189,7 +1189,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                     elementLocalToGlobal=elementLocalToGlobal.toView(),
                                     nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView() ]( localIndex const iter_elem )
     {
-      std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
+      std::unordered_map< stdArray< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
       localIndex elemVertID[ numVerticesPerCell];
       array1d< localIndex > const elemToNodeMapWork( numNodesPerCell );
       for( localIndex iter_node=0; iter_node < numVerticesPerCell; iter_node++ )

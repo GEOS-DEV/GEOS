@@ -849,7 +849,7 @@ void dispatchArray( vtkDataSetAttributes & data,
                  InputError );
 }
 
-std::array< std::pair< int, int >, 2 >
+stdArray< std::pair< int, int >, 2 >
 findGlobalIndexBounds( vtkDataSet & mesh,
                        MPI_Comm const & comm,
                        string const & indexArrayName )
@@ -893,7 +893,7 @@ redistributeByAreaGraphAndLayer( AllMeshes & input,
   GEOS_ERROR_IF_NE_MSG( numProcs % numPartZ, 0, "Number of ranks must evenly divide the number of z-partitions" );
 
   // Compute conversion from cell z-index to partition z-index
-  std::array< std::pair< int, int >, 2 > const idxLimits = findGlobalIndexBounds( *input.getMainMesh(), comm, indexArrayName );
+  stdArray< std::pair< int, int >, 2 > const idxLimits = findGlobalIndexBounds( *input.getMainMesh(), comm, indexArrayName );
   double const cellPerPartZInv = static_cast< double >( numPartZ ) / ( idxLimits[1].second - idxLimits[1].first + 1 );
   auto const computePartIndexZ = [minZ = idxLimits[1].first, cellPerPartZInv]( auto const zidx )
   {
@@ -1412,7 +1412,7 @@ splitCellsByType( vtkDataSet & mesh )
   vtkIdType const numCells = mesh.GetNumberOfCells();
 
   // Count the number of each cell type
-  std::array< size_t, numElementTypes() > cellTypeCounts{};
+  stdArray< size_t, numElementTypes() > cellTypeCounts{};
   for( vtkIdType c = 0; c < numCells; c++ )
   {
     ElementType const elemType = convertVtkToGeosxElementType( mesh.GetCell( c ) );
@@ -1420,7 +1420,7 @@ splitCellsByType( vtkDataSet & mesh )
   }
 
   // Allocate space to hold cell id lists by type
-  std::array< stdVector< vtkIdType >, numElementTypes() > cellListsByType;
+  stdArray< stdVector< vtkIdType >, numElementTypes() > cellListsByType;
   for( integer t = 0; t < numElementTypes(); ++t )
   {
     cellListsByType[t].reserve( cellTypeCounts[t] );

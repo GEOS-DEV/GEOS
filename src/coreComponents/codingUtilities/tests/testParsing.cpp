@@ -63,7 +63,7 @@ class ParsingTest : public ::testing::TestWithParam< T >
 {
 protected:
 
-  static constexpr std::array< char, 4 > const separators = { ' ', ',', '\n', ';' };
+  static constexpr geos::stdArray< char, 4 > const separators = { ' ', ',', '\n', ';' };
 
   static bool issep( char const c )
   {
@@ -147,7 +147,7 @@ protected:
 };
 
 template< typename T >
-std::array< char, 4 > const ParsingTest< T >::separators;
+geos::stdArray< char, 4 > const ParsingTest< T >::separators;
 
 using Types = ::testing::Types<
   float,

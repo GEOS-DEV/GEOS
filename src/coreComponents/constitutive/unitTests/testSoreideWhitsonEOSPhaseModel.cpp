@@ -38,7 +38,7 @@ struct FluidData< 2 >
     return TestFluid< 2 >::create( {Fluid::H2O, Fluid::C10H22} );
   }
 
-  static std::array< Feed< 2 >, 3 > constexpr feeds = {
+  static stdArray< Feed< 2 >, 3 > constexpr feeds = {
     Feed< 2 >{0.995, 0.005},
     Feed< 2 >{1.000, 0.000},
     Feed< 2 >{0.002, 0.998}
@@ -53,7 +53,7 @@ struct FluidData< 3 >
     return TestFluid< 3 >::create( {Fluid::H2O, Fluid::H2S, Fluid::H2} );
   }
 
-  static std::array< Feed< 3 >, 3 > constexpr feeds = {
+  static stdArray< Feed< 3 >, 3 > constexpr feeds = {
     Feed< 3 >{0.995, 0.000, 0.005},
     Feed< 3 >{0.990, 0.005, 0.005},
     Feed< 3 >{0.970, 0.025, 0.005}
@@ -70,7 +70,7 @@ struct FluidData< 4 >
     return fluid;
   }
 
-  static std::array< Feed< 4 >, 4 > constexpr feeds = {
+  static stdArray< Feed< 4 >, 4 > constexpr feeds = {
     Feed< 4 >{0.030933, 0.319683, 0.637861, 0.011523},
     Feed< 4 >{0.000000, 0.349686, 0.637891, 0.012423},
     Feed< 4 >{0.000000, 0.349686, 0.650314, 0.000000},

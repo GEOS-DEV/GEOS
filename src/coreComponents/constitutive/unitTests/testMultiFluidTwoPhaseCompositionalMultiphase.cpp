@@ -122,7 +122,7 @@ string MultiFluidCompositionalMultiphaseTestFixture< TEST_TYPE >::getFluidName()
 }
 
 template< integer NUM_COMP >
-static void fillBinaryCoeffs( array2d< real64 > & binaryCoeff, std::array< real64 const, NUM_COMP *(NUM_COMP-1)/2 > const data )
+static void fillBinaryCoeffs( array2d< real64 > & binaryCoeff, stdArray< real64 const, NUM_COMP *(NUM_COMP-1)/2 > const data )
 {
   auto bic = data.begin();
   binaryCoeff.resize( NUM_COMP, NUM_COMP );
@@ -138,7 +138,7 @@ static void fillBinaryCoeffs( array2d< real64 > & binaryCoeff, std::array< real6
 }
 
 template< integer NUM_COMP >
-static void populateArray( arraySlice1d< real64 > array, std::array< real64 const, NUM_COMP > const data )
+static void populateArray( arraySlice1d< real64 > array, stdArray< real64 const, NUM_COMP > const data )
 {
   for( integer i = 0; i < NUM_COMP; ++i )
   {

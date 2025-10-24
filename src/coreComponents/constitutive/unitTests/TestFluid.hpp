@@ -60,7 +60,7 @@ struct Fluid
 
   static constexpr integer NP = 6; // Number of properties
 
-  static constexpr std::array<real64,84> data = {
+  static constexpr stdArray<real64,84> data = {
   //  Mw            Pc            Tc            Vc            Ac            Pr              Name
       1.80153e-02,  2.20640e+07,  6.47096e+02,  5.59480e-05,  3.44300e-01,  9.36563e-06, // H2O    (water)
       4.40095e-02,  7.37730e+06,  3.04128e+02,  9.41185e-05,  2.23940e-01,  7.37268e-06, // CO2    (carbon dioxide)
@@ -83,7 +83,7 @@ struct Fluid
 };
 
 template< int NC >
-using Feed = std::array< real64, NC >;
+using Feed = stdArray< real64, NC >;
 
 template< int NC >
 class TestFluid
@@ -91,7 +91,7 @@ class TestFluid
 public:
   ~TestFluid() = default;
 
-  static std::unique_ptr< TestFluid< NC > > create( std::array< integer, NC > const & components )
+  static std::unique_ptr< TestFluid< NC > > create( stdArray< integer, NC > const & components )
   {
     std::unique_ptr< TestFluid< NC > > testFluid( new TestFluid() );
     for( integer const ic : components )

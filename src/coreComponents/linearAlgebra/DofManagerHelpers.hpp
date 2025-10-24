@@ -88,7 +88,7 @@ template<>
 struct MeshHelper< FieldLocation::Elem >
 {
   using ManagerType = ElementSubRegionBase;
-  using LocalIndexType = std::array< localIndex, 3 >;
+  using LocalIndexType = stdArray< localIndex, 3 >;
 
   static LocalIndexType constexpr invalid_local_index{ -1, -1, -1 };
 

@@ -85,7 +85,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
   GEOS_ERROR_IF( numIndicesUnpacked != packList.size(), "" );
 
-  using ElementID = std::array< localIndex, 3 >;
+  using ElementID = stdArray< localIndex, 3 >;
 
   // Allocate some memory to store map entries that don't fit in existing capacity
   array1d< localIndex > indicesToReplace;

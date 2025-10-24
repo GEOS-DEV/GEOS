@@ -47,7 +47,7 @@ struct FluidData< 3 >
   static std::unique_ptr< TestFluid< 3 > > createFluid()
   {
     auto fluid = TestFluid< 3 >::create( {Fluid::CH4, Fluid::C10H22, Fluid::H2O} );
-    std::array< real64, 3 > const bics = {0.25, 0.0, 0.0};
+    stdArray< real64, 3 > const bics = {0.25, 0.0, 0.0};
     fluid->setBinaryCoefficients( bics );
     return fluid;
   }

@@ -109,9 +109,9 @@ static string_view constexpr stencilDataCollectionPath = "/Tasks/cellToCellDataC
 
 
 /// a "stack" array to represent 3d floating point data (ie. coords)
-using Float3 = std::array< real64, 3 >;
+using Float3 = stdArray< real64, 3 >;
 /// a "stack" array to represent 3d integer data (ie. cell count / axis)
-using Int3 = std::array< integer, 3 >;
+using Int3 = stdArray< integer, 3 >;
 
 /// Enumeration of the 3D axis to take into account for a structured mesh.
 enum class Axis : integer { X = 0, Y = 1, Z = 2 };
@@ -196,7 +196,7 @@ TEST( TransmissibilityTest, StencilOutputVerificationAniso )
   std::ostringstream xmlInput;
   xmlInput << xmlInputCommon << meshInput << xmlInputEnd;
 
-  static TestParams constexpr params {
+    static TestParams constexpr params {
     { 3, 4, 5 }, // cellCount
     { 70.0, 10.0, 54.321 }, // meshSize
   };

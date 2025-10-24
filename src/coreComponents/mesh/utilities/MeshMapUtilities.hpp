@@ -223,7 +223,7 @@ struct NodeKeyHasher
    * @brief @return the hash of an interpolation array representing a high-order node.
    * @param arr the array corresponding to the node to be hashed
    */
-  std::size_t operator()( const std::array< T, 6 > & arr ) const
+  std::size_t operator()( const stdArray< T, 6 > & arr ) const
   {
     std::size_t hash = 0;
     // use a boost-style hash function
@@ -241,9 +241,9 @@ struct NodeKeyHasher
  * @param v the mesh vertex on which the high-order node lies.
  */
 template< typename T >
-static std::array< T, 6 > createNodeKey( T v )
+static stdArray< T, 6 > createNodeKey( T v )
 {
-  return std::array< T, 6 > { v, -1, -1, -1, -1, -1 };
+  return stdArray< T, 6 > { v, -1, -1, -1, -1, -1 };
 }
 
 /**
@@ -255,7 +255,7 @@ static std::array< T, 6 > createNodeKey( T v )
  * @param order the order of the discretization
  */
 template< typename T >
-static std::array< T, 6 > createNodeKey( T v1, T v2, int a, int order )
+static stdArray< T, 6 > createNodeKey( T v1, T v2, int a, int order )
 {
   if( a == 0 )
     return createNodeKey( v1 );
@@ -263,11 +263,11 @@ static std::array< T, 6 > createNodeKey( T v1, T v2, int a, int order )
     return createNodeKey( v2 );
   if( v1 < v2 )
   {
-    return std::array< T, 6 > { v1, v2, -1, -1, a, -1 };
+    return stdArray< T, 6 > { v1, v2, -1, -1, a, -1 };
   }
   else
   {
-    return std::array< T, 6 > { v2, v1, -1, -1, order - a, -1 };
+    return stdArray< T, 6 > { v2, v1, -1, -1, order - a, -1 };
   }
 }
 
@@ -283,7 +283,7 @@ static std::array< T, 6 > createNodeKey( T v1, T v2, int a, int order )
  * @param order the order of the discretization
  */
 template< typename T >
-static std::array< T, 6 > createNodeKey( T v1, T v2, T v3, T v4, int a, int b, int order )
+static stdArray< T, 6 > createNodeKey( T v1, T v2, T v3, T v4, int a, int b, int order )
 {
   if( a == 0 )
     return createNodeKey( v1, v3, b, order );
@@ -322,7 +322,7 @@ static std::array< T, 6 > createNodeKey( T v1, T v2, T v3, T v4, int a, int b, i
       std::swap( a, b );
     }
   }
-  return std::array< T, 6 > { v1, v2, v3, v4, a, b };
+  return stdArray< T, 6 > { v1, v2, v3, v4, a, b };
 }
 
 /**
@@ -335,7 +335,7 @@ static std::array< T, 6 > createNodeKey( T v1, T v2, T v3, T v4, int a, int b, i
  * @param order the order of the discretization
  */
 template< typename T >
-static std::array< T, 6 > createNodeKey( T const (&elemNodes)[ 8 ], int q1, int q2, int q3, int order )
+static stdArray< T, 6 > createNodeKey( T const (&elemNodes)[ 8 ], int q1, int q2, int q3, int order )
 {
   bool extremal1 = q1 == 0 || q1 == order;
   bool extremal2 = q2 == 0 || q2 == order;

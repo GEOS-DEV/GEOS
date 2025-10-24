@@ -142,7 +142,7 @@ std::tuple< std::vector< idx_t >, std::vector< idx_t > > generateGraphRandom( si
 }
 
 
-std::tuple< std::vector< idx_t >, std::vector< idx_t > > generateGraphCartPartitionning3D( idx_t nx, idx_t ny, idx_t nz, const std::vector< std::array< int, 3 > > & neighbor_offsets )
+std::tuple< std::vector< idx_t >, std::vector< idx_t > > generateGraphCartPartitionning3D( idx_t nx, idx_t ny, idx_t nz, const std::vector< stdArray< int, 3 > > & neighbor_offsets )
 {
   idx_t num_nodes = nx * ny * nz;
   std::vector< idx_t > xadj( num_nodes + 1, 0 );
@@ -188,7 +188,7 @@ std::tuple< std::vector< idx_t >, std::vector< idx_t > > generateGraphCartPartit
 
 std::tuple< std::vector< idx_t >, std::vector< idx_t > > generateGraphCartPartitionning3D6( idx_t nx, idx_t ny, idx_t nz )
 {
-  std::vector< std::array< int, 3 > > neighbor_offsets = {
+  std::vector< stdArray< int, 3 > > neighbor_offsets = {
     {-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}
   };
   return generateGraphCartPartitionning3D( nx, ny, nz, neighbor_offsets );
@@ -196,7 +196,7 @@ std::tuple< std::vector< idx_t >, std::vector< idx_t > > generateGraphCartPartit
 
 std::tuple< std::vector< idx_t >, std::vector< idx_t > > generateGraphCartPartitionning3D26( idx_t nx, idx_t ny, idx_t nz )
 {
-  std::vector< std::array< int, 3 > > neighbor_offsets;
+  std::vector< stdArray< int, 3 > > neighbor_offsets;
   for( int dz = -1; dz <= 1; ++dz )
   {
     for( int dy = -1; dy <= 1; ++dy )

@@ -2470,7 +2470,7 @@ void SolidMechanicsMPM::computeDamageFieldGradient( ParticleManager & particleMa
         arraySlice1d< localIndex const > const subRegionIndices = neighborSubRegions[p];
         arraySlice1d< localIndex const > const particleIndices = neighborIndices[p];
 
-        // Declare and size neighbor data arrays - TODO: switch to std::array? But then we'd need to template computeKernelFieldGradient
+        // Declare and size neighbor data arrays - TODO: switch to stdArray? But then we'd need to template computeKernelFieldGradient
         stdVector< real64 > neighborVolumes( numNeighbors );
         stdVector< stdVector< real64 > > neighborPositions;
         neighborPositions.resize( numNeighbors, stdVector< real64 >( 3 ) );
@@ -3464,7 +3464,7 @@ void SolidMechanicsMPM::computeSphF( ParticleManager & particleManager )
         arraySlice1d< localIndex const > const subRegionIndices = neighborSubRegions[p];
         arraySlice1d< localIndex const > const particleIndices = neighborIndices[p];
 
-        // Declare and size neighbor data arrays - TODO: switch to std::array? But then we'd need to template computeKernelFieldGradient
+        // Declare and size neighbor data arrays - TODO: switch to stdArray? But then we'd need to template computeKernelFieldGradient
         stdVector< real64 > neighborVolumes( numNeighbors );
         stdVector< stdVector< real64 > > neighborPositions;
         neighborPositions.resize( numNeighbors, stdVector< real64 >( 3 ) );
