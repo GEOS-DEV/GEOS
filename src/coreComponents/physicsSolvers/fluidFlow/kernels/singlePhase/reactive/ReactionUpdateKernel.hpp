@@ -40,7 +40,7 @@ struct EquilibriumReactionUpdateKernel
   static void helper( REACTION_WRAPPER_TYPE const & reactionWrapper,
                       arrayView1d< real64 const > const & pres,
                       arrayView1d< real64 const > const & temp,
-                      arrayView2d< real64 const, compflow::USD_COMP > const logPrimaryConc )
+                      arrayView2d< real64, compflow::USD_COMP > const logPrimaryConc )
   {
     forAll< parallelDevicePolicy<> >( reactionWrapper.numElems(), [=] GEOS_HOST_DEVICE ( localIndex const k )
     {
