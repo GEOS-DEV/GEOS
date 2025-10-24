@@ -127,7 +127,7 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
                        string const & name,
                        string const & regex )
 {
-  const std::string advanced_match_string = ".*[\\[\\]`$].*|";
+  string const advanced_match_string = ".*[\\[\\]`$].*|";
 
   // Create simpleType node
   xmlWrapper::xmlNode newNode = schemaRoot.append_child( "xsd:simpleType" );
@@ -154,6 +154,8 @@ void AppendSimpleType( xmlWrapper::xmlNode & schemaRoot,
   {
     patternString = advanced_match_string + regex;
   }
+
+  std::cout << "Appending simple type: " << name << " with pattern: " << patternString << std::endl;
 
   patternNode.append_attribute( "value" ).set_value( patternString.c_str());
 }
