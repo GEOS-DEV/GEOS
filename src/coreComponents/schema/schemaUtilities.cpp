@@ -176,9 +176,9 @@ void BuildSimpleSchemaTypes( xmlWrapper::xmlNode schemaRoot )
 
   for( auto const & [typeName, regex] : regexes )
   {
-    // ////////////
-    // std::cout << " " << typeName << std::endl;
-    // ////////////
+    ////////////
+    std::cout << " " << typeName << std::endl;
+    ////////////
     AppendSimpleType( schemaRoot, getSchemaTypeName( typeName ), regex.m_regexStr );
   }
 }
