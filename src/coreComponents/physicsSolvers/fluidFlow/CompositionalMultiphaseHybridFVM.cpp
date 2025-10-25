@@ -673,7 +673,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
                                     flow::bcTemperature::key(), flow::faceTemperature::key() );
 
     // Get face boundary values
-    arrayView1d< real64 const > const facePres = faceManager.getField< fields::flow::bcPressure >();
+    arrayView1d< real64 const > const facePres = faceManager.getField< fields::flow::facePressure >();
     arrayView1d< real64 const > const faceTemp = faceManager.getField< fields::flow::faceTemperature >();
     arrayView2d< real64 const, compflow::USD_COMP > const faceCompFrac = faceManager.getField< fields::flow::faceGlobalCompFraction >();
     arrayView1d< real64 const > const faceGravCoef = faceManager.getField< fields::flow::gravityCoefficient >();
@@ -883,53 +883,53 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
       }
     } );
     
-    // Keep strong enforcement that the face pressure equals the informed bcPressure value (original behavior)
-    arrayView1d< real64 const > const presFace =
-      faceManager.getField< flow::facePressure >();
-    arrayView1d< real64 const > const presFaceBC =
-      faceManager.getField< flow::bcPressure >();
-    
-    fsManager.apply< FaceManager >( time_n + dt,
-                                    mesh,
-                                    flow::bcPressure::key(),
-                                    [&] ( FieldSpecificationBase const & fs,
-                                          string const & setName,
-                                          SortedArrayView< localIndex const > const & targetSet,
-                                          FaceManager & targetGroup,
-                                          string const & )
-    {
-      // Using the field specification functions to apply the boundary conditions to the system
-      fs.applyFieldValue< FieldSpecificationEqual,
-                          parallelDevicePolicy<> >( targetSet,
-                                                    time_n + dt,
-                                                    targetGroup,
-                                                    flow::bcPressure::key() );
-
-      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-      {
-
-        localIndex const kf = targetSet[a];
-        if( faceGhostRank[kf] >= 0 )
-        {
-          return;
-        }
-
-        // Get the dof number of this face
-        globalIndex const dofIndex = faceDofNumber[kf];
-        localIndex const localRow = dofIndex - rankOffset;
-        real64 rhsValue;
-
-        // Apply field value to the lhs and rhs
-        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
-                                                    rankOffset,
-                                                    localMatrix,
-                                                    rhsValue,
-                                                    presFaceBC[kf],
-                                                    presFace[kf] );
-        localRhs[localRow] = rhsValue;
-      } );
-
-    } );
+//    // Keep strong enforcement that the face pressure equals the informed bcPressure value (original behavior)
+//    arrayView1d< real64 const > const presFace =
+//      faceManager.getField< flow::facePressure >();
+//    arrayView1d< real64 const > const presFaceBC =
+//      faceManager.getField< flow::bcPressure >();
+//    
+//    fsManager.apply< FaceManager >( time_n + dt,
+//                                    mesh,
+//                                    flow::bcPressure::key(),
+//                                    [&] ( FieldSpecificationBase const & fs,
+//                                          string const & setName,
+//                                          SortedArrayView< localIndex const > const & targetSet,
+//                                          FaceManager & targetGroup,
+//                                          string const & )
+//    {
+//      // Using the field specification functions to apply the boundary conditions to the system
+//      fs.applyFieldValue< FieldSpecificationEqual,
+//                          parallelDevicePolicy<> >( targetSet,
+//                                                    time_n + dt,
+//                                                    targetGroup,
+//                                                    flow::bcPressure::key() );
+//
+//      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+//      {
+//
+//        localIndex const kf = targetSet[a];
+//        if( faceGhostRank[kf] >= 0 )
+//        {
+//          return;
+//        }
+//
+//        // Get the dof number of this face
+//        globalIndex const dofIndex = faceDofNumber[kf];
+//        localIndex const localRow = dofIndex - rankOffset;
+//        real64 rhsValue;
+//
+//        // Apply field value to the lhs and rhs
+//        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
+//                                                    rankOffset,
+//                                                    localMatrix,
+//                                                    rhsValue,
+//                                                    presFaceBC[kf],
+//                                                    presFace[kf] );
+//        localRhs[localRow] = rhsValue;
+//      } );
+//
+//    } );
     
   } );
 }
