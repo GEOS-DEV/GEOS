@@ -1630,7 +1630,7 @@ evaluateBCFaceProperties( integer const numPhases,
         // Compute mobility from relative permeability evaluated at face conditions
         real64 const faceKr = facePhaseFrac[0][0][ip]; // phaseRelPerm[eiAdj][0][ip];
         real64 const mu = facePhaseVisc[0][0][ip];
-        facePhaseMob[kf][ip] = (mu > 0) ? faceKr / mu : 0.0;
+        facePhaseMob[kf][ip] = (mu > 0) ? faceTotalDens * faceKr / mu : 0.0;
         
         // Store phase composition from flash calculation
         for( integer ic = 0; ic < NC; ++ic )

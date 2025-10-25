@@ -645,64 +645,11 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
     FaceManager & faceManager = mesh.getFaceManager();
     NodeManager const & nodeManager = mesh.getNodeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
-
-    // Keep strong enforcement that the face pressure equals the informed bcPressure value (original behavior)
-    arrayView1d< real64 const > const presFace =
-      faceManager.getField< flow::facePressure >();
-    arrayView1d< real64 const > const presFaceBC =
-      faceManager.getField< flow::bcPressure >();
     string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
     arrayView1d< globalIndex const > const faceDofNumber =
       faceManager.getReference< array1d< globalIndex > >( faceDofKey );
     arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
-
     globalIndex const rankOffset = dofManager.rankOffset();
-
-    fsManager.apply< FaceManager >( time_n + dt,
-                                    mesh,
-                                    flow::bcPressure::key(),
-                                    [&] ( FieldSpecificationBase const & fs,
-                                          string const & setName,
-                                          SortedArrayView< localIndex const > const & targetSet,
-                                          FaceManager & targetGroup,
-                                          string const & )
-    {
-      // Using the field specification functions to apply the boundary conditions to the system
-      fs.applyFieldValue< FieldSpecificationEqual,
-                          parallelDevicePolicy<> >( targetSet,
-                                                    time_n + dt,
-                                                    targetGroup,
-                                                    flow::bcPressure::key() );
-
-      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-      {
-
-        localIndex const kf = targetSet[a];
-        if( faceGhostRank[kf] >= 0 )
-        {
-          return;
-        }
-
-        // Get the dof number of this face
-        globalIndex const dofIndex = faceDofNumber[kf];
-        localIndex const localRow = dofIndex - rankOffset;
-        real64 rhsValue;
-
-        // Apply field value to the lhs and rhs
-        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
-                                                    rankOffset,
-                                                    localMatrix,
-                                                    rhsValue,
-                                                    presFaceBC[kf],
-                                                    presFace[kf] );
-        localRhs[localRow] = rhsValue;
-      } );
-
-    } );
-
-
-
-
 
     // Get node positions
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePosition = nodeManager.referencePosition();
@@ -726,29 +673,10 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
                                     flow::bcTemperature::key(), flow::faceTemperature::key() );
 
     // Get face boundary values
-    arrayView1d< real64 const > const facePres = faceManager.getField< fields::flow::facePressure >();
+    arrayView1d< real64 const > const facePres = faceManager.getField< fields::flow::bcPressure >();
     arrayView1d< real64 const > const faceTemp = faceManager.getField< fields::flow::faceTemperature >();
     arrayView2d< real64 const, compflow::USD_COMP > const faceCompFrac = faceManager.getField< fields::flow::faceGlobalCompFraction >();
     arrayView1d< real64 const > const faceGravCoef = faceManager.getField< fields::flow::gravityCoefficient >();
-
-//    // Print all entries in faceCompFrac
-//    std::cout << "faceCompFrac array size: " << faceCompFrac.size(0) << " x " << faceCompFrac.size(1) << std::endl;
-//    for( localIndex iface = 0; iface < faceCompFrac.size(0); ++iface )
-//    {
-////      std::ostringstream oss;
-//      std::cout  << "Face " << iface << ": [";
-//      for( localIndex ic = 0; ic < faceCompFrac.size(1); ++ic )
-//      {
-//        std::cout  << faceCompFrac[iface][ic];
-//        if( ic < faceCompFrac.size(1) - 1 )
-//        {
-//          std::cout  << ", ";
-//        }
-//      }
-//      std::cout  << "]";
-//      std::cout << std::endl;
-////      GEOS_LOG_RANK_0( oss.str() );
-//    }
 
     // Loop over regions and apply Dirichlet flux kernel
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const erIndex,
@@ -863,38 +791,6 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
         faceManager.getField< flow::facePhaseMassDensity >();
       arrayView3d< real64 const, compflow::USD_PHASE_COMP > const facePhaseCompFracField =
         faceManager.getField< flow::facePhaseCompFraction >();
-
-//      // After facePhaseMob is defined (around line 615)
-//      std::cout << "facePhaseMob array size: " << facePhaseMob.size(0) << " x " << facePhaseMob.size(1) << std::endl;
-//      for( localIndex iface = 0; iface < facePhaseMob.size(0); ++iface )
-//      {
-//        std::cout << "Face " << iface << " facePhaseMob: [";
-//        for( localIndex ip = 0; ip < facePhaseMob.size(1); ++ip )
-//        {
-//          std::cout << facePhaseMob[iface][ip];
-//          if( ip < facePhaseMob.size(1) - 1 )
-//          {
-//            std::cout << ", ";
-//          }
-//        }
-//        std::cout << "]" << std::endl;
-//      }
-//
-//      // After facePhaseMobField is defined (around line 728)
-//      std::cout << "facePhaseMobField array size: " << facePhaseMobField.size(0) << " x " << facePhaseMobField.size(1) << std::endl;
-//      for( localIndex iface = 0; iface < facePhaseMobField.size(0); ++iface )
-//      {
-//        std::cout << "Face " << iface << " facePhaseMobField: [";
-//        for( localIndex ip = 0; ip < facePhaseMobField.size(1); ++ip )
-//        {
-//          std::cout << facePhaseMobField[iface][ip];
-//          if( ip < facePhaseMobField.size(1) - 1 )
-//          {
-//            std::cout << ", ";
-//          }
-//        }
-//        std::cout << "]" << std::endl;
-//      }
       
       // Apply Dirichlet boundary fluxes for each face set using DirichletFluxKernel
       for( string const & setName : bcFaceSets )
@@ -902,8 +798,6 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
         SortedArrayView< localIndex const > const targetSet = faceManager.getSet( setName ).toViewConst();
         if( targetSet.size() == 0 )
           continue;
-
-        GEOS_LOG_RANK_0( "Applying Dirichlet BC to face set '" << setName << "' with " << targetSet.size() << " faces" );
 
         // Launch the Dirichlet flux kernel with compile-time dispatch
         constitutive::constitutiveComponentUpdatePassThru( fluid, m_numComponents, [&]( auto & fluidWrapper, auto NC )
@@ -988,6 +882,55 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
         } );
       }
     } );
+    
+    // Keep strong enforcement that the face pressure equals the informed bcPressure value (original behavior)
+    arrayView1d< real64 const > const presFace =
+      faceManager.getField< flow::facePressure >();
+    arrayView1d< real64 const > const presFaceBC =
+      faceManager.getField< flow::bcPressure >();
+    
+    fsManager.apply< FaceManager >( time_n + dt,
+                                    mesh,
+                                    flow::bcPressure::key(),
+                                    [&] ( FieldSpecificationBase const & fs,
+                                          string const & setName,
+                                          SortedArrayView< localIndex const > const & targetSet,
+                                          FaceManager & targetGroup,
+                                          string const & )
+    {
+      // Using the field specification functions to apply the boundary conditions to the system
+      fs.applyFieldValue< FieldSpecificationEqual,
+                          parallelDevicePolicy<> >( targetSet,
+                                                    time_n + dt,
+                                                    targetGroup,
+                                                    flow::bcPressure::key() );
+
+      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      {
+
+        localIndex const kf = targetSet[a];
+        if( faceGhostRank[kf] >= 0 )
+        {
+          return;
+        }
+
+        // Get the dof number of this face
+        globalIndex const dofIndex = faceDofNumber[kf];
+        localIndex const localRow = dofIndex - rankOffset;
+        real64 rhsValue;
+
+        // Apply field value to the lhs and rhs
+        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
+                                                    rankOffset,
+                                                    localMatrix,
+                                                    rhsValue,
+                                                    presFaceBC[kf],
+                                                    presFace[kf] );
+        localRhs[localRow] = rhsValue;
+      } );
+
+    } );
+    
   } );
 }
 
