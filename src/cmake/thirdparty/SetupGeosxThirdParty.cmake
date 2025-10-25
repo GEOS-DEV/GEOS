@@ -581,27 +581,17 @@ endif()
 if(DEFINED SCOTCH_DIR)
     message(STATUS "SCOTCH_DIR = ${SCOTCH_DIR}")
 
-    find_and_import(NAME scotch
-                      INCLUDE_DIRECTORIES ${SCOTCH_DIR}/include
-                      LIBRARY_DIRECTORIES ${SCOTCH_DIR}/lib
-                      HEADER scotch.h
-                      LIBRARIES scotch scotcherr )
+    find_package(SCOTCH REQUIRED
+                 PATHS ${SCOTCH_DIR}
+                 NO_DEFAULT_PATH)
 
-    find_and_import(NAME ptscotch
-                      INCLUDE_DIRECTORIES ${SCOTCH_DIR}/include
-                      LIBRARY_DIRECTORIES ${SCOTCH_DIR}/lib
-                      DEPENDS scotch
-                      HEADER ptscotch.h
-                      LIBRARIES ptscotch ptscotcherr )
+    message( " ----> scotch_VERSION = ${SCOTCH_VERSION}")
 
-    extract_version_from_header( NAME scotch
-                                 HEADER "${SCOTCH_DIR}/include/scotch.h"
-                                 MAJOR_VERSION_STRING "SCOTCH_VERSION"
-                                 MINOR_VERSION_STRING "SCOTCH_RELEASE"
-                                 PATCH_VERSION_STRING "SCOTCH_PATCHLEVEL")
-
-    set(ENABLE_SCOTCH ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} scotch ptscotch)
+    foreach(_scotch_target SCOTCH::scotch SCOTCH::ptscotch SCOTCH::scotcherr )
+        get_target_property(SCOTCH_INCLUDE_DIRS ${_scotch_target} INTERFACE_INCLUDE_DIRECTORIES)
+        set_target_properties(${_scotch_target} PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${SCOTCH_INCLUDE_DIRS}")
+        set(thirdPartyLibs ${thirdPartyLibs} ${_scotch_target})
+    endforeach()
 else()
     if(ENABLE_SCOTCH)
         message(WARNING "ENABLE_SCOTCH is ON but SCOTCH_DIR isn't defined.")
@@ -897,7 +887,7 @@ if( ${CMAKE_VERSION} VERSION_LESS "3.19" )
     set( PYTHON_AND_VERSION Python3 )
     set( PYTHON_OPTIONAL_COMPONENTS)
 else()
-    set( PYTHON_AND_VERSION Python3 3.6.0...3.13.3 )
+    set( PYTHON_AND_VERSION Python3 3.6.0...<4 )
     set( PYTHON_OPTIONAL_COMPONENTS OPTIONAL_COMPONENTS Development NumPy)
 endif()
 if(ENABLE_PYGEOSX)

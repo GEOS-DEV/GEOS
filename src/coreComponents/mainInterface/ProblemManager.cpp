@@ -651,11 +651,12 @@ void ProblemManager::generateMesh()
       {
         int const order = feDiscretization->getOrder();
         string const & discretizationName = feDiscretization->getName();
+        FiniteElementDiscretization::Formulation const & formulationName = feDiscretization->getFormulation();
         string_array const & regionNames = discretizationPair.second;
         CellBlockManagerABC const & cellBlockManager = meshBody.getCellBlockManager();
 
         // create a high order MeshLevel
-        if( order > 1 )
+        if( order > 1 && formulationName == FiniteElementDiscretization::Formulation::SEM )
         {
           MeshLevel & mesh = meshBody.createMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                                        discretizationName, order );
@@ -666,8 +667,9 @@ void ProblemManager::generateMesh()
                                    regionNames );
         }
         // Just create a shallow copy of the base discretization.
-        else if( order==1 )
+        else if( order==1  ||  formulationName == FiniteElementDiscretization::Formulation::DG )
         {
+          // create a shallow copy of the base discretization
           meshBody.createShallowMeshLevel( MeshBody::groupStructKeys::baseDiscretizationString(),
                                            discretizationName );
         }
@@ -861,11 +863,12 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   elemRegionManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
   {
     subRegion.setupRelatedObjectsInRelations( meshLevel );
+    // TODO calling calculateElementGeometricQuantities for `FaceElementSubRegion` here is not very accurate:
     // `FaceElementSubRegion` has no node and therefore needs the nodes positions from the neighbor elements
     // in order to compute the geometric quantities.
     // And this point of the process, the ghosting has not been done and some elements of the `FaceElementSubRegion`
-    // can have no neighbor. Making impossible the computation, which is therfore postponed to after the ghosting.
-    if( isBaseMeshLevel && !dynamicCast< FaceElementSubRegion * >( &subRegion ) )
+    // can have no neighbor. We still call it only to compute element centers to be used for well perforation computations.
+    if( isBaseMeshLevel ) // && !dynamicCast< FaceElementSubRegion * >( &subRegion ) )
     {
       subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
     }

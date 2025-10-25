@@ -44,6 +44,9 @@ ContactSolverBase::ContactSolverBase( const string & name,
 
   this->getWrapper< string >( viewKeyStruct::surfaceGeneratorNameString() ).
     setInputFlag( dataRepository::InputFlags::FALSE );
+
+  addLogLevel< logInfo::ConfigurationStatistics >();
+  addLogLevel< logInfo::ContactTolerance >();
 }
 
 void ContactSolverBase::postInputInitialization()
@@ -197,24 +200,21 @@ void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
 
 void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & domain ) const
 {
-  if( getLogLevel() >=1 )
+  globalIndex numStick = 0;
+  globalIndex numNewSlip  = 0;
+  globalIndex numSlip  = 0;
+  globalIndex numOpen  = 0;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel const & mesh,
+                                                               string_array const & )
   {
-    globalIndex numStick = 0;
-    globalIndex numNewSlip  = 0;
-    globalIndex numSlip  = 0;
-    globalIndex numOpen  = 0;
+    computeFractureStateStatistics( mesh, numStick, numNewSlip, numSlip, numOpen );
 
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                 MeshLevel const & mesh,
-                                                                 string_array const & )
-    {
-      computeFractureStateStatistics( mesh, numStick, numNewSlip, numSlip, numOpen );
-
-      GEOS_LOG_RANK_0( GEOS_FMT( "  Number of element for each fracture state:"
-                                 " stick: {:12} | new slip: {:12} | slip:  {:12} | open:  {:12}",
-                                 numStick, numNewSlip, numSlip, numOpen ) );
-    } );
-  }
+    GEOS_LOG_RANK_0( GEOS_FMT( "  Number of element for each fracture state:"
+                               " stick = {:12} | new slip = {:12} | slip =  {:12} | open =  {:12}",
+                               numStick, numNewSlip, numSlip, numOpen ) );
+  } );
 }
 
 real64 ContactSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n ),

@@ -16,7 +16,6 @@
 #include "FieldSpecificationBase.hpp"
 
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -83,9 +82,16 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Time at which the boundary condition will stop being applied." );
 
-  addLogLevel< logInfo::BoundaryCondition >();
-  addLogLevel< logInfo::FaceBoundaryCondition >();
-  addLogLevel< logInfo::SourceFluxFailure >();
+  registerWrapper( viewKeyStruct::errorSetModeString(), &m_emptySetErrorMode ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( SetErrorMode::error ).
+    setDescription( GEOS_FMT( "Set the log state when a “set” does not target any region\n"
+                              "When set to \"{}\", no output.\n"
+                              "When set to \"{}\", output a warning.\n"
+                              "When set to \"{}\", output a throw.\n",
+                              EnumStrings< SetErrorMode >::toString( SetErrorMode::silent ),
+                              EnumStrings< SetErrorMode >::toString( SetErrorMode::warning ),
+                              EnumStrings< SetErrorMode >::toString( SetErrorMode::error )  ));
 }
 
 

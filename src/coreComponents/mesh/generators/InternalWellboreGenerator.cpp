@@ -272,9 +272,9 @@ void InternalWellboreGenerator::postInputInitialization()
                    GEOS_FMT( "{} must be strictly larger than 0",
                              viewKeyStruct::cartesianOuterBoundaryString() ) );
 
-    GEOS_ERROR_IF( m_cartesianOuterBoundary >= m_vertices[0].size()-1,
+    GEOS_ERROR_IF( m_cartesianOuterBoundary >= m_vertices[0].size(),
                    GEOS_FMT( "{} must be strictly smaller than the number of radial blocks (equal to {} here)",
-                             viewKeyStruct::cartesianOuterBoundaryString(), m_vertices[0].size()-1 ) );
+                             viewKeyStruct::cartesianOuterBoundaryString(), m_vertices[0].size() ) );
 
     // step 2: check that the cartesian inner radius is valid
     bool const isCartesianMappingInnerRadiusSpecified = m_cartesianMappingInnerRadius < 1e98;
@@ -349,7 +349,7 @@ void InternalWellboreGenerator::setConnectivityForPeriodicBoundaries( int ( & gl
   }
 }
 
-void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, std::map< string, SortedArray< localIndex > > & nodeSets )
+void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, stdMap< string, SortedArray< localIndex > > & nodeSets )
 {
   localIndex const numNodes = X.size( 0 );
 
@@ -359,10 +359,10 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
   SortedArray< localIndex > & ynegNodes = nodeSets.at( "yneg" );
   SortedArray< localIndex > & yposNodes = nodeSets.at( "ypos" );
   // Created on the fly
-  SortedArray< localIndex > & rnegNodes = nodeSets["rneg"];
-  SortedArray< localIndex > & rposNodes = nodeSets["rpos"];
-  SortedArray< localIndex > & tnegNodes = nodeSets["tneg"];
-  SortedArray< localIndex > & tposNodes = nodeSets["tpos"];
+  SortedArray< localIndex > & rnegNodes = nodeSets.get_inserted( "rneg" );
+  SortedArray< localIndex > & rposNodes = nodeSets.get_inserted( "rpos" );
+  SortedArray< localIndex > & tnegNodes = nodeSets.get_inserted( "tneg" );
+  SortedArray< localIndex > & tposNodes = nodeSets.get_inserted( "tpos" );
 
   // Map to radial mesh
   for( localIndex a = 0; a < numNodes; ++a )
