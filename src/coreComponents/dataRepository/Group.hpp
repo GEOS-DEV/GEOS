@@ -319,7 +319,7 @@ public:
   {
     Group * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getDataContext() << " has no child named '" << key << "'" << std::endl
+                   "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
                    std::domain_error );
     T * const castedChild = dynamicCast< T * >( child );
@@ -338,7 +338,7 @@ public:
   {
     Group const * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getDataContext() << " has no child named '" << key << "'" << std::endl
+                   "Group " << getDataContext() << " has no child named " << key << std::endl
                             << dumpSubGroupsNames(),
                    std::domain_error );
     T const * const castedChild = dynamicCast< T const * >( child );

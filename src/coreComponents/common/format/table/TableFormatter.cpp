@@ -358,11 +358,12 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
   }
 
   // number of times we will divide the each headers in the headerCellsLayout (key is the Column ptr)
-  std::map< std::ptrdiff_t, size_t > subdivsCount;
+  stdMap< std::ptrdiff_t, size_t > subdivsCount;
 
   for( auto it = tableLayout.beginDeepFirst(); it != tableLayout.endDeepFirst(); ++it )
   {
     CellLayout const & currentCell = it->m_header.m_layout;
+    subdivsCount.try_emplace( std::ptrdiff_t( it.getPtr() ), 0 );
     if( currentCell.m_cellType != CellType::Hidden )
     {
       size_t const layer = it.getCurrentLayer();
@@ -371,6 +372,7 @@ void TableTextFormatter::populateHeaderCellsLayout( PreparedTableLayout const & 
       // we subdivide divide parent cells each time we have a cell which has a neightboor to its right
       if( it->hasParent() )
       {
+        subdivsCount.try_emplace( std::ptrdiff_t( it->getParent() ), 0 );
         // we subdivide the parent by the subdiv count of the current (+1 if cell has a neightboor at its right)
         size_t const incrementsCount = subdivsCount[std::ptrdiff_t( it.getPtr() )] + ( it->hasNext() ? 1 : 0 );
         subdivsCount[std::ptrdiff_t( it->getParent() )] += incrementsCount;
