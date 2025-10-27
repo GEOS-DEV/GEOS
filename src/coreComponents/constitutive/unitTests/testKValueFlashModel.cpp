@@ -44,7 +44,7 @@ struct TestData< 9 >
   static std::unique_ptr< TestFluid< 9 > > createFluid()
   {
     auto fluid = TestFluid< 9 >::create( {Fluid::H2O, Fluid::CO2, Fluid::N2, Fluid::CH4, Fluid::C2H6, Fluid::C3H8, Fluid::C4H10, Fluid::C5H12, Fluid::C10H22} );
-    const std::array< real64 const, 36 > bics = {
+    const stdArray< real64 const, 36 > bics = {
       0.01, 0, 0.003732, 0, 0.01, 0, 0, 0.01, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0.01, 0, 0.028, 0.01, 0.01, 0, 0, 0.01, 0, 0.04532, 0.01, 0.01, 0, 0, 0
     };
@@ -113,7 +113,7 @@ public:
   void setProperties( ComponentProperties const & componentProperties )
   {
     string_array & phaseNames = getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
-    TestFluid< numPhases >::createArray( phaseNames, std::array< string, 2 >{"oil", "gas"} );
+    TestFluid< numPhases >::createArray( phaseNames, stdArray< string, 2 >{"oil", "gas"} );
     string_array & componentNames = getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
     TestFluid< numPhases >::createArray( componentNames, componentProperties.getComponentName());
   }
@@ -163,7 +163,7 @@ real64 getKValue( integer const phaseIndex, integer const compIndex, real64 cons
 {
   GEOS_UNUSED_VAR( phaseIndex );
 
-  static std::array< real64, 5 > constexpr crookstonCoefficients[9] = {
+  static stdArray< real64, 5 > constexpr crookstonCoefficients[9] = {
     {3.0620e+00, 8.9414e+02, 1.1912e-02, 5.3659e+02, 1.1951e+02},
     {-1.8141e+00, 6.2655e+02, 6.7489e-03, 5.0732e+00, 2.5249e+02},
     {-3.5742e-01, 4.8660e+02, 5.7887e-03, 9.1910e+01, 1.8027e+02},
