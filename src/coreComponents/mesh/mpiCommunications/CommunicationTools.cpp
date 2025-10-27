@@ -293,7 +293,7 @@ void CommunicationTools::assignNewGlobalIndices( ObjectManagerBase & manager,
 
 void
 CommunicationTools::assignNewGlobalIndices( ElementRegionManager & elementManager,
-                                            std::map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems )
+                                            stdMap< std::pair< localIndex, localIndex >, std::set< localIndex > > const & newElems )
 {
   localIndex numberOfNewObjectsHere = 0;
   for( auto const & iter : newElems )
@@ -446,7 +446,7 @@ CommunicationTools::
  * @param mpiRankToNodes For each involved mpi rank, all the nodes that need to be sent.
  * @return The sanitized mapping: only the ranks with the minimal MPI rank will be in charged of sending the proper nodes.
  */
-std::map< int, array1d< globalIndex > > reorganizeRequestedNodes( std::map< int, array1d< globalIndex > > const & mpiRankToNodes )
+stdMap< int, array1d< globalIndex > > reorganizeRequestedNodes( stdMap< int, array1d< globalIndex > > const & mpiRankToNodes )
 {
   class MinInt
   {
@@ -466,21 +466,22 @@ private:
     int m_value = std::numeric_limits< int >::max();
   };
 
-  std::map< int, array1d< globalIndex > > minMpiRankToNodes;  // Will be returned.
+  stdMap< int, array1d< globalIndex > > minMpiRankToNodes;  // Will be returned.
 
-  std::map< globalIndex, MinInt > nodeToMpiRank;
+  stdMap< globalIndex, MinInt > nodeToMpiRank;
   for( auto const & [mpiRank, nodes]: mpiRankToNodes )
   {
     for( globalIndex const & gi: nodes )
     {
-      nodeToMpiRank[gi] = mpiRank;
+      nodeToMpiRank.get_inserted( gi ) = mpiRank;
     }
-    minMpiRankToNodes[mpiRank];  // Explicitly allocate all the ranks. Important, otherwise mpi ranks without nodes will not be defined.
+    minMpiRankToNodes.insert( { mpiRank, {} } );  // Explicitly allocate all the ranks. Important, otherwise mpi ranks without nodes will
+                                                  // not be defined.
   }
 
   for( auto const & [node, mpiRank]: nodeToMpiRank )
   {
-    minMpiRankToNodes[mpiRank].emplace_back( node );
+    minMpiRankToNodes.get_inserted( mpiRank ).emplace_back( node );
   }
 
   return minMpiRankToNodes;
@@ -496,7 +497,7 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
   auto const & g2l = nodeManager.globalToLocalMap();
   integer const numNeighbors = LvArray::integerConversion< integer >( allNeighbors.size() );
 
-  std::map< int, array1d< globalIndex > > requestedMatchesMap;  // The key of the map is the MPI rank of the `neighbor`, not the index.
+  stdMap< int, array1d< globalIndex > > requestedMatchesMap;  // The key of the map is the MPI rank of the `neighbor`, not the index.
 
   {
     array1d< array1d< globalIndex > > const neighborBoundaryNodes = this->buildNeighborPartitionBoundaryObjects( nodeManager, allNeighbors );
@@ -547,7 +548,7 @@ void CommunicationTools::findMatchedPartitionBoundaryNodes( NodeManager & nodeMa
       // Some ranks may also have some nodes that the current rank requires.
       // In that case, we store the information.
       // Later in this function, we'll send this request to the rank and it will send those to us.
-      array1d< globalIndex > & requestedMatches = requestedMatchesMap[allNeighbors[i].neighborRank()];
+      array1d< globalIndex > & requestedMatches = requestedMatchesMap.get_inserted( allNeighbors[i].neighborRank());
       {
         stdVector< globalIndex > intersection;
         std::set_intersection( requestedNodes.cbegin(), requestedNodes.cend(),
