@@ -107,6 +107,7 @@ public:
       using SolverPtr = TYPEOFREF( solver );
       using SolverType = TYPEOFPTR( SolverPtr {} );
       auto const & solverName = m_names[idx()];
+      solver = this->getParent().template getGroupPointer< SolverType >( solverName );
       if( solver== nullptr )
       {
         std::ostringstream errorMessage;
