@@ -6674,6 +6674,86 @@ void SolidMechanicsMPM::stressControl( real64 dt,
                      boxMaterialVolume );
   // }
 
+  //=================================================================================vvv
+  // MH: TODO: partial pseudocode for new option for stress control, 
+  // mimicking the response of a natural stress free boundary condition.  
+  // Compute a lumped mass and acceleration at a free face, and compute the 
+  // corresponding domainL
+  // // This is an alternative to the stress control requiring PID parameters,
+  // // which behaves poorly in cases where the bulk modulus is heterogeneous
+  // // or transient (as in the case of mesoscale simulations of compaction)
+  // //
+  // //. 1.  compute face mass and momentum:
+  // //          m_f = sum(m_i) and q_f = sum(m_i*v_i) for all i in face (+) and (-)
+  // //. 2.  Sum face internal and external forces:
+  // //          Fint_f = sum(fint_i+fex_i) for all i in face
+  // //  3.  Perform MPI additive sync on m_f and Fint_f and q_f
+  // //. 4.  Compute surface start-of-step velocity 
+  // //          Vn_f = q_f/m_f
+  // //. 4.  Compute a_f = Fint_f/m_f
+  // //. 5.  Define m_domainL_x such that the velocity gradient is consistent with
+  // //      free surface expansion/contraction:
+  // //         m_domainL*(x_f(+) - x_f(-)) = ( v_fn(+) - v_fn(-) ) + ( a_f(+) - a_f(-) )*dt
+  // real64 faceMass[6] = {0.};
+  // real64 faceMomentum[6] = {0.};      // face-normal component only.
+  // real64 faceVelocity[6] = {0.};       // face normal component only
+  // real64 faceForce[6] = {0.};          // Sum of face-normal internal and external forces on face nodes
+  // real64 faceVelocity[6] = {0.};  //This will be the face-normal component only.
+  // arrayView2d< real64 > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
+  // arrayView3d< real64 > const gridVelocity = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridVelocityString() );
+  // arrayView3d< real64 > const gridMomentum = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridMomentumString() );
+  // arrayView3d< real64 > const gridAcceleration = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridAccelerationString() );
+  // arrayView3d< real64 > const gridInternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridInternalForceString() );
+  // arrayView3d< real64 > const gridExternalForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridExternalForceString() );
+  // arrayView3d< real64 > const gridContactForce = nodeManager.getReference< array3d< real64 > >( viewKeyStruct::gridContactForceString() );
+  // real64 internalForce, externalForce, contactForce, localSum;
+  // for (int f = 0; face < 6, f ++)
+  // {
+  //   localSum = sumFaceScalarField(f, gridMass )
+  //   MpiWrapper::allReduce< real64 >( &localSum,
+  //                                    &faceMass[f],
+  //                                    1,
+  //                                    MPI_SUM,
+  //                                    MPI_COMM_GEOSX );
+  //   localSum = sumFaceNormalVectorFieldComponent(f, gridMomentum )
+  //   MpiWrapper::allReduce< real64 >( &localSum,
+  //                                    &faceMomentum[f],
+  //                                    1,
+  //                                    MPI_SUM,
+  //                                    MPI_COMM_GEOSX );
+  //   internalForce = sumFaceNormalVectorFieldComponent(f, gridInternalForce )
+  //   externalForce = sumFaceNormalVectorFieldComponent(f, gridExternalForce )
+  //   contactForce = sumFaceNormalVectorFieldComponent(f, gridContactForce )
+  //   localSum = internalForce + external Force + contactForce;
+  //   MpiWrapper::allReduce< real64 >( &localSum,
+  //                                    &faceForce[f],
+  //                                    1,
+  //                                    MPI_SUM,
+  //                                    MPI_COMM_GEOSX );
+  // }
+  // real64 sumFaceNormalVectorFieldComponent(const int face, 
+  //                                          arrayView3d< real64 > const vectorMultiField )
+  // {
+  //   real64 faceSum = 0.0;
+  //   array1d< SortedArray< localIndex > > & m_boundaryNodes = nodeSets.getReference< array1d< SortedArray< localIndex > > >( viewKeyStruct::boundaryNodesString() );
+  //   for( int fieldIndex=0; fieldIndex<m_numVelocityFields; fieldIndex++ )
+  //   {
+  //     // Face-associated quantities
+  //     int dir0 = face / 2;           // 0, 0, 1, 1, 2, 2 (x-, x+, y-, y+, z-, z+)
+  //     //int positiveNormal = face % 2; // even => (-) => 0, odd => (+) => 1
+  //     // Sum face-normal vector field component.
+  //     SortedArrayView< localIndex const > const boundaryNodes = m_boundaryNodes[face].toView();
+  //     int const numBoundaryNodes = boundaryNodes.size();
+  //     forAll< serialPolicy >( numBoundaryNodes, [&, vectorMultiField, dVectorMultiField] GEOS_HOST ( localIndex const gg ) 
+  //     {
+  //       int const g = boundaryNodes[gg];
+  //       faceSum += vectorMultiField[g][fieldIndex][dir0];
+  //     }  
+  //     );
+  //     return faceSum;
+  //   }
+  //=================================================================================^^^
+
   // CC: TODO Still use box stress but enfore Lmax for each direction
 
   // // Non periodic directions should use boundary reactions instead of box stresses
