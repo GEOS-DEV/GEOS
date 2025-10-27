@@ -1395,14 +1395,24 @@ DirichletFluxKernel::
         break;
       }
     }
-    if( ifaceLoc < 0 ) return;
+    if( ifaceLoc < 0 ){
+      return;
+    }
 
-    real64 const transmissibility = transMatrix[ifaceLoc][ifaceLoc];
+    // Get all global face indices of the cell touching the boundary
+    stackArray1d< localIndex, NF > cellFaces( NF );
+    std::cout << "kf: " << kf << " ifaceLoc: " << ifaceLoc << "\n";
+    for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
+    {
+      cellFaces[jfaceLoc] = elemToFaces[eiAdj][jfaceLoc];
+      std::cout << "cellFaces[jfaceLoc]: " << cellFaces[jfaceLoc] << " jfaceLoc: " << ifaceLoc << "\n";
+    }
 
     // Component fluxes
     real64 compFlux[NC]{};
     real64 dCompFlux_dP[NC]{};
     real64 dCompFlux_dC[NC][NC]{};
+    real64 dCompFlux_dFaceP[NC][NF]{}; // Derivatives w.r.t. face pressures
 
     // Loop over phases to compute component fluxes
     // Use face-based properties for boundary conditions (upwinding)
@@ -1429,28 +1439,60 @@ DirichletFluxKernel::
         dDensMean_dC[jc] = 0.5 * dProp_dC[jc];
       }
 
-      // Potential difference
-      real64 const gravTimesDz = elemGravCoef[eiAdj] - faceGravCoef[kf];
-      real64 const potDif = elemPres[eiAdj] - facePres[kf] - densMean * gravTimesDz;
-      real64 const f = transmissibility * potDif;
-      real64 const dF_dP = transmissibility * ( 1.0 - dDensMean_dP * gravTimesDz );
+      // Compute flux by looping over all connected faces with consistent transmissibility
+      real64 f = 0.0;
+      real64 dF_dP = 0.0;
+      real64 dF_dFaceP[NF]{}; // Derivatives of flux w.r.t. face pressures
       for( integer jc = 0; jc < NC; ++jc )
       {
-        dF_dC[jc] = -transmissibility * dDensMean_dC[jc] * gravTimesDz;
+        dF_dC[jc] = 0.0;
+      }
+
+      // Sum contributions from all connected faces
+      for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
+      {
+        // Potential difference for each face
+        real64 const gravTimesDz_j = elemGravCoef[eiAdj] - faceGravCoef[cellFaces[jfaceLoc]];
+        real64 const potDif_j = elemPres[eiAdj] - facePres[kf] - densMean * gravTimesDz_j;
+        real64 const transmissibility_j = transMatrix[ifaceLoc][jfaceLoc];
+        
+        // Accumulate flux and derivatives
+        f += transmissibility_j * potDif_j;
+        dF_dP += transmissibility_j * ( 1.0 - dDensMean_dP * gravTimesDz_j );
+        
+        // Derivative w.r.t. face pressure at this face (only kf contributes since potDif uses facePres[kf])
+        if( jfaceLoc != ifaceLoc )
+        {
+          dF_dFaceP[jfaceLoc] = -transmissibility_j; // d(potDif)/d(facePres[kf]) = -1
+        }
+        else
+        {
+          dF_dFaceP[jfaceLoc] = 0.0;
+        }
+        
+        for( integer jc = 0; jc < NC; ++jc )
+        {
+          dF_dC[jc] += -transmissibility_j * dDensMean_dC[jc] * gravTimesDz_j;
+        }
       }
 
       // Use element mobility (simplified upwinding for Dirichlet BC)
-      // need to upwind the following:
       // Upwind phase component fraction based on flow direction
-      real64 const beta = (potDif > 0.0) ? 1.0  : 0.0;
+      // Use the total flux f for upwinding decision
+      real64 const beta = (f > 0.0) ? 1.0  : 0.0;
       real64 const facePhaseMobility = facePhaseMob[kf][ip];
       real64 const phaseMobility = beta * phaseMob[erAdj][esrAdj][eiAdj][ip] + (1.0 - beta) * facePhaseMobility;
       real64 const phaseFlux = phaseMobility * f;
       real64 const dPhaseFlux_dP = phaseMobility * dF_dP + beta * dPhaseMob[erAdj][esrAdj][eiAdj][ip][Deriv::dP] * f;
       real64 dPhaseFlux_dC[NC];
+      real64 dPhaseFlux_dFaceP[NF];
       for( integer jc = 0; jc < NC; ++jc )
       {
-        dPhaseFlux_dC[jc] = phaseMob[erAdj][esrAdj][eiAdj][ip] * dF_dC[jc] + dPhaseMob[erAdj][esrAdj][eiAdj][ip][Deriv::dC+jc] * f;
+        dPhaseFlux_dC[jc] = phaseMobility * dF_dC[jc] + beta * dPhaseMob[erAdj][esrAdj][eiAdj][ip][Deriv::dC+jc] * f;
+      }
+      for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
+      {
+        dPhaseFlux_dFaceP[jfaceLoc] = phaseMobility * dF_dFaceP[jfaceLoc];
       }
 
       // Use face-based phase composition for boundary conditions when flow is INTO the domain (potDif < 0)
@@ -1476,6 +1518,12 @@ DirichletFluxKernel::
         for( integer jc = 0; jc < NC; ++jc )
         {
           dCompFlux_dC[ic][jc] += dPhaseFlux_dC[jc] * ycp + beta * phaseFlux * dProp_dC[jc];
+        }
+        
+        // Add derivatives w.r.t. face pressures
+        for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
+        {
+          dCompFlux_dFaceP[ic][jfaceLoc] += dPhaseFlux_dFaceP[jfaceLoc] * ycp;
         }
       }
     }
@@ -1521,6 +1569,34 @@ DirichletFluxKernel::
                                                                         dofColIndices,
                                                                         localFluxJacobian[ic],
                                                                         NC+1 );
+      
+      // Add contributions from face pressure derivatives
+      for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
+      {
+        localIndex const kfj = cellFaces[jfaceLoc];
+        globalIndex const faceDof = faceDofNumber[kfj];
+        
+        real64 facePressureJacobian = dt * dCompFlux_dFaceP[ic][jfaceLoc];
+        
+        // Apply total mass equation transformation if needed
+        if( useTotalMassEquation && ic == 0 )
+        {
+          // For total mass equation, sum all component derivatives
+          facePressureJacobian = 0.0;
+          for( integer icc = 0; icc < NC; ++icc )
+          {
+            facePressureJacobian += dt * dCompFlux_dFaceP[icc][jfaceLoc];
+          }
+        }
+        
+        if( LvArray::math::abs( facePressureJacobian ) > 0.0 )
+        {
+          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + ic,
+                                                                            &faceDof,
+                                                                            &facePressureJacobian,
+                                                                            1 );
+        }
+      }
     }
   } );
 }
@@ -1630,8 +1706,7 @@ evaluateBCFaceProperties( integer const numPhases,
         // Compute mobility from relative permeability evaluated at face conditions
         real64 const faceKr = facePhaseFrac[0][0][ip]; // phaseRelPerm[eiAdj][0][ip];
         real64 const mu = facePhaseVisc[0][0][ip];
-//        facePhaseMob[kf][ip] = (mu > 0) ? faceTotalDens * faceKr / mu : 0.0;
-        facePhaseMob[kf][ip] = (mu > 0) ? faceKr / mu : 0.0;
+        facePhaseMob[kf][ip] = (mu > 0) ? faceTotalDens * faceKr / mu : 0.0;
         
         // Store phase composition from flash calculation
         for( integer ic = 0; ic < NC; ++ic )
