@@ -120,7 +120,7 @@ struct StateUpdateKernel
       LvArray::tensorOps::copy< 6 >( oldStress[p][0], particleStress[p] );
       #endif
 
-      real64 stress[6] = { 0 };
+      real64 stress[6] = { };
       //CC: debug hardcoded hyperelastic model for now
       if( hyperelasticUpdate == 1 )
       // if ( constitutiveWrapper.m_disableInelasticity ) // CC: Shouldn't there be a flag for hyperelastic models? otherwise we have to manually add their name here everything we add them
@@ -129,7 +129,7 @@ struct StateUpdateKernel
         // Don't believe we need to perform unrotation and rotation here (yes...unrotation...)
         // Think we can update stress directly by calling constitutive model
         // Hyperelastic models in GEOSX currently use FminusI as input argument
-        real64 FminusI[3][3] = { {0} };
+        real64 FminusI[3][3] = { };
         LvArray::tensorOps::copy< 3, 3 >( FminusI, deformationGradient[p] );
         for(int i =0; i < 3; i++)
         {
@@ -153,15 +153,15 @@ struct StateUpdateKernel
         strainIncrement[5] = (velocityGradient[p][0][1] + velocityGradient[p][1][0]) * dt;
 
         // Get old F by incrementing backwards
-        real64 fOld[3][3] = { {0} };
-        real64 fNew[3][3] = { {0} };
+        real64 fOld[3][3] = { };
+        real64 fNew[3][3] = { };
         LvArray::tensorOps::copy< 3, 3 >( fNew, deformationGradient[p] );
         LvArray::tensorOps::copy< 3, 3 >( fOld, deformationGradient[p] );
         LvArray::tensorOps::scaledAdd< 3, 3 >( fOld, fDot[p], -dt );
 
         // Polar decompositions
-        real64 rotBeginning[3][3] = { {0} };
-        real64 rotEnd[3][3] = { {0} };
+        real64 rotBeginning[3][3] = { };
+        real64 rotEnd[3][3] = { };
         polarDecomposition( rotBeginning, fOld );
         polarDecomposition( rotEnd, fNew );
 

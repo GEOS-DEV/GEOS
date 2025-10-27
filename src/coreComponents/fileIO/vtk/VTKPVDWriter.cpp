@@ -41,10 +41,15 @@ void VTKPVDWriter::setFileName( string fileName )
   m_fileName = std::move( fileName );
 }
 
+bool VTKPVDWriter::exists()
+{
+  return m_pvdFile.exists();
+}
+
 // If running job from restart the pvd file should be read in to append to, not overwritten
 void VTKPVDWriter::read()
 {
-  //CC: do I need to clear the document first?
+  // Clear vtk file first
   m_pvdFile.reset();
 
   // If restarting job and pvd already exists read in and append to that

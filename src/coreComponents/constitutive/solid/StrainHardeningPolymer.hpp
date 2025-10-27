@@ -471,7 +471,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
 {
   // Store trial stress for computing the plastic strain increment.  
   real64 trialStress[6] = { 0 };
-  LvArray::tensorOps::copy< 6 >( trialStress, stress);
+  LvArray::tensorOps::copy< 6 >( trialStress, stress );
 
   // decompose into mean (P) and von Mises (Q) stress invariants
   real64 trialP;
@@ -488,13 +488,13 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     LvArray::tensorOps::transpose< 3, 3 >( rotationTranspose, beginningRotation );
 
     real64 oldPlasticStrain[6] = { 0 };
-    LvArray::tensorOps::copy< 6 >(oldPlasticStrain, m_plasticStrain[k][q]);
+    LvArray::tensorOps::copy< 6 >( oldPlasticStrain, m_plasticStrain[k][q] );
     oldPlasticStrain[3] *= 0.5;
     oldPlasticStrain[4] *= 0.5;
     oldPlasticStrain[5] *= 0.5;
 
     real64 unrotatedOldPlasticStrain[6] = { 0 };
-    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >(unrotatedOldPlasticStrain, rotationTranspose, oldPlasticStrain);
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( unrotatedOldPlasticStrain, rotationTranspose, oldPlasticStrain );
 
     unrotatedOldPlasticStrain[3] *= 2.0;
     unrotatedOldPlasticStrain[4] *= 2.0;
@@ -519,12 +519,13 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 maximumStretch = 0.0;  
     for( localIndex i = 0; i < 3; ++i )
     {
-        maximumStretch = std::max( stretch[i], maximumStretch );
+      maximumStretch = std::max( stretch[i], maximumStretch );
     }
 
-    if(maximumStretch > failureStretch)
+    if( maximumStretch > failureStretch )
     {
-        m_damage[k][q] = 1.0;
+      GEOS_LOG_RANK( "k: " << k << "m_damage[k][q]: " << m_damage[k][q] << ", maximumStretch: " << maximumStretch );
+      m_damage[k][q] = 1.0;
     }
 
     // Return to yield surface requires iterative solution

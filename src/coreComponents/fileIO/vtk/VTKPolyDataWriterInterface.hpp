@@ -341,7 +341,7 @@ private:
   /// Names of the mesh levels to output (an empty array means all levels are saved)
   std::set< string > m_levelNames;
 
-  /// The previousCycle
+  /// The previous cycle number
   integer m_previousCycle;
 
   /// Output mode, could be ASCII or BINARAY

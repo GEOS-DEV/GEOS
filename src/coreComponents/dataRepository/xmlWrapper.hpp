@@ -218,6 +218,11 @@ public:
   xmlResult loadFile( string const & path, bool loadNodeFileInfo = false );
 
   /**
+   * @brief Checks if document exists
+   */
+  bool exists( );
+
+  /**
    * @brief Reset document
    */
   void reset( );
