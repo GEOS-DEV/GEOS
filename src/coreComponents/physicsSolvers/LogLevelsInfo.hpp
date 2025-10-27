@@ -94,7 +94,7 @@ struct Solution
 struct SolutionDetails
 {
   static constexpr int getMinLogLevel() { return 2; }
-  static constexpr std::string_view getDescription() { return "Solution details (negative values ids)"; }
+  static constexpr std::string_view getDescription() { return "Solution details (incoherent negative values ids)"; }
 };
 
 struct SolverInitialization
