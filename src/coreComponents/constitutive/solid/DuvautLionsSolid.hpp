@@ -60,6 +60,7 @@ public:
 
   using UPDATE_BASE::smallStrainUpdate;
   //using UPDATE_BASE::smallStrainUpdate_ElasticOnly;
+  using UPDATE_BASE::smallStrainUpdate_thermal;
   using UPDATE_BASE::saveConvergedState;
 
   using UPDATE_BASE::viscousStateUpdate;

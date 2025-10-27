@@ -98,6 +98,7 @@ public:
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicPressureDependentUpdates::smallStrainUpdate;
+  using ElasticIsotropicPressureDependentUpdates::smallStrainUpdate_thermal;
 
   GEOS_HOST_DEVICE
   void evaluateYield( real64 const p,

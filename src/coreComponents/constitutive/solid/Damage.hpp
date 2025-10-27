@@ -108,6 +108,7 @@ public:
 
   using UPDATE_BASE::smallStrainNoStateUpdate;
   using UPDATE_BASE::smallStrainUpdate;
+  using UPDATE_BASE::smallStrainUpdate_thermal;
   using UPDATE_BASE::smallStrainNoStateUpdate_StressOnly;
   using UPDATE_BASE::smallStrainUpdate_StressOnly;
   using UPDATE_BASE::saveConvergedState;
