@@ -1440,7 +1440,6 @@ DirichletFluxKernel::
       // Compute flux by looping over all connected faces with consistent transmissibility
       real64 f = 0.0;
       real64 dF_dP = 0.0;
-//      real64 dF_dfacePres = 0.0;
       real64 dF_dFaceP[NF]{}; // Derivatives of flux w.r.t. face pressures
       for( integer jc = 0; jc < NC; ++jc )
       {
@@ -1451,22 +1450,19 @@ DirichletFluxKernel::
       for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
       {
         // Potential difference for each face
-        real64 const gravTimesDz_j = elemGravCoef[eiAdj] - faceGravCoef[cellFaces[jfaceLoc]];
-        real64 const potDif_j = elemPres[eiAdj] - facePres[kf] - densMean * gravTimesDz_j;
+        localIndex const kfj = cellFaces[jfaceLoc];
+        real64 const gravTimesDz_j = elemGravCoef[eiAdj] - faceGravCoef[kfj];
+        real64 const potDif_j = elemPres[eiAdj] - facePres[kfj] - densMean * gravTimesDz_j;
         real64 const transmissibility_j = transMatrix[ifaceLoc][jfaceLoc];
         
         // Accumulate flux and derivatives
         f += transmissibility_j * potDif_j;
         dF_dP += transmissibility_j * ( 1.0 - dDensMean_dP * gravTimesDz_j );
-//        dF_dfacePres += transmissibility_j * ( -1.0 ); // d(potDif)/d(facePres[kf]) = -1
+
         // Derivative w.r.t. face pressure at this face (only kf contributes since potDif uses facePres[kf])
-        if( jfaceLoc == ifaceLoc )
+        if ( jfaceLoc != ifaceLoc )
         {
-          dF_dFaceP[jfaceLoc] = transmissibility_j * ( -1.0 ); // d(potDif)/d(facePres[kf]) = -1
-        }
-        else
-        {
-          dF_dFaceP[jfaceLoc] = transmissibility_j * ( -1.0 );
+          dF_dFaceP[jfaceLoc] = -transmissibility_j;
         }
                 
         for( integer jc = 0; jc < NC; ++jc )
@@ -1474,21 +1470,7 @@ DirichletFluxKernel::
           dF_dC[jc] += -transmissibility_j * dDensMean_dC[jc] * gravTimesDz_j;
         }
       }
-      
-//      for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc ){
-//          // Derivative w.r.t. face pressure at this face (only kf contributes since potDif uses facePres[kf])
-//          if( jfaceLoc == ifaceLoc )
-//          {
-//            dF_dFaceP[jfaceLoc] = dF_dfacePres;
-//          }
-//          else
-//          {
-//            dF_dFaceP[jfaceLoc] = 0.0;
-//          }
-//      }
-      
-
-
+          
       // Use element mobility (simplified upwinding for Dirichlet BC)
       // Upwind phase component fraction based on flow direction
       // Use the total flux f for upwinding decision
