@@ -121,6 +121,15 @@ public:
                                               real64 ( &stiffness )[6][6] ) const override;
 
   GEOS_HOST_DEVICE
+  virtual void smallStrainUpdate_thermal( localIndex const k,
+                                          localIndex const q,
+                                          real64 const & timeIncrement,
+                                          real64 const ( &strainIncrementNoThermalStrain )[6],
+                                          real64 ( &stress )[6],
+                                          DiscretizationOps & stiffness,
+                                          real64 ( &dStress_dTemperature )[6] ) const;
+
+  GEOS_HOST_DEVICE
   inline
   virtual void saveConvergedState( localIndex const k,
                                    localIndex const q ) const override final
@@ -339,7 +348,28 @@ void DruckerPragerUpdates::smallStrainUpdate( localIndex const k,
   smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
 }
 
+GEOS_HOST_DEVICE
+inline
+void DruckerPragerUpdates::smallStrainUpdate_thermal( localIndex const k,
+                                                      localIndex const q,
+                                                      real64 const & timeIncrement,
+                                                      real64 const ( &strainIncrementNoThermalStrain )[6],
+                                                      real64 ( & stress )[6],
+                                                      DiscretizationOps & stiffness,
+                                                      real64 ( & dStress_dTemperature )[6] ) const
+{
+  smallStrainUpdate( k, q, timeIncrement, strainIncrementNoThermalStrain, stress, stiffness );
 
+  real64 const ( &stiffnessTensor )[6][6] = stiffness.m_c;
+
+  for( int i=0; i<6; ++i )
+  {
+    for( int j=0; j<3; ++j )
+    {
+      dStress_dTemperature[i] += stiffnessTensor[i][j];
+    }
+  }
+}
 
 /**
  * @class DruckerPrager
