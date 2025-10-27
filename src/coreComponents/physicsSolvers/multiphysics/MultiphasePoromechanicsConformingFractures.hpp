@@ -84,8 +84,6 @@ protected:
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                    arrayView1d< real64 > const & localRhs ) override;
 
-private:
-
   virtual integer numFluidComponents() const override { return this->flowSolver()->numFluidComponents(); }
 
   virtual string getFlowDofKey() const override { return CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString(); }
