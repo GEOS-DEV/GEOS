@@ -21,16 +21,10 @@
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_COUPLEDSOLVER_HPP_
 
-#include "common/DataTypes.hpp"
-#include "common/format/Format.hpp"
-#include "common/format/StringUtilities.hpp"
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 
 #include <tuple>
-#include <type_traits>
 
 namespace geos
 {
