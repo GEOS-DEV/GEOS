@@ -1118,6 +1118,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     // is ( A*exp[-E_a/(R*T)] ) / ( A*exp[-E_a/(R*T0)] ) = Exp[-Ea*( 1/(R*T) - 1./(R*T0) )]
 
     real64 m_referenceTemperature =  m_initialTemperature; // We require 
+    std::cout<<" m_initialTemperature "<< m_initialTemperature<<std::endl;
     real64 m_gasConstantR = 8.314;  // this is J/(mol*K) and also works for mm,mg,us,K units, TODO: this should be a user input 
                                     // to allow for other unit systems.
     real64 m_creepActivationEnergy = m_Q;  // This will be a user input that can be used to fit temperature dependence.
