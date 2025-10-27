@@ -78,45 +78,6 @@ public:
   /// deleted move operator
   CoupledSolver & operator=( CoupledSolver && ) = delete;
 
-  /**
-   * @brief Retrieves a solver from the tuple by its runtime index
-   * @tparam INDEX Compile time index
-   * @param runtimeIndex The runtime index of the solver being retrieved
-   * @return PhysicsSolverBase* The physics solver base class of the targetted solver, nullptr if out of bounds
-   */
-  template< std::size_t INDEX = 0 >
-  PhysicsSolverBase * getSolverAtRuntimeIndexImpl( std::size_t runtimeIndex )
-  {
-    if constexpr ( INDEX < sizeof...(SOLVERS) )
-    {
-      if( INDEX == runtimeIndex )
-      {
-        using SolverPtrType = std::tuple_element_t< INDEX, decltype(m_solvers) >;
-        using SolverType = std::remove_pointer_t< SolverPtrType >;
-        return this->getParent().template getGroupPointer< SolverType >( m_names[INDEX] );
-      }
-      else
-      {
-        return getSolverAtRuntimeIndexImpl< INDEX + 1 >( runtimeIndex );
-      }
-    }
-    else
-    {
-      return nullptr;
-    }
-  }
-
-  /**
-   * @brief Retrieves a solver from the tuple by its runtime index
-   * @param index The runtime index of the solver being retrieved
-   * @return PhysicsSolverBase* The physics solver base class of the targetted solver, nullptr if out of bounds
-   */
-  PhysicsSolverBase * getSolverAtRuntimeIndex( std::size_t index )
-  {
-    return getSolverAtRuntimeIndexImpl< 0 >( index );
-  }
-
-
   template< typename T >
   void throwSolversNotFound( std::ostringstream & errorMessage, string const & solverType )
   {
@@ -132,13 +93,15 @@ public:
 
     if( availableSolvers.empty() )
     {
-      errorMessage << GEOS_FMT( "No {} solver has been found.", solverType );
+      errorMessage << GEOS_FMT( "No solver has been found for '{}'.", solverType );
     }
     else
     {
-      errorMessage << GEOS_FMT( "Available {} solvers are: {}. ", solverType,
+      errorMessage << GEOS_FMT( "Available solvers for '{}' are: {}. ", solverType,
                                 stringutilities::join( availableSolvers, ", " ) );
     }
+
+    GEOS_THROW( errorMessage.str(), InputError );
   }
   /**
    * @brief Utility function to set the subsolvers pointers using the names provided by the user
@@ -151,34 +114,14 @@ public:
       using SolverPtr = TYPEOFREF( solver );
       using SolverType = TYPEOFPTR( SolverPtr {} );
       auto const & solverName = m_names[idx()];
-      auto const & solverType = LvArray::system::demangleType< SolverType >(); 
-      solver = this->getParent().template getGroupPointer< SolverType >( solverName );
-      integer idxMissingSolver = -1;
+      auto const & solverType = LvArray::system::demangleType< SolverType >();
       std::ostringstream errorMessage;
       if( solver== nullptr )
       {
-        errorMessage << GEOS_FMT( "{}: Could not find solver  named '{}'.\n",
+        errorMessage << GEOS_FMT( "{}: Could not find solver named '{}'.\n",
                                   getDataContext(), solverName );
-        idxMissingSolver = idx;
-        
-        // if flowSolver base is valid it mean we  have to check valid solver for the wellSolverBase
-        size_t const runtimeValidSolverIdx =  (sizeof...(SOLVERS) - 1) - idxMissingSolver;
-        auto validSolver = getSolverAtRuntimeIndex( runtimeValidSolverIdx );
 
-        if( dynamic_cast< FlowSolverBase * >(validSolver) != nullptr )
-        {
-          throwSolversNotFound< WellSolverBase >( errorMessage, WellSolverBase::coupledSolverAttributePrefix() );
-        }
-        else if( dynamic_cast< WellSolverBase * >(validSolver) != nullptr )
-        {
-          throwSolversNotFound< FlowSolverBase >( errorMessage, FlowSolverBase::coupledSolverAttributePrefix()  );
-        }
-        else
-        {
-          errorMessage << "No solver found";
-        }
-
-        GEOS_THROW( errorMessage.str(), InputError );
+        throwSolversNotFound< SolverType >( errorMessage, SolverType::coupledSolverAttributePrefix() );
       }
 
 
