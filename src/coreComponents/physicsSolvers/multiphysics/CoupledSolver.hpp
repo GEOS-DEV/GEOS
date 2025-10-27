@@ -77,12 +77,11 @@ public:
   {
     string_array availableSolvers;
 
-    this->getParent().forSubGroups( [&]( Group & group )
+    this->getParent().template forSubGroups< T >( [&]( T & group )
     {
-      if( dynamic_cast< T * >(&group) )
-      {
-        availableSolvers.emplace_back( group.getName());
-      }
+
+      availableSolvers.emplace_back( group.getName());
+
     } );
 
     if( availableSolvers.empty() )
@@ -108,10 +107,9 @@ public:
       using SolverPtr = TYPEOFREF( solver );
       using SolverType = TYPEOFPTR( SolverPtr {} );
       auto const & solverName = m_names[idx()];
-      auto const & solverType = LvArray::system::demangleType< SolverType >();
-      std::ostringstream errorMessage;
       if( solver== nullptr )
       {
+        std::ostringstream errorMessage;
         errorMessage << GEOS_FMT( "{}: Could not find solver named '{}'.\n",
                                   getDataContext(), solverName );
 
