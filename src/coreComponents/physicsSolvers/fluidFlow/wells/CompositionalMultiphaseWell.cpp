@@ -1620,10 +1620,10 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
   integer localCheck = 1;
   real64 minPres = 0.0, minDens = 0.0, minTotalDens = 0.0;
   integer numNegTotalDens = 0;
-  ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::WellValidity >( getLogLevel() ),
-                                             isLogLevelActive< logInfo::SoutionDetails >( getLogLevel() ) ? 16 : 0 };
-  ElementsReporterBuffer rankNegDensityIds{ isLogLevelActive< logInfo::WellValidity >( getLogLevel() ),
-                                            isLogLevelActive< logInfo::SoutionDetails >( this->getLogLevel() ) ? 16 : 0 };
+  ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
+                                             isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
+  ElementsReporterBuffer rankNegDensityIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
+                                            isLogLevelActive< logInfo::SolutionDetails >( this->getLogLevel() ) ? 16 : 0 };
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -1713,7 +1713,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                        "negative component density", minDens, massUnit );
   if( numNegTotalDens > 0 )
   {
-    GEOS_LOG_LEVEL_RANK_0( logInfo::WellValidity,
+    GEOS_LOG_LEVEL_RANK_0( logInfo::SolutionDetails,
                            GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {}",
                                      getName(), numNegTotalDens, fmt::format( "{:.{}f}", minTotalDens, 3 ), units::getSymbol( massUnit ) ) );
   }
