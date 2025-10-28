@@ -61,7 +61,7 @@ public:
    */
   string getCatalogName() const override {return catalogName(); }
 
-  using connectivityMapType = std::map< std::pair< ElementShape, ElementShape >, ArrayOfArrays< localIndex > >;
+  using connectivityMapType = stdMap< std::pair< ElementShape, ElementShape >, ArrayOfArrays< localIndex > >;
 
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
@@ -123,19 +123,19 @@ private:
 
   string m_meshSlaveName;
 
-  std::map< MortarSide, std::map< ElementShape, array1d< localIndex > > > m_faceTypeToElementList;
+  stdMap< MortarSide, stdMap< ElementShape, array1d< localIndex > > > m_faceTypeToElementList;
 
   // holds pointers to master and slave MeshLevel and SurfaceElementRegion
-  std::map< MortarSide, MortarSurface > m_mortarSide;
+  stdMap< MortarSide, MortarSurface > m_mortarSide;
 
   // list of pairs of slave/master element ids for each mortar subtriangle
-  std::map< MortarSide, std::map< std::pair< ElementShape, ElementShape >, array1d< localIndex > > > m_triCells;
+  stdMap< MortarSide, stdMap< std::pair< ElementShape, ElementShape >, array1d< localIndex > > > m_triCells;
 
   // list of determinant of each mortar subtriangle
-  std::map< std::pair< ElementShape, ElementShape >, array1d< real64 > >  m_triCellsDet;
+  stdMap< std::pair< ElementShape, ElementShape >, array1d< real64 > >  m_triCellsDet;
 
   // list local coordinates of gauss points of subtriangles on each mortar side
-  std::map< MortarSide, std::map< std::pair< ElementShape, ElementShape >, array3d< real64 > > > m_gpLocalCoords;
+  stdMap< MortarSide, stdMap< std::pair< ElementShape, ElementShape >, array3d< real64 > > > m_gpLocalCoords;
 
   // coordinates of triangle gauss points (they are private in the triangle class)
   constexpr static localIndex nGPtri = feTriangleCell::numQuadraturePoints;
@@ -185,7 +185,7 @@ private:
   string m_slaveName;
   string m_masterName;
 
-  std::map< ElementShape, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToMortarFiniteElements;
+  stdMap< ElementShape, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToMortarFiniteElements;
 
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {

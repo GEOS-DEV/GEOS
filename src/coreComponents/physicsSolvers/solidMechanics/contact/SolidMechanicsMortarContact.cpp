@@ -1185,7 +1185,7 @@ void SolidMechanicsMortarContact::createFaceTypeListMortar( MortarSide side )
     quadList_v[kfe] = vals_v[nTri+kfe];
   } );
 
-  std::map< string, array1d< localIndex > > faceTypeList;
+  stdMap< string, array1d< localIndex > > faceTypeList;
 
   m_faceTypeToElementList[side][ElementShape::Quadrilateral] =  quadList;
   m_faceTypeToElementList[side][ElementShape::Triangle] =  triList;
@@ -2203,8 +2203,6 @@ void TreeNodeMortar::createNode( MeshLevel const & mesh,
   arrayView2d< double const > const surfCenter = faceManager.faceCenter().toViewConst();
   localIndex nSurf = surfList.size();
   arrayView2d< double const > const coords =  nodeManager.referencePosition();
-
-  //double const pP[3][9] = polytopPrimitives;
 
   // compute primitive of polytopal bounding box for input list of surfaces
   for( localIndex i=0; i<nSurf; ++i )
