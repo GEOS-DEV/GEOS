@@ -86,11 +86,11 @@ public:
 
     if( availableSolvers.empty() )
     {
-      errorMessage << GEOS_FMT( "No solver has been found for '{}'.", solverType );
+      errorMessage << GEOS_FMT( "No {} solver has been found.", solverType );
     }
     else
     {
-      errorMessage << GEOS_FMT( "Available solvers for '{}' are: {}. ", solverType,
+      errorMessage << GEOS_FMT( "Available {} solvers are: {}. ", solverType,
                                 stringutilities::join( availableSolvers, ", " ) );
     }
 
@@ -110,10 +110,10 @@ public:
       solver = this->getParent().template getGroupPointer< SolverType >( solverName );
       if( solver== nullptr )
       {
+        string const solverWrapperKey = SolverType::coupledSolverAttributePrefix() + "SolverName";
         std::ostringstream errorMessage;
         errorMessage << GEOS_FMT( "{}: Could not find solver named '{}'.\n",
-                                  getDataContext(), solverName );
-
+                                  getWrapperDataContext( solverWrapperKey ), solverName );
         throwSolversNotFound< SolverType >( errorMessage, SolverType::coupledSolverAttributePrefix() );
       }
 
