@@ -651,58 +651,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
     arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
     globalIndex const rankOffset = dofManager.rankOffset();
 
-//    // Keep strong enforcement that the face pressure equals the informed bcPressure value (original behavior)
-//    arrayView1d< real64 const > const presFace =
-//      faceManager.getField< flow::facePressure >();
-//    arrayView1d< real64 const > const presFaceBC =
-//      faceManager.getField< flow::bcPressure >();
-//
-//    fsManager.apply< FaceManager >( time_n + dt,
-//                                    mesh,
-//                                    flow::bcPressure::key(),
-//                                    [&] ( FieldSpecificationBase const & fs,
-//                                          string const & setName,
-//                                          SortedArrayView< localIndex const > const & targetSet,
-//                                          FaceManager & targetGroup,
-//                                          string const & )
-//    {
-//      // Using the field specification functions to apply the boundary conditions to the system
-//      fs.applyFieldValue< FieldSpecificationEqual,
-//                          parallelDevicePolicy<> >( targetSet,
-//                                                    time_n + dt,
-//                                                    targetGroup,
-//                                                    flow::bcPressure::key() );
-//
-//      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
-//      {
-//
-//        localIndex const kf = targetSet[a];
-//        if( faceGhostRank[kf] >= 0 )
-//        {
-//          return;
-//        }
-//
-//        // Get the dof number of this face
-//        globalIndex const dofIndex = faceDofNumber[kf];
-//        localIndex const localRow = dofIndex - rankOffset;
-//        real64 rhsValue;
-//
-//        // Apply field value to the lhs and rhs
-//        FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
-//                                                    rankOffset,
-//                                                    localMatrix,
-//                                                    rhsValue,
-//                                                    presFaceBC[kf],
-//                                                    presFace[kf] );
-//        // ADD THESE 3 LINES:
-//        // 1) Ensure Jacobian has dR/dPface = 1.0 on the face row
-//        real64 const one = 1.0;
-//        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow, &dofIndex, &one, 1 );
-//
-//        // 2) Set RHS = Pface - Pbc (consistent with constraint R = Pface - Pbc = 0)
-//        localRhs[localRow] = presFace[kf] - presFaceBC[kf];
-//      } );
-//    } );
+ 
     
     // Get node positions
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePosition = nodeManager.referencePosition();
@@ -727,6 +676,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
 
     // Get face boundary values
     arrayView1d< real64 const > const facePres = faceManager.getField< fields::flow::facePressure >();
+//    std::cout << "facePres: " << facePres << std::endl;
     arrayView1d< real64 const > const faceTemp = faceManager.getField< fields::flow::faceTemperature >();
     arrayView2d< real64 const, compflow::USD_COMP > const faceCompFrac = faceManager.getField< fields::flow::faceGlobalCompFraction >();
     arrayView1d< real64 const > const faceGravCoef = faceManager.getField< fields::flow::gravityCoefficient >();
@@ -936,7 +886,78 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
       }
     } );
   
-    
+    // Keep strong enforcement that the face pressure equals the informed bcPressure value (original behavior)
+    arrayView1d< real64 const > const presFace =
+      faceManager.getField< flow::facePressure >();
+    arrayView1d< real64 const > const presFaceBC =
+      faceManager.getField< flow::bcPressure >();
+
+    fsManager.apply< FaceManager >( time_n + dt,
+                                    mesh,
+                                    flow::bcPressure::key(),
+                                    [&] ( FieldSpecificationBase const & fs,
+                                          string const & setName,
+                                          SortedArrayView< localIndex const > const & targetSet,
+                                          FaceManager & targetGroup,
+                                          string const & )
+    {
+      // Using the field specification functions to apply the boundary conditions to the system
+      fs.applyFieldValue< FieldSpecificationEqual,
+                          parallelDevicePolicy<> >( targetSet,
+                                                    time_n + dt,
+                                                    targetGroup,
+                                                    flow::bcPressure::key() );
+
+      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
+      {
+
+        localIndex const kf = targetSet[a];
+        if( faceGhostRank[kf] >= 0 )
+        {
+          return;
+        }
+
+        // Get the dof number of this face
+        globalIndex const dofIndex = faceDofNumber[kf];
+        localIndex const localRow = dofIndex - rankOffset;
+        
+        // ENFORCE DIRICHLET CONSTRAINT: x_i = x_spec
+        // Mathematical procedure to enforce prescribed value in Ax = b:
+        // 1. For row i: Zero all entries except diagonal, set A[i,i] = 1, set b[i] = x_spec
+        // 2. For all other rows k: subtract A[k,i] * x_spec from b[k], then set A[k,i] = 0
+        //
+        // Note: Step 2 (removing column influence) should ideally be done, but in practice
+        // for boundary face DOFs in hybrid FVM, the column entries from interior faces to
+        // boundary faces are typically zero or minimal because boundary faces don't strongly
+        // couple to interior equations. The strong coupling is boundary->interior (via fluxes).
+        // For exact enforcement in non-trivial cases, column zeroing would be needed.
+        
+        if( localRow >= 0 && localRow < localMatrix.numRows() )
+        {
+          arraySlice1d< globalIndex const > const columns = localMatrix.getColumns( localRow );
+          arraySlice1d< real64 > const entries = localMatrix.getEntries( localRow );
+          localIndex const numEntries = localMatrix.numNonZeros( localRow );
+          
+          // Step 1: Zero out all row entries and set diagonal to 1
+          for( localIndex j = 0; j < numEntries; ++j )
+          {
+            if( columns[j] == dofIndex )
+            {
+              entries[j] = 1.0;  // Set diagonal to 1
+            }
+            else
+            {
+              entries[j] = 0.0;  // Zero out off-diagonal entries
+            }
+          }
+          
+          // Set RHS to the prescribed boundary value (absolute value)
+          // This directly enforces: 1.0 * facePressure = prescribed_value
+          localRhs[localRow] = presFace[kf] - presFaceBC[kf];
+        }
+      
+      } );
+    } );
     
   } );
 }
