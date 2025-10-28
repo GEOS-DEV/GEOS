@@ -363,6 +363,32 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
       faceManager.getReference< array1d< globalIndex > >( faceDofKey );
     arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
 
+    // Mark boundary faces (faces with Dirichlet BCs) to skip flux continuity constraint
+    // Initialize all faces as interior (0), then mark boundary faces (1)
+    array1d< integer > isBoundaryFace( faceManager.size() );
+    isBoundaryFace.setValues< serialPolicy >( 0 );
+    
+    FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+    fsManager.forSubGroups< FieldSpecificationBase >( [&]( FieldSpecificationBase const & fs )
+    {
+      string const & fieldName = fs.getFieldName();
+      if( fieldName == flow::bcPressure::key() ||
+          fieldName == flow::bcGlobalCompFraction::key() ||
+          fieldName == flow::bcTemperature::key() )
+      {
+        for( string const & setName : fs.getSetNames() )
+        {
+          SortedArrayView< localIndex const > const targetSet = faceManager.getSet( setName ).toViewConst();
+          forAll< serialPolicy >( targetSet.size(), [&]( localIndex const i )
+          {
+            isBoundaryFace[targetSet[i]] = 1;
+          } );
+        }
+      }
+    } );
+    
+    arrayView1d< integer const > const isBoundaryFaceView = isBoundaryFace.toViewConst();
+
     // get the element dof numbers for the assembly
     string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
@@ -424,6 +450,7 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                          faceToNodes,
                                          faceDofNumber,
                                          faceGhostRank,
+                                         isBoundaryFaceView,
                                          facePres,
                                          faceGravCoef,
                                          mimFaceGravCoef,
@@ -651,8 +678,6 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
     arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
     globalIndex const rankOffset = dofManager.rankOffset();
 
- 
-    
     // Get node positions
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePosition = nodeManager.referencePosition();
 
