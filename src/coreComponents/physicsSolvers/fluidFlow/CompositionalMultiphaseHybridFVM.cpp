@@ -105,6 +105,10 @@ void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group & meshBodies )
     faceManager.registerField< flow::facePhaseCompFraction >( getName() ).
       reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
     
+    // Register boundary face indicator (1 for boundary faces with Dirichlet BCs, 0 for interior)
+    // Used to skip flux continuity constraints for boundary faces
+    faceManager.registerField< flow::isBoundaryFace >( getName() );
+    
     // auxiliary data for the buoyancy coefficient
     faceManager.registerField< flow::mimGravityCoefficient >( getName() );
   } );
@@ -181,7 +185,30 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
                    ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
                    std::runtime_error );
 
+    // Mark boundary faces (faces with Dirichlet BCs) to skip flux continuity constraint
+    // Initialize all faces as interior (0), then mark boundary faces (1)
+    arrayView1d< integer > isBoundaryFaceView = faceManager.getField< flow::isBoundaryFace >();
+    isBoundaryFaceView.setValues< serialPolicy >( 0 );
+    
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+    fsManager.forSubGroups< FieldSpecificationBase >( [&]( FieldSpecificationBase const & fs )
+    {
+      string const & fieldName = fs.getFieldName();
+      if( fieldName == flow::bcPressure::key() ||
+          fieldName == flow::bcGlobalCompFraction::key() ||
+          fieldName == flow::bcTemperature::key() )
+      {
+        for( string const & setName : fs.getSetNames() )
+        {
+          SortedArrayView< localIndex const > const targetSet = faceManager.getSet( setName ).toViewConst();
+          forAll< serialPolicy >( targetSet.size(), [=]( localIndex const i )
+          {
+            isBoundaryFaceView[targetSet[i]] = 1;
+          } );
+        }
+      }
+    } );
+
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
       GEOS_LOG_RANK_0( getCatalogName() << " " << getDataContext() << ": An aquifer boundary condition named " <<
@@ -363,31 +390,9 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
       faceManager.getReference< array1d< globalIndex > >( faceDofKey );
     arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
 
-    // Mark boundary faces (faces with Dirichlet BCs) to skip flux continuity constraint
-    // Initialize all faces as interior (0), then mark boundary faces (1)
-    array1d< integer > isBoundaryFace( faceManager.size() );
-    isBoundaryFace.setValues< serialPolicy >( 0 );
-    
-    FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-    fsManager.forSubGroups< FieldSpecificationBase >( [&]( FieldSpecificationBase const & fs )
-    {
-      string const & fieldName = fs.getFieldName();
-      if( fieldName == flow::bcPressure::key() ||
-          fieldName == flow::bcGlobalCompFraction::key() ||
-          fieldName == flow::bcTemperature::key() )
-      {
-        for( string const & setName : fs.getSetNames() )
-        {
-          SortedArrayView< localIndex const > const targetSet = faceManager.getSet( setName ).toViewConst();
-          forAll< serialPolicy >( targetSet.size(), [&]( localIndex const i )
-          {
-            isBoundaryFace[targetSet[i]] = 1;
-          } );
-        }
-      }
-    } );
-    
-    arrayView1d< integer const > const isBoundaryFaceView = isBoundaryFace.toViewConst();
+    // Get boundary face indicator (initialized during initializePostInitialConditionsPreSubGroups)
+    arrayView1d< integer const > const isBoundaryFaceView =
+      faceManager.getField< flow::isBoundaryFace >();
 
     // get the element dof numbers for the assembly
     string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
