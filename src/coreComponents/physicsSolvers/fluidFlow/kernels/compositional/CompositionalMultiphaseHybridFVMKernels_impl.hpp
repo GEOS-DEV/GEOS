@@ -1570,10 +1570,6 @@ DirichletFluxKernel::
       for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
       {
         localIndex const kfj = cellFaces[jfaceLoc];
-        // Skip coupling the cell rows to the same boundary face DOF we strongly constrain
-          if( kfj == kf )
-            continue;
-        
         globalIndex const faceDof = faceDofNumber[kfj];
         
         real64 facePressureJacobian = dt * dCompFlux_dFaceP[ic][jfaceLoc];
@@ -1596,6 +1592,7 @@ DirichletFluxKernel::
       }
       
     }
+    
   } );
 }
 
