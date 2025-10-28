@@ -721,6 +721,7 @@ struct FluxKernel
           ArrayOfArraysView< localIndex const > const & faceToNodes,
           arrayView1d< globalIndex const > const & faceDofNumber,
           arrayView1d< integer const > const & faceGhostRank,
+          arrayView1d< integer const > const & isBoundaryFace,
           arrayView1d< real64 const > const & facePres,
           arrayView1d< real64 const > const & faceGravCoef,
           arrayView1d< real64 const > const & mimFaceGravCoef,

@@ -958,6 +958,7 @@ void
 AssemblerKernelHelper::
   assembleFaceConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
                            arrayView1d< integer const > const & faceGhostRank,
+                           arrayView1d< integer const > const & isBoundaryFace,
                            arraySlice1d< localIndex const > const & elemToFaces,
                            globalIndex const elemDofNumber,
                            globalIndex const rankOffset,
@@ -985,7 +986,16 @@ AssemblerKernelHelper::
   // for each element, loop over the local (one-sided) faces
   for( integer ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
-    if( faceGhostRank[elemToFaces[ifaceLoc]] >= 0 )
+    localIndex const kf = elemToFaces[ifaceLoc];
+    
+    // Skip ghost faces
+    if( faceGhostRank[kf] >= 0 )
+    {
+      continue;
+    }
+    
+    // Skip boundary faces - they have Dirichlet constraints, not flux continuity
+    if( isBoundaryFace[kf] > 0 )
     {
       continue;
     }
@@ -1041,6 +1051,7 @@ AssemblerKernel::
            arrayView2d< localIndex const > const & elemList,
            arrayView1d< globalIndex const > const & faceDofNumber,
            arrayView1d< integer const > const & faceGhostRank,
+           arrayView1d< integer const > const & isBoundaryFace,
            arrayView1d< real64 const > const & facePres,
            arrayView1d< real64 const > const & faceGravCoef,
            arrayView1d< real64 const > const & mimFaceGravCoef,
@@ -1146,6 +1157,7 @@ AssemblerKernel::
   // enforcing flux continuity at this element's faces
   AssemblerKernelHelper::assembleFaceConstraints< NF, NC >( faceDofNumber,
                                                             faceGhostRank,
+                                                            isBoundaryFace,
                                                             elemToFaces,
                                                             elemDofNumber[er][esr][ei],
                                                             rankOffset,
@@ -1173,6 +1185,7 @@ FluxKernel::
           ArrayOfArraysView< localIndex const > const & faceToNodes,
           arrayView1d< globalIndex const > const & faceDofNumber,
           arrayView1d< integer const > const & faceGhostRank,
+          arrayView1d< integer const > const & isBoundaryFace,
           arrayView1d< real64 const > const & facePres,
           arrayView1d< real64 const > const & faceGravCoef,
           arrayView1d< real64 const > const & mimFaceGravCoef,
@@ -1262,6 +1275,7 @@ FluxKernel::
                                                                                      elemList,
                                                                                      faceDofNumber,
                                                                                      faceGhostRank,
+                                                                                     isBoundaryFace,
                                                                                      facePres,
                                                                                      faceGravCoef,
                                                                                      mimFaceGravCoef,
