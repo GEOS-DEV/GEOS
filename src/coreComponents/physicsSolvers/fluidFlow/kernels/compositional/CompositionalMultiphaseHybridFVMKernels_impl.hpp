@@ -1594,18 +1594,7 @@ DirichletFluxKernel::
                                                                           &facePressureJacobian,
                                                                           1 );
       }
-    }
-
-    // Enforce strong Dirichlet constraint on the boundary face: R = Pface - Pbc = 0
-    // Add unit Jacobian (dR/dPface = 1.0) on the diagonal - ONCE per boundary face
-    // The RHS is handled by the BC application that runs before/after this kernel
-    {
-      globalIndex const faceDof = faceDofNumber[kf];
-      localIndex  const faceRow = LvArray::integerConversion< localIndex >( faceDof - rankOffset );
-
-      // Add unit Jacobian: dR/dPface = 1.0 on the diagonal
-      real64 const one = 1.0;
-      localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( faceRow, &faceDof, &one, 1 );
+      
     }
   } );
 }
