@@ -1406,18 +1406,6 @@ DirichletFluxKernel::
       cellFaces[jfaceLoc] = elemToFaces[eiAdj][jfaceLoc];
     }
 
-    // Enforce strong Dirichlet constraint on the boundary face: R = Pface - Pbc = 0
-    // Add unit Jacobian (dR/dPface = 1.0) on the diagonal
-    // The RHS is handled by the BC application that runs before/after this kernel
-    {
-      globalIndex const faceDof = faceDofNumber[kf];
-      localIndex  const faceRow = LvArray::integerConversion< localIndex >( faceDof - rankOffset );
-
-      // Add unit Jacobian: dR/dPface = 1.0 on the diagonal
-      real64 const one = -1.0;
-      localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( faceRow, &faceDof, &one, 1 );
-    }
-
     // Component fluxes
     real64 compFlux[NC]{};
     real64 dCompFlux_dP[NC]{};
@@ -1577,6 +1565,19 @@ DirichletFluxKernel::
                                                                         dofColIndices,
                                                                         localFluxJacobian[ic],
                                                                         NC+1 );
+      
+      
+    // Enforce strong Dirichlet constraint on the boundary face: R = Pface - Pbc = 0
+    // Add unit Jacobian (dR/dPface = 1.0) on the diagonal
+    // The RHS is handled by the BC application that runs before/after this kernel
+    {
+      globalIndex const faceDof = faceDofNumber[kf];
+      localIndex  const faceRow = LvArray::integerConversion< localIndex >( faceDof - rankOffset );
+
+      // Add unit Jacobian: dR/dPface = 1.0 on the diagonal
+      real64 const one = 1.0;
+      localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( faceRow, &faceDof, &one, 1 );
+    }
       
       // Add contributions from face pressure derivatives
       for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
