@@ -57,13 +57,10 @@ public:
   setupDofs( DomainPartition const & domain,
              DofManager & dofManager ) const override;
 
-  virtual void
-  setupSystem( DomainPartition & domain,
-               DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
-               ParallelVector & rhs,
-               ParallelVector & solution,
-               bool const setSparsity = true ) override final;
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override;
 
   virtual std::unique_ptr< PreconditionerBase< LAInterface > >
   createPreconditioner( DomainPartition & domain ) const override;
@@ -136,7 +133,8 @@ public:
 
   bool resetConfigurationToDefault( DomainPartition & domain ) const override final;
 
-  bool updateConfiguration( DomainPartition & domain ) override final;
+  bool updateConfiguration( DomainPartition & domain,
+                            integer const configurationLoopIter ) override final;
 
   bool isFractureAllInStickCondition( DomainPartition const & domain ) const;
 
@@ -186,7 +184,7 @@ private:
 
   real64 const m_slidingCheckTolerance = 0.05;
 
-  real64 m_stabilitzationScalingCoefficient = 1.0;
+  real64 m_stabilizationScalingCoefficient = 1.0;
 
   static const localIndex m_maxFaceNodes; // Maximum number of nodes on a contact face
 
@@ -207,7 +205,24 @@ private:
     constexpr static char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
 
     constexpr static char const * stabilizationScalingCoefficientString() { return "stabilizationScalingCoefficient"; }
+
+    constexpr static char const * useLocalYieldAccelerationString() { return "useLocalYieldAcceleration"; }
+
+    constexpr static char const * localYieldAccelerationBufferString() { return "localYieldAccelerationBuffer"; }
   };
+
+  /// Member variables and functions needed for yield acceleration. Naming convention follows ( Jiang & Tchelepi, 2019 )
+
+  integer m_useLocalYieldAcceleration; // flag for applying acceleration to yield
+  real64 m_localYieldAccelerationBuffer; // buffer to control the acceleration
+
+  void tryLocalYieldAcceleration( FaceElementSubRegion & subRegion,
+                                  integer configurationLoopIter,
+                                  localIndex kfe,
+                                  real64 currentTau_unscaled,
+                                  real64 limitTau,
+                                  real64 currentTau,
+                                  integer & fractureState );
 
 };
 

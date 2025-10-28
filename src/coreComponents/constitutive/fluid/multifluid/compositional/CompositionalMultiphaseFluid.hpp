@@ -26,6 +26,7 @@
 #include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterDensity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterViscosity.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/KValueFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NullModel.hpp"
@@ -63,15 +64,18 @@ public:
   using exec_policy = parallelDevicePolicy<>;
 
 public:
-  CompositionalMultiphaseFluid( string const & name, Group * const parent );
+  CompositionalMultiphaseFluid( string const & name, dataRepository::Group * const parent );
 
   virtual std::unique_ptr< ConstitutiveBase >
   deliverClone( string const & name,
-                Group * const parent ) const override;
+                dataRepository::Group * const parent ) const override;
 
   static string catalogName();
 
   virtual string getCatalogName() const override { return catalogName(); }
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override;
 
   static constexpr bool isThermalType(){ return false; }
 
@@ -84,8 +88,7 @@ public:
     GEOS_UNUSED_VAR( pressure, temperature );
   }
 
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  virtual void initializeState() const override;
 
   virtual integer getWaterPhaseIndex() const override final;
 
@@ -112,8 +115,6 @@ protected:
   virtual void postInputInitialization() override;
 
   virtual void initializePostSubGroups() override;
-
-  virtual void resizeFields( localIndex const size, localIndex const numPts ) override;
 
 private:
   // Create the fluid models
@@ -162,6 +163,14 @@ using CompositionalThreePhaseLohrenzBrayClarkViscosity = CompositionalMultiphase
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
   compositional::PhaseModel< compositional::ImmiscibleWaterDensity, compositional::ImmiscibleWaterViscosity, compositional::NullModel > >;
+using CompositionalKValueLohrenzBrayClarkViscosity = CompositionalMultiphaseFluid<
+  compositional::KValueFlashModel< 2 >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+using CompositionalKValuePhillipsBrine = CompositionalMultiphaseFluid<
+  compositional::KValueFlashModel< 2 >,
+  compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
 
 } /* namespace constitutive */
 

@@ -33,28 +33,13 @@ namespace constitutive
 
 template< typename BASE >
 DuvautLionsSolid< BASE >::DuvautLionsSolid( string const & name, Group * const parent ):
-  BASE( name, parent ),
-  m_relaxationTime()
+  BASE( name, parent )
 {
-
   this->registerWrapper( viewKeyStruct::relaxationTimeString(), &m_relaxationTime ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Relaxation time" );
 }
 
-
-template< typename BASE >
-void DuvautLionsSolid< BASE >::postInputInitialization()
-{
-  BASE::postInputInitialization();
-}
-
-template< typename BASE >
-void DuvautLionsSolid< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
-                                                         localIndex const numConstitutivePointsPerParentIndex )
-{
-  BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-}
 
 //typedef DuvautLionsSolid< ElasticIsotropic > ViscoElasticIsotropic;
 typedef DuvautLionsSolid< DruckerPrager > ViscoDruckerPrager;

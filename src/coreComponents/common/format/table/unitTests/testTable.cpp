@@ -62,13 +62,11 @@ TEST( testTable, tableEmptyRow )
                                   "CoordZ",
                                   "Prev\nelement",
                                   "Next\nelement"} );
-
   TableData tableData;
   tableData.addRow( "value1", "[30.21543]", "3.0", 54, 0 );
   tableData.addRow( "", " ", "", "", "" );
   tableData.addRow( "Duis fringilla, ligula sed porta fringilla, ligula wisi commodo felis,ut adipiscing felis dui in enim.", "[30.21543]", "30.45465142",
                     787442, 10 );
-
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableData ),
              "\n"
@@ -227,13 +225,13 @@ TEST( testTable, tableMergeOverflowParadox )
     TableLayout::Column()
       .setName( "X" ),
     TableLayout::Column()
-      .setName( "A" ),
+      .setName( "D" ),
     TableLayout::Column()
-      .setName( "B" ),
+      .setName( "E" ),
     TableLayout::Column()
-      .setName( "C" ),
+      .setName( "F" ),
     TableLayout::Column()
-      .setName( "C" )
+      .setName( "G" )
   } );
 
   TableData tableData;
@@ -251,7 +249,7 @@ TEST( testTable, tableMergeOverflowParadox )
              "---------------------------------------------------------------------------------------------------------------------------------\n"
              "|                                                          Lorem Ipsum                                                          |\n"
              "|-------------------------------------------------------------------------------------------------------------------------------|\n"
-             "|       A       |        B         |       C       |  X  |       A       |         B         |        C         |       C       |\n"
+             "|       A       |        B         |       C       |  X  |       D       |         E         |        F         |       G       |\n"
              "|---------------|------------------|---------------|-----|---------------|-------------------|------------------|---------------|\n"
              "|   0123456789  |      0123456789  |   0123456789  |  X  |   0123456789  |       0123456789  |      0123456789  |   0123456789  |\n"
              "|   0123456789  |  012345678901234567890123456789  |  X  |   0123456789  |       0123456789  |      0123456789  |   0123456789  |\n"
@@ -674,6 +672,176 @@ TEST( testTable, testFreeLayout )
              "|--------------------------------------------------------------|\n"
              "|                     121212465465465666656461245452145454545  |\n"
              "----------------------------------------------------------------\n"
+             );
+}
+
+TEST( testTable, table2DMismatchingCoordValues )
+{
+  TableData2D tableData2D;
+
+  // Prepare values
+  real64 const numRow = 5;
+  real64 const numCol = 5;
+  array1d< real64 > values( 25 );
+  for( real64 p = 0; p < numRow; p += 1 )
+  {
+    for( real64 t = 0; t < numCol; t += 1 )
+    {
+      real64 const value = t + p * numCol;
+      values[t + p * numCol] = value;
+    }
+  }
+
+  auto const testCoordinates = [&tableData2D, &values]( arrayView1d< real64 const > coordXValues,
+                                                        arrayView1d< real64 const > coordYValues )
+  {
+
+    struct Result
+    {
+      string text;
+      string csv;
+    };
+
+    string const rowFmt = GEOS_FMT( "{}", "Temperature" );
+    string const columnFmt = GEOS_FMT( "{}", "Pressure" );
+
+    // Convert
+    TableData2D::TableDataHolder const tableConverted = tableData2D.convertTable2D( coordXValues, coordYValues,
+                                                                                    rowFmt,
+                                                                                    columnFmt,
+                                                                                    values,
+                                                                                    true,
+                                                                                    "T" );
+
+    // Prepare table
+    TableLayout tableLayout;
+    tableLayout.addColumns( tableConverted.headerNames );
+
+    TableTextFormatter const tableText( tableLayout );
+    TableCSVFormatter const csvOutput( tableLayout );
+
+    return Result{tableText.toString( tableConverted.tableData ),
+                  csvOutput.toString( tableConverted.tableData )};
+  };
+
+  {  // Test with too many values
+    array1d< real64 > coordXValues;
+    coordXValues.emplace_back( 0 );
+    coordXValues.emplace_back( 1 );
+    coordXValues.emplace_back( 2 );
+    coordXValues.emplace_back( 3 );
+    array1d< real64 > coordYValues;
+    coordYValues.emplace_back( 4 );
+    coordYValues.emplace_back( 5 );
+    coordYValues.emplace_back( 6 );
+    coordYValues.emplace_back( 7 );
+    auto const [textFormatted, csvFormatted] = testCoordinates( coordXValues.toViewConst(), coordYValues.toViewConst() );
+    EXPECT_EQ( textFormatted,
+               "\n"
+               "-----------------------------------------------------------------------------------------\n"
+               "|         T         |  Pressure = 0  |  Pressure = 1  |  Pressure = 2  |  Pressure = 3  |\n"
+               "|-------------------|----------------|----------------|----------------|----------------|\n"
+               "|  Temperature = 4  |             0  |             1  |             2  |             3  |\n"
+               "|  Temperature = 5  |             4  |             5  |             6  |             7  |\n"
+               "|  Temperature = 6  |             8  |             9  |            10  |            11  |\n"
+               "|  Temperature = 7  |            12  |            13  |            14  |            15  |\n"
+               "|---------------------------------------------------------------------------------------|\n"
+               "|  Warning: Too much data for the number of columns & rows:                             |\n"
+               "|    - Expected 16 values (4 columns x 4 rows),                                         |\n"
+               "|    - Found 25 values. Data may be misaligned                                          |\n"
+               "-----------------------------------------------------------------------------------------\n" );
+
+    EXPECT_EQ( csvFormatted,
+               "T,Pressure = 0,Pressure = 1,Pressure = 2,Pressure = 3\n"
+               "Temperature = 4,0,1,2,3\n"
+               "Temperature = 5,4,5,6,7\n"
+               "Temperature = 6,8,9,10,11\n"
+               "Temperature = 7,12,13,14,15\n" );
+  }
+
+
+  tableData2D.clear();
+  {// Test with not enough values
+    array1d< real64 > coordXValues;
+    coordXValues.emplace_back( 0 );
+    coordXValues.emplace_back( 1 );
+    coordXValues.emplace_back( 2 );
+    coordXValues.emplace_back( 3 );
+    coordXValues.emplace_back( 4 );
+    coordXValues.emplace_back( 5 );
+    array1d< real64 > coordYValues;
+    coordYValues.emplace_back( 6 );
+    coordYValues.emplace_back( 7 );
+    coordYValues.emplace_back( 8 );
+    coordYValues.emplace_back( 9 );
+    coordYValues.emplace_back( 10 );
+    coordYValues.emplace_back( 11 );
+
+    auto const [textFormatted, csvFormatted] = testCoordinates( coordXValues, coordYValues );
+
+    EXPECT_EQ( textFormatted,
+               "\n"
+               "----------------------------------------------------------------------------------------------------------------------------\n"
+               "|         T          |  Pressure = 0  |  Pressure = 1  |  Pressure = 2  |  Pressure = 3  |  Pressure = 4  |  Pressure = 5  |\n"
+               "|--------------------|----------------|----------------|----------------|----------------|----------------|----------------|\n"
+               "|   Temperature = 6  |             0  |             1  |             2  |             3  |             4  |             5  |\n"
+               "|   Temperature = 7  |             6  |             7  |             8  |             9  |            10  |            11  |\n"
+               "|   Temperature = 8  |            12  |            13  |            14  |            15  |            16  |            17  |\n"
+               "|   Temperature = 9  |            18  |            19  |            20  |            21  |            22  |            23  |\n"
+               "|  Temperature = 10  |            24  |             0  |             0  |             0  |             0  |             0  |\n"
+               "|  Temperature = 11  |             0  |             0  |             0  |             0  |             0  |             0  |\n"
+               "|--------------------------------------------------------------------------------------------------------------------------|\n"
+               "|  Warning: Not enough for the number of columns & rows:                                                                   |\n"
+               "|    - Expected 36 values (6 columns x 6 rows),                                                                            |\n"
+               "|    - Found 25 values                                                                                                     |\n"
+               "----------------------------------------------------------------------------------------------------------------------------\n" );
+
+    EXPECT_EQ( csvFormatted,
+               "T,Pressure = 0,Pressure = 1,Pressure = 2,Pressure = 3,Pressure = 4,Pressure = 5\n"
+               "Temperature = 6,0,1,2,3,4,5\n"
+               "Temperature = 7,6,7,8,9,10,11\n"
+               "Temperature = 8,12,13,14,15,16,17\n"
+               "Temperature = 9,18,19,20,21,22,23\n"
+               "Temperature = 10,24,0,0,0,0,0\n"
+               "Temperature = 11,0,0,0,0,0,0\n" );
+  }
+}
+
+TEST( testTable, tableSpecialsValues )
+{
+  TableLayout const tableLayout( {
+    TableLayout::Column()
+      .setName( "Special values" )
+      .setHeaderAlignment( TableLayout::Alignment::center ),
+    TableLayout::Column()
+      .setName( "CoordX" )
+      .setHeaderAlignment( TableLayout::Alignment::right ),
+    "C",
+    TableLayout::Column()
+      .setName( "CoordZ" )
+      .setHeaderAlignment( TableLayout::Alignment::left ),
+    TableLayout::Column()
+      .setName( "Prev\nelement" )
+      .setHeaderAlignment( TableLayout::Alignment::left ),
+    TableLayout::Column()
+      .setName( "Next\nelement" )
+      .setHeaderAlignment( TableLayout::Alignment::center )} );
+
+  LvArray::NumericLimits< double > const realLimit;
+
+  TableData tableData;
+  tableData.addRow( "Global Id", 1234, 40, 5678, 60 );
+  tableData.addRow( "pressure", 0.1234, 0.40, 0.5678, 0.60 );
+
+  TableTextFormatter const tableText( tableLayout );
+  EXPECT_EQ( tableText.toString( tableData ),
+             "\n"
+             "    -------------------------------------------\n"
+             "    |                  Title                  |\n"
+             "    |-----------------------------------------|\n"
+             "    | Global Id |   1234 |  40 |   5678 |  60 |\n"
+             "    |  pressure | 0.1234 | 0.4 | 0.5678 | 0.6 |\n"
+             "    -------------------------------------------\n"
              );
 }
 

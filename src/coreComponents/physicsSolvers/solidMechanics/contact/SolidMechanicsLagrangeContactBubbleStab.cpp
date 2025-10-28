@@ -43,13 +43,15 @@ SolidMechanicsLagrangeContactBubbleStab::SolidMechanicsLagrangeContactBubbleStab
                                                                                   Group * const parent ):
   ContactSolverBase( name, parent )
 {
-  m_faceTypeToFiniteElements["Quadrilateral"] =  std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
-  m_faceTypeToFiniteElements["Triangle"] =  std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >();
+  m_faceTypeToFiniteElements.insert( {"Quadrilateral", std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >()} );
+  m_faceTypeToFiniteElements.insert( {"Triangle", std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >()} );
 
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanicsBubbleStab;
   linSolParams.mgr.separateComponents = true;
   linSolParams.dofsPerNode = 3;
+
+  addLogLevel< logInfo::ResidualNorm >();
 }
 
 SolidMechanicsLagrangeContactBubbleStab::~SolidMechanicsLagrangeContactBubbleStab()
@@ -59,7 +61,7 @@ SolidMechanicsLagrangeContactBubbleStab::~SolidMechanicsLagrangeContactBubbleSta
 
 real64 SolidMechanicsLagrangeContactBubbleStab::solverStep( real64 const & time_n,
                                                             real64 const & dt,
-                                                            const integer cycleNumber,
+                                                            integer const cycleNumber,
                                                             DomainPartition & domain )
 {
   if( cycleNumber == 0 )
@@ -195,10 +197,8 @@ void SolidMechanicsLagrangeContactBubbleStab::setupSystem( DomainPartition & dom
                                                            CRSMatrix< real64, globalIndex > & localMatrix,
                                                            ParallelVector & rhs,
                                                            ParallelVector & solution,
-                                                           bool const GEOS_UNUSED_PARAM( setSparsity ) )
+                                                           bool const setSparsity )
 {
-
-
   // setup monolithic coupled system
 
   // Create the lists of interface elements that have same type.
@@ -210,50 +210,42 @@ void SolidMechanicsLagrangeContactBubbleStab::setupSystem( DomainPartition & dom
   // Create the list of cell elements that they are enriched with bubble functions.
   createBubbleCellList( domain );
 
-  dofManager.setDomain( domain );
-  setupDofs( domain, dofManager );
-  dofManager.reorderByRank();
+  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
+  computeRotationMatrices( domain );
+}
+
+void SolidMechanicsLagrangeContactBubbleStab::setSparsityPattern( DomainPartition & domain,
+                                                                  DofManager & dofManager,
+                                                                  CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                                                                  SparsityPattern< globalIndex > & pattern )
+{
   // Set the sparsity pattern without the Abu and Aub blocks.
   SparsityPattern< globalIndex > patternDiag;
   dofManager.setSparsityPattern( patternDiag );
 
   // Get the original row lengths (diagonal blocks only)
-  array1d< localIndex > rowLengths( patternDiag.numRows() );
+  array1d< localIndex > rowLengths( patternDiag.numRows());
   for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
   {
     rowLengths[localRow] = patternDiag.numNonZeros( localRow );
   }
 
   // Add the number of nonzeros induced by coupling
-  this->addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
+  this->addCouplingNumNonzeros( domain, dofManager, rowLengths.toView());
 
   // Create a new pattern with enough capacity for coupled matrix
-  SparsityPattern< globalIndex > pattern;
-  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data() );
+  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data());
 
   // Copy the original nonzeros
   for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
   {
     globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
+    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ));
   }
 
   // Add the nonzeros from coupling
-  this->addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
-
-  // Finally, steal the pattern into a CRS matrix
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  localMatrix.setName( this->getName() + "/localMatrix" );
-
-  rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-
-  solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-
-  computeRotationMatrices( domain );
-
+  this->addCouplingSparsityPattern( domain, dofManager, pattern.toView());
 }
 
 void SolidMechanicsLagrangeContactBubbleStab::computeRotationMatrices( DomainPartition & domain ) const
@@ -467,7 +459,9 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateResidualNorm( real64 co
 
   real64 const contactResidual = calculateContactResidualNorm( domain, dofManager, localRhs );
 
-  return sqrt( solidResidual * solidResidual + contactResidual * contactResidual );
+  real64 const totalResidual = sqrt( solidResidual * solidResidual + contactResidual * contactResidual );
+
+  return totalResidual;
 }
 
 real64 SolidMechanicsLagrangeContactBubbleStab::calculateContactResidualNorm( DomainPartition const & domain,
@@ -510,10 +504,9 @@ real64 SolidMechanicsLagrangeContactBubbleStab::calculateContactResidualNorm( Do
   stickResidual = MpiWrapper::sum( stickResidual );
   stickResidual = sqrt( stickResidual );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual );
-  }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( Rt  ) = ( {:15.6e}  )", stickResidual ));
+  getConvergenceStats().setResidualValue( "Rt", stickResidual );
 
   return sqrt( stickResidual * stickResidual );
 }
@@ -962,10 +955,10 @@ void SolidMechanicsLagrangeContactBubbleStab::updateStickSlipList( DomainPartiti
         slipList_v[kfe] = vals_v[nStick+kfe];
       } );
 
-      this->m_faceTypesToFaceElementsStick[meshName][finiteElementName] =  stickList;
-      this->m_faceTypesToFaceElementsSlip[meshName][finiteElementName]  =  slipList;
+      this->m_faceTypesToFaceElementsStick.get_inserted( meshName ).get_inserted( finiteElementName ) = stickList;
+      this->m_faceTypesToFaceElementsSlip.get_inserted( meshName ).get_inserted( finiteElementName ) = slipList;
 
-      GEOS_LOG_LEVEL_RANK_0( logInfo::Configuration, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
+      GEOS_LOG_LEVEL_RANK_0( logInfo::ConfigurationStatistics, GEOS_FMT( "# stick elements: {}, # slip elements: {}", nStick, nSlip ))
     } );
   } );
 
@@ -1044,8 +1037,8 @@ void SolidMechanicsLagrangeContactBubbleStab::createFaceTypeList( DomainPartitio
       quadList_v[kfe] = vals_v[nTri+kfe];
     } );
 
-    this->m_faceTypesToFaceElements[meshName]["Quadrilateral"] =  quadList;
-    this->m_faceTypesToFaceElements[meshName]["Triangle"] =  triList;
+    this->m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Quadrilateral" ) = quadList;
+    this->m_faceTypesToFaceElements.get_inserted( meshName ).get_inserted( "Triangle" ) = triList;
   } );
 
 }
