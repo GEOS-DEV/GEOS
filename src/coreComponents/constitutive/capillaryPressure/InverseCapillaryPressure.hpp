@@ -29,6 +29,40 @@ namespace constitutive
 
 class JFunctionCapillaryPressure;
 
+
+struct NoOpCapillaryPressure
+{
+  struct KernelWrapper
+  {
+    GEOS_HOST_DEVICE
+    void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                  arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+                  arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const
+    {
+      GEOS_UNUSED_VAR( phaseVolFraction );
+      LvArray::forValuesInSlice( phaseCapPres, setZero );
+      LvArray::forValuesInSlice( dPhaseCapPres_dPhaseVolFrac, setZero );
+    }
+
+    GEOS_HOST_DEVICE
+    GEOS_FORCE_INLINE
+    static void setZero( real64 & value )
+    {
+      value = 0.0;
+    }
+  };
+
+  NoOpCapillaryPressure( integer const numPhases, arrayView1d< integer const > const & phaseOrder );
+  KernelWrapper createKernelWrapper();
+
+  integer numFluidPhases() const;
+  arrayView1d< integer const > const & phaseOrder() const;
+
+private:
+  integer const m_numPhases;
+  arrayView1d< integer const > const & m_phaseOrder;
+};
+
 template< typename CAP_PRESSURE >
 struct CapillaryPressureEvaluate
 {
@@ -39,8 +73,6 @@ struct CapillaryPressureEvaluate
                        arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
                        arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dSaturation )
   {
-    // integer constexpr MAX_NUM_PHASES = CapillaryPressureBase::MAX_NUM_PHASES;
-    // integer const numPhases = phaseVolumeFraction.size();
     constexpr bool isJFunction = std::is_same_v< CAP_PRESSURE, JFunctionCapillaryPressure >;
     if constexpr ( isJFunction )
     {
@@ -100,7 +132,7 @@ public:
                                   arrayView1d< integer const > const & jFunctionIndex );
 
   GEOS_HOST_DEVICE
-  bool compute( arraySlice1d< real64 const, USD_PC > const & phaseCapillapryPressure,
+  bool compute( arraySlice1d< real64 const, USD_PC > const & phaseCapillaryPressure,
                 arraySlice1d< real64 const > const & jFunctionMultiplier,
                 arraySlice1d< real64, USD_SAT > const & phaseVolumeFraction ) const;
 
@@ -137,6 +169,7 @@ public:
 private:
   // Calculate the model limits
   void calculatePropertyLimits( integer numPhases,
+                                arrayView1d< integer const > const & phaseOrder,
                                 typename CAP_PRESSURE::KernelWrapper capPressureWrapper,
                                 arrayView1d< real64 const > const & phaseMinVolumeFraction,
                                 arrayView2d< real64 > const & propertyLimits ) const;
@@ -172,7 +205,7 @@ template< typename CAP_PRESSURE >
 GEOS_HOST_DEVICE
 bool
 InverseCapillaryPressureUpdate< CAP_PRESSURE >::compute(
-  arraySlice1d< real64 const, USD_PC > const & phaseCapillapryPressure,
+  arraySlice1d< real64 const, USD_PC > const & phaseCapillaryPressure,
   arraySlice1d< real64 const > const & jFunctionMultiplier,
   arraySlice1d< real64, USD_SAT > const & phaseVolumeFraction ) const
 {
@@ -206,15 +239,15 @@ InverseCapillaryPressureUpdate< CAP_PRESSURE >::compute(
                          ::applyScale( maxCapPressure[ip],
                                        jFunctionMultiplier[m_jFunctionIndex[ip]] );
 
-    targetCapPres[ip] = phaseCapillapryPressure[ip];
+    targetCapPres[ip] = phaseCapillaryPressure[ip];
     targetCapPres[ip] = LvArray::math::max( minPc, targetCapPres[ip] );
     targetCapPres[ip] = LvArray::math::min( maxPc, targetCapPres[ip] );
 
-    if( phaseCapillapryPressure[ip] - STEP_TOLERANCE < minPc )
+    if( phaseCapillaryPressure[ip] - STEP_TOLERANCE < minPc )
     {
       S = minSaturation[ip];
     }
-    else if( maxPc < phaseCapillapryPressure[ip] + STEP_TOLERANCE )
+    else if( maxPc < phaseCapillaryPressure[ip] + STEP_TOLERANCE )
     {
       S = maxSaturation[ip];
     }
@@ -276,7 +309,6 @@ InverseCapillaryPressureUpdate< CAP_PRESSURE >::compute(
       converged = true;
     }
   }
-
   return converged;
 }
 

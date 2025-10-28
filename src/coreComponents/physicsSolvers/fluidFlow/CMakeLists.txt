@@ -69,6 +69,7 @@ set( fluidFlowSolvers_headers
      kernels/compositional/AquiferBCKernel.hpp
      kernels/compositional/PPUPhaseFlux.hpp
      kernels/compositional/C1PPUPhaseFlux.hpp
+     kernels/compositional/CapillaryPressureInversionKernel.hpp
      kernels/compositional/CapillaryPressureUpdateKernel.hpp
      kernels/compositional/CFLKernel.hpp
      kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp

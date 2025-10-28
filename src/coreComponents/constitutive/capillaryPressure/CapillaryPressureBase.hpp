@@ -198,7 +198,6 @@ protected:
   // output quantities
   array3d< real64, cappres::LAYOUT_CAPPRES >  m_phaseCapPressure;
   array4d< real64, cappres::LAYOUT_CAPPRES_DS >  m_dPhaseCapPressure_dPhaseVolFrac;
-
 };
 
 } // namespace constitutive

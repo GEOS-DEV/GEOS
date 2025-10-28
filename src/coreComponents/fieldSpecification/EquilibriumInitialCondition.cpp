@@ -75,7 +75,7 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
 
   registerWrapper( viewKeyStruct::phaseContactsString(), &m_phaseContacts ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Phase contacts' elevations [m]" );  
+    setDescription( "Phase contacts' elevations [m]" );
 
   getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
@@ -110,13 +110,28 @@ void EquilibriumInitialCondition::postInputInitialization()
                    viewKeyStruct::componentNamesString() <<
                    " and " << viewKeyStruct::componentFractionVsElevationTableNamesString(),
                    InputError );
-    GEOS_THROW_IF( m_componentNames.size() >= 2 && m_initPhaseName.empty(),
-                   getCatalogName() << " " << getDataContext() << ": for now, the keyword: " <<
-                   viewKeyStruct::initPhaseNameString() << " must be filled for a multiphase simulation",
-                   InputError );
 
-    array1d< localIndex > tableSizes( m_componentNames.size() );
-    for( size_t ic = 0; ic < m_componentNames.size(); ++ic )
+    integer const numberOfComponents = static_cast< integer >(m_componentNames.size());
+
+    if( 1 < numberOfComponents )
+    {
+      integer const numberOfContacts = static_cast< integer >(m_phaseContacts.size());
+      GEOS_THROW_IF( m_initPhaseName.empty() && numberOfContacts == 0,
+                     getCatalogName() << " " << getDataContext()
+                                      << ": for a multiphase simulation either the initial phase name must be provided using "
+                                      << viewKeyStruct::initPhaseNameString() << " or the phase contact elevations number be provided using "
+                                      << viewKeyStruct::phaseContactsString(),
+                     InputError );
+
+      GEOS_THROW_IF( !m_initPhaseName.empty() && 0 < numberOfContacts,
+                     getCatalogName() << " " << getDataContext()
+                                      << ": both " << viewKeyStruct::initPhaseNameString() << " and " << viewKeyStruct::phaseContactsString()
+                                      << " have been specified. The phase contacts will be ignored and single phase initialisation performed",
+                     InputError );
+    }
+
+    array1d< localIndex > tableSizes( numberOfComponents );
+    for( integer ic = 0; ic < numberOfComponents; ++ic )
     {
       GEOS_THROW_IF( m_componentFractionVsElevationTableNames[ic].empty(),
                      getCatalogName() << " " << getDataContext() <<

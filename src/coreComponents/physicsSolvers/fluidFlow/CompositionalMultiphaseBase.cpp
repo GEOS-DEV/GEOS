@@ -22,7 +22,6 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureSelector.hpp"
-#include "constitutive/capillaryPressure/InverseCapillaryPressure.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/diffusion/DiffusionSelector.hpp"
 #include "constitutive/dispersion/DispersionSelector.hpp"
@@ -46,6 +45,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalPhaseVolumeFractionKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/RelativePermeabilityUpdateKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureInversionKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/CapillaryPressureUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolidInternalEnergyUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/HydrostaticPressureKernel.hpp"
@@ -1099,8 +1099,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
   {
-
-    // collect all the equilibrium names to idx
+    // Collect all the equilibrium names to idx
     equilNameToEquilId.insert( {bc.getName(), equilCounter} );
     equilCounter++;
 
@@ -1171,7 +1170,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       real64 const equilTolerance = fs.getEquilibrationTolerance();
       real64 const datumElevation = fs.getDatumElevation();
       real64 const datumPressure = fs.getDatumPressure();
-      string const initPhaseName = fs.getInitPhaseName();   // will go away when GOC/WOC are implemented
+      string const initPhaseName = fs.getInitPhaseName();
       arrayView1d< real64 const > const phaseContacts = fs.getPhaseContacts();
 
       localIndex const equilIndex = equilNameToEquilId.at( fs.getName() );
@@ -1236,151 +1235,138 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                        InputError );
       }
 
-      // Note: for now, we assume that the reservoir is in a single-phase state at initialization
+      // Check if we are targetting single or multiple phase initialisation
+      integer ipInit = -1;
+      bool singlePhaseInitialisation = false;
       string_array const & phaseNames = fluid.phaseNames();
-      auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
-      GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
-                     getCatalogName() << " " << getDataContext() << ": phase name " <<
-                     initPhaseName << " not found in the phases of " << fluid.getDataContext(),
-                     InputError );
-      integer const ipInit = ( numPhases == 1 ) ? std::distance( std::begin( phaseNames ), itPhaseNames ) : -1;
+      if( !initPhaseName.empty())
+      {
+        auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
+        GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
+                       getCatalogName() << " " << getDataContext() << ": phase name " <<
+                       initPhaseName << " not found in the phases of " << fluid.getDataContext(),
+                       InputError );
+        ipInit = ( numPhases == 1 ) ? std::distance( std::begin( phaseNames ), itPhaseNames ) : -1;
+        singlePhaseInitialisation = true;
+      }
 
       // Step 3.4: compute the hydrostatic pressure values
-    // if( m_hasCapPressure )
-    // {
-      // initialized porosity
-      CoupledSolidBase const & porousSolid =
-        getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
+      arrayView1d< integer const > phaseOrder;
+      arrayView1d< real64 const > phaseMinVolumeFraction;
+      array1d< integer > temporaryPhaseOrder( constitutive::CapillaryPressureBase::MAX_NUM_PHASES );
+      array1d< real64 > temporaryMinVolumeFraction( numPhases );
+      if( m_hasCapPressure )
+      {
+        string const capPressureName = subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() );
+        CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
 
-      // initialized permeability
-      PermeabilityBase const & permeabilityMaterial =
-        getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
+        phaseOrder = capPressure.phaseOrder();
+        phaseMinVolumeFraction = capPressure.phaseMinVolumeFraction();
+      }
+      else
+      {
+        auto const toPhaseType = [&]( string const & lookup ) -> integer
+        {
+          static unordered_map< string, integer > const phaseDict =
+          {
+            { "gas", CapillaryPressureBase::PhaseType::GAS },
+            { "oil", CapillaryPressureBase::PhaseType::OIL },
+            { "water", CapillaryPressureBase::PhaseType::WATER }
+          };
+          auto const it = phaseDict.find( lookup );
+          if( it == phaseDict.end())
+          {
+            return -1;
+          }
+          return it->second;
+        };
+        for( integer phaseType = 0; phaseType < constitutive::CapillaryPressureBase::MAX_NUM_PHASES; phaseType++ )
+        {
+          temporaryPhaseOrder[phaseType] = -1;
+        }
+        for( integer ip = 0; ip < numPhases; ip++ )
+        {
+          auto const phaseType = toPhaseType( phaseNames[ip] );
+          temporaryMinVolumeFraction[ip] = 0.0;
+          temporaryPhaseOrder[phaseType] = ip;
+        }
+        phaseMinVolumeFraction = temporaryMinVolumeFraction.toViewConst();
+        phaseOrder = temporaryPhaseOrder.toViewConst();
+      }
 
-      CapillaryPressureBase & capPressure =
-        getConstitutiveModel< CapillaryPressureBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() ) );
-    // }
-
-      auto const phaseOrder = capPressure.phaseOrder();
       integer const ipGas = phaseOrder[CapillaryPressureBase::PhaseType::GAS];
       integer const ipWater = phaseOrder[CapillaryPressureBase::PhaseType::WATER];
       integer const ipOil = phaseOrder[CapillaryPressureBase::PhaseType::OIL];
-      arrayView1d< real64 const > const phaseMinVolumeFraction = capPressure.phaseMinVolumeFraction();
 
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
         using FluidType = TYPEOFREF( castedFluid );
         typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+        using Kernel = isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel;
 
-        // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
-        isothermalCompositionalMultiphaseBaseKernels::
-          HydrostaticPressureKernel::ReturnType const returnValue =
-          isothermalCompositionalMultiphaseBaseKernels::
-            HydrostaticPressureKernel::launch( numPointsInTable,
-                                               numComps,
-                                               numPhases,
-                                               ipGas,
-                                               ipOil,
-                                               ipWater,
-                                               ipInit,
-                                               maxNumEquilIterations,
-                                               phaseContacts,
-                                               phaseMinVolumeFraction,
-                                               equilTolerance,
-                                               gravVector,
-                                               minElevation,
-                                               elevationIncrement,
-                                               datumElevation,
-                                               datumPressure,
-                                               fluidWrapper,
-                                               compFracTableWrappers.toViewConst(),
-                                               tempTableWrapper,
-                                               elevationValues.toNestedView(),
-                                               pressureValues.toView(), 
-                                               phaseDens.toView(),
-                                               phaseCompFrac.toView() );
-        GEOS_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
+        // note: This is a serial Kernel (due to the nature of the problem being solved). So values do not need to go onto the GPU
+        Kernel::ReturnType const returnValue = Kernel::launch( numPointsInTable,
+                                                               numComps,
+                                                               numPhases,
+                                                               ipGas,
+                                                               ipOil,
+                                                               ipWater,
+                                                               ipInit,
+                                                               maxNumEquilIterations,
+                                                               phaseContacts,
+                                                               phaseMinVolumeFraction,
+                                                               equilTolerance,
+                                                               gravVector,
+                                                               minElevation,
+                                                               elevationIncrement,
+                                                               datumElevation,
+                                                               datumPressure,
+                                                               fluidWrapper,
+                                                               compFracTableWrappers.toViewConst(),
+                                                               tempTableWrapper,
+                                                               elevationValues.toNestedView(),
+                                                               pressureValues.toView(),
+                                                               phaseDens.toView(),
+                                                               phaseCompFrac.toView() );
+
+        GEOS_THROW_IF( returnValue == Kernel::ReturnType::FAILED_TO_CONVERGE,
                        getCatalogName() << " " << getDataContext() <<
                        ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
                        "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
                        "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
                        std::runtime_error );
 
-        GEOS_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
-                            getCatalogName() << " " << getDataContext() <<
-                            ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
-                            "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<
-                            "Please make sure that only one phase is mobile at the beginning of the simulation. \n" <<
-                            "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
-
+        if( singlePhaseInitialisation )
+        {
+          GEOS_LOG_RANK_0_IF( returnValue == Kernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
+                              getCatalogName() << " " << getDataContext() <<
+                              ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
+                              "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<
+                              "Please make sure that only one phase is mobile at the beginning of the simulation. \n" <<
+                              "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
+        }
       } );
 
       // Step: create table wrappers for the phase pressures and mass density
-      array1d< real64 > tmpPhasePressureValues( numPointsInTable ); // holder for phase pressure values
-      array1d< real64 > tmpphaseDensValues( numPointsInTable ); // holder for phase mass density values
-      array1d< TableFunction::KernelWrapper > phasePressureTableWrappers( numPhases );
-      array1d< TableFunction::KernelWrapper > phaseDensTableWrappers( numPhases );
-      for ( localIndex ip = 0; ip < numPhases; ++ip )
+      // Create a wrapper for the elevations
+      string const elevationIndexTableName = GEOS_FMT( "{}_{}_Elevation_index_table", fs.getName(), subRegion.getName() );
+      if( !functionManager.hasGroup< TableFunction >( elevationIndexTableName ))
       {
-        for ( localIndex i = 0; i < numPointsInTable; ++i )
+        array1d< real64 > indexValues( numPointsInTable );
+        for( localIndex i = 0; i < numPointsInTable; ++i )
         {
-          tmpPhasePressureValues[i] = pressureValues[i][0][ip];
-          tmpphaseDensValues[i] = phaseDens[i][0][ip];
+          indexValues[i] = i;
         }
-        string const presTableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ip] + "Pressure" + "_table";
-        TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), presTableName ) );
-        presTable->setTableCoordinates( elevationValues, { units::Distance } );
-        presTable->setTableValues( tmpPhasePressureValues, units::Pressure );
-        presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-        phasePressureTableWrappers[ip] = presTable->createKernelWrapper();
-
-        string const densTableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ip] + "Density" + "_table";
-        TableFunction * const densTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), densTableName ) );
-        densTable->setTableCoordinates( elevationValues, { units::Distance } );
-        densTable->setTableValues( tmpphaseDensValues, units::Density );
-        densTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-        phaseDensTableWrappers[ip] = densTable->createKernelWrapper();
+        TableFunction * table = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), elevationIndexTableName ) );
+        table->setTableCoordinates( elevationValues, { units::Distance } );
+        table->setTableValues( indexValues, units::Dimensionless );
+        table->setInterpolationMethod( TableFunction::InterpolationType::Linear );
       }
-
-      // Step: create table wrappers for phase component fractions 
-      array1d< real64 > tmpPhaseCompFracValues( numPointsInTable ); // holder for phase compositions values
-      array2d< TableFunction::KernelWrapper > phaseCompFracTableWrappers( numPhases, numComps );
-      for ( localIndex ip = 0; ip < numPhases; ++ip )
-      {
-        for ( localIndex ic = 0; ic < numComps; ++ic )
-        {
-          for ( localIndex i = 0; i < numPointsInTable; ++i )
-          {
-            tmpPhaseCompFracValues[i] = phaseCompFrac[i][0][ip][ic];
-          }
-          string const tableName = fs.getName() + "_" + subRegion.getName() + "_"  + componentNames[ic] +
-            "FracIn" + phaseNames[ip] + "Phase" + "_table";
-          TableFunction * const table = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
-          table->setTableCoordinates( elevationValues, { units::Distance } );
-          table->setTableValues( tmpPhaseCompFracValues, units::Dimensionless );
-          table->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-          phaseCompFracTableWrappers[ip][ic] = table->createKernelWrapper();
-        }
-      }
+      TableFunction const & elevationIndexTable = functionManager.getGroup< TableFunction >( elevationIndexTableName );
+      TableFunction::KernelWrapper elevationIndexTableWrapper = elevationIndexTable.createKernelWrapper();
 
       arrayView2d< real64 const > const elemCenter =
         subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
-
-      array3d< real64, geos::constitutive::cappres::LAYOUT_CAPPRES > targetPhaseCapPressure;
-      targetPhaseCapPressure.resize( targetSet.size(), 1, numPhases );
-
-      array2d< real64, compflow::LAYOUT_PHASE > targetPhaseVolumeFraction;
-      targetPhaseVolumeFraction.resize( targetSet.size(), numPhases );
-      real64 const initialPhaseVolumeFractionGuess = 1.0 / real64( numPhases );
-      for ( localIndex i = 0; i < targetSet.size(); ++i )
-      {
-        for ( localIndex ip = 0; ip < numPhases; ++ip )
-        {
-          targetPhaseVolumeFraction[i][ip] = initialPhaseVolumeFractionGuess;
-        }
-      }
-
-      array1d< bool > const success( targetSet.size() );
-      array2d< real64 > unCorrCompFractions( targetSet.size(), numComps );
 
       arrayView1d< real64 > const pres = subRegion.getReference< array1d< real64 > >( flow::pressure::key() );
       arrayView1d< real64 > const temp = subRegion.getReference< array1d< real64 > >( flow::temperature::key() );
@@ -1390,6 +1376,8 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         compFracTableWrappers.toViewConst();
 
       RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
+
+      arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > pressureValuesView = pressureValues.toViewConst();
 
       // Assign pressure and temperature to cells
       forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
@@ -1401,121 +1389,105 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                            pres,
                                                            temp,
                                                            minPressure,
-                                                           phasePressureTableWrappers,
+                                                           numPointsInTable,
+                                                           elevationIndexTableWrapper,
+                                                           pressureValuesView,
                                                            tempTableWrapper,
                                                            phaseContacts] GEOS_HOST_DEVICE ( localIndex const i )
       {
         localIndex const k = targetSet[i];
         real64 const elevation = elemCenter[k][2];
 
-        integer ip_pres = -1;
-        if ( numPhases == 2 && ipGas >= 0 && ipWater >= 0 )
+        real64 ea = elevationIndexTableWrapper.compute( &elevation );
+        integer const en = LvArray::math::min( static_cast< integer >(ea), numPointsInTable - 2 );
+        ea -= en;
+
+        integer phaseIndex = -1;
+        if( numPhases == 2 && ipGas >= 0 && ipWater >= 0 )
         {
-          ip_pres = ( elevation < phaseContacts[0] ) ? ipWater : ipGas;
+          phaseIndex = ( elevation < phaseContacts[0] ) ? ipWater : ipGas;
         }
-        else if ( numPhases == 3 && ipGas >= 0 && ipOil >= 0 && ipWater >= 0 )
+        else if( numPhases == 3 && ipGas >= 0 && ipOil >= 0 && ipWater >= 0 )
         {
-          ip_pres = ( elevation <= phaseContacts[1] ) ? ipWater :
-                    ( elevation > phaseContacts[1] && elevation <= phaseContacts[0] ) ? ipOil : ipGas;
+          phaseIndex = ( elevation <= phaseContacts[1] ) ? ipWater :
+                       ( elevation > phaseContacts[1] && elevation <= phaseContacts[0] ) ? ipOil : ipGas;
         }
-        pres[k] = phasePressureTableWrappers[ip_pres].compute( &elevation );
+        real64 const p0 = pressureValuesView[en][0][phaseIndex];
+        real64 const p1 = pressureValuesView[en+1][0][phaseIndex];
+        pres[k] = (1.0-ea)*p0 + ea*p1;
         temp[k] = tempTableWrapper.compute( &elevation );
         minPressure.min( pres[k] );
-      });
-
-      // Initialise porosity and permeability for capillary pressure computaion
-      CellElementSubRegion * cellElemSubRegion = dynamicCast< CellElementSubRegion * >( &subRegion );
-      if (cellElemSubRegion != nullptr)
-      {
-        updatePorosityAndPermeability( *cellElemSubRegion );
-      }
-      // This needs to happen before calling updateCapPressureModel
-      arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
-      arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
-      capPressure.initializeRockState( porosity, permeability );   
-      updateCapPressureModel( subRegion );
-
-      constitutiveUpdatePassThru( capPressure, [&] ( auto & castCapPressure )
-      {
-        using CapPressureType = TYPEOFREF( castCapPressure );
-        InverseCapillaryPressure< CapPressureType > inverseCapPressureType( castCapPressure );
-
-        auto capPressureWrapper = inverseCapPressureType.createKernelWrapper();
-
-        array2d< real64 > jFuncMultiplierArray( targetSet.size(), numPhases - 1 );
-        arrayView2d< real64 const > jFuncMultiplier = jFuncMultiplierArray.toViewConst();
-        constexpr bool isJFunction = std::is_same_v< CapPressureType, JFunctionCapillaryPressure >;
-        if constexpr ( isJFunction )
-        {
-          jFuncMultiplier = capPressure.getField<geos::fields::cappres::jFuncMultiplier>().reference().toViewConst();
-        }
-
-        forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
-                                                             elemCenter,
-                                                             ipGas,
-                                                             ipOil,
-                                                             ipWater,
-                                                             phasePressureTableWrappers,
-                                                             capPressureWrapper,
-                                                             targetPhaseVolumeFraction,
-                                                             jFuncMultiplier,
-                                                             targetPhaseCapPressure,
-                                                             numPhases,
-                                                             numComps,
-                                                             success,
-                                                             phaseDensTableWrappers,
-                                                             compFrac,
-                                                             unCorrCompFractions,
-                                                             phaseCompFracTableWrappers,
-                                                             compFracTableWrappersViewConst,
-                                                             phaseContacts] GEOS_HOST_DEVICE ( localIndex const i )
-        {
-          localIndex const k = targetSet[i];
-          real64 const elevation = elemCenter[k][2];
-
-          if ( numPhases == 2 && ipGas >= 0 && ipWater >= 0 )
-          {
-            targetPhaseCapPressure[k][0][ipWater] = phasePressureTableWrappers[ipGas].compute( &elevation ) 
-              - phasePressureTableWrappers[ipWater].compute( &elevation );
-          }
-          else if ( numPhases == 3 && ipGas >= 0 && ipOil >= 0 && ipWater >= 0 )
-          {
-            targetPhaseCapPressure[k][0][ipGas] = - phasePressureTableWrappers[ipGas].compute( &elevation ) 
-              + phasePressureTableWrappers[ipOil].compute( &elevation );
-            targetPhaseCapPressure[k][0][ipWater] = phasePressureTableWrappers[ipOil].compute( &elevation ) 
-              - phasePressureTableWrappers[ipWater].compute( &elevation );
-          }
-          success[k] = capPressureWrapper.compute( targetPhaseCapPressure[k][0],
-                                                   jFuncMultiplier[k],
-                                                   targetPhaseVolumeFraction[k] );
-
-          // Step: compute phase mass bulk density
-          real64 fluidBulkDens = 0.0;
-          array1d< real64 > phaseBulkDens( numPhases );
-          for (localIndex ip = 0; ip < numPhases; ++ip) 
-          {
-            phaseBulkDens[ip] = phaseDensTableWrappers[ip].compute( &elevation ) * targetPhaseVolumeFraction[k][ip];
-            fluidBulkDens += phaseBulkDens[ip];
-          }
-          for (localIndex ip = 0; ip < numPhases; ++ip) 
-          {
-            phaseBulkDens[ip] /= fluidBulkDens;
-          }
-          for ( localIndex ic = 0; ic < numComps; ++ic )
-          {
-            compFrac[k][ic] = 0;
-            for ( localIndex ip = 0; ip < numPhases; ++ip )
-            {
-              compFrac[k][ic] += phaseBulkDens[ip] * phaseCompFracTableWrappers[ip][ic].compute( &elevation );
-            }
-            unCorrCompFractions[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
-          }
-        } );
       } );
 
       GEOS_ERROR_IF( minPressure.get() < 0.0,
                      GEOS_FMT( "{}: A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
                                getDataContext(), minPressure.get(), region.getName(), subRegion.getName() ) );
+
+      // Initialise porosity and permeability for capillary pressure computaion
+      CellElementSubRegion * cellElemSubRegion = dynamicCast< CellElementSubRegion * >( &subRegion );
+      if( cellElemSubRegion != nullptr )
+      {
+        updatePorosityAndPermeability( *cellElemSubRegion );
+      }
+
+      if( m_hasCapPressure )
+      {
+        // This needs to happen before calling updateCapPressureModel
+        // initialized porosity
+        string const solidName = subRegion.template getReference< string >( viewKeyStruct::solidNamesString() );
+        CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+
+        // initialized permeability
+        string const permeabilityName = subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() );
+        PermeabilityBase const & permeabilityMaterial = getConstitutiveModel< PermeabilityBase >( subRegion, permeabilityName );
+
+        string const capPressureName = subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() );
+        CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
+
+        arrayView2d< real64 const > const porosity = porousSolid.getPorosity();
+        arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
+        capPressure.initializeRockState( porosity, permeability );
+        updateCapPressureModel( subRegion );
+      }
+
+      if( m_hasCapPressure )
+      {
+        string const capPressureName = subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() );
+        CapillaryPressureBase & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
+        constitutiveUpdatePassThru( capPressure, [&] ( auto & castCapPressure )
+        {
+          using CapPressureType = TYPEOFREF( castCapPressure );
+          using KernelType = isothermalCompositionalMultiphaseBaseKernels::CapillaryPressureInversionKernel< CapPressureType >;
+
+          isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector2< KernelType >( numComps,
+                                                                                             numPhases,
+                                                                                             targetSet,
+                                                                                             castCapPressure,
+                                                                                             phaseOrder,
+                                                                                             elemCenter,
+                                                                                             elevationIndexTable.createKernelWrapper(),
+                                                                                             pressureValues,
+                                                                                             phaseDens,
+                                                                                             phaseCompFrac,
+                                                                                             compFrac );
+        } );
+      }
+      else
+      {
+        using KernelType = isothermalCompositionalMultiphaseBaseKernels::CapillaryPressureInversionKernel< constitutive::NoOpCapillaryPressure >;
+        constitutive::NoOpCapillaryPressure noOpCapillaryPressure( numPhases, phaseOrder );
+        isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector2< KernelType >( numComps,
+                                                                                           numPhases,
+                                                                                           targetSet,
+                                                                                           noOpCapillaryPressure,
+                                                                                           phaseOrder,
+                                                                                           elemCenter,
+                                                                                           elevationIndexTable.createKernelWrapper(),
+                                                                                           pressureValues,
+                                                                                           phaseDens,
+                                                                                           phaseCompFrac,
+                                                                                           compFrac );
+      }
     } );
   } );
 }

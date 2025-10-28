@@ -1403,6 +1403,8 @@ When set to "error", output a throw.
 		<xsd:attribute name="maxNumberOfEquilibrationIterations" type="integer" default="5" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
+		<!--phaseContacts => Phase contacts' elevations [m]-->
+		<xsd:attribute name="phaseContacts" type="real64_array" default="{0}" />
 		<!--scale => Scale factor for value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--temperatureVsElevationTableName => Name of the table specifying the (temperature [K] vs elevation) relationship-->

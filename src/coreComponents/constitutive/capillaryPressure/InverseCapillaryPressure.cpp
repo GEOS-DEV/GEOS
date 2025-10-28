@@ -29,6 +29,27 @@ namespace geos
 namespace constitutive
 {
 
+NoOpCapillaryPressure::NoOpCapillaryPressure( integer const numPhases,
+                                              arrayView1d< integer const > const & phaseOrder )
+  : m_numPhases( numPhases ),
+  m_phaseOrder( phaseOrder )
+{}
+
+integer NoOpCapillaryPressure::numFluidPhases() const
+{
+  return m_numPhases;
+}
+
+arrayView1d< integer const > const & NoOpCapillaryPressure::phaseOrder() const
+{
+  return m_phaseOrder;
+}
+
+NoOpCapillaryPressure::KernelWrapper NoOpCapillaryPressure::createKernelWrapper()
+{
+  return KernelWrapper();
+}
+
 template< typename CAP_PRESSURE >
 InverseCapillaryPressureUpdate< CAP_PRESSURE >::InverseCapillaryPressureUpdate( CAP_PRESSURE & capPressure,
                                                                                 arrayView2d< real64 const > const & propertyLimits,
@@ -51,15 +72,16 @@ InverseCapillaryPressureUpdate< CAP_PRESSURE >::InverseCapillaryPressureUpdate( 
 template< typename CAP_PRESSURE >
 InverseCapillaryPressure< CAP_PRESSURE >::InverseCapillaryPressure( CAP_PRESSURE & capPressure )
   : m_capPressure( capPressure ),
-  m_propertyLimits( 5, capPressure.numFluidPhases())
+  m_propertyLimits( 5, capPressure.numFluidPhases() )
 {
   string const mivVolumeKey = CapillaryPressureBase::viewKeyStruct::phaseMinVolumeFractionString();
   array1d< real64 > & phaseMinVolumeFraction = capPressure.template getReference< array1d< real64 > >( mivVolumeKey );
 
   string const phaseOrderKey = CapillaryPressureBase::viewKeyStruct::phaseOrderString();
-  array1d< integer > const & phaseOrder = capPressure.template getReference< array1d< integer > >( phaseOrderKey );;
+  array1d< integer > const & phaseOrder = capPressure.template getReference< array1d< integer > >( phaseOrderKey );
 
   calculatePropertyLimits( capPressure.numFluidPhases(),
+                           phaseOrder,
                            capPressure.createKernelWrapper(),
                            phaseMinVolumeFraction,
                            m_propertyLimits );
@@ -72,6 +94,74 @@ InverseCapillaryPressure< CAP_PRESSURE >::InverseCapillaryPressure( CAP_PRESSURE
   calculateJFunctionIndex( capPressure.numFluidPhases(),
                            phaseOrder.toViewConst(),
                            m_jFunctionIndex );
+}
+
+template< >
+InverseCapillaryPressure< NoOpCapillaryPressure >::InverseCapillaryPressure( NoOpCapillaryPressure & capPressure )
+  : m_capPressure( capPressure ),
+  m_propertyLimits( 5, capPressure.numFluidPhases() ),
+  m_jFunctionIndex( capPressure.numFluidPhases() )
+{
+  integer const numPhases = capPressure.numFluidPhases();
+  arrayView1d< integer const > const & phaseOrder = capPressure.phaseOrder();
+
+  auto const minPoreVolume = m_propertyLimits[KernelWrapper::MIN_PORE_VOLUME];
+  auto const minSaturation = m_propertyLimits[KernelWrapper::MIN_SATURATION];
+  auto const maxSaturation = m_propertyLimits[KernelWrapper::MAX_SATURATION];
+  auto const minCapPressure = m_propertyLimits[KernelWrapper::MIN_CAP_PRESSURE];
+  auto const maxCapPressure = m_propertyLimits[KernelWrapper::MAX_CAP_PRESSURE];
+
+  for( integer ip = 0; ip < numPhases; ++ip )
+  {
+    minCapPressure[ip] = 0.0;
+    maxCapPressure[ip] = 0.0;
+    minPoreVolume[ip] = 0.0;
+    m_jFunctionIndex[ip] = 0;
+  }
+
+  for( integer phaseType = 0; phaseType < phaseOrder.size(); ++phaseType )
+  {
+    integer const phaseIndex = phaseOrder[phaseType];
+    if( phaseIndex < 0 )
+    {
+      continue;
+    }
+    // The water indexed capillary pressure is supposed to be decreasing
+    bool const isDecreasing = (phaseType == CapillaryPressureBase::PhaseType::WATER);
+    if( isDecreasing )
+    {
+      minSaturation[phaseIndex] = 1.0;
+      maxSaturation[phaseIndex] = 0.0;
+    }
+    else
+    {
+      minSaturation[phaseIndex] = 0.0;
+      maxSaturation[phaseIndex] = 1.0;
+    }
+  }
+
+  // Precedence of phases on independence
+  // Always favour water as the independent phase, then gas, then oil
+  if( 0 <= phaseOrder[CapillaryPressureBase::PhaseType::OIL] )
+  {
+    m_dependentPhase = phaseOrder[CapillaryPressureBase::PhaseType::OIL];
+  }
+  else if( 0 <= phaseOrder[CapillaryPressureBase::PhaseType::GAS] )
+  {
+    m_dependentPhase = phaseOrder[CapillaryPressureBase::PhaseType::GAS];
+  }
+  else
+  {
+    m_dependentPhase = 0;
+  }
+
+  for( integer ip = 0; ip < numPhases; ++ip )
+  {
+    if( ip != m_dependentPhase )
+    {
+      m_independentPhases.emplace_back( ip );
+    }
+  }
 }
 
 template< typename CAP_PRESSURE >
@@ -87,6 +177,7 @@ InverseCapillaryPressure< CAP_PRESSURE >::createKernelWrapper()
 
 template< typename CAP_PRESSURE >
 void InverseCapillaryPressure< CAP_PRESSURE >::calculatePropertyLimits( integer numPhases,
+                                                                        arrayView1d< integer const > const & phaseOrder,
                                                                         typename CAP_PRESSURE::KernelWrapper capPressureWrapper,
                                                                         arrayView1d< real64 const > const & phaseMinVolumeFraction,
                                                                         arrayView2d< real64 > const & propertyLimits ) const
@@ -139,6 +230,33 @@ void InverseCapillaryPressure< CAP_PRESSURE >::calculatePropertyLimits( integer 
       {
         maxSaturation[jp] = saturation[0][jp];
         maxCapPressure[jp] = capPressure[jp];
+      }
+    }
+  }
+
+  // If the capillary pressure variation in a phase is zero then we need to change the mimimum saturations
+  auto const getPhase = [&]( integer const phaseIndex ) -> integer {
+    for( integer ip = 0; ip < phaseOrder.size(); ++ip )
+    {
+      if( phaseOrder[ip] == phaseIndex )
+      {
+        return ip;
+      }
+    }
+    return -1;
+  };
+  for( integer ip = 0; ip < numPhases; ++ip )
+  {
+    real64 const dp = maxCapPressure[ip] - minCapPressure[ip];
+    if( dp < LvArray::NumericLimits< real64 >::epsilon )
+    {
+      // The water indexed capillary pressure is supposed to be decreasing
+      bool const isDecreasing = (getPhase( ip ) == CapillaryPressureBase::PhaseType::WATER);
+      minSaturation[ip] = phaseMinVolumeFraction[ip];
+      maxSaturation[ip] = 1.0 - sumMinVolumeFraction + phaseMinVolumeFraction[ip];
+      if( isDecreasing )
+      {
+        std::swap( minSaturation[ip], maxSaturation[ip] );
       }
     }
   }
@@ -214,6 +332,7 @@ template class InverseCapillaryPressure< BrooksCoreyCapillaryPressure >;
 template class InverseCapillaryPressure< TableCapillaryPressure >;
 template class InverseCapillaryPressure< JFunctionCapillaryPressure >;
 template class InverseCapillaryPressure< VanGenuchtenCapillaryPressure >;
+template class InverseCapillaryPressure< NoOpCapillaryPressure >;
 
 } // namespace constitutive
 
