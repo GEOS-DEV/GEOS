@@ -603,7 +603,7 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
 
   }
 
-};
+}
 void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & time_n )
 {
   GEOS_MARK_FUNCTION;
