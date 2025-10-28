@@ -383,9 +383,6 @@ public:
 
 protected:
 
-  /// The array containing the nodal position array.
-  //arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
-
   /// The array of array containing the face to node map.
   ArrayOfArraysView< localIndex const > const m_faceToNodes;
 

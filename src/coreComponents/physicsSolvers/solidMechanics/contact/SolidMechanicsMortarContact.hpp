@@ -1,20 +1,8 @@
 /*
  * ------------------------------------------------------------------------------------------------------------
- * SPDX-License-Identifier: LGPL-2    std::map< ElementShape, array1d< localIndex > > const &
-    faceTypesToFaceElementsSlave = m_faceTypeToElementList.at( MortarSide::Slave );
-
-    std::map< ElementShape, array1d< localIndex > > const &
-    faceTypesToFaceElementsMaster = m_faceTypeToElementList.at( MortarSide::Master );
-
-    for( const auto & [slaveShape, slaveElementList] : faceTypesToFaceElementsSlave )
-    {
-      GEOS_UNUSED_VAR( slaveElementList );
-      for(const auto & [masterShape, masterElementList] : faceTypesToFaceElementsMaster )
-      {
-        GEOS_UNUSED_VAR( masterElementList );
-        finiteElement::FiniteElementBase const & slaveFE = *(m_faceTypeToFiniteElements.at( slaveShape ));
-        finiteElement::FiniteElementBase const & masterFE = *(m_faceTypeToFiniteElements.at( masterShape ));Copyright (c) 2016-2024 Lawrence
- * Livermore National Security LLC
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
  * Copyright (c) 2023-2024 Chevron
@@ -268,31 +256,6 @@ private:
   // Check intersection between two bounding boxes using polytops primitives
   bool checkIntersection( std::unique_ptr< TreeNodeMortar > const & nodeMaster,
                           std::unique_ptr< TreeNodeMortar > const & nodeSlave );
-
-  // retrieve finite element type from templated element shape
-  // template< ElementShape S >
-  // decltype(auto) getFE()
-  // {
-  //   auto & femTypePtr = m_faceTypeToMortarFiniteElements.at( S ); // unique_ptr<FiniteElementBase>
-
-  //   if constexpr (S == ElementShape::Triangle)
-  //   {
-  //     using femType = finiteElement::H1_TriangleFace_Lagrange1_Gauss4;
-
-  //     return *static_cast< femType * >(femTypePtr.get());
-  //   }
-  //   else if constexpr (S == ElementShape::Quadrilateral)
-  //   {
-  //     using femType = finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2;
-  //     return *static_cast< femType * >(femTypePtr.get());
-  //   }
-  //   else
-  //   {
-  //     static_assert( S == ElementShape::Triangle || S == ElementShape::Quadrilateral,
-  //                    "Unsupported ElementShape" );
-  //   }
-  // }
-
 
   template< ElementShape S >
   struct selectFE

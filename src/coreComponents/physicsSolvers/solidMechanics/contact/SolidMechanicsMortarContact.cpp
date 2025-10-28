@@ -152,10 +152,6 @@ void SolidMechanicsMortarContact::setupDofs( DomainPartition const & domain,
                           DofManager::Connector::Elem,
                           meshTargets );
 
-  //dofManager.addCoupling( solidMechanics::totalDisplacement::key(),
-  //                        contact::totalBubbleDisplacement::key(),
-  //                        DofManager::Connector::Elem,
-  //                        meshTargets );
 }
 
 
@@ -254,17 +250,7 @@ void SolidMechanicsMortarContact::setupSystem( DomainPartition & domain,
   solution.setName( this->getName() + "/solution" );
   solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
 
-
-  //Write the matrix pattern to a file for debugging
-  // ParallelMatrix parallel_matrix;
-  // parallel_matrix.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
-  // parallel_matrix.write("mortar_sparsity_new.mtx");
-
   computeRotationMatrices( );
-
-  //GEOS_ERROR("Interrupt");
-
-  //////////////////////////////////////////////////////////////////////////////////
 
   GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( setSparsity );
@@ -294,10 +280,6 @@ void SolidMechanicsMortarContact::assembleSystem( real64 const time,
   GEOS_MARK_FUNCTION;
   synchronizeFractureState( domain );
 
-  // ParallelMatrix parallel_matrix_0;
-  // parallel_matrix_0.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
-  // parallel_matrix_0.write("matrix_preMech.mtx");
-
   SolidMechanicsLagrangianFEM::assembleSystem( time,
                                                dt,
                                                domain,
@@ -307,13 +289,7 @@ void SolidMechanicsMortarContact::assembleSystem( real64 const time,
 
   assembleBubbles( dt, domain, dofManager, localMatrix, localRhs );
 
-  std::cout << "Assembling mortar matrices" << std::endl;
-
   assembleMortar( dt, dofManager, localMatrix, localRhs );
-
-  // ParallelMatrix parallel_matrix_3;
-  // parallel_matrix_3.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
-  // parallel_matrix_3.write("systemMatrix.mtx");
 
 }
 
