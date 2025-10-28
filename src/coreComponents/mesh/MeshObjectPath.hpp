@@ -60,7 +60,7 @@ public:
 
   /// @brief alias for the map allowing to know the existance of given element types (node, edge, cell...)
   /// with localIndex = 0 | 1 ( exist / not existing)
-  using SetNameToTypesMap = std::map< std::string, std::map< MeshObjectPath::ObjectTypes, localIndex > >;
+  using SetNameToTypesMap = stdMap< string, stdMap< MeshObjectPath::ObjectTypes, localIndex > >;
 
   /**
    * @brief Construct a new Mesh Object Path object
