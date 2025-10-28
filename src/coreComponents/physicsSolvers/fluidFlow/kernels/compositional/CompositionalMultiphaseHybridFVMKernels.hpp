@@ -445,6 +445,7 @@ struct AssemblerKernelHelper
   static void
   assembleFaceConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
                            arrayView1d< integer const > const & faceGhostRank,
+                           arrayView1d< integer const > const & isBoundaryFace,
                            arraySlice1d< localIndex const > const & elemToFaces,
                            globalIndex const elemDofNumber,
                            globalIndex const rankOffset,
@@ -517,6 +518,7 @@ struct AssemblerKernel
            arrayView2d< localIndex const > const & elemList,
            arrayView1d< globalIndex const > const & faceDofNumber,
            arrayView1d< integer const > const & faceGhostRank,
+           arrayView1d< integer const > const & isBoundaryFace,
            arrayView1d< real64 const > const & facePres,
            arrayView1d< real64 const > const & faceGravCoef,
            arrayView1d< real64 const > const & mimFaceGravCoef,
