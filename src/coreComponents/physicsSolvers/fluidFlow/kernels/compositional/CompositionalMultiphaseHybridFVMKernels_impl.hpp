@@ -617,6 +617,7 @@ AssemblerKernelHelper::
                           arrayView2d< localIndex const > const & elemList,
                           SortedArrayView< localIndex const > const & regionFilter,
                           arrayView1d< globalIndex const > const & faceDofNumber,
+                          arrayView1d< integer const > const & isBoundaryFace,
                           arrayView1d< real64 const > const & mimFaceGravCoef,
                           arraySlice1d< localIndex const > const & elemToFaces,
                           real64 const & elemGravCoef,
@@ -677,6 +678,13 @@ AssemblerKernelHelper::
   // for each element, loop over the one-sided faces
   for( integer ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
+    localIndex const kf = elemToFaces[ifaceLoc];
+    
+    // Skip boundary faces - their fluxes are handled by DirichletFluxKernel
+    if( isBoundaryFace[kf] > 0 )
+    {
+      continue;
+    }
 
     // 1) Find if there is a neighbor, and if there is, grab the indices of the neighbor element
 
@@ -1129,6 +1137,7 @@ AssemblerKernel::
                                                                  elemList,
                                                                  regionFilter,
                                                                  faceDofNumber,
+                                                                 isBoundaryFace,
                                                                  mimFaceGravCoef,
                                                                  elemToFaces,
                                                                  elemGravCoef,
@@ -1485,7 +1494,8 @@ DirichletFluxKernel::
       // Use element mobility (simplified upwinding for Dirichlet BC)
       // Upwind phase component fraction based on flow direction
       // Use the total flux f for upwinding decision
-      real64 const beta = (f > 0.0) ? 1.0  : 0.0;
+//      real64 const beta = (f > 0.0) ? 1.0  : 0.0;
+      real64 const beta = 0.0;//(f > 0.0) ? 1.0  : 0.0;
       real64 const facePhaseMobility = facePhaseMob[kf][ip];
       real64 const phaseMobility = beta * phaseMob[erAdj][esrAdj][eiAdj][ip] + (1.0 - beta) * facePhaseMobility;
       real64 const phaseFlux = phaseMobility * f;
@@ -1567,6 +1577,7 @@ DirichletFluxKernel::
     for( integer ic = 0; ic < NC; ++ic )
     {
       RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow + ic], localFlux[ic] );
+      continue;
       
       globalIndex dofColIndices[NC+1];
       dofColIndices[0] = elemDof;
