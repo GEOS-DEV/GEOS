@@ -1406,6 +1406,18 @@ DirichletFluxKernel::
       cellFaces[jfaceLoc] = elemToFaces[eiAdj][jfaceLoc];
     }
 
+    // Enforce strong Dirichlet constraint on the boundary face: R = Pface - Pbc = 0
+    // Add unit Jacobian (dR/dPface = 1.0) on the diagonal
+    // The RHS is handled by the BC application that runs before/after this kernel
+    {
+      globalIndex const faceDof = faceDofNumber[kf];
+      localIndex  const faceRow = LvArray::integerConversion< localIndex >( faceDof - rankOffset );
+
+      // Add unit Jacobian: dR/dPface = 1.0 on the diagonal
+      real64 const one = -1.0;
+      localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( faceRow, &faceDof, &one, 1 );
+    }
+
     // Component fluxes
     real64 compFlux[NC]{};
     real64 dCompFlux_dP[NC]{};
@@ -1449,25 +1461,22 @@ DirichletFluxKernel::
       // Sum contributions from all connected faces
       for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
       {
-        // Potential difference for each face
+        // Each stencil face j uses its own face pressure
         localIndex const kfj = cellFaces[jfaceLoc];
         real64 const gravTimesDz_j = elemGravCoef[eiAdj] - faceGravCoef[kfj];
+        real64 const Tij = transMatrix[ifaceLoc][jfaceLoc];
         real64 const potDif_j = elemPres[eiAdj] - facePres[kfj] - densMean * gravTimesDz_j;
-        real64 const transmissibility_j = transMatrix[ifaceLoc][jfaceLoc];
-        
-        // Accumulate flux and derivatives
-        f += transmissibility_j * potDif_j;
-        dF_dP += transmissibility_j * ( 1.0 - dDensMean_dP * gravTimesDz_j );
 
-        // Derivative w.r.t. face pressure at this face (only kf contributes since potDif uses facePres[kf])
-        if ( jfaceLoc != ifaceLoc )
-        {
-          dF_dFaceP[jfaceLoc] = -transmissibility_j;
-        }
-                
+        // Accumulate flux and derivatives
+        f     += Tij * potDif_j;
+        dF_dP += Tij * ( 1.0 - dDensMean_dP * gravTimesDz_j );
+
+        // Correct Jacobian: d(potDif_j)/d(facePres[kfj]) = -1, so dF/d(facePres_j) = -T_ij
+        dF_dFaceP[jfaceLoc] = -Tij;
+
         for( integer jc = 0; jc < NC; ++jc )
         {
-          dF_dC[jc] += -transmissibility_j * dDensMean_dC[jc] * gravTimesDz_j;
+          dF_dC[jc] += -Tij * dDensMean_dC[jc] * gravTimesDz_j;
         }
       }
           
@@ -1505,14 +1514,18 @@ DirichletFluxKernel::
         // For derivatives, use element properties (simplified for boundary conditions)
         dCompFlux_dP[ic] += dPhaseFlux_dP * ycp + beta * phaseFlux * dPhaseCompFrac[erAdj][esrAdj][eiAdj][0][ip][ic][Deriv::dP];
 
+        // Compute dycpElem/dC for this component ic
+        real64 dycpElem_dC[NC];
         applyChainRule( NC,
                         dCompFrac_dCompDens[erAdj][esrAdj][eiAdj],
                         dPhaseCompFrac[erAdj][esrAdj][eiAdj][0][ip][ic],
-                        dProp_dC,
+                        dycpElem_dC,
                         Deriv::dC );
         for( integer jc = 0; jc < NC; ++jc )
         {
-          dCompFlux_dC[ic][jc] += dPhaseFlux_dC[jc] * ycp + beta * phaseFlux * dProp_dC[jc];
+          // d(ycp * phaseFlux)/dC = dycp/dC * phaseFlux + ycp * dPhaseFlux/dC
+          // dycp/dC = beta * dycpElem/dC (ycpFace is BC, independent of C)
+          dCompFlux_dC[ic][jc] += ycp * dPhaseFlux_dC[jc] + beta * phaseFlux * dycpElem_dC[jc];
         }
         
         // Add derivatives w.r.t. face pressures
@@ -1569,6 +1582,10 @@ DirichletFluxKernel::
       for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
       {
         localIndex const kfj = cellFaces[jfaceLoc];
+        // Skip coupling the cell rows to the same boundary face DOF we strongly constrain
+          if( kfj == kf )
+            continue;
+        
         globalIndex const faceDof = faceDofNumber[kfj];
         
         real64 facePressureJacobian = dt * dCompFlux_dFaceP[ic][jfaceLoc];

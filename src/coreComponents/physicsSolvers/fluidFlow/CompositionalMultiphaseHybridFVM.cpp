@@ -651,7 +651,6 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
     arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
     globalIndex const rankOffset = dofManager.rankOffset();
 
-    
 //    // Keep strong enforcement that the face pressure equals the informed bcPressure value (original behavior)
 //    arrayView1d< real64 const > const presFace =
 //      faceManager.getField< flow::facePressure >();
@@ -695,10 +694,15 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
 //                                                    rhsValue,
 //                                                    presFaceBC[kf],
 //                                                    presFace[kf] );
-//        localRhs[localRow] = rhsValue;
+//        // ADD THESE 3 LINES:
+//        // 1) Ensure Jacobian has dR/dPface = 1.0 on the face row
+//        real64 const one = 1.0;
+//        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow, &dofIndex, &one, 1 );
+//
+//        // 2) Set RHS = Pface - Pbc (consistent with constraint R = Pface - Pbc = 0)
+//        localRhs[localRow] = presFace[kf] - presFaceBC[kf];
 //      } );
 //    } );
-    
     
     // Get node positions
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePosition = nodeManager.referencePosition();
@@ -931,9 +935,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
         } );
       }
     } );
-    
-
-    
+  
     
     
   } );
