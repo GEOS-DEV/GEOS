@@ -647,6 +647,7 @@ AssemblerKernelHelper::
   // dof numbers
   globalIndex dofColIndicesElemVars[ NDOF*(NF+1) ]{};
   globalIndex dofColIndicesFaceVars[ NF ]{};
+  integer faceIndexMap[ NF ]{}; // Maps local face index to position in compact DOF array
   integer numNonBoundaryFaces = 0;
   for( integer idof = 0; idof < NDOF; ++idof )
   {
@@ -734,8 +735,13 @@ AssemblerKernelHelper::
     // Collect face DOF number only if this is not a boundary face
     if( isBoundaryFace[elemToFaces[ifaceLoc]] == 0 )
     {
+      faceIndexMap[ifaceLoc] = numNonBoundaryFaces;
       dofColIndicesFaceVars[numNonBoundaryFaces] = faceDofNumber[elemToFaces[ifaceLoc]];
       numNonBoundaryFaces++;
+    }
+    else
+    {
+      faceIndexMap[ifaceLoc] = -1; // Mark boundary faces
     }
 
     // 3) *************** Assemble buoyancy terms ******************
@@ -808,11 +814,21 @@ AssemblerKernelHelper::
                                                               NDOF * (NF+1) );
 
     // jacobian -- derivatives wrt face centered vars (only non-boundary faces)
+    // Need to compact the derivatives array to only include non-boundary faces
     if( numNonBoundaryFaces > 0 )
     {
+      real64 compactFaceDerivs[ NF ]{};
+      for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
+      {
+        if( faceIndexMap[jfaceLoc] >= 0 )
+        {
+          compactFaceDerivs[faceIndexMap[jfaceLoc]] = dDivMassFluxes_dFaceVars[ic][jfaceLoc];
+        }
+      }
+      
       localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
                                                                 &dofColIndicesFaceVars[0],
-                                                                &dDivMassFluxes_dFaceVars[0][0] + ic * NF,
+                                                                compactFaceDerivs,
                                                                 numNonBoundaryFaces );
     }
   }
@@ -1540,7 +1556,7 @@ DirichletFluxKernel::
         {
           // d(ycp * phaseFlux)/dC = dycp/dC * phaseFlux + ycp * dPhaseFlux/dC
           // dycp/dC = beta * dycpElem/dC (ycpFace is BC, independent of C)
-          dCompFlux_dC[ic][jc] += ycp * dPhaseFlux_dC[jc] + beta * dycpElem_dC[jc] * phaseFlux;
+          dCompFlux_dC[ic][jc] += ycp * dPhaseFlux_dC[jc] + beta * phaseFlux * dycpElem_dC[jc];
         }
         
         // Add derivatives w.r.t. face pressures
