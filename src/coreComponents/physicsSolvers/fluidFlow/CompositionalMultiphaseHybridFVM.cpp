@@ -159,7 +159,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
                                                                 string_array const & regionNames )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
-    FaceManager const & faceManager = mesh.getFaceManager();
+    FaceManager & faceManager = mesh.getFaceManager();
 
     CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups();
 
@@ -187,8 +187,8 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
     // Mark boundary faces (faces with Dirichlet BCs) to skip flux continuity constraint
     // Initialize all faces as interior (0), then mark boundary faces (1)
-    arrayView1d< integer > isBoundaryFaceView = faceManager.getField< flow::isBoundaryFace >();
-    isBoundaryFaceView.setValues< serialPolicy >( 0 );
+    arrayView1d< integer > const isBoundaryFaceView = faceManager.getReference< array1d< integer > >( flow::isBoundaryFace::key() );
+//    isBoundaryFaceView.setValues< serialPolicy >( 0 ); // default is zero
     
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< FieldSpecificationBase >( [&]( FieldSpecificationBase const & fs )

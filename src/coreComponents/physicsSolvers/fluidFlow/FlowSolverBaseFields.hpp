@@ -94,7 +94,7 @@ DECLARE_FIELD( isBoundaryFace,
                array1d< integer >,
                0,
                NOPLOT,
-               NO_WRITE,
+               WRITE_AND_READ,
                "Boundary face indicator: 1 for faces with Dirichlet BCs, 0 for interior faces" );
 
 DECLARE_FIELD( pressureGradient,

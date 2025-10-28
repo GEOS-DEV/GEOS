@@ -647,6 +647,7 @@ AssemblerKernelHelper::
   // dof numbers
   globalIndex dofColIndicesElemVars[ NDOF*(NF+1) ]{};
   globalIndex dofColIndicesFaceVars[ NF ]{};
+  integer numNonBoundaryFaces = 0;
   for( integer idof = 0; idof < NDOF; ++idof )
   {
     dofColIndicesElemVars[idof] = elemDofNumber[localIds[0]][localIds[1]][localIds[2]] + idof;
@@ -678,16 +679,8 @@ AssemblerKernelHelper::
   // for each element, loop over the one-sided faces
   for( integer ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
-    localIndex const kf = elemToFaces[ifaceLoc];
-    
-    // Skip boundary faces - their fluxes are handled by DirichletFluxKernel
-    if( isBoundaryFace[kf] > 0 )
-    {
-      continue;
-    }
 
     // 1) Find if there is a neighbor, and if there is, grab the indices of the neighbor element
-
     localIndex neighborIds[ 3 ] = { localIds[0], localIds[1], localIds[2] };
     hybridFVMKernels::CellConnectivity::isNeighborFound( localIds,
                                                          ifaceLoc,
@@ -737,6 +730,13 @@ AssemblerKernelHelper::
                                        dDivMassFluxes_dFaceVars,
                                        dofColIndicesElemVars,
                                        dofColIndicesFaceVars );
+
+    // Collect face DOF number only if this is not a boundary face
+    if( isBoundaryFace[elemToFaces[ifaceLoc]] == 0 )
+    {
+      dofColIndicesFaceVars[numNonBoundaryFaces] = faceDofNumber[elemToFaces[ifaceLoc]];
+      numNonBoundaryFaces++;
+    }
 
     // 3) *************** Assemble buoyancy terms ******************
 
@@ -807,11 +807,14 @@ AssemblerKernelHelper::
                                                               &dDivMassFluxes_dElemVars[0][0] + ic * NDOF * (NF+1),
                                                               NDOF * (NF+1) );
 
-    // jacobian -- derivatives wrt face centered vars
-    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
-                                                              &dofColIndicesFaceVars[0],
-                                                              &dDivMassFluxes_dFaceVars[0][0] + ic * NF,
-                                                              NF );
+    // jacobian -- derivatives wrt face centered vars (only non-boundary faces)
+    if( numNonBoundaryFaces > 0 )
+    {
+      localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
+                                                                &dofColIndicesFaceVars[0],
+                                                                &dDivMassFluxes_dFaceVars[0][0] + ic * NF,
+                                                                numNonBoundaryFaces );
+    }
   }
 }
 
@@ -894,7 +897,8 @@ AssemblerKernelHelper::
   {
     dofColIndicesElemVars[elemVarsOffset+idof] = neighborDofNumber + idof;
   }
-  dofColIndicesFaceVars[ifaceLoc] = faceDofNumber;
+  // Note: dofColIndicesFaceVars[ifaceLoc] is now set in assembleFluxDivergence
+  // after checking if the face is a boundary face
 }
 
 template< integer NF, integer NC, integer NP >
@@ -1494,8 +1498,7 @@ DirichletFluxKernel::
       // Use element mobility (simplified upwinding for Dirichlet BC)
       // Upwind phase component fraction based on flow direction
       // Use the total flux f for upwinding decision
-//      real64 const beta = (f > 0.0) ? 1.0  : 0.0;
-      real64 const beta = 0.0;//(f > 0.0) ? 1.0  : 0.0;
+      real64 const beta = (f > 0.0) ? 1.0  : 0.0;
       real64 const facePhaseMobility = facePhaseMob[kf][ip];
       real64 const phaseMobility = beta * phaseMob[erAdj][esrAdj][eiAdj][ip] + (1.0 - beta) * facePhaseMobility;
       real64 const phaseFlux = phaseMobility * f;
@@ -1537,7 +1540,7 @@ DirichletFluxKernel::
         {
           // d(ycp * phaseFlux)/dC = dycp/dC * phaseFlux + ycp * dPhaseFlux/dC
           // dycp/dC = beta * dycpElem/dC (ycpFace is BC, independent of C)
-          dCompFlux_dC[ic][jc] += ycp * dPhaseFlux_dC[jc] + beta * phaseFlux * dycpElem_dC[jc];
+          dCompFlux_dC[ic][jc] += ycp * dPhaseFlux_dC[jc] + beta * dycpElem_dC[jc] * phaseFlux;
         }
         
         // Add derivatives w.r.t. face pressures
@@ -1577,7 +1580,6 @@ DirichletFluxKernel::
     for( integer ic = 0; ic < NC; ++ic )
     {
       RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow + ic], localFlux[ic] );
-      continue;
       
       globalIndex dofColIndices[NC+1];
       dofColIndices[0] = elemDof;
