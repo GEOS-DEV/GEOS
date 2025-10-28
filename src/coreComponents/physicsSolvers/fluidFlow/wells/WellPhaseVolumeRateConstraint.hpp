@@ -44,7 +44,7 @@ localIndex getPhaseIndexFromFluidModel( T const & fluidModel, std::string const 
     }
   }
   return phaseIndex;
-};
+}
 
 /**
  * @class PhaseVolumeRateConstraint
