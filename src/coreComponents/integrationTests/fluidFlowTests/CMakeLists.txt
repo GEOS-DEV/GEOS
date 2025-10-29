@@ -10,7 +10,8 @@ if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
           testCompMultiphaseFlow.cpp
           testCompMultiphaseFlowHybrid.cpp
-          testReactiveCompositionalMultiphaseOBL.cpp )
+          testReactiveCompositionalMultiphaseOBL.cpp
+          testCompositionalMultiPhaseMFDPolyhedral.cpp )
 endif()
 
 set( tplDependencyList ${parallelDeps} gtest )
