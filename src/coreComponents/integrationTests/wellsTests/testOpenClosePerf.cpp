@@ -61,13 +61,18 @@ char const * PreXmlInput =
                                    logLevel="1"
                                    targetRegions="{wellRegion1}"
                                    useMass="0">
-          <WellControls name="wellControls1"
-                        type="producer"
-                        referenceElevation="1.25"
-                        control="BHP"
-                        targetBHP="2e6"
-                        targetPhaseRate="1"
-                        targetPhaseName="oil"/>
+    <WellControls
+      name="wellControls1"
+      type="producer">
+      <ProductionPhaseVolumeRateConstraint
+        name="maxoilprod"
+        phaseName="oil"
+        phaseRate="1"/>
+      <MinimumBHPConstraint
+        name="minbhp"
+        targetBHP="2e6"
+        referenceElevation="1.25"/>
+    </WellControls>
       </CompositionalMultiphaseWell>
     </Solvers>
     <Mesh>

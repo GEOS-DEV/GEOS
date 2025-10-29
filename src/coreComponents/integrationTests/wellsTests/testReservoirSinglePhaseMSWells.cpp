@@ -61,18 +61,29 @@ char const * PreXmlInput =
       <SinglePhaseWell name="singlePhaseWell"
                        logLevel="1"
                        targetRegions="{wellRegion1,wellRegion2}">
-          <WellControls name="wellControls1"
-                        type="producer"
-                        referenceElevation="2"
-                        control="BHP"
-                        targetBHP="5e5"
-                        targetTotalRate="1e-3"/>
-          <WellControls name="wellControls2"
-                        type="injector"
-                        referenceElevation="2"
-                        control="totalVolRate"
-                        targetBHP="2e7"
-                        targetTotalRate="1e-4"/>
+    <WellControls
+      name="wellControls1"
+      type="producer">
+      <MinimumBHPConstraint
+        name="minbhp"
+        targetBHP="5e5"
+        referenceElevation="2"/>
+      <ProductionVolumeRateConstraint
+        name="maxvolrateprod"
+        volumeRate="1e-3"/>
+    </WellControls>
+
+    <WellControls
+      name="wellControls2"
+      type="injector">
+      <MaximumBHPConstraint
+        name="maxbhp"
+        targetBHP="2e7"
+        referenceElevation="2"/>
+      <InjectionVolumeRateConstraint
+        name="maxvolrateinj"
+        volumeRate="1e-4"/>
+    </WellControls>
       </SinglePhaseWell>
     </Solvers>
     <Mesh>

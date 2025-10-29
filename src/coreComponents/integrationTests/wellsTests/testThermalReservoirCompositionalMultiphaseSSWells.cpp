@@ -108,16 +108,20 @@ char const * xmlInput =
         name="WC_CO2_INJ"
         logLevel="2"
         type="injector"
-        control="totalVolRate"
-        referenceElevation="-0.01"
-        targetBHP="1.45e7"
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="1.45e7"
-        surfaceTemperature="300.15"
-        targetTotalRate="0.001"
-        injectionTemperature="300.15"
-        injectionStream="{ 0.99, 0.01 }"/>
+        surfaceTemperature="300.15">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1.45e7"
+          referenceElevation="-0.01"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="0.001"
+          injectionStream="{ 0.99, 0.01 }"
+          injectionTemperature="300.15"/>
+      </WellControls>
      </CompositionalMultiphaseWell>
   </Solvers>
 
