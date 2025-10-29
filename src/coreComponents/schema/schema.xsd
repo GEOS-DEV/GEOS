@@ -1294,9 +1294,9 @@ When set to "error", output a throw.
 		<xsd:attribute name="pressureInfluenceFunctionName" type="groupNameRef" default="" />
 		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--setNames => Name of sets that the boundary condition is applied to.
+		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
-A set can be created by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
+A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -1335,9 +1335,9 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--setNames => Name of sets that the boundary condition is applied to.
+		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
-A set can be created by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
+A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -1371,9 +1371,9 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--setNames => Name of sets that the boundary condition is applied to.
+		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
-A set can be created by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
+A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -1446,9 +1446,9 @@ When set to "error", output a throw.
 		<xsd:attribute name="reflectivity" type="real32" default="0.001" />
 		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--setNames => Name of sets that the boundary condition is applied to.
+		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
-A set can be created by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
+A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--thicknessMaxXYZ => Thickness of the PML region, at right, back, and bottom sides, used to compute the damping profile-->
 		<xsd:attribute name="thicknessMaxXYZ" type="R1Tensor32" default="{-1,-1,-1}" />
@@ -1491,9 +1491,9 @@ When set to "error", output a throw.
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Multiplier of the functionName value. If no functionName is provided, this value is used directly.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--setNames => Name of sets that the boundary condition is applied to.
+		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
-A set can be created by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
+A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -1527,9 +1527,9 @@ When set to "error", output a throw.
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--scaleSet => (no description available)-->
 		<xsd:attribute name="scaleSet" type="real64_array" default="{0}" />
-		<!--setNames => Name of sets that the boundary condition is applied to.
+		<!--setNames => Names of sets that the boundary condition is applied to.
 A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
-A set can be created by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
+A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--tractionType => Type of traction boundary condition. Options are:
 vector - traction is applied to the faces as specified from the scale and direction,
@@ -2567,8 +2567,8 @@ Information output from lower logLevels is added with the desired log level
  - Output timing information
  - The statistics (minimal, maximal, average and sum) of memory usage of each Umpire memory pool across all ranks.-->
 		<xsd:attribute name="logLevel" type="integer" default="1" />
-		<!--writeCSV => When set to 1, write the same statistics as the 'logLevel' allows to output in a CSV file
-If the umpire statistics log is enabled, set to 1 by default, otherwise set to 0-->
+		<!--writeCSV => When set to 1, write the statistics into a CSV file.
+When set to 0, no output-->
 		<xsd:attribute name="writeCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3535,7 +3535,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--useTotalMassEquation => Use total mass equation-->
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
-		<!--writeCSV => When set to 1, write the rates into a CSV file-->
+		<!--writeCSV => When set to 1, write the rates into a CSV file.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
@@ -3562,7 +3562,7 @@ When set to `all` output both convergence & iteration information to a csv.-->
  - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) 
  - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) -->
 		<xsd:attribute name="initialPressureCoefficient" type="real64" default="0.1" />
-		<!--injectionStream => Defines the global component densities of the injected fluid in the reservoir as a fraction of its components [moles/m^3 or kg/m^3]-->
+		<!--injectionStream => Defines the global component fractions of the injected fluid.-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
 		<!--injectionTemperature => Temperature of the injection stream [K]-->
 		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
@@ -5347,7 +5347,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="timeStepFromTables" type="integer" default="0" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
-		<!--writeCSV => When set to 1, write the rates into a CSV file-->
+		<!--writeCSV => When set to 1, write the rates into a CSV file.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
@@ -6804,7 +6804,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
 		<!--componentCriticalVolume => Component critical volumes-->
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
@@ -6844,7 +6844,7 @@ if the table is requested to be output in the log, and it is too large, a CSV fi
 		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
 		<!--componentCriticalVolume => Component critical volumes-->
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
@@ -7945,7 +7945,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--writeCSV => When set to 1, write PVT tables into a CSV file.
-If the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
+If the table is requested to be output in the log, and it is too large,a CSV file will be generated even if `writeCSV` is set to 0.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -7968,7 +7968,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--writeCSV => When set to 1, write PVT tables into a CSV file.
-If the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
+If the table is requested to be output in the log, and it is too large,a CSV file will be generated even if `writeCSV` is set to 0.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
