@@ -18,6 +18,9 @@
 
 #include "ParticleMeshGenerator.hpp"
 
+#include "mainInterface/GeosxState.hpp"
+#include "common/initializeEnvironment.hpp"
+
 #include "ParticleBlockManager.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 
@@ -87,6 +90,12 @@ void ParticleMeshGenerator::postInputInitialization()
 void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition )
 {
   GEOS_MARK_FUNCTION;
+
+  // CommandLineOptions const & opts = getGlobalState().getCommandLineOptions();
+  // if( opts.beginFromRestart )
+  // {
+  //   return;
+  // }
 
   int numBlocks = m_blockNames.size();
 

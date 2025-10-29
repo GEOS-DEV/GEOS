@@ -1281,10 +1281,6 @@ void SolidMechanicsMPM::postInputInitialization()
 
       int rank;
       MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
-      if (rank == 0 )
-      {
-        std::cout<<"i="<<i<<", m_fTable[i][0] = "<<m_fTable[i][0]<<", m_fTable[i][1] = "<<m_fTable[i][1]<<", m_fTable[i][2] = "<<m_fTable[i][2]<<", m_fTable[i][3] = "<<m_fTable[i][3]<<std::endl;
-      }
 
       for(int k=0; k<3; ++k)
       { // Stress-control = 1 overrides FTable control, so if we aren't doing stress control in a direction,

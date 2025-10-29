@@ -41,6 +41,7 @@ HaltEvent::HaltEvent( const string & name,
 
   registerWrapper( viewKeyStruct::maxRuntimeString(), &m_maxRuntime ).
     setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "The maximum allowable runtime for the job." );
 }
 
