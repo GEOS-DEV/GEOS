@@ -9,10 +9,15 @@ These notes should be in reverse-chronological order, and use the following time
 PR #3849 (2025-10-23) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3849-14360-5fe41ab.tar.gz>
 Add multiphase contact with wells
 
+PR #3880 (2025-10-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3880-14441-1132122.tar.gz>
+Fix a bug introduced in #3485: mass that is used in accumulation term was not updated with porosity change after mechanics leading to always converged sequential outer loop.
+
 PR #3299 (2025-10-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3299-14426-6c93a0d.tar.gz>
+=====================
 Add co2 injection into gas with SW EoS and k-value flash.
 
 PR #3279 (2025-10-24) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3279-14414-db55426.tar.gz>
+=====================
 Output cell-wise average of each stress and strain component.
 
 PR #3851 (2025-10-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3851-14171-9d950d6.tar.gz>
