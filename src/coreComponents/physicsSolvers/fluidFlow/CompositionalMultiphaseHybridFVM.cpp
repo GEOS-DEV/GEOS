@@ -997,7 +997,6 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
           }
           
           // Set RHS to the prescribed boundary value (absolute value)
-          // This directly enforces: 1.0 * facePressure = prescribed_value
           localRhs[localRow] = presFace[kf] - presFaceBC[kf];
         }
       
