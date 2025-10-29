@@ -151,7 +151,6 @@
       ],
       "IP_TYPE": [
         "mimeticInnerProduct::TPFAInnerProduct",
-        "mimeticInnerProduct::QuasiTPFAInnerProduct",
         "mimeticInnerProduct::BdVLMInnerProduct"
       ]
     },
@@ -192,7 +191,6 @@
       ],
       "IP_TYPE": [
         "mimeticInnerProduct::TPFAInnerProduct",
-        "mimeticInnerProduct::QuasiTPFAInnerProduct",
         "mimeticInnerProduct::BdVLMInnerProduct"
       ]
     },

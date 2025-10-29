@@ -728,13 +728,11 @@ AssemblerKernelHelper::
                                          elemDofNumber[localIds[0]][localIds[1]][localIds[2]],
                                          neighborDofNumber,
                                          upwViscDofNumber,
-                                         faceDofNumber[elemToFaces[ifaceLoc]],
                                          dt,
                                          divMassFluxes,
                                          dDivMassFluxes_dElemVars,
                                          dDivMassFluxes_dFaceVars,
-                                         dofColIndicesElemVars,
-                                         dofColIndicesFaceVars );
+                                         dofColIndicesElemVars );
 
 
       faceIndexMap[ifaceLoc] = numNonBoundaryFaces;
@@ -881,13 +879,11 @@ AssemblerKernelHelper::
                        globalIndex const elemDofNumber,
                        globalIndex const neighborDofNumber,
                        globalIndex const upwViscDofNumber,
-                       globalIndex const faceDofNumber,
                        real64 const & dt,
                        real64 ( & divMassFluxes )[ NC ],
                        real64 ( & dDivMassFluxes_dElemVars )[ NC ][ (NC+1)*(NF+1) ],
                        real64 ( & dDivMassFluxes_dFaceVars )[ NC ][ NF ],
-                       globalIndex ( & dofColIndicesElemVars )[ (NC+1)*(NF+1) ],
-                       globalIndex ( & dofColIndicesFaceVars )[ NF ] )
+                       globalIndex ( & dofColIndicesElemVars )[ (NC+1)*(NF+1) ])
 {
   integer constexpr NDOF = NC+1;
   localIndex const elemVarsOffset = NDOF*(ifaceLoc+1);
@@ -944,8 +940,6 @@ AssemblerKernelHelper::
   {
     dofColIndicesElemVars[elemVarsOffset+idof] = neighborDofNumber + idof;
   }
-  // Note: dofColIndicesFaceVars[ifaceLoc] is now set in assembleFluxDivergence
-  // after checking if the face is a boundary face
 }
 
 template< integer NF, integer NC, integer NP >
@@ -1373,11 +1367,9 @@ DirichletFluxKernel::
           localIndex const esr,
           CellElementSubRegion const & subRegion,
           constitutive::PermeabilityBase const & permeabilityModel,
-          FaceManager const & faceManager,
           SortedArrayView< localIndex const > const & boundaryFaceSet,
           arrayView1d< real64 const > const & facePres,
           arrayView1d< real64 const > const & faceTemp,
-          arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
           arrayView2d< real64 const, compflow::USD_PHASE > const & facePhaseMob,
           arrayView2d< real64 const, compflow::USD_PHASE > const & facePhaseMassDens,
           arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & facePhaseCompFrac,
@@ -1399,6 +1391,7 @@ DirichletFluxKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
+  GEOS_UNUSED_VAR(faceTemp);
   using Deriv = multifluid::DerivativeOffset;
 
   // Get element data
@@ -1720,7 +1713,8 @@ evaluateBCFaceProperties( integer const numPhases,
     {
       using RelPermType = TYPEOFREF( castedRelperm );
       typename RelPermType::KernelWrapper relPermWrapper = castedRelperm.createKernelWrapper();
-
+      GEOS_UNUSED_VAR(relPermWrapper);
+      
       // Loop over BC faces and evaluate properties at BC conditions
       forAll< serialPolicy >( boundaryFaceSet.size(), [=, &facePhaseMob, &facePhaseMassDens, &facePhaseCompFrac] ( localIndex const iset )
     {

@@ -82,13 +82,11 @@ namespace compositionalMultiphaseHybridFVMKernels
                                        globalIndex const elemDofNumber,
                                        globalIndex const neighborDofNumber,
                                        globalIndex const upwViscDofNumber,
-                                       globalIndex const faceDofNumber,
                                        real64 const & dt,
                                        real64 ( &divMassFluxes )[ NC ],
                                        real64 ( &dDivMassFluxes_dElemVars )[ NC ][ (NC+1)*(NF+1) ],
                                        real64 ( &dDivMassFluxes_dFaceVars )[ NC ][ NF ],
-                                       globalIndex ( &dofColIndicesElemVars )[ (NC+1)*(NF+1) ],
-                                       globalIndex ( &dofColIndicesFaceVars )[ NF ] );
+                                       globalIndex ( &dofColIndicesElemVars )[ (NC+1)*(NF+1) ] );
   @EXTERN@
   template
   GEOS_HOST_DEVICE

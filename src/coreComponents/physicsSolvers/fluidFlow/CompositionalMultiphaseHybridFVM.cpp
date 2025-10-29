@@ -328,10 +328,6 @@ void CompositionalMultiphaseHybridFVM::setupDofs( DomainPartition const & GEOS_U
                           viewKeyStruct::elemDofFieldString(),
                           DofManager::Connector::Face );
 
-  // this call with instruct GEOS to reorder the dof numbers
-  //dofManager.setLocalReorderingType( viewKeyStruct::elemDofFieldString(),
-  //                                   DofManager::LocalReorderingType::ReverseCutHillMcKee );
-
   // for the volume balance equation, disable global coupling
   // this equation is purely local (not coupled to neighbors or other physics)
   dofManager.disableGlobalCouplingForEquation( viewKeyStruct::elemDofFieldString(),
@@ -376,12 +372,8 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
 
     NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager const & faceManager = mesh.getFaceManager();
-
-    // node data (for transmissibility computation)
-
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
-    // face data
 
     // get the face-based DOF numbers for the assembly
     string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
@@ -393,21 +385,6 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
     arrayView1d< integer const > const isBoundaryFaceView =
       faceManager.getField< flow::isBoundaryFace >();
     
-//    // Print isBoundaryFaceView for debugging
-//    std::cout << "=== isBoundaryFaceView Debug Info ===" << std::endl;
-//    std::cout << "Total number of faces: " << faceManager.size() << std::endl;
-//    integer numBoundaryFaces = 0;
-//    for( localIndex iface = 0; iface < faceManager.size(); ++iface )
-//    {
-//      if( isBoundaryFaceView[iface] == 1 )
-//      {
-//        std::cout << "Face " << iface << " is a boundary face" << std::endl;
-//        numBoundaryFaces++;
-//      }
-//    }
-//    std::cout << "Total boundary faces: " << numBoundaryFaces << std::endl;
-//    std::cout << "=====================================" << std::endl;
-
     // get the element dof numbers for the assembly
     string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
@@ -673,7 +650,6 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
   string const & innerProductType = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::innerProductTypeString() );
 
   string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-  globalIndex const rankOffset = dofManager.rankOffset();
 
   // Log message for Dirichlet BC application
   static char const faceBcLogMessage[] =
@@ -774,6 +750,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
         // Call evaluateBCFaceProperties to compute face properties at BC conditions
         constitutive::constitutiveComponentUpdatePassThru( fluid, m_numComponents, [&]( auto & fluidWrapper, auto NC )
         {
+          GEOS_UNUSED_VAR(fluidWrapper);
           integer constexpr NUM_COMP = NC();
 
           auto evaluateWithPhases = [&]( auto NP_VALUE )
@@ -808,28 +785,6 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
           }
         } );
       }
-      
-      // Get element-based fields for flux computation
-      arrayView1d< real64 const > const elemPres = subRegion.getField< flow::pressure >();
-      arrayView2d< real64 const, compflow::USD_COMP > const elemCompDens = subRegion.getField< flow::globalCompDensity >();
-      arrayView1d< real64 const > const elemGravCoef = subRegion.getField< flow::gravityCoefficient >();
-      arrayView2d< localIndex const > const elemToFaces = subRegion.faceList();
-      
-      // Get fluid properties at element centers
-      arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const elemPhaseDens =
-        fluid.phaseDensity();
-      arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const elemPhaseMassDens =
-        fluid.phaseMassDensity();
-      arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > const elemPhaseCompFrac =
-        fluid.phaseCompFraction();
-      
-      // Get mobility from flow solver
-      arrayView2d< real64 const, compflow::USD_PHASE > const elemPhaseMob =
-        subRegion.getField< flow::phaseMobility >();
-
-      // Get DOF numbers
-      arrayView1d< globalIndex const > const elemDofNumber =
-        subRegion.getReference< array1d< globalIndex > >( elemDofKey );
 
       // Get pre-computed fluid properties at BC faces
       arrayView2d< real64 const, compflow::USD_PHASE > const facePhaseMobField =
@@ -849,6 +804,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
         // Launch the Dirichlet flux kernel with compile-time dispatch
         constitutive::constitutiveComponentUpdatePassThru( fluid, m_numComponents, [&]( auto & fluidWrapper, auto NC )
         {
+          GEOS_UNUSED_VAR(fluidWrapper);
           integer constexpr NUM_COMP = NC();
 
           typename DirichletFluxKernel::CompFlowAccessors compFlowAccessors( elemManager, getName() );
@@ -873,11 +829,9 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
                   subRegion.getIndexInParent(),
                   subRegion,
                   permeabilityModel,
-                  faceManager,
                   targetSet,
                   facePres,
                   faceTemp,
-                  faceCompFrac,
                   facePhaseMobField,
                   facePhaseMassDensField,
                   facePhaseCompFracField,
@@ -932,10 +886,6 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
             {
               launchForFaces( TPFAInnerProduct{} );
             }
-            else if( innerProductType == "quasiTPFA" )
-            {
-              launchForFaces( QuasiTPFAInnerProduct{} );
-            }
             else if( innerProductType == "beiraoDaVeigaLipnikovManzini" )
             {
               launchForFaces( BdVLMInnerProduct{} );
@@ -971,6 +921,7 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
                                           FaceManager & targetGroup,
                                           string const & )
     {
+      GEOS_UNUSED_VAR(setName);
       // Using the field specification functions to apply the boundary conditions to the system
       fs.applyFieldValue< FieldSpecificationEqual,
                           parallelDevicePolicy<> >( targetSet,

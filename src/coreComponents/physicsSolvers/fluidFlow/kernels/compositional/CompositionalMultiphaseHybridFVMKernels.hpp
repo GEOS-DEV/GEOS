@@ -367,13 +367,11 @@ struct AssemblerKernelHelper
    * @param[in] dUpwPhaseViscCoef_dPres the derivative of the upwinded viscous transport coefficient wrt pressure
    * @param[in] dUpwPhaseViscCoef_dCompDens the derivative of the upwinded viscous transport coefficient wrt component density
    * @param[in] upwViscDofNumber degree of freedom number of the upwind element
-   * @param[in] faceDofNumber degree of freedom number of the face
    * @param[in] dt the time step
    * @param[inout] divMassFluxes the divergence of the fluxes in the element
    * @param[inout] dDivMassFluxes_dElemVars the derivatives of the flux divergence wrt the element centered vars (pres and comp dens)
    * @param[inout] dDivMassFluxes_dFaceVars the derivatives of the flux divergence wrt the face centered vars
    * @param[inout] dofColIndicesElemVars degrees of freedom of the cells involved in the flux divergence
-   * @param[inout] dofColIndicesFaceVars degrees of freedom of the faces involved in the flux divergence
    */
   template< integer NF, integer NC, integer NP >
   GEOS_HOST_DEVICE
@@ -389,13 +387,11 @@ struct AssemblerKernelHelper
                          globalIndex const elemDofNumber,
                          globalIndex const neighborDofNumber,
                          globalIndex const upwViscDofNumber,
-                         globalIndex const faceDofNumber,
                          real64 const & dt,
                          real64 ( &divMassFluxes )[ NC ],
                          real64 ( &dDivMassFluxes_dElemVars )[ NC ][ (NC+1)*(NF+1) ],
                          real64 ( &dDivMassFluxes_dFaceVars )[ NC ][ NF ],
-                         globalIndex ( &dofColIndicesElemVars )[ (NC+1)*(NF+1) ],
-                         globalIndex ( &dofColIndicesFaceVars )[ NF ] );
+                         globalIndex ( &dofColIndicesElemVars )[ (NC+1)*(NF+1) ]);
 
   /**
    * @brief In a given element, compute the buoyancy flux divergence, i.e, sum the buoyancy fluxes at this element's faces
@@ -587,11 +583,9 @@ struct DirichletFluxKernel
    * @param[in] esr index of this element's subregion
    * @param[in] subRegion the subRegion
    * @param[in] permeabilityModel the permeability model
-   * @param[in] faceManager the face manager
    * @param[in] boundaryFaceSet set of faces on the Dirichlet boundary
    * @param[in] facePres prescribed face pressures
    * @param[in] faceTemp prescribed face temperatures
-   * @param[in] faceCompFrac prescribed face component fractions
    * @param[in] facePhaseMob prescribed face phase mobilities
    * @param[in] facePhaseMassDens prescribed face phase mass densities
    * @param[in] facePhaseCompFrac prescribed face phase component fractions
@@ -619,11 +613,9 @@ struct DirichletFluxKernel
           localIndex const esr,
           CellElementSubRegion const & subRegion,
           constitutive::PermeabilityBase const & permeabilityModel,
-          FaceManager const & faceManager,
           SortedArrayView< localIndex const > const & boundaryFaceSet,
           arrayView1d< real64 const > const & facePres,
           arrayView1d< real64 const > const & faceTemp,
-          arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
           arrayView2d< real64 const, compflow::USD_PHASE > const & facePhaseMob,
           arrayView2d< real64 const, compflow::USD_PHASE > const & facePhaseMassDens,
           arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & facePhaseCompFrac,
@@ -1241,13 +1233,38 @@ void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 
   switch( value )
   {
-    case 4:
-    { lambda( std::integral_constant< T, 4 >() ); return;}
-    case 5:
-    { lambda( std::integral_constant< T, 5 >() ); return;}
-    case 6:
-    { lambda( std::integral_constant< T, 6 >() ); return;}
-    default: GEOS_ERROR( "Unknown numFacesInElem value: " << value );
+    case 4:  {
+      return lambda( std::integral_constant<int, 4>{} );
+    }
+    case 5:  {
+      return lambda( std::integral_constant<int, 5>{} );
+    }
+    case 6:  {
+      return lambda( std::integral_constant<int, 6>{} );
+    }
+    case 7:  {
+      return lambda( std::integral_constant<int, 7>{} );
+    }
+    case 8:  {
+      return lambda( std::integral_constant<int, 8>{} );
+    }
+    case 9:  {
+      return lambda( std::integral_constant<int, 9>{} );
+    }
+    case 10: {
+      return lambda( std::integral_constant<int, 10>{} );
+    }
+    case 11: {
+      return lambda( std::integral_constant<int, 11>{} );
+    }
+    case 12: {
+      return lambda( std::integral_constant<int, 12>{} );
+    }
+    case 13: {
+      return lambda( std::integral_constant<int, 13>{} );
+    }
+    default:
+      GEOS_ERROR( "Unknown numFacesInElem value: " << value );
   }
 }
 
