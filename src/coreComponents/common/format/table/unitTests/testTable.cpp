@@ -827,8 +827,6 @@ TEST( testTable, tableSpecialsValues )
       .setName( "Next\nelement" )
       .setHeaderAlignment( TableLayout::Alignment::center )} );
 
-  LvArray::NumericLimits< double > const realLimit;
-
   TableData tableData;
   tableData.addRow( "Global Id", 1234, 40, 5678, 60 );
   tableData.addRow( "pressure", 0.1234, 0.40, 0.5678, 0.60 );
