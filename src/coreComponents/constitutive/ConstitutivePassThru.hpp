@@ -36,6 +36,7 @@
 #include "solid/ElasticIsotropicPressureDependent.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/ElasticOrthotropic.hpp"
+#include "solid/PorousReactiveSolid.hpp"
 #include "solid/PorousSolid.hpp"
 #include "solid/PorousDamageSolid.hpp"
 #include "solid/CompressibleSolid.hpp"
@@ -340,6 +341,21 @@ struct ConstitutivePassThru< PorousDamageSolidBase >
 };
 
 /**
+ * Specialization for the PorousReactiveSolid models.
+ */
+template<>
+struct ConstitutivePassThru< PorousReactiveSolidBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< PorousReactiveSolid< ElasticIsotropic, ConstantPermeability >,
+                                 PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability > >::execute( constitutiveRelation,
+                                                                                                               std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+/**
  * Specialization for the CompressibleSolid models.
  */
 template<>
@@ -442,6 +458,8 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  CompressibleSolid< PressurePorosity, PressurePermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
+                                 PorousReactiveSolid< ElasticIsotropic, ConstantPermeability >,
+                                 PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability >,
                                  PorousSolid< DruckerPragerExtended, ConstantPermeability >,
                                  PorousSolid< ModifiedCamClay, ConstantPermeability >,
                                  PorousSolid< DelftEgg, ConstantPermeability >,
@@ -483,6 +501,8 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  CompressibleSolid< PressurePorosity, PressurePermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
+                                 PorousReactiveSolid< ElasticIsotropic, ConstantPermeability >,
+                                 PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability >,
                                  PorousSolid< DruckerPragerExtended, ConstantPermeability >,
                                  PorousSolid< ModifiedCamClay, ConstantPermeability >,
                                  PorousSolid< DelftEgg, ConstantPermeability >,

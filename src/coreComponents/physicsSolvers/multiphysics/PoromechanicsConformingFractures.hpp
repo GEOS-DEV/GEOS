@@ -564,7 +564,7 @@ protected:
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                    arrayView1d< real64 > const & localRhs ) = 0;
 
-  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override
+  virtual void mapSolutionBetweenSolvers( real64 const & dt, DomainPartition & domain, integer const solverType ) override
   {
     GEOS_MARK_FUNCTION;
 
@@ -581,7 +581,7 @@ protected:
       this->flowSolver()->updateStencilWeights( domain );
     }
 
-    Base::mapSolutionBetweenSolvers( domain, solverType );
+    Base::mapSolutionBetweenSolvers( dt, domain, solverType );
   }
 
   void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain )

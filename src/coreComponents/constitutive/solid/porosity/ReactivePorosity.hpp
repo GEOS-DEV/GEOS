@@ -125,6 +125,20 @@ public:
     return m_initialVolumeFractions[k][q][r];
   }
 
+  GEOS_HOST_DEVICE
+  inline
+  real64 getMolarWeights( localIndex const r ) const
+  {
+    return m_molarWeights[r];
+  }
+
+  GEOS_HOST_DEVICE
+  inline
+  real64 getMineralDensities( localIndex const r ) const
+  {
+    return m_mineralDensities[r];
+  }
+
 protected:
 
   arrayView3d< real64, reactivefluid::USD_SPECIES > m_volumeFractions;

@@ -22,6 +22,7 @@
 
 #include "physicsSolvers/multiphysics/PoromechanicsSolver.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseReactiveTransport.hpp"
 #include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
 
 namespace geos
@@ -96,6 +97,11 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override
   { Base::assembleSystem( time, dt, domain, dofManager, localMatrix, localRhs ); }
+
+  virtual void mapSolutionBetweenSolvers( real64 const & dt,
+                                          DomainPartition & domain,
+                                          integer const solverType ) override
+  { Base::mapSolutionBetweenSolvers( dt, domain, solverType ); }                             
 
   virtual void assembleElementBasedTerms( real64 const time_n,
                                           real64 const dt,

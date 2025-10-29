@@ -55,21 +55,24 @@ public:
   {}
 
   GEOS_HOST_DEVICE
-  void updateStateFromPressureAndReactions( localIndex const k,
-                                            localIndex const q,
-                                            real64 const & pressure,
-                                            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & kineticReactionMolarIncrements ) const
+  virtual void updateStateFromPressureTemperatureAndReactions( localIndex const k,
+                                                               localIndex const q,
+                                                               real64 const & pressure,
+                                                               real64 const & temperature,
+                                                               arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & kineticReactionMolarIncrements ) const override final
   {
+    GEOS_UNUSED_VAR( temperature );
+    
     m_porosityUpdate.updateFromReactions( k, q, kineticReactionMolarIncrements );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, porosity );
   }
 
   GEOS_HOST_DEVICE
-  void updateSurfaceArea( localIndex const k,
-                          localIndex const q,
-                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & initialSurfaceArea,
-                          arraySlice1d< real64, compflow::USD_COMP - 1 > const & surfaceArea ) const
+  virtual void updateSurfaceArea( localIndex const k,
+                                  localIndex const q,
+                                  arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & initialSurfaceArea,
+                                  arraySlice1d< real64, compflow::USD_COMP - 1 > const & surfaceArea ) const override final
   {
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     real64 const initialPorosity = m_porosityUpdate.getInitialPorosity( k, q );

@@ -187,6 +187,7 @@ set( constitutive_headers
      solid/InvariantDecompositions.hpp
      solid/PorousDamageSolid.hpp
      solid/PerfectlyPlastic.hpp
+     solid/PorousReactiveSolid.hpp
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/ReactiveSolid.hpp
@@ -328,6 +329,7 @@ set( constitutive_sources
      solid/ElasticOrthotropic.cpp
      solid/PorousDamageSolid.cpp
      solid/PerfectlyPlastic.cpp
+     solid/PorousReactiveSolid.cpp
      solid/PorousSolid.cpp
      solid/ReactiveSolid.cpp
      solid/SolidBase.cpp
