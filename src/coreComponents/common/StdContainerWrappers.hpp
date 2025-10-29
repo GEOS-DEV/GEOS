@@ -464,15 +464,31 @@ constexpr stdArray< T, N > to_stdArray( std::array< T, N > const & arr )
 
 } // namespace geos
 
+/**
+ * @namespace std
+ * @brief Partial specialization for stdArray.
+ *
+ * This namespace contains specializations for the `std::array` functionalities
+ * retrieved from `geos::stdArray.
+ */
 namespace std
 {
-// Partial specialization for stdArray
-// Those were retrived from std::array
+
+/**
+ * @brief Provides access to the number of elements in a tuple as a compile-time constant expression.
+ * @tparam T Type of elements in stdArray
+ * @tparam N The number of fixed element in the array
+ */
 template< typename T, size_t N >
 struct tuple_size< geos::stdArray< T, N > >
   : public integral_constant< size_t, N > { };
 
-/// Partial specialization for std::array
+/**
+ * @brief Provides compile-time indexed access to the types of the elements of the tuple.
+ * @tparam Ind The index element of the tuple to access
+ * @tparam Tp Type of elements in stdArray
+ * @tparam Nm The number of fixed element in the array
+ */
 template< size_t Ind, typename Tp, size_t Nm >
 struct tuple_element< Ind, geos::stdArray< Tp, Nm > >
 {
@@ -481,6 +497,11 @@ struct tuple_element< Ind, geos::stdArray< Tp, Nm > >
 };
 
 #if __cplusplus >= 201703L
+/**
+ * @brief Helper variable template
+ * @tparam Tp Type of elements in stdArray
+ * @tparam Nm The number of fixed element in the array
+ */
 template< typename Tp, size_t Nm >
 inline constexpr size_t tuple_size_v< geos::stdArray< Tp, Nm > > = Nm;
 

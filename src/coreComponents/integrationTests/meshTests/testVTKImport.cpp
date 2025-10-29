@@ -399,11 +399,9 @@ TEST( VTKImport, cube )
       // 1 elements type on 3 regions ("-1", "3", "9") = 3 sub-groups
       stdArray const expectedCellBlocks =
       {
-
         std::make_pair( "hexahedra", expectedSwap( 1, {  1, 0 } ) ),
         std::make_pair( "3_hexahedra", expectedSwap( 25, { 16, 9 } ) ),
         std::make_pair( "9_hexahedra", expectedSwap( 1, {  1, 0 } ) )
-
       };
       ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), expectedCellBlocks.size() );
 
