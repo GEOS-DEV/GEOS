@@ -70,7 +70,7 @@ TEST( testGeosxTraits, HasMemberFunction_insert )
   static_assert( HasMemberFunction_insert< std::list< stdVector< int > > >, "Should be true." );
 
   static_assert( !HasMemberFunction_insert< int >, "Should be false." );
-  static_assert( !HasMemberFunction_insert< stdArray< int, 5 > >, "Should be false." );
+  static_assert( !HasMemberFunction_insert< std::array< int, 5 > >, "Should be false." );
 }
 
 

@@ -107,9 +107,6 @@ public:
   void updateStencilWeights( DomainPartition & domain ) const
   { flowSolver()->updateStencilWeights( domain ); }
 
-  void updateMass( CellElementSubRegion & subRegion ) const
-  { flowSolver()->updateMass( subRegion ); }
-
 protected:
 
   virtual void initializePreSubGroups() override;

@@ -14,11 +14,11 @@
  */
 
 /**
- * @file StressStrainAverageKernels.hpp
+ * @file StrainHelper.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_STRESSSTRAINAVERAGEKERNELS_HPP_
-#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_STRESSSTRAINAVERAGEKERNELS_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_STRAINHELPER_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_STRAINHELPER_HPP_
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -30,17 +30,15 @@
 
 namespace geos
 {
-
-
 /**
- * @class AverageStressStrainOverQuadraturePoints
+ * @class AverageStrainOverQuadraturePoints
  * @tparam SUBREGION_TYPE the subRegion type
  * @tparam FE_TYPE the finite element type
  * @tparam SOLID_TYPE the solid mechanics constitutuve type
  */
 template< typename FE_TYPE,
           typename SOLID_TYPE >
-class AverageStressStrainOverQuadraturePoints :
+class AverageStrainOverQuadraturePoints :
   public AverageOverQuadraturePointsBase< CellElementSubRegion,
                                           FE_TYPE >
 {
@@ -63,21 +61,17 @@ public:
    * @param finiteElementSpace the finite element space
    * @param displacement the displacement solution field
    * @param avgStrain the strain averaged over quadrature points
-   * @param stress the stress solution field
-   * @param avgStress the stress averaged over quadrature points
    */
-  AverageStressStrainOverQuadraturePoints( NodeManager & nodeManager,
-                                           EdgeManager const & edgeManager,
-                                           FaceManager const & faceManager,
-                                           CellElementSubRegion const & elementSubRegion,
-                                           FE_TYPE const & finiteElementSpace,
-                                           SOLID_TYPE const & solidModel,
-                                           fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
-                                           fields::solidMechanics::arrayViewConst2dLayoutIncrDisplacement const displacementInc,
-                                           fields::solidMechanics::arrayView2dLayoutStrain const avgStrain,
-                                           fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain,
-                                           arrayView3d< real64 const, solid::STRESS_USD > const stress,
-                                           fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress ):
+  AverageStrainOverQuadraturePoints( NodeManager & nodeManager,
+                                     EdgeManager const & edgeManager,
+                                     FaceManager const & faceManager,
+                                     CellElementSubRegion const & elementSubRegion,
+                                     FE_TYPE const & finiteElementSpace,
+                                     SOLID_TYPE const & solidModel,
+                                     fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
+                                     fields::solidMechanics::arrayViewConst2dLayoutIncrDisplacement const displacementInc,
+                                     fields::solidMechanics::arrayView2dLayoutStrain const avgStrain,
+                                     fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -87,9 +81,7 @@ public:
     m_displacement( displacement ),
     m_displacementInc( displacementInc ),
     m_avgStrain( avgStrain ),
-    m_avgPlasticStrain( avgPlasticStrain ),
-    m_stress( stress ),
-    m_avgStress( avgStress )
+    m_avgPlasticStrain( avgPlasticStrain )
   {}
 
   /**
@@ -123,7 +115,7 @@ public:
     for( int icomp = 0; icomp < 6; ++icomp )
     {
       m_avgStrain[k][icomp] = 0.0;
-      m_avgStress[k][icomp] = 0.0;
+      //m_avgPlasticStrain[k][icomp] = 0.0;
     }
   }
 
@@ -155,7 +147,6 @@ public:
     for( int icomp = 0; icomp < 6; ++icomp )
     {
       m_avgStrain[k][icomp] += conversionFactor[icomp]*detJxW*strain[icomp]/m_elementVolume[k];
-      m_avgStress[k][icomp] += detJxW*m_stress[k][q][icomp]/m_elementVolume[k];
 
       // This is a hack to handle boundary conditions such as those seen in plane-strain wellbore problems
       // Essentially, if bcs are constraining the strain (and thus total displacement), we do not accumulate any plastic strain (regardless
@@ -210,21 +201,15 @@ protected:
   /// The average plastic strain
   fields::solidMechanics::arrayView2dLayoutStrain const m_avgPlasticStrain;
 
-  /// The stress solution
-  arrayView3d< real64 const, solid::STRESS_USD > const m_stress;
-
-  /// The average stress
-  fields::solidMechanics::arrayView2dLayoutAvgStress const m_avgStress;
-
 };
 
 
 
 /**
- * @class AverageStressStrainOverQuadraturePointsKernelFactory
+ * @class AverageStrainOverQuadraturePointsKernelFactory
  * @brief Class to create and launch the kernel
  */
-class AverageStressStrainOverQuadraturePointsKernelFactory
+class AverageStrainOverQuadraturePointsKernelFactory
 {
 public:
 
@@ -255,15 +240,13 @@ public:
                    fields::solidMechanics::arrayViewConst2dLayoutTotalDisplacement const displacement,
                    fields::solidMechanics::arrayViewConst2dLayoutIncrDisplacement const displacementInc,
                    fields::solidMechanics::arrayView2dLayoutStrain const avgStrain,
-                   fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain,
-                   arrayView3d< real64 const, solid::STRESS_USD > const stress,
-                   fields::solidMechanics::arrayView2dLayoutAvgStress const avgStress )
+                   fields::solidMechanics::arrayView2dLayoutStrain const avgPlasticStrain )
   {
-    AverageStressStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >
+    AverageStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >
     kernel( nodeManager, edgeManager, faceManager, elementSubRegion, finiteElementSpace,
-            solidModel, displacement, displacementInc, avgStrain, avgPlasticStrain, stress, avgStress );
+            solidModel, displacement, displacementInc, avgStrain, avgPlasticStrain );
 
-    AverageStressStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >::template
+    AverageStrainOverQuadraturePoints< FE_TYPE, SOLID_TYPE >::template
     kernelLaunch< POLICY >( elementSubRegion.size(), kernel );
   }
 };
@@ -273,5 +256,4 @@ public:
 }
 
 
-
-#endif /* GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_STRESSSTRAINAVERAGEKERNELS_HPP_ */
+#endif /* GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_STRAINHELPER_HPP_ */

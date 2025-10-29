@@ -41,6 +41,11 @@
     />
 
     <PeriodicEvent
+      name="outputs1"
+      target="/Outputs/siloOutput"
+    />
+
+    <PeriodicEvent
       name="stressCollection"
       timeFrequency="1"
       targetExactTimestep="1"

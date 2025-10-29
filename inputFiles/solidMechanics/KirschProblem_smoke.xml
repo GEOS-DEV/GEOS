@@ -39,6 +39,11 @@
       targetExactTimestep="1"
       target="/Outputs/vtkOutput"
     />
+
+    <PeriodicEvent
+      name="outputs1"
+      target="/Outputs/siloOutput"
+    />
     
     <PeriodicEvent
       name="restarts"
