@@ -680,107 +680,110 @@ AssemblerKernelHelper::
   // for each element, loop over the one-sided faces
   for( integer ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
+    
+    // Contribute and Collect face DOF number only if this is not a boundary face
+    if( isBoundaryFace[elemToFaces[ifaceLoc]] == 0 )
+    {
+      // 1) Find if there is a neighbor, and if there is, grab the indices of the neighbor element
+      localIndex neighborIds[ 3 ] = { localIds[0], localIds[1], localIds[2] };
+      hybridFVMKernels::CellConnectivity::isNeighborFound( localIds,
+                                                           ifaceLoc,
+                                                           elemRegionList,
+                                                           elemSubRegionList,
+                                                           elemList,
+                                                           regionFilter,
+                                                           elemToFaces,
+                                                           neighborIds );
+      localIndex const neighborDofNumber = elemDofNumber[neighborIds[0]][neighborIds[1]][neighborIds[2]];
 
-    // 1) Find if there is a neighbor, and if there is, grab the indices of the neighbor element
-    localIndex neighborIds[ 3 ] = { localIds[0], localIds[1], localIds[2] };
-    hybridFVMKernels::CellConnectivity::isNeighborFound( localIds,
-                                                         ifaceLoc,
-                                                         elemRegionList,
-                                                         elemSubRegionList,
-                                                         elemList,
-                                                         regionFilter,
-                                                         elemToFaces,
-                                                         neighborIds );
-    localIndex const neighborDofNumber = elemDofNumber[neighborIds[0]][neighborIds[1]][neighborIds[2]];
+      // 2) *************** Assemble viscous terms ******************
 
-    // 2) *************** Assemble viscous terms ******************
+      // 2.a) Compute the upwinded x_{c, \ell} \rho_{\ell} \frac{\lambda_{\ell}}{\lambda_T} for each phase at this face
+      UpwindingHelper::upwindViscousCoefficient< NC, NP >( localIds,
+                                                           neighborIds,
+                                                           phaseDens,
+                                                           dPhaseDens,
+                                                           phaseMob,
+                                                           dPhaseMob,
+                                                           dCompFrac_dCompDens,
+                                                           phaseCompFrac,
+                                                           dPhaseCompFrac,
+                                                           elemDofNumber,
+                                                           oneSidedVolFlux[ifaceLoc],
+                                                           upwPhaseViscCoef,
+                                                           dUpwPhaseViscCoef_dPres,
+                                                           dUpwPhaseViscCoef_dCompDens,
+                                                           upwViscDofNumber );
 
-    // 2.a) Compute the upwinded x_{c, \ell} \rho_{\ell} \frac{\lambda_{\ell}}{\lambda_T} for each phase at this face
-    UpwindingHelper::upwindViscousCoefficient< NC, NP >( localIds,
-                                                         neighborIds,
-                                                         phaseDens,
-                                                         dPhaseDens,
-                                                         phaseMob,
-                                                         dPhaseMob,
-                                                         dCompFrac_dCompDens,
-                                                         phaseCompFrac,
-                                                         dPhaseCompFrac,
-                                                         elemDofNumber,
-                                                         oneSidedVolFlux[ifaceLoc],
-                                                         upwPhaseViscCoef,
-                                                         dUpwPhaseViscCoef_dPres,
-                                                         dUpwPhaseViscCoef_dCompDens,
-                                                         upwViscDofNumber );
+      // 2.b) Add the \x_{c,\ell} \rho_{\ell} \frac{\lambda_{\ell}}{\lambda_T} q_T of this face to the divergence of the flux in this cell
+      assembleViscousFlux< NF, NC, NP >( ifaceLoc,
+                                         oneSidedVolFlux,
+                                         dOneSidedVolFlux_dPres,
+                                         dOneSidedVolFlux_dFacePres,
+                                         dOneSidedVolFlux_dCompDens,
+                                         upwPhaseViscCoef,
+                                         dUpwPhaseViscCoef_dPres,
+                                         dUpwPhaseViscCoef_dCompDens,
+                                         elemDofNumber[localIds[0]][localIds[1]][localIds[2]],
+                                         neighborDofNumber,
+                                         upwViscDofNumber,
+                                         faceDofNumber[elemToFaces[ifaceLoc]],
+                                         dt,
+                                         divMassFluxes,
+                                         dDivMassFluxes_dElemVars,
+                                         dDivMassFluxes_dFaceVars,
+                                         dofColIndicesElemVars,
+                                         dofColIndicesFaceVars );
 
-    // 2.b) Add the \x_{c,\ell} \rho_{\ell} \frac{\lambda_{\ell}}{\lambda_T} q_T of this face to the divergence of the flux in this cell
-    assembleViscousFlux< NF, NC, NP >( ifaceLoc,
-                                       oneSidedVolFlux,
-                                       dOneSidedVolFlux_dPres,
-                                       dOneSidedVolFlux_dFacePres,
-                                       dOneSidedVolFlux_dCompDens,
-                                       upwPhaseViscCoef,
-                                       dUpwPhaseViscCoef_dPres,
-                                       dUpwPhaseViscCoef_dCompDens,
-                                       elemDofNumber[localIds[0]][localIds[1]][localIds[2]],
-                                       neighborDofNumber,
-                                       upwViscDofNumber,
-                                       faceDofNumber[elemToFaces[ifaceLoc]],
-                                       dt,
-                                       divMassFluxes,
-                                       dDivMassFluxes_dElemVars,
-                                       dDivMassFluxes_dFaceVars,
-                                       dofColIndicesElemVars,
-                                       dofColIndicesFaceVars );
 
-    // Collect face DOF number only if this is not a boundary face
-//    if( isBoundaryFace[elemToFaces[ifaceLoc]] == 0 )
-//    {
-    faceIndexMap[ifaceLoc] = numNonBoundaryFaces;
-    dofColIndicesFaceVars[numNonBoundaryFaces] = faceDofNumber[elemToFaces[ifaceLoc]];
-    numNonBoundaryFaces++;
-//    }
-//    else
-//    {
-//      faceIndexMap[ifaceLoc] = -1; // Mark boundary faces
-//    }
+      faceIndexMap[ifaceLoc] = numNonBoundaryFaces;
+      dofColIndicesFaceVars[numNonBoundaryFaces] = faceDofNumber[elemToFaces[ifaceLoc]];
+      numNonBoundaryFaces++;
 
-    // 3) *************** Assemble buoyancy terms ******************
 
-    real64 const transGravCoef = (localIds[0] != neighborIds[0] || localIds[1] != neighborIds[1] || localIds[2] != neighborIds[2])
-                                 * transMatrixGrav[ifaceLoc][ifaceLoc] * (elemGravCoef - mimFaceGravCoef[elemToFaces[ifaceLoc]]);
+      // 3) *************** Assemble buoyancy terms ******************
 
-    // 3.a) Compute the upwinded x_{c, \ell} \rho_{\ell} \frac{\lambda_{\ell}\lambda_m}{\lambda_T}
-    //      and (\rho_{\ell} - \rho_m) g \Delta z for each phase at this face
-    UpwindingHelper::upwindBuoyancyCoefficient< NC, NP >( localIds,
-                                                          neighborIds,
-                                                          transGravCoef,
-                                                          phaseDens,
-                                                          dPhaseDens,
-                                                          phaseMassDens,
-                                                          dPhaseMassDens,
-                                                          phaseMob,
-                                                          dPhaseMob,
-                                                          dCompFrac_dCompDens,
-                                                          phaseCompFrac,
-                                                          dPhaseCompFrac,
-                                                          phaseGravTerm,
-                                                          dPhaseGravTerm_dPres,
-                                                          dPhaseGravTerm_dCompDens,
-                                                          upwPhaseGravCoef,
-                                                          dUpwPhaseGravCoef_dPres,
-                                                          dUpwPhaseGravCoef_dCompDens );
+      real64 const transGravCoef = (localIds[0] != neighborIds[0] || localIds[1] != neighborIds[1] || localIds[2] != neighborIds[2])
+                                   * transMatrixGrav[ifaceLoc][ifaceLoc] * (elemGravCoef - mimFaceGravCoef[elemToFaces[ifaceLoc]]);
 
-    // 3.b) Add the buoyancy term of this face to the divergence of the flux in this cell
-    assembleBuoyancyFlux< NF, NC, NP >( ifaceLoc,
-                                        phaseGravTerm,
-                                        dPhaseGravTerm_dPres,
-                                        dPhaseGravTerm_dCompDens,
-                                        upwPhaseGravCoef,
-                                        dUpwPhaseGravCoef_dPres,
-                                        dUpwPhaseGravCoef_dCompDens,
-                                        dt,
-                                        divMassFluxes,
-                                        dDivMassFluxes_dElemVars );
+      // 3.a) Compute the upwinded x_{c, \ell} \rho_{\ell} \frac{\lambda_{\ell}\lambda_m}{\lambda_T}
+      //      and (\rho_{\ell} - \rho_m) g \Delta z for each phase at this face
+      UpwindingHelper::upwindBuoyancyCoefficient< NC, NP >( localIds,
+                                                            neighborIds,
+                                                            transGravCoef,
+                                                            phaseDens,
+                                                            dPhaseDens,
+                                                            phaseMassDens,
+                                                            dPhaseMassDens,
+                                                            phaseMob,
+                                                            dPhaseMob,
+                                                            dCompFrac_dCompDens,
+                                                            phaseCompFrac,
+                                                            dPhaseCompFrac,
+                                                            phaseGravTerm,
+                                                            dPhaseGravTerm_dPres,
+                                                            dPhaseGravTerm_dCompDens,
+                                                            upwPhaseGravCoef,
+                                                            dUpwPhaseGravCoef_dPres,
+                                                            dUpwPhaseGravCoef_dCompDens );
+
+      // 3.b) Add the buoyancy term of this face to the divergence of the flux in this cell
+      assembleBuoyancyFlux< NF, NC, NP >( ifaceLoc,
+                                          phaseGravTerm,
+                                          dPhaseGravTerm_dPres,
+                                          dPhaseGravTerm_dCompDens,
+                                          upwPhaseGravCoef,
+                                          dUpwPhaseGravCoef_dPres,
+                                          dUpwPhaseGravCoef_dCompDens,
+                                          dt,
+                                          divMassFluxes,
+                                          dDivMassFluxes_dElemVars );
+      
+    }
+    else
+    {
+      faceIndexMap[ifaceLoc] = -1; // Mark boundary faces
+    }
 
   }
 
@@ -808,10 +811,37 @@ AssemblerKernelHelper::
     localRhs[eqnRowLocalIndex] = localRhs[eqnRowLocalIndex] + divMassFluxes[ic];
 
     // jacobian -- derivative wrt elem centered vars
+    // Need to compact both DOF indices and derivatives to only include non-boundary neighbors
+    globalIndex compactElemDofs[ NDOF*(NF+1) ];
+    real64 compactElemDerivs[ NDOF*(NF+1) ];
+    
+    // Copy current element DOFs and derivatives
+    for( integer idof = 0; idof < NDOF; ++idof )
+    {
+      compactElemDofs[idof] = dofColIndicesElemVars[idof];
+      compactElemDerivs[idof] = dDivMassFluxes_dElemVars[ic][idof];
+    }
+    
+    // Copy neighbor DOFs and derivatives only for non-boundary faces
+    integer compactIdx = NDOF;
+    for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
+    {
+      if( faceIndexMap[jfaceLoc] >= 0 )  // non-boundary face
+      {
+        integer const neighborOffset = NDOF * (jfaceLoc + 1);
+        for( integer idof = 0; idof < NDOF; ++idof )
+        {
+          compactElemDofs[compactIdx] = dofColIndicesElemVars[neighborOffset + idof];
+          compactElemDerivs[compactIdx] = dDivMassFluxes_dElemVars[ic][neighborOffset + idof];
+          compactIdx++;
+        }
+      }
+    }
+    
     localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
-                                                              &dofColIndicesElemVars[0],
-                                                              &dDivMassFluxes_dElemVars[0][0] + ic * NDOF * (NF+1),
-                                                              NDOF * (NF+1) );
+                                                              compactElemDofs,
+                                                              compactElemDerivs,
+                                                              compactIdx );
 
     // jacobian -- derivatives wrt face centered vars (only non-boundary faces)
     // Need to compact the derivatives array to only include non-boundary faces

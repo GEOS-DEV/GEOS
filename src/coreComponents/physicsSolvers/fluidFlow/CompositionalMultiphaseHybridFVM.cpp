@@ -208,7 +208,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
         }
       }
     } );
-
+    
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
       GEOS_LOG_RANK_0( getCatalogName() << " " << getDataContext() << ": An aquifer boundary condition named " <<
@@ -393,6 +393,21 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
     // Get boundary face indicator (initialized during initializePostInitialConditionsPreSubGroups)
     arrayView1d< integer const > const isBoundaryFaceView =
       faceManager.getField< flow::isBoundaryFace >();
+    
+//    // Print isBoundaryFaceView for debugging
+//    std::cout << "=== isBoundaryFaceView Debug Info ===" << std::endl;
+//    std::cout << "Total number of faces: " << faceManager.size() << std::endl;
+//    integer numBoundaryFaces = 0;
+//    for( localIndex iface = 0; iface < faceManager.size(); ++iface )
+//    {
+//      if( isBoundaryFaceView[iface] == 1 )
+//      {
+//        std::cout << "Face " << iface << " is a boundary face" << std::endl;
+//        numBoundaryFaces++;
+//      }
+//    }
+//    std::cout << "Total boundary faces: " << numBoundaryFaces << std::endl;
+//    std::cout << "=====================================" << std::endl;
 
     // get the element dof numbers for the assembly
     string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
