@@ -101,9 +101,6 @@ void SinglePhaseStressPathDrivenFVM::updateFractureAperture( SurfaceElementSubRe
   BartonBandisStressPathDrivenUpdates hydraulicApertureWrapper = hydraulicApertureModel.createKernelWrapper(); 
 
   real64 sumAperture = 0.0;
-  // not used
-  real64 dHydraulicAperture_aperture = 0.0;
-  real64 dHydraulicAperture_dNormalTraction = 0.0;
   forAll< parallelDevicePolicy<> >( subRegion.size(), [&] GEOS_DEVICE ( localIndex const k )
   {
     array1d < real64 > normal(3);
@@ -111,13 +108,7 @@ void SinglePhaseStressPathDrivenFVM::updateFractureAperture( SurfaceElementSubRe
     normal[1] = normalVector[k][1];
     normal[2] = normalVector[k][2];
     
-    real64 const sigmaN_N = hydraulicApertureWrapper.computeFractureStress( pressure[k], normal );
-    // The traction sigmaN_N must be negative
-    newHydraulicAperture[k] = hydraulicApertureWrapper.computeHydraulicAperture( 0.0,
-                                                    -sigmaN_N,
-                                                    fields::contact::FractureState::Slip, // not open
-                                                    dHydraulicAperture_aperture,
-                                                    dHydraulicAperture_dNormalTraction );
+    newHydraulicAperture[k] = hydraulicApertureWrapper.computeHydraulicAperture( pressure[k], normal );
 
     sumAperture += newHydraulicAperture[k];
   } );

@@ -37,7 +37,7 @@ BartonBandisStressPathDriven::BartonBandisStressPathDriven( string const & name,
 
   registerWrapper( viewKeyStruct::referenceNormalStressString(), &m_referenceNormalStress ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( " Reference normal stress." );
+    setDescription( "Reference normal stress." );
   registerWrapper( viewKeyStruct::biotString(), &m_biot ).
     setApplyDefaultValue( 1.0 ). 
     setInputFlag( InputFlags::REQUIRED ).
@@ -45,15 +45,18 @@ BartonBandisStressPathDriven::BartonBandisStressPathDriven( string const & name,
   registerWrapper( viewKeyStruct::poissonString(), &m_poisson ).
     setApplyDefaultValue( 0.3 ). 
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( " Poisson ratio." );
+    setDescription( "Poisson ratio." );
+  registerWrapper( viewKeyStruct::normalStiffnessString(), &m_normalStiffness ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Normal stiffness: Kni." );
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setApplyDefaultValue( 1.0e5 ). 
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( " Reference pressure: p_0." );
+    setDescription( "Reference pressure: p_0." );
   registerWrapper( viewKeyStruct::referenceTotalStressString(), &m_referenceTotalStress ).
     setApplyDefaultValue( { 85.0e6, 85.0e6, 105.0e6 } ). 
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( " Total stress at reference state: sigmaT_0." );
+    setDescription( "Total stress at reference state: sigmaT_0." );
     
 }
 
@@ -67,7 +70,13 @@ void BartonBandisStressPathDriven::postInputInitialization()
 
 BartonBandisStressPathDrivenUpdates BartonBandisStressPathDriven::createKernelWrapper() const
 {
-  return KernelWrapper( m_aperture0, m_referenceNormalStress, m_biot, m_poisson, m_referencePressure, m_referenceTotalStress);
+  return KernelWrapper( m_aperture0, 
+                        m_referenceNormalStress, 
+                        m_biot, 
+                        m_poisson, 
+                        m_normalStiffness, 
+                        m_referencePressure, 
+                        m_referenceTotalStress);
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, BartonBandisStressPathDriven, string const &, Group * const )
