@@ -372,7 +372,7 @@ void DomainPartition::outputPartitionInformation() const
                       addCommaSeparators( stat.localCount[3] + stat.ghostCount[3] ) );
   };
 
-  auto addSummaryRow = []( TableData & tableData, stdArray< double, 4 > & stats, string_view heading )
+  auto addSummaryRow = []( TableData & tableData, stdArray< double, 4 > const & stats, string_view heading )
   {
     tableData.addRow( heading,
                       CellType::MergeNext, CellType::MergeNext, stats[0],
