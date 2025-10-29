@@ -6922,15 +6922,17 @@ Information output from lower logLevels is added with the desired log level
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="BartonBandisPermeabilityType">
-		<!--biotCoefficient => Biot coefficient.-->
-		<xsd:attribute name="biotCoefficient" type="real64" use="required" />
+	<xsd:complexType name="BartonBandisStressPathDrivenType">
+		<!--biot => Biot coefficient.-->
+		<xsd:attribute name="biot" type="real64" use="required" />
 		<!--normalStiffness => Normal stiffness: Kni.-->
 		<xsd:attribute name="normalStiffness" type="real64" use="required" />
-		<!--poissonRatio => Poisson ratio.-->
-		<xsd:attribute name="poissonRatio" type="real64" use="required" />
+		<!--poisson => Poisson ratio.-->
+		<xsd:attribute name="poisson" type="real64" use="required" />
 		<!--referenceAperture => Reference hydraulic aperture. It is the aperture at zero normal stress.-->
 		<xsd:attribute name="referenceAperture" type="real64" default="1e-06" />
+		<!--referenceNormalStress => Reference normal stress.-->
+		<xsd:attribute name="referenceNormalStress" type="real64" use="required" />
 		<!--referencePressure => Reference pressure: p_0.-->
 		<xsd:attribute name="referencePressure" type="real64" use="required" />
 		<!--referenceTotalStress => Total stress at reference state: sigmaT_0.-->

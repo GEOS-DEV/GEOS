@@ -107,9 +107,14 @@
     
     <BartonBandis
       name="hApertureModel"
-      referenceNormalStress="1.0844e8"
-	  referenceAperture="1.e-3"/>   
-	  
+	  biot="1.0"
+	  poisson="0.3"
+	  normalStiffness="12.041e9"
+	  referenceAperture="1.2421e-4"
+	  referencePressure="1e5"
+      referenceNormalStress="1.0e6"
+	  referenceTotalStress="{ 85.0e6, 85.0e6, 105.0e6 }"/>
+	    
   </Constitutive>
 
   

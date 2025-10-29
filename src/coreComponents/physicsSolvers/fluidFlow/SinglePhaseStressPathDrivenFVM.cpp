@@ -104,9 +104,6 @@ void SinglePhaseStressPathDrivenFVM::updateFractureAperture( SurfaceElementSubRe
   BartonBandisUpdates hydraulicApertureWrapper = hydraulicApertureModel.createKernelWrapper(); 
 
   real64 sumAperture = 0.0;
-  // not used
-  real64 dHydraulicAperture_aperture = 0.0;
-  real64 dHydraulicAperture_dNormalTraction = 0.0;
   forAll< parallelDevicePolicy<> >( subRegion.size(), [&] GEOS_DEVICE ( localIndex const k )
   {
     R1Tensor const normal = { normalVector[k][0], normalVector[k][1], normalVector[k][2] };

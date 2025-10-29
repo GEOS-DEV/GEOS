@@ -46,6 +46,19 @@ void constitutiveUpdatePassThru( HydraulicApertureBase & contact,
                                BartonBandis >::execute( contact, std::forward< LAMBDA >( lambda ) );
 }
 
+template< typename LAMBDA >
+void constitutiveUpdatePassThru( BartonBandisStressPathDriven const & contact,
+                                 LAMBDA && lambda )
+{
+  ConstitutivePassThruHandler< BartonBandisStressPathDriven >::execute( contact, std::forward< LAMBDA >( lambda ) );
+}
+
+template< typename LAMBDA >
+void constitutiveUpdatePassThru( BartonBandisStressPathDriven & contact,
+                                 LAMBDA && lambda )
+{
+  ConstitutivePassThruHandler< BartonBandisStressPathDriven >::execute( contact, std::forward< LAMBDA >( lambda ) );
+}
 } /* namespace constitutive */
 
 } /* namespace geos */
