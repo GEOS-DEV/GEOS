@@ -247,24 +247,13 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
       WellControls & wellControls = getWellControls( subRegion );
       wellControls.registerWrapper< real64 >( viewKeyStruct::currentBHPString() );
 
-      wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentBHPString() ).
-        setSizedFromParent( 0 ).
-        reference().resizeDimension< 0 >( m_numComponents + 2 );   // dP, dT, dC
-
       wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::currentPhaseVolRateString() ).
         setSizedFromParent( 0 ).
         reference().resizeDimension< 0 >( m_numPhases );
 
-      wellControls.registerWrapper< array2d< real64 > >( viewKeyStruct::dCurrentPhaseVolRateString() ).
-        setSizedFromParent( 0 ).
-        reference().resizeDimension< 0, 1 >( m_numPhases, m_numComponents + 3 );   // dP, dT, dC, dQ
-
       wellControls.registerWrapper< real64 >( viewKeyStruct::massDensityString() );
 
       wellControls.registerWrapper< real64 >( viewKeyStruct::currentTotalVolRateString() );
-      wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentTotalVolRateString() ).
-        setSizedFromParent( 0 ).
-        reference().resizeDimension< 0 >( m_numComponents + 3 );   // dP, dT, dC dQ
 
       wellControls.registerWrapper< real64 >( viewKeyStruct::massDensityString() );
 
@@ -535,62 +524,34 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
   {
     return;
   }
-  using Deriv = constitutive::multifluid::DerivativeOffset;
 
-  integer const numComp = m_numComponents;
   localIndex const iwelemRef = subRegion.getTopWellElementIndex();
 
-  string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-  integer const isThermal = fluid.isThermal();
   // subRegion data
-
   arrayView1d< real64 const > const & pres = subRegion.getField< well::pressure >();
-
   arrayView1d< real64 > const & totalMassDens = subRegion.getField< well::totalMassDensity >();
-  arrayView2d< real64, compflow::USD_FLUID_DC > const & dTotalMassDens = subRegion.getField< well::dTotalMassDensity >();
-
   arrayView1d< real64 const > const wellElemGravCoef = subRegion.getField< well::gravityCoefficient >();
 
   // control data
-
   WellControls & wellControls = getWellControls( subRegion );
   string const wellControlsName = wellControls.getName();
   real64 const & refGravCoef = wellControls.getReferenceGravityCoef();
 
   real64 & currentBHP =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
-  arrayView1d< real64 > const & dCurrentBHP =
-    wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentBHPString() );
 
-  geos::internal::kernelLaunchSelectorCompThermSwitch( numComp, isThermal, [&] ( auto NC, auto ISTHERMAL )
+  // bring everything back to host, capture the scalars by reference
+  forAll< serialPolicy >( 1, [ pres,
+                               totalMassDens,
+                               wellElemGravCoef,
+                               &currentBHP,
+                               &iwelemRef,
+                               &refGravCoef] ( localIndex const )
   {
-    integer constexpr IS_THERMAL = ISTHERMAL();
-    GEOS_UNUSED_VAR( NC );
-    // bring everything back to host, capture the scalars by reference
-    forAll< serialPolicy >( 1, [&numComp,
-                                pres,
-                                totalMassDens,
-                                dTotalMassDens,
-                                wellElemGravCoef,
-                                &currentBHP,
-                                &dCurrentBHP,
-                                &iwelemRef,
-                                &refGravCoef] ( localIndex const )
-    {
-      real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
-      currentBHP = pres[iwelemRef] + totalMassDens[iwelemRef] * diffGravCoef;
-      dCurrentBHP[Deriv::dP] =   1 + dTotalMassDens[iwelemRef][Deriv::dP] * diffGravCoef;
-      for( integer ic = 0; ic < numComp; ++ic )
-      {
-        dCurrentBHP[Deriv::dC+ic] = dTotalMassDens[iwelemRef][Deriv::dC+ic] * diffGravCoef;
-      }
-      if constexpr ( IS_THERMAL )
-      {
-        dCurrentBHP[Deriv::dT] =  dTotalMassDens[iwelemRef][Deriv::dT] * diffGravCoef;
-      }
-    } );
+    real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
+    currentBHP = pres[iwelemRef] + totalMassDens[iwelemRef] * diffGravCoef;
   } );
+
 
   GEOS_LOG_LEVEL_BY_RANK( logInfo::BoundaryConditions,
                           GEOS_FMT( "{}: BHP (at the specified reference elevation) = {} Pa",

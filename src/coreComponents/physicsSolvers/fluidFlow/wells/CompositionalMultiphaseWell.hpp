@@ -370,31 +370,12 @@ public:
     static constexpr char const * massDensityString() { return "massDensity";}
 
     static constexpr char const * currentBHPString() { return "currentBHP"; }
-    static constexpr char const * dCurrentBHPString() { return "dCurrentBHP"; }
-
-    static constexpr char const * dCurrentBHP_dPresString() { return "dCurrentBHP_dPres"; }
-    static constexpr char const * dCurrentBHP_dCompDensString() { return "dCurrentBHP_dCompDens"; }
 
     static constexpr char const * currentPhaseVolRateString() { return "currentPhaseVolumetricRate"; }
-    static constexpr char const * dCurrentPhaseVolRateString() { return "dCurrentPhaseVolumetricRate"; }
-
-
-    static constexpr char const * dCurrentPhaseVolRate_dPresString() { return "dCurrentPhaseVolumetricRate_dPres"; }
-
-    static constexpr char const * dCurrentPhaseVolRate_dCompDensString() { return "dCurrentPhaseVolumetricRate_dCompDens"; }
-
-    static constexpr char const * dCurrentPhaseVolRate_dRateString() { return "dCurrentPhaseVolumetricRate_dRate"; }
 
     static constexpr char const * currentTotalVolRateString() { return "currentTotalVolumetricRate"; }
-    static constexpr char const * dCurrentTotalVolRateString() { return "dCurrentTotalVolumetricRate"; }
 
     static constexpr char const * currentMassRateString() { return "currentMassRate"; }
-
-    static constexpr char const * dCurrentTotalVolRate_dPresString() { return "dCurrentTotalVolumetricRate_dPres"; }
-
-    static constexpr char const * dCurrentTotalVolRate_dCompDensString() { return "dCurrentTotalVolumetricRate_dCompDens"; }
-
-    static constexpr char const * dCurrentTotalVolRate_dRateString() { return "dCurrentTotalVolumetricRate_dRate"; }
 
   } viewKeysCompMultiphaseWell;
 

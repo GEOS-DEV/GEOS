@@ -368,7 +368,7 @@ real64 WellControls::getTargetBHP( real64 const & targetTime ) const
 real64 WellControls::getInjectionTemperature() const
 {
   real64 injectionTemperature = 0.0;
-  this->forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint > >( [&] ( auto & constraint )
+  this->forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
   {
     if( constraint.isConstraintActive())
     {
@@ -383,7 +383,7 @@ real64 WellControls::getInjectionTemperature() const
 arrayView1d< real64 const > WellControls::getInjectionStream() const
 {
   arrayView1d< real64 const > injectionStream;
-  forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint > >( [&] ( auto & constraint )
+  forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
   {
     if( constraint.isConstraintActive() )
     {
