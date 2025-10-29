@@ -526,6 +526,7 @@ protected:
                          solver->getSystemSolution() );
 
     solver->implicitStepSetup( TIME, DT, domain );
+    solver->wellSolver()->initializeWells( domain, TIME );
   }
 
   void TestAssembleCouplingTerms()

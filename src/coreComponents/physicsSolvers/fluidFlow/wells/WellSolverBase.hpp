@@ -280,6 +280,13 @@ public:
   virtual void updateState( DomainPartition & domain ) override;
 
   /**
+   * @brief Initialize all the primary and secondary variables in all the wells
+   * @param domain the domain containing the well manager to access individual wells
+   */
+  virtual void initializeWells( DomainPartition & domain, real64 const & time_n ) = 0;
+  virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) = 0;
+
+  /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive
    * models)
    * @param subRegion the well subRegion containing the well elements and their associated
@@ -410,12 +417,7 @@ protected:
 
   virtual void initializePostSubGroups() override;
 
-  /**
-   * @brief Initialize all the primary and secondary variables in all the wells
-   * @param domain the domain containing the well manager to access individual wells
-   */
-  virtual void initializeWells( DomainPartition & domain, real64 const & time_n ) = 0;
-  virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) = 0;
+
   /**
    * @brief Make sure that the well constraints are compatible
    * @param time_n the time at the beginning of the time step

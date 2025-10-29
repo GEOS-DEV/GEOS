@@ -317,6 +317,13 @@ public:
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
 
+  /**
+   * @brief Initialize all the primary and secondary variables in all the wells
+   * @param domain the domain containing the well manager to access individual wells
+   */
+  void initializeWells( DomainPartition & domain, real64 const & time_n ) override;
+  void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) override;
+
   /*
    * @brief apply a special treatment to the wells that are shut
    * @param time_n the time at the previous converged time step
@@ -358,12 +365,7 @@ private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
-  /**
-   * @brief Initialize all the primary and secondary variables in all the wells
-   * @param domain the domain containing the well manager to access individual wells
-   */
-  void initializeWells( DomainPartition & domain, real64 const & time_n ) override;
-  void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) override;
+
   /**
    * @brief Make sure that the well constraints are compatible
    * @param time_n the time at the beginning of the time step

@@ -336,6 +336,13 @@ public:
 
   void chopNegativeDensities( WellElementSubRegion & subRegion );
 
+  /**
+   * @brief Initialize all the primary and secondary variables in all the wells
+   * @param domain the domain containing the well manager to access individual wells
+   */
+  void initializeWells( DomainPartition & domain, real64 const & time_n ) override;
+  void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) override;
+
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     static constexpr char const * dofFieldString() { return "compositionalWellVars"; }
@@ -444,14 +451,6 @@ protected:
                                     WellElementSubRegion & subRegion ) override;
 
 private:
-
-  /**
-   * @brief Initialize all the primary and secondary variables in all the wells
-   * @param domain the domain containing the well manager to access individual wells
-   */
-  void initializeWells( DomainPartition & domain, real64 const & time_n ) override;
-
-  void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) override;
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 

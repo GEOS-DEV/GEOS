@@ -535,7 +535,6 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
           real64 const dP = perturbParameter * ( wellElemPressure[iwelem] + perturbParameter );
           wellElemPressure.move( hostMemorySpace, true );
           wellElemPressure[iwelem] += dP;
-
           // after perturbing, update the pressure-dependent quantities in the well
           wellSolver.updateState( domain );
 
@@ -656,6 +655,7 @@ protected:
                          solver->getSystemSolution() );
 
     solver->implicitStepSetup( time, dt, domain );
+    solver->wellSolver()->initializeWells( domain, time );
   }
 
   static real64 constexpr time = 0.0;

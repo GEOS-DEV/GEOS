@@ -584,6 +584,7 @@ protected:
                          solver->getSystemSolution() );
 
     solver->implicitStepSetup( time, dt, domain );
+    solver->wellSolver()->initializeWells( domain, time );
   }
 
   static real64 constexpr time = 0.0;
