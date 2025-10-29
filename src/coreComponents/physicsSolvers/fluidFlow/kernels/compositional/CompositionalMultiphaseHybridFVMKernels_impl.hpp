@@ -733,16 +733,16 @@ AssemblerKernelHelper::
                                        dofColIndicesFaceVars );
 
     // Collect face DOF number only if this is not a boundary face
-    if( isBoundaryFace[elemToFaces[ifaceLoc]] == 0 )
-    {
-      faceIndexMap[ifaceLoc] = numNonBoundaryFaces;
-      dofColIndicesFaceVars[numNonBoundaryFaces] = faceDofNumber[elemToFaces[ifaceLoc]];
-      numNonBoundaryFaces++;
-    }
-    else
-    {
-      faceIndexMap[ifaceLoc] = -1; // Mark boundary faces
-    }
+//    if( isBoundaryFace[elemToFaces[ifaceLoc]] == 0 )
+//    {
+    faceIndexMap[ifaceLoc] = numNonBoundaryFaces;
+    dofColIndicesFaceVars[numNonBoundaryFaces] = faceDofNumber[elemToFaces[ifaceLoc]];
+    numNonBoundaryFaces++;
+//    }
+//    else
+//    {
+//      faceIndexMap[ifaceLoc] = -1; // Mark boundary faces
+//    }
 
     // 3) *************** Assemble buoyancy terms ******************
 
