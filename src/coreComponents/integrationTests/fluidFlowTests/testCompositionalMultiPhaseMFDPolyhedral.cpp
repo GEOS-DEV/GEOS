@@ -56,7 +56,7 @@ static std::string generateXmlInputCompTPFA( std::string const & meshFile )
       useMass="1"
       temperature="300">
       <NonlinearSolverParameters
-        newtonTol="1e-3"
+        newtonTol="1e-7"
         lineSearchAction="None"
         maxTimeStepCuts="100"
         maxSubSteps="100"
@@ -138,10 +138,10 @@ static std::string generateXmlInputCompTPFA( std::string const & meshFile )
 
     <!-- Uniform initial global component fractions to avoid external files -->
     <FieldSpecification name="initZH2O" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain" fieldName="globalCompFraction" component="0" scale="0.0"/>
+      objectPath="ElementRegions/Domain" fieldName="globalCompFraction" component="0" scale="1.0"/>
 
     <FieldSpecification name="initZCH4" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain" fieldName="globalCompFraction" component="1" scale="1.0"/>
+      objectPath="ElementRegions/Domain" fieldName="globalCompFraction" component="1" scale="0.0"/>
 
     <!-- Pressure and composition BCs on faces -->
     <FieldSpecification name="westPressure" objectPath="faceManager"
@@ -190,7 +190,7 @@ static std::string generateXmlInputCompMFD( std::string const & innerProductType
       useMass="1"
       temperature="300">
       <NonlinearSolverParameters
-        newtonTol="1e-3"
+        newtonTol="1e-7"
         lineSearchAction="None"
         maxTimeStepCuts="100"
         maxSubSteps="100"
@@ -273,10 +273,10 @@ static std::string generateXmlInputCompMFD( std::string const & innerProductType
 
     <!-- Uniform initial global component fractions to avoid external files -->
     <FieldSpecification name="initZH2O" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain" fieldName="globalCompFraction" component="0" scale="0.0"/>
+      objectPath="ElementRegions/Domain" fieldName="globalCompFraction" component="0" scale="1.0"/>
 
     <FieldSpecification name="initZCH4" initialCondition="1" setNames="{ all }"
-      objectPath="ElementRegions/Domain" fieldName="globalCompFraction" component="1" scale="1.0"/>
+      objectPath="ElementRegions/Domain" fieldName="globalCompFraction" component="1" scale="0.0"/>
 
     <!-- Pressure BC regions for hybrid solver use bc* fields -->
     <FieldSpecification name="westPressure" objectPath="faceManager"
@@ -367,6 +367,7 @@ TEST_F( CompositionalTPFAIntegrationTest, PressureFieldL2Error )
                       solver.getSystemSolution() );
   solver.implicitStepSetup( 0.0, TIME_STEP, domain );
   solver.solverStep( 0.0, TIME_STEP, 0, domain );
+  solver.updateState( domain );
   solver.implicitStepComplete( 0.0, TIME_STEP, domain );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
@@ -430,6 +431,7 @@ TEST_F( CompositionalMFDTPFAIntegrationTest, PressureFieldL2Error )
                       solver.getSystemSolution() );
   solver.implicitStepSetup( 0.0, TIME_STEP, domain );
   solver.solverStep( 0.0, TIME_STEP, 0, domain );
+  solver.updateState( domain );
   solver.implicitStepComplete( 0.0, TIME_STEP, domain );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
@@ -487,6 +489,7 @@ TEST( CompositionalTPFAvsMFDTPFA, PressureAndSaturationComparison )
                         solver.getSystemSolution() );
     solver.implicitStepSetup( 0.0, TIME_STEP, domain );
     solver.solverStep( 0.0, TIME_STEP, 0, domain );
+    solver.updateState( domain );
     solver.implicitStepComplete( 0.0, TIME_STEP, domain );
 
     MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
@@ -518,6 +521,7 @@ TEST( CompositionalTPFAvsMFDTPFA, PressureAndSaturationComparison )
                         solver.getSystemSolution() );
     solver.implicitStepSetup( 0.0, TIME_STEP, domain );
     solver.solverStep( 0.0, TIME_STEP, 0, domain );
+    solver.updateState( domain );
     solver.implicitStepComplete( 0.0, TIME_STEP, domain );
 
     MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
