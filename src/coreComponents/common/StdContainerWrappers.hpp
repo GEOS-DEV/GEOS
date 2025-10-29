@@ -464,4 +464,33 @@ constexpr stdArray< T, N > to_stdArray( std::array< T, N > const & arr )
 
 } // namespace geos
 
+namespace std
+{
+// Partial specialization for stdArray
+// Those were retrived from std::array
+template< typename T, size_t N >
+struct tuple_size< geos::stdArray< T, N > >
+  : public integral_constant< size_t, N > { };
+
+/// Partial specialization for std::array
+template< size_t Ind, typename Tp, size_t Nm >
+struct tuple_element< Ind, geos::stdArray< Tp, Nm > >
+{
+  static_assert( Ind < Nm, "array index is in range" );
+  using type = Tp;
+};
+
+#if __cplusplus >= 201703L
+template< typename Tp, size_t Nm >
+inline constexpr size_t tuple_size_v< geos::stdArray< Tp, Nm > > = Nm;
+
+template< typename Tp, size_t Nm >
+inline constexpr size_t tuple_size_v< const geos::stdArray< Tp, Nm > > = Nm;
+#endif
+
+template< typename Tp, size_t Nm >
+struct __is_tuple_like_impl< geos::stdArray< Tp, Nm > > : true_type
+{ };
+}
+
 #endif /* GEOS_COMMON_STD_CONTAINER_WRAPPERS_HPP */
