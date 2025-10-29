@@ -467,9 +467,7 @@ constexpr stdArray< T, N > to_stdArray( std::array< T, N > const & arr )
 /**
  * @namespace std
  * @brief Partial specialization for stdArray.
- *
- * This namespace contains specializations for the `std::array` functionalities
- * retrieved from `geos::stdArray.
+ * Those specialization serve to use geos::stdArray as tuples.
  */
 namespace std
 {
