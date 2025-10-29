@@ -145,11 +145,10 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
   MimeticInnerProductBase const & mimeticInnerProductBase =
     hmDiscretization.getReference< MimeticInnerProductBase >( HybridMimeticDiscretization::viewKeyStruct::innerProductString() );
   if( dynamicCast< QuasiRTInnerProduct const * >( &mimeticInnerProductBase )  ||
-      dynamicCast< QuasiTPFAInnerProduct const * >( &mimeticInnerProductBase )  ||
       dynamicCast< SimpleInnerProduct const * >( &mimeticInnerProductBase ) )
   {
     GEOS_ERROR( getCatalogName() << " " << getDataContext() <<
-                "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM" );
+                "The QuasiRT, and Simple inner products are only available in SinglePhaseHybridFVM" );
   }
 
   m_lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * 1e-8;
@@ -936,14 +935,6 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
             else if( innerProductType == "quasiTPFA" )
             {
               launchForFaces( QuasiTPFAInnerProduct{} );
-            }
-            else if( innerProductType == "quasiRT" )
-            {
-              launchForFaces( QuasiRTInnerProduct{} );
-            }
-            else if( innerProductType == "simple" )
-            {
-              launchForFaces( SimpleInnerProduct{} );
             }
             else if( innerProductType == "beiraoDaVeigaLipnikovManzini" )
             {
