@@ -1239,7 +1239,7 @@ struct PrecomputeMimeticTransGgradZKernel
       for( integer i = 0; i < NF; ++i )
       {
         localIndex const kf = elemToFaces[ei][i];
-        
+
         real64 T_g_delta_z = 0.0;
         for( integer j = 0; j < NF; ++j )
         {
@@ -1247,7 +1247,7 @@ struct PrecomputeMimeticTransGgradZKernel
           real64 const gravCoefDif = ccGravCoef - fGravCoef;
           T_g_delta_z += transMatrix[i][j] * gravCoefDif;
         }
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &faceInvSum[kf], 1.0 / LvArray::math::abs(T_g_delta_z) );
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &faceInvSum[kf], 1.0 / LvArray::math::abs( T_g_delta_z ) );
         RAJA::atomicAdd( parallelDeviceAtomic{}, &faceCount[kf], 1 );
       }
     } );
@@ -1268,7 +1268,7 @@ struct PrecomputeMimeticTransGgradZKernel
     ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
     arrayView1d< real64 const > const & transMultiplier = faceManager.getField< fields::flow::transMultiplier >();
     arrayView1d< real64 const > const & faceGravCoef = faceManager.getField< fields::flow::gravityCoefficient >();
-    
+
     arrayView2d< real64 const > const & elemCenter = subRegion.getElementCenter();
     arrayView1d< real64 const > const & elemVolume = subRegion.getElementVolume();
     arrayView3d< real64 const > const & elemPerm = permeability.permeability();

@@ -742,8 +742,8 @@ AssemblerKernelHelper::
       real64 const T_ij = transMatrix[ifaceLoc][jfaceLoc];            // local mimetic coupling (i,j)
       gFlux_i += T_ij * gravCoefDif;
     }
-    integer const sign = integer(gFlux_i > 0.0) - integer(gFlux_i < 0.0);
-    
+    integer const sign = integer( gFlux_i > 0.0 ) - integer( gFlux_i < 0.0 );
+
     // Buoyancy transmissibility applied on ifaceLoc face. The boolean comparison acts
     // as a 0/1 mask that disables the buoyancy flux for domain boundaries.
     real64 const transGravCoef = sign * (localIds[0] != neighborIds[0] || localIds[1] != neighborIds[1] || localIds[2] != neighborIds[2]) * mimeticTransGgradZ[elemToFaces[ifaceLoc]];

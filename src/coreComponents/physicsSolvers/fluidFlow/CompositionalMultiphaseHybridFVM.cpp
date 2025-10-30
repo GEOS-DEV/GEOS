@@ -77,9 +77,6 @@ void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group & meshBodies )
 
     faceManager.registerField< flow::facePressure_n >( getName() );
 
-    // precomputed mimetic gravity-driven trans coefficient on faces
-    faceManager.registerField< flow::mimeticTransGgradZ >( getName() );
-    
     // Register the face data for global component fraction
     faceManager.registerField< flow::faceGlobalCompFraction >( getName() );
 
@@ -107,12 +104,11 @@ void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group & meshBodies )
       reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
 
     // Register boundary face indicator (1 for boundary faces with Dirichlet BCs, 0 for interior)
-    // Used to skip flux continuity constraints for boundary faces
     faceManager.registerField< flow::isBoundaryFace >( getName() );
 
-    // auxiliary data for the buoyancy coefficient
-    faceManager.registerField< flow::mimGravityCoefficient >( getName() );
-    
+    // precomputed mimetic gravity-driven trans coefficient on faces
+    faceManager.registerField< flow::mimeticTransGgradZ >( getName() );
+
   } );
 }
 
@@ -242,20 +238,22 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, string_
       array1d< integer > count( faceManager.size() ); count.setValues< parallelDevicePolicy<> >( 0 );
 
       NodeManager const & nodeManager = mesh.getNodeManager();
-      mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames, [&]( localIndex const, localIndex const er, localIndex const esr, ElementRegionBase const &, CellElementSubRegion const & subRegion )
+      mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames,
+                                                                                  [&]( localIndex const, localIndex const er, localIndex const esr, ElementRegionBase const &,
+                                                                                       CellElementSubRegion const & subRegion )
       {
         GEOS_UNUSED_VAR( er );
         GEOS_UNUSED_VAR( esr );
         string const & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
         PermeabilityBase const & permeability = getConstitutiveModel< PermeabilityBase >( subRegion, permName );
         PrecomputeMimeticTransGgradZKernel::createAndLaunch< parallelDevicePolicy<> >( ip,
-                                                                                        nodeManager,
-                                                                                        faceManager,
-                                                                                        subRegion,
-                                                                                        permeability,
-                                                                                        lengthTolerance,
-                                                                                        invSum.toView(),
-                                                                                        count.toView() );
+                                                                                       nodeManager,
+                                                                                       faceManager,
+                                                                                       subRegion,
+                                                                                       permeability,
+                                                                                       lengthTolerance,
+                                                                                       invSum.toView(),
+                                                                                       count.toView() );
       } );
 
       // Reduce to effective value per face and write to field
@@ -263,7 +261,8 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, string_
       arrayView1d< integer const > ghost = faceManager.ghostRank();
       forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOS_HOST_DEVICE ( localIndex const kf )
       {
-        if( ghost[kf] >= 0 ) {
+        if( ghost[kf] >= 0 )
+        {
           return;
         }
         real64 const s = invSum[kf];
