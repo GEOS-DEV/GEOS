@@ -63,6 +63,7 @@ char const * PreXmlInput =
                        targetRegions="{wellRegion1,wellRegion2}">
     <WellControls
       name="wellControls1"
+      control="BHP"
       type="producer">
       <MinimumBHPConstraint
         name="minbhp"
@@ -75,6 +76,7 @@ char const * PreXmlInput =
 
     <WellControls
       name="wellControls2"
+      control="totalVolRate"
       type="injector">
       <MaximumBHPConstraint
         name="maxbhp"

@@ -107,6 +107,7 @@ char const * xmlInput =
         name="WC_CO2_INJ"
         logLevel="2"
         type="injector"
+        control="totalVolRate"
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="1.45e7"

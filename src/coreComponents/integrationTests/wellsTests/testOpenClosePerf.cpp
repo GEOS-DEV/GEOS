@@ -71,6 +71,7 @@ char const * PreXmlInput =
       <MinimumBHPConstraint
         name="minbhp"
         targetBHP="2e6"
+        control="BHP"
         referenceElevation="1.25"/>
     </WellControls>
       </CompositionalMultiphaseWell>

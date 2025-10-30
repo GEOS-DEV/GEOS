@@ -65,6 +65,7 @@ char const * xmlInput =
         name="wellControls1"
         type="producer">
         <ProductionPhaseVolumeRateConstraint
+        control="BHP"
           name="maxoilprod"
           phaseName="oil"
           phaseRate="1"/>
@@ -75,6 +76,7 @@ char const * xmlInput =
       </WellControls>
       <WellControls
         name="wellControls2"
+        control="totalVolRate"
         type="injector">
         <MaximumBHPConstraint
           name="maxbhp"

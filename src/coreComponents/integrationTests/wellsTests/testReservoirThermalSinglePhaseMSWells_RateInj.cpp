@@ -83,6 +83,7 @@ char const *  XmlInput =
       name="wellControls2"
       type="injector"
       enableCrossflow="0"
+      control="totalVolRate"
       useSurfaceConditions="1"
       surfacePressure="1.45e7"
       surfaceTemperature="323">
