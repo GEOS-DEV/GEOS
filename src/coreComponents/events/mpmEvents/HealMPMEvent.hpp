@@ -45,7 +45,9 @@ public:
    **/
   static string catalogName() { return "Heal"; }
 
- /// @cond DO_NOT_DOCUMENT
+  virtual string getCatalogName() const override { return catalogName(); }
+
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr char const * targetRegionString() { return "targetRegion"; }

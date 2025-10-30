@@ -122,7 +122,8 @@ public:
     MassWeighted,
     LargerMass,
     Mixed,
-    Aligned
+    Aligned,
+    LogisticRegression
   };
 
   /**
@@ -174,7 +175,8 @@ public:
 
   enum struct NormalsAndPositionsMethodOption : integer
   {
-    LR
+    LogisticRegression,
+    DFGAndVolumeIntegration
   };
 
   /**
@@ -331,8 +333,8 @@ public:
     static constexpr char const * gridVPlusString() { return "gridVPlus"; }
     static constexpr char const * gridDVPlusString() { return "gridDVPlus"; }
 
-    static constexpr char const * gridLRSurfaceNormalString() { return "gridLRSurfaceNormal"; }
-    static constexpr char const * gridLRSurfacePositionString() { return "gridLRSurfacePosition"; }
+    static constexpr char const * gridBasedSurfaceNormalString() { return "gridBasedSurfaceNormal"; }
+    static constexpr char const * gridBasedSurfacePositionString() { return "gridBasedSurfacePosition"; }
 
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
@@ -430,11 +432,14 @@ public:
                                           ParticleManager & particleManager,
                                           SpatialPartition & partition );
 
-  void computeGridSurfaceNormals( ParticleManager & particleManager,
-                                  NodeManager & nodeManager );
-
-  void computeGridSurfacePositions( ParticleManager & particleManager,
-                                    NodeManager & nodeManager );
+  real64 bruteForceNodalAreaIntegration( real64 const (& hEl)[3],
+                                         integer const & numSurfaceIntegrationPoints,
+                                         real64 const & L,
+                                         real64 const & dA,
+                                         arraySlice1d< real64 const > const surfaceNormal,
+                                         arraySlice1d< real64 const > const surfacePosition );
+    
+  void meshNodalAreaIntegration( NodeManager & nodeManager );
 
   void computeNodalAreas( NodeManager & nodeManager );
 
@@ -446,6 +451,7 @@ public:
                                         NodeManager & nodeManager );
 
   void computeContactForces( real64 const dt,
+                             ParticleManager & particleManager,
                              NodeManager & nodeManager );
 
   void initializeFrictionCoefficients();
@@ -456,8 +462,7 @@ public:
 
   GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
-  void computePairwiseNodalContactForce( ContactNormalTypeOption const & contactNormalType,
-                                         ContactGapCorrectionOption const & contactGapCorrection,
+  void computePairwiseNodalContactForce( ContactGapCorrectionOption const & contactGapCorrection,
                                          OverlapCorrectionOption const & overlapCorrection,
                                          real64 const (& hEl) [3],
                                          int const & planeStrain,
@@ -467,6 +472,7 @@ public:
                                          int & separable,
                                          real64 const & dt,
                                          real64 const & frictionCoefficient,
+                                        real64 (& nAB)[3],
                                          real64 const & mA,
                                          real64 const & mB,
                                          real64 const & VA,
@@ -475,8 +481,6 @@ public:
                                          arraySlice1d< real64 const > const GEOS_UNUSED_PARAM( vB ),
                                          arraySlice1d< real64 const > const qA,
                                          arraySlice1d< real64 const > const qB,
-                                         arraySlice1d< real64 const > const nA,
-                                         arraySlice1d< real64 const > const nB,
                                          real64 const spmA,
                                          real64 const spmB,
                                          arraySlice1d< real64 const > const sA,
@@ -485,8 +489,6 @@ public:
                                          arraySlice1d< real64 const > const xB, // Position of field B
                                          arraySlice1d< real64 const > const centerOfVolumeA,
                                          arraySlice1d< real64 const > const centerOfVolumeB,
-                                         real64 const & wA, // Surface normal weights of field A
-                                         real64 const & wB, // Surface normal weights of field A
                                          arraySlice1d< real64 > const fA,
                                          arraySlice1d< real64 > const fB );
 
@@ -768,13 +770,47 @@ public:
 
   void enforceContact( real64 dt,
                       //  DomainPartition & domain,
-                      //  ParticleManager & particleManager,
+                       ParticleManager & particleManager,
                        NodeManager & nodeManager
                       //  MeshLevel & mesh
                       );
 
-void logisticRegression( ParticleManager & particleManager,
-                         NodeManager & nodeManager );
+void computeParticleSurfaceNormalsAndPositions( ParticleManager & particleManager,
+                                                NodeManager & nodeManager );
+
+void computePairwiseLogisticRegressionSurfaceNormalsAndPositions( ParticleManager & particleManager,
+                                                                  NodeManager & nodeManager );
+
+void computeGridSurfacePositionFromVolume( NodeManager & nodeManager );
+
+real64 computeVolumeFromSurfacePosition( real64 const (& n)[3],
+                                         real64 const offset,
+                                         real64 const (& hEl) [3]);
+
+real64 computeMaximumSurfacePositionOffset( real64 (& n)[3],
+                                            real64 const (& hEl)[3] );
+
+void logisticRegression( int const & planeStrain,
+                         integer const & numContactGroups,
+                         integer const & damageFieldPartitioning,
+                         integer const & maxLRIterations,
+                         real64 const & LRtolerance,
+                         real64 const (& hEl)[3],
+                         localIndex const & fieldA,
+                         localIndex const & fieldB,
+                         localIndex const & numNeighboringParticles,
+                         arraySlice1d< localIndex const > const neighborRegions,
+                         arraySlice1d< localIndex const > const neighborSubRegions,
+                         arraySlice1d< localIndex const > const neighborIndices,
+                         ParticleManager::ParticleViewConst< arrayView1d< localIndex const > > particleGroup,
+                         ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleDamageGradient,
+                         ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particleSurfaceNormal,
+                         ParticleManager::ParticleViewConst< arrayView2d< real64 const > > particlePosition,
+                         arraySlice1d< real64 const > const gridPosition,
+                         arraySlice1d< real64 const > const gridDamageGradient,
+                         real64 (& normal0)[3],
+                         real64 (& normal)[3],
+                         real64 (& surfacePosition)[3] );
 
 void mapSurfaceNormalsAndPositionsToParticles( ParticleManager & particleManager,
                                                NodeManager & nodeManager );
@@ -832,12 +868,6 @@ void interpolateValueInRange( real64 const & x,
   void printProfilingResults();
 
   void computeSurfaceFlags( ParticleManager & particleManager );
-
-  void computeParticleSurfaceNormalsAndPositions( ParticleManager & particleManager,
-                                                  NodeManager & nodeManager );
-
-  void logisticRegression1D( ParticleManager & particleManager,
-                             NodeManager & nodeManager );
 
   void computeSphF( ParticleManager & particleManager );
 
@@ -1040,12 +1070,12 @@ protected:
   // Cohesive law variables
   int m_referenceCohesiveZone;
   int m_enableCohesiveLaws;
+  int m_czVolumeNormalization;
   CohesiveLawOption m_cohesiveLaw;
   int m_enableCohesiveFailure;
   int m_preventCZInterpentration;
   real64 m_normalForceConstant;
   real64 m_shearForceConstant;
-  int m_reinitializeCohesiveZones;
   real64 m_totalBinderVolume;
 
   real64 m_numSurfaceIntegrationPoints;
@@ -1077,7 +1107,6 @@ protected:
 
   int m_needsNeighborList;
   int m_needsNodalNeighborList;
-  int m_logisticRegression;
   OrderedVariableToManyParticleRelation m_nodalNeighborList;
   real64 m_neighborRadius;
   int m_binSizeMultiplier;
@@ -1113,6 +1142,7 @@ protected:
   int m_subdivideParticles; // Gas particles larger than a grid cell are subdivided
   int m_disableSurfaceNormalsAndPositionsOnCPDIScaling; // Turns off surface normals and positions for highly deformed particles
   int m_disableSurfaceNormalsAndPositionsOnDamage; // Turns off surface normals and positions for highly damaged particles
+  real64 m_surfaceNormalAndPositionDamageThreshold;
 
   real64 m_smallMass;
 
@@ -1132,8 +1162,11 @@ protected:
   real64 m_contactNormalExponent;
   ContactGapCorrectionOption m_contactGapCorrection;
   int m_directionalOverlapCorrection;
+  int m_maxLRIterations;
+  real64 m_LRtolerance;
 
   int m_resetDefGradForFullyDamagedParticles;
+  int m_resetDefGradForScaledSurfaceParticles;
   int m_useReferenceVectorsForParticleUpdate;
   int m_plotUnscaledParticles;
 
@@ -1242,7 +1275,8 @@ ENUM_STRINGS( SolidMechanicsMPM::ContactNormalTypeOption,
               "MassWeighted",
               "LargerMass",
               "Mixed",
-              "Aligned" );
+              "Aligned",
+              "LogisticRegression" );
 
 ENUM_STRINGS( SolidMechanicsMPM::ContactGapCorrectionOption,
               "Simple",
@@ -1268,7 +1302,8 @@ ENUM_STRINGS( SolidMechanicsMPM::GPUSchemeOption,
               "Colors" );
 
 ENUM_STRINGS( SolidMechanicsMPM:: NormalsAndPositionsMethodOption,
-              "LR" );
+              "LogisticRegression",
+              "DFGAndVolumeIntegration" );
 
 //**********************************************************************************************************************
 //**********************************************************************************************************************

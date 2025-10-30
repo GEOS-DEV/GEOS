@@ -50,8 +50,8 @@ namespace geos
     }
 
     GEOS_LOG_RANK_0( "BodyForceUpdateEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
+                     "Start time=" << m_startTime << ", " << 
+                     "Time interval=" << getTimeInterval() << ", " << 
                      "bodyForce=" << m_bodyForce );
   }
 

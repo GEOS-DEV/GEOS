@@ -57,8 +57,8 @@ namespace geos
     GEOS_ERROR_IF( m_boreholeRadius < 0.0   , "Borehole radius must be positive!");
 
     GEOS_LOG_RANK_0( "BoreholePressureEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
+                     "Start time=" << m_startTime << ", " << 
+                     "Time interval=" << getTimeInterval() << ", " << 
                      "boreholeRadius=" << m_boreholeRadius << ", " << 
                      "startPressure=" << m_startPressure << ", " << 
                      "endPressure=" << m_endPressure << ", " << 

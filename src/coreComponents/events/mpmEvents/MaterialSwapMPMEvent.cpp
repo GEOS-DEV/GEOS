@@ -44,8 +44,8 @@ namespace geos
   void MaterialSwapMPMEvent::postInputInitialization()
   {
     GEOS_LOG_RANK_0( "MaterialSwapEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
+                     "Start Time=" << m_startTime << ", " << 
+                     "Time Interval=" << getTimeInterval() << ", " << 
                      "Source region=" << m_sourceRegion << ", " << 
                      "Destination region=" << m_destinationRegion );
   }

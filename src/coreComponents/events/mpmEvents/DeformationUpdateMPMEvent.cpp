@@ -62,8 +62,8 @@ namespace geos
     }
 
     GEOS_LOG_RANK_0( "DeformationUpdateEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
+                     "Start time=" << m_startTime << ", " << 
+                     "Time interval=" << getTimeInterval() << ", " << 
                      "prescribedBoundaryFTable=" << m_prescribedBoundaryFTable << ", "
                      "prescribedFTable=" << m_prescribedFTable << ", " <<
                      "stressControl=" << m_stressControl);

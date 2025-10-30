@@ -13,37 +13,31 @@
  */
 
 /**
- * @file HealMPMEvent.cpp
+ * @file ResetDeformationGradientMPMEvent.cpp
  */
 
-#include "HealMPMEvent.hpp"
+#include "ResetDeformationGradientMPMEvent.hpp"
 
 namespace geos
 {
 
   using namespace dataRepository;
   
-  HealMPMEvent::HealMPMEvent( const string & name,
-                              Group * const parent ) :
-                              MPMEventBase(  name, parent ),
-                              m_targetRegion( "mat1" )
-  {
-    registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "Particle region to perform heal on" );
-  }
-
-  HealMPMEvent::~HealMPMEvent() 
+  ResetDeformationGradientMPMEvent::ResetDeformationGradientMPMEvent( const string & name,
+                                                                      Group * const parent ) :
+                                                                      MPMEventBase(  name, parent )
   {}
 
-  void HealMPMEvent::postInputInitialization()
+  ResetDeformationGradientMPMEvent::~ResetDeformationGradientMPMEvent() 
+  {}
+
+  void ResetDeformationGradientMPMEvent::postInputInitialization()
   {
-    GEOS_LOG_RANK_0( "HealEvent: " << 
+    GEOS_LOG_RANK_0( "ResetDeformationGradientMPMEvent: " << 
                      "Start time=" << m_startTime << ", " << 
-                     "Time interval=" << getTimeInterval() << ", " << 
-                     "targetRegion=" << m_targetRegion );
+                     "Time interval=" << getTimeInterval() );
   }
 
-  REGISTER_CATALOG_ENTRY( MPMEventBase, HealMPMEvent, string const &, Group * const )
+  REGISTER_CATALOG_ENTRY( MPMEventBase, ResetDeformationGradientMPMEvent, string const &, Group * const )
 
 } /* namespace geos */

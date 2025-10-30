@@ -35,6 +35,7 @@ set( events_headers
      mpmEvents/MaterialSwapMPMEvent.hpp
      mpmEvents/AnnealMPMEvent.hpp
      mpmEvents/HealMPMEvent.hpp
+     mpmEvents/PolymerHealMPMEvent.hpp
      mpmEvents/CrystalHealMPMEvent.hpp
      mpmEvents/InsertPeriodicContactSurfacesMPMEvent.hpp
      mpmEvents/MachineSampleMPMEvent.hpp
@@ -43,6 +44,7 @@ set( events_headers
      mpmEvents/DeformationUpdateMPMEvent.hpp
      mpmEvents/CohesiveZoneReferenceMPMEvent.hpp
      mpmEvents/BoreholePressureMPMEvent.hpp
+     mpmEvents/ResetDeformationGradientMPMEvent.hpp
    )
 
 #
@@ -61,6 +63,7 @@ set( events_sources
      mpmEvents/MaterialSwapMPMEvent.cpp
      mpmEvents/AnnealMPMEvent.cpp
      mpmEvents/HealMPMEvent.cpp
+     mpmEvents/PolymerHealMPMEvent.cpp
      mpmEvents/CrystalHealMPMEvent.cpp
      mpmEvents/InsertPeriodicContactSurfacesMPMEvent.cpp
      mpmEvents/MachineSampleMPMEvent.cpp
@@ -69,6 +72,7 @@ set( events_sources
      mpmEvents/DeformationUpdateMPMEvent.cpp
      mpmEvents/CohesiveZoneReferenceMPMEvent.cpp
      mpmEvents/BoreholePressureMPMEvent.cpp
+     mpmEvents/ResetDeformationGradientMPMEvent.cpp
    )
 
 set( dependencyList ${parallelDeps} functions )

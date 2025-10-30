@@ -45,8 +45,8 @@ namespace geos
   void FrictionCoefficientSwapMPMEvent::postInputInitialization()
   {
     GEOS_LOG_RANK_0( "FrictionCoefficientSwapEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval );
+                     "Start time=" << m_startTime << ", " << 
+                     "Time interval=" << getTimeInterval() );
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, FrictionCoefficientSwapMPMEvent, string const &, Group * const )

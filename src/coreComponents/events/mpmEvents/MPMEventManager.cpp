@@ -33,7 +33,8 @@ MPMEventManager::MPMEventManager( string const & name,
                                   Group( name, parent )
 {
   setInputFlags( InputFlags::REQUIRED );
-
+  setRestartFlags( RestartFlags::NO_WRITE );
+  
   // // This enables logLevel filtering
   // Seems to be deprecated now
   // enableLogLevelInput();

@@ -26,17 +26,18 @@ namespace geos
   MPMEventBase::MPMEventBase( string const & name,
                               Group * const parent  ) :
                               Group( name, parent),
-                              m_time( DBL_MAX ),
-                              m_interval( DBL_MAX ),
+                              m_startTime( 0.0 ),
+                              m_endTime( DBL_MAX ),
                               m_isComplete( 0 )
   {
-    registerWrapper( viewKeyStruct::timeString(), &m_time ).
+    registerWrapper( viewKeyStruct::startTimeString(), &m_startTime ).
       setInputFlag( InputFlags::REQUIRED ).
       setDescription( "Time at which event starts" );
 
-    registerWrapper( viewKeyStruct::intervalString(), &m_interval ).
-      setInputFlag( InputFlags::REQUIRED ).
-      setDescription( "Time interval over which event is performed" );
+    registerWrapper( viewKeyStruct::endTimeString(), &m_endTime ).
+      setInputFlag( InputFlags::OPTIONAL ).
+      setApplyDefaultValue( DBL_MAX ).
+      setDescription( "Time at which event ends" );
 
     registerWrapper( viewKeyStruct::isCompleteString(), &m_isComplete ).
       setInputFlag( InputFlags::FALSE ).

@@ -24,9 +24,15 @@ namespace geos
   using namespace dataRepository;
   
   CohesiveZoneReferenceMPMEvent::CohesiveZoneReferenceMPMEvent( const string & name,
-                                  Group * const parent ) :
-                                  MPMEventBase(  name, parent )
+                                                                Group * const parent ) :
+                                                                MPMEventBase(  name, parent ),
+                                                                m_czVolumeNormalization( 1 )
   {  
+    registerWrapper( "czVolumeNormalization", &m_czVolumeNormalization ).
+      setInputFlag( InputFlags::OPTIONAL ).
+      setApplyDefaultValue( m_czVolumeNormalization ).
+      setRestartFlags( RestartFlags::WRITE_AND_READ ).
+      setDescription( "Flag to perform volume normalization of cohesive nodal area for partially filled grid cells" );
   }
 
   CohesiveZoneReferenceMPMEvent::~CohesiveZoneReferenceMPMEvent() 
@@ -35,8 +41,9 @@ namespace geos
   void CohesiveZoneReferenceMPMEvent::postInputInitialization()
   {
     GEOS_LOG_RANK_0( "CohesiveZoneReferenceEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval );
+                     "Start time=" << m_startTime << ", " << 
+                     "Time interval=" << getTimeInterval() << ", " << 
+                     "czVolumeNormalization=" << m_czVolumeNormalization );
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, CohesiveZoneReferenceMPMEvent, string const &, Group * const )

@@ -45,6 +45,8 @@ public:
    **/
   static string catalogName() { return "Anneal"; }
 
+  virtual string getCatalogName() const override { return catalogName(); }
+
  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {

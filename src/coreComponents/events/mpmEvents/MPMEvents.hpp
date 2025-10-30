@@ -23,6 +23,7 @@
 #include "events/mpmEvents/MaterialSwapMPMEvent.hpp"
 #include "events/mpmEvents/AnnealMPMEvent.hpp"
 #include "events/mpmEvents/HealMPMEvent.hpp"
+#include "events/mpmEvents/PolymerHealMPMEvent.hpp"
 #include "events/mpmEvents/CrystalHealMPMEvent.hpp"
 #include "events/mpmEvents/InsertPeriodicContactSurfacesMPMEvent.hpp"
 #include "events/mpmEvents/MachineSampleMPMEvent.hpp"
@@ -30,4 +31,5 @@
 #include "events/mpmEvents/BodyForceUpdateMPMEvent.hpp"
 #include "events/mpmEvents/DeformationUpdateMPMEvent.hpp"
 #include "events/mpmEvents/BoreholePressureMPMEvent.hpp"
+#include "events/mpmEvents/CohesiveZoneReferenceMPMEvent.hpp"
 #endif /* GEOSX_MPMEVENTS_HPP_ */

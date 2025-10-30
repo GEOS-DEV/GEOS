@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CohesiveZoneReferenceMPMEvent.hpp
+ * @file HealMPMEvent.hpp
  */
 
-#ifndef GEOSX_COHESIVEZONEREFERENCE_MPMEVENT_HPP_
-#define GEOSX_COHESIVEZONEREFERENCE_MPMEVENT_HPP_
+#ifndef GEOSX_POLYMERHEAL_MPMEVENT_HPP_
+#define GEOSX_POLYMERHEAL_MPMEVENT_HPP_
 
 #include "MPMEventBase.hpp"
 
@@ -25,43 +25,47 @@ namespace geos
 {
 
 /**
- * @class CohesiveZoneReferenceMPMEvent
+ * @class PolymerHealMPMEvent
  *
  * This class implements the material swap mpm event for the solid mechanics material point method solver
  */
-class CohesiveZoneReferenceMPMEvent : public MPMEventBase
+class PolymerHealMPMEvent : public MPMEventBase
 {
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
-  CohesiveZoneReferenceMPMEvent( const string & name,
-                  Group * const parent );
+  PolymerHealMPMEvent( const string & name,
+                Group * const parent );
 
   /// Destructor
-  virtual ~CohesiveZoneReferenceMPMEvent() override;
+  virtual ~PolymerHealMPMEvent() override;
 
   /**
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string catalogName() { return "CohesiveZoneReference"; }
+  static string catalogName() { return "PolymerHeal"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
- /// @cond DO_NOT_DOCUMENT
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
+    static constexpr char const * targetRegionString() { return "targetRegion"; }
 
-  } CohesiveZoneReferenceMPMEventViewKeys;
+    dataRepository::ViewKey targetRegion = { targetRegionString() };
+
+  } PolymerHealMPMEventViewKeys;
   /// @endcond
 
-  int getCZVolumeNormalization() const { return m_czVolumeNormalization; } 
+  string getTargetRegion() const { return m_targetRegion; }
 
 protected:
   virtual void postInputInitialization() override final;
 
-  int m_czVolumeNormalization;
+  // Event variables
+  string m_targetRegion;
 };
 
 } /* namespace geos */
 
-#endif /* GEOSX_COHESIVEZONEREFERENCE_MPMEVENT_HPP_ */
+#endif /* GEOSX_POLYMERHEAL_MPMEVENT_HPP_ */

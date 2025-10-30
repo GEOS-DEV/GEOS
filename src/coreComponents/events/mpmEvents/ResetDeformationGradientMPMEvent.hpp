@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CohesiveZoneReferenceMPMEvent.hpp
+ * @file HealMPMEvent.hpp
  */
 
-#ifndef GEOSX_COHESIVEZONEREFERENCE_MPMEVENT_HPP_
-#define GEOSX_COHESIVEZONEREFERENCE_MPMEVENT_HPP_
+#ifndef GEOSX_RESETDEFORMATIONGRADIENT_MPMEVENT_HPP_
+#define GEOSX_RESETDEFORMATIONGRADIENT_MPMEVENT_HPP_
 
 #include "MPMEventBase.hpp"
 
@@ -25,43 +25,39 @@ namespace geos
 {
 
 /**
- * @class CohesiveZoneReferenceMPMEvent
+ * @class ResetDeformationGradientMPMEvent
  *
- * This class implements the material swap mpm event for the solid mechanics material point method solver
+ * This class resets the deformation gradient of cpid scaled particles regardless of damage
  */
-class CohesiveZoneReferenceMPMEvent : public MPMEventBase
+class ResetDeformationGradientMPMEvent : public MPMEventBase
 {
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
-  CohesiveZoneReferenceMPMEvent( const string & name,
-                  Group * const parent );
+  ResetDeformationGradientMPMEvent( const string & name,
+                                 Group * const parent );
 
   /// Destructor
-  virtual ~CohesiveZoneReferenceMPMEvent() override;
+  virtual ~ResetDeformationGradientMPMEvent() override;
 
   /**
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string catalogName() { return "CohesiveZoneReference"; }
+  static string catalogName() { return "ResetDeformationGradient"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
-
- /// @cond DO_NOT_DOCUMENT
+  
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
 
-  } CohesiveZoneReferenceMPMEventViewKeys;
+  } ResetDeformationGradientMPMEventViewKeys;
   /// @endcond
-
-  int getCZVolumeNormalization() const { return m_czVolumeNormalization; } 
 
 protected:
   virtual void postInputInitialization() override final;
-
-  int m_czVolumeNormalization;
 };
 
 } /* namespace geos */
 
-#endif /* GEOSX_COHESIVEZONEREFERENCE_MPMEVENT_HPP_ */
+#endif /* GEOSX_RESETDEFORMATIONGRADIENT_MPMEVENT_HPP_ */

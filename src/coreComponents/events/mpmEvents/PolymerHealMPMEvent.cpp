@@ -13,37 +13,37 @@
  */
 
 /**
- * @file HealMPMEvent.cpp
+ * @file PolymerHealMPMEvent.cpp
  */
 
-#include "HealMPMEvent.hpp"
+#include "PolymerHealMPMEvent.hpp"
 
 namespace geos
 {
 
   using namespace dataRepository;
   
-  HealMPMEvent::HealMPMEvent( const string & name,
+  PolymerHealMPMEvent::PolymerHealMPMEvent( const string & name,
                               Group * const parent ) :
                               MPMEventBase(  name, parent ),
                               m_targetRegion( "mat1" )
   {
     registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
         setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "Particle region to perform heal on" );
+        setDescription( "Particle region to perform polymer heal on" );
   }
 
-  HealMPMEvent::~HealMPMEvent() 
+  PolymerHealMPMEvent::~PolymerHealMPMEvent() 
   {}
 
-  void HealMPMEvent::postInputInitialization()
+  void PolymerHealMPMEvent::postInputInitialization()
   {
-    GEOS_LOG_RANK_0( "HealEvent: " << 
+    GEOS_LOG_RANK_0( "PolymerHealEvent: " << 
                      "Start time=" << m_startTime << ", " << 
                      "Time interval=" << getTimeInterval() << ", " << 
                      "targetRegion=" << m_targetRegion );
   }
 
-  REGISTER_CATALOG_ENTRY( MPMEventBase, HealMPMEvent, string const &, Group * const )
+  REGISTER_CATALOG_ENTRY( MPMEventBase, PolymerHealMPMEvent, string const &, Group * const )
 
 } /* namespace geos */
