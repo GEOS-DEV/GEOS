@@ -44,6 +44,7 @@ namespace compositionalMultiphaseHybridFVMKernels
                                           arrayView1d< globalIndex const > const & faceDofNumber,
                                           arrayView1d< integer const > const & isBoundaryFace,
                                           arrayView1d< real64 const > const & mimeticTransGgradZ,
+                                          arrayView1d< real64 const > const & faceGravCoef,
                                           arraySlice1d< localIndex const > const & elemToFaces,
                                           real64 const & elemGravCoef,
                                           integer const useTotalMassEquation,
