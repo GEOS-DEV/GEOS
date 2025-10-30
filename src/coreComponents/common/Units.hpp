@@ -113,6 +113,9 @@ enum Unit : integer
 
   /// Permeability in m^2
   Permeability,
+
+  /// Reservoir volume in rm^3
+  ReservoirVolume
 };
 
 
@@ -143,6 +146,7 @@ constexpr inline std::string_view getDescription( Unit unit )
     case MolarVolume:       return "molar volume [m3/mol]";
     case MolarDensity:      return "molar density [mol/m3]";
     case Permeability:      return "permeability [m2]";
+    case ReservoirVolume:   return "reservoir volume [rm3]";
   }
 }
 
@@ -173,6 +177,7 @@ constexpr inline std::string_view getSymbol( Unit unit )
     case MolarVolume:       return "m3/mol";
     case MolarDensity:      return "mol/m3";
     case Permeability:      return "m2";
+    case ReservoirVolume:   return "rm3";
   }
 }
 
@@ -236,6 +241,7 @@ inline string formatValue( real64 value, Unit unit )
     case MolarVolume:       return GEOS_FMT( "molar volume of {} [m3/mol]", value );
     case MolarDensity:      return GEOS_FMT( "molar density of {} [mol/m3]", value );
     case Permeability:      return GEOS_FMT( "permeability of {} [m2]", value );
+    case ReservoirVolume:   return GEOS_FMT( "reservoir volume of {} [rm3]", value );
   }
 }
 

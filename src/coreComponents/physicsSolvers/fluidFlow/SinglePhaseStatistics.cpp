@@ -81,7 +81,7 @@ void SinglePhaseStatistics::registerDataOnMesh( Group & meshBodies )
           GEOS_FMT( "Min temperature [{}]", units::getSymbol( units::Unit::Temperature ))<<
           GEOS_FMT( "Average temperature [{}]", units::getSymbol( units::Unit::Temperature ))<<
           GEOS_FMT( "Max temperature [{}]", units::getSymbol( units::Unit::Temperature ))<<
-          "Total dynamic pore volume rm^3" <<
+          GEOS_FMT( "Total dynamic pore volume [{}]", units::getSymbol( units::Unit::ReservoirVolume ) ) <<
           GEOS_FMT( "Total fluid mass [{}]", units::getSymbol( units::Unit::Mass ));
         outputFile << std::endl;
         outputFile.close();

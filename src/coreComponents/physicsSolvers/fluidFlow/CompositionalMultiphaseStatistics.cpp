@@ -162,7 +162,7 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
               TableLayout::Column().setName( GEOS_FMT( "Min temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
               TableLayout::Column().setName( GEOS_FMT( "Average temperature[{}]", units::getSymbol( units::Unit::Temperature ) )),
               TableLayout::Column().setName( GEOS_FMT( "Max temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
-              TableLayout::Column().setName( "Total dynamic pore volume rm^3" )
+              TableLayout::Column().setName( GEOS_FMT( "Total dynamic pore volume [{}]", units::getSymbol( units::Unit::ReservoirVolume ) )),
             } );
 
           std::ostringstream statsLayout;
