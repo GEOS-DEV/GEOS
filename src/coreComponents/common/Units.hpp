@@ -208,6 +208,7 @@ constexpr inline std::string_view getVariableSymbol( Unit unit )
     case MolarVolume:       return "V_m";
     case MolarDensity:      return "rho_n";
     case Permeability:      return "K";
+    case ReservoirVolume:   return "V";
   }
 }
 
