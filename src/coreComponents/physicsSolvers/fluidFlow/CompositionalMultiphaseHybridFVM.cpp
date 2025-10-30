@@ -187,7 +187,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     // Mark boundary faces (faces with Dirichlet BCs) to skip flux continuity constraint
     // Initialize all faces as interior (0), then mark boundary faces (1)
     arrayView1d< integer > const isBoundaryFaceView = faceManager.getReference< array1d< integer > >( flow::isBoundaryFace::key() );
-//    isBoundaryFaceView.setValues< serialPolicy >( 0 ); // default is zero
+    // isBoundaryFaceView is default-initialized to zero
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< FieldSpecificationBase >( [&]( FieldSpecificationBase const & fs )

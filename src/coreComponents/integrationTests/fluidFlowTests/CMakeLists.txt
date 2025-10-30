@@ -62,7 +62,7 @@ foreach(test ${gtest_geosx_tests})
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 ${CMAKE_CURRENT_SOURCE_DIR}/hex_pyr_tet_nested_mixed.vtu
                 $<TARGET_FILE_DIR:${test_name}>
-    )    
+    )
                      
 endforeach()
 
