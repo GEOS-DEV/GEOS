@@ -6,6 +6,10 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3765 (2025-10-30) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3765-14502-dd8f391.tar.gz>
+=====================
+Adding boundary fields to handle Dirichlet conditions in compositional MFD.
+
 PR #3880 (2025-10-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3880-14441-1132122.tar.gz>
 =====================
 Fix a bug introduced in #3485: mass that is used in accumulation term was not updated with porosity change after mechanics leading to always converged sequential outer loop.
