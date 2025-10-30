@@ -1060,7 +1060,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
     if( wellControls.getCurrentConstraint() == nullptr )
     {
       // tjb needed for backward compatibility. and these 2 lists must be consistent
-      ConstraintTypeId inputControl = ConstraintTypeId(wellControls.getInputControl());
+      ConstraintTypeId inputControl = ConstraintTypeId( wellControls.getInputControl());
       if( wellControls.isProducer() )
       {
         wellControls.forSubGroups< MinimumBHPConstraint, ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >,
