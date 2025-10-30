@@ -685,6 +685,12 @@ AssemblerKernelHelper::
     // Contribute and Collect face DOF number only if this is not a boundary face
     if( isBoundaryFace[elemToFaces[ifaceLoc]] == 0 )
     {
+
+      faceIndexMap[ifaceLoc] = numNonBoundaryFaces;
+      dofColIndicesFaceVars[numNonBoundaryFaces] = faceDofNumber[elemToFaces[ifaceLoc]];
+      numNonBoundaryFaces++;
+
+
       // 1) Find if there is a neighbor, and if there is, grab the indices of the neighbor element
       localIndex neighborIds[ 3 ] = { localIds[0], localIds[1], localIds[2] };
       hybridFVMKernels::CellConnectivity::isNeighborFound( localIds,
@@ -733,11 +739,6 @@ AssemblerKernelHelper::
                                          dDivMassFluxes_dElemVars,
                                          dDivMassFluxes_dFaceVars,
                                          dofColIndicesElemVars );
-
-
-      faceIndexMap[ifaceLoc] = numNonBoundaryFaces;
-      dofColIndicesFaceVars[numNonBoundaryFaces] = faceDofNumber[elemToFaces[ifaceLoc]];
-      numNonBoundaryFaces++;
 
 
       // 3) *************** Assemble buoyancy terms ******************
