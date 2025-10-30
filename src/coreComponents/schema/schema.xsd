@@ -3542,6 +3542,13 @@ When set to `all` output both convergence & iteration information to a csv.-->
 			<xsd:element name="ProductionPhaseVolumeRateConstraint" type="ProductionPhaseVolumeRateConstraintType" />
 			<xsd:element name="ProductionVolumeRateConstraint" type="ProductionVolumeRateConstraintType" />
 		</xsd:choice>
+		<!--control => Well control. Valid options:
+* BHP
+* phaseVolRate
+* totalVolRate
+* massRate
+* uninitialized-->
+		<xsd:attribute name="control" type="geos_WellControls_Control" use="required" />
 		<!--enableCrossflow => Flag to enable crossflow. Currently only supported for injectors: 
  - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
  - If the flag is set to 0, we only allow well-to-reservoir flow at the perforations.-->
@@ -3677,6 +3684,11 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geos_WellControls_Control">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate|massRate|uninitialized" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="geos_WellControls_Type">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|producer|injector" />
