@@ -391,7 +391,7 @@ struct AssemblerKernelHelper
                          real64 ( &divMassFluxes )[ NC ],
                          real64 ( &dDivMassFluxes_dElemVars )[ NC ][ (NC+1)*(NF+1) ],
                          real64 ( &dDivMassFluxes_dFaceVars )[ NC ][ NF ],
-                         globalIndex ( &dofColIndicesElemVars )[ (NC+1)*(NF+1) ]);
+                         globalIndex ( &dofColIndicesElemVars )[ (NC+1)*(NF+1) ] );
 
   /**
    * @brief In a given element, compute the buoyancy flux divergence, i.e, sum the buoyancy fluxes at this element's faces
@@ -1233,35 +1233,17 @@ void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 
   switch( value )
   {
-    case 4:  {
-      return lambda( std::integral_constant<int, 4>{} );
+    case 4:
+    {
+      return lambda( std::integral_constant< int, 4 >{} );
     }
-    case 5:  {
-      return lambda( std::integral_constant<int, 5>{} );
+    case 5:
+    {
+      return lambda( std::integral_constant< int, 5 >{} );
     }
-    case 6:  {
-      return lambda( std::integral_constant<int, 6>{} );
-    }
-    case 7:  {
-      return lambda( std::integral_constant<int, 7>{} );
-    }
-    case 8:  {
-      return lambda( std::integral_constant<int, 8>{} );
-    }
-    case 9:  {
-      return lambda( std::integral_constant<int, 9>{} );
-    }
-    case 10: {
-      return lambda( std::integral_constant<int, 10>{} );
-    }
-    case 11: {
-      return lambda( std::integral_constant<int, 11>{} );
-    }
-    case 12: {
-      return lambda( std::integral_constant<int, 12>{} );
-    }
-    case 13: {
-      return lambda( std::integral_constant<int, 13>{} );
+    case 6:
+    {
+      return lambda( std::integral_constant< int, 6 >{} );
     }
     default:
       GEOS_ERROR( "Unknown numFacesInElem value: " << value );

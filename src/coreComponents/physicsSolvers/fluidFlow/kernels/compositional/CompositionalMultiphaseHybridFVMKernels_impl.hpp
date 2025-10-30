@@ -449,7 +449,7 @@ UpwindingHelper::
                                        localIndex ( & totalMobIds )[ NP ][ 3 ],
                                        localIndex ( & totalMobPos )[ NP ] )
 {
-  if constexpr( NP == 2 )
+  if constexpr ( NP == 2 )
   {
     if( gravTerm[0][0] > 0 )
     {
@@ -474,7 +474,7 @@ UpwindingHelper::
       totalMobPos[1] = Pos::LOCAL;
     }
   }
-  else if constexpr( NP == 3 )
+  else if constexpr ( NP == 3 )
   {
     // TODO Francois: this should be improved
     // currently this implements the algorithm proposed by SH Lee
@@ -681,7 +681,7 @@ AssemblerKernelHelper::
   // for each element, loop over the one-sided faces
   for( integer ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
-    
+
     // Contribute and Collect face DOF number only if this is not a boundary face
     if( isBoundaryFace[elemToFaces[ifaceLoc]] == 0 )
     {
@@ -777,7 +777,7 @@ AssemblerKernelHelper::
                                           dt,
                                           divMassFluxes,
                                           dDivMassFluxes_dElemVars );
-      
+
     }
     else
     {
@@ -813,14 +813,14 @@ AssemblerKernelHelper::
     // Need to compact both DOF indices and derivatives to only include non-boundary neighbors
     globalIndex compactElemDofs[ NDOF*(NF+1) ];
     real64 compactElemDerivs[ NDOF*(NF+1) ];
-    
+
     // Copy current element DOFs and derivatives
     for( integer idof = 0; idof < NDOF; ++idof )
     {
       compactElemDofs[idof] = dofColIndicesElemVars[idof];
       compactElemDerivs[idof] = dDivMassFluxes_dElemVars[ic][idof];
     }
-    
+
     // Copy neighbor DOFs and derivatives only for non-boundary faces
     integer compactIdx = NDOF;
     for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
@@ -836,7 +836,7 @@ AssemblerKernelHelper::
         }
       }
     }
-    
+
     localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
                                                               compactElemDofs,
                                                               compactElemDerivs,
@@ -854,7 +854,7 @@ AssemblerKernelHelper::
           compactFaceDerivs[faceIndexMap[jfaceLoc]] = dDivMassFluxes_dFaceVars[ic][jfaceLoc];
         }
       }
-      
+
       localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowLocalIndex,
                                                                 &dofColIndicesFaceVars[0],
                                                                 compactFaceDerivs,
@@ -883,7 +883,7 @@ AssemblerKernelHelper::
                        real64 ( & divMassFluxes )[ NC ],
                        real64 ( & dDivMassFluxes_dElemVars )[ NC ][ (NC+1)*(NF+1) ],
                        real64 ( & dDivMassFluxes_dFaceVars )[ NC ][ NF ],
-                       globalIndex ( & dofColIndicesElemVars )[ (NC+1)*(NF+1) ])
+                       globalIndex ( & dofColIndicesElemVars )[ (NC+1)*(NF+1) ] )
 {
   integer constexpr NDOF = NC+1;
   localIndex const elemVarsOffset = NDOF*(ifaceLoc+1);
@@ -1040,13 +1040,13 @@ AssemblerKernelHelper::
   for( integer ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
   {
     localIndex const kf = elemToFaces[ifaceLoc];
-    
+
     // Skip ghost faces
     if( faceGhostRank[kf] >= 0 )
     {
       continue;
     }
-    
+
     // Skip boundary faces - they have Dirichlet constraints, not flux continuity
     if( isBoundaryFace[kf] > 0 )
     {
@@ -1391,7 +1391,7 @@ DirichletFluxKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
-  GEOS_UNUSED_VAR(faceTemp);
+  GEOS_UNUSED_VAR( faceTemp );
   using Deriv = multifluid::DerivativeOffset;
 
   // Get element data
@@ -1462,7 +1462,8 @@ DirichletFluxKernel::
         break;
       }
     }
-    if( ifaceLoc < 0 ){
+    if( ifaceLoc < 0 )
+    {
       return;
     }
 
@@ -1491,7 +1492,7 @@ DirichletFluxKernel::
       real64 const elemDens = phaseMassDens[erAdj][esrAdj][eiAdj][0][ip];
       real64 const faceDens = facePhaseMassDens[kf][ip];
       real64 const densMean = 0.5 * (elemDens + faceDens);
-      
+
       applyChainRule( NC,
                       dCompFrac_dCompDens[erAdj][esrAdj][eiAdj],
                       dPhaseMassDens[erAdj][esrAdj][eiAdj][0][ip],
@@ -1534,7 +1535,7 @@ DirichletFluxKernel::
           dF_dC[jc] += -Tij * dDensMean_dC[jc] * gravTimesDz_j;
         }
       }
-          
+
       // Use element mobility (simplified upwinding for Dirichlet BC)
       // Upwind phase component fraction based on flow direction
       // Use the total flux f for upwinding decision
@@ -1560,12 +1561,12 @@ DirichletFluxKernel::
       {
         real64 const ycpElem = phaseCompFrac[erAdj][esrAdj][eiAdj][0][ip][ic];
         real64 const ycpFace = facePhaseCompFrac[kf][ip][ic];
-        
+
         // Upwind phase component fraction based on flow direction
         real64 const ycp = beta * ycpElem + (1.0 - beta) * ycpFace;
-        
+
         compFlux[ic] += ycp * phaseFlux;
-        
+
         // For derivatives, use element properties (simplified for boundary conditions)
         dCompFlux_dP[ic] += dPhaseFlux_dP * ycp + beta * phaseFlux * dPhaseCompFrac[erAdj][esrAdj][eiAdj][0][ip][ic][Deriv::dP];
 
@@ -1582,7 +1583,7 @@ DirichletFluxKernel::
           // dycp/dC = beta * dycpElem/dC (ycpFace is BC, independent of C)
           dCompFlux_dC[ic][jc] += ycp * dPhaseFlux_dC[jc] + beta * phaseFlux * dycpElem_dC[jc];
         }
-        
+
         // Add derivatives w.r.t. face pressures
         for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
         {
@@ -1620,27 +1621,27 @@ DirichletFluxKernel::
     for( integer ic = 0; ic < NC; ++ic )
     {
       RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow + ic], localFlux[ic] );
-      
+
       globalIndex dofColIndices[NC+1];
       dofColIndices[0] = elemDof;
       for( integer jc = 0; jc < NC; ++jc )
       {
         dofColIndices[jc+1] = elemDof + jc + 1;
       }
-      
+
       localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + ic,
                                                                         dofColIndices,
                                                                         localFluxJacobian[ic],
                                                                         NC+1 );
-      
+
       // Add contributions from face pressure derivatives
       for( integer jfaceLoc = 0; jfaceLoc < NF; ++jfaceLoc )
       {
         localIndex const kfj = cellFaces[jfaceLoc];
         globalIndex const faceDof = faceDofNumber[kfj];
-        
+
         real64 facePressureJacobian = dt * dCompFlux_dFaceP[ic][jfaceLoc];
-        
+
         // Apply total mass equation transformation if needed
         if( useTotalMassEquation && ic == 0 )
         {
@@ -1651,15 +1652,15 @@ DirichletFluxKernel::
             facePressureJacobian += dt * dCompFlux_dFaceP[icc][jfaceLoc];
           }
         }
-        
+
         localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow + ic,
                                                                           &faceDof,
                                                                           &facePressureJacobian,
                                                                           1 );
       }
-      
+
     }
-    
+
   } );
 }
 
@@ -1713,71 +1714,72 @@ evaluateBCFaceProperties( integer const numPhases,
     {
       using RelPermType = TYPEOFREF( castedRelperm );
       typename RelPermType::KernelWrapper relPermWrapper = castedRelperm.createKernelWrapper();
-      GEOS_UNUSED_VAR(relPermWrapper);
-      
+      GEOS_UNUSED_VAR( relPermWrapper );
+
       // Loop over BC faces and evaluate properties at BC conditions
       forAll< serialPolicy >( boundaryFaceSet.size(), [=, &facePhaseMob, &facePhaseMassDens, &facePhaseCompFrac] ( localIndex const iset )
-    {
-      localIndex const kf = boundaryFaceSet[iset];
-
-      // Find adjacent element in target region
-      localIndex eiAdj = -1;
-      for( integer ke = 0; ke < elemRegionList.size( 1 ); ++ke )
       {
-        if( elemRegionList[kf][ke] == er && elemSubRegionList[kf][ke] == esr )
+        localIndex const kf = boundaryFaceSet[iset];
+
+        // Find adjacent element in target region
+        localIndex eiAdj = -1;
+        for( integer ke = 0; ke < elemRegionList.size( 1 ); ++ke )
         {
-          eiAdj = elemList[kf][ke];
-          break;
+          if( elemRegionList[kf][ke] == er && elemSubRegionList[kf][ke] == esr )
+          {
+            eiAdj = elemList[kf][ke];
+            break;
+          }
         }
-      }
-      if( eiAdj < 0 ) return;
+        if( eiAdj < 0 )
+          return;
 
-      // Allocate temporary storage for face constitutive properties
-      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseFrac( 1, 1, numPhases );
-      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseDens( 1, 1, numPhases );
-      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseMassDensLocal( 1, 1, numPhases );
-      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseVisc( 1, 1, numPhases );
-      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseEnthalpy( 1, 1, numPhases );
-      StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseInternalEnergy( 1, 1, numPhases );
-      StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES * NC,
-                  constitutive::multifluid::LAYOUT_PHASE_COMP > facePhaseCompFracLocal( 1, 1, numPhases, NC );
-      real64 faceTotalDens = 0.0;
+        // Allocate temporary storage for face constitutive properties
+        StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseFrac( 1, 1, numPhases );
+        StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseDens( 1, 1, numPhases );
+        StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseMassDensLocal( 1, 1, numPhases );
+        StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseVisc( 1, 1, numPhases );
+        StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseEnthalpy( 1, 1, numPhases );
+        StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseInternalEnergy( 1, 1, numPhases );
+        StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES * NC,
+                    constitutive::multifluid::LAYOUT_PHASE_COMP > facePhaseCompFracLocal( 1, 1, numPhases, NC );
+        real64 faceTotalDens = 0.0;
 
-      // Evaluate fluid properties at BC face conditions using flash calculation
-      constitutive::MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
-                                                                  facePres[kf],
-                                                                  faceTemp[kf],
-                                                                  faceCompFrac[kf],
-                                                                  facePhaseFrac[0][0],
-                                                                  facePhaseDens[0][0],
-                                                                  facePhaseMassDensLocal[0][0],
-                                                                  facePhaseVisc[0][0],
-                                                                  facePhaseEnthalpy[0][0],
-                                                                  facePhaseInternalEnergy[0][0],
-                                                                  facePhaseCompFracLocal[0][0],
-                                                                  faceTotalDens );
+        // Evaluate fluid properties at BC face conditions using flash calculation
+        constitutive::MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
+                                                                    facePres[kf],
+                                                                    faceTemp[kf],
+                                                                    faceCompFrac[kf],
+                                                                    facePhaseFrac[0][0],
+                                                                    facePhaseDens[0][0],
+                                                                    facePhaseMassDensLocal[0][0],
+                                                                    facePhaseVisc[0][0],
+                                                                    facePhaseEnthalpy[0][0],
+                                                                    facePhaseInternalEnergy[0][0],
+                                                                    facePhaseCompFracLocal[0][0],
+                                                                    faceTotalDens );
 
-      // Evaluate relative permeability at face saturation from flash calculation
+        // Evaluate relative permeability at face saturation from flash calculation
 //      relPermWrapper.compute( facePhaseFrac[0][0], 0, 0 );
-      
-      // Store computed properties in output arrays
-      for( integer ip = 0; ip < numPhases; ++ip )
-      {
-        // Store phase mass density from flash calculation
-        facePhaseMassDens[kf][ip] = facePhaseMassDensLocal[0][0][ip];
-        
-        // Compute mobility from relative permeability evaluated at face conditions
-        real64 const faceKr = facePhaseFrac[0][0][ip]; // phaseRelPerm[eiAdj][0][ip];
-        real64 const mu = facePhaseVisc[0][0][ip];
-        facePhaseMob[kf][ip] = (mu > 0) ? faceTotalDens * faceKr / mu : 0.0;
-        
-        // Store phase composition from flash calculation
-        for( integer ic = 0; ic < NC; ++ic )
+
+        // Store computed properties in output arrays
+        for( integer ip = 0; ip < numPhases; ++ip )
         {
-          facePhaseCompFrac[kf][ip][ic] = facePhaseCompFracLocal[0][0][ip][ic];
+          // Store phase mass density from flash calculation
+          facePhaseMassDens[kf][ip] = facePhaseMassDensLocal[0][0][ip];
+
+          // Compute mobility from relative permeability evaluated at face conditions
+          real64 const faceKr = facePhaseFrac[0][0][ip]; // phaseRelPerm[eiAdj][0][ip];
+          real64 const mu = facePhaseVisc[0][0][ip];
+          facePhaseMob[kf][ip] = (mu > 0) ? faceTotalDens * faceKr / mu : 0.0;
+
+          // Store phase composition from flash calculation
+          for( integer ic = 0; ic < NC; ++ic )
+          {
+            facePhaseCompFrac[kf][ip][ic] = facePhaseCompFracLocal[0][0][ip][ic];
+          }
         }
-      }
-    } );
+      } );
     } ); // end nested constitutiveUpdatePassThru for relperm
   } ); // end constitutiveUpdatePassThru for fluid
 }
