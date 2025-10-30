@@ -36,15 +36,15 @@
       name="singlePhaseWell"
       logLevel="1"
       isThermal="1"
-      targetRegions="{ wellRegion2 }"
-      writeCSV="1">
+      targetRegions="{ wellRegion2 }">
       <WellControls
         name="wellControls2"
         type="injector"
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="1.45e7"
-        surfaceTemperature="300.15">
+        surfaceTemperature="300.15"
+        control="BHP">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="1.45e7"

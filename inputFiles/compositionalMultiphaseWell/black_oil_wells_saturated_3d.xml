@@ -33,11 +33,11 @@
       targetRegions="{ wellRegion1, wellRegion2 }"
       maxRelativePressureChange="0.1"
       maxCompFractionChange="0.1"
-      useMass="1"
-      writeCSV="1">
+      useMass="1">
       <WellControls
         name="wellControls1"
-        type="producer">
+        type="producer"
+        control="BHP">
         <ProductionPhaseVolumeRateConstraint
           name="maxoilprod"
           phaseName="oil"
@@ -49,7 +49,8 @@
       </WellControls>
       <WellControls
         name="wellControls2"
-        type="injector">
+        type="injector"
+        control="BHP">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="2e+7"

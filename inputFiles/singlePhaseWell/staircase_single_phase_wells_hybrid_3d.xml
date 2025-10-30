@@ -24,11 +24,11 @@
     <SinglePhaseWell
       name="SinglePhaseWell"
       logLevel="1"
-      targetRegions="{ wellRegion1, wellRegion2 }"
-      writeCSV="1">
+      targetRegions="{ wellRegion1, wellRegion2 }">
       <WellControls
         name="wellControls1"
-        type="producer">
+        type="producer"
+        control="BHP">
         <MinimumBHPConstraint
           name="minbhp"
           targetBHP="5e5"
@@ -41,7 +41,8 @@
         name="wellControls2"
         type="injector"
         useSurfaceConditions="1"
-        surfacePressure="101325">
+        surfacePressure="101325"
+        control="totalVolRate">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="1e7"

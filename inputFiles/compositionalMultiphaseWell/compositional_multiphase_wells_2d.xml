@@ -26,11 +26,11 @@
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       logLevel="1"
-      targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }"
-      writeCSV="1">
+      targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }">
       <WellControls
         name="wellControls1"
-        type="producer">
+        type="producer"
+        control="BHP">
         <ProductionPhaseVolumeRateConstraint
           name="maxoilprod"
           phaseName="oil"
@@ -42,7 +42,8 @@
       </WellControls>
       <WellControls
         name="wellControls2"
-        type="producer">
+        type="producer"
+        control="phaseVolRate">
         <ProductionPhaseVolumeRateConstraint
           name="maxoilprod"
           phaseName="oil"
@@ -54,7 +55,8 @@
       </WellControls>
       <WellControls
         name="wellControls3"
-        type="injector">
+        type="injector"
+        control="totalVolRate">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="4e7"

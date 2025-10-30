@@ -37,7 +37,6 @@
       maxRelativePressureChange="0.5"
       maxCompFractionChange="0.5"
       targetRegions="{ WATER.INJECTOR, GAS.INJECTOR, PRODUCER }"
-      writeCSV="1"
       timeStepFromTables="1"
       logLevel="1">
       <WellControls
@@ -47,7 +46,8 @@
         surfacePressure="1.013250e+05"
         surfaceTemperature="288.71"
         enableCrossflow="0"
-        logLevel="0">
+        logLevel="0"
+        control="totalVolRate">
         <InjectionPhaseVolumeRateConstraint
           name="inj"
           phaseName="oil"/>
@@ -68,7 +68,8 @@
         surfacePressure="1.013250e+05"
         surfaceTemperature="288.71"
         enableCrossflow="0"
-        logLevel="0">
+        logLevel="0"
+        control="totalVolRate">
         <InjectionPhaseVolumeRateConstraint
           name="inj"
           phaseName="gas"/>
@@ -88,7 +89,8 @@
         useSurfaceConditions="0"
         surfacePressure="1.013250e+05"
         surfaceTemperature="288.71"
-        logLevel="0">
+        logLevel="0"
+        control="BHP">
         <ProductionPhaseVolumeRateConstraint
           name="maxgasprod"
           phaseName="gas"

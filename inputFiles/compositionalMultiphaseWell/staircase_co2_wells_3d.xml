@@ -30,12 +30,12 @@
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }"
       maxCompFractionChange="0.2"
-      useMass="1"
-      writeCSV="1">
+      useMass="1">
       <WellControls
         name="wellControls1"
         logLevel="1"
-        type="producer">
+        type="producer"
+        control="phaseVolRate">
         <ProductionPhaseVolumeRateConstraint
           name="maxwaterprod"
           phaseName="water"
@@ -48,7 +48,8 @@
       <WellControls
         name="wellControls2"
         logLevel="1"
-        type="injector">
+        type="injector"
+        control="totalVolRate">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="2e7"

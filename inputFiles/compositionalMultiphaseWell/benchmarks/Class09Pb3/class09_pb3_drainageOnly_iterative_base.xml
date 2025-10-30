@@ -32,8 +32,7 @@
       name="compositionalMultiphaseWell"
       targetRegions="{ wellRegion }"
       logLevel="1"
-      useMass="1"
-      writeCSV="1">
+      useMass="1">
       <WellControls
         name="wellControls"
         logLevel="1"
@@ -41,7 +40,8 @@
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="101325"
-        surfaceTemperature="288.71">
+        surfaceTemperature="288.71"
+        control="totalVolRate">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="1e8"
@@ -59,7 +59,8 @@
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="101325"
-        surfaceTemperature="288.71">
+        surfaceTemperature="288.71"
+        control="massRate">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="1e8"
@@ -77,7 +78,8 @@
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="101325"
-        surfaceTemperature="288.71">
+        surfaceTemperature="288.71"
+        control="massRate">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="1e8"

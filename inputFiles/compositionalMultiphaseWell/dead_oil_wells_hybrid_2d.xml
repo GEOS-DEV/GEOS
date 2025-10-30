@@ -28,14 +28,14 @@
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }"
       maxRelativePressureChange="0.1"
-      maxCompFractionChange="0.1"
-      writeCSV="1">
+      maxCompFractionChange="0.1">
       <WellControls
         name="wellControls1"
         type="producer"
         useSurfaceConditions="1"
         surfacePressure="101325"
-        surfaceTemperature="297.15">
+        surfaceTemperature="297.15"
+        control="BHP">
         <ProductionPhaseVolumeRateConstraint
           name="maxoilprod"
           phaseName="oil"
@@ -50,7 +50,8 @@
         type="producer"
         useSurfaceConditions="1"
         surfacePressure="101325"
-        surfaceTemperature="297.15">
+        surfaceTemperature="297.15"
+        control="BHP">
         <ProductionPhaseVolumeRateConstraint
           name="maxoilprod"
           phaseName="oil"
@@ -65,7 +66,8 @@
         type="injector"
         useSurfaceConditions="1"
         surfacePressure="101325"
-        surfaceTemperature="297.15">
+        surfaceTemperature="297.15"
+        control="totalVolRate">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="4.5e7"

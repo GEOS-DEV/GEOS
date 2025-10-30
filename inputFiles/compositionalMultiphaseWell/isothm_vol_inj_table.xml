@@ -34,7 +34,6 @@
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       targetRegions="{ injwell }"
-      writeCSV="1"
       logLevel="1"
       useMass="1">
       <WellControls
@@ -44,7 +43,8 @@
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="1.45e7"
-        surfaceTemperature="300.15">
+        surfaceTemperature="300.15"
+        control="totalVolRate">
         <MaximumBHPConstraint
           name="maxbhp"
           constraintScheduleTableName="totalBHPTable"
