@@ -360,8 +360,8 @@ struct AssemblerKernelHelper
                           arrayView2d< localIndex const > const & elemList,
                           SortedArrayView< localIndex const > const & regionFilter,
                           arrayView1d< globalIndex const > const & faceDofNumber,
+                          arrayView1d< integer const > const & isBoundaryFace,
                           arrayView1d< real64 const > const & mimeticTransGgradZ,
-                          arrayView1d< real64 const > const & faceGravCoef,
                           arraySlice1d< localIndex const > const & elemToFaces,
                           real64 const & elemGravCoef,
                           integer const useTotalMassEquation,
@@ -395,13 +395,11 @@ struct AssemblerKernelHelper
    * @param[in] dUpwPhaseViscCoef_dPres the derivative of the upwinded viscous transport coefficient wrt pressure
    * @param[in] dUpwPhaseViscCoef_dCompDens the derivative of the upwinded viscous transport coefficient wrt component density
    * @param[in] upwViscDofNumber degree of freedom number of the upwind element
-   * @param[in] faceDofNumber degree of freedom number of the face
    * @param[in] dt the time step
    * @param[inout] divMassFluxes the divergence of the fluxes in the element
    * @param[inout] dDivMassFluxes_dElemVars the derivatives of the flux divergence wrt the element centered vars (pres and comp dens)
    * @param[inout] dDivMassFluxes_dFaceVars the derivatives of the flux divergence wrt the face centered vars
    * @param[inout] dofColIndicesElemVars degrees of freedom of the cells involved in the flux divergence
-   * @param[inout] dofColIndicesFaceVars degrees of freedom of the faces involved in the flux divergence
    */
   template< integer NF, integer NC, integer NP >
   GEOS_HOST_DEVICE
@@ -417,13 +415,11 @@ struct AssemblerKernelHelper
                          globalIndex const elemDofNumber,
                          globalIndex const neighborDofNumber,
                          globalIndex const upwViscDofNumber,
-                         globalIndex const faceDofNumber,
                          real64 const & dt,
                          real64 ( &divMassFluxes )[ NC ],
                          real64 ( &dDivMassFluxes_dElemVars )[ NC ][ (NC+1)*(NF+1) ],
                          real64 ( &dDivMassFluxes_dFaceVars )[ NC ][ NF ],
-                         globalIndex ( &dofColIndicesElemVars )[ (NC+1)*(NF+1) ],
-                         globalIndex ( &dofColIndicesFaceVars )[ NF ] );
+                         globalIndex ( &dofColIndicesElemVars )[ (NC+1)*(NF+1) ] );
 
   /**
    * @brief In a given element, compute the buoyancy flux divergence, i.e, sum the buoyancy fluxes at this element's faces
@@ -474,6 +470,7 @@ struct AssemblerKernelHelper
   static void
   assembleFaceConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
                            arrayView1d< integer const > const & faceGhostRank,
+                           arrayView1d< integer const > const & isBoundaryFace,
                            arraySlice1d< localIndex const > const & elemToFaces,
                            globalIndex const elemDofNumber,
                            globalIndex const rankOffset,
@@ -546,6 +543,7 @@ struct AssemblerKernel
            arrayView2d< localIndex const > const & elemList,
            arrayView1d< globalIndex const > const & faceDofNumber,
            arrayView1d< integer const > const & faceGhostRank,
+           arrayView1d< integer const > const & isBoundaryFace,
            arrayView1d< real64 const > const & facePres,
            arrayView1d< real64 const > const & faceGravCoef,
            arrayView1d< real64 const > const & mimeticTransGgradZ,
@@ -571,6 +569,102 @@ struct AssemblerKernel
            arrayView1d< real64 > const & localRhs );
 };
 
+
+/******************************** DirichletFluxKernel ********************************/
+
+struct DirichletFluxKernel
+{
+
+  /**
+   * @brief The type for element-based non-constitutive data parameters.
+   * Consists entirely of ArrayView's.
+   *
+   * Can be converted from ElementRegionManager::ElementViewAccessor
+   * by calling .toView() or .toViewConst() on an accessor instance
+   */
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  using CompFlowAccessors =
+    StencilAccessors< fields::flow::phaseMobility,
+                      fields::flow::dPhaseMobility,
+                      fields::flow::dGlobalCompFraction_dGlobalCompDensity >;
+
+  using MultiFluidAccessors =
+    StencilMaterialAccessors< constitutive::MultiFluidBase,
+                              fields::multifluid::phaseDensity,
+                              fields::multifluid::dPhaseDensity,
+                              fields::multifluid::phaseMassDensity,
+                              fields::multifluid::dPhaseMassDensity,
+                              fields::multifluid::phaseCompFraction,
+                              fields::multifluid::dPhaseCompFraction >;
+
+  /**
+   * @brief Compute the Dirichlet boundary fluxes for compositional multiphase flow
+   * @tparam NF number of faces per element
+   * @tparam NC number of components
+   * @tparam NP number of phases
+   * @tparam IP_TYPE mimetic inner product type
+   * @param[in] numPhases number of phases
+   * @param[in] er index of this element's region
+   * @param[in] esr index of this element's subregion
+   * @param[in] subRegion the subRegion
+   * @param[in] permeabilityModel the permeability model
+   * @param[in] boundaryFaceSet set of faces on the Dirichlet boundary
+   * @param[in] facePres prescribed face pressures
+   * @param[in] faceTemp prescribed face temperatures
+   * @param[in] facePhaseMob prescribed face phase mobilities
+   * @param[in] facePhaseMassDens prescribed face phase mass densities
+   * @param[in] facePhaseCompFrac prescribed face phase component fractions
+   * @param[in] nodePosition node positions
+   * @param[in] faceToNodes face to nodes map
+   * @param[in] elemRegionList face to element region map
+   * @param[in] elemSubRegionList face to element subregion map
+   * @param[in] elemList face to element index map
+   * @param[in] faceDofNumber face DOF numbers
+   * @param[in] transMultiplier transmissibility multipliers
+   * @param[in] lengthTolerance geometric tolerance
+   * @param[in] dt time step size
+   * @param[in] rankOffset MPI rank offset
+   * @param[in] useTotalMassEquation flag for total mass equation
+   * @param[in] compFlowAccessors accessor for comp flow fields
+   * @param[in] multiFluidAccessors accessor for fluid properties
+   * @param[in] elemDofNumber element DOF numbers
+   * @param[inout] localMatrix the local matrix
+   * @param[inout] localRhs the local RHS vector
+   */
+  template< integer NF, integer NC, integer NP, typename IP_TYPE >
+  static void
+  launch( integer const numPhases,
+          localIndex const er,
+          localIndex const esr,
+          CellElementSubRegion const & subRegion,
+          constitutive::PermeabilityBase const & permeabilityModel,
+          SortedArrayView< localIndex const > const & boundaryFaceSet,
+          arrayView1d< real64 const > const & facePres,
+          arrayView1d< real64 const > const & faceTemp,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & facePhaseMob,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & facePhaseMassDens,
+          arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & facePhaseCompFrac,
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+          ArrayOfArraysView< localIndex const > const & faceToNodes,
+          arrayView2d< localIndex const > const & elemRegionList,
+          arrayView2d< localIndex const > const & elemSubRegionList,
+          arrayView2d< localIndex const > const & elemList,
+          arrayView1d< globalIndex const > const & faceDofNumber,
+          arrayView1d< real64 const > const & faceGravCoef,
+          arrayView1d< real64 const > const & transMultiplier,
+          real64 const lengthTolerance,
+          real64 const dt,
+          globalIndex const rankOffset,
+          integer const useTotalMassEquation,
+          CompFlowAccessors const & compFlowAccessors,
+          MultiFluidAccessors const & multiFluidAccessors,
+          ElementViewConst< arrayView1d< globalIndex const > > const & elemDofNumber,
+          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          arrayView1d< real64 > const & localRhs );
+
+};
 
 /******************************** FluxKernel ********************************/
 
@@ -650,6 +744,7 @@ struct FluxKernel
           ArrayOfArraysView< localIndex const > const & faceToNodes,
           arrayView1d< globalIndex const > const & faceDofNumber,
           arrayView1d< integer const > const & faceGhostRank,
+          arrayView1d< integer const > const & isBoundaryFace,
           arrayView1d< real64 const > const & facePres,
           arrayView1d< real64 const > const & faceGravCoef,
           arrayView1d< real64 const > const & mimeticTransGgradZ,
@@ -1201,6 +1296,35 @@ struct PrecomputeMimeticTransGgradZKernel
 
 /******************************** Kernel switches ********************************/
 
+namespace internal
+{
+
+template< typename T, typename LAMBDA >
+void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
+{
+  static_assert( std::is_integral< T >::value, "KernelLaunchSelectorFaceSwitch: type should be integral" );
+
+  switch( value )
+  {
+    case 4:
+    {
+      return lambda( std::integral_constant< int, 4 >{} );
+    }
+    case 5:
+    {
+      return lambda( std::integral_constant< int, 5 >{} );
+    }
+    case 6:
+    {
+      return lambda( std::integral_constant< int, 6 >{} );
+    }
+    default:
+      GEOS_ERROR( "Unknown numFacesInElem value: " << value );
+  }
+}
+
+} // namespace internal
+
 template< typename KERNELWRAPPER, typename INNER_PRODUCT, typename ... ARGS >
 void simpleKernelLaunchSelector( localIndex numFacesInElem, ARGS && ... args )
 {
@@ -1274,6 +1398,46 @@ void kernelLaunchSelector( integer numFacesInElem, integer numComps, integer num
     GEOS_ERROR( "Unsupported number of phases: " << numPhases );
   }
 }
+
+/******************************** EvaluateBCFacePropertiesKernel ********************************/
+
+/**
+ * @brief Evaluate constitutive properties at BC face conditions
+ * @tparam NC number of components
+ * @tparam NP number of phases
+ * @param[in] numPhases number of phases
+ * @param[in] boundaryFaceSet set of boundary faces
+ * @param[in] facePres face pressures at BC
+ * @param[in] faceTemp face temperatures at BC
+ * @param[in] faceCompFrac face component fractions at BC
+ * @param[in] elemRegionList face to element region list
+ * @param[in] elemSubRegionList face to element subregion list
+ * @param[in] elemList face to element list
+ * @param[in] er target element region index
+ * @param[in] esr target element subregion index
+ * @param[in] fluid multifluid model
+ * @param[in] relperm relative permeability model
+ * @param[out] facePhaseMob output: face phase mobility at BC
+ * @param[out] facePhaseMassDens output: face phase mass density at BC
+ * @param[out] facePhaseCompFrac output: face phase component fraction at BC
+ */
+template< integer NC, integer NP >
+void
+evaluateBCFaceProperties( integer const numPhases,
+                          SortedArrayView< localIndex const > const & boundaryFaceSet,
+                          arrayView1d< real64 const > const & facePres,
+                          arrayView1d< real64 const > const & faceTemp,
+                          arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
+                          arrayView2d< localIndex const > const & elemRegionList,
+                          arrayView2d< localIndex const > const & elemSubRegionList,
+                          arrayView2d< localIndex const > const & elemList,
+                          localIndex const er,
+                          localIndex const esr,
+                          constitutive::MultiFluidBase & fluid,
+                          constitutive::RelativePermeabilityBase & relperm,
+                          arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
+                          arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
+                          arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
 
 } // namespace compositionalMultiphaseHybridFVMKernels
 

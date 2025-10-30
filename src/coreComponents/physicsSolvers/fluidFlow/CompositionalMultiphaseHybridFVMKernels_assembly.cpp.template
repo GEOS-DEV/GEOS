@@ -42,8 +42,8 @@ namespace compositionalMultiphaseHybridFVMKernels
                                           arrayView2d< localIndex const > const & elemList,
                                           SortedArrayView< localIndex const > const & regionFilter,
                                           arrayView1d< globalIndex const > const & faceDofNumber,
+                                          arrayView1d< integer const > const & isBoundaryFace,
                                           arrayView1d< real64 const > const & mimeticTransGgradZ,
-                                          arrayView1d< real64 const > const & faceGravCoef,
                                           arraySlice1d< localIndex const > const & elemToFaces,
                                           real64 const & elemGravCoef,
                                           integer const useTotalMassEquation,
@@ -82,13 +82,11 @@ namespace compositionalMultiphaseHybridFVMKernels
                                        globalIndex const elemDofNumber,
                                        globalIndex const neighborDofNumber,
                                        globalIndex const upwViscDofNumber,
-                                       globalIndex const faceDofNumber,
                                        real64 const & dt,
                                        real64 ( &divMassFluxes )[ NC ],
                                        real64 ( &dDivMassFluxes_dElemVars )[ NC ][ (NC+1)*(NF+1) ],
                                        real64 ( &dDivMassFluxes_dFaceVars )[ NC ][ NF ],
-                                       globalIndex ( &dofColIndicesElemVars )[ (NC+1)*(NF+1) ],
-                                       globalIndex ( &dofColIndicesFaceVars )[ NF ] );
+                                       globalIndex ( &dofColIndicesElemVars )[ (NC+1)*(NF+1) ] );
   @EXTERN@
   template
   GEOS_HOST_DEVICE
@@ -111,6 +109,7 @@ namespace compositionalMultiphaseHybridFVMKernels
   AssemblerKernelHelper::
     assembleFaceConstraints< NF, NC >( arrayView1d< globalIndex const > const & faceDofNumber,
                                        arrayView1d< integer const > const & faceGhostRank,
+                                       arrayView1d< integer const > const & isBoundaryFace,
                                        arraySlice1d< localIndex const > const & elemToFaces,
                                        globalIndex const elemDofNumber,
                                        globalIndex const rankOffset,
@@ -133,6 +132,7 @@ namespace compositionalMultiphaseHybridFVMKernels
                            arrayView2d< localIndex const > const & elemList,
                            arrayView1d< globalIndex const > const & faceDofNumber,
                            arrayView1d< integer const > const & faceGhostRank,
+                           arrayView1d< integer const > const & isBoundaryFace,
                            arrayView1d< real64 const > const & facePres,
                            arrayView1d< real64 const > const & faceGravCoef,
                            arrayView1d< real64 const > const & mimeticTransGgradZ,
