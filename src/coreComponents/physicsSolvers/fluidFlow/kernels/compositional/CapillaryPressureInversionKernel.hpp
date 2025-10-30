@@ -88,7 +88,7 @@ struct CapillaryPressureInversionKernel
       phases[2] = ipWater;
     }
 
-    integer const numPoints = pressureValues.size( 0 );
+    localIndex const numPoints = pressureValues.size( 0 );
 
     forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
                                                          elementCenter,
@@ -117,14 +117,16 @@ struct CapillaryPressureInversionKernel
                                                phases,
                                                targetPhaseCapPressure[0][0] );
 
+
       real64 constexpr initialPhaseVolumeFractionGuess = 1.0 / numPhases;
       for( integer ip = 0; ip < numPhases; ++ip )
       {
         targetPhaseVolumeFraction[0][ip] = initialPhaseVolumeFractionGuess;
       }
 
+      localIndex const jFunctionIndex = isJFunction ? k : 0;
       capPressureWrapper.compute( targetPhaseCapPressure[0][0],
-                                  jFuncMultiplier[k],
+                                  jFuncMultiplier[jFunctionIndex],
                                   targetPhaseVolumeFraction[0] );
 
       for( integer ic = 0; ic < numComps; ++ic )

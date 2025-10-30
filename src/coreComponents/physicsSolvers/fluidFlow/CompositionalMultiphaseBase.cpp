@@ -1177,7 +1177,6 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       real64 const minElevation = LvArray::math::min( globalMinElevation[equilIndex], datumElevation );
       real64 const maxElevation = LvArray::math::max( globalMaxElevation[equilIndex], datumElevation );
       real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
-      localIndex const numPointsInTable = ( elevationIncrement > 0 ) ? std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1 : 1;
       real64 const eps = 0.1 * (maxElevation - minElevation);   // we add a small buffer to only log in the pathological cases
       GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
                           getCatalogName() << " " << getDataContext() <<
@@ -1188,9 +1187,59 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                           "The simulation is going to proceed with this out-of-bound datum elevation," <<
                           " but the initial condition may be inaccurate." );
 
+      // Check if we are targetting single or multiple phase initialisation
+      bool singlePhaseInitialisation = !initPhaseName.empty();
+      if( !singlePhaseInitialisation )
+      {
+        real64 const minAllowedElevation = 2.0*minElevation - maxElevation;
+        real64 const maxAllowedElevation = 2.0*maxElevation - minElevation;
+        // Check that the contacts are not too far away from the region extents
+        for( real64 const & contact : phaseContacts )
+        {
+          GEOS_THROW_IF( contact < minAllowedElevation,
+                         GEOS_FMT( "{}: The phase contact {} is below the limit of {} for region {}",
+                                   fs.getWrapperDataContext( EquilibriumInitialCondition::viewKeyStruct::phaseContactsString() ),
+                                   contact, minAllowedElevation, subRegion.getName() ),
+                         InputError );
+          GEOS_THROW_IF( maxAllowedElevation < contact,
+                         GEOS_FMT( "{}: The phase contact {} is above the limit of {} for region {}",
+                                   fs.getWrapperDataContext( EquilibriumInitialCondition::viewKeyStruct::phaseContactsString() ),
+                                   contact, maxAllowedElevation, subRegion.getName() ),
+                         InputError );
+        }
+      }
+
+      // Populate elevation values. Done here in serial
+      auto const getUniqueFloat = []( const real64 & a, const real64 & b ) {
+        return a < b - LvArray::NumericLimits< real64 >::epsilon;
+      };
+      std::set< real64, decltype(getUniqueFloat) > uniqueElevations( getUniqueFloat );
+      // If we are doing multiphase initialisation, add the contacts and the datum
+      if( !singlePhaseInitialisation )
+      {
+        uniqueElevations.insert( datumElevation );
+        for( real64 const & contact : phaseContacts )
+        {
+          uniqueElevations.insert( contact );
+        }
+      }
+      uniqueElevations.insert( maxElevation );
+      uniqueElevations.insert( minElevation );
+      if( LvArray::NumericLimits< real64 >::epsilon < elevationIncrement )
+      {
+        for( real64 elevation = minElevation; elevation < maxElevation; elevation += elevationIncrement )
+        {
+          uniqueElevations.insert( elevation );
+        }
+      }
       array1d< array1d< real64 > > elevationValues;
       elevationValues.resize( 1 );
-      elevationValues[0].resize( numPointsInTable );
+      for( real64 const & elevation : uniqueElevations )
+      {
+        elevationValues[0].emplace_back( elevation );
+      }
+      localIndex const numPointsInTable = static_cast< localIndex >(elevationValues[0].size());
+
       array3d< real64, constitutive::multifluid::LAYOUT_PHASE > pressureValues( numPointsInTable, 1, numPhases );
       array3d< real64, constitutive::multifluid::LAYOUT_PHASE > phaseDens( numPointsInTable, 1, numPhases );
       array4d< real64, constitutive::multifluid::LAYOUT_PHASE_COMP > phaseCompFrac( numPointsInTable, 1, numPhases, numComps );
@@ -1235,11 +1284,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                        InputError );
       }
 
-      // Check if we are targetting single or multiple phase initialisation
       integer ipInit = -1;
-      bool singlePhaseInitialisation = false;
       string_array const & phaseNames = fluid.phaseNames();
-      if( !initPhaseName.empty())
+      if( singlePhaseInitialisation )
       {
         auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
         GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
@@ -1247,7 +1294,6 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                        initPhaseName << " not found in the phases of " << fluid.getDataContext(),
                        InputError );
         ipInit = ( numPhases == 1 ) ? std::distance( std::begin( phaseNames ), itPhaseNames ) : -1;
-        singlePhaseInitialisation = true;
       }
 
       // Step 3.4: compute the hydrostatic pressure values

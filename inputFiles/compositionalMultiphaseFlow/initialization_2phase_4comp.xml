@@ -83,15 +83,33 @@
   </ElementRegions>
 
   <Constitutive>
-    <CO2BrinePhillipsFluid
+    <CompositionalTwoPhaseFluidPhillipsBrine
       name="fluid"
-      logLevel="1"
       phaseNames="{ gas, water }"
-      componentNames="{ co2, water }"
-      componentMolarWeight="{ 44e-3, 18e-3 }"
-      phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
-      flashModelParaFile="co2flash.txt" />
-
+      equationsOfState="{ PengRobinson, SoreideWhitson }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentMolarWeight="{ 1.60425e-02, 4.40095e-02, 3.40809e-02, 1.80153e-02 }"
+      componentCriticalPressure="{ 4.59920e+06, 7.37730e+06, 9.00000e+06, 2.20640e+07 }"
+      componentCriticalTemperature="{ 1.90564e+02, 3.04128e+02, 3.73100e+02, 6.47096e+02 }"
+      componentCriticalVolume="{ 9.86278e-05, 9.41185e-05, 9.81354e-05, 5.59480e-05 }"
+      componentAcentricFactor="{ 1.14200e-02, 2.23940e-01, 1.00500e-01, 3.44300e-01 }"
+      componentBinaryCoeff="{
+          { 0.0000, 0.0000, 0.0000, 0.4850 },
+          { 0.0000, 0.0000, 0.0000, 0.1896 },
+          { 0.0000, 0.0000, 0.0000, 0.1353 },
+          { 0.4850, 0.1896, 0.1353, 0.0000 }
+      }"
+      pressureCoordinates="{
+          1.000e+05, 1.704e+05, 2.904e+05, 4.949e+05, 8.434e+05,
+          1.437e+06, 2.449e+06, 4.174e+06, 7.114e+06, 1.212e+07,
+          2.066e+07, 3.521e+07, 6.000e+07
+      }"
+      temperatureCoordinates="{ 283.15, 334.15, 342.15, 346.15, 354.15 }"
+      waterCompressibility="4.1483E-10"
+      salinity="2.3"
+      stabilityTolerance="1.0e-5"
+      flashTolerance="1.0e-4"
+      stabilityThreshold="-1.0e-3" />        
     <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
@@ -137,8 +155,8 @@
       datumPressure="1.1e7"
       elevationIncrementInHydrostaticPressureTable="0.5"
       phaseContacts="{ 30 }"
-      componentNames="{ co2, water }"
-      componentFractionVsElevationTableNames="{ initCO2CompFracTable, initWaterCompFracTable }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentFractionVsElevationTableNames="{ CH4.VD, CO2.VD, H2S.VD, H2O.VD }"
       temperatureVsElevationTableName="initTempTable" />
     <HydrostaticEquilibrium
       name="equil01"
@@ -147,8 +165,8 @@
       datumPressure="1.1e7"
       elevationIncrementInHydrostaticPressureTable="0.5"
       phaseContacts="{ 30 }"
-      componentNames="{ co2, water }"
-      componentFractionVsElevationTableNames="{ initCO2CompFracTable, initWaterCompFracTable }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentFractionVsElevationTableNames="{ CH4.VD, CO2.VD, H2S.VD, H2O.VD }"
       temperatureVsElevationTableName="initTempTable" />
     <HydrostaticEquilibrium
       name="equil10"
@@ -157,8 +175,8 @@
       datumPressure="1.1e7"
       elevationIncrementInHydrostaticPressureTable="0.5"
       phaseContacts="{ 30 }"
-      componentNames="{ co2, water }"
-      componentFractionVsElevationTableNames="{ initCO2CompFracTable, initWaterCompFracTable }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentFractionVsElevationTableNames="{ CH4.VD, CO2.VD, H2S.VD, H2O.VD }"
       temperatureVsElevationTableName="initTempTable" />
     <HydrostaticEquilibrium
       name="equil11"
@@ -167,8 +185,8 @@
       datumPressure="1.1e7"
       elevationIncrementInHydrostaticPressureTable="5.0"
       phaseContacts="{ 30 }"
-      componentNames="{ co2, water }"
-      componentFractionVsElevationTableNames="{ initCO2CompFracTable, initWaterCompFracTable }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentFractionVsElevationTableNames="{ CH4.VD, CO2.VD, H2S.VD, H2O.VD }"
       temperatureVsElevationTableName="initTempTable" />
     <HydrostaticEquilibrium
       name="equil20"
@@ -177,8 +195,8 @@
       datumPressure="1.1e7"
       elevationIncrementInHydrostaticPressureTable="0.5"
       phaseContacts="{ -10 }"
-      componentNames="{ co2, water }"
-      componentFractionVsElevationTableNames="{ initCO2CompFracTable, initWaterCompFracTable }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentFractionVsElevationTableNames="{ CH4.VD, CO2.VD, H2S.VD, H2O.VD }"
       temperatureVsElevationTableName="initTempTable" />
     <HydrostaticEquilibrium
       name="equil21"
@@ -187,21 +205,28 @@
       datumPressure="1.1e7"
       elevationIncrementInHydrostaticPressureTable="0.5"
       phaseContacts="{ 110 }"
-      componentNames="{ co2, water }"
-      componentFractionVsElevationTableNames="{ initCO2CompFracTable, initWaterCompFracTable }"
+      componentNames="{ CH4, CO2, H2S, H2O }"
+      componentFractionVsElevationTableNames="{ CH4.VD, CO2.VD, H2S.VD, H2O.VD }"
       temperatureVsElevationTableName="initTempTable" />
   </FieldSpecifications>
 
   <Functions>
     <TableFunction
-      name="initCO2CompFracTable"
+      name="CH4.VD"
+      coordinates="{ 0.0, 100.0 }"
+      values="{ 0.34, 0.34 }" />
+    <TableFunction
+      name="CO2.VD"
+      coordinates="{ 0.0, 100.0 }"
+      values="{ 0.07, 0.07 }" />
+    <TableFunction
+      name="H2S.VD"
       coordinates="{ 0.0, 100.0 }"
       values="{ 0.04, 0.04 }" />
-
     <TableFunction
-      name="initWaterCompFracTable"
+      name="H2O.VD"
       coordinates="{ 0.0, 100.0 }"
-      values="{ 0.96, 0.96 }" />
+      values="{ 0.55, 0.55 }" />
 
     <TableFunction
       name="initTempTable"

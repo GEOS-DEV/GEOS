@@ -154,10 +154,6 @@ InverseCapillaryPressureTestFixture< CAP_PRESSURE, NUM_PHASE >::testInversion( T
     capillaryPressure[0][0][ip] = capPres[ip];
     phaseVolumeFraction[0][ip] = 1.0/NUM_PHASE;
   }
-  for( integer ip = 0; ip < NUM_PHASE-1; ++ip )
-  {
-    jFunctionMultiplier[ip] = permeability;
-  }
 
   string const modelName = GEOS_FMT( "{}{}", CapPressureModel::catalogName(), NUM_PHASE );
   CapPressureModel & model = m_constitutiveManager->getConstitutiveRelation< CapPressureModel >( modelName );
@@ -173,7 +169,6 @@ InverseCapillaryPressureTestFixture< CAP_PRESSURE, NUM_PHASE >::testInversion( T
     poro( 0, 0 ) = 0.2;
     poro( 0, 1 ) = 0.1;
     model.initializeRockState( poro.toViewConst(), perm.toViewConst());
-    string const jFunctionWrapperKey = JFunctionCapillaryPressure::viewKeyStruct::jFunctionWrappersString();
     auto jFunctionMultiplierField = model.template getField< geos::fields::cappres::jFuncMultiplier >().reference();
     for( integer ip = 0; ip < NUM_PHASE-1; ++ip )
     {

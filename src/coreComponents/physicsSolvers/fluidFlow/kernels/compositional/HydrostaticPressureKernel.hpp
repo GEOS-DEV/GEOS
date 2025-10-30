@@ -135,17 +135,17 @@ struct HydrostaticPressureKernel
 
     // Step 5: Ensure the correct phases exist. If not, apply phase correction.
     StackArray< real64, 2, constitutive::MultiFluidBase::MAX_NUM_COMPONENTS, compflow::LAYOUT_COMP > compFrac( 1, numComps );
-    ReturnType phaseCorr = phaseCorrection( numComps,
-                                            numPhases,
-                                            ipGas,
-                                            ipWater,
-                                            phaseMinVolumeFraction,
-                                            pres0[ipPP],
-                                            temp,
-                                            uncorrCompFrac[0],
-                                            phaseFrac[0][0],
-                                            compFrac[0],
-                                            fluidWrapper );
+    phaseCorrection( numComps,
+                     numPhases,
+                     ipGas,
+                     ipWater,
+                     phaseMinVolumeFraction,
+                     pres0[ipPP],
+                     temp,
+                     uncorrCompFrac[0],
+                     phaseFrac[0][0],
+                     compFrac[0],
+                     fluidWrapper );
 
     for( localIndex ip = 0; ip < numPhases; ++ip )
     {
@@ -403,12 +403,13 @@ struct HydrostaticPressureKernel
                                   endPhaseCompFrac[0] );
     // Compute relative error defined as the relative difference between the phase pressures at end elevation
     real64 err = LvArray::math::abs( endPressure[0][ipCP] - endPressure[0][ipPP] ) / endPressure[0][ipPP];
-    int maxMarchIterations = 10;
+    int constexpr maxMarchIterations = 10;
+    real64 constexpr pressureTolerance = 1.0e-5;
 
     // Marching Loop
     for( int marchIter = 1; marchIter < maxMarchIterations; ++marchIter )
     {
-      if( err < 1e-5 )  // maybe use equilTolerance here as well and modify err from relative to absolute
+      if( err < pressureTolerance )
       {
         break;
       }
@@ -522,7 +523,7 @@ struct HydrostaticPressureKernel
     ReturnType returnVal = ReturnType::SUCCESS;
 
     // Contacts classified as "close" and "far"
-    int numContacts = phaseContacts.size();
+    int const numContacts = phaseContacts.size();
     // Find the index of the contact that is closest to the datum
     integer iContactClose = 0;
     integer iContactFar = -1;
@@ -560,12 +561,6 @@ struct HydrostaticPressureKernel
                                compFracTableWrappers,
                                fluidWrapper );
 
-    // populate the elevation array.
-    forAll< parallelHostPolicy >( size, [&] ( localIndex const i )
-    {
-      real64 const elevation = minElevation + i * elevationIncrement;
-      elevationValues[0][i] = elevation;
-    } );
 
     // find the closest elevation to datumElevation. Its index is denoted as iDatum
     localIndex const iDatum = LvArray::sortedArrayManipulation::find( elevationValues[0].begin(),
@@ -742,7 +737,6 @@ struct HydrostaticPressureKernel
                                                                 phaseMassDens,
                                                                 phaseDens,
                                                                 phaseCompFrac );
-
     return returnVal;
   }
 
