@@ -59,6 +59,7 @@
       writeCSV="1">
       <WellControls
         name="wellControls1"
+        control="BHP"
         logLevel="2"
         type="producer">
         <MinimumBHPConstraint
@@ -71,6 +72,7 @@
       </WellControls>
       <WellControls
         name="wellControls2"
+        control="BHP"
         logLevel="2"
         type="injector">
         <MaximumBHPConstraint

@@ -52,6 +52,7 @@
       logLevel="1">
       <WellControls
         name="WATER.INJECTOR.CONTROL"
+        control="totalVolRate"
         type="injector"
         useSurfaceConditions="1"
         surfacePressure="1.013250e+05"
@@ -70,6 +71,7 @@
       </WellControls>
       <WellControls
         name="GAS.INJECTOR.CONTROL"
+        control="totalVolRate"
         type="injector"
         useSurfaceConditions="1"
         surfacePressure="1.013250e+05"
@@ -88,6 +90,7 @@
       </WellControls>
       <WellControls
         name="PRODUCER.CONTROL"
+        control="phaseVolRate"
         type="producer"
         useSurfaceConditions="1"
         surfacePressure="1.013250e+05"
