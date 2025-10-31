@@ -862,6 +862,20 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
                 launchKernel( IP_TAG, std::integral_constant< integer, 5 >{} );
               else if( numFacesPerElement == 6 )
                 launchKernel( IP_TAG, std::integral_constant< integer, 6 >{} );
+              else if( numFacesPerElement == 7 )
+                launchKernel( IP_TAG, std::integral_constant< integer, 7 >{} );
+              else if( numFacesPerElement == 8 )
+                launchKernel( IP_TAG, std::integral_constant< integer, 8 >{} );
+              else if( numFacesPerElement == 9 )
+                launchKernel( IP_TAG, std::integral_constant< integer, 9 >{} );
+              else if( numFacesPerElement == 10 )
+                launchKernel( IP_TAG, std::integral_constant< integer, 10 >{} );
+              else if( numFacesPerElement == 11 )
+                launchKernel( IP_TAG, std::integral_constant< integer, 11 >{} );
+              else if( numFacesPerElement == 12 )
+                launchKernel( IP_TAG, std::integral_constant< integer, 12 >{} );
+              else if( numFacesPerElement == 13 )
+                launchKernel( IP_TAG, std::integral_constant< integer, 13 >{} );
               else
                 GEOS_ERROR( "Unsupported number of faces per element: " << numFacesPerElement );
             };
