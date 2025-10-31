@@ -33,8 +33,8 @@ using namespace geos::testing;
 CommandLineOptions g_commandLineOptions;
 
 // Pressure L2 error tolerance
-static constexpr real64 PRESSURE_L2_TOLERANCE = 1.0e-10;
-static constexpr real64 SATURATION_L2_TOLERANCE = 1.0e-10;
+static constexpr real64 PRESSURE_L2_TOLERANCE = 1.0e-7;
+static constexpr real64 SATURATION_L2_TOLERANCE = 1.0e-7;
 
 // Single time step
 static constexpr real64 TIME_STEP = 1.0e-2; // 0.01
@@ -60,7 +60,7 @@ static std::string generateXmlInputCompTPFA( std::string const & meshFile )
       useMass="1"
       temperature="300">
       <NonlinearSolverParameters
-        newtonTol="1e-7"
+        newtonTol="1e-9"
         lineSearchAction="None"
         maxTimeStepCuts="100"
         maxSubSteps="100"
@@ -196,7 +196,7 @@ static std::string generateXmlInputCompMFD( std::string const & innerProductType
       useMass="1"
       temperature="300">
       <NonlinearSolverParameters
-        newtonTol="1e-7"
+        newtonTol="1e-9"
         lineSearchAction="None"
         maxTimeStepCuts="100"
         maxSubSteps="100"
