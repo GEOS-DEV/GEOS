@@ -163,8 +163,6 @@ set( kernelTemplateFileList "" )
 
 # Keep only the templates that are unrelated to hybrid flux/dirichlet
 list( APPEND kernelTemplateFileList
-      CompositionalMultiphaseHybridFVMKernels_upwinding.cpp.template
-      CompositionalMultiphaseHybridFVMKernels_assembly.cpp.template
       ReactiveCompositionalMultiphaseOBLKernels.cpp.template )
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )

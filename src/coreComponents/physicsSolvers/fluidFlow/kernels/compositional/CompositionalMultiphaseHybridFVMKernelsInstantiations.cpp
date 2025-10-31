@@ -41,7 +41,14 @@ namespace compositionalMultiphaseHybridFVMKernels
 #define GEOS_NFACES_LIST \
   X_NF( 4 )                \
   X_NF( 5 )                \
-  X_NF( 6 )
+  X_NF( 6 )                \
+  X_NF( 7 )                \
+  X_NF( 8 )                \
+  X_NF( 9 )                \
+  X_NF( 10 )               \
+  X_NF( 11 )               \
+  X_NF( 12 )               \
+  X_NF( 13 )
 
 // -----------------------------------------------------------------------------
 // Common parameter macros (kept in sync with kernel signatures)
@@ -178,180 +185,61 @@ GEOS_NFACES_LIST
 #undef INSTANTIATE_FLUX_FOR_NP
 #undef INSTANTIATE_FLUX_FOR_NC
 #undef INSTANTIATE_FLUX_FOR_NF
-#undef GEOS_NFACES_LIST
 
 // -----------------------------------------------------------------------------
 // evaluateBCFaceProperties explicit instantiations
 // -----------------------------------------------------------------------------
-template void
-evaluateBCFaceProperties< 1, 2 >( integer const numPhases,
-                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
-                                  arrayView1d< real64 const > const & facePres,
-                                  arrayView1d< real64 const > const & faceTemp,
-                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
-                                  arrayView2d< localIndex const > const & elemRegionList,
-                                  arrayView2d< localIndex const > const & elemSubRegionList,
-                                  arrayView2d< localIndex const > const & elemList,
-                                  localIndex const er,
-                                  localIndex const esr,
-                                  constitutive::MultiFluidBase & fluid,
-                                  constitutive::RelativePermeabilityBase & relperm,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
-                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
+#define INSTANTIATE_EVALUATE_BC_FACE_PROPERTIES( NC, NP ) \
+  template void evaluateBCFaceProperties< NC, NP >( \
+    integer const numPhases, \
+    SortedArrayView< localIndex const > const & boundaryFaceSet, \
+    arrayView1d< real64 const > const & facePres, \
+    arrayView1d< real64 const > const & faceTemp, \
+    arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac, \
+    arrayView2d< localIndex const > const & elemRegionList, \
+    arrayView2d< localIndex const > const & elemSubRegionList, \
+    arrayView2d< localIndex const > const & elemList, \
+    localIndex const er, \
+    localIndex const esr, \
+    constitutive::MultiFluidBase & fluid, \
+    constitutive::RelativePermeabilityBase & relperm, \
+    arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob, \
+    arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens, \
+    arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
 
-template void
-evaluateBCFaceProperties< 2, 2 >( integer const numPhases,
-                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
-                                  arrayView1d< real64 const > const & facePres,
-                                  arrayView1d< real64 const > const & faceTemp,
-                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
-                                  arrayView2d< localIndex const > const & elemRegionList,
-                                  arrayView2d< localIndex const > const & elemSubRegionList,
-                                  arrayView2d< localIndex const > const & elemList,
-                                  localIndex const er,
-                                  localIndex const esr,
-                                  constitutive::MultiFluidBase & fluid,
-                                  constitutive::RelativePermeabilityBase & relperm,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
-                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
+#define INSTANTIATE_EVALUATE_BC_FACE_PROPERTIES_FOR_NP( NC, NP ) \
+  INSTANTIATE_EVALUATE_BC_FACE_PROPERTIES( NC, NP )
 
-template void
-evaluateBCFaceProperties< 3, 2 >( integer const numPhases,
-                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
-                                  arrayView1d< real64 const > const & facePres,
-                                  arrayView1d< real64 const > const & faceTemp,
-                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
-                                  arrayView2d< localIndex const > const & elemRegionList,
-                                  arrayView2d< localIndex const > const & elemSubRegionList,
-                                  arrayView2d< localIndex const > const & elemList,
-                                  localIndex const er,
-                                  localIndex const esr,
-                                  constitutive::MultiFluidBase & fluid,
-                                  constitutive::RelativePermeabilityBase & relperm,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
-                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
+#define INSTANTIATE_EVALUATE_BC_FACE_PROPERTIES_FOR_NC( NC ) \
+  INSTANTIATE_EVALUATE_BC_FACE_PROPERTIES_FOR_NP( NC, 2 ) \
+  INSTANTIATE_EVALUATE_BC_FACE_PROPERTIES_FOR_NP( NC, 3 )
 
-template void
-evaluateBCFaceProperties< 4, 2 >( integer const numPhases,
-                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
-                                  arrayView1d< real64 const > const & facePres,
-                                  arrayView1d< real64 const > const & faceTemp,
-                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
-                                  arrayView2d< localIndex const > const & elemRegionList,
-                                  arrayView2d< localIndex const > const & elemSubRegionList,
-                                  arrayView2d< localIndex const > const & elemList,
-                                  localIndex const er,
-                                  localIndex const esr,
-                                  constitutive::MultiFluidBase & fluid,
-                                  constitutive::RelativePermeabilityBase & relperm,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
-                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
+INSTANTIATE_EVALUATE_BC_FACE_PROPERTIES_FOR_NC( 1 )
+INSTANTIATE_EVALUATE_BC_FACE_PROPERTIES_FOR_NC( 2 )
+INSTANTIATE_EVALUATE_BC_FACE_PROPERTIES_FOR_NC( 3 )
+INSTANTIATE_EVALUATE_BC_FACE_PROPERTIES_FOR_NC( 4 )
+INSTANTIATE_EVALUATE_BC_FACE_PROPERTIES_FOR_NC( 5 )
 
-template void
-evaluateBCFaceProperties< 5, 2 >( integer const numPhases,
-                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
-                                  arrayView1d< real64 const > const & facePres,
-                                  arrayView1d< real64 const > const & faceTemp,
-                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
-                                  arrayView2d< localIndex const > const & elemRegionList,
-                                  arrayView2d< localIndex const > const & elemSubRegionList,
-                                  arrayView2d< localIndex const > const & elemList,
-                                  localIndex const er,
-                                  localIndex const esr,
-                                  constitutive::MultiFluidBase & fluid,
-                                  constitutive::RelativePermeabilityBase & relperm,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
-                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
+// Cleanup local helper macros
+#undef INSTANTIATE_EVALUATE_BC_FACE_PROPERTIES
+#undef INSTANTIATE_EVALUATE_BC_FACE_PROPERTIES_FOR_NP
+#undef INSTANTIATE_EVALUATE_BC_FACE_PROPERTIES_FOR_NC
 
-template void
-evaluateBCFaceProperties< 1, 3 >( integer const numPhases,
-                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
-                                  arrayView1d< real64 const > const & facePres,
-                                  arrayView1d< real64 const > const & faceTemp,
-                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
-                                  arrayView2d< localIndex const > const & elemRegionList,
-                                  arrayView2d< localIndex const > const & elemSubRegionList,
-                                  arrayView2d< localIndex const > const & elemList,
-                                  localIndex const er,
-                                  localIndex const esr,
-                                  constitutive::MultiFluidBase & fluid,
-                                  constitutive::RelativePermeabilityBase & relperm,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
-                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
-
-template void
-evaluateBCFaceProperties< 2, 3 >( integer const numPhases,
-                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
-                                  arrayView1d< real64 const > const & facePres,
-                                  arrayView1d< real64 const > const & faceTemp,
-                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
-                                  arrayView2d< localIndex const > const & elemRegionList,
-                                  arrayView2d< localIndex const > const & elemSubRegionList,
-                                  arrayView2d< localIndex const > const & elemList,
-                                  localIndex const er,
-                                  localIndex const esr,
-                                  constitutive::MultiFluidBase & fluid,
-                                  constitutive::RelativePermeabilityBase & relperm,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
-                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
-
-template void
-evaluateBCFaceProperties< 3, 3 >( integer const numPhases,
-                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
-                                  arrayView1d< real64 const > const & facePres,
-                                  arrayView1d< real64 const > const & faceTemp,
-                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
-                                  arrayView2d< localIndex const > const & elemRegionList,
-                                  arrayView2d< localIndex const > const & elemSubRegionList,
-                                  arrayView2d< localIndex const > const & elemList,
-                                  localIndex const er,
-                                  localIndex const esr,
-                                  constitutive::MultiFluidBase & fluid,
-                                  constitutive::RelativePermeabilityBase & relperm,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
-                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
-
-template void
-evaluateBCFaceProperties< 4, 3 >( integer const numPhases,
-                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
-                                  arrayView1d< real64 const > const & facePres,
-                                  arrayView1d< real64 const > const & faceTemp,
-                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
-                                  arrayView2d< localIndex const > const & elemRegionList,
-                                  arrayView2d< localIndex const > const & elemSubRegionList,
-                                  arrayView2d< localIndex const > const & elemList,
-                                  localIndex const er,
-                                  localIndex const esr,
-                                  constitutive::MultiFluidBase & fluid,
-                                  constitutive::RelativePermeabilityBase & relperm,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
-                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
-
-template void
-evaluateBCFaceProperties< 5, 3 >( integer const numPhases,
-                                  SortedArrayView< localIndex const > const & boundaryFaceSet,
-                                  arrayView1d< real64 const > const & facePres,
-                                  arrayView1d< real64 const > const & faceTemp,
-                                  arrayView2d< real64 const, compflow::USD_COMP > const & faceCompFrac,
-                                  arrayView2d< localIndex const > const & elemRegionList,
-                                  arrayView2d< localIndex const > const & elemSubRegionList,
-                                  arrayView2d< localIndex const > const & elemList,
-                                  localIndex const er,
-                                  localIndex const esr,
-                                  constitutive::MultiFluidBase & fluid,
-                                  constitutive::RelativePermeabilityBase & relperm,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMob,
-                                  arrayView2d< real64, compflow::USD_PHASE > const & facePhaseMassDens,
-                                  arrayView3d< real64, compflow::USD_PHASE_COMP > const & facePhaseCompFrac );
+// -----------------------------------------------------------------------------
+// NOTE: Explicit instantiations for AssemblerKernelHelper and AssemblerKernel
+// functions are NOT included here because they are declared as 'inline' in
+// CompositionalMultiphaseHybridFVMKernels_impl.hpp. Inline template functions
+// are automatically instantiated at the point of use and cannot be explicitly
+// instantiated.
+//
+// The following functions are inline and therefore auto-instantiated:
+// - AssemblerKernelHelper::applyGradient
+// - AssemblerKernelHelper::assembleFluxDivergence
+// - AssemblerKernelHelper::assembleViscousFlux
+// - AssemblerKernelHelper::assembleBuoyancyFlux
+// - AssemblerKernelHelper::assembleFaceConstraints
+// - AssemblerKernel::compute
+// -----------------------------------------------------------------------------
 
 #endif // GEOS_ENABLE_MANUAL_HYBRID_FVM_INST
 
