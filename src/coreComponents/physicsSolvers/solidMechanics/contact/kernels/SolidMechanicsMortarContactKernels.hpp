@@ -410,7 +410,7 @@ protected:
   arrayView1d< globalIndex const > const m_tDofNumber;
 
   /// The array containing the displacement field
-  arrayView2d< real64 const > const m_displacement;
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_displacement;
 
   /// The array containing the rotation matrix for each element.
   arrayView3d< real64 const > const m_rotationMatrix;
