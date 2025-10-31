@@ -26,9 +26,6 @@
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "functions/TableFunction.hpp"
 
-//#include <fstream>
-//#include <iostream>
-
 namespace geos
 {
 
@@ -39,7 +36,6 @@ namespace isothermalCompositionalMultiphaseBaseKernels
 
 struct HydrostaticPressureKernel
 {
-
   // TODO: this type of constants should be centralized somewhere or provided by fluid model
   static real64 constexpr MIN_FOR_PHASE_PRESENCE = 1e-12;
   static real64 constexpr MIN_FOR_COMP_PRESENCE = 1e-12;
@@ -79,7 +75,7 @@ struct HydrostaticPressureKernel
                               arraySlice2d< real64, constitutive::multifluid::USD_PHASE_COMP - 2 > const & newPhaseCompFrac )
   {
     // fluid properties at this elevation
-    StackArray< real64, 2, constitutive::MultiFluidBase::MAX_NUM_COMPONENTS, compflow::LAYOUT_COMP > uncorrCompFrac( 1, numComps );
+    StackArray< real64, 2, constitutive::MultiFluidBase::MAX_NUM_COMPONENTS, compflow::LAYOUT_COMP > inputComposition( 1, numComps );
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > phaseFrac( 1, 1, numPhases );
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > phaseDens( 1, 1, numPhases );
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > phaseMassDens( 1, 1, numPhases );
@@ -90,40 +86,42 @@ struct HydrostaticPressureKernel
                 constitutive::multifluid::LAYOUT_PHASE_COMP > phaseCompFrac( 1, 1, numPhases, numComps );
     real64 totalDens = 0.0;
 
+    bool const isSinglePhaseInitialisation = phaseContacts.size() == 0;
+
     bool isSinglePhaseFlow = true;
 
     // Step 1: compute the hydrostatic pressure at the current elevation
 
     real64 const gravCoef = gravVector[2] * ( refElevation - newElevation );
-    real64 const temp = tempTableWrapper.compute( &newElevation );
+    real64 const temperature = tempTableWrapper.compute( &newElevation );
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      uncorrCompFrac[0][ic] = compFracTableWrappers[ic].compute( &newElevation );
+      inputComposition[0][ic] = compFracTableWrappers[ic].compute( &newElevation );
     }
 
     // Step 2: guess the pressure with the refPhaseMassDensity
-    array1d< real64 > pres0( numPhases );
-    array1d< real64 > pres1( numPhases );
+    StackArray< real64, 2, 2*constitutive::MultiFluidBase::MAX_NUM_PHASES > phasePressures( 2, numPhases );
+    StackArray< real64, 2, constitutive::MultiFluidBase::MAX_NUM_COMPONENTS, compflow::LAYOUT_COMP > compFrac( 1, numComps );
     for( localIndex ip = 0; ip < numPhases; ++ip )
     {
-      pres0[ip] = refPres[ip] - refPhaseMassDens[ip] * gravCoef;
-      pres1[ip] = 0.0;
+      phasePressures[0][ip] = refPres[ip] - refPhaseMassDens[ip] * gravCoef;
     }
 
     // Step 3: determine which phase pressure to use as the flash pressure
-    integer const ipPP = evaluateFlashPhaseIndex( numPhases,
-                                                  ipGas,
-                                                  ipOil,
-                                                  ipWater,
-                                                  ipInit,
-                                                  newElevation,
-                                                  phaseContacts );
+    integer const flashPhase = isSinglePhaseInitialisation ? ipInit :
+                               evaluateFlashPhaseIndex( numPhases,
+                                                        ipGas,
+                                                        ipOil,
+                                                        ipWater,
+                                                        ipInit,
+                                                        newElevation,
+                                                        phaseContacts );
 
     // Step 4: compute the mass density at this elevation using the guess, and update pressure
     constitutive::MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
-                                                                pres0[ipPP], // flash pressure
-                                                                temp,
-                                                                uncorrCompFrac[0],
+                                                                phasePressures[0][flashPhase], // flash pressure
+                                                                temperature,
+                                                                inputComposition[0],
                                                                 phaseFrac[0][0],
                                                                 phaseDens[0][0],
                                                                 phaseMassDens[0][0],
@@ -134,63 +132,56 @@ struct HydrostaticPressureKernel
                                                                 totalDens );
 
     // Step 5: Ensure the correct phases exist. If not, apply phase correction.
-    StackArray< real64, 2, constitutive::MultiFluidBase::MAX_NUM_COMPONENTS, compflow::LAYOUT_COMP > compFrac( 1, numComps );
-    phaseCorrection( numComps,
-                     numPhases,
-                     ipGas,
-                     ipWater,
-                     phaseMinVolumeFraction,
-                     pres0[ipPP],
-                     temp,
-                     uncorrCompFrac[0],
-                     phaseFrac[0][0],
-                     compFrac[0],
-                     fluidWrapper );
-
+    if( isSinglePhaseInitialisation )
+    {
+      for( integer ic = 0; ic < numComps; ++ic )
+      {
+        compFrac[0][ic] = inputComposition[0][ic];
+      }
+    }
+    else
+    {
+      phaseCorrection( numComps,
+                       numPhases,
+                       ipGas,
+                       ipWater,
+                       phaseMinVolumeFraction,
+                       phasePressures[0][flashPhase],
+                       temperature,
+                       inputComposition[0],
+                       phaseFrac[0][0],
+                       compFrac[0],
+                       fluidWrapper );
+    }
     for( localIndex ip = 0; ip < numPhases; ++ip )
     {
-      pres1[ip] = refPres[ip] - 0.5 * ( refPhaseMassDens[ip] + phaseMassDens[0][0][ip] ) * gravCoef;
+      phasePressures[1][ip] = refPres[ip] - 0.5 * ( refPhaseMassDens[ip] + phaseMassDens[0][0][ip] ) * gravCoef;
     }
 
     // Step 6: fixed-point iteration until convergence
     bool equilHasConverged;
-    int iters = 0;
     for( integer eqIter = 0; eqIter < maxNumEquilIterations; ++eqIter )
     {
-      iters += 1;
       // check convergence
-      equilHasConverged = true;
-      for( localIndex ip = 0; ip < numPhases; ++ip )
+      real64 pressureError = 0.0;
+      for( integer ip = 0; ip < numPhases; ++ip )
       {
-        equilHasConverged = equilHasConverged && ( LvArray::math::abs( pres0[ip] - pres1[ip] ) < equilTolerance );
-        pres0[ip] = pres1[ip];
+        real64 const dp = LvArray::math::abs( phasePressures[0][ip] - phasePressures[1][ip] );
+        pressureError = LvArray::math::max( pressureError, dp );
+        phasePressures[0][ip] = phasePressures[1][ip];
       }
+      equilHasConverged = ( pressureError < equilTolerance );
 
       // if converged, check number of phases and move on
       if( equilHasConverged )
       {
-        // make sure that the fluid is single-phase, other we have to issue a warning (for now)
-        // if only one phase is mobile, we are in good shape (unfortunately it is hard to access relperm from here)
-        localIndex numberOfPhases = 0;
-        for( integer ip = 0; ip < numPhases; ++ip )
-        {
-          if( phaseFrac[0][0][ip] > MIN_FOR_PHASE_PRESENCE )
-          {
-            numberOfPhases++;
-          }
-        }
-        if( numberOfPhases > 1 )
-        {
-          isSinglePhaseFlow = false;
-        }
-
         break;
       }
 
       // compute the mass density at this elevation using the previous pressure, and compute the new pressure
       constitutive::MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
-                                                                  pres0[ipPP], // flash pressure
-                                                                  temp,
+                                                                  phasePressures[0][flashPhase], // flash pressure
+                                                                  temperature,
                                                                   compFrac[0],
                                                                   phaseFrac[0][0],
                                                                   phaseDens[0][0],
@@ -200,25 +191,32 @@ struct HydrostaticPressureKernel
                                                                   phaseInternalEnergy[0][0],
                                                                   phaseCompFrac[0][0],
                                                                   totalDens );
-      for( localIndex ip = 0; ip < numPhases; ++ip )
+      for( integer ip = 0; ip < numPhases; ++ip )
       {
-        pres1[ip] = refPres[ip] - 0.5 * ( refPhaseMassDens[ip] + phaseMassDens[0][0][ip] ) * gravCoef;
+        phasePressures[1][ip] = refPres[ip] - 0.5 * ( refPhaseMassDens[ip] + phaseMassDens[0][0][ip] ) * gravCoef;
       }
     }
 
-    // Step 7: save the hydrostatic pressure and the corresponding density
-    for( localIndex ip = 0; ip < numPhases; ++ip )
-    {
-      newPres[ip] = pres1[ip];
-    }
+    // Step 7: save the hydrostatic pressure and the corresponding density and composition
+    // Also count the number of phases on exit
+    integer numberOfPhases = 0;
     for( integer ip = 0; ip < numPhases; ++ip )
     {
+      newPres[ip] = phasePressures[1][ip];
       newPhaseMassDens[ip] = phaseMassDens[0][0][ip];
       newPhaseDens[ip] = phaseDens[0][0][ip];
       for( integer ic = 0; ic < numComps; ++ic )
       {
         newPhaseCompFrac[ip][ic] = phaseCompFrac[0][0][ip][ic];
       }
+      if( phaseFrac[0][0][ip] > MIN_FOR_PHASE_PRESENCE )
+      {
+        numberOfPhases++;
+      }
+    }
+    if( 1 < numberOfPhases )
+    {
+      isSinglePhaseFlow = false;
     }
 
     if( !equilHasConverged )
@@ -254,7 +252,6 @@ struct HydrostaticPressureKernel
                                                   arrayView1d< TableFunction::KernelWrapper const > compFracTableWrappers,
                                                   TableFunction::KernelWrapper tempTableWrapper,
                                                   arrayView1d< arrayView1d< real64 > const > elevationValues,
-                                                  // arrayView2d< real64 > const pressureValues,
                                                   arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & pressureValues,
                                                   arrayView2d< real64 > const & phaseMassDens,
                                                   arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & phaseDens,
@@ -524,6 +521,7 @@ struct HydrostaticPressureKernel
 
     // Contacts classified as "close" and "far"
     int const numContacts = phaseContacts.size();
+    bool const isSinglePhase = (numContacts == 0);
     // Find the index of the contact that is closest to the datum
     integer iContactClose = 0;
     integer iContactFar = -1;
@@ -541,9 +539,9 @@ struct HydrostaticPressureKernel
 
     // Temporarily set all phase pressures at datum to input datum pressure.
     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > datumPresInput( 1, 1, numPhases );
-    for( localIndex i = 0; i < numPhases; ++i )
+    for( localIndex ip = 0; ip < numPhases; ++ip )
     {
-      datumPresInput[0][0][i] = datumPres;
+      datumPresInput[0][0][ip] = datumPres;
     }
 
     // compute the phase mass densities at datum
@@ -559,6 +557,7 @@ struct HydrostaticPressureKernel
                                datumTemp,
                                datumPhaseMassDens,
                                compFracTableWrappers,
+                               isSinglePhase,
                                fluidWrapper );
 
 
@@ -608,135 +607,187 @@ struct HydrostaticPressureKernel
       returnVal = ReturnType::DETECTED_MULTIPHASE_FLOW;
     }
 
-    integer iContactCloseIndex = iDatum;
-    integer iContactTop = iDatum;
-    integer iContactBottom = iDatum;
-    // March from datum to the close contact
-    if( LvArray::math::abs( datumElevation - phaseContacts[iContactClose] ) > 1e-12 )
+    if( isSinglePhase )
     {
-      // Find index of the closest element in elevationValues to the close contact, denoted as iContact
-      iContactCloseIndex = LvArray::sortedArrayManipulation::find( elevationValues[0].begin(),
-                                                                   elevationValues[0].size(),
-                                                                   phaseContacts[iContactClose] );
+      // compute hydrostatic pressure for each elevation above the reference elevation, compute the pressure
+      returnVal = computeHydrostaticPressureAtMultipleElevations( iDatum,
+                                                                  size - 1,
+                                                                  numComps,
+                                                                  numPhases,
+                                                                  ipGas,
+                                                                  ipOil,
+                                                                  ipWater,
+                                                                  ipInit,
+                                                                  phaseContacts,
+                                                                  phaseMinVolumeFraction,
+                                                                  maxNumEquilIterations,
+                                                                  equilTolerance,
+                                                                  gravVector,
+                                                                  fluidWrapper,
+                                                                  compFracTableWrappers,
+                                                                  tempTableWrapper,
+                                                                  elevationValues,
+                                                                  pressureValues,
+                                                                  phaseMassDens,
+                                                                  phaseDens,
+                                                                  phaseCompFrac );
 
-      // compute hydrostatic pressure for each elevation between the datum and the closest contact
-      returnVal = marchBetweenTwoElevations( datumElevation,
-                                             phaseContacts[iContactClose],
-                                             numComps,
-                                             numPhases,
-                                             ipGas,
-                                             ipOil,
-                                             ipWater,
-                                             ipInit,
-                                             phaseContacts,
-                                             phaseMinVolumeFraction,
-                                             maxNumEquilIterations,
-                                             equilTolerance,
-                                             gravVector,
-                                             fluidWrapper,
-                                             compFracTableWrappers,
-                                             tempTableWrapper,
-                                             elevationValues,
-                                             pressureValues,
-                                             phaseMassDens,
-                                             phaseDens,
-                                             phaseCompFrac );
-    }
-
-    integer iContactFarIndex = iContactCloseIndex;
-    // March from close contact to far contact
-    if( iContactFar != -1 && LvArray::math::abs( phaseContacts[iContactClose] - phaseContacts[iContactFar] ) > 1e-12 )
-    {
-      // Find index of the closest element in elevationValues to the far contact, denoted as iContact
-      iContactFarIndex = LvArray::sortedArrayManipulation::find( elevationValues[0].begin(),
-                                                                 elevationValues[0].size(),
-                                                                 phaseContacts[iContactFar] );
-
-      // compute hydrostatic pressure for each elevation between the closest and the farthest contacts
-      returnVal = marchBetweenTwoElevations( phaseContacts[iContactClose],
-                                             phaseContacts[iContactFar],
-                                             numComps,
-                                             numPhases,
-                                             ipGas,
-                                             ipOil,
-                                             ipWater,
-                                             ipInit,
-                                             phaseContacts,
-                                             phaseMinVolumeFraction,
-                                             maxNumEquilIterations,
-                                             equilTolerance,
-                                             gravVector,
-                                             fluidWrapper,
-                                             compFracTableWrappers,
-                                             tempTableWrapper,
-                                             elevationValues,
-                                             pressureValues,
-                                             phaseMassDens,
-                                             phaseDens,
-                                             phaseCompFrac );
-    }
-
-    if( iContactFar == -1 )
-    {
-      iContactTop = iContactCloseIndex;
-      iContactBottom = iContactCloseIndex;
-    }
-    else if( phaseContacts[iContactClose] > phaseContacts[iContactFar] )
-    {
-      iContactTop = iContactCloseIndex;
-      iContactBottom = iContactFarIndex;
+      // compute hydrostatic pressure for each elevation above the reference elevation, compute the pressure
+      returnVal = computeHydrostaticPressureAtMultipleElevations( iDatum,
+                                                                  0,
+                                                                  numComps,
+                                                                  numPhases,
+                                                                  ipGas,
+                                                                  ipOil,
+                                                                  ipWater,
+                                                                  ipInit,
+                                                                  phaseContacts,
+                                                                  phaseMinVolumeFraction,
+                                                                  maxNumEquilIterations,
+                                                                  equilTolerance,
+                                                                  gravVector,
+                                                                  fluidWrapper,
+                                                                  compFracTableWrappers,
+                                                                  tempTableWrapper,
+                                                                  elevationValues,
+                                                                  pressureValues,
+                                                                  phaseMassDens,
+                                                                  phaseDens,
+                                                                  phaseCompFrac );
     }
     else
     {
-      iContactTop = iContactFarIndex;
-      iContactBottom = iContactCloseIndex;
+      integer iContactCloseIndex = iDatum;
+      integer iContactTop = iDatum;
+      integer iContactBottom = iDatum;
+
+      // March from datum to the close contact
+      if( LvArray::math::abs( datumElevation - phaseContacts[iContactClose] ) > 1e-12 )
+      {
+        // Find index of the closest element in elevationValues to the close contact, denoted as iContact
+        iContactCloseIndex = LvArray::sortedArrayManipulation::find( elevationValues[0].begin(),
+                                                                     elevationValues[0].size(),
+                                                                     phaseContacts[iContactClose] );
+
+        // compute hydrostatic pressure for each elevation between the datum and the closest contact
+        returnVal = marchBetweenTwoElevations( datumElevation,
+                                               phaseContacts[iContactClose],
+                                               numComps,
+                                               numPhases,
+                                               ipGas,
+                                               ipOil,
+                                               ipWater,
+                                               ipInit,
+                                               phaseContacts,
+                                               phaseMinVolumeFraction,
+                                               maxNumEquilIterations,
+                                               equilTolerance,
+                                               gravVector,
+                                               fluidWrapper,
+                                               compFracTableWrappers,
+                                               tempTableWrapper,
+                                               elevationValues,
+                                               pressureValues,
+                                               phaseMassDens,
+                                               phaseDens,
+                                               phaseCompFrac );
+      }
+
+      integer iContactFarIndex = iContactCloseIndex;
+      // March from close contact to far contact
+      if( iContactFar != -1 && LvArray::math::abs( phaseContacts[iContactClose] - phaseContacts[iContactFar] ) > 1e-12 )
+      {
+        // Find index of the closest element in elevationValues to the far contact, denoted as iContact
+        iContactFarIndex = LvArray::sortedArrayManipulation::find( elevationValues[0].begin(),
+                                                                   elevationValues[0].size(),
+                                                                   phaseContacts[iContactFar] );
+
+        // compute hydrostatic pressure for each elevation between the closest and the farthest contacts
+        returnVal = marchBetweenTwoElevations( phaseContacts[iContactClose],
+                                               phaseContacts[iContactFar],
+                                               numComps,
+                                               numPhases,
+                                               ipGas,
+                                               ipOil,
+                                               ipWater,
+                                               ipInit,
+                                               phaseContacts,
+                                               phaseMinVolumeFraction,
+                                               maxNumEquilIterations,
+                                               equilTolerance,
+                                               gravVector,
+                                               fluidWrapper,
+                                               compFracTableWrappers,
+                                               tempTableWrapper,
+                                               elevationValues,
+                                               pressureValues,
+                                               phaseMassDens,
+                                               phaseDens,
+                                               phaseCompFrac );
+      }
+
+      if( iContactFar == -1 )
+      {
+        iContactTop = iContactCloseIndex;
+        iContactBottom = iContactCloseIndex;
+      }
+      else if( phaseContacts[iContactClose] > phaseContacts[iContactFar] )
+      {
+        iContactTop = iContactCloseIndex;
+        iContactBottom = iContactFarIndex;
+      }
+      else
+      {
+        iContactTop = iContactFarIndex;
+        iContactBottom = iContactCloseIndex;
+      }
+
+      // compute hydrostatic pressure for each elevation between the top contact and the topmost elevation
+      returnVal = computeHydrostaticPressureAtMultipleElevations( iContactTop,
+                                                                  size - 1,
+                                                                  numComps,
+                                                                  numPhases,
+                                                                  ipGas,
+                                                                  ipOil,
+                                                                  ipWater,
+                                                                  ipInit,
+                                                                  phaseContacts,
+                                                                  phaseMinVolumeFraction,
+                                                                  maxNumEquilIterations,
+                                                                  equilTolerance,
+                                                                  gravVector,
+                                                                  fluidWrapper,
+                                                                  compFracTableWrappers,
+                                                                  tempTableWrapper,
+                                                                  elevationValues,
+                                                                  pressureValues,
+                                                                  phaseMassDens,
+                                                                  phaseDens,
+                                                                  phaseCompFrac );
+
+      // compute hydrostatic pressure for each elevation between the bottom contact and the bottom-most elevation
+      returnVal = computeHydrostaticPressureAtMultipleElevations( iContactBottom,
+                                                                  0,
+                                                                  numComps,
+                                                                  numPhases,
+                                                                  ipGas,
+                                                                  ipOil,
+                                                                  ipWater,
+                                                                  ipInit,
+                                                                  phaseContacts,
+                                                                  phaseMinVolumeFraction,
+                                                                  maxNumEquilIterations,
+                                                                  equilTolerance,
+                                                                  gravVector,
+                                                                  fluidWrapper,
+                                                                  compFracTableWrappers,
+                                                                  tempTableWrapper,
+                                                                  elevationValues,
+                                                                  pressureValues,
+                                                                  phaseMassDens,
+                                                                  phaseDens,
+                                                                  phaseCompFrac );
     }
-
-    // compute hydrostatic pressure for each elevation between the top contact and the topmost elevation
-    returnVal = computeHydrostaticPressureAtMultipleElevations( iContactTop,
-                                                                size - 1,
-                                                                numComps,
-                                                                numPhases,
-                                                                ipGas,
-                                                                ipOil,
-                                                                ipWater,
-                                                                ipInit,
-                                                                phaseContacts,
-                                                                phaseMinVolumeFraction,
-                                                                maxNumEquilIterations,
-                                                                equilTolerance,
-                                                                gravVector,
-                                                                fluidWrapper,
-                                                                compFracTableWrappers,
-                                                                tempTableWrapper,
-                                                                elevationValues,
-                                                                pressureValues,
-                                                                phaseMassDens,
-                                                                phaseDens,
-                                                                phaseCompFrac );
-
-    // compute hydrostatic pressure for each elevation between the bottom contact and the bottom-most elevation
-    returnVal = computeHydrostaticPressureAtMultipleElevations( iContactBottom,
-                                                                0,
-                                                                numComps,
-                                                                numPhases,
-                                                                ipGas,
-                                                                ipOil,
-                                                                ipWater,
-                                                                ipInit,
-                                                                phaseContacts,
-                                                                phaseMinVolumeFraction,
-                                                                maxNumEquilIterations,
-                                                                equilTolerance,
-                                                                gravVector,
-                                                                fluidWrapper,
-                                                                compFracTableWrappers,
-                                                                tempTableWrapper,
-                                                                elevationValues,
-                                                                pressureValues,
-                                                                phaseMassDens,
-                                                                phaseDens,
-                                                                phaseCompFrac );
     return returnVal;
   }
 
@@ -749,7 +800,7 @@ struct HydrostaticPressureKernel
                    arrayView1d< real64 const > const & phaseMinVolumeFraction,
                    real64 const & pres,
                    real64 const & temp,
-                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & uncorrCompFrac,
+                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & inputComposition,
                    arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & phaseFrac,
                    arraySlice1d< real64, compflow::USD_COMP - 1 > const & compFrac,
                    FLUID_WRAPPER fluidWrapper )
@@ -792,7 +843,7 @@ struct HydrostaticPressureKernel
                                    ip_otherPhase,
                                    pres,
                                    temp,
-                                   uncorrCompFrac,
+                                   inputComposition,
                                    addedCompFrac[0],
                                    compFrac,
                                    fluidWrapper );
@@ -801,7 +852,7 @@ struct HydrostaticPressureKernel
     {
       for( localIndex ic = 0; ic < numComps; ++ic )
       {
-        compFrac[ic] = uncorrCompFrac[ic];
+        compFrac[ic] = inputComposition[ic];
       }
       return ReturnType::PHASE_CORRECTION_NOT_NEEDED;
     }
@@ -816,7 +867,7 @@ struct HydrostaticPressureKernel
                         integer const & ip_otherPhase,
                         real64 const & pres,
                         real64 const & temp,
-                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & uncorrCompFrac,
+                        arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & inputComposition,
                         arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & addedCompFrac,
                         arraySlice1d< real64, compflow::USD_COMP - 1 > const & compFrac,
                         FLUID_WRAPPER fluidWrapper )
@@ -842,7 +893,7 @@ struct HydrostaticPressureKernel
       a = ( a_high + a_low ) * 0.5;
       mixingStep( numComps,
                   a,
-                  uncorrCompFrac,
+                  inputComposition,
                   addedCompFrac,
                   compFrac );
       constitutive::MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
@@ -888,14 +939,14 @@ struct HydrostaticPressureKernel
 
   static void mixingStep( integer const & numComps,
                           real64 const & a,
-                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & uncorrCompFrac,
+                          arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & inputComposition,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & addedCompFrac,
                           arraySlice1d< real64, compflow::USD_COMP - 1 > const & compFrac )
   {
     real64 tot = 0.0;
     for( localIndex ic = 0; ic < numComps; ++ic )
     {
-      compFrac[ic] = a * addedCompFrac[ic] + ( 1 - a ) * uncorrCompFrac[ic];
+      compFrac[ic] = a * addedCompFrac[ic] + ( 1 - a ) * inputComposition[ic];
       if( compFrac[ic] < MIN_FOR_COMP_PRESENCE )
       {
         compFrac[ic] = 0.0;
@@ -1076,10 +1127,11 @@ struct HydrostaticPressureKernel
                              real64 const & datumTemp,
                              arrayView3d< real64, constitutive::multifluid::USD_PHASE > const & datumPhaseMassDens,
                              arrayView1d< TableFunction::KernelWrapper const > compFracTableWrappers,
+                             bool singlePhase,
                              FLUID_WRAPPER fluidWrapper )
   {
     // datum fluid properties
-    array2d< real64, compflow::LAYOUT_COMP > datumUncorrCompFrac( 1, numComps );
+    array2d< real64, compflow::LAYOUT_COMP > datumInputComposition( 1, numComps );
     array2d< real64, compflow::LAYOUT_COMP > datumCompFrac( 1, numComps );
     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > datumPhaseFrac( 1, 1, numPhases );
     array3d< real64, constitutive::multifluid::LAYOUT_PHASE > datumPhaseDens( 1, 1, numPhases );
@@ -1090,12 +1142,12 @@ struct HydrostaticPressureKernel
     real64 datumTotalDens = 0.0;
     for( integer ic = 0; ic < numComps; ++ic )
     {
-      datumUncorrCompFrac[0][ic] = compFracTableWrappers[ic].compute( &datumElevation );
+      datumInputComposition[0][ic] = compFracTableWrappers[ic].compute( &datumElevation );
     }
     constitutive::MultiFluidBase::KernelWrapper::computeValues( fluidWrapper,
                                                                 datumPres,
                                                                 datumTemp,
-                                                                datumUncorrCompFrac[0],
+                                                                datumInputComposition[0],
                                                                 datumPhaseFrac[0][0],
                                                                 datumPhaseDens[0][0],
                                                                 datumPhaseMassDens[0][0],
@@ -1104,6 +1156,12 @@ struct HydrostaticPressureKernel
                                                                 datumPhaseInternalEnergy[0][0],
                                                                 datumPhaseCompFrac[0][0],
                                                                 datumTotalDens );
+
+    if( singlePhase )
+    {
+      return;
+    }
+
     ReturnType datumPhaseCorr = phaseCorrection( numComps,
                                                  numPhases,
                                                  ipGas,
@@ -1111,7 +1169,7 @@ struct HydrostaticPressureKernel
                                                  phaseMinVolumeFraction,
                                                  datumPres,
                                                  datumTemp,
-                                                 datumUncorrCompFrac[0],
+                                                 datumInputComposition[0],
                                                  datumPhaseFrac[0][0],
                                                  datumCompFrac[0],
                                                  fluidWrapper );
