@@ -183,8 +183,6 @@ public:
 
     // assume that reservoir solver discretization is the primary one
     this->m_discretizationName = reservoirSolver()->getDiscretizationName();
-
-    setMGRStrategy();
   }
 
   virtual void
@@ -281,12 +279,6 @@ protected:
   addCouplingSparsityPattern( DomainPartition const & domain,
                               DofManager const & dofManager,
                               SparsityPatternView< globalIndex > const & pattern ) const = 0;
-
-  virtual void setMGRStrategy()
-  {
-    if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
-      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
-  }
 
   /// Flag to determine whether the well transmissibility needs to be computed
   bool m_isWellTransmissibilityComputed;

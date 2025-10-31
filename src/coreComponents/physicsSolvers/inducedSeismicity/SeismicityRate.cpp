@@ -70,6 +70,8 @@ SeismicityRate::SeismicityRate( const string & name,
 
 void SeismicityRate::postInputInitialization()
 {
+  PhysicsSolverBase::postInputInitialization();
+
   // Check orthogonality of user-specified faults
   if( std::abs( LvArray::tensorOps::AiBi< 3 >( m_faultNormalDirection, m_faultShearDirection )) > 1e-8 )
   {
@@ -87,8 +89,6 @@ void SeismicityRate::postInputInitialization()
   {
     m_stressSolver = &this->getParent().getGroup< PhysicsSolverBase >( m_stressSolverName );
   }
-
-  PhysicsSolverBase::postInputInitialization();
 }
 
 SeismicityRate::~SeismicityRate()

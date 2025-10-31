@@ -37,9 +37,6 @@ void SinglePhasePoromechanicsConformingFractures<>::setMGRStrategy()
 {
   LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
 
-  if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
-    return;
-
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.dofsPerNode = 3;
 

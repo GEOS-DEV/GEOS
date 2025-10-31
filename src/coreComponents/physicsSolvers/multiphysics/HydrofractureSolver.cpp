@@ -92,9 +92,6 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::setMGRStrategy()
 {
   LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
 
-  if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
-    return;
-
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.dofsPerNode = 3;
 
@@ -222,8 +219,6 @@ template< typename POROMECHANICS_SOLVER >
 void HydrofractureSolver< POROMECHANICS_SOLVER >::postInputInitialization()
 {
   Base::postInputInitialization();
-
-  setMGRStrategy();
 
   static const std::set< integer > binaryOptions = { 0, 1 };
   GEOS_ERROR_IF( binaryOptions.count( m_isMatrixPoroelastic ) == 0, viewKeyStruct::isMatrixPoroelasticString() << " option can be either 0 (false) or 1 (true)" );

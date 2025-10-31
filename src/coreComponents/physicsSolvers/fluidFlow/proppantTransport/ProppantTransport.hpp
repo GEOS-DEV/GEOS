@@ -215,10 +215,6 @@ public:
    */
   void updateState( ObjectManagerBase & dataGroup );
 
-protected:
-
-  virtual void postInputInitialization() override;
-
 private:
 
   /**

@@ -42,14 +42,9 @@ SinglePhasePoromechanicsEmbeddedFractures::SinglePhasePoromechanicsEmbeddedFract
   SinglePhasePoromechanics( name, parent )
 { }
 
-SinglePhasePoromechanicsEmbeddedFractures::~SinglePhasePoromechanicsEmbeddedFractures() = default;
-
 void SinglePhasePoromechanicsEmbeddedFractures::setMGRStrategy()
 {
   LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
-
-  if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
-    return;
 
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.dofsPerNode = 3;

@@ -74,11 +74,6 @@ public:
   PhysicsSolverBase( PhysicsSolverBase && ) = default;
 
   /**
-   * @brief Destructor for PhysicsSolverBase
-   */
-  virtual ~PhysicsSolverBase() override;
-
-  /**
    * @brief Deleted constructor
    */
   PhysicsSolverBase() = delete;
@@ -1004,6 +999,8 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
+
+  virtual void setMGRStrategy();
 
   /**
    * @brief Eisenstat-Walker adaptive tolerance

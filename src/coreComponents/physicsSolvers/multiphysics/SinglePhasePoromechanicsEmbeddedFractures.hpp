@@ -37,7 +37,6 @@ public:
 
   SinglePhasePoromechanicsEmbeddedFractures( const std::string & name,
                                              Group * const parent );
-  ~SinglePhasePoromechanicsEmbeddedFractures() override;
 
   /**
    * @brief name of the node manager in the object catalog

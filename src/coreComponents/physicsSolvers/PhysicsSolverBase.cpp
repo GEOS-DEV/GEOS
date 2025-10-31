@@ -144,9 +144,11 @@ void PhysicsSolverBase::postInputInitialization()
                                            m_writeStatisticsCSV == StatsOutputType::all );
   getConvergenceStats().setCSVOutputRequest( m_writeStatisticsCSV == StatsOutputType::convergence ||
                                              m_writeStatisticsCSV == StatsOutputType::all );
-}
 
-PhysicsSolverBase::~PhysicsSolverBase() = default;
+  LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
+  if( linearSolverParameters.preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
+    setMGRStrategy();
+}
 
 void PhysicsSolverBase::initialize_postMeshGeneration()
 {
@@ -1694,6 +1696,11 @@ bool PhysicsSolverBase::detectOscillations() const
   real64 const f = static_cast< real64 >( MpiWrapper::sum( oscillationCount.get() ) ) / MpiWrapper::sum( numDofs );
 
   return f > oscillationFraction;
+}
+
+void PhysicsSolverBase::setMGRStrategy()
+{
+  GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
 }
 
 #if defined(GEOS_USE_PYGEOSX)

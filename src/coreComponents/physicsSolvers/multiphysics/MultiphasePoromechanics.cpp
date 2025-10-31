@@ -176,9 +176,6 @@ void MultiphasePoromechanics<>::setMGRStrategy()
 {
   LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
 
-  if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
-    return;
-
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.dofsPerNode = 3;
 
@@ -209,9 +206,6 @@ void MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<>, SolidM
   // same as CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics<> >::setMGRStrategy
 
   LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
-
-  if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
-    return;
 
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.dofsPerNode = 3;

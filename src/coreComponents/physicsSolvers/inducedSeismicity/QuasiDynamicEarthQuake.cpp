@@ -49,11 +49,10 @@ QuasiDynamicEarthQuake< RSSOLVER_TYPE >::QuasiDynamicEarthQuake( const string & 
 template< typename RSSOLVER_TYPE >
 void QuasiDynamicEarthQuake< RSSOLVER_TYPE >::postInputInitialization()
 {
+  PhysicsSolverBase::postInputInitialization();
 
   // Initialize member stress solver as specified in XML input
   m_stressSolver = &this->getParent().template getGroup< PhysicsSolverBase >( m_stressSolverName );
-
-  PhysicsSolverBase::postInputInitialization();
 }
 
 template< typename RSSOLVER_TYPE >

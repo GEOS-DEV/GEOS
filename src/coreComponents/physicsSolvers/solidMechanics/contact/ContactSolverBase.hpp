@@ -33,8 +33,6 @@ public:
   ContactSolverBase( const string & name,
                      Group * const parent );
 
-  ~ContactSolverBase() override = default;
-
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override;
 
   virtual real64

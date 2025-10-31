@@ -132,7 +132,7 @@ protected:
 
   virtual void postInputInitialization() override final;
 
-  void setMGRStrategy();
+  virtual void setMGRStrategy() override;
 
 private:
 

@@ -38,12 +38,12 @@ OneWayCoupledFractureFlowContactMechanics< FLOW_SOLVER >::OneWayCoupledFractureF
 template< typename FLOW_SOLVER >
 void OneWayCoupledFractureFlowContactMechanics< FLOW_SOLVER >::postInputInitialization()
 {
+  Base::postInputInitialization();
+
   bool const isSequential = this->getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
   GEOS_THROW_IF( !isSequential,
                  "Only sequential coupling is allowed for this solver.",
                  InputError );
-
-  Base::postInputInitialization();
 }
 
 

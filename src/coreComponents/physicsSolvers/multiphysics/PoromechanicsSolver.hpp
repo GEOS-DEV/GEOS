@@ -126,8 +126,6 @@ public:
                              this->solidMechanicsSolver()->getName(),
                              EnumStrings< SolidMechanicsLagrangianFEM::TimeIntegrationOption >::toString( SolidMechanicsLagrangianFEM::TimeIntegrationOption::QuasiStatic ) ),
                    InputError );
-
-    setMGRStrategy();
   }
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final
@@ -736,8 +734,6 @@ protected:
       } );
     } );
   }
-
-  virtual void setMGRStrategy() = 0;
 
   virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) = 0;
 

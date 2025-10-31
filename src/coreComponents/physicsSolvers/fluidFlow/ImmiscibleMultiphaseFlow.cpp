@@ -93,11 +93,6 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
     setDescription( "Target (absolute) change in phase volume fraction in a time step" );
 }
 
-void ImmiscibleMultiphaseFlow::postInputInitialization()
-{
-  FlowSolverBase::postInputInitialization();
-}
-
 void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
 {
   FlowSolverBase::registerDataOnMesh( meshBodies );

@@ -72,9 +72,6 @@ setMGRStrategy()
 {
   LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
 
-  if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
-    return;
-
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.dofsPerNode = 3;
 
@@ -97,9 +94,6 @@ SinglePhaseReservoirAndWells< SinglePhasePoromechanics<> >::
 setMGRStrategy()
 {
   LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
-
-  if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
-    return;
 
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.dofsPerNode = 3;

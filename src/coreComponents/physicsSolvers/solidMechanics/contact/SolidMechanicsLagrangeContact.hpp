@@ -175,9 +175,7 @@ protected:
                                        DofManager const & dofManager,
                                        arrayView1d< real64 const > const & localRhs );
 
-  virtual void postInputInitialization() override final;
-
-  void setMGRStrategy();
+  virtual void setMGRStrategy() override;
 
 private:
   string m_stabilizationName;

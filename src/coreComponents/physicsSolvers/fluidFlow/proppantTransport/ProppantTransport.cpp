@@ -83,11 +83,6 @@ ProppantTransport::ProppantTransport( const string & name,
     setDescription( "Flag that enables/disables proppant-packing update" );
 }
 
-void ProppantTransport::postInputInitialization()
-{
-  FlowSolverBase::postInputInitialization();
-}
-
 void ProppantTransport::registerDataOnMesh( Group & meshBodies )
 {
   FlowSolverBase::registerDataOnMesh( meshBodies );

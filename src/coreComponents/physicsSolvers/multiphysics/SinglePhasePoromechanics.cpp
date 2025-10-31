@@ -101,9 +101,6 @@ void SinglePhasePoromechanics<>::setMGRStrategy()
 {
   LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
 
-  if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
-    return;
-
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.dofsPerNode = 3;
 
@@ -141,9 +138,6 @@ void SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLag
   // same as SinglePhaseReservoirAndWells< SinglePhasePoromechanics<> >::setMGRStrategy
 
   LinearSolverParameters & linearSolverParameters = m_linearSolverParameters.get();
-
-  if( linearSolverParameters.preconditionerType != LinearSolverParameters::PreconditionerType::mgr )
-    return;
 
   linearSolverParameters.mgr.separateComponents = true;
   linearSolverParameters.dofsPerNode = 3;

@@ -236,8 +236,6 @@ public:
 
 private:
 
-  virtual void postInputInitialization() override;
-
   /**
    * @brief Update all relevant fluid models using current values of pressure and phase volume fraction
    * @param dataGroup the group storing the required fields
