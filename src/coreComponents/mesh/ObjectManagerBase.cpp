@@ -96,7 +96,7 @@ SortedArray< localIndex > & ObjectManagerBase::createSet( const string & newSetN
   else
   {
     return m_sets.registerWrapper< SortedArray< localIndex > >( newSetName ).reference();
-  }  
+  }
 }
 
 void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,

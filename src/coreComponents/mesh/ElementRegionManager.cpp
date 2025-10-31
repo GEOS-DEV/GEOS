@@ -92,7 +92,7 @@ void ElementRegionManager::expandObjectCatalogs()
   for( string const & key : getUserAvailableKeys() )
   {
     Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
-    
+
     std::unique_ptr< Group > region =
       CatalogInterface::factory( key, getDataContext(), key, &elementRegions );
 

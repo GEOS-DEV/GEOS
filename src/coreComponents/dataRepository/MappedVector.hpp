@@ -53,13 +53,13 @@ public:
   using key_type      = KEY_TYPE;
 
   /// pointer to the value type
-  using mapped_type   = T*;
+  using mapped_type   = T *;
 
   /// the type of the lookup map
   using LookupMapType          = stdUnorderedMap< KEY_TYPE, INDEX_TYPE >;
 
   /// the type of the values held in the vector
-  using value_type             = typename std::pair< KEY_TYPE, T* >;
+  using value_type             = typename std::pair< KEY_TYPE, T * >;
 
   /// the type of the values with const keys held in the vector
   using const_key_value_type   = typename std::pair< KEY_TYPE const, T * >;
@@ -178,7 +178,7 @@ public:
    */
   inline T * operator[]( KEY_TYPE const & keyName )
   {
-    return const_cast< T * >( const_cast< MappedVector< T, KEY_TYPE, INDEX_TYPE > const * >( this )->operator[]( keyName ) ); 
+    return const_cast< T * >( const_cast< MappedVector< T, KEY_TYPE, INDEX_TYPE > const * >( this )->operator[]( keyName ) );
   }
 
   /**

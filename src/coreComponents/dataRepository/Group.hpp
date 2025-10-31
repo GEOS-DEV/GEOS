@@ -1613,7 +1613,7 @@ private:
   void insertWrapper( std::unique_ptr< WrapperBase > wrapper, bool const allowExistence=false );
 
   void insertGroup( Group * const newObject, bool const takeOwnership, bool const allowExistence=false );
-  
+
   //START_SPHINX_INCLUDE_02
   /// The parent Group that contains "this" Group in its "sub-Group" collection.
   Group * m_parent = nullptr;
@@ -1714,7 +1714,7 @@ Wrapper< T > & Group::registerWrapper( string const & name,
 {
   static_assert( !std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
   insertWrapper( std::make_unique< Wrapper< T > >( name, *this, std::move( newObject ) ) );
-  
+
   Wrapper< T > & rval = getWrapper< T >( name );
   if( rval.sizedFromParent() == 1 )
   {
