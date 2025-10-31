@@ -86,7 +86,10 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 5.e-02 ).
     setDescription( "Tolerance for the sliding check" );
+}
 
+void SolidMechanicsAugmentedLagrangianContact::setMGRStrategy()
+{
   // Set the default linear solver parameters
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
 
@@ -99,9 +102,6 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::augmentedLagrangianContactMechanics;
   linSolParams.mgr.separateComponents = true;
 }
-
-SolidMechanicsAugmentedLagrangianContact::~SolidMechanicsAugmentedLagrangianContact()
-{}
 
 void SolidMechanicsAugmentedLagrangianContact::registerDataOnMesh( dataRepository::Group & meshBodies )
 {

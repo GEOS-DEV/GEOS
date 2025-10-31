@@ -51,9 +51,12 @@ SinglePhaseHybridFVM::SinglePhaseHybridFVM( const string & name,
   SinglePhaseBase( name, parent ),
   m_areaRelTol( 1e-8 )
 {
-
   // one cell-centered dof per cell
   m_numDofPerCell = 1;
+}
+
+void SinglePhaseHybridFVM::setMGRStrategy()
+{
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM;
 }
 

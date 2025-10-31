@@ -161,7 +161,7 @@ public:
 
   struct viewKeyStruct : CompositionalMultiphaseBase::viewKeyStruct
   {
-    static constexpr char const * faceDofFieldString() { return "faceCenteredVariables"; }
+    static constexpr char const *faceDofFieldString() { return "faceCenteredVariables"; }
   };
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
@@ -169,6 +169,8 @@ public:
   virtual void initializePreSubGroups() override;
 
 protected:
+
+  virtual void setMGRStrategy() override;
 
   /// precompute the minGravityCoefficient for the buoyancy term
   void precomputeData( MeshLevel & mesh, string_array const & regionNames ) override;

@@ -31,11 +31,8 @@ class NumericalMethodsManager;
 class SolidMechanicsLagrangeContactBubbleStab : public ContactSolverBase
 {
 public:
-
   SolidMechanicsLagrangeContactBubbleStab( const string & name,
                                            Group * const parent );
-
-  ~SolidMechanicsLagrangeContactBubbleStab() override;
 
   /**
    * @brief name of the node manager in the object catalog
@@ -45,6 +42,7 @@ public:
   {
     return "SolidMechanicsLagrangeContactBubbleStab";
   }
+
   /**
    * @copydoc SolverBase::getCatalogName()
    */
@@ -198,6 +196,9 @@ public:
    */
   void computeRotationMatrices( DomainPartition & domain ) const;
 
+protected:
+
+  virtual void setMGRStrategy() override;
 
 private:
   /**

@@ -180,8 +180,6 @@ void ImmiscibleMultiphaseFlow::setConstitutiveNames( ElementSubRegionBase & subR
 
 void ImmiscibleMultiphaseFlow::initializePreSubGroups()
 {
-  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::immiscibleMultiphaseFVM;
-
   FlowSolverBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -200,6 +198,10 @@ void ImmiscibleMultiphaseFlow::initializePreSubGroups()
   } );
 }
 
+void ImmiscibleMultiphaseFlow::setMGRStrategy()
+{
+  m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::immiscibleMultiphaseFVM;
+}
 
 void ImmiscibleMultiphaseFlow::updateFluidModel( ObjectManagerBase & dataGroup ) const
 {

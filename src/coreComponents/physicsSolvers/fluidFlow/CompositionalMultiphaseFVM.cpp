@@ -194,10 +194,6 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
                           EnumStrings< ScalingType >::toString( ScalingType::Local )) );
   }
 
-  m_linearSolverParameters.get().mgr.strategy = m_isThermal
-                                                ? LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM
-                                                : LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
-
   checkDiscretizationName();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -207,6 +203,13 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
   GEOS_ERROR_IF( fluxApprox.upwindingParams().upwindingScheme == UpwindingScheme::HU2PH && m_numPhases != 2,
                  GEOS_FMT( "{}: upwinding scheme {} only supports 2-phase flow",
                            getName(), EnumStrings< UpwindingScheme >::toString( UpwindingScheme::HU2PH )));
+}
+
+void CompositionalMultiphaseFVM::setMGRStrategy()
+{
+  m_linearSolverParameters.get().mgr.strategy = m_isThermal
+                                                    ? LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM
+                                                    : LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
 }
 
 void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,

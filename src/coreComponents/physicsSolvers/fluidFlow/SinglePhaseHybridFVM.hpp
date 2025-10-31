@@ -44,7 +44,6 @@ public:
   SinglePhaseHybridFVM( const string & name,
                         Group * const parent );
 
-
   /// deleted default constructor
   SinglePhaseHybridFVM() = delete;
 
@@ -70,7 +69,9 @@ public:
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
   static string catalogName()
-  { return "SinglePhaseHybridFVM"; }
+  {
+    return "SinglePhaseHybridFVM";
+  }
   /**
    * @copydoc PhysicsSolverBase::getCatalogName()
    */
@@ -184,6 +185,10 @@ public:
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
+
+protected:
+
+  virtual void setMGRStrategy() override;
 
 private:
 

@@ -32,8 +32,6 @@ public:
   SolidMechanicsAugmentedLagrangianContact( const string & name,
                                             Group * const parent );
 
-  ~SolidMechanicsAugmentedLagrangianContact() override;
-
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
@@ -197,6 +195,10 @@ public:
    * @param domain The physical domain object
    */
   void createBubbleCellList( DomainPartition & domain ) const;
+
+protected:
+
+  virtual void setMGRStrategy() override;
 
 private:
 

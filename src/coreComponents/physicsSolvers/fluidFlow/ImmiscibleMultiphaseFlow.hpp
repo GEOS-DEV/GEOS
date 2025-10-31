@@ -233,6 +233,9 @@ public:
     static constexpr char const * elemDofFieldString() { return "elemDofField"; }
   };
 
+protected:
+
+  virtual void setMGRStrategy() override;
 
 private:
 

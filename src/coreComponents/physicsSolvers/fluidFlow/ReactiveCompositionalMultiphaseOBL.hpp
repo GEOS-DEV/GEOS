@@ -308,6 +308,9 @@ public:
 
   virtual void initializePreSubGroups() override;
 
+protected:
+
+  virtual void setMGRStrategy() override;
 
 private:
 

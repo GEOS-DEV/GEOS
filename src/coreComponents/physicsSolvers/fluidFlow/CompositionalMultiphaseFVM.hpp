@@ -206,6 +206,8 @@ protected:
 
   virtual void initializePreSubGroups() override;
 
+  virtual void setMGRStrategy() override;
+
   real64 setNextDtBasedOnCFL( real64 const & currentDt,
                               DomainPartition & domain );
 

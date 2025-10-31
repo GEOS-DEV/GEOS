@@ -53,6 +53,9 @@ CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::s
                                                                     Group * const parent ):
   CompositionalMultiphaseBase( name, parent ),
   m_lengthTolerance( 0 )
+{}
+
+void CompositionalMultiphaseHybridFVM::setMGRStrategy()
 {
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseHybridFVM;
 }

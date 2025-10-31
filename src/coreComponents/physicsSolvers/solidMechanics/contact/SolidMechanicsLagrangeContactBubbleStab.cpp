@@ -46,17 +46,15 @@ SolidMechanicsLagrangeContactBubbleStab::SolidMechanicsLagrangeContactBubbleStab
   m_faceTypeToFiniteElements.insert( {"Quadrilateral", std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >()} );
   m_faceTypeToFiniteElements.insert( {"Triangle", std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >()} );
 
+  addLogLevel< logInfo::ResidualNorm >();
+}
+
+void SolidMechanicsLagrangeContactBubbleStab::setMGRStrategy()
+{
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanicsBubbleStab;
   linSolParams.mgr.separateComponents = true;
   linSolParams.dofsPerNode = 3;
-
-  addLogLevel< logInfo::ResidualNorm >();
-}
-
-SolidMechanicsLagrangeContactBubbleStab::~SolidMechanicsLagrangeContactBubbleStab()
-{
-  // TODO Auto-generated destructor stub
 }
 
 real64 SolidMechanicsLagrangeContactBubbleStab::solverStep( real64 const & time_n,
