@@ -286,6 +286,17 @@ static std::string generateXmlInputCompMFD( std::string const & innerProductType
     <FieldSpecification name="initZCH4" initialCondition="1" setNames="{ all }"
       objectPath="ElementRegions/Domain" fieldName="globalCompFraction" component="1" scale="0.0"/>
 
+    <!-- Face-based initial component fractions for hybrid solver -->
+    <FieldSpecification name="initFaceZH2O" initialCondition="1" setNames="{ all }"
+      objectPath="faceManager" fieldName="faceGlobalCompFraction" component="0" scale="1.0"/>
+
+    <FieldSpecification name="initFaceZCH4" initialCondition="1" setNames="{ all }"
+      objectPath="faceManager" fieldName="faceGlobalCompFraction" component="1" scale="0.0"/>
+
+    <!-- Face-based initial temperature for hybrid solver -->
+    <FieldSpecification name="initFaceTemperature" initialCondition="1" setNames="{ all }"
+      objectPath="faceManager" fieldName="faceTemperature" scale="300.0"/>
+
     <!-- Pressure BC regions for hybrid solver use bc* fields -->
     <FieldSpecification name="westPressure" objectPath="faceManager"
       fieldName="bcPressure" scale="2.0" setNames="{ westBC }"/>
