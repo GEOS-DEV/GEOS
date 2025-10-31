@@ -470,13 +470,13 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
                                                              real64 ( & stress )[6] ) const // this is the trial stress, and will be overwritten.
 {
   // Store trial stress for computing the plastic strain increment.  
-  real64 trialStress[6] = { 0 };
-  LvArray::tensorOps::copy< 6 >( trialStress, stress);
+  real64 trialStress[6] = { };
+  LvArray::tensorOps::copy< 6 >( trialStress, stress );
 
   // decompose into mean (P) and von Mises (Q) stress invariants
   real64 trialP;
   real64 trialQ;
-  real64 deviator[6] = { 0 };
+  real64 deviator[6] = { };
   twoInvariant::stressDecomposition( trialStress,
                                      trialP,
                                      trialQ,
@@ -487,27 +487,27 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 rotationTranspose[3][3];
     LvArray::tensorOps::transpose< 3, 3 >( rotationTranspose, beginningRotation );
 
-    real64 oldPlasticStrain[6] = { 0 };
-    LvArray::tensorOps::copy< 6 >(oldPlasticStrain, m_plasticStrain[k][q]);
+    real64 oldPlasticStrain[6] = { };
+    LvArray::tensorOps::copy< 6 >( oldPlasticStrain, m_plasticStrain[k][q] );
     oldPlasticStrain[3] *= 0.5;
     oldPlasticStrain[4] *= 0.5;
     oldPlasticStrain[5] *= 0.5;
 
-    real64 unrotatedOldPlasticStrain[6] = { 0 };
-    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >(unrotatedOldPlasticStrain, rotationTranspose, oldPlasticStrain);
+    real64 unrotatedOldPlasticStrain[6] = { };
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( unrotatedOldPlasticStrain, rotationTranspose, oldPlasticStrain );
 
     unrotatedOldPlasticStrain[3] *= 2.0;
     unrotatedOldPlasticStrain[4] *= 2.0;
     unrotatedOldPlasticStrain[5] *= 2.0;
 
-    real64 unrotatedDeformationGradient[3][3] = { { 0 } };
+    real64 unrotatedDeformationGradient[3][3] = { };
     LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3>( unrotatedDeformationGradient, rotationTranspose, m_deformationGradient[k] );
 
-    real64 U[6] = { 0.0 };
+    real64 U[6] = { };
     LvArray::tensorOps::denseToSymmetric< 3 >( U, unrotatedDeformationGradient );
 
-    real64 stretch[3] = { 0 };
-    real64 eigenVectors[3][3] = { { 0 } };
+    real64 stretch[3] = { };
+    real64 eigenVectors[3][3] = { };
     LvArray::tensorOps::symEigenvectors< 3 >( stretch, eigenVectors, U );
 
     // Find the largest eigenvalues and compare to max allowable failure stretch (which is temperature dependent)
@@ -519,12 +519,12 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 maximumStretch = 0.0;  
     for( localIndex i = 0; i < 3; ++i )
     {
-        maximumStretch = std::max( stretch[i], maximumStretch );
+      maximumStretch = std::max( stretch[i], maximumStretch );
     }
 
-    if(maximumStretch > failureStretch)
+    if( maximumStretch > failureStretch )
     {
-        m_damage[k][q] = 1.0;
+      m_damage[k][q] = 1.0;
     }
 
     // Return to yield surface requires iterative solution
@@ -544,8 +544,8 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 strainHardeningSlope = m_strainHardeningSlope * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_strainHardeningSlopeT0, m_strainHardeningSlopeA, m_strainHardeningSlopeB ); 
     real64 shearSofteningMagnitude = m_shearSofteningMagnitude * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_shearSofteningMagnitudeT0, m_shearSofteningMagnitudeA, m_shearSofteningMagnitudeB );     
     
-    real64 unrotatedTempPlasticStrain[6] = { 0 };
-    real64 plasticStrainIncrement[6] = { 0 };
+    real64 unrotatedTempPlasticStrain[6] = { };
+    real64 plasticStrainIncrement[6] = { };
     
     // Fixed-point iteration to find plastic strain and consistent return to updated yield surface
     for(int iter=0; iter < maxEvals; ++iter)
@@ -585,7 +585,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
                                            stressTemp );
 
         // Increment plastic strain
-        real64 stressIncrement[6] = {0};
+        real64 stressIncrement[6] = { };
         LvArray::tensorOps::copy< 6 >(stressIncrement, stressTemp);
         LvArray::tensorOps::subtract< 6 >(stressIncrement, trialStress);
 
@@ -597,7 +597,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
                                        stressIncrement,
                                        plasticStrainIncrement );
 
-        real64 unrotatedNewPlasticStrain[6] = { 0 };
+        real64 unrotatedNewPlasticStrain[6] = { };
         LvArray::tensorOps::copy< 6 >(unrotatedNewPlasticStrain, unrotatedOldPlasticStrain);
         LvArray::tensorOps::add< 6 >(unrotatedNewPlasticStrain, plasticStrainIncrement);
 
@@ -606,7 +606,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
           unrotatedNewPlasticStrain[3] *= 0.5;
           unrotatedNewPlasticStrain[4] *= 0.5;
           unrotatedNewPlasticStrain[5] *= 0.5;
-          real64 newPlasticStrain[6] = { 0 };
+          real64 newPlasticStrain[6] = { };
           LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >(newPlasticStrain, endRotation, unrotatedNewPlasticStrain);
           newPlasticStrain[3] *= 2.0;
           newPlasticStrain[4] *= 2.0;

@@ -156,6 +156,20 @@
 #define GEOS_WARNING( msg ) LVARRAY_WARNING( msg )
 
 /**
+ * @brief Log a warning message on screen on rank 0.
+ * @param msg a warning message to log (any expression that can be stream inserted)
+ */
+#define GEOS_WARNING_RANK_0( msg ) \
+  do { \
+    if( ::geos::logger::internal::rank == 0 ) \
+    { \
+      std::ostringstream oss; \
+      oss << msg; \
+      std::cout << oss.str() << std::endl; \
+    } \
+  } while( false )
+
+/**
  * @brief Conditionally log an info message.
  * @param EXP an expression that will be evaluated as a predicate
  * @param msg a message to log (any expression that can be stream inserted)

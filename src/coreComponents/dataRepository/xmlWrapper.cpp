@@ -18,6 +18,7 @@
  */
 
 #include <regex>
+#include <filesystem>
 
 #include "xmlWrapper.hpp"
 
@@ -298,8 +299,11 @@ xmlResult xmlDocument::loadFile( string const & path, bool loadNodeFileInfo )
   return result;
 }
 
+bool xmlDocument::exists()
+{ return std::filesystem::exists( m_rootFilePath ); }
+
 void xmlDocument::reset()
-{ return pugiDocument.reset() ; }
+{ pugiDocument.reset(); }
 
 xmlNode xmlDocument::appendChild( string const & name )
 { return pugiDocument.append_child( name.c_str() ); }

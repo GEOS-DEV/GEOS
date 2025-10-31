@@ -15,6 +15,7 @@ set( events_headers
      mpmEvents/AnnealMPMEvent.hpp
      mpmEvents/InitializeStressMPMEvent.hpp
      mpmEvents/HealMPMEvent.hpp
+     mpmEvents/PolymerHealMPMEvent.hpp
      mpmEvents/CrystalHealMPMEvent.hpp
      mpmEvents/InsertPeriodicContactSurfacesMPMEvent.hpp
      mpmEvents/MachineSampleMPMEvent.hpp
@@ -44,6 +45,7 @@ set( events_sources
      mpmEvents/AnnealMPMEvent.cpp
      mpmEvents/InitializeStressMPMEvent.cpp
      mpmEvents/HealMPMEvent.cpp
+     mpmEvents/PolymerHealMPMEvent.cpp
      mpmEvents/CrystalHealMPMEvent.cpp
      mpmEvents/InsertPeriodicContactSurfacesMPMEvent.cpp
      mpmEvents/MachineSampleMPMEvent.cpp

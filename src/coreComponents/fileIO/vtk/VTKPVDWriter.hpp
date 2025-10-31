@@ -45,6 +45,11 @@ public:
   void setFileName( string fileName );
 
   /*!
+   * @brief Checks if pvd file exists
+   */
+  bool exists();
+
+  /*!
    * @brief Reads existing pvd file
    */
   void read();

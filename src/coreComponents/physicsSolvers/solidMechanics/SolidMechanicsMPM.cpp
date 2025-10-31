@@ -445,7 +445,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "stressTable", &m_stressTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Array that stores the time-depended grid aligned stresses" );
+    setDescription( "Array that stores the time-dependent grid aligned stresses" );
 
   registerWrapper( "temperatureTableInterpType", &m_temperatureTableInterpType ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -456,7 +456,7 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
   registerWrapper( "temperatureTable", &m_temperatureTable ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Array that stores the time-dependent domain Temperature" );
+    setDescription( "Array that stores the time-dependent domain temperature" );
 
   registerWrapper( "stressControlKp", &m_stressControlKp ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -1281,10 +1281,6 @@ void SolidMechanicsMPM::postInputInitialization()
 
       int rank;
       MPI_Comm_rank( MPI_COMM_GEOSX, &rank );
-      if (rank == 0 )
-      {
-        std::cout<<"i="<<i<<", m_fTable[i][0] = "<<m_fTable[i][0]<<", m_fTable[i][1] = "<<m_fTable[i][1]<<", m_fTable[i][2] = "<<m_fTable[i][2]<<", m_fTable[i][3] = "<<m_fTable[i][3]<<std::endl;
-      }
 
       for(int k=0; k<3; ++k)
       { // Stress-control = 1 overrides FTable control, so if we aren't doing stress control in a direction,
@@ -2046,9 +2042,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
       particleCohesiveZoneFlag[p] = 0;
       particleSubdivideFlag[p] = 0;
       particleCopyFlag[p] = -1;
-      particleDomainScaledFlag[p] = 0;
-
-      
+      particleDomainScaledFlag[p] = 0;   
       
       // Initialize field from constitutive model
       particleHeatCapacity[p] = DBL_MAX; // CC: TODO Need to get this from constitutive model
@@ -2292,7 +2286,6 @@ void SolidMechanicsMPM::initializeConstitutiveModelDependencies( ParticleManager
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   { 
     // TODO: check if porosity etc for geomechanics model need initialization here
-    
 
     // Get constitutive model referencen
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
@@ -3260,6 +3253,65 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
           event.setIsComplete( 1 );
       }
 
+      // Resets kinematic damage to 0.0
+      // Resets deformation gradient but keep rotation to reset stretch which are used for kinematic damage criteria
+      // Plastic strain is not modified
+      if( event.getName() == "PolymerHeal" )
+      {
+        PolymerHealMPMEvent & polymerHeal = dynamicCast< PolymerHealMPMEvent & >( event );
+         particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion & region )
+        {
+          if( region.getName() == polymerHeal.getTargetRegion() || polymerHeal.getTargetRegion() == "all" )
+          {
+            subGroupMap & targetSubRegions = region.getSubRegions();
+            for( int r=0; r < targetSubRegions.size(); ++r )
+            {
+              ParticleSubRegion & targetSubRegion = dynamicCast< ParticleSubRegion & >( *targetSubRegions[r] );
+              string const & solidMaterialName = targetSubRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+              ContinuumBase & constitutiveModel = getConstitutiveModel< ContinuumBase >( targetSubRegion, solidMaterialName );
+              
+              if( constitutiveModel.getCatalogName() == "StrainHardeningPolymer" )
+              {
+                // Particle fields
+                arrayView1d< real64 > const particleDamage = targetSubRegion.getParticleDamage();
+                arrayView3d< real64 > const particleDeformationGradient = targetSubRegion.getField< fields::mpm::particleDeformationGradient >();
+                arrayView1d< real64 const > const particleVolume = targetSubRegion.getParticleVolume();
+                arrayView1d< real64 > const particleReferenceVolume = targetSubRegion.getField< fields::mpm::particleReferenceVolume >();
+                arrayView3d< real64 const > const particleRVectors = targetSubRegion.getParticleRVectors();
+                arrayView3d< real64 > const particleReferenceRVectors = targetSubRegion.getField< fields::mpm::particleReferenceRVectors >();
+                
+                SortedArrayView< localIndex const > const activeParticleIndices = targetSubRegion.activeParticleIndices();
+                forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+                {
+                  localIndex const p = activeParticleIndices[pp];
+                   // There shouldn't be intermediate values of damage for the current formulation of the StrainHardeningPolymer constitutive model
+                  if( LvArray::math::abs(particleDamage[p] - 1.0) < 1e-16 ) // Should this be toleranced?...probably, but for now we set it to 1.0 in model
+                  {
+                    particleDamage[p] = 0.0; // Reset damage
+
+                    LvArray::tensorOps::fill< 3, 3 >( particleDeformationGradient[p], 0.0 );
+                    particleDeformationGradient[p][0][0] = 1.0;
+                    particleDeformationGradient[p][1][1] = 1.0;
+                    particleDeformationGradient[p][2][2] = 1.0;
+                    
+                    particleReferenceVolume[p] = particleVolume[p];
+                    
+                    // Should we keep the rotation, perhaps in the future if we track surface normals and positions?
+                    // Presently assume both normals and positions explicity defined are disabled since particle was fully "damaged"
+                    // real64 rotation[3][3] = {};
+                    // LvArray::tensorOps::polarDecomposition< 3 >( rotation, particleDeformationGradient[p] );
+                     
+                    LvArray::tensorOps::copy< 3, 3 >( particleReferenceRVectors[p], particleRVectors[p] );
+                    // LvArray::tensorOps::copy< 3, 3 >( particleDeformationGradient[p], rotation ); // Reset deformation gradient
+                  }
+                } );
+              }
+            }
+          }
+        } );
+        event.setIsComplete( 1 );
+      }
+ 
       if( event.getName() == "CrystalHeal" ){
         CrystalHealMPMEvent & crystalHeal = dynamicCast< CrystalHealMPMEvent & >( event );
 
@@ -6184,6 +6236,17 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
       {
         localIndex const p = activeParticleIndices[pp];
         constitutiveJacobian[p][0] = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] ); 
+      } );
+    }
+
+    if( constitutiveModel.hasWrapper( "damage" ) )
+    {
+      arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
+      arrayView2d< real64 > const constitutiveDamage = constitutiveModel.getReference< array2d< real64 > >( "damage" );
+      forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+      {
+        localIndex const p = activeParticleIndices[pp];
+        constitutiveDamage[p][0] = particleDamage[p];
       } );
     }
   } );
@@ -9906,9 +9969,7 @@ void SolidMechanicsMPM::updateSolverDependencies( ParticleManager & particleMana
         if( constitutiveDamage[p][0] > particleDamage[p] ) // Damage can only increase - This will also preserve user-specified damage at
                                                            // initialization
         {
-          particleDamage[p] = constitutiveDamage[p][0]; // TODO: Load any pre-damage into the constitutive model at initialization. Or,
-                                                        // switch to using VTK input such that we can initialize any field we want without
-                                                        // explicitly post-processing the input file.
+          particleDamage[p] = constitutiveDamage[p][0];
         }
       } );
     }
