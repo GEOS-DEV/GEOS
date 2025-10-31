@@ -365,7 +365,9 @@ INSTANTIATE_TEST_SUITE_P(
   CompositionalTPFAIntegrationTest,
   ::testing::Values(
     "polyhedral_voronoi_regular.vtu",
-    "hex_pyr_tet_nested_mixed.vtu"
+    "hex_pyr_tet_nested_mixed.vtu",
+    "polyhedral_voronoi_lattice.vtu",
+    "polyhedral_voronoi_complex.vtu"
     )
   );
 
@@ -447,7 +449,9 @@ INSTANTIATE_TEST_SUITE_P(
   CompositionalMFDTPFAIntegrationTest,
   ::testing::Values(
     "polyhedral_voronoi_regular.vtu",
-    "hex_pyr_tet_nested_mixed.vtu"
+    "hex_pyr_tet_nested_mixed.vtu",
+    "polyhedral_voronoi_lattice.vtu",
+    "polyhedral_voronoi_complex.vtu"
     )
   );
 
@@ -512,7 +516,9 @@ INSTANTIATE_TEST_SUITE_P(
   CompositionalTPFAvsMFDTPFA,
   ::testing::Values(
     "polyhedral_voronoi_regular.vtu",
-    "hex_pyr_tet_nested_mixed.vtu"
+    "hex_pyr_tet_nested_mixed.vtu",
+    "polyhedral_voronoi_lattice.vtu",
+    "polyhedral_voronoi_complex.vtu"
     )
   );
 
@@ -639,7 +645,9 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::Combine(
     ::testing::Values(
       "polyhedral_voronoi_regular.vtu",
-      "hex_pyr_tet_nested_mixed.vtu"
+      "hex_pyr_tet_nested_mixed.vtu",
+      "polyhedral_voronoi_lattice.vtu",
+      "polyhedral_voronoi_complex.vtu"
       ),
     ::testing::Values(
       INNER_quasiTPFA,
