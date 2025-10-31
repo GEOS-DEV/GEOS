@@ -1000,6 +1000,9 @@ protected:
 
   virtual void postInputInitialization() override;
 
+  /**
+   * @brief Set MGR strategy
+   */
   virtual void setMGRStrategy();
 
   /**
