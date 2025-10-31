@@ -67,13 +67,6 @@ Group::CatalogInterface::CatalogType & Group::getCatalog()
   return catalog;
 }
 
-WrapperBase & Group::registerWrapper( std::unique_ptr< WrapperBase > wrapper )
-{
-  // Extract `wrapperName` first to prevent from UB call order in the `insert` call.
-  string const wrapperName = wrapper->getName();
-  return *m_wrappers.insert( wrapperName, wrapper.release(), true );
-}
-
 void Group::deregisterWrapper( string const & name )
 {
   GEOS_ERROR_IF( !hasWrapper( name ),
@@ -278,9 +271,7 @@ void Group::registerDataOnMeshRecursive( Group & meshBodies )
 Group * Group::createChild( string const & childKey, string const & childName )
 {
   GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
-  return &registerGroup( childName,
-                         CatalogInterface::factory( childKey, getDataContext(),
-                                                    childName, this ) );
+  return &registerGroup( CatalogInterface::factory( childKey, getDataContext(), childName, this ) );
 }
 
 void Group::printDataHierarchy( integer const indent ) const
@@ -747,6 +738,34 @@ stdVector< string > Group::getWrappersNames() const
   wrappersNames.reserve( numWrappers() );
   forWrappers( [&]( WrapperBase const & wrapper ){ wrappersNames.push_back( wrapper.getName() ); } );
   return wrappersNames;
+}
+
+void Group::insertWrapper( std::unique_ptr< WrapperBase > wrapper, bool const allowExistence )
+{
+  GEOS_ERROR_IF( !wrapper, "Trying to register a nullptr WrapperBase with " << getPath() );
+
+  // Extract `name` first to prevent from UB call order in the `insert` call.
+  string const name = wrapper->getName();
+  WrapperBase * const ret = m_wrappers.insert( name, wrapper.release(), true );
+
+  GEOS_ERROR_IF( !allowExistence && ret == nullptr,
+                "Tried registering a wrapper \"" << name <<
+                "\"  that already exists with \"" << getPath() << "\"" );
+}
+
+void Group::insertGroup( Group * const newObject, bool const takeOwnership, bool const allowExistence )
+{
+  GEOS_ERROR_IF( !newObject, "Attempting to register a nullptr as a subgroup of " << getPath() );
+  
+  newObject->m_parent = this;
+  
+  // Extract `name` first to prevent from UB call order in the `insert` call.
+  string const name = newObject->getName();
+  Group * const ret = m_subGroups.insert( name, newObject, takeOwnership );
+
+  GEOS_ERROR_IF( !allowExistence && ret == nullptr,
+                "Tried registering a group \"" << name <<
+                "\"  that already exists with \"" << getPath() << "\"" );
 }
 
 } /* end namespace dataRepository */

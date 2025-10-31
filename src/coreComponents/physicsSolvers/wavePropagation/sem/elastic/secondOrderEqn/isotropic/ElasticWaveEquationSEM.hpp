@@ -117,6 +117,10 @@ public:
 
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
+    static constexpr char const * sourceConstantsXString() { return "sourceConstantsX"; }
+    static constexpr char const * sourceConstantsYString() { return "sourceConstantsY"; }
+    static constexpr char const * sourceConstantsZString() { return "sourceConstantsZ"; }
+
     static constexpr char const * displacementXNp1AtReceiversString() { return "displacementXNp1AtReceivers"; }
     static constexpr char const * displacementYNp1AtReceiversString() { return "displacementYNp1AtReceivers"; }
     static constexpr char const * displacementZNp1AtReceiversString() { return "displacementZNp1AtReceivers"; }

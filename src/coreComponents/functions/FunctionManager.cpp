@@ -56,7 +56,7 @@ Group * FunctionManager::createChild( string const & functionCatalogKey,
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), functionCatalogKey, functionName ) );
   std::unique_ptr< FunctionBase > function =
     FunctionBase::CatalogInterface::factory( functionCatalogKey, getDataContext(), functionName, this );
-  return &this->registerGroup< FunctionBase >( functionName, std::move( function ) );
+  return &this->registerGroup< FunctionBase >( std::move( function ) );
 }
 
 
@@ -65,7 +65,9 @@ void FunctionManager::expandObjectCatalogs()
   // During schema generation, register one of each type derived from FunctionBase here
   for( auto & catalogIter: FunctionBase::getCatalog())
   {
-    createChild( catalogIter.first, catalogIter.first );
+    std::unique_ptr< FunctionBase > function =
+      FunctionBase::CatalogInterface::factory( catalogIter.first, getDataContext(), catalogIter.first, this );
+    registerGroup< FunctionBase >( std::move( function ), true );
   }
 }
 

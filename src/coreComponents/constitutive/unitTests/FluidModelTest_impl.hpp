@@ -516,7 +516,7 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::createFunctionManager()
   // TODO: FunctionManager is a singleton
   string const name = FunctionManager::catalogName();
   auto functionManager = std::make_unique< FunctionManager >( name, &m_parent );
-  m_parent.registerGroup( name, std::move( functionManager ) );
+  m_parent.registerGroup( std::move( functionManager ) );
 }
 
 } // namespace testing

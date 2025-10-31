@@ -43,22 +43,22 @@ MeshLevel::MeshLevel( string const & name,
   m_shallowParent( nullptr )
 {
 
-  registerGroup( groupStructKeys::nodeManagerString(), m_nodeManager.get() );
+  registerGroup( m_nodeManager.get() );
 
-  registerGroup( groupStructKeys::particleManagerString(), m_particleManager.get() );
+  registerGroup( m_particleManager.get() );
 
-  registerGroup( groupStructKeys::edgeManagerString(), m_edgeManager.get() );
+  registerGroup( m_edgeManager.get() );
 
 
-  registerGroup< FaceManager >( groupStructKeys::faceManagerString(), m_faceManager.get() );
+  registerGroup< FaceManager >( m_faceManager.get() );
   m_faceManager->nodeList().setRelatedObject( *m_nodeManager );
 
 
-  registerGroup< ElementRegionManager >( groupStructKeys::elemManagerString(), m_elementManager.get() );
+  registerGroup< ElementRegionManager >( m_elementManager.get() );
 
-  registerGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, m_embSurfEdgeManager.get() );
+  registerGroup< EdgeManager >( m_embSurfEdgeManager.get() );
 
-  registerGroup< EmbeddedSurfaceNodeManager >( groupStructKeys::embSurfNodeManagerString, m_embSurfNodeManager.get() );
+  registerGroup< EmbeddedSurfaceNodeManager >( m_embSurfNodeManager.get() );
 
   registerWrapper< integer >( viewKeys.meshLevel );
 
@@ -85,20 +85,20 @@ MeshLevel::MeshLevel( string const & name,
 {
   this->setRestartFlags( RestartFlags::NO_WRITE );
 
-  registerGroup( groupStructKeys::nodeManagerString(), m_nodeManager.get() );
+  registerGroup( m_nodeManager.get() );
 
-  registerGroup( groupStructKeys::edgeManagerString(), m_edgeManager.get() );
+  registerGroup( m_edgeManager.get() );
 
 
-  registerGroup< FaceManager >( groupStructKeys::faceManagerString(), m_faceManager.get() );
+  registerGroup< FaceManager >( m_faceManager.get() );
   m_faceManager->nodeList().setRelatedObject( *m_nodeManager );
 
 
-  registerGroup< ElementRegionManager >( groupStructKeys::elemManagerString(), m_elementManager.get() );
+  registerGroup< ElementRegionManager >( m_elementManager.get() );
 
-  registerGroup< EdgeManager >( groupStructKeys::embSurfEdgeManagerString, m_embSurfEdgeManager.get() );
+  registerGroup< EdgeManager >( m_embSurfEdgeManager.get() );
 
-  registerGroup< EmbeddedSurfaceNodeManager >( groupStructKeys::embSurfNodeManagerString, m_embSurfNodeManager.get() );
+  registerGroup< EmbeddedSurfaceNodeManager >( m_embSurfNodeManager.get() );
 
   registerWrapper< integer >( viewKeys.meshLevel );
 

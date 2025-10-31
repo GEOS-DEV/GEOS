@@ -86,8 +86,7 @@ Group * ParticleManager::createChild( string const & childKey, string const & ch
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   Group & particleRegions = this->getGroup( ParticleManager::groupKeyStruct::particleRegionsGroup() );
-  return &particleRegions.registerGroup( childName,
-                                         CatalogInterface::factory( childKey, getDataContext(),
+  return &particleRegions.registerGroup( CatalogInterface::factory( childKey, getDataContext(),
                                                                     childName, &particleRegions ) );
 }
 
@@ -101,7 +100,12 @@ void ParticleManager::expandObjectCatalogs()
     string const key = iter->first;
     if( key.find( "ParticleRegion" ) != string::npos )
     {
-      this->createChild( key, key );
+      Group & particleRegions = this->getGroup( ParticleManager::groupKeyStruct::particleRegionsGroup() );
+
+      std::unique_ptr< Group > region =
+        CatalogInterface::factory( key, getDataContext(), key, &particleRegions );
+
+      particleRegions.registerGroup( std::move( region ), true );
     }
   }
 }

@@ -43,7 +43,7 @@ Group * FiniteElementDiscretizationManager::createChild( string const & childKey
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   std::unique_ptr< Group > fem =
     Group::CatalogInterface::factory( childKey, getDataContext(), childName, this );
-  return &this->registerGroup( childName, std::move( fem ) );
+  return &this->registerGroup( std::move( fem ) );
 }
 
 

@@ -249,8 +249,6 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
         setSizedFromParent( 0 ).
         reference().resizeDimension< 0, 1 >( m_numPhases, m_numComponents + 3 );   // dP, dT, dC, dQ
 
-      wellControls.registerWrapper< real64 >( viewKeyStruct::massDensityString() );
-
       wellControls.registerWrapper< real64 >( viewKeyStruct::currentTotalVolRateString() );
       wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentTotalVolRateString() ).
         setSizedFromParent( 0 ).

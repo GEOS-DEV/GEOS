@@ -39,8 +39,8 @@ ObjectManagerBase::ObjectManagerBase( string const & name,
   m_ghostRank(),
   m_neighborData()
 {
-  registerGroup( groupKeyStruct::setsString(), &m_sets );
-  registerGroup( groupKeyStruct::neighborDataString(), &m_neighborGroup );
+  registerGroup( &m_sets );
+  registerGroup( &m_neighborGroup );
 
   registerWrapper( viewKeyStruct::localToGlobalMapString(), &m_localToGlobalMap ).
     setApplyDefaultValue( -1 ).

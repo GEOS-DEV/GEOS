@@ -41,7 +41,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   m_particleType(),
   m_particleRVectors()
 {
-  registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
+  registerGroup( &m_constitutiveModels ).
     setSizedFromParent( 1 );
 
   registerWrapper( viewKeyStruct::particleRankString(), &m_particleRank ).

@@ -39,7 +39,7 @@ using namespace dataRepository;
 template< typename CHILD, typename T >
 void registerInputBlock( Group * parent, char const * const key, T & data )
 {
-  parent->registerGroup( key, std::make_unique< CHILD >( key, parent, data ) ).setInputFlags( InputFlags::OPTIONAL );
+  parent->registerGroup( std::make_unique< CHILD >( key, parent, data ) ).setInputFlags( InputFlags::OPTIONAL );
 }
 
 class BlockParametersInput final : public dataRepository::Group

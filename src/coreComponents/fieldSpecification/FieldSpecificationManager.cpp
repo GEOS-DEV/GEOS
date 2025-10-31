@@ -55,7 +55,7 @@ Group * FieldSpecificationManager::createChild( string const & childKey, string 
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   std::unique_ptr< FieldSpecificationBase > bc =
     FieldSpecificationBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
-  return &this->registerGroup( childName, std::move( bc ) );
+  return &this->registerGroup( std::move( bc ) );
 }
 
 
@@ -64,7 +64,9 @@ void FieldSpecificationManager::expandObjectCatalogs()
   // During schema generation, register one of each type derived from BoundaryConditionBase here
   for( auto & catalogIter: FieldSpecificationBase::getCatalog())
   {
-    createChild( catalogIter.first, catalogIter.first );
+    std::unique_ptr< FieldSpecificationBase > bc =
+      FieldSpecificationBase::CatalogInterface::factory( catalogIter.first, getDataContext(), catalogIter.first, this );
+    registerGroup( std::move( bc ), true );
   }
 }
 

@@ -63,7 +63,7 @@ void CellElementRegion::generateMesh( Group const & cellBlocks )
                    InputError );
 
     // subRegion name must be the same as the cell-block (so we can match them and reference them in errors).
-    CellElementSubRegion & subRegion = subRegions.registerGroup< CellElementSubRegion >( cbName );
+    CellElementSubRegion & subRegion = subRegions.registerGroup< CellElementSubRegion >( cbName, true );
     subRegion.copyFromCellBlock( *cellBlock );
   }
 }

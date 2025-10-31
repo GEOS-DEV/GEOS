@@ -30,7 +30,7 @@ Group * ExternalDataSourceBase::createChild( string const & childKey, string con
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   std::unique_ptr< ExternalDataSourceBase > event =
     ExternalDataSourceBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
-  return &this->registerGroup( childName, std::move( event ) );
+  return &this->registerGroup( std::move( event ) );
 }
 
 void ExternalDataSourceBase::expandObjectCatalogs()

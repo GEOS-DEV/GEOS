@@ -83,8 +83,7 @@ Group * ElementRegionManager::createChild( string const & childKey, string const
   GEOS_ERROR_IF( getUserAvailableKeys().count( childKey ) == 0,
                  CatalogInterface::unknownTypeError( childKey, getDataContext(), getUserAvailableKeys() ) );
   Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
-  return &elementRegions.registerGroup( childName,
-                                        CatalogInterface::factory( childKey, getDataContext(),
+  return &elementRegions.registerGroup( CatalogInterface::factory( childKey, getDataContext(),
                                                                    childName, &elementRegions ) );
 }
 
@@ -92,7 +91,12 @@ void ElementRegionManager::expandObjectCatalogs()
 {
   for( string const & key : getUserAvailableKeys() )
   {
-    this->createChild( key, key );
+    Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
+    
+    std::unique_ptr< Group > region =
+      CatalogInterface::factory( key, getDataContext(), key, &elementRegions );
+
+    elementRegions.registerGroup( std::move( region ), true );
   }
 }
 

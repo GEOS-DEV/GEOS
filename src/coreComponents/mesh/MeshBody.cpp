@@ -35,12 +35,12 @@ MeshBody::MeshBody( string const & name,
 
 MeshLevel & MeshBody::createMeshLevel( localIndex const newLevel )
 {
-  return m_meshLevels.registerGroup< MeshLevel >( intToMeshLevelString( newLevel ) );
+  return m_meshLevels.registerGroup< MeshLevel >( intToMeshLevelString( newLevel ), true );
 }
 
 MeshLevel & MeshBody::createMeshLevel( string const & name )
 {
-  return m_meshLevels.registerGroup< MeshLevel >( name );
+  return m_meshLevels.registerGroup< MeshLevel >( name, true );
 }
 
 MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
@@ -48,8 +48,7 @@ MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
                                        int const order )
 {
   MeshLevel const & sourceMeshLevel = this->getMeshLevel( sourceLevelName );
-  return m_meshLevels.registerGroup( newLevelName,
-                                     std::make_unique< MeshLevel >( newLevelName,
+  return m_meshLevels.registerGroup( std::make_unique< MeshLevel >( newLevelName,
                                                                     this,
                                                                     sourceMeshLevel,
                                                                     order ) );
@@ -60,8 +59,7 @@ MeshLevel & MeshBody::createShallowMeshLevel( string const & sourceLevelName,
 {
   MeshLevel & sourceMeshLevel = this->getMeshLevel( sourceLevelName );
 
-  MeshLevel & rval = m_meshLevels.registerGroup( newLevelName,
-                                                 std::make_unique< MeshLevel >( newLevelName,
+  MeshLevel & rval = m_meshLevels.registerGroup( std::make_unique< MeshLevel >( newLevelName,
                                                                                 this,
                                                                                 sourceMeshLevel ) );
   rval.setRestartFlags( RestartFlags::NO_WRITE );

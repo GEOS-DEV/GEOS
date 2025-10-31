@@ -791,7 +791,7 @@ TEST( FunctionTests, 2DMultivariableTable )
       values[( i * axisPoints[1] + j ) * nOps + 2] = operator3( x, y );
     }
 
-  MultivariableTableFunction & table_g = dynamicCast< MultivariableTableFunction & >( *functionManager->createChild( "MultivariableTableFunction", "table_f" ) );
+  MultivariableTableFunction & table_g = dynamicCast< MultivariableTableFunction & >( *functionManager->createChild( "MultivariableTableFunction", "table_g" ) );
   table_g.setTableCoordinates( nDims, nOps, axisMins, axisMaxs, axisPoints );
   table_g.setTableValues( values );
   table_g.initializeFunction();
@@ -835,7 +835,7 @@ TEST( FunctionTests, MultivariableTableFromFile )
 
   // Setup table
 
-  MultivariableTableFunction & table_h = dynamicCast< MultivariableTableFunction & >( *functionManager->createChild( "MultivariableTableFunction", "table_f" ) );
+  MultivariableTableFunction & table_h = dynamicCast< MultivariableTableFunction & >( *functionManager->createChild( "MultivariableTableFunction", "table_h" ) );
 
   writeTableToFile( "tableData.txt", multivariableTableFileContent );
   table_h.initializeFunctionFromFile ( "tableData.txt" );
