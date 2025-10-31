@@ -638,7 +638,6 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
-
     updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
 
   } );
@@ -646,7 +645,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
 
 
 void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & domain, // cannot be const...
-                                                             std::map< string, localIndex > const & equilNameToEquilId,
+                                                             stdMap< string, localIndex > const & equilNameToEquilId,
                                                              arrayView1d< real64 > const & maxElevation,
                                                              arrayView1d< real64 > const & minElevation ) const
 {
@@ -699,7 +698,7 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
 void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
                                                          real64 const & dt,
                                                          DomainPartition & domain, // cannot be const...
-                                                         std::map< string, localIndex > const & bcNameToBcId,
+                                                         stdMap< string, localIndex > const & bcNameToBcId,
                                                          arrayView1d< globalIndex > const & bcAllSetsSize ) const
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -732,7 +731,6 @@ void FlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
           localSetSize += 1;
         }
       } );
-
       // increment the set size for this source flux boundary conditions
       bcAllSetsSize[bcNameToBcId.at( fs.getName())] += localSetSize.get();
     } );
@@ -766,12 +764,12 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
 
   // Step 1: count individual aquifers
 
-  std::map< string, localIndex > aquiferNameToAquiferId;
+  stdMap< string, localIndex > aquiferNameToAquiferId;
   localIndex aquiferCounter = 0;
 
   fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
   {
-    aquiferNameToAquiferId[bc.getName()] = aquiferCounter;
+    aquiferNameToAquiferId.insert( {bc.getName(), aquiferCounter} );
     aquiferCounter++;
   } );
 
