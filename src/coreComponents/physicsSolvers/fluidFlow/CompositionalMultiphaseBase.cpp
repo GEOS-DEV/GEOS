@@ -317,24 +317,24 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       {
         GEOS_THROW_IF( getConstitutiveName< CapillaryPressureBase >( subRegion ).empty(),
                        GEOS_FMT( "{}: Capillary pressure model not found on subregion {}",
-                                 getDataContext(), subRegion.getDataContext() ),
-                       InputError );
+                                 getDataContext(), subRegion.getName() ),
+                       InputError, subRegion.getDataContext() );
       }
 
       if( m_hasDiffusion )
       {
         GEOS_THROW_IF( getConstitutiveName< DiffusionBase >( subRegion ).empty(),
                        GEOS_FMT( "{}: Diffusion model not found on subregion {}",
-                                 getDataContext(), subRegion.getDataContext() ),
-                       InputError );
+                                 getDataContext(), subRegion.getName() ),
+                       InputError, subRegion.getDataContext() );
       }
 
       if( m_hasDispersion )
       {
         GEOS_THROW_IF( getConstitutiveName< DispersionBase >( subRegion ).empty(),
                        GEOS_FMT( "{}: Dispersion model not found on subregion {}",
-                                 getDataContext(), subRegion.getDataContext() ),
-                       InputError );
+                                 getDataContext(), subRegion.getName() ),
+                       InputError, subRegion.getDataContext() );
       }
     } );
   } );
@@ -495,15 +495,15 @@ void compareMultiphaseModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
 {
   GEOS_THROW_IF_NE_MSG( lhs.numFluidPhases(), rhs.numFluidPhases(),
                         GEOS_FMT( "Mismatch in number of phases between constitutive models {} and {}",
-                                  lhs.getDataContext(), rhs.getDataContext() ),
-                        InputError );
+                                  lhs.getName(), rhs.getName() ),
+                        InputError, lhs.getDataContext(), rhs.getDataContext() );
 
   for( integer ip = 0; ip < lhs.numFluidPhases(); ++ip )
   {
     GEOS_THROW_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
                           GEOS_FMT( "Mismatch in phase names between constitutive models {} and {}",
-                                    lhs.getDataContext(), rhs.getDataContext() ),
-                          InputError );
+                                    lhs.getName(), rhs.getName() ),
+                          InputError, lhs.getDataContext(), rhs.getDataContext() );
   }
 }
 
@@ -512,15 +512,15 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 {
   GEOS_THROW_IF_NE_MSG( lhs.numFluidComponents(), rhs.numFluidComponents(),
                         GEOS_FMT( "Mismatch in number of components between constitutive models {} and {}",
-                                  lhs.getDataContext(), rhs.getDataContext() ),
-                        InputError );
+                                  lhs.getName(), rhs.getName() ),
+                        InputError, lhs.getDataContext(), rhs.getDataContext() );
 
   for( integer ic = 0; ic < lhs.numFluidComponents(); ++ic )
   {
     GEOS_THROW_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
                           GEOS_FMT( "Mismatch in component names between constitutive models {} and {}",
-                                    lhs.getDataContext(), rhs.getDataContext() ),
-                          InputError );
+                                    lhs.getName(), rhs.getName() ),
+                          InputError, lhs.getDataContext(), rhs.getDataContext() );
   }
 }
 
@@ -613,11 +613,11 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
       bool const isFluidModelThermal = fluid.isThermal();
       GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
                      GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
-                               getDataContext(), fluid.getDataContext() ),
+                               getName(), fluid.getName() ),
                      InputError, getDataContext(), fluid.getDataContext() );
       GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
                      GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
-                               getDataContext(), fluid.getDataContext() ),
+                               getDgetNameataContext(), fluid.getName() ),
                      InputError, getDataContext(), fluid.getDataContext() );
 
       string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
@@ -1104,26 +1104,24 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
     // check that the gravity vector is aligned with the z-axis
     GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
-                   getCatalogName() << " " << getDataContext() <<
-                   ": the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
+                   getCatalogName() <<
+                   " : the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
                    ") is not aligned with the z-axis. \n"
-                   "This is incompatible with the " << bc.getCatalogName() << " " << bc.getDataContext() <<
-                   "used in this simulation. To proceed, you can either: \n" <<
+                   "This is incompatible with the " << bc.getCatalogName() <<
+                   " used in this simulation. To proceed, you can either: \n" <<
                    "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
                    "   - Remove the hydrostatic equilibrium initial condition from the XML file",
                    InputError, getDataContext(), bc.getDataContext() );
 
     // ensure that the temperature and composition tables are defined
     GEOS_THROW_IF( bc.getTemperatureVsElevationTableName().empty(),
-                   getCatalogName() << " " << bc.getDataContext()
-                                    << ": " << EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString()
+                   getCatalogName() << " : " << EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString()
                                     << " must be provided for a multiphase simulation",
-                   InputError );
+                   InputError, bc.getDataContext() );
     GEOS_THROW_IF( bc.getComponentFractionVsElevationTableNames().empty(),
-                   getCatalogName() << " " << bc.getDataContext()
-                                    << ": " << EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString()
+                   getCatalogName() << ": " << EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString()
                                     << " must be provided for a multiphase simulation",
-                   InputError );
+                   InputError, bc.getDataContext() );
   } );
 
   if( equilCounter == 0 )
@@ -1223,13 +1221,13 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       string_array const & componentNames = fs.getComponentNames();
       GEOS_THROW_IF( fluid.componentNames().size() != componentNames.size(),
                      "Mismatch in number of components between constitutive model "
-                     << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
+                     << fluid.getName() << " and the Equilibrium initial condition " << fs.getName(),
                      InputError, fluid.getDataContext(), fs.getDataContext() );
       for( integer ic = 0; ic < fluid.numFluidComponents(); ++ic )
       {
         GEOS_THROW_IF( fluid.componentNames()[ic] != componentNames[ic],
                        "Mismatch in component names between constitutive model "
-                       << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
+                       << fluid.getName() << " and the Equilibrium initial condition " << fs.getName(),
                        InputError, fluid.getDataContext(), fs.getDataContext() );
       }
 
@@ -1237,8 +1235,8 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       string_array const & phaseNames = fluid.phaseNames();
       auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
       GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
-                     getCatalogName() << " " << getDataContext() << ": phase name " <<
-                     initPhaseName << " not found in the phases of " << fluid.getDataContext(),
+                     getCatalogName() <<  " : phase name " <<
+                     initPhaseName << " not found in the phases of " << fluid.getName(),
                      InputError, getDataContext(), fluid.getDataContext() );
       integer const ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
 
@@ -1271,15 +1269,15 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                pressureValues.toView() );
 
         GEOS_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
-                       getCatalogName() << " " << getDataContext() <<
-                       ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
+                       getCatalogName() <<
+                       " : hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
                        "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
                        "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
                        std::runtime_error, getDataContext() );
 
         GEOS_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
                             getCatalogName() << " " << getDataContext() <<
-                            ": currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
+                            " : currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
                             "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<
                             "Please make sure that only one phase is mobile at the beginning of the simulation. \n" <<
                             "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
@@ -1334,8 +1332,8 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       } );
 
       GEOS_ERROR_IF( minPressure.get() < 0.0,
-                     GEOS_FMT( "{}: A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
-                               getDataContext(), minPressure.get(), region.getName(), subRegion.getName() ),
+                     GEOS_FMT( "A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
+                               minPressure.get(), region.getName(), subRegion.getName() ),
                      getDataContext() );
     } );
   } );
@@ -1849,8 +1847,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent,
-                   GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ),
+    GEOS_ERROR_IF( !bcConsistent, "CompositionalMultiphaseBase: inconsistent boundary conditions",
                    getDataContext() );
   }
 

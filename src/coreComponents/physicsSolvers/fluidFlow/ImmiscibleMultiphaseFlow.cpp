@@ -143,9 +143,9 @@ void ImmiscibleMultiphaseFlow::registerDataOnMesh( Group & meshBodies )
         string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
         capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
         GEOS_THROW_IF( capPresName.empty(),
-                       GEOS_FMT( "{}: Capillary pressure model not found on subregion {}",
-                                 getDataContext(), subRegion.getDataContext() ),
-                       InputError );
+                       GEOS_FMT( "Capillary pressure model not found on subregion {}",
+                                 subRegion.getName() ),
+                       InputError, getDataContext(), subRegion.getDataContext() );
       }
 
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,

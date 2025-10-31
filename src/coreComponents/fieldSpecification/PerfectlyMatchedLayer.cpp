@@ -79,14 +79,14 @@ PerfectlyMatchedLayer::PerfectlyMatchedLayer( string const & name, Group * const
 void PerfectlyMatchedLayer::postInputInitialization()
 {
   GEOS_THROW_IF( (m_xMax[0]<m_xMin[0] || m_xMax[1]<m_xMin[1] || m_xMax[2]<m_xMin[2]),
-                 getCatalogName() << " " << getDataContext() << " "
+                 getCatalogName() << " "
                                   << viewKeyStruct::xMinString()
                                   << " must be smaller than "
                                   << viewKeyStruct::xMaxString(),
                  InputError, getDataContext() );
 
   GEOS_THROW_IF( (m_reflectivity<=0 || m_reflectivity>1),
-                 getCatalogName() << " " << getDataContext() << " "
+                 getCatalogName() << " "
                                   << viewKeyStruct::reflectivityString()
                                   << " must satisfy 0 < reflectivity <= 1",
                  InputError, getDataContext() );

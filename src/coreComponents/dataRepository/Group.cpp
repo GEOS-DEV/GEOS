@@ -77,7 +77,7 @@ WrapperBase & Group::registerWrapper( std::unique_ptr< WrapperBase > wrapper )
 void Group::deregisterWrapper( string const & name )
 {
   GEOS_ERROR_IF( !hasWrapper( name ),
-                 "Wrapper " << name << " doesn't exist in Group" << getDataContext() << '.',
+                 "Wrapper " << name << " doesn't exist in Group.",
                  getDataContext() );
   m_wrappers.erase( name );
   m_conduitNode.remove( name );

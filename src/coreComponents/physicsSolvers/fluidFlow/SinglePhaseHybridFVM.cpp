@@ -104,7 +104,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
 
   GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
                  getCatalogName() << " " << getDataContext() <<
-                 ": the HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
+                 " : the HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
                  InputError, getDataContext() );
 }
 
@@ -139,8 +139,8 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
     } );
 
     GEOS_THROW_IF_LE_MSG( minVal.get(), 0.0,
-                          getCatalogName() << " " << getDataContext() <<
-                          "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
+                          getCatalogName() << 
+                          " The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
                           std::runtime_error );
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
