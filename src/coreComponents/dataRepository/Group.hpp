@@ -191,7 +191,9 @@ public:
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in] newObject A unique_ptr to the object that is being registered under `newObject->getName()`.
-   * @return              A pointer to the newly registered Group.
+   * @param[in] allowExistence Whether to error out if an sub group already exists with the same name,
+   *   or return the existing object.
+   * @return A pointer to the newly registered Group.
    *
    * Registers a Group or class derived from Group as a subgroup of this Group and takes ownership.
    */
@@ -204,11 +206,11 @@ public:
   }
 
   /**
-   * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
+   * @brief Register a new Group as a sub-group of current Group.
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in] newObject     A pointer to the object that is being registered under `newObject->getName()`.
-   * @return                  A pointer to the newly registered Group.
+   * @return                  A reference to the newly registered Group.
    *
    * Registers a Group or class derived from Group as a subgroup of this Group but does not take ownership.
    */
@@ -222,11 +224,13 @@ public:
   }
 
   /**
-   * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
+   * @brief Register a new Group as a sub-group of current Group.
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param[in] name The name of the group to use as a string key.
-   * @return         A pointer to the newly registered Group.
+   * @param[in] allowExistence Whether to error out if an sub group already exists with the same name,
+   *   or return the existing object.
+   * @return A reference to the newly registered Group.
    *
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
@@ -235,12 +239,12 @@ public:
   { return registerGroup< T >( std::make_unique< T >( name, this ), allowExistence ); }
 
   /**
-   * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
+   * @brief Register a new Group as a sub-group of current Group.
    *
    * @tparam T The type of the Group to add/register. This should be a type that derives from Group.
    * @param keyIndex A KeyIndexT object that will be used to specify the name of
    *   the new group. The index of the KeyIndex will also be set.
-   * @return A pointer to the newly registered Group, or @c nullptr if no group was registered.
+   * @return A reference to the newly registered Group, or @c nullptr if no group was registered.
    *
    * Creates and registers a Group or class derived from Group as a subgroup of this Group.
    */
@@ -808,6 +812,13 @@ public:
    */
   ///@{
 
+  /**
+   * @brief Register a new Wrapper.
+   * @param[in] newObject The wrapper to register
+   * @param[in] allowExistence Whether to error out if an wrapper already exists with the same name,
+   *   or return the existing object.
+   * @return A reference to the newly registered Wrapper
+   */
   WrapperBase & registerWrapper( std::unique_ptr< WrapperBase > newObject,
                                  bool const allowExistence=false )
   {
@@ -823,6 +834,8 @@ public:
    * @param[in] name the name of the wrapper to use as a string key
    * @param[out] rkey a pointer to a index type that will be filled with the new
    *   Wrapper index in this Group
+   * @param[in] allowExistence Whether to error out if an wrapper already exists with the same name,
+   *   or return the existing object.
    * @return A reference to the newly registered/created Wrapper
    */
   template< typename T, typename TBASE=T >
@@ -831,10 +844,12 @@ public:
                                       bool const allowExistence=false );
 
   /**
-   * @copybrief registerWrapper(string const &,wrapperMap::KeyIndex::index_type * const)
+   * @brief Register a new Wrapper.
    * @tparam T the type of the wrapped object
    * @tparam TBASE the base type to cast the returned wrapper to
    * @param[in] viewKey The KeyIndex that contains the name of the new Wrapper.
+   * @param[in] allowExistence Whether to error out if an wrapper already exists with the same name,
+   *   or return the existing object.
    * @return A reference to the newly registered/created Wrapper
    */
   template< typename T, typename TBASE=T >
@@ -1610,8 +1625,19 @@ private:
                        bool onDevice,
                        parallelDeviceEvents & events ) const;
 
+  /**
+   * @brief Insert into m_wrappers.
+   * @param[in] wrapper The wrapper to insert with the key wrapper->getName().
+   * @param[in] allowExistence Whether to error out if an wrapper already exists with the same name.
+   */
   void insertWrapper( std::unique_ptr< WrapperBase > wrapper, bool const allowExistence=false );
 
+  /**
+   * @brief Insert into m_subGroups.
+   * @param[in] newObject The group to insert with the key newObject->getName().
+   * @param[in] takeOwnership Whether to take ownership of newObject or not.
+   * @param[in] allowExistence Whether to error out if an wrapper already exists with the same name.
+   */
   void insertGroup( Group * const newObject, bool const takeOwnership, bool const allowExistence=false );
 
   //START_SPHINX_INCLUDE_02
