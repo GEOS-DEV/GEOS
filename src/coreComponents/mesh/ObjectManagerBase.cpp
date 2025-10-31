@@ -67,7 +67,7 @@ ObjectManagerBase::ObjectManagerBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setPlotLevel( PlotLevel::NOPLOT );
 
-//  m_sets.registerWrapper< SortedArray< localIndex > >( this->m_ObjectManagerBaseViewKeys.externalSet );
+ m_sets.registerWrapper< SortedArray< localIndex > >( this->m_ObjectManagerBaseViewKeys.externalSet );
 
   excludeWrappersFromPacking( { viewKeyStruct::localToGlobalMapString(),
                                 viewKeyStruct::globalToLocalMapString(),

@@ -3441,7 +3441,10 @@
 	</xsd:complexType>
 	<xsd:complexType name="elementRegionsGroupType" />
 	<xsd:complexType name="neighborDataType" />
-	<xsd:complexType name="setsType" />
+	<xsd:complexType name="setsType">
+		<!--externalSet => (no description available)-->
+		<xsd:attribute name="externalSet" type="LvArray_SortedArray_lt_int_cm_-int_cm_-LvArray_ChaiBuffer_gt_" />
+	</xsd:complexType>
 	<xsd:complexType name="ParticleRegionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="neighborData" type="neighborDataType" />
