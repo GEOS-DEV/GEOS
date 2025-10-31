@@ -1393,6 +1393,11 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
 
   matrix.setDofManager( &dofManager );
 
+  GEOS_WARNING_IF( isDirectSolver && dofManager.numGlobalDofs() > 100000,
+                   "Direct solver used for large system ( > 100,000 DOFs ). "
+                   "This may lead to high memory consumption and long computation times. "
+                   "Consider using an iterative solver for better performance." );
+
   // Apply physics-based scaling to the linear system if enabled
   if( m_usePhysicsScaling )
   {
