@@ -721,9 +721,9 @@ protected:
   virtual void
   postInputInitialization() override
   {
-    PhysicsSolverBase::postInputInitialization();
+    setSubSolvers(); // has to go first
 
-    setSubSolvers();
+    PhysicsSolverBase::postInputInitialization();
 
     bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
     bool const usesLineSearch = getNonlinearSolverParameters().m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None;
