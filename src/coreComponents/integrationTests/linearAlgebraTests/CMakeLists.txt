@@ -25,7 +25,8 @@ foreach(test ${LAI_tests})
 if ( ENABLE_MPI )
   geos_add_test( NAME ${test_name}
                  COMMAND ${test_name} -x ${nranks}
-                 NUM_MPI_TASKS ${nranks} )
+                 NUM_MPI_TASKS ${nranks}
+                 NUM_OMP_THREADS 1 )
 else()
   geos_add_test( NAME ${test_name}
                  COMMAND ${test_name} )
