@@ -336,9 +336,11 @@ static inline std::vector< real64 > arrayViewToVector( arrayView1d< real64 const
 
 // Helper: copy a 2D view to flat vector (row-major by phase index), accept any 2D view type
 template< typename View2D >
-static inline std::vector< real64 > arrayView2dToVector( View2D & arr, localIndex nCells, localIndex nCols )
+static inline std::vector< real64 > arrayView2dToVector( View2D & arr )
 {
   arr.move( hostMemorySpace, false );
+  localIndex nCells = arr.size( 0 );
+  localIndex nCols = arr.size( 1 );
   std::vector< real64 > out;
   out.reserve( static_cast< size_t >( nCells ) * static_cast< size_t >( nCols ) );
   for( localIndex i = 0; i < nCells; ++i )
