@@ -328,10 +328,10 @@ static std::string generateXmlInputCompMFD( std::string const & innerProductType
 }
 
 // Helper: copy arrayView1d<real64 const> to std::vector<real64>
-static inline std::vector< real64 > arrayViewToVector( arrayView1d< real64 const > & arr, localIndex n )
+static inline std::vector< real64 > arrayViewToVector( arrayView1d< real64 const > & arr )
 {
   arr.move( hostMemorySpace, false );
-  return std::vector< real64 >( arr.data(), arr.data() + n );
+  return std::vector< real64 >( arr.data(), arr.data() + arr.size() );
 }
 
 // Helper: copy a 2D view to flat vector (row-major by phase index), accept any 2D view type
