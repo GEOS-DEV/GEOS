@@ -353,6 +353,37 @@ static inline std::vector< real64 > arrayView2dToVector( View2D & arr )
   return out;
 }
 
+// Helper: compute normalized L2 error for linear pressure profile p(x) = 2*(1-x) + x = 2 - x
+static inline real64 computeNormalizedPressureL2Error( CellElementSubRegion & subRegion )
+{
+  arrayView2d< real64 const > centers = subRegion.getElementCenter();
+  arrayView1d< real64 const > volumes = subRegion.getElementVolume();
+  arrayView1d< real64 const > const p_h = subRegion.getField< fields::flow::pressure >();
+
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > squaredPressureError_ReduceSum( 0.0 );
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > squaredExactPressure_ReduceSum( 0.0 );
+  localIndex const n_cells = subRegion.size();
+  
+  forAll< geos::parallelDevicePolicy<> >( n_cells, [=] GEOS_HOST_DEVICE ( localIndex const i )
+  {
+    real64 const x = centers[i][0];
+    real64 const cellVolume = volumes[i];
+    real64 const pNumeric = p_h[i];
+    real64 const pExact = 2.0 * (1.0 - x) + 1.0 * x;
+    squaredPressureError_ReduceSum += (pNumeric - pExact) * (pNumeric - pExact) * cellVolume;
+    squaredExactPressure_ReduceSum += pExact * pExact * cellVolume;
+  } );
+
+  // Gather global reductions
+  real64 const squaredPressureError = squaredPressureError_ReduceSum.get();
+  real64 const squaredExactPressure = squaredExactPressure_ReduceSum.get();
+
+  // Compute pressure relative L2 error
+  real64 const normalizedL2Error = std::sqrt( squaredPressureError ) / std::sqrt( squaredExactPressure );
+  
+  return normalizedL2Error;
+}
+
 // TPFA test: check linear pressure profile on regular polyhedral mesh
 class CompositionalTPFAIntegrationTest : public ::testing::TestWithParam< const char * >
 {
@@ -405,25 +436,7 @@ TEST_P( CompositionalTPFAIntegrationTest, PressureFieldL2Error )
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   CellElementSubRegion & subRegion = mesh.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
 
-  arrayView2d< real64 const > centers = subRegion.getElementCenter();
-  arrayView1d< real64 const > volumes = subRegion.getElementVolume();
-  arrayView1d< real64 const > const p_h = subRegion.getField< fields::flow::pressure >();
-
-  RAJA::ReduceSum< parallelDeviceReduce, real64 > l2Error_ReduceSum( 0.0 );
-  RAJA::ReduceSum< parallelDeviceReduce, real64 > totalVolume_ReduceSum( 0.0 );
-  localIndex const n_cells  = subRegion.size();
-  forAll< geos::parallelDevicePolicy<> >( n_cells, [=] GEOS_HOST_DEVICE ( localIndex const i )
-  {
-    real64 x = centers[i][0];
-    real64 volume = volumes[i];
-    real64 pNumeric = p_h[i];
-    real64 pExact = 2.0 * (1.0 - x) + 1.0 * x;
-    l2Error_ReduceSum += (pNumeric - pExact) * (pNumeric - pExact) * volume;
-    totalVolume_ReduceSum += volume;
-  } );
-
-  real64 const data[2] = { l2Error_ReduceSum.get(), totalVolume_ReduceSum.get() };
-  real64 l2Error = std::sqrt( data[0] ) / data[1];
+  real64 l2Error = computeNormalizedPressureL2Error( subRegion );
 
   // Expect exact solution only on the k-orthogonal regular mesh; expect non-zero error on mixed mesh
   std::string meshFile = GetParam();
@@ -489,25 +502,7 @@ TEST_P( CompositionalMFDTPFAIntegrationTest, PressureFieldL2Error )
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   CellElementSubRegion & subRegion = mesh.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
 
-  arrayView2d< real64 const > centers = subRegion.getElementCenter();
-  arrayView1d< real64 const > volumes = subRegion.getElementVolume();
-  arrayView1d< real64 const > const p_h = subRegion.getField< fields::flow::pressure >();
-
-  RAJA::ReduceSum< parallelDeviceReduce, real64 > l2Error_ReduceSum( 0.0 );
-  RAJA::ReduceSum< parallelDeviceReduce, real64 > totalVolume_ReduceSum( 0.0 );
-  localIndex const n_cells  = subRegion.size();
-  forAll< geos::parallelDevicePolicy<> >( n_cells, [=] GEOS_HOST_DEVICE ( localIndex const i )
-  {
-    real64 x = centers[i][0];
-    real64 volume = volumes[i];
-    real64 pNumeric = p_h[i];
-    real64 pExact = 2.0 * (1.0 - x) + 1.0 * x;
-    l2Error_ReduceSum += (pNumeric - pExact) * (pNumeric - pExact) * volume;
-    totalVolume_ReduceSum += volume;
-  } );
-
-  real64 const data[2] = { l2Error_ReduceSum.get(), totalVolume_ReduceSum.get() };
-  real64 l2Error = std::sqrt( data[0] ) / data[1];
+  real64 l2Error = computeNormalizedPressureL2Error( subRegion );
 
   // Expect exact solution only on the k-orthogonal regular mesh; expect non-zero error on mixed mesh
   std::string meshFile = GetParam();
@@ -570,11 +565,10 @@ TEST_P( CompositionalTPFAvsMFDTPFA, PressureAndSaturationComparison )
     CellElementSubRegion & subRegion = mesh.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
 
     arrayView1d< real64 const > p_h = subRegion.getField< fields::flow::pressure >();
-    n_cells_tpfa = subRegion.size();
-    p_tpfa = arrayViewToVector( p_h, n_cells_tpfa );
+    p_tpfa = arrayViewToVector( p_h );
 
     auto sat = subRegion.getField< fields::flow::phaseVolumeFraction >();
-    sat_tpfa = arrayView2dToVector( sat, n_cells_tpfa, n_phases_tpfa );
+    sat_tpfa = arrayView2dToVector( sat );
   }
 
   // --- Run MFD solver (innerProductType = TPFA) ---
@@ -602,11 +596,10 @@ TEST_P( CompositionalTPFAvsMFDTPFA, PressureAndSaturationComparison )
     CellElementSubRegion & subRegion = mesh.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
 
     arrayView1d< real64 const > p_h = subRegion.getField< fields::flow::pressure >();
-    n_cells_mfd = subRegion.size();
-    p_mfd = arrayViewToVector( p_h, n_cells_mfd );
+    p_mfd = arrayViewToVector( p_h );
 
     auto sat = subRegion.getField< fields::flow::phaseVolumeFraction >();
-    sat_mfd = arrayView2dToVector( sat, n_cells_mfd, n_phases_mfd );
+    sat_mfd = arrayView2dToVector( sat );
   }
 
   ASSERT_EQ( n_cells_tpfa, n_cells_mfd );
@@ -690,32 +683,10 @@ TEST_P( CompositionalMFDNonTPFAExactnessTest, PressureFieldL2ErrorExact )
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   CellElementSubRegion & subRegion = mesh.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
 
-  arrayView2d< real64 const > centers = subRegion.getElementCenter();
-  arrayView1d< real64 const > volumes = subRegion.getElementVolume();
-  arrayView1d< real64 const > const p_h = subRegion.getField< fields::flow::pressure >();
-
-  RAJA::ReduceSum< parallelDeviceReduce, real64 > squaredPressureError_ReduceSum( 0.0 );
-  RAJA::ReduceSum< parallelDeviceReduce, real64 > squaredExactPressure_ReduceSum( 0.0 );
-  localIndex const n_cells  = subRegion.size();
-  forAll< geos::parallelDevicePolicy<> >( n_cells, [=] GEOS_HOST_DEVICE ( localIndex const i )
-  {
-    real64 const x = centers[i][0];
-    real64 const cellVolume = volumes[i];
-    real64 const pNumeric = p_h[i];
-    real64 const pExact = 2.0 * (1.0 - x) + 1.0 * x;
-    squaredPressureError_ReduceSum += (pNumeric - pExact) * (pNumeric - pExact) * cellVolume;
-    squaredExactPressure_ReduceSum += pExact * pExact * cellVolume;
-  } );
-
-// Gather global reductions
-real64 const squaredPressureError = squaredPressureError_ReduceSum.get();
-real64 const squaredExactPressure = squaredExactPressure_ReduceSum.get();
-
-// Compute pressure relative L2 error
-real64 const normalizedL2Error = std::sqrt(squaredPressureError) / std::sqrt(squaredExactPressure);
+  real64 const normalizedL2Error = computeNormalizedPressureL2Error( subRegion );
 
   // Expect exact solution for these inner products on both meshes
-  EXPECT_NEAR( l2Error, 0.0, PRESSURE_L2_TOLERANCE );
+  EXPECT_NEAR( normalizedL2Error, 0.0, PRESSURE_L2_TOLERANCE );
 }
 
 int main( int argc, char * * argv )
