@@ -694,21 +694,25 @@ TEST_P( CompositionalMFDNonTPFAExactnessTest, PressureFieldL2ErrorExact )
   arrayView1d< real64 const > volumes = subRegion.getElementVolume();
   arrayView1d< real64 const > const p_h = subRegion.getField< fields::flow::pressure >();
 
-  RAJA::ReduceSum< parallelDeviceReduce, real64 > l2Error_ReduceSum( 0.0 );
-  RAJA::ReduceSum< parallelDeviceReduce, real64 > totalVolume_ReduceSum( 0.0 );
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > squaredPressureError_ReduceSum( 0.0 );
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > squaredExactPressure_ReduceSum( 0.0 );
   localIndex const n_cells  = subRegion.size();
   forAll< geos::parallelDevicePolicy<> >( n_cells, [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
-    real64 x = centers[i][0];
-    real64 volume = volumes[i];
-    real64 pNumeric = p_h[i];
-    real64 pExact = 2.0 * (1.0 - x) + 1.0 * x;
-    l2Error_ReduceSum += (pNumeric - pExact) * (pNumeric - pExact) * volume;
-    totalVolume_ReduceSum += volume;
+    real64 const x = centers[i][0];
+    real64 const cellVolume = volumes[i];
+    real64 const pNumeric = p_h[i];
+    real64 const pExact = 2.0 * (1.0 - x) + 1.0 * x;
+    squaredPressureError_ReduceSum += (pNumeric - pExact) * (pNumeric - pExact) * cellVolume;
+    squaredExactPressure_ReduceSum += pExact * pExact * cellVolume;
   } );
 
-  real64 const data[2] = { l2Error_ReduceSum.get(), totalVolume_ReduceSum.get() };
-  real64 l2Error = std::sqrt( data[0] ) / data[1];
+// Gather global reductions
+real64 const squaredPressureError = squaredPressureError_ReduceSum.get();
+real64 const squaredExactPressure = squaredExactPressure_ReduceSum.get();
+
+// Compute pressure relative L2 error
+real64 const normalizedL2Error = std::sqrt(squaredPressureError) / std::sqrt(squaredExactPressure);
 
   // Expect exact solution for these inner products on both meshes
   EXPECT_NEAR( l2Error, 0.0, PRESSURE_L2_TOLERANCE );
