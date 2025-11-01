@@ -292,6 +292,7 @@ struct PresTempCompFracInitializationKernel
           arrayView1d< localIndex const > const & resElementIndex,
           arrayView1d< real64 const > const & perfGravCoef,
           arrayView1d< integer const > const & perfState,
+          arrayView1d< localIndex const > const perfWellElemIndex,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 > const & wellElemPres,
           arrayView1d< real64 > const & wellElemTemp,
@@ -525,7 +526,8 @@ public:
   {
     if( m_isProducer )
     {
-      m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
+      if( wellControls.getMinBHPConstraint()->isConstraintActive())
+        m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
       // Note this assumes that there is only one   rate constraint
       // This is a normalizer for the balance equations.  The normalizaer should be the current rate not the constraint value!!
       // This is one of the reasons for restricting  constraint type for a production well
@@ -538,7 +540,7 @@ public:
     {
       m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
 
-      // Note this assumes that there is only one     rate constraint
+      //  tjb Note this assumes that there is only one     rate constraint
       // This is a normalizer for the balance equations.  The normalizaer should be the current rate not the constraint value!!
       // This is one of the reasons for restricting  constraint type for a production well
       // another pr will remove fix this (so the cause for difference results is isolated to one change)
@@ -1151,7 +1153,18 @@ public:
         stack.localResidual[numRows-1]=0.0;
       }
     }
+    /* tjb iso
+        for( integer i=0; i < numComp+1+IS_THERMAL; i++ )
+        {
+          stack.localJacobian[numRows-1][i] = 0.0;
+        }
+        // constant Temperature
+        for( integer i=0; i < numComp+1+IS_THERMAL; i++ )
+          stack.localJacobian[i][numRows-1]  = 0.0;
+        stack.localJacobian[numRows-1][numRows-1] = 1.0;
 
+        stack.localResidual[numRows-1]=0.0;
+     */
     if( m_kernelFlags.isSet( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation ) )
     {
       // apply equation/variable change transformation to the component mass balance equations
@@ -1620,13 +1633,11 @@ public:
       // derivative with respect to upstream pressure
       stack.localFluxJacobian[TAG::NEXT * NC +ic][CP_Deriv::dP] =  dt * dCompFlux[ic][WJ_COFFSET::dP];
       stack.localFluxJacobian[TAG::CURRENT * NC+ ic][CP_Deriv::dP] = -dt * dCompFlux[ic][WJ_COFFSET::dP];
-
       if   constexpr ( IS_THERMAL )
       {
         stack.localFluxJacobian[TAG::NEXT * NC +ic][CP_Deriv::dT] =  dt * dCompFlux[ic][WJ_COFFSET::dT];
         stack.localFluxJacobian[TAG::CURRENT * NC +ic][CP_Deriv::dT] = -dt * dCompFlux[ic][WJ_COFFSET::dT];
       }
-
       // derivatives with respect to upstream component densities
       for( integer jdof = 0; jdof < NC; ++jdof )
       {

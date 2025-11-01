@@ -267,7 +267,7 @@ public:
    */
   void setControl( Control const & newControl )  {  m_currentControl = newControl; }
 
-    /**
+  /**
    * @brief getter for esitmator switch
    * @return True if estimate well solution
    */
@@ -363,10 +363,6 @@ public:
 
   void setWellState( bool open );
   bool getWellState() const;
-
-
-  void setConstraintSwitch( bool constraintSwitch );
-  bool getConstraintSwitch() const;
 
   void setCurrentConstraint( WellConstraintBase * currentConstraint ) { m_currentConstraint = currentConstraint;}
   WellConstraintBase *  getCurrentConstraint() { return m_currentConstraint; }
@@ -488,19 +484,20 @@ public:
     /// string key for the maximum BHP presssure for a injection
     static constexpr char const * maximumBHPConstraintString() { return "MaximumBHPConstraint"; }
     /// string key for the maximum phase rate for a producer
-    static constexpr char const * phaseProductionConstraintString() { return "PhaseProductionConstraint"; }
+    static constexpr char const * productionPhaseVolumeRateConstraintString() { return "ProductionPhaseVolumeRateConstraint"; }
     /// string key for the maximum phase rate for a injection
-    static constexpr char const * phaseInjectionConstraintString() { return "PhaseInjectionConstraint"; }
+    static constexpr char const * injectionPhaseVolumeRateConstraint() { return "InjectionPhaseVolumeRateConstraint"; }
     /// string key for the maximum volume rate for a producer
-    static constexpr char const * totalVolProductionConstraintString() { return "TotalVolProductionConstraint"; }
+    static constexpr char const * productionVolumeRateConstraint() { return "ProductionVolumeRateConstraint"; }
     /// string key for the maximum volume rate for a injector
-    static constexpr char const * totalVolInjectionConstraintString() { return "TotalVolInjectionConstraint"; }
+    static constexpr char const * injectionVolumeRateConstraint() { return "InjectionVolumeRateConstraint"; }
     /// string key for the maximum mass rate for a producer
-    static constexpr char const * massProductionConstraintString() { return "massProductionConstraint"; }
+    static constexpr char const * productionMassRateConstraint() { return "ProductionMassRateConstraint"; }
     /// string key for the maximum mass rate for a injector
-    static constexpr char const * massInjectionConstraintString() { return "massInjectionConstraint"; }
+    static constexpr char const * injectionMassRateConstraint() { return "InjectionMassRateConstraint"; }
     /// string key for the liquid rate for a producer
-    static constexpr char const * liquidProductionConstraintString() { return "liquidProductionConstraint"; }
+    static constexpr char const * productionLiquidRateConstraint() { return "ProductionLiquidRateConstraint"; }
+
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -586,11 +583,6 @@ private:
 
   /// flag to use the estimator
   integer m_estimateSolution;
-
-  /// List of constraints
-  //constraint_array m_ConstraintList;
-  // Bool to trigger old/new constraint switch logic
-  bool m_constraintSwitch;
 
   // Current constraint
   WellConstraintBase * m_currentConstraint;

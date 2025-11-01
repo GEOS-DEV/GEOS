@@ -329,7 +329,7 @@ public:
    * @param matrix the system matrix
    * @param rhs the system right-hand side vector
    */
-    virtual void assembleWellPressureRelations( real64 const & time_n,
+  virtual void assembleWellPressureRelations( real64 const & time_n,
                                               real64 const & dt,
                                               WellElementSubRegion const & subRegion,
                                               DofManager const & dofManager,
@@ -343,6 +343,36 @@ public:
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
 
+
+  /**
+   * @brief apply a special treatment to the wells that are shut
+   * @param time_n the time at the previous converged time step
+   * @param dt the time step size
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void outputSingleWellDebug( real64 const time,
+                                      real64 const dt,
+                                      integer num_timesteps,
+                                      integer current_newton_iteration,
+                                      integer num_timestep_cuts,
+                                      MeshLevel & mesh,
+                                      WellElementSubRegion & subRegion,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< const real64 > const & localRhs ) override;
+
+  virtual void outputWellDebug( real64 const time,
+                                real64 const dt,
+                                integer num_timesteps,
+                                integer current_newton_iteration,
+                                integer num_timestep_cuts,
+                                DomainPartition & domain,
+                                DofManager const & dofManager,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief Sets all the negative component densities (if any) to zero.
@@ -407,6 +437,9 @@ public:
 
   } viewKeysCompMultiphaseWell;
 
+  void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) override;
+
+  virtual void saveState( WellElementSubRegion & subRegion ) override;
 protected:
 
   virtual void postInputInitialization() override;
@@ -415,7 +448,7 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  void saveState( WellElementSubRegion & subRegion );
+
   virtual void postRestartInitialization() override final;
   /*
    * @brief Utility function that checks the consistency of the constitutive models
@@ -455,7 +488,12 @@ protected:
   void printRates( real64 const & time_n,
                    real64 const & dt,
                    DomainPartition & domain ) override;
-
+  void printSegRates( real64 const & time_n,
+                      real64 const & dt,
+                      integer num_timesteps,
+                      integer num_timestep_cuts,
+                      integer current_newton_iteration,
+                      DomainPartition & domain );
   virtual bool evaluateConstraints( real64 const & time_n,
                                     real64 const & stepDt,
                                     integer const cycleNumber,
@@ -474,14 +512,13 @@ private:
    */
   void initializeWells( DomainPartition & domain, real64 const & time_n ) override;
 
-  void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) override;
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
   template< typename ... GROUPTYPES >
   void selectLimitingConstraint( real64 const & time_n, integer const coupledIterationNumber, WellElementSubRegion & subRegion );
 
-  void solveConstraint(  WellConstraintBase * constraint,
+  void solveConstraint( WellConstraintBase * constraint,
                         real64 const & time_n,
                         real64 const & dt,
                         integer const cycleNumber,
@@ -523,6 +560,7 @@ private:
   /// index of the target phase, used to impose the phase rate constraint
   localIndex m_targetPhaseIndex;
 
+  bool m_wellDebugInit;
 
 
 };

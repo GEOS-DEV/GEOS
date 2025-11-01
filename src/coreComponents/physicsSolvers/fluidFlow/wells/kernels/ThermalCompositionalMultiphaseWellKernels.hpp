@@ -82,7 +82,7 @@ public:
     arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseMassDens = m_dPhaseMassDens[ei][0];
 
     real64 & dTotalMassDens_dT = m_dTotalMassDens[ei][Deriv::dT];
-    dTotalMassDens_dT=0.0;
+
     // Call the base compute the compute the total mass density and derivatives
     return Base::compute( ei, [&]( localIndex const ip )
     {
@@ -181,7 +181,6 @@ public:
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
     m_isProducer( wellControls.isProducer() ),
     m_currentControl( wellControls.getControl() ),
-    m_constraintValue ( wellControls.getCurrentConstraint()->getConstraintValue( time )),
     m_volume( subRegion.getElementVolume() ),
     m_phaseDens_n( fluid.phaseDensity_n() ),
     m_totalDens_n( fluid.totalDensity_n() ),
@@ -191,19 +190,22 @@ public:
     if( m_isProducer )
     {
       // tjb This needs to be fixed  should use current constraint rate for normalization
-      m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
+      if( wellControls.getMinBHPConstraint()->isConstraintActive() )
+      {
+        m_targetBHP = wellControls.getMinBHPConstraint()->getConstraintValue( time );
+      }
       if( m_currentControl == WellControls::Control::PHASEVOLRATE )
       {
         m_targetPhaseIndex = wellControls.getConstraintPhaseIndex();
+        m_constraintValue =  wellControls.getProdRateConstraints()[0]->getConstraintValue( time );
       }
     }
     else
     {
       m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
-      if( m_currentControl == WellControls::Control::PHASEVOLRATE )
-      {
-        m_targetPhaseIndex = wellControls.getConstraintPhaseIndex();
-      }
+      m_targetPhaseIndex = -1;
+      m_constraintValue =  wellControls.getInjRateConstraints()[0]->getConstraintValue( time );
+
     }
 
   }
@@ -372,7 +374,7 @@ protected:
 
   /// Controls
   WellControls::Control const m_currentControl;
-  real64 const m_constraintValue;
+  real64 m_constraintValue;
   real64 m_targetBHP;
 
 
@@ -574,6 +576,14 @@ public:
                                      + phaseAmount * dPhaseInternalEnergy[ip][Deriv::dP];
       real64 const dPhaseEnergy_dT = dPhaseAmount[FLUID_PROP_COFFSET::dT] * phaseInternalEnergy[ip]
                                      + phaseAmount * dPhaseInternalEnergy[ip][Deriv::dT];
+      if( false && ei== 75 )
+      {
+        std::cout << "taccum dp" <<ei << " " << phaseAmount << " " << phaseInternalEnergy[ip] << " " << dPhaseAmount[FLUID_PROP_COFFSET::dP] <<
+          " " << dPhaseInternalEnergy[ip][Deriv::dP] << " " <<  dPhaseEnergy_dP << "\n";
+
+        std::cout << "taccum dt " <<ei << " " << phaseAmount << " " << phaseInternalEnergy[ip] << " " << dPhaseAmount[FLUID_PROP_COFFSET::dT] <<
+          " " << dPhaseInternalEnergy[ip][Deriv::dT] << " " <<  dPhaseEnergy_dT << "\n";
+      }
       // local accumulation
       stack.localResidual[numEqn-1] += phaseEnergy - phaseEnergy_n;
 
@@ -790,7 +800,7 @@ public:
   void complete( localIndex const iwelem, StackVariables & stack ) const
   {
     Base::complete ( iwelem, stack );
-
+    // tjb iso return;
     using namespace compositionalMultiphaseUtilities;
     if( stack.numConnectedElems ==1 )
     {
@@ -812,6 +822,10 @@ public:
           stack.localEnergyFluxJacobian_dQ[0][0]=0;
           stack.localEnergyFlux[0]=0;
         }
+        // if(  m_isProducer  && m_globalWellElementIndex[iwelem] == 0 )
+        // {
+        //  stack.localEnergyFlux[0]=0;
+        //}
 
 
         // Setup Jacobian global col indicies  ( Mapping from local jac order to well jac order)
@@ -950,9 +964,11 @@ public:
         }
         // Energy equation
         stack.localEnergyFlux[0]   =  -m_dt * eflux * currentConnRate;
+        // tjb std::cout << "seg flux " << iwelem << " " << iwelemUp << " " <<  -m_dt * eflux * currentConnRate << std::endl;
+
         stack.localEnergyFluxJacobian_dQ[0][0]  = -m_dt * eflux_dq;
       }
-      else if( (  iwelemNext < 0 && m_isProducer ) || currentConnRate < 0 )    // exit connection, producer
+      else if( (  iwelemNext < 0 && m_isProducer )  )    // exit connection, producer
       {
         real64 eflux=0;
         real64 eflux_dq=0;
@@ -979,9 +995,9 @@ public:
 
         for( integer dof=0; dof < CP_Deriv::nDer; dof++ )
         {
-          stack.localEnergyFluxJacobian[0][dof] *= -m_dt*currentConnRate;
+          stack.localEnergyFluxJacobian[0][dof] *=  -m_dt*currentConnRate;
         }
-        stack.localEnergyFlux[0]   =  -m_dt * eflux * currentConnRate;
+        stack.localEnergyFlux[0]   =   -m_dt * eflux * currentConnRate;
         stack.localEnergyFluxJacobian_dQ[0][0]  = -m_dt*eflux_dq;
       }
       else
@@ -998,9 +1014,14 @@ public:
           real64 dprop_dt = m_phaseEnthalpy[iwelemUp][0][ip]*m_dPhaseFraction[iwelemUp][0][ip][CP_Deriv::dT]
                             +  m_dPhaseEnthalpy[iwelemUp][0][ip][CP_Deriv::dT]*m_phaseFraction[iwelemUp][0][ip];
 
+          //std::cout << " tjb " << iwelem << " " << iwelemNext << " " << iwelemUp << " dprop_dp " << dprop_dp << " dprop_dt " << dprop_dt
+          // << std::endl;
           stack.localEnergyFluxJacobian[TAG::NEXT ] [CP_Deriv::dP] += dprop_dp;
           stack.localEnergyFluxJacobian[TAG::NEXT] [CP_Deriv::dT] += dprop_dt;
-
+          // tjb  std::cout << "seg dprop_dp  " << iwelem << " " << iwelemUp << " " <<  ip<< " " << dprop_dp <<  " pf "
+          // <<m_phaseFraction[iwelemUp][0][ip] <<
+          // " pe " << m_phaseEnthalpy[iwelemUp][0][ip] <<   " dpe " << m_dPhaseEnthalpy[iwelemUp][0][ip][CP_Deriv::dT] << " dpf " <<
+          // m_dPhaseFraction[iwelemUp][0][ip][CP_Deriv::dT] << std::endl;
           stack.localEnergyFluxJacobian[TAG::CURRENT ] [CP_Deriv::dP] += dprop_dp;
           stack.localEnergyFluxJacobian[TAG::CURRENT] [CP_Deriv::dT] += dprop_dt;
 
@@ -1019,6 +1040,7 @@ public:
         }
         stack.localEnergyFlux[TAG::NEXT   ]   =  m_dt * eflux * currentConnRate;
         stack.localEnergyFlux[TAG::CURRENT  ] = -m_dt * eflux * currentConnRate;
+        // tjb std::cout << "seg flux2  " << iwelem << " " << iwelemUp << " " <<  -m_dt * eflux * currentConnRate     <<  std::endl;
         stack.localEnergyFluxJacobian_dQ [TAG::NEXT   ][0] =  m_dt * eflux_dq;
         stack.localEnergyFluxJacobian_dQ [TAG::CURRENT][0] =  -m_dt * eflux_dq;
         for( integer dof=0; dof < CP_Deriv::nDer; dof++ )

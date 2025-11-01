@@ -42,7 +42,6 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_statusTable( nullptr ),
   m_wellOpen( false ),
   m_estimateSolution( false ),
-  m_constraintSwitch( true ),
   m_currentConstraint( nullptr ),
   m_wellStatus( WellControls::Status::OPEN ),
   m_regionAveragePressure( -1 )
@@ -99,7 +98,7 @@ WellControls::WellControls( string const & name, Group * const parent )
                     " - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) \n"
                     " - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) " );
 
-this->registerWrapper( viewKeyStruct::estimateWellSolutionString(), &m_estimateSolution ).
+  this->registerWrapper( viewKeyStruct::estimateWellSolutionString(), &m_estimateSolution ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to esitmate well solution prior to coupled reservoir and well solve." );
@@ -131,45 +130,45 @@ Group * WellControls::createChild( string const & childKey, string const & child
     m_maxBHPConstraint =  &bhpConstraint;
     constraint = &bhpConstraint;
   }
-  else if( childKey == viewKeyStruct::phaseProductionConstraintString() )
+  else if( childKey == viewKeyStruct::productionPhaseVolumeRateConstraintString() )
   {
     ProductionConstraint< PhaseVolumeRateConstraint > & phaseConstraint = registerGroup< ProductionConstraint< PhaseVolumeRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &phaseConstraint );
     constraint = &phaseConstraint;
   }
-  else if( childKey == viewKeyStruct::phaseInjectionConstraintString() )
+  else if( childKey == viewKeyStruct::injectionPhaseVolumeRateConstraint() )
   {
 
     InjectionConstraint< PhaseVolumeRateConstraint > & phaseConstraint = registerGroup< InjectionConstraint< PhaseVolumeRateConstraint > >( childName );
     m_injectionRateConstraintList.emplace_back( &phaseConstraint );
     constraint = &phaseConstraint;
   }
-  else if( childKey == viewKeyStruct::totalVolProductionConstraintString() )
+  else if( childKey == viewKeyStruct::productionVolumeRateConstraint() )
   {
     ProductionConstraint< VolumeRateConstraint > & volConstraint = registerGroup< ProductionConstraint< VolumeRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &volConstraint );
     constraint = &volConstraint;
   }
-  else if( childKey == viewKeyStruct::totalVolInjectionConstraintString() )
+  else if( childKey == viewKeyStruct::injectionVolumeRateConstraint() )
   {
     InjectionConstraint< VolumeRateConstraint > & volConstraint = registerGroup< InjectionConstraint< VolumeRateConstraint > >( childName );
     m_injectionRateConstraintList.emplace_back( &volConstraint );
     constraint = &volConstraint;
   }
-  else if( childKey == viewKeyStruct::massProductionConstraintString() )
+  else if( childKey == viewKeyStruct::productionMassRateConstraint() )
   {
     ProductionConstraint< MassRateConstraint > & massConstraint = registerGroup< ProductionConstraint< MassRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &massConstraint );
     constraint = &massConstraint;
 
   }
-  else if( childKey == viewKeyStruct::massInjectionConstraintString() )
+  else if( childKey == viewKeyStruct::injectionMassRateConstraint() )
   {
     InjectionConstraint< MassRateConstraint > & massConstraint = registerGroup< InjectionConstraint< MassRateConstraint > >( childName );
     m_injectionRateConstraintList.emplace_back( &massConstraint );
     constraint = &massConstraint;
   }
-  else if( childKey == viewKeyStruct::liquidProductionConstraintString() )
+  else if( childKey == viewKeyStruct::productionLiquidRateConstraint() )
   {
     ProductionConstraint< LiquidRateConstraint > & liquidConstraint = registerGroup< ProductionConstraint< LiquidRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &liquidConstraint );
@@ -309,22 +308,14 @@ bool WellControls::getWellState() const
   return m_wellOpen;
 }
 
-void WellControls::setConstraintSwitch( bool constraintSwitch )
-{
-  m_constraintSwitch = constraintSwitch;
-}
-
-bool WellControls::getConstraintSwitch() const
-{
-  return m_constraintSwitch;
-}
-
-
 void WellControls::setNextDtFromTables( real64 const & currentTime, real64 & nextDt )
 {
   if( isProducer() )
   {
-    getMinBHPConstraint()->setNextDtFromTables( currentTime, nextDt );
+    if( getMinBHPConstraint() != nullptr )
+    {
+      getMinBHPConstraint()->setNextDtFromTables( currentTime, nextDt );
+    }
     for( auto const & constraint : m_productionRateConstraintList )
     {
       constraint->setNextDtFromTables( currentTime, nextDt );
@@ -369,7 +360,7 @@ real64 WellControls::getTargetBHP( real64 const & targetTime ) const
 real64 WellControls::getInjectionTemperature() const
 {
   real64 injectionTemperature = 0.0;
-  this->forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint > >( [&] ( auto & constraint )
+  this->forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
   {
     if( constraint.isConstraintActive())
     {
@@ -384,7 +375,7 @@ real64 WellControls::getInjectionTemperature() const
 arrayView1d< real64 const > WellControls::getInjectionStream() const
 {
   arrayView1d< real64 const > injectionStream;
-  forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint > >( [&] ( auto & constraint )
+  forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
   {
     if( constraint.isConstraintActive() )
     {

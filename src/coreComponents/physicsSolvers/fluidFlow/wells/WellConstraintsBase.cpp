@@ -68,7 +68,7 @@ TableFunction * createConstraintScheduleTable( string const & tableName,
 
 WellConstraintBase::WellConstraintBase( string const & name, Group * const parent )
   : Group( name, parent ),
-  m_isConstraintActive( true ),
+  m_isConstraintActive( 1 ),
   m_useScheduleTable( false ),
   m_constraintValue( 0 ),
   m_constraintScheduleTable( nullptr ),
@@ -81,6 +81,13 @@ WellConstraintBase::WellConstraintBase( string const & name, Group * const paren
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the well constraint schedule table when the constraint value  is a time dependent function. \n" );
+
+  registerWrapper( viewKeyStruct::constraintActiveString(), &m_isConstraintActive ).
+    setDefaultValue( 1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to enable constraint. Currently only supported for injectors: \n"
+                    " - If the flag is set to 1, constraint included in boundary condition selection. \n"
+                    " - If the flag is set to 0, constraint excluded from boundary condition selection." );
 
 }
 

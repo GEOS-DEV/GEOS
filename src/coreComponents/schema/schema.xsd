@@ -222,16 +222,8 @@
 				</xsd:unique>
 			</xsd:element>
 			<xsd:element name="Functions" type="FunctionsType" maxOccurs="1">
-				<xsd:unique name="FunctionsCompositeFunctionUniqueName">
-					<xsd:selector xpath="CompositeFunction" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
 				<xsd:unique name="FunctionsMultivariableTableFunctionUniqueName">
 					<xsd:selector xpath="MultivariableTableFunction" />
-					<xsd:field xpath="@name" />
-				</xsd:unique>
-				<xsd:unique name="FunctionsSymbolicFunctionUniqueName">
-					<xsd:selector xpath="SymbolicFunction" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
 				<xsd:unique name="FunctionsTableFunctionUniqueName">
@@ -1433,43 +1425,15 @@ stress - traction is applied to the faces as specified by the inner product of i
 	</xsd:simpleType>
 	<xsd:complexType name="FunctionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="CompositeFunction" type="CompositeFunctionType" />
 			<xsd:element name="MultivariableTableFunction" type="MultivariableTableFunctionType" />
-			<xsd:element name="SymbolicFunction" type="SymbolicFunctionType" />
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="CompositeFunctionType">
-		<!--expression => Composite math expression-->
-		<xsd:attribute name="expression" type="string" default="" />
-		<!--functionNames => List of source functions. The order must match the variableNames argument.-->
-		<xsd:attribute name="functionNames" type="string_array" default="{}" />
-		<!--inputVarNames => Name of fields are input to function.-->
-		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
-		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
-		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
-		<!--variableNames => List of variables in expression-->
-		<xsd:attribute name="variableNames" type="groupNameRef_array" default="{}" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MultivariableTableFunctionType">
 		<!--inputVarNames => Name of fields are input to function.-->
 		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
 		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
 		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="groupName" use="required" />
-	</xsd:complexType>
-	<xsd:complexType name="SymbolicFunctionType">
-		<!--expression => Symbolic math expression-->
-		<xsd:attribute name="expression" type="string" use="required" />
-		<!--inputVarNames => Name of fields are input to function.-->
-		<xsd:attribute name="inputVarNames" type="groupNameRef_array" default="{}" />
-		<!--inputVarScale => Scaling applied to function inputs before function evaluation.-->
-		<xsd:attribute name="inputVarScale" type="real64_array" default="{1}" />
-		<!--variableNames => List of variables in expression.  The order must match the evaluate argument-->
-		<xsd:attribute name="variableNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -3370,8 +3334,6 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--estimateWellSolution => Flag to esitmate well solution prior to coupled reservoir and well solve.-->
-		<xsd:attribute name="estimateWellSolution" type="integer" default="0" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
@@ -3405,6 +3367,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="timeStepFromTables" type="integer" default="0" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
+		<!--useNewCode => Use new code-->
+		<xsd:attribute name="useNewCode" type="integer" default="1" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--useTotalMassEquation => Use total mass equation-->
@@ -3413,6 +3377,8 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSegDebug => Write well seg/perf debug into CSV files-->
+		<xsd:attribute name="writeSegDebug" type="integer" default="0" />
 		<!--writeStatistics => When set to 1, output iterations information to a csv
 When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="writeStatistics" type="integer" default="0" />
@@ -3420,61 +3386,29 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="WellControlsType">
-		<!--control => Well control. Valid options:
-* BHP
-* phaseVolRate
-* totalVolRate
-* massRate
-* uninitialized-->
-		<xsd:attribute name="control" type="geos_WellControls_Control" use="required" />
 		<!--enableCrossflow => Flag to enable crossflow. Currently only supported for injectors: 
  - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
  - If the flag is set to 0, we only allow well-to-reservoir flow at the perforations.-->
 		<xsd:attribute name="enableCrossflow" type="integer" default="1" />
+		<!--estimateWellSolution => Flag to esitmate well solution prior to coupled reservoir and well solve.-->
+		<xsd:attribute name="estimateWellSolution" type="integer" default="0" />
 		<!--initialPressureCoefficient => Tuning coefficient for the initial well pressure of rate-controlled wells: 
  - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) 
  - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) -->
 		<xsd:attribute name="initialPressureCoefficient" type="real64" default="0.1" />
-		<!--injectionStream => Global component densities of the injection stream [moles/m^3 or kg/m^3]-->
-		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
-		<!--injectionTemperature => Temperature of the injection stream [K]-->
-		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
 Information output from lower logLevels is added with the desired log level
 1
  - Well control information-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--referenceElevation => Reference elevation where BHP control is enforced [m]-->
-		<xsd:attribute name="referenceElevation" type="real64" use="required" />
 		<!--referenceReservoirRegion => Name of reservoir region used for obtaining average region pressure used in volume rate constraint calculations.
 Frequency of pressure update is set in Single/CompositionalMultiPhaseStatistics definition.
 Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint properties-->
 		<xsd:attribute name="referenceReservoirRegion" type="groupNameRef" default="" />
-		<!--statusTableName => Name of the well status table when the status of the well is a time dependent function. 
-If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut.-->
-		<xsd:attribute name="statusTableName" type="groupNameRef" default="" />
 		<!--surfacePressure => Surface pressure used to compute volumetric rates when surface conditions are used [Pa]-->
 		<xsd:attribute name="surfacePressure" type="real64" default="0" />
 		<!--surfaceTemperature => Surface temperature used to compute volumetric rates when surface conditions are used [K]-->
 		<xsd:attribute name="surfaceTemperature" type="real64" default="0" />
-		<!--targetBHP => Target bottom-hole pressure [Pa]-->
-		<xsd:attribute name="targetBHP" type="real64" default="0" />
-		<!--targetBHPTableName => Name of the BHP table when the rate is a time dependent function-->
-		<xsd:attribute name="targetBHPTableName" type="groupNameRef" default="" />
-		<!--targetMassRate => Target Mass Rate rate ( [kg^3/s])-->
-		<xsd:attribute name="targetMassRate" type="real64" default="0" />
-		<!--targetMassRateTableName => Name of the mass rate table when the rate is a time dependent function-->
-		<xsd:attribute name="targetMassRateTableName" type="groupNameRef" default="" />
-		<!--targetPhaseName => Name of the target phase-->
-		<xsd:attribute name="targetPhaseName" type="groupNameRef" default="" />
-		<!--targetPhaseRate => Target phase volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])-->
-		<xsd:attribute name="targetPhaseRate" type="real64" default="0" />
-		<!--targetPhaseRateTableName => Name of the phase rate table when the rate is a time dependent function-->
-		<xsd:attribute name="targetPhaseRateTableName" type="groupNameRef" default="" />
-		<!--targetTotalRate => Target total volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])-->
-		<xsd:attribute name="targetTotalRate" type="real64" default="0" />
-		<!--targetTotalRateTableName => Name of the total rate table when the rate is a time dependent function-->
-		<xsd:attribute name="targetTotalRateTableName" type="groupNameRef" default="" />
 		<!--type => Well type. Valid options:
 * producer
 * injector-->
@@ -3486,11 +3420,6 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geos_WellControls_Control">
-		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|BHP|phaseVolRate|totalVolRate|massRate|uninitialized" />
-		</xsd:restriction>
-	</xsd:simpleType>
 	<xsd:simpleType name="geos_WellControls_Type">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|producer|injector" />
@@ -3885,7 +3814,7 @@ Information output from lower logLevels is added with the desired log level
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
 		<xsd:attribute name="maxNumResolves" type="integer" default="10" />
 		<!--newFractureInitializationType => Type of new fracture element initialization. Can be Pressure or Displacement. -->
-		<xsd:attribute name="newFractureInitializationType" type="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt_-_gt__InitializationType" default="Pressure" />
+		<xsd:attribute name="newFractureInitializationType" type="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt__gt__InitializationType" default="Pressure" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
 		<xsd:attribute name="solidSolverName" type="groupNameRef" use="required" />
 		<!--stabilizationMultiplier => Constant multiplier of stabilization strength-->
@@ -3913,7 +3842,7 @@ When set to 2 also output convergence information to a csv-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
-	<xsd:simpleType name="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt_-_gt__InitializationType">
+	<xsd:simpleType name="geos_HydrofractureSolver_lt_geos_SinglePhasePoromechanics_lt_geos_SinglePhaseBase_cm_-geos_SolidMechanicsLagrangianFEM_gt__gt__InitializationType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|Pressure|Displacement" />
 		</xsd:restriction>
@@ -5165,8 +5094,6 @@ When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--estimateWellSolution => Flag to esitmate well solution prior to coupled reservoir and well solve.-->
-		<xsd:attribute name="estimateWellSolution" type="integer" default="0" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
@@ -5188,12 +5115,16 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
 		<!--timeStepFromTables => Choose time step to honor rates/bhp tables time intervals-->
 		<xsd:attribute name="timeStepFromTables" type="integer" default="0" />
+		<!--useNewCode => Use new code-->
+		<xsd:attribute name="useNewCode" type="integer" default="1" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeCSV => When set to 1, write the rates into a CSV file-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
+		<!--writeSegDebug => Write well seg/perf debug into CSV files-->
+		<xsd:attribute name="writeSegDebug" type="integer" default="0" />
 		<!--writeStatistics => When set to 1, output iterations information to a csv
 When set to 2 also output convergence information to a csv-->
 		<xsd:attribute name="writeStatistics" type="integer" default="0" />

@@ -925,6 +925,7 @@ public:
                                     localIndex const iwelem,
                                     stackArray1d< globalIndex, resNumDOF > & dofColIndices )
     {
+      GEOS_UNUSED_VAR( dofColIndices ); // tjb iso
       // No energy equation if top element and Injector
       // Top element defined by global index == 0
       // Assumption is global index == 0 is top segment with fixed temp BC
@@ -939,8 +940,9 @@ public:
       stackArray2d< real64, resNumDOF > localPerfJacobian( 1, resNumDOF );
       // populate local flux vector and derivatives
 
-      real64 localPerf  = -m_dt * m_energyPerfFlux[iperf];
+      real64 localPerf  =   -m_dt * m_energyPerfFlux[iperf];
 
+      // std::cout << "Local perf: " << iperf << " " << localPerf << std::endl;
       localIndex localDofIndexPres = 0;
       localPerfJacobian [0][localDofIndexPres] = -m_dt *  m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP];
 
@@ -954,6 +956,7 @@ public:
 
       if( eqnRowIndices >= 0 && eqnRowIndices < m_localMatrix.numRows() )
       {
+        // tjb iso
         m_localMatrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices,
                                                                                      dofColIndices.data(),
                                                                                      localPerfJacobian[0].dataIfContiguous(),

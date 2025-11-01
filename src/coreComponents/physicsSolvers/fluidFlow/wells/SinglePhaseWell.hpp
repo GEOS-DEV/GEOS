@@ -317,6 +317,25 @@ public:
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
 
+  virtual void outputSingleWellDebug( real64 const time,
+                                      real64 const dt,
+                                      integer num_timesteps,
+                                      integer current_newton_iteration,
+                                      integer num_timestep_cuts,
+                                      MeshLevel & mesh,
+                                      WellElementSubRegion & subRegion,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< const real64 > const & localRhs ) override;
+  virtual void outputWellDebug( real64 const time,
+                                real64 const dt,
+                                integer num_timesteps,
+                                integer current_newton_iteration,
+                                integer num_timestep_cuts,
+                                DomainPartition & domain,
+                                DofManager const & dofManager,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs )override;
   /*
    * @brief apply a special treatment to the wells that are shut
    * @param time_n the time at the previous converged time step
@@ -330,6 +349,9 @@ public:
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs );
+
+
+  virtual void saveState( WellElementSubRegion & subRegion ) override;
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     static constexpr char const * dofFieldString() { return "singlePhaseWellVars"; }
@@ -345,7 +367,6 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  void saveState( WellElementSubRegion & subRegion );
 
   void printRates( real64 const & time_n,
                    real64 const & dt,
@@ -376,14 +397,14 @@ private:
                                         WellElementSubRegion const & subRegion,
                                         ElementRegionManager const & elemManager ) override;
 
- virtual bool evaluateConstraints( real64 const &   time_n ,
+  virtual bool evaluateConstraints( real64 const &   time_n,
                                     real64 const & GEOS_UNUSED_PARAM( stepDt ),
                                     integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                     integer const GEOS_UNUSED_PARAM( coupledIterationNumber ),
                                     DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                     MeshLevel & GEOS_UNUSED_PARAM( mesh ),
                                     ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
-                                    WellElementSubRegion &   subRegion  ,
+                                    WellElementSubRegion &   subRegion,
                                     DofManager const & GEOS_UNUSED_PARAM( dofManager ) ) override;
 
 

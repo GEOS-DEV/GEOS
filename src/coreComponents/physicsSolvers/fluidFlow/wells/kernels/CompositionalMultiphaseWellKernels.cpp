@@ -420,6 +420,7 @@ PresTempCompFracInitializationKernel::
           arrayView1d< localIndex const > const & resElementIndex,
           arrayView1d< real64 const > const & perfGravCoef,
           arrayView1d< integer const > const & perfStatus,
+          arrayView1d< localIndex const > const perfWellElemIndex,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 > const & wellElemPres,
           arrayView1d< real64 > const & wellElemTemp,
@@ -432,9 +433,10 @@ PresTempCompFracInitializationKernel::
   real64 const initialPresCoef = wellControls.getInitialPressureCoefficient();
   WellControls::Control const currentControl = wellControls.getControl();
   bool const isProducer = wellControls.isProducer();
-
-
-
+  localIndex const nLocalSeg = wellElemPres.size();
+  array1d< real64 > segTemp;
+  GEOS_UNUSED_VAR( perfWellElemIndex );
+  segTemp.resize( nLocalSeg );
   // Step 1: we loop over all the perforations on this rank to compute the following quantities:
   //   - Sum of total mass densities over the perforated reservoir elements
   //   - Sum of the temperatures over the perforated reservoir elements
@@ -448,7 +450,7 @@ PresTempCompFracInitializationKernel::
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumCompFrac[MAX_NUM_COMP]{};
   RAJA::ReduceMin< parallelDeviceReduce, real64 > localMinGravCoefDiff( 1e9 );
 
-  forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOS_HOST_DEVICE ( localIndex const iperf )
+  forAll< parallelDevicePolicy<> >( perforationSize, [&] GEOS_HOST_DEVICE ( localIndex const iperf )
   {
     if( perfStatus[iperf] )
     {
@@ -457,7 +459,9 @@ PresTempCompFracInitializationKernel::
       localIndex const er = resElementRegion[iperf];
       localIndex const esr = resElementSubRegion[iperf];
       localIndex const ei = resElementIndex[iperf];
-
+      //localIndex const wi = perfWellElemIndex[iperf];
+      //std::cout << "perf " << iperf << " maps to well elem " << wi << std::endl;
+      //segTemp[wi] = resTemp[er][esr][ei];
       // save the min gravCoef difference between the reference depth and the perforation depth (times g)
       localMinGravCoefDiff.min( LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] ) );
 
@@ -482,6 +486,16 @@ PresTempCompFracInitializationKernel::
       }
     }
   } );
+#if 0
+  for( integer i=nLocalSeg-2; i>-1; --i )
+  {
+    std::cout << "segTemp[" << i << "] = " << segTemp[i] << std::endl;
+    if( segTemp[i] == 0.0 )
+    {
+      segTemp[i] = segTemp[i+1];
+    }
+  }
+#endif
   real64 const minGravCoefDiff = MpiWrapper::min( localMinGravCoefDiff.get() );
 
   integer totalOpenPerfs = MpiWrapper::sum( numOpenPerfs.get() );
@@ -500,7 +514,6 @@ PresTempCompFracInitializationKernel::
   {
     // use average temperature from reservoir
     avgTemp = MpiWrapper::sum( sumTemp.get() ) / totalOpenPerfs;
-
     // use average comp frac from reservoir
     for( integer ic = 0; ic < numComps; ++ic )
     {
@@ -552,6 +565,9 @@ PresTempCompFracInitializationKernel::
         if( isZero( gravCoefDiff - minGravCoefDiff ) )
         {
           localRefPres.min( alpha * resPres[er][esr][ei] + avgTotalMassDens * ( refWellElemGravCoef - perfGravCoef[iperf] ) );
+          //localRefPres.min(  resPres[er][esr][ei]  );
+          //std::cout << "perf " << iperf << " alpha " << alpha << " resPres " << resPres[er][esr][ei] << " estimated refPres " <<
+          // refWellElemGravCoef << " " << perfGravCoef[iperf]   << std::endl;
         }
       }
     } );
@@ -574,8 +590,11 @@ PresTempCompFracInitializationKernel::
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
     wellElemPres[iwelem] = refPres + avgTotalMassDens * ( wellElemGravCoef[iwelem] - refWellElemGravCoef );
+    //wellElemPres[iwelem] = refPres ;
     wellElemTemp[iwelem] = avgTemp;
-
+#if 0
+    wellElemTemp[iwelem] = segTemp[iwelem];
+#endif
     real64 sumCompFracForCheck = 0.0;
     for( integer ic = 0; ic < numComps; ++ic )
     {
@@ -608,7 +627,9 @@ PresTempCompFracInitializationKernel::
   GEOS_THROW_IF( foundInconsistentCompFrac.get() == 1,
                  wellControls.getDataContext() << "Invalid well initialization, inconsistent component fractions were found.",
                  InputError );
-
+  std::cout << wellControls.getName() << " initialized with reference pressure " << refPres
+            << ", average temperature " << avgTemp
+            << ", average total mass density " << avgTotalMassDens << std::endl;
 
 }
 
@@ -654,7 +675,7 @@ RateInitializationKernel::
 
       forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
       {
-        connRate[iwelem] = LvArray::math::max( 0.1 * constraintVal * phaseDens[iwelem][0][targetPhaseIndex], -1e3 );
+        connRate[iwelem] = constraintVal * phaseDens[iwelem][0][targetPhaseIndex];
       } );
     }
     else if( controlType == ConstraintTypeId::TOTALVOLRATE )
@@ -669,6 +690,17 @@ RateInitializationKernel::
       forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
       {
         connRate[iwelem] = constraintVal;
+      } );
+    }
+    else if( controlType == ConstraintTypeId::BHP )
+    {
+      // this assumes phase control presen
+      integer const targetPhaseIndex = wellControls.getConstraintPhaseIndex();
+
+      forAll< parallelDevicePolicy<> >( subRegionSize, [&] GEOS_HOST_DEVICE ( localIndex const iwelem )
+      {
+
+        connRate[iwelem] = LvArray::math::max( 0.1 * constraintVal * phaseDens[iwelem][0][targetPhaseIndex], -1e3 );
       } );
     }
   }
@@ -691,6 +723,7 @@ RateInitializationKernel::
     {
       forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
       {
+        std::cout << "rate est " << iwelem << " " << constraintVal << std::endl;
         connRate[iwelem] =  constraintVal * totalDens[iwelem][0];
       } );
     }
@@ -699,6 +732,13 @@ RateInitializationKernel::
       forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
       {
         connRate[iwelem] = constraintVal;
+      } );
+    }
+    else if( controlType == ConstraintTypeId::BHP )
+    {
+      forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
+      {
+        connRate[iwelem] = LvArray::math::min( 0.1 * constraintVal * totalDens[iwelem][0], 1e3 );
       } );
     }
   }
