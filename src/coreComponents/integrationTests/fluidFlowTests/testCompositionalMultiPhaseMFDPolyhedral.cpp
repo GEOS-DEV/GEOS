@@ -32,7 +32,7 @@ using namespace geos::testing;
 
 CommandLineOptions g_commandLineOptions;
 
-// Pressure L2 error tolerance
+// Pressure and saturation L2 error tolerances
 static constexpr real64 PRESSURE_L2_TOLERANCE = 1.0e-7;
 static constexpr real64 SATURATION_L2_TOLERANCE = 1.0e-7;
 
@@ -43,7 +43,7 @@ static constexpr auto INNER_TPFA = "TPFA";
 static constexpr auto INNER_quasiTPFA = "quasiTPFA";
 static constexpr auto INNER_BDVLM = "beiraoDaVeigaLipnikovManzini";
 
-// Generate XML for compositional multiphase FV-TPFA (simplified from user-provided template)
+// Generate XML for compositional multiphase FV-TPFA (simplified from the user-provided template)
 static std::string generateXmlInputCompTPFA( std::string const & meshFile )
 {
   std::ostringstream oss;
@@ -334,7 +334,7 @@ static inline std::vector< real64 > arrayViewToVector( arrayView1d< real64 const
   return std::vector< real64 >( arr.data(), arr.data() + n );
 }
 
-// Helper: copy a 2D view to flat vector (row-major by phase index), accept any 2D view type
+// Helper: copy a 2D view to flat vector (row-major by phase index), accepts any 2D view type
 template< typename View2D >
 static inline std::vector< real64 > arrayView2dToVector( View2D & arr, localIndex nCells, localIndex nCols )
 {
@@ -626,7 +626,7 @@ TEST_P( CompositionalTPFAvsMFDTPFA, PressureAndSaturationComparison )
   }
 }
 
-// MFD non-TPFA inner products: check linear pressure profile is exact on both meshes
+// MFD non-TPFA inner products: check linear pressure profile is exact on all meshes
 class CompositionalMFDNonTPFAExactnessTest : public ::testing::TestWithParam< std::tuple< const char *, const char * > >
 {
 public:
