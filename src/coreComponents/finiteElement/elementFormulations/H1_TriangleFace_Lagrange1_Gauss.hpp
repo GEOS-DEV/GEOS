@@ -116,6 +116,18 @@ public:
   }
 
   /**
+   * @brief Get the number of quadrature points.
+   * @param q Index of the quadrature point.
+   * @return The weight of the quadrature point.
+   */
+  GEOS_HOST_DEVICE
+  static real64 getQuadratureWeight( localIndex const q )
+  {
+    return quadratureWeight( q ) * weight;
+  }
+
+
+  /**
    * @brief Calculate shape functions values at a single point.
    * @param[in] coords The parent coordinates at which to evaluate the shape function value
    * @param[out] N The shape function values.

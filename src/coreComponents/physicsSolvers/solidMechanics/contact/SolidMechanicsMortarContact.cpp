@@ -47,8 +47,8 @@ SolidMechanicsMortarContact::SolidMechanicsMortarContact( const string & name,
   ContactSolverBase( name, parent )
 {
 
-  m_faceTypeToMortarFiniteElements.get_inserted(ElementShape::Quadrilateral) = std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
-  m_faceTypeToMortarFiniteElements.get_inserted(ElementShape::Triangle) = std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss4 >();
+  m_faceTypeToMortarFiniteElements.get_inserted( ElementShape::Quadrilateral ) = std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >();
+  m_faceTypeToMortarFiniteElements.get_inserted( ElementShape::Triangle ) = std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss4 >();
 
   registerWrapper( viewKeyStruct::masterString(), &m_masterName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -396,7 +396,7 @@ void SolidMechanicsMortarContact::assembleMortarBubbles( DofManager const & dofM
   int permutation[numNodesPerElem];
   FEType::getPermutation( permutation );
 
-  forAll< parallelDevicePolicy<> >( elementList.size(), [=] ( localIndex const kk )
+  forAll< parallelDevicePolicy<> >( elementList.size(), [=] GEOS_HOST_DEVICE ( localIndex const kk )
   {
     localIndex const k = elementList[kk];
     localIndex const kf0 = elemsToFaces[k][0];
@@ -1187,8 +1187,8 @@ void SolidMechanicsMortarContact::createFaceTypeListMortar( MortarSide side )
 
   stdMap< string, array1d< localIndex > > faceTypeList;
 
-  m_faceTypeToElementList.get_inserted(side).get_inserted(ElementShape::Quadrilateral) = quadList;
-  m_faceTypeToElementList.get_inserted(side).get_inserted(ElementShape::Triangle) = triList;
+  m_faceTypeToElementList.get_inserted( side ).get_inserted( ElementShape::Quadrilateral ) = quadList;
+  m_faceTypeToElementList.get_inserted( side ).get_inserted( ElementShape::Triangle ) = triList;
 
 }
 
@@ -1333,7 +1333,7 @@ void SolidMechanicsMortarContact::setMortarSurfaces( DomainPartition & domain )
         MortarSurface surfaceSlave;
         surfaceSlave.mesh = &mesh;
         surfaceSlave.surface = &region;
-        m_mortarSide.get_inserted(MortarSide::Slave) = surfaceSlave;
+        m_mortarSide.get_inserted( MortarSide::Slave ) = surfaceSlave;
         m_meshSlaveName = meshName;
       }
       else if( surfacePath.find( m_masterName ) != std::string::npos )
@@ -1341,7 +1341,7 @@ void SolidMechanicsMortarContact::setMortarSurfaces( DomainPartition & domain )
         MortarSurface surfaceMaster;
         surfaceMaster.mesh = &mesh;
         surfaceMaster.surface = &region;
-        m_mortarSide.get_inserted(MortarSide::Master) = surfaceMaster;
+        m_mortarSide.get_inserted( MortarSide::Master ) = surfaceMaster;
       }
     } );
   } );
@@ -1551,11 +1551,11 @@ void SolidMechanicsMortarContact::computeMortarInterpolation( ArrayOfArrays< loc
     std::cout << "----------------------------------------------------------------------------------------------------------------------" << std::endl;
   }
 
-  m_triCells.get_inserted(MortarSide::Slave).get_inserted({slaveShape, masterShape}) = triCellsListSlave;
-  m_triCells.get_inserted(MortarSide::Master).get_inserted({slaveShape, masterShape}) = triCellsListMaster;
-  m_triCellsDet.get_inserted({slaveShape, masterShape}) = triCellsDetList;
-  m_gpLocalCoords.get_inserted(MortarSide::Slave).get_inserted({slaveShape, masterShape}) = gpLocalCoordsSlave;
-  m_gpLocalCoords.get_inserted(MortarSide::Master).get_inserted({slaveShape, masterShape}) = gpLocalCoordsMaster;
+  m_triCells.get_inserted( MortarSide::Slave ).get_inserted( {slaveShape, masterShape} ) = triCellsListSlave;
+  m_triCells.get_inserted( MortarSide::Master ).get_inserted( {slaveShape, masterShape} ) = triCellsListMaster;
+  m_triCellsDet.get_inserted( {slaveShape, masterShape} ) = triCellsDetList;
+  m_gpLocalCoords.get_inserted( MortarSide::Slave ).get_inserted( {slaveShape, masterShape} ) = gpLocalCoordsSlave;
+  m_gpLocalCoords.get_inserted( MortarSide::Master ).get_inserted( {slaveShape, masterShape} ) = gpLocalCoordsMaster;
 }
 
 
@@ -2067,7 +2067,7 @@ void SolidMechanicsMortarContact::getConnectivityMap( connectivityMapType & conn
       // loop over all master-slave element shape pairs
       ArrayOfArrays< localIndex > connections;
       getMortarConnections( slaveShape, masterShape, connections );
-      connectivityMap.get_inserted({slaveShape, masterShape}) = connections;
+      connectivityMap.get_inserted( {slaveShape, masterShape} ) = connections;
     }
   }
 }
