@@ -46,8 +46,7 @@ public:
   /// Destructor
   virtual ~OutputManager() override;
 
-  /// @copydoc geos::dataRepository::Group::createChild( string const & childKey, string const & childName, bool const allowExistence=false
-  /// )
+  /// @copydoc geos::dataRepository::Group::createChild( string const & childKey, string const & childName, bool const allowExistence )
   virtual Group * createChild( string const & childKey,
                                string const & childName,
                                bool const allowExistence=false ) override;
