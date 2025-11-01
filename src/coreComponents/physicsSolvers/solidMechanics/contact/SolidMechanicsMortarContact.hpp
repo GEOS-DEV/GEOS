@@ -117,6 +117,11 @@ public:
 
   void setMortarSurfaces( DomainPartition & domain );
 
+  template< ElementShape shape >
+  void assembleMortarBubbles( DofManager const & dofManager,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs );
+
 
 
 private:
@@ -164,10 +169,6 @@ private:
                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
                         arrayView1d< real64 > const & localRhs );
 
-  template< ElementShape shape >
-  void assembleMortarBubbles( DofManager const & dofManager,
-                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                              arrayView1d< real64 > const & localRhs );
 
   void assembleMortar( real64 const dt,
                        DofManager const & dofManager,
