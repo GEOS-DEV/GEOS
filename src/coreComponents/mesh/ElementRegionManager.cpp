@@ -77,14 +77,16 @@ auto const & getUserAvailableKeys()
   return keys;
 }
 
-Group * ElementRegionManager::createChild( string const & childKey, string const & childName )
+Group * ElementRegionManager::createChild( string const & childKey,
+                                           string const & childName,
+                                           bool const allowExistence )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   GEOS_ERROR_IF( getUserAvailableKeys().count( childKey ) == 0,
                  CatalogInterface::unknownTypeError( childKey, getDataContext(), getUserAvailableKeys() ) );
   Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
   return &elementRegions.registerGroup( CatalogInterface::factory( childKey, getDataContext(),
-                                                                   childName, &elementRegions ) );
+                                                                   childName, &elementRegions ), allowExistence );
 }
 
 void ElementRegionManager::expandObjectCatalogs()

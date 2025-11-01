@@ -94,7 +94,9 @@ public:
    * </Events>
    * @endcode
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override;
 
   /**
    * @brief Expand any catalogs in the data structure.

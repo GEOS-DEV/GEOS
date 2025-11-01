@@ -224,7 +224,7 @@ public:
   T & addProperty( string const & propertyName )
   {
     m_externalPropertyNames.emplace_back( propertyName );
-    return this->registerWrapper< T >( propertyName ).reference();
+    return this->registerWrapper< T >( propertyName, true ).reference();
   }
 
   ///@}

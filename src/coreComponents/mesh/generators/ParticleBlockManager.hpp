@@ -41,7 +41,9 @@ public:
    */
   ParticleBlockManager( string const & name, Group * const parent );
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override;
 
   using Group::resize;
 

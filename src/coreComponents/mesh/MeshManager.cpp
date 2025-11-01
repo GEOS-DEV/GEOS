@@ -43,12 +43,14 @@ MeshManager::MeshManager( string const & name,
 MeshManager::~MeshManager()
 {}
 
-Group * MeshManager::createChild( string const & childKey, string const & childName )
+Group * MeshManager::createChild( string const & childKey,
+                                  string const & childName,
+                                  bool const allowExistence )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   std::unique_ptr< MeshGeneratorBase > mesh =
     MeshGeneratorBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
-  return &this->registerGroup< MeshGeneratorBase >( std::move( mesh ) );
+  return &this->registerGroup< MeshGeneratorBase >( std::move( mesh ), allowExistence );
 }
 
 

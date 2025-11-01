@@ -222,7 +222,9 @@ void PhysicsSolverBase::registerDataOnMesh( Group & meshBodies )
 
 
 
-Group * PhysicsSolverBase::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
+Group * PhysicsSolverBase::createChild( string const & GEOS_UNUSED_PARAM( childKey ),
+                                        string const & GEOS_UNUSED_PARAM( childName ),
+                                        bool const GEOS_UNUSED_PARAM( allowExistence ) )
 {
   // Unused as all children are created within the constructor
   return nullptr;

@@ -54,7 +54,9 @@ public:
 
   void print();
 
-  virtual Group * createChild( string const & childKey, string const & childName ) override final;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override final;
 
   LinearSolverParameters const & get() const
   { return m_parameters; }

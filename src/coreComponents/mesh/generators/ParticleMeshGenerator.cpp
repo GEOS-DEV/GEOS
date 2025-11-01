@@ -59,7 +59,8 @@ ParticleMeshGenerator::ParticleMeshGenerator( string const & name, Group * const
 }
 
 Group * ParticleMeshGenerator::createChild( string const & GEOS_UNUSED_PARAM( childKey ),
-                                            string const & GEOS_UNUSED_PARAM( childName ) )
+                                            string const & GEOS_UNUSED_PARAM( childName ),
+                                            bool const GEOS_UNUSED_PARAM( allowExistence ) )
 {
   return nullptr;
 }

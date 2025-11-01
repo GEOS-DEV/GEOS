@@ -264,13 +264,15 @@ public:
 
   /**
    * @brief Creates a new sub-Group using the ObjectCatalog functionality.
-   * @param[in] childKey The name of the new object type's key in the
-   *                     ObjectCatalog.
-   * @param[in] childName The name of the new object in the collection of
-   *                      sub-Groups.
+   * @param[in] childKey The name of the new object type's key in the ObjectCatalog.
+   * @param[in] childName The name of the new object in the collection of sub-Groups.
+   * @param[in] allowExistence Whether to error out if an sub group already exists with the same name,
+   *   or return the existing object.
    * @return A pointer to the new Group created by this function.
    */
-  virtual Group * createChild( string const & childKey, string const & childName );
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false );
 
   ///@}
 
@@ -861,11 +863,15 @@ public:
    * @tparam T the type of the wrapped object
    * @param[in] name the name of the wrapper to use as a string key
    * @param[in] newObject an owning pointer to the object that is being registered
+   * @param[in] allowExistence Whether to error out if an wrapper already exists with the same name,
+   *   or return the existing object.
    * @return A reference to the newly registered/created Wrapper
    * @note Not intended to register a @p WrapperBase instance. Use dedicated member function instead.
    */
   template< typename T >
-  Wrapper< T > & registerWrapper( string const & name, std::unique_ptr< T > newObject );
+  Wrapper< T > & registerWrapper( string const & name,
+                                  std::unique_ptr< T > newObject,
+                                  bool const allowExistence=false );
 
   /**
    * @brief Register a Wrapper around an existing object, does not take ownership of the object.
@@ -1736,10 +1742,11 @@ Wrapper< TBASE > & Group::registerWrapper( ViewKey const & viewKey, bool const a
 
 template< typename T >
 Wrapper< T > & Group::registerWrapper( string const & name,
-                                       std::unique_ptr< T > newObject )
+                                       std::unique_ptr< T > newObject,
+                                       bool const allowExistence )
 {
   static_assert( !std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
-  insertWrapper( std::make_unique< Wrapper< T > >( name, *this, std::move( newObject ) ) );
+  insertWrapper( std::make_unique< Wrapper< T > >( name, *this, std::move( newObject ) ), allowExistence );
 
   Wrapper< T > & rval = getWrapper< T >( name );
   if( rval.sizedFromParent() == 1 )

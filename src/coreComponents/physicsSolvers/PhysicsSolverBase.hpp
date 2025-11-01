@@ -701,9 +701,13 @@ public:
    * @brief creates a child group of of this PhysicsSolverBase instantiation
    * @param childKey the key of the child type
    * @param childName the name of the child
+   * @param[in] allowExistence Whether to error out if an sub group already exists with the same name,
+   *   or return the existing object.
    * @return a pointer to the child group
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override;
 
   /**
    * @brief Type alias for catalog interface used by this class. See CatalogInterface.

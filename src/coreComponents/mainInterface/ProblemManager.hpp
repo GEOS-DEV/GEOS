@@ -78,13 +78,15 @@ public:
 
   /**
    * @brief Creates a new sub-Group using the ObjectCatalog functionality.
-   * @param childKey The name of the new object type's key in the
-   *                 ObjectCatalog.
-   * @param childName The name of the new object in the collection of
-   *                  sub-Groups.
+   * @param childKey The name of the new object type's key in the ObjectCatalog.
+   * @param childName The name of the new object in the collection of sub-Groups.
+   * @param[in] allowExistence Whether to error out if an sub group already exists with the same name,
+   *   or return the existing object.
    * @return A pointer to the new Group created by this function.
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override;
 
   /**
    * @brief Parses command line input

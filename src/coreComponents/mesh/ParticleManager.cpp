@@ -82,12 +82,14 @@ void ParticleManager::setMaxGlobalIndex()
                                             MPI_COMM_GEOS );
 }
 
-Group * ParticleManager::createChild( string const & childKey, string const & childName )
+Group * ParticleManager::createChild( string const & childKey,
+                                      string const & childName,
+                                      bool const allowExistence )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   Group & particleRegions = this->getGroup( ParticleManager::groupKeyStruct::particleRegionsGroup() );
   return &particleRegions.registerGroup( CatalogInterface::factory( childKey, getDataContext(),
-                                                                    childName, &particleRegions ) );
+                                                                    childName, &particleRegions ), allowExistence );
 }
 
 void ParticleManager::expandObjectCatalogs()

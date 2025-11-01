@@ -50,12 +50,14 @@ FieldSpecificationManager & FieldSpecificationManager::getInstance()
   return *m_instance;
 }
 
-Group * FieldSpecificationManager::createChild( string const & childKey, string const & childName )
+Group * FieldSpecificationManager::createChild( string const & childKey,
+                                                string const & childName,
+                                                bool const allowExistence )
 {
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   std::unique_ptr< FieldSpecificationBase > bc =
     FieldSpecificationBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
-  return &this->registerGroup( std::move( bc ) );
+  return &this->registerGroup( std::move( bc ), allowExistence );
 }
 
 

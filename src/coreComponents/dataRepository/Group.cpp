@@ -268,10 +268,10 @@ void Group::registerDataOnMeshRecursive( Group & meshBodies )
   }
 }
 
-Group * Group::createChild( string const & childKey, string const & childName )
+Group * Group::createChild( string const & childKey, string const & childName, bool const allowExistence )
 {
   GEOS_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from Group::Catalog." );
-  return &registerGroup( CatalogInterface::factory( childKey, getDataContext(), childName, this ) );
+  return &registerGroup( CatalogInterface::factory( childKey, getDataContext(), childName, this ), allowExistence );
 }
 
 void Group::printDataHierarchy( integer const indent ) const

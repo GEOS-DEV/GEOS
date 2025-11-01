@@ -39,7 +39,8 @@ NumericalMethodsManager::~NumericalMethodsManager()
 {}
 
 Group * NumericalMethodsManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ),
-                                              string const & GEOS_UNUSED_PARAM( childName ) )
+                                              string const & GEOS_UNUSED_PARAM( childName ),
+                                              bool const GEOS_UNUSED_PARAM( allowExistence ) )
 {
   // Unused as all children are created within the constructor
   return nullptr;

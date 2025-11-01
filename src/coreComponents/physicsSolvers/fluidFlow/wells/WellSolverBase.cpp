@@ -66,7 +66,9 @@ WellSolverBase::WellSolverBase( string const & name,
   addLogLevel< logInfo::WellControl >();
 }
 
-Group * WellSolverBase::createChild( string const & childKey, string const & childName )
+Group * WellSolverBase::createChild( string const & childKey,
+                                     string const & childName,
+                                     bool const allowExistence )
 {
   static std::set< string > const childTypes = {
     keys::wellControls,
@@ -77,11 +79,11 @@ Group * WellSolverBase::createChild( string const & childKey, string const & chi
                  CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
   if( childKey == keys::wellControls )
   {
-    return &registerGroup< WellControls >( childName );
+    return &registerGroup< WellControls >( childName, allowExistence );
   }
   else
   {
-    PhysicsSolverBase::createChild( childKey, childName );
+    PhysicsSolverBase::createChild( childKey, childName, allowExistence );
     return nullptr;
   }
 }

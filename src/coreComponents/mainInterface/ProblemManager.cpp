@@ -159,7 +159,9 @@ ProblemManager::~ProblemManager()
 }
 
 
-Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ), string const & GEOS_UNUSED_PARAM( childName ) )
+Group * ProblemManager::createChild( string const & GEOS_UNUSED_PARAM( childKey ),
+                                     string const & GEOS_UNUSED_PARAM( childName ),
+                                     bool const GEOS_UNUSED_PARAM( allowExistence ) )
 {
   // Unused as all children are created within the constructor
   return nullptr;
@@ -971,7 +973,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
                 std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
 
                 finiteElement::FiniteElementBase &
-                fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ) ).
+                fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ), true ).
                        setRestartFlags( RestartFlags::NO_WRITE ).reference();
                 subRegion.excludeWrappersFromPacking( { discretizationName } );
 

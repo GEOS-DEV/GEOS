@@ -169,9 +169,13 @@ public:
    * @brief Create a new ElementRegion object as a child of this group.
    * @param childKey catalog key of the new ElementRegion derived type to create
    * @param childName name of the new ElementRegion object
+   * @param[in] allowExistence Whether to error out if an sub group already exists with the same name,
+   *   or return the existing object.
    * @return pointer to the created ElementRegion object
    */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
+  virtual Group * createChild( string const & childKey,
+                               string const & childName,
+                               bool const allowExistence=false ) override;
 //  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
 
   /**
