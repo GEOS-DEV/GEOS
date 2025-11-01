@@ -33,8 +33,8 @@ using namespace geos::testing;
 CommandLineOptions g_commandLineOptions;
 
 // Pressure and saturation L2 error tolerances
-static constexpr real64 PRESSURE_L2_TOLERANCE = 1.0e-7;
-static constexpr real64 SATURATION_L2_TOLERANCE = 1.0e-7;
+static constexpr real64 PRESSURE_L2_TOLERANCE = 1.0e-8;
+static constexpr real64 SATURATION_L2_TOLERANCE = 1.0e-8;
 
 // Single time step
 static constexpr real64 TIME_STEP = 1.0e-2; // 0.01
@@ -363,7 +363,7 @@ static inline real64 computeNormalizedPressureL2Error( CellElementSubRegion & su
   RAJA::ReduceSum< parallelDeviceReduce, real64 > squaredPressureError_ReduceSum( 0.0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > squaredExactPressure_ReduceSum( 0.0 );
   localIndex const n_cells = subRegion.size();
-  
+
   forAll< geos::parallelDevicePolicy<> >( n_cells, [=] GEOS_HOST_DEVICE ( localIndex const i )
   {
     real64 const x = centers[i][0];
@@ -380,7 +380,7 @@ static inline real64 computeNormalizedPressureL2Error( CellElementSubRegion & su
 
   // Compute pressure relative L2 error
   real64 const normalizedL2Error = std::sqrt( squaredPressureError ) / std::sqrt( squaredExactPressure );
-  
+
   return normalizedL2Error;
 }
 
