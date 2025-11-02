@@ -1193,6 +1193,37 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
   else
   {
     wellControls.setWellState( true );
+    // setup if restart
+    if( wellControls.getCurrentConstraint() == nullptr )
+    {
+      updateSubRegionState( subRegion );
+      if( wellControls.isProducer() )
+      {
+        wellControls.forSubGroups< MinimumBHPConstraint, ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >,
+                                   ProductionConstraint< PhaseVolumeRateConstraint > >( [&](
+                                                                                          auto
+                                                                                          & constraint )
+        {
+          if( ConstraintTypeId( wellControls.getControl()) == constraint.getControl()  )
+          {
+            wellControls.setCurrentConstraint( &constraint );
+          }
+        } );
+      }
+      else
+      {
+        wellControls.forSubGroups< MaximumBHPConstraint, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint >, InjectionConstraint< PhaseVolumeRateConstraint > >( [&](
+                                                                                                                                                                                                       auto
+                                                                                                                                                                                                       &
+                                                                                                                                                                                                       constraint )
+        {
+          if( ConstraintTypeId( wellControls.getControl()) == constraint.getControl()  )
+          {
+            wellControls.setCurrentConstraint( &constraint );
+          }
+        } );
+      }
+    }
 
   }
 }
