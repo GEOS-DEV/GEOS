@@ -17,14 +17,6 @@
 <!-- SPHINX_SOLVER_END -->
 </Solvers>
 
-  <NumericalMethods>
-    <FiniteElements>
-      <FiniteElementSpace
-        name="FE1"
-        order="1"/>
-    </FiniteElements>
-  </NumericalMethods>
-
   <!-- SPHINX_MESH -->
   <Mesh>
     <InternalMesh

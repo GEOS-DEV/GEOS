@@ -1264,12 +1264,12 @@ string PhysicsSolverBase::getConstitutiveName( ParticleSubRegionBase const & sub
 template< typename CONSTITUTIVE >
 void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const
 {
-  subRegion.registerWrapper< string >( wrapperName ).
-    setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
-    setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
-    setSizedFromParent( 0 );
+  string & constitutiveName = subRegion.registerWrapper< string >( wrapperName, true ).
+                                setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
+                                setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+                                setSizedFromParent( 0 ).
+                                reference();
 
-  string & constitutiveName = subRegion.getReference< string >( wrapperName );
   constitutiveName = getConstitutiveName< CONSTITUTIVE >( subRegion );
   GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{}: {} constitutive model not found on subregion {}",
                                                      getDataContext(), constitutiveType, subRegion.getName() ) );

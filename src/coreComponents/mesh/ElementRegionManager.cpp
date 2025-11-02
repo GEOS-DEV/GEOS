@@ -93,12 +93,7 @@ void ElementRegionManager::expandObjectCatalogs()
 {
   for( string const & key : getUserAvailableKeys() )
   {
-    Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
-
-    std::unique_ptr< Group > region =
-      CatalogInterface::factory( key, getDataContext(), key, &elementRegions );
-
-    elementRegions.registerGroup( std::move( region ), true );
+    this->createChild( key, key, true );
   }
 }
 
@@ -275,6 +270,7 @@ void ElementRegionManager::buildSets( NodeManager const & nodeManager )
       arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
 
       SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName, true ).reference();
+      targetSet.clear();
       for( localIndex k = 0; k < subRegion.size(); ++k )
       {
         localIndex const numNodes = subRegion.numNodesPerElement( k );

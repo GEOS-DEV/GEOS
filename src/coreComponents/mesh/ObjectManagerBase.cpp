@@ -89,14 +89,9 @@ ObjectManagerBase::CatalogInterface::CatalogType & ObjectManagerBase::getCatalog
 
 SortedArray< localIndex > & ObjectManagerBase::createSet( const string & newSetName )
 {
-  if( m_sets.hasWrapper( newSetName ) )
-  {
-    return m_sets.getReference< SortedArray< localIndex > >( newSetName );
-  }
-  else
-  {
-    return m_sets.registerWrapper< SortedArray< localIndex > >( newSetName ).reference();
-  }
+  auto & set = m_sets.registerWrapper< SortedArray< localIndex > >( newSetName, true ).reference();
+  set.clear();
+  return set;
 }
 
 void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,

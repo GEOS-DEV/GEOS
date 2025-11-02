@@ -102,12 +102,7 @@ void ParticleManager::expandObjectCatalogs()
     string const key = iter->first;
     if( key.find( "ParticleRegion" ) != string::npos )
     {
-      Group & particleRegions = this->getGroup( ParticleManager::groupKeyStruct::particleRegionsGroup() );
-
-      std::unique_ptr< Group > region =
-        CatalogInterface::factory( key, getDataContext(), key, &particleRegions );
-
-      particleRegions.registerGroup( std::move( region ), true );
+      this->createChild( key, key, true );
     }
   }
 }

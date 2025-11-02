@@ -574,7 +574,7 @@ public:
 
     m_registeredField.insert( FIELD_TRAIT::key());
 
-    return this->registerWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key() ).
+    return this->registerWrapper< typename FIELD_TRAIT::type >( FIELD_TRAIT::key(), nullptr, true ).
              setApplyDefaultValue( defaultValue ).
              setPlotLevel( FIELD_TRAIT::plotLevel ).
              setRestartFlags( FIELD_TRAIT::restartFlag ).
