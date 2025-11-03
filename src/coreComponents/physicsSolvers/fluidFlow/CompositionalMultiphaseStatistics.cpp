@@ -155,12 +155,12 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
           TableLayout tableLayout( {
               TableLayout::Column().setName( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ))),
               TableLayout::Column().setName( GEOS_FMT( "Min pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
-              TableLayout::Column().setName( GEOS_FMT( "Average pressure[{}]", units::getSymbol( units::Unit::Pressure )) ),
+              TableLayout::Column().setName( GEOS_FMT( "Average pressure [{}]", units::getSymbol( units::Unit::Pressure )) ),
               TableLayout::Column().setName( GEOS_FMT( "Max pressure [{}]", units::getSymbol( units::Unit::Pressure ) ) ),
-              TableLayout::Column().setName( GEOS_FMT( "Min delta pressur[{}]", units::getSymbol( units::Unit::Pressure ))),
-              TableLayout::Column().setName( GEOS_FMT( "Max delta pressur[{}]", units::getSymbol( units::Unit::Pressure ))),
+              TableLayout::Column().setName( GEOS_FMT( "Min delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+              TableLayout::Column().setName( GEOS_FMT( "Max delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
               TableLayout::Column().setName( GEOS_FMT( "Min temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
-              TableLayout::Column().setName( GEOS_FMT( "Average temperature[{}]", units::getSymbol( units::Unit::Temperature ) )),
+              TableLayout::Column().setName( GEOS_FMT( "Average temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
               TableLayout::Column().setName( GEOS_FMT( "Max temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
               TableLayout::Column().setName( GEOS_FMT( "Total dynamic pore volume [{}]", units::getSymbol( units::Unit::ReservoirVolume ) )),
             } );

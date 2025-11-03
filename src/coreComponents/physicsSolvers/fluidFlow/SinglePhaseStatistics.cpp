@@ -76,8 +76,8 @@ void SinglePhaseStatistics::registerDataOnMesh( Group & meshBodies )
           GEOS_FMT( "Average pressure [{}]", units::getSymbol( units::Unit::Pressure ))<<
           GEOS_FMT( "Min pressure [{}]", units::getSymbol( units::Unit::Pressure ))<<
           GEOS_FMT( "Max pressure [{}]", units::getSymbol( units::Unit::Pressure ))<<
-          GEOS_FMT( "<Min delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))<<
-          GEOS_FMT( "<Max delta pressure  [{}]", units::getSymbol( units::Unit::Pressure )) <<
+          GEOS_FMT( "Min delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))<<
+          GEOS_FMT( "Max delta pressure [{}]", units::getSymbol( units::Unit::Pressure )) <<
           GEOS_FMT( "Min temperature [{}]", units::getSymbol( units::Unit::Temperature ))<<
           GEOS_FMT( "Average temperature [{}]", units::getSymbol( units::Unit::Temperature ))<<
           GEOS_FMT( "Max temperature [{}]", units::getSymbol( units::Unit::Temperature ))<<
