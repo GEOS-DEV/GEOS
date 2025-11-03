@@ -198,53 +198,67 @@ void CompositionalMultiphaseBase::postInputInitialization()
   FlowSolverBase::postInputInitialization();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
-                        ": The maximum absolute change in component fraction in a Newton iteration must be smaller or equal to 1.0" );
+                        viewKeyStruct::maxCompFracChangeString() <<
+                        "The maximum absolute change in component fraction in a Newton iteration must be smaller or equal to 1.0",
+                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxCompFracChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
-                        ": The maximum absolute change in component fraction in a Newton iteration must be larger than 0.0" );
+                        viewKeyStruct::maxCompFracChangeString() <<
+                        "The maximum absolute change in component fraction in a Newton iteration must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativePresChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxRelativePresChangeString() ) <<
-                        ": The maximum relative change in pressure in a Newton iteration must be larger than 0.0" );
+                        viewKeyStruct::maxRelativePresChangeString() <<
+                        "The maximum relative change in pressure in a Newton iteration must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxRelativePresChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativeTempChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxRelativeTempChangeString() ) <<
-                        ": The maximum relative change in temperature in a Newton iteration must be larger than 0.0" );
+                        viewKeyStruct::maxRelativeTempChangeString() <<
+                        "The maximum relative change in temperature in a Newton iteration must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxRelativeTempChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativeCompDensChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxRelativeCompDensChangeString() ) <<
-                        ": The maximum relative change in component density in a Newton iteration must be larger than 0.0" );
+                        viewKeyStruct::maxRelativeCompDensChangeString() <<
+                        "The maximum relative change in component density in a Newton iteration must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxRelativeCompDensChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetRelativePresChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::targetRelativePresChangeString() ) <<
-                        ": The target relative change in pressure in a time step must be larger than 0.0" );
+                        viewKeyStruct::targetRelativePresChangeString() <<
+                        "The target relative change in pressure in a time step must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::targetRelativePresChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetRelativeTempChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::targetRelativeTempChangeString() ) <<
-                        ": The target relative change in temperature in a time step must be larger than 0.0" );
+                        viewKeyStruct::targetRelativeTempChangeString() <<
+                        "The target relative change in temperature in a time step must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::targetRelativeTempChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetPhaseVolFracChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::targetPhaseVolFracChangeString() ) <<
-                        ": The target change in phase volume fraction in a time step must be larger than 0.0" );
+                        viewKeyStruct::targetPhaseVolFracChangeString() <<
+                        "The target change in phase volume fraction in a time step must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::targetPhaseVolFracChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetRelativeCompDensChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::targetRelativeCompDensChangeString() ) <<
-                        ": The target change in component density in a time step must be larger than 0.0" );
+                        viewKeyStruct::targetRelativeCompDensChangeString() <<
+                        "The target change in component density in a time step must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::targetRelativeCompDensChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetCompFracChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::targetCompFracChangeString() ) <<
-                        ": The target change in component fraction in a time step must be larger than 0.0" );
+                        viewKeyStruct::targetCompFracChangeString() <<
+                        "The target change in component fraction in a time step must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::targetCompFracChangeString() ) );
 
   GEOS_ERROR_IF_LT_MSG( m_solutionChangeScalingFactor, 0.0,
-                        getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ) <<
-                        ": The solution change scaling factor must be larger or equal to 0.0" );
+                        viewKeyStruct::solutionChangeScalingFactorString() <<
+                        "The solution change scaling factor must be larger or equal to 0.0",
+                        getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ));
   GEOS_ERROR_IF_GT_MSG( m_solutionChangeScalingFactor, 1.0,
-                        getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ) <<
-                        ": The solution change scaling factor must be smaller or equal to 1.0" );
+                        viewKeyStruct::solutionChangeScalingFactorString() <<
+                        "The solution change scaling factor must be smaller or equal to 1.0",
+                        getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ));
   GEOS_ERROR_IF_LE_MSG( m_minScalingFactor, 0.0,
-                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ) <<
-                        ": The minumum scaling factor must be larger than 0.0" );
+                        viewKeyStruct::minScalingFactorString() <<
+                        "The minumum scaling factor must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ));
   GEOS_ERROR_IF_GT_MSG( m_minScalingFactor, 1.0,
-                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ) <<
-                        ": The minumum scaling factor must be smaller or equal to 1.0" );
+                        viewKeyStruct::minScalingFactorString() <<
+                        "The minumum scaling factor must be smaller or equal to 1.0",
+                        getWrapperDataContext( viewKeyStruct::minScalingFactorString() ));
 
   if( m_isThermal && m_useSimpleAccumulation ) // useSimpleAccumulation is not yet compatible with thermal
   {
-    GEOS_LOG_RANK_0( GEOS_FMT( "{}: '{}' is not yet implemented for thermal simulation. Switched to phase sum accumulation.",
-                               getDataContext(), viewKeyStruct::useSimpleAccumulationString() ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "'{}' is not yet implemented for thermal simulation. Switched to phase sum accumulation.",
+                               viewKeyStruct::useSimpleAccumulationString(), getDataContext()  ) );
     m_useSimpleAccumulation = 0;
   }
 
@@ -254,18 +268,18 @@ void CompositionalMultiphaseBase::postInputInitialization()
 
     if( m_isThermal ) // z_c formulation is not yet compatible with thermal
     {
-      GEOS_ERROR( GEOS_FMT( "{}: '{}' is currently not available for thermal simulations",
-                            getDataContext(), formulationName ) );
+      GEOS_ERROR( GEOS_FMT( " '{}' is currently not available for thermal simulations",
+                            formulationName ), getDataContext());
     }
     if( m_hasDiffusion || m_hasDispersion ) // z_c formulation is not yet compatible with diffusion or dispersion
     {
-      GEOS_ERROR( GEOS_FMT( "{}: {} is currently not available for diffusion or dispersion",
-                            getDataContext(), formulationName ) );
+      GEOS_ERROR( GEOS_FMT( " {} is currently not available for diffusion or dispersion",
+                            formulationName ), getDataContext() );
     }
     if( m_isJumpStabilized ) // z_c formulation is not yet compatible with pressure stabilization
     {
-      GEOS_ERROR( GEOS_FMT( "{}: pressure stabilization is not yet supported by {}",
-                            getDataContext(), formulationName ) );
+      GEOS_ERROR( GEOS_FMT( " pressure stabilization is not yet supported by {}",
+                            formulationName ), getDataContext() );
     }
   }
 }
@@ -316,25 +330,22 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       if( m_hasCapPressure )
       {
         GEOS_THROW_IF( getConstitutiveName< CapillaryPressureBase >( subRegion ).empty(),
-                       GEOS_FMT( "{}: Capillary pressure model not found on subregion {}",
-                                 getDataContext(), subRegion.getName() ),
-                       InputError, subRegion.getDataContext() );
+                       GEOS_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
+                       InputError, getDataContext(), subRegion.getDataContext() );
       }
 
       if( m_hasDiffusion )
       {
         GEOS_THROW_IF( getConstitutiveName< DiffusionBase >( subRegion ).empty(),
-                       GEOS_FMT( "{}: Diffusion model not found on subregion {}",
-                                 getDataContext(), subRegion.getName() ),
-                       InputError, subRegion.getDataContext() );
+                       GEOS_FMT( "Diffusion model not found on subregion {}", subRegion.getName() ),
+                       InputError, getDataContext(), subRegion.getDataContext() );
       }
 
       if( m_hasDispersion )
       {
         GEOS_THROW_IF( getConstitutiveName< DispersionBase >( subRegion ).empty(),
-                       GEOS_FMT( "{}: Dispersion model not found on subregion {}",
-                                 getDataContext(), subRegion.getName() ),
-                       InputError, subRegion.getDataContext() );
+                       GEOS_FMT( " Dispersion model not found on subregion {}", subRegion.getName() ),
+                       InputError, getDataContext(), subRegion.getDataContext() );
       }
     } );
   } );
@@ -546,14 +557,16 @@ void CompositionalMultiphaseBase::initializeAquiferBC( ConstitutiveManager const
     string_array const & aquiferWaterPhaseCompNames = bc.getWaterPhaseComponentNames();
 
     GEOS_ERROR_IF_NE_MSG( fluid0.numFluidComponents(), aquiferWaterPhaseCompFrac.size(),
-                          getDataContext() << ": Mismatch in number of components between constitutive model "
-                                           << fluid0.getName() << " and the water phase composition in aquifer " << bc.getName() );
+                          "Mismatch in number of components between constitutive model "
+                          << fluid0.getName() << " and the water phase composition in aquifer " << bc.getName(),
+                          getDataContext()  );
 
     for( integer ic = 0; ic < fluid0.numFluidComponents(); ++ic )
     {
       GEOS_ERROR_IF_NE_MSG( fluid0.componentNames()[ic], aquiferWaterPhaseCompNames[ic],
-                            getDataContext() << ": Mismatch in component names between constitutive model "
-                                             << fluid0.getName() << " and the water phase components in aquifer " << bc.getName() );
+                            "Mismatch in component names between constitutive model "
+                            << fluid0.getName() << " and the water phase components in aquifer " << bc.getName(),
+                            getDataContext()  );
     }
   } );
 }
@@ -612,12 +625,12 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
 
       bool const isFluidModelThermal = fluid.isThermal();
       GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
-                     GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
-                               getName(), fluid.getName() ),
+                     GEOS_FMT( "The thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
+                               fluid.getName() ),
                      InputError, getDataContext(), fluid.getDataContext() );
       GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
-                     GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
-                               getDgetNameataContext(), fluid.getName() ),
+                     GEOS_FMT( "The thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
+                               fluid.getName() ),
                      InputError, getDataContext(), fluid.getDataContext() );
 
       string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
@@ -1119,7 +1132,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                     << " must be provided for a multiphase simulation",
                    InputError, bc.getDataContext() );
     GEOS_THROW_IF( bc.getComponentFractionVsElevationTableNames().empty(),
-                   getCatalogName() << ": " << EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString()
+                   getCatalogName() << "" << EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString()
                                     << " must be provided for a multiphase simulation",
                    InputError, bc.getDataContext() );
   } );
@@ -1178,7 +1191,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       real64 const eps = 0.1 * (maxElevation - minElevation);   // we add a small buffer to only log in the pathological cases
       GEOS_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
                           getCatalogName() << " " << getDataContext() <<
-                          ": By looking at the elevation of the cell centers in this model, GEOS found that " <<
+                          "By looking at the elevation of the cell centers in this model, GEOS found that " <<
                           "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " <<
                           globalMaxElevation[equilIndex] << "\nBut, a datum elevation of " << datumElevation <<
                           " was specified in the input file to equilibrate the model.\n " <<

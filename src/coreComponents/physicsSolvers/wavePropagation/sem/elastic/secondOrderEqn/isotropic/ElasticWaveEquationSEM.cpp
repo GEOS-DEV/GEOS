@@ -297,7 +297,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
   {
 
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                   ": Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
+                   "Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
                    InputError, getDataContext(), elementSubRegion.getDataContext().getContextInfo().setPriority( -1 ) );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
@@ -766,7 +766,7 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
     }
     else
     {
-      GEOS_ERROR( getDataContext() << ": This option is not supported yet" );
+      GEOS_ERROR( getDataContext() << "This option is not supported yet" );
     }
   } );
 }
@@ -791,7 +791,7 @@ real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                      DomainPartition & domain,
                                                      integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
-  GEOS_ERROR( getDataContext() << ": Backward propagation for the elastic wave propagator not yet implemented" );
+  GEOS_ERROR( getDataContext() << "Backward propagation for the elastic wave propagator not yet implemented" );
   real64 dtOut = explicitStepInternal( time_n, dt, domain );
   return dtOut;
 }
@@ -1096,12 +1096,12 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
 
 void ElasticWaveEquationSEM::initializePML()
 {
-  GEOS_ERROR( getDataContext() << ": PML for the elastic wave propagator not yet implemented" );
+  GEOS_ERROR( getDataContext() << "PML for the elastic wave propagator not yet implemented" );
 }
 
 void ElasticWaveEquationSEM::applyPML( real64 const, DomainPartition & )
 {
-  GEOS_ERROR( getDataContext() << ": PML for the elastic wave propagator not yet implemented" );
+  GEOS_ERROR( getDataContext() << "PML for the elastic wave propagator not yet implemented" );
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, ElasticWaveEquationSEM, string const &, dataRepository::Group * const )

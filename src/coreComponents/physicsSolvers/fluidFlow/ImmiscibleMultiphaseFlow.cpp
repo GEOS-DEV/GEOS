@@ -793,7 +793,7 @@ void ImmiscibleMultiphaseFlow::applyDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "ImmiscibleMultiphaseFlow {}: inconsistent boundary conditions", getDataContext() ) );
+    GEOS_ERROR_IF( !bcConsistent, "ImmiscibleMultiphaseFlow : inconsistent boundary conditions", getDataContext() );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();

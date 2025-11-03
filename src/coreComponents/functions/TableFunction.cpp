@@ -83,7 +83,7 @@ void TableFunction::readFile( string const & filename, array1d< real64 > & targe
   }
   catch( std::runtime_error const & e )
   {
-    GEOS_THROW( GEOS_FMT( "{} {}: {}", catalogName(), getDataContext(), e.what() ), InputError );
+    GEOS_THROW( GEOS_FMT( "{}: {}", catalogName(), e.what() ), InputError, getDataContext()  );
   }
 }
 
@@ -103,8 +103,8 @@ void TableFunction::setTableCoordinates( array1d< real64_array > const & coordin
     for( localIndex j = 1; j < coordinates[i].size(); ++j )
     {
       GEOS_THROW_IF( coordinates[i][j] - coordinates[i][j-1] <= 0,
-                     GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
-                               catalogName(), getDataContext(), i ),
+                     GEOS_FMT( "{} : coordinates must be strictly increasing, but axis {} is not",
+                               catalogName(), i ),
                      InputError, getDataContext() );
     }
     m_coordinates.appendArray( coordinates[i].begin(), coordinates[i].end() );
@@ -165,17 +165,17 @@ void TableFunction::reInitializeFunction()
     for( localIndex j = 1; j < m_coordinates[ii].size(); ++j )
     {
       GEOS_THROW_IF( m_coordinates[ii][j] - m_coordinates[ii][j-1] <= 0,
-                     GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
-                               catalogName(), getDataContext(), ii ),
+                     GEOS_FMT( "{} : coordinates must be strictly increasing, but axis {} is not",
+                               catalogName(), ii ),
                      InputError, getDataContext() );
     }
   }
   if( m_coordinates.size() > 0 && !m_values.empty() ) // coordinates and values have been set
   {
     GEOS_THROW_IF_NE_MSG( increment, m_values.size(),
-                          GEOS_FMT( "{} {}: number of values does not match total number of table coordinates",
-                                    catalogName(), getDataContext() ),
-                          InputError );
+                          GEOS_FMT( "{} : number of values does not match total number of table coordinates",
+                                    catalogName()  ),
+                          InputError, getDataContext() );
   }
 
   // Create the kernel wrapper
@@ -185,14 +185,13 @@ void TableFunction::reInitializeFunction()
 void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
 {
   GEOS_THROW_IF( dim >= m_coordinates.size() || dim < 0,
-                 GEOS_FMT( "{}: The {} dimension ( no. {} ) doesn't exist in the table.",
-                           getDataContext(), units::getDescription( getDimUnit( dim ) ), dim ),
+                 GEOS_FMT( "The {} dimension ( no. {} ) doesn't exist in the table.",
+                           units::getDescription( getDimUnit( dim ) ), dim ),
                  SimulationError, getDataContext() );
   real64 const lowerBound = m_coordinates[dim][0];
   real64 const upperBound = m_coordinates[dim][m_coordinates.sizeOfArray( dim ) - 1];
   GEOS_THROW_IF( coord > upperBound || coord < lowerBound,
-                 GEOS_FMT( "{}: Requested {} is out of the table bounds ( lower bound: {} -> upper bound: {} ).",
-                           getDataContext(),
+                 GEOS_FMT( "Requested {} is out of the table bounds ( lower bound: {} -> upper bound: {} ).",
                            units::formatValue( coord, getDimUnit( dim ) ),
                            units::formatValue( lowerBound, getDimUnit( dim ) ),
                            units::formatValue( upperBound, getDimUnit( dim ) ) ),
@@ -214,8 +213,9 @@ real64 TableFunction::evaluate( real64 const * const input ) const
 real64 TableFunction::getCoord( real64 const * const input, localIndex const dim, InterpolationType interpolationMethod ) const
 {
   GEOS_ASSERT_MSG( interpolationMethod != InterpolationType::Linear,
-                   GEOS_FMT( "{}: TableFunction::getCoord should not be called with {} interpolation method",
-                             getDataContext(), EnumStrings< InterpolationType >::toString( interpolationMethod )));
+                   GEOS_FMT( "TableFunction::getCoord should not be called with {} interpolation method",
+                             EnumStrings< InterpolationType >::toString( interpolationMethod )),
+                   getDataContext() );
   GEOS_ASSERT( dim >= 0 && dim < m_coordinates.size() );
   return m_kernelWrapper.getCoord( input, dim, interpolationMethod );
 }

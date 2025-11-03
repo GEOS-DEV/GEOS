@@ -383,7 +383,7 @@ void AcousticWaveEquationDG::initializePostInitialConditionsPreSubGroups()
 
 real64 AcousticWaveEquationDG::computeTimeStep( real64 & dtOut )
 {
-  GEOS_ERROR( getDataContext() << ":  Time-Step computation for  acoustic dg wave propagator not yet implemented" );
+  GEOS_ERROR( " Time-Step computation for  acoustic dg wave propagator not yet implemented", getDataContext() );
   return dtOut;
 }
 
@@ -391,7 +391,7 @@ real64 AcousticWaveEquationDG::computeTimeStep( real64 & dtOut )
 void AcousticWaveEquationDG::applyFreeSurfaceBC( real64 const time, DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( time, domain );
-  GEOS_ERROR( getDataContext() << ":  Free-Surface computation for acoustic dg wave propagator not yet implemented" );
+  GEOS_ERROR( " Free-Surface computation for acoustic dg wave propagator not yet implemented", getDataContext() );
 //  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 //  FunctionManager const & functionManager = FunctionManager::getInstance();
 //

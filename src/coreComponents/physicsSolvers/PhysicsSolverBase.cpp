@@ -166,7 +166,7 @@ void PhysicsSolverBase::generateMeshTargetsFromTargetRegions( Group const & mesh
     if( targetTokens.size()==1 ) // no MeshBody or MeshLevel specified
     {
       GEOS_ERROR_IF( meshBodies.numSubGroups() != 1,
-                     getDataContext() << ": No MeshBody information is specified in" <<
+                     "No MeshBody information is specified in" <<
                      " PhysicsSolverBase::meshTargets, but there are multiple MeshBody objects",
                      getDataContext() );
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( 0 );
@@ -182,7 +182,7 @@ void PhysicsSolverBase::generateMeshTargetsFromTargetRegions( Group const & mesh
     {
       string const meshBodyName = targetTokens[0];
       GEOS_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
-                     getWrapperDataContext( viewKeyStruct::targetRegionsString() ) << ": MeshBody (" <<
+                     viewKeyStruct::targetRegionsString() << "MeshBody (" <<
                      meshBodyName << ") is specified in targetRegions, but does not exist.",
                      getWrapperDataContext( viewKeyStruct::targetRegionsString() ) );
 
@@ -196,7 +196,7 @@ void PhysicsSolverBase::generateMeshTargetsFromTargetRegions( Group const & mesh
     }
     else
     {
-      GEOS_ERROR( getDataContext() << ": Invalid specification of targetRegions" );
+      GEOS_ERROR( "Invalid specification of targetRegions", getDataContext()  );
     }
   }
 }
@@ -241,8 +241,8 @@ localIndex PhysicsSolverBase::targetRegionIndex( string const & regionName ) con
 {
   auto const pos = std::find( m_targetRegionNames.begin(), m_targetRegionNames.end(), regionName );
   GEOS_ERROR_IF( pos == m_targetRegionNames.end(),
-                 GEOS_FMT( "{}: Region {} is not a target of the solver.",
-                           getDataContext(), regionName ), getDataContext() );
+                 GEOS_FMT( "Region {} is not a target of the solver.",
+                           regionName ), getDataContext() );
   return std::distance( m_targetRegionNames.begin(), pos );
 }
 
@@ -360,8 +360,7 @@ bool PhysicsSolverBase::execute( real64 const time_n,
     }
   }
   GEOS_ERROR_IF( dtRemaining > 0.0,
-                 getDataContext() << ": Maximum allowed number of sub-steps"
-                                     " reached. Consider increasing maxSubSteps.",
+                 "Maximum allowed number of sub-steps reached. Consider increasing maxSubSteps.",
                  getDataContext() );
 
   // Decide what to do with the next Dt for the event running the solver.
@@ -1447,14 +1446,12 @@ void PhysicsSolverBase::solveLinearSystem( DofManager const & dofManager,
 
   if( params.stopIfError )
   {
-    GEOS_ERROR_IF( m_linearSolverResult.breakdown(),
-                   getDataContext() << ": Linear solution breakdown -> simulation STOP",
+    GEOS_ERROR_IF( m_linearSolverResult.breakdown(), "Linear solution breakdown -> simulation STOP",
                    getDataContext() );
   }
   else
   {
-    GEOS_WARNING_IF( !m_linearSolverResult.success(),
-                     getDataContext() << ": Linear solution failed",
+    GEOS_WARNING_IF( !m_linearSolverResult.success(), "Linear solution failed",
                      getDataContext() );
   }
 

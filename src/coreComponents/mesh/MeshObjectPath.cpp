@@ -128,7 +128,7 @@ MeshObjectPath::fillPathTokens( string const & path,
         meshBodies.forSubGroups< MeshBody >( [&]( MeshBody const & meshBody )
         {
           stdVector< string > meshLevelsNames;
-          existingMeshBodiesAndLevels += "  MeshBody "+meshBody.getName() + ": { ";
+          existingMeshBodiesAndLevels += "  MeshBody "+meshBody.getName() + "{ ";
           meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
           {
             meshLevelsNames.push_back( meshLevel.getName() );

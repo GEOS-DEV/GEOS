@@ -126,15 +126,18 @@ void CompositionalMultiphaseWell::postInputInitialization()
   WellSolverBase::postInputInitialization();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
-                        ": The maximum absolute change in component fraction must smaller or equal to 1.0" );
+                        viewKeyStruct::maxCompFracChangeString() <<
+                        "The maximum absolute change in component fraction must smaller or equal to 1.0",
+                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
   GEOS_ERROR_IF_LT_MSG( m_maxCompFracChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) <<
-                        ": The maximum absolute change in component fraction must larger or equal to 0.0" );
+                        viewKeyStruct::maxCompFracChangeString() <<
+                        "The maximum absolute change in component fraction must larger or equal to 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
 
   GEOS_ERROR_IF_LE_MSG( m_maxRelativeCompDensChange, 0.0,
-                        getWrapperDataContext( viewKeyStruct::maxRelativeCompDensChangeString() ) <<
-                        ": The maximum relative change in component density must be larger than 0.0" );
+                        viewKeyStruct::maxRelativeCompDensChangeString() <<
+                        "The maximum relative change in component density must be larger than 0.0",
+                        getWrapperDataContext( viewKeyStruct::maxRelativeCompDensChangeString() ) );
 }
 
 void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
@@ -416,14 +419,14 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
       real64 const compFrac = injectionStream[ic];
       GEOS_THROW_IF( ( compFrac < 0.0 ) || ( compFrac > 1.0 ),
                      "WellControls " << wellControls.getName() <<
-                     ": Invalid injection stream for well " << subRegion.getName(),
+                     "Invalid injection stream for well " << subRegion.getName(),
                      InputError, wellControls.getDataContext() );
       compFracSum += compFrac;
     }
     GEOS_THROW_IF( ( compFracSum < 1.0 - std::numeric_limits< real64 >::epsilon() ) ||
                    ( compFracSum > 1.0 + std::numeric_limits< real64 >::epsilon() ),
                    "WellControls " << wellControls.getName() <<
-                   ": Invalid injection stream for well " << subRegion.getName(),
+                   "Invalid injection stream for well " << subRegion.getName(),
                    InputError, wellControls.getDataContext() );
   }
 }
@@ -508,7 +511,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
                  InputError, wellControls.getDataContext() );
   GEOS_THROW_IF( wellControls.isProducer() && !isZero( targetTotalRate ),
                  "WellControls " << wellControls.getDataContext() <<
-                 ": Target total rate cannot be used for producers",
+                 "Target total rate cannot be used for producers",
                  InputError, wellControls.getDataContext() );
 
   // Find target phase index for phase rate constraint

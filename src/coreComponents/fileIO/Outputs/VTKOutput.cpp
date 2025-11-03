@@ -120,9 +120,8 @@ void VTKOutput::postInputInitialization()
   string const onlyPlotSpecifiedFieldNamesString = viewKeysStruct::onlyPlotSpecifiedFieldNames;
 
   GEOS_THROW_IF( ( m_onlyPlotSpecifiedFieldNames != 0 ) && m_fieldNames.empty(),
-                 GEOS_FMT( "{} `{}`: the flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
-                           catalogName(), getDataContext(),
-                           onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
+                 GEOS_FMT( "{} : the flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
+                           catalogName(), onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
                  InputError, getDataContext() );
 
   GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames != 0 ),
@@ -138,8 +137,7 @@ void VTKOutput::postInputInitialization()
                         std::to_string( m_fieldNames.size() ), fieldNamesString, m_plotLevel ) );
 
   GEOS_ERROR_IF( m_writeFaceElementsAs3D,
-                 GEOS_FMT( "{} `{}`: 3D vtk plot of faceElements is not yet supported.",
-                           catalogName(), getDataContext() ),
+                 GEOS_FMT( "{} : 3D vtk plot of faceElements is not yet supported.", catalogName() ),
                  getDataContext() );
 }
 

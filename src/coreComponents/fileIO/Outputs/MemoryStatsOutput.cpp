@@ -49,8 +49,8 @@ void MemoryStatsOutput::postInputInitialization()
 {
   static bool isInstanceInitialized = false;
   GEOS_ERROR_IF( isInstanceInitialized,
-                 GEOS_FMT( "{}: Multiple instances of {} are not supported, please remove this one.",
-                           getDataContext(), catalogName() ) );
+                 GEOS_FMT( "Multiple instances of {} are not supported, please remove this one.",
+                           catalogName() ), getDataContext()  );
   isInstanceInitialized = true;
 
   auto & memLogging = MemoryLogging::getInstance();

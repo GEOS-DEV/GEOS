@@ -110,8 +110,9 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
       dynamicCast< QuasiTPFAInnerProduct const * >( &mimeticInnerProductBase )  ||
       dynamicCast< SimpleInnerProduct const * >( &mimeticInnerProductBase ) )
   {
-    GEOS_ERROR( getCatalogName() << " " << getDataContext() <<
-                "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM" );
+    GEOS_ERROR( getCatalogName() << " " << 
+                "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM",
+                 getDataContext() );
   }
 
   m_lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * 1e-8;
@@ -149,7 +150,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOS_LOG_RANK_0( getCatalogName() << " " << getDataContext() << ": An aquifer boundary condition named " <<
+      GEOS_LOG_RANK_0( getCatalogName() << " " << getDataContext() << "An aquifer boundary condition named " <<
                        bc.getName() << " was requested in the XML file. \n" <<
                        "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored" );
     } );

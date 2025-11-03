@@ -240,8 +240,7 @@ void WellControls::postInputInitialization()
   // When the simulation starts from a restart file, we don't want to use the inputControl,
   // because the control may have switched in the simulation that generated the restart
   GEOS_THROW_IF( m_inputControl == Control::UNINITIALIZED,
-                 getWrapperDataContext( viewKeyStruct::inputControlString() ) <<
-                 ": Input well control cannot be uninitialized",
+                 viewKeyStruct::inputControlString() <<  " Input well control cannot be uninitialized",
                  InputError, getWrapperDataContext( viewKeyStruct::inputControlString() ) );
 
   if( m_currentControl == Control::UNINITIALIZED )
@@ -251,21 +250,21 @@ void WellControls::postInputInitialization()
 
   // 1.a) check target BHP
   GEOS_THROW_IF( m_targetBHP < 0,
-                 getWrapperDataContext( viewKeyStruct::targetBHPString() ) <<
-                 ": Target bottom-hole pressure is negative",
+                 viewKeyStruct::targetBHPString() <<
+                 "Target bottom-hole pressure is negative",
                  InputError, getWrapperDataContext( viewKeyStruct::targetBHPString() ) );
 
   // 1.b) check target rates
   GEOS_THROW_IF( m_targetTotalRate < 0,
-                 getWrapperDataContext( viewKeyStruct::targetTotalRateString() ) << ": Target rate is negative",
+                 viewKeyStruct::targetTotalRateString() << " Target rate is negative",
                  InputError, getWrapperDataContext( viewKeyStruct::targetTotalRateString() ) );
 
   GEOS_THROW_IF( m_targetPhaseRate < 0,
-                 getWrapperDataContext( viewKeyStruct::targetPhaseRateString() ) << ": Target oil rate is negative",
+                 viewKeyStruct::targetPhaseRateString() << " Target oil rate is negative",
                  InputError, getWrapperDataContext( viewKeyStruct::targetPhaseRateString() ) );
 
   GEOS_THROW_IF( m_targetMassRate < 0,
-                 getWrapperDataContext( viewKeyStruct::targetMassRateString() ) << ": Target mass rate is negative",
+                 viewKeyStruct::targetMassRateString() << " Target mass rate is negative",
                  InputError, getWrapperDataContext( viewKeyStruct::targetMassRateString() ) );
 
   GEOS_THROW_IF( (m_injectionStream.empty()  && m_injectionTemperature >= 0) ||
@@ -292,18 +291,18 @@ void WellControls::postInputInitialization()
     for( localIndex ic = 0; ic < m_injectionStream.size(); ++ic )
     {
       GEOS_ERROR_IF( m_injectionStream[ic] < 0.0 || m_injectionStream[ic] > 1.0,
-                     getWrapperDataContext( viewKeyStruct::injectionStreamString() ) << ": Invalid injection stream",
+                     viewKeyStruct::injectionStreamString()<< " Invalid injection stream",
                      getWrapperDataContext( viewKeyStruct::injectionStreamString() ) );
       sum += m_injectionStream[ic];
     }
     GEOS_THROW_IF( LvArray::math::abs( 1.0 - sum ) > std::numeric_limits< real64 >::epsilon(),
-                   getWrapperDataContext( viewKeyStruct::injectionStreamString() ) << ": Invalid injection stream",
+                   viewKeyStruct::injectionStreamString() << " Invalid injection stream",
                    InputError, getWrapperDataContext( viewKeyStruct::injectionStreamString() ) );
   }
 
   // 3) check the flag for surface / reservoir conditions
   GEOS_THROW_IF( m_useSurfaceConditions != 0 && m_useSurfaceConditions != 1,
-                 getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) << ": The flag to select surface/reservoir conditions must be equal to 0 or 1",
+                 viewKeyStruct::useSurfaceConditionsString() << " The flag to select surface/reservoir conditions must be equal to 0 or 1",
                  InputError, getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) );
 
   // 4) check that at least one rate constraint has been defined
@@ -379,8 +378,8 @@ void WellControls::postInputInitialization()
 
   // 8) Make sure that the initial pressure coefficient is positive
   GEOS_THROW_IF( m_initialPressureCoefficient < 0,
-                 getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) <<
-                 ": This tuning coefficient is negative",
+                 viewKeyStruct::initialPressureCoefficientString() <<
+                 "This tuning coefficient is negative",
                  InputError, getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) );
 
 
