@@ -30,9 +30,11 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/FluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ResidualNormKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ReactionUpdateKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/SourceFluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalAccumulationKernels.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalDirichletFluxComputeKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalFluxComputeKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/reactive/ThermalSourceFluxComputeKernel.hpp"
 #include "constitutive/fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp"
 
 

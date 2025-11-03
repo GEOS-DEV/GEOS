@@ -913,18 +913,15 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
                                                                MeshLevel & mesh,
                                                                string_array const & )
   {
-    integer const isThermal = m_isThermal;
-    integer const numPrimarySpecies = m_numPrimarySpecies;
-
     fsManager.apply< ElementSubRegionBase,
                      SourceFluxBoundaryCondition >( time_n + dt,
                                                     mesh,
                                                     SourceFluxBoundaryCondition::catalogName(),
-                                                    [&, isThermal, numPrimarySpecies]( SourceFluxBoundaryCondition const & fs,
-                                                                                       string const & setName,
-                                                                                       SortedArrayView< localIndex const > const & targetSet,
-                                                                                       ElementSubRegionBase & subRegion,
-                                                                                       string const & )
+                                                    [&]( SourceFluxBoundaryCondition const & fs,
+                                                         string const & setName,
+                                                         SortedArrayView< localIndex const > const & targetSet,
+                                                         ElementSubRegionBase & subRegion,
+                                                         string const & )
     {
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
@@ -982,192 +979,43 @@ void SinglePhaseReactiveTransport::applySourceFluxBC( real64 const time_n,
       // get the normalizer
       real64 const sizeScalingFactor = bcAllSetsSize[bcNameToBcId.at( fs.getName())];
 
-      if( isThermal )
+      if( m_isThermal )
       {
-        using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
         reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid const & fluid =
           getConstitutiveModel< reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
-        arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration = fluid.primarySpeciesAggregateConcentration();
-        arrayView4d< real64 const,
-                     reactivefluid::USD_SPECIES_DC > const dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations =
-          fluid.dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations();
-        arrayView2d< real64 const, singlefluid::USD_FLUID > const density = fluid.density();
-        arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const dDensity = fluid.dDensity();
-        arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const enthalpy = fluid.enthalpy();
-        arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const dEnthalpy = fluid.dEnthalpy();
-
-        forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
-                                                             targetSet,
-                                                             rankOffset,
-                                                             ghostRank,
-                                                             dofNumber,
-                                                             numPrimarySpecies,
-                                                             primarySpeciesAggregateConcentration,
-                                                             dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                             density,
-                                                             dDensity,
-                                                             enthalpy,
-                                                             dEnthalpy,
-                                                             rhsContributionArrayView,
-                                                             localRhs,
-                                                             localMatrix,
-                                                             massProd] GEOS_HOST_DEVICE ( localIndex const a )
-        {
-          singlePhaseReactiveBaseKernels::internal::kernelLaunchSelectorCompSwitch( numPrimarySpecies, [&] ( auto NS )
-          {
-            integer constexpr NUM_SPECIES = NS();
-
-            // we need to filter out ghosts here, because targetSet may contain them
-            localIndex const ei = targetSet[a];
-            if( ghostRank[ei] >= 0 )
-            {
-              return;
-            }
-
-            // add the value to the mass balance equation
-            globalIndex const massRowIndex   = dofNumber[ei] - rankOffset;
-            globalIndex const energyRowIndex = massRowIndex + 1;
-            globalIndex const speciesRowBeginIndex = massRowIndex + 2;
-            real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor
-                                                                                     // here!
-            localRhs[massRowIndex] += rhsValue;
-            massProd += rhsValue;
-
-            // add the value to the energy balance equation and species mass balance equations if the flux is positive (i.e., it's a
-            // producer)
-            if( rhsContributionArrayView[a] > 0.0 )
-            {
-              globalIndex const pressureDofIndex    = dofNumber[ei] - rankOffset;
-              globalIndex const temperatureDofIndex = pressureDofIndex + 1;
-
-              globalIndex dofIndices[2+NUM_SPECIES]{};
-
-              dofIndices[0] = pressureDofIndex;
-              dofIndices[1] = temperatureDofIndex;
-
-              for( integer i = 0; i < NUM_SPECIES; ++i )
-              {
-                dofIndices[i+2] = pressureDofIndex + i + 2;
-              }
-
-              // add the value to the energy balance equation
-              localRhs[energyRowIndex] += enthalpy[ei][0] * rhsValue;
-
-              real64 jacobianEnergyFlux[2+NUM_SPECIES]{0.0};
-
-              jacobianEnergyFlux[0] = rhsValue * dEnthalpy[ei][0][DerivOffset::dP];
-              jacobianEnergyFlux[1] = rhsValue * dEnthalpy[ei][0][DerivOffset::dT];
-
-              localMatrix.template addToRow< serialAtomic >( energyRowIndex,
-                                                             dofIndices,
-                                                             jacobianEnergyFlux,
-                                                             2+NUM_SPECIES );
-
-              // add the value to the species mass balance equations
-              for( integer i = 0; i < NUM_SPECIES; ++i )
-              {
-                localRhs[speciesRowBeginIndex + i] += primarySpeciesAggregateConcentration[ei][0][i] / density[ei][0] * rhsValue;
-
-                real64 jacobianSpeciesFlux[2+NUM_SPECIES] = {0.0};
-                jacobianSpeciesFlux[0] += -primarySpeciesAggregateConcentration[ei][0][i] * dDensity[ei][0][DerivOffset::dP] / (density[ei][0] * density[ei][0]) * rhsValue;
-                jacobianSpeciesFlux[1] += -primarySpeciesAggregateConcentration[ei][0][i] * dDensity[ei][0][DerivOffset::dT] / (density[ei][0] * density[ei][0]) * rhsValue;
-
-                for( integer j = 0; j < NUM_SPECIES; ++j )
-                {
-                  jacobianSpeciesFlux[j+2] += dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[ei][0][i][j] / density[ei][0] * rhsValue;
-                }
-
-                localMatrix.template addToRow< serialAtomic >( speciesRowBeginIndex + i,
-                                                               dofIndices,
-                                                               jacobianSpeciesFlux,
-                                                               2+NUM_SPECIES );
-              }
-            }
-          } );
-        } );
+        thermalSinglePhaseReactiveBaseKernels::
+          SourceFluxComputeKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
+                                                     rankOffset,
+                                                     dofNumber,
+                                                     ghostRank,
+                                                     targetSet,
+                                                     rhsContributionArrayView,
+                                                     sizeScalingFactor,
+                                                     fluid,
+                                                     localMatrix,
+                                                     localRhs,
+                                                     massProd );
       }
       else
       {
-        using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 1 >;
         reactivefluid::ReactiveCompressibleSinglePhaseFluid const & fluid =
           getConstitutiveModel< reactivefluid::ReactiveCompressibleSinglePhaseFluid >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
-        arrayView3d< real64 const, reactivefluid::USD_SPECIES > const primarySpeciesAggregateConcentration = fluid.primarySpeciesAggregateConcentration();
-        arrayView4d< real64 const,
-                     reactivefluid::USD_SPECIES_DC > const dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations =
-          fluid.dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations();
-        arrayView2d< real64 const, singlefluid::USD_FLUID > const density = fluid.density();
-        arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const dDensity = fluid.dDensity();
-
-        forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
-                                                             targetSet,
-                                                             rankOffset,
-                                                             ghostRank,
-                                                             dofNumber,
-                                                             numPrimarySpecies,
-                                                             primarySpeciesAggregateConcentration,
-                                                             dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                             density,
-                                                             dDensity,
-                                                             rhsContributionArrayView,
-                                                             localRhs,
-                                                             localMatrix,
-                                                             massProd] GEOS_HOST_DEVICE ( localIndex const a )
-        {
-          singlePhaseReactiveBaseKernels::internal::kernelLaunchSelectorCompSwitch( numPrimarySpecies, [&] ( auto NS )
-          {
-            integer constexpr NUM_SPECIES = NS();
-
-            // we need to filter out ghosts here, because targetSet may contain them
-            localIndex const ei = targetSet[a];
-            if( ghostRank[ei] >= 0 )
-            {
-              return;
-            }
-
-            // add the value to the mass balance equation
-            globalIndex const massRowIndex = dofNumber[ei] - rankOffset;
-            globalIndex const speciesRowBeginIndex = massRowIndex + 1;
-            real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor
-                                                                                     // here!
-            localRhs[massRowIndex] += rhsValue;
-            massProd += rhsValue;
-
-            //add the value to the species mass balance equations if the flux is positive (i.e., it's a producer)
-            if( rhsContributionArrayView[a] > 0.0 )
-            {
-              globalIndex const pressureDofIndex = dofNumber[ei] - rankOffset;
-
-              globalIndex dofIndices[1+NUM_SPECIES]{};
-
-              dofIndices[0] = pressureDofIndex;
-
-              for( integer i = 0; i < NUM_SPECIES; ++i )
-              {
-                dofIndices[i+1] = pressureDofIndex + i + 1;
-              }
-
-              for( integer i = 0; i < NUM_SPECIES; ++i )
-              {
-                localRhs[speciesRowBeginIndex + i] += primarySpeciesAggregateConcentration[ei][0][i] / density[ei][0] * rhsValue;
-
-                real64 jacobian[1+NUM_SPECIES] = {0.0};
-                jacobian[0] += -primarySpeciesAggregateConcentration[ei][0][i] * dDensity[ei][0][DerivOffset::dP] / (density[ei][0] * density[ei][0]) * rhsValue;
-
-                for( integer j = 0; j < NUM_SPECIES; ++j )
-                {
-                  jacobian[j+1] += dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations[ei][0][i][j] / density[ei][0] * rhsValue;
-                }
-
-                localMatrix.template addToRow< serialAtomic >( speciesRowBeginIndex + i,
-                                                               dofIndices,
-                                                               jacobian,
-                                                               1+NUM_SPECIES );
-              }
-            }
-          } );
-        } );
+        singlePhaseReactiveBaseKernels::
+          SourceFluxComputeKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_numPrimarySpecies,
+                                                     rankOffset,
+                                                     dofNumber,
+                                                     ghostRank,
+                                                     targetSet,
+                                                     rhsContributionArrayView,
+                                                     sizeScalingFactor,
+                                                     fluid,
+                                                     localMatrix,
+                                                     localRhs,
+                                                     massProd );
       }
 
       SourceFluxStatsAggregator::forAllFluxStatWrappers( subRegion, fs.getName(),
