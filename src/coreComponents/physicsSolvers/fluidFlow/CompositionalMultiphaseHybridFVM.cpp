@@ -184,6 +184,25 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
                    ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
                    std::runtime_error );
 
+    // Initialize face-based constitutive property arrays to zero to prevent uninitialized memory usage on GPU
+    arrayView2d< real64, compflow::USD_PHASE > facePhaseMob = faceManager.getField< flow::facePhaseMobility >();
+    arrayView2d< real64, compflow::USD_PHASE > facePhaseMassDens = faceManager.getField< flow::facePhaseMassDensity >();
+    arrayView3d< real64, compflow::USD_PHASE_COMP > facePhaseCompFrac = faceManager.getField< flow::facePhaseCompFraction >();
+
+    localIndex const numFaces = faceManager.size();
+    forAll< parallelDevicePolicy<> >( numFaces, [=] GEOS_HOST_DEVICE ( localIndex const iface )
+    {
+      for( integer ip = 0; ip < facePhaseMob.size( 1 ); ++ip )
+      {
+        facePhaseMob[iface][ip] = 0.0;
+        facePhaseMassDens[iface][ip] = 0.0;
+        for( integer ic = 0; ic < facePhaseCompFrac.size( 2 ); ++ic )
+        {
+          facePhaseCompFrac[iface][ip][ic] = 0.0;
+        }
+      }
+    } );
+
     // Mark boundary faces (faces with Dirichlet BCs) to skip flux continuity constraint
     // Initialize all faces as interior (0), then mark boundary faces (1)
     arrayView1d< integer > const isBoundaryFaceView = faceManager.getReference< array1d< integer > >( flow::isBoundaryFace::key() );
@@ -739,6 +758,11 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
       arrayView3d< real64, compflow::USD_PHASE_COMP > facePhaseCompFrac =
         faceManager.getField< flow::facePhaseCompFraction >();
 
+      // Move arrays to host memory before evaluateBCFaceProperties runs with serialPolicy
+      facePhaseMob.move( hostMemorySpace, true );
+      facePhaseMassDens.move( hostMemorySpace, true );
+      facePhaseCompFrac.move( hostMemorySpace, true );
+
       // Evaluate constitutive properties at BC face conditions for each face set
       for( string const & setName : bcFaceSets )
       {
@@ -785,20 +809,20 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
         } );
       }
 
-      // Get pre-computed fluid properties at BC faces
+      // CRITICAL: Move the SAME array views that were just modified back to device memory
+      // Don't get new views - use the views that evaluateBCFaceProperties actually modified
+      // evaluateBCFaceProperties uses serialPolicy (host), DirichletFluxKernel uses parallelDevicePolicy (device)
+      facePhaseMob.move( parallelDeviceMemorySpace, false );
+      facePhaseMassDens.move( parallelDeviceMemorySpace, false );
+      facePhaseCompFrac.move( parallelDeviceMemorySpace, false );
+
+      // Get const views to the face properties for use in DirichletFluxKernel
       arrayView2d< real64 const, compflow::USD_PHASE > const facePhaseMobField =
         faceManager.getField< flow::facePhaseMobility >();
       arrayView2d< real64 const, compflow::USD_PHASE > const facePhaseMassDensField =
         faceManager.getField< flow::facePhaseMassDensity >();
       arrayView3d< real64 const, compflow::USD_PHASE_COMP > const facePhaseCompFracField =
         faceManager.getField< flow::facePhaseCompFraction >();
-
-      // Move face property arrays to device memory after they were computed on host
-      // evaluateBCFaceProperties uses serialPolicy (host) because CUDA doesn't allow extended device lambdas inside generic lambdas
-      // DirichletFluxKernel uses parallelDevicePolicy (device), so explicit synchronization is required
-      facePhaseMobField.move( parallelDeviceMemorySpace, false );
-      facePhaseMassDensField.move( parallelDeviceMemorySpace, false );
-      facePhaseCompFracField.move( parallelDeviceMemorySpace, false );
 
       // Apply Dirichlet boundary fluxes for each face set using DirichletFluxKernel
       for( string const & setName : bcFaceSets )
