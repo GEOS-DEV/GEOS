@@ -1668,24 +1668,28 @@ DirichletFluxKernel::
 /******************************** EvaluateBCFacePropertiesKernel ********************************/
 
 /**
- * @brief Evaluate constitutive properties at BC face conditions
+ * @brief Evaluate constitutive properties at BC face conditions using flash calculations
  * @tparam NC number of components
  * @tparam NP number of phases
- * @param numPhases number of phases
- * @param boundaryFaceSet set of boundary faces
- * @param facePres face pressures at BC
- * @param faceTemp face temperatures at BC
- * @param faceCompFrac face component fractions at BC
- * @param elemRegionList face to element region list
- * @param elemSubRegionList face to element subregion list
- * @param elemList face to element list
- * @param er target element region index
- * @param esr target element subregion index
- * @param fluid multifluid model
- * @param relperm relative permeability model
- * @param facePhaseMob output: face phase mobility at BC
- * @param facePhaseMassDens output: face phase mass density at BC
- * @param facePhaseCompFrac output: face phase component fraction at BC
+ * @param[in] numPhases number of phases in the simulation
+ * @param[in] boundaryFaceSet sorted array view of boundary face indices
+ * @param[in] facePres pressure values at boundary faces
+ * @param[in] faceTemp temperature values at boundary faces
+ * @param[in] faceCompFrac component fraction values at boundary faces
+ * @param[in] elemRegionList face-to-element region mapping
+ * @param[in] elemSubRegionList face-to-element subregion mapping
+ * @param[in] elemList face-to-element index mapping
+ * @param[in] er target element region index
+ * @param[in] esr target element subregion index
+ * @param[in] fluid reference to multifluid constitutive model
+ * @param[in] relperm reference to relative permeability constitutive model
+ * @param[out] facePhaseMob computed phase mobility at BC faces
+ * @param[out] facePhaseMassDens computed phase mass density at BC faces
+ * @param[out] facePhaseCompFrac computed phase component fractions at BC faces
+ *
+ * @note This function uses serialPolicy (host execution) because CUDA does not allow
+ *       extended device lambdas inside generic lambda expressions. The output arrays
+ *       must be explicitly moved to device memory after this function completes.
  */
 template< integer NC, integer NP >
 void
@@ -1746,7 +1750,7 @@ evaluateBCFaceProperties( integer const numPhases,
         StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseInternalEnergy( 1, 1, numPhases );
         StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES * NC,
                     constitutive::multifluid::LAYOUT_PHASE_COMP > facePhaseCompFracLocal( 1, 1, numPhases, NC );
-
+        
         // Initialize all temporary arrays to zero to ensure deterministic behavior on GPU
         for( integer ip = 0; ip < numPhases; ++ip )
         {
@@ -1761,7 +1765,7 @@ evaluateBCFaceProperties( integer const numPhases,
             facePhaseCompFracLocal[0][0][ip][ic] = 0.0;
           }
         }
-
+        
         real64 faceTotalDens = 0.0;
 
         // Evaluate fluid properties at BC face conditions using flash calculation

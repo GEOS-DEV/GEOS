@@ -68,7 +68,7 @@ struct UpwindingHelper
   /**
    * @brief At a given one-sided face, compute the upwind viscous transport coefficient
    * @param[in] localIds region, subRegion, and element indices of the local element
-   * @param[in] neighborIds region, subRegion, and element indices of the neigbhbor element
+   * @param[in] neighborIds region, subRegion, and element indices of the neighbor element
    * @param[in] phaseDens the phase densities in the domain (non-local)
    * @param[in] dPhaseDens the derivatives of the phase densities in the domain wrt pressure and component fractions (non-local)
    * @param[in] phaseMob the phase mobilities in the domain (non-local)
@@ -106,7 +106,7 @@ struct UpwindingHelper
   /**
    * @brief At a given one-sided face, compute the upwind viscous transport coefficient
    * @param[in] localIds region, subRegion, and element indices of the local element
-   * @param[in] neighborIds region, subRegion, and element indices of the neigbhbor element
+   * @param[in] neighborIds region, subRegion, and element indices of the neighbor element
    * @param[in] transGravCoef
    * @param[in] phaseDens the phase densities in the domain (non-local)
    * @param[in] dPhaseDens the derivatives of the phase densities in the domain wrt pressure and component fractions (non-local)
@@ -153,7 +153,7 @@ struct UpwindingHelper
   /**
    * @brief At a given one-sided face, compute the gravCoef multiplied by the difference in phase densities
    * @param[in] localIds region, subRegion, and element indices of the local element
-   * @param[in] neighborIds region, subRegion, and element indices of the neigbhbor element
+   * @param[in] neighborIds region, subRegion, and element indices of the neighbor element
    * @param[in] transGravCoef
    * @param[in] phaseDens the phase densities in the domain (non-local)
    * @param[in] dPhaseDens the derivatives of the phase densities in the domain wrt pressure and component fractions (non-local)
@@ -179,7 +179,7 @@ struct UpwindingHelper
   /**
    * @brief At a given one-sided face, compute the upwinded total mobility
    * @param[in] localIds region, subRegion, and element indices of the local element
-   * @param[in] neighborIds region, subRegion, and element indices of the neigbhbor element
+   * @param[in] neighborIds region, subRegion, and element indices of the neighbor element
    * @param[in] phaseMob the phase mobilities in the domain (non-local)
    * @param[in] dPhaseMob the derivatives of the phase mobilities in the domain (non-local)
    * @param[in] phaseGravTerm the gravCoef multiplied by the difference in phase densities
@@ -246,6 +246,14 @@ struct UpwindingHelper
 
 /******************************** AssemblerKernelHelper ********************************/
 
+/**
+ * @struct AssemblerKernelHelper
+ * @brief Helper structure containing static methods for flux assembly in hybrid FVM
+ *
+ * This helper provides methods to compute pressure gradients, flux divergence, and assemble
+ * face-based continuity equations for the hybrid finite volume method discretization.
+ * All methods are designed to work on both host and device (GEOS_HOST_DEVICE).
+ */
 struct AssemblerKernelHelper
 {
 

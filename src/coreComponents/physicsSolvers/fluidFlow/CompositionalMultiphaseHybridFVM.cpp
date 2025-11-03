@@ -1,4 +1,4 @@
-/*
+.md file/*
  * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
@@ -181,14 +181,14 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
     GEOS_THROW_IF( minVal.get() <= 0.0,
                    getCatalogName() << " " << getDataContext() <<
-                   ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
+                   ": the transmissibility multipliers used in SinglePhaseHybridFVM must be strictly larger than 0.0",
                    std::runtime_error );
 
     // Initialize face-based constitutive property arrays to zero to prevent uninitialized memory usage on GPU
     arrayView2d< real64, compflow::USD_PHASE > facePhaseMob = faceManager.getField< flow::facePhaseMobility >();
     arrayView2d< real64, compflow::USD_PHASE > facePhaseMassDens = faceManager.getField< flow::facePhaseMassDensity >();
     arrayView3d< real64, compflow::USD_PHASE_COMP > facePhaseCompFrac = faceManager.getField< flow::facePhaseCompFraction >();
-
+    
     localIndex const numFaces = faceManager.size();
     forAll< parallelDevicePolicy<> >( numFaces, [=] GEOS_HOST_DEVICE ( localIndex const iface )
     {
