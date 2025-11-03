@@ -292,11 +292,14 @@ public:
               T * const source,
               bool const takeOwnership )
   {
+    GEOS_ASSERT_MSG( source, "Trying to insert a nullptr with name: " << keyName );
+
     typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find( keyName );
 
-    // key was found, already exists!
+    // If the key already exists, free the source if required and return.
     if( iterKeyLookup != m_keyLookup.end() )
     {
+      if( takeOwnership ) delete source;
       return nullptr;
     }
 
