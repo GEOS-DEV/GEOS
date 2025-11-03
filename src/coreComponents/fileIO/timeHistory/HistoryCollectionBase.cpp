@@ -177,7 +177,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
       {
 
         GEOS_THROW_IF( targetTokens.size() <= 4,
-                       GEOS_FMT( " Object Path '{}' does not targeting any element sub region",
+                       GEOS_FMT( " Object Path '{}' does not target any element sub region",
                                  objectPath ),
                        std::runtime_error );
         ElementRegionManager const & elemRegionManager = meshLevel.getElemManager();
