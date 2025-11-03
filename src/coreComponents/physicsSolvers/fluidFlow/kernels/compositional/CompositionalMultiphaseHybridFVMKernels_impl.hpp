@@ -1718,8 +1718,9 @@ evaluateBCFaceProperties( integer const numPhases,
       GEOS_UNUSED_VAR( relPermWrapper );
 
       // Loop over BC faces and evaluate properties at BC conditions
-      // Run on device to match DirichletFluxKernel policy and avoid host-device memory synchronization
-      forAll< parallelDevicePolicy<> >( boundaryFaceSet.size(), [=] GEOS_DEVICE ( localIndex const iset )
+      // Note: Using serialPolicy (host) because extended device lambdas cannot be defined inside generic lambdas
+      // The output arrays will be moved to device after this completes
+      forAll< serialPolicy >( boundaryFaceSet.size(), [=, &facePhaseMob, &facePhaseMassDens, &facePhaseCompFrac] ( localIndex const iset )
       {
         localIndex const kf = boundaryFaceSet[iset];
 
