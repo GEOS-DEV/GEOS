@@ -75,6 +75,8 @@ public:
 
   virtual string getCatalogName() const = 0;
 
+  virtual void postInputInitialization() override;
+
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {

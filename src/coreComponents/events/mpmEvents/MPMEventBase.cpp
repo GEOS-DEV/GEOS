@@ -55,6 +55,11 @@ namespace geos
     return catalog;
   }
 
+  void MPMEventBase::postInputInitialization()
+  {
+    GEOS_ERROR_IF( m_startTime > m_endTime, "Event start time must be less than end time!");
+  }
+
   Group * MPMEventBase::createChild( string const & childKey, string const & childName )
   {
     // GEOS_LOG_RANK_0( "Adding MPM Event: " << childKey << ", " << childName );

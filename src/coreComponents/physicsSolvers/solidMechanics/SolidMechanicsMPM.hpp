@@ -624,6 +624,10 @@ public:
                                           ParticleManager::ParticleView< arrayView2d< real64 const > > particleDisplacementView, 
                                           arraySlice2d< real64 > const result );
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  bool markSurfaceAsDamage( int const & surfaceFlag );
+
   void computeDamageFieldGradient( ParticleManager & particleManager );
 
   void estimateParticleSurfacePosition( ParticleManager & particleManager );

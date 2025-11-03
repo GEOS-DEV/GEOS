@@ -49,14 +49,9 @@ namespace geos
 
   void TemperatureRampMPMEvent::postInputInitialization()
   {
+    MPMEventBase::postInputInitialization();
+    
     GEOS_ERROR_IF( m_startTemperature < 0.0 || m_endTemperature < 0.0  , "Temperatures must be positive!");
-
-    GEOS_LOG_RANK_0( "TemperatureRampEvent: " << 
-                     "Start time=" << m_startTime << ", " << 
-                     "Time interval=" << getTimeInterval() << ", " << 
-                     "startTemperature=" << m_startTemperature << ", " << 
-                     "endTemperature=" << m_endTemperature << ", " << 
-                     "interpType=" << m_interpType );
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, TemperatureRampMPMEvent, string const &, Group * const )

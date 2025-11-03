@@ -38,10 +38,7 @@ namespace geos
 
   void AnnealMPMEvent::postInputInitialization()
   {
-    GEOS_LOG_RANK_0( "AnnealEvent: " << 
-                     "Start time=" << m_startTime << ", " << 
-                     "Time interval=" << getTimeInterval() << ", " << 
-                     "targetRegion=" << m_targetRegion );
+    MPMEventBase::postInputInitialization();
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, AnnealMPMEvent, string const &, Group * const )

@@ -33,9 +33,7 @@ namespace geos
 
   void ResetDeformationGradientMPMEvent::postInputInitialization()
   {
-    GEOS_LOG_RANK_0( "ResetDeformationGradientMPMEvent: " << 
-                     "Start time=" << m_startTime << ", " << 
-                     "Time interval=" << getTimeInterval() );
+    MPMEventBase::postInputInitialization();
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, ResetDeformationGradientMPMEvent, string const &, Group * const )

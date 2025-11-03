@@ -54,15 +54,9 @@ namespace geos
 
   void BoreholePressureMPMEvent::postInputInitialization()
   {
-    GEOS_ERROR_IF( m_boreholeRadius < 0.0   , "Borehole radius must be positive!");
+    MPMEventBase::postInputInitialization();
 
-    GEOS_LOG_RANK_0( "BoreholePressureEvent: " << 
-                     "Start time=" << m_startTime << ", " << 
-                     "Time interval=" << getTimeInterval() << ", " << 
-                     "boreholeRadius=" << m_boreholeRadius << ", " << 
-                     "startPressure=" << m_startPressure << ", " << 
-                     "endPressure=" << m_endPressure << ", " << 
-                     "interpType=" << m_interpType );
+    GEOS_ERROR_IF( m_boreholeRadius < 0.0   , "Borehole radius must be positive!");
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, BoreholePressureMPMEvent, string const &, Group * const )

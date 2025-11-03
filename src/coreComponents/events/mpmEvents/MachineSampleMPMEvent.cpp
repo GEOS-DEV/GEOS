@@ -63,6 +63,8 @@ namespace geos
 
   void MachineSampleMPMEvent::postInputInitialization()
   {
+    MPMEventBase::postInputInitialization();
+    
     if( m_sampleType == "dogbone" )
     {
         GEOS_ERROR_IF( m_filletRadius < 0.0, "Fillet radius must be specified for dogbone sample type and positive" );

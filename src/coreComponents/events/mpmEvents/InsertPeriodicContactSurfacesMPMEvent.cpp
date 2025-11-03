@@ -31,6 +31,11 @@ namespace geos
   InsertPeriodicContactSurfacesMPMEvent::~InsertPeriodicContactSurfacesMPMEvent() 
   {}
 
+  void InsertPeriodicContactSurfacesMPMEvent::postInputInitialization()
+  {
+    MPMEventBase::postInputInitialization();
+  }
+
   REGISTER_CATALOG_ENTRY( MPMEventBase, InsertPeriodicContactSurfacesMPMEvent, string const &, Group * const )
 
 } /* namespace geos */

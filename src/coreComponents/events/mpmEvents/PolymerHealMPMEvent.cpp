@@ -38,10 +38,7 @@ namespace geos
 
   void PolymerHealMPMEvent::postInputInitialization()
   {
-    GEOS_LOG_RANK_0( "PolymerHealEvent: " << 
-                     "Start time=" << m_startTime << ", " << 
-                     "Time interval=" << getTimeInterval() << ", " << 
-                     "targetRegion=" << m_targetRegion );
+    MPMEventBase::postInputInitialization();
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, PolymerHealMPMEvent, string const &, Group * const )
