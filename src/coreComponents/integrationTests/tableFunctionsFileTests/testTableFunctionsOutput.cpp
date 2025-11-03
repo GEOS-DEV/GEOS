@@ -95,6 +95,7 @@ char const * xmlInput =
       type="injector"
       enableCrossflow="0"
       useSurfaceConditions="1"
+      control="totalVolRate"
       surfacePressure="1.45e7"
       surfaceTemperature="300.15">
       <MaximumBHPConstraint

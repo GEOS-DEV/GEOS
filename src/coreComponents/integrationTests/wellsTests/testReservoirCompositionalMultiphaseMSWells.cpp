@@ -63,9 +63,9 @@ char const * xmlInput =
                                    useMass="0">
       <WellControls
         name="wellControls1"
+        control="BHP"
         type="producer">
         <ProductionPhaseVolumeRateConstraint
-        control="BHP"
           name="maxoilprod"
           phaseName="oil"
           phaseRate="1"/>

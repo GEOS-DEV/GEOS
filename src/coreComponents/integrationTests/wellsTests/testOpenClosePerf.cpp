@@ -63,6 +63,7 @@ char const * PreXmlInput =
                                    useMass="0">
     <WellControls
       name="wellControls1"
+      control="BHP"
       type="producer">
       <ProductionPhaseVolumeRateConstraint
         name="maxoilprod"
