@@ -332,14 +332,14 @@ public:
    */
   virtual real64 updateWellState( WellElementSubRegion & subRegion ) = 0;
   virtual void updateState( DomainPartition & domain ) override;
-
+  virtual void saveState( WellElementSubRegion & subRegion )   = 0;
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
   virtual void initializeWells( DomainPartition & domain, real64 const & time_n ) = 0;
   virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) = 0;
-  virtual void saveState( WellElementSubRegion & subRegion )   = 0;
+
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive
    * models)
@@ -396,8 +396,6 @@ public:
                              ElementRegionManager & elementRegionManager,
                              WellElementSubRegion & subregion,
                              DofManager const & dofManager );
-
-  virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) = 0;
 
   /**
    * @brief Function to perform line search

@@ -116,7 +116,7 @@ void WellSolverBase::postInputInitialization()
   // 1. Set key dimensions of the problem
   m_numDofPerWellElement = m_isThermal ?    m_numComponents + 2 : m_numComponents + 1; // 1 pressure  connectionRate + temp if thermal
   m_numDofPerResElement = m_isThermal ? m_numComponents  + 1: m_numComponents;   // 1 pressure   + temp if thermal
-  m_writeSegDebug=2;
+  m_writeSegDebug=0;
   if( m_writeSegDebug > 0 )
   {
     if( m_writeCSV == 0 )
@@ -787,7 +787,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
                              GEOS_FMT( " Well: {}   Est Attempt: NewtonIter: {:2}", subRegion.getName(), stepDt, newtonIter ));
 
     {
-      Timer timer( m_timers["assemble"] );
+      Timer timer( m_timers.get_inserted( "assemble" ) );
 
 // We sync the nonlinear convergence history. The coupled solver parameters are the one being
 // used. We want to propagate the info to subsolvers. It can be important for solvers that
@@ -833,7 +833,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
                            mesh, subRegion, dofManager, m_localMatrix.toViewConstSizes(), m_rhs.values()  );
     real64 residualNorm = 0;
     {
-      Timer timer( m_timers["convergence check"] );
+      Timer timer( m_timers.get_inserted( "convergence check" ) );
 
 // get residual norm
       residualNorm = calculateWellResidualNorm( time_n, stepDt, subRegion, dofManager, m_rhs.values() );
@@ -931,7 +931,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     {
-      Timer timer( m_timers["linear solver total"] );
+      Timer timer( m_timers.get_inserted( "linear solver total" ) );
 
 // if using adaptive Krylov tolerance scheme, update tolerance.
       LinearSolverParameters::Krylov & krylovParams = m_linearSolverParameters.get().krylov;
@@ -947,7 +947,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
       }
 
       {
-        Timer timer_setup( m_timers["linear solver create"] );
+        Timer timer_setup( m_timers.get_inserted( "linear solver create" ) );
 
 // Compose parallel LA matrix/rhs out of local LA matrix/rhs
 //
@@ -969,7 +969,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     {
-      Timer timer( m_timers["apply solution"] );
+      Timer timer( m_timers.get_inserted( "apply solution" ) );
 
 // Compute the scaling factor for the Newton update
       scaleFactor = scalingForWellSystemSolution( subRegion, dofManager, m_solution.values() );
@@ -990,7 +990,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     {
-      Timer timer( m_timers["update state"] );
+      Timer timer( m_timers.get_inserted( "update state" ) );
 
       // update derived variables (constitutive models)
       updateWellState( subRegion );

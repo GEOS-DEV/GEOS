@@ -425,8 +425,6 @@ public:
 
   } viewKeysCompMultiphaseWell;
 
-  void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) override;
-
   virtual void saveState( WellElementSubRegion & subRegion ) override;
 protected:
 
@@ -498,8 +496,6 @@ private:
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
-  void initializeWells( DomainPartition & domain, real64 const & time_n ) override;
-
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
