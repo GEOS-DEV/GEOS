@@ -95,7 +95,7 @@ public:
     using Base::StackVariables::totalInflowMass;
 
     /// Storage for the element local residual vector for energy row
-    real64 localEnergyRhs;
+    real64 localEnergyRhs=0.0;
 
     /// Storage for the element local Jacobian matrix for energy row
     real64 localEnergyJacobian[numDof]{};
