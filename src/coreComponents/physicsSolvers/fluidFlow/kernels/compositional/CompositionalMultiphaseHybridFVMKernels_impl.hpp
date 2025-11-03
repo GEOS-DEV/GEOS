@@ -1744,7 +1744,7 @@ evaluateBCFaceProperties( integer const numPhases,
         StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseInternalEnergy( 1, 1, numPhases );
         StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES * NC,
                     constitutive::multifluid::LAYOUT_PHASE_COMP > facePhaseCompFracLocal( 1, 1, numPhases, NC );
-        
+
         // Initialize all temporary arrays to zero to ensure deterministic behavior on GPU
         for( integer ip = 0; ip < numPhases; ++ip )
         {
@@ -1759,7 +1759,7 @@ evaluateBCFaceProperties( integer const numPhases,
             facePhaseCompFracLocal[0][0][ip][ic] = 0.0;
           }
         }
-        
+
         real64 faceTotalDens = 0.0;
 
         // Evaluate fluid properties at BC face conditions using flash calculation
