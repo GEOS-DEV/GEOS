@@ -398,6 +398,36 @@ assembleCouplingTerms( real64 const time_n,
   } );
 }
 
+template< typename RESERVOIR_SOLVER >
+void
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
+assembleHydrofracFluxTerms( real64 const time_n,
+                            real64 const dt,
+                            DomainPartition const & domain,
+                            DofManager const & dofManager,
+                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                            arrayView1d< real64 > const & localRhs,
+                            CRSMatrixView< real64, localIndex const > const & dR_dAper )
+{
+  flowSolver()->assembleHydrofracFluxTerms( time_n, dt, domain, dofManager, localMatrix, localRhs, dR_dAper );
+}
+
+template< typename RESERVOIR_SOLVER >
+void
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
+prepareStencilWeights( DomainPartition & domain ) const
+{
+  flowSolver()->prepareStencilWeights( domain );
+}
+
+template< typename RESERVOIR_SOLVER >
+void
+CompositionalMultiphaseReservoirAndWells< RESERVOIR_SOLVER >::
+updateStencilWeights( DomainPartition & domain ) const
+{
+  flowSolver()->updateStencilWeights( domain );
+}
+
 template class CompositionalMultiphaseReservoirAndWells<>;
 template class CompositionalMultiphaseReservoirAndWells< MultiphasePoromechanics<> >;
 

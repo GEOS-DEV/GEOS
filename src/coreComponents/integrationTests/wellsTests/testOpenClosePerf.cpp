@@ -61,13 +61,19 @@ char const * PreXmlInput =
                                    logLevel="1"
                                    targetRegions="{wellRegion1}"
                                    useMass="0">
-          <WellControls name="wellControls1"
-                        type="producer"
-                        referenceElevation="1.25"
-                        control="BHP"
-                        targetBHP="2e6"
-                        targetPhaseRate="1"
-                        targetPhaseName="oil"/>
+    <WellControls
+      name="wellControls1"
+      control="BHP"
+      type="producer">
+      <ProductionPhaseVolumeRateConstraint
+        name="maxoilprod"
+        phaseName="oil"
+        phaseRate="1"/>
+      <MinimumBHPConstraint
+        name="minbhp"
+        targetBHP="2e6"
+        referenceElevation="1.25"/>
+    </WellControls>
       </CompositionalMultiphaseWell>
     </Solvers>
     <Mesh>
@@ -177,12 +183,12 @@ void testPlugTopDownPerfCheck( CompositionalMultiphaseReservoirAndWells<> & solv
 {
   CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
 
-  typedef std::map< real64, std::vector< int > > map_type;
+  typedef stdMap< real64, std::vector< int > > map_type;
   map_type refVal;
-  refVal[29800.0] = { 1, 1, 1, 1, 1};
-  refVal[32400.0] = { 1, 1, 1, 1, 0};
-  refVal[32500.0] = { 0, 0, 0, 0, 0};
-  refVal[33000.0] = { 1, 1, 1, 1, 1};
+  refVal.insert( {29800.0, { 1, 1, 1, 1, 1}} );
+  refVal.insert( {32400.0, { 1, 1, 1, 1, 0}} );
+  refVal.insert( {32500.0, { 0, 0, 0, 0, 0}} );
+  refVal.insert( {33000.0, { 1, 1, 1, 1, 1}} );
 
   map_type::iterator it = refVal.begin();
   while( it != refVal.end() )
@@ -219,13 +225,13 @@ void testPlugBottomUpPerfCheck( CompositionalMultiphaseReservoirAndWells<> & sol
 {
   CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
 
-  typedef std::map< real64, std::vector< int > > map_type;
+  typedef stdMap< real64, std::vector< int > > map_type;
   map_type refVal;
-  refVal[4800.0] =  { 1, 1, 1, 1, 1};
-  refVal[14800.0] = { 1, 1, 1, 1, 0};
-  refVal[19600.0] = { 1, 1, 1, 0, 0};
-  refVal[32400.0] = { 1, 1, 0, 0, 0};
-  refVal[39800.0] = { 0, 0, 0, 0, 0};
+  refVal.insert( {4800.0, { 1, 1, 1, 1, 1}} );
+  refVal.insert( {14800.0, { 1, 1, 1, 1, 0}} );
+  refVal.insert( {19600.0, { 1, 1, 1, 0, 0}} );
+  refVal.insert( {32400.0, { 1, 1, 0, 0, 0}} );
+  refVal.insert( {39800.0, { 0, 0, 0, 0, 0}} );
 
   map_type::iterator it = refVal.begin();
   while( it != refVal.end() )
@@ -262,13 +268,13 @@ void testOpenTopDownPerfCheck( CompositionalMultiphaseReservoirAndWells<> & solv
 {
   CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
 
-  typedef std::map< real64, std::vector< int > > map_type;
+  typedef stdMap< real64, std::vector< int > > map_type;
   map_type refPerfTable;
-  refPerfTable[4800.0] = { 0, 0, 0, 0, 0};
-  refPerfTable[14800.0] = { 1, 0, 0, 0, 0};
-  refPerfTable[19800.0] = { 1, 1, 0, 0, 0};
-  refPerfTable[29800.0] = { 1, 1, 1, 0, 0};
-  refPerfTable[39800.0] = { 1, 1, 1, 1, 1};
+  refPerfTable.insert( {4800.0, { 0, 0, 0, 0, 0}} );
+  refPerfTable.insert( {14800.0, { 1, 0, 0, 0, 0}} );
+  refPerfTable.insert( {19800.0, { 1, 1, 0, 0, 0}} );
+  refPerfTable.insert( {29800.0, { 1, 1, 1, 0, 0}} );
+  refPerfTable.insert( {39800.0, { 1, 1, 1, 1, 1}} );
   map_type::iterator it = refPerfTable.begin();
   while( it != refPerfTable.end() )
   {
@@ -304,10 +310,10 @@ void testOpenBottomUpPerfCheck( CompositionalMultiphaseReservoirAndWells<> & sol
 {
   CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
 
-  typedef std::map< real64, std::vector< int > > map_type;
+  typedef stdMap< real64, std::vector< int > > map_type;
   map_type refVal;
-  refVal[4800.0] = { 0, 0, 0, 0, 0};
-  refVal[33000.0] = { 1, 1, 1, 1, 1};
+  refVal.insert( {4800.0, { 0, 0, 0, 0, 0}} );
+  refVal.insert( {33000.0, { 1, 1, 1, 1, 1}} );
 
   map_type::iterator it = refVal.begin();
   while( it != refVal.end() )

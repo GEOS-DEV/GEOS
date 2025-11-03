@@ -274,6 +274,13 @@ public:
   integer estimateSolution() const { return m_estimateSolution; }
 
   /**
+   * @brief Get the input control type for the well.
+   * @return the Control enum enforced at the well
+   */
+  Control getInputControl() const { return m_inputControl; }
+
+
+  /**
    * @brief Getter for the reference gravity coefficient
    * @return the reference gravity coefficient
    */
@@ -476,10 +483,10 @@ public:
     static constexpr char const * refElevString() { return "referenceElevation"; }
     /// String key for the well type
     static constexpr char const * typeString() { return "type"; }
-
     /// String key for the well current control
     static constexpr char const * currentControlString() { return "currentControl"; }
-
+    /// String key for the well input control
+    static constexpr char const * inputControlString() { return "control"; }
     /// String key for checking the rates at surface conditions
     static constexpr char const * useSurfaceConditionsString() { return "useSurfaceConditions"; }
     /// String key for reference reservoir region
@@ -519,7 +526,6 @@ public:
     static constexpr char const * injectionMassRateConstraint() { return "InjectionMassRateConstraint"; }
     /// string key for the liquid rate for a producer
     static constexpr char const * productionLiquidRateConstraint() { return "ProductionLiquidRateConstraint"; }
-
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -562,6 +568,9 @@ private:
 
   /// Gravity coefficient of the reference elevation
   real64 m_refGravCoef;
+
+  /// Input well controls as a Control enum
+  Control m_inputControl;
 
   /// Well controls as a Control enum
   Control m_currentControl;

@@ -32,6 +32,7 @@ using namespace dataRepository;
 WellControls::WellControls( string const & name, Group * const parent )
   : Group( name, parent ),
   m_type( Type::PRODUCER ),
+  m_inputControl( Control::UNINITIALIZED ),
   m_currentControl( Control::UNINITIALIZED ), // tjb remove
   m_useSurfaceConditions( 0 ),
   m_surfacePres( -1.0 ),
@@ -58,7 +59,9 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Current well control" );
 
-
+  registerWrapper( viewKeyStruct::inputControlString(), &m_inputControl ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Well control. Valid options:\n* " + EnumStrings< Control >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::useSurfaceConditionsString(), &m_useSurfaceConditions ).
     setDefaultValue( 0 ).
@@ -188,7 +191,11 @@ Group * WellControls::createChild( string const & childKey, string const & child
 
 void WellControls::expandObjectCatalogs()
 {
-  //createChild( keys::wellControls, keys::wellControls );
+  // During schema generation, register one of each type derived from ConstitutiveBase here
+  for( auto & catalogIter: WellConstraintBase::getCatalog())
+  {
+    createChild( catalogIter.first, catalogIter.first );
+  }
 }
 
 namespace
@@ -217,6 +224,20 @@ TableFunction * createWellTable( string const & tableName,
 void WellControls::postInputInitialization()
 {
 
+  // 0) Assign the value of the current well control
+  // When the simulation starts from a restart file, we don't want to use the inputControl,
+  // because the control may have switched in the simulation that generated the restart
+  GEOS_THROW_IF( m_inputControl == Control::UNINITIALIZED,
+                 getWrapperDataContext( viewKeyStruct::inputControlString() ) <<
+                 ": Input well control cannot be uninitialized",
+                 InputError );
+
+  if( m_currentControl == Control::UNINITIALIZED )
+  {
+    m_currentControl = m_inputControl;
+  }
+
+
   // 3) check the flag for surface / reservoir conditions
   GEOS_THROW_IF( m_useSurfaceConditions != 0 && m_useSurfaceConditions != 1,
                  getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) << ": The flag to select surface/reservoir conditions must be equal to 0 or 1",
@@ -238,7 +259,19 @@ void WellControls::postInputInitialization()
                  ": This tuning coefficient is negative",
                  InputError );
 
+  // 6.2) Check incoherent information
 
+  // An injector must be controlled by TotalVolRate
+  GEOS_THROW_IF( (isInjector() && (m_inputControl == Control::PHASEVOLRATE)),
+                 "WellControls " << getDataContext() << ": You have to control an injector with "
+                                 << EnumStrings< Control >::toString( Control::TOTALVOLRATE ),
+                 InputError );
+
+  // An injector must be controlled by TotalVolRate
+  GEOS_THROW_IF( (isProducer() && (m_inputControl == Control::MASSRATE)),
+                 "WellControls " << getDataContext() << ": You have to control an injector with "
+                                 << EnumStrings< Control >::toString( Control::MASSRATE ),
+                 InputError );
 
   // 12) Create the time-dependent well status table
   if( m_statusTableName.empty())

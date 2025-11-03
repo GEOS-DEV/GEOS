@@ -520,23 +520,26 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
     {
       if( wellControls.isProducer() )
       {
-        wellControls.forSubGroups< MinimumBHPConstraint >( [&]( auto & constraint )
-                                                           //wellControls.forSubGroups< PhaseProductionConstraint >( [&]( auto &
-                                                           // constraint
-                                                           // )
+        wellControls.forSubGroups< MinimumBHPConstraint, ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >,
+                                   ProductionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
         {
-          wellControls.setCurrentConstraint( &constraint );
-          wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );    // tjb old
+          if( ConstraintTypeId( wellControls.getControl()) == constraint.getControl() )
+          {
+            wellControls.setCurrentConstraint( &constraint );
+            wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );    // tjb old
+          }
         } );
       }
       else
       {
-        // tjb needed for backward compatibility
-        //wellControls.forSubGroups< MaximumBHPConstraint >( [&]( auto & constraint )
-        wellControls.forSubGroups< InjectionConstraint< VolumeRateConstraint > >( [&]( auto & constraint )
+        wellControls.forSubGroups< MaximumBHPConstraint, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint >,
+                                   InjectionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
         {
-          wellControls.setCurrentConstraint( &constraint );
-          wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );   // tjb old
+          if( ConstraintTypeId( wellControls.getControl()) == constraint.getControl() )
+          {
+            wellControls.setCurrentConstraint( &constraint );
+            wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );   // tjb old
+          }
         } );
       }
     }
@@ -600,10 +603,41 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
   else
   {
     wellControls.setWellState( true );
+    // setup for restart
+    if( wellControls.getCurrentConstraint() == nullptr )
+    {
+      updateSubRegionState( subRegion );
+      if( wellControls.isProducer() )
+      {
+        wellControls.forSubGroups< MinimumBHPConstraint, ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >,
+                                   ProductionConstraint< PhaseVolumeRateConstraint > >( [&](
+                                                                                          auto
+                                                                                          & constraint )
+        {
+          if( ConstraintTypeId( wellControls.getControl()) == constraint.getControl()  )
+          {
+            wellControls.setCurrentConstraint( &constraint );
+          }
+        } );
+      }
+      else
+      {
+        wellControls.forSubGroups< MaximumBHPConstraint, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint >, InjectionConstraint< PhaseVolumeRateConstraint > >( [&](
+                                                                                                                                                                                                       auto
+                                                                                                                                                                                                       &
+                                                                                                                                                                                                       constraint )
+        {
+          if( ConstraintTypeId( wellControls.getControl()) == constraint.getControl()  )
+          {
+            wellControls.setCurrentConstraint( &constraint );
+          }
+        } );
+      }
+    }
 
   }
 
-};
+}
 void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & time_n )
 {
   GEOS_MARK_FUNCTION;

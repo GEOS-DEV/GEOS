@@ -79,19 +79,24 @@ char const *  XmlInput =
       isThermal="1"
       writeCSV="1"
       targetRegions="{ wellRegion2 }">
-      <WellControls
-        name="wellControls2"
-        type="injector"
-        control="totalVolRate"
-        referenceElevation="-0.01"
+    <WellControls
+      name="wellControls2"
+      type="injector"
+      enableCrossflow="0"
+      control="totalVolRate"
+      useSurfaceConditions="1"
+      surfacePressure="1.45e7"
+      surfaceTemperature="323">
+      <MaximumBHPConstraint
+        name="maxbhp"
         targetBHP="1.45e7"
-        enableCrossflow="0"
-        useSurfaceConditions="1"
-        surfacePressure="1.45e7"
-        surfaceTemperature="323"
-        targetTotalRate="0.035"
-        injectionTemperature="323"
-        injectionStream="{1.0}"/>
+        referenceElevation="-0.01"/>
+      <InjectionVolumeRateConstraint
+        name="maxvolrateinj"
+        volumeRate="0.035"
+        injectionStream="{ 1.0 }"
+        injectionTemperature="323"/>
+    </WellControls>
     </SinglePhaseWell>
   </Solvers>
 
@@ -597,6 +602,8 @@ protected:
                          solver->getSystemSolution() );
 
     solver->implicitStepSetup( TIME, DT, domain );
+
+    solver->wellSolver()->initializeWells( domain, TIME );
   }
 
   void TestAssembleCouplingTerms()

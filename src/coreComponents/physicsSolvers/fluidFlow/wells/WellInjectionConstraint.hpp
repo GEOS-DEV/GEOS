@@ -91,8 +91,10 @@ public:
    */
   static string catalogName()
   {
-    return "InjectionConstraint"+ConstraintType::catalogName();
+    return "Injection"+ConstraintType::catalogName();
   }
+
+  virtual string getCatalogName() const override { return catalogName(); }
 
   struct injectionStreamKey
   {

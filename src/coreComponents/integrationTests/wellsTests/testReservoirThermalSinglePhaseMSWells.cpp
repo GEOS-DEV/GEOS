@@ -64,22 +64,35 @@ char const * PreXmlInput =
                        logLevel="1"
                        isThermal="1"
                        targetRegions="{wellRegion1,wellRegion2}">
-          <WellControls name="wellControls1"
-                        type="producer"
-                        referenceElevation="2"
-                        control="BHP"
-                        targetBHP="5e5"
-                        targetTotalRate="1e-3"/>
-          <WellControls name="wellControls2"
-                        type="injector"
-                        referenceElevation="2"
-                        control="totalVolRate"
-                        surfacePressure="1.45e7"
-                        surfaceTemperature="300.15"
-                        injectionTemperature="323"
-                        injectionStream="{1.0}"
-                        targetBHP="2e7"
-                        targetTotalRate="1e-4"/>
+    <WellControls
+      name="wellControls1"
+      control="BHP"
+      type="producer">
+      <MinimumBHPConstraint
+        name="minbhp"
+        targetBHP="5e5"
+        referenceElevation="2"/>
+      <ProductionVolumeRateConstraint
+        name="maxvolrateprod"
+        volumeRate="1e-3"/>
+    </WellControls>
+
+    <WellControls
+      name="wellControls2"
+      type="injector"
+      control="totalVolRate"
+      surfacePressure="1.45e7"
+      surfaceTemperature="300.15">
+      <MaximumBHPConstraint
+        name="maxbhp"
+        targetBHP="2e7"
+        referenceElevation="2"/>
+      <InjectionVolumeRateConstraint
+        name="maxvolrateinj"
+        volumeRate="1e-4"
+        injectionStream="{ 1.0 }"
+        injectionTemperature="323"/>
+    </WellControls>
       </SinglePhaseWell>
     </Solvers>
     <Mesh>
@@ -515,6 +528,7 @@ protected:
                          solver->getSystemSolution() );
 
     solver->implicitStepSetup( TIME, DT, domain );
+    solver->wellSolver()->initializeWells( domain, TIME );
   }
 
   void TestAssembleCouplingTerms()

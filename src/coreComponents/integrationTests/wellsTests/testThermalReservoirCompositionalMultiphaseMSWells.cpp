@@ -108,15 +108,20 @@ char const * xmlInput =
         logLevel="2"
         type="injector"
         control="totalVolRate"
-        referenceElevation="-0.01"
-        targetBHP="1.45e7"
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="1.45e7"
-        surfaceTemperature="300.15"
-        targetTotalRate="0.001"
-        injectionTemperature="300.15"
-        injectionStream="{ 0.99, 0.01 }"/>
+        surfaceTemperature="300.15">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="1.45e7"
+          referenceElevation="-0.01"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="0.001"
+          injectionStream="{ 0.99, 0.01 }"
+          injectionTemperature="300.15"/>
+      </WellControls>
      </CompositionalMultiphaseWell>
   </Solvers>
 
@@ -153,7 +158,7 @@ char const * xmlInput =
   <Geometry>
     <Box
       name="sink"
-      xMin="{ 89.99, 89.99, -0.01 }"
+      xMin="{ 49.99, 49.99, -0.01 }"
       xMax="{ 101.01, 101.01, 1.01 }"/>
 
     
@@ -699,6 +704,7 @@ protected:
                          solver->getSystemSolution() );
 
     solver->implicitStepSetup( time, dt, domain );
+    solver->wellSolver()->initializeWells( domain, time );
   }
 
   static real64 constexpr time = 0.0;

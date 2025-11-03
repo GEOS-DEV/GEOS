@@ -257,24 +257,13 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
       WellControls & wellControls = getWellControls( subRegion );
       wellControls.registerWrapper< real64 >( viewKeyStruct::currentBHPString() );
 
-      wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentBHPString() ).
-        setSizedFromParent( 0 ).
-        reference().resizeDimension< 0 >( m_numComponents + 2 );   // dP, dT, dC
-
       wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::currentPhaseVolRateString() ).
         setSizedFromParent( 0 ).
         reference().resizeDimension< 0 >( m_numPhases );
 
-      wellControls.registerWrapper< array2d< real64 > >( viewKeyStruct::dCurrentPhaseVolRateString() ).
-        setSizedFromParent( 0 ).
-        reference().resizeDimension< 0, 1 >( m_numPhases, m_numComponents + 3 );   // dP, dT, dC, dQ
-
       wellControls.registerWrapper< real64 >( viewKeyStruct::massDensityString() );
 
       wellControls.registerWrapper< real64 >( viewKeyStruct::currentTotalVolRateString() );
-      wellControls.registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentTotalVolRateString() ).
-        setSizedFromParent( 0 ).
-        reference().resizeDimension< 0 >( m_numComponents + 3 );   // dP, dT, dC dQ
 
       wellControls.registerWrapper< real64 >( viewKeyStruct::massDensityString() );
 
@@ -1028,62 +1017,34 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
   {
     return;
   }
-  using Deriv = constitutive::multifluid::DerivativeOffset;
 
-  integer const numComp = m_numComponents;
   localIndex const iwelemRef = subRegion.getTopWellElementIndex();
 
-  string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-  integer const isThermal = fluid.isThermal();
   // subRegion data
-
   arrayView1d< real64 const > const & pres = subRegion.getField< well::pressure >();
-
   arrayView1d< real64 > const & totalMassDens = subRegion.getField< well::totalMassDensity >();
-  arrayView2d< real64, compflow::USD_FLUID_DC > const & dTotalMassDens = subRegion.getField< well::dTotalMassDensity >();
-
   arrayView1d< real64 const > const wellElemGravCoef = subRegion.getField< well::gravityCoefficient >();
 
   // control data
-
   WellControls & wellControls = getWellControls( subRegion );
   string const wellControlsName = wellControls.getName();
   real64 const & refGravCoef = wellControls.getReferenceGravityCoef();
 
   real64 & currentBHP =
     wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
-  arrayView1d< real64 > const & dCurrentBHP =
-    wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentBHPString() );
 
-  geos::internal::kernelLaunchSelectorCompThermSwitch( numComp, isThermal, [&] ( auto NC, auto ISTHERMAL )
+  // bring everything back to host, capture the scalars by reference
+  forAll< serialPolicy >( 1, [ pres,
+                               totalMassDens,
+                               wellElemGravCoef,
+                               &currentBHP,
+                               &iwelemRef,
+                               &refGravCoef] ( localIndex const )
   {
-    integer constexpr IS_THERMAL = ISTHERMAL();
-    GEOS_UNUSED_VAR( NC );
-    // bring everything back to host, capture the scalars by reference
-    forAll< serialPolicy >( 1, [&numComp,
-                                pres,
-                                totalMassDens,
-                                dTotalMassDens,
-                                wellElemGravCoef,
-                                &currentBHP,
-                                &dCurrentBHP,
-                                &iwelemRef,
-                                &refGravCoef] ( localIndex const )
-    {
-      real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
-      currentBHP = pres[iwelemRef] + totalMassDens[iwelemRef] * diffGravCoef;
-      dCurrentBHP[Deriv::dP] =   1 + dTotalMassDens[iwelemRef][Deriv::dP] * diffGravCoef;
-      for( integer ic = 0; ic < numComp; ++ic )
-      {
-        dCurrentBHP[Deriv::dC+ic] = dTotalMassDens[iwelemRef][Deriv::dC+ic] * diffGravCoef;
-      }
-      if constexpr ( IS_THERMAL )
-      {
-        dCurrentBHP[Deriv::dT] =  dTotalMassDens[iwelemRef][Deriv::dT] * diffGravCoef;
-      }
-    } );
+    real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
+    currentBHP = pres[iwelemRef] + totalMassDens[iwelemRef] * diffGravCoef;
   } );
+
 
   GEOS_LOG_LEVEL_BY_RANK( logInfo::BoundaryConditions,
                           GEOS_FMT( "{}: BHP (at the specified reference elevation) = {} Pa",
@@ -1588,32 +1549,35 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
 
   if( time_n <= 0.0  || ( wellControls.isWellOpen(  ) && !hasNonZeroRate ) )
   {
-    // GEOS_LOG_RANK( "tjb initialize wells "<< subRegion.getName());
-    if( !wellControls.getWellState() && isThermal() )     // tjb add as schema option
-    {
-      m_nextDt=43200;
-    }
     wellControls.setWellState( true );
     if( wellControls.getCurrentConstraint() == nullptr )
     {
+      // tjb needed for backward compatibility. and these 2 lists must be consistent
+      ConstraintTypeId inputControl = ConstraintTypeId( wellControls.getInputControl());
       if( wellControls.isProducer() )
       {
-        //wellControls.forSubGroups< MinimumBHPConstraint >( [&]( auto & constraint )
-        wellControls.forSubGroups< ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >, ProductionConstraint< PhaseVolumeRateConstraint > >( [&](
-                                                                                                                                                                                    auto & constraint )
+        wellControls.forSubGroups< MinimumBHPConstraint, ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >,
+                                   ProductionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
         {
-          wellControls.setCurrentConstraint( &constraint );
-          wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );    // tjb old
+          if( constraint.getControl() == inputControl )
+          {
+            wellControls.setCurrentConstraint( &constraint );
+            wellControls.setControl( static_cast< WellControls::Control >(inputControl) );  // tjb old
+          }
+
         } );
       }
       else
       {
-        // tjb needed for backward compatibility
-        //wellControls.forSubGroups< MaximumBHPConstraint >( [&]( auto & constraint )
-        wellControls.forSubGroups< InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint >, InjectionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
+
+        wellControls.forSubGroups< MaximumBHPConstraint, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint >,
+                                   InjectionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
         {
-          wellControls.setCurrentConstraint( &constraint );
-          wellControls.setControl( static_cast< WellControls::Control >(constraint.getControl()) );   // tjb old
+          if( constraint.getControl() == inputControl )
+          {
+            wellControls.setCurrentConstraint( &constraint );
+            wellControls.setControl( static_cast< WellControls::Control >(inputControl) );   // tjb old
+          }
         } );
       }
     }
@@ -2135,13 +2099,13 @@ CompositionalMultiphaseWell::calculateWellResidualNorm( real64 const & time_n,
                                                         arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
-  integer numNorm = 1; // mass balance
+  integer numNorm = 1;     // mass balance
   array1d< real64 > localResidualNorm;
   array1d< real64 > localResidualNormalizer;
 
   if( isThermal() )
   {
-    numNorm = 2;  // mass balance and energy balance
+    numNorm = 2;     // mass balance and energy balance
   }
   localResidualNorm.resize( numNorm );
   localResidualNormalizer.resize( numNorm );
@@ -3873,4 +3837,4 @@ void CompositionalMultiphaseWell::solveConstraint( WellConstraintBase *constrain
 
 }
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, CompositionalMultiphaseWell, string const &, Group * const )
-} // namespace geos
+}   // namespace geos

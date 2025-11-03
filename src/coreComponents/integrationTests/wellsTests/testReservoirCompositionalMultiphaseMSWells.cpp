@@ -61,21 +61,33 @@ char const * xmlInput =
                                    logLevel="1"
                                    targetRegions="{wellRegion1,wellRegion2}"
                                    useMass="0">
-          <WellControls name="wellControls1"
-                        type="producer"
-                        referenceElevation="1.25"
-                        control="BHP"
-                        targetBHP="2e6"
-                        targetPhaseRate="1"
-                        targetPhaseName="oil"/>
-          <WellControls name="wellControls2"
-                        type="injector"
-                        referenceElevation="1.25"
-                        control="totalVolRate"
-                        targetBHP="6e7"
-                        targetTotalRate="1e-5"
-                        injectionTemperature="297.15"
-                        injectionStream="{0.1, 0.1, 0.1, 0.7}"/>
+      <WellControls
+        name="wellControls1"
+        control="BHP"
+        type="producer">
+        <ProductionPhaseVolumeRateConstraint
+          name="maxoilprod"
+          phaseName="oil"
+          phaseRate="1"/>
+        <MinimumBHPConstraint
+          name="minbhp"
+          targetBHP="2e6"
+          referenceElevation="1.25"/>
+      </WellControls>
+      <WellControls
+        name="wellControls2"
+        control="totalVolRate"
+        type="injector">
+        <MaximumBHPConstraint
+          name="maxbhp"
+          targetBHP="6e7"
+          referenceElevation="1.25"/>
+        <InjectionVolumeRateConstraint
+          name="maxvolrateinj"
+          volumeRate="1e-5"
+          injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"
+          injectionTemperature="297.15"/>
+      </WellControls>
       </CompositionalMultiphaseWell>
     </Solvers>
     <Mesh>
@@ -483,6 +495,7 @@ protected:
                          solver->getSystemSolution() );
 
     solver->implicitStepSetup( time, dt, domain );
+    solver->wellSolver()->initializeWells( domain, time );
   }
 
   static real64 constexpr time = 0.0;
