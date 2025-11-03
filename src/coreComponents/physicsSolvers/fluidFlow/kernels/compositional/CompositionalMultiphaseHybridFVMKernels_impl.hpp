@@ -1744,6 +1744,22 @@ evaluateBCFaceProperties( integer const numPhases,
         StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, constitutive::multifluid::LAYOUT_PHASE > facePhaseInternalEnergy( 1, 1, numPhases );
         StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES * NC,
                     constitutive::multifluid::LAYOUT_PHASE_COMP > facePhaseCompFracLocal( 1, 1, numPhases, NC );
+        
+        // Initialize all temporary arrays to zero to ensure deterministic behavior on GPU
+        for( integer ip = 0; ip < numPhases; ++ip )
+        {
+          facePhaseFrac[0][0][ip] = 0.0;
+          facePhaseDens[0][0][ip] = 0.0;
+          facePhaseMassDensLocal[0][0][ip] = 0.0;
+          facePhaseVisc[0][0][ip] = 0.0;
+          facePhaseEnthalpy[0][0][ip] = 0.0;
+          facePhaseInternalEnergy[0][0][ip] = 0.0;
+          for( integer ic = 0; ic < NC; ++ic )
+          {
+            facePhaseCompFracLocal[0][0][ip][ic] = 0.0;
+          }
+        }
+        
         real64 faceTotalDens = 0.0;
 
         // Evaluate fluid properties at BC face conditions using flash calculation
@@ -1772,7 +1788,8 @@ evaluateBCFaceProperties( integer const numPhases,
           // Compute mobility from relative permeability evaluated at face conditions
           real64 const faceKr = facePhaseFrac[0][0][ip]; // phaseRelPerm[eiAdj][0][ip];
           real64 const mu = facePhaseVisc[0][0][ip];
-          facePhaseMob[kf][ip] = (mu > 0) ? faceTotalDens * faceKr / mu : 0.0;
+          // Safety check: ensure faceTotalDens and mu are valid before computing mobility
+          facePhaseMob[kf][ip] = (mu > 0 && faceTotalDens > 0) ? faceTotalDens * faceKr / mu : 0.0;
 
           // Store phase composition from flash calculation
           for( integer ic = 0; ic < NC; ++ic )
