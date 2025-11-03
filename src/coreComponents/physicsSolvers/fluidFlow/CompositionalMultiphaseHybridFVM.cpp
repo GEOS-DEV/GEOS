@@ -793,6 +793,9 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
       arrayView3d< real64 const, compflow::USD_PHASE_COMP > const facePhaseCompFracField =
         faceManager.getField< flow::facePhaseCompFraction >();
 
+      // Note: Face properties are computed on device by evaluateBCFaceProperties using parallelDevicePolicy,
+      // so no host-to-device memory synchronization is needed before launching DirichletFluxKernel
+
       // Apply Dirichlet boundary fluxes for each face set using DirichletFluxKernel
       for( string const & setName : bcFaceSets )
       {
