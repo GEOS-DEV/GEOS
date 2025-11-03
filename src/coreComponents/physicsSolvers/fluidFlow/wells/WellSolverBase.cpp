@@ -507,12 +507,12 @@ void WellSolverBase::assembleWellSystem( real64 const time_n,
   computeWellPerforationRates( time_n, dt, elementRegionManager, subRegion );
   assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
   my_ctime=my_ctime+1;
- 
-    //  auto iterInfo = currentIter( time_n, dt );
-    //  outputWellDebug( time_n, dt, std::get< 0 >( iterInfo ), std::get< 1 >( iterInfo ), std::get< 2 >( iterInfo ),
-    //                 domain, dofManager, localMatrix, localRhs );
- 
- 
+
+  //  auto iterInfo = currentIter( time_n, dt );
+  //  outputWellDebug( time_n, dt, std::get< 0 >( iterInfo ), std::get< 1 >( iterInfo ), std::get< 2 >( iterInfo ),
+  //                 domain, dofManager, localMatrix, localRhs );
+
+
 }
 
 void WellSolverBase::assembleSystem( real64 const time,

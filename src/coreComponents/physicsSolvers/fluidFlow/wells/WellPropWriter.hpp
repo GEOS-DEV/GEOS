@@ -161,7 +161,7 @@ public:
         stream << "," <<  m_prop[er][esr][ei][i];
     }
   };
-    template< typename T > struct typed_2d_perf_res_prop_writer : public perf_prop_writer
+  template< typename T > struct typed_2d_perf_res_prop_writer : public perf_prop_writer
   {
     typedef T value_type;
     typedef typed_prop_wrapper< value_type > prop_wrapper_type;
@@ -398,7 +398,7 @@ public:
       }
     m_perfPropWriterVec.push_back( new typed_2d_perf_res_prop_writer( prop, m_numComponent ));
   }
- 
+
   template< typename T >
   void registerPerfResPhaseComponentProp( std::string const & name, const T & prop )
   {

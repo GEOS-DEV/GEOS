@@ -624,9 +624,10 @@ void CompositionalMultiphaseWell::outputWellDebug( real64 const time,
             m_wellPropWriter[srn].registerPerfResPhasePropf( "PhaseInternalEnergy", multiFluidAccessors.get( fields::multifluid::phaseInternalEnergy{} ));
           }
           m_wellPropWriter[srn].registerPerfComponentProp( "CompPerfRate", perforationData.getField< fields::well::compPerforationRate >());
-          // m_wellPropWriter[srn].registerPerfResComponentProp( "ComponentDensity", compFlowAccessors.get( fields::flow::globalCompDensity{} ));
-           m_wellPropWriter[srn].registerPerfResPhaseComponentProp( "PhaseCompFrac", multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ));
-           m_wellPropWriter[srn].registerPerfResPhaseProp( "PhaseVolFrac", compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ));
+          // m_wellPropWriter[srn].registerPerfResComponentProp( "ComponentDensity", compFlowAccessors.get(
+          // fields::flow::globalCompDensity{} ));
+          m_wellPropWriter[srn].registerPerfResPhaseComponentProp( "PhaseCompFrac", multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ));
+          m_wellPropWriter[srn].registerPerfResPhaseProp( "PhaseVolFrac", compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ));
           m_wellPropWriter[srn].registerPerfResPhasePropf( "Viscosity", multiFluidAccessors.get( fields::multifluid::phaseViscosity{} ));
           m_wellPropWriter[srn].registerPerfResPhasePropf( "RelPerm", relPermAccessors.get( fields::relperm::phaseRelPerm{} ));
 
@@ -940,7 +941,8 @@ void CompositionalMultiphaseWell::printSegRates( real64 const & time,
             m_wellPropWriter_eot[srn].registerPerfResPhasePropf( "PhaseInternalEnergy", multiFluidAccessors.get( fields::multifluid::phaseInternalEnergy{} ));
           }
           m_wellPropWriter_eot[srn].registerPerfComponentProp( "CompPerfRate", perforationData.getField< fields::well::compPerforationRate >());
-          //m_wellPropWriter_eot[srn].registerPerfResComponentProp( "ComponentDensity", compFlowAccessors.get( fields::flow::globalCompDensity{} ));
+          //m_wellPropWriter_eot[srn].registerPerfResComponentProp( "ComponentDensity", compFlowAccessors.get(
+          // fields::flow::globalCompDensity{} ));
           m_wellPropWriter_eot[srn].registerPerfResPhaseComponentProp( "PhaseCompFrac", multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ));
           m_wellPropWriter_eot[srn].registerPerfResPhaseProp( "PhaseVolFrac", compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ));
           m_wellPropWriter_eot[srn].registerPerfResPhasePropf( "Viscosity", multiFluidAccessors.get( fields::multifluid::phaseViscosity{} ));
@@ -1727,10 +1729,12 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
       updateSubRegionState( subRegion );
       if( wellControls.isProducer() )
       {
-        wellControls.forSubGroups< MinimumBHPConstraint, ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >, ProductionConstraint< PhaseVolumeRateConstraint > >( [&](
-                                                                                                                                                                                    auto & constraint )
+        wellControls.forSubGroups< MinimumBHPConstraint, ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >,
+                                   ProductionConstraint< PhaseVolumeRateConstraint > >( [&](
+                                                                                          auto
+                                                                                          & constraint )
         {
-          if( ConstraintTypeId(wellControls.getControl()) == constraint.getControl()  )
+          if( ConstraintTypeId( wellControls.getControl()) == constraint.getControl()  )
           {
             wellControls.setCurrentConstraint( &constraint );
           }
@@ -1738,9 +1742,12 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
       }
       else
       {
-        wellControls.forSubGroups< MaximumBHPConstraint, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint >, InjectionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
+        wellControls.forSubGroups< MaximumBHPConstraint, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint >, InjectionConstraint< PhaseVolumeRateConstraint > >( [&](
+                                                                                                                                                                                                       auto
+                                                                                                                                                                                                       &
+                                                                                                                                                                                                       constraint )
         {
-          if( ConstraintTypeId(wellControls.getControl()) == constraint.getControl()  )
+          if( ConstraintTypeId( wellControls.getControl()) == constraint.getControl()  )
           {
             wellControls.setCurrentConstraint( &constraint );
           }
