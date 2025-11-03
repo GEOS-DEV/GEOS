@@ -44,7 +44,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_estimateSolution( false ),
   m_currentConstraint( nullptr ),
   m_wellStatus( WellControls::Status::OPEN ),
-  m_regionAveragePressure( -1 )
+  m_regionAveragePressure( -1 ),
+  m_enableIsoThermalEstimator( 0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -102,6 +103,14 @@ WellControls::WellControls( string const & name, Group * const parent )
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to esitmate well solution prior to coupled reservoir and well solve." );
+
+  registerWrapper( viewKeyStruct::enableIsoThermalEstimatorString(), &m_enableIsoThermalEstimator ).
+    setDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Estimator configuration option to disable thermal effects on initial well constraint solve and then converge solution with thermal effects enabled: \n"
+                    " - If the flag is set to 1, thermal effects are enabled during the initial constraint solve. \n"
+                    " - If the flag is set to 0, thermal effects are disabled during the initial constraint solve." );
+
 
   addLogLevel< logInfo::WellControl >();
 }

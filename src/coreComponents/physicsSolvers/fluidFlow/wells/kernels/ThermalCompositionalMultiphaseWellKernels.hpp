@@ -492,6 +492,7 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   ElementBasedAssemblyKernel( localIndex const numPhases,
+                              bool const thermalEffectsEnabled,
                               integer const isProducer,
                               globalIndex const rankOffset,
                               string const dofKey,
@@ -500,7 +501,7 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > const kernelFlags )
-    : Base( numPhases, isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags ),
+    : Base( numPhases, thermalEffectsEnabled, isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags ),
     m_phaseInternalEnergy_n( fluid.phaseInternalEnergy_n()),
     m_phaseInternalEnergy( fluid.phaseInternalEnergy()),
     m_dPhaseInternalEnergy( fluid.dPhaseInternalEnergy())
@@ -660,6 +661,7 @@ public:
   static void
   createAndLaunch( localIndex const numComps,
                    localIndex const numPhases,
+                   WellControls const & wellControls,
                    integer const isProducer,
                    globalIndex const rankOffset,
                    BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags,
@@ -674,7 +676,7 @@ public:
       localIndex constexpr NUM_COMP = NC();
 
       ElementBasedAssemblyKernel< NUM_COMP >
-      kernel( numPhases, isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags );
+      kernel( numPhases, wellControls.thermalEffectsEnabled(), isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags );
       ElementBasedAssemblyKernel< NUM_COMP >::template
       launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP > >( subRegion.size(), kernel );
     } );
@@ -754,6 +756,7 @@ public:
             , localRhs
             , kernelFlags ),
     m_numPhases ( fluid.numFluidPhases()),
+    m_thermalEffectsEnabled( wellControls.thermalEffectsEnabled()),
     m_globalWellElementIndex( subRegion.getGlobalWellElementIndex() ),
     m_phaseFraction( fluid.phaseFraction()),
     m_dPhaseFraction( fluid.dPhaseFraction()),
@@ -801,6 +804,7 @@ public:
   {
     Base::complete ( iwelem, stack );
     // tjb iso return;
+    if( !m_thermalEffectsEnabled ) return;
     using namespace compositionalMultiphaseUtilities;
     if( stack.numConnectedElems ==1 )
     {
@@ -1082,6 +1086,8 @@ public:
 protected:
   /// Number of phases
   integer const m_numPhases;
+  /// Flag specifying whether thermal effects are enabled
+  bool const m_thermalEffectsEnabled;
 
   /// Global index of local element
   arrayView1d< globalIndex const > m_globalWellElementIndex;

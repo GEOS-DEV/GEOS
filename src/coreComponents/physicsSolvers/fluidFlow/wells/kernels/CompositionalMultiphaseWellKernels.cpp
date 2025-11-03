@@ -723,7 +723,6 @@ RateInitializationKernel::
     {
       forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
       {
-        std::cout << "rate est " << iwelem << " " << constraintVal << std::endl;
         connRate[iwelem] =  constraintVal * totalDens[iwelem][0];
       } );
     }

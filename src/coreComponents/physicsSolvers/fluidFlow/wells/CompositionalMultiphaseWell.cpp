@@ -498,7 +498,7 @@ void CompositionalMultiphaseWell::outputWellDebug( real64 const time,
                                                                              WellElementSubRegion & subRegion )
     {
 
-      if( m_writeSegDebug > 0 )
+      if( m_writeSegDebug > 1 )
       {
         CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
         auto solver_names = getParent().getSubGroupsNames();
@@ -620,13 +620,13 @@ void CompositionalMultiphaseWell::outputWellDebug( real64 const time,
           if( isThermal() )
           {
             m_wellPropWriter[srn].registerPerfResProp( "Temperature", compFlowAccessors.get( fields::flow::temperature{} ));
-            m_wellPropWriter[srn].registerPerfResPhasePropf( "Enthalpy", multiFluidAccessors.get( fields::multifluid::phaseEnthalpy{} ));
-            m_wellPropWriter[srn].registerPerfResPhasePropf( "InternalEnergy", multiFluidAccessors.get( fields::multifluid::phaseInternalEnergy{} ));
+            m_wellPropWriter[srn].registerPerfResPhasePropf( "PhaseEnthalpy", multiFluidAccessors.get( fields::multifluid::phaseEnthalpy{} ));
+            m_wellPropWriter[srn].registerPerfResPhasePropf( "PhaseInternalEnergy", multiFluidAccessors.get( fields::multifluid::phaseInternalEnergy{} ));
           }
           m_wellPropWriter[srn].registerPerfComponentProp( "CompPerfRate", perforationData.getField< fields::well::compPerforationRate >());
-          m_wellPropWriter[srn].registerPerfResComponentProp( "ComponentDensity", compFlowAccessors.get( fields::flow::globalCompDensity{} ));
-          m_wellPropWriter[srn].registerPerfResPhaseComponentProp( "PhaseCompFrac", multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ));
-          m_wellPropWriter[srn].registerPerfResPhaseProp( "PhaseVolFrac", compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ));
+          // m_wellPropWriter[srn].registerPerfResComponentProp( "ComponentDensity", compFlowAccessors.get( fields::flow::globalCompDensity{} ));
+           m_wellPropWriter[srn].registerPerfResPhaseComponentProp( "PhaseCompFrac", multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ));
+           m_wellPropWriter[srn].registerPerfResPhaseProp( "PhaseVolFrac", compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ));
           m_wellPropWriter[srn].registerPerfResPhasePropf( "Viscosity", multiFluidAccessors.get( fields::multifluid::phaseViscosity{} ));
           m_wellPropWriter[srn].registerPerfResPhasePropf( "RelPerm", relPermAccessors.get( fields::relperm::phaseRelPerm{} ));
 
@@ -657,7 +657,7 @@ void CompositionalMultiphaseWell::outputSingleWellDebug( real64 const time,
   GEOS_UNUSED_VAR( localRhs );
 
 
-  if( m_writeSegDebug > 0 )
+  if( m_writeSegDebug > 1 )
   {
     CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
     auto solver_names = getParent().getSubGroupsNames();
@@ -780,11 +780,11 @@ void CompositionalMultiphaseWell::outputSingleWellDebug( real64 const time,
       if( isThermal() )
       {
         m_wellPropWriter[srn].registerPerfResProp( "Temperature", compFlowAccessors.get( fields::flow::temperature{} ));
-        m_wellPropWriter[srn].registerPerfResPhasePropf( "Enthalpy", multiFluidAccessors.get( fields::multifluid::phaseEnthalpy{} ));
-        m_wellPropWriter[srn].registerPerfResPhasePropf( "InternalEnergy", multiFluidAccessors.get( fields::multifluid::phaseInternalEnergy{} ));
+        m_wellPropWriter[srn].registerPerfResPhasePropf( "PhaseEnthalpy", multiFluidAccessors.get( fields::multifluid::phaseEnthalpy{} ));
+        m_wellPropWriter[srn].registerPerfResPhasePropf( "PhaseInternalEnergy", multiFluidAccessors.get( fields::multifluid::phaseInternalEnergy{} ));
       }
       m_wellPropWriter[srn].registerPerfComponentProp( "CompPerfRate", perforationData.getField< fields::well::compPerforationRate >());
-      m_wellPropWriter[srn].registerPerfResComponentProp( "ComponentDensity", compFlowAccessors.get( fields::flow::globalCompDensity{} ));
+      //m_wellPropWriter[srn].registerPerfResComponentProp( "ComponentDensity", compFlowAccessors.get( fields::flow::globalCompDensity{} ));
       m_wellPropWriter[srn].registerPerfResPhaseComponentProp( "PhaseCompFrac", multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ));
       m_wellPropWriter[srn].registerPerfResPhaseProp( "PhaseVolFrac", compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ));
       m_wellPropWriter[srn].registerPerfResPhasePropf( "Viscosity", multiFluidAccessors.get( fields::multifluid::phaseViscosity{} ));
@@ -936,10 +936,11 @@ void CompositionalMultiphaseWell::printSegRates( real64 const & time,
           if( isThermal() )
           {
             m_wellPropWriter_eot[srn].registerPerfResProp( "Temperature", compFlowAccessors.get( fields::flow::temperature{} ));
-            m_wellPropWriter[srn].registerPerfResPhaseProp( "Enthalpy", multiFluidAccessors.get( fields::multifluid::phaseEnthalpy{} ));
+            m_wellPropWriter_eot[srn].registerPerfResPhasePropf( "PhaseEnthalpy", multiFluidAccessors.get( fields::multifluid::phaseEnthalpy{} ));
+            m_wellPropWriter_eot[srn].registerPerfResPhasePropf( "PhaseInternalEnergy", multiFluidAccessors.get( fields::multifluid::phaseInternalEnergy{} ));
           }
           m_wellPropWriter_eot[srn].registerPerfComponentProp( "CompPerfRate", perforationData.getField< fields::well::compPerforationRate >());
-          m_wellPropWriter_eot[srn].registerPerfResComponentProp( "ComponentDensity", compFlowAccessors.get( fields::flow::globalCompDensity{} ));
+          //m_wellPropWriter_eot[srn].registerPerfResComponentProp( "ComponentDensity", compFlowAccessors.get( fields::flow::globalCompDensity{} ));
           m_wellPropWriter_eot[srn].registerPerfResPhaseComponentProp( "PhaseCompFrac", multiFluidAccessors.get( fields::multifluid::phaseCompFraction{} ));
           m_wellPropWriter_eot[srn].registerPerfResPhaseProp( "PhaseVolFrac", compFlowAccessors.get( fields::flow::phaseVolumeFraction{} ));
           m_wellPropWriter_eot[srn].registerPerfResPhasePropf( "Viscosity", multiFluidAccessors.get( fields::multifluid::phaseViscosity{} ));
@@ -1720,6 +1721,32 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
   else
   {
     wellControls.setWellState( true );
+    // setup if restart
+    if( wellControls.getCurrentConstraint() == nullptr )
+    {
+      updateSubRegionState( subRegion );
+      if( wellControls.isProducer() )
+      {
+        wellControls.forSubGroups< MinimumBHPConstraint, ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >, ProductionConstraint< PhaseVolumeRateConstraint > >( [&](
+                                                                                                                                                                                    auto & constraint )
+        {
+          if( ConstraintTypeId(wellControls.getControl()) == constraint.getControl()  )
+          {
+            wellControls.setCurrentConstraint( &constraint );
+          }
+        } );
+      }
+      else
+      {
+        wellControls.forSubGroups< MaximumBHPConstraint, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint >, InjectionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
+        {
+          if( ConstraintTypeId(wellControls.getControl()) == constraint.getControl()  )
+          {
+            wellControls.setCurrentConstraint( &constraint );
+          }
+        } );
+      }
+    }
 
   }
 }
@@ -1906,6 +1933,7 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
         ElementBasedAssemblyKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( numComponents,
                                                    numPhases,
+                                                   wellControls,
                                                    wellControls.isProducer(),
                                                    dofManager.rankOffset(),
                                                    kernelFlags,
@@ -1921,6 +1949,7 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
         ElementBasedAssemblyKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( numComponents,
                                                    numPhases,
+                                                   wellControls,
                                                    wellControls.isProducer(),
                                                    dofManager.rankOffset(),
                                                    kernelFlags,
@@ -2050,6 +2079,7 @@ CompositionalMultiphaseWell::applyWellBoundaryConditions( real64 const time_n,
     coupledReservoirAndWellKernels::
       ThermalCompositionalMultiPhaseWellFluxKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( numComps,
+                                                 wellControls,
                                                  wellControls.isProducer(),
                                                  dt,
                                                  rankOffset,
@@ -2829,15 +2859,11 @@ CompositionalMultiphaseWell::applyWellSystemSolution( DofManager const & dofMana
                                fields::well::mixtureConnectionRate::key(),
                                scalingFactor,
                                connRateMask );
-  arrayView1d< real64 const > const & temp =subRegion.getField< fields::well::temperature >();
+
   if( isThermal() )
   {
     DofManager::CompMask temperatureMask( m_numDofPerWellElement, numFluidComponents()+2, numFluidComponents()+3 );
 
-    for( integer i=0; i<subRegion.size(); i++ )
-    {
-      std::cout << " bu temp i "<< i << " " << temp[i] << std::endl;
-    }
     dofManager.addVectorToField( localSolution,
                                  wellElementDofName(),
                                  fields::well::temperature::key(),
@@ -2986,15 +3012,11 @@ void CompositionalMultiphaseWell::chopNegativeDensities( WellElementSubRegion & 
       }
     }
   } );
-  return;
+
   WellControls const & wellControls = getWellControls( subRegion );
-  if( isThermal()   )
+  if( isThermal() && !wellControls.isInjector()  )
   {
-    real64 minTemp;
-    if( wellControls.isInjector() )
-      minTemp  =wellControls.getInjectionTemperature();
-    // else
-    minTemp=280.0;
+    real64 minTemp =290.0;
     arrayView1d< real64 > const & wellElemTemperature =
       subRegion.getField< well::temperature >();
 
@@ -3050,15 +3072,11 @@ void CompositionalMultiphaseWell::chopNegativeDensities( DomainPartition & domai
           }
         }
       } );
-      return;
-      if( isThermal()   )
+      WellControls const & wellControls = getWellControls( subRegion );
+      if( isThermal() && !wellControls.isInjector() )
       {
-        WellControls const & wellControls = getWellControls( subRegion );
-        real64 minTemp;
-        if( wellControls.isInjector() )
-          minTemp  = wellControls.getInjectionTemperature();
-        else
-          minTemp=280.0;
+
+        real64 minTemp =290.0;
         arrayView1d< real64 > const & wellElemTemperature =
           subRegion.getField< well::temperature >();
 
@@ -3427,6 +3445,8 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & time_n,
   if( getLogLevel() > 0 )
   {
     printRates( time_n, dt, domain );
+    auto iterInfo = currentIter( time_n, dt );
+    printSegRates( time_n, dt, std::get< 0 >( iterInfo ), std::get< 1 >( iterInfo ), std::get< 2 >( iterInfo ), domain );
   }
 }
 
@@ -3612,10 +3632,11 @@ bool CompositionalMultiphaseWell::evaluateConstraints( real64 const & time_n,
           {
             constraintList.push_back( wellControls.getMinBHPConstraint() );
           }
+          constraintList.insert( constraintList.begin(), limitingConstraint );
         }
       }
       // Solve minimum bhp constraint first
-      if( wellControls.getMinBHPConstraint()->isConstraintActive() )
+      if( false && wellControls.getMinBHPConstraint()->isConstraintActive() )
       {
         // this is related to WHP option which introduces a new BHP constraint
         limitingConstraint = wellControls.getMinBHPConstraint();
@@ -3632,16 +3653,29 @@ bool CompositionalMultiphaseWell::evaluateConstraints( real64 const & time_n,
       {
         if( limitingConstraint->getControl() != ConstraintTypeId::BHP )
         { // remove from list and add BHP constraint
-          auto it = std::find( constraintList.begin(), constraintList.end(), limitingConstraint );
-          if( it != constraintList.end() )
-          {
-            constraintList.erase( it );
-          }
+          //auto it = std::find( constraintList.begin(), constraintList.end(), limitingConstraint );
+          //if( it != constraintList.end() )
+          //{
+          //  constraintList.erase( it );
+          //}
           constraintList.push_back( wellControls.getMaxBHPConstraint() );
         }
       }
     }
-
+    if( wellControls.isoThermalEstimatorEnabled() )
+    {
+      wellControls.enableThermalEffects( false );
+      solveConstraint ( limitingConstraint, time_n,
+                        dt,
+                        cycleNumber,
+                        coupledIterationNumber,
+                        domain,
+                        mesh,
+                        elemManager,
+                        subRegion,
+                        dofManager );
+      wellControls.enableThermalEffects( true );
+    }
     solveConstraint ( limitingConstraint, time_n,
                       dt,
                       cycleNumber,

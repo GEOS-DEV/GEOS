@@ -780,7 +780,7 @@ public:
           for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
           {
             dMob[jc] = resPhaseMob*dResEnthalpy[jc]  +
-                       resPhaseMobE*(dRelPerm[jc]/(resRelPerm+0.000000001) + dDens[jc] / (resDens +0.000000001)  - dVisc[jc]/resVisc);
+                       resPhaseMobE*(dRelPerm[jc]/(resRelPerm+0.000000001) + dDens[jc] / (resDens +0.000000001)  - dVisc[jc]/(resVisc+0.000000001));
           }
           // compute the phase flux and derivatives using upstream cell mobility
           eflux = resPhaseMobE * potDiff;
@@ -798,8 +798,8 @@ public:
           m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dT] += dEFlux[TAG::RES][CP_Deriv::dT] * resPhaseVolFrac +
                                                               eflux *m_dResPhaseFraction[er][esr][ei][0][ip][Deriv::dT];
           // energy equation derivatives WRT well P - //tjb
-          m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP] += dFlux[TAG::WELL][CP_Deriv::dP];
-          m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT] += dFlux[TAG::WELL][CP_Deriv::dT];
+          m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP] += dEFlux[TAG::WELL][CP_Deriv::dP];
+          m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT] += dEFlux[TAG::WELL][CP_Deriv::dT];
 
           real64 dProp_dC[numComp]{};
           applyChainRule( NC,

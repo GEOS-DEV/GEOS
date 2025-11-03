@@ -145,7 +145,23 @@ public:
         stream << "," <<  m_prop[er][esr][ei][0][i];
     }
   };
-  template< typename T > struct typed_2d_perf_res_prop_writer : public perf_prop_writer
+  template< typename T > struct typed_2d_perf_res_phase_prop_writer : public perf_prop_writer
+  {
+    typedef T value_type;
+    typedef typed_prop_wrapper< value_type > prop_wrapper_type;
+
+    typed_2d_perf_res_phase_prop_writer( value_type & prop, integer dim2 ): m_prop( prop ), m_Dim2( dim2 ){}
+    value_type const m_prop;
+    const integer m_Dim2;
+
+    virtual void write_prop( const integer g, const integer er, const integer esr, const integer ei, std::ofstream & stream )
+    {
+      GEOS_UNUSED_VAR( g );
+      for( integer i=0; i<m_Dim2; i++ )
+        stream << "," <<  m_prop[er][esr][ei][i];
+    }
+  };
+    template< typename T > struct typed_2d_perf_res_prop_writer : public perf_prop_writer
   {
     typedef T value_type;
     typedef typed_prop_wrapper< value_type > prop_wrapper_type;
@@ -157,8 +173,11 @@ public:
     virtual void write_prop( const integer g, const integer er, const integer esr, const integer ei, std::ofstream & stream )
     {
       GEOS_UNUSED_VAR( g );
+      GEOS_UNUSED_VAR( er );
+      GEOS_UNUSED_VAR( esr );
       for( integer i=0; i<m_Dim2; i++ )
-        stream << "," <<  m_prop[er][esr][ei][i];
+        //stream << "," <<  m_prop[er][esr][ei][i];
+        stream << "," <<  m_prop[ei][i];
     }
   };
   template< typename T > struct typed_2d_prop_writer : public prop_writer
@@ -379,6 +398,7 @@ public:
       }
     m_perfPropWriterVec.push_back( new typed_2d_perf_res_prop_writer( prop, m_numComponent ));
   }
+ 
   template< typename T >
   void registerPerfResPhaseComponentProp( std::string const & name, const T & prop )
   {
@@ -446,7 +466,7 @@ public:
         m_perfHeader.push_back( name+"_"+p );
       }
 
-    m_perfPropWriterVec.push_back( new typed_2d_perf_res_prop_writer( prop, m_numPhase ));
+    m_perfPropWriterVec.push_back( new typed_2d_perf_res_phase_prop_writer( prop, m_numPhase ));
   }
   template< typename T >
   void registerPerfResPhasePropf( std::string const & name, const T & prop )

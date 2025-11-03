@@ -639,6 +639,7 @@ public:
    * @param[in] kernelFlags flags packed together
    */
   ThermalCompositionalMultiPhaseFluxKernel( real64 const dt,
+                                            bool const thermalEffectsEnabled,
                                             integer const isProducer,
                                             globalIndex const rankOffset,
                                             string const wellDofKey,
@@ -663,6 +664,7 @@ public:
             detectCrossflow,
             numCrossFlowPerforations,
             kernelFlags ),
+    m_thermalEffectsEnabled( thermalEffectsEnabled ),
     m_isProducer( isProducer ),
     m_globalWellElementIndex( subRegion.getGlobalWellElementIndex() ),
     m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >()),
@@ -688,6 +690,8 @@ public:
                                     stackArray1d< globalIndex, 2*resNumDOF > & dofColIndices,
                                     localIndex const iwelem )
     {
+      if( !m_thermalEffectsEnabled )
+        return;
       // No energy equation if top element and Injector
       // Top element defined by global index == 0
       // Assumption is global index == 0 is top segment with fixed temp BC
@@ -766,6 +770,8 @@ public:
   }
 
 protected:
+  /// Flag specifying whether thermal effects are enabled
+  bool const m_thermalEffectsEnabled;
 
   /// Well type
   integer const m_isProducer;
@@ -801,6 +807,7 @@ public:
   template< typename POLICY >
   static void
   createAndLaunch( integer const numComps,
+                   WellControls const & wellControls,
                    integer const isProducer,
                    real64 const dt,
                    globalIndex const rankOffset,
@@ -821,7 +828,7 @@ public:
       integer constexpr NUM_COMP = NC();
 
       using kernelType = ThermalCompositionalMultiPhaseFluxKernel< NUM_COMP, 1 >;
-      kernelType kernel( dt, isProducer, rankOffset, wellDofKey, subRegion, resDofNumber, perforationData,
+      kernelType kernel( dt, wellControls.thermalEffectsEnabled(), isProducer, rankOffset, wellDofKey, subRegion, resDofNumber, perforationData,
                          fluid, localRhs, localMatrix, detectCrossflow, numCrossFlowPerforations, kernelFlags );
       kernelType::template launch< POLICY >( perforationData->size(), kernel );
     } );
@@ -883,6 +890,7 @@ public:
    * @param[in] kernelFlags flags packed together
    */
   ThermalCompositionalMultiPhaseWellFluxKernel( real64 const dt,
+                                                bool const thermalEffectsEnabled,
                                                 integer const isProducer,
                                                 globalIndex const rankOffset,
                                                 string const wellDofKey,
@@ -901,6 +909,7 @@ public:
             localRhs,
             localMatrix,
             kernelFlags ),
+    m_thermalEffectsEnabled( thermalEffectsEnabled ),
     m_isProducer( isProducer ),
     m_globalWellElementIndex( subRegion.getGlobalWellElementIndex() ),
     m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >()),
@@ -925,7 +934,9 @@ public:
                                     localIndex const iwelem,
                                     stackArray1d< globalIndex, resNumDOF > & dofColIndices )
     {
-      GEOS_UNUSED_VAR( dofColIndices ); // tjb iso
+      GEOS_UNUSED_VAR( dofColIndices );
+      if( !m_thermalEffectsEnabled )   // tjb iso
+        return;
       // No energy equation if top element and Injector
       // Top element defined by global index == 0
       // Assumption is global index == 0 is top segment with fixed temp BC
@@ -991,7 +1002,8 @@ public:
   }
 
 protected:
-
+  /// Thermal effects enabled
+  bool const m_thermalEffectsEnabled;
   /// Well type
   integer const m_isProducer;
 
@@ -1026,6 +1038,7 @@ public:
   template< typename POLICY >
   static void
   createAndLaunch( integer const numComps,
+                   WellControls const & wellControls,
                    integer const isProducer,
                    real64 const dt,
                    globalIndex const rankOffset,
@@ -1043,7 +1056,7 @@ public:
       integer constexpr NUM_COMP = NC();
 
       using kernelType = ThermalCompositionalMultiPhaseWellFluxKernel< NUM_COMP, 1 >;
-      kernelType kernel( dt, isProducer, rankOffset, wellDofKey, subRegion, perforationData,
+      kernelType kernel( dt, wellControls.thermalEffectsEnabled(), isProducer, rankOffset, wellDofKey, subRegion, perforationData,
                          fluid, localRhs, localMatrix, kernelFlags );
       kernelType::template launch< POLICY >( perforationData->size(), kernel );
     } );

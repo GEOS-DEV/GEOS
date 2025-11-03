@@ -446,6 +446,27 @@ public:
   ///@}
 
   /**
+   * @brief Set thermal effects enable
+   * @param[in] true/false
+   */
+  void enableThermalEffects ( bool enable ) { m_thermalEffectsEnabled = enable; };
+
+  /**
+   * @brief Are thermal effects enabled
+   * @return true if thermal effects are enabled, false otherwise
+   */
+  bool thermalEffectsEnabled() const { return m_thermalEffectsEnabled; }
+
+  /**
+   * @brief Is isoThermalEstimator  enabled
+   * @return true if isoThermalEstimator is enabled, false otherwise
+   */
+  bool isoThermalEstimatorEnabled() const { return m_enableIsoThermalEstimator; }
+
+
+  ///@}
+
+  /**
    * @brief Struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
    */
@@ -478,7 +499,8 @@ public:
     static constexpr char const * initialPressureCoefficientString() { return "initialPressureCoefficient"; }
     /// string key for the esitmate well solution flag
     static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
-
+    /// string key for the enable iso thermal estimator flag
+    static constexpr char const * enableIsoThermalEstimatorString() { return "enableIsoThermalEstimator"; }
     /// string key for the minimum BHP presssure for a producer
     static constexpr char const * minimumBHPConstraintString() { return "MinimumBHPConstraint"; }
     /// string key for the maximum BHP presssure for a injection
@@ -606,6 +628,8 @@ private:
   /// Region average temperature used in volume rate constraint calculations
   real64 m_regionAverageTemperature;
 
+  bool m_thermalEffectsEnabled;
+  integer m_enableIsoThermalEstimator;
 };
 
 

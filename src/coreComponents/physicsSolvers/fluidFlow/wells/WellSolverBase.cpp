@@ -116,8 +116,7 @@ void WellSolverBase::postInputInitialization()
   // 1. Set key dimensions of the problem
   m_numDofPerWellElement = m_isThermal ?    m_numComponents + 2 : m_numComponents + 1; // 1 pressure  connectionRate + temp if thermal
   m_numDofPerResElement = m_isThermal ? m_numComponents  + 1: m_numComponents;   // 1 pressure   + temp if thermal
-
-
+  m_writeSegDebug=2;
   if( m_writeSegDebug > 0 )
   {
     if( m_writeCSV == 0 )
@@ -508,14 +507,12 @@ void WellSolverBase::assembleWellSystem( real64 const time_n,
   computeWellPerforationRates( time_n, dt, elementRegionManager, subRegion );
   assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
   my_ctime=my_ctime+1;
-  /*
-     if ( !m_useNewCode )
-     {
-     auto iterInfo = currentIter( time_n, dt );
-     outputWellDebug( time_n, dt, std::get< 0 >( iterInfo ), std::get< 1 >( iterInfo ), std::get< 2 >( iterInfo ),
-                    domain, dofManager, localMatrix, localRhs );
-     }
-   */
+ 
+    //  auto iterInfo = currentIter( time_n, dt );
+    //  outputWellDebug( time_n, dt, std::get< 0 >( iterInfo ), std::get< 1 >( iterInfo ), std::get< 2 >( iterInfo ),
+    //                 domain, dofManager, localMatrix, localRhs );
+ 
+ 
 }
 
 void WellSolverBase::assembleSystem( real64 const time,
@@ -787,7 +784,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
   {
     if( m_nonlinearSolverParameters.getLogLevel() > 4 )
       GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
-                             GEOS_FMT( " Well: {}   Est Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", subRegion.getName(), dtAttempt, configurationLoopIter, newtonIter ));
+                             GEOS_FMT( " Well: {}   Est Attempt: NewtonIter: {:2}", subRegion.getName(), stepDt, newtonIter ));
 
     {
       Timer timer( m_timers["assemble"] );
@@ -1000,9 +997,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
     }
 
     lastResidual = residualNorm;
-    std::cout << "lastResidual " << lastResidual << std::endl;
   }
-  std::cout << "isNewtonConverged " << isNewtonConverged << std::endl;
   return isNewtonConverged;
 }
 

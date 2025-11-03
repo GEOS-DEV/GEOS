@@ -540,7 +540,7 @@ public:
     {
       m_targetBHP = wellControls.getMaxBHPConstraint()->getConstraintValue( time );
 
-      //  tjb Note this assumes that there is only one     rate constraint
+      //  tjbNote this assumes that there is only one     rate constraint
       // This is a normalizer for the balance equations.  The normalizaer should be the current rate not the constraint value!!
       // This is one of the reasons for restricting  constraint type for a production well
       // another pr will remove fix this (so the cause for difference results is isolated to one change)
@@ -845,6 +845,7 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   ElementBasedAssemblyKernel( localIndex const numPhases,
+                              bool const thermalEffectsEnabled,
                               integer const isProducer,
                               globalIndex const rankOffset,
                               string const dofKey,
@@ -854,6 +855,7 @@ public:
                               arrayView1d< real64 > const & localRhs,
                               BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > const kernelFlags )
     : m_numPhases( numPhases ),
+    m_thermalEffectsEnabled( thermalEffectsEnabled ),
     m_isProducer( isProducer ),
     m_rankOffset( rankOffset ),
     m_iwelemControl( subRegion.getTopWellElementIndex() ),
@@ -1135,7 +1137,20 @@ public:
 
     if constexpr ( IS_THERMAL)
     {
-      if( ei == m_iwelemControl && !m_isProducer )
+      if( !m_thermalEffectsEnabled )
+      {
+        for( integer i=0; i < numComp+1+IS_THERMAL; i++ )
+        {
+          stack.localJacobian[numRows-1][i] = 0.0;
+        }
+        // constant Temperature
+        for( integer i=0; i < numComp+1+IS_THERMAL; i++ )
+          stack.localJacobian[i][numRows-1]  = 0.0;
+        stack.localJacobian[numRows-1][numRows-1] = 1.0;
+
+        stack.localResidual[numRows-1]=0.0;
+      }
+      else if( ei == m_iwelemControl && !m_isProducer )
       {
         // For top segment energy balance eqn replaced with  T(n+1) - T = 0
         // No other energy balance derivatives
@@ -1152,19 +1167,9 @@ public:
 
         stack.localResidual[numRows-1]=0.0;
       }
-    }
-    /* tjb iso
-        for( integer i=0; i < numComp+1+IS_THERMAL; i++ )
-        {
-          stack.localJacobian[numRows-1][i] = 0.0;
-        }
-        // constant Temperature
-        for( integer i=0; i < numComp+1+IS_THERMAL; i++ )
-          stack.localJacobian[i][numRows-1]  = 0.0;
-        stack.localJacobian[numRows-1][numRows-1] = 1.0;
 
-        stack.localResidual[numRows-1]=0.0;
-     */
+
+    }
     if( m_kernelFlags.isSet( isothermalCompositionalMultiphaseBaseKernels::KernelFlags::TotalMassEquation ) )
     {
       // apply equation/variable change transformation to the component mass balance equations
@@ -1223,6 +1228,8 @@ protected:
   /// Number of fluid phases
   integer const m_numPhases;
 
+  /// Flag indicating whether thermal effects are enabled
+  bool const m_thermalEffectsEnabled;
   /// Well type
   integer const m_isProducer;
 
@@ -1302,6 +1309,7 @@ public:
   static void
   createAndLaunch( localIndex const numComps,
                    localIndex const numPhases,
+                   WellControls const & wellControls,
                    integer const isProducer,
                    globalIndex const rankOffset,
                    BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags,
@@ -1318,7 +1326,7 @@ public:
       integer constexpr istherm = IS_THERMAL();
 
       ElementBasedAssemblyKernel< NUM_COMP, istherm >
-      kernel( numPhases, isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags );
+      kernel( numPhases, wellControls.thermalEffectsEnabled(), isProducer, rankOffset, dofKey, subRegion, fluid, localMatrix, localRhs, kernelFlags );
       ElementBasedAssemblyKernel< NUM_COMP, istherm >::template
       launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP, istherm > >( subRegion.size(), kernel );
     } );
