@@ -18,4 +18,11 @@
       nz="{ 3 }"
       cellBlockNames="{ cb }"/>
   </Mesh>
+
+  <Geometry>
+    <Box
+      name="zpos"
+      xMin="{ -0.01, -0.01, 100.99 }"
+      xMax="{ 101.01, 101.01, 101.01 }"/>
+  </Geometry>
 </Problem>
