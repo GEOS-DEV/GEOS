@@ -2367,22 +2367,8 @@ void CompositionalMultiphaseWell::chopNegativeDensities( WellElementSubRegion & 
   arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens =
     subRegion.getField< fields::well::globalCompDensity >();
 
-  //arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens_n =
-  // subRegion.getField< fields::well::globalCompDensity_n >();
-
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
   {
-    /*
-       for( integer ic = 0; ic < numComp; ++ic )
-       {
-       if( iwelem == 65 )
-       {
-        std::cout << "tjb dens " << iwelem << " " << ic << " " << wellElemCompDens[iwelem][ic] << " " <<
-           wellElemCompDens_n[iwelem][ic] <<
-           std::endl;
-       }
-       }
-     */
     if( wellElemGhostRank[iwelem] < 0 )
     {
       for( integer ic = 0; ic < numComp; ++ic )
@@ -2981,9 +2967,6 @@ bool CompositionalMultiphaseWell::evaluateConstraints( real64 const & time_n,
 
     if( limitingConstraint->getName() != constraint->getName())
     {
-      //std::cout << "Use estimator " <<  useEstimator << "  Evaluating constraint " << constraint.getName() <<  " against constraint "
-      // <<
-      // limitingConstraint->getName() << std::endl;
       if( constraint->checkViolation( *limitingConstraint, time_n ) )
       {
         limitingConstraint = constraint;
