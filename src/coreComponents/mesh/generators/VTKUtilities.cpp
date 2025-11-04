@@ -641,6 +641,7 @@ partitionByCellGraph( AllMeshes & input,
       return parmetis::partition( graph.toViewConst(), elemDist, numParts, comm, numRefinements );
 #else
       GEOS_THROW( "GEOS must be built with ParMETIS support (ENABLE_PARMETIS=ON) to use 'parmetis' partitioning method", InputError );
+      return {};
 #endif
     }
     case PartitionMethod::ptscotch:
@@ -650,6 +651,7 @@ partitionByCellGraph( AllMeshes & input,
       return ptscotch::partition( graph.toViewConst(), numParts, comm );
 #else
       GEOS_THROW( "GEOS must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method", InputError );
+      return {};
 #endif
     }
     default:
@@ -794,8 +796,14 @@ scatterByBlock( vtkDataSet & mesh )
   }
   else
   {
-    // Other ranks have empty mesh
-    localParts->SetNumberOfPartitions( 0 );
+    // Other ranks have an empty mesh, but we still need to create the
+    // partitioned data set structure.
+    localParts->SetNumberOfPartitions( size );
+    for( int r = 0; r < size; ++r )
+    {
+      vtkNew< vtkUnstructuredGrid > emptyPartition;
+      localParts->SetPartition( r, emptyPartition );
+    }
   }
 
   //Send cells to appropriate ranks

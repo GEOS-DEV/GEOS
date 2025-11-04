@@ -105,7 +105,7 @@ protected:
 private:
 
   ///@cond DO_NOT_DOCUMENT
-  struct viewKeyStruct
+  struct viewKeyStruct : public ExternalMeshGeneratorBase::viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
     constexpr static char const * structuredIndexAttributeString() { return "structuredIndexAttribute"; }
@@ -116,7 +116,6 @@ private:
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
     constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
     constexpr static char const * dataSourceString() { return "dataSourceName"; }
-    constexpr static char const * meshPathString() { return "meshPath"; }
   };
 
   struct groupKeyStruct
@@ -173,9 +172,6 @@ private:
 
   /// Repository name
   string m_dataSourceName;
-
-  /// path to the mesh in the repository
-  string m_meshPath;
 
   /// Repository of VTK objects
   VTKHierarchicalDataSource * m_dataSource;
