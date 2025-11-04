@@ -450,6 +450,7 @@ public:
   WellControls::Status getWellStatus () const { return m_wellStatus; }
   ///@}
 
+
   /**
    * @brief Struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
@@ -606,10 +607,8 @@ private:
   std::vector< WellConstraintBase * > m_productionRateConstraintList;
   std::vector< WellConstraintBase * > m_injectionRateConstraintList;
 
-
   /// Well status
   WellControls::Status m_wellStatus;
-
 
   /// Region average pressure used in volume rate constraint calculations
   real64 m_regionAveragePressure;

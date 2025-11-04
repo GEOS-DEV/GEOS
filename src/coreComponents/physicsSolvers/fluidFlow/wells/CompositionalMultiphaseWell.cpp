@@ -469,6 +469,7 @@ void CompositionalMultiphaseWell::postRestartInitialization()
     // loop over the wells
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
+
     {
       // setup fluid separator
       WellControls & wellControls = getWellControls( subRegion );
@@ -1007,6 +1008,27 @@ real64 CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion &
       // update the current BHP
       updateBHPForConstraint( subRegion );
 
+      // Broad case the updated well state to other ranks
+      real64 & currentBHP =
+        wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
+      array1d< real64 >   currentPhaseVolRate =
+        wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
+      real64 & currentTotalVolRate =
+        wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
+      real64 & currentMassRate =
+        wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() );
+      integer topRank = subRegion.getTopRank();
+      MpiWrapper::broadcast( currentBHP, topRank );
+      MpiWrapper::bcast( currentPhaseVolRate.data(), LvArray::integerConversion< int >( currentPhaseVolRate.size() ), topRank );
+      MpiWrapper::broadcast( currentTotalVolRate, topRank );
+      MpiWrapper::broadcast( currentMassRate, topRank );
+      if( !subRegion.isLocallyOwned() )
+      {
+        wellControls.getReference< array1d< real64 > >(
+          CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) =currentPhaseVolRate;
+
+
+      }
     }
     else
     {
@@ -1437,36 +1459,30 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
   }
   else
   {
-//wellControls.setWellOpen(false);
-// get the degrees of freedom and ghosting info
-    // get the degrees of freedom and ghosting info
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< integer const > const wellElemGhostRank = subRegion.ghostRank();
-    arrayView1d< integer const > const elemStatus = subRegion.getLocalWellElementStatus();
+
     arrayView1d< real64 >  mixConnRate = subRegion.getField< fields::well::mixtureConnectionRate >();
     localIndex rank_offset = dofManager.rankOffset();
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       if( wellElemGhostRank[ei] < 0 )
       {
-        if( elemStatus[ei]==WellElementSubRegion::WellElemStatus::CLOSED )
-        {
-          mixConnRate[ei] = 0.0;
-          globalIndex const dofIndex = wellElemDofNumber[ei];
-          localIndex const localRow = dofIndex - rank_offset;
+        mixConnRate[ei] = 0.0;
+        globalIndex const dofIndex = wellElemDofNumber[ei];
+        localIndex const localRow = dofIndex - rank_offset;
 
-          real64 const unity = 1.0;
-          for( integer i=0; i < m_numDofPerWellElement; i++ )
-          {
-            globalIndex const rindex = localRow+i;
-            globalIndex const cindex =dofIndex + i;
-            localMatrix.template addToRow< serialAtomic >( rindex,
-                                                           &cindex,
-                                                           &unity,
-                                                           1 );
-            localRhs[rindex] = 0.0;
-          }
+        real64 const unity = 1.0;
+        for( integer i=0; i < m_numDofPerWellElement; i++ )
+        {
+          globalIndex const rindex = localRow+i;
+          globalIndex const cindex =dofIndex + i;
+          localMatrix.template addToRow< serialAtomic >( rindex,
+                                                         &cindex,
+                                                         &unity,
+                                                         1 );
+          localRhs[rindex] = 0.0;
         }
       }
     } );
@@ -2216,15 +2232,10 @@ CompositionalMultiphaseWell::applyWellSystemSolution( DofManager const & dofMana
                                fields::well::mixtureConnectionRate::key(),
                                scalingFactor,
                                connRateMask );
-  arrayView1d< real64 const > const & temp =subRegion.getField< fields::well::temperature >();
+
   if( isThermal() )
   {
     DofManager::CompMask temperatureMask( m_numDofPerWellElement, numFluidComponents()+2, numFluidComponents()+3 );
-
-    for( integer i=0; i<subRegion.size(); i++ )
-    {
-      std::cout << " bu temp i "<< i << " " << temp[i] << std::endl;
-    }
     dofManager.addVectorToField( localSolution,
                                  wellElementDofName(),
                                  fields::well::temperature::key(),
@@ -2978,6 +2989,12 @@ bool CompositionalMultiphaseWell::evaluateConstraints( real64 const & time_n,
         limitingConstraint = constraint;
         wellControls.setControl( static_cast< WellControls::Control >(constraint->getControl()) );     // tjb old
         wellControls.setCurrentConstraint( constraint );
+        constraint->setBHP ( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() ));
+        constraint->setPhaseVolumeRates ( wellControls.getReference< array1d< real64 > >(
+                                            CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) );
+        constraint->setTotalVolumeRate ( wellControls.getReference< real64 >(
+                                           CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
+        constraint->setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
         GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
                            " Well " << subRegion.getName() << " New Limiting Constraint " << constraint->getName() << " "  << constraint->getConstraintValue( time_n )  );
       }
