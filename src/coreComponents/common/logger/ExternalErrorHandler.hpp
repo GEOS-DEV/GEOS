@@ -94,7 +94,7 @@ private:
 /**
  * @brief Class to handle external error capture.
  *        This class role is to capture and process external error messages, using the geos logger for
-*         better tracing, logging and handling of messages.
+ *         better tracing, logging and handling of messages.
  */
 class ExternalErrorHandler
 {
