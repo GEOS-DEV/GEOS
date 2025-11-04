@@ -182,6 +182,9 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
   // to reference groups, we need to support the / for paths, and * [ ] for fnmatch patterns.
   string_view const groupNameRefDesc = "Input value must be a string that can contain only upper/lower letters, digits, and the characters  . - _ / * [ ]";
   string_view const groupNameRefRegex = "[a-zA-Z0-9.\\-_/*\\[\\]]*";
+  // to reference an array of groups, we need to support the / for paths, and * [ ] for fnmatch patterns.
+  string_view const groupNameRefArrayDesc = "Input value must be a list of strings that can contain only upper/lower letters, digits, and the characters  . - _ / * [ ]";
+  string_view const groupNameRefArrayRegex = "\\{([a-zA-Z0-9.\\-_/*\\[\\], ]+)*\\}";
 
 
   // Build master list of regexes
@@ -220,7 +223,7 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
     { string( CustomTypes::plotLevel ), Regex( intRegex, intDesc ) },
     { string( CustomTypes::groupName ), Regex( groupNameRegex, groupNameDesc ) },
     { string( CustomTypes::groupNameRef ), Regex( groupNameRefRegex, groupNameRefDesc ) },
-    { string( CustomTypes::groupNameRefArray ), constructArrayRegex( groupNameRefRegex, groupNameRefDesc, 1 ) }
+    { string( CustomTypes::groupNameRefArray ), Regex( groupNameRefArrayRegex, groupNameRefArrayDesc) }
   };
   return regexMap;
 }
