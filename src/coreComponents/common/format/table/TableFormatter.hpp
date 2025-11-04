@@ -277,7 +277,6 @@ protected:
    * @param tableOutput A reference to an `std::ostream` where the formatted table will be written.
    * @param tableLayout The layout of the table
    * @param headerCellsLayout The header rows in a grid layout
-   * @param errorCellsLayout The layout of the error rows
    * @param separatorLine A string that will be used as the table separator line
    */
   void outputTableHeader( std::ostream & tableOutput,
