@@ -120,7 +120,7 @@ public:
     real64 localMinNegDens;
     real64 localMinNegTotalDens;
 
-    localIndex localNumNegTotalDens; // ne peuvent être que 0 ou 1 dans chaque kernel
+    localIndex localNumNegTotalDens; // Can only be 0 or 1 in each kernel
   };
 
   /**

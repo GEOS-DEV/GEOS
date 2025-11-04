@@ -14,7 +14,7 @@
  */
 
 /**
- * @file SolutionCheckKernel.hpp
+ * @file SolutionCheckKernel.cpp
  */
 
 #include "physicsSolvers/fluidFlow/SolutionCheckHelpers.hpp"
