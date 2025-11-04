@@ -225,6 +225,7 @@ public:
 
   /**
    * @brief Get for the MPI rank that owns this well (i.e. the top segment).
+   * @return the rank that owns the top well element
    */
   int getTopRank() const
   {
