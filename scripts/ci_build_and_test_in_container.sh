@@ -282,7 +282,6 @@ if [[ "${BUILD_EXE_ONLY}" = true ]]; then
   or_die cmake --build . -j $NPROC --target geosx
 else
   or_die cmake --build . -j $NPROC
-  # TODO: for the moment, installation is disabled to save some space on the runner, but must be re-enabled in the future.
   #or_die cmake --install .
 
   if [[ ! -z "${DATA_BASENAME_WE}" ]]; then
