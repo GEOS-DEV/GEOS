@@ -827,19 +827,32 @@ TEST( testTable, tableSpecialsValues )
       .setName( "Next\nelement" )
       .setHeaderAlignment( TableLayout::Alignment::center )} );
 
+  LvArray::NumericLimits< double > const realLimit;
+
   TableData tableData;
-  tableData.addRow( "Global Id", 1234, 40, 5678, 60 );
-  tableData.addRow( "pressure", 0.1234, 0.40, 0.5678, 0.60 );
+  tableData.addRow( realLimit.infinity, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+  tableData.addRow( realLimit.quiet_NaN, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+  tableData.addRow( realLimit.signaling_NaN, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+  tableData.addRow( realLimit.lowest, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+  tableData.addRow( realLimit.max, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
+  tableData.addRow( realLimit.denorm_min, "dummy1", "dummy2", "dummy3", "dummy4", "dummy5" );
 
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableData ),
              "\n"
-             "    -------------------------------------------\n"
-             "    |                  Title                  |\n"
-             "    |-----------------------------------------|\n"
-             "    | Global Id |   1234 |  40 |   5678 |  60 |\n"
-             "    |  pressure | 0.1234 | 0.4 | 0.5678 | 0.6 |\n"
-             "    -------------------------------------------\n"
+             "---------------------------------------------------------------------------------------\n"
+             "|       Special values       |  CoordX  |    C     |  CoordZ  |  Prev     |   Next    |\n"
+             "|                            |          |          |          |  element  |  element  |\n"
+             "|----------------------------|----------|----------|----------|-----------|-----------|\n"
+             "|                       inf  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|                       nan  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|                       nan  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|  -1.7976931348623157e+308  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|   1.7976931348623157e+308  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|                    5e-324  |  dummy1  |  dummy2  |  dummy3  |   dummy4  |   dummy5  |\n"
+             "|-------------------------------------------------------------------------------------|\n"
+             "|  Warning : Invalid values detected (nan/inf).                                       |\n"
+             "---------------------------------------------------------------------------------------\n"
              );
 }
 
