@@ -165,14 +165,6 @@
       fieldName="acousticVelocity"
       scale="1500"
       setNames="{ all }"/>
-
-    <!-- 3) The free surface condition the domain -->
-    <FieldSpecification
-      name="zposFreeSurface"
-      objectPath="faceManager"
-      fieldName="FreeSurface"
-      scale="0.0"
-      setNames="{ zpos }"/>
   </FieldSpecifications>
 
   <Events
