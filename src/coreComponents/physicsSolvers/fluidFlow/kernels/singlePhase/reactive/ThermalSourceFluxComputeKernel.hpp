@@ -195,7 +195,7 @@ public:
                    RAJA::ReduceSum< parallelDeviceReduce, real64 > massProd )
   {
     singlePhaseReactiveBaseKernels::
-    internal::kernelLaunchSelectorCompSwitch( numSpecies, [&] ( auto NS )
+      internal::kernelLaunchSelectorCompSwitch( numSpecies, [&] ( auto NS )
     {
       integer constexpr NUM_SPECIES = NS();
       integer constexpr NUM_DOF = 2+NS();

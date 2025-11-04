@@ -544,6 +544,8 @@ void SinglePhaseReactiveTransport::updateSpeciesAmount( ElementSubRegionBase & s
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
   arrayView1d< real64 > const deltaVolume = subRegion.getField< fields::flow::deltaVolume >();
 
+  integer const numPrimarySpecies = m_numPrimarySpecies;
+
   if( m_isThermal )
   {
     reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid & fluid =
@@ -553,7 +555,7 @@ void SinglePhaseReactiveTransport::updateSpeciesAmount( ElementSubRegionBase & s
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
-      for( integer is = 0; is < m_numPrimarySpecies; ++is )
+      for( integer is = 0; is < numPrimarySpecies; ++is )
       {
         primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][0][is];
 
@@ -571,7 +573,7 @@ void SinglePhaseReactiveTransport::updateSpeciesAmount( ElementSubRegionBase & s
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
-      for( integer is = 0; is < m_numPrimarySpecies; ++is )
+      for( integer is = 0; is < numPrimarySpecies; ++is )
       {
         primarySpeciesAggregateMole[ei][is] = porosity[ei][0] * ( volume[ei] + deltaVolume[ei] ) * primarySpeciesAggregateConcentration[ei][0][is];
 
@@ -589,6 +591,8 @@ void SinglePhaseReactiveTransport::updateKineticReactionMolarIncrements( real64 
 
   arrayView2d< real64, compflow::USD_COMP > const kineticReactionMolarIncrements = subRegion.getField< fields::flow::kineticReactionMolarIncrements >();
 
+  integer const numKineticReactions = m_numKineticReactions;
+
   if( m_isThermal )
   {
     reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid & fluid =
@@ -597,7 +601,7 @@ void SinglePhaseReactiveTransport::updateKineticReactionMolarIncrements( real64 
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
-      for( integer r = 0; r < m_numKineticReactions; ++r )
+      for( integer r = 0; r < numKineticReactions; ++r )
       {
         kineticReactionMolarIncrements[ei][r] = dt* kineticReactionRates[ei][0][r];
       }
@@ -611,7 +615,7 @@ void SinglePhaseReactiveTransport::updateKineticReactionMolarIncrements( real64 
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
-      for( integer r = 0; r < m_numKineticReactions; ++r )
+      for( integer r = 0; r < numKineticReactions; ++r )
       {
         kineticReactionMolarIncrements[ei][r] = dt* kineticReactionRates[ei][0][r];
       }
@@ -728,9 +732,11 @@ void SinglePhaseReactiveTransport::updateSurfaceArea( ElementSubRegionBase & sub
   }
   else
   {
+    integer const numKineticReactions = m_numKineticReactions;
+
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
-      for( integer ir = 0; ir < m_numKineticReactions; ++ir )
+      for( integer ir = 0; ir < numKineticReactions; ++ir )
       {
         surfaceArea[ei][ir] = initialSurfaceArea[ei][ir];
       }
@@ -1121,6 +1127,8 @@ void SinglePhaseReactiveTransport::applyDirichletBC( real64 const time_n,
         subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( fields::flow::logPrimarySpeciesConcentration::key() );
 
       integer const numPrimarySpecies = m_numPrimarySpecies;
+      integer const isThermal = m_isThermal;
+
       forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
         localIndex const ei = targetSet[a];
@@ -1133,7 +1141,7 @@ void SinglePhaseReactiveTransport::applyDirichletBC( real64 const time_n,
         localIndex const localRow = dofIndex - rankOffset;
         real64 rhsValue;
 
-        integer const speciesDofBeginIndex = m_isThermal? 2:1;
+        integer const speciesDofBeginIndex = isThermal? 2:1;
 
         // 5.1. For each component, apply target global density value
         for( integer is = 0; is < numPrimarySpecies; ++is )
