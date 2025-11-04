@@ -36,6 +36,8 @@
 #include "physicsSolvers/fluidFlow/kernels/MinPoreVolumeMaxPorosityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/StencilWeightsUpdateKernel.hpp"
 
+// LILIANE
+#include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 
 namespace geos
 {
@@ -121,7 +123,13 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
-    
+
+  // LILIANE
+  this->registerWrapper( viewKeyStruct::computesPrescribedStressPathString(), &m_computePrescribedStressPath ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to determine whether or not this simulation computes the precribed stress path." );  
+
   this->registerWrapper( viewKeyStruct::allowNegativePressureString(), &m_allowNegativePressure ).
     setApplyDefaultValue( 0 ). // negative pressure is not allowed by default
     setInputFlag( InputFlags::OPTIONAL ).
@@ -652,9 +660,44 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
   {
     typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousWrapper = castedPorousSolid.createKernelUpdates();
+    updatePorosityAndPermeabilityFromPressureAndAperture( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture );
 
-    updatePorosityAndPermeabilityFromPressureApertureAndNormal( porousWrapper, subRegion, pressure, oldHydraulicAperture, newHydraulicAperture, normalVector );
+  } );
+}
 
+void FlowSolverBase::updateHydarulicAperture( SurfaceElementSubRegion & subRegion ) const
+{
+  GEOS_MARK_FUNCTION;
+  
+  arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
+  arrayView1d< real64 > const & newHydraulicAperture = subRegion.getField< fields::flow::hydraulicAperture >();
+  arrayView2d< real64 const > const & normalVector = subRegion.getField< fields::normalVector >(); // mesh/MeshFields.hpp
+  
+  string const & hydraulicApertureRelationName = 
+    subRegion.template getReference< string >( viewKeyStruct::hydraulicApertureRelationNameString()  );
+  BartonBandisStressPathDriven const & hydraulicApertureModel = 
+    this->template getConstitutiveModel< BartonBandisStressPathDriven >( subRegion, hydraulicApertureRelationName );
+
+  BartonBandisStressPathDrivenUpdates hydraulicApertureWrapper = hydraulicApertureModel.createKernelWrapper(); 
+
+  real64 sumAperture = 0.0;
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [&] GEOS_DEVICE ( localIndex const k )
+  {
+    array1d < real64 > normal(3);
+    normal[0] = normalVector[k][0];
+    normal[1] = normalVector[k][1];
+    normal[2] = normalVector[k][2];
+    
+    newHydraulicAperture[k] = hydraulicApertureWrapper.computeHydraulicAperture( pressure[k], normal );
+
+    sumAperture += newHydraulicAperture[k];
+  } );
+
+  real64 const averageAperture = sumAperture / subRegion.size();
+
+  forAll< parallelDevicePolicy<> >( subRegion.size(), [&newHydraulicAperture, averageAperture] GEOS_DEVICE ( localIndex const k )
+  {
+    newHydraulicAperture[k] = averageAperture;
   } );
 }
 

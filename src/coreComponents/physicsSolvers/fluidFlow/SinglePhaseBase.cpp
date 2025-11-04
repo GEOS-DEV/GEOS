@@ -49,6 +49,9 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp"
 
+// LILIANE
+#include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
+
 namespace geos
 {
 
@@ -1233,7 +1236,33 @@ void SinglePhaseBase::keepVariablesConstantDuringInitStep( real64 const time,
 void SinglePhaseBase::updateState( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-  
+
+  if(m_computePrescribedStressPath)
+  {
+    GEOS_LOG_RANK_0("SinglePhaseBase::updateState m_computePrescribedStressPath");
+    
+    // remove the contribution of the hydraulic aperture from the stencil weights
+    prepareStencilWeights( domain );
+
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                               auto & subRegion )
+      {
+        
+        setConstitutiveName< constitutive::BartonBandisStressPathDriven >( subRegion,
+                              viewKeyStruct::hydraulicApertureRelationNameString(), "hydraulic aperture" );
+                          
+        updateHydarulicAperture( subRegion );
+      } );
+    } );
+    
+    // update the stencil weights using the updated hydraulic aperture
+    updateStencilWeights( domain );
+  }
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
