@@ -77,7 +77,7 @@ postInputInitialization()
                            getWrapperDataContext( viewKeyStruct::poromechanicsSolverNameString() ),
                            POROMECHANICS_SOLVER::catalogName(),
                            m_poromechanicsSolverName ),
-                 InputError );
+                 InputError, getWrapperDataContext( viewKeyStruct::poromechanicsSolverNameString() ) );
 
   m_poromechanicsSolver = &physicsSolverManager.getGroup< POROMECHANICS_SOLVER >( m_poromechanicsSolverName );
 
@@ -90,7 +90,7 @@ postInputInitialization()
                              getWrapperDataContext( viewKeyStruct::solidMechanicsStatisticsNameString() ),
                              SolidMechanicsStatistics::catalogName(),
                              m_solidMechanicsStatisticsName ),
-                   InputError );
+                   InputError, getWrapperDataContext( viewKeyStruct::solidMechanicsStatisticsNameString() ) );
 
     m_solidMechanicsStatistics = &tasksManager.getGroup< SolidMechanicsStatistics >( m_solidMechanicsStatisticsName );
   }
