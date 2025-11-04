@@ -43,17 +43,17 @@ void InternalWellGenerator::postInputInitialization()
   GEOS_THROW_IF( m_polyNodeCoords.size( 1 ) != m_nDims,
                  "InternalWell " << getWrapperDataContext( viewKeyStruct::polylineNodeCoordsString() ) <<
                  ": Invalid number of physical coordinates.",
-                 InputError );
+                 InputError, getWrapperDataContext( viewKeyStruct::polylineNodeCoordsString() ) );
 
   GEOS_THROW_IF( m_segmentToPolyNodeMap.size( 1 ) != 2,
                  "InternalWell " << getWrapperDataContext( viewKeyStruct::polylineSegmentConnString() ) <<
                  ": Invalid size.",
-                 InputError );
+                 InputError, getWrapperDataContext( viewKeyStruct::polylineSegmentConnString() ) );
 
   GEOS_THROW_IF( m_polyNodeCoords.size( 0 )-1 != m_segmentToPolyNodeMap.size( 0 ),
                  "Incompatible sizes of " << getWrapperDataContext( viewKeyStruct::polylineNodeCoordsString() ) <<
                  " and " << getWrapperDataContext( viewKeyStruct::polylineSegmentConnString() ),
-                 InputError );
+                 InputError, getWrapperDataContext( viewKeyStruct::polylineSegmentConnString() ) );
 
   // TODO: add more checks here
   // TODO: check that the connectivity of the well is valid

@@ -75,6 +75,7 @@
 #endif
 
 #include <numeric>
+#include <type_traits>
 
 
 namespace geos
@@ -930,8 +931,11 @@ redistributeByAreaGraphAndLayer( AllMeshes & input,
                                                        minA = idxLimits[0].first]( localIndex const i )
     {
       auto const aidx = index.Get( i, 0 );
-      GEOS_ASSERT_GE( aidx, 0 );
+
       GEOS_ASSERT_GT( std::numeric_limits< int32_t >::max(), dst[i] );
+      if constexpr ( std::is_signed_v< decltype(aidx) > )
+        GEOS_ASSERT_GE( aidx, 0 );
+
       dst[i] |= static_cast< int64_t >( aidx - minA ) << 32;
     } );
   } );
