@@ -66,9 +66,7 @@ void FieldSpecificationManager::expandObjectCatalogs()
   // During schema generation, register one of each type derived from BoundaryConditionBase here
   for( auto & catalogIter: FieldSpecificationBase::getCatalog())
   {
-    std::unique_ptr< FieldSpecificationBase > bc =
-      FieldSpecificationBase::CatalogInterface::factory( catalogIter.first, getDataContext(), catalogIter.first, this );
-    registerGroup( std::move( bc ), true );
+    createChild( catalogIter.first, catalogIter.first, true );
   }
 }
 
