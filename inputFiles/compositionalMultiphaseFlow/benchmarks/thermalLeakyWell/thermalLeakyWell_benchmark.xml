@@ -4,8 +4,33 @@
 
   <Included>
     <File
-      name="./thermalLeakyWell_base_iterative.xml"/>
+      name="./thermalLeakyWell_base.xml"/>
   </Included>
+  
+  <!-- SPHINX_SOLVER -->      
+  <Solvers>
+    <CompositionalMultiphaseFVM
+      name="compflow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      temperature="307.15"
+      initialDt="1"
+      useMass="1"
+      targetRegions="{ aquiferTop, aquiferBottom, injectionWell, leakyWell }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-3"
+        newtonMaxIter="20"
+        timeStepIncreaseIterLimit="0.5"
+        timeStepDecreaseIterLimit="0.9"	
+        maxTimeStepCuts="5"
+        lineSearchAction="Attempt"/>
+      <LinearSolverParameters
+        solverType="fgmres"
+        preconditionerType="mgr"
+        krylovTol="1e-4"/>
+    </CompositionalMultiphaseFVM>
+  </Solvers>
+  <!-- SPHINX_SOLVER_END -->        
   
   <!-- SPHINX_MESH -->  
   <Mesh>
@@ -29,30 +54,5 @@
 			                     aquiferTop02,    aquiferTop12,    aquiferTop22,    aquiferTop32,    aquiferTop42 }"/>
   </Mesh>
   <!-- SPHINX_MESH_END -->  
-  
-  <Geometry>
-    <Box
-      name="source"
-      xMin="{  99.85, -0.15, -801 }"
-      xMax="{ 100.15,  0.15, -769 }"/>
 
-    <Box
-      name="west"
-      xMin="{ -500.01, -500.01, -801 }"
-      xMax="{ -489.99,  500.01, -639 }"/>
-    <Box
-      name="east"
-      xMin="{ 489.99, -500.01, -801 }"
-      xMax="{ 500.01,  500.01, -639 }"/>
-    <Box
-      name="north"
-      xMin="{ -500.01, -500.01, -801 }"
-      xMax="{  500.01, -489.99, -639 }"/>
-    <Box
-      name="south"
-      xMin="{ -500.01, 489.99, -801 }"
-      xMax="{  500.01, 500.01, -639 }"/>
-    
-  </Geometry>
-  
 </Problem>
