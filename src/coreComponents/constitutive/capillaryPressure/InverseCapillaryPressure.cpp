@@ -87,7 +87,7 @@ InverseCapillaryPressure< CAP_PRESSURE >::InverseCapillaryPressure( CAP_PRESSURE
                            m_propertyLimits );
 
   calculateIndependentPhases( capPressure.numFluidPhases(),
-                              m_propertyLimits.toViewConst(),
+                              phaseOrder.toViewConst(),
                               m_dependentPhase,
                               m_independentPhases );
 
@@ -140,28 +140,10 @@ InverseCapillaryPressure< NoOpCapillaryPressure >::InverseCapillaryPressure( NoO
     }
   }
 
-  // Precedence of phases on independence
-  // Always favour water as the independent phase, then gas, then oil
-  if( 0 <= phaseOrder[CapillaryPressureBase::PhaseType::OIL] )
-  {
-    m_dependentPhase = phaseOrder[CapillaryPressureBase::PhaseType::OIL];
-  }
-  else if( 0 <= phaseOrder[CapillaryPressureBase::PhaseType::GAS] )
-  {
-    m_dependentPhase = phaseOrder[CapillaryPressureBase::PhaseType::GAS];
-  }
-  else
-  {
-    m_dependentPhase = 0;
-  }
-
-  for( integer ip = 0; ip < numPhases; ++ip )
-  {
-    if( ip != m_dependentPhase )
-    {
-      m_independentPhases.emplace_back( ip );
-    }
-  }
+  calculateIndependentPhases( capPressure.numFluidPhases(),
+                              phaseOrder.toViewConst(),
+                              m_dependentPhase,
+                              m_independentPhases );
 }
 
 template< typename CAP_PRESSURE >
@@ -234,7 +216,7 @@ void InverseCapillaryPressure< CAP_PRESSURE >::calculatePropertyLimits( integer 
     }
   }
 
-  // If the capillary pressure variation in a phase is zero then we need to change the mimimum saturations
+  // If the capillary pressure variation in a phase is zero then we need to change the mimimum and maximum saturations
   auto const getPhase = [&]( integer const phaseIndex ) -> integer {
     for( integer ip = 0; ip < phaseOrder.size(); ++ip )
     {
@@ -250,8 +232,7 @@ void InverseCapillaryPressure< CAP_PRESSURE >::calculatePropertyLimits( integer 
     real64 const dp = maxCapPressure[ip] - minCapPressure[ip];
     if( dp < LvArray::NumericLimits< real64 >::epsilon )
     {
-      // The water indexed capillary pressure is supposed to be decreasing
-      bool const isDecreasing = (getPhase( ip ) == CapillaryPressureBase::PhaseType::WATER);
+      bool const isDecreasing = (getPhase( ip ) != CapillaryPressureBase::PhaseType::OIL);
       minSaturation[ip] = phaseMinVolumeFraction[ip];
       maxSaturation[ip] = 1.0 - sumMinVolumeFraction + phaseMinVolumeFraction[ip];
       if( isDecreasing )
@@ -264,33 +245,39 @@ void InverseCapillaryPressure< CAP_PRESSURE >::calculatePropertyLimits( integer 
 
 template< typename CAP_PRESSURE >
 void InverseCapillaryPressure< CAP_PRESSURE >::calculateIndependentPhases( integer numPhases,
-                                                                           arrayView2d< real64 const > const & propertyLimits,
+                                                                           arrayView1d< integer const > const & phaseOrder,
                                                                            integer & dependentPhase,
                                                                            array1d< integer > & independentPhases ) const
 {
-  // The dependent phase is the one with the least variation in capillary pressure
-  auto const minCapPressure = propertyLimits[KernelWrapper::MIN_CAP_PRESSURE];
-  auto const maxCapPressure = propertyLimits[KernelWrapper::MAX_CAP_PRESSURE];
-
-  // Choose one of the phases to be dependent
-  real64 minDP = LvArray::NumericLimits< real64 >::max;
-  dependentPhase = -1;
-  for( integer ip = 0; ip < numPhases; ++ip )
+  // Precedence of phases on independence
+  // Always favour water as the independent phase, then gas, then oil
+  if( 0 <= phaseOrder[CapillaryPressureBase::PhaseType::OIL] )
   {
-    real64 const dp = maxCapPressure[ip] - minCapPressure[ip];
-    if( dp < minDP )
-    {
-      minDP = dp;
-      dependentPhase = ip;
-    }
+    dependentPhase = phaseOrder[CapillaryPressureBase::PhaseType::OIL];
+  }
+  else if( 0 <= phaseOrder[CapillaryPressureBase::PhaseType::GAS] )
+  {
+    dependentPhase = phaseOrder[CapillaryPressureBase::PhaseType::GAS];
+  }
+  else
+  {
+    dependentPhase = 0;
   }
 
-  independentPhases.clear();
   for( integer ip = 0; ip < numPhases; ++ip )
   {
     if( ip != dependentPhase )
     {
       independentPhases.emplace_back( ip );
+    }
+  }
+
+  // Ensure water is the first independent phase
+  if( numPhases == 3 )
+  {
+    if( phaseOrder[CapillaryPressureBase::PhaseType::GAS] == independentPhases[0] )
+    {
+      std::swap( independentPhases[0], independentPhases[1] );
     }
   }
 }

@@ -170,8 +170,8 @@ struct CapillaryPressureInversionKernel
     }
     if constexpr (numPhases == 3)
     {
-      real64 const capPressure00 = phasePressures0[phaseOrder[0]] - phasePressures0[phaseOrder[1]];
-      real64 const capPressure01 = phasePressures1[phaseOrder[0]] - phasePressures1[phaseOrder[1]];
+      real64 const capPressure00 = phasePressures0[phaseOrder[1]] - phasePressures0[phaseOrder[0]];
+      real64 const capPressure01 = phasePressures1[phaseOrder[1]] - phasePressures1[phaseOrder[0]];
       phaseCapPressure[phaseOrder[0]] = (1.0-alpha)*capPressure00 + alpha*capPressure01;
       real64 const capPressure10 = phasePressures0[phaseOrder[1]] - phasePressures0[phaseOrder[2]];
       real64 const capPressure11 = phasePressures1[phaseOrder[1]] - phasePressures1[phaseOrder[2]];

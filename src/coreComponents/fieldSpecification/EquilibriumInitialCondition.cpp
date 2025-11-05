@@ -123,11 +123,24 @@ void EquilibriumInitialCondition::postInputInitialization()
                                       << viewKeyStruct::phaseContactsString(),
                      InputError );
 
-      GEOS_THROW_IF( !m_initPhaseName.empty() && 0 < numberOfContacts,
-                     getCatalogName() << " " << getDataContext()
-                                      << ": both " << viewKeyStruct::initPhaseNameString() << " and " << viewKeyStruct::phaseContactsString()
-                                      << " have been specified. The phase contacts will be ignored and single phase initialisation performed",
-                     InputError );
+      if( !m_initPhaseName.empty() && 0 < numberOfContacts )
+      {
+        GEOS_WARNING( getCatalogName() << " " << getDataContext()
+                                       << ": both " << viewKeyStruct::initPhaseNameString() << " and " << viewKeyStruct::phaseContactsString()
+                                       << " have been specified. The phase contacts will be ignored and single phase initialisation performed" );
+      }
+
+      // Contacts if provided must be non-decreasing
+      if( 1 < numberOfContacts )
+      {
+        for( integer i = 1; i < numberOfContacts; i++ )
+        {
+          GEOS_THROW_IF( m_phaseContacts[i] - m_phaseContacts[i-1] < -LvArray::NumericLimits< real64 >::epsilon,
+                         getCatalogName() << " " << getDataContext()
+                                          << ": The phase contacts must be increasing",
+                         InputError );
+        }
+      }
     }
 
     array1d< localIndex > tableSizes( numberOfComponents );

@@ -117,13 +117,13 @@ public:
   // Minimum phase volume fraction for phase
   static constexpr integer MIN_PORE_VOLUME = 0;
   // End points for the capillary pressure
-  static constexpr integer MIN_CAP_PRESSURE = 3;
-  static constexpr integer MAX_CAP_PRESSURE = 4;
+  static constexpr integer MIN_CAP_PRESSURE = 1;
+  static constexpr integer MAX_CAP_PRESSURE = 2;
   // End points for the saturation dimension
   // Min saturation is saturation at which PC is minimum
   // Max saturation is saturation at which PC is maximum
-  static constexpr integer MIN_SATURATION = 1;
-  static constexpr integer MAX_SATURATION = 2;
+  static constexpr integer MIN_SATURATION = 3;
+  static constexpr integer MAX_SATURATION = 4;
 public:
   InverseCapillaryPressureUpdate( CAP_PRESSURE & capPressure,
                                   arrayView2d< real64 const > const & propertyLimits,
@@ -176,7 +176,7 @@ private:
 
   // Determine which phases are independent and which is dependent
   void calculateIndependentPhases( integer numPhases,
-                                   arrayView2d< real64 const > const & propertyLimits,
+                                   arrayView1d< integer const > const & phaseOrder,
                                    integer & dependentPhase,
                                    array1d< integer > & independentPhases ) const;
 
@@ -215,7 +215,6 @@ InverseCapillaryPressureUpdate< CAP_PRESSURE >::compute(
   StackArray< real64, 3, 3*MAX_NUM_PHASES, cappres::LAYOUT_CAPPRES > workSpace( 1, 3, numPhases );
   StackArray< real64, 4, MAX_NUM_PHASES *MAX_NUM_PHASES, cappres::LAYOUT_CAPPRES_DS > dPhaseCapPres_dSaturation( 1, 1, numPhases, numPhases );
 
-  // auto const & minPoreVolume = m_propertyLimits[MIN_PORE_VOLUME];
   auto const & minSaturation = m_propertyLimits[MIN_SATURATION];
   auto const & maxSaturation = m_propertyLimits[MAX_SATURATION];
   auto const & minCapPressure = m_propertyLimits[MIN_CAP_PRESSURE];
@@ -309,6 +308,72 @@ InverseCapillaryPressureUpdate< CAP_PRESSURE >::compute(
       converged = true;
     }
   }
+
+  // For 3-phase cases the oil phase might end up with a negative saturation. This is an
+  // indication that we have reached the gas-oil contact while still in the oil transision
+  // zone. In this case, we will solve the problem as a 2-phase gas-water system.
+  if( 3 <= numPhases && saturation[m_dependentPhase] < -LvArray::NumericLimits< real64 >::epsilon )
+  {
+    saturation[m_dependentPhase] = 0.0;
+
+    integer const phase0 = m_independentPhases[0];
+    integer const phase1 = m_independentPhases[1];
+
+    real64 const minPhase0Pc = CapillaryPressureEvaluate< CAP_PRESSURE >::applyScale( minCapPressure[phase0],
+                                                                                      jFunctionMultiplier[m_jFunctionIndex[phase0]] )
+                               - CapillaryPressureEvaluate< CAP_PRESSURE >::applyScale( maxCapPressure[phase1],
+                                                                                        jFunctionMultiplier[m_jFunctionIndex[phase1]] );
+
+    real64 const maxPhase0Pc = CapillaryPressureEvaluate< CAP_PRESSURE >::applyScale( maxCapPressure[phase0],
+                                                                                      jFunctionMultiplier[m_jFunctionIndex[phase0]] )
+                               - CapillaryPressureEvaluate< CAP_PRESSURE >::applyScale( minCapPressure[phase1],
+                                                                                        jFunctionMultiplier[m_jFunctionIndex[phase1]] );
+
+    real64 const targetPc = phaseCapillaryPressure[phase0] - phaseCapillaryPressure[phase1];
+
+    converged = false;
+    if( targetPc - STEP_TOLERANCE < minPhase0Pc )
+    {
+      saturation[phase0] = minSaturation[phase0];
+      converged = true;
+    }
+    else if( maxPhase0Pc < targetPc + STEP_TOLERANCE )
+    {
+      saturation[phase0] = maxSaturation[phase0];
+      converged = true;
+    }
+    else
+    {
+      saturation[phase0] = 0.5*(minSaturation[phase0] + maxSaturation[phase0]);
+    }
+    saturation[phase1] = 1.0 - saturation[phase0];
+
+    for( integer iterationCount = 0; (iterationCount < MAX_ITERATIONS) && !converged; ++iterationCount )
+    {
+      CapillaryPressureEvaluate< CAP_PRESSURE >::compute( m_capPressureWrapper,
+                                                          saturation.toSliceConst(),
+                                                          jFunctionMultiplier,
+                                                          capPres,
+                                                          jacobian );
+
+      real64 const currentPc = capPres[phase0] - capPres[phase1];
+      real64 const dp = targetPc - currentPc;
+      real64 const Aii = jacobian[phase0][phase0] + jacobian[phase1][phase1];
+      real64 const dS = ( epsilon < LvArray::math::abs( Aii )) ? dp/Aii : 0.0;
+      real64 stepSize = 1.0;
+      if( epsilon < LvArray::math::abs( dS ))
+      {
+        real64 const phaseStepSize = LvArray::math::max((minSaturation[phase0] - saturation[phase0])/dS, (maxSaturation[phase0] - saturation[phase0])/dS );
+        stepSize = LvArray::math::min( stepSize, phaseStepSize );
+      }
+
+      saturation[phase0] += stepSize*dS;
+      saturation[phase1] = 1.0 - saturation[phase0];
+
+      converged = LvArray::math::abs( stepSize*dS ) < STEP_TOLERANCE;
+    }
+  }
+
   return converged;
 }
 

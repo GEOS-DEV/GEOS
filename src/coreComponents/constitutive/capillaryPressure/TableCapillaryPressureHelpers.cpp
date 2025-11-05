@@ -120,16 +120,13 @@ void TableCapillaryPressureHelpers::populateMinPhaseVolumeFraction(
   ArrayOfArraysView< real64 const > coords = capPresTableWettingIntermediate.getCoordinates();
   arraySlice1d< real64 const > wettingSaturation = coords[0];
   real64 const minWettingSaturation = wettingSaturation[0];
-  real64 const maxWettingSaturation = wettingSaturation[wettingSaturation.size()-1];
   coords = capPresTableNonWettingIntermediate.getCoordinates();
   arraySlice1d< real64 const > nonWettingSaturation = coords[0];
   real64 const minNonWettingSaturation = nonWettingSaturation[0];
-  real64 const maxNonWettingSaturation = nonWettingSaturation[nonWettingSaturation.size()-1];
 
   minPhaseVolumeFraction[ipWater] = minWettingSaturation;
   minPhaseVolumeFraction[ipGas] = minNonWettingSaturation;
-  // minPhaseVolumeFraction[ipOil] = LvArray::math::max( 0.0, 1.0 - maxWettingSaturation - maxNonWettingSaturation );
-  minPhaseVolumeFraction[ipOil] = LvArray::math::min( 1.0 - maxWettingSaturation, 1 - maxNonWettingSaturation );
+  minPhaseVolumeFraction[ipOil] = 0.0;
 }
 
 void

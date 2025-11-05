@@ -984,8 +984,8 @@ struct HydrostaticPressureKernel
     else if( ipGas >= 0 && ipOil >= 0 && ipWater >= 0 )
     {
       // phases = gas + oil + water
-      real64 const goc = phaseContacts[0];
-      real64 const owc = phaseContacts[1];
+      real64 const goc = phaseContacts[1];
+      real64 const owc = phaseContacts[0];
       ipFP = ipWater; // default
       if( elevation > owc
           && elevation < goc )
@@ -1051,8 +1051,8 @@ struct HydrostaticPressureKernel
       if( ipGas >= 0 && ipOil >= 0 && ipWater >= 0 )
       {
         // phases = gas + oil + water
-        real64 const goc = phaseContacts[0];
-        real64 const owc = phaseContacts[1];
+        real64 const goc = phaseContacts[1];
+        real64 const owc = phaseContacts[0];
         ipPP = ipWater; // default
         ipCP = ipOil; // default
         if( LvArray::math::abs( endElevation - owc ) < 1e-12

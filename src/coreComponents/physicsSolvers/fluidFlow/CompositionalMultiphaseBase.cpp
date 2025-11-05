@@ -1198,6 +1198,13 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       bool singlePhaseInitialisation = !initPhaseName.empty();
       if( !singlePhaseInitialisation )
       {
+        // Check that we have number of contacts equal to one less that number of phases
+        GEOS_THROW_IF( phaseContacts.size() != numPhases - 1,
+                       GEOS_FMT( "{}: For a region ({}) with {} phases, the number of phase contacts must be {} not {}.",
+                                 fs.getWrapperDataContext( EquilibriumInitialCondition::viewKeyStruct::phaseContactsString() ),
+                                 subRegion.getName(), numPhases, numPhases-1, phaseContacts.size() ),
+                       InputError );
+
         real64 const minAllowedElevation = 2.0*minElevation - maxElevation;
         real64 const maxAllowedElevation = 2.0*maxElevation - minElevation;
         // Check that the contacts are not too far away from the region extents
@@ -1439,12 +1446,12 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
         if( ipGas < 0 )
         {
           phaseIndexOrdering[0] = ipWater;
-          phaseIndexOrdering[1] = ipGas;
+          phaseIndexOrdering[1] = ipOil;
         }
         if( ipOil < 0 )
         {
           phaseIndexOrdering[0] = ipWater;
-          phaseIndexOrdering[1] = ipOil;
+          phaseIndexOrdering[1] = ipGas;
         }
         if( ipWater < 0 )
         {
