@@ -40,6 +40,9 @@
     <!-- output from 10 to 500 yr at frequency = 10 -->
     <PeriodicEvent name="OUTPUT.03" target="/Outputs/vtkOutput" targetExactTimestep="1" beginTime="315360000" endTime="15768000000" timeFrequency="315360000" />
 
+    <!-- Restart every 100 years -->
+    <PeriodicEvent name="RESTART.00" target="/Outputs/restartOutput" targetExactTimestep="1" beginTime="0" timeFrequency="3155760000" />
+
     <!-- From 0 to 1 yr at max dt = 100 days -->
     <PeriodicEvent name="solverApplications.01" beginTime="0" endTime="31536000" maxEventDt="8640000" target="/Solvers/compflow" />
     <!-- From 1 to 10 yr at max dt = 1 yr -->
