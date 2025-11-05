@@ -115,7 +115,7 @@ public:
    */
   string getTemperatureVsElevationTableName() const { return m_temperatureVsElevationTableName; }
 
-    /**
+  /**
    * @brief Getter for the phase contacts' elevations
    * @return the phase contacts' elevations
    */
@@ -167,7 +167,7 @@ public:
     // array storing phase contact elevations
 
     /// @return String key for the phase contacts' elevations
-    constexpr static char const * phaseContactsString() { return "phaseContacts"; }    
+    constexpr static char const * phaseContactsString() { return "phaseContacts"; }
 
   };
 
