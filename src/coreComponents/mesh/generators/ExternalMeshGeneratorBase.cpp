@@ -82,7 +82,7 @@ void ExternalMeshGeneratorBase::postInputInitialization()
     GEOS_THROW_IF( hasDuplicates,
                    getWrapperDataContext( key ) << ": '" << stringutilities::join( v, ", " ) <<
                    "' already present in list of fields to import.",
-                   InputError );
+                   InputError, getWrapperDataContext( key ) );
   };
   checkDuplicates( m_volumicFieldsInGEOS, viewKeyStruct::volumicFieldsInGEOSString() );
   checkDuplicates( m_surfacicFieldsInGEOS, viewKeyStruct::surfacicFieldsInGEOSString() );

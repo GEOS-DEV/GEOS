@@ -89,7 +89,7 @@ void ThermalCompressibleSinglePhaseFluid::postInputInitialization()
     GEOS_THROW_IF( value != expectedValue,
                    GEOS_FMT( "{}: invalid model type in attribute '{}' (only {} currently supported)",
                              getFullName(), attribute, EnumStrings< ExponentApproximationType >::toString( expectedValue ) ),
-                   InputError );
+                   InputError, getDataContext() );
   };
   checkModelType( m_internalEnergyModelType, ExponentApproximationType::Linear, viewKeyStruct::internalEnergyModelTypeString() );
 }
