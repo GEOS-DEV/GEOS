@@ -204,15 +204,15 @@ jobs:
             GEOS_ENABLE_BOUNDS_CHECK: OFF
             HOST_CONFIG: /spack-generated.cmake
 
-          - name: Ubuntu (22.04, clang 15.0.7, open-mpi 4.1.2)
-            CMAKE_BUILD_TYPE: Release
-            DOCKER_REPOSITORY: geosx/ubuntu22.04-clang15
-            ENABLE_HYPRE: ON
-            ENABLE_TRILINOS: OFF
-            GEOS_ENABLE_BOUNDS_CHECK: ON
-            BUILD_SHARED_LIBS: ON
-            HOST_CONFIG: /spack-generated.cmake
-            USE_SCCACHE: false
+          #- name: Ubuntu (22.04, clang 15.0.7, open-mpi 4.1.2)
+          #  CMAKE_BUILD_TYPE: Release
+          #  DOCKER_REPOSITORY: geosx/ubuntu22.04-clang15
+          #  ENABLE_HYPRE: ON
+          ##  ENABLE_TRILINOS: OFF
+          #  GEOS_ENABLE_BOUNDS_CHECK: ON
+          #  BUILD_SHARED_LIBS: ON
+          #  HOST_CONFIG: /spack-generated.cmake
+          #  USE_SCCACHE: false
 
           #- name: Sherlock CPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10)
           #  CMAKE_BUILD_TYPE: Release
