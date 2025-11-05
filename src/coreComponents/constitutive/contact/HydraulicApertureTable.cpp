@@ -141,7 +141,7 @@ void HydraulicApertureTable::validateApertureTable( TableFunction const & apertu
   real64 const slope = ( hydraulicApertureValues[n] - hydraulicApertureValues[n-1] ) / ( apertureValues[n] - apertureValues[n-1] );
 
   GEOS_THROW_IF( slope >= 1.0,
-                 getFullName() << "Invalid aperture table. The slope of the last two points >= 1 is invalid.",
+                 getFullName() << ": Invalid aperture table. The slope of the last two points >= 1 is invalid.",
                  InputError, getDataContext() );
 }
 

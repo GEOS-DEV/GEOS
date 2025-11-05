@@ -641,6 +641,7 @@ partitionByCellGraph( AllMeshes & input,
       return parmetis::partition( graph.toViewConst(), elemDist, numParts, comm, numRefinements );
 #else
       GEOS_THROW( "GEOS must be built with ParMETIS support (ENABLE_PARMETIS=ON) to use 'parmetis' partitioning method", InputError );
+      return {};
 #endif
     }
     case PartitionMethod::ptscotch:
@@ -650,6 +651,7 @@ partitionByCellGraph( AllMeshes & input,
       return ptscotch::partition( graph.toViewConst(), numParts, comm );
 #else
       GEOS_THROW( "GEOS must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method", InputError );
+      return {};
 #endif
     }
     default:

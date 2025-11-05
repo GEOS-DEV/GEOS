@@ -82,6 +82,8 @@ void TractionBoundaryCondition::postInputInitialization()
                    viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
                    ", but appears to be unspecified",
                    getDataContext() );
+                   ", but appears to be unspecified",
+                   getDataContext() );
   }
   else
   {

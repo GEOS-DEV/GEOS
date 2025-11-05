@@ -299,9 +299,9 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
     } catch( std::runtime_error const & e )
     {
       ErrorLogger::global().currentErrorMsg()
-        .addToMsg( getDataContext().toString() + "" + e.what() )
+        .addToMsg( getDataContext().toString() + ": " + e.what() )
         .addContextInfo( getDataContext().getContextInfo().setPriority( 1 ) );
-      throw std::runtime_error( getDataContext().toString() + "" + e.what() );
+      throw std::runtime_error( getDataContext().toString() + ": " + e.what() );
     }
   } );
 }
