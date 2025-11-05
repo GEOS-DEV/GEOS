@@ -133,6 +133,16 @@ void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) c
   {
     setConstitutiveName< SinglePhaseThermalConductivityBase >( subRegion, viewKeyStruct::thermalConductivityNamesString(), "singlephase thermal conductivity" );
   }
+  
+  // LILIANE
+  if( m_computePrescribedStressPath )
+  {
+    // Only for fractures 
+    if( dynamic_cast< SurfaceElementSubRegion * >( &subRegion ) )
+    {
+      setConstitutiveName< constitutive::BartonBandisStressPathDriven >( subRegion, viewKeyStruct::hydraulicApertureRelationNameString(), "hydraulic aperture" );
+    }
+  }
 }
 
 void SinglePhaseBase::initializeAquiferBC() const
@@ -1200,10 +1210,6 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
       mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                auto & subRegion )
       {
-        
-        setConstitutiveName< constitutive::BartonBandisStressPathDriven >( subRegion,
-                              viewKeyStruct::hydraulicApertureRelationNameString(), "hydraulic aperture" );
-                          
         updateHydarulicAperture( subRegion );
       } );
     } );

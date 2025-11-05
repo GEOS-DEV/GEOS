@@ -1,17 +1,17 @@
-<?xml version="1.0" ?> 
-  
+<?xml version="1.0" ?>
+
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="1"
-	  computesPrescribedStressPath="0"
+	  computesPrescribedStressPath="1"
       discretization="singlePhaseTPFA"
       targetRegions="{ RockMatrix, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
-        newtonMaxIter="10"/>
+        newtonMaxIter="8"/>
       <LinearSolverParameters
         directParallel="0"/>
     </SinglePhaseFVM>
@@ -41,14 +41,14 @@
   <ElementRegions>
     <CellElementRegion
       name="RockMatrix"
-      cellBlocks="{ * }" 
+      cellBlocks="{ * }"
       materialList="{ water, rock }"/>
 
 	<!-- NEW faceBlock -->
     <SurfaceElementRegion
       name="Fracture"
       faceBlock="embeddedSurfaceSubRegion"
-      defaultAperture="1.2421e-4"
+      defaultAperture="1e-3"
       materialList="{ water, fractureFilling, hApertureModel }"
       subRegionType="embeddedElement"/>
   </ElementRegions>
@@ -56,10 +56,10 @@
   <Constitutive>
     <CompressibleSinglePhaseFluid
       name="water"
-      defaultDensity="2000"
+      defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      compressibility="5e-12"
+      compressibility="0.0"
       viscosibility="0.0"/>
 
     <CompressibleSolidParallelPlatesPermeability
@@ -85,7 +85,7 @@
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>
+      permeabilityComponents="{ 2.0e-15, 2.0e-15, 2.0e-15 }"/>
 
     <PressurePorosity
       name="fracturePorosity"
@@ -95,7 +95,7 @@
 
     <ParallelPlatesPermeability
       name="fracturePerm"/>
-    
+	  
     <BartonBandisStressPathDriven
       name="hApertureModel"
 	  biot="1.0"
@@ -105,10 +105,8 @@
 	  referencePressure="1e5"
       referenceNormalStress="1.0e6"
 	  referenceTotalStress="{ 85.0e6, 85.0e6, 105.0e6 }"/>
-	  
   </Constitutive>
 
-  
   <FieldSpecifications>
 
     <FieldSpecification
@@ -128,36 +126,25 @@
       scale="1.00"/>
 
     <FieldSpecification
-      name="initialFracturePressure"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="pressure"
-      scale="1e5"/>
-	  
-    <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/RockMatrix/cb1"
       fieldName="pressure"
-      scale="1e5"/>
+      scale="0.0"/>
 
     <FieldSpecification
-      name="pressure_xneg"
-      objectPath="faceManager"
+      name="sourceTerm"
+      objectPath="ElementRegions/RockMatrix/cb1"
       fieldName="pressure"
-      component="0"
-      scale="1.0e7"
-      setNames="{ xneg }"/>
-    
-    <FieldSpecification
-      name="pressure_xpos"
-      objectPath="faceManager"
-      fieldName="pressure"
-      component="0"
-      scale="1.0e5"
-      setNames="{ xpos }"/>
+      scale="1e7"
+      setNames="{ source }"/>
 
+    <FieldSpecification
+      name="sinkTerm"
+      objectPath="ElementRegions/RockMatrix/cb1"
+      fieldName="pressure"
+      scale="0.0"
+      setNames="{ sink }"/>
   </FieldSpecifications>
 </Problem>

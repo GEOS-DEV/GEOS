@@ -161,23 +161,9 @@ private:
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-real64 BartonBandisStressPathDrivenUpdates::
-        computeHydraulicAperture( real64 const pressure, 
-                                  array1d< real64 > const & normal ) const
+real64 BartonBandisStressPathDrivenUpdates::computeHydraulicAperture( real64 const pressure, 
+                                                                      array1d< real64 > const & normal ) const
 {
-  /*using namespace fields::contact;
-
-  real64 const normalTraction = -computeFractureStress( pressure, normal );
-
-  // Note: compressive
-  real64 const hydraulicAperture = m_aperture0 / ( 1.0 - 9.0 * normalTraction /m_referenceNormalStress );
-  dHydraulicAperture_dNormalTraction = hydraulicAperture / ( 1.0 - 9.0 * normalTraction /m_referenceNormalStress ) * 9.0/m_referenceNormalStress;
-  dHydraulicAperture_aperture =  0.0;
-
-  return hydraulicAperture; ///It would be nice to change this to return a tuple.
-  */
-
-
   real64 const biot_pressure = m_biot * m_referencePressure; // biot is alpha in the equations
   // Fracture traction via Terzaghi's Principle
   real64 const sigma_c[3] = { m_referenceTotalStress[0] * normal[0] - biot_pressure * normal[0],
@@ -201,18 +187,13 @@ real64 BartonBandisStressPathDrivenUpdates::
   // minus the closure from the free-stress state to the current state
   real64 const newHydraulicAperture = maximumClosure - fractureClosure;
 
-  GEOS_LOG_RANK_0( "*** "<< std::setprecision(6) << std::scientific <<" pressure "<< pressure << " newHydraulicAperture "<< newHydraulicAperture << " sigmaN_N "<< sigmaN_N << " sigma_n0 " << sigma_n0 << " Vm " << maximumClosure <<" m_aperture0 "<< m_aperture0);
   return newHydraulicAperture;
 }
-
-
-
-
 
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 real64 BartonBandisStressPathDrivenUpdates::computeFractureStress( real64 const pressure,
-                                                    array1d< real64 > const & normal ) const
+                                                                   array1d< real64 > const & normal ) const
 {  
   auto matmul = [](real64 const (&u)[3], array1d< real64 > const &v, array1d< real64 > &r) -> void
   {

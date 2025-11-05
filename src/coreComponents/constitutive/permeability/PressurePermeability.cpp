@@ -85,6 +85,7 @@ void PressurePermeability::allocateConstitutiveData( Group & parent,
       m_referencePermeability[ei][q][0] = m_referencePermeabilityComponents[0];
       m_referencePermeability[ei][q][1] = m_referencePermeabilityComponents[1];
       m_referencePermeability[ei][q][2] = m_referencePermeabilityComponents[2];
+      //GEOS_LOG_RANK_0("m_referencePermeability "<< ei << " " << q << " " << m_referencePermeability[ei][q][0]);
     }
   }
 }
