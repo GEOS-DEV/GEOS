@@ -371,10 +371,10 @@ struct HydrostaticPressureKernel
                                                       phaseCompFrac );
 
     // Compute phase presssures and densities at end elevation using iEnd as the reference
-    array2d< real64 > endPressure( 1, numPhases );
-    array2d< real64 > endPhaseMassDens( 1, numPhases );
-    array2d< real64 > endPhaseDens( 1, numPhases );
-    array3d< real64 > endPhaseCompFrac( 1, numPhases, numComps );
+    array3d< real64, constitutive::multifluid::LAYOUT_PHASE > endPressure( 1, 1, numPhases );
+    array3d< real64 > endPhaseMassDens( 1, 1, numPhases );
+    array3d< real64, constitutive::multifluid::LAYOUT_PHASE > endPhaseDens( 1, 1, numPhases );
+    array4d< real64, constitutive::multifluid::LAYOUT_PHASE_COMP > endPhaseCompFrac( 1, 1, numPhases, numComps );
     returnVal =
       computeHydrostaticPressure( numComps,
                                   numPhases,
@@ -394,12 +394,12 @@ struct HydrostaticPressureKernel
                                   pressureValues[iEnd][0],
                                   phaseMassDens[iEnd],
                                   endElevation,
-                                  endPressure[0],
-                                  endPhaseMassDens[0],
-                                  endPhaseDens[0],
-                                  endPhaseCompFrac[0] );
+                                  endPressure[0][0],
+                                  endPhaseMassDens[0][0],
+                                  endPhaseDens[0][0],
+                                  endPhaseCompFrac[0][0] );
     // Compute relative error defined as the relative difference between the phase pressures at end elevation
-    real64 err = LvArray::math::abs( endPressure[0][ipCP] - endPressure[0][ipPP] ) / endPressure[0][ipPP];
+    real64 err = LvArray::math::abs( endPressure[0][0][ipCP] - endPressure[0][0][ipPP] ) / endPressure[0][0][ipPP];
     int constexpr maxMarchIterations = 10;
     real64 constexpr pressureTolerance = 1.0e-5;
 
@@ -411,7 +411,7 @@ struct HydrostaticPressureKernel
         break;
       }
       // equate the phase pressure at the end elevation
-      endPressure[0][ipCP] = endPressure[0][ipPP];
+      endPressure[0][0][ipCP] = endPressure[0][0][ipPP];
       real64 const iStartPrimaryPressure = pressureValues[iStart][0][ipPP]; // saves the known phase pressure at iStart
       // Estimate the unknown phase (contact) pressure and density at iStart using the updated pressures
       returnVal =
@@ -430,8 +430,8 @@ struct HydrostaticPressureKernel
                                     compFracTableWrappers,
                                     tempTableWrapper,
                                     endElevation,
-                                    endPressure[0],
-                                    endPhaseMassDens[0],
+                                    endPressure[0][0],
+                                    endPhaseMassDens[0][0],
                                     elevationValues[0][iStart],
                                     pressureValues[iStart][0],
                                     phaseMassDens[iStart],
@@ -481,11 +481,11 @@ struct HydrostaticPressureKernel
                                     pressureValues[iEnd][0],
                                     phaseMassDens[iEnd],
                                     endElevation,
-                                    endPressure[0],
-                                    endPhaseMassDens[0],
-                                    endPhaseDens[0],
-                                    endPhaseCompFrac[0] );
-      err = LvArray::math::abs( endPressure[0][ipCP] - endPressure[0][ipPP] ) / endPressure[0][ipPP];
+                                    endPressure[0][0],
+                                    endPhaseMassDens[0][0],
+                                    endPhaseDens[0][0],
+                                    endPhaseCompFrac[0][0] );
+      err = LvArray::math::abs( endPressure[0][0][ipCP] - endPressure[0][0][ipPP] ) / endPressure[0][0][ipPP];
     }
 
     return returnVal;
