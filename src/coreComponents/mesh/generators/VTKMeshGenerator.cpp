@@ -102,13 +102,15 @@ void VTKMeshGenerator::postInputInitialization()
   ExternalMeshGeneratorBase::postInputInitialization();
 
   GEOS_ERROR_IF( m_filePath.empty() && m_dataSourceName.empty(),
-                 GEOS_FMT( "{}: Either {} or {} must be specified.",
-                           getDataContext(), viewKeyStruct::filePathString(), viewKeyStruct::dataSourceString() ) );
+                 GEOS_FMT( "Either {} or {} must be specified.",
+                           viewKeyStruct::filePathString(), viewKeyStruct::dataSourceString() ),
+                 getDataContext() );
 
   GEOS_ERROR_IF( !m_filePath.empty() && !m_dataSourceName.empty(),
-                 GEOS_FMT( "{}: Access to the mesh via file and data source are mutually exclusive. "
+                 GEOS_FMT( "Access to the mesh via file and data source are mutually exclusive. "
                            "You can't set both {} and {} at the same time.",
-                           getDataContext(), viewKeyStruct::filePathString(), viewKeyStruct::dataSourceString() ) );
+                           viewKeyStruct::filePathString(), viewKeyStruct::dataSourceString() ),
+                 getDataContext() );
 
   if( !m_dataSourceName.empty())
   {
@@ -118,7 +120,7 @@ void VTKMeshGenerator::postInputInitialization()
 
     GEOS_THROW_IF( m_dataSource == nullptr,
                    getDataContext() << ": VTK Data Object Source not found: " << m_dataSourceName,
-                   InputError );
+                   InputError, getDataContext() );
 
     m_dataSource->open();
   }
