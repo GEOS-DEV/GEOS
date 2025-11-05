@@ -44,6 +44,7 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolutionScalingKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/StatisticsKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/HydrostaticPressureKernel.hpp"
+#include "physicsSolvers/fluidFlow/kernels/singlePhase/ThermalHydrostaticPressureKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp"
 
@@ -402,13 +403,13 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 
   // Step 1: count individual equilibriums (there may be multiple ones)
 
-  std::map< string, localIndex > equilNameToEquilId;
+  stdMap< string, localIndex > equilNameToEquilId;
   localIndex equilCounter = 0;
 
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
   {
     // collect all the equil name to idx
-    equilNameToEquilId[bc.getName()] = equilCounter;
+    equilNameToEquilId.insert( {bc.getName(), equilCounter} );
     equilCounter++;
 
     // check that the gravity vector is aligned with the z-axis
@@ -420,6 +421,26 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
                    "used in this simulation. To proceed, you can either: \n" <<
                    "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
                    "   - Remove the hydrostatic equilibrium initial condition from the XML file",
+                   InputError, getDataContext(), bc.getDataContext() );
+
+    // ensure that the temperature tables are defined for thermal simulations
+    GEOS_THROW_IF( m_isThermal && bc.getTemperatureVsElevationTableName().empty(),
+                   getCatalogName() << " " << bc.getDataContext()
+                                    << ": " << EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString()
+                                    << " must be provided for a thermal simulation",
+                   InputError, getDataContext(), bc.getDataContext() );
+
+    //ensure that compositions are empty
+    GEOS_THROW_IF( !bc.getComponentFractionVsElevationTableNames().empty(),
+                   getCatalogName() << " " << bc.getDataContext()
+                                    << ": " << EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString()
+                                    << " must not be provided for a single phase simulation.",
+                   InputError, getDataContext(), bc.getDataContext() );
+
+    GEOS_THROW_IF( !bc.getComponentNames().empty(),
+                   getCatalogName() << " " << bc.getDataContext()
+                                    << ": " << EquilibriumInitialCondition::viewKeyStruct::componentNamesString()
+                                    << " must not be provided for a single phase simulation.",
                    InputError, getDataContext(), bc.getDataContext() );
   } );
 
@@ -492,6 +513,16 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     // Step 3.2: retrieve the fluid model to compute densities
     // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
 
+    FunctionManager & functionManager = FunctionManager::getInstance();
+    TableFunction::KernelWrapper tempTableWrapper;
+    // Creation of Wrapper in case of TemperatureVsElevationTableName
+    if( m_isThermal )
+    {
+      string const tempTableName = fs.getTemperatureVsElevationTableName();
+      TableFunction const & tempTable = functionManager.getGroup< TableFunction >( tempTableName );
+      tempTableWrapper = tempTable.createKernelWrapper();
+    }
+
     // filter out region not in target
     Group const & region = subRegion.getParent().getParent();
     auto it = regionFilter.find( region.getName() );
@@ -518,18 +549,32 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
       typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
       // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
-      bool const equilHasConverged =
-        HydrostaticPressureKernel::launch( numPointsInTable,
-                                           maxNumEquilIterations,
-                                           equilTolerance,
-                                           gravVector,
-                                           minElevation,
-                                           elevationIncrement,
-                                           datumElevation,
-                                           datumPressure,
-                                           fluidWrapper,
-                                           elevationValues.toNestedView(),
-                                           pressureValues.toView() );
+      bool const equilHasConverged = m_isThermal ?
+                                     thermalSinglePhaseBaseKernels::
+                                       HydrostaticPressureKernel::launch( numPointsInTable,
+                                                                          maxNumEquilIterations,
+                                                                          equilTolerance,
+                                                                          gravVector,
+                                                                          minElevation,
+                                                                          elevationIncrement,
+                                                                          datumElevation,
+                                                                          datumPressure,
+                                                                          fluidWrapper,
+                                                                          tempTableWrapper,
+                                                                          elevationValues.toNestedView(),
+                                                                          pressureValues.toView() ) :
+                                     singlePhaseBaseKernels::
+                                       HydrostaticPressureKernel::launch( numPointsInTable,
+                                                                          maxNumEquilIterations,
+                                                                          equilTolerance,
+                                                                          gravVector,
+                                                                          minElevation,
+                                                                          elevationIncrement,
+                                                                          datumElevation,
+                                                                          datumPressure,
+                                                                          fluidWrapper,
+                                                                          elevationValues.toNestedView(),
+                                                                          pressureValues.toView() );
 
       GEOS_THROW_IF( !equilHasConverged,
                      getCatalogName() << " " << getDataContext() <<
@@ -538,8 +583,6 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     } );
 
     // Step 3.4: create hydrostatic pressure table
-
-    FunctionManager & functionManager = FunctionManager::getInstance();
 
     string const tableName = fs.getName() + "_" + subRegion.getName() + "_table";
     TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
@@ -552,14 +595,20 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
     // TODO: this last step should probably be delayed to wait for the creation of FaceElements
     arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
     arrayView1d< real64 > const pres = subRegion.getField< flow::pressure >();
+    arrayView1d< real64 > const temp = subRegion.getField< flow::temperature >();
 
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
 
-    forAll< parallelDevicePolicy< > >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+    RAJA::ReduceMin< parallelHostReduce, real64 > minPressure( LvArray::NumericLimits< real64 >::max );
+
+    forAll< parallelHostPolicy >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
       pres[k] = presTableWrapper.compute( &elevation );
+      if( m_isThermal )
+      {
+        temp[k] = tempTableWrapper.compute( &elevation );
+      }
       minPressure.min( pres[k] );
     } );
 
@@ -936,13 +985,13 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
 
   // Step 1: count individual source flux boundary conditions
 
-  std::map< string, localIndex > bcNameToBcId;
+  stdMap< string, localIndex > bcNameToBcId;
   localIndex bcCounter = 0;
 
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
     // collect all the bc names to idx
-    bcNameToBcId[bc.getName()] = bcCounter;
+    bcNameToBcId.insert( {bc.getName(), bcCounter} );
     bcCounter++;
   } );
 

@@ -128,14 +128,6 @@ void CompositionalMultiphaseFVM::postInputInitialization()
 {
   CompositionalMultiphaseBase::postInputInitialization();
 
-  if( m_scalingType == ScalingType::Local &&
-      m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None )
-  {
-    GEOS_ERROR( GEOS_FMT( "{}: line search is not supported for {} = {}",
-                          getName(), viewKeyStruct::scalingTypeString(),
-                          EnumStrings< ScalingType >::toString( ScalingType::Local )) );
-  }
-
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
     string const formulationName = EnumStrings< CompositionalMultiphaseFormulationType >::toString( CompositionalMultiphaseFormulationType::OverallComposition );
@@ -193,6 +185,14 @@ void CompositionalMultiphaseFVM::registerDataForCFL( Group & meshBodies )
 void CompositionalMultiphaseFVM::initializePreSubGroups()
 {
   CompositionalMultiphaseBase::initializePreSubGroups();
+
+  if( m_scalingType == ScalingType::Local &&
+      m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None )
+  {
+    GEOS_ERROR( GEOS_FMT( "{}: line search is not supported for {} = {}",
+                          getName(), viewKeyStruct::scalingTypeString(),
+                          EnumStrings< ScalingType >::toString( ScalingType::Local )) );
+  }
 
   m_linearSolverParameters.get().mgr.strategy = m_isThermal
                                                 ? LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM

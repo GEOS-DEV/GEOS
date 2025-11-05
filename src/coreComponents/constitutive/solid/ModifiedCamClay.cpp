@@ -71,13 +71,16 @@ void ModifiedCamClay::postInputInitialization()
   ElasticIsotropicPressureDependent::postInputInitialization();
 
   GEOS_THROW_IF( m_defaultCslSlope <= 0,
-                 getFullName() << ": Non-positive slope of critical state line detected",
+                 GEOS_FMT( "{}: Non-positive slope of critical state line detected", getFullName() ),
                  InputError, getDataContext() );
   GEOS_THROW_IF( m_defaultVirginCompressionIndex <= 0,
-                 getFullName() << ": Non-positive virgin compression index detected",
+                 GEOS_FMT( "{}: Non-positive virgin compression index detected", getFullName() ),
                  InputError, getDataContext() );
   GEOS_THROW_IF( m_defaultVirginCompressionIndex <= m_defaultRecompressionIndex,
-                 getFullName() << ": Recompression index should exceed virgin recompression index",
+                 GEOS_FMT( "{}: Recompression index should exceed virgin recompression index", getFullName() ),
+                 InputError );
+  GEOS_THROW_IF( m_defaultPreConsolidationPressure >= 0,
+                 GEOS_FMT( "{}: Preconsolidation pressure must be negative", getFullName() ),
                  InputError, getDataContext() );
 
   // set results as array default values

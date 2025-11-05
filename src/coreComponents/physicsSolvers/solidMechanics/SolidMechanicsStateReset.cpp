@@ -104,8 +104,8 @@ bool SolidMechanicsStateReset::execute( real64 const time_n,
                                                                 [&]( localIndex const,
                                                                      ElementSubRegionBase & subRegion )
       {
-        subRegion.getField< solidMechanics::strain >().zero();
-        subRegion.getField< solidMechanics::plasticStrain >().zero();
+        subRegion.getField< solidMechanics::averageStrain >().zero();
+        subRegion.getField< solidMechanics::averagePlasticStrain >().zero();
       } );
 
     }

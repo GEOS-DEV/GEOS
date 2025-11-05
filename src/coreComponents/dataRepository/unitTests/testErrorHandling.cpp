@@ -15,8 +15,8 @@
 
 // forcefully enable asserts macros for this unit test
 #define GEOS_ASSERT_ENABLED
-
 #include "common/logger/ErrorHandling.hpp"
+
 #include "common/logger/Logger.hpp"
 #include "dataRepository/DataContext.hpp"
 #include "common/initializeEnvironment.hpp"
@@ -28,6 +28,10 @@ using namespace geos;
 using namespace dataRepository;
 
 namespace fs = std::filesystem;
+
+// redeging logger instance to test macros with a local instance (to prevent any side effect)
+#undef GEOS_ERROR_LOGGER_INSTANCE
+#define GEOS_ERROR_LOGGER_INSTANCE testErrorLogger
 
 // declare a constant which value is the source file line (to predict the error file output).
 #define GET_LINE( lineVar ) static size_t constexpr lineVar = __LINE__
@@ -99,23 +103,19 @@ void endLocalLoggerTest( ErrorLogger & errorLogger,
 
 TEST( ErrorHandling, testYamlFileWarningOutput )
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow"
-  ErrorLogger g_errorLogger; // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
-#pragma GCC diagnostic pop
+  ErrorLogger testErrorLogger;
 
-  beginLocalLoggerTest( g_errorLogger, "warningTestOutput.yaml" );
+  beginLocalLoggerTest( testErrorLogger, "warningTestOutput.yaml" );
 
   GET_LINE( line1 ); GEOS_WARNING( "Conflicting pressure boundary conditions" );
 
   GET_LINE( line2 ); GEOS_WARNING_IF_GT_MSG( testValue, testMaxPrecision, "Pressure value is too high." );
 
-  GET_LINE( line3 ); GEOS_WARNING_IF( testValue == 5,
-                                      GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
-                                                context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision ),
-                                      context, additionalContext );
+  string const warningMsg = GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
+                                      context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision );
+  GET_LINE( line3 ); GEOS_WARNING_IF( testValue == 5, warningMsg, context, additionalContext );
 
-  endLocalLoggerTest( g_errorLogger, {
+  endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
 
     GEOS_FMT(
@@ -165,33 +165,27 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
 
 TEST( ErrorHandling, testYamlFileExceptionOutput )
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow"
-  ErrorLogger g_errorLogger; // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
-#pragma GCC diagnostic pop
+  ErrorLogger testErrorLogger;
 
-  beginLocalLoggerTest( g_errorLogger, "exceptionTestOutput.yaml" );
+  beginLocalLoggerTest( testErrorLogger, "exceptionTestOutput.yaml" );
   size_t line1;
 
   // Stacked exception test (contexts must appear sorted by priority)
   try
   {
-    line1 = __LINE__; GEOS_THROW_IF( testValue == 5,
-                                     "Group " << context.toString() << " has no wrapper named" << std::endl,
-                                     std::domain_error,
-                                     context.getContextInfo().setPriority( 1 ) );
+    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group: " << context.toString(), std::domain_error, context );
   }
   catch( std::domain_error const & ex )
   {
     string const errorMsg = "Table input error.\n";
-    g_errorLogger.currentErrorMsg()
+    testErrorLogger.currentErrorMsg()
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
       .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
   }
-  g_errorLogger.flushErrorMsg( g_errorLogger.currentErrorMsg() );
+  testErrorLogger.flushErrorMsg( testErrorLogger.currentErrorMsg() );
 
-  endLocalLoggerTest( g_errorLogger, {
+  endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
 
     GEOS_FMT(
@@ -199,12 +193,12 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
     rank: 0
     message: >-
       Table input error.
-      Group Base Test Class (file.xml, l.23) has no wrapper named
+      Empty Group: Base Test Class (file.xml, l.23)
     contexts:
       - priority: 2
         inputFile: /path/to/file.xml
         inputLine: 64
-      - priority: 1
+      - priority: 0
         inputFile: /path/to/file.xml
         inputLine: 23
       - priority: 0
@@ -225,27 +219,24 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
 
 TEST( ErrorHandling, testYamlFileErrorOutput )
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow"
-  ErrorLogger g_errorLogger; // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
-#pragma GCC diagnostic pop
+  ErrorLogger testErrorLogger;
 
-  beginLocalLoggerTest( g_errorLogger, "errorTestOutput.yaml" );
+  beginLocalLoggerTest( testErrorLogger, "errorTestOutput.yaml" );
 
-  GET_LINE( line1 ); EXPECT_EXIT( GEOS_ERROR_IF_GT_MSG( testValue, testMaxPrecision,
-                                                        GEOS_FMT( "{}: option should be lower than {}.",
-                                                                  context.toString(), testMaxPrecision ),
-                                                        context,
-                                                        additionalContext,
-                                                        importantAdditionalContext.getContextInfo().setPriority( 2 ) ),
-                                  ::testing::ExitedWithCode( 1 ),
-                                  ".*" );
+  EXPECT_EXIT( GEOS_ERROR_IF_GT_MSG( testValue, testMaxPrecision,
+                                     GEOS_FMT( "{}: option should be lower than {}.",
+                                               context.toString(), testMaxPrecision ),
+                                     context,
+                                     additionalContext,
+                                     importantAdditionalContext.getContextInfo().setPriority( 2 ) ),
+               ::testing::ExitedWithCode( 1 ),
+               ".*" );
 
-  endLocalLoggerTest( g_errorLogger, {
+  endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
 
-    GEOS_FMT(
-      R"(- type: Error
+    // we won't test the line index for this test as it cannot be a one-liner.
+    R"(- type: Error
     rank: 0
     message: >-
       Base Test Class (file.xml, l.23): option should be lower than 0.001.
@@ -263,40 +254,35 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
       Expected: testValue <= testMaxPrecision
       * testValue = 5
       * testMaxPrecision = 0.001
-    sourceLocation:
-      file: {}
-      line: {}
-    sourceCallStack:)",
-      __FILE__, line1 ),
+    sourceLocation:)",
+    "  file: ",
+    "  line: ",
+    "sourceCallStack:",
     "- frame0: ",
     "- frame1: ",
     "- frame2: "
   } );
 }
 
-#ifdef GEOS_ASSERT_ENABLED
 TEST( ErrorHandling, testYamlFileAssertOutput )
 {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wshadow"
-  ErrorLogger g_errorLogger; // Local overriding of global 'g_errorLogger' (to contain test macros effects to local scope)
-#pragma GCC diagnostic pop
+  ErrorLogger testErrorLogger;
 
-  beginLocalLoggerTest( g_errorLogger, "assertTestOutput.yaml" );
+  beginLocalLoggerTest( testErrorLogger, "assertTestOutput.yaml" );
 
-  GET_LINE( line1 ); EXPECT_EXIT( GEOS_ASSERT_MSG( testValue > testMinPrecision && testValue < testMaxPrecision,
-                                                   GEOS_FMT( "{}: value should be between {} and {}, but is {}.",
-                                                             context.toString(), testMinPrecision, testMaxPrecision, testValue ),
-                                                   context,
-                                                   additionalContext ),
-                                  ::testing::ExitedWithCode( 1 ),
-                                  ".*" );
+  EXPECT_EXIT( GEOS_ASSERT_MSG( testValue > testMinPrecision && testValue < testMaxPrecision,
+                                GEOS_FMT( "{}: value should be between {} and {}, but is {}.",
+                                          context.toString(), testMinPrecision, testMaxPrecision, testValue ),
+                                context,
+                                additionalContext ),
+               ::testing::ExitedWithCode( 1 ),
+               ".*" );
 
-  endLocalLoggerTest( g_errorLogger, {
+  endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
 
-    GEOS_FMT(
-      R"(- type: Error
+    // we won't test the line index for this test as it cannot be a one-liner.
+    R"(- type: Error
     rank: 0
     message: >-
       Base Test Class (file.xml, l.23): value should be between 1e-06 and 0.001, but is 5.
@@ -309,17 +295,15 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
         inputLine: 32
     cause: >-
       Expected: testValue > testMinPrecision && testValue < testMaxPrecision
-    sourceLocation:
-      file: {}
-      line: {}
-    sourceCallStack:)",
-      __FILE__, line1 ),
+    sourceLocation:)",
+    "  file: ",
+    "  line: ",
+    "sourceCallStack:",
     "- frame0: ",
     "- frame1: ",
     "- frame2: "
   } );
 }
-#endif
 
 int main( int ac, char * av[] )
 {
@@ -327,6 +311,6 @@ int main( int ac, char * av[] )
   ::testing::InitGoogleTest( &ac, av );
   geos::setupEnvironment( ac, av );
   int const result = RUN_ALL_TESTS();
-  geos::cleanupEnvironment();
+  geos::cleanupEnvironment( );
   return result;
 }

@@ -81,7 +81,7 @@ static const string solverLogOutput =
         name="SinglePhaseFlow"
         discretization="singlePhaseTPFA"
         targetRegions="{ Channel }"
-        writeStatistics="1" >
+        writeStatistics="iteration" >
         <NonlinearSolverParameters
             newtonTol="1.0e-6"
             newtonMaxIter="8"/>
@@ -102,7 +102,7 @@ static const string solverCSVOutput =
             name="SinglePhaseFlow"
             discretization="singlePhaseTPFA"
             targetRegions="{ Channel }"
-            writeStatistics="2" >
+            writeStatistics="convergence" >
             <NonlinearSolverParameters
                 newtonTol="1.0e-6"
                 newtonMaxIter="8"/>

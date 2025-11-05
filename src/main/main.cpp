@@ -76,7 +76,8 @@ int main( int argc, char *argv[] )
   }
   catch( std::exception const & e )
   {
-    g_errorLogger.flushErrorMsg( g_errorLogger.currentErrorMsg() );
+
+    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().currentErrorMsg() );
 
     LvArray::system::callErrorHandler();
     basicCleanup();
