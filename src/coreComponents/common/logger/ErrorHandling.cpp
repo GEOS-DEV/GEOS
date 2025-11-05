@@ -248,18 +248,17 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
                         GEOS_FMT( "{}{}\n", g_level3Start, errorMsg.m_sourceCallStack[i] ) );
         }
       }
+
+      yamlFile << "\n";
+      yamlFile.flush();
+      errorMsg = ErrorMsg();
+      GEOS_LOG_RANK( GEOS_FMT( "The error file {} was appended.", m_filename ) );
     }
     else
     {
       GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing.\n- Error file: {}\n- Error file enabled = {}.\n",
                                m_filename, g_errorLogger.isOutputFileEnabled() ) );
     }
-
-
-    yamlFile << "\n";
-    yamlFile.flush();
-    errorMsg = ErrorMsg();
-    GEOS_LOG_RANK( GEOS_FMT( "The error file {} was appended.", m_filename ) );
   }
   ErrorLogger::formatMsgToAscii( errorMsg, ::geos::logger::internal::g_rankString, std::cout );
 }

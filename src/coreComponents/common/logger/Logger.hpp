@@ -26,7 +26,6 @@
 #include "common/format/Format.hpp"
 #include "LvArray/src/Macros.hpp"
 #include "common/logger/ErrorHandling.hpp"
-#include "common/logger/ErrorHandling.hpp"
 
 // System includes
 #include <stdexcept>
@@ -274,7 +273,6 @@
 
 /**
  * @brief Conditionally raise a hard error and terminate the program.
- * @param COND A condition that causes the error if true.
  * @param MSG a message to log (any expression that can be stream inserted)
  * @param ... Variable arguments with the following structure:
  *            - Mandatory first parameter, the type of the exception to throw
@@ -1033,6 +1031,6 @@ void FinalizeLogger();
 
 }   // namespace logger
 
-}   // namespace geos
+} // namespace geos
 
 #endif /* GEOS_COMMON_LOGGER_HPP */

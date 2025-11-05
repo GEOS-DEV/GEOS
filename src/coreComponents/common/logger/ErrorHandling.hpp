@@ -221,8 +221,14 @@ private:
     bool m_isValidStackTrace = false;
   };
 
+  /**
+   * @brief Retrieve all informations from the ErrorLogger and format into an ascii message
+   * @param errMsg Class containing all the error/warning information
+   * @param rank The rank where the error/warning happened
+   * @param output The output stream. By default std::cout
+   */
   static void formatMsgToAscii( ErrorLogger::ErrorMsg const & errMsg, string const & rank,
-                                std::ostream & output )
+                                std::ostream & output = std::cout )
   {
     output << "***** EXCEPTION\n";
     output << "***** LOCATION: " LOCATION "\n";
