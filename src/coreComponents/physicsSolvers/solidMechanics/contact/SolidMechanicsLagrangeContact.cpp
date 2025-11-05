@@ -1830,7 +1830,8 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
           }
         }
         GEOS_ERROR_IF( realNodes != 2,
-                       getDataContext() << ": An edge shared by two fracture elements must have 2 nodes." );
+                       getDataContext() << ": An edge shared by two fracture elements must have 2 nodes.",
+                       getDataContext() );
         edge.resize( realNodes );
 
         // Compute nodal area factor
