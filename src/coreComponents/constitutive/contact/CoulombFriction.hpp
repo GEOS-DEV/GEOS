@@ -182,6 +182,14 @@ public:
    */
   KernelWrapper createKernelUpdates() const;
 
+  /// getting cohesion value
+  real64 getCohesion() const
+  { return m_cohesion; }
+
+  /// getting friction coeff
+  real64 getFrictionCoeff() const
+  { return m_frictionCoefficient; }
+
   /**
    * @struct Set of "char const *" and keys for data specified in this class.
    */

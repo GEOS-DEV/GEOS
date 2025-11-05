@@ -22,6 +22,7 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 #include <cmath>
+#include <type_traits>
 
 #include "FrictionDriver.hpp"
 
@@ -246,14 +247,17 @@ void FrictionDriver::resizeTables()
   // set input columns
   resizeTable< FRICTION_TYPE >();
 
-  // real64 const cohesion = baseFriction.getWrapper("cohesion");
-  // real64 const frictionCoeff = baseFriction.getGroup("frictionCoefficient");
+  real64 cohesion = 0.;  
+  real64 frictionCoeff = 0.; 
+  if constexpr ( std::is_same_v< CoulombFriction, FRICTION_TYPE> ) {
+  
+    cohesion = dynamic_cast<CoulombFriction*>(&baseFriction)->getCohesion();
+    frictionCoeff = dynamic_cast<CoulombFriction*>(&baseFriction)->getFrictionCoeff();
+  }
 
   //All variation
   for( integer nt = 0; nt < m_numSteps+1; ++nt )
   {
-
-
     for( integer nj = 0; nj < m_numSteps+1; ++nj )
     {
 
@@ -268,10 +272,8 @@ void FrictionDriver::resizeTables()
 
       m_table( index, FS ) = fields::contact::FractureState::Stick;
 
-
-      m_table( index, TLIM ) = -1;
       //Only for Coulomb
-      // m_table( index, TLIM ) = cohesion - m_table(index, NTRAC) * frictionCoeff;
+      m_table( index, TLIM ) = cohesion - m_table(index, NTRAC) * frictionCoeff;
 
     }
   }
