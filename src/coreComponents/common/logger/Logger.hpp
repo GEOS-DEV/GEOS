@@ -151,6 +151,7 @@
  *            - Mandatory first parameter, the message to log (must be streamable)
  *            - Optional following parameters, context information on the current error (DataContext)
  */
+#if !defined(GEOS_DEVICE_COMPILE)
 #define GEOS_ERROR_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
   do \
   { \
@@ -162,16 +163,33 @@
       causemsgsoss << CAUSE_MESSAGE; \
       ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
                                        msgoss.str(), \
+                                       ::geos::logger::internal::g_rank, \
                                        __FILE__, \
                                        __LINE__ ); \
-      msgStruct.setRank( ::geos::logger::internal::rank ); \
       msgStruct.setCause( causemsgsoss.str() ); \
       msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      g_errorLogger.flushErrorMsg( msgStruct ); \
+      GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \
       LvArray::system::callErrorHandler(); \
     } \
   }while( false )
+  #elif __CUDA_ARCH__
+#define GEOS_ERROR_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      constexpr char const * formatString = "***** ERROR\n" \
+                                            "***** LOCATION" LOCATION "\n" \
+                                                                      "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                      "***** THREAD: [%u, %u, %u]\n" \
+                                                                      "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+                                                                                                          "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
+      asm ( "trap;" ); \
+    } \
+  } while( false )
+#endif
 
 /**
  * @brief Conditionally raise a hard error and terminate the program.
@@ -200,6 +218,7 @@
  *            - Mandatory first parameter, the type of the exception to throw
  *            - Optional following parameters, context information on the current error (DataContext)
  */
+ #if !defined(GEOS_DEVICE_COMPILE)
 #define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... ) \
   do \
   { \
@@ -209,21 +228,49 @@
       std::ostringstream causemsgsoss; \
       msgoss << MSG; \
       causemsgsoss << CAUSE_MESSAGE; \
-      if( g_errorLogger.currentErrorMsg().m_type == ErrorLogger::MsgType::Undefined ) \
+      if( GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg().m_type == ErrorLogger::MsgType::Undefined ) \
       {   /* first throw site, we initialize the error message completly */ \
-        g_errorLogger.currentErrorMsg() \
+        GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg() \
           .setType( ErrorLogger::MsgType::Exception ) \
           .setCodeLocation( __FILE__, __LINE__ ) \
           .setCause( causemsgsoss.str() ) \
-          .setRank( ::geos::logger::internal::rank ) \
+          .addRank( ::geos::logger::internal::g_rank ) \
           .addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       } \
-      g_errorLogger.currentErrorMsg() \
+      GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg() \
         .addToMsg( msgoss.str() ) \
         .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
       throw GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )(msgoss.str()); \
     } \
   } while( false )
+  #elif __CUDA_ARCH__
+#define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      static char const formatString[] = "***** ERROR\n" \
+                                         "***** LOCATION" LOCATION "\n" \
+                                                                   "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                   "***** THREAD: [%u, %u, %u]\n" \
+                                                                   "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+                                                                                                       "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
+      asm ( "trap;" ); \
+    } \
+  } while( false )
+#endif
+
+/**
+ * @brief Conditionally raise a hard error and terminate the program.
+ * @param COND A condition that causes the error if true.
+ * @param MSG a message to log (any expression that can be stream inserted)
+ * @param ... Variable arguments with the following structure:
+ *            - Mandatory first parameter, the type of the exception to throw
+ *            - Optional following parameters, context information on the current error (DataContext)
+ */
+#define GEOS_THROW_IF( COND, MSG, ... ) \
+  GEOS_THROW_IF_CAUSE( COND, "Error cause: " STRINGIZE( COND ), MSG, __VA_ARGS__ )
 
 /**
  * @brief Conditionally raise a hard error and terminate the program.
@@ -249,29 +296,18 @@
   { \
     if( COND ) \
     { \
-      std::ostringstream __msgoss; \
-      __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
-      std::string __message = __msgoss.str(); \
-      __msgoss = std::ostringstream(); \
-      __msgoss << CAUSE_MESSAGE; \
-      std::string __cause =  __msgoss.str(); \
-      std::ostringstream __oss; \
-      __oss << "***** WARNING\n"; \
-      __oss << "***** LOCATION: " LOCATION "\n"; \
-      __oss << "***** " << __cause << "\n"; \
-      __oss << "***** Rank " << ::geos::logger::internal::g_rankString << ": " << __message << "\n"; \
-      std::cout << __oss.str() << std::endl; \
-      if( GEOS_ERROR_LOGGER_INSTANCE.isOutputFileEnabled() ) \
-      { \
-        ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
-                                         __message, \
-                                         ::geos::logger::internal::g_rank, \
-                                         __FILE__, \
-                                         __LINE__ ); \
-        msgStruct.setCause( __cause ); \
-        msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-        GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \
-      } \
+      std::ostringstream msgoss; \
+      std::ostringstream causemsgsoss; \
+      msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
+      causemsgsoss << CAUSE_MESSAGE; \
+      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
+                                       msgoss.str(), \
+                                       ::geos::logger::internal::g_rank, \
+                                       __FILE__, \
+                                       __LINE__ ); \
+      msgStruct.setCause( causemsgsoss.str() ); \
+      msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
+      GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \
     } \
   } while( false )
 #elif __CUDA_ARCH__
