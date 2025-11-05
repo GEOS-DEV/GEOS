@@ -27,9 +27,9 @@ namespace geos
 namespace graph
 {
 
-bool GraphColoringBase::isColoringValid( const std::vector< camp::idx_t > & xadj,
-                                         const std::vector< camp::idx_t > & adjncy,
-                                         const std::vector< int > & coloring )
+bool GraphColoringBase::isColoringValid( const stdVector< camp::idx_t > & xadj,
+                                         const stdVector< camp::idx_t > & adjncy,
+                                         const stdVector< int > & coloring )
 {
   for( size_t node = 0; node < coloring.size(); ++node )
   {
@@ -48,7 +48,7 @@ bool GraphColoringBase::isColoringValid( const std::vector< camp::idx_t > & xadj
 }
 
 
-size_t GraphColoringBase::getNumberOfColors( const std::vector< int > & colors )
+size_t GraphColoringBase::getNumberOfColors( const stdVector< int > & colors )
 {
   std::unordered_set< int > uniqueColors;
   for( int color : colors )
@@ -63,13 +63,13 @@ size_t GraphColoringBase::getNumberOfColors( const std::vector< int > & colors )
 
 
 // Assume only one node per rank.
-bool GraphColoringBase::isColoringValid( const std::vector< camp::idx_t > & adjncy,
+bool GraphColoringBase::isColoringValid( const stdVector< camp::idx_t > & adjncy,
                                          const int color,
                                          MPI_Comm comm )
 {
   // Gather neighbor colors asynchronously
-  std::vector< int > neighborColors( adjncy.size());
-  std::vector< MPI_Request > requests( adjncy.size() * 2, MPI_REQUEST_NULL ); // Two requests per neighbor (send and receive)
+  stdVector< int > neighborColors( adjncy.size());
+  stdVector< MPI_Request > requests( adjncy.size() * 2, MPI_REQUEST_NULL ); // Two requests per neighbor (send and receive)
   for( size_t i = 0; i < adjncy.size(); ++i )
   {
     int const neighborRank = adjncy[i];
@@ -101,27 +101,27 @@ bool GraphColoringBase::isColoringValid( const std::vector< camp::idx_t > & adjn
 
 size_t GraphColoringBase::getNumberOfColors( const int color, MPI_Comm comm )
 {
-  std::vector< int > colors = {color};
+  stdVector< int > colors = {color};
   return getNumberOfColors( colors, comm );
 }
 
 
-size_t GraphColoringBase::getNumberOfColors( const std::vector< int > & colors, MPI_Comm comm )
+size_t GraphColoringBase::getNumberOfColors( const stdVector< int > & colors, MPI_Comm comm )
 {
   int const rank = MpiWrapper::commRank( comm );
   int const size = MpiWrapper::commSize( comm );
 
   std::set< int > localDistinctColors = std::set< int >( colors.begin(), colors.end());
-  std::vector< int > localDistinctColorsVector( localDistinctColors.begin(), localDistinctColors.end());
+  stdVector< int > localDistinctColorsVector( localDistinctColors.begin(), localDistinctColors.end());
   int const localSize = localDistinctColorsVector.size();
 
   // Gather the sizes of the local color vectors from all ranks
-  std::vector< int > allSizes( size );
+  stdVector< int > allSizes( size );
   MpiWrapper::gather( &localSize, 1, allSizes.data(), 1, 0, comm );
 
   // Calculate the total number of colors and the displacements for gathering
   int totalSize = 0;
-  std::vector< int > displacements( size, 0 );
+  stdVector< int > displacements( size, 0 );
   if( rank == 0 )
   {
     for( int i = 0; i < size; ++i )
@@ -132,7 +132,7 @@ size_t GraphColoringBase::getNumberOfColors( const std::vector< int > & colors, 
   }
 
   // Gather all colors from all ranks to rank 0
-  std::vector< int > allColors( totalSize );
+  stdVector< int > allColors( totalSize );
   MpiWrapper::gatherv( localDistinctColorsVector.data(), localSize,
                        allColors.data(), allSizes.data(), displacements.data(),
                        0, comm );

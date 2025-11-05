@@ -54,14 +54,14 @@ public:
    * @param adjncy Adjacency list containing neighbors of each node.
    * @return A vector of colors assigned to each node.
    */
-  virtual std::vector< int > colorGraph( const std::vector< camp::idx_t > & xadj, const std::vector< camp::idx_t > & adjncy ) = 0;
+  virtual stdVector< int > colorGraph( const stdVector< camp::idx_t > & xadj, const stdVector< camp::idx_t > & adjncy ) = 0;
 
   /**
    * @brief Pure virtual method to color a graph assuming one node per rank.
    * @param adjncy Adjacency list containing neighbors of each node.
    * @return Color of the node.
    */
-  virtual int  colorGraph( const std::vector< camp::idx_t > & adjncy ) = 0;
+  virtual int  colorGraph( const stdVector< camp::idx_t > & adjncy ) = 0;
 
 
   /**
@@ -81,7 +81,7 @@ public:
  * @param coloring A vector where the index represents the node and the value represents the assigned color.*
  * @return True if the coloring is valid, false otherwise.
  */
-  static bool isColoringValid( const std::vector< camp::idx_t > & xadj, const std::vector< camp::idx_t > & adjncy, const std::vector< int > & coloring );
+  static bool isColoringValid( const stdVector< camp::idx_t > & xadj, const stdVector< camp::idx_t > & adjncy, const stdVector< int > & coloring );
 
   /**
    * @brief Checks the validity of the graph coloring assuming one node per rank.
@@ -92,7 +92,7 @@ public:
    *
    * @return True if the coloring is valid, false otherwise.
    */
-  static bool isColoringValid( const std::vector< camp::idx_t > & adjncy, const int color, MPI_Comm comm );
+  static bool isColoringValid( const stdVector< camp::idx_t > & adjncy, const int color, MPI_Comm comm );
 
 /**
  * @brief Counts the number of distinct colors.
@@ -103,7 +103,7 @@ public:
  * @param colors A vector of integers representing colors.
  * @return The number of distinct colors in the vector.
  */
-  static size_t getNumberOfColors( const std::vector< int > & colors );
+  static size_t getNumberOfColors( const stdVector< int > & colors );
 
   /**
    * @brief Counts the number of distinct colors  (parallel version).
@@ -111,7 +111,7 @@ public:
    * @param comm MPI communicator.
    * @return Number of distinct colors.
    */
-  static size_t getNumberOfColors( const std::vector< int > & colors, MPI_Comm comm );
+  static size_t getNumberOfColors( const stdVector< int > & colors, MPI_Comm comm );
 
   /**
    * @brief Counts the number of distinct colors assuming one node per rank (parallel version).
