@@ -79,7 +79,7 @@ void TableCapillaryPressure::postInputInitialization()
   GEOS_THROW_IF( numPhases != 2 && numPhases != 3,
                  GEOS_FMT( "{}: the expected number of fluid phases is either two, or three",
                            getFullName() ),
-                 InputError );
+                 InputError, getDataContext() );
 
   // Populate the minimum phase volumes
   m_phaseMinVolumeFraction.resize( numPhases );
@@ -90,7 +90,7 @@ void TableCapillaryPressure::postInputInitialization()
                    GEOS_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the capillary pressure table for the pair (wetting phase, non-wetting phase)",
                              getFullName(),
                              viewKeyStruct::wettingNonWettingCapPresTableNameString() ),
-                   InputError );
+                   InputError, getDataContext() );
   }
   else if( numPhases == 3 )
   {
@@ -101,7 +101,7 @@ void TableCapillaryPressure::postInputInitialization()
                              getFullName(),
                              viewKeyStruct::wettingIntermediateCapPresTableNameString(),
                              viewKeyStruct::nonWettingIntermediateCapPresTableNameString()  ),
-                   InputError );
+                   InputError, getDataContext() );
   }
 }
 
@@ -131,7 +131,7 @@ void TableCapillaryPressure::initializePreSubGroups()
                    GEOS_FMT( "{}: the table function named {} could not be found",
                              getFullName(),
                              m_wettingIntermediateCapPresTableName ),
-                   InputError );
+                   InputError, getDataContext() );
     TableFunction const & capPresTableWI = functionManager.getGroup< TableFunction >( m_wettingIntermediateCapPresTableName );
     TableCapillaryPressureHelpers::validateCapillaryPressureTable( capPresTableWI, getFullName(), false );
 
@@ -139,7 +139,7 @@ void TableCapillaryPressure::initializePreSubGroups()
                    GEOS_FMT( "{}: the table function named {} could not be found",
                              getFullName(),
                              m_nonWettingIntermediateCapPresTableName ),
-                   InputError );
+                   InputError, getDataContext() );
     TableFunction const & capPresTableNWI = functionManager.getGroup< TableFunction >( m_nonWettingIntermediateCapPresTableName );
     TableCapillaryPressureHelpers::validateCapillaryPressureTable( capPresTableNWI, getFullName(), true );
   }

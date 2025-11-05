@@ -615,11 +615,11 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
       GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
                      GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
                                getDataContext(), fluid.getDataContext() ),
-                     InputError );
+                     InputError, getDataContext(), fluid.getDataContext() );
       GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
                      GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
                                getDataContext(), fluid.getDataContext() ),
-                     InputError );
+                     InputError, getDataContext(), fluid.getDataContext() );
 
       string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
@@ -1112,7 +1112,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                    "used in this simulation. To proceed, you can either: \n" <<
                    "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
                    "   - Remove the hydrostatic equilibrium initial condition from the XML file",
-                   InputError );
+                   InputError, getDataContext(), bc.getDataContext() );
 
     // ensure that the temperature and composition tables are defined
     GEOS_THROW_IF( bc.getTemperatureVsElevationTableName().empty(),
@@ -1279,13 +1279,13 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       GEOS_THROW_IF( fluid.componentNames().size() != componentNames.size(),
                      "Mismatch in number of components between constitutive model "
                      << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
-                     InputError );
+                     InputError, fluid.getDataContext(), fs.getDataContext() );
       for( integer ic = 0; ic < fluid.numFluidComponents(); ++ic )
       {
         GEOS_THROW_IF( fluid.componentNames()[ic] != componentNames[ic],
                        "Mismatch in component names between constitutive model "
                        << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
-                       InputError );
+                       InputError, fluid.getDataContext(), fs.getDataContext() );
       }
 
       integer ipInit = -1;
@@ -1384,7 +1384,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                        ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
                        "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
                        "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
-                       std::runtime_error );
+                       std::runtime_error, getDataContext() );
 
         if( singlePhaseInitialisation )
         {
@@ -2102,7 +2102,9 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ) );
+    GEOS_ERROR_IF( !bcConsistent,
+                   GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ),
+                   getDataContext() );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
