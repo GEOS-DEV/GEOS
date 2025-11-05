@@ -16,7 +16,7 @@
 #ifndef GEOS_FRICTIONDRIVERRUNTEST_HPP_
 #define GEOS_FRICTIONDRIVERRUNTEST_HPP_
 
-#include "constitutive/contact/FrictionDriver.hpp"
+#include "constitutiveDrivers/contact/FrictionDriver.hpp"
 #include "physicsSolvers/solidMechanics/contact/FractureState.hpp"
 #include "constitutive/solid/SolidFields.hpp"
 
@@ -27,78 +27,46 @@ namespace geos
 
 template< typename FRICTION_TYPE >
 void
-FrictionDriver::runTest( FRICTION_TYPE & relperm,
+FrictionDriver::runTest( FRICTION_TYPE & friction,
                         const arrayView2d< real64 > & table )
 {
-  // get number of phases and components
 
-  integer const numPhases = relperm.numFluidPhases();
+  array2d< real64 > jumps, tractions;
+  jumps.resize(table.size(0),3);
+  tractions.resize(table.size(0),3);
+
+  for( integer n = 0; n < table.size(0); ++n)
+  {
+    jumps[n][0] = table(n,NJUMP);
+    jumps[n][1] = table(n,SLIP0);
+    jumps[n][2] = table(n,SLIP1);
+
+    tractions[n][0] = table(n,NTRAC);
+    tractions[n][1] = table(n,STRAC0);
+    tractions[n][2] = table(n,STRAC1);
+
+  }
+
 
   // create kernel wrapper
+  typename FRICTION_TYPE::KernelWrapper const kernelWrapper = friction.createKernelUpdates();
 
-  typename RELPERM_TYPE::KernelWrapper const kernelWrapper = relperm.createKernelWrapper();
-
-  // set saturation to user specified feed
-  // it is more convenient to provide input in molar, so perform molar to mass conversion here
-
-  array2d< real64, compflow::LAYOUT_PHASE > saturationValues;
-  if( numPhases > 2 )
+  forAll< parallelDevicePolicy<> >( 1,
+                                    [ kernelWrapper, table, jumps, tractions ] 
+                                    GEOS_HOST_DEVICE ( integer const ei )
   {
-    saturationValues.resize(( m_numSteps + 1 ) * ( m_numSteps + 1 ), numPhases );
-  }
-  else
-  {
-    saturationValues.resize( m_numSteps + 1, numPhases );
-  }
-  integer const ipWater = relperm.getPhaseOrder()[PT::WATER];
-  integer const ipOil = relperm.getPhaseOrder()[PT::OIL];
-  integer const ipGas = relperm.getPhaseOrder()[PT::GAS];
-  const localIndex offset = std::max( std::max( ipOil, ipWater ), std::max( ipOil, ipGas ) ) + 1;
-
-  for( integer n = 0; n < table.size( 0 ); ++n )
-  {
-
-
-    if( m_numPhases > 2 )
+    for( integer i = 1; i < table.size(0) ; ++i )
     {
-      saturationValues[n][ipWater] = table( n, ipWater + 1 );
-      saturationValues[n][ipOil] = table( n, ipOil + 1 );
-      saturationValues[n][ipGas] = table( n, ipGas + 1 );
-    }
-    else//two-phase
-    {
-      if( ipWater < 0 )
-      {
-        saturationValues[n][ipOil] = table( n, ipOil + 1 );
-        saturationValues[n][ipGas] = table( n, ipGas + 1 );
-      }
-      else if( ipGas < 0 )
-      {
-        saturationValues[n][ipWater] = table( n, ipWater + 1 );
-        saturationValues[n][ipOil] = table( n, ipOil + 1 );
-      }
-    }
+      integer fs = fields::contact::FractureState::Stick;
+      kernelWrapper.updateFractureState( jumps[i],
+                                         tractions[i],
+                                         fs );
 
-  }
-
-  arrayView2d< real64 const, compflow::USD_PHASE > const saturation = saturationValues.toViewConst();
-
-  // perform relperm update using table (Swet,Snonwet) and save resulting total density, etc.
-  // note: column indexing should be kept consistent with output file header below.
-
-  forAll< parallelDevicePolicy<> >( saturation.size( 0 ),
-                                    [numPhases, kernelWrapper, saturation, table,
-                                     offset] GEOS_HOST_DEVICE ( integer const n )
-  {
-    kernelWrapper.update( 0, 0, saturation[n] );
-    for( integer p = 0; p < numPhases; ++p )
-    {
-      table( n, offset + 1 + p ) = kernelWrapper.relperm()( 0, 0, p );
+      table(i,FS) = fs;
     }
   } );
 
 }
-
 
 }
 

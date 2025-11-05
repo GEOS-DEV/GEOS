@@ -29,7 +29,7 @@ public:
                  Group * const parent );
 
   static string catalogName()
-  { return "frictionDriver"; }
+  { return "FrictionDriver"; }
 
   void postInputInitialization() override;
 
@@ -51,10 +51,10 @@ public:
   // runTest( friction_TYPE & friction,
   //          const arrayView2d< real64, 1 > & table );
 
-  // template< typename friction_TYPE >
-  // std::enable_if_t< !std::is_same< constitutive::TableRelativePermeabilityHysteresis, friction_TYPE >::value, void >
-  // runTest( friction_TYPE & friction,
-  //          const arrayView2d< real64, 1 > & table );
+  template< typename FRICTION_TYPE >
+  void
+  runTest( FRICTION_TYPE & friction,
+           const arrayView2d< real64, 1 > & table );
 
   /**
    * @brief Ouput table to file for easy plotting
@@ -69,11 +69,10 @@ public:
 private:
 
   template< typename FRICTION_TYPE >
-  void resizeTables();
+  void resizeTable();
 
-  // template< typename friction_TYPE >
-  // std::enable_if_t< std::is_same< constitutive::TableRelativePermeabilityHysteresis, friction_TYPE >::value, void >
-  // resizeTable();
+  template< typename FRICTION_TYPE >
+  void resizeTables();
 
   // template< typename friction_TYPE >
   // std::enable_if_t< !std::is_same< constitutive::TableRelativePermeabilityHysteresis, friction_TYPE >::value, void >
@@ -90,16 +89,34 @@ private:
     constexpr static char const * numStepsString()
     { return "steps"; }
 
+    constexpr static char const * jumpFunctionString() 
+    { return "jumpControl"; }
+
+    constexpr static char const * tractionFunctionString() 
+    { return "tractionControl"; }
+
+    constexpr static char const * thetaString()
+    { return "xTiltAngle";}
+    
+    constexpr static char const * phiString()
+    { return "yTiltAngle";}
+
     constexpr static char const * outputString()
     { return "output"; }
 
     constexpr static char const * baselineString()
     { return "baseline"; }
+
   };
 
   integer m_numSteps;      ///< Number of load steps
-  integer m_numColumns;    ///< Number of columns in data table (depends on number of fluid phases)
-  integer m_numPhases;     ///< Number of fluid phases
+  static integer const m_numColumns = 8;    ///< Number of columns in dat
+  enum columnKeys { NJUMP, SLIP0, SLIP1, NTRAC, STRAC0, STRAC1, FS, TLIM };
+
+  string m_jumpFunctionName; ///<  
+  string m_tractionFunctionName; ///< 
+
+  float m_theta, m_phi;///< x- and y-tilt of fault
 
   string m_frictionName;               ///< frictionType identifier
   string m_outputFile;              ///< Output file (optional, no output if not specified)
@@ -108,10 +125,6 @@ private:
 
   Path m_baselineFile; ///< Baseline file (optional, for unit testing of solid models)
 
-  enum columnKeys
-  {
-    TIME
-  }; ///< Enumeration of "input" column keys for readability
 
   static constexpr real64 m_baselineTol = 1e-3; ///< Comparison tolerance for baseline results
 };

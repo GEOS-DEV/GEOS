@@ -29,6 +29,8 @@ set( constitutiveDrivers_headers
      relativePermeability/RelpermDriver.hpp
      relativePermeability/RelpermDriverRunTest.hpp
      solid/TriaxialDriver.hpp
+     contact/FrictionDriver.hpp
+     contact/FrictionDriverRunTest.hpp
    )
 #
 # Specify all sources
@@ -57,6 +59,8 @@ set( constitutiveDrivers_sources
      relativePermeability/RelpermDriverTableRelativeRunTest.cpp
      relativePermeability/RelpermDriverTableRelativeHysteresisRunTest.cpp
      solid/TriaxialDriver.cpp
+     contact/FrictionDriver.cpp
+     contact/FrictionDriverRunTest.cpp
    )
 
 set( dependencyList ${parallelDeps} constitutive events )

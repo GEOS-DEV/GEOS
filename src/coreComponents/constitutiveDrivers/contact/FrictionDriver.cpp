@@ -19,6 +19,10 @@
 #include "constitutive/contact/FrictionBase.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
 
+#include "functions/FunctionManager.hpp"
+#include "functions/TableFunction.hpp"
+#include <cmath>
+
 #include "FrictionDriver.hpp"
 
 namespace geos {
@@ -33,11 +37,27 @@ TaskBase(name, parent)
   registerWrapper( viewKeyStruct::frictionNameString(), &m_frictionName ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Relperm model to test" );
+    setDescription( "Friction model to test" );
 
   registerWrapper( viewKeyStruct::numStepsString(), &m_numSteps ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Number of saturation steps to take" );
+    setDescription( "Number of sample step to take in both jumps and traction increments" );
+
+  registerWrapper( viewKeyStruct::jumpFunctionString(), &m_jumpFunctionName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of the input function representing jump function along world x-axis" );
+
+  registerWrapper( viewKeyStruct::tractionFunctionString(), &m_tractionFunctionName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of the input function representing traction function along world x-axis");
+  
+  registerWrapper( viewKeyStruct::thetaString(), &m_theta ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Number of increment step to take in both jumps and traction increments" );
+  
+  registerWrapper( viewKeyStruct::phiString(), &m_phi ).
+    setInputFlag( InputFlags::INVALID).
+    setDescription( "Number of increment step to take in both jumps and traction increments" );
 
   registerWrapper( viewKeyStruct::outputString(), &m_outputFile ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -52,6 +72,56 @@ TaskBase(name, parent)
   addLogLevel< logInfo::LogOutput >();
 }
 
+void FrictionDriver::compareWithBaseline()
+{
+  // open baseline file
+
+  std::ifstream file( m_baselineFile.c_str() );
+  GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
+
+  // discard file header
+
+  string line;
+  for( integer row=0; row < m_numColumns; ++row )
+  {
+    getline( file, line );
+  }
+
+  // read data block.  we assume the file size is consistent with m_table,
+  // but check for a premature end-of-file. we then compare results value by value.
+  // we ignore the newton iteration and residual columns, as those may be platform
+  // specific.
+
+  real64 value;
+  real64 error;
+
+  for( integer row=0; row < m_table.size( 0 ); ++row )
+  {
+    for( integer col=0; col < m_table.size( 1 ); ++col )
+    {
+      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+      file >> value;
+    
+      error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
+      GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
+                                                                                          << " (row " << row+10 << " with header)"
+                                                                                          << " and column " << col+1, std::runtime_error );
+      
+    }
+  }
+
+  // check we actually reached the end of the baseline file
+
+  file >> value;
+  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+
+  // success
+
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Comparison ........ Internal results consistent with baseline." );
+
+  file.close();
+}
+
 void FrictionDriver::outputResults()
 {
   // TODO: improve file path output to grab command line -o directory
@@ -59,15 +129,10 @@ void FrictionDriver::outputResults()
 
   FILE * fp = fopen( m_outputFile.c_str(), "w" );
 
-  fprintf( fp, "# column 1 = time\n" );
-  fprintf( fp, "# columns %d-%d = phase vol fractions\n", 2, 1 + m_numPhases );
-  fprintf( fp, "# columns %d-%d = phase relperm\n", 2 + m_numPhases, 1 + 2 * m_numPhases );
-
-  if( ( m_numPhases == 2 && m_table.size( 1 ) > 5 ) || m_table.size( 1 ) > 7 )
-  {
-    fprintf( fp, "# columns %d-%d = phase relperm (hyst)\n", 1 + 2 * m_numPhases, 1 + 3 * m_numPhases );
-  }
-
+  fprintf( fp, "# column 1-3 = normal and in-plane displacement jump\n" );
+  fprintf( fp, "# columns 4-6 = normal and in-place tractions\n");
+  fprintf( fp, "# columns 7 = fracture state (0:Stick,1-2:[new]Slip,3:Open)\n");
+  fprintf( fp, "# columns 8 = tau lim\n");
 
   for( integer n = 0; n < m_table.size( 0 ); ++n )
   {
@@ -78,7 +143,6 @@ void FrictionDriver::outputResults()
     fprintf( fp, "\n" );
   }
   fclose( fp );
-
 
 }
 
@@ -104,7 +168,7 @@ bool FrictionDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
 {
   // this code only makes sense in serial
 
-  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "RelpermDriver should only be run in serial", std::runtime_error );
+  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "FrictionDriver should only be run in serial", std::runtime_error );
 
 
   ConstitutiveManager
@@ -112,8 +176,8 @@ bool FrictionDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
   FrictionBase
   & baseFriction = constitutiveManager.getGroup< FrictionBase >( m_frictionName );
 
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "Launching Relperm Driver" );
-  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Relperm .................. " << m_frictionName );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "Launching Friction Driver" );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Friction .................. " << m_frictionName );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Type ................... " << baseFriction.getCatalogName() );
 //   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  No. of Phases .......... " << m_numPhases );
   GEOS_LOG_LEVEL_RANK_0( logInfo::LogOutput, "  Steps .................. " << m_numSteps );
@@ -128,13 +192,13 @@ bool FrictionDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
   dataRepository::Group discretization( "discretization", &rootGroup );
 
   discretization.resize( 1 );   // one element
-  baseRelperm.allocateConstitutiveData( discretization, 1 );   // one quadrature point
+  baseFriction.allocateConstitutiveData( discretization, 1 );   // one quadrature point
 
   constitutiveUpdatePassThru( baseFriction, [&]( auto & selectedFrictionModel )
   {
-    using RELPERM_TYPE = TYPEOFREF( selectedFrictionModel );
-    resizeTables< RELPERM_TYPE >();
-    runTest< RELPERM_TYPE >( selectedFrictionModel, m_table );
+    using FRICTION_TYPE = TYPEOFREF( selectedFrictionModel );
+    resizeTables< FRICTION_TYPE >();
+    runTest< FRICTION_TYPE >( selectedFrictionModel, m_table );
   } );
 
   // move table back to host for output
@@ -154,103 +218,76 @@ bool FrictionDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
 }
 
 
-template< typename RELPERM_TYPE >
+template< typename FRICTION_TYPE >
 void FrictionDriver::resizeTables()
 {
   ConstitutiveManager
   & constitutiveManager = this->getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
   FrictionBase
-  & baseRelperm = constitutiveManager.getGroup< FrictionBaseBase >( m_frictionName );
+  & baseFriction = constitutiveManager.getGroup< FrictionBase >( m_frictionName );
 
-  using PT = RelativePermeabilityBase::PhaseType;
-  integer const ipWater = baseRelperm.getPhaseOrder()[PT::WATER];
-  integer const ipOil = baseRelperm.getPhaseOrder()[PT::OIL];
-  integer const ipGas = baseRelperm.getPhaseOrder()[PT::GAS];
+  // initialize table functions
+  FunctionManager & functionManager = FunctionManager::getInstance();
 
-  real64 minSw = 0., minSnw = 0.;
-  if( baseRelperm.numFluidPhases() > 2 )
-  {
-    minSw = baseRelperm.getWettingPhaseMinVolumeFraction();
-    minSnw = baseRelperm.getNonWettingMinVolumeFraction();
-  }
-  else
-  {
-    if( ipWater < 0 )// a.k.a o/g
-    {
-      minSw = 0;
-      minSnw = baseRelperm.getNonWettingMinVolumeFraction();
-    }
-    else if( ipGas < 0 || ipOil < 0 )// a.k.a w/o or w/g
-    {
-      minSnw = 0;
-      minSw = baseRelperm.getWettingPhaseMinVolumeFraction();
-    }
-  }
+  TableFunction & jumpFunction = functionManager.getGroup< TableFunction >( m_jumpFunctionName );
+  TableFunction & tractionFunction = functionManager.getGroup< TableFunction >( m_tractionFunctionName );
 
-  real64 const dSw = ( 1 - minSw - minSnw ) / m_numSteps;
+  jumpFunction.initializeFunction();
+  tractionFunction.initializeFunction();
+
+  ArrayOfArraysView< real64 > Jcoordinates = jumpFunction.getCoordinates();
+  real64 const minJump = Jcoordinates[0][0];
+  real64 const maxJump = Jcoordinates[0][Jcoordinates.sizeOfArray( 0 )-1];
+  real64 const dJ = (maxJump-minJump) / m_numSteps;
+  ArrayOfArraysView< real64 > Tcoordinates = jumpFunction.getCoordinates();
+  real64 const minTrac = Tcoordinates[0][0];
+  real64 const maxTrac = Tcoordinates[0][Tcoordinates.sizeOfArray( 0 )-1];
+  real64 const dT = (maxTrac-minTrac) / m_numSteps;
   // set input columns
+  resizeTable< FRICTION_TYPE >();
 
-  resizeTable< RELPERM_TYPE >();
-  // 3-phase branch
-  if( m_numPhases > 2 )
+  // real64 const cohesion = baseFriction.getWrapper("cohesion");
+  // real64 const frictionCoeff = baseFriction.getGroup("frictionCoefficient");
+
+  //All variation
+  for( integer nt = 0; nt < m_numSteps+1; ++nt )
   {
-    for( integer ni = 0; ni < m_numSteps + 1; ++ni )
-    {
-      for( integer nj = 0; nj < m_numSteps + 1; ++nj )
-      {
 
-        integer index = ni * ( m_numSteps + 1 ) + nj;
-        m_table( index, TIME ) = minSw + index * dSw;
-        m_table( index, ipWater + 1 ) = minSw + nj * dSw;
-        m_table( index, ipGas + 1 ) = minSnw + ni * dSw;
-        m_table( index, ipOil + 1 ) =
-          1. - m_table( index, ipWater + 1 ) - m_table( index, ipOil + 1 );
-      }
+
+    for( integer nj = 0; nj < m_numSteps+1; ++nj )
+    {
+
+      integer index = nt * (m_numSteps+1) + nj;    
+      m_table( index, NTRAC ) = (minTrac + nt*dT)*cos(m_theta * 180/M_PI);
+      m_table( index, STRAC0 ) = (minTrac + nt*dT)*sin(m_theta * 180/M_PI);
+      m_table( index, STRAC1 ) = (minTrac + nt*dT)*sin(m_theta * 180/M_PI);
+      
+      m_table( index, NJUMP ) = (minJump + nj*dJ)*cos(m_theta * 180/M_PI);
+      m_table( index, SLIP0 ) = (minJump + nj*dJ)*sin(m_theta * 180/M_PI);
+      m_table( index, SLIP1 ) = (minJump + nj*dJ)*sin(m_theta * 180/M_PI);
+
+      m_table( index, FS ) = fields::contact::FractureState::Stick;
+
+
+      m_table( index, TLIM ) = -1;
+      //Only for Coulomb
+      // m_table( index, TLIM ) = cohesion - m_table(index, NTRAC) * frictionCoeff;
+
     }
   }
-  else // 2-phase branch
-  {
-    for( integer ni = 0; ni < m_numSteps + 1; ++ni )
-    {
-      integer index = ni;
-      m_table( index, TIME ) = minSw + index * dSw;
-      if( ipWater < 0 )
-      {
-        m_table( index, ipGas + 1 ) = minSnw + ni * dSw;
-        m_table( index, ipOil + 1 ) = 1. - m_table( index, ipGas + 1 );
-      }
-      else if( ipGas < 0 )
-      {
-        m_table( index, ipWater + 1 ) = minSw + ni * dSw;
-        m_table( index, ipOil + 1 ) = 1. - m_table( index, ipWater + 1 );
-      }
-      else if( ipOil < 0 )
-      {
-        m_table( index, ipWater + 1 ) = minSw + ni * dSw;
-        m_table( index, ipGas + 1 ) = 1. - m_table( index, ipWater + 1 );
-      }
-    }
-
-  }
-
-
+  
 }
 
 
-// template< typename RELPERM_TYPE >
-// std::enable_if_t< std::is_same< TableRelativePermeabilityHysteresis, RELPERM_TYPE >::value, void >
-// RelpermDriver::resizeTable()
-// {
-//   if( m_numPhases > 2 )
-//   {
-//     m_table.resize( ( m_numSteps + 1 ) * ( m_numSteps + 1 ), 1 + 3 * m_numPhases );
-//   }
-//   else
-//   {
-//     m_table.resize( m_numSteps + 1, 1 + 3 * m_numPhases );
-//   }
+template< typename FRICTION_TYPE >
+void
+FrictionDriver::resizeTable()
+{
+  m_table.resize((m_numSteps + 1)*(m_numSteps + 1), m_numColumns );
+}
 
-// }
-
+REGISTER_CATALOG_ENTRY( TaskBase,
+                        FrictionDriver,
+                        string const &, dataRepository::Group * const )
 
 }

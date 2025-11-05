@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <!-- SPHINX_TASK -->
+  <Tasks>
+    <FrictionDriver
+      name="frictionDriver"
+      friction="fractureContact0"
+      jumpControl="jFunction"
+      xTiltAngle="80"
+      tractionControl="tFunction"
+      steps="10" 
+      output="FrictionDriver.txt" />
+  </Tasks>
+  <!-- SPHINX_TASK_END -->
+
+  <Included>
+    <File name="./frictionDriver_base.xml"/>
+  </Included>
+</Problem>
