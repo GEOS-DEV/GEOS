@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/PhysicsConstants.hpp"
 #include "common/format/Format.hpp"
+#include "common/logger/Logger.hpp"
 
 namespace geos
 {
@@ -335,11 +336,17 @@ TimeFormatInfo TimeFormatInfo::fromDuration( DURATION const value )
 {
   using namespace std::chrono;
 
+  GEOS_LOG( "*** fromSeconds(): value = "+std::to_string(value.count) );
   auto const totalYears = duration_cast< units::Years >( value );
+  GEOS_LOG( "*** fromSeconds(): totalYears = "+std::to_string(totalYears.count()) );
   auto const daysOut = duration_cast< units::Days >( value - totalYears );
+  GEOS_LOG( "*** fromSeconds(): daysOut = "+std::to_string(daysOut.count()) );
   auto const hoursOut = duration_cast< hours >( value - totalYears - daysOut );
+  GEOS_LOG( "*** fromSeconds(): hoursOut = "+std::to_string(hoursOut.count()) );
   auto const minutesOut = duration_cast< minutes >( value - totalYears - daysOut - hoursOut );
+  GEOS_LOG( "*** fromSeconds(): minutesOut = "+std::to_string(minutesOut.count()) );
   auto const secondsOut = duration_cast< seconds >( value - totalYears - daysOut - hoursOut - minutesOut );
+  GEOS_LOG( "*** fromSeconds(): secondsOut = "+std::to_string(secondsOut.count()) );
 
   return TimeFormatInfo( duration< double >( value ).count(), int( totalYears.count() ),
                          int( daysOut.count() ), int( hoursOut.count() ),
