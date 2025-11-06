@@ -275,17 +275,17 @@ static constexpr double YearSeconds = YearDays * DaySeconds;
 struct TimeFormatInfo
 {
   /// Total time (including the decimal part) this instance represents in seconds
-  double const m_totalSeconds = 0.0;
+  double const m_totalSeconds;
   /// Number of integral years to show
-  int const m_years = 0;
+  int const m_years;
   /// Number of integral days to show
-  int const m_days = 0;
+  int const m_days;
   /// Number of integral hours to show
-  int const m_hours = 0;
+  int const m_hours;
   /// Number of integral minutes to show
-  int const m_minutes = 0;
+  int const m_minutes;
   /// Number of integral seconds to show
-  int const m_seconds = 0;
+  int const m_seconds;
 
   /**
    * @brief Construct a TimeFormatInfo from raw data (which must be coherent)
