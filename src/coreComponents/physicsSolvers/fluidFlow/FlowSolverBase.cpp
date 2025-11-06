@@ -312,6 +312,8 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
 
   setConstitutiveName< PermeabilityBase >( subRegion, viewKeyStruct::permeabilityNamesString(), "permeability" );
 
+  setConstitutiveName< HydraulicApertureBase >( subRegion, viewKeyStruct::hydraulicApertureNamesString(), "hydraulicAperture" );
+
   if( m_isThermal )
   {
     setConstitutiveName< SolidInternalEnergy >( subRegion, viewKeyStruct::solidInternalEnergyNamesString(), "solid internal energy" );
@@ -629,6 +631,26 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
 
   arrayView1d< real64 const > const newHydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
   arrayView1d< real64 const > const oldHydraulicAperture = subRegion.getField< flow::aperture0 >();
+
+  string const & hydraulicApertureName = subRegion.getReference< string >( viewKeyStruct::hydraulicApertureNamesString() );
+  HydraulicApertureBase & hydraulicApertureModel = subRegion.getConstitutiveModel< HydraulicApertureBase >( hydraulicApertureName );
+
+  constitutive::ConstitutivePassThru< HydraulicApertureBase >::execute( hydraulicApertureModel, [=, &subRegion] ( auto & castedHydraulicApertureModel )
+  {
+    typename TYPEOFREF( castedHydraulicApertureModel )::KernelWrapper hydraulicApertureWrapper = castedHydraulicApertureModel.createKernelUpdates();
+    for( localIndex k = 0; k < subRegion.size(); ++k )
+    {
+      real64 const normalStress = 0.0; 
+      real64 dHydraulicAperture_aperture = 0.0;
+      real64 dHydraulicAperture_dNormalTraction = 0.0; 
+      newHydraulicAperture[k] = hydraulicApertureWrapper.computeHydraulicAperture( oldHydraulicAperture[k],
+                                                                                   normalStress,
+                                                                                   0,
+                                                                                   dHydraulicAperture_aperture,
+                                                                                   dHydraulicAperture_dNormalTraction );
+    }
+  } );
+
 
   string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.getConstitutiveModel< CoupledSolidBase >( solidName );

@@ -140,10 +140,21 @@ real64 BartonBandisUpdates::computeHydraulicAperture( real64 const aperture,
   using namespace fields::contact;
 
   // Note: compressive
-  real64 const hydraulicAperture = ( fractureState == FractureState::Open ) ? (aperture + m_aperture0) : m_aperture0 / ( 1.0 - 9.0 * normalTraction /m_referenceNormalStress );
-  dHydraulicAperture_dNormalTraction =
-    ( fractureState == FractureState::Open ) ? 0.0 : hydraulicAperture / ( 1.0 - 9.0 * normalTraction /m_referenceNormalStress ) * 9.0/m_referenceNormalStress;
-  dHydraulicAperture_aperture = ( fractureState == FractureState::Open ) ? 1.0 : 0.0;
+  real64 hydraulicAperture = -1e99;
+  if( fractureState == FractureState::Open )
+  {
+    hydraulicAperture = (aperture + m_aperture0);
+    dHydraulicAperture_dNormalTraction = 0.0 ;
+    dHydraulicAperture_aperture = 1.0;
+  }
+  else
+  {
+    hydraulicAperture = m_aperture0 / ( 1.0 - 9.0 * normalTraction /m_referenceNormalStress );
+    dHydraulicAperture_dNormalTraction = hydraulicAperture / ( 1.0 - 9.0 * normalTraction /m_referenceNormalStress ) * 9.0/m_referenceNormalStress;
+    dHydraulicAperture_aperture = 0.0;
+  }
+
+
 
   return hydraulicAperture; ///It would be nice to change this to return a tuple.
 }
