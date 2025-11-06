@@ -192,10 +192,10 @@ protected:
 
 private:
 
-  /// tolerance used in the  computation of the transmissibility matrix
+  /// Tolerance used in the computation of the transmissibility matrix (typically domain_length * 1e-8)
   real64 m_lengthTolerance;
 
-  /// region filter used in flux assembly
+  /// Set of region indices that are targeted by this solver (used to filter flux assembly)
   SortedArray< localIndex > m_regionFilter;
 
 };

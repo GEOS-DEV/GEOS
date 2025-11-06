@@ -179,8 +179,27 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
     GEOS_THROW_IF( minVal.get() <= 0.0,
                    getCatalogName() << " " << getDataContext() <<
-                   ": the transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
+                   ": the transmissibility multipliers used in SinglePhaseHybridFVM must be strictly larger than 0.0",
                    std::runtime_error );
+
+    // Initialize face-based constitutive property arrays to zero to prevent uninitialized memory usage on GPU
+    arrayView2d< real64, compflow::USD_PHASE > facePhaseMob = faceManager.getField< flow::facePhaseMobility >();
+    arrayView2d< real64, compflow::USD_PHASE > facePhaseMassDens = faceManager.getField< flow::facePhaseMassDensity >();
+    arrayView3d< real64, compflow::USD_PHASE_COMP > facePhaseCompFrac = faceManager.getField< flow::facePhaseCompFraction >();
+
+    localIndex const numFaces = faceManager.size();
+    forAll< parallelDevicePolicy<> >( numFaces, [=] GEOS_HOST_DEVICE ( localIndex const iface )
+    {
+      for( integer ip = 0; ip < facePhaseMob.size( 1 ); ++ip )
+      {
+        facePhaseMob[iface][ip] = 0.0;
+        facePhaseMassDens[iface][ip] = 0.0;
+        for( integer ic = 0; ic < facePhaseCompFrac.size( 2 ); ++ic )
+        {
+          facePhaseCompFrac[iface][ip][ic] = 0.0;
+        }
+      }
+    } );
 
     // Mark boundary faces (faces with Dirichlet BCs) to skip flux continuity constraint
     // Initialize all faces as interior (0), then mark boundary faces (1)
@@ -727,6 +746,11 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
       arrayView3d< real64, compflow::USD_PHASE_COMP > facePhaseCompFrac =
         faceManager.getField< flow::facePhaseCompFraction >();
 
+      // Move arrays to host memory before evaluateBCFaceProperties runs with serialPolicy
+      facePhaseMob.move( hostMemorySpace, true );
+      facePhaseMassDens.move( hostMemorySpace, true );
+      facePhaseCompFrac.move( hostMemorySpace, true );
+
       // Evaluate constitutive properties at BC face conditions for each face set
       for( string const & setName : bcFaceSets )
       {
@@ -773,7 +797,14 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
         } );
       }
 
-      // Get pre-computed fluid properties at BC faces
+      // CRITICAL: Move the SAME array views that were just modified back to device memory
+      // Don't get new views - use the views that evaluateBCFaceProperties actually modified
+      // evaluateBCFaceProperties uses serialPolicy (host), DirichletFluxKernel uses parallelDevicePolicy (device)
+      facePhaseMob.move( parallelDeviceMemorySpace, false );
+      facePhaseMassDens.move( parallelDeviceMemorySpace, false );
+      facePhaseCompFrac.move( parallelDeviceMemorySpace, false );
+
+      // Get const views to the face properties for use in DirichletFluxKernel
       arrayView2d< real64 const, compflow::USD_PHASE > const facePhaseMobField =
         faceManager.getField< flow::facePhaseMobility >();
       arrayView2d< real64 const, compflow::USD_PHASE > const facePhaseMassDensField =
@@ -850,6 +881,20 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
                 launchKernel( IP_TAG, std::integral_constant< integer, 5 >{} );
               else if( numFacesPerElement == 6 )
                 launchKernel( IP_TAG, std::integral_constant< integer, 6 >{} );
+              else if( numFacesPerElement == 7 )
+                launchKernel( IP_TAG, std::integral_constant< integer, 7 >{} );
+              else if( numFacesPerElement == 8 )
+                launchKernel( IP_TAG, std::integral_constant< integer, 8 >{} );
+              else if( numFacesPerElement == 9 )
+                launchKernel( IP_TAG, std::integral_constant< integer, 9 >{} );
+              else if( numFacesPerElement == 10 )
+                launchKernel( IP_TAG, std::integral_constant< integer, 10 >{} );
+              else if( numFacesPerElement == 11 )
+                launchKernel( IP_TAG, std::integral_constant< integer, 11 >{} );
+              else if( numFacesPerElement == 12 )
+                launchKernel( IP_TAG, std::integral_constant< integer, 12 >{} );
+              else if( numFacesPerElement == 13 )
+                launchKernel( IP_TAG, std::integral_constant< integer, 13 >{} );
               else
                 GEOS_ERROR( "Unsupported number of faces per element: " << numFacesPerElement );
             };
