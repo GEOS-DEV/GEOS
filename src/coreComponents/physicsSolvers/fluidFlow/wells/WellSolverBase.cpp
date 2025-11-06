@@ -74,7 +74,8 @@ Group * WellSolverBase::createChild( string const & childKey, string const & chi
     PhysicsSolverBase::groupKeyStruct::nonlinearSolverParametersString(),
   };
   GEOS_ERROR_IF( childTypes.count( childKey ) == 0,
-                 CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
+                 CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ),
+                 getDataContext() );
   if( childKey == keys::wellControls )
   {
     return &registerGroup< WellControls >( childName );
