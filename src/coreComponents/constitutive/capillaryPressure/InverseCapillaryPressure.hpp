@@ -130,6 +130,7 @@ public:
                                   integer dependentPhase,
                                   arrayView1d< integer const > const & jFunctionIndex );
 
+  GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   bool compute( arraySlice1d< real64 const, USD_PC > const & phaseCapillaryPressure,
                 arraySlice1d< real64 const > const & jFunctionMultiplier,
@@ -201,6 +202,7 @@ private:
 };
 
 template< typename CAP_PRESSURE >
+GEOS_FORCE_INLINE
 GEOS_HOST_DEVICE
 bool
 InverseCapillaryPressureUpdate< CAP_PRESSURE >::compute(
