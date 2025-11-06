@@ -194,15 +194,18 @@ void SurfaceGenerator::postInputInitialization()
 
   GEOS_ERROR_IF( binaryOptions.count( m_isPoroelastic ) == 0,
                  getWrapperDataContext( viewKeyStruct::isPoroelasticString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::isPoroelasticString() ) );
 
   GEOS_ERROR_IF( binaryOptions.count( m_nodeBasedSIF ) == 0,
                  getWrapperDataContext( viewKeyStruct::nodeBasedSIFString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::nodeBasedSIFString() ) );
 
   GEOS_ERROR_IF( binaryOptions.count( m_mpiCommOrder ) == 0,
                  getWrapperDataContext( viewKeyStruct::mpiCommOrderString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::mpiCommOrderString() ) );
 }
 
 SurfaceGenerator::~SurfaceGenerator()
@@ -950,7 +953,9 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
   {
     localIndex const parentNodeIndex = parentNodeIndices[nodeIndex];
 
-    GEOS_ERROR_IF( parentNodeIndex == -1, getDataContext() << ": parentNodeIndex should not be -1" );
+    GEOS_ERROR_IF( parentNodeIndex == -1,
+                   getDataContext() << ": parentNodeIndex should not be -1",
+                   getDataContext() );
 
     m_tipNodes.remove( parentNodeIndex );
   }
@@ -975,7 +980,9 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
   {
     localIndex const parentEdgeIndex = parentEdgeIndices[edgeIndex];
 
-    GEOS_ERROR_IF( parentEdgeIndex == -1, getDataContext() << ": parentEdgeIndex should not be -1" );
+    GEOS_ERROR_IF( parentEdgeIndex == -1,
+                   getDataContext() << ": parentEdgeIndex should not be -1",
+                   getDataContext() );
 
     m_tipEdges.remove( parentEdgeIndex );
     for( localIndex const faceIndex : edgeToFaceMap[ parentEdgeIndex ] )
@@ -1008,7 +1015,9 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
   for( localIndex const faceIndex : receivedObjects.newFaces )
   {
     localIndex const parentFaceIndex = parentFaceIndices[faceIndex];
-    GEOS_ERROR_IF( parentFaceIndex == -1, getDataContext() << ": parentFaceIndex should not be -1" );
+    GEOS_ERROR_IF( parentFaceIndex == -1,
+                   getDataContext() << ": parentFaceIndex should not be -1",
+                   getDataContext() );
 
     m_trailingFaces.insert( parentFaceIndex );
     m_tipFaces.remove( parentFaceIndex );

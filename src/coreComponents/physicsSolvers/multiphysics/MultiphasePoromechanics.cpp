@@ -253,6 +253,7 @@ void MultiphasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::updateBulkDensity
 template class MultiphasePoromechanics<>;
 template class MultiphasePoromechanics< CompositionalMultiphaseBase, SolidMechanicsLagrangeContact >;
 template class MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<> >;
+template class MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<>, SolidMechanicsLagrangeContact >;
 
 namespace
 {
