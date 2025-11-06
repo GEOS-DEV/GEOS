@@ -1027,8 +1027,6 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
         getConstitutiveModel< CapillaryPressureBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() ) );
       capPressure.initializeRockState( porosity, permeability );   // this needs to happen before calling updateCapPressureModel
       updateCapPressureModel( subRegion );
-
-      auto phaseMinVolumeFraction = capPressure.phaseMinVolumeFraction();
     }
 
     // If the diffusion and/or dispersion is/are supported, initialize the two models
@@ -1473,9 +1471,6 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       // Assign pressure and temperature to cells
       forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
                                                            elemCenter,
-                                                           ipGas,
-                                                           ipOil,
-                                                           ipWater,
                                                            numPhases,
                                                            numComps,
                                                            pres,

@@ -105,8 +105,7 @@ struct CapillaryPressureEvaluate
 template< typename CAP_PRESSURE >
 class InverseCapillaryPressureUpdate
 {
-private:
-  static constexpr integer MAX_NUM_PHASES = CapillaryPressureBase::MAX_NUM_PHASES;
+public:
   static constexpr integer MAX_ITERATIONS = 20;
   static constexpr real64 STEP_TOLERANCE = 1.0e-6;
   static constexpr integer USD_SAT = compflow::USD_PHASE - 1;
@@ -210,6 +209,7 @@ InverseCapillaryPressureUpdate< CAP_PRESSURE >::compute(
   arraySlice1d< real64, USD_SAT > const & phaseVolumeFraction ) const
 {
   constexpr real64 epsilon = LvArray::NumericLimits< real64 >::epsilon;
+  constexpr integer MAX_NUM_PHASES = CapillaryPressureBase::MAX_NUM_PHASES;
 
   integer const numPhases = phaseVolumeFraction.size();
   StackArray< real64, 3, 3*MAX_NUM_PHASES, cappres::LAYOUT_CAPPRES > workSpace( 1, 3, numPhases );

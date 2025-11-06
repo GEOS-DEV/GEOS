@@ -164,7 +164,7 @@ void InverseCapillaryPressure< CAP_PRESSURE >::calculatePropertyLimits( integer 
                                                                         arrayView1d< real64 const > const & phaseMinVolumeFraction,
                                                                         arrayView2d< real64 > const & propertyLimits ) const
 {
-  static constexpr integer maxNumPhases = CapillaryPressureBase::MAX_NUM_PHASES;
+  constexpr integer MAX_NUM_PHASES = CapillaryPressureBase::MAX_NUM_PHASES;
 
   auto const minPoreVolume = propertyLimits[KernelWrapper::MIN_PORE_VOLUME];
   auto const minSaturation = propertyLimits[KernelWrapper::MIN_SATURATION];
@@ -173,7 +173,7 @@ void InverseCapillaryPressure< CAP_PRESSURE >::calculatePropertyLimits( integer 
   auto const maxCapPressure = propertyLimits[KernelWrapper::MAX_CAP_PRESSURE];
 
   real64 sumMinVolumeFraction = 0.0;
-  stackArray1d< real64, maxNumPhases > jFunctionMultiplier( numPhases );
+  stackArray1d< real64, MAX_NUM_PHASES > jFunctionMultiplier( numPhases );
   for( integer ip = 0; ip < numPhases; ++ip )
   {
     minCapPressure[ip] = LvArray::NumericLimits< real64 >::max;
@@ -183,9 +183,9 @@ void InverseCapillaryPressure< CAP_PRESSURE >::calculatePropertyLimits( integer 
     jFunctionMultiplier[ip] = 1.0;  // Call with multipliers of 1
   }
 
-  StackArray< real64, 2, maxNumPhases, compflow::LAYOUT_PHASE > saturation( 1, numPhases );
-  StackArray< real64, 3, maxNumPhases, cappres::LAYOUT_CAPPRES > workSpace( 1, 1, numPhases );
-  StackArray< real64, 4, maxNumPhases *maxNumPhases, cappres::LAYOUT_CAPPRES_DS > dPhaseCapPres_dSaturation( 1, 1, numPhases, numPhases );
+  StackArray< real64, 2, MAX_NUM_PHASES, compflow::LAYOUT_PHASE > saturation( 1, numPhases );
+  StackArray< real64, 3, MAX_NUM_PHASES, cappres::LAYOUT_CAPPRES > workSpace( 1, 1, numPhases );
+  StackArray< real64, 4, MAX_NUM_PHASES *MAX_NUM_PHASES, cappres::LAYOUT_CAPPRES_DS > dPhaseCapPres_dSaturation( 1, 1, numPhases, numPhases );
 
   auto const capPressure = workSpace[0][0];
 
