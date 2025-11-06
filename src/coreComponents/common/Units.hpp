@@ -336,7 +336,7 @@ TimeFormatInfo TimeFormatInfo::fromDuration( DURATION const value )
 {
   using namespace std::chrono;
 
-  GEOS_LOG( "*** fromSeconds(): value = "+std::to_string(value.count) );
+  GEOS_LOG( "*** fromSeconds(): value = "+std::to_string(value.count()) );
   auto const totalYears = duration_cast< units::Years >( value );
   GEOS_LOG( "*** fromSeconds(): totalYears = "+std::to_string(totalYears.count()) );
   auto const daysOut = duration_cast< units::Days >( value - totalYears );
