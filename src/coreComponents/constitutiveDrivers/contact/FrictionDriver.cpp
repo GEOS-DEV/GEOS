@@ -130,10 +130,11 @@ void FrictionDriver::outputResults()
 
   FILE * fp = fopen( m_outputFile.c_str(), "w" );
 
-  fprintf( fp, "# column 1-3 = normal and in-plane displacement jump\n" );
-  fprintf( fp, "# columns 4-6 = normal and in-place tractions\n");
-  fprintf( fp, "# columns 7 = fracture state (0:Stick,1-2:[new]Slip,3:Open)\n");
-  fprintf( fp, "# columns 8 = tau lim\n");
+  fprintf( fp, "# column 1 = index \n" );
+  fprintf( fp, "# column 2-3 = normal and in-plane displacement jump\n" );
+  fprintf( fp, "# columns 5-7 = normal and in-place tractions\n");
+  fprintf( fp, "# columns 8 = fracture state (0:Stick,1-2:[new]Slip,3:Open)\n");
+  fprintf( fp, "# columns 9 = tau lim\n");
 
   for( integer n = 0; n < m_table.size( 0 ); ++n )
   {
@@ -236,16 +237,21 @@ void FrictionDriver::resizeTables()
   jumpFunction.initializeFunction();
   tractionFunction.initializeFunction();
 
-  ArrayOfArraysView< real64 > Jcoordinates = jumpFunction.getCoordinates();
-  real64 const minJump = Jcoordinates[0][0];
-  real64 const maxJump = Jcoordinates[0][Jcoordinates.sizeOfArray( 0 )-1];
-  real64 const dJ = (maxJump-minJump) / m_numSteps;
-  ArrayOfArraysView< real64 > Tcoordinates = jumpFunction.getCoordinates();
-  real64 const minTrac = Tcoordinates[0][0];
-  real64 const maxTrac = Tcoordinates[0][Tcoordinates.sizeOfArray( 0 )-1];
-  real64 const dT = (maxTrac-minTrac) / m_numSteps;
+  ArrayOfArraysView< real64 > coordinates = jumpFunction.getCoordinates();
+  real64 const minTime = coordinates[0][0];
+  real64 const maxTime = coordinates[0][coordinates.sizeOfArray( 0 )-1];
+  real64 const dt = (maxTime-minTime) / m_numSteps;
+  
   // set input columns
   resizeTable< FRICTION_TYPE >();
+  
+  // set time column
+  for( integer k=0; k<m_numSteps+1; ++k )
+  for( integer n=0; n<m_numSteps+1; ++n )
+  {
+    m_table( n + k*(m_numSteps+1), TIME ) = minTime + n*dt;
+  }
+
 
   real64 cohesion = 0.;  
   real64 frictionCoeff = 0.; 
@@ -262,13 +268,13 @@ void FrictionDriver::resizeTables()
     {
 
       integer index = nt * (m_numSteps+1) + nj;    
-      m_table( index, NTRAC ) = (minTrac + nt*dT)*cos(m_theta * 180/M_PI);
-      m_table( index, STRAC0 ) = (minTrac + nt*dT)*sin(m_theta * 180/M_PI);
-      m_table( index, STRAC1 ) = (minTrac + nt*dT)*sin(m_theta * 180/M_PI);
+      m_table( index, NTRAC ) =  tractionFunction.evaluate(&m_table(nt,TIME))*sin(m_theta * M_PI/180);
+      m_table( index, STRAC0 ) = tractionFunction.evaluate(&m_table(nt,TIME))*cos(m_theta * M_PI/180);
+      m_table( index, STRAC1 ) = tractionFunction.evaluate(&m_table(nt,TIME))*cos(m_theta * M_PI/180);
       
-      m_table( index, NJUMP ) = (minJump + nj*dJ)*cos(m_theta * 180/M_PI);
-      m_table( index, SLIP0 ) = (minJump + nj*dJ)*sin(m_theta * 180/M_PI);
-      m_table( index, SLIP1 ) = (minJump + nj*dJ)*sin(m_theta * 180/M_PI);
+      m_table( index, NJUMP ) = jumpFunction.evaluate(&m_table(nj,TIME))*sin(m_theta * M_PI/180);
+      m_table( index, SLIP0 ) = jumpFunction.evaluate(&m_table(nj,TIME))*cos(m_theta * M_PI/180);
+      m_table( index, SLIP1 ) = jumpFunction.evaluate(&m_table(nj,TIME))*cos(m_theta * M_PI/180);
 
       m_table( index, FS ) = fields::contact::FractureState::Stick;
 

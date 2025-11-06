@@ -110,8 +110,8 @@ private:
   };
 
   integer m_numSteps;      ///< Number of load steps
-  static integer const m_numColumns = 8;    ///< Number of columns in dat
-  enum columnKeys { NJUMP, SLIP0, SLIP1, NTRAC, STRAC0, STRAC1, FS, TLIM };
+  static integer const m_numColumns = 9;    ///< Number of columns in dat
+  enum columnKeys { TIME, NJUMP, SLIP0, SLIP1, NTRAC, STRAC0, STRAC1, FS, TLIM };
 
   string m_jumpFunctionName; ///<  
   string m_tractionFunctionName; ///< 
