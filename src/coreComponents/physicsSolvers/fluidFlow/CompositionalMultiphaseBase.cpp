@@ -1367,8 +1367,6 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                                phaseMinVolumeFraction,
                                                                equilTolerance,
                                                                gravVector,
-                                                               minElevation,
-                                                               elevationIncrement,
                                                                datumElevation,
                                                                datumPressure,
                                                                fluidWrapper,

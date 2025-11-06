@@ -159,7 +159,7 @@ struct HydrostaticPressureKernel
     }
 
     // Step 6: fixed-point iteration until convergence
-    bool equilHasConverged;
+    bool equilHasConverged = false;
     for( integer eqIter = 0; eqIter < maxNumEquilIterations; ++eqIter )
     {
       // check convergence
@@ -505,8 +505,6 @@ struct HydrostaticPressureKernel
           arrayView1d< real64 const > const & phaseMinVolumeFraction,
           real64 const equilTolerance,
           real64 const (&gravVector)[ 3 ],
-          real64 const & minElevation,
-          real64 const & elevationIncrement,
           real64 const & datumElevation,
           real64 const & datumPres,
           FLUID_WRAPPER fluidWrapper,
