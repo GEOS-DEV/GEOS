@@ -130,7 +130,6 @@ public:
                                   integer dependentPhase,
                                   arrayView1d< integer const > const & jFunctionIndex );
 
-  GEOS_FORCE_INLINE
   GEOS_HOST_DEVICE
   bool compute( arraySlice1d< real64 const, USD_PC > const & phaseCapillaryPressure,
                 arraySlice1d< real64 const > const & jFunctionMultiplier,
@@ -202,13 +201,12 @@ private:
 };
 
 template< typename CAP_PRESSURE >
-GEOS_FORCE_INLINE
 GEOS_HOST_DEVICE
 bool
 InverseCapillaryPressureUpdate< CAP_PRESSURE >::compute(
-  arraySlice1d< real64 const, USD_PC > const & phaseCapillaryPressure,
+  arraySlice1d< real64 const, InverseCapillaryPressureUpdate< CAP_PRESSURE >::USD_PC > const & phaseCapillaryPressure,
   arraySlice1d< real64 const > const & jFunctionMultiplier,
-  arraySlice1d< real64, USD_SAT > const & phaseVolumeFraction ) const
+  arraySlice1d< real64, InverseCapillaryPressureUpdate< CAP_PRESSURE >::USD_SAT > const & phaseVolumeFraction ) const
 {
   constexpr real64 epsilon = LvArray::NumericLimits< real64 >::epsilon;
   constexpr integer MAX_NUM_PHASES = CapillaryPressureBase::MAX_NUM_PHASES;
