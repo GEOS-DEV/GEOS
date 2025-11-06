@@ -296,10 +296,10 @@ public:
 
     typename LookupMapType::iterator iterKeyLookup = m_keyLookup.find( keyName );
 
-    // If the key already exists, free the source if required and return.
     if( iterKeyLookup != m_keyLookup.end() )
     {
-      if( takeOwnership ) delete source;
+      T const * const existingPointer = m_values[ iterKeyLookup->second ].second;
+      if( takeOwnership && existingPointer != source ) delete source;
       return nullptr;
     }
 

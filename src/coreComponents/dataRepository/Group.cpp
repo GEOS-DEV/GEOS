@@ -744,13 +744,38 @@ void Group::insertWrapper( std::unique_ptr< WrapperBase > wrapper, bool const al
 {
   GEOS_ERROR_IF( !wrapper, "Trying to register a nullptr WrapperBase with " << getPath() );
 
-  // Extract `name` first to prevent from UB call order in the `insert` call.
+  // Extract data from wrapper in case it's free'd in insert.
   string const name = wrapper->getName();
+  std::type_info const & typeId = wrapper->getTypeId();
+  string const typeName = wrapper->getRTTypeName();
+
   WrapperBase * const ret = m_wrappers.insert( name, wrapper.release(), true );
 
-  GEOS_ERROR_IF( !allowExistence && ret == nullptr,
-                 "Tried registering a wrapper \"" << name <<
-                 "\"  that already exists with \"" << getPath() << "\"" );
+  if( ret == nullptr )
+  {
+    WrapperBase const & existingWrapper = getWrapperBase( name );
+    bool const typesMatch = existingWrapper.getTypeId() == typeId;
+
+    if( !allowExistence || !typesMatch )
+    {
+      string registrationString = "";
+      if( !existingWrapper.getRegisteringObjects().empty() )
+      {
+        std::ostringstream oss;
+        oss << ". The existing wrapper was registered by the following:";
+        for( string const & object : existingWrapper.getRegisteringObjects() )
+        {
+          oss << "\n\t" << object;
+        }
+
+        registrationString = oss.str();
+      }
+
+      GEOS_ERROR( "Tried registering a wrapper \"" << name << "\" of type " <<  typeName <<
+                  " with \"" << getPath() << "\"\n" <<
+                  "A wrapper of this name already exists with type " << existingWrapper.getRTTypeName() << registrationString );
+    }
+  }
 }
 
 void Group::insertGroup( Group * const newObject, bool const takeOwnership, bool const allowExistence )
@@ -759,13 +784,22 @@ void Group::insertGroup( Group * const newObject, bool const takeOwnership, bool
 
   newObject->m_parent = this;
 
-  // Extract `name` first to prevent from UB call order in the `insert` call.
+  // Extract data from newObject in case it's free'd in insert.
   string const name = newObject->getName();
+  std::type_info const & typeId = typeid( *newObject );
+
   Group * const ret = m_subGroups.insert( name, newObject, takeOwnership );
 
-  GEOS_ERROR_IF( !allowExistence && ret == nullptr,
-                 "Tried registering a group \"" << name <<
-                 "\"  that already exists with \"" << getPath() << "\"" );
+  if( ret == nullptr )
+  {
+    Group const & existingGroup = getGroup( name );
+    std::type_info const & existingTypeId = typeid( existingGroup );
+
+    GEOS_ERROR_IF( !allowExistence || (existingTypeId != typeId),
+                   "Tried registering a Group \"" << name << "\" of type " << rtTypes::getTypeName( typeId ) <<
+                   " with \"" << getPath() << "\"\n" <<
+                   "A Group of this name already exists with type " << rtTypes::getTypeName( existingTypeId ) );
+  }
 }
 
 } /* end namespace dataRepository */

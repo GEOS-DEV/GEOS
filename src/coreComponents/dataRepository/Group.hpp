@@ -200,6 +200,7 @@ public:
   template< typename T = Group >
   T & registerGroup( std::unique_ptr< T > newObject, bool const allowExistence=false )
   {
+    GEOS_ERROR_IF( !newObject, "Trying to register a nullptr." );
     string const name = newObject->getName();
     insertGroup( newObject.release(), true, allowExistence );
     return getGroup< T >( name );
@@ -218,6 +219,7 @@ public:
   std::enable_if_t< std::is_base_of_v< Group, T >, T & >
   registerGroup( T * newObject )
   {
+    GEOS_ERROR_IF( !newObject, "Trying to register a nullptr." );
     string const name = newObject->getName();
     insertGroup( newObject, false );
     return getGroup< T >( name );
@@ -824,6 +826,7 @@ public:
   WrapperBase & registerWrapper( std::unique_ptr< WrapperBase > newObject,
                                  bool const allowExistence=false )
   {
+    GEOS_ERROR_IF( !newObject, "Trying to register a nullptr." );
     string const name = newObject->getName();
     insertWrapper( std::move( newObject ), allowExistence );
     return getWrapperBase( name );
