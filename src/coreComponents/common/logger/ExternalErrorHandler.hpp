@@ -80,12 +80,12 @@ private:
     /**
      * @return the read end file descriptor of the pipe (serve to read data).
      */
-     PosixId & readEnd()
-     { return fileDescriptorsArray[0]; }
-     
-     /**
+    PosixId & readEnd()
+    { return fileDescriptorsArray[0]; }
+
+    /**
      * @return the write end file descriptor of the pipe (serve to write data).
-      */
+     */
     PosixId & writeEnd()
     { return fileDescriptorsArray[1]; }
 
