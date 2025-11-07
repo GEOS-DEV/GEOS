@@ -18,8 +18,6 @@
  */
 
 #include "Units.hpp"
-#include <string>
-#include "logger/Logger.hpp"
 
 namespace geos
 {
@@ -77,31 +75,16 @@ std::ostream & operator<<( std::ostream & os, TimeFormatInfo const & info )
 
 TimeFormatInfo TimeFormatInfo::fromSeconds( double const seconds )
 {
-  GEOS_LOG( "*** fromSeconds(): seconds = "+std::to_string(seconds) );
   double remainingSeconds = seconds < 0.0 ? -seconds : seconds;
-  GEOS_LOG( "*** fromSeconds(): remainingSeconds = "+std::to_string(remainingSeconds) );
-  GEOS_LOG( "*** fromSeconds(): YearSeconds = "+std::to_string(YearSeconds) );
   int const totalYears = int( remainingSeconds / YearSeconds );
-  GEOS_LOG( "*** fromSeconds(): totalYears = "+std::to_string(totalYears) );
   remainingSeconds -= totalYears * YearSeconds;
-  GEOS_LOG( "*** fromSeconds(): remainingSeconds = "+std::to_string(remainingSeconds) );
-  GEOS_LOG( "*** fromSeconds(): DaySeconds = "+std::to_string(DaySeconds) );
   int const daysOut = int( remainingSeconds / DaySeconds );
-  GEOS_LOG( "*** fromSeconds(): daysOut = "+std::to_string(daysOut) );
   remainingSeconds -= daysOut * DaySeconds;
-  GEOS_LOG( "*** fromSeconds(): remainingSeconds = "+std::to_string(remainingSeconds) );
-  GEOS_LOG( "*** fromSeconds(): HourSeconds = "+std::to_string(HourSeconds) );
   int const hoursOut = int( remainingSeconds / HourSeconds );
-  GEOS_LOG( "*** fromSeconds(): hoursOut = "+std::to_string(hoursOut) );
   remainingSeconds -= hoursOut * HourSeconds;
-  GEOS_LOG( "*** fromSeconds(): remainingSeconds = "+std::to_string(remainingSeconds) );
-  GEOS_LOG( "*** fromSeconds(): MinuteSeconds = "+std::to_string(MinuteSeconds) );
   int const minutesOut = int( remainingSeconds / MinuteSeconds );
-  GEOS_LOG( "*** fromSeconds(): minutesOut = "+std::to_string(minutesOut) );
   remainingSeconds -= minutesOut * MinuteSeconds;
-  GEOS_LOG( "*** fromSeconds(): remainingSeconds = "+std::to_string(remainingSeconds) );
   int const secondsOut = int( remainingSeconds );
-  GEOS_LOG( "*** fromSeconds(): secondsOut = "+std::to_string(secondsOut) );
 
   return TimeFormatInfo( seconds, totalYears, daysOut, hoursOut, minutesOut, secondsOut );
 }
