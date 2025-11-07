@@ -165,27 +165,28 @@ real64 BartonBandisStressPathDrivenUpdates::computeHydraulicAperture( real64 con
                                                                       array1d< real64 > const & normal ) const
 {
   real64 const biot_pressure = m_biot * m_referencePressure; // biot is alpha in the equations
+
+  // Computation of maximum fracture closure (Barton-Bandis parameter)
   // Fracture traction via Terzaghi's Principle
-  real64 const sigma_c[3] = { m_referenceTotalStress[0] * normal[0] - biot_pressure * normal[0],
+  real64 const sigma_c0[3] = { m_referenceTotalStress[0] * normal[0] - biot_pressure * normal[0],
                               m_referenceTotalStress[1] * normal[1] - biot_pressure * normal[1],
-                              m_referenceTotalStress[2] * normal[2] - biot_pressure * normal[2]};
-  // contact pressure ?
-  real64 const sigma_n0 = sigma_c[0]*normal[0] + 
-                          sigma_c[1]*normal[1] + 
-                          sigma_c[2]*normal[2];
+                              m_referenceTotalStress[2] * normal[2] - biot_pressure * normal[2] };
+  real64 const sigma_n0 = sigma_c0[0]*normal[0] + 
+                          sigma_c0[1]*normal[1] + 
+                          sigma_c0[2]*normal[2];
   real64 const g0 = (-m_normalStiffness*m_aperture0 + 
                       std::sqrt((m_normalStiffness*m_aperture0)*
                       (m_normalStiffness*m_aperture0) + 
                       4.0*m_normalStiffness*sigma_n0*m_aperture0)) / (2.0*m_normalStiffness);
-  real64 const maximumClosure = g0 + m_aperture0; // Vm
+  real64 const maximumFractureClosure = g0 + m_aperture0; // Vm
 
-  // Effective stress over the fracture
+  // Normal effective stress on the fracture
   real64 const sigmaN_N = computeFractureStress( pressure, normal );
-  real64 const fractureClosure =  sigmaN_N*maximumClosure/(m_normalStiffness*maximumClosure + sigmaN_N); // gn_BB
+  real64 const fractureClosure = sigmaN_N*maximumFractureClosure/(m_normalStiffness*maximumFractureClosure + sigmaN_N); // gn_BB
 
   // Compute the new aperture which is equal to the aperture at the free-stress state 
   // minus the closure from the free-stress state to the current state
-  real64 const newHydraulicAperture = maximumClosure - fractureClosure;
+  real64 const newHydraulicAperture = maximumFractureClosure - fractureClosure;
 
   return newHydraulicAperture;
 }

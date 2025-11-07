@@ -36,7 +36,6 @@
 #include "physicsSolvers/fluidFlow/kernels/MinPoreVolumeMaxPorosityKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/StencilWeightsUpdateKernel.hpp"
 
-// LILIANE
 #include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 
 namespace geos
@@ -112,6 +111,7 @@ FlowSolverBase::FlowSolverBase( string const & name,
   PhysicsSolverBase( name, parent ),
   m_numDofPerCell( 0 ),
   m_isThermal( 0 ),
+  m_computePrescribedStressPath( 0 ), 
   m_keepVariablesConstantDuringInitStep( false ),
   m_isFixedStressPoromechanicsUpdate( false ),
   m_isJumpStabilized( false ),
@@ -122,7 +122,6 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag indicating whether the problem is thermal or not." );
 
-  // LILIANE
   this->registerWrapper( viewKeyStruct::computesPrescribedStressPathString(), &m_computePrescribedStressPath ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -634,6 +633,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
 {
   GEOS_MARK_FUNCTION;
 
+
   arrayView1d< real64 const > const & pressure = subRegion.getField< flow::pressure >();
 
   arrayView1d< real64 const > const newHydraulicAperture = subRegion.getField< flow::hydraulicAperture >();
@@ -651,7 +651,7 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   } );
 }
 
-void FlowSolverBase::updateHydarulicAperture( SurfaceElementSubRegion & subRegion ) const
+void FlowSolverBase::updateHydraulicAperture( SurfaceElementSubRegion & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
   

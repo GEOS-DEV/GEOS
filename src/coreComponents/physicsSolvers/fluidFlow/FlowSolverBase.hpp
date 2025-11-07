@@ -87,7 +87,6 @@ public:
     static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
 
-    // LILIANE
     static constexpr char const * computesPrescribedStressPathString() { return "computesPrescribedStressPath"; }
     static constexpr char const * hydraulicApertureRelationNameString() { return "hydraulicApertureRelationName"; }
   };
@@ -114,7 +113,7 @@ public:
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
 
-  void updateHydarulicAperture( SurfaceElementSubRegion & subRegion ) const;
+  void updateHydraulicAperture( SurfaceElementSubRegion & subRegion ) const;
 
   /**
    * @brief Utility function to save the iteration state (useful for sequential simulations)
@@ -265,7 +264,6 @@ protected:
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;
 
-  // LILIANE
   /// flag to determine whether or not this simulation computes the precribed stress path
   integer m_computePrescribedStressPath;
 

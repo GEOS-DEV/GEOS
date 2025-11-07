@@ -47,7 +47,6 @@
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/singlePhase/SolidInternalEnergyUpdateKernel.hpp"
 
-// LILIANE
 #include "constitutive/contact/HydraulicApertureRelationSelector.hpp"
 
 namespace geos
@@ -134,7 +133,6 @@ void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) c
     setConstitutiveName< SinglePhaseThermalConductivityBase >( subRegion, viewKeyStruct::thermalConductivityNamesString(), "singlephase thermal conductivity" );
   }
   
-  // LILIANE
   if( m_computePrescribedStressPath )
   {
     // Only for fractures 
@@ -1198,11 +1196,6 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
 
   if(m_computePrescribedStressPath)
   {
-    GEOS_LOG_RANK_0("SinglePhaseBase::updateState m_computePrescribedStressPath");
-    
-    // remove the contribution of the hydraulic aperture from the stencil weights
-    prepareStencilWeights( domain );
-
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -1210,12 +1203,9 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
       mesh.getElemManager().forElementSubRegions< SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                auto & subRegion )
       {
-        updateHydarulicAperture( subRegion );
+        updateHydraulicAperture( subRegion );
       } );
     } );
-    
-    // update the stencil weights using the updated hydraulic aperture
-    updateStencilWeights( domain );
   }
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,

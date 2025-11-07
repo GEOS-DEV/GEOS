@@ -87,7 +87,7 @@ public:
     referencePermeability[0] = m_referencePermeability[k][0][0];
     referencePermeability[1] = m_referencePermeability[k][0][1];
     referencePermeability[2] = m_referencePermeability[k][0][2];
-
+  
     switch( m_presModelType )
     {
       case PressureModelType::Exponential:
@@ -231,8 +231,6 @@ void PressurePermeabilityUpdate::compute( real64 const & deltaPressure,
                                           arraySlice1d< real64 > const & permeability,
                                           arraySlice1d< real64 > const & dPerm_dPressure ) const
 {
-  
-  //GEOS_LOG_RANK_0("referencePermeability " << referencePermeability[0]);
   for( localIndex i=0; i < permeability.size(); i++ )
   {
     real64 const pressureOffSet = log( maxPermeability/referencePermeability[i] - 1 )/pressureDependenceConstants[i];

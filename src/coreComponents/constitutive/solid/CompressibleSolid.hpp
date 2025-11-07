@@ -73,9 +73,6 @@ public:
     real64 const dHydraulicAperture_dNormalJump = 1.0;
     m_porosityUpdate.updateFromPressureAndTemperature( k, q, pressure, temperature );
     m_permUpdate.updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture, dHydraulicAperture_dNormalJump );
-    // LILIANE
-    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
-    m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, porosity );
   }
 
   GEOS_HOST_DEVICE
