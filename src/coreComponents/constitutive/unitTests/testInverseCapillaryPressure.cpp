@@ -168,8 +168,11 @@ InverseCapillaryPressureTestFixture< CAP_PRESSURE, NUM_PHASE >::testInversion( T
     perm( 0, 0, 2 ) = 0.1*permeability;
     poro( 0, 0 ) = 0.2;
     poro( 0, 1 ) = 0.1;
+    auto & jFunctionMultiplierField = model.template getField< geos::fields::cappres::jFuncMultiplier >().reference();
     model.initializeRockState( poro.toViewConst(), perm.toViewConst());
-    auto jFunctionMultiplierField = model.template getField< geos::fields::cappres::jFuncMultiplier >().reference();
+    // Copy back to CPU
+    auto view = jFunctionMultiplierField.toView();
+    forAll< serialPolicy >( 1, [view] ( localIndex const ){} );
     for( integer ip = 0; ip < NUM_PHASE-1; ++ip )
     {
       jFunctionMultiplier[ip] = jFunctionMultiplierField[0][ip];
