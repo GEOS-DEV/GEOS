@@ -189,7 +189,7 @@ void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstr
   }
 }
 
-void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
+void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg, std::ostringstream & msgoss )
 {
   if( isOutputFileEnabled() )
   {
@@ -260,7 +260,7 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
                                m_filename, g_errorLogger.isOutputFileEnabled() ) );
     }
   }
-  ErrorLogger::formatMsgToAscii( errorMsg, ::geos::logger::internal::g_rankString, std::cout );
+  ErrorLogger::formatMsgToAscii( errorMsg, ::geos::logger::internal::g_rankString, msgoss );
 }
 
 } /* namespace geos */

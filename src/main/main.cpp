@@ -76,8 +76,8 @@ int main( int argc, char *argv[] )
   }
   catch( std::exception const & e )
   {
-
-    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().currentErrorMsg() );
+    std::ostringstream flushoss;
+    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().currentErrorMsg(), flushoss );
 
     LvArray::system::callErrorHandler();
     basicCleanup();

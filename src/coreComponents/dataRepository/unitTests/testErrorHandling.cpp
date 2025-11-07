@@ -14,6 +14,7 @@
  */
 
 // forcefully enable asserts macros for this unit test
+#include <iostream>
 #define GEOS_ASSERT_ENABLED
 #include "common/logger/ErrorHandling.hpp"
 
@@ -182,14 +183,15 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
       .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
-  }
-  testErrorLogger.flushErrorMsg( testErrorLogger.currentErrorMsg() );
 
-  endLocalLoggerTest( testErrorLogger, {
-    R"(errors:)",
 
-    GEOS_FMT(
-      R"(- type: Exception
+    std::ostringstream flushoss;
+    testErrorLogger.flushErrorMsg( testErrorLogger.currentErrorMsg(), flushoss );
+    endLocalLoggerTest( testErrorLogger, {
+      R"(errors:)",
+
+      GEOS_FMT(
+        R"(- type: Exception
     rank: 0
     message: >-
       Table input error.
@@ -210,11 +212,12 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
       file: {}
       line: {}
     sourceCallStack:)",
-      __FILE__, line1 ),
-    "- frame0: ",
-    "- frame1: ",
-    "- frame2: "
-  } );
+        __FILE__, line1 ),
+      "- frame0: ",
+      "- frame1: ",
+      "- frame2: "
+    } );
+  }
 }
 
 TEST( ErrorHandling, testYamlFileErrorOutput )

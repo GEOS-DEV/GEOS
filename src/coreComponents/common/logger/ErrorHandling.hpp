@@ -22,6 +22,7 @@
 
 #include "common/DataTypes.hpp"
 
+
 namespace geos
 {
 
@@ -37,7 +38,7 @@ public:
    * @enum MsgType
    * Enum listing the different types of possible errors
    */
-  enum class MsgType
+  enum class MsgType : integer
   {
     Error,
     Warning,
@@ -225,16 +226,17 @@ private:
    * @brief Retrieve all informations from the ErrorLogger and format into an ascii message
    * @param errMsg Class containing all the error/warning information
    * @param rank The rank where the error/warning happened
-   * @param output The output stream. By default std::cout
+   * @param msgoss The output stream. By default std::cout
    */
   static void formatMsgToAscii( ErrorLogger::ErrorMsg const & errMsg, string const & rank,
-                                std::ostream & output = std::cout )
+                                std::ostringstream & msgoss )
   {
-    output << "***** EXCEPTION\n";
-    output << "***** LOCATION: " LOCATION "\n";
-    output << "***** " << errMsg.m_cause << "\n";
-    output << "***** Rank " << rank << ": " << errMsg.m_msg << "\n";
-    output << errMsg.m_stringCallStack;
+
+    msgoss << "***** " << ErrorLogger::toString( errMsg.m_type ) << "\n";
+    msgoss << "***** LOCATION: " << errMsg.m_file<< "\n";
+    msgoss << "***** " << errMsg.m_cause << "\n";
+    msgoss << "***** Rank " << rank << ": " << errMsg.m_msg << "\n";
+    msgoss << errMsg.m_stringCallStack;
   }
 
   /**
@@ -300,7 +302,7 @@ private:
    *        and reset the errorMsg instance to its initial state
    * @param errorMsg a constant reference to the error
    */
-  void flushErrorMsg( ErrorMsg & errorMsg );
+  void flushErrorMsg( ErrorMsg & errorMsg, std::ostringstream & oss );
 
 private:
   /// The error constructed via exceptions
