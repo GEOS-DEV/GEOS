@@ -148,7 +148,7 @@ private:
    * @return The new duplicated file descriptor, or m_disabledPipeEnd on failure.
    * @details Used primarily for backup purposes to preserve the original stream state to restore that after cleanup.
    */
-  int duplicateDescriptor( int pipeEnd );
+  static int duplicateDescriptor( int pipeEnd );
 
   /**
    * @brief Prepare the streaming buffer with a few optimisation by:
