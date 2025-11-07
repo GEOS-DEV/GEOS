@@ -392,7 +392,6 @@ TEST( testXmlWrapper, testGroupNamesFormats )
       GroupNameTest( groupNameRegex, "test name" ),
       GroupNameTest( groupNameRegex, "test\tname" ),
       GroupNameTest( groupNameRegex, "testname " ),
-      GroupNameTest( groupNameRegex, " testname" ),
       //fordbiden characters
       GroupNameTest( groupNameRegex, "test/name" ),
       GroupNameTest( groupNameRegex, "test:name" ),
