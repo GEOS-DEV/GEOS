@@ -53,7 +53,7 @@ bool OutputStreamDeviation::Pipe::setDescriptorInheritanceMode( bool inherit )
     else
     {
       // enable O_CLOEXEC flag if inheritance is disabled
-      flags |= inherit ? ( flags & ~O_CLOEXEC ) : ( flags | FD_CLOEXEC );
+      flags = inherit ? ( flags & ~O_CLOEXEC ) : ( flags | FD_CLOEXEC );
 
       // apply new flags
       if( ::fcntl( pipeEndFD, F_SETFD, flags ) == m_errorResult )
@@ -118,7 +118,7 @@ bool OutputStreamDeviation::setPipeEndBlockingMode( PosixId pipeEnd, bool nonBlo
     return false;
 
   // set flags depending on nonBlocking value
-  flags |= nonBlocking ? ( flags | O_NONBLOCK ) : ( flags & ~O_NONBLOCK );
+  flags = nonBlocking ? ( flags | O_NONBLOCK ) : ( flags & ~O_NONBLOCK );
 
   // apply new flags
   return ::fcntl( m_deviationPipe.readEnd(), F_SETFL, flags ) != m_errorResult;
