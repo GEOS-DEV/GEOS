@@ -72,6 +72,9 @@ private:
     /// the file descriptors of the stream, read end first, then write end.
     PosixId fileDescriptorsArray[2];
 
+    /**
+     * @brief Initialize the file descriptors to open the pipe as a "virtual file".
+     */
     void create();
 
     /**

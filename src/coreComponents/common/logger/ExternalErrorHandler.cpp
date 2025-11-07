@@ -29,43 +29,6 @@
 namespace geos
 {
 
-OutputStreamDeviation::OutputStreamDeviation( PosixId fileNo ):
-  m_redirectedStream( fileNo ),
-  m_originalStreamTarget( m_disabledPipeEnd )
-{
-  // Create pipe with appropriate flags
-  m_deviationPipe.create();
-  m_deviationPipe.setDescriptorInheritanceMode( false );
-
-  if( !setPipeEndBlockingMode( m_deviationPipe.readEnd(), true ) )
-  {
-    m_deviationPipe.close();
-    GEOS_WARNING( "Failed to set pipe end non-blocking: " + getLastPosixErrorString() );
-  }
-
-  // backup original descriptor for reset after destruction
-  m_originalStreamTarget = duplicateDescriptor( m_redirectedStream );
-  if( m_originalStreamTarget == m_disabledPipeEnd )
-  {
-    m_deviationPipe.close();
-    GEOS_WARNING( "Failed to duplicate original descriptor: " + getLastPosixErrorString() );
-  }
-
-  // Redirect stderr to pipe
-  if( !m_deviationPipe.redirectWriteEnd( m_redirectedStream ) )
-  {
-    m_deviationPipe.close();
-    closePipeEnd( m_originalStreamTarget );
-    GEOS_WARNING( "Failed to redirect stream: " + getLastPosixErrorString() );
-  }
-
-  // Close the write end of the parent pipe: no longer useful as the source "file" will be written externally
-  // we will only use the readEnd of the pipe to get the content of it
-  closePipeEnd( m_deviationPipe.writeEnd() );
-
-  prepareBuffer();
-}
-
 void OutputStreamDeviation::Pipe::create()
 {
   if( ::pipe( m_deviationPipe.fileDescriptorsArray ) == m_errorResult )
@@ -108,6 +71,43 @@ void OutputStreamDeviation::Pipe::close()
 {
   closePipeEnd( readEnd() );
   closePipeEnd( writeEnd() );
+}
+
+OutputStreamDeviation::OutputStreamDeviation( PosixId fileNo ):
+  m_redirectedStream( fileNo ),
+  m_originalStreamTarget( m_disabledPipeEnd )
+{
+  // Create pipe with appropriate flags
+  m_deviationPipe.create();
+  m_deviationPipe.setDescriptorInheritanceMode( false );
+
+  if( !setPipeEndBlockingMode( m_deviationPipe.readEnd(), true ) )
+  {
+    m_deviationPipe.close();
+    GEOS_WARNING( "Failed to set pipe end non-blocking: " + getLastPosixErrorString() );
+  }
+
+  // backup original descriptor for reset after destruction
+  m_originalStreamTarget = duplicateDescriptor( m_redirectedStream );
+  if( m_originalStreamTarget == m_disabledPipeEnd )
+  {
+    m_deviationPipe.close();
+    GEOS_WARNING( "Failed to duplicate original descriptor: " + getLastPosixErrorString() );
+  }
+
+  // Redirect stderr to pipe
+  if( !m_deviationPipe.redirectWriteEnd( m_redirectedStream ) )
+  {
+    m_deviationPipe.close();
+    closePipeEnd( m_originalStreamTarget );
+    GEOS_WARNING( "Failed to redirect stream: " + getLastPosixErrorString() );
+  }
+
+  // Close the write end of the parent pipe: no longer useful as the source "file" will be written externally
+  // we will only use the readEnd of the pipe to get the content of it
+  closePipeEnd( m_deviationPipe.writeEnd() );
+
+  prepareBuffer();
 }
 
 bool OutputStreamDeviation::setPipeEndBlockingMode( PosixId pipeEnd, bool nonBlocking )
