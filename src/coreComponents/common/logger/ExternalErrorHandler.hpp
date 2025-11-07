@@ -37,6 +37,9 @@ class OutputStreamDeviation
 {
 public:
 
+  /// Posix identifier, can be a file handle, an error number... Must be consistent with posix functions.
+  using PosixId = int;
+
   /**
    * @brief A functor executed for each independant lines to process, taking the line as the 1st
    *        string_view parameter, and the detectionLocation as the 2nd.
@@ -48,7 +51,7 @@ public:
    * @param fileNo The file descriptor number, as returned by fileno() or can be one of the
    *               following: "STDOUT_FILENO" (1), "STDERR_FILENO" (2).
    */
-  OutputStreamDeviation( int fileNo );
+  OutputStreamDeviation( PosixId fileNo );
 
   /**
    * @brief Destroy the OutputStreamDeviation object, restoring the original pipe state.
@@ -66,29 +69,102 @@ public:
 private:
   struct Pipe
   {
-    int fileDescriptorsArray[2];
+    /// the file descriptors of the stream, read end first, then write end.
+    PosixId fileDescriptorsArray[2];
 
-    int & readEnd() { return fileDescriptorsArray[0]; }
-    int & writeEnd() { return fileDescriptorsArray[1]; }
+    void create();
+
+    /**
+     * @return the read end file descriptor of the pipe (serve to read data).
+     */
+     PosixId & readEnd()
+     { return fileDescriptorsArray[0]; }
+     
+     /**
+     * @return the write end file descriptor of the pipe (serve to write data).
+      */
+    PosixId & writeEnd()
+    { return fileDescriptorsArray[1]; }
+
+    /**
+     * @brief Prevent or enable file descriptors of the pipe instance from being inherited by child processes.
+     * @param inherit If true, enable file descriptors inheritance. If false, disable it.
+     * @return True if successful, false otherwise. If the function fails, a warning is logged.
+     * @details When disabled, this function sets the close-on-exec flag on a file descriptor,
+     *          preventing it from being inherited by child processes when exec() is called.
+     *          This helps prevent resource leaks and security issues in process management.
+     */
+    bool setDescriptorInheritanceMode( bool inherit );
+
+    /**
+     * @brief Redirect the write end of this pipe to a target stream, enabling capture of output
+              written to that stream through the read end.
+              The write end can still be used to write through the same pipe.
+     * @param targetFd The file descriptor to redirect to (e.g., stdout, stderr).
+     * @return True if successful, false otherwise.
+     */
+    bool redirectWriteEnd( int targetFd );
+
+    /**
+     * @brief Close the pipe ends.
+     */
+    void closePipe();
   };
 
   /// a special value to represant a disabled / not existing pipe.
-  static constexpr int m_disabledPipe = -1;
+  static constexpr PosixId m_disabledPipeEnd = -1;
 
   /// error values from POSIX functions.
-  static constexpr int m_errorResult = -1;
+  static constexpr PosixId m_errorResult = -1;
 
   /// the original pipe to deviate
-  int m_redirectedStream;
+  PosixId m_redirectedStream;
 
   /// Backup for restoring the original pipe at destruction.
-  int m_originalStreamTarget;
+  PosixId m_originalStreamTarget;
 
-  // the pipe that deviate the original pipe
+  /// the pipe that deviate the original pipe
   Pipe m_deviationPipe;
 
   /// a buffer to store the flush() results
   std::string m_unprocessedData;
+
+  /**
+   * @brief Set a file descriptor to non-blocking mode for asynchronous I/O operations.
+   * @param pipeEnd The file descriptor to set the blocking mode.
+   * @param nonBlocking If true, non-blocking mode is enabled. If false, blocking mode is used.
+   * @return True if successful, false otherwise.
+   * @details This function allows the read operation to return immediately even when no data is available,
+   *          rather than blocking until data becomes available.
+   */
+  static bool setPipeEndBlockingMode( PosixId pipeEnd, bool nonBlocking );
+
+  /**
+   * @brief Duplicate a file descriptor, creating a new file descriptor that refers to the same underlying object.
+   * @param pipeEnd The original file descriptor to duplicate.
+   * @return The new duplicated file descriptor, or m_disabledPipeEnd on failure.
+   * @details Used primarily for backup purposes to preserve the original stream state to restore that after cleanup.
+   */
+  int duplicateDescriptor( int pipeEnd );
+
+  /**
+   * @brief Prepare the streaming buffer with a few optimisation by:
+            - preallocating the intermediate message processing buffer,
+            - growing the pipe stream to make it able to process the biggest error messages as one bit.
+   */
+  void prepareStreamingBuffer();
+
+  /**
+   * @brief Close the given pipe end
+   * @param posixErrNo Reference to the POSIX pipe identifier. Set to m_disabledPipeEnd afterwards.
+   */
+  static void closePipeEnd( PosixId & pipeEnd );
+
+  /**
+   * @param posixErrNo POSIX error number
+   * @return the error description of the given error number
+   */
+  static string getLastPosixErrorString();
 };
 
 /**
