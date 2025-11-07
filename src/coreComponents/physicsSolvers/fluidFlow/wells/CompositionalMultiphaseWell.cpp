@@ -1425,7 +1425,7 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
   integer const numPhases = fluid.numFluidPhases();
   integer const numComponents = fluid.numFluidComponents();
-  WellControls const & wellControls = getWellControls( subRegion );
+  WellControls & wellControls = getWellControls( subRegion );
   if( wellControls.getWellStatus() == WellControls::Status::OPEN && !m_keepVariablesConstantDuringInitStep )
   {
     if( isThermal() )
@@ -1459,6 +1459,38 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
                                                    localMatrix,
                                                    localRhs );
     }
+    // get the degrees of freedom and ghosting info
+    arrayView1d< globalIndex const > const & wellElemDofNumber =
+      subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+    arrayView1d< integer const > const wellElemGhostRank = subRegion.ghostRank();
+    arrayView1d< integer const > const elemStatus = subRegion.getLocalWellElementStatus();
+    arrayView1d< real64 > const mixConnRate = subRegion.getField< fields::well::mixtureConnectionRate >();
+    localIndex rank_offset = dofManager.rankOffset();
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    {
+      if( wellElemGhostRank[ei] < 0 )
+      {
+        if( elemStatus[ei]==WellElementSubRegion::WellElemStatus::CLOSED )
+        {
+          mixConnRate[ei] = 0.0;
+          globalIndex const dofIndex = wellElemDofNumber[ei];
+          localIndex const localRow = dofIndex - rank_offset;
+
+          real64 const unity = 1.0;
+          for( integer i=0; i < m_numDofPerWellElement; i++ )
+          {
+            globalIndex const rindex = localRow+i;
+            globalIndex const cindex =dofIndex + i;
+            localMatrix.template addToRow< serialAtomic >( rindex,
+                                                           &cindex,
+                                                           &unity,
+                                                           1 );
+            localRhs[rindex] = 0.0;
+          }
+        }
+      }
+    } );
+
   }
   else
   {
@@ -1489,10 +1521,14 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
         }
       }
     } );
+    // zero out current state constraint quantities
+    wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() )=0.0;
+    wellControls.getReference< array1d< real64 > >(
+      CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ).zero();
+    wellControls.getReference< real64 >(
+      CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() )=0.0;
+    wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() )=0.0;
   }
-
-
-
 }
 
 

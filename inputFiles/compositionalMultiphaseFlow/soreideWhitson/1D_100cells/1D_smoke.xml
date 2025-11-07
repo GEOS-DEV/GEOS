@@ -48,9 +48,6 @@
         enableCrossflow="0"
         logLevel="0"
         control="totalVolRate">
-        <InjectionPhaseVolumeRateConstraint
-          name="inj"
-          phaseName="oil"/>
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="4.5e7"
@@ -70,9 +67,6 @@
         enableCrossflow="0"
         logLevel="0"
         control="totalVolRate">
-        <InjectionPhaseVolumeRateConstraint
-          name="inj"
-          phaseName="gas"/>
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="4.5e7"
