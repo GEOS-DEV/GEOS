@@ -31,7 +31,7 @@ namespace geos
 
 void OutputStreamDeviation::Pipe::create()
 {
-  if( ::pipe( m_deviationPipe.fileDescriptorsArray ) == m_errorResult )
+  if( ::pipe( fileDescriptorsArray ) == m_errorResult )
   {
     GEOS_WARNING( "Failed to create error pipe: " + getLastPosixErrorString() );
   }
@@ -42,7 +42,7 @@ bool OutputStreamDeviation::Pipe::setDescriptorInheritanceMode( bool inherit )
   bool r = true;
 
   // set O_CLOEXEC flag on both descriptors
-  for( PosixId pipeEndFD : m_deviationPipe.fileDescriptorsArray )
+  for( PosixId pipeEndFD : fileDescriptorsArray )
   {
     // get current flags for pipe end
     PosixId flags = ::fcntl( pipeEndFD, F_GETFD );
@@ -60,6 +60,8 @@ bool OutputStreamDeviation::Pipe::setDescriptorInheritanceMode( bool inherit )
         r = false;
     }
   }
+
+  return r;
 }
 
 bool OutputStreamDeviation::Pipe::redirectWriteEnd( int targetFd )
@@ -67,7 +69,7 @@ bool OutputStreamDeviation::Pipe::redirectWriteEnd( int targetFd )
   return ::dup2( writeEnd(), targetFd ) != m_errorResult;
 }
 
-void OutputStreamDeviation::Pipe::close()
+void OutputStreamDeviation::Pipe::closePipe()
 {
   closePipeEnd( readEnd() );
   closePipeEnd( writeEnd() );
@@ -83,7 +85,7 @@ OutputStreamDeviation::OutputStreamDeviation( PosixId fileNo ):
 
   if( !setPipeEndBlockingMode( m_deviationPipe.readEnd(), true ) )
   {
-    m_deviationPipe.close();
+    m_deviationPipe.closePipe();
     GEOS_WARNING( "Failed to set pipe end non-blocking: " + getLastPosixErrorString() );
   }
 
@@ -91,14 +93,14 @@ OutputStreamDeviation::OutputStreamDeviation( PosixId fileNo ):
   m_originalStreamTarget = duplicateDescriptor( m_redirectedStream );
   if( m_originalStreamTarget == m_disabledPipeEnd )
   {
-    m_deviationPipe.close();
+    m_deviationPipe.closePipe();
     GEOS_WARNING( "Failed to duplicate original descriptor: " + getLastPosixErrorString() );
   }
 
   // Redirect stderr to pipe
   if( !m_deviationPipe.redirectWriteEnd( m_redirectedStream ) )
   {
-    m_deviationPipe.close();
+    m_deviationPipe.closePipe();
     closePipeEnd( m_originalStreamTarget );
     GEOS_WARNING( "Failed to redirect stream: " + getLastPosixErrorString() );
   }
@@ -107,13 +109,13 @@ OutputStreamDeviation::OutputStreamDeviation( PosixId fileNo ):
   // we will only use the readEnd of the pipe to get the content of it
   closePipeEnd( m_deviationPipe.writeEnd() );
 
-  prepareBuffer();
+  prepareStreamingBuffer();
 }
 
 bool OutputStreamDeviation::setPipeEndBlockingMode( PosixId pipeEnd, bool nonBlocking )
 {
   // get current flags for pipe end
-  PosixId flags = ::fcntl( m_deviationPipe.readEnd(), F_GETFL );
+  PosixId flags = ::fcntl( pipeEnd, F_GETFL );
   if( flags == m_errorResult )
     return false;
 
@@ -121,12 +123,12 @@ bool OutputStreamDeviation::setPipeEndBlockingMode( PosixId pipeEnd, bool nonBlo
   flags = nonBlocking ? ( flags | O_NONBLOCK ) : ( flags & ~O_NONBLOCK );
 
   // apply new flags
-  return ::fcntl( m_deviationPipe.readEnd(), F_SETFL, flags ) != m_errorResult;
+  return ::fcntl( pipeEnd, F_SETFL, flags ) != m_errorResult;
 }
 
 int OutputStreamDeviation::duplicateDescriptor( int pipeEnd )
 {
-  int fdDuplicata = ::dup( m_redirectedStream );
+  int fdDuplicata = ::dup( pipeEnd );
   // if ::dup() fails, it should returns -1, which is the same value as m_disabledPipeEnd
   return fdDuplicata;
 }
@@ -160,7 +162,7 @@ void OutputStreamDeviation::closePipeEnd( PosixId & pipeEnd )
 
 string OutputStreamDeviation::getLastPosixErrorString()
 {
-  return std::string( getErrorString( errno ) );
+  return std::string( strerror( errno ) );
 }
 
 OutputStreamDeviation::~OutputStreamDeviation()
