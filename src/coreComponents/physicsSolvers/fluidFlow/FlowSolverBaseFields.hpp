@@ -89,6 +89,14 @@ DECLARE_FIELD( facePressure_n,
                NO_WRITE,
                "Face pressure at the previous converged time step" );
 
+DECLARE_FIELD( isBoundaryFace,
+               "isBoundaryFace",
+               array1d< integer >,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Boundary face indicator: 1 for faces with Dirichlet BCs, 0 for interior faces" );
+
 DECLARE_FIELD( pressureGradient,
                "pressureGradient",
                array2d< real64 >,
@@ -177,13 +185,13 @@ DECLARE_FIELD( gravityCoefficient,
                WRITE_AND_READ,
                "Gravity coefficient (dot product of gravity acceleration by gravity vector)" );
 
-DECLARE_FIELD( mimGravityCoefficient,
-               "mimGravityCoefficient",
+DECLARE_FIELD( mimeticTransGgradZ,
+               "mimeticTransGgradZ",
                array1d< real64 >,
                0,
                NOPLOT,
                WRITE_AND_READ,
-               "Mimetic gravity coefficient" );
+               "Consistent mimetic operator applied to g grad(z) (harmonic average of element contributions)" );
 
 DECLARE_FIELD( macroElementIndex,
                "macroElementIndex",

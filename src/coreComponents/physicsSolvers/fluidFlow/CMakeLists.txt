@@ -152,25 +152,18 @@ set( fluidFlowSolvers_sources
      wells/WellControls.cpp
      wells/WellSolverBase.cpp
      proppantTransport/ProppantTransport.cpp
-     proppantTransport/ProppantTransportKernels.cpp )
+     proppantTransport/ProppantTransportKernels.cpp
+     # Macro-based explicit instantiations for hybrid FVM kernels
+     kernels/compositional/CompositionalMultiphaseHybridFVMKernelsInstantiations.cpp
+     kernels/singlePhase/SinglePhaseHybridFVMKernelsInstantiations.cpp )
 
-set( dependencyList ${parallelDeps} physicsSolversBase )
-
-geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
-
-
-
-
+# Remove the old generator-based hybrid flux/dirichlet kernels and switch to macro approach
 file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
 set( kernelTemplateFileList "" )
 
+# Keep only the templates that are unrelated to hybrid flux/dirichlet
 list( APPEND kernelTemplateFileList
-      SinglePhaseHybridFVMKernels.cpp.template
-      CompositionalMultiphaseHybridFVMKernels_upwinding.cpp.template
-      CompositionalMultiphaseHybridFVMKernels_assembly.cpp.template
-      CompositionalMultiphaseHybridFVMKernels_flux.cpp.template
       ReactiveCompositionalMultiphaseOBLKernels.cpp.template )
-
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )
   get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
@@ -179,9 +172,8 @@ foreach( kernelTemplateFile ${kernelTemplateFileList} )
                    KEY ${jsonKey}
                    HEADERS headerFiles
                    SOURCES sourceFiles )
-
-list(APPEND fluidFlowSolvers_headers ${headerFiles})
-list(APPEND fluidFlowSolvers_sources ${sourceFiles})
+  list(APPEND fluidFlowSolvers_headers ${headerFiles})
+  list(APPEND fluidFlowSolvers_sources ${sourceFiles})
 endforeach()
 
 # TODO: The two kernels below have non-matching file names and JSON keys.
@@ -214,6 +206,9 @@ blt_add_library( NAME       fluidFlowSolvers
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
+
+# Always enable the manual instantiation compile flag
+target_compile_definitions( fluidFlowSolvers PUBLIC GEOS_ENABLE_MANUAL_HYBRID_FVM_INST )
 
 target_include_directories( fluidFlowSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
