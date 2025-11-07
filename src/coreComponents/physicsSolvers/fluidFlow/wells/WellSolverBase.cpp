@@ -116,7 +116,6 @@ void WellSolverBase::postInputInitialization()
   // 1. Set key dimensions of the problem
   m_numDofPerWellElement = m_isThermal ?    m_numComponents + 2 : m_numComponents + 1; // 1 pressure  connectionRate + temp if thermal
   m_numDofPerResElement = m_isThermal ? m_numComponents  + 1: m_numComponents;   // 1 pressure   + temp if thermal
-  m_writeSegDebug=0;
   if( m_writeSegDebug > 0 )
   {
     if( m_writeCSV == 0 )
@@ -777,7 +776,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
   real64 lastResidual = 1e99;
   integer newtonIter = 0;
   real64 scaleFactor = 1.0;
-
+  //m_writeLinearSystem = 2;
   bool isNewtonConverged = false;
 
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
@@ -959,8 +958,15 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
       debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs, tag );
 
 // Solve the linear system
-      solveLinearSystem( dofManager, m_matrix, m_rhs, m_solution );
+      try
+      {
+        solveLinearSystem( dofManager, m_matrix, m_rhs, m_solution );
+      } catch( ... )
+      {
+        m_writeLinearSystem=2;
+        debugOutputSystem( time_n, cycleNumber, 0, m_matrix, m_rhs );
 
+      }
 // Increment the solver statistics for reporting purposes
       getIterationStats().updateNonlinearIteration( m_linearSolverResult.numIterations );
 

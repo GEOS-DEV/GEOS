@@ -33,6 +33,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellMassRateConstraint.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellWHPConstraint.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 namespace geos
@@ -274,6 +275,14 @@ public:
   integer estimateSolution() const { return m_estimateSolution; }
 
   /**
+   * @brief getter for presence of production WHP constraint
+   * @return True if constraint exists
+   */
+  bool hasMinimumWHPConstraint() const
+  {
+    return static_cast< bool >(m_minWHPConstraint);
+  }
+  /**
    * @brief Get the input control type for the well.
    * @return the Control enum enforced at the well
    */
@@ -512,6 +521,10 @@ public:
     static constexpr char const * minimumBHPConstraintString() { return "MinimumBHPConstraint"; }
     /// string key for the maximum BHP presssure for a injection
     static constexpr char const * maximumBHPConstraintString() { return "MaximumBHPConstraint"; }
+    /// string key for the minimum WHP presssure for a injection
+    static constexpr char const * minimumWHPConstraintString() { return "MinimumWHPConstraint"; }
+    /// string key for the maximum WHP presssure for a injection
+    static constexpr char const * maximumWHPConstraintString() { return "MaximumWHPConstraint"; }
     /// string key for the maximum phase rate for a producer
     static constexpr char const * productionPhaseVolumeRateConstraintString() { return "ProductionPhaseVolumeRateConstraint"; }
     /// string key for the maximum phase rate for a injection
@@ -538,6 +551,11 @@ public:
    * @param[in] constraintName name to assign to the constraint
    */
   template< typename ConstraintType > void createConstraint ( string const & constraintName );
+  /**
+   * @brief Creates for internal constraints used by WHP constraints
+   */
+  void createMinBHPConstraintForWHP();
+  void createMaxLiquidConstraintForWHP();
 
 
   /**
@@ -547,6 +565,14 @@ public:
   MinimumBHPConstraint * getMinBHPConstraint() const { return m_minBHPConstraint; };
   MaximumBHPConstraint * getMaxBHPConstraint() { return m_maxBHPConstraint; };
   MaximumBHPConstraint * getMaxBHPConstraint() const { return m_maxBHPConstraint; };
+
+  //  WHP constraint getters
+  MinimumWHPConstraint * getMinWHPConstraint() { return m_minWHPConstraint; };
+  MinimumWHPConstraint * getMinWHPConstraint() const { return m_minWHPConstraint; };
+
+  ProductionConstraint< LiquidRateConstraint > * getMaxLiquidConstraintForWHP() { return m_maxLiquidConstraintForWHP; };
+  MinimumBHPConstraint * getMinimumBHPConstraintForWHP() { return m_minBHPConstraintForWHP; };
+
   // Lists of rate constraints
   std::vector< WellConstraintBase * >  getProdRateConstraints() { return m_productionRateConstraintList; };
   std::vector< WellConstraintBase * >  getProdRateConstraints() const { return m_productionRateConstraintList; };
@@ -620,7 +646,11 @@ private:
   // Minimum and maximum BHP and WHP constraints
   MinimumBHPConstraint *  m_minBHPConstraint;
   MaximumBHPConstraint * m_maxBHPConstraint;
+  MinimumWHPConstraint *  m_minWHPConstraint;
 
+  // BHP constraint used when WHP constraint is active
+  MinimumBHPConstraint *     m_minBHPConstraintForWHP;
+  ProductionConstraint< LiquidRateConstraint > *  m_maxLiquidConstraintForWHP;
 
   // Lists of rate constraints
   std::vector< WellConstraintBase * > m_productionRateConstraintList;

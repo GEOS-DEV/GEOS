@@ -417,6 +417,8 @@ public:
 
     static constexpr char const * currentBHPString() { return "currentBHP"; }
 
+    static constexpr char const * currentWHPString() { return "currentWHP"; }
+
     static constexpr char const * currentPhaseVolRateString() { return "currentPhaseVolumetricRate"; }
 
     static constexpr char const * currentTotalVolRateString() { return "currentTotalVolumetricRate"; }
@@ -514,6 +516,15 @@ private:
                         DofManager const & dofManager );
 
 
+  bool solveWHPConstraint( real64 const & time_n,
+                           real64 const & dt,
+                           integer const cycleNumber,
+                           integer const coupledIterationNumber,
+                           DomainPartition & domain,
+                           MeshLevel & mesh,
+                           ElementRegionManager & elemManager,
+                           WellElementSubRegion & subRegion,
+                           DofManager const & dofManage );
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
 

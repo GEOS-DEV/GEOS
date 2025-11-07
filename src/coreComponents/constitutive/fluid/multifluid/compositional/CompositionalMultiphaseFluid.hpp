@@ -92,6 +92,8 @@ public:
 
   virtual integer getWaterPhaseIndex() const override final;
 
+  virtual integer getPhaseIndex( const std::string & phaseName ) const override final;
+
   struct viewKeyStruct : MultiFluidBase::viewKeyStruct
   {
     static constexpr char const * componentCriticalPressureString() { return "componentCriticalPressure"; }
@@ -122,6 +124,7 @@ private:
 
   array1d< integer > getPhaseTypes() const;
 
+  integer findPhaseIndex( string names ) const;
   static std::unique_ptr< compositional::ModelParameters > createModelParameters();
 
   // Flash model

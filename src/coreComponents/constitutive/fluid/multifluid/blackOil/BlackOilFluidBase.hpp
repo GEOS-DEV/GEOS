@@ -129,6 +129,8 @@ protected:
 
   virtual integer getWaterPhaseIndex() const override final;
 
+  virtual integer getPhaseIndex( const std::string & phaseName ) const override final;
+
   virtual void postInputInitialization() override;
 
   virtual void initializePostSubGroups() override;

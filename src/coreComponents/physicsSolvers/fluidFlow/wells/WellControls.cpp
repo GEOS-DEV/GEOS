@@ -22,7 +22,7 @@
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
-
+#include "physicsSolvers/fluidFlow/wells/PipeFlowTableFunction.hpp"
 
 namespace geos
 {
@@ -142,6 +142,12 @@ Group * WellControls::createChild( string const & childKey, string const & child
     m_maxBHPConstraint =  &bhpConstraint;
     constraint = &bhpConstraint;
   }
+  else if( childKey == viewKeyStruct::minimumWHPConstraintString() )
+  {
+    MinimumWHPConstraint & whpConstraint = registerGroup< MinimumWHPConstraint >( childName );
+    m_minWHPConstraint =  &whpConstraint;
+    constraint = &whpConstraint;
+  }
   else if( childKey == viewKeyStruct::productionPhaseVolumeRateConstraintString() )
   {
     ProductionConstraint< PhaseVolumeRateConstraint > & phaseConstraint = registerGroup< ProductionConstraint< PhaseVolumeRateConstraint > >( childName );
@@ -187,6 +193,32 @@ Group * WellControls::createChild( string const & childKey, string const & child
     constraint = &liquidConstraint;
   }
   return constraint;
+}
+
+void WellControls::createMinBHPConstraintForWHP()
+{
+  // Create constraint and set local pointer
+  MinimumBHPConstraint & bhpConstraint = registerGroup< MinimumBHPConstraint >( m_minWHPConstraint->getName()+"MinimumBHPConstraint" );
+  m_minBHPConstraintForWHP =    &bhpConstraint;
+  // Set properties from the original minBHP constraint
+  m_minBHPConstraintForWHP->setReferenceElevation( m_minBHPConstraint->getReferenceElevation() );
+  m_minBHPConstraintForWHP->setReferenceGravityCoef ( m_minBHPConstraint->getReferenceGravityCoef() );
+  // Set to inactive. WHP estimator solve will set status
+  m_minBHPConstraintForWHP->setConstraintActive( false );
+}
+void WellControls::createMaxLiquidConstraintForWHP()
+{
+  // Create constraint and set local pointer
+  ProductionConstraint< LiquidRateConstraint > & liquidConstraint = registerGroup< ProductionConstraint< LiquidRateConstraint > >( m_minWHPConstraint->getName()+"LiquidProductionConstraint" );
+  m_maxLiquidConstraintForWHP =  &liquidConstraint;
+  // Set properties from VFP table
+  FunctionManager & functionManager = FunctionManager::getInstance();
+  const PipeFlowTableFunction & m_flowTable =  functionManager.getGroup< PipeFlowTableFunction const >( m_minWHPConstraint->getFlowTableName());
+  string_array ratePhases = m_flowTable.getRatePhases();
+  m_maxLiquidConstraintForWHP->setPhaseNames( ratePhases );
+  m_maxLiquidConstraintForWHP->validateLiquidType( getMultiFluidSeparator());
+  // WHP estimator solve will set status
+  m_maxLiquidConstraintForWHP->setConstraintActive( false );
 }
 
 void WellControls::expandObjectCatalogs()
