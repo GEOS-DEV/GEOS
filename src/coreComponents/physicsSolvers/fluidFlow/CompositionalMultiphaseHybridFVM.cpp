@@ -125,12 +125,12 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
   GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
                  getCatalogName() << " " << getDataContext() <<
                  ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
-                 InputError );
+                 InputError, getDataContext() );
 
   GEOS_THROW_IF( m_hasCapPressure,
                  getCatalogName() << " " << getDataContext() <<
                  ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
-                 InputError );
+                 InputError, getDataContext() );
 }
 
 void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGroups()
