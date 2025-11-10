@@ -989,68 +989,49 @@ real64 CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion &
   WellControls & wellControls = getWellControls( subRegion );
   if( wellControls.getWellState())
   {
-    if( m_useNewCode )
+
+    // update properties
+    updateGlobalComponentFraction( subRegion );
+
+    // update densities, phase fractions, phase volume fractions
+
+    updateFluidModel( subRegion );   //  Calculate fluid properties
+
+    updateSeparator( subRegion );   //  Calculate fluid properties at control conditions
+
+    updateVolRatesForConstraint( subRegion );    // remove tjb ??
+
+    maxPhaseVolChange = updatePhaseVolumeFraction( subRegion );
+    updateTotalMassDensity( subRegion );
+
+    // Calculate the reference element rates
+    calculateReferenceElementRates( subRegion );
+
+    // update the current BHP
+    updateBHPForConstraint( subRegion );
+
+    // Broad case the updated well state to other ranks
+    real64 & currentBHP =
+      wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
+    array1d< real64 >   currentPhaseVolRate =
+      wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
+    real64 & currentTotalVolRate =
+      wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
+    real64 & currentMassRate =
+      wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() );
+    integer topRank = subRegion.getTopRank();
+    MpiWrapper::broadcast( currentBHP, topRank );
+    MpiWrapper::bcast( currentPhaseVolRate.data(), LvArray::integerConversion< int >( currentPhaseVolRate.size() ), topRank );
+    MpiWrapper::broadcast( currentTotalVolRate, topRank );
+    MpiWrapper::broadcast( currentMassRate, topRank );
+    if( !subRegion.isLocallyOwned() )
     {
-      // update properties
-      updateGlobalComponentFraction( subRegion );
-
-      // update densities, phase fractions, phase volume fractions
-
-      updateFluidModel( subRegion ); //  Calculate fluid properties
-
-      updateSeparator( subRegion ); //  Calculate fluid properties at control conditions
-
-      updateVolRatesForConstraint( subRegion );  // remove tjb ??
-
-      maxPhaseVolChange = updatePhaseVolumeFraction( subRegion );
-      updateTotalMassDensity( subRegion );
-
-      // Calculate the reference element rates
-      calculateReferenceElementRates( subRegion );
-
-      // update the current BHP
-      updateBHPForConstraint( subRegion );
-
-      // Broad case the updated well state to other ranks
-      real64 & currentBHP =
-        wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
-      array1d< real64 >   currentPhaseVolRate =
-        wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
-      real64 & currentTotalVolRate =
-        wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
-      real64 & currentMassRate =
-        wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() );
-      integer topRank = subRegion.getTopRank();
-      MpiWrapper::broadcast( currentBHP, topRank );
-      MpiWrapper::bcast( currentPhaseVolRate.data(), LvArray::integerConversion< int >( currentPhaseVolRate.size() ), topRank );
-      MpiWrapper::broadcast( currentTotalVolRate, topRank );
-      MpiWrapper::broadcast( currentMassRate, topRank );
-      if( !subRegion.isLocallyOwned() )
-      {
-        wellControls.getReference< array1d< real64 > >(
-          CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) =currentPhaseVolRate;
+      wellControls.getReference< array1d< real64 > >(
+        CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() ) =currentPhaseVolRate;
 
 
-      }
     }
-    else
-    {
-      // update properties
-      updateGlobalComponentFraction( subRegion );
 
-      // update volumetric rates for the well constraints
-      // note: this must be called before updateFluidModel
-
-      updateVolRatesForConstraint( subRegion );
-
-      // update densities, phase fractions, phase volume fractions
-
-      updateFluidModel( subRegion ); //  Calculate fluid properties;
-      maxPhaseVolChange = updatePhaseVolumeFraction( subRegion );
-      updateTotalMassDensity( subRegion );
-      // update the current BHP pressure
-      updateBHPForConstraint( subRegion );
-    }
 
   }
   return maxPhaseVolChange;

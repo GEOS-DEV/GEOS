@@ -396,7 +396,6 @@ public:
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
     static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
-    static constexpr char const * useNewCodeString() { return "useNewCode"; }
 
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
   };
@@ -470,9 +469,6 @@ protected:
 
   /// flag to use the estimator
   integer m_estimateSolution;
-
-
-  integer m_useNewCode;
 
 };
 

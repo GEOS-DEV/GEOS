@@ -452,33 +452,20 @@ real64 SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
   WellControls & wellControls = getWellControls( subRegion );
   if( wellControls.getWellState())
   {
-    if( m_useNewCode )
-    {
-      // update volumetric rates for the well constraints
-      // Warning! This must be called before updating the fluid model
-      //calculateReferenceElementRates( subRegion );
 
-      // update density in the well elements
-      updateFluidModel( subRegion );
-      updateSeparator( subRegion ); //  Calculate fluid properties at control conditions
+    // update volumetric rates for the well constraints
+    // Warning! This must be called before updating the fluid model
+    //calculateReferenceElementRates( subRegion );
 
-      // Calculate the reference element rates
-      calculateReferenceElementRates( subRegion );
-      // update the current BHP
-      updateBHPForConstraint( subRegion );
-    }
-    else
-    {
-      // update volumetric rates for the well constraints
-      // Warning! This must be called before updating the fluid model
-      calculateReferenceElementRates( subRegion );
+    // update density in the well elements
+    updateFluidModel( subRegion );
+    updateSeparator( subRegion );   //  Calculate fluid properties at control conditions
 
-      // update density in the well elements
-      updateFluidModel( subRegion );
+    // Calculate the reference element rates
+    calculateReferenceElementRates( subRegion );
+    // update the current BHP
+    updateBHPForConstraint( subRegion );
 
-      // update the current BHP
-      updateBHPForConstraint( subRegion );
-    }
 
   }
   return 0.0; // change in phasevolume fraction doesnt apply
@@ -771,16 +758,15 @@ void SinglePhaseWell::assembleSystem( real64 const time,
 {
   string const wellDofKey = dofManager.getKey( wellElementDofName());
 
-  if( m_useNewCode )
-  {
-    // selects constraints one of 2 ways
-    //  wellEstimator flag set to 0 => orginal logic rates are computed during update state and constraints are selected every newton
-    // iteration
-    //  wellEstimator flag > 0 =>   well esitmator solved for each constraint and then selects the constraint
-    //                         =>   estimator solve only performed first "wellEstimator" iterations
-    NonlinearSolverParameters const & nonlinearParams =  getNonlinearSolverParameters();
-    selectWellConstraint( time, dt, nonlinearParams.m_numNewtonIterations, domain );
-  }
+
+  // selects constraints one of 2 ways
+  //  wellEstimator flag set to 0 => orginal logic rates are computed during update state and constraints are selected every newton
+  // iteration
+  //  wellEstimator flag > 0 =>   well esitmator solved for each constraint and then selects the constraint
+  //                         =>   estimator solve only performed first "wellEstimator" iterations
+  NonlinearSolverParameters const & nonlinearParams =  getNonlinearSolverParameters();
+  selectWellConstraint( time, dt, nonlinearParams.m_numNewtonIterations, domain );
+
 
   // assemble the accumulation term in the mass balance equations
   assembleAccumulationTerms( time, dt, domain, dofManager, localMatrix, localRhs );

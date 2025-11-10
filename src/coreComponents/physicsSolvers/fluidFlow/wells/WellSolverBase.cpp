@@ -43,9 +43,8 @@ WellSolverBase::WellSolverBase( string const & name,
   m_numDofPerResElement( 0 ),
   m_isThermal( 0 ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) ),
-  m_keepVariablesConstantDuringInitStep( false ),
+  m_keepVariablesConstantDuringInitStep( false )
 
-  m_useNewCode( true )
 {
   registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -64,11 +63,6 @@ WellSolverBase::WellSolverBase( string const & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Choose time step to honor rates/bhp tables time intervals" );
-
-  this->registerWrapper( viewKeyStruct::useNewCodeString(), &m_useNewCode ).
-    setApplyDefaultValue( 1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Use new code" );
 
 
   addLogLevel< logInfo::WellControl >();
@@ -301,12 +295,6 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
   // Open close perfs
   setPerforationStatus( time_n, domain );
 
-  // Initialize the primary and secondary variables for the first time step
-  if( !m_useNewCode )
-  {
-    initializeWells( domain, time_n );
-  }
-
 }
 
 void WellSolverBase::selectWellConstraint( real64 const & time_n,
@@ -393,16 +381,15 @@ void WellSolverBase::assembleSystem( real64 const time,
                                      arrayView1d< real64 > const & localRhs )
 {
 
-  if( m_useNewCode )
-  {
-    // selects constraints one of 2 ways
-    //  wellEstimator flag set to 0 => orginal logic rates are computed during update state and constraints are selected every newton
-    // iteration
-    //  wellEstimator flag > 0 =>   well esitmator solved for each constraint and then selects the constraint
-    //                         =>   estimator solve only performed first "wellEstimator" iterations
-    NonlinearSolverParameters const & nonlinearParams =  getNonlinearSolverParameters();
-    selectWellConstraint( time, dt, nonlinearParams.m_numNewtonIterations, domain );
-  }
+
+  // selects constraints one of 2 ways
+  //  wellEstimator flag set to 0 => orginal logic rates are computed during update state and constraints are selected every newton
+  // iteration
+  //  wellEstimator flag > 0 =>   well esitmator solved for each constraint and then selects the constraint
+  //                         =>   estimator solve only performed first "wellEstimator" iterations
+  NonlinearSolverParameters const & nonlinearParams =  getNonlinearSolverParameters();
+  selectWellConstraint( time, dt, nonlinearParams.m_numNewtonIterations, domain );
+
 
 
   // assemble the accumulation term in the mass balance equations
@@ -410,25 +397,24 @@ void WellSolverBase::assembleSystem( real64 const time,
 
   // then assemble the pressure relations between well elements
   assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
-  //if(  false && m_useNewCode )
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
   {
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                 MeshLevel & mesh,
-                                                                 string_array const & regionNames )
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                 [&]( localIndex const,
+                                                                      WellElementRegion & region )
     {
-      ElementRegionManager & elementRegionManager = mesh.getElemManager();
-      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
-                                                                   [&]( localIndex const,
-                                                                        WellElementRegion & region )
-      {
-        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
-                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
-        WellControls & wellControls = getWellControls( subRegion );
-        if( !wellControls.getConstraintSwitch() )
-          assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-      } );
+      WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                           .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+      WellControls & wellControls = getWellControls( subRegion );
+      if( !wellControls.getConstraintSwitch() )
+        assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
     } );
-  }
+  } );
+
   // then compute the perforation rates (later assembled by the coupled solver)
   computePerforationRates( time, dt, domain );
 
