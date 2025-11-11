@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -35,7 +35,7 @@ namespace timingHelpers
   {
     std::string input(prettyFunction);
     std::string::size_type const end = input.find_first_of( '(' );
-    std::string::size_type const beg = input.find_last_of( ' ', end)+1;
+    std::string::size_type const beg = input.find_last_of( ' ', end ) + 1;
     return input.substr( beg, end-beg );
   }
 }
@@ -96,10 +96,10 @@ namespace timingHelpers
 #include <iostream>
 
 /// Mark a function or scope for timing with a given name
-#define GEOS_CALIPER_MARK_SCOPE(name) cali::Function __cali_ann##__LINE__(STRINGIZE_NX(name))
+#define GEOS_CALIPER_MARK_SCOPE(name) cali::Function GEOS_CONCAT(_cali_ann, __LINE__)(STRINGIZE_NX(name))
 
 /// Mark a function for timing using a compiler-provided name
-#define GEOS_CALIPER_MARK_FUNCTION cali::Function __cali_ann##__func__(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str())
+#define GEOS_CALIPER_MARK_FUNCTION cali::Function _cali_ann_func(timingHelpers::stripPF(__PRETTY_FUNCTION__).c_str())
 
 /// Mark the beginning of timed statement group
 #define GEOS_CALIPER_MARK_BEGIN(name) CALI_MARK_BEGIN(STRINGIZE(name))

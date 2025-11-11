@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -20,14 +20,10 @@
 #include "EmbeddedSurfaceGenerator.hpp"
 #include "EmbeddedSurfacesParallelSynchronization.hpp"
 
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
-#include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshFields.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
@@ -36,7 +32,7 @@
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/simpleGeometricObjects/Rectangle.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
-
+#include "physicsSolvers/LogLevelsInfo.hpp"
 
 
 namespace geos
@@ -44,27 +40,9 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 
-void NewObjectLists::insert( NewObjectLists const & newObjects )
-{
-  newNodes.insert( newObjects.newNodes.begin(),
-                   newObjects.newNodes.end() );
-
-  newEdges.insert( newObjects.newEdges.begin(),
-                   newObjects.newEdges.end() );
-
-  for( auto & iter : newObjects.newElements )
-  {
-    std::pair< localIndex, localIndex > const & key = iter.first;
-    std::set< localIndex > const & values = iter.second;
-    newElements[key].insert( values.begin(), values.end() );
-  }
-
-}
-
-
 EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
                                                     Group * const parent ):
-  SolverBase( name, parent ),
+  PhysicsSolverBase( name, parent ),
   m_fractureRegionName(),
   m_mpiCommOrder( 0 )
 {
@@ -191,7 +169,7 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
             if( added )
             {
-              GEOS_LOG_LEVEL_RANK_0( 2, "Element " << cellIndex << " is fractured" );
+              GEOS_LOG_LEVEL_RANK_0( logInfo::SurfaceGenerator, GEOS_FMT( "{}: element {} is fractured", subRegion.getName(), cellIndex ) );
 
               // Add the information to the CellElementSubRegion
               subRegion.addFracturedElement( cellIndex, localNumberOfSurfaceElems );
@@ -241,11 +219,11 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
 
   setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
-  embeddedSurfacesParallelSynchronization::sychronizeTopology( meshLevel,
-                                                               domain.getNeighbors(),
-                                                               newObjects,
-                                                               m_mpiCommOrder,
-                                                               this->m_fractureRegionName );
+  embeddedSurfacesParallelSynchronization::synchronizeTopology( meshLevel,
+                                                                domain.getNeighbors(),
+                                                                newObjects,
+                                                                m_mpiCommOrder,
+                                                                this->m_fractureRegionName );
 
   addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
 
@@ -284,7 +262,7 @@ real64 EmbeddedSurfaceGenerator::solverStep( real64 const & GEOS_UNUSED_PARAM( t
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
-                                                                arrayView1d< string const > const & )
+                                                                string_array const & )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
     SurfaceElementRegion & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
@@ -338,8 +316,8 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
                                                  EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion )
 {
   // Add new globalIndices
-  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  int const commSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
+  int const thisRank = MpiWrapper::commRank( MPI_COMM_GEOS );
+  int const commSize = MpiWrapper::commSize( MPI_COMM_GEOS );
 
   localIndex_array numberOfSurfaceElemsPerRank( commSize );
   localIndex_array globalIndexOffset( commSize );
@@ -353,7 +331,7 @@ void EmbeddedSurfaceGenerator::setGlobalIndices( ElementRegionManager & elemMana
     totalNumberOfSurfaceElements += numberOfSurfaceElemsPerRank[rank];
   }
 
-  GEOS_LOG_LEVEL_RANK_0( 1, "Number of embedded surface elements: " << totalNumberOfSurfaceElements );
+  GEOS_LOG_LEVEL_RANK_0( logInfo::SurfaceGenerator, "Number of embedded surface elements: " << totalNumberOfSurfaceElements );
 
   arrayView1d< globalIndex > const & elemLocalToGlobal = embeddedSurfaceSubRegion.localToGlobalMap();
 
@@ -425,7 +403,7 @@ void EmbeddedSurfaceGenerator::addEmbeddedElementsToSets( ElementRegionManager c
   } );
 }
 
-REGISTER_CATALOG_ENTRY( SolverBase,
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase,
                         EmbeddedSurfaceGenerator,
                         string const &, dataRepository::Group * const )
 

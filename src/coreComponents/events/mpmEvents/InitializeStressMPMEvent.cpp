@@ -44,9 +44,11 @@ namespace geos
 
   void InitializeStressMPMEvent::postInputInitialization()
   {
+    MPMEventBase::postInputInitialization();
+
     GEOS_LOG_RANK_0( "InitializeStressEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
+                     "Start time=" << m_startTime << ", " << 
+                     "Time interval=" << getTimeInterval() << ", " << 
                      "pressure=" << m_pressure << ", " << 
                      "targetRegion=" << m_targetRegion );
   }

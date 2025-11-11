@@ -279,9 +279,8 @@ void Graphite::allocateConstitutiveData( dataRepository::Group & parent,
 void Graphite::postInputInitialization()
 {
   SolidBase::postInputInitialization();
-
+  
   // TODO: initialize m_effectiveBulkModulus here. it might be needed by stress control before first updateStress.
-
 
   // GEOS_LOG_RANK_0( "Ez: " << m_defaultYoungModulusAxial << "\n" << 
   //                  "Ep: " << m_defaultYoungModulusTransverse << "\n" << 

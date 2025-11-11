@@ -34,9 +34,11 @@ namespace geos
 
   void TemperatureProfileMPMEvent::postInputInitialization()
   {
+    MPMEventBase::postInputInitialization();
+    
     GEOS_LOG_RANK_0( "TemperatureProfileEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval );
+                     "Start time=" << m_startTime << ", " << 
+                     "Time interval=" << getTimeInterval() );
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, TemperatureProfileMPMEvent, string const &, Group * const )

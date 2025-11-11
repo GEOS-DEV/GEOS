@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -151,44 +151,15 @@ public:
   ///@}
 
   /**
-   * @name Miscellaneous
-   */
-  ///@{
-
-  /**
-   * @brief Helper function to apply a lambda function over all constructive groups
-   * @tparam LAMBDA the type of the lambda function
-   * @param lambda the lambda function
-   */
-  template< typename LAMBDA >
-  void forMaterials( LAMBDA lambda )
-  {
-
-    for( auto & constitutiveGroup : m_constitutiveGrouping )
-    {
-      lambda( constitutiveGroup );
-    }
-  }
-
-  ///@}
-
-  /**
    * @brief struct to serve as a container for variable strings and keys
    * @struct viewKeyStruct
    */
   struct viewKeyStruct : public ElementSubRegionBase::viewKeyStruct
   {
-    /// @return String key for the constitutive point volume fraction
-    static constexpr char const * constitutivePointVolumeFractionString() { return "ConstitutivePointVolumeFraction"; }
     /// @return String key for the derivatives of the shape functions with respect to the reference configuration
     static constexpr char const * dNdXString() { return "dNdX"; }
     /// @return String key for the derivative of the jacobian.
-    static constexpr char const * detJString() { return "detJ"; }
-    /// @return String key for the constitutive grouping
-    static constexpr char const * constitutiveGroupingString() { return "ConstitutiveGrouping"; }
-    /// @return String key for the constitutive map
-    static constexpr char const * constitutiveMapString() { return "ConstitutiveMap"; }
-    /// @return String key to embSurfMap
+    static constexpr char const * detJString() { return "detJ"; }    /// @return String key to embSurfMap
     static constexpr char const * toEmbSurfString() { return "ToEmbeddedSurfaces"; }
     /// @return String key to fracturedCells
     static constexpr char const * fracturedCellsString() { return "fracturedCells"; }
@@ -196,11 +167,6 @@ public:
     static constexpr char const * bubbleCellsString() { return "bubbleCells"; }
     /// @return String key to toFaceElements
     static constexpr char const * toFaceElementsString() { return "toFaceElements"; }
-
-    /// ViewKey for the constitutive grouping
-    dataRepository::ViewKey constitutiveGrouping  = { constitutiveGroupingString() };
-    /// ViewKey for the constitutive map
-    dataRepository::ViewKey constitutiveMap       = { constitutiveMapString() };
   }
   /// viewKey struct for the CellElementSubRegion class
   m_CellBlockSubRegionViewKeys;
@@ -359,12 +325,6 @@ public:
                                             FaceManager const & faceManager ) override;
 
 private:
-
-  /// Map used for constitutive grouping
-  map< string, localIndex_array > m_constitutiveGrouping;
-
-  /// Array of constitutive point volume fraction
-  array3d< real64 > m_constitutivePointVolumeFraction;
 
   /// Element-to-node relation
   NodeMapType m_toNodesRelation;

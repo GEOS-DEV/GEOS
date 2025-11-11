@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -22,7 +22,8 @@
 
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "mesh/generators/VTKUtilities.hpp"
-
+#include "mesh/generators/VTKHierarchicalDataSource.hpp"
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include <vtkDataSet.h>
 
 namespace geos
@@ -44,10 +45,10 @@ public:
   VTKMeshGenerator( const string & name,
                     Group * const parent );
 
-/**
- * @brief Return the name of the VTKMeshGenerator in object Catalog.
- * @return string that contains the key name to VTKMeshGenerator in the Catalog
- */
+  /**
+   * @brief Return the name of the VTKMeshGenerator in object Catalog.
+   * @return string that contains the key name to VTKMeshGenerator in the Catalog
+   */
   static string catalogName() { return "VTKMesh"; }
 
   /**
@@ -87,15 +88,19 @@ public:
    * surfaces of interest, with triangles and/or quads holding an attribute value
    * of 1, 2 or 3, three node sets named "1", "2" and "3" will be instantiated by this method
    */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition ) override;
 
+  void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) override;
+  
   void importFieldOnArray( Block block,
                            string const & blockName,
                            string const & meshFieldName,
                            bool isMaterialField,
                            dataRepository::WrapperBase & wrapper ) const override;
 
-  virtual void freeResources() override;
+  void freeResources() override;
+
+protected:
+  void postInputInitialization() override;
 
 private:
 
@@ -109,6 +114,13 @@ private:
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
     constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
+    constexpr static char const * dataSourceString() { return "dataSourceName"; }
+    constexpr static char const * meshPathString() { return "meshPath"; }
+  };
+
+  struct groupKeyStruct
+  {
+    constexpr static char const * regionString() { return "VTKRegion"; }
   };
   /// @endcond
 
@@ -135,7 +147,7 @@ private:
   string m_mainBlockName;
 
   /// Name of the face blocks to be imported (for multi-block files).
-  array1d< string > m_faceBlockNames;
+  string_array m_faceBlockNames;
 
   /// Maps the face block name to its vtk mesh instance.
   std::map< string, vtkSmartPointer< vtkDataSet > > m_faceBlockMeshes;
@@ -154,6 +166,16 @@ private:
 
   /// Lists of VTK cell ids, organized by element type, then by region
   vtk::CellMapType m_cellMap;
+
+  /// Repository name
+  string m_dataSourceName;
+
+  /// path to the mesh in the repository
+  string m_meshPath;
+
+  /// Repository of VTK objects
+  VTKHierarchicalDataSource * m_dataSource;
+
 };
 
 } // namespace geos

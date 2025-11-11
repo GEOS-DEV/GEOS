@@ -24,9 +24,29 @@ namespace geos
   using namespace dataRepository;
   
   CohesiveZoneReferenceMPMEvent::CohesiveZoneReferenceMPMEvent( const string & name,
-                                  Group * const parent ) :
-                                  MPMEventBase(  name, parent )
+                                                                Group * const parent ) :
+                                                                MPMEventBase(  name, parent ),
+                                                                m_czVolumeNormalization( 1 ),
+                                                                m_computeNormalsAndPositions( 0 ),
+                                                                m_normalsAndPositionsMethod( SolidMechanicsMPM::NormalsAndPositionsMethodOption::LogisticRegression )
   {  
+    registerWrapper( "czVolumeNormalization", &m_czVolumeNormalization ).
+      setInputFlag( InputFlags::OPTIONAL ).
+      setApplyDefaultValue( m_czVolumeNormalization ).
+      setRestartFlags( RestartFlags::WRITE_AND_READ ).
+      setDescription( "Flag to perform volume normalization of cohesive nodal area for partially filled grid cells" );
+
+    registerWrapper( "computeNormalsAndPositions", &m_computeNormalsAndPositions ).
+      setInputFlag( InputFlags::OPTIONAL ).
+      setApplyDefaultValue( m_computeNormalsAndPositions ).
+      setRestartFlags( RestartFlags::WRITE_AND_READ ).
+      setDescription( "Flag to automicatlly compute particle surface normals and positions" );
+
+    registerWrapper( "normalsAndPositionsMethod", &m_normalsAndPositionsMethod ).
+      setInputFlag( InputFlags::OPTIONAL ).
+      setApplyDefaultValue( m_normalsAndPositionsMethod ).
+      setRestartFlags( RestartFlags::WRITE_AND_READ ).
+      setDescription( "Method for computing particle surface normals and positions" );
   }
 
   CohesiveZoneReferenceMPMEvent::~CohesiveZoneReferenceMPMEvent() 
@@ -34,9 +54,7 @@ namespace geos
 
   void CohesiveZoneReferenceMPMEvent::postInputInitialization()
   {
-    GEOS_LOG_RANK_0( "CohesiveZoneReferenceEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval );
+    MPMEventBase::postInputInitialization();
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, CohesiveZoneReferenceMPMEvent, string const &, Group * const )

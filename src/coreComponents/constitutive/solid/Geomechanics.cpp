@@ -23,7 +23,9 @@ namespace geos
 using namespace dataRepository;
 namespace constitutive
 {
-Geomechanics::Geomechanics( string const & name, Group * const parent ):
+
+Geomechanics::Geomechanics( string const & name, 
+                            Group * const parent ):
   SolidBase( name, parent ),
   m_b0( 0.0 ),
   m_b1( 0.0 ),

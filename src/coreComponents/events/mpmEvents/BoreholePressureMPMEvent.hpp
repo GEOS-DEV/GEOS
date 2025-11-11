@@ -34,7 +34,7 @@ class BoreholePressureMPMEvent : public MPMEventBase
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   BoreholePressureMPMEvent( const string & name,
-                  Group * const parent );
+                            Group * const parent );
 
   /// Destructor
   virtual ~BoreholePressureMPMEvent() override;
@@ -44,6 +44,8 @@ public:
    * @return This type's catalog name.
    **/
   static string catalogName() { return "BoreholePressure"; }
+
+  virtual string getCatalogName() const override { return catalogName(); }
 
  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct

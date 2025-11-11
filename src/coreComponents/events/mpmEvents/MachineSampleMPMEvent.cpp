@@ -63,6 +63,8 @@ namespace geos
 
   void MachineSampleMPMEvent::postInputInitialization()
   {
+    MPMEventBase::postInputInitialization();
+    
     if( m_sampleType == "dogbone" )
     {
         GEOS_ERROR_IF( m_filletRadius < 0.0, "Fillet radius must be specified for dogbone sample type and positive" );
@@ -70,7 +72,7 @@ namespace geos
         GEOS_ERROR_IF( m_gaugeRadius < 0.0, "Gauge radius must be specified for dogbone sample type and positive" );
     }
 
-    if( m_sampleType == "brazilDisk")
+    if( m_sampleType == "brazilianDisk")
     {
         GEOS_ERROR_IF( m_diskRadius < 0.0, "Disk radius must be specified for brazil disk sample type and positive" ); 
     }

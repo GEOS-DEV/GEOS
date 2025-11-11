@@ -320,7 +320,6 @@ private:
   real64 const m_maximumStretchA;
   real64 const m_maximumStretchB;
   real64 const m_maximumStretchT0;
-
 };
 
 
@@ -532,7 +531,6 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
     real64 tol = 1e-10; // CC: need to experiment with these for the best options
     int maxEvals = 100; // Same cas above
 
-
     // In initialization, yieldStrength is set to defaultYieldStrength, but we will generally want it to be modified by temp
     // Here we would update the m_bulkModulus[k] and m_shearModulus[k] with temperature dependent values:
     // These will be input paramters:
@@ -559,14 +557,15 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
       {
         gamma_p += 0.5*( 1 + (i < 3) ) * unrotatedTempPlasticStrain[i] * unrotatedTempPlasticStrain[i];
       }
-      gamma_p = sqrt( gamma_p );
+
+      gamma_p = LvArray::math::sqrt( gamma_p );
       
       // This term starts at value r0 and decays with plastic shear strain to give plastic softening.
       // Put in a check to prevent roundoff error.
-      real64 gamma_by_r1_to_r2 = std::pow( gamma_p / m_shearSofteningShapeParameter1, m_shearSofteningShapeParameter2 );
+      real64 gamma_by_r1_to_r2 = LvArray::math::pow( gamma_p / m_shearSofteningShapeParameter1, m_shearSofteningShapeParameter2 );
 
       // Shear Softening:
-      real64 plasticSoftening = shearSofteningMagnitude * std::exp( std::max( -1.0 * gamma_by_r1_to_r2, -16.0 ) );
+      real64 plasticSoftening = shearSofteningMagnitude * LvArray::math::exp( LvArray::math::max( -1.0 * gamma_by_r1_to_r2, -16.0 ) );
 
       // Stretch hardening
       real64 stretchHardening = strainHardeningSlope * ( maximumStretch * maximumStretch - 1.0 / maximumStretch );
@@ -606,6 +605,7 @@ void StrainHardeningPolymerUpdates::smallStrainUpdateHelper( localIndex const k,
           unrotatedNewPlasticStrain[3] *= 0.5;
           unrotatedNewPlasticStrain[4] *= 0.5;
           unrotatedNewPlasticStrain[5] *= 0.5;
+          
           real64 newPlasticStrain[6] = { };
           LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >(newPlasticStrain, endRotation, unrotatedNewPlasticStrain);
           newPlasticStrain[3] *= 2.0;
@@ -672,7 +672,7 @@ void StrainHardeningPolymerUpdates::computePlasticStrainIncrement ( localIndex c
     }
     if (m_shearModulus[k] > 1.0e-12)
     {
-      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * sqrt(2/3) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
+      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * LvArray::math::sqrt(2/3) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
     }
   }
 
@@ -686,8 +686,7 @@ GEOS_FORCE_INLINE
 real64 StrainHardeningPolymerUpdates::thermalSoftening( const real64 & T,
                                                         const real64 & T0,
                                                         const real64 & A,
-                                                        const real64 & B
-) const 
+                                                        const real64 & B ) const 
 { 
   if (std::abs(A) > 1.e-16)
   {
@@ -697,8 +696,6 @@ real64 StrainHardeningPolymerUpdates::thermalSoftening( const real64 & T,
   {
     return 1.;
   }
-
-  
 }
 
 /**
@@ -790,13 +787,11 @@ public:
     static constexpr char const * shearSofteningShapeParameter2String() { return "shearSofteningShapeParameter2"; }
 
     /// string/key for default bulk modulus (temp independent value)
-    //static constexpr char const * defaultBulkModulusString() { return "defaultBulkModulus"; }
     static constexpr char const * bulkModulusAString() { return "bulkModulusA"; }
     static constexpr char const * bulkModulusBString() { return "bulkModulusB"; }
     static constexpr char const * bulkModulusT0String() { return "bulkModulusT0"; }
 
     /// string/key for default shear modulus (temp independent value)
-    //static constexpr char const * defaultShearModulusString() { return "defaultShearModulus"; }
     static constexpr char const * shearModulusAString() { return "shearModulusA"; }
     static constexpr char const * shearModulusBString() { return "shearModulusB"; }
     static constexpr char const * shearModulusT0String() { return "shearModulusT0"; }
@@ -861,8 +856,6 @@ public:
                                           m_wavespeed,
                                           m_disableInelasticity );
   }
-
-
   
   /**
    * @brief Construct an update kernel for a derived type.

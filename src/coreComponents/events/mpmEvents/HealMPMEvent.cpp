@@ -38,10 +38,7 @@ namespace geos
 
   void HealMPMEvent::postInputInitialization()
   {
-    GEOS_LOG_RANK_0( "HealEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
-                     "targetRegion=" << m_targetRegion );
+    MPMEventBase::postInputInitialization();
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, HealMPMEvent, string const &, Group * const )

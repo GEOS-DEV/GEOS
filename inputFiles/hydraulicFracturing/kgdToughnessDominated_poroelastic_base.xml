@@ -11,7 +11,6 @@
       logLevel="1"
       targetRegions="{ Domain, Fracture }"
       isMatrixPoroelastic="1"
-      contactRelationName="fractureContact"
       maxNumResolves="2">
 
       <NonlinearSolverParameters
@@ -22,12 +21,12 @@
         directParallel="0"/>
     </Hydrofracture>
 
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
-      contactRelationName="fractureContact"/>
+      contactRelationName="fractureContact"
+      contactPenaltyStiffness="1.0"/>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
@@ -38,7 +37,7 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
-      rockToughness="1e6"
+      initialRockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>
 
@@ -58,13 +57,13 @@
   <ElementRegions>
     <CellElementRegion
       name="Domain"
-      cellBlocks="{ cb1 }"
+      cellBlocks="{ * }"
       materialList="{ water, porousRock }"/>
 
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="0.02e-3"
-      materialList="{ water, fractureFilling, fractureContact }"/>
+      materialList="{ water, fractureFilling, fractureContact, hApertureModel }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -117,9 +116,11 @@
       name="fracturePerm"/>
 
     <FrictionlessContact
-      name="fractureContact"
-      penaltyStiffness="1.0e0"
-      apertureTableName="aperTable"/>
+      name="fractureContact"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="aperTable"/>  
   </Constitutive>
 
   <FieldSpecifications>
@@ -211,8 +212,7 @@
     <VTK
       name="vtkOutput"
       plotFileRoot="zeroViscosity_poroelastic"
-      plotLevel="3"
-      parallelThreads="48"/>
+      plotLevel="3"/>
 
     <TimeHistory
       name="timeHistoryOutput"

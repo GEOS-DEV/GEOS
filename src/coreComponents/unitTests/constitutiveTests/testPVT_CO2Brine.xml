@@ -23,6 +23,7 @@
       outputCompressibility="1"
       outputPhaseComposition="1"
       baseline="testPVT_CO2Brine_testCo2BrinePhillipsMixtureB.txt"
+      precision="6"
       logLevel="1" />
     <PVTDriver
       name="testCo2BrineEzrokhiMixtureA"
@@ -68,6 +69,30 @@
       outputPhaseComposition="1"
       baseline="testPVT_CO2Brine_testCo2SpycherPruessBrinePhillipsMixtureB.txt"
       logLevel="1" />
+    <PVTDriver
+      name="testCo2BrinePhillipsMixtureThermalA"
+      fluid="co2BrinePhillipsMixtureThermal"
+      feedComposition="{ 1.0, 0.0 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="20"
+      outputCompressibility="1"
+      outputPhaseComposition="1"
+      outputMassDensity="1"
+      baseline="testPVT_CO2Brine_testCo2BrinePhillipsMixtureThermalA.txt"
+      logLevel="1" />
+    <PVTDriver
+      name="testCo2BrinePhillipsMixtureThermalB"
+      fluid="co2BrinePhillipsMixtureThermal"
+      feedComposition="{ 0.2, 0.8 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="20"
+      outputCompressibility="1"
+      outputPhaseComposition="1"
+      outputMassDensity="1"
+      baseline="testPVT_CO2Brine_testCo2BrinePhillipsMixtureThermalB.txt"
+      logLevel="1" />
   </Tasks>
 
   <Events
@@ -90,6 +115,12 @@
     <SoloEvent
       name="eventCo2SpycherPruessBrinePhillipsMixtureB"
       target="/Tasks/testCo2SpycherPruessBrinePhillipsMixtureB" />
+    <SoloEvent
+      name="eventCo2BrinePhillipsMixtureThermalA"
+      target="/Tasks/testCo2BrinePhillipsMixtureThermalA" />
+    <SoloEvent
+      name="eventCo2BrinePhillipsMixtureThermalB"
+      target="/Tasks/testCo2BrinePhillipsMixtureThermalB" />
   </Events>
 
   <Constitutive>
@@ -114,6 +145,13 @@
       componentMolarWeight="{ 44e-3, 18e-3 }"
       phasePVTParaFiles="{ testPVT_data/carbonDioxidePVT.txt, testPVT_data/brinePVT.txt }"
       flashModelParaFile="testPVT_data/carbonDioxideSpycherPruessFlash.txt" />
+    <CO2BrinePhillipsThermalFluid
+      name="co2BrinePhillipsMixtureThermal"
+      phaseNames="{ gas, water }"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ testPVT_data/carbonDioxidePVT_thermal.txt, testPVT_data/brinePVT_thermal.txt }"
+      flashModelParaFile="testPVT_data/carbonDioxideFlash.txt" />
   </Constitutive>
 
   <Functions>
@@ -129,25 +167,4 @@
       coordinates="{ 0.0, 0.45, 0.55, 1.0 }"
       values="{ 350.0, 350.0, 258, 380 }" />
   </Functions>
-
-  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 1 }"
-      ny="{ 1 }"
-      nz="{ 1 }"
-      cellBlockNames="{ cellBlock01 }" />
-  </Mesh>
-
-  <ElementRegions>
-    <CellElementRegion
-      name="dummy"
-      cellBlocks="{ cellBlock01 }"
-      materialList="{ dummy }" />
-  </ElementRegions>
 </Problem>

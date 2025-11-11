@@ -51,6 +51,8 @@ namespace geos
 
   void DeformationUpdateMPMEvent::postInputInitialization()
   {
+    MPMEventBase::postInputInitialization();
+
     GEOS_ERROR_IF( m_stressControl.size() != 3 && m_stressControl.size() > 0,
                    "stressControl must be of length 3. ");
 
@@ -60,13 +62,6 @@ namespace geos
       m_stressControl.resize(3);
       LvArray::tensorOps::fill< 3 >( m_stressControl, 0 );
     }
-
-    GEOS_LOG_RANK_0( "DeformationUpdateEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
-                     "prescribedBoundaryFTable=" << m_prescribedBoundaryFTable << ", "
-                     "prescribedFTable=" << m_prescribedFTable << ", " <<
-                     "stressControl=" << m_stressControl);
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, DeformationUpdateMPMEvent, string const &, Group * const )

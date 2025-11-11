@@ -3,14 +3,18 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file KrylovSolver.hpp
  */
 
 #ifndef GEOS_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
@@ -47,9 +51,10 @@ public:
    * @param precond preconditioning operator (must be set up by the user prior to calling solve()/apply())
    * @return an owning pointer to the newly instantiated solver
    */
-  static std::unique_ptr< KrylovSolver< VECTOR > > create( LinearSolverParameters const & parameters,
-                                                           LinearOperator< VECTOR > const & matrix,
-                                                           LinearOperator< VECTOR > const & precond );
+  static std::unique_ptr< KrylovSolver< VECTOR > >
+  create( LinearSolverParameters const & parameters,
+          LinearOperator< VECTOR > const & matrix,
+          LinearOperator< VECTOR > const & precond );
 
   /**
    * @brief Constructor.
@@ -62,21 +67,14 @@ public:
                 LinearOperator< Vector > const & precond );
 
   /**
-   * @brief Virtual destructor
-   */
-  virtual ~KrylovSolver() override = default;
-
-  /**
    * @brief Solve preconditioned system
    * @param [in] b system right hand side.
    * @param [inout] x system solution (input = initial guess, output = solution).
    */
   virtual void solve( Vector const & b, Vector & x ) const = 0;
 
-
   /**
    * @brief Apply operator to a vector.
-   *
    * @param src Input vector (src).
    * @param dst Output vector (dst).
    */

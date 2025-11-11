@@ -43,11 +43,7 @@ namespace geos
 
   void MaterialSwapMPMEvent::postInputInitialization()
   {
-    GEOS_LOG_RANK_0( "MaterialSwapEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
-                     "Source region=" << m_sourceRegion << ", " << 
-                     "Destination region=" << m_destinationRegion );
+    MPMEventBase::postInputInitialization();
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, MaterialSwapMPMEvent, string const &, Group * const )

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -54,14 +54,14 @@ public:
   {}
 
   GEOS_HOST_DEVICE
-  virtual void updateStateFromPressureAndTemperature( localIndex const k,
-                                                      localIndex const q,
-                                                      real64 const & pressure,
-                                                      real64 const & pressure_k,
-                                                      real64 const & pressure_n,
-                                                      real64 const & temperature,
-                                                      real64 const & temperature_k,
-                                                      real64 const & temperature_n ) const override final
+  virtual void updateStateFixedStress( localIndex const k,
+                                       localIndex const q,
+                                       real64 const & pressure,
+                                       real64 const & pressure_k,
+                                       real64 const & pressure_n,
+                                       real64 const & temperature,
+                                       real64 const & temperature_k,
+                                       real64 const & temperature_n ) const override final
   {
     updateBiotCoefficientAndAssignModuli( k );
 
@@ -76,7 +76,7 @@ public:
                                        real64 const & timeIncrement,
                                        real64 const & pressure,
                                        real64 const & pressure_n,
-                                       real64 const & temperature,
+                                       real64 const & deltaTemperature,
                                        real64 const & deltaTemperatureFromLastStep,
                                        real64 const ( &strainIncrement )[6],
                                        real64 ( & totalStress )[6],
@@ -96,7 +96,7 @@ public:
                         q,
                         timeIncrement,
                         pressure,
-                        temperature,
+                        deltaTemperature,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure,
@@ -139,6 +139,7 @@ public:
                                                   real64 const & pressure_n,
                                                   real64 const & temperature,
                                                   real64 const & temperature_n,
+                                                  real64 const & referenceTemperature,
                                                   real64 const ( &strainIncrement )[6],
                                                   real64 ( & totalStress )[6],
                                                   DiscretizationOps & stiffness ) const
@@ -147,11 +148,12 @@ public:
     real64 dTotalStress_dTemperature[6]{};
 
     // Compute total stress increment and its derivative
+    real64 const deltaTemperature = temperature - referenceTemperature;
     computeTotalStress( k,
                         q,
                         timeIncrement,
                         pressure,
-                        temperature,
+                        deltaTemperature,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure, // To pass something here
@@ -271,7 +273,7 @@ private:
                            localIndex const q,
                            real64 const & timeIncrement,
                            real64 const & pressure,
-                           real64 const & temperature,
+                           real64 const & deltaTemperature,
                            real64 const ( &strainIncrement )[6],
                            real64 ( & totalStress )[6],
                            real64 ( & dTotalStress_dPressure )[6],
@@ -294,7 +296,7 @@ private:
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
     real64 const thermalExpansionCoefficientTimesBulkModulus = thermalExpansionCoefficient * bulkModulus;
 
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * temperature );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * pressure - 3 * thermalExpansionCoefficientTimesBulkModulus * deltaTemperature );
 
     // Compute derivatives of total stress
     dTotalStress_dPressure[0] = -biotCoefficient;
@@ -312,6 +314,7 @@ private:
     dTotalStress_dTemperature[5] = 0;
 
   }
+
 };
 
 /**

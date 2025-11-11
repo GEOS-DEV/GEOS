@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -139,6 +139,15 @@ public:
                                              real64 ( &stress )[6] ) const override final;
 
   GEOS_HOST_DEVICE
+  virtual void smallStrainUpdate_StressOnly( localIndex const k,
+                                             localIndex const q,
+                                             real64 const & timeIncrement,
+                                             real64 const ( & beginningRotation )[3][3],
+                                             real64 const ( & endRotation )[3][3],
+                                             real64 const ( & strainIncrement )[6],
+                                             real64 ( & stress )[6] ) const override final;
+
+  GEOS_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
                           localIndex const q,
                           real64 const & timeIncrement,
@@ -154,6 +163,16 @@ public:
                                   real64 ( &stress )[6],
                                   DiscretizationOps & stiffness ) const final;
 
+  GEOS_HOST_DEVICE
+  virtual void getElasticStrain( localIndex const k,
+                                 localIndex const q,
+                                 real64 ( &elasticStrain )[6] ) const override final;
+
+  GEOS_HOST_DEVICE
+  virtual void getElasticStrainInc( localIndex const k,
+                                    localIndex const q,
+                                    real64 ( &elasticStrainInc )[6] ) const override final;
+
   // miscellaneous getters
 
   GEOS_HOST_DEVICE
@@ -168,6 +187,13 @@ public:
   {
     return LvArray::math::max( LvArray::math::max( m_c44[k], m_c55[k] ), m_c66[k] );
   }
+
+protected:
+  GEOS_HOST_DEVICE
+  virtual void computeElasticStrain( localIndex const k,
+                                     localIndex const q,
+                                     real64 const (&stress)[6],
+                                     real64 ( &elasticStrain )[6] ) const;
 
 private:
   /// A reference to the ArrayView holding c11 for each element.
@@ -200,8 +226,8 @@ private:
 };
 
 
-inline
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ElasticOrthotropicUpdates::getElasticStiffness( localIndex const k,
                                                      localIndex const q,
                                                      real64 ( & stiffness )[6][6] ) const
@@ -226,8 +252,64 @@ void ElasticOrthotropicUpdates::getElasticStiffness( localIndex const k,
   stiffness[5][5] = m_c66[k];
 }
 
-inline
+
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void ElasticOrthotropicUpdates::computeElasticStrain( localIndex const k,
+                                                      localIndex const q,
+                                                      real64 const (&stress)[6],
+                                                      real64 ( & elasticStrain)[6] ) const
+{
+
+  GEOS_UNUSED_VAR( q );
+
+  real64 const detC = m_c11[k]*(m_c22[k]*m_c33[k] - m_c23[k]*m_c23[k]) - m_c12[k]*(m_c12[k]*m_c33[k] - m_c23[k]*m_c13[k]) + m_c13[k]*(m_c12[k]*m_c23[k] - m_c22[k]*m_c13[k]);
+
+  elasticStrain[0] =
+    ( (m_c22[k]*m_c33[k] - m_c23[k]*m_c23[k])*stress[0] + (m_c13[k]*m_c23[k] - m_c12[k]*m_c33[k])*stress[1] + (m_c12[k]*m_c23[k] - m_c13[k]*m_c22[k])*stress[2] ) /
+    detC;
+  elasticStrain[1] =
+    ( (m_c23[k]*m_c13[k] - m_c12[k]*m_c33[k])*stress[0] + (m_c11[k]*m_c33[k] - m_c13[k]*m_c13[k])*stress[1] + (m_c13[k]*m_c12[k] - m_c11[k]*m_c23[k])*stress[2] ) /
+    detC;
+  elasticStrain[2] =
+    ( (m_c12[k]*m_c23[k] - m_c22[k]*m_c13[k])*stress[0] + (m_c12[k]*m_c13[k] - m_c11[k]*m_c23[k])*stress[1] + (m_c11[k]*m_c22[k] - m_c12[k]*m_c12[k])*stress[2] ) /
+    detC;
+
+  elasticStrain[3] = stress[3] / m_c44[k];
+  elasticStrain[4] = stress[4] / m_c55[k];
+  elasticStrain[5] = stress[5] / m_c66[k];
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void ElasticOrthotropicUpdates::getElasticStrain( localIndex const k,
+                                                  localIndex const q,
+                                                  real64 ( & elasticStrain)[6] ) const
+{
+
+  real64 stress[6] = {m_newStress[k][q][0], m_newStress[k][q][1], m_newStress[k][q][2], m_newStress[k][q][3], m_newStress[k][q][4], m_newStress[k][q][5]};
+
+  computeElasticStrain( k, q, stress, elasticStrain );
+
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void ElasticOrthotropicUpdates::getElasticStrainInc( localIndex const k,
+                                                     localIndex const q,
+                                                     real64 ( & elasticStrainInc)[6] ) const
+{
+
+  real64 stress[6] =
+  {m_newStress[k][q][0] - m_oldStress[k][q][0], m_newStress[k][q][1] - m_oldStress[k][q][1], m_newStress[k][q][2] - m_oldStress[k][q][2], m_newStress[k][q][3] - m_oldStress[k][q][3],
+   m_newStress[k][q][4] - m_oldStress[k][q][4], m_newStress[k][q][5] - m_oldStress[k][q][5]};
+
+  computeElasticStrain( k, q, stress, elasticStrainInc );
+
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ElasticOrthotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
                                                                      localIndex const q,
                                                                      real64 const ( &totalStrain )[6],
@@ -244,8 +326,8 @@ void ElasticOrthotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex 
 }
 
 
-inline
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ElasticOrthotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                           localIndex const q,
                                                           real64 const ( &totalStrain )[6],
@@ -258,7 +340,7 @@ void ElasticOrthotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
 
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void ElasticOrthotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                           localIndex const q,
                                                           real64 const ( &totalStrain )[6],
@@ -278,8 +360,8 @@ void ElasticOrthotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
 }
 
 
-inline
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ElasticOrthotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                               localIndex const q,
                                                               real64 const & timeIncrement,
@@ -292,9 +374,27 @@ void ElasticOrthotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k
   saveStress( k, q, stress );                                           // m_newStress = stress
 }
 
-
-inline
 GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+void ElasticOrthotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
+                                                              localIndex const q,
+                                                              real64 const & timeIncrement,
+                                                              real64 const ( & beginningRotation )[3][3],
+                                                              real64 const ( & endRotation )[3][3],
+                                                              real64 const ( & strainIncrement )[6],
+                                                              real64 ( & stress )[6] ) const
+{
+  GEOS_UNUSED_VAR( beginningRotation );
+  GEOS_UNUSED_VAR( endRotation );
+  smallStrainUpdate_StressOnly( k, 
+                                q, 
+                                timeIncrement, 
+                                strainIncrement, 
+                                stress);
+}
+
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
 void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
                                                    localIndex const q,
                                                    real64 const & timeIncrement,
@@ -308,7 +408,7 @@ void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
 
 
 GEOS_HOST_DEVICE
-inline
+GEOS_FORCE_INLINE
 void ElasticOrthotropicUpdates::smallStrainUpdate( localIndex const k,
                                                    localIndex const q,
                                                    real64 const & timeIncrement,

@@ -3,14 +3,18 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
  * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
  * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file InternalMeshGenerator.cpp
  */
 
 #include "InternalMeshGenerator.hpp"
@@ -19,8 +23,6 @@
 #include "common/MpiWrapper.hpp"
 
 #include "common/DataTypes.hpp"
-
-#include "LvArray/src/tensorOps.hpp"
 
 #include <cmath>
 
@@ -97,7 +99,8 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
   registerWrapper( viewKeyStruct::elementTypesString(), &m_elementType ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "Element types of each mesh block" );
+    setDescription( GEOS_FMT( "Element types of each mesh block. Use \"C3D8\" for linear brick element. Possible values are: {}.",
+                              stringutilities::join( EnumStrings< ElementType >::get(), ", " ) ) );
 
   registerWrapper( viewKeyStruct::trianglePatternString(), &m_trianglePattern ).
     setApplyDefaultValue( 0 ).
@@ -177,12 +180,11 @@ void InternalMeshGenerator::postInputInitialization()
 
   m_numElePerBox.resize( m_nElems[0].size() * m_nElems[1].size() * m_nElems[2].size());
 
-  if( m_elementType.size() != m_numElePerBox.size() )
+  if( LvArray::integerConversion< int >( m_elementType.size() ) != m_numElePerBox.size() )
   {
     if( m_elementType.size() == 1 )
     {
-      string const elementType = m_elementType[0];
-      m_elementType.resizeDefault( m_numElePerBox.size(), elementType );
+      m_elementType.resize( m_numElePerBox.size(), m_elementType[0] );
     }
     else
     {
@@ -210,12 +212,11 @@ void InternalMeshGenerator::postInputInitialization()
     {
       numBlocks *= m_nElems[i].size();
     }
-    if( numBlocks != m_regionNames.size() )
+    if( numBlocks != LvArray::integerConversion< localIndex >( m_regionNames.size()) )
     {
       if( m_regionNames.size() == 1 )
       {
-        string const regionName = m_regionNames[0];
-        m_regionNames.resizeDefault( numBlocks, regionName );
+        m_regionNames.resize( numBlocks, m_regionNames[0] );
       }
       else
       {
@@ -558,14 +559,10 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
   }
 }
 
-void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, array1d< int > const & partition )
+void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
 {
   GEOS_MARK_FUNCTION;
   
-  //Needs to be set before addNeighbors call that occurs in SpatialPartition::setSizes
-  m_partition.setPeriodic( m_periodic );
-
-  m_partition.setPartitions( partition );
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
   {
@@ -577,7 +574,8 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     m_max[1] = m_vertices[1].back();
     m_max[2] = m_vertices[2].back();
 
-    m_partition.setSizes( m_min, m_max );
+    partition.setPeriodic( m_periodic );
+    partition.setSizes( m_min, m_max );
   }
 
   // Make sure that the node manager fields are initialized
@@ -589,7 +587,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
 //  bool isRadialWithOneThetaPartition = false;
 
-  // This should probably handled elsewhere:
+  // This should probably be handled elsewhere:
   int aa = 0;
   for( auto & cellBlockName : m_regionNames )
   {
@@ -614,7 +612,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     {
       m_numElemsTotal[dim] += m_nElems[dim][block];
     }
-    array1d< int > const parts = m_partition.getPartitions();
+    array1d< int > const & parts = partition.getPartitions();
     GEOS_ERROR_IF( parts[dim] > m_numElemsTotal[dim], "Number of partitions in a direction should not exceed the number of elements in that direction" );
 
     elemCenterCoords[dim].resize( m_numElemsTotal[dim] );
@@ -623,11 +621,10 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     {
       elemCenterCoordsLocal[k] = m_min[dim] + ( m_max[dim] - m_min[dim] ) * ( k + 0.5 ) / m_numElemsTotal[dim];
     }
-    MpiWrapper::allReduce( elemCenterCoordsLocal.data(),
-                           elemCenterCoords[dim].data(),
-                           m_numElemsTotal[dim],
-                           MPI_MAX,
-                           MPI_COMM_GEOSX );
+    MpiWrapper::allReduce( elemCenterCoordsLocal,
+                           elemCenterCoords[dim],
+                           MpiWrapper::Reduction::Max,
+                           MPI_COMM_GEOS );
   }
 
   // Find starting/ending index
@@ -637,11 +634,9 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   for( int dim = 0; dim < m_dim; ++dim )
   {
-    //    firstElemIndexInPartition[i] = -1;
-    //    lastElemIndexInPartition[i] = -2;
     for( int k = 0; k < m_numElemsTotal[dim]; ++k )
     {
-      if( m_partition.isCoordInPartition( elemCenterCoords[dim][k], dim ) )
+      if( partition.isCoordInPartition( elemCenterCoords[dim][k], dim ) )
       {
         firstElemIndexInPartition[dim] = k;
         break;
@@ -652,7 +647,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     {
       for( int k = firstElemIndexInPartition[dim]; k < m_numElemsTotal[dim]; ++k )
       {
-        if( m_partition.isCoordInPartition( elemCenterCoords[dim][k], dim ) )
+        if( partition.isCoordInPartition( elemCenterCoords[dim][k], dim ) )
         {
           lastElemIndexInPartition[dim] = k;
         }
@@ -739,14 +734,13 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
     }
   }
 
-  localIndex numNodes = 1;
   integer numNodesInDir[3] = { 1, 1, 1 };
   for( int dim = 0; dim < m_dim; ++dim )
   {
     numNodesInDir[dim] = lastElemIndexInPartition[dim] - firstElemIndexInPartition[dim] + 2;
   }
-  reduceNumNodesForPeriodicBoundary( m_partition, numNodesInDir );
-  numNodes = numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2];
+  reduceNumNodesForPeriodicBoundary( partition, numNodesInDir );
+  localIndex numNodes = numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2];
 
   cellBlockManager.setNumNodes( numNodes );
 
@@ -772,7 +766,8 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
           getNodePosition( globalIJK, m_trianglePattern, X[localNodeIndex] );
 
           // Alter global node map for radial mesh
-          setNodeGlobalIndicesOnPeriodicBoundary( globalIJK );
+          setNodeGlobalIndicesOnPeriodicBoundary( partition, 
+                                                  globalIJK );
 
           nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( globalIJK );
 
@@ -816,7 +811,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
   {
     array1d< integer > numElements;
-    array1d< string > elementRegionNames;
+    string_array elementRegionNames;
     std::map< string, localIndex > localElemIndexInRegion;
 
     for( auto const & numElemsInRegion : numElemsInRegions )
@@ -830,13 +825,12 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
 
     // Assign global numbers to elementsl
     regionOffset = 0;
-    SortedArray< string > processedRegionNames;
     localIndex iR = 0;
 
     // Reset the number of nodes in each dimension in case of periodic BCs so the element firstNodeIndex
     //  calculation is correct? Not actually needed in parallel since we still have ghost nodes in that case and
     //  the count has not been altered due to periodicity.
-    auto const periodic = m_partition.getPeriodic();
+    auto const periodic = partition.getPeriodic();
     if( std::any_of( periodic.begin(), periodic.end(), []( int & dimPeriodic ) { return dimPeriodic == 1; } ) )
     {
       for( int i = 0; i < m_dim; ++i )

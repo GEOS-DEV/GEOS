@@ -39,6 +39,8 @@ namespace geos
 
   void BodyForceUpdateMPMEvent::postInputInitialization()
   {
+    MPMEventBase::postInputInitialization();
+    
     GEOS_ERROR_IF( m_bodyForce.size() != 3 && m_bodyForce.size() > 0,
                    "bodyForce must be of length 3. ");
     
@@ -48,11 +50,6 @@ namespace geos
       m_bodyForce.resize(3);
       LvArray::tensorOps::fill< 3 >( m_bodyForce, 0.0 );
     }
-
-    GEOS_LOG_RANK_0( "BodyForceUpdateEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
-                     "bodyForce=" << m_bodyForce );
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, BodyForceUpdateMPMEvent, string const &, Group * const )

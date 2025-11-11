@@ -117,7 +117,7 @@ A homogeneous domain with one solid material is assumed, whose mechanical proper
     :end-before: <!-- SPHINX_DP_WELLBORE_MATERIAL_END -->
 
 
-Recall that in the ``SolidMechanics_LagrangianFEM`` section, 
+Recall that in the ``SolidMechanicsLagrangianFEM`` section, 
 ``rock`` is designated as the material in the computational domain. 
 Here, Extended Drucker Prager model ``ExtendedDruckerPrager`` is used to simulate the elastoplastic behavior of ``rock``.
 As for the material parameters, ``defaultInitialFrictionAngle``, ``defaultResidualFrictionAngle`` and ``defaultCohesion`` denote the initial friction angle, the residual friction angle, and cohesion, respectively, as defined by the Mohr-Coulomb failure envelope. In this example, zero cohesion is considered to consist with the reference analytical results. As the residual friction angle ``defaultResidualFrictionAngle`` is larger than the initial one ``defaultInitialFrictionAngle``, a  strain hardening model is adopted, whose hardening rate is given as ``defaultHardening="0.01"``. 
@@ -200,8 +200,6 @@ Inspecting results
 ---------------------------------
 
 In the above example, we requested hdf5 output files. We can therefore use python scripts to visualize the outcome. Below figure shows the comparisons between the numerical predictions (marks) and the corresponding analytical solutions (solid curves) with respect to the distributions of principal stress components, stress path on the wellbore surface, the supporting wellbore pressure and wellbore size. It is clear that the GEOS predictions are in excellent agreement with the analytical results. On the top-right figure, we added also a comparison between GEOS results for elasto-plastic material and the anlytical solutions of an elastic material. Note that the elastic solutions are differed from the elasto-plastic results even in the elastic zone (r/a>2).
-
-.. plot:: docs/sphinx/advancedExamples/validationStudies/wellboreProblems/edpWellbore/edpWellbore_plot.py
 
 .. _edpWellboreVerificationFig:
 .. figure:: edpWellboreVerification.png

@@ -45,7 +45,11 @@ public:
    **/
   static string catalogName() { return "InsertPeriodicContactSurfaces"; }
 
- /// @cond DO_NOT_DOCUMENT
+  virtual string getCatalogName() const override { return catalogName(); }
+  
+  virtual void postInputInitialization() override final;
+
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
 

@@ -47,11 +47,13 @@ ParticleMeshGenerator::ParticleMeshGenerator( string const & name, Group * const
   //   setDescription( "path to the header file" );
 
   registerWrapper( viewKeyStruct::particleBlockNamesString(), &m_blockNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Names of each particle block" );
 
   registerWrapper( viewKeyStruct::particleTypesString(), &m_particleTypes ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Particle types of each particle block" );
@@ -70,9 +72,9 @@ void ParticleMeshGenerator::postInputInitialization()
   GEOS_ERROR_IF(m_blockNames.size() == 0, "No particle blocks were specified! Must specify at least one particle block.");
   GEOS_ERROR_IF(m_blockNames.size() != m_particleTypes.size(), "The particle block and type lists must have the same size.");
 
-  for( int i = 0; i < m_particleTypes.size(); i++)
+  for( int i = 0; i < static_cast< int >( m_particleTypes.size() ); ++i)
   {
-    for( int j = 0; j < EnumSize<ParticleType>; j++ )
+    for( int j = 0; j < EnumSize<ParticleType>; ++j )
     {
       if( m_particleTypes[i] == EnumStrings< ParticleType >::toString( static_cast< ParticleType >( j ) ) )
       {
@@ -91,6 +93,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
 {
   GEOS_MARK_FUNCTION;
 
+  // TODO: modify this function for particle restarts (e.g. no need to read read from particle file, just initialize particle blocks)
   // CommandLineOptions const & opts = getGlobalState().getCommandLineOptions();
   // if( opts.beginFromRestart )
   // {
@@ -200,21 +203,15 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       {
         case ParticleColumnHeaders::StrengthScale:
         case ParticleColumnHeaders::MaterialDirectionX:
-        case ParticleColumnHeaders::SurfaceNormalX:
           defaultValue = 1.0;
           break;
         case ParticleColumnHeaders::Temperature:
           defaultValue = 300.0;
           break;
-        case ParticleColumnHeaders::TemperatureRate:
-          defaultValue = 0.0;
-          break;
         case ParticleColumnHeaders::ParticleType:
           defaultValue = 2.0;
           break;
         case ParticleColumnHeaders::MaterialType:
-          defaultValue = 0.0;
-          break;
         case ParticleColumnHeaders::ContactGroup:
         case ParticleColumnHeaders::Damage:
         case ParticleColumnHeaders::Porosity:
@@ -223,6 +220,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         case ParticleColumnHeaders::VelocityZ:
         case ParticleColumnHeaders::MaterialDirectionY:
         case ParticleColumnHeaders::MaterialDirectionZ:
+        case ParticleColumnHeaders::SurfaceNormalX:
         case ParticleColumnHeaders::SurfaceNormalY:
         case ParticleColumnHeaders::SurfaceNormalZ:
         case ParticleColumnHeaders::SurfacePositionX:
@@ -231,6 +229,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         case ParticleColumnHeaders::SurfaceTractionX:
         case ParticleColumnHeaders::SurfaceTractionY:
         case ParticleColumnHeaders::SurfaceTractionZ:
+        case ParticleColumnHeaders::TemperatureRate:
           defaultValue = 0.0;
           break;
         default:

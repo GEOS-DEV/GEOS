@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -19,6 +19,7 @@
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
@@ -32,8 +33,6 @@ namespace geos
 
 namespace testing
 {
-
-using namespace geos::constitutive;
 
 void fillNumericalJacobian( arrayView1d< real64 const > const & residual,
                             arrayView1d< real64 const > const & residualOrig,
@@ -62,7 +61,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
     GEOS_LOG_RANK_0( "Error offset: " << xmlResult.offset );
   }
 
-  int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
+  int mpiSize = MpiWrapper::commSize( MPI_COMM_GEOS );
 
   dataRepository::Group & commandLine =
     problemManager.getGroup< dataRepository::Group >( problemManager.groupKeys.commandLine );
@@ -96,10 +95,11 @@ void testMobilityNumericalDerivatives( SinglePhaseFVM<> & solver,
                                        real64 const perturbParameter,
                                        real64 const relTol )
 {
+  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 0 >;
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(),
                                          [&]( string const,
                                               MeshLevel & mesh,
-                                              arrayView1d< string const > const & regionNames )
+                                              string_array const & regionNames )
   {
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     elementRegionManager.forElementSubRegions( regionNames,
@@ -116,8 +116,8 @@ void testMobilityNumericalDerivatives( SinglePhaseFVM<> & solver,
       arrayView1d< real64 > const mob =
         subRegion.getField< fields::flow::mobility >();
 
-      arrayView1d< real64 > const dMob_dPres =
-        subRegion.getField< fields::flow::dMobility_dPressure >();
+      arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const dMob =
+        subRegion.getField< fields::flow::dMobility >();
 
       // reset the solver state to zero out variable updates
       solver.resetStateToBeginningOfStep( domain );
@@ -146,7 +146,7 @@ void testMobilityNumericalDerivatives( SinglePhaseFVM<> & solver,
           real64 const delta = pres[ei] - pres_n[ei];
           checkDerivative( mob[ei],
                            mobOrig[ei],
-                           dMob_dPres[ei],
+                           dMob[ei][DerivOffset::dP],
                            delta,
                            relTol,
                            "mob",
@@ -158,13 +158,14 @@ void testMobilityNumericalDerivatives( SinglePhaseFVM<> & solver,
 
       if( isThermal )
       {
+        using DerivOffsetTherm = constitutive::singlefluid::DerivativeOffsetC< 1 >;
         arrayView1d< real64 > const temp =
           subRegion.getField< fields::flow::temperature >();
         arrayView1d< real64 const > const temp_n =
           subRegion.getField< fields::flow::temperature_n >();
 
-        arrayView1d< real64 > const dMob_dTemp =
-          subRegion.getField< fields::flow::dMobility_dTemperature >();
+        arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const dMobTherm =
+          subRegion.getField< fields::flow::dMobility >();
 
         // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
         solver.resetStateToBeginningOfStep( domain );
@@ -186,7 +187,7 @@ void testMobilityNumericalDerivatives( SinglePhaseFVM<> & solver,
           real64 const delta = temp[ei] - temp_n[ei];
           checkDerivative( mob[ei],
                            mobOrig[ei],
-                           dMob_dTemp[ei],
+                           dMobTherm[ei][DerivOffsetTherm::dT],
                            delta,
                            relTol,
                            "mob",
@@ -214,7 +215,7 @@ void fillCellCenteredNumericalJacobian( SINGLE_PHASE_SOLVER & solver,
 
   solver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                        MeshLevel & mesh,
-                                                                       arrayView1d< string const > const & regionNames )
+                                                                       string_array const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,

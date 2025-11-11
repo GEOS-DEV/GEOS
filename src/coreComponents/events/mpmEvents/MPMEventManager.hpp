@@ -44,7 +44,7 @@ public:
    * @param[in] parent group this MPMEventManager
    */
   MPMEventManager( string const & name,
-                Group * const parent );
+                   Group * const parent );
 
   /**
    * @brief Default destructor for the EventManager

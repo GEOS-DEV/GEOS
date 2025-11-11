@@ -21,6 +21,8 @@
 
 #include "MPMEventBase.hpp"
 
+#include "physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp"
+
 namespace geos
 {
 
@@ -45,6 +47,8 @@ public:
    **/
   static string catalogName() { return "CohesiveZoneReference"; }
 
+  virtual string getCatalogName() const override { return catalogName(); }
+
  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
@@ -52,9 +56,16 @@ public:
   } CohesiveZoneReferenceMPMEventViewKeys;
   /// @endcond
 
+  int getCZVolumeNormalization() const { return m_czVolumeNormalization; } 
+  int getComputeNormalsAndPositions() const { return m_computeNormalsAndPositions; } 
+  SolidMechanicsMPM::NormalsAndPositionsMethodOption getNormalsAndPositionsMethod() const { return m_normalsAndPositionsMethod; }
+
 protected:
   virtual void postInputInitialization() override final;
 
+  int m_czVolumeNormalization;
+  int m_computeNormalsAndPositions;
+  SolidMechanicsMPM::NormalsAndPositionsMethodOption m_normalsAndPositionsMethod;
 };
 
 } /* namespace geos */

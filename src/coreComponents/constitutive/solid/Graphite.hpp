@@ -507,7 +507,7 @@ void GraphiteUpdates::smallStrainUpdate_StressOnly( localIndex const k,
   //                                                                                   strainIncrement,
   //                                                                                   stress );
 
-  m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
+  m_jacobian[k][q] *= LvArray::math::exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
   // if( m_disableInelasticity )
   // {
@@ -590,16 +590,16 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
     // CC: in old geos the elastic on two different lines of the same code, Mike used planeNormalStress in one but not the other
     // need to ask him about that
-    real64 Ez = m_defaultYoungModulusAxial + m_defaultYoungModulusAxialPressureDerivative * std::max( 0.0, -0.5*oldPlaneNormalStress + 0.5*oldPressure);
-    real64 Ep = m_defaultYoungModulusTransverse + m_defaultYoungModulusTransversePressureDerivative * std::max( 0.0, oldPressure);
-    real64 Gzp  = m_defaultShearModulusAxialTransverse + m_defaultShearModulusAxialTransversePressureDerivative * std::max( 0.0, oldPressure );
+    real64 Ez = m_defaultYoungModulusAxial + m_defaultYoungModulusAxialPressureDerivative * LvArray::math::max( 0.0, -0.5*oldPlaneNormalStress + 0.5*oldPressure);
+    real64 Ep = m_defaultYoungModulusTransverse + m_defaultYoungModulusTransversePressureDerivative * LvArray::math::max( 0.0, oldPressure);
+    real64 Gzp  = m_defaultShearModulusAxialTransverse + m_defaultShearModulusAxialTransversePressureDerivative * LvArray::math::max( 0.0, oldPressure );
     real64 nuzp = m_defaultPoissonRatioAxialTransverse;
     real64 nup = m_defaultPoissonRatioTransverse;
 
     // Update effective elastic properties
     m_effectiveBulkModulus[k] = -Ep*Ez/(2*Ez*(nup+nuzp-1) + Ep*(2*nuzp-1));
     m_effectiveShearModulus[k] = 0.6*m_effectiveBulkModulus[k];
-    m_wavespeed[k][0] = sqrt( ( m_effectiveBulkModulus[k] + (4.0/3.0) * m_effectiveShearModulus[k] ) / m_density[k][0] );
+    m_wavespeed[k][0] = LvArray::math::sqrt( ( m_effectiveBulkModulus[k] + (4.0/3.0) * m_effectiveShearModulus[k] ) / m_density[k][0] );
 
     // CC: debug
     // GEOS_LOG_RANK( "Particle " << k << ":\n"
@@ -634,7 +634,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // CC: debug
     // GEOS_LOG_RANK( "Particle " << k << ", Trial stress: {" << stress[0] << ", " << stress[1] << ", " << stress[2] << ", " << stress[3] << ", " << stress[4] << ", " << stress[5] << "}" );
 
-    // m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
+    // m_jacobian[k][q] *= LvArray::math::exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
     if( m_disableInelasticity )
     {
@@ -692,7 +692,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     if ( planeNormalStress > failureStrength )
     {
         real64 timeToFailure = m_lengthScale[k] / m_crackSpeed;
-        m_damage[k][q] = std::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
+        m_damage[k][q] = LvArray::math::min( m_damage[k][q] + timeIncrement / timeToFailure, 1.0 );
     }
 
     // If strain-softening is enabled, insert damage once max strain is reached.
@@ -775,12 +775,12 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     y1 *= damageMultiplier*strainHardeningMultiplier;
     y2 *= strainHardeningMultiplier;
     m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
-    m1 = std::max( m1, (y2-y1)/(x2-x1) ); // Ensure convexity
+    m1 = LvArray::math::max( m1, (y2-y1)/(x2-x1) ); // Ensure convexity
 
     if(pressure < x1)
     {
-        totalShearStrength=std::max(0.0,y1-(x1-pressure)*m1);
-        // totalShearStrength=std::max(0.0,y1-(x2-pressure)*m1);
+        totalShearStrength=LvArray::math::max(0.0,y1-(x1-pressure)*m1);
+        // totalShearStrength=LvArray::math::max(0.0,y1-(x2-pressure)*m1);
     }
     else if(pressure < x2)
     {
@@ -804,12 +804,12 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     y1 *= damageMultiplier*strainHardeningMultiplier;
     y2 *= strainHardeningMultiplier;
     m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
-    m1 = std::max( m1, (y2-y1)/(x2-x1) ); // Ensure convexity
+    m1 = LvArray::math::max( m1, (y2-y1)/(x2-x1) ); // Ensure convexity
 
     if(pressure<x1)
     {
-      coupledYieldStrength=std::max(0.0,y1-(x1-pressure)*m1);
-      // coupledYieldStrength=std::max(0.0,y1-(x2-pressure)*m1);
+      coupledYieldStrength=LvArray::math::max(0.0,y1-(x1-pressure)*m1);
+      // coupledYieldStrength=LvArray::math::max(0.0,y1-(x2-pressure)*m1);
     }
     else if(pressure<x2)
     {
@@ -833,12 +833,12 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     y1 *= damageMultiplier*strainHardeningMultiplier;
     y2 *= strainHardeningMultiplier;
     m1 = damageMultiplier*m1*strainHardeningMultiplier + (1. - damageMultiplier)*m_damagedMaterialFrictionalSlope;
-    m1 = std::max( m1, (y2-y1)/(x2-x1) ); // Ensure convexity
+    m1 = LvArray::math::max( m1, (y2-y1)/(x2-x1) ); // Ensure convexity
 
     if( pressure < x1 )
     {
-      inPlaneShearStrength=std::max(0.0, y1  -( x1 - pressure ) * m1 );
-      // inPlaneShearStrength=std::max(0.0, y1  -( x2 - pressure ) * m1 );
+      inPlaneShearStrength=LvArray::math::max(0.0, y1  -( x1 - pressure ) * m1 );
+      // inPlaneShearStrength=LvArray::math::max(0.0, y1  -( x2 - pressure ) * m1 );
     }
     else if( pressure < x2 )
     {
@@ -986,7 +986,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
         plasticStrainIncrement[4] *= 1.41421356237;
         plasticStrainIncrement[5] *= 1.41421356237;
         m_relaxation[k][q] += LvArray::tensorOps::l2Norm< 6 >( plasticStrainIncrement ) / m_maximumPlasticStrain;
-        m_relaxation[k][q] = std::min(1.0, m_relaxation[k][q]);
+        m_relaxation[k][q] = LvArray::math::min(1.0, m_relaxation[k][q]);
     }
 }
 
@@ -1002,8 +1002,7 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
                                                               real64 const (& oldStress)[6],   // stress at start of step.
                                                               real64 const (& D)[6],           // D=sym(L)
                                                               real64 (& newStress) [6],         // stress at end of step
-                                                              const localIndex k
-) const
+                                                              const localIndex k ) const
 {
   // These are the TI elastic stiffness coefficients using Brannon's TI basis tensors:
 	real64 h1 = ( Ez*Ez*(-1 + nup) ) / ( Ez*(-1 + nup) + 2*Ep*nuzp*nuzp );
@@ -1015,7 +1014,7 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
   // Construct the dense 3x3 transversely isotropic thermal expansion tensor.
   // We do this in a loop to easily implement the indicial expression, but    
   // this could be more efficient since we only need 6 of the components.
-  real64 alphaDense[3][3] = { { 0 } };
+  real64 alphaDense[3][3] = { };
   for (int i = 0; i < 3; ++i)
   {
       for (int j = 0; j < 3; ++j)
@@ -1028,7 +1027,7 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress(const real64 timeI
   // The trial stress increment is computed using the transversely isotropic basis construction of the stiffness
   // tensor, and we subtract a thermal strain rate from the symmetric portion of the velocity gradient too
   // allow for thermal expansion effects:
-  real64 stressIncrementDense[3][3] = { { 0 } };
+  real64 stressIncrementDense[3][3] = { };
   int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
 	for(int i=0; i<3; i++)
 	{
@@ -1241,9 +1240,9 @@ real64 GraphiteUpdates::slopePoint0( const real64 x,
 {
   // returns a function h(x), for x1 <= x <= x2, with h(x1)=y1, h(x2)=y2, h'(x1)=m1, x'(x2)=0
   //realT beta = (m1*x1 - m1*x2 - y1 + y2)/(y1 - y2);
-  //return -(((m1*(x1 - x2) + m1*std::pow((x - x2)/(x1 - x2),beta)*(-x + x2) + (m1*(-x1 + x2)*y1)/(y1 - y2))*(y1 - y2))/(m1*(x1 - x2)));
+  //return -(((m1*(x1 - x2) + m1*powf((x - x2)/(x1 - x2),beta)*(-x + x2) + (m1*(-x1 + x2)*y1)/(y1 - y2))*(y1 - y2))/(m1*(x1 - x2)));
   // This should be the same, but simplified:
-  return y2 + (y1-y2)*std::pow( (x-x2)/(x1-x2) , m1*(x1-x2)/(y1-y2) );
+  return y2 + (y1-y2)*LvArray::math::pow( (x-x2)/(x1-x2) , m1*(x1-x2)/(y1-y2) );
 }
 
 
@@ -1764,7 +1763,6 @@ protected:
   real64 m_coupledShearResponseY1;
   real64 m_coupledShearResponseY2;
   real64 m_coupledShearResponseM1;
-
 
   real64 m_distortionStrainHardeningC0;
   real64 m_inPlaneStrainHardeningC0;

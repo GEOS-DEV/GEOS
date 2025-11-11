@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -24,7 +24,6 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
-#include "constitutive/solid/SolidBase.hpp"
 #include "ToParticleRelation.hpp"
 
 namespace geos
@@ -150,7 +149,7 @@ public:
   arrayView1d< real64 > getParticlePorosity()
   { return m_particlePorosity; }
 
-   /**
+  /**
    * @brief Get the temperature of each particle in this subregion.
    * @return an arrayView1d of const particle temperature
    */
@@ -162,7 +161,6 @@ public:
    */
   arrayView1d< real64 > getParticleTemperature()
   { return m_particleTemperature; }
-
 
    /**
    * @brief Get the temperature rate of each particle in this subregion.
@@ -176,8 +174,6 @@ public:
    */
   arrayView1d< real64 > getParticleTemperatureRate()
   { return m_particleTemperatureRate; }
-
-
 
   /**
    * @brief Get the strength scale of each particle in this subregion.
@@ -457,13 +453,13 @@ public:
 
     /// @return String key for the member level field for the particle volume.
     static constexpr char const * particleRVectorsString() { return "particleRVectors"; }
-  
+
     /// @return String key for the member level field for the particle surface normal.
     static constexpr char const * particleSurfaceNormalString() { return "particleSurfaceNormal"; }
 
     /// @return String key for the member level field for the particle surface position.
     static constexpr char const * particleSurfacePositionString() { return "particleSurfacePosition"; }
-  
+
     /// @return String key for the member level field for the particle surface traction.
     static constexpr char const * particleSurfaceTractionString() { return "particleSurfaceTraction"; }
   };

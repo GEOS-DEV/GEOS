@@ -26,17 +26,18 @@ namespace geos
   MPMEventBase::MPMEventBase( string const & name,
                               Group * const parent  ) :
                               Group( name, parent),
-                              m_time( DBL_MAX ),
-                              m_interval( DBL_MAX ),
+                              m_startTime( 0.0 ),
+                              m_endTime( DBL_MAX ),
                               m_isComplete( 0 )
   {
-    registerWrapper( viewKeyStruct::timeString(), &m_time ).
+    registerWrapper( viewKeyStruct::startTimeString(), &m_startTime ).
       setInputFlag( InputFlags::REQUIRED ).
       setDescription( "Time at which event starts" );
 
-    registerWrapper( viewKeyStruct::intervalString(), &m_interval ).
-      setInputFlag( InputFlags::REQUIRED ).
-      setDescription( "Time interval over which event is performed" );
+    registerWrapper( viewKeyStruct::endTimeString(), &m_endTime ).
+      setInputFlag( InputFlags::OPTIONAL ).
+      setApplyDefaultValue( DBL_MAX ).
+      setDescription( "Time at which event ends" );
 
     registerWrapper( viewKeyStruct::isCompleteString(), &m_isComplete ).
       setInputFlag( InputFlags::FALSE ).
@@ -54,10 +55,19 @@ namespace geos
     return catalog;
   }
 
+  void MPMEventBase::postInputInitialization()
+  {
+    GEOS_ERROR_IF( m_startTime > m_endTime, "Event start time must be less than end time!");
+  }
+
   Group * MPMEventBase::createChild( string const & childKey, string const & childName )
   {
-    GEOS_LOG_RANK_0( "Adding MPM Event: " << childKey << ", " << childName );
-    std::unique_ptr< MPMEventBase > event = MPMEventBase::CatalogInterface::factory( childKey, childName, this );
+    // GEOS_LOG_RANK_0( "Adding MPM Event: " << childKey << ", " << childName );
+    // std::unique_ptr< MPMEventBase > event = MPMEventBase::CatalogInterface::factory( childKey, childName, this );
+    // return &this->registerGroup< MPMEventBase >( childName, std::move( event ) );
+
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
+    std::unique_ptr< MPMEventBase > event = MPMEventBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
     return &this->registerGroup< MPMEventBase >( childName, std::move( event ) );
   }
 

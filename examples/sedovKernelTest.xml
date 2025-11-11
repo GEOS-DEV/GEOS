@@ -2,12 +2,7 @@
 
 <Problem>
   <Solvers>
-    <!-- SolidMechanics_LagrangianFEM name="lagsolve" 
-                                  cflFactor="0.25"
-                                  discretization="FE1"
-                                  targetRegions="{Region2}"
-                                  solidMaterialName="shale"/-->
-    <SolidMechanicsLagrangianSSLE
+    <SolidMechanicsLagrangianFEM
       name="lagsolve"
       cflFactor="0.25"
       discretization="FE1"
@@ -68,7 +63,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
-      cellBlocks="{ cb1 }"
+      cellBlocks="{ * }"
       materialList="{ shale }"/>
   </ElementRegions>
 

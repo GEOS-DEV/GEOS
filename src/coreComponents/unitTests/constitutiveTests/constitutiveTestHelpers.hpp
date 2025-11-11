@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -19,7 +19,7 @@
 #include "common/DataTypes.hpp"
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
-#include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureSelector.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "unitTests/fluidFlowTests/testFlowUtils.hpp"
@@ -32,7 +32,24 @@ namespace geos
 {
 namespace testing
 {
+void fillArray( array1d< real64_array > & arr, std::initializer_list< real64 > const & input_list )
+{
+  arr.resize( 1 );
+  arr[0].resize( input_list.size());
+  int j = 0;
+  for( auto const & elt : input_list )
+    arr[0][j++] = elt;
 
+}
+
+void fillArray( real64_array & arr, std::initializer_list< real64 > const & input_list )
+{
+  arr.resize( input_list.size());
+  int j = 0;
+  for( auto const & elt : input_list )
+    arr[j++] = elt;
+
+}
 void initializeTable( string const & tableName,
                       array1d< array1d< real64 > > const & coordinates,
                       array1d< real64 > const & values )

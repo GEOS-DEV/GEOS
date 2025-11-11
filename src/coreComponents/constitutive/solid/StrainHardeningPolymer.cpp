@@ -127,10 +127,6 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Yield strength T0" );
 
-  // registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
-  //   setInputFlag( InputFlags::REQUIRED ).
-  //   setDescription( "Temperature independent bulk modulus" );
-
   registerWrapper( viewKeyStruct::bulkModulusAString(), &m_bulkModulusA ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -145,10 +141,6 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setApplyDefaultValue( 300.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature dependent bulk modulus T0 parameter" );
-
-  // registerWrapper( viewKeyStruct::defaultShearModulusString(), &m_defaultShearModulus ).
-  //   setInputFlag( InputFlags::REQUIRED ).
-  //   setDescription( "Temperature independent shear modulus" );
 
   registerWrapper( viewKeyStruct::shearModulusAString(), &m_shearModulusA ).
     setApplyDefaultValue( 0.0 ).
@@ -170,18 +162,15 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum stretch" );
 
-
   registerWrapper( viewKeyStruct::maximumStretchAString(), &m_maximumStretchA ).
     setApplyDefaultValue( 300 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "max Stretch A" );
 
-
   registerWrapper( viewKeyStruct::maximumStretchBString(), &m_maximumStretchB ).
     setApplyDefaultValue( DBL_MAX ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum stretch B" );
-
 
   registerWrapper( viewKeyStruct::maximumStretchT0String(), &m_maximumStretchT0 ).
     setApplyDefaultValue( DBL_MAX ).
@@ -251,7 +240,7 @@ void StrainHardeningPolymer::postInputInitialization()
   GEOS_THROW_IF( m_defaultYieldStrength < 0.0, "Yield strength must be a positive number.", InputError );
   GEOS_THROW_IF( m_maximumStretch < 0.0, "Max stretch must be greater than 1", InputError );
 
-  // We are using defeault yield strength to be the temperature-independent value, that will be modified by thermal softening.
+  // We are using default yield strength to be the temperature-independent value, that will be modified by thermal softening.
   this->getWrapper< array1d< real64 > >( viewKeyStruct::yieldStrengthString() ).setApplyDefaultValue( m_defaultYieldStrength );
 }
 

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -19,7 +19,7 @@
 
 #include "InternalWellboreGenerator.hpp"
 
-#include "LvArray/src/tensorOps.hpp"
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 
 namespace geos
 {
@@ -272,9 +272,9 @@ void InternalWellboreGenerator::postInputInitialization()
                    GEOS_FMT( "{} must be strictly larger than 0",
                              viewKeyStruct::cartesianOuterBoundaryString() ) );
 
-    GEOS_ERROR_IF( m_cartesianOuterBoundary >= m_vertices[0].size()-1,
+    GEOS_ERROR_IF( m_cartesianOuterBoundary >= m_vertices[0].size(),
                    GEOS_FMT( "{} must be strictly smaller than the number of radial blocks (equal to {} here)",
-                             viewKeyStruct::cartesianOuterBoundaryString(), m_vertices[0].size()-1 ) );
+                             viewKeyStruct::cartesianOuterBoundaryString(), m_vertices[0].size() ) );
 
     // step 2: check that the cartesian inner radius is valid
     bool const isCartesianMappingInnerRadiusSpecified = m_cartesianMappingInnerRadius < 1e98;
@@ -302,10 +302,10 @@ void InternalWellboreGenerator::postInputInitialization()
   InternalMeshGenerator::postInputInitialization();
 }
 
-void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( PartitionDescriptor & partition,
+void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
                                                                    integer ( & numNodesInDir )[3] )
 {
-  if( m_isFullAnnulus )
+   if( m_isFullAnnulus )
   {
     if( partition.getPartitions()[1] == 1 )
     {
@@ -313,14 +313,15 @@ void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( PartitionDesc
     }
     else if( partition.getPartitions()[1] > 1 )
     {
-      partition.setPeriodic( 1, 1 );
+      partition.setPeriodic(1, 1);
     }
   }
-
 }
 
-void InternalWellboreGenerator::setNodeGlobalIndicesOnPeriodicBoundary( int ( & globalIJK )[3] )
+void InternalWellboreGenerator::setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
+                                                                        int ( & globalIJK )[3] )
 {
+  GEOS_UNUSED_VAR(partition);
   if( m_isFullAnnulus )
   {
     if( globalIJK[1] == m_nElems[1].back() + 1 )

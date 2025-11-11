@@ -305,11 +305,11 @@ void VonMisesJUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                      trialP,
                                      trialQ,
                                      oldDeviatoricStress );
-  LvArray::tensorOps::scale< 6 >( oldDeviatoricStress, sqrt(2.0 / 3.0)*trialQ );
+  LvArray::tensorOps::scale< 6 >( oldDeviatoricStress, LvArray::math::sqrt(2.0 / 3.0)*trialQ );
 
   // Exactly compute pressure 
   real64 J = LvArray::tensorOps::determinant< 3 >( m_deformationGradient[k] );
-  real64 pressure = -m_bulkModulus[k] * std::log( J );
+  real64 pressure = -m_bulkModulus[k] * LvArray::math::log( J );
 
   // Hypoelastically compute deviatoric stress
   real64 rotationTranspose[3][3] = { { 0 } };
@@ -491,7 +491,7 @@ void VonMisesJUpdates::computePlasticStrainIncrement ( localIndex const k,
     }
     if (m_shearModulus[k] > 1.0e-12)
     {
-      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * sqrt(2/3) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
+      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * LvArray::math::sqrt(2/3) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
     }
   }
 

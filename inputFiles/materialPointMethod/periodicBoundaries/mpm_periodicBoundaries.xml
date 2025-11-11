@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <!-- 
-srun -p pdebug -n 1 /usr/workspace/crook5/GEOS/build-quartz-clang-14-release/bin/geosx -i mpm_diskThruPBC.xml
-srun -n 25 /usr/workspace/crook5/GEOS/build-quartz-clang-14-release/bin/geosx -i mpm_diskThruPBC.xml
+srun -p pdebug -n 1 /usr/workspace/crook5/GEOS/build-ruby-clang-14-release/bin/geosx -i mpm_periodicBoundaries.xml
+srun -n 25 /usr/workspace/crook5/GEOS/build-ruby-clang-14-release/bin/geosx -i mpm_periodicBoundaries.xml
 -->
 <Problem>
 
@@ -20,10 +20,8 @@ srun -n 25 /usr/workspace/crook5/GEOS/build-quartz-clang-14-release/bin/geosx -i
       
     <ParticleMesh
       name="particles"
-      particleFile="mpmParticleFile_diskThruPBC"
-      headerFile="mpmHeaderFile_diskThruPBC"
-      particleBlockNames="{ pb1 }"
-      particleMaterialNames="{ aluminum }"
+      particleFile="mpmParticleFile_periodicBoundaries"
+      particleBlockNames="{ pb0 }"
       particleTypes="{ CPDI }"/>
   </Mesh>
 
@@ -39,8 +37,8 @@ srun -n 25 /usr/workspace/crook5/GEOS/build-quartz-clang-14-release/bin/geosx -i
     <ParticleRegion
         name="ParticleRegion1"
         meshBody="particles"
-        particleBlocks="{ pb1 }"
-        materialList="{aluminum}"/>
+        particleBlocks="{ pb0 }"
+        materialList="{ testMaterial }"/>
   </ParticleRegions>
 
   <Solvers
@@ -50,13 +48,12 @@ srun -n 25 /usr/workspace/crook5/GEOS/build-quartz-clang-14-release/bin/geosx -i
       discretization="FE1"
       targetRegions="{ backgroundGrid/CellRegion1, particles/ParticleRegion1 }"
       timeIntegrationOption="ExplicitDynamic"
-      cflFactor="0.5"
+      updateMethod="FLIP"
+      cflFactor="0.25"
       initialDt="1e-16"
-      solverProfiling="0"
       planeStrain="1"
-      needsNeighborList="0"
-      boundaryConditionTypes="{0, 0, 0, 0, 1, 1}"
-      neighborRadius="-1.01">
+      boundaryConditionTypes="{0, 0, 0, 0, 1, 1}">
+
     </SolidMechanics_MPM>
   </Solvers>
 
@@ -66,28 +63,30 @@ srun -n 25 /usr/workspace/crook5/GEOS/build-quartz-clang-14-release/bin/geosx -i
       defaultDensity="1000"
       defaultBulkModulus="1.0e9"
       defaultShearModulus="1.0e9"/>
+    
     <ElasticIsotropic
-    	name="aluminum"
-    	defaultDensity="2.7"
-    	defaultBulkModulus="70.0"
-    	defaultShearModulus="24.0"/>
+    	name="testMaterial"
+    	defaultDensity="1000"
+    	defaultBulkModulus="10.0e9"
+    	defaultShearModulus="10.0e9"/>
+    
   </Constitutive>
 
   <Events
-    maxTime="1.0">
+    maxTime="0.1">
     <PeriodicEvent
       name="solverApplications"
       target="/Solvers/mpmsolve"/>
     <PeriodicEvent
       name="outputs"
-      timeFrequency="0.005"
+      timeFrequency="0.001"
       target="/Outputs/vtkOutput"/>
     <PeriodicEvent
       name="restart"
-      timeFrequency="0.05"
+      timeFrequency="0.01"
       target="/Outputs/restartOutput"/> 
     <HaltEvent
-      maxRuntime="60"/>
+      maxRuntime="300.0"/>
   </Events>
 
   <NumericalMethods>

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -23,11 +23,16 @@
 #include "constitutive/fluid/multifluid/compositional/CompositionalMultiphaseFluidUpdates.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/ConstantViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/CompositionalDensity.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterDensity.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/ImmiscibleWaterViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp"
-#include "constitutive/fluid/multifluid/compositional/models/ModelParameters.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/NullModel.hpp"
 #include "constitutive/fluid/multifluid/compositional/models/PhaseModel.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineDensity.hpp"
+#include "constitutive/fluid/multifluid/compositional/models/PhillipsBrineViscosity.hpp"
+#include "constitutive/fluid/multifluid/compositional/parameters/ModelParameters.hpp"
 
 namespace geos
 {
@@ -67,6 +72,8 @@ public:
   static string catalogName();
 
   virtual string getCatalogName() const override { return catalogName(); }
+
+  static constexpr bool isThermalType(){ return false; }
 
   // TODO: This method should be implemented if an incorrect extrapolation of the pressure and temperature is encountered in the kernel
   /**
@@ -112,10 +119,16 @@ private:
   // Create the fluid models
   void createModels();
 
+  array1d< integer > getPhaseTypes() const;
+
   static std::unique_ptr< compositional::ModelParameters > createModelParameters();
 
   // Flash model
   std::unique_ptr< FLASH > m_flash{};
+
+  // Phase ordering
+  array1d< integer > m_phaseOrder{};
+  array1d< integer > m_phaseType{};
 
   // Phase models
   std::unique_ptr< PHASE1 > m_phase1{};
@@ -140,6 +153,15 @@ using CompositionalTwoPhaseLohrenzBrayClarkViscosity = CompositionalMultiphaseFl
   compositional::NegativeTwoPhaseFlashModel,
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
   compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+using CompositionalTwoPhasePhillipsBrine = CompositionalMultiphaseFluid<
+  compositional::NegativeTwoPhaseFlashModel,
+  compositional::PhaseModel< compositional::PhillipsBrineDensity, compositional::PhillipsBrineViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel > >;
+using CompositionalThreePhaseLohrenzBrayClarkViscosity = CompositionalMultiphaseFluid<
+  compositional::ImmiscibleWaterFlashModel,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::CompositionalDensity, compositional::LohrenzBrayClarkViscosity, compositional::NullModel >,
+  compositional::PhaseModel< compositional::ImmiscibleWaterDensity, compositional::ImmiscibleWaterViscosity, compositional::NullModel > >;
 
 } /* namespace constitutive */
 

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -50,6 +50,9 @@ public:
    * @param[in] thermalExpansionCoefficient The ArrayView holding the thermal expansion coefficient data for each element.
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
+   * @param[in] density The ArrayView holding the density data for each quadrature point.
+   * @param[in] wavepseed The ArrayView holding the wavespeed data for each quadrature point.
+   * @param[in] disableInelasticity Flag to disable plasticity for inelastic models
    */
   PerfectlyPlasticUpdates( arrayView1d< real64 const > const & yieldStress,
                            arrayView1d< real64 > const & bulkModulus,
@@ -93,6 +96,7 @@ public:
   using ElasticIsotropicUpdates::smallStrainUpdate;
 
   GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   void smallStrainUpdate( localIndex const k,
                           localIndex const q,
                           real64 const & timeIncrement,
@@ -101,6 +105,7 @@ public:
                           real64 ( &stiffness )[6][6] ) const;
 
   GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void smallStrainUpdate( localIndex const k,
                                   localIndex const q,
                                   real64 const & timeIncrement,
@@ -109,6 +114,7 @@ public:
                                   DiscretizationOps & stiffness ) const;
 
   GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
@@ -116,6 +122,7 @@ public:
                                              real64 ( &stress )[6] ) const override;
   
   GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
@@ -139,8 +146,6 @@ private:
 };
 
 
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
 void PerfectlyPlasticUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
                                                  real64 const & timeIncrement,
@@ -149,7 +154,12 @@ void PerfectlyPlasticUpdates::smallStrainUpdate( localIndex const k,
                                                  real64 ( & stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
-  ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
+  ElasticIsotropicUpdates::smallStrainUpdate( k,
+                                              q,
+                                              timeIncrement,
+                                              strainIncrement,
+                                              stress,
+                                              stiffness );
 
   if( m_disableInelasticity )
   {
@@ -188,8 +198,6 @@ void PerfectlyPlasticUpdates::smallStrainUpdate( localIndex const k,
 }
 
 
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
 void PerfectlyPlasticUpdates::smallStrainUpdate( localIndex const k,
                                                  localIndex const q,
                                                  real64 const & timeIncrement,
@@ -197,12 +205,16 @@ void PerfectlyPlasticUpdates::smallStrainUpdate( localIndex const k,
                                                  real64 ( & stress )[6],
                                                  DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
+  smallStrainUpdate( k,
+                     q,
+                     timeIncrement,
+                     strainIncrement,
+                     stress,
+                     stiffness.m_c );
 }
 
 
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE // TODO: Is there a way to not have to re-write the constitutive model twice for regular and StressOnly?
+// TODO: Is there a way to not have to re-write the constitutive model twice for regular and StressOnly?
 void PerfectlyPlasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                             localIndex const q,
                                                             real64 const & timeIncrement,
@@ -245,25 +257,24 @@ void PerfectlyPlasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
   return;
 }
 
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
+
 void PerfectlyPlasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
-                                                     localIndex const q,
-                                                     real64 const & timeIncrement,
-                                                     real64 const ( & beginningRotation )[3][3],
-                                                     real64 const ( & endRotation )[3][3],
-                                                     real64 const ( & strainIncrement )[6],
-                                                     real64 ( & stress )[6] ) const
+                                                            localIndex const q,
+                                                            real64 const & timeIncrement,
+                                                            real64 const ( & beginningRotation )[3][3],
+                                                            real64 const ( & endRotation )[3][3],
+                                                            real64 const ( & strainIncrement )[6],
+                                                            real64 ( & stress )[6] ) const
 {
-  GEOS_UNUSED_VAR( k );
-  GEOS_UNUSED_VAR( q );
-  GEOS_UNUSED_VAR( timeIncrement );
   GEOS_UNUSED_VAR( beginningRotation);
   GEOS_UNUSED_VAR( endRotation);
-  GEOS_UNUSED_VAR( strainIncrement );
-  GEOS_UNUSED_VAR( stress );
-  GEOS_ERROR( "smallStrainUpdate_StressOnly overload not implemented for PerfectlyPlastic" );
+  smallStrainUpdate_StressOnly( k,
+                                q,
+                                timeIncrement,
+                                strainIncrement,
+                                stress);
 }
+
 
 /**
  * @class PerfectlyPlastic

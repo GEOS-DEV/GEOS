@@ -417,7 +417,7 @@ void ChiumentiUpdates::hyperUpdate( localIndex const k,
   real64 maximumPrincipalStress = 0.0;
   for( localIndex i = 0; i < 3; ++i )
   {
-    maximumPrincipalStress = fmax( principalStresses[i], maximumPrincipalStress );
+    maximumPrincipalStress = LvArray::math::max( principalStresses[i], maximumPrincipalStress );
   }
 
   if( maximumPrincipalStress > failureStrength )
@@ -427,7 +427,7 @@ void ChiumentiUpdates::hyperUpdate( localIndex const k,
     {
         newDamage = (1.0+brittlenessFactorScaled) * (1.0-failureStrength / maximumPrincipalStress);
     }   
-    m_damage[k][q] = fmax(0.0, fmin(1.0, fmax(m_damage[k][q], newDamage)));
+    m_damage[k][q] = LvArray::math::max(0.0, LvArray::math::min(1.0, LvArray::math::max(m_damage[k][q], newDamage)));
   }
 //   ss << "Updated damage" << m_damage[k][q] << "\n";
 

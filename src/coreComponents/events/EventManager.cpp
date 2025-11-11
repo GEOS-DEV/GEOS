@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -19,10 +19,12 @@
 
 #include "EventManager.hpp"
 
+#include "common/MemoryInfos.hpp"
 #include "common/TimingMacros.hpp"
 #include "events/EventBase.hpp"
-#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/Units.hpp"
+#include "events/LogLevelsInfo.hpp"
 
 namespace geos
 {
@@ -45,16 +47,13 @@ EventManager::EventManager( string const & name,
 {
   setInputFlags( InputFlags::REQUIRED );
 
-  // This enables logLevel filtering
-  enableLogLevelInput();
-
   registerWrapper( viewKeyStruct::minTimeString(), &m_minTime ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Start simulation time for the global event loop." );
 
   registerWrapper( viewKeyStruct::maxTimeString(), &m_maxTime ).
-    setApplyDefaultValue( std::numeric_limits< real64 >::max() ).
+    setApplyDefaultValue( 10000 * units::YearSeconds ). // 10000 years
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum simulation time for the global event loop. Disabled by default." );
 
@@ -83,6 +82,8 @@ EventManager::EventManager( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Format of the time in the GEOS log." );
+
+  addLogLevel< logInfo::EventExecution >();
 }
 
 
@@ -92,8 +93,9 @@ EventManager::~EventManager()
 
 Group * EventManager::createChild( string const & childKey, string const & childName )
 {
-  GEOS_LOG_RANK_0( "Adding Event: " << childKey << ", " << childName );
-  std::unique_ptr< EventBase > event = EventBase::CatalogInterface::factory( childKey, childName, this );
+  GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
+  std::unique_ptr< EventBase > event =
+    EventBase::CatalogInterface::factory( childKey, getDataContext(), childName, this );
   return &this->registerGroup< EventBase >( childName, std::move( event ) );
 }
 
@@ -165,13 +167,14 @@ bool EventManager::run( DomainPartition & domain )
 #ifdef GEOS_USE_MPI
       // Find the min dt across processes
       real64 dt_global;
-      MPI_Allreduce( &m_dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_GEOSX );
+      MPI_Allreduce( &m_dt, &dt_global, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_GEOS );
       m_dt = dt_global;
 #endif
     }
+    LogPart logPart( "TIMESTEP", MpiWrapper::commRank() == 0 );
 
-    outputTime();
-
+    outputTime( logPart );
+    logPart.begin();
     // Execute
     for(; m_currentSubEvent<this->numSubGroups(); ++m_currentSubEvent )
     {
@@ -181,8 +184,9 @@ bool EventManager::run( DomainPartition & domain )
       subEvent->checkEvents( m_time, m_dt, m_cycle, domain );
 
       // Print debug information for logLevel >= 1
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "Event: {} ({}), dt_request={}, forecast={}",
-                                          m_currentSubEvent, subEvent->getName(), subEvent->getCurrentEventDtRequest(), subEvent->getForecast() ) );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::EventExecution,
+                             GEOS_FMT( "Event: {} ({}), dt_request={}, forecast={}", m_currentSubEvent,
+                                       subEvent->getName(), subEvent->getCurrentEventDtRequest(), subEvent->getForecast() ) );
 
       // Execute, signal events
       bool earlyReturn = false;
@@ -223,6 +227,10 @@ bool EventManager::run( DomainPartition & domain )
     GEOS_LOG_RANK_0( "Job complete" );
   }
 
+  // setup the last time / cycle for the memory output
+  MemoryLogging::getInstance().setCurrentTime( m_time );
+  MemoryLogging::getInstance().setCurrentCycle( m_cycle );
+
   // Cleanup
   GEOS_LOG_RANK_0( "Cleaning up events" );
 
@@ -234,7 +242,7 @@ bool EventManager::run( DomainPartition & domain )
   return false;
 }
 
-void EventManager::outputTime() const
+void EventManager::outputTime( LogPart & logPart ) const
 {
   const bool isTimeLimited = m_maxTime < std::numeric_limits< real64 >::max();
   const bool isCycleLimited = m_maxCycle < std::numeric_limits< integer >::max();
@@ -254,19 +262,16 @@ void EventManager::outputTime() const
                      m_maxCycle, ( 100.0 * m_cycle ) / m_maxCycle );
   };
 
-  // The formating here is a work in progress.
-  GEOS_LOG_RANK_0( "\n------------------------- TIMESTEP START -------------------------" );
-  GEOS_LOG_RANK_0( GEOS_FMT( "    - Time:       {}{}",
-                             timeInfo.toUnfoldedString(),
-                             isTimeLimited ? timeCompletionUnfoldedString() : "" ) );
-  GEOS_LOG_RANK_0( GEOS_FMT( "                  ({}{})",
-                             timeInfo.toSecondsString(),
-                             isTimeLimited ? timeCompletionSecondsString() : "" ) );
-  GEOS_LOG_RANK_0( GEOS_FMT( "    - Delta Time: {}", units::TimeFormatInfo::fromSeconds( m_dt ) ) );
-  GEOS_LOG_RANK_0( GEOS_FMT( "    - Cycle:      {}{}",
-                             m_cycle,
-                             isCycleLimited ? cycleCompletionString() : "" ) );
-  GEOS_LOG_RANK_0( "--------------------------------------------------------------------\n" );
+  string const timeCompletionUnfolded = isTimeLimited ? timeCompletionUnfoldedString() : "";
+  string const timeCompletionSecond = isTimeLimited ? timeCompletionSecondsString() : "";
+  string const cycleLimited = isCycleLimited ? cycleCompletionString() : "";
+
+  string const timeInfosUnfolded = timeInfo.toUnfoldedString() + timeCompletionUnfolded;
+  string const timeCompletionSeconds = timeInfo.toSecondsString() + timeCompletionSecond;
+
+  logPart.addDescription( "- Time ", timeInfosUnfolded, timeCompletionSeconds );
+  logPart.addDescription( "- Delta Time ", units::TimeFormatInfo::fromSeconds( m_dt ).toString() );
+  logPart.addDescription( "- Cycle ", m_cycle, cycleLimited );
 
   // We are keeping the old outputs to keep compatibility with current log reading scripts.
   if( m_timeOutputFormat==TimeOutputFormat::full )
@@ -296,7 +301,7 @@ void EventManager::outputTime() const
   }
   else if( m_timeOutputFormat == TimeOutputFormat::seconds )
   {
-    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:4.5e} s, dt: {} s, Cycle: {}", m_time, m_dt, m_cycle ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Time: {:4.5e} s, dt: {} s, Cycle: {}\n", m_time, m_dt, m_cycle ) );
   }
   else
   {

@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -112,13 +112,13 @@ protected:
   TimeBufferProvider m_timeBufferProvider;
 
   /// Callbacks to get the current buffer head to write history data into
-  std::vector< BufferProvider > m_bufferProviders;
+  stdVector< BufferProvider > m_bufferProviders;
 
   /**
    * @brief The set of metadata collectors for this collector
    * @note Currently only used to collect coordinates of mesh objects when collecting field data.
    */
-  std::vector< std::unique_ptr< HistoryCollection > > m_metaDataCollectors;
+  stdVector< std::unique_ptr< HistoryCollection > > m_metaDataCollectors;
 };
 
 }

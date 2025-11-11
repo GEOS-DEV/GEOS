@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -30,8 +30,8 @@
  * integrated and tracked by this model.
  */
 
-#ifndef GEOSX_CONSTITUTIVE_SOLID_CERAMICDAMAGE_HPP_
-#define GEOSX_CONSTITUTIVE_SOLID_CERAMICDAMAGE_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_CERAMICDAMAGE_HPP
+#define GEOS_CONSTITUTIVE_SOLID_CERAMICDAMAGE_HPP
 
 #include "ElasticIsotropic.hpp"
 #include "InvariantDecompositions.hpp"
@@ -259,21 +259,21 @@ real64 thirdInvariantStrengthScaling( const real64 J2,
                                       const real64 dfdp ) const;
 
 
-  GEOS_HOST_DEVICE
-  void computePlasticStrainIncrement ( localIndex const k,
-                                       localIndex const q,
-                                       const real64 timeIncrement,
-                                       real64 const ( &strainIncrement )[6],
-                                       real64 const ( &stressIncrement )[6],
-                                       real64 ( & plasticStrainIncrement )[6] ) const;
+GEOS_HOST_DEVICE
+void computePlasticStrainIncrement ( localIndex const k,
+                                      localIndex const q,
+                                      const real64 timeIncrement,
+                                      real64 const ( &strainIncrement )[6],
+                                      real64 const ( &stressIncrement )[6],
+                                      real64 ( & plasticStrainIncrement )[6] ) const;
 
-  GEOS_HOST_DEVICE
-  GEOS_FORCE_INLINE
-  virtual void saveConvergedState( localIndex const k,
-                                   localIndex const q ) const override final
-  {
-    ElasticIsotropicUpdates::saveConvergedState( k, q );
-  }
+GEOS_HOST_DEVICE
+GEOS_FORCE_INLINE
+virtual void saveConvergedState( localIndex const k,
+                                  localIndex const q ) const override final
+{
+  ElasticIsotropicUpdates::saveConvergedState( k, q );
+}
 
 private:
   /// A reference to the ArrayView holding the damage for each quadrature point.
@@ -356,7 +356,6 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               real64 ( & unrotatedStress )[6], // unrotated stress at start/end of step
                                               real64 ( & stiffness )[6][6] ) const
 {
-
   // Elastic trial update (assume strainIncrement is all elastic)
   ElasticIsotropicUpdates::smallStrainUpdate( k, 
                                               q, 
@@ -365,7 +364,7 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               unrotatedStress, // this overwrites old stress with trial stress
                                               stiffness 
                                               );
-  m_jacobian[k][q] *= exp( unrotatedStrainIncrement[0] + unrotatedStrainIncrement[1] + unrotatedStrainIncrement[2] );
+  m_jacobian[k][q] *= LvArray::math::exp( unrotatedStrainIncrement[0] + unrotatedStrainIncrement[1] + unrotatedStrainIncrement[2] );
 
   if( m_disableInelasticity )
   {
@@ -374,12 +373,12 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
   
   // These rotations are just dummy values passed to the smallStrainUpdateHelper.
   // MH: Why are we doing this when they are unused?
-  real64 beginningRotation[3][3] = { { 0 } };
+  real64 beginningRotation[3][3] = { };
   beginningRotation[0][0] = 1.0;
   beginningRotation[1][1] = 1.0;
   beginningRotation[2][2] = 1.0;
 
-  real64 endRotation[3][3] = { { 0 } }; 
+  real64 endRotation[3][3] = { }; 
   endRotation[0][0] = 1.0;
   endRotation[1][1] = 1.0;
   endRotation[2][2] = 1.0;
@@ -451,7 +450,7 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                          strainIncrement, 
                                                          stress );
 
-  m_jacobian[k][q] *= exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
+  m_jacobian[k][q] *= LvArray::math::exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
 
   if( m_disableInelasticity )
   {
@@ -486,7 +485,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   GEOS_UNUSED_VAR( endRotation );
 
   // Copy the pre-computed hyper-elastic trial stress to trialStress. "stress" will now be the end-of-step stress.
-  real64 trialStress[6] = { 0 };
+  real64 trialStress[6] = { };
   LvArray::tensorOps::copy< 6 >( trialStress, stress );
 
   // cohesion slope
@@ -501,8 +500,8 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 Ycmax = m_maximumStrength;
   real64 Ytmax = Ycmax / tensionCompressionStrengthRatio;
 
-  Yt = std::min(Yt, 0.999*Ytmax);
-  Yc = std::min(Yc, 0.999*Ycmax);
+  Yt = LvArray::math::min(Yt, 0.999*Ytmax);
+  Yc = LvArray::math::min(Yc, 0.999*Ycmax);
 
   // get trial pressure
   // Tensile cutoff pressure (negative value in tension) is scaled by damage. 
@@ -514,20 +513,20 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   // The tensile strength is Yt = (1/Gamma)*Yt0, where Gamma is the third-invariant dependence function
   // that gives a reduced strength in TXE vs TXC.  This correction ensures the model produces the correct
   // Yt in tension tests:
-  real64 Yt0 = m_thirdInvariantDependence == 1 ? fmax( 0.5 * Yt, std::min( 2.0 * Yt, (3.0 * Yc * Yt ) / ( 2.0 * Yc + Yt + 1.0e-16 ) ) ) : Yt;
+  real64 Yt0 = m_thirdInvariantDependence == 1 ? LvArray::math::max( 0.5 * Yt, LvArray::math::min( 2.0 * Yt, (3.0 * Yc * Yt ) / ( 2.0 * Yc + Yt + 1.0e-16 ) ) ) : Yt;
   // Limit the tension test so the slope of the initial yield surface is greater than the slope of the fully damaged surface
   // otherwise damage might produce hardening.
-  Yt0 = fmin( Yt0, ( 3.0 * Yc - Yc * mu ) / ( 3.0 + mu ) );
+  Yt0 = LvArray::math::min( Yt0, ( 3.0 * Yc - Yc * mu ) / ( 3.0 + mu ) );
 
   // Compute the vertex pressure (should be pmin0 < 0) for the undamaged yield surface.
   real64 pmin0 = -( 2.0 * Yc * Yt0 ) / ( 3.0 * ( Yc - Yt0 ) );
-  pmin0 = fmin( pmin0, -1.0e-12 );
+  pmin0 = LvArray::math::min( pmin0, -1.0e-12 );
   real64 pmin = ( 1.0 - m_damage[k][q] ) * pmin0;
  
   // Compute trial deviatoric stress
   real64 trialMeanStress;    // negative of pressure
   real64 trialVonMises;      // von Mises stress
-  real64 trialDeviator[6] = { 0 };   // direction of stress deviator
+  real64 trialDeviator[6] = { };   // direction of stress deviator
   twoInvariant::stressDecomposition( trialStress,
                                      trialMeanStress, // This will get overwritten by the hyper calculation of pressure.
                                      trialVonMises,
@@ -559,9 +558,9 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   m_crackTipStressConcentration[k] = 1.0;
   if( ( m_enableCrackTipStressConcentration == 1 ) and ( m_distanceToCrackTip[k] > 0 ) )
   {
-    real64 fractureProcessZoneRadius = std::max(1.e-12, m_fractureToughness * m_fractureToughness /( 6.283185307179586 * std::max(1.e-12,nominalIntactStrength * nominalIntactStrength) ) );
-    //crackTipStressConcentration = std::min( 1.0, sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
-    m_crackTipStressConcentration[k] = std::min( 1.0, sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
+    real64 fractureProcessZoneRadius = LvArray::math::max(1.e-12, m_fractureToughness * m_fractureToughness /( 6.283185307179586 * LvArray::math::max(1.e-12,nominalIntactStrength * nominalIntactStrength) ) );
+    //crackTipStressConcentration = LvArray::math::min( 1.0, LvArray::math::sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
+    m_crackTipStressConcentration[k] = LvArray::math::min( 1.0, LvArray::math::sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
   }
 
   // Evaluate the yield criterion:
@@ -622,7 +621,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
       
       // Compute the elastic strain energy minus the strain energy that would exist at the current pressure with damage=1;
       // i.e. the energy that would be dissipated if damage were set equal to 1, without unloading.
-      real64 nominalElasticStrainEnergy = 0.5*trialPressure*trialPressure/bulk + pow(nominalIntactStrength - nominalFullyDamagedStrength,2) / (6.*m_shearModulus[k]);
+      real64 nominalElasticStrainEnergy = 0.5*trialPressure*trialPressure/bulk + LvArray::math::pow(nominalIntactStrength - nominalFullyDamagedStrength,2) / (6.*m_shearModulus[k]);
 
 
 
@@ -652,7 +651,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
           m_accumulatedModeIWork[k] = oldAccumulatedModeIWork + LvArray::tensorOps::AiBi< 6 >( stress, strainIncrement);
 
           // Set damage equal to the ratio of the dissipated energy to the expected regularized fracture energy release rate:
-          m_damage[k][q] = fmin( fmax( m_damage[k][q] , ( m_accumulatedModeIWork[k] - elasticStrainEnergy ) / ( m_fractureEnergyReleaseRate / m_lengthScale[k] ) ), 1.0 );
+          m_damage[k][q] = LvArray::math::min( LvArray::math::max( m_damage[k][q] , ( m_accumulatedModeIWork[k] - elasticStrainEnergy ) / ( m_fractureEnergyReleaseRate / m_lengthScale[k] ) ), 1.0 );
 
         } // end of fixed point iteration on damage.
       }
@@ -721,7 +720,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
         real64 tFail = m_lengthScale[k] / m_crackSpeed;
 
         // Increment damage
-        m_damage[k][q] = fmin( m_damage[k][q] + timeIncrement / tFail, 1.0 );
+        m_damage[k][q] = LvArray::math::min( m_damage[k][q] + timeIncrement / tFail, 1.0 );
       }
 
       CeramicDamageUpdates::plasticReturn(m_damage[k][q],  // damage
@@ -744,7 +743,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
 
   // Compute plastic strain.  This is just a plotting variable, but it can be useful.
   // This will be pStrain += C^inv:(sigmaTrial - sigmaNew) 
-  real64 stressIncrement[6] = { 0 };  
+  real64 stressIncrement[6] = { };  
   LvArray::tensorOps::copy< 6 >( stressIncrement, trialStress);
   LvArray::tensorOps::subtract< 6 >( stressIncrement, stress);
 
@@ -763,15 +762,15 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                                  plasticStrainIncrement );
 
   // Increment plastic strain
-  real64 oldPlasticStrain[6] = { 0 };
+  real64 oldPlasticStrain[6] = { };
   LvArray::tensorOps::copy< 6 >( oldPlasticStrain, m_plasticStrain[k][q] );
   oldPlasticStrain[3] *= 0.5; // This corrects for voight notation in subsequent rotation calcs.
   oldPlasticStrain[4] *= 0.5;
   oldPlasticStrain[5] *= 0.5;
 
   // unrotate old strain
-  real64 unrotatedOldPlasticStrain[6] = { 0 };
-  real64 rotationTranspose[3][3] = { { 0 } };
+  real64 unrotatedOldPlasticStrain[6] = { };
+  real64 rotationTranspose[3][3] = { };
   LvArray::tensorOps::transpose< 3, 3 >( rotationTranspose, beginningRotation ); 
   LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( unrotatedOldPlasticStrain, rotationTranspose, oldPlasticStrain );
 
@@ -781,7 +780,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   unrotatedOldPlasticStrain[5] *= 2.0;
 
   // add unrotated increment to unrotated old strain
-  real64 unrotatedNewPlasticStrain[6] = { 0 };
+  real64 unrotatedNewPlasticStrain[6] = { };
   LvArray::tensorOps::copy< 6 >( unrotatedNewPlasticStrain, unrotatedOldPlasticStrain );
   LvArray::tensorOps::add< 6 >( unrotatedNewPlasticStrain, plasticStrainIncrement );
   
@@ -791,7 +790,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   unrotatedNewPlasticStrain[5] *= 0.5;
 
   // re-rotate end-of-step plastic strain
-  real64 newPlasticStrain[6] = { 0 };
+  real64 newPlasticStrain[6] = { };
   LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( newPlasticStrain, endRotation, unrotatedNewPlasticStrain );
   
   // un-scale after rotation
@@ -849,8 +848,8 @@ void CeramicDamageUpdates::plasticReturn( const real64 damage,        // damage
     // scale deviatoric stress and return reconstructed stress:
 
     // trialJ2 = trialVonMises * trialVonMises / 3.0;
-    // trialVonMises = sqrt(3.0*J2);
-    newShearStress = std::min( sqrt(3.0*J2) , strength );
+    // trialVonMises = LvArray::math::sqrt(3.0*J2);
+    newShearStress = LvArray::math::min( LvArray::math::sqrt(3.0*J2) , strength );
     twoInvariant::stressRecomposition( -pressure,
                                       newShearStress,  // new magnitude of deviatoric stress
                                       deviator,
@@ -897,7 +896,7 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
     real64 m1 = oneOverGamma * ceramicdY10dp( damage, mu, Yc, Yt0 );
     real64 y1 = oneOverGamma * ceramicY10( p1, damage, mu, Yt0, Yc);
     real64 y2 = oneOverGamma * Ymax;
-    return ( 1. / stressConcentration ) * ( pow((pressure - p2) / (p1 - p2), m1 * (p1 - p2) / (y1 - y2)) * (y1 - y2) + y2 );
+    return ( 1. / stressConcentration ) * ( LvArray::math::pow((pressure - p2) / (p1 - p2), m1 * (p1 - p2) / (y1 - y2)) * (y1 - y2) + y2 );
   }
   else
   {
@@ -915,10 +914,10 @@ real64 CeramicDamageUpdates::ceramicY10( const real64 pLocal,   // pressure
                                          const real64 YcLocal ) const 
 {
   return (((3.0 + dLocal * (-3.0 + muLocal)) * YcLocal + 
-              (-3.0 + dLocal * (3.0 + muLocal)) * Yt0Local) * (pLocal - 
-              (2.0 * (dLocal - 1.0) * YcLocal * Yt0Local) / 
-              (3.0 * (YcLocal - Yt0Local)))) / 
-              (YcLocal + Yt0Local);
+           (-3.0 + dLocal * (3.0 + muLocal)) * Yt0Local) * (pLocal - 
+           (2.0 * (dLocal - 1.0) * YcLocal * Yt0Local) / 
+           (3.0 * (YcLocal - Yt0Local)))) / 
+           (YcLocal + Yt0Local);
 };
 
 GEOS_HOST_DEVICE
@@ -988,17 +987,17 @@ real64 CeramicDamageUpdates::thirdInvariantStrengthScaling( const real64 J2,    
 
   // pressure dependent scaling based on slop of strength vs. pressure
   // This ignores the friction cutoff for failed material.
-  real64 psi = std::min( 2.0, std::max( 0.5, 1.0 / ( 1.0 + dfdp / 3. ) ) );
+  real64 psi = LvArray::math::min( 2.0, LvArray::math::max( 0.5, 1.0 / ( 1.0 + dfdp / 3. ) ) );
 
   // Compute Lode angle
   if( J2 > 1e-12 )
   {
     // Lode angle
-    real64 theta = ( 1.0 / 3.0 ) * asin( std::min( 1.0, std::max( -1.0, -0.5 * J3 * std::pow( 3.0 / J2, 1.5 ) ) ) );
+    real64 theta = ( 1.0 / 3.0 ) * LvArray::math::asin( LvArray::math::min( 1.0, LvArray::math::max( -1.0, -0.5 * J3 * LvArray::math::pow( 3.0 / J2, 1.5 ) ) ) );
 
     // This is the Willam-Warnke third-invariant scale function as defined in the Kayenta manual.
-    real64 cosPi6plusTheta = cos( 0.5235987755982989 + theta );
-    real64 num = 2 * ( 1 - psi * psi ) * cosPi6plusTheta + ( 2.0 * psi - 1.0 ) * sqrt( std::max( 0., -4.0 * psi + 5.0 * psi * psi + 4.0 * ( 1.0 - psi * psi ) * cosPi6plusTheta * cosPi6plusTheta ) );
+    real64 cosPi6plusTheta = LvArray::math::cos( 0.5235987755982989 + theta );
+    real64 num = 2 * ( 1 - psi * psi ) * cosPi6plusTheta + ( 2.0 * psi - 1.0 ) * LvArray::math::sqrt( LvArray::math::max( 0., -4.0 * psi + 5.0 * psi * psi + 4.0 * ( 1.0 - psi * psi ) * cosPi6plusTheta * cosPi6plusTheta ) );
     real64 denom = ( 2 * psi - 1.0 ) * ( 2 * psi - 1.0 ) + 4 * ( 1 - psi * psi ) * cosPi6plusTheta * cosPi6plusTheta;
 
     if( denom > 1e-12 )
@@ -1051,7 +1050,7 @@ void CeramicDamageUpdates::computePlasticStrainIncrement ( localIndex const k,
     }
     if (m_shearModulus[k] > 1.0e-12)
     {
-      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * sqrt(2/3) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
+      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * LvArray::math::sqrt(2/3) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
     }
   }
 

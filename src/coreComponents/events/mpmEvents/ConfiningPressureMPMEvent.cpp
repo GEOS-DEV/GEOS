@@ -59,13 +59,14 @@ namespace geos
 
   void ConfiningPressureMPMEvent::postInputInitialization()
   {
-    GEOS_ERROR_IF( m_interval < 0.0   , "Interval must be positive!");
+    MPMEventBase::postInputInitialization();
+    
     GEOS_ERROR_IF( m_confiningPressureBoxMin.size() != 3 , "confiningPressureBoxMin must be of length 3. ");
     GEOS_ERROR_IF( m_confiningPressureBoxMax.size() != 3 , "confiningPressureBoxMax must be of length 3. ");
 
     GEOS_LOG_RANK_0( "ConfiningPressureEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
+                     "Start time=" << m_startTime << ", " << 
+                     "Time interval=" << getTimeInterval() << ", " << 
                      "confiningPressureBoxMin=" << m_confiningPressureBoxMin << ", " << 
                      "confiningPressureBoxMax=" << m_confiningPressureBoxMax << ", " << 
                      "startPressure=" << m_startPressure << ", " << 

@@ -49,11 +49,7 @@ namespace geos
 
   void CrystalHealMPMEvent::postInputInitialization()
   {
-    GEOS_LOG_RANK_0( "CrystalHealEvent: " << 
-                     "Time=" << m_time << ", " << 
-                     "Interval=" << m_interval << ", " << 
-                     "targetRegion=" << m_targetRegion << ", " <<
-                     "healType=" << m_healType );
+    MPMEventBase::postInputInitialization();
   }
 
   REGISTER_CATALOG_ENTRY( MPMEventBase, CrystalHealMPMEvent, string const &, Group * const )

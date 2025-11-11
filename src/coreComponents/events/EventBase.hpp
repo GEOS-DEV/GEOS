@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
- * Copyright (c) 2018-2024 Total, S.A
+ * Copyright (c) 2018-2024 TotalEnergies
  * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2024 Chevron
+ * Copyright (c) 2023-2024 Chevron
  * Copyright (c) 2019-     GEOS/GEOSX Contributors
  * All rights reserved
  *
@@ -170,7 +170,7 @@ public:
   /**
    * @brief Update the event progress for the event/sub-events.
    * @note This method is used to determine how to handle the timestamp for an event
-   * @note If the event occurs after anything targeting a SolverBase object, then
+   * @note If the event occurs after anything targeting a PhysicsSolverBase object, then
    *       set the m_isPostSolverEvent flag.  If set, then the time passed to the target
    *       will be time + dt.
    * @param eventCounters The event count for each event/sub-event.
@@ -270,6 +270,13 @@ public:
     return m_eventTarget;
   }
 
+  /**
+   * @brief Get the target of this event.
+   * @return The target of this event.
+   */
+  ExecutableGroup * getEventTarget() const
+  { return m_target; }
+
 protected:
 
   /**
@@ -300,13 +307,6 @@ protected:
    */
   void setForecast( integer forecast )
   { m_eventForecast = forecast; }
-
-  /**
-   * @brief Get the target of this event.
-   * @return The target of this event.
-   */
-  ExecutableGroup * getEventTarget() const
-  { return m_target; }
 
   /**
    * @brief Is the event active?
