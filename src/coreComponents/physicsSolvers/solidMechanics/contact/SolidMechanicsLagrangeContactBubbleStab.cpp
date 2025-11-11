@@ -1224,8 +1224,8 @@ void SolidMechanicsLagrangeContactBubbleStab::setAllVariablesToZero( DomainParti
                                                                 [&]( localIndex const,
                                                                      ElementSubRegionBase & subRegion )
     {
-      subRegion.getField< solidMechanics::strain >().zero();
-      subRegion.getField< solidMechanics::plasticStrain >().zero();
+      subRegion.getField< solidMechanics::averageStrain >().zero();
+      subRegion.getField< solidMechanics::averagePlasticStrain >().zero();
       string const & solidName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
       SolidBase & solidModel = subRegion.getConstitutiveModel< constitutive::SolidBase >( solidName );
       solidModel.getStress().zero();
