@@ -53,6 +53,14 @@ class PhysicsSolverBase : public ExecutableGroup
 public:
 
   /**
+   * @brief Type of the stat output
+   */
+  enum class StatsOutputType : integer
+  {
+    none, iteration, convergence, all
+  };
+
+  /**
    * @brief Constructor for PhysicsSolverBase
    * @param name the name of this instantiation of PhysicsSolverBase
    * @param parent the parent group of this instantiation of PhysicsSolverBase
@@ -401,6 +409,19 @@ public:
                ParallelVector & rhs,
                ParallelVector & solution,
                bool const setSparsity = true );
+
+  /**
+   * @brief Set the sparsity pattern of the linear system matrix
+   * @param domain the domain containing the mesh and fields
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the system matrix
+   * @param pattern the sparsity pattern to be filled
+   */
+  virtual void
+  setSparsityPattern( DomainPartition & domain,
+                      DofManager & dofManager,
+                      CRSMatrix< real64, globalIndex > & localMatrix,
+                      SparsityPattern< globalIndex > & pattern );
 
   /**
    * @brief Create a preconditioner for this solver's linear system.
@@ -1150,9 +1171,8 @@ protected:
   /// flag for debug output of matrix, rhs, and solution
   integer m_writeLinearSystem;
 
-  /// When set to 1 output to log iterations information
-  /// When set to 2 additionnaly output csv files containing iterations & convergence information
-  integer m_writeStatisticsCSV;
+  /// Parameter for outputing statistics information
+  StatsOutputType m_writeStatisticsCSV;
 
   /// Linear solver parameters
   LinearSolverParametersInput m_linearSolverParameters;
@@ -1173,7 +1193,7 @@ protected:
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
   /// Timers for the aggregate profiling of the solver
-  std::map< std::string, std::chrono::system_clock::duration > m_timers;
+  stdMap< std::string, std::chrono::system_clock::duration > m_timers;
 
   /// History of the solution vector, used for oscillation detection
   ArrayOfArrays< real64 > m_solutionHistory;
@@ -1260,6 +1280,15 @@ void PhysicsSolverBase::setConstitutiveName( ElementSubRegionBase & subRegion, s
   GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{}: {} constitutive model not found on subregion {}",
                                                      getDataContext(), constitutiveType, subRegion.getName() ) );
 }
+
+/**
+ * @brief String for the stats output type
+ */
+ENUM_STRINGS( PhysicsSolverBase::StatsOutputType,
+              "none",
+              "iteration",
+              "convergence",
+              "all" );
 
 } // namespace geos
 

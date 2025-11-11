@@ -69,6 +69,11 @@ public:
                ParallelVector & solution,
                bool const setSparsity = true ) override final;
 
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override final;
+
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
@@ -130,8 +135,8 @@ public:
   template< typename LAMBDA >
   void forFiniteElementOnFractureSubRegions( string const & meshName, LAMBDA && lambda ) const
   {
-    std::map< string,
-              array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at( meshName );
+    stdMap< string,
+            array1d< localIndex > > const & faceTypesToFaceElements = m_faceTypesToFaceElements.at( meshName );
 
     for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
     {
@@ -155,7 +160,7 @@ public:
   {
     bool const isStickState = true;
 
-    std::map< string, array1d< localIndex > > const &
+    stdMap< string, array1d< localIndex > > const &
     faceTypesToFaceElements = m_faceTypesToFaceElementsStick.at( meshName );
 
     for( const auto & [finiteElementName, faceElementList] : faceTypesToFaceElements )
@@ -225,16 +230,16 @@ private:
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
   /// Finite element type to face element index map
-  std::map< string, std::map< string, array1d< localIndex > > > m_faceTypesToFaceElements;
+  stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElements;
 
   /// Finite element type to face element index map (stick mode)
-  std::map< string, std::map< string, array1d< localIndex > > > m_faceTypesToFaceElementsStick;
+  stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElementsStick;
 
   /// Finite element type to face element index map (slip mode)
-  std::map< string, std::map< string, array1d< localIndex > > > m_faceTypesToFaceElementsSlip;
+  stdMap< string, stdMap< string, array1d< localIndex > > > m_faceTypesToFaceElementsSlip;
 
   /// Finite element type to finite element object map
-  std::map< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
+  stdMap< string, std::unique_ptr< geos::finiteElement::FiniteElementBase > > m_faceTypeToFiniteElements;
 
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {

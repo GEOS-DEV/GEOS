@@ -19,7 +19,6 @@
 
 #include "EventBase.hpp"
 #include <cstring>
-
 #include "events/LogLevelsInfo.hpp"
 #include "common/DataTypes.hpp"
 
@@ -152,8 +151,13 @@ void EventBase::getTargetReferences()
     }
     catch( std::exception const & e )
     {
-      throw InputError( e, GEOS_FMT( "Error while reading {}:\n",
-                                     getWrapperDataContext( viewKeyStruct::eventTargetString() ) ) );
+      string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
+                                        getWrapperDataContext( viewKeyStruct::eventTargetString() ) );
+      ErrorLogger::global().currentErrorMsg()
+        .addToMsg( errorMsg )
+        .addContextInfo( getWrapperDataContext( viewKeyStruct::eventTargetString() ).getContextInfo()
+                           .setPriority( 1 ) );
+      throw InputError( e, errorMsg );
     }
   }
 

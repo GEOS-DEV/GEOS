@@ -160,7 +160,8 @@
             name="INITIALISATION"
             datumElevation="-3250"
             datumPressure="3.763746e7"
-            objectPath="ElementRegions"/>
+            objectPath="ElementRegions"
+            temperatureVsElevationTableName="initTempTable"/>
 
         <FieldSpecification
             name="xRoller"
@@ -191,6 +192,7 @@
             objectPath="ElementRegions/Reservoir"
             component="0"
             scale="-8.87"
+            errorSetMode="warning"
             beginTime="0"
             endTime="6.30721e8"
             setNames="{ source }"/>
@@ -198,6 +200,7 @@
         <FieldSpecification
             name="sourceTemperature"
             setNames="{ source }"       
+            errorSetMode="warning"
             objectPath="ElementRegions/Reservoir"
             fieldName="temperature"
             scale="293.15"
