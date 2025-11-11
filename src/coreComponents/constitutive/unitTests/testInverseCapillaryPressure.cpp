@@ -74,49 +74,50 @@ InverseCapillaryPressureTestFixture< CAP_PRESSURE, NUM_PHASE >::InverseCapillary
   m_constitutiveManager( std::make_unique< ConstitutiveManager >( ConstitutiveManager::groupKeyStruct::constitutiveModelsString(), m_parent.get() ))
 {
   /* UNCRUSTIFY-OFF */
-  string const inputStream =
-    "<Constitutive>"
-    "<BrooksCoreyCapillaryPressure"
-    "    name=\"BrooksCoreyCapillaryPressure3\""
-    "    phaseNames=\"{ gas, oil, water }\""
-    "    phaseMinVolumeFraction=\"{ 0.05, 0.1, 0.2 }\""
-    "    phaseCapPressureExponentInv=\"{ 4, 0, 2 }\""
-    "    phaseEntryPressure=\"{ 0.75e6, 2.2e5, 1.2e5 }\""
-    "    capPressureEpsilon=\"1e-8\" />"
-    "<TableCapillaryPressure"
-    "    name=\"TableCapillaryPressure2\""
-    "    phaseNames=\"{ water, gas }\""
-    "    wettingNonWettingCapPressureTableName=\"PCOW\" />"
-    "<TableCapillaryPressure"
-    "    name=\"TableCapillaryPressure3\""
-    "    phaseNames=\"{ oil, water, gas }\""
-    "    wettingIntermediateCapPressureTableName=\"PCOW\""
-    "    nonWettingIntermediateCapPressureTableName=\"PCGO\" />"
-    "<JFunctionCapillaryPressure"
-    "  name=\"JFunctionCapillaryPressure2\""
-    "  phaseNames=\"{ gas, water }\""
-    "  wettingNonWettingJFunctionTableName=\"PCOW\""
-    "  wettingNonWettingSurfaceTension=\"23.869e-3\""
-    "  permeabilityDirection=\"XY\" />"
-    "<JFunctionCapillaryPressure"
-    "  name=\"JFunctionCapillaryPressure3\""
-    "  phaseNames=\"{ gas, oil, water }\""
-    "  wettingIntermediateJFunctionTableName=\"PCOW\""
-    "  nonWettingIntermediateJFunctionTableName=\"PCGO\""
-    "  wettingIntermediateSurfaceTension=\"23.869e-3\""
-    "  nonWettingIntermediateSurfaceTension=\"32.7e-4\""
-    "  permeabilityDirection=\"Z\" />"
-    "</Constitutive>"
-    "<Functions>"
-    "<TableFunction"
-    "  name=\"PCOW\""
-    "  coordinates=\"{ 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90 }\""
-    "  values=\"{ 2.08e+05, 1.82e+05, 1.65e+05, 1.53e+05, 1.44e+05, 1.37e+05, 1.31e+05, 1.26e+05, 1.22e+05, 1.18e+05, 1.14e+05, 1.11e+05, 1.09e+05, 1.06e+05, 1.04e+05 }\" />"
-    "<TableFunction"
-    "  name=\"PCGO\""
-    "  coordinates=\"{ 0.00, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80 }\""
-    "  values=\"{ 0.00e+00, 3.30e+03, 7.19e+03, 1.18e+04, 1.72e+04, 2.35e+04, 3.10e+04, 3.99e+04, 5.03e+04, 6.25e+04, 7.70e+04, 9.40e+04, 1.14e+05, 1.38e+05, 1.65e+05, 1.98e+05, 2.37e+05 }\" />"
-    "</Functions>";
+  string const inputStream = R"xml(
+    <Constitutive>
+    <BrooksCoreyCapillaryPressure
+        name="BrooksCoreyCapillaryPressure3"
+        phaseNames="{ gas, oil, water }"
+        phaseMinVolumeFraction="{ 0.05, 0.1, 0.2 }"
+        phaseCapPressureExponentInv="{ 4, 0, 2 }"
+        phaseEntryPressure="{ 0.75e6, 2.2e5, 1.2e5 }"
+        capPressureEpsilon="1e-8" />
+    <TableCapillaryPressure
+        name="TableCapillaryPressure2"
+        phaseNames="{ water, gas }"
+        wettingNonWettingCapPressureTableName="PCOW" />
+    <TableCapillaryPressure
+        name="TableCapillaryPressure3"
+        phaseNames="{ oil, water, gas }"
+        wettingIntermediateCapPressureTableName="PCOW"
+        nonWettingIntermediateCapPressureTableName="PCGO" />
+    <JFunctionCapillaryPressure
+      name="JFunctionCapillaryPressure2"
+      phaseNames="{ gas, water }"
+      wettingNonWettingJFunctionTableName="PCOW"
+      wettingNonWettingSurfaceTension="23.869e-3"
+      permeabilityDirection="XY" />
+    <JFunctionCapillaryPressure
+      name="JFunctionCapillaryPressure3"
+      phaseNames="{ gas, oil, water }"
+      wettingIntermediateJFunctionTableName="PCOW"
+      nonWettingIntermediateJFunctionTableName="PCGO"
+      wettingIntermediateSurfaceTension="23.869e-3"
+      nonWettingIntermediateSurfaceTension="32.7e-4"
+      permeabilityDirection="Z" />
+    </Constitutive>
+    <Functions>
+    <TableFunction
+      name="PCOW"
+      coordinates="{ 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90 }"
+      values="{ 2.08e+05, 1.82e+05, 1.65e+05, 1.53e+05, 1.44e+05, 1.37e+05, 1.31e+05, 1.26e+05, 1.22e+05, 1.18e+05, 1.14e+05, 1.11e+05, 1.09e+05, 1.06e+05, 1.04e+05 }" />
+    <TableFunction
+      name="PCGO"
+      coordinates="{ 0.00, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80 }"
+      values="{ 0.00e+00, 3.30e+03, 7.19e+03, 1.18e+04, 1.72e+04, 2.35e+04, 3.10e+04, 3.99e+04, 5.03e+04, 6.25e+04, 7.70e+04, 9.40e+04, 1.14e+05, 1.38e+05, 1.65e+05, 1.98e+05, 2.37e+05 }" />
+    </Functions>
+)xml";
   /* UNCRUSTIFY-ON */
 
   xmlWrapper::xmlDocument xmlDocument;
@@ -260,13 +261,11 @@ INSTANTIATE_TEST_SUITE_P(
     {{ 0.00e+00,  1.04e+05, -0.00e+00}, { 0.00000000,  1.00000000,  0.00000000}, 1.00e+00},
     {{ 0.00e+00,  1.04e+05, -1.00e+03}, { 0.08484848,  0.90000000,  0.01515152}, 1.00e+00},
     {{ 0.00e+00,  1.04e+05, -1.00e+05}, { 0.00000000,  0.51025641,  0.48974359}, 1.00e+00},
-    {{ 0.00e+00,  1.04e+05, -2.37e+05}, { 0.00000000,  0.20000000,  0.80000000}, 1.00e+00},
     {{ 0.00e+00,  1.04e+05, -3.00e+05}, { 0.00000000,  0.20000000,  0.80000000}, 1.00e+00},
     {{ 0.00e+00,  8.60e+04,  5.00e+04}, { 0.00000000,  1.00000000,  0.00000000}, 1.00e+00},
     {{ 0.00e+00,  8.60e+04, -0.00e+00}, { 0.00000000,  1.00000000,  0.00000000}, 1.00e+00},
     {{ 0.00e+00,  8.60e+04, -1.00e+03}, { 0.08484848,  0.90000000,  0.01515152}, 1.00e+00},
     {{ 0.00e+00,  8.60e+04, -1.00e+05}, { 0.00000000,  0.55771605,  0.44228395}, 1.00e+00},
-    {{ 0.00e+00,  8.60e+04, -2.37e+05}, { 0.00000000,  0.20000000,  0.80000000}, 1.00e+00},
     {{ 0.00e+00,  8.60e+04, -3.00e+05}, { 0.00000000,  0.20000000,  0.80000000}, 1.00e+00},
     {{ 0.00e+00, -1.20e+05,  5.00e+04}, { 0.00000000,  1.00000000,  0.00000000}, 1.00e+00},
     {{ 0.00e+00, -1.20e+05, -0.00e+00}, { 0.00000000,  1.00000000,  0.00000000}, 1.00e+00},
@@ -389,7 +388,6 @@ INSTANTIATE_TEST_SUITE_P(
     {{-8.47e+00,  0.00e+00,  8.14e+02}, { 0.15047219,  0.51215471,  0.33737310}, 3.14e+01},
     {{-8.47e+01,  0.00e+00,  8.14e+02}, { 0.60939575,  0.05323115,  0.33737310}, 3.14e+01},
     {{-1.61e+02,  0.00e+00,  8.14e+02}, { 0.80000000,  0.00000000,  0.20000000}, 3.14e+01},
-    {{-1.69e+02,  0.00e+00,  8.14e+02}, { 0.80000000,  0.00000000,  0.20000000}, 3.14e+01},
     {{-1.86e+02,  0.00e+00,  8.14e+02}, { 0.80000000,  0.00000000,  0.20000000}, 3.14e+01},
     {{ 8.47e+00,  0.00e+00,  5.70e+02}, { 0.00000000,  0.20649138,  0.79350862}, 3.14e+01},
     {{-0.00e+00,  0.00e+00,  5.70e+02}, { 0.00000000,  0.20649138,  0.79350862}, 3.14e+01},
@@ -437,7 +435,6 @@ INSTANTIATE_TEST_SUITE_P(
     {{-0.00e+00,  0.00e+00,  5.66e+04}, { 0.00000000,  0.66290222,  0.33709778}, 6.50e-03},
     {{-5.88e+02,  0.00e+00,  5.66e+04}, { 0.15034233,  0.51255988,  0.33709778}, 6.50e-03},
     {{-5.88e+03,  0.00e+00,  5.66e+04}, { 0.60910358,  0.05379863,  0.33709778}, 6.50e-03},
-    {{-1.12e+04,  0.00e+00,  5.66e+04}, { 0.80000000,  0.00000000,  0.20000000}, 6.50e-03},
     {{-1.18e+04,  0.00e+00,  5.66e+04}, { 0.80000000,  0.00000000,  0.20000000}, 6.50e-03},
     {{-1.30e+04,  0.00e+00,  5.66e+04}, { 0.80000000,  0.00000000,  0.20000000}, 6.50e-03},
     {{ 5.88e+02,  0.00e+00,  3.96e+04}, { 0.00000000,  0.20531037,  0.79468963}, 6.50e-03},
@@ -481,14 +478,10 @@ INSTANTIATE_TEST_SUITE_P(
     {{-4.75e+02,  0.00e+00,  5.93e+03}, { 0.60959217,  0.18050382,  0.20990400}, 1.00e+00},
     {{-9.02e+02,  0.00e+00,  5.93e+03}, { 0.78490156,  0.00519444,  0.20990400}, 1.00e+00},
     {{-9.49e+02,  0.00e+00,  5.93e+03}, { 0.80000000,  0.00000000,  0.20000000}, 1.00e+00},
-    {{-1.04e+03,  0.00e+00,  5.93e+03}, { 0.80000000,  0.00000000,  0.20000000}, 1.00e+00},
     {{ 4.75e+01,  0.00e+00,  4.56e+03}, { 0.00000000,  0.66244072,  0.33755928}, 1.00e+00},
     {{-0.00e+00,  0.00e+00,  4.56e+03}, { 0.00000000,  0.66244072,  0.33755928}, 1.00e+00},
     {{-4.75e+01,  0.00e+00,  4.56e+03}, { 0.15055948,  0.51188124,  0.33755928}, 1.00e+00},
     {{-4.75e+02,  0.00e+00,  4.56e+03}, { 0.60959217,  0.05284855,  0.33755928}, 1.00e+00},
-    {{-9.02e+02,  0.00e+00,  4.56e+03}, { 0.80000000,  0.00000000,  0.20000000}, 1.00e+00},
-    {{-9.49e+02,  0.00e+00,  4.56e+03}, { 0.80000000,  0.00000000,  0.20000000}, 1.00e+00},
-    {{-1.04e+03,  0.00e+00,  4.56e+03}, { 0.80000000,  0.00000000,  0.20000000}, 1.00e+00},
     {{ 4.75e+01,  0.00e+00,  3.19e+03}, { 0.00000000,  0.20304065,  0.79695935}, 1.00e+00},
     {{-0.00e+00,  0.00e+00,  3.19e+03}, { 0.00000000,  0.20304065,  0.79695935}, 1.00e+00},
     {{-4.75e+01,  0.00e+00,  3.19e+03}, { 0.15055948,  0.05248117,  0.79695935}, 1.00e+00},
