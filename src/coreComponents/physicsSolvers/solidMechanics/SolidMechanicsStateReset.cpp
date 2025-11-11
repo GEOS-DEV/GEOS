@@ -67,7 +67,7 @@ void SolidMechanicsStateReset::postInputInitialization()
   GEOS_THROW_IF( !physicsSolverManager.hasGroup( m_solidSolverName ),
                  GEOS_FMT( "Task {}: physics solver named {} not found",
                            getDataContext(), m_solidSolverName ),
-                 InputError );
+                 InputError, getDataContext() );
 
   m_solidSolver = &physicsSolverManager.getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
 }
