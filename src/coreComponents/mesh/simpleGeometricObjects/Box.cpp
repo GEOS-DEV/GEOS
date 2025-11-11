@@ -78,7 +78,8 @@ void Box::postInputInitialization()
   {
     GEOS_ERROR_IF( (m_max[0]-m_min[0]) < (m_max[1]-m_min[1]),
                    getDataContext() << ": When a strike angle is specified, the box is supposed to" <<
-                   " represent a plane normal to the y direction. This box seems to be too thick." );
+                   " represent a plane normal to the y direction. This box seems to be too thick.",
+                   getDataContext() );
 
     m_cosStrike = std::cos( m_strikeAngle / 180 *M_PI );
     m_sinStrike = std::sin( m_strikeAngle / 180 *M_PI );

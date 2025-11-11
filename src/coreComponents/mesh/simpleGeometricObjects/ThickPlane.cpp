@@ -50,11 +50,13 @@ void ThickPlane::postInputInitialization()
 
   m_thickness *= 0.5; // actually store the half-thickness
   GEOS_ERROR_IF( m_thickness <= 0,
-                 getDataContext() << ": The plane appears to have zero or negative thickness" );
+                 getDataContext() << ": The plane appears to have zero or negative thickness",
+                 getDataContext() );
 
   LvArray::tensorOps::normalize< 3 >( m_normal );
   GEOS_ERROR_IF( std::fabs( LvArray::tensorOps::l2Norm< 3 >( m_normal ) - 1.0 ) > 1e-15,
-                 getDataContext() << ": Could not properly normalize input normal." );
+                 getDataContext() << ": Could not properly normalize input normal.",
+                 getDataContext() );
 }
 
 
