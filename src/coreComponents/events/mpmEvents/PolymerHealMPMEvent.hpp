@@ -34,7 +34,7 @@ class PolymerHealMPMEvent : public MPMEventBase
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   PolymerHealMPMEvent( const string & name,
-                Group * const parent );
+                       Group * const parent );
 
   /// Destructor
   virtual ~PolymerHealMPMEvent() override;

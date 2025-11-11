@@ -69,21 +69,25 @@ void ParticleMeshGenerator::postInputInitialization()
 {
   ParticleMeshGeneratorBase::postInputInitialization();
 
-  GEOS_ERROR_IF(m_blockNames.size() == 0, "No particle blocks were specified! Must specify at least one particle block.");
-  GEOS_ERROR_IF(m_blockNames.size() != m_particleTypes.size(), "The particle block and type lists must have the same size.");
+  GEOS_ERROR_IF( m_blockNames.size() == 0, "No particle blocks were specified! Must specify at least one particle block." );
+  GEOS_ERROR_IF( m_blockNames.size() != m_particleTypes.size(), "The particle block and type lists must have the same size." );
 
-  for( int i = 0; i < static_cast< int >( m_particleTypes.size() ); ++i)
+  for( int i = 0; i < static_cast< int >( m_particleTypes.size() ); ++i )
   {
-    for( int j = 0; j < EnumSize<ParticleType>; ++j )
+    for( int j = 0; j < EnumSize< ParticleType >; ++j )
     {
       if( m_particleTypes[i] == EnumStrings< ParticleType >::toString( static_cast< ParticleType >( j ) ) )
       {
         break;
       }
 
-      if( j == EnumSize<ParticleType>-1)
+      if( j == EnumSize< ParticleType >-1 )
       {
-        GEOS_ERROR( "No particle type of " << m_particleTypes[i] << " in particleTypes input. Available options are SinglePoint (0), SinglePointBSpline (1), CPDI (2), CPTI (3), CPDI2 (4)."); // TODO Make available options dynamic
+        GEOS_ERROR( "No particle type of " << m_particleTypes[i] << " in particleTypes input. Available options are SinglePoint (0), SinglePointBSpline (1), CPDI (2), CPTI (3), CPDI2 (4)." ); // TODO
+                                                                                                                                                                                                // Make
+                                                                                                                                                                                                // available
+                                                                                                                                                                                                // options
+                                                                                                                                                                                                // dynamic
       }
     }
   }
@@ -103,8 +107,8 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
   int numBlocks = m_blockNames.size();
 
   // This should probably be handled elsewhere:
-  std::vector<int> blockMaterialIndices( numBlocks );
-  for(int b = 0; b < numBlocks; b++ )
+  std::vector< int > blockMaterialIndices( numBlocks );
+  for( int b = 0; b < numBlocks; b++ )
   {
     ParticleBlock & particleBlock = particleBlockManager.registerParticleBlock( m_blockNames[b] );
     particleBlock.setParticleType( EnumStrings< ParticleType >::fromString( m_particleTypes[b] ) );
@@ -112,24 +116,24 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
 
   // Collect material names for each particle block
   // Assumes particleRegions loop follows material name ordering of input file
-  int regionIndex = 0;    
+  int regionIndex = 0;
   particleManager.forParticleRegions< ParticleRegion >( [&]( auto & particleRegion )
   {
     auto & subRegions = particleRegion.getSubRegions();
-    for( int r=0; r < subRegions.size(); ++r)
+    for( int r=0; r < subRegions.size(); ++r )
     {
       ParticleSubRegion & subRegion = dynamicCast< ParticleSubRegion & >( *subRegions[r] );
       GEOS_LOG_RANK( particleRegion.getName() << " | " << subRegion.getName() );
     }
 
     string_array particleBlockNames = particleRegion.getParticleBlockNames();
-    for( auto & particleBlockName : particleBlockNames)
+    for( auto & particleBlockName : particleBlockNames )
     {
       for( int b = 0; b < numBlocks; b++ )
       {
-        if( particleBlockName == m_blockNames[b])
+        if( particleBlockName == m_blockNames[b] )
         {
-          blockMaterialIndices[b] = regionIndex;                                                     
+          blockMaterialIndices[b] = regionIndex;
           break;
         }
       }
@@ -147,9 +151,9 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
   {
     std::getline( particleFile, line );
     std::string token;
-  
+
     std::istringstream lineStream( line );
-    while( std::getline( lineStream, token, '\t') )
+    while( std::getline( lineStream, token, '\t' ) )
     {
       columnHeaderMap.insert( std::pair< int, int >( static_cast< int >( EnumStrings< ParticleColumnHeaders >::fromString( token ) ), numColumnHeaders ) );
       numColumnHeaders++;
@@ -163,7 +167,8 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     std::getline( particleFile, line );
     std::istringstream lineStream( line );
 
-    std::vector< double > lineData; // TODO: Not great because we cast all input as doubles, but it all gets re-cast later so maybe it's fine.
+    std::vector< double > lineData; // TODO: Not great because we cast all input as doubles, but it all gets re-cast later so maybe it's
+                                    // fine.
 
     // Read line from particle file and parse columns
     double value;
@@ -174,12 +179,13 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       numLineColumns++;
     }
 
-    GEOS_ERROR_IF( numLineColumns != numColumnHeaders, "Particle file line " << lineNumber << " has a different number of terms than the column headers! Was " << numLineColumns << " but should be " << numColumnHeaders );
+    GEOS_ERROR_IF( numLineColumns != numColumnHeaders,
+                   "Particle file line " << lineNumber << " has a different number of terms than the column headers! Was " << numLineColumns << " but should be " << numColumnHeaders );
     lineNumber++;
 
     // If particle is inside partition add to particleData otherwise ignore and continue parsing file
-    bool inPartition = partition.isCoordInPartition( lineData[ columnHeaderMap[ static_cast< int >( ParticleColumnHeaders::PositionX ) ] ], 0 ) && 
-                       partition.isCoordInPartition( lineData[ columnHeaderMap[ static_cast< int >( ParticleColumnHeaders::PositionY ) ] ], 1 ) && 
+    bool inPartition = partition.isCoordInPartition( lineData[ columnHeaderMap[ static_cast< int >( ParticleColumnHeaders::PositionX ) ] ], 0 ) &&
+                       partition.isCoordInPartition( lineData[ columnHeaderMap[ static_cast< int >( ParticleColumnHeaders::PositionY ) ] ], 1 ) &&
                        partition.isCoordInPartition( lineData[ columnHeaderMap[ static_cast< int >( ParticleColumnHeaders::PositionZ ) ] ], 2 );
     if( !inPartition )
     {
@@ -189,7 +195,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     // Reformat particle data and apply defaults to particle fields not specified in particle file
     std::vector< double > lineDataInside;
     // Presently get the number of enums using a sentinel (COUNT), but ideally this should be done more robustly
-    for(int c = 0; c < EnumSize<ParticleColumnHeaders>; c++)
+    for( int c = 0; c < EnumSize< ParticleColumnHeaders >; c++ )
     {
       if( columnHeaderMap.find( c ) != columnHeaderMap.end() )
       {
@@ -245,16 +251,18 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
 
     // Match particle to block using material and particle types
     int blockIndex = -1;
-    for( int b = 0; b < numBlocks; b++)
+    for( int b = 0; b < numBlocks; b++ )
     {
-      if( materialTypeIndex == blockMaterialIndices[b] && 
+      if( materialTypeIndex == blockMaterialIndices[b] &&
           particleTypeIndex == static_cast< int >( EnumStrings< ParticleType >::fromString( m_particleTypes[b] ) ) )
       {
         blockIndex = b;
       }
     }
 
-    GEOS_ERROR_IF(blockIndex < 0, "Particle at line  " << lineNumber <<  " with type and material indices of " << particleTypeIndex << " and " << materialTypeIndex << " respectively, does not match any particle block!");
+    GEOS_ERROR_IF( blockIndex < 0,
+                   "Particle at line  " << lineNumber <<  " with type and material indices of " << particleTypeIndex << " and " << materialTypeIndex <<
+      " respectively, does not match any particle block!" );
 
     particleData[blockIndex].push_back( lineDataInside );
   }
@@ -280,7 +288,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     array1d< real64 > particleVolume( npInBlock );
     array1d< real64 > particleStrengthScale( npInBlock );
     array3d< real64 > particleRVectors( npInBlock, 3, 3 ); // TODO: Flatten the r-vector array into a 1x9 for each particle
-    array2d< real64 > particleSurfaceNormal( npInBlock, 3);
+    array2d< real64 > particleSurfaceNormal( npInBlock, 3 );
     array2d< real64 > particleSurfacePosition( npInBlock, 3 );
     array2d< real64 > particleSurfaceTraction( npInBlock, 3 );
 
@@ -299,7 +307,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       particleVelocity[i][0] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::VelocityX )];
       particleVelocity[i][1] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::VelocityY )];
       particleVelocity[i][2] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::VelocityZ )];
-  
+
       // Material (set above) is [10]
 
       // Group
@@ -344,12 +352,12 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         }
         case ParticleType::SinglePointBSpline:
         {
-          GEOS_ERROR("SinglePointBSpline particle type is not implemented!");
+          GEOS_ERROR( "SinglePointBSpline particle type is not implemented!" );
           break;
         }
         case ParticleType::CPDI:
         {
-           double x1, y1, z1, x2, y2, z2, x3, y3, z3;
+          double x1, y1, z1, x2, y2, z2, x3, y3, z3;
           x1 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorXX )];
           y1 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorXY )];
           z1 = particleData[b][i][static_cast< int >( ParticleColumnHeaders::RVectorXZ )];
@@ -373,12 +381,12 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         }
         case ParticleType::CPTI:
         {
-          GEOS_ERROR("CPTI particle type is not implemented!");
+          GEOS_ERROR( "CPTI particle type is not implemented!" );
           break;
         }
         case ParticleType::CPDI2:
         {
-          GEOS_ERROR("CPDI2 particle type is not implemented!");
+          GEOS_ERROR( "CPDI2 particle type is not implemented!" );
           break;
         }
         default:
@@ -430,7 +438,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
   {
     string_array particleBlockNames = particleRegion.getParticleBlockNames();
 
-    int size = 0; 
+    int size = 0;
     for( auto & particleBlockName : particleBlockNames )
     {
       for( int b = 0; b < numBlocks; b++ )

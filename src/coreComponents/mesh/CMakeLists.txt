@@ -59,6 +59,9 @@ set( mesh_headers
      ParticleSubRegion.hpp
      ParticleSubRegionBase.hpp
      ParticleType.hpp
+     CohesiveZoneManager.hpp
+     CohesiveZoneRegionBase.hpp
+     CohesiveZoneRegion.hpp
      Perforation.hpp
      PerforationData.hpp
      PerforationFields.hpp
@@ -154,6 +157,9 @@ set( mesh_sources
      ParticleRegionBase.cpp
      ParticleSubRegion.cpp
      ParticleSubRegionBase.cpp
+     CohesiveZoneManager.cpp
+     CohesiveZoneRegionBase.cpp
+     CohesiveZoneRegion.cpp
      Perforation.cpp
      PerforationData.cpp
      SurfaceElementRegion.cpp

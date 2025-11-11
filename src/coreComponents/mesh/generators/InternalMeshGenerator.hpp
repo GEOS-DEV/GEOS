@@ -383,7 +383,7 @@ private:
     }
   }
 
-  public:
+public:
 
 
 };

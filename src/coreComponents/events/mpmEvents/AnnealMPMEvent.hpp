@@ -47,7 +47,7 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
- /// @cond DO_NOT_DOCUMENT
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr char const * targetRegionString() { return "targetRegion"; }
@@ -56,7 +56,7 @@ public:
   } AnnealMPMEventViewKeys;
   /// @endcond
 
-  string getTargetRegion() const { return m_targetRegion; } 
+  string getTargetRegion() const { return m_targetRegion; }
 
 protected:
   virtual void postInputInitialization() override final;

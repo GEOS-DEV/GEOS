@@ -45,7 +45,7 @@ Gas::Gas( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::jacobianString(), &m_jacobian ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::FALSE ).
-    setPlotLevel( PlotLevel::LEVEL_0).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Jacobian" );
 
   registerWrapper( viewKeyStruct::temperatureString(), &m_temperature ).

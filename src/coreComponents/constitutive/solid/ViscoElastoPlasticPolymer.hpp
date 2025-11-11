@@ -66,11 +66,11 @@ public:
                                   arrayView2d< real64 > const & density,
                                   arrayView2d< real64 > const & wavespeed,
                                   bool const & disableInelasticity ):
-    SolidBaseUpdates( newStress, 
+    SolidBaseUpdates( newStress,
                       oldStress,
                       density,
                       wavespeed,
-                      thermalExpansionCoefficient, 
+                      thermalExpansionCoefficient,
                       disableInelasticity ),
     m_deformationGradient( deformationGradient ),
     m_plasticStrain( plasticStrain ),
@@ -133,8 +133,8 @@ public:
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
-                                             real64 const ( & beginningRotation )[3][3],
-                                             real64 const ( & endRotation )[3][3],
+                                             real64 const ( &beginningRotation )[3][3],
+                                             real64 const ( &endRotation )[3][3],
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override;
 
@@ -183,11 +183,11 @@ private:
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void HyperViscoElastoPlasticUpdates::smallStrainUpdate( localIndex const k,
-                                                       localIndex const q,
-                                                       real64 const & timeIncrement,
-                                                       real64 const ( &strainIncrement )[6],
-                                                       real64 ( & stress )[6],
-                                                       real64 ( & stiffness )[6][6] ) const
+                                                        localIndex const q,
+                                                        real64 const & timeIncrement,
+                                                        real64 const ( &strainIncrement )[6],
+                                                        real64 ( & stress )[6],
+                                                        real64 ( & stiffness )[6][6] ) const
 {
   GEOS_UNUSED_VAR( k );
   GEOS_UNUSED_VAR( q );
@@ -201,11 +201,11 @@ void HyperViscoElastoPlasticUpdates::smallStrainUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void HyperViscoElastoPlasticUpdates::smallStrainUpdate( localIndex const k,
-                                                       localIndex const q,
-                                                       real64 const & timeIncrement,
-                                                       real64 const ( &strainIncrement )[6],
-                                                       real64 ( & stress )[6],
-                                                       DiscretizationOps & stiffness ) const
+                                                        localIndex const q,
+                                                        real64 const & timeIncrement,
+                                                        real64 const ( &strainIncrement )[6],
+                                                        real64 ( & stress )[6],
+                                                        DiscretizationOps & stiffness ) const
 {
   GEOS_UNUSED_VAR( k );
   GEOS_UNUSED_VAR( q );
@@ -219,10 +219,10 @@ void HyperViscoElastoPlasticUpdates::smallStrainUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void HyperViscoElastoPlasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
-                                                         localIndex const q,
-                                                         real64 const & timeIncrement,
-                                                         real64 const ( & strainIncrement )[6],
-                                                         real64 ( & stress )[6] ) const
+                                                                   localIndex const q,
+                                                                   real64 const & timeIncrement,
+                                                                   real64 const ( &strainIncrement )[6],
+                                                                   real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( k );
   GEOS_UNUSED_VAR( q );
@@ -235,12 +235,12 @@ void HyperViscoElastoPlasticUpdates::smallStrainUpdate_StressOnly( localIndex co
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void HyperViscoElastoPlasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
-                                                                  localIndex const q,
-                                                                  real64 const & timeIncrement,
-                                                                  real64 const ( & beginningRotation )[3][3],
-                                                                  real64 const ( & endRotation )[3][3],
-                                                                  real64 const ( & strainIncrement )[6],
-                                                                  real64 ( & stress )[6] ) const
+                                                                   localIndex const q,
+                                                                   real64 const & timeIncrement,
+                                                                   real64 const ( &beginningRotation )[3][3],
+                                                                   real64 const ( &endRotation )[3][3],
+                                                                   real64 const ( &strainIncrement )[6],
+                                                                   real64 ( & stress )[6] ) const
 {
   // Elastic predictor (assume strainIncrement is all elastic)
   real64 dt = timeIncrement;
@@ -252,18 +252,18 @@ void HyperViscoElastoPlasticUpdates::smallStrainUpdate_StressOnly( localIndex co
   LvArray::tensorOps::transpose< 3 >( rightCauchyDeformationTensor );
 
   real64 rotatedOldInverseTransposePlasticDeformationGradient[3][3] = { { 0.0 } };
-  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3>( rotatedOldInverseTransposePlasticDeformationGradient, endRotation, m_plasticDeformationGradient[k] );
+  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( rotatedOldInverseTransposePlasticDeformationGradient, endRotation, m_plasticDeformationGradient[k] );
   LvArray::tensorOps::invert< 3 >( rotatedOldInverseTransposePlasticDeformationGradient );
   LvArray::tensorOps::transpose< 3 >( rotatedOldInverseTransposePlasticDeformationGradient );
 
   real64 elasticRigthCauchyDeformationTensorDense[3][3] = { { 0.0 } };
-  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( elasticRigthCauchyDeformationTensorDense, rotatedOldInverseTransposePlasticDeformationGradient,  rightCauchyDeformationTensor );
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( elasticRigthCauchyDeformationTensorDense, rotatedOldInverseTransposePlasticDeformationGradient, rightCauchyDeformationTensor );
 
   real64 elasticRightCauchyDeformationTensor[6] = { 0.0 };
   LvArray::tensorOps::denseToSymmetric< 3 >( elasticRightCauchyDeformationTensor, elasticRightCauchyDeformationTensorDense );
 
   // Compute the logarithmic strain measure
-  // Compute eigen vectors 
+  // Compute eigen vectors
   real64 eigenValues[3] = { 0.0 };
   real64 eigenVectors[3][3] = { { 0.0 } }; // Are these normalized? TODO check!
   LvArray::tensorOps::symEigenvectors< 3 >( eigenValues, eigenVectors, elasticRightCauchyDeformationTensor );
@@ -278,7 +278,7 @@ void HyperViscoElastoPlasticUpdates::smallStrainUpdate_StressOnly( localIndex co
   real64 elasticStrainPredictor[6] = { 0.0 }
   for( int i=0; i < 3; ++i )
   {
-    elasticStrainPredictor[i] = 0.5*LvArray::math::log(eigenValues[i]);
+    elasticStrainPredictor[i] = 0.5*LvArray::math::log( eigenValues[i] );
   }
 
   real64 E_inf = m_youngModuli[0];
@@ -286,33 +286,33 @@ void HyperViscoElastoPlasticUpdates::smallStrainUpdate_StressOnly( localIndex co
 
   for( localIndex i = 0; i < numMaxwellElements; ++i )
   {
-    E_e += m_youngModuli[i+1] * LvArray::math::exp(-0.5*dt/m_relaxationTimes[i]); 
+    E_e += m_youngModuli[i+1] * LvArray::math::exp( -0.5*dt/m_relaxationTimes[i] );
   }
 
-  real64 K_inf = E_inf/(3((1-2*m_elasticPoissonRatio)));
+  real64 K_inf = E_inf/(3 ((1-2*m_elasticPoissonRatio)));
   real64 G_inf = E_inf/(2*(1+m_elasticPoissonRatio));
-  real64 K_e = E_e/(3((1-2*m_elasticPoissonRatio)));
+  real64 K_e = E_e/(3 ((1-2*m_elasticPoissonRatio)));
   real64 G_e = E_e/(2*(1+m_elasticPoissonRatio));
 
   real64 volumetricStress = K_e*LvArray::tensorOps::symTrace< 3 >( elasticStrainPredictor ) - (K_e - K_inf)*LvArray::tensorOps::symTrace< 3 >( oldElasticStrain );
   for( localIndex n = 0; n < numMaxwellElements; ++n )
   {
-    volumetricStress += m_Bin[k][n]*LvArray::math::exp(-dt/m_relaxationTimes[n]);
+    volumetricStress += m_Bin[k][n]*LvArray::math::exp( -dt/m_relaxationTimes[n] );
   }
-  
+
   localIndex voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
   real64 trialStress[3][3] = { { 0.0 } };
-  for(localIndex i=0; i < 3; ++i)
+  for( localIndex i=0; i < 3; ++i )
   {
-    for(localIndex j=0; j < 3; ++j)
-    {  
-        // Check summation using voigt notation is correct for off axis elements
-        localIndex voigtIndex = voigtMap[i][j];
-        trialStress[voigtIndex] += 2*G_e*elasticStrainPredictor[voigtIndex] - 2*(G_e-G_inf)*oldElasticStrain[voigtIndex] +  i == j ? volumetricStress : 0.0;
-        for(localIndex n=0; n < numMaxwellElements; ++n)
-        {
-            trialStress[voigtIndex] += m_Ain[k][n][voigtIndex]*LvArray::math::exp(-dt/m_relaxationTimes[n]);
-        }
+    for( localIndex j=0; j < 3; ++j )
+    {
+      // Check summation using voigt notation is correct for off axis elements
+      localIndex voigtIndex = voigtMap[i][j];
+      trialStress[voigtIndex] += 2*G_e*elasticStrainPredictor[voigtIndex] - 2*(G_e-G_inf)*oldElasticStrain[voigtIndex] +  i == j ? volumetricStress : 0.0;
+      for( localIndex n=0; n < numMaxwellElements; ++n )
+      {
+        trialStress[voigtIndex] += m_Ain[k][n][voigtIndex]*LvArray::math::exp( -dt/m_relaxationTimes[n] );
+      }
     }
   }
 
@@ -437,7 +437,7 @@ public:
                                     m_oldStress,
                                     m_density,
                                     m_wavespeed,
-                                    m_disableInelasticity  );
+                                    m_disableInelasticity );
   }
 
   /**

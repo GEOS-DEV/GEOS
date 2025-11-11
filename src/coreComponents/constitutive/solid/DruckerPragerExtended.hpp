@@ -63,7 +63,7 @@ public:
                                 arrayView2d< real64 > const & density,
                                 arrayView2d< real64 > const & wavespeed,
                                 bool const & disableInelasticity ):
-    ElasticIsotropicUpdates( bulkModulus, 
+    ElasticIsotropicUpdates( bulkModulus,
                              shearModulus,
                              thermalExpansionCoefficient,
                              newStress,

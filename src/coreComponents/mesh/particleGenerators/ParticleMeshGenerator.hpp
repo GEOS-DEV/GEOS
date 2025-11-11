@@ -22,7 +22,7 @@
 #include "common/format/EnumStrings.hpp"
 #include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 
-template<typename Enum>
+template< typename Enum >
 constexpr auto EnumSize = static_cast< int >(Enum::Count);
 
 namespace geos

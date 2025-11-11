@@ -34,7 +34,7 @@ class BodyForceUpdateMPMEvent : public MPMEventBase
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   BodyForceUpdateMPMEvent( const string & name,
-                  Group * const parent );
+                           Group * const parent );
 
   /// Destructor
   virtual ~BodyForceUpdateMPMEvent() override;
@@ -47,14 +47,14 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
- /// @cond DO_NOT_DOCUMENT
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr char const * bodyForceString() { return "bodyForce"; }
   } BodyForceUpdateMPMEventViewKeys;
   /// @endcond
 
-  array1d< real64 > getBodyForce() const { return m_bodyForce; } 
+  array1d< real64 > getBodyForce() const { return m_bodyForce; }
 
 protected:
   virtual void postInputInitialization() override final;

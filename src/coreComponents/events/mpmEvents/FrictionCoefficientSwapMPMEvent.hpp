@@ -34,7 +34,7 @@ class FrictionCoefficientSwapMPMEvent : public MPMEventBase
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   FrictionCoefficientSwapMPMEvent( const string & name,
-                Group * const parent );
+                                   Group * const parent );
 
   /// Destructor
   virtual ~FrictionCoefficientSwapMPMEvent() override;
@@ -56,15 +56,15 @@ public:
   } FrictionCoefficientSwapMPMEventViewKeys;
   /// @endcond
 
-    real64 getFrictionCoefficient() const { return m_frictionCoefficient; }
-    array2d< real64 > getFrictionCoefficientTable() const { return m_frictionCoefficientTable; }
+  real64 getFrictionCoefficient() const { return m_frictionCoefficient; }
+  array2d< real64 > getFrictionCoefficientTable() const { return m_frictionCoefficientTable; }
 
 protected:
   virtual void postInputInitialization() override final;
 
   // Event variables
   real64 m_frictionCoefficient;
-  array2d< real64 > m_frictionCoefficientTable; 
+  array2d< real64 > m_frictionCoefficientTable;
 };
 
 } /* namespace geos */

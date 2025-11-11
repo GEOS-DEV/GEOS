@@ -338,7 +338,7 @@ GEOS_HOST_DEVICE
 inline
 real64 toFirstLame( real64 const & G, real64 const & E )
 {
-  return  G * ( E - 2 * G) / ( 3 * G - E);
+  return G * ( E - 2 * G) / ( 3 * G - E);
 }
 
 } /* namespace shearModAndYoungMod*/
@@ -356,7 +356,7 @@ GEOS_HOST_DEVICE
 inline
 real64 toShearMod( real64 const & lambda, real64 const & E )
 {
-  return 0.25 * (E-3*lambda + std::sqrt(E * E + 9 * lambda * lambda + 2 * E * lambda));
+  return 0.25 * (E-3*lambda + std::sqrt( E * E + 9 * lambda * lambda + 2 * E * lambda ));
 }
 
 /**
@@ -369,7 +369,7 @@ GEOS_HOST_DEVICE
 inline
 real64 toBulkMod( real64 const & lambda, real64 const & E )
 {
-  return (E+3*lambda + std::sqrt(E * E + 9 * lambda * lambda + 2 * E * lambda))/6;
+  return (E+3*lambda + std::sqrt( E * E + 9 * lambda * lambda + 2 * E * lambda ))/6;
 }
 
 /**
@@ -382,7 +382,7 @@ GEOS_HOST_DEVICE
 inline
 real64 toPoissonRatio( real64 const & lambda, real64 const & E )
 {
-  return 2*lambda / (E+lambda + std::sqrt(E * E + 9 * lambda * lambda + 2 * E * lambda));
+  return 2*lambda / (E+lambda + std::sqrt( E * E + 9 * lambda * lambda + 2 * E * lambda ));
 }
 
 }

@@ -326,8 +326,8 @@ struct SolidUtilities
                           localIndex const q,
                           real64 const timeIncrement,
                           real64 ( & Ddt )[6],
-                          real64 const ( & RotBeginning )[3][3],
-                          real64 const ( & RotEnd )[3][3],
+                          real64 const ( &RotBeginning )[3][3],
+                          real64 const ( &RotEnd )[3][3],
                           real64 ( & stress )[6] )
   {
     // Prepare strain increment for rotation

@@ -13,33 +13,25 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "PartitionBase.hpp"
+#include "CohesiveZoneRegionBase.hpp"
+
+#include "common/TimingMacros.hpp"
+
 
 namespace geos
 {
+using namespace dataRepository;
 
-PartitionBase::PartitionBase( string const & name,
-                              Group * const parent ):
-  Group( name, parent )
-{}
 
-PartitionBase::PartitionBase( const unsigned int numPartitions,
-                              const unsigned int thisPartition,
-                              string const & name,
-                              Group * const parent ):
-  Group( name, parent ),
-  m_size( numPartitions ),
-  m_rank( thisPartition ),
-  m_numColors( 1 )
-{}
-
-PartitionBase::~PartitionBase()
-{}
-
-PartitionBase::CatalogInterface::CatalogType & PartitionBase::getCatalog()
+CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * const parent ):
+  ObjectManagerBase( name, parent )
 {
-  static PartitionBase::CatalogInterface::CatalogType catalog;
-  return catalog;
+//   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
+
 }
+
+
+CohesiveZoneRegionBase::~CohesiveZoneRegionBase()
+{}
 
 }

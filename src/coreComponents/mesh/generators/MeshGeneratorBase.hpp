@@ -148,19 +148,19 @@ private:
    * @param[inout] cellBlockManager the CellBlockManager that will receive the meshing information
    * @param[in] partition The (x, y , y) MPI split (in case we need it)
    */
-  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition  ) = 0;
+  virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) = 0;
 
   void attachWellInfo( CellBlockManager & cellBlockManager );
 
 // BEGIN DEVELOP BRANCH MERGE
-  //  * @param[in] partition The reference to spatial partition
-  //  */
-  // virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
-  // {
-  //   GEOS_UNUSED_VAR( cellBlockManager );
-  //   GEOS_UNUSED_VAR( partition );
-  //   GEOS_ERROR( "Cell mesh generation not implemented for generator of this type" );
-  // }
+//  * @param[in] partition The reference to spatial partition
+//  */
+// virtual void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
+// {
+//   GEOS_UNUSED_VAR( cellBlockManager );
+//   GEOS_UNUSED_VAR( partition );
+//   GEOS_ERROR( "Cell mesh generation not implemented for generator of this type" );
+// }
 
   // void attachWellInfo( CellBlockManager & cellBlockManager );
 
@@ -170,7 +170,8 @@ private:
   //  * @param[in] particleManager The reference to the particle manager
   //  * @param[in] partition The reference to spatial partition
   //  */
-  // virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition const & partition )
+  // virtual void fillParticleBlockManager( ParticleBlockManager & particleBlockManager, ParticleManager & particleManager, SpatialPartition
+  // const & partition )
   // {
   //   GEOS_UNUSED_VAR( particleBlockManager );
   //   GEOS_UNUSED_VAR( particleManager );

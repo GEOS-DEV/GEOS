@@ -74,36 +74,36 @@ SpatialPartition::SpatialPartition( string const & name,
 
   // Do m_coords, m_partitions need to be registered?
 
-  registerWrapper( viewKeyStruct::minString() , &m_min ).
+  registerWrapper( viewKeyStruct::minString(), &m_min ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Minimum extent of partition dimensions (excluding ghost objects)" );
 
-  registerWrapper( viewKeyStruct::maxString() , &m_max ).
+  registerWrapper( viewKeyStruct::maxString(), &m_max ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Maximum extent of partition dimensions (excluding ghost objects)" );
 
-  registerWrapper( viewKeyStruct::blockSizeString() , &m_blockSize ).
+  registerWrapper( viewKeyStruct::blockSizeString(), &m_blockSize ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Length of partition dimensions (excluding ghost objects)." );
 
-  registerWrapper( viewKeyStruct::partitionLocationsString() , &m_partitionLocations ).
+  registerWrapper( viewKeyStruct::partitionLocationsString(), &m_partitionLocations ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Locations of partition boundaries" );
 
-  registerWrapper( viewKeyStruct::gridMinString() , &m_gridMin ).
+  registerWrapper( viewKeyStruct::gridMinString(), &m_gridMin ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Minimum extent of problem dimensions (excluding ghost objects)." );
 
-  registerWrapper( viewKeyStruct::gridMaxString() , &m_gridMax ).
+  registerWrapper( viewKeyStruct::gridMaxString(), &m_gridMax ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Maximum extent of problem dimensions (excluding ghost objects)." );
 
-  registerWrapper( viewKeyStruct::gridSizeString() , &m_gridSize ).
+  registerWrapper( viewKeyStruct::gridSizeString(), &m_gridSize ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Total length of problem dimensions (excluding ghost objects)." );
@@ -113,11 +113,11 @@ SpatialPartition::SpatialPartition( string const & name,
     setInputFlag( InputFlags::FALSE ).
     setDescription( "periodic flag for each direction of mesh" );
 
-  registerWrapper( viewKeyStruct::contactGhostMinString() , &m_contactGhostMin ).
+  registerWrapper( viewKeyStruct::contactGhostMinString(), &m_contactGhostMin ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Ghost position min." );
 
-  registerWrapper( viewKeyStruct::contactGhostMaxString() , &m_contactGhostMax ).
+  registerWrapper( viewKeyStruct::contactGhostMaxString(), &m_contactGhostMax ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Ghost position max." );
 }
@@ -129,68 +129,70 @@ void SpatialPartition::postInputInitialization()
 {
   PartitionBase::postInputInitialization();
 
-    // Do LvArrays explicitly need to be resized to 0?
-    if( m_partitionLocations.size() == 0)
+  // Do LvArrays explicitly need to be resized to 0?
+  if( m_partitionLocations.size() == 0 )
+  {
+    m_partitionLocations.resize( 3 );
+    for( int i= 0; i < 3; i++ )
     {
-      m_partitionLocations.resize( 3 );
-      for( int i= 0; i < 3; i++){
-        m_partitionLocations[i].resize( 0 );
-      }
+      m_partitionLocations[i].resize( 0 );
     }
+  }
 
-    if( m_periodic.size() == 0 ){
-      m_periodic.resize( 3 );
-      LvArray::tensorOps::fill< 3 >(m_periodic, 0);
-    }
-    else
-    {
-      GEOS_ERROR_IF( m_periodic.size() !=3, "Periodic flags must have size 3" );
-    }
+  if( m_periodic.size() == 0 )
+  {
+    m_periodic.resize( 3 );
+    LvArray::tensorOps::fill< 3 >( m_periodic, 0 );
+  }
+  else
+  {
+    GEOS_ERROR_IF( m_periodic.size() !=3, "Periodic flags must have size 3" );
+  }
 
-    if( m_min.size() == 0 )
-    {
-      m_min.resize( 3 );
-      LvArray::tensorOps::fill< 3 >(m_min, 0.0);
-    }
-    
-    if( m_max.size() == 0 )
-    {
-      m_max.resize( 3 );
-      LvArray::tensorOps::fill< 3 >(m_max, 0.0);
-    }
+  if( m_min.size() == 0 )
+  {
+    m_min.resize( 3 );
+    LvArray::tensorOps::fill< 3 >( m_min, 0.0 );
+  }
 
-    if( m_blockSize.size() == 0 ) 
-    {
-      m_blockSize.resize( 3 );
-      LvArray::tensorOps::fill< 3 >(m_blockSize, 1.0) ;
-    }
-    if( m_gridSize.size() == 0 )
-    {
-      m_gridSize.resize( 3 );
-      LvArray::tensorOps::fill< 3 >(m_gridSize, 0.0);
-    }
+  if( m_max.size() == 0 )
+  {
+    m_max.resize( 3 );
+    LvArray::tensorOps::fill< 3 >( m_max, 0.0 );
+  }
 
-    if( m_gridMin.size() == 0 )
-    {
-      m_gridMin.resize( 3 );
-      LvArray::tensorOps::fill< 3 >(m_gridMin, 0.0);
-    }
+  if( m_blockSize.size() == 0 )
+  {
+    m_blockSize.resize( 3 );
+    LvArray::tensorOps::fill< 3 >( m_blockSize, 1.0 );
+  }
+  if( m_gridSize.size() == 0 )
+  {
+    m_gridSize.resize( 3 );
+    LvArray::tensorOps::fill< 3 >( m_gridSize, 0.0 );
+  }
 
-    if( m_gridMax.size() == 0 )
-    {
-      m_gridMax.resize( 3 );
-      LvArray::tensorOps::fill< 3 >(m_gridMax, 0.0);
-    }
+  if( m_gridMin.size() == 0 )
+  {
+    m_gridMin.resize( 3 );
+    LvArray::tensorOps::fill< 3 >( m_gridMin, 0.0 );
+  }
 
-    if( m_contactGhostMin.size() == 0 )
-    {
-      m_contactGhostMin.resize( 3 );
-    }
+  if( m_gridMax.size() == 0 )
+  {
+    m_gridMax.resize( 3 );
+    LvArray::tensorOps::fill< 3 >( m_gridMax, 0.0 );
+  }
 
-    if( m_contactGhostMax.size() == 0 )
-    {
-      m_contactGhostMax.resize( 3 );
-    }
+  if( m_contactGhostMin.size() == 0 )
+  {
+    m_contactGhostMin.resize( 3 );
+  }
+
+  if( m_contactGhostMax.size() == 0 )
+  {
+    m_contactGhostMax.resize( 3 );
+  }
 }
 
 void SpatialPartition::setPartitions( unsigned int xPartitions,
@@ -282,8 +284,8 @@ void SpatialPartition::addNeighbors( const unsigned int idim,
 }
 
 void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
-                                real64 const ( &max )[ 3 ] )
-{  
+                                 real64 const ( &max )[ 3 ] )
+{
   {
     //get size of problem and decomposition
     m_size = MpiWrapper::commSize( MPI_COMM_GEOS );
@@ -400,7 +402,7 @@ bool SpatialPartition::isCoordInPartition( const real64 & coord, const int dir )
   {
     if( m_partitions( i ) != 1 )
     {
-      real64 localCenter = MapValueToRange( coord,  m_gridMin[ i ],  m_gridMax[ i ] );
+      real64 localCenter = MapValueToRange( coord, m_gridMin[ i ], m_gridMax[ i ] );
       rval = rval && localCenter >= m_min[ i ] && localCenter < m_max[ i ];
     }
 
@@ -460,190 +462,201 @@ void SpatialPartition::setPeriodicDomainBoundaryObjects( MeshBody & grid,
                                                          NodeManager & nodeManager,
                                                          EdgeManager & edgeManager,
                                                          FaceManager & faceManager )
+{
+  GEOS_LOG_RANK( "Set periodic domain boundary objects" );
+  arrayView1d< globalIndex > localToGlobalMap = nodeManager.localToGlobalMap();
+  // unordered_map< globalIndex, localIndex > const & globalToLocalMap = nodeManager.globalToLocalMap(); // CC: need this for single
+  // partition case
+  const arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > gridPosition = nodeManager.referencePosition();
+
+  // CC: Should we be using periodicSets? Old geos used periodic sets in the input file, we don't here
+  CellBlockManager & cellBlockManager = grid.getGroup< CellBlockManager >( dataRepository::keys::cellManager );
+  auto & nodeSets = cellBlockManager.getNodeSets();
+
+  //Get cartesian communicator to get rank of neighbor periodic partition
+  MPI_Comm cartcomm;
   {
-    GEOS_LOG_RANK( "Set periodic domain boundary objects");
-    arrayView1d< globalIndex > localToGlobalMap = nodeManager.localToGlobalMap();
-    // unordered_map< globalIndex, localIndex > const & globalToLocalMap = nodeManager.globalToLocalMap(); // CC: need this for single partition case 
-    const arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > gridPosition = nodeManager.referencePosition();
+    int reorder = 0;
+    MpiWrapper::cartCreate( MPI_COMM_GEOS, 3, m_partitions.data(), m_periodic.data(), reorder, &cartcomm );
+    GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
+  }
 
-    // CC: Should we be using periodicSets? Old geos used periodic sets in the input file, we don't here
-    CellBlockManager & cellBlockManager = grid.getGroup< CellBlockManager >( dataRepository::keys::cellManager );
-    auto & nodeSets = cellBlockManager.getNodeSets();
-
-    //Get cartesian communicator to get rank of neighbor periodic partition
-    MPI_Comm cartcomm;
+  // Check for periodic boundaries in each direction
+  for( unsigned int dimension =0; dimension < 3; dimension++ )
+  {
+    if( m_periodic[dimension] )
     {
-      int reorder = 0;
-      MpiWrapper::cartCreate( MPI_COMM_GEOS, 3, m_partitions.data(), m_periodic.data(), reorder, &cartcomm );
-      GEOS_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
-    }
-
-    // Check for periodic boundaries in each direction
-    for(unsigned int dimension =0; dimension < 3; dimension++)
-    {
-      if(m_periodic[dimension])
+      // Is this partition on a boundary of domain?
+      if( (m_coords[dimension] == 0)  ||
+          (m_coords[dimension] == m_partitions[dimension]-1) )
       {
-        // Is this partition on a boundary of domain?
-        if( (m_coords[dimension] == 0)  ||
-            (m_coords[dimension] == m_partitions[dimension]-1) )
-        {
-          // Reset global id numbers
-          ///////////////////////////
+        // Reset global id numbers
+        ///////////////////////////
 
-          // Pick sets based on direction
-          string setnames[2];
-          switch(dimension){
-            case 0:
-              setnames[0] = "xneg";
-              setnames[1] = "xpos";
-              break;
-            case 1:
-              setnames[0] = "yneg";
-              setnames[1] = "ypos";
-              break;
-            case 2:
-              setnames[0] = "zneg";
-              setnames[1] = "zpos";
-              break;
-            default:
-              GEOS_ERROR( "SpatialPartition::setPeriodicDomainBoundaryObjects() unrecognized direction!\n" );
+        // Pick sets based on direction
+        string setnames[2];
+        switch( dimension )
+        {
+          case 0:
+            setnames[0] = "xneg";
+            setnames[1] = "xpos";
+            break;
+          case 1:
+            setnames[0] = "yneg";
+            setnames[1] = "ypos";
+            break;
+          case 2:
+            setnames[0] = "zneg";
+            setnames[1] = "zpos";
+            break;
+          default:
+            GEOS_ERROR( "SpatialPartition::setPeriodicDomainBoundaryObjects() unrecognized direction!\n" );
+        }
+
+        SortedArray< localIndex > * theSets[2];
+        theSets[0] = &(nodeSets[setnames[0]]);
+        theSets[1] = &(nodeSets[setnames[1]]);
+
+        PlanarSorter planarSorter( gridPosition, dimension );
+
+        if( m_partitions[dimension] > 1 )
+        {
+          // Multiple partitions
+
+          // Find periodic neighbor partition coordinates
+          array1d< int > nbr_coords = m_coords;
+          if( m_coords[dimension] == 0 )
+          {
+            nbr_coords[dimension] = m_partitions[dimension]-1;
+          }
+          else
+          {
+            nbr_coords[dimension] = 0;
           }
 
-          SortedArray< localIndex >* theSets[2];
-          theSets[0] = &(nodeSets[setnames[0]]);
-          theSets[1] = &(nodeSets[setnames[1]]);
+          int mySetId = (theSets[0]->size() > 0)? 0 : 1;
+          int nbrSetId = 1-mySetId;
+          if( theSets[nbrSetId]->size() > 0 )
+          {
+            GEOS_ERROR( "SpatialPartition::SetPeriodicDomainBoundaryObjects: " + setnames[0] + " and " + setnames[1] + " present on same partition\n" );
+          }
+          SortedArray< localIndex > & mySet =  *(theSets[mySetId]);
 
-          PlanarSorter planarSorter(gridPosition, dimension);
+          // gather local and global ids
+          std::vector< std::pair< localIndex, localIndex > > myLocalAndGlobalIds;
 
-          if(m_partitions[dimension] > 1){
-            // Multiple partitions
+          for( int i = 0; i < mySet.size(); ++i )
+          {
+            localIndex globalId = localToGlobalMap[ mySet[i] ];   //nodeGlobalIds[*itr];
+            myLocalAndGlobalIds.push_back( std::pair< localIndex, localIndex >( mySet[i], globalId ) );
+          }
 
-            // Find periodic neighbor partition coordinates
-            array1d<int> nbr_coords = m_coords;
-            if(m_coords[dimension] == 0){
-              nbr_coords[dimension] = m_partitions[dimension]-1;
-            } else {
-              nbr_coords[dimension] = 0;
-            }
+          // Sort local/global ids by position in plane
+          array1d< localIndex > mySortedGlobalIds( myLocalAndGlobalIds.size());
+          array1d< localIndex > nbrSortedGlobalIds;
 
-            int mySetId = (theSets[0]->size() > 0)? 0 : 1;
-            int nbrSetId = 1-mySetId;
-            if(theSets[nbrSetId]->size() > 0)
-            {
-              GEOS_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects: " + setnames[0] + " and " + setnames[1] + " present on same partition\n");
-            }
-            SortedArray< localIndex > & mySet =  *(theSets[mySetId]);
+          std::sort( myLocalAndGlobalIds.begin(), myLocalAndGlobalIds.end(), planarSorter );
+          for( unsigned int ii = 0; ii <myLocalAndGlobalIds.size(); ++ii )
+          {
+            mySortedGlobalIds[ii]  = myLocalAndGlobalIds[ii].second;
+          }
 
-            // gather local and global ids
-            std::vector< std::pair< localIndex, localIndex > > myLocalAndGlobalIds;
+          int neighbor_rank = MpiWrapper::cartRank( cartcomm, nbr_coords.data());  // Get rank of periodic neighbor
+          int neighborsTag = 54;
 
-            for( int i = 0; i < mySet.size(); ++i )
-            {
-              localIndex globalId = localToGlobalMap[ mySet[i] ]; //nodeGlobalIds[*itr];
-              myLocalAndGlobalIds.push_back( std::pair<localIndex , localIndex>( mySet[i], globalId ) );
-            }
+          // Perform manual MPI communication with neighbor
+          MPI_Request mpiRequest = MPI_REQUEST_NULL;
+          MPI_Status mpiStatus;
 
-            // Sort local/global ids by position in plane
-            array1d< localIndex > mySortedGlobalIds(myLocalAndGlobalIds.size());
-            array1d< localIndex > nbrSortedGlobalIds;
+          MpiWrapper::iSend( mySortedGlobalIds,
+                             neighbor_rank,
+                             neighborsTag,
+                             MPI_COMM_GEOS,
+                             &mpiRequest );
 
-            std::sort(myLocalAndGlobalIds.begin(), myLocalAndGlobalIds.end(), planarSorter);
-            for(unsigned int ii = 0 ; ii <myLocalAndGlobalIds.size() ; ++ii ){
-              mySortedGlobalIds[ii]  = myLocalAndGlobalIds[ii].second;
-            }
+          MpiWrapper::recv( nbrSortedGlobalIds,
+                            neighbor_rank,
+                            neighborsTag,
+                            MPI_COMM_GEOS,
+                            &mpiStatus );
 
-            int neighbor_rank = MpiWrapper::cartRank(cartcomm, nbr_coords.data()); // Get rank of periodic neighbor
-            int neighborsTag = 54;
+          MpiWrapper::waitAll( 1, &mpiRequest, &mpiStatus );  //does the count refer to siz
 
-            // Perform manual MPI communication with neighbor  
-            MPI_Request mpiRequest = MPI_REQUEST_NULL;
-            MPI_Status mpiStatus;
+          // should have same number of nodes in both sets
+          if( nbrSortedGlobalIds.size() !=  mySortedGlobalIds.size() )
+          {
+            GEOS_ERROR( "SpatialPartition::SetPeriodicDomainBoundaryObjects: Size of " + setnames[mySetId] + " does not match size of " + setnames[nbrSetId] + " on neighboring partition\n" );
+          }
 
-            MpiWrapper::iSend( mySortedGlobalIds,
-                              neighbor_rank, 
-                              neighborsTag, 
-                              MPI_COMM_GEOS, 
-                              &mpiRequest );
-
-            MpiWrapper::recv( nbrSortedGlobalIds, 
-                              neighbor_rank, 
-                              neighborsTag, 
-                              MPI_COMM_GEOS, 
-                              &mpiStatus );
-
-            MpiWrapper::waitAll( 1, &mpiRequest, &mpiStatus); //does the count refer to siz
-            
-            // should have same number of nodes in both sets
-            if(nbrSortedGlobalIds.size() !=  mySortedGlobalIds.size() )
-            {
-              GEOS_ERROR("SpatialPartition::SetPeriodicDomainBoundaryObjects: Size of " + setnames[mySetId] + " does not match size of " + setnames[nbrSetId] + " on neighboring partition\n");
-            }
-
-            // assign new global ids
-            for(unsigned int ii = 0 ; ii < myLocalAndGlobalIds.size() ; ++ii )
-            {
-              localIndex& nd =  myLocalAndGlobalIds[ii].first;
-              localToGlobalMap[nd] = std::min(mySortedGlobalIds[ii], nbrSortedGlobalIds[ii]);
-              nodeManager.updateGlobalToLocalMap(nd); //Update global to local map so it doesn't crash when matching domain boundary objects
-            }
-
-          } else {
-            //CC: Logic for single partition periodic boundaries is unimplemented
-
-    //          // Single partition
-    //          //-----------------
-
-    //          // Nodes
-    //          {
-    //            std::vector< std::vector<std::pair<localIndex, localIndex>  >  > setLocalAndGlobalIds(2);
-    //            for(int a =0; a<2; ++a){
-    //              // Gather local/global ids
-    //              for( lSet::iterator itr=theSets[a]->begin() ; itr!=theSets[a]->end() ; ++itr )
-    //              {
-    //                localIndex globalId = nodeGlobalIds[*itr];
-    //                setLocalAndGlobalIds[a].push_back(std::pair<localIndex , localIndex>( *itr,globalId) );
-    //              }
-    //              // Sort local/global ids by position in plane
-    //              std::sort(setLocalAndGlobalIds[a].begin(),setLocalAndGlobalIds[a].end(),planarSorter);
-    //            }
-
-    //            // should have same number of nodes in both sets
-    //            if(setLocalAndGlobalIds[0].size() !=  setLocalAndGlobalIds[1].size() )
-    //            {
-    //              throw GPException("SpatialPartition::SetPeriodicDomainBoundaryObjects: Size of " + setnames[0] + " does not match size of " + setnames[1] + " on process " +toString(m_rank) +  "\n");
-    //            }
-
-    //            // assign new global ids and make global to local map point to nodes on min boundary
-    //            for(unsigned int ii = 0 ; ii <setLocalAndGlobalIds[0].size() ; ++ii ){
-    //              localIndex& nd0 =  setLocalAndGlobalIds[0][ii].first;
-    //              localIndex& nd1 =  setLocalAndGlobalIds[1][ii].first;
-
-    //              // this could be done once (all nodes in the same set should lie on the one boundary)
-    //              int minBoundarySetIndx = 0;
-    //              if(  (*domain.m_feNodeManager.m_refposition)[nd1][dimension] < (*domain.m_feNodeManager.m_refposition)[nd0][dimension] ){
-    //                minBoundarySetIndx = 1;
-    //              }
-    //              int maxBoundarySetIndx = 1 - minBoundarySetIndx;
-    //              localIndex localTarget = (minBoundarySetIndx == 0)? nd0 : nd1;
-    // //             localIndex notThelocalTarget = (minBoundarySetIndx == 0)? nd1 : nd0;
-
-    //              // fix up local to global map
-    //              localIndex minBoundGlobalId = setLocalAndGlobalIds[minBoundarySetIndx][ii].second;
-    //              localIndex maxBoundGlobalId = setLocalAndGlobalIds[maxBoundarySetIndx][ii].second;
-
-    //              nodeGlobalIds[nd0] = minBoundGlobalId;
-    //              nodeGlobalIds[nd1] = minBoundGlobalId;
-
-    //              // fix up global to local map
-    //              nodeGlobalToLocalMap[minBoundGlobalId] = localTarget;
-
-    //              // not used? in any case make old Global id point to same local target
-    //              nodeGlobalToLocalMap[maxBoundGlobalId] = localTarget;
-    //            }
-    //          }
+          // assign new global ids
+          for( unsigned int ii = 0; ii < myLocalAndGlobalIds.size(); ++ii )
+          {
+            localIndex & nd =  myLocalAndGlobalIds[ii].first;
+            localToGlobalMap[nd] = std::min( mySortedGlobalIds[ii], nbrSortedGlobalIds[ii] );
+            nodeManager.updateGlobalToLocalMap( nd ); //Update global to local map so it doesn't crash when matching domain boundary objects
+          }
 
         }
-    
+        else
+        {
+          //CC: Logic for single partition periodic boundaries is unimplemented
+
+          //          // Single partition
+          //          //-----------------
+
+          //          // Nodes
+          //          {
+          //            std::vector< std::vector<std::pair<localIndex, localIndex>  >  > setLocalAndGlobalIds(2);
+          //            for(int a =0; a<2; ++a){
+          //              // Gather local/global ids
+          //              for( lSet::iterator itr=theSets[a]->begin() ; itr!=theSets[a]->end() ; ++itr )
+          //              {
+          //                localIndex globalId = nodeGlobalIds[*itr];
+          //                setLocalAndGlobalIds[a].push_back(std::pair<localIndex , localIndex>( *itr,globalId) );
+          //              }
+          //              // Sort local/global ids by position in plane
+          //              std::sort(setLocalAndGlobalIds[a].begin(),setLocalAndGlobalIds[a].end(),planarSorter);
+          //            }
+
+          //            // should have same number of nodes in both sets
+          //            if(setLocalAndGlobalIds[0].size() !=  setLocalAndGlobalIds[1].size() )
+          //            {
+          //              throw GPException("SpatialPartition::SetPeriodicDomainBoundaryObjects: Size of " + setnames[0] + " does not match
+          // size of " + setnames[1] + " on process " +toString(m_rank) +  "\n");
+          //            }
+
+          //            // assign new global ids and make global to local map point to nodes on min boundary
+          //            for(unsigned int ii = 0 ; ii <setLocalAndGlobalIds[0].size() ; ++ii ){
+          //              localIndex& nd0 =  setLocalAndGlobalIds[0][ii].first;
+          //              localIndex& nd1 =  setLocalAndGlobalIds[1][ii].first;
+
+          //              // this could be done once (all nodes in the same set should lie on the one boundary)
+          //              int minBoundarySetIndx = 0;
+          //              if(  (*domain.m_feNodeManager.m_refposition)[nd1][dimension] <
+          // (*domain.m_feNodeManager.m_refposition)[nd0][dimension] ){
+          //                minBoundarySetIndx = 1;
+          //              }
+          //              int maxBoundarySetIndx = 1 - minBoundarySetIndx;
+          //              localIndex localTarget = (minBoundarySetIndx == 0)? nd0 : nd1;
+          // //             localIndex notThelocalTarget = (minBoundarySetIndx == 0)? nd1 : nd0;
+
+          //              // fix up local to global map
+          //              localIndex minBoundGlobalId = setLocalAndGlobalIds[minBoundarySetIndx][ii].second;
+          //              localIndex maxBoundGlobalId = setLocalAndGlobalIds[maxBoundarySetIndx][ii].second;
+
+          //              nodeGlobalIds[nd0] = minBoundGlobalId;
+          //              nodeGlobalIds[nd1] = minBoundGlobalId;
+
+          //              // fix up global to local map
+          //              nodeGlobalToLocalMap[minBoundGlobalId] = localTarget;
+
+          //              // not used? in any case make old Global id point to same local target
+          //              nodeGlobalToLocalMap[maxBoundGlobalId] = localTarget;
+          //            }
+          //          }
+
+        }
+
         // CC: For periodic MPM stuff we don't need to update edge or face managers, right?
         // Only need to additively sync the values of the grid nodes
         for( int i = 0; i < theSets[0]->size(); ++i )
@@ -662,7 +675,7 @@ void SpatialPartition::setPeriodicDomainBoundaryObjects( MeshBody & grid,
       }
     }
   }
-    
+
   MpiWrapper::commFree( cartcomm );
 }
 

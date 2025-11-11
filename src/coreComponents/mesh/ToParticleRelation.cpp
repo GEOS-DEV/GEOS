@@ -25,8 +25,8 @@ namespace geos
 {
 
 void resizeArray( OrderedVariableToManyParticleRelation & relation,
-            localIndex const index,
-            localIndex const size )
+                  localIndex const index,
+                  localIndex const size )
 {
   relation.m_numParticles[index] = size;
   relation.m_toParticleRegion.resizeArray( index, size );

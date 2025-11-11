@@ -47,10 +47,10 @@ VonMisesJ::VonMisesJ( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::velocityGradientString(), &m_velocityGradient ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::NOPLOT ).  
+    setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Velocity gradient field" );
 
-registerWrapper( viewKeyStruct::plasticStrainString(), &m_plasticStrain ).
+  registerWrapper( viewKeyStruct::plasticStrainString(), &m_plasticStrain ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Plastic strain field" );
@@ -64,9 +64,9 @@ void VonMisesJ::allocateConstitutiveData( dataRepository::Group & parent,
 {
   ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_deformationGradient.resize( 0, 3, 3);
-  m_velocityGradient.resize(0, 3, 3);
-  m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6);
+  m_deformationGradient.resize( 0, 3, 3 );
+  m_velocityGradient.resize( 0, 3, 3 );
+  m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_yieldStrength.resize( 0 );
 }
 

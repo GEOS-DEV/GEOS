@@ -63,15 +63,15 @@ public:
    * @param[in] newStress The ArrayView holding the new stress data for each quadrature point.
    * @param[in] oldStress The ArrayView holding the old stress data for each quadrature point.
    */
-  GeneralizedVortexMMSUpdates(arrayView2d< real64 > const & jacobian,
-                              arrayView1d< real64 > const & bulkModulus,
-                              arrayView1d< real64 > const & shearModulus,
-                              arrayView1d< real64 const > const & thermalExpansionCoefficient,
-                              arrayView3d< real64, solid::STRESS_USD > const & newStress,
-                              arrayView3d< real64, solid::STRESS_USD > const & oldStress,
-                              arrayView2d< real64 > const & density,
-                              arrayView2d< real64 > const & wavespeed,
-                              bool const & disableInelasticity ):
+  GeneralizedVortexMMSUpdates( arrayView2d< real64 > const & jacobian,
+                               arrayView1d< real64 > const & bulkModulus,
+                               arrayView1d< real64 > const & shearModulus,
+                               arrayView1d< real64 const > const & thermalExpansionCoefficient,
+                               arrayView3d< real64, solid::STRESS_USD > const & newStress,
+                               arrayView3d< real64, solid::STRESS_USD > const & oldStress,
+                               arrayView2d< real64 > const & density,
+                               arrayView2d< real64 > const & wavespeed,
+                               bool const & disableInelasticity ):
     ElasticIsotropicUpdates( bulkModulus,
                              shearModulus,
                              thermalExpansionCoefficient,
@@ -151,11 +151,11 @@ private:
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void GeneralizedVortexMMSUpdates::smallStrainUpdate( localIndex const k,
-                                              localIndex const q,
-                                              real64 const & timeIncrement,
-                                              real64 const ( &strainIncrement )[6],
-                                              real64 ( & stress )[6],
-                                              real64 ( & stiffness )[6][6] ) const
+                                                     localIndex const q,
+                                                     real64 const & timeIncrement,
+                                                     real64 const ( &strainIncrement )[6],
+                                                     real64 ( & stress )[6],
+                                                     real64 ( & stiffness )[6][6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
   ElasticIsotropicUpdates::smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness );
@@ -179,11 +179,11 @@ void GeneralizedVortexMMSUpdates::smallStrainUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void GeneralizedVortexMMSUpdates::smallStrainUpdate( localIndex const k,
-                                              localIndex const q,
-                                              real64 const & timeIncrement,
-                                              real64 const ( &strainIncrement )[6],
-                                              real64 ( & stress )[6],
-                                              DiscretizationOps & stiffness ) const
+                                                     localIndex const q,
+                                                     real64 const & timeIncrement,
+                                                     real64 const ( &strainIncrement )[6],
+                                                     real64 ( & stress )[6],
+                                                     DiscretizationOps & stiffness ) const
 {
   smallStrainUpdate( k, q, timeIncrement, strainIncrement, stress, stiffness.m_c );
 }
@@ -191,10 +191,10 @@ void GeneralizedVortexMMSUpdates::smallStrainUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void GeneralizedVortexMMSUpdates::smallStrainUpdate_StressOnly( localIndex const k,
-                                                         localIndex const q,
-                                                         real64 const & timeIncrement,
-                                                         real64 const ( &strainIncrement )[6],
-                                                         real64 ( & stress )[6] ) const
+                                                                localIndex const q,
+                                                                real64 const & timeIncrement,
+                                                                real64 const ( &strainIncrement )[6],
+                                                                real64 ( & stress )[6] ) const
 {
   // elastic predictor (assume strainIncrement is all elastic)
   ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, q, timeIncrement, strainIncrement, stress );
@@ -216,9 +216,9 @@ void GeneralizedVortexMMSUpdates::smallStrainUpdate_StressOnly( localIndex const
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void GeneralizedVortexMMSUpdates::smallStrainUpdateHelper( localIndex const k,
-                                                    localIndex const q,
-                                                    real64 const dt,
-                                                    real64 ( & stress )[6] ) const
+                                                           localIndex const q,
+                                                           real64 const dt,
+                                                           real64 ( & stress )[6] ) const
 {
   // get trial pressure
   real64 trialPressure = -m_bulkModulus[k] * log( m_jacobian[k][q] );
@@ -347,15 +347,15 @@ public:
    */
   GeneralizedVortexMMSUpdates createKernelUpdates() const
   {
-    return GeneralizedVortexMMSUpdates(m_jacobian,
-                                       m_bulkModulus,
-                                       m_shearModulus,
-                                       m_thermalExpansionCoefficient,
-                                       m_newStress,
-                                       m_oldStress,
-                                       m_density,
-                                       m_wavespeed,
-                                       m_disableInelasticity );
+    return GeneralizedVortexMMSUpdates( m_jacobian,
+                                        m_bulkModulus,
+                                        m_shearModulus,
+                                        m_thermalExpansionCoefficient,
+                                        m_newStress,
+                                        m_oldStress,
+                                        m_density,
+                                        m_wavespeed,
+                                        m_disableInelasticity );
   }
 
   /**

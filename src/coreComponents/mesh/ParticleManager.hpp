@@ -563,23 +563,23 @@ public:
   }
 
   /**
-   * @brief This const function is used to launch kernel function over the particle subregions of all subregion types.
-   * @tparam LAMBDA type of the user-provided function
-   * @param lambda kernel function
-   */
-  template< typename LAMBDA >
-  void forParticleSubRegionsComplete( LAMBDA && lambda ) const
-  {
-    forParticleSubRegionsComplete< ParticleSubRegion >( std::forward< LAMBDA >( lambda ) );
-  }
-
-  /**
    * @brief This function is used to launch kernel function over the particle subregions of all subregion types.
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
    */
   template< typename LAMBDA >
   void forParticleSubRegionsComplete( LAMBDA && lambda )
+  {
+    forParticleSubRegionsComplete< ParticleSubRegion >( std::forward< LAMBDA >( lambda ) );
+  }
+
+  /**
+   * @brief This const function is used to launch kernel function over the particle subregions of all subregion types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
+  template< typename LAMBDA >
+  void forParticleSubRegionsComplete( LAMBDA && lambda ) const
   {
     forParticleSubRegionsComplete< ParticleSubRegion >( std::forward< LAMBDA >( lambda ) );
   }

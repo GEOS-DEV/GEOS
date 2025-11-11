@@ -34,7 +34,7 @@ class ResetDeformationGradientMPMEvent : public MPMEventBase
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   ResetDeformationGradientMPMEvent( const string & name,
-                                 Group * const parent );
+                                    Group * const parent );
 
   /// Destructor
   virtual ~ResetDeformationGradientMPMEvent() override;
@@ -46,12 +46,10 @@ public:
   static string catalogName() { return "ResetDeformationGradient"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
-  
+
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
-  {
-
-  } ResetDeformationGradientMPMEventViewKeys;
+  {} ResetDeformationGradientMPMEventViewKeys;
   /// @endcond
 
 protected:

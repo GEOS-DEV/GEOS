@@ -60,7 +60,7 @@ void ParticleRegion::generateMesh( Group & particleBlocks )
 // TODO This should be changed to call a ParticleSubRegion::getParticleCoordinates (and/or getParticleCorners) on each subregion such that
 // we can access those functions directly if needed
 array2d< real64 > ParticleRegion::getParticleCorners() const
-{ 
+{
   int const size = 8 * ( this->getNumberOfParticles() );
   array2d< real64 > coords( size, 3 );
   int index = 0;

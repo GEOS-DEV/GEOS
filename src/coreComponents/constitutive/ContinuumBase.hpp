@@ -214,7 +214,7 @@ public:
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
-                                             real64 const ( & strainIncrement )[6],
+                                             real64 const ( &strainIncrement )[6],
                                              real64 ( & stress )[6] ) const
   {
     GEOS_UNUSED_VAR( k );
@@ -241,9 +241,9 @@ public:
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
-                                             real64 const ( & beginningRotation )[3][3],
-                                             real64 const ( & endRotation )[3][3],
-                                             real64 const ( & strainIncrement )[6],
+                                             real64 const ( &beginningRotation )[3][3],
+                                             real64 const ( &endRotation )[3][3],
+                                             real64 const ( &strainIncrement )[6],
                                              real64 ( & stress )[6] ) const
   {
     GEOS_UNUSED_VAR( k );
@@ -347,8 +347,8 @@ public:
   GEOS_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
-                            real64 const ( & FminusI )[3][3],
-                            real64 ( & stress )[6] ) const 
+                            real64 const ( &FminusI )[3][3],
+                            real64 ( & stress )[6] ) const
   {
     GEOS_UNUSED_VAR( k );
     GEOS_UNUSED_VAR( q );
@@ -360,7 +360,7 @@ public:
   GEOS_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
-                            real64 const ( & FminusI )[3][3],
+                            real64 const ( &FminusI )[3][3],
                             real64 ( & stress )[6],
                             real64 ( & stiffness )[6][6] ) const
   {
@@ -370,7 +370,7 @@ public:
     GEOS_UNUSED_VAR( stress );
     GEOS_UNUSED_VAR( stiffness );
     GEOS_ERROR( "hyperUpdate() not implemented for this model" );
-  }                     
+  }
 };
 
 
@@ -387,7 +387,7 @@ public:
    * @param parent The parent group of the ContinuumBase object.
    */
   ContinuumBase( string const & name,
-             Group * const parent );
+                 Group * const parent );
 
   /**
    * Destructor
@@ -421,7 +421,7 @@ public:
     static constexpr char const * oldStressString() { return "oldStress"; }            ///< Old stress key
     static constexpr char const * densityString() { return "density"; }                ///< Density key
     static constexpr char const * defaultDensityString() { return "defaultDensity"; }  ///< Default density key
-    static constexpr char const * wavespeedString() { return "wavespeed"; } 
+    static constexpr char const * wavespeedString() { return "wavespeed"; }
   };
 
   /**

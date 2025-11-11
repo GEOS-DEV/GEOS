@@ -143,9 +143,10 @@ void InternalMeshGenerator::postInputInitialization()
   m_dim = getElementDim( EnumStrings< ElementType >::fromString( m_elementType[0] ) );
 
   // Should this have the size of the problem as enforced by m_dim?
-  if( m_periodic.size() == 0 ){
+  if( m_periodic.size() == 0 )
+  {
     m_periodic.resize( 3 );
-    LvArray::tensorOps::fill< 3 >(m_periodic, 0);
+    LvArray::tensorOps::fill< 3 >( m_periodic, 0 );
   }
   else
   {
@@ -562,7 +563,7 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
 void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition )
 {
   GEOS_MARK_FUNCTION;
-  
+
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
   {
@@ -766,7 +767,7 @@ void InternalMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockMa
           getNodePosition( globalIJK, m_trianglePattern, X[localNodeIndex] );
 
           // Alter global node map for radial mesh
-          setNodeGlobalIndicesOnPeriodicBoundary( partition, 
+          setNodeGlobalIndicesOnPeriodicBoundary( partition,
                                                   globalIJK );
 
           nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( globalIJK );

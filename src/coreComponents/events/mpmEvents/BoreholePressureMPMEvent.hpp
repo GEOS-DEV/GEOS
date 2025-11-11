@@ -47,7 +47,7 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
- /// @cond DO_NOT_DOCUMENT
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
     static constexpr char const * boreholeRadiusString() { return "boreholeRadius"; }
@@ -57,10 +57,10 @@ public:
   } BoreholePressureMPMEventViewKeys;
   /// @endcond
 
-  real64 getBoreholeRadius() const { return m_boreholeRadius; } 
-  real64 getStartPressure() const { return m_startPressure; } 
-  real64 getEndPressure() const { return m_endPressure; } 
-  int getInterpType() const { return m_interpType; } 
+  real64 getBoreholeRadius() const { return m_boreholeRadius; }
+  real64 getStartPressure() const { return m_startPressure; }
+  real64 getEndPressure() const { return m_endPressure; }
+  int getInterpType() const { return m_interpType; }
 
 protected:
   virtual void postInputInitialization() override final;

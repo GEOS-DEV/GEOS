@@ -26,7 +26,7 @@ namespace geos
  * @class ParticleRegionBase
  * @brief The ParticleRegionBase is the base class to manage the data stored at the particle level.
  *
- * The ParticleRegion base is the base class for the ParticleRegion class. It may be depreciated at
+ * The ParticleRegionBase is the base class for the ParticleRegion class. It may be depreciated at
  * some point since no other classes are currently derived from ParticleRegionBase.
  */
 class ParticleRegionBase : public ObjectManagerBase

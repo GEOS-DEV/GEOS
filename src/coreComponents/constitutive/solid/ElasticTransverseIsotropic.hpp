@@ -71,7 +71,7 @@ public:
                                      arrayView2d< real64 > const & density,
                                      arrayView2d< real64 > const & wavespeed,
                                      bool const & disableInelasticity ):
-    SolidBaseUpdates( newStress, 
+    SolidBaseUpdates( newStress,
                       oldStress,
                       density,
                       wavespeed,
@@ -143,10 +143,10 @@ public:
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
-                                             real64 const ( & beginningRotation )[3][3],
-                                             real64 const ( & endRotation )[3][3],
-                                             real64 const ( & strainIncrement)[6],
-                                             real64 ( & stress )[6]) const override;
+                                             real64 const ( &beginningRotation )[3][3],
+                                             real64 const ( &endRotation )[3][3],
+                                             real64 const ( &strainIncrement)[6],
+                                             real64 ( &stress )[6] ) const override;
 
   GEOS_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
@@ -366,12 +366,12 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
-                                                         localIndex const q,
-                                                         real64 const & timeIncrement,
-                                                         real64 const ( & beginningRotation )[3][3],
-                                                         real64 const ( & endRotation )[3][3],
-                                                         real64 const ( & strainIncrement )[6],
-                                                         real64 ( & stress )[6] ) const
+                                                                      localIndex const q,
+                                                                      real64 const & timeIncrement,
+                                                                      real64 const ( &beginningRotation )[3][3],
+                                                                      real64 const ( &endRotation )[3][3],
+                                                                      real64 const ( &strainIncrement )[6],
+                                                                      real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( timeIncrement );
   GEOS_UNUSED_VAR( endRotation );
@@ -381,7 +381,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   // Get inverse of rotation matrix using transpose
   real64 beginningRotationTranspose[3][3] = { };
   LvArray::tensorOps::transpose< 3, 3 >( beginningRotationTranspose, beginningRotation );
-  
+
   // Normalize the material direction for safety
   real64 materialDirection[3] ={ 0 };
   LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k] );
@@ -415,7 +415,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
 
   real64 v_copy[3][3] = { };
   real64 temp[3][3] = { };
-  LvArray::tensorOps::copy< 3, 3 >( v_copy, v ); 
+  LvArray::tensorOps::copy< 3, 3 >( v_copy, v );
   LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( temp, v_copy, v );
   LvArray::tensorOps::scale< 3, 3 >( temp, ( 1 - c ) / ( s * s ));
   LvArray::tensorOps::add< 3, 3 >( R, temp );
@@ -427,7 +427,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
   M[0][2] = R[0][2] * R[0][2];
   M[0][3] = 2 * R[0][1] * R[0][2];
   M[0][4] = 2 * R[0][0] * R[0][2];
-  M[0][5] = 2 * R[0][0] * R[0][1]; 
+  M[0][5] = 2 * R[0][0] * R[0][1];
 
   M[1][0] = R[1][0] * R[1][0];
   M[1][1] = R[1][1] * R[1][1];
@@ -496,7 +496,7 @@ void ElasticTransverseIsotropicUpdates::smallStrainUpdate_StressOnly( localIndex
 
   LvArray::tensorOps::Ri_eq_AijBj< 6, 6 >( stress, rotatedStiffnessMatrix, strainIncrement );
   LvArray::tensorOps::add< 6 >( stress, m_oldStress[k][q] );
-  saveStress( k, q, stress );  
+  saveStress( k, q, stress );
 
   // GEOS_UNUSED_VAR( beginningRotation );
   // GEOS_UNUSED_VAR( endRotation );
@@ -630,10 +630,10 @@ public:
     /// string/key for c66 component of Voigt stiffness tensor
     static constexpr char const * c66String() { return "c66"; }
 
-    /// string/key for effective bulk modulus 
+    /// string/key for effective bulk modulus
     static constexpr char const * effectiveBulkModulusString() { return "effectiveBulkModulus"; }
 
-    /// string/key for effective shear modulus 
+    /// string/key for effective shear modulus
     static constexpr char const * effectiveShearModulusString() { return "effectiveShearModulus"; }
 
     /// string/key for material direction value
@@ -805,7 +805,7 @@ public:
    */
   arrayView1d< real64 const > const effectiveBulkModulus() const { return m_effectiveBulkModulus; }
 
- /**
+  /**
    * @brief Accessor for effective bulk modulus
    * @return A const reference to arrayView1d<real64> containing the effective bulk
    *         modulus (at every element).
@@ -827,9 +827,9 @@ public:
   arrayView1d< real64 const > getEffectiveBulkModulus() const { return m_effectiveBulkModulus; }
 
   /**
-  * @brief Getter for effective shear modulus.
-  * @return reference to mutable effective shear modulus.
-  */
+   * @brief Getter for effective shear modulus.
+   * @return reference to mutable effective shear modulus.
+   */
   GEOS_HOST_DEVICE
   arrayView1d< real64 const > getEffectiveShearModulus() const { return m_effectiveShearModulus; }
 
@@ -929,7 +929,7 @@ protected:
 
   /// The effective shear modulus
   array1d< real64 > m_effectiveShearModulus;
-  
+
   /// State variable: The material direction for each element/particle
   array2d< real64 > m_materialDirection;
 };

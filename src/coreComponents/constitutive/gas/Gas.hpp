@@ -41,7 +41,7 @@ class GasUpdates : public ContinuumBaseUpdates
 public:
   /**
    * @brief Constructor
-   * @param[in] referencePressure    The value of the reference pressure 
+   * @param[in] referencePressure    The value of the reference pressure
    * @param[in] referenceTemperature The value of the reference temperature
    * @param[in] jacobian             The ArrayView holding the jacobian data for each element.
    * @param[in] temperature          The ArrayView holding the temperature data for each element.
@@ -56,14 +56,14 @@ public:
               arrayView3d< real64, solid::STRESS_USD > const & oldStress,
               arrayView2d< real64 > const & density,
               arrayView2d< real64 > const & wavespeed ):
-    ContinuumBaseUpdates( newStress, 
+    ContinuumBaseUpdates( newStress,
                           oldStress,
                           density,
                           wavespeed ),
     m_referencePressure( referencePressure ),
     m_referenceTemperature( referenceTemperature ),
     m_jacobian( jacobian ),
-    m_temperature( temperature ) 
+    m_temperature( temperature )
   {}
 
   /// Deleted default constructor
@@ -118,8 +118,8 @@ public:
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
-                                             real64 const ( & beginningRotation )[3][3],
-                                             real64 const ( & endRotation )[3][3],
+                                             real64 const ( &beginningRotation )[3][3],
+                                             real64 const ( &endRotation )[3][3],
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override;
 
@@ -144,15 +144,15 @@ public:
   GEOS_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
-                            real64 const ( & FminusI )[3][3],
-                            real64 ( & stress )[6] ) const override final;
+                            real64 const ( &FminusI )[3][3],
+                            real64 ( &stress )[6] ) const override final;
 
   GEOS_HOST_DEVICE
   virtual void hyperUpdate( localIndex const k,
                             localIndex const q,
-                            real64 const ( & FminusI )[3][3],
-                            real64 ( & stress )[6],
-                            real64 ( & stiffness )[6][6] ) const override final;
+                            real64 const ( &FminusI )[3][3],
+                            real64 ( &stress )[6],
+                            real64 ( &stiffness )[6][6] ) const override final;
 
 protected:
 
@@ -191,7 +191,7 @@ void GasUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
   stress[4] = 0.0;
   stress[5] = 0.0;
 
-  m_wavespeed[k][0] = sqrt( 1.4*pressure / m_density[k][0]);
+  m_wavespeed[k][0] = sqrt( 1.4*pressure / m_density[k][0] );
 }
 
 
@@ -241,9 +241,9 @@ inline
 void GasUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                localIndex const q,
                                                real64 const & timeIncrement,
-                                               real64 const ( & beginningRotation )[3][3],
-                                               real64 const ( & endRotation )[3][3],
-                                               real64 const ( & strainIncrement )[6],
+                                               real64 const ( &beginningRotation )[3][3],
+                                               real64 const ( &endRotation )[3][3],
+                                               real64 const ( &strainIncrement )[6],
                                                real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( beginningRotation );
@@ -266,10 +266,10 @@ void GasUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 //                                                  real64 ( & stress )[6],
 //                                                  real64 ( & stiffness )[6][6] ) const
 // {
-//   smallStrainUpdate_StressOnly( k, 
-//                                 q, 
+//   smallStrainUpdate_StressOnly( k,
+//                                 q,
 //                                 timeIncrement,
-//                                 strainIncrement, 
+//                                 strainIncrement,
 //                                 stress );
 //   getElasticStiffness( k, q, stiffness );
 // }
@@ -285,9 +285,9 @@ void GasUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 //                                                  DiscretizationOps & stiffness ) const
 // {
 //   smallStrainUpdate_StressOnly( k,
-//                                 q, 
+//                                 q,
 //                                 timeIncrement,
-//                                 strainIncrement, 
+//                                 strainIncrement,
 //                                 stress );
 //   stiffness.m_bulkModulus = m_bulkModulus[k];
 //   stiffness.m_shearModulus = m_shearModulus[k];
@@ -309,9 +309,9 @@ void GasUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void GasUpdates::hyperUpdate( localIndex const k,
-                          localIndex const q,
-                          real64 const ( & FminusI )[3][3],
-                          real64 ( & stress )[6] ) const
+                              localIndex const q,
+                              real64 const ( &FminusI )[3][3],
+                              real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( k );
   GEOS_UNUSED_VAR( q );
@@ -325,10 +325,10 @@ void GasUpdates::hyperUpdate( localIndex const k,
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
 void GasUpdates::hyperUpdate( localIndex const k,
-                          localIndex const q,
-                          real64 const ( & FminusI )[3][3],
-                          real64 ( & stress )[6],
-                          real64 ( & stiffness )[6][6] ) const
+                              localIndex const q,
+                              real64 const ( &FminusI )[3][3],
+                              real64 ( & stress )[6],
+                              real64 ( & stiffness )[6][6] ) const
 {
   GEOS_UNUSED_VAR( k );
   GEOS_UNUSED_VAR( q );
@@ -355,8 +355,8 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  Gas( string const & name, 
-                    Group * const parent );
+  Gas( string const & name,
+       Group * const parent );
 
   /**
    * Default Destructor
@@ -433,7 +433,7 @@ public:
   {
     return m_jacobian;
   }
-  
+
   GEOS_HOST_DEVICE
   virtual arrayView1d< real64 const > getTemperature() const final
   {

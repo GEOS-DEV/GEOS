@@ -33,7 +33,7 @@ class MachineSampleMPMEvent : public MPMEventBase
 {
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
-  MachineSampleMPMEvent(  const string & name,
+  MachineSampleMPMEvent( const string & name,
                          Group * const parent );
 
   /// Destructor
@@ -62,11 +62,11 @@ public:
   } MachineSampleMPMEventViewKeys;
   /// @endcond
 
-string getSampleType() const { return m_sampleType; }
-real64 getFilletRadius() const { return m_filletRadius; }
-real64 getGaugeLength() const { return m_gaugeLength; }
-real64 getGaugeRadius() const { return m_gaugeRadius; }
-real64 getDiskRadius() const { return m_diskRadius; }
+  string getSampleType() const { return m_sampleType; }
+  real64 getFilletRadius() const { return m_filletRadius; }
+  real64 getGaugeLength() const { return m_gaugeLength; }
+  real64 getGaugeRadius() const { return m_gaugeRadius; }
+  real64 getDiskRadius() const { return m_diskRadius; }
 
 protected:
   virtual void postInputInitialization() override final;

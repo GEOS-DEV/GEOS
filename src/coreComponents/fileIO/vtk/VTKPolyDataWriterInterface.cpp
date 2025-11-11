@@ -1413,7 +1413,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
     {
       if( m_pvd.exists() )
       {
-        GEOS_LOG_RANK_0( "Restart and existing vtkOutput.pvd detected. Appending to existing pvd file!");
+        GEOS_LOG_RANK_0( "Restart and existing vtkOutput.pvd detected. Appending to existing pvd file!" );
         m_pvd.read();
       }
     }

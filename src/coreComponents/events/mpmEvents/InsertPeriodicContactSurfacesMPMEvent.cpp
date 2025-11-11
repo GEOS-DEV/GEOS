@@ -21,21 +21,21 @@
 namespace geos
 {
 
-  using namespace dataRepository;
-  
-  InsertPeriodicContactSurfacesMPMEvent::InsertPeriodicContactSurfacesMPMEvent( const string & name,
-                                                                                Group * const parent ) :
-                                                                                MPMEventBase(  name, parent )
-  {}
+using namespace dataRepository;
 
-  InsertPeriodicContactSurfacesMPMEvent::~InsertPeriodicContactSurfacesMPMEvent() 
-  {}
+InsertPeriodicContactSurfacesMPMEvent::InsertPeriodicContactSurfacesMPMEvent( const string & name,
+                                                                              Group * const parent ):
+  MPMEventBase( name, parent )
+{}
 
-  void InsertPeriodicContactSurfacesMPMEvent::postInputInitialization()
-  {
-    MPMEventBase::postInputInitialization();
-  }
+InsertPeriodicContactSurfacesMPMEvent::~InsertPeriodicContactSurfacesMPMEvent()
+{}
 
-  REGISTER_CATALOG_ENTRY( MPMEventBase, InsertPeriodicContactSurfacesMPMEvent, string const &, Group * const )
+void InsertPeriodicContactSurfacesMPMEvent::postInputInitialization()
+{
+  MPMEventBase::postInputInitialization();
+}
+
+REGISTER_CATALOG_ENTRY( MPMEventBase, InsertPeriodicContactSurfacesMPMEvent, string const &, Group * const )
 
 } /* namespace geos */

@@ -37,73 +37,82 @@ namespace geos
 // CC: Taken from old geos
 // Planar Sorter
 // Sorts pairs of local and global indexes by the positions of their corresponding node points in a plane.
-class PlanarSorter {
+class PlanarSorter
+{
 
 public:
-	PlanarSorter(const arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >& refPos, int dim) :
-               dimension(dim), 
-               refPositions(refPos) {};
+  PlanarSorter( const arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > & refPos, int dim ):
+    dimension( dim ),
+    refPositions( refPos ) {};
 
-	// sort operator for pairs containing local indexes (sort based on 1st element in pair)
-	bool operator()(const std::pair<localIndex, localIndex>& lhs,
-	                const std::pair<localIndex, localIndex>& rhs) 
+  // sort operator for pairs containing local indexes (sort based on 1st element in pair)
+  bool operator()( const std::pair< localIndex, localIndex > & lhs,
+                   const std::pair< localIndex, localIndex > & rhs )
   {
-		bool rv = false;
-		int a = 0;
-		int b = 2;
-		if (dimension == 0)
-			a = 1;
-		if (dimension == 2)
-			b = 1;
+    bool rv = false;
+    int a = 0;
+    int b = 2;
+    if( dimension == 0 )
+      a = 1;
+    if( dimension == 2 )
+      b = 1;
 
 
-		auto const & lhsVect = refPositions[lhs.first];
-		auto const & rhsVect = refPositions[rhs.first];
+    auto const & lhsVect = refPositions[lhs.first];
+    auto const & rhsVect = refPositions[rhs.first];
 
-		// const arraySlice1d<real64 const>& lhsVect = refPositions[lhs.first];
-		// const arraySlice1d<real64 const>& rhsVect = refPositions[rhs.first];
+    // const arraySlice1d<real64 const>& lhsVect = refPositions[lhs.first];
+    // const arraySlice1d<real64 const>& rhsVect = refPositions[rhs.first];
 
-		if (lhsVect[a] < rhsVect[a]) {
-			rv = true;
-		} else if (isEqual(lhsVect[a], rhsVect[a])
-				&& (lhsVect[b] < rhsVect[b])) {
-			rv = true;
-		};
+    if( lhsVect[a] < rhsVect[a] )
+    {
+      rv = true;
+    }
+    else if( isEqual( lhsVect[a], rhsVect[a] )
+             && (lhsVect[b] < rhsVect[b]))
+    {
+      rv = true;
+    }
+    ;
 
-		return rv;
-	};
+    return rv;
+  };
 
-	// sort operator for local indexes
-	bool operator()(const localIndex& lhs, 
-                  const localIndex& rhs)
+  // sort operator for local indexes
+  bool operator()( const localIndex & lhs,
+                   const localIndex & rhs )
   {
-		bool rv = false;
-		int a = 0;
-		int b = 2;
-		if (dimension == 0)
-			a = 1;
-		if (dimension == 2)
-			b = 1;
+    bool rv = false;
+    int a = 0;
+    int b = 2;
+    if( dimension == 0 )
+      a = 1;
+    if( dimension == 2 )
+      b = 1;
 
-		// const arraySlice1d<real64 const>& lhsVect = refPositions[lhs];
-		// const arraySlice1d<real64 const>& rhsVect = refPositions[rhs];
+    // const arraySlice1d<real64 const>& lhsVect = refPositions[lhs];
+    // const arraySlice1d<real64 const>& rhsVect = refPositions[rhs];
 
-		auto const & lhsVect = refPositions[lhs];
-		auto const & rhsVect = refPositions[rhs];
+    auto const & lhsVect = refPositions[lhs];
+    auto const & rhsVect = refPositions[rhs];
 
-		if (lhsVect[a] < rhsVect[a]) {
-			rv = true;
-		} else if (isEqual(lhsVect[a], rhsVect[a])
-				&& (lhsVect[b] < rhsVect[b])) {
-			rv = true;
-		};
+    if( lhsVect[a] < rhsVect[a] )
+    {
+      rv = true;
+    }
+    else if( isEqual( lhsVect[a], rhsVect[a] )
+             && (lhsVect[b] < rhsVect[b]))
+    {
+      rv = true;
+    }
+    ;
 
-		return rv;
-	};
+    return rv;
+  };
 
 private:
-	int dimension;
-	const arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >& refPositions;
+  int dimension;
+  const arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > & refPositions;
 };
 
 /**
@@ -117,7 +126,7 @@ public:
 
   ~SpatialPartition() override;
 
-    struct viewKeyStruct
+  struct viewKeyStruct
   {
     static constexpr char const * periodicString() { return "periodic"; }
     static constexpr char const * minString() { return "min"; }
@@ -132,10 +141,10 @@ public:
   } partitionViewKeys;
 
   static string catalogName() { return "SpatialPartition"; }
-  
+
   virtual string getCatalogName() const override { return catalogName(); }
 
-  void postInputInitialization() override; 
+  void postInputInitialization() override;
 
   void setSizes( real64 const ( &min )[ 3 ],
                  real64 const ( &max )[ 3 ] );
@@ -168,7 +177,8 @@ public:
     return m_gridMax;
   }
 
-  void setCoords( array1d< int > coords ) {
+  void setCoords( array1d< int > coords )
+  {
     m_coords = coords;
   }
 
@@ -194,15 +204,18 @@ public:
     return m_partitions;
   }
 
-  void setPeriodic( array1d< int > periodic ) {
+  void setPeriodic( array1d< int > periodic )
+  {
     m_periodic = periodic;
   }
 
-  void setPeriodic( int index, int periodic) {
+  void setPeriodic( int index, int periodic )
+  {
     m_periodic[index] = periodic;
   }
 
-  array1d< int > const & getPeriodic() const {
+  array1d< int > const & getPeriodic() const
+  {
     return m_periodic;
   }
 
@@ -333,13 +346,13 @@ private:
 
   /// Maximum extent of problem dimensions (excluding ghost objects).
   array1d< real64 > m_gridMax;
-  
+
   /// Total length of problem dimensions (excluding ghost objects).
   array1d< real64 > m_gridSize;
-  
+
   /// ijk partition indexes
   array1d< int > m_coords;
-  
+
   /// number of partitions
   array1d< int > m_partitions;
 
@@ -354,7 +367,7 @@ private:
   /**
    * @brief Ghost position (max).
    */
-   array1d< real64 > m_contactGhostMax;
+  array1d< real64 > m_contactGhostMax;
 
   /**
    * @brief Contains the global indices of the metis neighbors in case `metis` is used. Empty otherwise.

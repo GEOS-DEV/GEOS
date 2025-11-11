@@ -21,26 +21,26 @@
 namespace geos
 {
 
-  using namespace dataRepository;
-  
-  HealMPMEvent::HealMPMEvent( const string & name,
-                              Group * const parent ) :
-                              MPMEventBase(  name, parent ),
-                              m_targetRegion( "mat1" )
-  {
-    registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setDescription( "Particle region to perform heal on" );
-  }
+using namespace dataRepository;
 
-  HealMPMEvent::~HealMPMEvent() 
-  {}
+HealMPMEvent::HealMPMEvent( const string & name,
+                            Group * const parent ):
+  MPMEventBase( name, parent ),
+  m_targetRegion( "mat1" )
+{
+  registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Particle region to perform heal on" );
+}
 
-  void HealMPMEvent::postInputInitialization()
-  {
-    MPMEventBase::postInputInitialization();
-  }
+HealMPMEvent::~HealMPMEvent()
+{}
 
-  REGISTER_CATALOG_ENTRY( MPMEventBase, HealMPMEvent, string const &, Group * const )
+void HealMPMEvent::postInputInitialization()
+{
+  MPMEventBase::postInputInitialization();
+}
+
+REGISTER_CATALOG_ENTRY( MPMEventBase, HealMPMEvent, string const &, Group * const )
 
 } /* namespace geos */

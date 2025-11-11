@@ -155,7 +155,7 @@ struct ConstitutivePassThru< Hyperelastic >
   void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< HyperelasticMMS >::execute( constitutiveRelation,
-                                                              std::forward< LAMBDA >( lambda ) );
+                                                             std::forward< LAMBDA >( lambda ) );
   }
 };
 
@@ -170,7 +170,7 @@ struct ConstitutivePassThru< HyperelasticMMS >
   void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< HyperelasticMMS >::execute( constitutiveRelation,
-                                                              std::forward< LAMBDA >( lambda ) );
+                                                             std::forward< LAMBDA >( lambda ) );
   }
 };
 

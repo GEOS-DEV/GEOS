@@ -21,27 +21,27 @@
 namespace geos
 {
 
-  using namespace dataRepository;
-  
-  PolymerHealMPMEvent::PolymerHealMPMEvent( const string & name,
-                              Group * const parent ) :
-                              MPMEventBase(  name, parent ),
-                              m_targetRegion( "mat1" )
-  {
-    registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
-        setInputFlag( InputFlags::REQUIRED ).
-        setRestartFlags( RestartFlags::NO_WRITE ).
-        setDescription( "Particle region to perform polymer heal on" );
-  }
+using namespace dataRepository;
 
-  PolymerHealMPMEvent::~PolymerHealMPMEvent() 
-  {}
+PolymerHealMPMEvent::PolymerHealMPMEvent( const string & name,
+                                          Group * const parent ):
+  MPMEventBase( name, parent ),
+  m_targetRegion( "mat1" )
+{
+  registerWrapper( viewKeyStruct::targetRegionString(), &m_targetRegion ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Particle region to perform polymer heal on" );
+}
 
-  void PolymerHealMPMEvent::postInputInitialization()
-  {
-    MPMEventBase::postInputInitialization();
-  }
+PolymerHealMPMEvent::~PolymerHealMPMEvent()
+{}
 
-  REGISTER_CATALOG_ENTRY( MPMEventBase, PolymerHealMPMEvent, string const &, Group * const )
+void PolymerHealMPMEvent::postInputInitialization()
+{
+  MPMEventBase::postInputInitialization();
+}
+
+REGISTER_CATALOG_ENTRY( MPMEventBase, PolymerHealMPMEvent, string const &, Group * const )
 
 } /* namespace geos */

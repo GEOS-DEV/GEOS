@@ -112,11 +112,11 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
 //   this->m_localToGlobalMap = particleSubRegion.localToGlobalMap();
 //   this->constructGlobalToLocalMap();
 
-//   // CC: I believe the particleblock assosciated with this subregion is already registered from copyFromParticleBlock on startup so 
+//   // CC: I believe the particleblock assosciated with this subregion is already registered from copyFromParticleBlock on startup so
 //   // there should not be a need to get the particle block of the source sub region during the copy (double check this!!!)
 
 //   // Not sure what the following actually does, but ParticleSubRegion does not have a particleBlock or forExternalProperties
-//   // particleBlock.forExternalProperties( [&]( WrapperBase & wrapper ) 
+//   // particleBlock.forExternalProperties( [&]( WrapperBase & wrapper )
 //   // {
 //   //   types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
 //   //   {

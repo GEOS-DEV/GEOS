@@ -120,14 +120,14 @@ public:
                                              real64 const & timeIncrement,
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override;
-  
+
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
-                                             real64 const ( & beginningRotation )[3][3],
-                                             real64 const ( & endRotation )[3][3],
+                                             real64 const ( &beginningRotation )[3][3],
+                                             real64 const ( &endRotation )[3][3],
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override;
 
@@ -261,18 +261,18 @@ void PerfectlyPlasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
 void PerfectlyPlasticUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                             localIndex const q,
                                                             real64 const & timeIncrement,
-                                                            real64 const ( & beginningRotation )[3][3],
-                                                            real64 const ( & endRotation )[3][3],
-                                                            real64 const ( & strainIncrement )[6],
+                                                            real64 const ( &beginningRotation )[3][3],
+                                                            real64 const ( &endRotation )[3][3],
+                                                            real64 const ( &strainIncrement )[6],
                                                             real64 ( & stress )[6] ) const
 {
-  GEOS_UNUSED_VAR( beginningRotation);
-  GEOS_UNUSED_VAR( endRotation);
+  GEOS_UNUSED_VAR( beginningRotation );
+  GEOS_UNUSED_VAR( endRotation );
   smallStrainUpdate_StressOnly( k,
                                 q,
                                 timeIncrement,
                                 strainIncrement,
-                                stress);
+                                stress );
 }
 
 

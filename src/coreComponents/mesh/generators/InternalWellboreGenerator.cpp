@@ -305,7 +305,7 @@ void InternalWellboreGenerator::postInputInitialization()
 void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
                                                                    integer ( & numNodesInDir )[3] )
 {
-   if( m_isFullAnnulus )
+  if( m_isFullAnnulus )
   {
     if( partition.getPartitions()[1] == 1 )
     {
@@ -313,7 +313,7 @@ void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( SpatialPartit
     }
     else if( partition.getPartitions()[1] > 1 )
     {
-      partition.setPeriodic(1, 1);
+      partition.setPeriodic( 1, 1 );
     }
   }
 }
@@ -321,7 +321,7 @@ void InternalWellboreGenerator::reduceNumNodesForPeriodicBoundary( SpatialPartit
 void InternalWellboreGenerator::setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
                                                                         int ( & globalIJK )[3] )
 {
-  GEOS_UNUSED_VAR(partition);
+  GEOS_UNUSED_VAR( partition );
   if( m_isFullAnnulus )
   {
     if( globalIJK[1] == m_nElems[1].back() + 1 )

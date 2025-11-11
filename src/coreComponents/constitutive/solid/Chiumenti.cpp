@@ -61,7 +61,7 @@ Chiumenti::Chiumenti( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::strengthScaleString(), &m_strengthScale ).
     setApplyDefaultValue( 1.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Strength scale" );
 }
 
@@ -71,7 +71,7 @@ Chiumenti::~Chiumenti()
 
 
 void Chiumenti::allocateConstitutiveData( dataRepository::Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+                                          localIndex const numConstitutivePointsPerParentIndex )
 {
   HyperelasticMMS::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 

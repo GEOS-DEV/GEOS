@@ -36,7 +36,7 @@ class CohesiveZoneReferenceMPMEvent : public MPMEventBase
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
   CohesiveZoneReferenceMPMEvent( const string & name,
-                  Group * const parent );
+                                 Group * const parent );
 
   /// Destructor
   virtual ~CohesiveZoneReferenceMPMEvent() override;
@@ -49,15 +49,13 @@ public:
 
   virtual string getCatalogName() const override { return catalogName(); }
 
- /// @cond DO_NOT_DOCUMENT
+  /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
-  {
-
-  } CohesiveZoneReferenceMPMEventViewKeys;
+  {} CohesiveZoneReferenceMPMEventViewKeys;
   /// @endcond
 
-  int getCZVolumeNormalization() const { return m_czVolumeNormalization; } 
-  int getComputeNormalsAndPositions() const { return m_computeNormalsAndPositions; } 
+  int getCZVolumeNormalization() const { return m_czVolumeNormalization; }
+  int getComputeNormalsAndPositions() const { return m_computeNormalsAndPositions; }
   SolidMechanicsMPM::NormalsAndPositionsMethodOption getNormalsAndPositionsMethod() const { return m_normalsAndPositionsMethod; }
 
 protected:

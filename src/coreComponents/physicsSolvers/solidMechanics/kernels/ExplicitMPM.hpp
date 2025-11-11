@@ -67,31 +67,33 @@ struct StateUpdateKernel
       // Particle index
       localIndex const p = indices[k];
 
-      // Copy the beginning-of-step particle stress into the constitutive model's m_oldStress - this fixes the MPI sync issue on Lassen for some reason
+      // Copy the beginning-of-step particle stress into the constitutive model's m_oldStress - this fixes the MPI sync issue on Lassen for
+      // some reason
       #if defined(GEOS_USE_CUDA)
-        LvArray::tensorOps::copy< 6 >( oldStress[p][0], particleStress[p] );
+      LvArray::tensorOps::copy< 6 >( oldStress[p][0], particleStress[p] );
       #endif
 
       real64 stress[6] = { };
       //CC: debug hardcoded hyperelastic model for now
       if( hyperelasticUpdate == 1 )
-      // if ( constitutiveWrapper.m_disableInelasticity ) // CC: Shouldn't there be a flag for hyperelastic models? otherwise we have to manually add their name here everything we add them
-                                                                    // Some models we might want hyperelastic updates when plasticity or damage are turned off 
+      // if ( constitutiveWrapper.m_disableInelasticity ) // CC: Shouldn't there be a flag for hyperelastic models? otherwise we have to
+      // manually add their name here everything we add them
+      // Some models we might want hyperelastic updates when plasticity or damage are turned off
       { //Hyperelastic stress update
         // Don't believe we need to perform unrotation and rotation here (yes...unrotation...)
         // Think we can update stress directly by calling constitutive model
         // Hyperelastic models in GEOSX currently use FminusI as input argument
         real64 FminusI[3][3] = { };
         LvArray::tensorOps::copy< 3, 3 >( FminusI, deformationGradient[p] );
-        for(int i =0; i < 3; i++)
+        for( int i =0; i < 3; i++ )
         {
           --FminusI[i][i];
         }
-        
-       constitutiveWrapper.hyperUpdate( p,       // particle local index
-                                        0,       // particles have 1 quadrature point
-                                        FminusI, // particle strain increment
-                                        stress );
+
+        constitutiveWrapper.hyperUpdate( p,      // particle local index
+                                         0,      // particles have 1 quadrature point
+                                         FminusI, // particle strain increment
+                                         stress );
       }
       else //Hypoeleastic stress update
       {

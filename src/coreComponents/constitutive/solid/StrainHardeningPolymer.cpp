@@ -60,7 +60,7 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
   m_maximumStretchT0()
 {
   // register default values
-   
+
   registerWrapper( viewKeyStruct::strainHardeningSlopeString(), &m_strainHardeningSlope ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Strain hardening slope" );
@@ -132,7 +132,7 @@ StrainHardeningPolymer::StrainHardeningPolymer( string const & name, Group * con
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature dependent bulk modulus A parameter" );
 
-   registerWrapper( viewKeyStruct::bulkModulusBString(), &m_bulkModulusB ).
+  registerWrapper( viewKeyStruct::bulkModulusBString(), &m_bulkModulusB ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Temperature dependent bulk modulus B parameter" );
@@ -220,8 +220,8 @@ void StrainHardeningPolymer::allocateConstitutiveData( dataRepository::Group & p
 {
   ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
-  m_deformationGradient.resize( 0, 3, 3);
-  m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6);
+  m_deformationGradient.resize( 0, 3, 3 );
+  m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
   m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
   m_yieldStrength.resize( 0 );
@@ -233,7 +233,9 @@ void StrainHardeningPolymer::postInputInitialization()
   ElasticIsotropic::postInputInitialization();
 
   // CC: need checks for strain hardening and softening inputs
-  GEOS_THROW_IF( m_strainHardeningSlope < 0.0, "Strain hardening slope must be a positive number.", InputError ); // CC: Check that these are the rules for inputs
+  GEOS_THROW_IF( m_strainHardeningSlope < 0.0, "Strain hardening slope must be a positive number.", InputError ); // CC: Check that these
+                                                                                                                  // are the rules for
+                                                                                                                  // inputs
   GEOS_THROW_IF( m_shearSofteningMagnitude < 0.0, "Shear softening magnitude must be a positive number.", InputError );
   GEOS_THROW_IF( m_shearSofteningShapeParameter1 < 0.0, "Shear softening shape paraemter 1 must be a positive number.", InputError );
   GEOS_THROW_IF( m_shearSofteningShapeParameter2 < 0.0, "Shear softening shape paraemter 2 must be a positive number.", InputError );

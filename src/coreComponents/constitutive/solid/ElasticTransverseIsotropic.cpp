@@ -115,10 +115,10 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
   registerWrapper( viewKeyStruct::effectiveBulkModulusString(), &m_effectiveBulkModulus ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Effective bulk modulus for stress control and wavespeed calculations" );
-  
+
   registerWrapper( viewKeyStruct::effectiveShearModulusString(), &m_effectiveShearModulus ).
-    setInputFlag( InputFlags::FALSE).
-    setDescription( "Effective shear modulus for stress control and wavespeed calculations");
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "Effective shear modulus for stress control and wavespeed calculations" );
 
   registerWrapper( viewKeyStruct::materialDirectionString(), &m_materialDirection ).
     setPlotLevel( PlotLevel::NOPLOT ).
@@ -128,7 +128,7 @@ ElasticTransverseIsotropic::ElasticTransverseIsotropic( string const & name, Gro
 ElasticTransverseIsotropic::~ElasticTransverseIsotropic()
 {}
 
-void ElasticTransverseIsotropic::allocateConstitutiveData( dataRepository::Group & parent, 
+void ElasticTransverseIsotropic::allocateConstitutiveData( dataRepository::Group & parent,
                                                            localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
@@ -152,7 +152,8 @@ void ElasticTransverseIsotropic::postInputInitialization()
   real64 & Nuat = m_defaultPoissonRatioAxialTransverse;
   real64 & Gat = m_defaultShearModulusAxialTransverse;
 
-  // CC: TODO make sure that if stiffness constants are set or issues with other variable error is through or other logic to ensure effective bulk and shear moduli can be computed
+  // CC: TODO make sure that if stiffness constants are set or issues with other variable error is through or other logic to ensure
+  // effective bulk and shear moduli can be computed
   if( Et > 0.0 && Ea > 0.0 && Gat > 0.0 && Nut > -0.5 && Nut < 0.5 )
   {
     real64 const Nuta = Nuat * ( Et / Ea );
@@ -166,8 +167,8 @@ void ElasticTransverseIsotropic::postInputInitialization()
       c44 = 2.0 * Gat;
       c66 = Et / ( 1.0 + Nut );
     }
-  } 
-  else 
+  }
+  else
   {
     Et = 4 * c66 * (c11 * c33 - c66 * c33 - c13 * c13) / ( c11 * c33 - c13 * c13 );
     Ea = c33 - c13 * c13 / ( c11 - c66 );

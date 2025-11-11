@@ -63,10 +63,10 @@ public:
                                             arrayView2d< real64 > const & density,
                                             arrayView2d< real64 > const & wavespeed,
                                             bool const & disableInelasticity ):
-    SolidBaseUpdates( newStress, 
+    SolidBaseUpdates( newStress,
                       oldStress,
                       density,
-                      wavespeed, 
+                      wavespeed,
                       thermalExpansionCoefficient,
                       disableInelasticity ),
     m_refPressure( refPressure ),

@@ -40,7 +40,7 @@ public:
    * @return string that contains the catalog name of the Partition
    */
   static string catalogName() { return "Partition"; }
-  
+
   /**
    * @return Get the final class Catalog name
    */
@@ -95,7 +95,7 @@ protected:
    * @brief Preventing dummy default constructor.
    */
   PartitionBase( string const & name,
-                 Group * const parent  );
+                 Group * const parent );
 
   /**
    * @brief Builds from the size of partitions and the current rank of the partition

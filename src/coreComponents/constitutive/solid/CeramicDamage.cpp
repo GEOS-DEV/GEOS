@@ -63,13 +63,13 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::crackSpeedString(), &m_crackSpeed ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.e16 ).
-    setPlotLevel( PlotLevel::NOPLOT).
+    setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Crack speed" );
 
   // register fields
   registerWrapper( viewKeyStruct::strengthScaleString(), &m_strengthScale ).
     setApplyDefaultValue( 1.0 ).
-    setPlotLevel( PlotLevel::NOPLOT).
+    setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Strength scale" );
 
   registerWrapper( viewKeyStruct::porosityString(), &m_porosity ).
@@ -96,78 +96,78 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
     setApplyDefaultValue( DBL_MIN ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Array of quadrature point damage values" );
-  
+
   registerWrapper( viewKeyStruct::damagedMaterialFrictionSlopeString(), &m_damagedMaterialFrictionSlope ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5773502691896258 ).
-    setPlotLevel( PlotLevel::NOPLOT).
-    setDescription( "Value of the damaged material friction slope");
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setDescription( "Value of the damaged material friction slope" );
 
   registerWrapper( viewKeyStruct::thirdInvariantDependenceString(), &m_thirdInvariantDependence ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setPlotLevel( PlotLevel::NOPLOT).
+    setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Flag to enable third invariant dependence" );
 
-  registerWrapper( viewKeyStruct::velocityGradientString(), &m_velocityGradient).
+  registerWrapper( viewKeyStruct::velocityGradientString(), &m_velocityGradient ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Velocity gradient" );
 
-  registerWrapper( viewKeyStruct::plasticStrainString(), &m_plasticStrain).
+  registerWrapper( viewKeyStruct::plasticStrainString(), &m_plasticStrain ).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Plastic strain" );
 
-  registerWrapper( viewKeyStruct::enableCrackTipStressConcentrationString(), &m_enableCrackTipStressConcentration).
+  registerWrapper( viewKeyStruct::enableCrackTipStressConcentrationString(), &m_enableCrackTipStressConcentration ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Use crack-tip stress concentration" );
 
-  registerWrapper( viewKeyStruct::fractureToughnessString(), &m_fractureToughness).
+  registerWrapper( viewKeyStruct::fractureToughnessString(), &m_fractureToughness ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Fracture toughness to compute fracture radius from crack-tip stress concentration" );
 
-  registerWrapper( viewKeyStruct::enableEnergyFailureCriterionString(), &m_enableEnergyFailureCriterion).
+  registerWrapper( viewKeyStruct::enableEnergyFailureCriterionString(), &m_enableEnergyFailureCriterion ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Enable energy failure criterion" );
 
-  registerWrapper( viewKeyStruct::fractureEnergyReleaseRateString(), &m_fractureEnergyReleaseRate).
+  registerWrapper( viewKeyStruct::fractureEnergyReleaseRateString(), &m_fractureEnergyReleaseRate ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( DBL_MAX ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Fracture energy release rate" );
 
-  registerWrapper( viewKeyStruct::crackTipStressConcentrationString(), &m_crackTipStressConcentration).
+  registerWrapper( viewKeyStruct::crackTipStressConcentrationString(), &m_crackTipStressConcentration ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0).    
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Crack tip stress concentration" );
 
-  registerWrapper( viewKeyStruct::accumulatedModeIWorkString(), &m_accumulatedModeIWork).
+  registerWrapper( viewKeyStruct::accumulatedModeIWorkString(), &m_accumulatedModeIWork ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0).    
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Accumulated mode I work" );
-  
-  registerWrapper( viewKeyStruct::accumulatedModeIIWorkString(), &m_accumulatedModeIIWork).
+
+  registerWrapper( viewKeyStruct::accumulatedModeIIWorkString(), &m_accumulatedModeIIWork ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0).    
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Accumulated mode II work" );
-  
+
   registerWrapper( viewKeyStruct::distanceToCrackTipString(), &m_distanceToCrackTip ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0.0 ).
-    setPlotLevel( PlotLevel::LEVEL_0).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Distance to crack tip" );
 
-  registerWrapper( viewKeyStruct::surfaceFlagString(), &m_surfaceFlag).
+  registerWrapper( viewKeyStruct::surfaceFlagString(), &m_surfaceFlag ).
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
@@ -208,7 +208,7 @@ void CeramicDamage::postInputInitialization()
   GEOS_THROW_IF( m_maximumStrength < m_compressiveStrength, "Maximum theoretical strength must be greater than compressive strength.", InputError );
   GEOS_THROW_IF( m_crackSpeed < 0.0, "Crack speed must be a positive number.", InputError );
   GEOS_THROW_IF( m_fractureEnergyReleaseRate < 0.0, "Fracture energy release rate must be positive.", InputError );
-  
+
 }
 
 

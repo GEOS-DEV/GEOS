@@ -142,10 +142,10 @@ public:
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
-                                             real64 const ( & beginningRotation )[3][3],
-                                             real64 const ( & endRotation )[3][3],
-                                             real64 const ( & strainIncrement )[6],
-                                             real64 ( & stress )[6] ) const override final;
+                                             real64 const ( &beginningRotation )[3][3],
+                                             real64 const ( &endRotation )[3][3],
+                                             real64 const ( &strainIncrement )[6],
+                                             real64 ( &stress )[6] ) const override final;
 
   GEOS_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
@@ -379,18 +379,18 @@ GEOS_FORCE_INLINE
 void ElasticOrthotropicUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                               localIndex const q,
                                                               real64 const & timeIncrement,
-                                                              real64 const ( & beginningRotation )[3][3],
-                                                              real64 const ( & endRotation )[3][3],
-                                                              real64 const ( & strainIncrement )[6],
+                                                              real64 const ( &beginningRotation )[3][3],
+                                                              real64 const ( &endRotation )[3][3],
+                                                              real64 const ( &strainIncrement )[6],
                                                               real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( beginningRotation );
   GEOS_UNUSED_VAR( endRotation );
-  smallStrainUpdate_StressOnly( k, 
-                                q, 
-                                timeIncrement, 
-                                strainIncrement, 
-                                stress);
+  smallStrainUpdate_StressOnly( k,
+                                q,
+                                timeIncrement,
+                                strainIncrement,
+                                stress );
 }
 
 GEOS_HOST_DEVICE

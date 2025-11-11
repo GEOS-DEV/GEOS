@@ -21,21 +21,21 @@
 namespace geos
 {
 
-  using namespace dataRepository;
-  
-  ResetDeformationGradientMPMEvent::ResetDeformationGradientMPMEvent( const string & name,
-                                                                      Group * const parent ) :
-                                                                      MPMEventBase(  name, parent )
-  {}
+using namespace dataRepository;
 
-  ResetDeformationGradientMPMEvent::~ResetDeformationGradientMPMEvent() 
-  {}
+ResetDeformationGradientMPMEvent::ResetDeformationGradientMPMEvent( const string & name,
+                                                                    Group * const parent ):
+  MPMEventBase( name, parent )
+{}
 
-  void ResetDeformationGradientMPMEvent::postInputInitialization()
-  {
-    MPMEventBase::postInputInitialization();
-  }
+ResetDeformationGradientMPMEvent::~ResetDeformationGradientMPMEvent()
+{}
 
-  REGISTER_CATALOG_ENTRY( MPMEventBase, ResetDeformationGradientMPMEvent, string const &, Group * const )
+void ResetDeformationGradientMPMEvent::postInputInitialization()
+{
+  MPMEventBase::postInputInitialization();
+}
+
+REGISTER_CATALOG_ENTRY( MPMEventBase, ResetDeformationGradientMPMEvent, string const &, Group * const )
 
 } /* namespace geos */

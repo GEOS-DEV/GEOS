@@ -828,11 +828,11 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   bool loadFromConduit() override
   {
-    if( getRestartFlags() != RestartFlags::WRITE_AND_READ || !( m_conduitNode.has_path( "__sizedFromParent__") ) )
+    if( getRestartFlags() != RestartFlags::WRITE_AND_READ || !( m_conduitNode.has_path( "__sizedFromParent__" ) ) )
     {
-      if(getRestartFlags() == RestartFlags::WRITE_AND_READ )
+      if( getRestartFlags() == RestartFlags::WRITE_AND_READ )
       {
-        GEOS_WARNING_RANK_0("Wrapper " <<  getName() << " was not loaded from restart!" );
+        GEOS_WARNING_RANK_0( "Wrapper " <<  getName() << " was not loaded from restart!" );
       }
       m_conduitNode.reset();
       return false;

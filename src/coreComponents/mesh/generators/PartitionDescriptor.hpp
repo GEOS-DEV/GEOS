@@ -98,7 +98,8 @@ public:
     m_periodic[i] = value;
   }
 
-  void setPeriodic( array1d< int > periodic ) {
+  void setPeriodic( array1d< int > periodic )
+  {
     m_periodic = periodic;
   }
 

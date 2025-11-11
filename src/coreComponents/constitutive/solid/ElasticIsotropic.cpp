@@ -36,7 +36,7 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Bulk Modulus Parameter" );
-  
+
   registerWrapper( viewKeyStruct::defaultShearModulusString(), &m_defaultShearModulus ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).

@@ -90,7 +90,7 @@ public:
    */
 
   void fillCellBlockManager( CellBlockManager & cellBlockManager, SpatialPartition & partition ) override;
-  
+
   void importFieldOnArray( Block block,
                            string const & blockName,
                            string const & meshFieldName,

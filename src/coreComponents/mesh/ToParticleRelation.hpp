@@ -91,18 +91,18 @@ public:
 
   void resizeFromCapacities( array1d< localIndex > const & counts )
   {
-    if constexpr( traits::is_array_of_arrays_type< BASETYPE > )
+    if constexpr ( traits::is_array_of_arrays_type< BASETYPE > )
     {
       m_toParticleRegion.template resizeFromCapacities< serialPolicy >( counts.size(), counts.data() );
       m_toParticleSubRegion.template resizeFromCapacities< serialPolicy >( counts.size(), counts.data() );
       m_toParticleIndex.template resizeFromCapacities< serialPolicy >( counts.size(), counts.data() );
       m_numParticles.resizeDefault( m_toParticleRegion.size(), 0 );
-      for(localIndex i = 0; i < counts.size(); ++i)
+      for( localIndex i = 0; i < counts.size(); ++i )
       {
         m_numParticles[i] = counts[i];
-        m_toParticleRegion.resizeArray(i, counts[i]);
-        m_toParticleSubRegion.resizeArray(i, counts[i]);
-        m_toParticleIndex.resizeArray(i, counts[i]);
+        m_toParticleRegion.resizeArray( i, counts[i] );
+        m_toParticleSubRegion.resizeArray( i, counts[i] );
+        m_toParticleIndex.resizeArray( i, counts[i] );
       }
     }
     else
@@ -191,8 +191,8 @@ typedef ToParticleRelation< ArrayOfArrays< localIndex > > OrderedVariableToManyP
  * @param size The size of the new particle relation.
  */
 void resizeArray( OrderedVariableToManyParticleRelation & relation,
-             localIndex const index,
-             localIndex const size );
+                  localIndex const index,
+                  localIndex const size );
 
 /**
  * @brief Remove a particle relation from an object in the relation.

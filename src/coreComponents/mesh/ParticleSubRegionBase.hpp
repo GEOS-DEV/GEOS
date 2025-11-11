@@ -162,7 +162,7 @@ public:
   arrayView1d< real64 > getParticleTemperature()
   { return m_particleTemperature; }
 
-   /**
+  /**
    * @brief Get the temperature rate of each particle in this subregion.
    * @return an arrayView1d of const particle temperature
    */

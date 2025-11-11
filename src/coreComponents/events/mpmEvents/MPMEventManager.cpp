@@ -30,11 +30,11 @@ using namespace dataRepository;
 
 MPMEventManager::MPMEventManager( string const & name,
                                   Group * const parent ):
-                                  Group( name, parent )
+  Group( name, parent )
 {
   setInputFlags( InputFlags::REQUIRED );
   setRestartFlags( RestartFlags::NO_WRITE );
-  
+
   // // This enables logLevel filtering
   // Seems to be deprecated now
   // enableLogLevelInput();

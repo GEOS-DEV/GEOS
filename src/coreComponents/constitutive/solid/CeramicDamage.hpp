@@ -74,7 +74,7 @@ public:
   CeramicDamageUpdates( arrayView2d< real64 > const & damage,
                         arrayView2d< real64 > const & jacobian,
                         arrayView1d< real64 > const & lengthScale,
-                        arrayView1d< real64 > const & strengthScale,                       
+                        arrayView1d< real64 > const & strengthScale,
                         arrayView1d< real64 > const & porosity,
                         arrayView1d< real64 > const & referencePorosity,
                         real64 const & tensileStrength,
@@ -92,7 +92,7 @@ public:
                         arrayView1d< real64 > const & crackTipStressConcentration,
                         arrayView1d< real64 > const & accumulatedModeIWork,
                         arrayView1d< real64 > const & accumulatedModeIIWork,
-                        arrayView1d< real64 > const & distanceToCrackTip,                         
+                        arrayView1d< real64 > const & distanceToCrackTip,
                         arrayView1d< int > const & surfaceFlag,
                         arrayView1d< real64 > const & bulkModulus,
                         arrayView1d< real64 > const & shearModulus,
@@ -128,7 +128,7 @@ public:
     m_fractureToughness( fractureToughness ),
     m_enableEnergyFailureCriterion( enableEnergyFailureCriterion ),
     m_fractureEnergyReleaseRate( fractureEnergyReleaseRate ),
-    m_crackTipStressConcentration( crackTipStressConcentration),
+    m_crackTipStressConcentration( crackTipStressConcentration ),
     m_accumulatedModeIWork( accumulatedModeIWork ),
     m_accumulatedModeIIWork( accumulatedModeIIWork ),
     m_distanceToCrackTip( distanceToCrackTip ),
@@ -185,8 +185,8 @@ public:
   virtual void smallStrainUpdate_StressOnly( localIndex const k,
                                              localIndex const q,
                                              real64 const & timeIncrement,
-                                             real64 const ( & beginningRotation )[3][3],
-                                             real64 const ( & endRotation )[3][3],
+                                             real64 const ( &beginningRotation )[3][3],
+                                             real64 const ( &endRotation )[3][3],
                                              real64 const ( &strainIncrement )[6],
                                              real64 ( &stress )[6] ) const override;
 
@@ -194,28 +194,29 @@ public:
   void smallStrainUpdateHelper( localIndex const k,
                                 localIndex const q,
                                 real64 const timeIncrement,
-                                real64 const ( & beginningRotation )[3][3],
-                                real64 const ( & endRotation )[3][3],
+                                real64 const ( &beginningRotation )[3][3],
+                                real64 const ( &endRotation )[3][3],
                                 real64 const ( &strainIncrement )[6],
                                 real64 ( &stress )[6] ) const;
 
   GEOS_HOST_DEVICE
   void plasticReturn( const real64 damage,        // damage
-                                          const real64 crackTipStressConcentration,
-                                          const real64 pressure,        // trial pressure
-                                          const real64 J2,              // trial J2 invariant of stress
-                                          const real64 J3,              // trial J3 invariant of stress
-                                          real64 const ( & deviator )[6],  // deviatoric stress
-                                          const real64 pmin,            // pmin0 vertex pressure for D=0
-                                          const real64 bulk,            // elastic bulk modulus
-                                          const real64 shear,           // elsatic shear modulus
-                                          const real64 mu,              // friction slope
-                                          const real64 Yc,              // compressive strength
-                                          const real64 Yt0,             // tensile strength before third-invariant scaling.
-                                          const real64 Ycmax,
-                                          real64 ( & elasticStrainEnergy ),  // strain energy at end of step stress based on linear elasticity.                                          
-                                          real64 ( & stress )[6]       // reconstructed stress after plastic return stress 
-                                          ) const;
+                      const real64 crackTipStressConcentration,
+                      const real64 pressure,                            // trial pressure
+                      const real64 J2,                                  // trial J2 invariant of stress
+                      const real64 J3,                                  // trial J3 invariant of stress
+                      real64 const ( &deviator )[6],                       // deviatoric stress
+                      const real64 pmin,                                // pmin0 vertex pressure for D=0
+                      const real64 bulk,                                // elastic bulk modulus
+                      const real64 shear,                               // elsatic shear modulus
+                      const real64 mu,                                  // friction slope
+                      const real64 Yc,                                  // compressive strength
+                      const real64 Yt0,                                 // tensile strength before third-invariant scaling.
+                      const real64 Ycmax,
+                      real64 ( &elasticStrainEnergy ),                       // strain energy at end of step stress based on linear
+                                                                             // elasticity.
+                      real64 ( &stress )[6]                            // reconstructed stress after plastic return stress
+                      ) const;
   GEOS_HOST_DEVICE
   real64 getStrength( const real64 damage,      // damage
                       const real64 stressConcentration, // stress concentration from crack tip
@@ -227,53 +228,53 @@ public:
                       const real64 Yt0,         // Tensile parameter
                       const real64 Ymax ) const; // Max strength
 
-GEOS_HOST_DEVICE
-real64 ceramicY10( const real64 pLocal,   // pressure
-                                         const real64 dLocal,   // damage,
-                                         const real64 muLocal,  // friction slope
-                                         const real64 Yt0Local, // tensile strength parameter
-                                         const real64 YcLocal ) const;
+  GEOS_HOST_DEVICE
+  real64 ceramicY10( const real64 pLocal, // pressure
+                     const real64 dLocal,                       // damage,
+                     const real64 muLocal,                      // friction slope
+                     const real64 Yt0Local,                     // tensile strength parameter
+                     const real64 YcLocal ) const;
 
-GEOS_HOST_DEVICE
-real64 ceramicdY10dp(const real64 d, // damage,
-                                const real64 mu, // friction slope
-                                const real64 Yc, // unconfined compressive strength
-                                const real64 Yt0 ) const; // unconfined tensile strength before 3rd invariant scaling
+  GEOS_HOST_DEVICE
+  real64 ceramicdY10dp( const real64 d, // damage,
+                        const real64 mu,         // friction slope
+                        const real64 Yc,         // unconfined compressive strength
+                        const real64 Yt0 ) const;         // unconfined tensile strength before 3rd invariant scaling
 
-GEOS_HOST_DEVICE
-real64 ceramicdY20dp(const real64 p, // pressure
-                                const real64 d,   // damage,
-                                const real64 mu,  // friction slope
-                                const real64 Yc,  // unconfined compressive strength
-                                const real64 Yt0,  // unconfined tensile strength before 3rd invariant scaling
-                                const real64 Ymax ) const; // max shear stress
+  GEOS_HOST_DEVICE
+  real64 ceramicdY20dp( const real64 p, // pressure
+                        const real64 d,           // damage,
+                        const real64 mu,          // friction slope
+                        const real64 Yc,          // unconfined compressive strength
+                        const real64 Yt0,          // unconfined tensile strength before 3rd invariant scaling
+                        const real64 Ymax ) const;         // max shear stress
 
-GEOS_HOST_DEVICE
-real64 smoothStep(const real64 x,
-                             const real64 xmin,
-                             const real64 xmax) const;
+  GEOS_HOST_DEVICE
+  real64 smoothStep( const real64 x,
+                     const real64 xmin,
+                     const real64 xmax ) const;
 
-GEOS_HOST_DEVICE
-real64 thirdInvariantStrengthScaling( const real64 J2,
-                                      const real64 J3,
-                                      const real64 dfdp ) const;
+  GEOS_HOST_DEVICE
+  real64 thirdInvariantStrengthScaling( const real64 J2,
+                                        const real64 J3,
+                                        const real64 dfdp ) const;
 
 
-GEOS_HOST_DEVICE
-void computePlasticStrainIncrement ( localIndex const k,
-                                      localIndex const q,
-                                      const real64 timeIncrement,
-                                      real64 const ( &strainIncrement )[6],
-                                      real64 const ( &stressIncrement )[6],
-                                      real64 ( & plasticStrainIncrement )[6] ) const;
+  GEOS_HOST_DEVICE
+  void computePlasticStrainIncrement ( localIndex const k,
+                                       localIndex const q,
+                                       const real64 timeIncrement,
+                                       real64 const ( &strainIncrement )[6],
+                                       real64 const ( &stressIncrement )[6],
+                                       real64 ( &plasticStrainIncrement )[6] ) const;
 
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-virtual void saveConvergedState( localIndex const k,
-                                  localIndex const q ) const override final
-{
-  ElasticIsotropicUpdates::saveConvergedState( k, q );
-}
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  virtual void saveConvergedState( localIndex const k,
+                                   localIndex const q ) const override final
+  {
+    ElasticIsotropicUpdates::saveConvergedState( k, q );
+  }
 
 private:
   /// A reference to the ArrayView holding the damage for each quadrature point.
@@ -357,12 +358,12 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               real64 ( & stiffness )[6][6] ) const
 {
   // Elastic trial update (assume strainIncrement is all elastic)
-  ElasticIsotropicUpdates::smallStrainUpdate( k, 
-                                              q, 
+  ElasticIsotropicUpdates::smallStrainUpdate( k,
+                                              q,
                                               timeIncrement,
-                                              unrotatedStrainIncrement, 
+                                              unrotatedStrainIncrement,
                                               unrotatedStress, // this overwrites old stress with trial stress
-                                              stiffness 
+                                              stiffness
                                               );
   m_jacobian[k][q] *= LvArray::math::exp( unrotatedStrainIncrement[0] + unrotatedStrainIncrement[1] + unrotatedStrainIncrement[2] );
 
@@ -370,7 +371,7 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
   {
     return;
   }
-  
+
   // These rotations are just dummy values passed to the smallStrainUpdateHelper.
   // MH: Why are we doing this when they are unused?
   real64 beginningRotation[3][3] = { };
@@ -378,16 +379,16 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
   beginningRotation[1][1] = 1.0;
   beginningRotation[2][2] = 1.0;
 
-  real64 endRotation[3][3] = { }; 
+  real64 endRotation[3][3] = { };
   endRotation[0][0] = 1.0;
   endRotation[1][1] = 1.0;
   endRotation[2][2] = 1.0;
 
-  CeramicDamageUpdates::smallStrainUpdateHelper( k, 
-                                                 q, 
-                                                 timeIncrement, 
-                                                 beginningRotation, 
-                                                 endRotation, 
+  CeramicDamageUpdates::smallStrainUpdateHelper( k,
+                                                 q,
+                                                 timeIncrement,
+                                                 beginningRotation,
+                                                 endRotation,
                                                  unrotatedStrainIncrement,
                                                  unrotatedStress );
 
@@ -406,11 +407,11 @@ void CeramicDamageUpdates::smallStrainUpdate( localIndex const k,
                                               real64 ( & stress )[6],
                                               DiscretizationOps & stiffness ) const
 {
-  smallStrainUpdate( k, 
-                     q, 
+  smallStrainUpdate( k,
+                     q,
                      timeIncrement,
-                     strainIncrement, 
-                     stress, 
+                     strainIncrement,
+                     stress,
                      stiffness.m_c );
 }
 
@@ -419,7 +420,7 @@ GEOS_FORCE_INLINE
 void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                          localIndex const q,
                                                          real64 const & timeIncrement,
-                                                         real64 const ( & strainIncrement )[6],
+                                                         real64 const ( &strainIncrement )[6],
                                                          real64 ( & stress )[6] ) const
 {
   GEOS_UNUSED_VAR( k );
@@ -435,8 +436,8 @@ GEOS_FORCE_INLINE
 void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
                                                          localIndex const q,
                                                          real64 const & timeIncrement,
-                                                         real64 const ( & beginningRotation )[3][3],
-                                                         real64 const ( & endRotation )[3][3],
+                                                         real64 const ( &beginningRotation )[3][3],
+                                                         real64 const ( &endRotation )[3][3],
                                                          real64 const ( &strainIncrement )[6],
                                                          real64 ( & stress )[6] ) const
 {
@@ -444,10 +445,10 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
   GEOS_UNUSED_VAR( endRotation );
 
   // elastic predictor (assume strainIncrement is all elastic)
-  ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k, 
-                                                         q, 
+  ElasticIsotropicUpdates::smallStrainUpdate_StressOnly( k,
+                                                         q,
                                                          timeIncrement,
-                                                         strainIncrement, 
+                                                         strainIncrement,
                                                          stress );
 
   m_jacobian[k][q] *= LvArray::math::exp( strainIncrement[0] + strainIncrement[1] + strainIncrement[2] );
@@ -458,11 +459,11 @@ void CeramicDamageUpdates::smallStrainUpdate_StressOnly( localIndex const k,
   }
 
   // Call the constitutive model
-  CeramicDamageUpdates::smallStrainUpdateHelper( k, 
-                                                 q, 
+  CeramicDamageUpdates::smallStrainUpdateHelper( k,
+                                                 q,
                                                  timeIncrement,
-                                                 beginningRotation, 
-                                                 endRotation, 
+                                                 beginningRotation,
+                                                 endRotation,
                                                  strainIncrement,
                                                  stress );
 
@@ -475,9 +476,9 @@ GEOS_FORCE_INLINE
 void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                                                     localIndex const q,
                                                     real64 const timeIncrement,
-                                                    real64 const ( & beginningRotation )[3][3], //unused 
-                                                    real64 const ( & endRotation )[3][3], // unused
-                                                    real64 const ( & strainIncrement )[6], // unrotated strain increment.
+                                                    real64 const ( &beginningRotation )[3][3],  //unused
+                                                    real64 const ( &endRotation )[3][3],  // unused
+                                                    real64 const ( &strainIncrement )[6],  // unrotated strain increment.
                                                     real64 ( & stress )[6] // unrotated trial stress will be overwritten by new stress.
                                                     ) const
 {
@@ -500,11 +501,11 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 Ycmax = m_maximumStrength;
   real64 Ytmax = Ycmax / tensionCompressionStrengthRatio;
 
-  Yt = LvArray::math::min(Yt, 0.999*Ytmax);
-  Yc = LvArray::math::min(Yc, 0.999*Ycmax);
+  Yt = LvArray::math::min( Yt, 0.999*Ytmax );
+  Yc = LvArray::math::min( Yc, 0.999*Ycmax );
 
   // get trial pressure
-  // Tensile cutoff pressure (negative value in tension) is scaled by damage. 
+  // Tensile cutoff pressure (negative value in tension) is scaled by damage.
   // so we also scale the bulk modulus in tension so unloading from a damaged vertex
   // smoothly appraoches p=0 as J=1
   real64 bulk = (m_jacobian[k][q] <= 1.0) ? m_bulkModulus[k] : ( 1.0 - m_damage[k][q] )*m_bulkModulus[k];
@@ -522,7 +523,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   real64 pmin0 = -( 2.0 * Yc * Yt0 ) / ( 3.0 * ( Yc - Yt0 ) );
   pmin0 = LvArray::math::min( pmin0, -1.0e-12 );
   real64 pmin = ( 1.0 - m_damage[k][q] ) * pmin0;
- 
+
   // Compute trial deviatoric stress
   real64 trialMeanStress;    // negative of pressure
   real64 trialVonMises;      // von Mises stress
@@ -533,17 +534,17 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
                                      trialDeviator );
   real64 trialJ2 = trialVonMises * trialVonMises / 3.0;
   real64 trialJ3 = trialVonMises * trialVonMises * trialVonMises *
-                ( trialDeviator[0] * trialDeviator[1] * trialDeviator[2] +
-                  2.0 * trialDeviator[3] * trialDeviator[4] * trialDeviator[5] -
-                  trialDeviator[0] * trialDeviator[3] * trialDeviator[3] -
-                  trialDeviator[1] * trialDeviator[4] * trialDeviator[4] -
-                  trialDeviator[2] * trialDeviator[5] * trialDeviator[5] );
+                   ( trialDeviator[0] * trialDeviator[1] * trialDeviator[2] +
+                     2.0 * trialDeviator[3] * trialDeviator[4] * trialDeviator[5] -
+                     trialDeviator[0] * trialDeviator[3] * trialDeviator[3] -
+                     trialDeviator[1] * trialDeviator[4] * trialDeviator[4] -
+                     trialDeviator[2] * trialDeviator[5] * trialDeviator[5] );
 
   // Compute the nominal 0-damage yield stress for crack-tip correction and regularization.
   real64 nominalIntactStrength;
-  if( trialPressure >= pmin ) 
+  if( trialPressure >= pmin )
   {
-   nominalIntactStrength = CeramicDamageUpdates::getStrength( 0.0, 1.0, trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax ); 
+    nominalIntactStrength = CeramicDamageUpdates::getStrength( 0.0, 1.0, trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax );
   }
   else
   {
@@ -553,12 +554,13 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   // If the particle is a crack-tip particle, the distanceToCrackTip will be greater than 0, and we compute the
   // stress concentration.  We don't actually need to store this as a state variable, it is sufficient to store
   // the distanceToCrackTip, but we've added this field to allow plotting of the stress concentration.  TODO:
-  // switch this back later to reduce memory footprint of the model.  
+  // switch this back later to reduce memory footprint of the model.
   // real64 crackTipStressConcentration = 1.0;
   m_crackTipStressConcentration[k] = 1.0;
   if( ( m_enableCrackTipStressConcentration == 1 ) and ( m_distanceToCrackTip[k] > 0 ) )
   {
-    real64 fractureProcessZoneRadius = LvArray::math::max(1.e-12, m_fractureToughness * m_fractureToughness /( 6.283185307179586 * LvArray::math::max(1.e-12,nominalIntactStrength * nominalIntactStrength) ) );
+    real64 fractureProcessZoneRadius =
+      LvArray::math::max( 1.e-12, m_fractureToughness * m_fractureToughness /( 6.283185307179586 * LvArray::math::max( 1.e-12, nominalIntactStrength * nominalIntactStrength ) ) );
     //crackTipStressConcentration = LvArray::math::min( 1.0, LvArray::math::sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
     m_crackTipStressConcentration[k] = LvArray::math::min( 1.0, LvArray::math::sqrt( m_distanceToCrackTip[k] / fractureProcessZoneRadius ) );
   }
@@ -566,7 +568,7 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   // Evaluate the yield criterion:
   bool yielding = false;
   // test pressure against vertex pressure:
-  if( trialPressure >= pmin ) 
+  if( trialPressure >= pmin )
   { // strength at trial pressure and current damage.
     real64 strength = CeramicDamageUpdates::getStrength( m_damage[k][q], m_crackTipStressConcentration[k], trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax );
     // check for yield in shear.
@@ -579,30 +581,32 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
   {
     yielding = true;
   }
-  
+
   if( yielding == false )
   { // ELASTIC
     twoInvariant::stressRecomposition( -trialPressure,
-                                      trialVonMises,
-                                      trialDeviator,
-                                      stress ); // stress gets over-written so it now reflects the trial state with the hyperelastic pressure calc.
-    if( m_enableEnergyFailureCriterion == 1 )   
+                                       trialVonMises,
+                                       trialDeviator,
+                                       stress ); // stress gets over-written so it now reflects the trial state with the hyperelastic
+                                                 // pressure calc.
+    if( m_enableEnergyFailureCriterion == 1 )
     {
-      m_accumulatedModeIWork[k] += LvArray::tensorOps::AiBi< 6 >( stress, strainIncrement);  // Check that this correctly counts the shear components twice.
+      m_accumulatedModeIWork[k] += LvArray::tensorOps::AiBi< 6 >( stress, strainIncrement );  // Check that this correctly counts the shear
+                                                                                              // components twice.
     }
   }
   else
-  { // PLASTIC 
+  { // PLASTIC
     real64 oldAccumulatedModeIWork = m_accumulatedModeIWork[k];  // beginning-of-step stress work
     real64 elasticStrainEnergy = 0.0; // elastic strain energy computed from end-of-step stress.
-    
-    if( m_enableEnergyFailureCriterion )   
+
+    if( m_enableEnergyFailureCriterion )
     { // Adjust damage so that the total dissipation associated with setting damage = 1 is consistent
       // with the regularized fracture energy release rate.  If the element size is too large, there
       // will be too much elastic strain energy at the failure stress, so instead we partially damage
       // the material and activate a surface flag.  This will only be effective if used with
       // field-gradient partitioning, so the surface flag creates a fracture surface.
-      // 
+      //
       // Compute the nominal fully-damaged yield stress for crack-tip correction and regularization.
       //
       // We treat the stress concentration as a strength modifier, so the energy regularization should
@@ -610,48 +614,47 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
 
 
       real64 nominalFullyDamagedStrength;
-      if( trialPressure > 0.0 ) 
+      if( trialPressure > 0.0 )
       {
-        nominalFullyDamagedStrength = CeramicDamageUpdates::getStrength( 1.0, m_crackTipStressConcentration[k], trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax ); 
+        nominalFullyDamagedStrength = CeramicDamageUpdates::getStrength( 1.0, m_crackTipStressConcentration[k], trialPressure, trialJ2, trialJ3, mu, Yc, Yt0, Ycmax );
       }
       else
       {
         nominalFullyDamagedStrength = 0.0;
       }
-      
+
       // Compute the elastic strain energy minus the strain energy that would exist at the current pressure with damage=1;
       // i.e. the energy that would be dissipated if damage were set equal to 1, without unloading.
-      real64 nominalElasticStrainEnergy = 0.5*trialPressure*trialPressure/bulk + LvArray::math::pow(nominalIntactStrength - nominalFullyDamagedStrength,2) / (6.*m_shearModulus[k]);
+      real64 nominalElasticStrainEnergy = 0.5*trialPressure*trialPressure/bulk + LvArray::math::pow( nominalIntactStrength - nominalFullyDamagedStrength, 2 ) / (6.*m_shearModulus[k]);
 
 
 
-
-      if ( nominalElasticStrainEnergy < m_fractureEnergyReleaseRate / m_lengthScale[k] )
-      { // Increment damage to ramp down stress until energy criteria is met.   
+      if( nominalElasticStrainEnergy < m_fractureEnergyReleaseRate / m_lengthScale[k] )
+      { // Increment damage to ramp down stress until energy criteria is met.
         for( int i = 0; i < 16; ++i )
         { // Use fixed-point iteration to find damage consistent with dissipation for the current step.
-          CeramicDamageUpdates::plasticReturn(m_damage[k][q],  // damage
-                                              m_crackTipStressConcentration[k],
-                                              trialPressure,   // trial pressure
-                                              trialJ2,         // trial J2 invariant of stress
-                                              trialJ3,         // trial J3 invariant of stress
-                                              trialDeviator,   // deviatoric stress
-                                              pmin0,           // pmin0 vertex pressure for D=0
-                                              bulk,
-                                              m_shearModulus[k],
-                                              mu,              // friction slope
-                                              Yc,              // compressive strength
-                                              Yt0,             // tensile strength before third-invariant scaling.
-                                              Ycmax,
-                                              elasticStrainEnergy,                                         
-                                              stress          // reconstructed stress after plastic return stress
-                                              );
+          CeramicDamageUpdates::plasticReturn( m_damage[k][q],  // damage
+                                               m_crackTipStressConcentration[k],
+                                               trialPressure,  // trial pressure
+                                               trialJ2,        // trial J2 invariant of stress
+                                               trialJ3,        // trial J3 invariant of stress
+                                               trialDeviator,  // deviatoric stress
+                                               pmin0,          // pmin0 vertex pressure for D=0
+                                               bulk,
+                                               m_shearModulus[k],
+                                               mu,             // friction slope
+                                               Yc,             // compressive strength
+                                               Yt0,            // tensile strength before third-invariant scaling.
+                                               Ycmax,
+                                               elasticStrainEnergy,
+                                               stress         // reconstructed stress after plastic return stress
+                                               );
 
           // Stress work including contribution from current step.
-          m_accumulatedModeIWork[k] = oldAccumulatedModeIWork + LvArray::tensorOps::AiBi< 6 >( stress, strainIncrement);
+          m_accumulatedModeIWork[k] = oldAccumulatedModeIWork + LvArray::tensorOps::AiBi< 6 >( stress, strainIncrement );
 
           // Set damage equal to the ratio of the dissipated energy to the expected regularized fracture energy release rate:
-          m_damage[k][q] = LvArray::math::min( LvArray::math::max( m_damage[k][q] , ( m_accumulatedModeIWork[k] - elasticStrainEnergy ) / ( m_fractureEnergyReleaseRate / m_lengthScale[k] ) ), 1.0 );
+          m_damage[k][q] = LvArray::math::min( LvArray::math::max( m_damage[k][q], ( m_accumulatedModeIWork[k] - elasticStrainEnergy ) / ( m_fractureEnergyReleaseRate / m_lengthScale[k] ) ), 1.0 );
 
         } // end of fixed point iteration on damage.
       }
@@ -663,32 +666,32 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
         real64 damageIn = m_damage[k][q];
         real64 damageOut = 1.0;
 
-        while( damageOut - damageIn > 0.001 ) 
+        while( damageOut - damageIn > 0.001 )
         {
           m_damage[k][q] = 0.5*( damageIn + damageOut );
 
-          CeramicDamageUpdates::plasticReturn(m_damage[k][q],  // damage
-                                              m_crackTipStressConcentration[k],
-                                              trialPressure,   // trial pressure
-                                              trialJ2,         // trial J2 invariant of stress
-                                              trialJ3,         // trial J3 invariant of stress
-                                              trialDeviator,   // deviatoric stress
-                                              pmin0,           // pmin0 vertex pressure for D=0
-                                              bulk,
-                                              m_shearModulus[k],
-                                              mu,              // friction slope
-                                              Yc,              // compressive strength
-                                              Yt0,             // tensile strength before third-invariant scaling.
-                                              Ycmax,
-                                              elasticStrainEnergy,                                         
-                                              stress          // reconstructed stress after plastic return stress
-                                              );
-          
+          CeramicDamageUpdates::plasticReturn( m_damage[k][q],  // damage
+                                               m_crackTipStressConcentration[k],
+                                               trialPressure,  // trial pressure
+                                               trialJ2,        // trial J2 invariant of stress
+                                               trialJ3,        // trial J3 invariant of stress
+                                               trialDeviator,  // deviatoric stress
+                                               pmin0,          // pmin0 vertex pressure for D=0
+                                               bulk,
+                                               m_shearModulus[k],
+                                               mu,             // friction slope
+                                               Yc,             // compressive strength
+                                               Yt0,            // tensile strength before third-invariant scaling.
+                                               Ycmax,
+                                               elasticStrainEnergy,
+                                               stress         // reconstructed stress after plastic return stress
+                                               );
+
           // Stress work including contribution from current step.
-          m_accumulatedModeIWork[k] = oldAccumulatedModeIWork + LvArray::tensorOps::AiBi< 6 >( stress, strainIncrement);
+          m_accumulatedModeIWork[k] = oldAccumulatedModeIWork + LvArray::tensorOps::AiBi< 6 >( stress, strainIncrement );
 
           // Adjust bisection limits until dissipation is correct.
-          if ( m_accumulatedModeIWork[k] - elasticStrainEnergy <  m_fractureEnergyReleaseRate / m_lengthScale[k] )
+          if( m_accumulatedModeIWork[k] - elasticStrainEnergy <  m_fractureEnergyReleaseRate / m_lengthScale[k] )
           {
             damageIn = m_damage[k][q];
           }
@@ -697,12 +700,12 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
             damageOut = m_damage[k][q];
           }
         }
-        
+
         // If total dissipation exceeds fracture energy, set surface flag = 1.  This will allow fracture slip and separation
         // in tension, even if the constitutive damage isn't 1.
-        if ( m_accumulatedModeIWork[k] - elasticStrainEnergy > 0.999 * m_fractureEnergyReleaseRate / m_lengthScale[k] )
+        if( m_accumulatedModeIWork[k] - elasticStrainEnergy > 0.999 * m_fractureEnergyReleaseRate / m_lengthScale[k] )
         {
-          m_surfaceFlag[k] = 1; 
+          m_surfaceFlag[k] = 1;
         }
       }
     }
@@ -723,83 +726,83 @@ void CeramicDamageUpdates::smallStrainUpdateHelper( localIndex const k,
         m_damage[k][q] = LvArray::math::min( m_damage[k][q] + timeIncrement / tFail, 1.0 );
       }
 
-      CeramicDamageUpdates::plasticReturn(m_damage[k][q],  // damage
-                                              m_crackTipStressConcentration[k],
-                                              trialPressure,   // trial pressure
-                                              trialJ2,         // trial J2 invariant of stress
-                                              trialJ3,         // trial J3 invariant of stress
-                                              trialDeviator,   // deviatoric stress
-                                              pmin0,           // pmin0 vertex pressure for D=0
-                                              bulk,
-                                              m_shearModulus[k],
-                                              mu,              // friction slope
-                                              Yc,              // compressive strength
-                                              Yt0,             // tensile strength before third-invariant scaling.
-                                              Ycmax,
-                                              elasticStrainEnergy,                                         
-                                              stress          // reconstructed stress after plastic return stress
-                                              );
+      CeramicDamageUpdates::plasticReturn( m_damage[k][q],  // damage
+                                           m_crackTipStressConcentration[k],
+                                           trialPressure,      // trial pressure
+                                           trialJ2,            // trial J2 invariant of stress
+                                           trialJ3,            // trial J3 invariant of stress
+                                           trialDeviator,      // deviatoric stress
+                                           pmin0,              // pmin0 vertex pressure for D=0
+                                           bulk,
+                                           m_shearModulus[k],
+                                           mu,                 // friction slope
+                                           Yc,                 // compressive strength
+                                           Yt0,                // tensile strength before third-invariant scaling.
+                                           Ycmax,
+                                           elasticStrainEnergy,
+                                           stress             // reconstructed stress after plastic return stress
+                                           );
     }
 
-  // Compute plastic strain.  This is just a plotting variable, but it can be useful.
-  // This will be pStrain += C^inv:(sigmaTrial - sigmaNew) 
-  real64 stressIncrement[6] = { };  
-  LvArray::tensorOps::copy< 6 >( stressIncrement, trialStress);
-  LvArray::tensorOps::subtract< 6 >( stressIncrement, stress);
+    // Compute plastic strain.  This is just a plotting variable, but it can be useful.
+    // This will be pStrain += C^inv:(sigmaTrial - sigmaNew)
+    real64 stressIncrement[6] = { };
+    LvArray::tensorOps::copy< 6 >( stressIncrement, trialStress );
+    LvArray::tensorOps::subtract< 6 >( stressIncrement, stress );
 
-  // Unlike the stress and strain incremenent, the old value 
-  // of the plastic strain has not been unrotated,
-  // so se have to do that here, then add the increment, then
-  // re-rotate the result.
+    // Unlike the stress and strain incremenent, the old value
+    // of the plastic strain has not been unrotated,
+    // so se have to do that here, then add the increment, then
+    // re-rotate the result.
 
-  // Compute plastic strain increment
-  real64 plasticStrainIncrement[6] = {0};
-  computePlasticStrainIncrement( k,
-                                 q,
-                                 timeIncrement,           
-                                 strainIncrement,
-                                 stressIncrement,
-                                 plasticStrainIncrement );
+    // Compute plastic strain increment
+    real64 plasticStrainIncrement[6] = {0};
+    computePlasticStrainIncrement( k,
+                                   q,
+                                   timeIncrement,
+                                   strainIncrement,
+                                   stressIncrement,
+                                   plasticStrainIncrement );
 
-  // Increment plastic strain
-  real64 oldPlasticStrain[6] = { };
-  LvArray::tensorOps::copy< 6 >( oldPlasticStrain, m_plasticStrain[k][q] );
-  oldPlasticStrain[3] *= 0.5; // This corrects for voight notation in subsequent rotation calcs.
-  oldPlasticStrain[4] *= 0.5;
-  oldPlasticStrain[5] *= 0.5;
+    // Increment plastic strain
+    real64 oldPlasticStrain[6] = { };
+    LvArray::tensorOps::copy< 6 >( oldPlasticStrain, m_plasticStrain[k][q] );
+    oldPlasticStrain[3] *= 0.5; // This corrects for voight notation in subsequent rotation calcs.
+    oldPlasticStrain[4] *= 0.5;
+    oldPlasticStrain[5] *= 0.5;
 
-  // unrotate old strain
-  real64 unrotatedOldPlasticStrain[6] = { };
-  real64 rotationTranspose[3][3] = { };
-  LvArray::tensorOps::transpose< 3, 3 >( rotationTranspose, beginningRotation ); 
-  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( unrotatedOldPlasticStrain, rotationTranspose, oldPlasticStrain );
+    // unrotate old strain
+    real64 unrotatedOldPlasticStrain[6] = { };
+    real64 rotationTranspose[3][3] = { };
+    LvArray::tensorOps::transpose< 3, 3 >( rotationTranspose, beginningRotation );
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( unrotatedOldPlasticStrain, rotationTranspose, oldPlasticStrain );
 
-  // scale for voigt notation
-  unrotatedOldPlasticStrain[3] *= 2.0;
-  unrotatedOldPlasticStrain[4] *= 2.0;
-  unrotatedOldPlasticStrain[5] *= 2.0;
+    // scale for voigt notation
+    unrotatedOldPlasticStrain[3] *= 2.0;
+    unrotatedOldPlasticStrain[4] *= 2.0;
+    unrotatedOldPlasticStrain[5] *= 2.0;
 
-  // add unrotated increment to unrotated old strain
-  real64 unrotatedNewPlasticStrain[6] = { };
-  LvArray::tensorOps::copy< 6 >( unrotatedNewPlasticStrain, unrotatedOldPlasticStrain );
-  LvArray::tensorOps::add< 6 >( unrotatedNewPlasticStrain, plasticStrainIncrement );
-  
-  // apply voight scaling 
-  unrotatedNewPlasticStrain[3] *= 0.5;
-  unrotatedNewPlasticStrain[4] *= 0.5;
-  unrotatedNewPlasticStrain[5] *= 0.5;
+    // add unrotated increment to unrotated old strain
+    real64 unrotatedNewPlasticStrain[6] = { };
+    LvArray::tensorOps::copy< 6 >( unrotatedNewPlasticStrain, unrotatedOldPlasticStrain );
+    LvArray::tensorOps::add< 6 >( unrotatedNewPlasticStrain, plasticStrainIncrement );
 
-  // re-rotate end-of-step plastic strain
-  real64 newPlasticStrain[6] = { };
-  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( newPlasticStrain, endRotation, unrotatedNewPlasticStrain );
-  
-  // un-scale after rotation
-  newPlasticStrain[3] *= 2.0;
-  newPlasticStrain[4] *= 2.0;
-  newPlasticStrain[5] *= 2.0;
+    // apply voight scaling
+    unrotatedNewPlasticStrain[3] *= 0.5;
+    unrotatedNewPlasticStrain[4] *= 0.5;
+    unrotatedNewPlasticStrain[5] *= 0.5;
 
-  // copy updated value to state variable.
-  LvArray::tensorOps::copy< 6 >( m_plasticStrain[k][q], newPlasticStrain );
+    // re-rotate end-of-step plastic strain
+    real64 newPlasticStrain[6] = { };
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( newPlasticStrain, endRotation, unrotatedNewPlasticStrain );
+
+    // un-scale after rotation
+    newPlasticStrain[3] *= 2.0;
+    newPlasticStrain[4] *= 2.0;
+    newPlasticStrain[5] *= 2.0;
+
+    // copy updated value to state variable.
+    LvArray::tensorOps::copy< 6 >( m_plasticStrain[k][q], newPlasticStrain );
   }
 }
 
@@ -810,7 +813,7 @@ void CeramicDamageUpdates::plasticReturn( const real64 damage,        // damage
                                           const real64 trialPressure,        // trial pressure
                                           const real64 J2,              // trial J2 invariant of stress
                                           const real64 J3,              // trial J3 invariant of stress
-                                          real64 const ( & deviator )[6],  // deviatoric stress
+                                          real64 const ( &deviator )[6],   // deviatoric stress
                                           const real64 pmin0,            // pmin0 vertex pressure for D=0
                                           const real64 bulk,            // elastic bulk modulus
                                           const real64 shear,           // elsatic shear modulus
@@ -818,15 +821,16 @@ void CeramicDamageUpdates::plasticReturn( const real64 damage,        // damage
                                           const real64 Yc,              // compressive strength
                                           const real64 Yt0,             // tensile strength before third-invariant scaling.
                                           const real64 Ycmax,
-                                          real64 ( & elasticStrainEnergy ),  // strain energy at end of step stress based on linear elasticity.                                          
-                                          real64 ( & stress )[6]       // reconstructed stress after plastic return stress 
+                                          real64 ( &elasticStrainEnergy ),   // strain energy at end of step stress based on linear
+                                                                             // elasticity.
+                                          real64 ( & stress )[6]       // reconstructed stress after plastic return stress
                                           ) const     // strength parameter
 {
   real64 pressure = trialPressure;
   real64 strength = 0.0;
   real64 newShearStress = 0.0;
-  if( trialPressure <= ( 1.0 - damage ) * pmin0 ) 
-  { 
+  if( trialPressure <= ( 1.0 - damage ) * pmin0 )
+  {
     // Pressure is on the vertex
     pressure = ( 1.0 - damage ) * pmin0;
 
@@ -839,7 +843,7 @@ void CeramicDamageUpdates::plasticReturn( const real64 damage,        // damage
     stress[5] = 0.0;
   }
   else
-  {          
+  {
     // We may be in this loop if the shear stress exceed strength/crackTipStressConcentration,
     // but the continuum stress isn't above the continuum strength.
 
@@ -849,11 +853,11 @@ void CeramicDamageUpdates::plasticReturn( const real64 damage,        // damage
 
     // trialJ2 = trialVonMises * trialVonMises / 3.0;
     // trialVonMises = LvArray::math::sqrt(3.0*J2);
-    newShearStress = LvArray::math::min( LvArray::math::sqrt(3.0*J2) , strength );
+    newShearStress = LvArray::math::min( LvArray::math::sqrt( 3.0*J2 ), strength );
     twoInvariant::stressRecomposition( -pressure,
-                                      newShearStress,  // new magnitude of deviatoric stress
-                                      deviator,
-                                      stress );
+                                       newShearStress, // new magnitude of deviatoric stress
+                                       deviator,
+                                       stress );
   }
 
   // Elastic strain energy at end-of-step stress based on linear-elasticity.
@@ -887,14 +891,14 @@ real64 CeramicDamageUpdates::getStrength( const real64 damage,     // damage
     oneOverGamma = m_thirdInvariantDependence == 1 ? thirdInvariantStrengthScaling( J2, J3, dfdp ) : 1.0;
     return ( 1. / stressConcentration ) * ( oneOverGamma * ceramicY10( pressure, damage, mu, Yt0, Yc ) );
   }
-  
+
   if( pressure < p2 )
   {
     dfdp = ceramicdY20dp( pressure, damage, mu, Yc, Yt0, Ymax );
-	  oneOverGamma = m_thirdInvariantDependence == 1 ? thirdInvariantStrengthScaling( J2, J3, dfdp ) : 1.0;
+    oneOverGamma = m_thirdInvariantDependence == 1 ? thirdInvariantStrengthScaling( J2, J3, dfdp ) : 1.0;
 
     real64 m1 = oneOverGamma * ceramicdY10dp( damage, mu, Yc, Yt0 );
-    real64 y1 = oneOverGamma * ceramicY10( p1, damage, mu, Yt0, Yc);
+    real64 y1 = oneOverGamma * ceramicY10( p1, damage, mu, Yt0, Yc );
     real64 y2 = oneOverGamma * Ymax;
     return ( 1. / stressConcentration ) * ( LvArray::math::pow((pressure - p2) / (p1 - p2), m1 * (p1 - p2) / (y1 - y2)) * (y1 - y2) + y2 );
   }
@@ -911,13 +915,13 @@ real64 CeramicDamageUpdates::ceramicY10( const real64 pLocal,   // pressure
                                          const real64 dLocal,   // damage,
                                          const real64 muLocal,  // friction slope
                                          const real64 Yt0Local, // tensile strength parameter
-                                         const real64 YcLocal ) const 
+                                         const real64 YcLocal ) const
 {
-  return (((3.0 + dLocal * (-3.0 + muLocal)) * YcLocal + 
-           (-3.0 + dLocal * (3.0 + muLocal)) * Yt0Local) * (pLocal - 
-           (2.0 * (dLocal - 1.0) * YcLocal * Yt0Local) / 
-           (3.0 * (YcLocal - Yt0Local)))) / 
-           (YcLocal + Yt0Local);
+  return (((3.0 + dLocal * (-3.0 + muLocal)) * YcLocal +
+           (-3.0 + dLocal * (3.0 + muLocal)) * Yt0Local) * (pLocal -
+                                                            (2.0 * (dLocal - 1.0) * YcLocal * Yt0Local) /
+                                                            (3.0 * (YcLocal - Yt0Local)))) /
+         (YcLocal + Yt0Local);
 };
 
 GEOS_HOST_DEVICE
@@ -948,7 +952,7 @@ real64 CeramicDamageUpdates::ceramicdY20dp( const real64 p, // pressure
   real64 p1 = Yc/3;
   real64 p2 = Ymax/mu;
 
-  return dfdp1*( 1.0 - smoothStep(p,p1,p2) );
+  return dfdp1*( 1.0 - smoothStep( p, p1, p2 ) );
 }
 
 GEOS_HOST_DEVICE
@@ -962,11 +966,11 @@ real64 CeramicDamageUpdates::smoothStep( const real64 x,
   //
   // will fail if xmax=xmin, so don't do that.
 
-  if(x <= xmin)
+  if( x <= xmin )
   {
     return 0.0;
   }
-  else if(x >= xmax)
+  else if( x >= xmax )
   {
     return 1.0;
   }
@@ -997,7 +1001,8 @@ real64 CeramicDamageUpdates::thirdInvariantStrengthScaling( const real64 J2,    
 
     // This is the Willam-Warnke third-invariant scale function as defined in the Kayenta manual.
     real64 cosPi6plusTheta = LvArray::math::cos( 0.5235987755982989 + theta );
-    real64 num = 2 * ( 1 - psi * psi ) * cosPi6plusTheta + ( 2.0 * psi - 1.0 ) * LvArray::math::sqrt( LvArray::math::max( 0., -4.0 * psi + 5.0 * psi * psi + 4.0 * ( 1.0 - psi * psi ) * cosPi6plusTheta * cosPi6plusTheta ) );
+    real64 num = 2 * ( 1 - psi * psi ) * cosPi6plusTheta + ( 2.0 * psi - 1.0 ) *
+                 LvArray::math::sqrt( LvArray::math::max( 0., -4.0 * psi + 5.0 * psi * psi + 4.0 * ( 1.0 - psi * psi ) * cosPi6plusTheta * cosPi6plusTheta ) );
     real64 denom = ( 2 * psi - 1.0 ) * ( 2 * psi - 1.0 ) + 4 * ( 1 - psi * psi ) * cosPi6plusTheta * cosPi6plusTheta;
 
     if( denom > 1e-12 )
@@ -1014,13 +1019,13 @@ GEOS_FORCE_INLINE
 void CeramicDamageUpdates::computePlasticStrainIncrement ( localIndex const k,
                                                            localIndex const q,
                                                            const real64 timeIncrement,
-                                                           real64 const ( & strainIncrement )[6],
-                                                           real64 const ( & stressIncrement )[6],
+                                                           real64 const ( &strainIncrement )[6],
+                                                           real64 const ( &stressIncrement )[6],
                                                            real64 ( & plasticStrainIncrement )[6] ) const
-{ 
+{
   GEOS_UNUSED_VAR( q );
   GEOS_UNUSED_VAR( timeIncrement );
-  
+
   // For hypo-elastic models we compute the increment in plastic strain assuming
   // for some increment in total strain and stress and elastic properties.
 
@@ -1038,24 +1043,24 @@ void CeramicDamageUpdates::computePlasticStrainIncrement ( localIndex const k,
   stressIncrementIsostatic[1] = trialP;
   stressIncrementIsostatic[2] = trialP;
 
-  // For damage or softening it there may be cases where bulk or shear are approx 0, 
+  // For damage or softening it there may be cases where bulk or shear are approx 0,
   // so we need to be careful that we compute this
   real64 elasticStrainIncrement[6] = {0};
   for( int i = 0; i < 6; ++i )
   {
-    if (m_bulkModulus[k] > 1.0e-12)
+    if( m_bulkModulus[k] > 1.0e-12 )
     {
       // CC: off diagonal elements need x2 for strain
       elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * stressIncrementIsostatic[i] * 1.0/3.0/m_bulkModulus[k];
     }
-    if (m_shearModulus[k] > 1.0e-12)
+    if( m_shearModulus[k] > 1.0e-12 )
     {
-      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * LvArray::math::sqrt(2/3) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
+      elasticStrainIncrement[i] += ( 1 + (i >= 3) ) * LvArray::math::sqrt( 2/3 ) * trialQ * stressIncrementDeviator[i] * 1.0/2.0/m_shearModulus[k];
     }
   }
 
-  LvArray::tensorOps::copy< 6 >( plasticStrainIncrement, strainIncrement);
-  LvArray::tensorOps::subtract< 6 >( plasticStrainIncrement, elasticStrainIncrement);
+  LvArray::tensorOps::copy< 6 >( plasticStrainIncrement, strainIncrement );
+  LvArray::tensorOps::subtract< 6 >( plasticStrainIncrement, elasticStrainIncrement );
 }
 
 /**
@@ -1149,7 +1154,7 @@ public:
     //string/key for element/particle velocityGradient value
     static constexpr char const * velocityGradientString() { return "velocityGradient"; }
 
-    /// string/key for quadrature point plasticStrain value 
+    /// string/key for quadrature point plasticStrain value
     static constexpr char const * plasticStrainString() { return "plasticStrain"; }
 
     /// string/key for Flag to enable stress concenration for crack-tip
@@ -1201,7 +1206,7 @@ public:
                                  m_velocityGradient,
                                  m_plasticStrain,
                                  m_enableCrackTipStressConcentration,
-                                 m_fractureToughness,                                 
+                                 m_fractureToughness,
                                  m_enableEnergyFailureCriterion,
                                  m_fractureEnergyReleaseRate,
                                  m_crackTipStressConcentration,
