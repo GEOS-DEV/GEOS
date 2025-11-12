@@ -1,23 +1,6 @@
 # Specify list of tests
 set( gtest_geosx_tests
-<<<<<<< HEAD:src/coreComponents/unitTests/fluidFlowTests/CMakeLists.txt
-     testSinglePhaseMobilityKernel.cpp
-     testThermalCompMultiphaseFlow.cpp
-     testThermalSinglePhaseFlow.cpp
-     testFlowStatistics.cpp
-     testTransmissibility.cpp
-     testImmiscibleMultiphaseFlow.cpp
-     testImmiscibleInterfaceConditions.cpp )
-
-if( ENABLE_PVTPackage )
-    list( APPEND gtest_geosx_tests
-          testCompMultiphaseFlow.cpp
-          testCompMultiphaseFlowHybrid.cpp
-          testReactiveCompositionalMultiphaseOBL.cpp )
-endif()
-=======
      testReservoirSinglePhaseMSWells.cpp )
->>>>>>> develop:src/coreComponents/integrationTests/wellsTests/CMakeLists.txt
 
 set( tplDependencyList ${parallelDeps} gtest )
 

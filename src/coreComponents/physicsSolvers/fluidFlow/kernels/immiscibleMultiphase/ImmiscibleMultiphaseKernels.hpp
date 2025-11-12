@@ -38,7 +38,7 @@
  #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
  #include "constitutive/relativePermeability/RelativePermeabilityFields.hpp"
  #include "constitutive/ConstitutiveManager.hpp"
-#include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilitySelector.hpp"
 
 #include "constitutive/ConstitutivePassThru.hpp"
@@ -959,11 +959,11 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                       dC1_dS[ip][ke] = dC_dS_term1 + dC_dS_term2 * dC_dS_term3;
                       dhalfFlux1_dP[ip][ke] -= dC_dP;
                       dhalfFlux1_dS[ip][ke] -= dC1_dS[ip][ke];
-                      // if (std::fabs(facePhaseVolFrac1[0][0] - 1.0) > 1e-8){
+                      if (std::fabs(facePhaseVolFrac1[0][0] - 1.0) > 1e-8){
                         dC1_dpc[ip][ke] =  dC1_dS[ip][ke] * dfacePhaseVolFrac_dCapPres1[0][0][0][0];
-                      // } else {
-                      //   dC1_dpc[ip][ke] = dC_dS_term1 * dfacePhaseVolFrac_dCapPres1[0][0][0][0];
-                      // }
+                      } else {
+                        dC1_dpc[ip][ke] = dC_dS_term1 * dfacePhaseVolFrac_dCapPres1[0][0][0][0];
+                      }
                       
                       // GEOS_UNUSED_VAR( dC1_dpc[ip][ke] );
                     }
@@ -972,11 +972,11 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                       dC2_dS[ip][ke] = dC_dS_term1 + dC_dS_term2 * dC_dS_term3;
                       dhalfFlux2_dP[ip][ke] -= dC_dP;
                       dhalfFlux2_dS[ip][ke] -= dC2_dS[ip][ke];
-                      // if (std::fabs(facePhaseVolFrac2[0][0] - 1.0) > 1e-8){
+                      if (std::fabs(facePhaseVolFrac2[0][0] - 1.0) > 1e-8){
                         dC2_dpc[ip][ke] =  dC2_dS[ip][ke] * dfacePhaseVolFrac_dCapPres2[0][0][0][0];
-                      // } else {
-                      //   dC2_dpc[ip][ke] = dC_dS_term1 * dfacePhaseVolFrac_dCapPres2[0][0][0][0];
-                      // }
+                      } else {
+                        dC2_dpc[ip][ke] = dC_dS_term1 * dfacePhaseVolFrac_dCapPres2[0][0][0][0];
+                      }
                       // GEOS_UNUSED_VAR( dC2_dpc[ip][ke] );
                     }
 
@@ -1040,7 +1040,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                 }
                 else
                 {
-                  if( std::fabs( halfFluxVal[ip][0] ) < 1e-20 )
+                  if( std::fabs( halfFluxVal[ip][0] ) < 1e-20 )                                                 
                   {
                     k_up_0_check[ip] = k_up_0_b;
                   }
@@ -1106,6 +1106,9 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
             // Check convergence
             if( std::fabs( local_residual ) < tol )
             {
+              // if( std::fabs( dhalfFlux_dpc[0][0] - dhalfFlux_dpc[0][1] ) <eps2 ) {
+              // std::cout << "**********************ZeroJacobian*******************" << std::endl;                
+              // }
               converged = 1;
               break; // Converged
             }
@@ -1136,27 +1139,11 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
               real64 deltaPc = local_residual/local_jacobian;
 
-              // if (std::fabs(facePhaseVolFrac1[0][0] - 1.0) < 1e-5 && (std::fabs(deltaPc * dfacePhaseVolFrac_dCapPres2[0][0][0][0]) < 0.05)){
-              //   ext_iter0++;
-              // }
-              // if (std::fabs(facePhaseVolFrac2[0][0] - 1.0) < 1e-5 && (std::fabs(deltaPc * dfacePhaseVolFrac_dCapPres1[0][0][0][0]) < 0.05)){
-              //   ext_iter1++;
-              // }
-  
-              // if (ext_iter0 > 20){
-              //   halfFluxVal[0][1] = halfFluxVal[0][0];
-              //   halfFluxVal[1][1] = halfFluxVal[1][0];
-              //   local_residual = halfFluxVal[0][0] - halfFluxVal[0][1];
-              // }
-  
-              // if (ext_iter1 > 20){
-              //   halfFluxVal[0][0] = halfFluxVal[0][1];
-              //   halfFluxVal[1][0] = halfFluxVal[1][1];
-              //   local_residual = halfFluxVal[0][0] - halfFluxVal[0][1];
-              // }
-
               if( std::fabs( local_residual ) < tol )
               {
+              // if( std::fabs( dhalfFlux_dpc[0][0] - dhalfFlux_dpc[0][1] ) < eps2 ) {
+              // std::cout << "**********************ZeroJacobian*******************" << std::endl;                
+              // }
                 converged = 1;  
                 break; // Converged
               }
@@ -1351,10 +1338,11 @@ public:
                               fields::twophaseimmisciblefluid::dPhaseViscosity >;
 
   using CapPressureAccessors =
-    StencilMaterialAccessors< JFunctionCapillaryPressure,
+    StencilMaterialAccessors< BrooksCoreyCapillaryPressure,
                               fields::cappres::phaseCapPressure,
-                              fields::cappres::dPhaseCapPressure_dPhaseVolFraction,
-                              fields::cappres::jFuncMultiplier >;
+                              fields::cappres::dPhaseCapPressure_dPhaseVolFraction
+                              >;
+                              // ,fields::cappres::jFuncMultiplier >;
 
 
   using PermeabilityAccessors =
@@ -1411,7 +1399,7 @@ public:
     m_dVisc_dPres( fluidAccessors.get( fields::twophaseimmisciblefluid::dPhaseViscosity {} ) ),
     m_phaseCapPressure( capPressureAccessors.get( fields::cappres::phaseCapPressure {} ) ),
     m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( fields::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
-    m_jFuncMultiplier( capPressureAccessors.get( fields::cappres::jFuncMultiplier {} ) ),
+    // m_jFuncMultiplier( capPressureAccessors.get( fields::cappres::jFuncMultiplier {} ) ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs ),
     m_hasCapPressure ( hasCapPressure ),
@@ -1460,7 +1448,7 @@ protected:
   /// Views on capillary pressure
   ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const m_phaseCapPressure;
   ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const m_dPhaseCapPressure_dPhaseVolFrac;
-  ElementViewConst< arrayView2d< real64 const > > const m_jFuncMultiplier;
+  // ElementViewConst< arrayView2d< real64 const > > const m_jFuncMultiplier;
 
   // Residual and jacobian
 
@@ -2029,7 +2017,8 @@ protected:
  * @tparam RELPERMWRAPPER the type of the realtive permeability wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER, typename CAPPRESWRAPPER, typename RELPERMWRAPPER >
+// template< integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER, typename CAPPRESWRAPPER, typename RELPERMWRAPPER >
+template< integer NUM_EQN, integer NUM_DOF, typename STENCILWRAPPER >
 class FluxComputeInterfaceConditionKernel : public FluxComputeKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >
 {
 public:
@@ -2057,7 +2046,7 @@ public:
   using Base::m_phaseVolFrac;
   using Base::m_phaseMass_n;
   using Base::m_phaseCapPressure;
-  using Base::m_jFuncMultiplier;
+  // using Base::m_jFuncMultiplier;
   using Base::m_dPhaseCapPressure_dPhaseVolFrac;
   using Base::m_dens;
   using Base::m_dDens_dPres;
@@ -2096,8 +2085,8 @@ public:
   FluxComputeInterfaceConditionKernel( integer const numPhases,
                                        globalIndex const rankOffset,
                                        STENCILWRAPPER const & stencilWrapper,
-                                       CAPPRESWRAPPER const & capPressureWrapper,
-                                       RELPERMWRAPPER const & relPermWrapper,
+                                      //  CAPPRESWRAPPER const & capPressureWrapper,
+                                      //  RELPERMWRAPPER const & relPermWrapper,
                                        DofNumberAccessor const & dofNumberAccessor,
                                        ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
                                        MultiphaseFluidAccessors const & fluidAccessors,
@@ -2114,9 +2103,9 @@ public:
                                                                           constitutive::CapillaryPressureBase *,
                                                                           constitutive::TwoPhaseImmiscibleFluid * >, 2 > > const & interfaceConstitutivePairs,
                                        unordered_map< localIndex, localIndex > const & interfaceRegionByConnector,
-                                       std::tuple< constitutive::RelativePermeabilityBase *,
-                                                   constitutive::CapillaryPressureBase *,
-                                                   constitutive::TwoPhaseImmiscibleFluid * > const & interfaceConstitutivePairs_temp,
+                                      //  std::tuple< constitutive::RelativePermeabilityBase *,
+                                      //              constitutive::CapillaryPressureBase *,
+                                      //              constitutive::TwoPhaseImmiscibleFluid * > const & interfaceConstitutivePairs_temp,
                                        localIndex const GEOS_UNUSED_PARAM( domainSize ) )
     : Base( numPhases,
             rankOffset,
@@ -2132,12 +2121,13 @@ public:
             hasCapPressure,
             useTotalMassEquation,
             checkPhasePresenceInGravity ),
-    m_capPressureWrapper( capPressureWrapper ),
-    m_relPermWrapper( relPermWrapper ),
+    // m_capPressureWrapper( capPressureWrapper ),
+    // m_relPermWrapper( relPermWrapper ),
     m_interfaceFaceSetNames( interfaceFaceSetNames ),
     m_interfaceConstitutivePairs( interfaceConstitutivePairs ),
-    m_interfaceRegionByConnector( interfaceRegionByConnector ),
-    m_interfaceConstitutivePairs_temp( interfaceConstitutivePairs_temp )
+    m_interfaceRegionByConnector( interfaceRegionByConnector )
+    // ,
+    // m_interfaceConstitutivePairs_temp( interfaceConstitutivePairs_temp )
   {}
 
   /**
@@ -2161,6 +2151,7 @@ public:
          connectorHasInterfaceConditionQ =
              m_interfaceRegionByConnector.find(iconn) != m_interfaceRegionByConnector.end();
      }
+
 
 
     //  if (connectorHasInterfaceConditionQ){
@@ -2204,7 +2195,7 @@ public:
         real64 dGravHead_dP[numEqn][2]{};
 
         real64 capGrad[numEqn]{};
-        real64 capPresIC[numEqn][2]{};
+        // real64 capPresIC[numEqn][2]{};
         real64 jFMultiplier[numEqn][2]{};
         real64 dCapGrad_dP[numEqn][2]{};
         real64 dCapGrad_dS[numEqn][2]{};
@@ -2245,7 +2236,7 @@ public:
 
         stdVector< real64 > saturations = {m_phaseVolFrac[seri[0]][sesri[0]][sei[0]][0], m_phaseVolFrac[seri[1]][sesri[1]][sei[1]][0] };
         stdVector< real64 > pressures = {m_pres[seri[0]][sesri[0]][sei[0]], m_pres[seri[1]][sesri[1]][sei[1]] };
-        bool isJfunction = 1;
+        bool isJfunction = 0;
 
         // loop over phases
         for( integer ip = 0; ip < m_numPhases; ++ip )
@@ -2318,9 +2309,9 @@ public:
             if( m_hasCapPressure ) // check sign convention
             {
               real64 const capPres = m_phaseCapPressure[er][esr][ei][0][ip]; // Pc = Pc1 || Pc2
-              jFMultiplier[ip][ke] = m_jFuncMultiplier[er][esr][ei][0];
+              // jFMultiplier[ip][ke] = m_jFuncMultiplier[er][esr][ei][0];
 
-              capPresIC[ip][ke] = capPres;
+              // capPresIC[ip][ke] = capPres;
               dCapGrad_dTrans -= signPotDiff[ke] * capPres;      // dDPc/dT = (-Pc1 + Pc2)
               pot -= trans[ke] * capPres;                        // Phi = T P1 - rho T g z1 - T Pc1 || -T P2 + rho T g z2 + T
               // Pc2
@@ -2479,8 +2470,8 @@ public:
 
 
         // this determines whether the local solver is needed becuase of heterogeneous capillary pressure regions
-        bool notOnInterface = std::fabs( jFMultiplier[0][0] - jFMultiplier[0][1] ) < 1  && std::fabs( jFMultiplier[1][0] - jFMultiplier[1][1] ) < 1;
-        notOnInterface = !connectorHasInterfaceConditionQ;
+        // bool notOnInterface = std::fabs( jFMultiplier[0][0] - jFMultiplier[0][1] ) < 1  && std::fabs( jFMultiplier[1][0] - jFMultiplier[1][1] ) < 1;
+       bool notOnInterface = !connectorHasInterfaceConditionQ;
         if( notOnInterface )
         {
           for( integer ip = 0; ip < 2; ++ip )
@@ -2510,66 +2501,9 @@ public:
         else
         {
 
-          // nonlinear solver's parameters
-          real64 tol = 1.0e-9;
-          int max_iter = 50;
+
           bool converged = 0;
-          bool damping = true;
 
-          // Local newton loop:
-          // Use of the capillary pressure kernel wrapper
-          StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > facePhaseVolFrac1( 1, 2 );
-          StackArray< real64, 3, 2, constitutive::cappres::LAYOUT_CAPPRES > faceCapPres1( 1, 1, 2 );
-          StackArray< real64, 4, 4, constitutive::cappres::LAYOUT_CAPPRES_DS > dfacePhaseVolFrac_dCapPres1( 1, 1, 2, 2 );
-          StackArray< real64, 4, 4, constitutive::cappres::LAYOUT_CAPPRES_DS > dCapPres1_dfacePhaseVolFrac( 1, 1, 2, 2 );
-          StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > facePhaseVolFrac2( 1, 2 );
-          StackArray< real64, 3, 2, constitutive::cappres::LAYOUT_CAPPRES > faceCapPres2( 1, 1, 2 );
-          StackArray< real64, 4, 4, constitutive::cappres::LAYOUT_CAPPRES_DS > dfacePhaseVolFrac_dCapPres2( 1, 1, 2, 2 );
-          StackArray< real64, 4, 4, constitutive::cappres::LAYOUT_CAPPRES_DS > dCapPres2_dfacePhaseVolFrac( 1, 1, 2, 2 );
-          StackArray< real64, 1, 2 > JFunc1( 2 );
-          StackArray< real64, 1, 2 > JFunc2( 2 );
-
-          JFunc1[0] = jFMultiplier[0][0];
-          JFunc2[0] = jFMultiplier[0][1];
-
-          // finding endpoints:
-          facePhaseVolFrac1[0][1] = 0.0;
-          facePhaseVolFrac1[0][0] = 1.0;
-          m_capPressureWrapper.compute( facePhaseVolFrac1[0],
-                                        JFunc1.toSliceConst(),
-                                        faceCapPres1[0][0],
-                                        dCapPres1_dfacePhaseVolFrac[0][0] );
-          real64 const Pc1_min = faceCapPres1[0][0][0];
-          facePhaseVolFrac1[0][1] = 1.0;
-          facePhaseVolFrac1[0][0] = 0.0;
-          m_capPressureWrapper.compute( facePhaseVolFrac1[0],
-                                        JFunc1.toSliceConst(),
-                                        faceCapPres1[0][0],
-                                        dCapPres1_dfacePhaseVolFrac[0][0] );
-          real64 const Pc1_max = faceCapPres1[0][0][0];
-
-          facePhaseVolFrac2[0][1] = 0.0;
-          facePhaseVolFrac2[0][0] = 1.0;
-          m_capPressureWrapper.compute( facePhaseVolFrac2[0],
-                                        JFunc2.toSliceConst(),
-                                        faceCapPres2[0][0],
-                                        dCapPres2_dfacePhaseVolFrac[0][0] );
-          real64 const Pc2_min = faceCapPres2[0][0][0];
-          facePhaseVolFrac2[0][1] = 1.0;
-          facePhaseVolFrac2[0][0] = 0.0;
-          m_capPressureWrapper.compute( facePhaseVolFrac2[0],
-                                        JFunc2.toSliceConst(),
-                                        faceCapPres2[0][0],
-                                        dCapPres2_dfacePhaseVolFrac[0][0] );
-          real64 const Pc2_max = faceCapPres2[0][0][0];
-
-          // Use of the relative permeability kernel wrapper
-          StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > faceTrappedVolFrac1( 1, 1, 2 );
-          StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > faceRelPerm1( 1, 1, 2 );
-          StackArray< real64, 4, 4, constitutive::relperm::LAYOUT_RELPERM_DS > dfacePhaseRelPerm1_dPhaseVolFrac( 1, 1, 2, 2 );
-          StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > faceTrappedVolFrac2( 1, 1, 2 );
-          StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > faceRelPerm2( 1, 1, 2 );
-          StackArray< real64, 4, 4, constitutive::relperm::LAYOUT_RELPERM_DS > dfacePhaseRelPerm2_dPhaseVolFrac( 1, 1, 2, 2 );
 
           // clear working arrays
           real64 halfFluxVal[numEqn][2]{};
@@ -2580,31 +2514,9 @@ public:
           real64 dhalfFlux_duT[numEqn][2]{};
           real64 dhalfFlux_dpc[numEqn][2]{};
 
-          // initial guess:
-          real64 S_int[numEqn]{};
-          real64 const Pc1 = capPresIC[0][0];
-          real64 const Pc2 = capPresIC[0][1];
 
-          real64 Pc_int = ( Pc1 + Pc2 ) / 2.0;
-
-          real64 Pc_min_all = fmax( Pc1_min, Pc2_min );
-          real64 Pc_max_all = fmin( Pc1_max, Pc2_max );
-
-          if( Pc_int < Pc_min_all || Pc_int > Pc_max_all )
-          {
-            Pc_int = ( Pc_min_all + Pc_max_all ) / 2.0;
-          }
-
-          real64 same_Pc_int = Pc_int;
-
-          // GEOS_UNUSED_VAR(gravCoef2[0]);
-          // GEOS_UNUSED_VAR(gravCoef2[1]);
-
-          // Pc_int = fmin( Pc_max_all, fmax( Pc_int, Pc_min_all ));
-          //  m_interfaceConstitutivePairs[0][0] = std::make_tuple( relPerm, capPressure, fluid );
-//  m_interfaceConstitutivePairs[0][1] = std::make_tuple( relPerm, capPressure, fluid );
-
-          stdVector< real64 > JFMultipliers = {jFMultiplier[0][0], jFMultiplier[0][1]};
+          // stdVector< real64 > JFMultipliers = {jFMultiplier[0][0], jFMultiplier[0][1]};
+          stdVector< real64 > JFMultipliers = {0.0, 0.0};
           stdVector< real64 > trappedSats1 = {0.0, 0.0};
           stdVector< real64 > trappedSats2 = {0.0, 0.0};
           stdVector< real64 > transHats = {transHat[0], transHat[1]};
@@ -2614,9 +2526,28 @@ public:
           stdVector< real64 > cellCenterDuTdS = {duT_dP[0], duT_dP[1], duT_dS[0], duT_dS[1]};
           stdVector< real64 > cellCenterDens = {density2[0], density2[1]};
           stdVector< real64 > cellCenterDens_dP = {dDens_dP2[0][0], dDens_dP2[0][1], dDens_dP2[1][0], dDens_dP2[1][1]};
-          std::vector< RelativePermeabilityBase * > relPerms = {std::get< 0 >( m_interfaceConstitutivePairs_temp ), std::get< 0 >( m_interfaceConstitutivePairs_temp )};
-          std::vector< CapillaryPressureBase * > capPressures = {std::get< 1 >( m_interfaceConstitutivePairs_temp ), std::get< 1 >( m_interfaceConstitutivePairs_temp )};
-          std::vector< TwoPhaseImmiscibleFluid * > fluids = {std::get< 2 >( m_interfaceConstitutivePairs_temp ), std::get< 2 >( m_interfaceConstitutivePairs_temp )};
+          // std::vector< RelativePermeabilityBase * > relPerms = {std::get< 0 >( m_interfaceConstitutivePairs_temp ), std::get< 0 >( m_interfaceConstitutivePairs_temp )};
+          // std::vector< CapillaryPressureBase * > capPressures = {std::get< 1 >( m_interfaceConstitutivePairs_temp ), std::get< 1 >( m_interfaceConstitutivePairs_temp )};
+          // std::vector< TwoPhaseImmiscibleFluid * > fluids = {std::get< 2 >( m_interfaceConstitutivePairs_temp ), std::get< 2 >( m_interfaceConstitutivePairs_temp )};
+
+          // auto const & pairArray = m_interfaceConstitutivePairs[0];
+          localIndex const surfaceRegionIndex = m_interfaceRegionByConnector.at(iconn);
+auto const & pairArray = m_interfaceConstitutivePairs[surfaceRegionIndex];
+
+std::vector< constitutive::RelativePermeabilityBase * > relPerms = {
+  std::get<0>( pairArray[0] ),
+  std::get<0>( pairArray[1] )
+};
+
+std::vector< constitutive::CapillaryPressureBase * > capPressures = {
+  std::get<1>( pairArray[0] ),
+  std::get<1>( pairArray[1] )
+};
+
+std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
+  std::get<2>( pairArray[0] ),
+  std::get<2>( pairArray[1] )
+};
 
           stdVector< real64 > phi = {halfFluxVal[0][0], halfFluxVal[0][1]};
           stdVector< real64 > grad_phi_P = {0.0, 0.0, 0.0, 0.0};
@@ -2671,16 +2602,16 @@ public:
 protected:
 
   /// Reference to the capillary pressure wrapper
-  CAPPRESWRAPPER const m_capPressureWrapper;
-  RELPERMWRAPPER const m_relPermWrapper;
+  // CAPPRESWRAPPER const m_capPressureWrapper;
+  // RELPERMWRAPPER const m_relPermWrapper;
   string_array const m_interfaceFaceSetNames;
   stdVector< std::array< std::tuple< constitutive::RelativePermeabilityBase *,
                                      constitutive::CapillaryPressureBase *,
                                      constitutive::TwoPhaseImmiscibleFluid * >, 2 > >  const m_interfaceConstitutivePairs;
   unordered_map< localIndex, localIndex > const m_interfaceRegionByConnector;
-  std::tuple< constitutive::RelativePermeabilityBase *,
-              constitutive::CapillaryPressureBase *,
-              constitutive::TwoPhaseImmiscibleFluid * > const m_interfaceConstitutivePairs_temp;
+  // std::tuple< constitutive::RelativePermeabilityBase *,
+  //             constitutive::CapillaryPressureBase *,
+  //             constitutive::TwoPhaseImmiscibleFluid * > const m_interfaceConstitutivePairs_temp;
 
 };
 
@@ -2758,7 +2689,8 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  template< typename POLICY, typename STENCILWRAPPER, typename CAPPRESWRAPPER, typename RELPERMWRAPPER >
+  // template< typename POLICY, typename STENCILWRAPPER, typename CAPPRESWRAPPER, typename RELPERMWRAPPER >
+  template< typename POLICY, typename STENCILWRAPPER >
   static void
   createAndLaunch( integer const numPhases,
                    globalIndex const rankOffset,
@@ -2769,16 +2701,16 @@ public:
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
-                   CAPPRESWRAPPER const & capPresWrapper,
-                   RELPERMWRAPPER const & relPermWrapper,
+                  //  CAPPRESWRAPPER const & capPresWrapper,
+                  //  RELPERMWRAPPER const & relPermWrapper,
                    string_array const & interfaceFaceSetNames,
                    stdVector< std::array< std::tuple< constitutive::RelativePermeabilityBase *,
                                                       constitutive::CapillaryPressureBase *,
                                                       constitutive::TwoPhaseImmiscibleFluid * >, 2 > > const & interfaceConstitutivePairs,
                    unordered_map< localIndex, localIndex > const & interfaceRegionByConnector,
-                   std::tuple< constitutive::RelativePermeabilityBase *,
-                               constitutive::CapillaryPressureBase *,
-                               constitutive::TwoPhaseImmiscibleFluid * > const & interfaceConstitutivePairs_temp,
+                  //  std::tuple< constitutive::RelativePermeabilityBase *,
+                  //              constitutive::CapillaryPressureBase *,
+                  //              constitutive::TwoPhaseImmiscibleFluid * > const & interfaceConstitutivePairs_temp,
                    ElementSubRegionBase const & subRegion,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -2791,16 +2723,21 @@ public:
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
-    using kernelType = FluxComputeInterfaceConditionKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER, CAPPRESWRAPPER, RELPERMWRAPPER >;
+    // using kernelType = FluxComputeInterfaceConditionKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER, CAPPRESWRAPPER, RELPERMWRAPPER >;
+        using kernelType = FluxComputeInterfaceConditionKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
     typename kernelType::ImmiscibleMultiphaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::MultiphaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
     typename kernelType::PermeabilityAccessors permAccessors( elemManager, solverName );
 
-    kernelType kernel( numPhases, rankOffset, stencilWrapper, capPresWrapper, relPermWrapper, dofNumberAccessor,
+    // kernelType kernel( numPhases, rankOffset, stencilWrapper, capPresWrapper, relPermWrapper, dofNumberAccessor,
+    //                    flowAccessors, fluidAccessors, capPressureAccessors, permAccessors,
+    //                    dt, localMatrix, localRhs, hasCapPressure, useTotalMassEquation,
+    //                    checkPhasePresenceInGravity, interfaceFaceSetNames, interfaceConstitutivePairs, interfaceRegionByConnector, interfaceConstitutivePairs_temp, domainSize );
+    kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
                        flowAccessors, fluidAccessors, capPressureAccessors, permAccessors,
                        dt, localMatrix, localRhs, hasCapPressure, useTotalMassEquation,
-                       checkPhasePresenceInGravity, interfaceFaceSetNames, interfaceConstitutivePairs, interfaceRegionByConnector, interfaceConstitutivePairs_temp, domainSize );
+                       checkPhasePresenceInGravity, interfaceFaceSetNames, interfaceConstitutivePairs, interfaceRegionByConnector, domainSize );
     kernelType::template launch< POLICY >( stencilWrapper.size(), kernel );
   }
 };
