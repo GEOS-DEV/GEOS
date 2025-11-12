@@ -76,13 +76,6 @@ std::ostream & operator<<( std::ostream & os, TimeFormatInfo const & info )
 
 TimeFormatInfo TimeFormatInfo::fromSeconds( double const seconds )
 {
-  if( std::isnan( seconds ) || std::isinf( seconds ) )
-  {
-    // Handle error appropriately
-    GEOS_ERROR( GEOS_FMT( "Invalid time value: {} ", seconds ) );
-    return TimeFormatInfo( 0.0, 0, 0, 0, 0, 0 );
-  }
-  std::cout << seconds << std::endl;
 
   double remainingSeconds = seconds < 0.0 ? -seconds : seconds;
   int const totalYears = int( remainingSeconds / YearSeconds );

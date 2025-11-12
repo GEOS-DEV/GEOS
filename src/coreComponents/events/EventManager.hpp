@@ -159,7 +159,7 @@ private:
   integer m_maxCycle;
 
   /// Simulation timestamp at the beginning of the cycle
-  real64 m_time;
+  real64 m_time = 0.0;
 
   /// Current timestep request
   real64 m_dt;
