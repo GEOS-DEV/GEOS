@@ -110,9 +110,9 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
       dynamicCast< QuasiTPFAInnerProduct const * >( &mimeticInnerProductBase )  ||
       dynamicCast< SimpleInnerProduct const * >( &mimeticInnerProductBase ) )
   {
-    GEOS_ERROR( getCatalogName() << " " << 
+    GEOS_ERROR( getCatalogName() << " " <<
                 "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM",
-                 getDataContext() );
+                getDataContext() );
   }
 
   m_lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * 1e-8;

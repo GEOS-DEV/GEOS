@@ -83,8 +83,6 @@ Group * ElementRegionManager::createChild( string const & childKey, string const
   GEOS_ERROR_IF( getUserAvailableKeys().count( childKey ) == 0,
                  CatalogInterface::unknownTypeError( childKey, getDataContext(), getUserAvailableKeys() ),
                  getDataContext() );
-                 CatalogInterface::unknownTypeError( childKey, getDataContext(), getUserAvailableKeys() ),
-                 getDataContext() );
   Group & elementRegions = this->getGroup( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
   return &elementRegions.registerGroup( childName,
                                         CatalogInterface::factory( childKey, getDataContext(),

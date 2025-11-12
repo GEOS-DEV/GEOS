@@ -73,7 +73,9 @@ public:
   CoupledSolver & operator=( CoupledSolver && ) = delete;
 
   template< typename T >
-  void throwSolversNotFound( std::ostringstream & errorMessage, string const & solverType )
+  void throwSolversNotFound( std::ostringstream & errorMessage,
+                             string const & solverWrapperKey,
+                             string const & solverType )
   {
     string_array availableSolvers;
 
@@ -94,7 +96,8 @@ public:
                                 stringutilities::join( availableSolvers, ", " ) );
     }
 
-    GEOS_THROW( errorMessage.str(), InputError );
+    GEOS_THROW( errorMessage.str(),
+                InputError, getWrapperDataContext( solverWrapperKey ) );
   }
   /**
    * @brief Utility function to set the subsolvers pointers using the names provided by the user
@@ -108,11 +111,15 @@ public:
       using SolverType = TYPEOFPTR( SolverPtr {} );
       auto const & solverName = m_names[idx()];
       solver = this->getParent().template getGroupPointer< SolverType >( solverName );
-      GEOS_THROW_IF( solver == nullptr,
-                     GEOS_FMT( "{}: Could not find solver '{}' of type {}",
-                               getDataContext(),
-                               solverName, solverType ),
-                     InputError, getDataContext() );
+      if( solver== nullptr )
+      {
+        string const solverWrapperKey = SolverType::coupledSolverAttributePrefix() + "SolverName";
+        std::ostringstream errorMessage;
+        errorMessage << GEOS_FMT( "Could not find solver named '{}'.\n", solverName );
+        throwSolversNotFound< SolverType >( errorMessage, solverWrapperKey, SolverType::coupledSolverAttributePrefix() );
+      }
+
+
       GEOS_LOG_LEVEL_RANK_0( logInfo::Coupling,
                              GEOS_FMT( "{}: found {} solver named {}",
                                        getName(), solver->getCatalogName(), solverName ) );

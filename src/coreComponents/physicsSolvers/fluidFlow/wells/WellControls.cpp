@@ -341,7 +341,6 @@ void WellControls::postInputInitialization()
                  "WellControls : You have provided redundant information for well mass rate." <<
                  " The keywords " << viewKeyStruct::targetMassRateString() << " and " << viewKeyStruct::targetMassRateTableNameString() << " cannot be specified together",
                  InputError, getDataContext() );
-                 InputError, getDataContext() );
 
   GEOS_THROW_IF( ((m_targetMassRate > 0.0 &&  m_useSurfaceConditions==0)),
                  "WellControls : Option only valid if useSurfaceConditions set to 1",

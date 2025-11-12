@@ -120,7 +120,7 @@ void HydraulicApertureTable::validateApertureTable( TableFunction const & apertu
 
   GEOS_THROW_IF( coords.size() == 0,
                  getFullName() << ": Empty aperture table.",
-                 InputError,getDataContext() );
+                 InputError, getDataContext() );
 
   GEOS_THROW_IF( coords.size() > 1,
                  getFullName() << ": Aperture limiter table cannot be greater than a 1D table.",

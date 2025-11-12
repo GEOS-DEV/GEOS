@@ -206,7 +206,7 @@ void InternalMeshGenerator::postInputInitialization()
       }
       else
       {
-        GEOS_ERROR( "Incorrect number of regionLayout entries specified.",getDataContext()  );
+        GEOS_ERROR( "Incorrect number of regionLayout entries specified.", getDataContext()  );
       }
     }
   }

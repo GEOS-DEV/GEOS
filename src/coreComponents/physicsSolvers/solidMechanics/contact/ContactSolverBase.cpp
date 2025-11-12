@@ -223,7 +223,7 @@ real64 ContactSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n
                                         DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_MARK_FUNCTION;
-  GEOS_ERROR( "ExplicitStep non available for contact solvers.",getDataContext() );
+  GEOS_ERROR( "ExplicitStep non available for contact solvers.", getDataContext() );
   return dt;
 }
 
