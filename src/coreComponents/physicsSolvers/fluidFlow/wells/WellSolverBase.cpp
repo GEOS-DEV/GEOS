@@ -116,6 +116,8 @@ void WellSolverBase::postInputInitialization()
   // 1. Set key dimensions of the problem
   m_numDofPerWellElement = m_isThermal ?    m_numComponents + 2 : m_numComponents + 1; // 1 pressure  connectionRate + temp if thermal
   m_numDofPerResElement = m_isThermal ? m_numComponents  + 1: m_numComponents;   // 1 pressure   + temp if thermal
+  m_writeSegDebug=2;
+  m_writeCSV=1;
   if( m_writeSegDebug > 0 )
   {
     if( m_writeCSV == 0 )
@@ -851,6 +853,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
               << ", Residual Norm: " << residualNorm << std::endl;
     if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
     {
+      std::cout << "converged " << std::endl;
       isNewtonConverged = true;
       break;
     }
@@ -860,11 +863,12 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
     if( residualNorm > m_nonlinearSolverParameters.m_maxAllowedResidualNorm )
     {
       string const maxAllowedResidualNormString = NonlinearSolverParameters::viewKeysStruct::maxAllowedResidualNormString();
-      if( m_nonlinearSolverParameters.getLogLevel() > 4 )
-        GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
-                               GEOS_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
-                                         maxAllowedResidualNormString,
-                                         m_nonlinearSolverParameters.m_maxAllowedResidualNorm )  );
+      //if( m_nonlinearSolverParameters.getLogLevel() > 4 )
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
+                             GEOS_FMT( "    The residual norm is above the {} of {}. Newton loop terminated.",
+                                       maxAllowedResidualNormString,
+                                       m_nonlinearSolverParameters.m_maxAllowedResidualNorm )  );
+      std::cout << "Residual norm " << residualNorm << " exceeded max allowed " << m_nonlinearSolverParameters.m_maxAllowedResidualNorm << ". Newton loop terminated." << std::endl;
       isNewtonConverged = false;
       break;
     }
@@ -960,11 +964,13 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
 // Solve the linear system
       try
       {
+        // m_writeLinearSystem=2;
+        //debugOutputSystem( time_n, cycleNumber, 0, m_matrix, m_rhs );
         solveLinearSystem( dofManager, m_matrix, m_rhs, m_solution );
       } catch( ... )
       {
-        m_writeLinearSystem=2;
-        debugOutputSystem( time_n, cycleNumber, 0, m_matrix, m_rhs );
+        // m_writeLinearSystem=2;
+        // debugOutputSystem( time_n, cycleNumber, 0, m_matrix, m_rhs );
 
       }
 // Increment the solver statistics for reporting purposes
@@ -1004,6 +1010,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
 
     lastResidual = residualNorm;
   }
+  std::cout << "WellSolverBase::solveNewtonSystem completed with isNewtonConverged = " << isNewtonConverged << std::endl;
   return isNewtonConverged;
 }
 

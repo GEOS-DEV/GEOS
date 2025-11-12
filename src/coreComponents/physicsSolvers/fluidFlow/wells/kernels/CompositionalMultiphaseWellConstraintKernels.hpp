@@ -274,9 +274,10 @@ struct ConstraintHelper
 
     // residual
     real64 controlEqn =  -targetPhaseRate;
-    for( integer ip= 0; ip < phaseIndices.size(); ++ip )
+    for( integer ip= 0; ip < 1; ++ip ) // phaseIndices.size(); ++ip )
     {
       controlEqn += currentPhaseVolRate[phaseIndices[ip]];
+      std::cout << "Phase " << phaseIndices[ip] << " currentPhaseVolRate: " << currentPhaseVolRate[phaseIndices[ip]] <<  " " << controlEqn << " " << targetPhaseRate << std::endl;
     }
 
     // setup Jacobian terms
@@ -297,7 +298,7 @@ struct ConstraintHelper
     {
 
       stackArray1d< real64, NC > work( NC );
-      for( integer i= 0; i < phaseIndices.size(); ++i )
+      for( integer i= 0; i < 1; ++i ) //phaseIndices.size(); ++i )
       {
         integer ip = phaseIndices[i];
         bool const phaseExists = (phaseFrac[iwelemRef][0][ip] > 0);

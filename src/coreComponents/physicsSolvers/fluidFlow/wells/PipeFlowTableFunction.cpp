@@ -167,6 +167,7 @@ void PipeFlowTableFunction::initializeFunction()
   }
   setTableCoordinates( nDims, nOps, axisCoordinates, axisPoints );
   setTableValues( m_bhp );
+  std::cout << " bhp table min max " << *std::min_element( m_bhp.begin(), m_bhp.end()) << " " << *std::max_element( m_bhp.begin(), m_bhp.end()) << std::endl;
   MultivariableNonuniformTableFunction::initializeFunction();
 
 
@@ -184,27 +185,49 @@ void PipeFlowTableFunction::calculateBHP( array1d< real64 > const & phaseRates, 
 
   solveStat = 0;                                                                  // Assume success
   // liq(oil)=0 vap = 1 wat = 2
-  real64 totalLiquedRate = (phaseRates[0] + phaseRates[2]);
+  real64 const m_sign=-1.0;
+  real64 liq = (phaseRates[0] + phaseRates[2]);
   //for( int i = 0; i < phaseRates.size(); ++i )
   //{
   //  totalVolumeRate += phaseRates[i];
 //  }
   std::cout << bhp << " " << phaseRates << " " << whp << std::endl;
 
-  real64 wct = phaseRates[2]/totalLiquedRate;
-  real64 gor = m_gfr[0]; //phaseRates[1]/phaseRates[0];
-  real64 liq = (phaseRates[0] + phaseRates[1] );  // liquid rate
+  real64 wct = phaseRates[2]/(liq + 0.00000001);
+#if 0
+  if( wct < m_wfr[0] )
+  {
+    wct = m_wfr[0] + 0.00000001;
+  }
+  else if( wct > m_wfr[ m_wfr.size() -1 ] )
+  {
+    wct = m_wfr[ m_wfr.size() -1 ]- +0.00000001;
+  }
+#endif
+  real64 gor =  phaseRates[1]/(phaseRates[0] + 0.00000001);
+#if 0
+  if( gor < m_gfr[0] )
+  {
+    gor = m_gfr[0]+   0.00000001;
+  }
+  else if( gor > m_gfr[ m_gfr.size() -1 ] )
+  {
+    gor = m_gfr[ m_gfr.size() -1 ]-  0.00000001;
+  }
+#endif
   array1d< real64 > table_coords( 4 );
   table_coords[0]=whp;  // liquid rate
+
   table_coords[1]=gor; // well head pressure
   table_coords[2]=wct; // water cut
-  table_coords[3]=liq; // gas oil ratio
-  std::cout << "PipeFlowTableFunction::calculateWHP input bhp = " << bhp << " liq = " << liq << " whp " << whp << " wct = " << wct << " gor = " << gor << std::endl;
+  table_coords[3]=liq*m_sign; // gas oil ratio
 
   array1d< real64 > table_bhp( 1 );
   array2d< real64 > derivs( 1, 4 );
   kernel.compute( table_coords, table_bhp, derivs );
   bhp = table_bhp[0];
+  std::cout << "PipeFlowTableFunction::calculateBHP output bhp = " << bhp << " liq = " << liq << " whp " << whp << " wct = " << wct << " gor = " << gor << std::endl;
+
 }
 
 void PipeFlowTableFunction::calculateWHP( real64 const & bhp, array1d< real64 > const & phaseRates, real64 & whp, integer & solveStat ) const
@@ -226,17 +249,43 @@ void PipeFlowTableFunction::calculateWHP( real64 const & bhp, array1d< real64 > 
   //  totalVolumeRate += phaseRates[i];
 //  }
   std::cout << bhp << " " << phaseRates << " " << whp << std::endl;
-  integer m_sign=-1;
-  real64 wct = 0; // phaseRates[2]/totalVolumeRate*m_sign;
-  real64 gor = 0; //phaseRates[1]/phaseRates[0];
-  real64 liq = (phaseRates[0] /* + phaseRates[1]*/)*m_sign;  // liquid rate
+  real64 const m_sign=-1.0;
+  real64 liq = (phaseRates[0] + phaseRates[2]);
+  //for( int i = 0; i < phaseRates.size(); ++i )
+  //{
+  //  totalVolumeRate += phaseRates[i];
+//  }
+  std::cout << bhp << " " << phaseRates << " " << whp << std::endl;
+
+  real64 wct = phaseRates[2]/(liq + 0.00000001);
+#if 0
+  if( wct < m_wfr[0] )
+  {
+    wct = m_wfr[0] + 0.00000001;
+  }
+  else if( wct > m_wfr[ m_wfr.size() -1 ] )
+  {
+    wct = m_wfr[ m_wfr.size() -1 ]- +0.00000001;
+  }
+#endif
+  real64 gor =  phaseRates[1]/(phaseRates[0] + 0.00000001);
+#if 0
+  if( gor <  m_gfr[0] )
+  {
+    gor = m_gfr[0]+   0.00000001;
+  }
+  else if( gor > m_gfr[ m_gfr.size() -1 ] )
+  {
+    gor = m_gfr[ m_gfr.size() -1 ]-  0.00000001;
+  }
+#endif
   array1d< real64 > table_coords( 4 );
 
   table_coords[0]=whp; // well head pressure
   table_coords[1]=gor; // gas oil ratio
   table_coords[2]=wct; // water cut
-  table_coords[3]=liq;  // liquid rate
-  std::cout << "PipeFlowTableFunction::calculateWHP input bhp = " << bhp << " liq = " << liq << " whp " << whp << " wct = " << wct << " gor = " << gor << std::endl;
+  table_coords[3]=liq*m_sign;  // liquid rate
+  std::cout << "PipeFlowTableFunction::calculateWHP input bhp = " << bhp << " liq = " << liq*m_sign << " whp " << whp << " wct = " << wct << " gor = " << gor << std::endl;
 
   array1d< real64 > table_bhp( 1 );
   array2d< real64 > derivs( 1, 4 );
@@ -255,6 +304,7 @@ void PipeFlowTableFunction::calculateWHP( real64 const & bhp, array1d< real64 > 
     ++iter;
   }
   whp = table_coords[0];
+  std::cout << "PipeFlowTableFunction::calculateWHP output whp = " << whp << " liq = " << liq*m_sign << " bhp " << bhp << " wct = " << wct << " gor = " << gor << std::endl;
 }
 
 void PipeFlowTableFunction::writeTable() const

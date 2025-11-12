@@ -155,7 +155,8 @@ void MultivariableNonuniformTableFunction::getHypercubePoints( globalIndex const
 
   for( auto i = 0; i < m_numDims; ++i )
   {
-
+    if( m_axisHypercubeMults[i] <=0 )
+      std::cout << hypercubeIndex << " " << i << " " << m_axisHypercubeMults[i] << std::endl;
     integer const axis_idx = remainder / m_axisHypercubeMults[i];
     remainder = remainder % m_axisHypercubeMults[i];
 
@@ -209,7 +210,12 @@ void MultivariableNonuniformTableFunction::initializeFunction()
   for( integer dim = m_numDims - 2; dim >= 0; --dim )
   {
     m_axisPointMults[dim] = m_axisPointMults[dim + 1] * m_axisPoints[dim + 1];
-    m_axisHypercubeMults[dim] = m_axisHypercubeMults[dim + 1] * (m_axisPoints[dim + 1] - 1);
+
+    std::cout << " dim " << dim << " point mult " << m_axisPointMults[dim+1] << " " << m_axisPoints[dim + 1]  << " ";
+    std::cout <<    m_axisHypercubeMults[dim + 1]  << "   " << m_axisPoints[dim + 1] - 1;
+    std::cout << " "  << m_axisHypercubeMults[dim + 1] * (m_axisPoints[dim + 1] - 1) << std::endl;
+    m_axisHypercubeMults[dim] = std::max( globalIndex( 1 ), m_axisHypercubeMults[dim + 1] * (m_axisPoints[dim + 1] - 1));
+    std::cout << " dim " << dim << " hypercube mult " << m_axisPointMults[dim] << " " << m_axisHypercubeMults[dim] << std::endl;
   }
 
   // check for point index overflow
@@ -220,6 +226,7 @@ void MultivariableNonuniformTableFunction::initializeFunction()
   {
     numTablePoints *= m_axisPoints[dim];
     numTableHypercubes *= std::max( 1, m_axisPoints[dim] - 1 );
+    std::cout << dim << " " << numTablePoints << " " << numTableHypercubes << std::endl;
   }
 
 

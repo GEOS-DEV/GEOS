@@ -192,6 +192,13 @@ Group * WellControls::createChild( string const & childKey, string const & child
     m_productionRateConstraintList.emplace_back( &liquidConstraint );
     constraint = &liquidConstraint;
   }
+  else
+  {
+      GEOS_THROW_IF( true,
+                 getWrapperDataContext( viewKeyStruct::inputControlString() ) <<
+                 ": Invalid well constraint type ",
+                 InputError );
+  }
   return constraint;
 }
 
@@ -434,7 +441,7 @@ real64 WellControls::getTargetBHP( real64 const & targetTime ) const
 real64 WellControls::getInjectionTemperature() const
 {
   real64 injectionTemperature = 0.0;
-  this->forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
+  forInjectionConstraints< InjectionConstraint< PhaseVolumeRateConstraint >, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint > >( [&] ( auto & constraint )
   {
     if( constraint.isConstraintActive())
     {
