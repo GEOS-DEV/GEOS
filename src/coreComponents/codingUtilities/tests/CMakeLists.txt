@@ -24,7 +24,7 @@ foreach( test ${testSources} )
 
   get_filename_component( test_name ${test} NAME_WE )
   blt_add_executable( NAME ${test_name}
-                      SOURCES ${test} ${mock_object_headers} ${mock_object_impl}
+                      SOURCES ${test} ${mock_object_impl}
                       OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                       DEPENDS_ON ${decoratedDependencies} gtest dataRepository )
 
