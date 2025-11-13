@@ -205,20 +205,28 @@ void LogPart::begin( std::ostream & os )
 
 void LogPart::end( std::ostream & os )
 {
+  std::cout << "logPart end"<< std::endl;
   if( !m_enableOutput )
     return;
 
+  std::cout << "formatDescription"<< std::endl;
   formatDescriptions( m_endDescription, m_formattedEndDescription );
+  std::cout << "formatDescriptions end"<< std::endl;
 
   string const line =  string( m_width, m_borderCharacter );
   if( !m_endDescription.m_names.empty() )
   {
     os << '\n';
+  std::cout << "outputDescription"<< std::endl;
     os << outputDescription( m_formattedEndDescription );
+  std::cout << "outputDescription end"<< std::endl;
     os << line;
   }
+  std::cout << "outputTitle"<< std::endl;
   os << outputTitle( m_formattedEndDescription );
+  std::cout << "outputTitle end"<< std::endl;
   os << line << "\n\n";
+  std::cout << "end logPart end"<< std::endl;
 }
 
 }
