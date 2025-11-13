@@ -357,21 +357,13 @@ TEST( TypeNameTests, FullAndBrief )
   auto briefEnum = TypeName< geos::MyEnum >::brief();
   // Current implementation may yield leading ':'; accept both forms.
   ASSERT_TRUE( briefEnum == "MyEnum" || briefEnum == ":MyEnum" )
-    << "Unexpected brief name: " << briefEnum;
-}
-
-TEST( TypeNameTests, BriefNamespaceStrip )
-{
-  // Confirm brief strips namespaces (no leading ':') when possible.
   auto briefInt = TypeName< int >::brief();
   ASSERT_EQ( briefInt, "int" );
-  // For the enum, brief currently may include a leading ':' due to existing implementation if not patched.
-  auto briefEnum = TypeName< geos::MyEnum >::brief();
-  ASSERT_TRUE( briefEnum == "MyEnum" || briefEnum == ":MyEnum" ) << "Unexpected brief name: " << briefEnum;
-}
 
-int main( int argc, char * * argv )
-{
-  ::testing::InitGoogleTest( &argc, argv );
+  auto briefEnum = TypeName< geos::MyEnum >::brief();
+  // Current implementation may yield leading ':'; accept both forms.
+  ASSERT_TRUE( briefEnum == "MyEnum" || briefEnum == ":MyEnum" )
+    << "Unexpected brief name: " << briefEnum;
+}
   return RUN_ALL_TESTS();
 }
