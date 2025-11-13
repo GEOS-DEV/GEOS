@@ -104,7 +104,7 @@ std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const
   {
     material.forWrappers( [&]( WrapperBase const & wrapper )
     {
-       std::cout << "    getMaterial wrapper " << wrapper.getName() << std::endl;
+      std::cout << "    getMaterial wrapper " << wrapper.getName() << std::endl;
       if( wrapper.sizedFromParent() )
       {
         materialWrapperNames.insert( ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() ) );
@@ -135,6 +135,7 @@ void MeshManager::importFields( DomainPartition & domain )
     {
       GEOS_LOG_RANK_0( GEOS_FMT( "  mesh level = {}", meshLevel.getName() ) );
       FieldIdentifiers fieldsToBeSync;
+      std::cout << "-- DEBUG --" << std::endl;
       meshLevel.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >(
         [&]( localIndex,
              localIndex,
@@ -142,7 +143,9 @@ void MeshManager::importFields( DomainPartition & domain )
              CellElementSubRegion & subRegion )
       {
         GEOS_LOG_RANK_0( GEOS_FMT( "  volumic fields on {}/{}", region.getName(), subRegion.getName() ) );
+        std::cout << "CellElementSubRegion:" << std::endl;
         importFields( generator, region.getName(), subRegion, MeshGeneratorBase::Block::VOLUMIC, generator.getVolumicFieldsMapping(), fieldsToBeSync );
+        std::cout << "endof CellElementSubRegion loop" << std::endl;
       } );
       meshLevel.getElemManager().forElementSubRegionsComplete< FaceElementSubRegion >(
         [&]( localIndex,
@@ -151,15 +154,21 @@ void MeshManager::importFields( DomainPartition & domain )
              FaceElementSubRegion & subRegion )
       {
         GEOS_LOG_RANK_0( GEOS_FMT( "  surfaic fields on {}/{}", region.getName(), subRegion.getName() ) );
+        std::cout << "FaceElementSubRegion:" << std::endl;
         importFields( generator, region.getName(), subRegion, MeshGeneratorBase::Block::SURFACIC, generator.getSurfacicFieldsMapping(), fieldsToBeSync );
+        std::cout << "endof FaceElementSubRegion loop:" << std::endl;
       } );
       CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, meshLevel, domain.getNeighbors(), false ); // TODO Validate this.
+      std::cout << "endof mesh loop:" << std::endl;
     } );
+    std::cout << "endof subgroup loop:" << std::endl;
   } );
 
   forSubGroups< MeshGeneratorBase >( []( MeshGeneratorBase & generator )
   {
+    std::cout << "MeshGeneratorBase loop:" << std::endl;
     generator.freeResources();
+    std::cout << "endof loop:" << std::endl;
   } );
 }
 
@@ -170,7 +179,7 @@ void MeshManager::importFields( MeshGeneratorBase const & generator,
                                 stdMap< string, string > const & fieldsMapping,
                                 FieldIdentifiers & fieldsToBeSync )
 {
-  std::cout << "-- DEBUG --" << std::endl;
+
   std::cout << "  generator " << generator.getName() << std::endl;
   std::cout << "  region name" << regionName << std::endl;
   std::cout << "  subregion " << subRegion.getName() << std::endl;
@@ -197,7 +206,7 @@ void MeshManager::importFields( MeshGeneratorBase const & generator,
     // we can add the geosFieldName to the list of fields to synchronize
     fieldsToBeSync.addElementFields( { geosFieldName }, { regionName } );
     WrapperBase & wrapper = subRegion.getWrapperBase( geosFieldName );
-     std::cout << "  wrapperbase " << wrapper.getName() << std::endl;
+    std::cout << "  wrapperbase " << wrapper.getName() << std::endl;
     GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::ImportFields,
                                     GEOS_FMT( "    {} -> {}", meshFieldName, geosFieldName ),
                                     generator );
@@ -205,6 +214,7 @@ void MeshManager::importFields( MeshGeneratorBase const & generator,
     bool const isMaterialField = materialWrapperNames.count( geosFieldName ) > 0 && wrapper.numArrayDims() > 1;
     generator.importFieldOnArray( block, subRegion.getName(), meshFieldName, isMaterialField, wrapper );
   }
+  std::cout << "  end of importfields  " << std::endl;
 }
 
 } /* namespace geos */
