@@ -67,10 +67,9 @@ TEST( DynamicCastTests, Pointer_Casting_Success )
 
 TEST( DynamicCastTests, Pointer_Casting_Failure )
 {
-  BaseClass * base = new BaseClass();
-  DerivedFinalClass * derived = geos::dynamicCast< DerivedFinalClass * >( base );
-  ASSERT_EQ( derived, nullptr ) << "Expected nullptr due to failed cast from Base to Derived.";
-  delete base;   // Clean up allocated memory
+  std::unique_ptr<BaseClass> base(new BaseClass());
+  DerivedFinalClass * derived = geos::dynamicCast<DerivedFinalClass *>(base.get());
+  ASSERT_EQ(derived, nullptr) << "Expected nullptr due to failed cast from Base to Derived.";
 }
 
 TEST( DynamicCastTests, Pointer_Casting_Nullptr )
