@@ -8,7 +8,6 @@
 #ifndef DerivedFinalClass_hpp
 #define DerivedFinalClass_hpp
 
-#include <stdio.h>
 #include "BaseClass.hpp"
 
 class DerivedFinalClass final : public BaseClass

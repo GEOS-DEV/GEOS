@@ -30,7 +30,6 @@
 // Mock classes to test dynamic casting
 #include "BaseClass.hpp"
 #include "DerivedFinalClass.hpp"
-#include "DerivedClassFinal.hpp"
 
 using namespace geos;
 using namespace dataRepository;
