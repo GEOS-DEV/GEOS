@@ -18,7 +18,7 @@
       contactPenaltyStiffness="0.0e8">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
-        newtonMaxIter="2"
+        newtonMaxIter="4"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
         solverType="gmres"

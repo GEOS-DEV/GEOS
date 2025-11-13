@@ -120,7 +120,7 @@ enum class Axis : integer { X = 0, Y = 1, Z = 2 };
  * @brief a map of the half transmissibilities, from the first to the second cell identified by the
  * key global id.
  */
-using TransmissibilityMap = std::map< std::pair< globalIndex, globalIndex >, real64 >;
+using TransmissibilityMap = stdMap< std::pair< globalIndex, globalIndex >, real64 >;
 
 /**
  * @brief the parameters for a given test instance.
@@ -288,7 +288,7 @@ TransmissibilityMap getTransmissibilityMap( StencilDataCollection const & stenci
   TransmissibilityMap transmissibilities;
   for( int i = 0; i < arraySize; ++i )
   {
-    transmissibilities[std::make_pair( cellAGlobalId[i], cellBGlobalId[i] )] = transmissibilityAB[i];
+    transmissibilities.insert( {std::make_pair( cellAGlobalId[i], cellBGlobalId[i] ), transmissibilityAB[i]} );
   }
   return transmissibilities;
 }

@@ -49,7 +49,7 @@ int main( int argc, char *argv[] )
       {
         state.applyInitialConditions();
         state.run();
-        LVARRAY_WARNING_IF( state.getState() != State::COMPLETED, "Simulation exited early." );
+        GEOS_WARNING_IF( state.getState() != State::COMPLETED, "Simulation exited early." );
       }
 
       initTime = state.getInitTime();
@@ -77,6 +77,10 @@ int main( int argc, char *argv[] )
   catch( std::exception const & e )
   {
     GEOS_LOG( e.what() );
+    if( ErrorLogger::global().isOutputFileEnabled() )
+    {
+      ErrorLogger::global().flushErrorMsg( ErrorLogger::global().currentErrorMsg() );
+    }
     LvArray::system::callErrorHandler();
     basicCleanup();
     std::abort();
