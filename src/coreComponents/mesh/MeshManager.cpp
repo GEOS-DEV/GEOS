@@ -104,6 +104,7 @@ std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const
   {
     material.forWrappers( [&]( WrapperBase const & wrapper )
     {
+       std::cout << "    getMaterial wrapper " << wrapper.getName() << std::endl;
       if( wrapper.sizedFromParent() )
       {
         materialWrapperNames.insert( ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() ) );
@@ -169,12 +170,18 @@ void MeshManager::importFields( MeshGeneratorBase const & generator,
                                 stdMap< string, string > const & fieldsMapping,
                                 FieldIdentifiers & fieldsToBeSync )
 {
+  std::cout << "-- DEBUG --" << std::endl;
+  std::cout << "  generator " << generator.getName() << std::endl;
+  std::cout << "  region name" << regionName << std::endl;
+  std::cout << "  subregion " << subRegion.getName() << std::endl;
   std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
   // Writing properties
   for( auto const & pair : fieldsMapping )
   {
     string const & meshFieldName = pair.first;
     string const & geosFieldName = pair.second;
+    std::cout << "  mesh field  " << meshFieldName << std::endl;
+    std::cout << "  geos field  " << geosFieldName << std::endl;
     // Find destination
     if( !subRegion.hasWrapper( geosFieldName ) )
     {
@@ -190,6 +197,7 @@ void MeshManager::importFields( MeshGeneratorBase const & generator,
     // we can add the geosFieldName to the list of fields to synchronize
     fieldsToBeSync.addElementFields( { geosFieldName }, { regionName } );
     WrapperBase & wrapper = subRegion.getWrapperBase( geosFieldName );
+     std::cout << "  wrapperbase " << wrapper.getName() << std::endl;
     GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::ImportFields,
                                     GEOS_FMT( "    {} -> {}", meshFieldName, geosFieldName ),
                                     generator );
