@@ -261,7 +261,7 @@ template<> struct TypeRegex< CustomRegexType, void >
   static Regex get() { return Regex( "X+", "Input value must be one or more X characters." ); }
 };
 
-struct NoRegexType {};   // no specialization => empty regex
+struct NoRegexType {};   // no specialization
 }
 
 TEST( RtTypesTests, TypeRegex_CustomSpecialization_Caching )
@@ -335,7 +335,7 @@ TEST( RtTypesTests, GetTypeRegex_R1Tensor )
   EXPECT_FALSE( regexMatches( r.m_regexStr, "{1,2,3,4}" ) );
 }
 
-// Enum roundtrip tests (non-aborting, uses GEOS_THROW_IF which throws InputError)
+// Enum roundtrip tests
 TEST( EnumStringsTests, Roundtrip )
 {
   geos::MyEnum e = EnumStrings< geos::MyEnum >::fromString( "beta" );
@@ -348,23 +348,13 @@ TEST( EnumStringsTests, InvalidValueThrows )
 }
 
 
-// TypeName utility tests (robust to current brief implementation or future fix)
+// TypeName utility tests
 TEST( TypeNameTests, FullAndBrief )
 {
   auto fullInt = TypeName< int >::full();
   ASSERT_TRUE( fullInt.find( "int" ) != std::string::npos );
+  EXPECT_EQ( TypeName< int >::brief(), "int" );
 
-  auto briefEnum = TypeName< geos::MyEnum >::brief();
-  // Current implementation may yield leading ':'; accept both forms.
-  EXPECT_TRUE( briefEnum == "MyEnum" || briefEnum == ":MyEnum" );
-}
-
-TEST( TypeNameTests, BriefNamespaceStrip )
-{
-  // Confirm brief strips namespaces (no leading ':') when possible.
-  auto briefInt = TypeName< int >::brief();
-  ASSERT_EQ( briefInt, "int" );
-  // For the enum, brief currently may include a leading ':' due to existing implementation if not patched.
   auto briefEnum = TypeName< geos::MyEnum >::brief();
   EXPECT_TRUE( briefEnum == "MyEnum" || briefEnum == ":MyEnum" );
 }
