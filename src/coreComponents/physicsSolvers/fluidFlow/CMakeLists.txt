@@ -145,6 +145,7 @@ set( fluidFlowSolvers_sources
      kernels/compositional/AquiferBCKernel.cpp
      kernels/compositional/CFLKernel.cpp
      kernels/compositional/FluxComputeKernelBase.cpp
+     kernels/compositional/CompositionalMultiphaseHybridFVMKernelsInstantiations.cpp     
      wells/CompositionalMultiphaseWell.cpp
      wells/kernels/CompositionalMultiphaseWellKernels.cpp
      wells/SinglePhaseWell.cpp
@@ -152,10 +153,7 @@ set( fluidFlowSolvers_sources
      wells/WellControls.cpp
      wells/WellSolverBase.cpp
      proppantTransport/ProppantTransport.cpp
-     proppantTransport/ProppantTransportKernels.cpp
-     # Macro-based explicit instantiations for hybrid FVM kernels
-     kernels/compositional/CompositionalMultiphaseHybridFVMKernelsInstantiations.cpp
-     kernels/singlePhase/SinglePhaseHybridFVMKernelsInstantiations.cpp )
+     proppantTransport/ProppantTransportKernels.cpp )
 
 # Remove the old generator-based hybrid flux/dirichlet kernels and switch to macro approach
 file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
