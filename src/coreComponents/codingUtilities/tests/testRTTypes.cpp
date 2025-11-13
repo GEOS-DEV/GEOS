@@ -60,10 +60,9 @@ ENUM_STRINGS( MyEnum, "alpha", "beta", "gamma" );
 // dynamicCast pointer tests
 TEST( DynamicCastTests, Pointer_Casting_Success )
 {
-  BaseClass * base = new DerivedFinalClass();
-  DerivedFinalClass * derived = geos::dynamicCast< DerivedFinalClass * >( base );
+  std::unique_ptr< BaseClass > base( new DerivedFinalClass());
+  DerivedFinalClass * derived = geos::dynamicCast< DerivedFinalClass * >( base.get());
   ASSERT_NE( derived, nullptr ) << "Expected successful cast from Base to Derived.";
-  delete base;   // Clean up allocated memory
 }
 
 TEST( DynamicCastTests, Pointer_Casting_Failure )
