@@ -13,8 +13,8 @@
 class BaseClass
 {
 public:
-    explicit BaseClass();
-    virtual ~BaseClass();
+  explicit BaseClass();
+  virtual ~BaseClass();
 };
 
 #endif /* BaseClass_hpp */

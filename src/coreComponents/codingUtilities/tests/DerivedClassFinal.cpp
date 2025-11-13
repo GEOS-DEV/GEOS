@@ -8,4 +8,3 @@
 #include "DerivedClassFinal.hpp"
 
 Derived::Derived() = default;
-

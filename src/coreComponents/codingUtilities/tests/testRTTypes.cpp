@@ -36,7 +36,8 @@ using namespace geos;
 using namespace dataRepository;
 
 // Helper function used in several regex tests.
-namespace {
+namespace
+{
 bool regexMatches( std::string const & pattern, std::string const & value )
 {
   std::regex re( pattern );
@@ -47,13 +48,13 @@ bool regexMatches( std::string const & pattern, std::string const & value )
 // ENUM WITH STRINGS FOR TypeRegex SPECIALIZATION TESTING
 namespace geos // must be in same namespace for ENUM_STRINGS ADL
 {
-  enum struct MyEnum
-  {
-    Alpha,
-    Beta,
-    Gamma
-  };
-  ENUM_STRINGS( MyEnum, "alpha", "beta", "gamma" );
+enum struct MyEnum
+{
+  Alpha,
+  Beta,
+  Gamma
+};
+ENUM_STRINGS( MyEnum, "alpha", "beta", "gamma" );
 }
 
 
@@ -232,9 +233,9 @@ TEST( RtTypesTests, GetTypeRegex_Array2DInteger )
   geos::Regex const & r = geos::rtTypes::getTypeRegex< int >( "integer_array2d" );
   ASSERT_FALSE( r.m_regexStr.empty() );
   std::regex re( r.m_regexStr );
-  EXPECT_TRUE( std::regex_match( std::string("{{1,2},{3,4}}"), re ) );
-  EXPECT_TRUE( std::regex_match( std::string(" { { 1 , 2 } , { 3 , 4 } } "), re ) );
-  EXPECT_FALSE( std::regex_match( std::string("{1,2,3,4}"), re ) ); // Not a 2d array pattern
+  EXPECT_TRUE( std::regex_match( std::string( "{{1,2},{3,4}}" ), re ) );
+  EXPECT_TRUE( std::regex_match( std::string( " { { 1 , 2 } , { 3 , 4 } } " ), re ) );
+  EXPECT_FALSE( std::regex_match( std::string( "{1,2,3,4}" ), re ) ); // Not a 2d array pattern
 }
 
 TEST( RtTypesTests, GetTypeRegex_CustomGroupNameRef )
@@ -242,28 +243,28 @@ TEST( RtTypesTests, GetTypeRegex_CustomGroupNameRef )
   geos::Regex const & r = geos::rtTypes::getTypeRegex< string >( rtTypes::CustomTypes::groupNameRef );
   ASSERT_FALSE( r.m_regexStr.empty() );
   std::regex re( r.m_regexStr );
-  EXPECT_TRUE( std::regex_match( std::string("group/sub*pattern"), re ) );
-  EXPECT_FALSE( std::regex_match( std::string("group name with spaces"), re ) );
+  EXPECT_TRUE( std::regex_match( std::string( "group/sub*pattern" ), re ) );
+  EXPECT_FALSE( std::regex_match( std::string( "group name with spaces" ), re ) );
 }
 
 TEST( RtTypesTests, GetTypeRegex_EnumSpecialization )
 {
   geos::Regex const & r = geos::rtTypes::getTypeRegex< geos::MyEnum >();
-  EXPECT_EQ( r.m_regexStr, std::string("alpha|beta|gamma") );
-  EXPECT_NE( r.m_formatDescription.find("alpha, beta, gamma"), std::string::npos );
+  EXPECT_EQ( r.m_regexStr, std::string( "alpha|beta|gamma" ) );
+  EXPECT_NE( r.m_formatDescription.find( "alpha, beta, gamma" ), std::string::npos );
 }
 
 
 // Custom type with TypeRegex specialization
 namespace geos
 {
-  struct CustomRegexType {};
-  template<> struct TypeRegex< CustomRegexType, void >
-  {
-    static Regex get() { return Regex( "X+", "Input value must be one or more X characters." ); }
-  };
+struct CustomRegexType {};
+template<> struct TypeRegex< CustomRegexType, void >
+{
+  static Regex get() { return Regex( "X+", "Input value must be one or more X characters." ); }
+};
 
-  struct NoRegexType {}; // no specialization => empty regex
+struct NoRegexType {};   // no specialization => empty regex
 }
 
 TEST( RtTypesTests, TypeRegex_CustomSpecialization_Caching )
@@ -286,26 +287,26 @@ TEST( RtTypesTests, IntegerRegex_EdgeCases )
 {
   geos::Regex const & intR = geos::rtTypes::getTypeRegex< int >();
   std::regex re( intR.m_regexStr );
-  EXPECT_TRUE( std::regex_match( std::string("0"), re ) );
-  EXPECT_TRUE( std::regex_match( std::string("-0"), re ) );
-  EXPECT_TRUE( std::regex_match( std::string("+123456789"), re ) );
-  EXPECT_FALSE( std::regex_match( std::string("++1"), re ) );
-  EXPECT_FALSE( std::regex_match( std::string("-+1"), re ) );
-  EXPECT_FALSE( std::regex_match( std::string("1-"), re ) );
+  EXPECT_TRUE( std::regex_match( std::string( "0" ), re ) );
+  EXPECT_TRUE( std::regex_match( std::string( "-0" ), re ) );
+  EXPECT_TRUE( std::regex_match( std::string( "+123456789" ), re ) );
+  EXPECT_FALSE( std::regex_match( std::string( "++1" ), re ) );
+  EXPECT_FALSE( std::regex_match( std::string( "-+1" ), re ) );
+  EXPECT_FALSE( std::regex_match( std::string( "1-" ), re ) );
 }
 
 TEST( RtTypesTests, RealRegex_EdgeCases )
 {
   geos::Regex const & realR = geos::rtTypes::getTypeRegex< real64 >();
   std::regex re( realR.m_regexStr );
-  EXPECT_TRUE( std::regex_match( std::string("1."), re ) );
-  EXPECT_TRUE( std::regex_match( std::string(".5"), re ) );
-  EXPECT_TRUE( std::regex_match( std::string("5e3"), re ) );
-  EXPECT_TRUE( std::regex_match( std::string("5E+3"), re ) );
-  EXPECT_TRUE( std::regex_match( std::string("-8.2e-9"), re ) );
-  EXPECT_FALSE( std::regex_match( std::string("."), re ) ); // single dot not valid per pattern
-  EXPECT_FALSE( std::regex_match( std::string("1..2"), re ) );
-  EXPECT_FALSE( std::regex_match( std::string("e10"), re ) );
+  EXPECT_TRUE( std::regex_match( std::string( "1." ), re ) );
+  EXPECT_TRUE( std::regex_match( std::string( ".5" ), re ) );
+  EXPECT_TRUE( std::regex_match( std::string( "5e3" ), re ) );
+  EXPECT_TRUE( std::regex_match( std::string( "5E+3" ), re ) );
+  EXPECT_TRUE( std::regex_match( std::string( "-8.2e-9" ), re ) );
+  EXPECT_FALSE( std::regex_match( std::string( "." ), re ) ); // single dot not valid per pattern
+  EXPECT_FALSE( std::regex_match( std::string( "1..2" ), re ) );
+  EXPECT_FALSE( std::regex_match( std::string( "e10" ), re ) );
 }
 
 TEST( RtTypesTests, Array1DInteger_EmptyAndValues )
@@ -321,9 +322,9 @@ TEST( RtTypesTests, GroupNameRefArrayRegex )
 {
   geos::Regex const & r = geos::rtTypes::getTypeRegex< string >( rtTypes::CustomTypes::groupNameRefArray );
   std::regex re( r.m_regexStr );
-  EXPECT_TRUE( std::regex_match( std::string("{}"), re ) );
-  EXPECT_TRUE( std::regex_match( std::string("{pattern/*,path/sub}"), re ) );
-  EXPECT_FALSE( std::regex_match( std::string("{bad space}"), re ) );
+  EXPECT_TRUE( std::regex_match( std::string( "{}" ), re ) );
+  EXPECT_TRUE( std::regex_match( std::string( "{pattern/*,path/sub}" ), re ) );
+  EXPECT_FALSE( std::regex_match( std::string( "{bad space}" ), re ) );
 }
 
 // New: R1Tensor regex test
@@ -341,7 +342,7 @@ TEST( RtTypesTests, GetTypeRegex_R1Tensor )
 TEST( EnumStringsTests, Roundtrip )
 {
   geos::MyEnum e = EnumStrings< geos::MyEnum >::fromString( "beta" );
-  EXPECT_EQ( EnumStrings< geos::MyEnum >::toString( e ), std::string("beta") );
+  EXPECT_EQ( EnumStrings< geos::MyEnum >::toString( e ), std::string( "beta" ) );
 }
 
 TEST( EnumStringsTests, InvalidValueThrows )
@@ -354,7 +355,7 @@ TEST( EnumStringsTests, InvalidValueThrows )
 TEST( TypeNameTests, FullAndBrief )
 {
   auto fullInt = TypeName< int >::full();
-  ASSERT_TRUE( fullInt.find("int") != std::string::npos );
+  ASSERT_TRUE( fullInt.find( "int" ) != std::string::npos );
 
   auto briefEnum = TypeName< geos::MyEnum >::brief();
   // Current implementation may yield leading ':'; accept both forms.
@@ -372,7 +373,7 @@ TEST( TypeNameTests, BriefNamespaceStrip )
   ASSERT_TRUE( briefEnum == "MyEnum" || briefEnum == ":MyEnum" ) << "Unexpected brief name: " << briefEnum;
 }
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
   return RUN_ALL_TESTS();

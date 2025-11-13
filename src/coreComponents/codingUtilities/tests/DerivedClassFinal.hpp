@@ -14,11 +14,10 @@
 class Derived final : public BaseClass
 {
 public:
-    explicit Derived();
-    
-    virtual ~Derived() noexcept override {
-        
-    };
+  explicit Derived();
+
+  virtual ~Derived() noexcept override
+  {};
 };
 
 #endif /* DerivedClassFinal_hpp */
