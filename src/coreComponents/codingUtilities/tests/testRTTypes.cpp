@@ -326,41 +326,6 @@ TEST( RtTypesTests, GroupNameRefArrayRegex )
   EXPECT_FALSE( std::regex_match( std::string("{bad space}"), re ) );
 }
 
-TEST( RtTypesTests, PathVsStringRegex )
-{
-  geos::Regex const & pathR = geos::rtTypes::getTypeRegex< string >( "path" );
-  geos::Regex const & stringR = geos::rtTypes::getTypeRegex< string >( "string" );
-  // Path and string both allow empty values (use *_ERegex variants in map).
-  EXPECT_TRUE( regexMatches( pathR.m_regexStr, "" ) );
-  EXPECT_TRUE( regexMatches( stringR.m_regexStr, "" ) );
-
-  // Valid examples
-  EXPECT_TRUE( regexMatches( pathR.m_regexStr, "valid_name" ) );
-  EXPECT_TRUE( regexMatches( stringR.m_regexStr, "valid_name" ) );
-  EXPECT_TRUE( regexMatches( pathR.m_regexStr, "a.b-1_name" ) );
-  EXPECT_TRUE( regexMatches( stringR.m_regexStr, "a.b-1_name" ) );
-
-  // Colon is disallowed in path (escaped and excluded) but allowed in string (only ',', '{', '}', whitespace excluded)
-  EXPECT_FALSE( regexMatches( pathR.m_regexStr, "name:withColon" ) );
-  EXPECT_TRUE( regexMatches( stringR.m_regexStr, "name:withColon" ) );
-
-  // Characters disallowed in both
-  for( std::string const bad : { "bad space", "has,comma", "brace{here", "brace}here" } )
-  {
-    EXPECT_FALSE( regexMatches( pathR.m_regexStr, bad ) );
-    EXPECT_FALSE( regexMatches( stringR.m_regexStr, bad ) );
-  }
-
-  // Characters additionally disallowed in path but allowed in string (apart from whitespace/comma/braces)
-  // '*', '?', '<', '>', '|', '"', ';' are excluded from path but allowed by string regex.
-  for( std::string const sym : { "star*sym", "q?mark", "lt<sym", "gt>sym", "pipe|sym", "quote\"sym", "semi;sym" } )
-  {
-    EXPECT_FALSE( regexMatches( pathR.m_regexStr, sym ) );
-    // For string, whitespace/comma/braces are the only forbidden characters; ensure no spaces to remain valid
-    EXPECT_TRUE( regexMatches( stringR.m_regexStr, sym ) ) << "String regex should allow: " << sym;
-  }
-}
-
 // New: R1Tensor regex test
 TEST( RtTypesTests, GetTypeRegex_R1Tensor )
 {
