@@ -15,7 +15,7 @@ set(mock_object_impl
     DerivedFinalClass.cpp
 )
 
-set( dependencyList codingUtilities ${parallelDeps})
+set( dependencyList codingUtilities ${parallelDeps} )
 
 geos_decorate_link_dependencies( LIST decoratedDependencies
                                  DEPENDENCIES ${dependencyList} )
