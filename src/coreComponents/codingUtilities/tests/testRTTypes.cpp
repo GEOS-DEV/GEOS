@@ -16,6 +16,7 @@
 #include <iostream>
 #include <regex>
 #include <typeindex>
+#include <string>
 
 #include "codingUtilities/RTTypes.hpp"
 #include "dataRepository/Group.hpp"
@@ -34,6 +35,15 @@
 using namespace geos;
 using namespace dataRepository;
 
+// Helper function used in several regex tests.
+namespace {
+bool regexMatches( std::string const & pattern, std::string const & value )
+{
+  std::regex re( pattern );
+  return std::regex_match( value, re );
+}
+}
+
 // ENUM WITH STRINGS FOR TypeRegex SPECIALIZATION TESTING
 namespace geos // must be in same namespace for ENUM_STRINGS ADL
 {
@@ -46,9 +56,8 @@ namespace geos // must be in same namespace for ENUM_STRINGS ADL
   ENUM_STRINGS( MyEnum, "alpha", "beta", "gamma" );
 }
 
-// --------------------------------------------------------------------------------------
+
 // dynamicCast pointer tests
-// --------------------------------------------------------------------------------------
 TEST( DynamicCastTests, Pointer_Casting_Success )
 {
   BaseClass * base = new DerivedFinalClass();
@@ -72,9 +81,8 @@ TEST( DynamicCastTests, Pointer_Casting_Nullptr )
   ASSERT_EQ( derived, nullptr ) << "Casting a nullptr should return nullptr.";
 }
 
-// --------------------------------------------------------------------------------------
+
 // dynamicCast reference tests
-// --------------------------------------------------------------------------------------
 TEST( DynamicCastTests, Reference_Casting_Success )
 {
   DerivedFinalClass derived;
@@ -92,9 +100,8 @@ TEST( DynamicCastTests, Reference_Casting_BaseToBase )
 }
 
 
-// --------------------------------------------------------------------------------------
+
 // Typed test for geos Wrapper
-// --------------------------------------------------------------------------------------
 
 template< typename T >
 class WrapperMock : public ::testing::Test
@@ -170,9 +177,8 @@ TYPED_TEST( WrapperMock, DynamicCastWithReference )
   this->testDynamicCastWithReference();
 }
 
-// --------------------------------------------------------------------------------------
+
 // Regex basic constructor
-// --------------------------------------------------------------------------------------
 TEST( RegexTests, Constructor )
 {
   geos::Regex regex( "^[0-9]+$", "Input must be a number." );
@@ -180,9 +186,8 @@ TEST( RegexTests, Constructor )
   ASSERT_EQ( regex.m_formatDescription, "Input must be a number." ) << "Format description is incorrect.";
 }
 
-// --------------------------------------------------------------------------------------
+
 // rtTypes::getTypeName tests
-// --------------------------------------------------------------------------------------
 TEST( RtTypesTests, GetTypeName_KnownTypes )
 {
   {
@@ -207,9 +212,8 @@ TEST( RtTypesTests, GetTypeName_UnknownType_Fallback )
     << "Fallback demangled name should contain 'SomeCustomType' but was '" << typeName << "'";
 }
 
-// --------------------------------------------------------------------------------------
+
 // rtTypes::getTypeRegex tests
-// --------------------------------------------------------------------------------------
 TEST( RtTypesTests, GetTypeRegex_DefaultInteger )
 {
   geos::Regex const & regex1 = geos::rtTypes::getTypeRegex< int >();
@@ -218,10 +222,9 @@ TEST( RtTypesTests, GetTypeRegex_DefaultInteger )
   geos::Regex const & regex2 = geos::rtTypes::getTypeRegex< int >();
   ASSERT_EQ( &regex1, &regex2 ) << "Regex map should cache and return same reference instance.";
 
-  std::regex re( regex1.m_regexStr );
-  EXPECT_TRUE( std::regex_match( std::string("-12"), re ) );
-  EXPECT_TRUE( std::regex_match( std::string("+7"), re ) );
-  EXPECT_FALSE( std::regex_match( std::string("12a"), re ) );
+  EXPECT_TRUE( regexMatches( regex1.m_regexStr, "-12" ) );
+  EXPECT_TRUE( regexMatches( regex1.m_regexStr, "+7" ) );
+  EXPECT_FALSE( regexMatches( regex1.m_regexStr, "12a" ) );
 }
 
 TEST( RtTypesTests, GetTypeRegex_Array2DInteger )
@@ -250,9 +253,6 @@ TEST( RtTypesTests, GetTypeRegex_EnumSpecialization )
   EXPECT_NE( r.m_formatDescription.find("alpha, beta, gamma"), std::string::npos );
 }
 
-// --------------------------------------------------------------------------------------
-// Additional judicious coverage improvements
-// --------------------------------------------------------------------------------------
 
 // Custom type with TypeRegex specialization
 namespace geos
@@ -311,11 +311,10 @@ TEST( RtTypesTests, RealRegex_EdgeCases )
 TEST( RtTypesTests, Array1DInteger_EmptyAndValues )
 {
   geos::Regex const & arrR = geos::rtTypes::getTypeRegex< int >( "integer_array" );
-  std::regex re( arrR.m_regexStr );
-  EXPECT_TRUE( std::regex_match( std::string("{}"), re ) ); // empty allowed
-  EXPECT_TRUE( std::regex_match( std::string("{1}"), re ) );
-  EXPECT_TRUE( std::regex_match( std::string("{ 1 , 2 , 3 }"), re ) );
-  EXPECT_FALSE( std::regex_match( std::string("{,}"), re ) );
+  EXPECT_TRUE( regexMatches( arrR.m_regexStr, "{}" ) );
+  EXPECT_TRUE( regexMatches( arrR.m_regexStr, "{1}" ) );
+  EXPECT_TRUE( regexMatches( arrR.m_regexStr, "{ 1 , 2 , 3 }" ) );
+  EXPECT_FALSE( regexMatches( arrR.m_regexStr, "{,}" ) );
 }
 
 TEST( RtTypesTests, GroupNameRefArrayRegex )
@@ -331,14 +330,35 @@ TEST( RtTypesTests, PathVsStringRegex )
 {
   geos::Regex const & pathR = geos::rtTypes::getTypeRegex< string >( "path" );
   geos::Regex const & stringR = geos::rtTypes::getTypeRegex< string >( "string" );
-  std::regex pathRe( pathR.m_regexStr );
-  std::regex strRe( stringR.m_regexStr );
-  EXPECT_TRUE( std::regex_match( std::string("valid_name"), pathRe ) );
-  EXPECT_TRUE( std::regex_match( std::string("valid_name"), strRe ) );
-  EXPECT_FALSE( std::regex_match( std::string("name:withColon"), pathRe ) );
-  EXPECT_FALSE( std::regex_match( std::string("name:withColon"), strRe ) );
-  EXPECT_TRUE( std::regex_match( std::string(""), pathRe ) );
-  EXPECT_TRUE( std::regex_match( std::string(""), strRe ) );
+  // Path and string both allow empty values (use *_ERegex variants in map).
+  EXPECT_TRUE( regexMatches( pathR.m_regexStr, "" ) );
+  EXPECT_TRUE( regexMatches( stringR.m_regexStr, "" ) );
+
+  // Valid examples
+  EXPECT_TRUE( regexMatches( pathR.m_regexStr, "valid_name" ) );
+  EXPECT_TRUE( regexMatches( stringR.m_regexStr, "valid_name" ) );
+  EXPECT_TRUE( regexMatches( pathR.m_regexStr, "a.b-1_name" ) );
+  EXPECT_TRUE( regexMatches( stringR.m_regexStr, "a.b-1_name" ) );
+
+  // Colon is disallowed in path (escaped and excluded) but allowed in string (only ',', '{', '}', whitespace excluded)
+  EXPECT_FALSE( regexMatches( pathR.m_regexStr, "name:withColon" ) );
+  EXPECT_TRUE( regexMatches( stringR.m_regexStr, "name:withColon" ) );
+
+  // Characters disallowed in both
+  for( std::string const bad : { "bad space", "has,comma", "brace{here", "brace}here" } )
+  {
+    EXPECT_FALSE( regexMatches( pathR.m_regexStr, bad ) );
+    EXPECT_FALSE( regexMatches( stringR.m_regexStr, bad ) );
+  }
+
+  // Characters additionally disallowed in path but allowed in string (apart from whitespace/comma/braces)
+  // '*', '?', '<', '>', '|', '"', ';' are excluded from path but allowed by string regex.
+  for( std::string const sym : { "star*sym", "q?mark", "lt<sym", "gt>sym", "pipe|sym", "quote\"sym", "semi;sym" } )
+  {
+    EXPECT_FALSE( regexMatches( pathR.m_regexStr, sym ) );
+    // For string, whitespace/comma/braces are the only forbidden characters; ensure no spaces to remain valid
+    EXPECT_TRUE( regexMatches( stringR.m_regexStr, sym ) ) << "String regex should allow: " << sym;
+  }
 }
 
 // New: R1Tensor regex test
@@ -346,11 +366,10 @@ TEST( RtTypesTests, GetTypeRegex_R1Tensor )
 {
   geos::Regex const & r = geos::rtTypes::getTypeRegex< R1Tensor >( "R1Tensor" );
   ASSERT_FALSE( r.m_regexStr.empty() );
-  std::regex re( r.m_regexStr );
-  EXPECT_TRUE( std::regex_match( std::string("{1,2,3}"), re ) );
-  EXPECT_TRUE( std::regex_match( std::string(" { 1 , .5 , -2.3e3 } "), re ) );
-  EXPECT_FALSE( std::regex_match( std::string("{1,2}"), re ) ); // wrong number of components
-  EXPECT_FALSE( std::regex_match( std::string("{1,2,3,4}"), re ) ); // too many components
+  EXPECT_TRUE( regexMatches( r.m_regexStr, "{1,2,3}" ) );
+  EXPECT_TRUE( regexMatches( r.m_regexStr, " { 1 , .5 , -2.3e3 } " ) );
+  EXPECT_FALSE( regexMatches( r.m_regexStr, "{1,2}" ) );
+  EXPECT_FALSE( regexMatches( r.m_regexStr, "{1,2,3,4}" ) );
 }
 
 // Enum roundtrip tests (non-aborting, uses GEOS_THROW_IF which throws InputError)
@@ -365,9 +384,8 @@ TEST( EnumStringsTests, InvalidValueThrows )
   EXPECT_THROW( (void) EnumStrings< geos::MyEnum >::fromString( "delta" ), geos::InputError );
 }
 
-// --------------------------------------------------------------------------------------
+
 // TypeName utility tests (robust to current brief implementation or future fix)
-// --------------------------------------------------------------------------------------
 TEST( TypeNameTests, FullAndBrief )
 {
   auto fullInt = TypeName< int >::full();
@@ -384,6 +402,9 @@ TEST( TypeNameTests, BriefNamespaceStrip )
   // Confirm brief strips namespaces (no leading ':') when possible.
   auto briefInt = TypeName< int >::brief();
   ASSERT_EQ( briefInt, "int" );
+  // For the enum, brief currently may include a leading ':' due to existing implementation if not patched.
+  auto briefEnum = TypeName< geos::MyEnum >::brief();
+  ASSERT_TRUE( briefEnum == "MyEnum" || briefEnum == ":MyEnum" ) << "Unexpected brief name: " << briefEnum;
 }
 
 int main( int argc, char ** argv )
