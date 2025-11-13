@@ -24,8 +24,6 @@
 #include "common/logger/Logger.hpp"
 
 #include <gtest/gtest.h>
-
-// TPL includes
 #include <conduit.hpp>
 
 // Mock classes to test dynamic casting
@@ -36,9 +34,7 @@
 using namespace geos;
 using namespace dataRepository;
 
-// --------------------------------------------------------------------------------------
 // ENUM WITH STRINGS FOR TypeRegex SPECIALIZATION TESTING
-// --------------------------------------------------------------------------------------
 namespace geos // must be in same namespace for ENUM_STRINGS ADL
 {
   enum struct MyEnum
@@ -390,9 +386,6 @@ TEST( TypeNameTests, BriefNamespaceStrip )
   ASSERT_EQ( briefInt, "int" );
 }
 
-// --------------------------------------------------------------------------------------
-// Main (custom since we add death tests)
-// --------------------------------------------------------------------------------------
 int main( int argc, char ** argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
