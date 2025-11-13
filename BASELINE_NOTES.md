@@ -6,9 +6,9 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #3522 (2025-11-05) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3522-14638-33a9d44.tar.gz>
+PR #3765 (2025-10-30) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3765-14543-498692f.tar.gz>
 =====================
-Single Phase Poromechanics Conforming Fractures
+Adding boundary fields to handle Dirichlet conditions in compositional MFD.
 
 PR #3849 (2025-10-23) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3849-14514-aaaf0f9.tar.gz>
 =====================
