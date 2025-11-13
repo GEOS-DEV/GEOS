@@ -8,3 +8,5 @@
 #include "DerivedFinalClass.hpp"
 
 DerivedFinalClass::DerivedFinalClass() = default;
+
+DerivedFinalClass::~DerivedFinalClass() noexcept = default;

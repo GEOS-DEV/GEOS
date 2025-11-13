@@ -5,11 +5,6 @@ set( testSources
      testRTTypes.cpp
      testUtilities.cpp )
 
-set(mock_object_headers
-    BaseClass.hpp
-    DerivedFinalClass.hpp
-)
-
 set(mock_object_impl
     BaseClass.cpp
     DerivedFinalClass.cpp

@@ -15,8 +15,7 @@ class DerivedFinalClass final : public BaseClass
 public:
   explicit DerivedFinalClass();
 
-  virtual ~DerivedFinalClass() noexcept override
-  {};
+  virtual ~DerivedFinalClass() noexcept override;
 };
 
 #endif /* DerivedFinalClass_hpp */

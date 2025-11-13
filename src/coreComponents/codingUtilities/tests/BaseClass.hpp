@@ -12,7 +12,7 @@ class BaseClass
 {
 public:
   explicit BaseClass();
-  virtual ~BaseClass();
+  virtual ~BaseClass() noexcept; // added noexcept
 };
 
 #endif /* BaseClass_hpp */

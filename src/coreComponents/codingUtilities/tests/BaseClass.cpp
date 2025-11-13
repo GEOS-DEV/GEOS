@@ -7,8 +7,6 @@
 
 #include "BaseClass.hpp"
 
-BaseClass::BaseClass()
-{}
+BaseClass::BaseClass() = default;
 
-BaseClass::~BaseClass()
-{}
+BaseClass::~BaseClass() noexcept = default;
