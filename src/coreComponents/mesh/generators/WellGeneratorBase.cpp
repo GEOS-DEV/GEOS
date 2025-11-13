@@ -80,7 +80,8 @@ Group * WellGeneratorBase::createChild( string const & childKey, string const & 
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   const auto childTypes = { viewKeyStruct::perforationString() };
   GEOS_ERROR_IF( childKey != viewKeyStruct::perforationString(),
-                 CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
+                 CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ),
+                 getDataContext() );
 
   ++m_numPerforations;
   m_perforationList.emplace_back( childName );

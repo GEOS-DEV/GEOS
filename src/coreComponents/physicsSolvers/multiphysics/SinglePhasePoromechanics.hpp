@@ -98,11 +98,6 @@ public:
                                arrayView1d< real64 > const & localRhs ) override
   { Base::assembleSystem( time, dt, domain, dofManager, localMatrix, localRhs ); }
 
-  virtual void mapSolutionBetweenSolvers( real64 const & dt,
-                                          DomainPartition & domain,
-                                          integer const solverType ) override
-  { Base::mapSolutionBetweenSolvers( dt, domain, solverType ); }                             
-
   virtual void assembleElementBasedTerms( real64 const time_n,
                                           real64 const dt,
                                           DomainPartition & domain,
@@ -126,6 +121,31 @@ protected:
   {
     if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
       GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
+  }
+
+  virtual void mapSolutionBetweenSolvers( real64 const & dt, DomainPartition & domain, integer const solverType ) override
+  {
+    GEOS_MARK_FUNCTION;
+
+    Base::mapSolutionBetweenSolvers( dt, domain, solverType );
+
+    /// After the solid mechanics solver
+    if( solverType == static_cast< integer >( Base::SolverType::SolidMechanics )
+        && !this->m_performStressInitialization ) // do not update during poromechanics initialization
+    {
+      this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&]( string const &,
+                                                                                    MeshLevel & mesh,
+                                                                                    string_array const & regionNames )
+      {
+
+        mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                              auto & subRegion )
+        {
+          // update mass after porosity change due to mechanics solve
+          this->flowSolver()->updateMass( subRegion );
+        } );
+      } );
+    }
   }
 
   /**

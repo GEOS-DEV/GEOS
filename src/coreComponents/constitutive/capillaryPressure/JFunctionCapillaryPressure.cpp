@@ -126,7 +126,7 @@ void JFunctionCapillaryPressure::postInputInitialization()
   GEOS_THROW_IF( numPhases != 2 && numPhases != 3,
                  GEOS_FMT( "{}: the expected number of fluid phases is either two, or three",
                            getFullName() ),
-                 InputError );
+                 InputError, getDataContext() );
 
   if( numPhases == 2 )
   {
@@ -134,12 +134,12 @@ void JFunctionCapillaryPressure::postInputInitialization()
                    GEOS_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the J-function table for the pair (wetting phase, non-wetting phase)",
                              getFullName(),
                              viewKeyStruct::wettingNonWettingJFuncTableNameString() ),
-                   InputError );
+                   InputError, getDataContext() );
     GEOS_THROW_IF( m_wettingNonWettingSurfaceTension <= 0,
                    GEOS_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the surface tension for the pair (wetting phase, non-wetting phase)",
                              getFullName(),
                              viewKeyStruct::wettingNonWettingSurfaceTensionString() ),
-                   InputError );
+                   InputError, getDataContext() );
   }
   else if( numPhases == 3 )
   {
@@ -150,7 +150,7 @@ void JFunctionCapillaryPressure::postInputInitialization()
                              getFullName(),
                              viewKeyStruct::wettingIntermediateJFuncTableNameString(),
                              viewKeyStruct::nonWettingIntermediateJFuncTableNameString()  ),
-                   InputError );
+                   InputError, getDataContext() );
     GEOS_THROW_IF( m_wettingIntermediateSurfaceTension <= 0 || m_nonWettingIntermediateSurfaceTension <= 0,
                    GEOS_FMT( "{}: for a three-phase flow simulation, we must use {} to specify the surface tension"
                              "for the pair (wetting phase, intermediate phase), "
@@ -158,7 +158,7 @@ void JFunctionCapillaryPressure::postInputInitialization()
                              getFullName(),
                              viewKeyStruct::wettingIntermediateSurfaceTensionString(),
                              viewKeyStruct::nonWettingIntermediateSurfaceTensionString()  ),
-                   InputError );
+                   InputError, getDataContext() );
   }
 }
 
@@ -175,7 +175,7 @@ void JFunctionCapillaryPressure::initializePreSubGroups()
                    GEOS_FMT( "{}: the table function named {} could not be found",
                              getFullName(),
                              m_wettingNonWettingJFuncTableName ),
-                   InputError );
+                   InputError, getDataContext() );
     TableFunction const & jFuncTable = functionManager.getGroup< TableFunction >( m_wettingNonWettingJFuncTableName );
     bool const jFuncMustBeIncreasing = ( m_phaseOrder[PhaseType::WATER] < 0 )
       ? true   // pc on the gas phase, function must be increasing
@@ -188,7 +188,7 @@ void JFunctionCapillaryPressure::initializePreSubGroups()
                    GEOS_FMT( "{}: the table function named {} could not be found",
                              getFullName(),
                              m_wettingIntermediateJFuncTableName ),
-                   InputError );
+                   InputError, getDataContext() );
     TableFunction const & jFuncTableWI = functionManager.getGroup< TableFunction >( m_wettingIntermediateJFuncTableName );
     TableCapillaryPressureHelpers::validateCapillaryPressureTable( jFuncTableWI, getFullName(), false );
 
@@ -196,7 +196,7 @@ void JFunctionCapillaryPressure::initializePreSubGroups()
                    GEOS_FMT( "{}: the table function named {} could not be found",
                              getFullName(),
                              m_nonWettingIntermediateJFuncTableName ),
-                   InputError );
+                   InputError, getDataContext() );
     TableFunction const & jFuncTableNWI = functionManager.getGroup< TableFunction >( m_nonWettingIntermediateJFuncTableName );
     TableCapillaryPressureHelpers::validateCapillaryPressureTable( jFuncTableNWI, getFullName(), true );
   }

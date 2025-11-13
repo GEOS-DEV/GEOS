@@ -188,6 +188,24 @@ void SinglePhasePoromechanics< SinglePhaseReactiveTransport, SolidMechanicsLagra
 
   Base::mapSolutionBetweenSolvers( dt, domain, solverType );
 
+  /// After the solid mechanics solver
+  if( solverType == static_cast< integer >( Base::SolverType::SolidMechanics )
+      && !this->m_performStressInitialization ) // do not update during poromechanics initialization
+  {
+    this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&]( string const &,
+                                                                                  MeshLevel & mesh,
+                                                                                  string_array const & regionNames )
+    {
+
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            auto & subRegion )
+      {
+        // update mass after porosity change due to mechanics solve
+        this->flowSolver()->updateMass( subRegion );
+      } );
+    } );
+  }
+
   if( solverType == static_cast< integer >( SolverType::Flow ) )
   {
     this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&]( string const &,
