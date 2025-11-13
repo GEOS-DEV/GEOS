@@ -46,7 +46,7 @@ The inputs for this case are contained inside a case-specific (``heterogeneousIn
 The ``tables`` directory contains the pre-constructed geologic model.
 This example will first focus on the case-specific input file, which contains the key parameter definitions, then consider the base xml file.
 
-
+Note: to avoid the dependency on python packages, the processed file (``heterogeneousInSitu_benchmark.xml.processed``) is also provided in the folder.
 
 
 ---------------------------------------------

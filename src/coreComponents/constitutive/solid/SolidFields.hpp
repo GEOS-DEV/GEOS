@@ -38,7 +38,7 @@ DECLARE_FIELD( stress,
                "stress",
                array3dLayoutStress,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Current material stress" );
 

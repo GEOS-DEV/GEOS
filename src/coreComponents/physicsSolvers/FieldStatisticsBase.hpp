@@ -90,7 +90,7 @@ protected:
                    GEOS_FMT( "{}: Could not find solver '{}' of type {}",
                              getDataContext(),
                              m_solverName, LvArray::system::demangleType< SOLVER >() ),
-                   InputError );
+                   InputError, getDataContext() );
 
     // create dir for output
     if( m_writeCSV > 0 )

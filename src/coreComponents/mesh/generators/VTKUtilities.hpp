@@ -56,7 +56,7 @@ ENUM_STRINGS( PartitionMethod,
  * This should be an unordered_map, but some outdated standard libraries on some systems
  * do not provide std::hash specialization for enums. This is not performance critical though.
  */
-using CellMapType = std::map< ElementType, std::unordered_map< int, stdVector< vtkIdType > > >;
+using CellMapType = stdMap< ElementType, stdUnorderedMap< int, stdVector< vtkIdType > > >;
 
 /**
  * @brief Return a VTK controller for multiprocessing.
@@ -78,7 +78,7 @@ public:
    * @param faceBlocks The fractures meshes.
    */
   AllMeshes( vtkSmartPointer< vtkDataSet > const & main,
-             std::map< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
+             stdMap< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
     : m_main( main ),
     m_faceBlocks( faceBlocks )
   { }
@@ -94,7 +94,7 @@ public:
   /**
    * @return a mapping linking the name of each face block to its mesh.
    */
-  std::map< string, vtkSmartPointer< vtkDataSet > > & getFaceBlocks()
+  stdMap< string, vtkSmartPointer< vtkDataSet > > & getFaceBlocks()
   {
     return m_faceBlocks;
   }
@@ -112,7 +112,7 @@ public:
    * @brief Defines the face blocks/fractures.
    * @param faceBlocks A map which connects each name of the face block to its mesh.
    */
-  void setFaceBlocks( std::map< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
+  void setFaceBlocks( stdMap< string, vtkSmartPointer< vtkDataSet > > const & faceBlocks )
   {
     m_faceBlocks = faceBlocks;
   }
@@ -122,7 +122,7 @@ private:
   vtkSmartPointer< vtkDataSet > m_main;
 
   /// The face meshes (namely the fractures).
-  std::map< string, vtkSmartPointer< vtkDataSet > > m_faceBlocks;
+  stdMap< string, vtkSmartPointer< vtkDataSet > > m_faceBlocks;
 };
 
 /**
@@ -150,19 +150,23 @@ findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes );
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
  * @param[in] namesToFractures the fracture meshes
  * @param[in] comm the MPI communicator
- * @param[in] method the partitionning method
+ * @param[in] method the partitioning method
  * @param[in] partitionRefinement number of graph partitioning refinement cycles
  * @param[in] useGlobalIds controls whether global id arrays from the vtk input should be used
+ * @param[in] structuredIndexAttributeName VTK array name for structured index attribute, if present
+ * @param[in] numPartZ number of MPI partitions in Z direction (only if @p structuredIndexAttributeName is used)
  * @return the vtk grid redistributed
  */
 AllMeshes
 redistributeMeshes( integer const logLevel,
                     vtkSmartPointer< vtkDataSet > loadedMesh,
-                    std::map< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
+                    stdMap< string, vtkSmartPointer< vtkDataSet > > & namesToFractures,
                     MPI_Comm const comm,
                     PartitionMethod const method,
                     int const partitionRefinement,
-                    int const useGlobalIds );
+                    int const useGlobalIds,
+                    string const & structuredIndexAttributeName,
+                    int const numPartZ );
 
 /**
  * @brief Collect lists of VTK cell indices organized by type and attribute value.
@@ -263,11 +267,13 @@ void writeNodes( integer const logLevel,
  * @param[in] logLevel the log level
  * @param[in] mesh The vtkUnstructuredGrid or vtkStructuredGrid that is loaded
  * @param[in] cellMap Map from the surfaces index to the list of cells in this surface in this rank.
+ * @param[in] structuredIndexAttributeName name of the VTK cell array to use as "structured index" attribute (if non-empty)
  * @param[in] cellBlockManager The instance that stores the cell blocks.
  */
 void writeCells( integer const logLevel,
                  vtkDataSet & mesh,
-                 const geos::vtk::CellMapType & cellMap,
+                 vtk::CellMapType const & cellMap,
+                 string const & structuredIndexAttributeName,
                  CellBlockManager & cellBlockManager );
 
 /**
