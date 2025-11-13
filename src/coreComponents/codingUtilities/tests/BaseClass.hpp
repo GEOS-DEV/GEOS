@@ -8,8 +8,6 @@
 #ifndef BaseClass_hpp
 #define BaseClass_hpp
 
-#include <stdio.h>
-
 class BaseClass
 {
 public:
