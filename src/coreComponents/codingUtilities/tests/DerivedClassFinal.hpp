@@ -9,8 +9,9 @@
 #define DerivedClassFinal_hpp
 
 #include <stdio.h>
+#include "BaseClass.hpp"
 
-class Derived final : public Base
+class Derived final : public BaseClass
 {
 public:
     explicit Derived();
