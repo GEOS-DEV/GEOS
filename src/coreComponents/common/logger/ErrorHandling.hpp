@@ -237,6 +237,7 @@ private:
     msgoss << "***** " << errMsg.m_cause << "\n";
     msgoss << "***** Rank " << rank << ": " << errMsg.m_msg << "\n";
     msgoss << errMsg.m_stringCallStack;
+    std::cout << msgoss.str() <<std::endl;
   }
 
   /**
