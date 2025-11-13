@@ -150,25 +150,25 @@ private:
                                  stdVector< real64 > const & subStepDts ) const;
 
   /// Min time for a simulation
-  real64 m_minTime= 0.0;
+  real64 m_minTime;
 
   /// Max time for a simulation
-  real64 m_maxTime= 0.0;
+  real64 m_maxTime;
 
   /// Maximum number of cycles for a simulation
-  integer m_maxCycle= 0;
+  integer m_maxCycle;
 
   /// Simulation timestamp at the beginning of the cycle
   real64 m_time = 0.0;
 
   /// Current timestep request
-  real64 m_dt = 0;
+  real64 m_dt;
 
   /// Current cycle
-  integer m_cycle = 0;
+  integer m_cycle;
 
   /// Current subevent index
-  integer m_currentSubEvent= 0;
+  integer m_currentSubEvent;
 
   /// time output type
   TimeOutputFormat m_timeOutputFormat;

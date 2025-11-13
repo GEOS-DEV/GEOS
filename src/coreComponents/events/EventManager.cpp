@@ -63,22 +63,18 @@ EventManager::EventManager( string const & name,
     setDescription( "Maximum simulation cycle for the global event loop. Disabled by default." );
 
   registerWrapper( viewKeyStruct::timeString(), &m_time ).
-    setApplyDefaultValue( 0 ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Current simulation time." );
 
   registerWrapper( viewKeyStruct::dtString(), &m_dt ).
-    setApplyDefaultValue( 0 ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Current simulation timestep." );
 
   registerWrapper( viewKeyStruct::cycleString(), &m_cycle ).
-    setApplyDefaultValue( 0 ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Current simulation cycle number." );
 
   registerWrapper( viewKeyStruct::currentSubEventString(), &m_currentSubEvent ).
-    setApplyDefaultValue( 0 ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Index of the current subevent." );
 
