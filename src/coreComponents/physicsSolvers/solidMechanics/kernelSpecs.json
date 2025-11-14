@@ -99,7 +99,7 @@
         "PorousSolid<ModifiedCamClay, ConstantPermeability>",
         "PorousSolid<ModifiedCamClay, CarmanKozenyPermeability>",
         "PorousSolid<DuvautLionsSolid<DruckerPragerExtended>, ConstantPermeability>",
-        "PorousSolid<DuvautLionsSolid<DruckerPragerExtended>, CarmanKozenyPermeability>"
+        "PorousSolid<DuvautLionsSolid<DruckerPragerExtended>, CarmanKozenyPermeability>",
         "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, ConstantPermeability>",
         "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, CarmanKozenyPermeability>"
       ],
