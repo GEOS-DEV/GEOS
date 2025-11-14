@@ -274,7 +274,7 @@ stdVector< string > wrapTextToMaxLength( stdVector< string > const & lines,
  * @tparam STRING_T The type of the string (string or string_view)
  * @return A vector containing the lines wrapped.
  */
-string wrapTextToMaxLength( string_view text, size_t maxLineLength );
+string wrapTextToMaxLength( string const & text, size_t maxLineLength );
 
 /**
  * @brief Take a string, and return a array1d with the cast values

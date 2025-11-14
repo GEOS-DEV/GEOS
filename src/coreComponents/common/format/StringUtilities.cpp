@@ -196,7 +196,7 @@ stdVector< string > divideLines( string_view value )
 }
 
 stdVector< string > wrapTextToMaxLength( stdVector< string > const & lines,
-                                           size_t & maxLineLength )
+                                         size_t & maxLineLength )
 {
   if( lines.empty())
     return lines;
@@ -242,7 +242,7 @@ stdVector< string > wrapTextToMaxLength( stdVector< string > const & lines,
   return formattedLines;
 }
 
-string wrapTextToMaxLength( string_view text, size_t maxLineLength )
+string wrapTextToMaxLength( string const & text, size_t maxLineLength )
 {
   stdVector< string > lines = divideLines( text );
   lines = wrapTextToMaxLength( lines, maxLineLength );
