@@ -761,7 +761,12 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
   if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 && m_reactionHistory == 1 )
   {
     std::ofstream file;
-    file.open( "reactionHistory.csv", std::ios::out | std::ios::app );
+    string const filename = "reactionHistory.csv";
+    file.open( filename, std::ios::out | std::ios::app );
+    GEOS_THROW_IF( !file,
+                   getDataContext() << ": Could not open file "<< filename << " for writing",
+                   InputError );
+
     if( file.fail() )
       throw std::ios_base::failure( std::strerror( errno ) );
     //make sure write fails with exception if something is wrong
@@ -774,6 +779,9 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
          << 0.0 << "," << 0.0 << "," << 0.0 << "," << 0.0 << "," << 0.0 << "," << 0.0 << ","
          << 0.0 << "," << 0.0 << "," << 0.0
          << std::endl;
+    GEOS_THROW_IF( !file.good(),
+                   getDataContext() << ": An error occured while writing "<< filename,
+                   InputError );
   }
 
   // Initialize particle fields that weren't intialized by reading the particle input file
@@ -858,13 +866,17 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
     {
       std::ofstream file;
-      file.open( "boxAverageHistory.csv", std::ios::out | std::ios::app );
+      string const filename = "boxAverageHistory.csv";
+      file.open( filename, std::ios::out | std::ios::app );
       if( file.fail() )
       {
         throw std::ios_base::failure( std::strerror( errno ) );
       }
       file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
       file << "Time, Sxx, Syy, Szz, Sxy, Syz, Sxz, Density, Damage" << std::endl;
+      GEOS_THROW_IF( !file.good(),
+                     getDataContext() << ": An error occured while writing "<< filename,
+                     InputError );
     }
     MpiWrapper::barrier( MPI_COMM_GEOS ); // wait for the header to be written
     computeAndWriteBoxAverage( 0.0, 0.0, particleManager );
@@ -1483,9 +1495,10 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
   if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 && m_reactionHistory == 1 )
   {
     std::ofstream file;
+    string const filename = "reactionHistory.csv";
     // can't enable exception now because of gcc bug that raises ios_base::failure with useless message
     // file.exceptions(file.exceptions() | std::ios::failbit);
-    file.open( "reactionHistory.csv", std::ios::out | std::ios::app );
+    file.open( filename, std::ios::out | std::ios::app );
     if( file.fail() )
     {
       throw std::ios_base::failure( std::strerror( errno ) );
@@ -1510,6 +1523,9 @@ void SolidMechanicsMPM::applyEssentialBCs( const real64 dt,
          << m_domainL[1] << ","
          << m_domainL[2] << std::endl;
     file.close();
+    GEOS_THROW_IF( !file.good(),
+                   getDataContext() << ": An error occured while writing "<< filename,
+                   InputError );
   }
 }
 
@@ -2772,7 +2788,8 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
 
     // Write to file
     std::ofstream file;
-    file.open( "boxAverageHistory.csv", std::ios::out | std::ios::app );
+    string const filename =  "boxAverageHistory.csv";
+    file.open( filename, std::ios::out | std::ios::app );
     if( file.fail() )
     {
       throw std::ios_base::failure( std::strerror( errno ) );
@@ -2800,6 +2817,9 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
                                     // damaged
          << std::endl;
     file.close();
+    GEOS_THROW_IF( !file.good(),
+                   getDataContext() << ": An error occured while writing "<< filename,
+                   InputError );
   }
 }
 

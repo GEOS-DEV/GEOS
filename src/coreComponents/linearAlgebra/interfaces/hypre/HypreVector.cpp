@@ -352,7 +352,7 @@ void HypreVector::write( string const & filename,
       // Write MatrixMarket header
       if( rank == 0 )
       {
-        std::ofstream os( filename );
+        std::ofstream os( filename, std::ios_base::out | std::ios_base::binary );
         GEOS_ERROR_IF( !os, GEOS_FMT( "Unable to open file for writing: {}", filename ) );
         os << "%%MatrixMarket matrix array real general\n";
         os << GEOS_FMT( "{} {}\n", globalSize(), 1 );
@@ -370,7 +370,7 @@ void HypreVector::write( string const & filename,
         // Write to file vector
         if( MpiWrapper::commRank( comm() ) == printRank )
         {
-          std::ofstream os( filename, std::ios_base::app );
+          std::ofstream os( filename, std::ios_base::out | std::ios_base::binary );
           GEOS_ERROR_IF( !os, GEOS_FMT( "Unable to open file for writing on rank {}: {}", rank, filename ) );
           char str[32];
 
@@ -382,6 +382,9 @@ void HypreVector::write( string const & filename,
             GEOS_FMT_TO( str, sizeof( str ), "{:>24.16e}\n", data[i] );
             os << str;
           }
+          GEOS_THROW_IF( !os.good(),
+                         ": An error occured while writing "<< filename,
+                         InputError );
         }
 
         // Destroy temporary vector

@@ -49,6 +49,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalPhaseVolumeFractionKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatistics.hpp"
+#include <ios>
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -274,7 +275,11 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
         // format: time,bhp,total_rate,total_vol_rate,phase0_vol_rate,phase1_vol_rate,...
         makeDirsForPath( m_ratesOutputDir );
         GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
-        std::ofstream outputFile( fileName );
+        std::ofstream outputFile( fileName, std::ios_base::out | std::ios_base::binary );
+        GEOS_THROW_IF( !outputFile,
+                       getDataContext() << ": Could not open file "<< fileName << " for writing",
+                       InputError );
+
         outputFile << "Time [s],dt[s],BHP [Pa],Total rate [" << massUnit << "/s],Total " << conditionKey << " volumetric rate [" << unitKey << "m3/s]";
         for( integer ip = 0; ip < numPhase; ++ip )
         {
@@ -286,6 +291,9 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
         }
         outputFile << std::endl;
         outputFile.close();
+        GEOS_THROW_IF( !outputFile.good(),
+                       getDataContext() << ": An error occured while writing "<< fileName,
+                       InputError );
       }
     } );
   } );
@@ -2226,7 +2234,11 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
       std::ofstream outputFile;
       if( m_writeCSV > 0 )
       {
-        outputFile.open( m_ratesOutputDir + "/" + wellControlsName + ".csv", std::ios_base::app );
+        outputFile.open( m_ratesOutputDir + "/" + wellControlsName + ".csv", std::ios_base::app | std::ios_base::binary );
+        GEOS_THROW_IF( !outputFile,
+                       getDataContext() << ": Could not open file "
+                                        << m_ratesOutputDir + "/" + wellControlsName + ".csv" << " for writing",
+                       InputError );
         outputFile << time_n << "," << dt;
       }
 
@@ -2247,6 +2259,10 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
           }
           outputFile << std::endl;
           outputFile.close();
+          GEOS_THROW_IF( !outputFile.good(),
+                         getDataContext() << ": Could not open file "
+                                          << m_ratesOutputDir + "/" + wellControlsName + ".csv" << " for writing",
+                         InputError );
         }
         return;
       }

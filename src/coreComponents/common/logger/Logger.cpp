@@ -102,6 +102,10 @@ void InitializeLogger( MPI_Comm mpi_comm, const std::string & rankOutputDir )
     MPI_Barrier( mpi_comm );
     std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
     internal::rankStream = new std::ofstream( outputFilePath );
+    GEOS_THROW_IF( !(*internal::rankStream),
+                   ": Could not open file "<< outputFilePath << " for writing",
+                   InputError );
+
   }
   else
   {
@@ -119,6 +123,9 @@ void InitializeLogger( const std::string & rankOutputDir )
 
     std::string outputFilePath = rankOutputDir + "/rank_" + internal::rankString + ".out";
     internal::rankStream = new std::ofstream( outputFilePath );
+    GEOS_THROW_IF( !(*internal::rankStream),
+                   ": Could not open file "<< outputFilePath << " for writing",
+                   InputError );
   }
   else
   {

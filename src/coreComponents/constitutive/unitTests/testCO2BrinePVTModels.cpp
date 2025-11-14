@@ -318,7 +318,7 @@ void testNumericalDerivatives( FLASH_WRAPPER const & flashModelWrapper,
 
 void writeTableToFile( string const & filename, char const * str )
 {
-  std::ofstream os( filename );
+  std::ofstream os( filename, std::ios_base::out | std::ios_base::binary  );
   ASSERT_TRUE( os.is_open() );
   os << str;
   os.close();

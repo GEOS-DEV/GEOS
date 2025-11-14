@@ -254,8 +254,8 @@ template< typename T, typename COL_INDEX >
 void printCompareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & matrix1,
                                 CRSMatrixView< T const, COL_INDEX const > const & matrix2, std::string const & testName )
 {
-  std::ofstream omat1( testName+".csv" );
-
+  std::ofstream omat1( testName+".csv", std::ios_base::out | std::ios_base::binary );;
+  ASSERT_TRUE( omat1.is_open() );
 
   std::vector< std::vector< double > > fmat1( matrix1.numRows(), std::vector< double >( matrix1.numRows(), 0.0 ));
   std::vector< std::vector< double > > fmat2( matrix2.numRows(), std::vector< double >( matrix2.numRows(), 0.0 ));
@@ -295,6 +295,7 @@ void printCompareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const 
 
   }
   omat1.close();
+  ASSERT_TRUE( omat1.good() );
 }
 template< typename LAMBDA >
 void testNumericalJacobian( SinglePhaseReservoirAndWells<> & solver,

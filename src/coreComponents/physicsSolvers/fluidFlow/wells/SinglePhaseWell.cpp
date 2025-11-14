@@ -120,9 +120,15 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
         // format: time,bhp,total_rate,total_vol_rate
         makeDirsForPath( m_ratesOutputDir );
         GEOS_LOG( GEOS_FMT( "{}: Rates CSV generated at {}", getName(), fileName ) );
-        std::ofstream outputFile( fileName );
+        std::ofstream outputFile( fileName, std::ios_base::out | std::ios_base::binary );
+        GEOS_THROW_IF( !outputFile,
+                       getDataContext() << ": Could not open file "<< fileName << " for writing",
+                       InputError );
         outputFile << "Time [s],BHP [Pa],Total rate [kg/s],Total " << conditionKey << " volumetric rate ["<<unitKey<<"m3/s]" << std::endl;
         outputFile.close();
+        GEOS_THROW_IF( !outputFile.good(),
+                       getDataContext() << ": An error occured while writing "<< fileName,
+                       InputError );
       }
     } );
   } );

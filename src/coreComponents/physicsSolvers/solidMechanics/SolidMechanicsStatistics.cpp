@@ -69,10 +69,17 @@ void SolidMechanicsStatistics::registerDataOnMesh( Group & meshBodies )
     // write output header
     if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
     {
-      std::ofstream outputFile( m_outputDir + "/" + mesh.getName() + "_node_statistics" + ".csv" );
+      string const filename = m_outputDir + "/" + mesh.getName() + "_node_statistics" + ".csv";
+      std::ofstream outputFile( filename, std::ios_base::out | std::ios_base::binary );
+      GEOS_THROW_IF( !outputFile,
+                     getDataContext() << ": Could not open file "<< filename << " for writing",
+                     InputError );
       outputFile << "Time [s],Min displacement X [m],Min displacement Y [m],Min displacement Z [m],"
                  << "Max displacement X [m],Max displacement Y [m],Max displacement Z [m]" << std::endl;
       outputFile.close();
+      GEOS_THROW_IF( !outputFile.good(),
+                     getDataContext() << ": Could not open file "<< filename << " for writing",
+                     InputError );
     }
   } );
 }
@@ -172,7 +179,11 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 c
 
   if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
   {
-    std::ofstream outputFile( m_outputDir + "/" + mesh.getName() + "_node_statistics" + ".csv", std::ios_base::app );
+    string const filename = m_outputDir + "/" + mesh.getName() + "_node_statistics" + ".csv";
+    std::ofstream outputFile( filename, std::ios_base::out | std::ios_base::binary );
+    GEOS_THROW_IF( !outputFile,
+                   getDataContext() << ": Could not open file "<< filename << " for writing",
+                   InputError );
     outputFile << time;
     for( integer i = 0; i < 3; ++i )
       outputFile << "," << nodeStatistics.minDisplacement[i];
@@ -180,6 +191,9 @@ void SolidMechanicsStatistics::computeNodeStatistics( MeshLevel & mesh, real64 c
       outputFile << "," << nodeStatistics.maxDisplacement[i];
     outputFile << std::endl;
     outputFile.close();
+    GEOS_THROW_IF( !outputFile.good(),
+                   getDataContext() << ": Could not open file "<< filename << " for writing",
+                   InputError );
   }
 }
 

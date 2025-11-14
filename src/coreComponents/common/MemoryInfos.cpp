@@ -125,7 +125,14 @@ void MemoryLogging::enableUmpireStatsCsvReport( bool enable, string_view filenam
   {
     // start a new file
     std::ofstream csvFile{ m_umpireStatsCsvReportFilename, std::ios_base::out };
+    GEOS_THROW_IF( !csvFile,
+                   ": Could not open file "<< m_umpireStatsCsvReportFilename << " for writing",
+                   InputError );
+
     m_memoryStatCsvFormatter->headerToStream( csvFile );
+    GEOS_THROW_IF( !csvFile.good(),
+                   ": An error occured while writing " << m_umpireStatsCsvReportFilename,
+                   InputError );
   }
 }
 
@@ -247,7 +254,13 @@ void MemoryLogging::memoryStatsReport() const
     if( m_umpireStatsCsvReport )
     {
       std::ofstream csvFile{ m_umpireStatsCsvReportFilename, std::ios_base::app };
+      GEOS_THROW_IF( !csvFile,
+                     ": Could not open file "<< m_umpireStatsCsvReportFilename << " for writing",
+                     InputError );
       m_memoryStatCsvFormatter->dataToStream( csvFile, tableDataCsv );
+      GEOS_THROW_IF( !csvFile.good(),
+                     ": Could not open file "<< m_umpireStatsCsvReportFilename << " for writing",
+                     InputError );
     }
   }
 }

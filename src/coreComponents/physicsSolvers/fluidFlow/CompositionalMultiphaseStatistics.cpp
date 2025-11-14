@@ -33,6 +33,7 @@
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
+#include <ios>
 
 
 namespace geos
@@ -174,9 +175,16 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
           addStatsValue( statsLayout, tableLayout, "Mobile phase mass (metric 2)", massUnit, numPhases );
           addStatsValue( statsLayout, tableLayout, "Component mass", massUnit, numPhases, numComps );
 
-          std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv" );
+          std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::out | std::ios_base::binary );
+          GEOS_THROW_IF( !outputFile,
+                         getDataContext() << ": Could not open file "<< m_outputDir << " for writing",
+                         InputError );
           TableCSVFormatter csvFormatter( tableLayout );
           outputFile << csvFormatter.headerToString();
+          GEOS_THROW_IF( !outputFile.good(),
+                         getDataContext() << ": An error occured while writing " <<
+                         m_outputDir + "/" + regionNames[i] + ".csv",
+                         InputError );
         }
       }
     }
@@ -525,10 +533,20 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
                         stringutilities::joinLambda( mobilePhaseMass, "\n", []( auto value ) { return value[0]; } ),
                         stringutilities::join( massValues, '\n' ) );
 
-      std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::app );
+      std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv",
+                                std::ios_base::app  | std::ios_base::binary );
+      GEOS_THROW_IF( !outputFile,
+                     getDataContext() << ": Could not open file "<<
+                     m_outputDir + "/" + regionNames[i] + ".csv" << " for writing",
+                     InputError );
+
       TableCSVFormatter const csvOutput;
       outputFile << csvOutput.dataToString( tableData );
       outputFile.close();
+      GEOS_THROW_IF( !outputFile.good(),
+                     getDataContext() << ": An error occured while writing "<<
+                     m_outputDir + "/" + regionNames[i] + ".csv",
+                     InputError );
     }
   }
 

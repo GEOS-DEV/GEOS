@@ -1437,10 +1437,16 @@ void HypreMatrix::write( string const & filename,
       // Write MatrixMarket header
       if( rank == 0 )
       {
-        std::ofstream os( filename );
-        GEOS_ERROR_IF( !os, GEOS_FMT( "Unable to open file for writing: {}", filename ) );
+        std::ofstream os( filename, std::ios_base::out | std::ios_base::binary );
+        GEOS_THROW_IF( !os,
+                       ": Could not open file "<< filename << " for writing",
+                       InputError );
         os << "%%MatrixMarket matrix coordinate real general\n";
         os << GEOS_FMT( "{} {} {}\n", numRows, numCols, numNonzeros );
+        GEOS_THROW_IF( !os.good(),
+                       ": An error occured while writing "<< filename,
+                       InputError );
+
       }
 
       // Write matrix values

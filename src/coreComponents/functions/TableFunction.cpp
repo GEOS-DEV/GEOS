@@ -368,9 +368,15 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
 
   if( outputOpts.writeCSV || logOutputFailed )
   {
-    std::ofstream csvStream( csvName );
+    std::ofstream csvStream( csvName, std::ios_base::out | std::ios_base::binary );
+    GEOS_THROW_IF( !csvStream,
+                   getDataContext() << ": Could not open file "<< csvName << " for writing",
+                   InputError );
     csvFormatter.showErrors( false );
     csvStream << csvFormatter.toString( *this );
+    GEOS_THROW_IF( !csvStream.good(),
+                   getDataContext() << ": An error occured while writing "<< csvName,
+                   InputError );
   }
 
   if( outputOpts.writeInLog || outputOpts.writeCSV )

@@ -121,9 +121,10 @@ protected:
   {
     std::string const fname = GEOS_FMT( "testParsing_{}_input", typeid(T).name() );
     std::ofstream os( fname );
+    ASSERT_TRUE( os.is_open() );
     os << input;
     os.close();
-
+    ASSERT_TRUE( os.good() );
     geos::stdVector< T > vec;
     geos::parseFile( fname, vec, issep );
     compareToReference( vec );
@@ -135,9 +136,10 @@ protected:
   {
     std::string const fname = GEOS_FMT( "testParsing_{}_input_invalid", typeid(T).name() );
     std::ofstream os( fname );
+    ASSERT_TRUE( os.is_open() );
     os << input;
     os.close();
-
+    ASSERT_TRUE( os.good() );
     geos::stdVector< T > vec;
     auto const issep_invalid = []( char const c ){ return c == '|'; };
     EXPECT_THROW( geos::parseFile( fname, vec, issep_invalid ), std::runtime_error );

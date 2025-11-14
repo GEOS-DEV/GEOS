@@ -1277,8 +1277,14 @@ void EpetraMatrix::write( string const & filename,
   {
     case LAIOutputFormat::NATIVE_ASCII:
     {
-      std::ofstream ofs( filename );
+      std::ofstream ofs( filename, std::ios_base::out | std::ios_base::binary );
+      GEOS_THROW_IF( !ofs,
+                     ": Could not open file "<< filename << " for writing",
+                     InputError );
       print( ofs );
+      GEOS_THROW_IF( !ofs.good(),
+                     ": An error occured while writing "<< filename,
+                     InputError );
       break;
     }
     case LAIOutputFormat::MATRIX_MARKET:

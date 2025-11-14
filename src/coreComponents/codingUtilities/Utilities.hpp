@@ -25,6 +25,7 @@
 #include "common/DataTypes.hpp"
 #include "LvArray/src/limits.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include <fstream>
 
 namespace geos
 {
@@ -516,6 +517,15 @@ real64 dot( VECTOR_TYPE const & vec1,
       result += vec1[i] * vec2[i];
     } );
   return result.get();
+}
+
+inline std::ofstream openFile( string const & filename, std::ios_base::openmode )
+{
+  std::ofstream wf( filename, std::ios::out| std::ios::binary );
+  GEOS_THROW_IF( !wf,
+                 ": Could not open file "<< filename << " for writing",
+                 InputError );
+  return wf;
 }
 
 } // namespace geos

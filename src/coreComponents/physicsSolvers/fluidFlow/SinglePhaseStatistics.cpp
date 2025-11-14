@@ -70,12 +70,20 @@ void SinglePhaseStatistics::registerDataOnMesh( Group & meshBodies )
       // write output header
       if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
       {
-        std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv" );
+        std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::out | std::ios_base::binary );
+        GEOS_THROW_IF( !outputFile,
+                       getDataContext() << ": Could not open file "<< m_outputDir + "/" + regionNames[i] + ".csv"
+                                        << " for writing",
+                       InputError );
         outputFile <<
           "Time [s],Min pressure [Pa],Average pressure [Pa],Max pressure [Pa],Min delta pressure [Pa],Max delta pressure [Pa]," <<
           "Min temperature [Pa],Average temperature [Pa],Max temperature [Pa],Total dynamic pore volume [rm^3],Total fluid mass [kg]";
         outputFile << std::endl;
         outputFile.close();
+        GEOS_THROW_IF( !outputFile.good(),
+                       getDataContext() << ": An error occured while writing "
+                                        << ": Could not open file "<< m_outputDir + "/" + regionNames[i] + ".csv",
+                       InputError );
       }
     }
   } );
@@ -273,12 +281,20 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
 
       if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
       {
-        std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::app );
+        std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv", std::ios_base::app | std::ios_base::binary );
+        GEOS_THROW_IF( !outputFile,
+                       getDataContext() << ": Could not open file "<< m_outputDir + "/" + regionNames[i] + ".csv"
+                                        << " for writing",
+                       InputError );
         outputFile << time << "," << stats.minPressure << "," << stats.averagePressure << "," << stats.maxPressure << "," <<
           stats.minDeltaPressure << "," << stats.maxDeltaPressure << "," <<
           stats.minTemperature << "," << stats.averageTemperature << "," << stats.maxTemperature << "," <<
           stats.totalPoreVolume << "," << stats.totalMass << std::endl;
         outputFile.close();
+        GEOS_THROW_IF( !outputFile.good(),
+                       getDataContext() << ": An error occured while writing "
+                                        << ": Could not open file "<< m_outputDir + "/" + regionNames[i] + ".csv",
+                       InputError );
       }
     }
   }

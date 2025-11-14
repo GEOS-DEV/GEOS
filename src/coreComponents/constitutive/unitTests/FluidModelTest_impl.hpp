@@ -414,10 +414,11 @@ void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::testNumericalDerivatives
 template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >
 void FluidModelTest< FLUID_TYPE, NUM_COMP, NUM_PHASE >::writeTableToFile( string const & fileName, char const * content )
 {
-  std::ofstream os( fileName );
+  std::ofstream os( fileName, std::ios_base::out | std::ios_base::binary );
   ASSERT_TRUE( os.is_open() );
   os << content;
   os.close();
+  ASSERT_TRUE( os.good() );
 }
 
 template< typename FLUID_TYPE, integer NUM_COMP, integer NUM_PHASE >

@@ -213,10 +213,16 @@ void SourceFluxStatsAggregator::outputStatsToCSV( TableData & csvData )
 {
   if( m_writeCSV > 0 && logger::internal::rank == 0 )
   {
-    std::ofstream outputFile( m_csvFilename );
+    std::ofstream outputFile( m_csvFilename, std::ios_base::out | std::ios_base::binary );
+    GEOS_THROW_IF( !outputFile,
+                   getDataContext() << ": Could not open file "<< m_csvFilename << " for writing",
+                   InputError );
     TableCSVFormatter const tableStatFormatter( m_csvLayout );
     outputFile << tableStatFormatter.toString( csvData );
     outputFile.close();
+    GEOS_THROW_IF( !outputFile.good(),
+                   getDataContext() << ": An error occured while writing "<< m_csvFilename,
+                   InputError );
     csvData.clear();
   }
 }

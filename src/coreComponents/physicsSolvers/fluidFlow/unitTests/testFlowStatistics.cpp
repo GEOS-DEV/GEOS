@@ -156,11 +156,11 @@ public:
   {
     for( auto const & [fileName, content] : files )
     {
-      std::ofstream os( fileName );
+      std::ofstream os( fileName, std::ios_base::out | std::ios_base::binary );
       ASSERT_TRUE( os.is_open() );
       os << content;
       os.close();
-
+      ASSERT_TRUE( os.good() );
       m_tableFileNames.push_back( fileName );
     }
   }

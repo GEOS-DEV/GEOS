@@ -272,10 +272,11 @@ void KValueFlashTestFixture< numPhases, numComps >::generateTables( string_array
 template< integer numPhases, integer numComps >
 void KValueFlashTestFixture< numPhases, numComps >::writeToFile( string const & fileName, string const & content )
 {
-  std::ofstream os( fileName );
+  std::ofstream os( fileName, std::ios_base::out | std::ios_base::binary  );
   ASSERT_TRUE( os.is_open() );
   os << content;
   os.close();
+  ASSERT_TRUE( os.good() );
 }
 
 template< integer numPhases, integer numComps >
