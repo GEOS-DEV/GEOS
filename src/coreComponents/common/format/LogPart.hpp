@@ -155,7 +155,7 @@ private:
   /// string used to separate the name/description
   static constexpr string_view m_delimiter = " : ";
   /// Active the LogPart output
-  bool m_enableOutput = true;
+  bool m_enableOutput = false;
 
   /**
    * @brief Add a description to a specific section (top or bottom)
