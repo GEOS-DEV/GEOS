@@ -201,14 +201,14 @@ void LogPart::addDescriptionBySection( Description & description, FormattedDescr
                    "Argument passed cannot be converted to string" );
     string const value = GEOS_FMT( "{}", args );
 
-    stdVector< string_view > splitValues =  divideLines< string_view >( maxValueSize, value );
+    stdVector< string > splitValues =  divideLines( maxValueSize, value );
     values.insert( values.end(), splitValues.begin(), splitValues.end() );
   } (), ...);
 
   description.m_values.push_back( values );
 
   size_t lineWidth = 0;
-  stdVector< string > nameDivided = divideLines< string >( lineWidth, name );
+  stdVector< string > nameDivided = divideLines( lineWidth, name );
   if( lineWidth == 0 )
     lineWidth = name.size();
   maxNameSize = std::max( maxNameSize, lineWidth );

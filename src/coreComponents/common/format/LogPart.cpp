@@ -35,14 +35,14 @@ LogPart::LogPart( string_view logPartTitle, bool enableOutput )
 void LogPart::addDescription( string_view description )
 {
   size_t compareWidth = m_width;
-  m_startDescription.m_names.push_back( stringutilities::divideLines< string >( compareWidth, description ) );
+  m_startDescription.m_names.push_back( stringutilities::divideLines( compareWidth, description ) );
   m_startDescription.m_values.push_back( stdVector< string >() );
 }
 
 void LogPart::addEndDescription( string_view description )
 {
   size_t compareWidth = m_width;
-  m_endDescription.m_names.push_back( stringutilities::divideLines< string >( compareWidth, description ) );
+  m_endDescription.m_names.push_back( stringutilities::divideLines( compareWidth, description ) );
   m_endDescription.m_values.push_back( stdVector< string >() );
 
 }
@@ -205,28 +205,20 @@ void LogPart::begin( std::ostream & os )
 
 void LogPart::end( std::ostream & os )
 {
-  std::cout << "logPart end"<< std::endl;
-  if( !m_enableOutput )
+    if( !m_enableOutput )
     return;
 
-  std::cout << "formatDescription"<< std::endl;
-  formatDescriptions( m_endDescription, m_formattedEndDescription );
-  std::cout << "formatDescriptions end"<< std::endl;
-
+    formatDescriptions( m_endDescription, m_formattedEndDescription );
+  
   string const line =  string( m_width, m_borderCharacter );
   if( !m_endDescription.m_names.empty() )
   {
     os << '\n';
-  std::cout << "outputDescription"<< std::endl;
-    os << outputDescription( m_formattedEndDescription );
-  std::cout << "outputDescription end"<< std::endl;
-    os << line;
+        os << outputDescription( m_formattedEndDescription );
+        os << line;
   }
-  std::cout << "outputTitle"<< std::endl;
-  os << outputTitle( m_formattedEndDescription );
-  std::cout << "outputTitle end"<< std::endl;
-  os << line << "\n\n";
-  std::cout << "end logPart end"<< std::endl;
-}
+    os << outputTitle( m_formattedEndDescription );
+    os << line << "\n\n";
+  }
 
 }
