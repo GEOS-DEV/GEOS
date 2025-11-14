@@ -69,6 +69,7 @@ void ConvertDocumentationToSchema( string const & fname,
   schemaTree.saveFile( fname );
 
   GEOS_LOG_RANK_0( "  Done!" );
+  std::quick_exit(0);
 }
 
 string getSchemaTypeName( string_view rtTypeName )
