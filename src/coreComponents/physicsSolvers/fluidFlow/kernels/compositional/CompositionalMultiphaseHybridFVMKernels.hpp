@@ -1339,62 +1339,62 @@ struct PrecomputeMimeticTransGgradZKernel
 
 /******************************** Kernel switches ********************************/
 
-//namespace internal
-//{
-//
-//template< typename T, typename LAMBDA >
-//void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
-//{
-//  static_assert( std::is_integral< T >::value, "KernelLaunchSelectorFaceSwitch: type should be integral" );
-//
-//  switch( value )
-//  {
-//    case 4:
-//    {
-//      return lambda( std::integral_constant< int, 4 >{} );
-//    }
-//    case 5:
-//    {
-//      return lambda( std::integral_constant< int, 5 >{} );
-//    }
-//    case 6:
-//    {
-//      return lambda( std::integral_constant< int, 6 >{} );
-//    }
-//    case 7:
-//    {
-//      return lambda( std::integral_constant< int, 7 >{} );
-//    }
-//    case 8:
-//    {
-//      return lambda( std::integral_constant< int, 8 >{} );
-//    }
-//    case 9:
-//    {
-//      return lambda( std::integral_constant< int, 9 >{} );
-//    }
-//    case 10:
-//    {
-//      return lambda( std::integral_constant< int, 10 >{} );
-//    }
-//    case 11:
-//    {
-//      return lambda( std::integral_constant< int, 11 >{} );
-//    }
-//    case 12:
-//    {
-//      return lambda( std::integral_constant< int, 12 >{} );
-//    }
-//    case 13:
-//    {
-//      return lambda( std::integral_constant< int, 13 >{} );
-//    }
-//    default:
-//      GEOS_ERROR( "Unknown numFacesInElem value: " << value );
-//  }
-//}
-//
-//} // namespace internal
+namespace internal
+{
+
+template< typename T, typename LAMBDA >
+void kernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
+{
+  static_assert( std::is_integral< T >::value, "KernelLaunchSelectorFaceSwitch: type should be integral" );
+
+  switch( value )
+  {
+    case 4:
+    {
+      return lambda( std::integral_constant< int, 4 >{} );
+    }
+    case 5:
+    {
+      return lambda( std::integral_constant< int, 5 >{} );
+    }
+    case 6:
+    {
+      return lambda( std::integral_constant< int, 6 >{} );
+    }
+    case 7:
+    {
+      return lambda( std::integral_constant< int, 7 >{} );
+    }
+    case 8:
+    {
+      return lambda( std::integral_constant< int, 8 >{} );
+    }
+    case 9:
+    {
+      return lambda( std::integral_constant< int, 9 >{} );
+    }
+    case 10:
+    {
+      return lambda( std::integral_constant< int, 10 >{} );
+    }
+    case 11:
+    {
+      return lambda( std::integral_constant< int, 11 >{} );
+    }
+    case 12:
+    {
+      return lambda( std::integral_constant< int, 12 >{} );
+    }
+    case 13:
+    {
+      return lambda( std::integral_constant< int, 13 >{} );
+    }
+    default:
+      GEOS_ERROR( "Unknown numFacesInElem value: " << value );
+  }
+}
+
+} // namespace internal
 
 template< typename KERNELWRAPPER, typename INNER_PRODUCT, typename ... ARGS >
 void simpleKernelLaunchSelector( localIndex numFacesInElem, ARGS && ... args )
