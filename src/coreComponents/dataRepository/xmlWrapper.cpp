@@ -308,7 +308,10 @@ xmlResult xmlDocument::loadFile( string const & path, bool loadNodeFileInfo )
   // keeping a copy of original buffer to allow line retrieval
   if( loadNodeFileInfo )
   {
-    std::ifstream t( path );
+    std::ifstream t( path, std::ios::in | std::ios::binary );
+    GEOS_THROW_IF( !t.is_open(),
+                   ": Could not open file "<< path << " for writing",
+                   std::runtime_error );
     std::stringstream buffer;
     buffer << t.rdbuf();
 

@@ -33,7 +33,8 @@ BlackOilTables::readTable( string const & fileName,
                            integer minRowLength,
                            array1d< array1d< real64 > > & data )
 {
-  std::ifstream is( fileName );
+  std::ifstream is( fileName, std::ios::in | std::ios::binary );
+
   GEOS_ERROR_IF( !is.is_open(),
                  "BlackOilTables: could not open file: " << fileName );
 
@@ -63,7 +64,9 @@ BlackOilTables::readTable( string const & fileName,
   }
 
   is.close();
-
+  GEOS_THROW_IF( is.fail() && !is.eof(),
+                 GEOS_FMT( "Error while reading file {}: {}", fileName, std::strerror( errno ) ),
+                 std::runtime_error );
   for( localIndex i = 0; i < data.size(); ++i )
   {
     GEOS_ERROR_IF( data[i].size() < minRowLength,

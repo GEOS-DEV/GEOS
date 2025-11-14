@@ -318,7 +318,7 @@ void testNumericalDerivatives( FLASH_WRAPPER const & flashModelWrapper,
 
 void writeTableToFile( string const & filename, char const * str )
 {
-  std::ofstream os( filename, std::ios_base::out | std::ios_base::binary  );
+  std::ofstream os( filename, std::ios_base::out | std::ios_base::binary );
   ASSERT_TRUE( os.is_open() );
   os << str;
   os.close();
@@ -344,7 +344,11 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
   componentMolarWeight[0] = 44e-3; componentMolarWeight[1] = 18e-3;
 
   // read parameters from file
-  std::ifstream is( filename );
+  std::ifstream is( filename, std::ios::in | std::ios::binary );
+  GEOS_THROW_IF( !is.is_open(),
+                 ": Could not open file "<< filename << " for writing",
+                 std::runtime_error );
+
   std::unique_ptr< MODEL > pvtFunction = nullptr;
   string str;
   while( std::getline( is, str ) )
@@ -365,6 +369,9 @@ std::unique_ptr< MODEL > makePVTFunction( string const & filename,
                                                pvtOutputOpts );
     }
   }
+  GEOS_THROW_IF( is.fail() && !is.eof(),
+                 GEOS_FMT( "Error while reading file {}: {}", filename, std::strerror( errno ) ),
+                 std::runtime_error );
   GEOS_ERROR_IF( pvtFunction == nullptr,
                  "Could not find " << key << " in " << filename );
 
@@ -390,7 +397,10 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
   componentMolarWeight[0] = 44e-3; componentMolarWeight[1] = 18e-3;
 
   // read parameters from file
-  std::ifstream is( filename );
+  std::ifstream is( filename, std::ios::in | std::ios::binary );
+  GEOS_THROW_IF( !is.is_open(),
+                 ": Could not open file "<< filename << " for writing",
+                 std::runtime_error );
   std::unique_ptr< MODEL > flashModel;
   string str;
   while( std::getline( is, str ) )
@@ -410,6 +420,9 @@ std::unique_ptr< MODEL > makeFlashModel( string const & filename,
                                               flashOutputOpts );
     }
   }
+  GEOS_THROW_IF( is.fail() && !is.eof(),
+                 GEOS_FMT( "Error while reading file {}: {}", filename, std::strerror( errno ) ),
+                 std::runtime_error );
   GEOS_ERROR_IF( flashModel == nullptr,
                  "Could not find " << key << " in " << filename );
 

@@ -1113,6 +1113,9 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         p_forward.move( LvArray::MemorySpace::host, true );
         wf.read( (char *)&p_forward[0], p_forward.size()*sizeof( real32 ) );
         wf.close( );
+        GEOS_THROW_IF( wf.fail() && !wf.eof(),
+                       GEOS_FMT( "Error while reading file {}: {}", fileName, std::strerror( errno ) ),
+                       std::runtime_error );
         remove( fileName.c_str() );
       }
       elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,

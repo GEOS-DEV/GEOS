@@ -537,7 +537,7 @@ void TriaxialDriver::compareWithBaseline()
 {
   // open baseline file
 
-  std::ifstream file( m_baselineFile.c_str() );
+  std::ifstream file( m_baselineFile.c_str(), std::ios::in | std::ios::binary  );
   GEOS_THROW_IF( !file.is_open(), "Can't seem to open the baseline file " << m_baselineFile, InputError );
 
   // discard file header

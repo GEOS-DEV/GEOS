@@ -103,7 +103,10 @@ void parseFile( string const & filename,
   char buf[BUF_SIZE+1];
   buf[BUF_SIZE] = '\0'; // safe padding for strtol
 
-  std::ifstream inputStream( filename );
+  std::ifstream inputStream( filename, std::ios::in | std::ios::binary );
+  GEOS_THROW_IF( !inputStream,
+                 ": Could not open file "<< filename << " for writing",
+                 InputError );
   while( inputStream )
   {
     inputStream.read( buf, BUF_SIZE );

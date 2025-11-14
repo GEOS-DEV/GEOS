@@ -280,10 +280,13 @@ protected:
     LIFO_MARK_FUNCTION;
     std::string fileName = GEOS_FMT( "{}_{:08}.dat", m_name, id );
     std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-    GEOS_ERROR_IF( !wf,
+    GEOS_ERROR_IF( !wf.is_open(),
                    "Could not open file "<< fileName << " for reading" );
     wf.read( (char *)d, m_bufferSize );
     wf.close();
+    GEOS_THROW_IF( wf.fail() && !wf.eof(),
+                   GEOS_FMT( "Error while reading file {}: {}", fileName, std::strerror( errno ) ),
+                   std::runtime_error );
     remove( fileName.c_str() );
   }
 

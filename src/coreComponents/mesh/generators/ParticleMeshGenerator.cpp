@@ -91,7 +91,13 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
 
   // Get and process header and particle files
   std::ifstream headerFile( m_headerFilePath );
+  GEOS_THROW_IF( !headerFile.is_open(),
+                 getDataContext() << ": Could not open file "<< m_headerFilePath << " for writing",
+                 std::runtime_error );
   std::ifstream particleFile( m_particleFilePath );
+  GEOS_THROW_IF( !particleFile.is_open(),
+                 getDataContext() << ": Could not open file "<< m_particleFilePath << " for writing",
+                 std::runtime_error );
   std::string line; // initialize line variable
 
   // Read in number of materials and particle types
@@ -114,7 +120,9 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     materialMap[key] = value;
     //GEOS_LOG_RANK_0( "Material name/ID: " + key + "/" << value );
   }
-
+  GEOS_THROW_IF( headerFile.fail() && !headerFile.eof(),
+                 GEOS_FMT( "Error while reading file {}: {}", m_headerFilePath, std::strerror( errno ) ),
+                 std::runtime_error );
   // Read in the particle type key
   for( int i=0; i<numParticleTypes; i++ )
   {
@@ -126,7 +134,9 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     particleTypeMap[particleType] = np;
     particleTypes[i] = particleType;
   }
-
+  GEOS_THROW_IF( particleFile.fail() && !particleFile.eof(),
+                 GEOS_FMT( "Error while reading file {}: {}", m_particleFilePath, std::strerror( errno ) ),
+                 std::runtime_error );
   // Read in particle data
   for( size_t i=0; i<particleTypes.size(); i++ )
   {

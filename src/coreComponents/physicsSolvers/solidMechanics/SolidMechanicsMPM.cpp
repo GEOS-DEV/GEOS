@@ -568,7 +568,11 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
 
     if( rank == 0 ) // Rank 0 process parses the BC table file
     {
-      std::ifstream fp( "BCTable.dat" );
+      std::ifstream fp( "BCTable.dat", std::ios::in | std::ios::binary );
+      GEOS_THROW_IF( !fp.is_open(),
+                     getDataContext() << ": Could not open file "<< "BCTable.dat" << " for writing",
+                     std::runtime_error );
+
       double BCTableEntry = 0;
       while( fp >> BCTableEntry )
       {
@@ -607,6 +611,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
     if( rank == 0 ) // Rank 0 process parses the F table file
     {
       std::ifstream fp( m_fTablePath );
+
       // Throw error if FTable can't be read
       GEOS_ERROR_IF( fp.fail(), "MPMSolver Failed to read FTable.dat" );
 

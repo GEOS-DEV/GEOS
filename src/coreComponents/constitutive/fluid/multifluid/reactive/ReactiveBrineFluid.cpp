@@ -150,6 +150,9 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
   for( string const & filename : m_phasePVTParaFiles )
   {
     std::ifstream is( filename );
+    GEOS_THROW_IF( !is.is_open(),
+                   getDataContext() << ": Could not open file "<< filename << " for writing",
+                   std::runtime_error );
     string str;
     while( std::getline( is, str ) )
     {
@@ -189,6 +192,9 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
       }
     }
     is.close();
+    GEOS_THROW_IF( is.fail() && !is.eof(),
+                   GEOS_FMT( "Error while reading file {}: {}", filename, std::strerror( errno ) ),
+                   std::runtime_error );
   }
 
   // at this point, we have read the file and we check the consistency of non-thermal models

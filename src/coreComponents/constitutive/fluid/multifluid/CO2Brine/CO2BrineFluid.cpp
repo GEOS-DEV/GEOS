@@ -23,6 +23,7 @@
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "common/Units.hpp"
 #include "functions/TableFunction.hpp"
+#include <stdexcept>
 
 namespace geos
 {
@@ -259,7 +260,10 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
   // 1) Create the viscosity, density, enthalpy models
   for( string const & filename : m_phasePVTParaFiles )
   {
-    std::ifstream is( filename );
+    std::ifstream is( filename, std::ios::in | std::ios::binary );
+    GEOS_THROW_IF( !is.is_open(),
+                   getDataContext() << ": Could not open file "<< filename << " for writing",
+                   std::runtime_error );
     string str;
     while( std::getline( is, str ) )
     {
@@ -311,6 +315,9 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
       }
     }
     is.close();
+    GEOS_THROW_IF( is.fail() && !is.eof(),
+                   GEOS_FMT( "Error while reading file {}: {}", filename, std::strerror( errno ) ),
+                   std::runtime_error );
   }
 
   // at this point, we have read the file and we check the consistency of non-thermal models
@@ -359,7 +366,10 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
   // 2) Create the flash model
   if( !m_flashModelParaFile.empty())
   {
-    std::ifstream is( m_flashModelParaFile );
+    std::ifstream is( m_flashModelParaFile, std::ios::in | std::ios::binary );
+    GEOS_THROW_IF( !is.is_open(),
+                   getDataContext() << ": Could not open file "<< m_flashModelParaFile << " for writing",
+                   std::runtime_error );
     string str;
     while( std::getline( is, str ) )
     {
@@ -390,6 +400,9 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
       }
     }
     is.close();
+    GEOS_THROW_IF( is.fail() && !is.eof(),
+                   GEOS_FMT( "Error while reading file {}: {}", m_flashModelParaFile, std::strerror( errno ) ),
+                   std::runtime_error );
   }
   else
   {
