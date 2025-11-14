@@ -116,6 +116,18 @@ public:
   }
 
   /**
+   * @brief Get the number of quadrature points.
+   * @param q Index of the quadrature point.
+   * @return The weight of the quadrature point.
+   */
+  GEOS_HOST_DEVICE
+  static real64 getQuadratureWeight( localIndex const q )
+  {
+    return quadratureWeight( q ) * weight;
+  }
+
+
+  /**
    * @brief Calculate shape functions values at a single point.
    * @param[in] coords The parent coordinates at which to evaluate the shape function value
    * @param[out] N The shape function values.
@@ -150,6 +162,18 @@ public:
   static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( &N )[numNodes] );
+
+  /**
+   * @brief Calculate shape functions gradients for each support point at a
+   *   quadrature point.
+   * @param coords The parent coordinates at which to evaluate the shape function gradient (unused)
+   * @param gradN An array to pass back the shape function gradients for each support
+   *   point.
+   */
+  GEOS_HOST_DEVICE
+  inline
+  static void calcGradN( real64 const (&coords)[2],
+                         real64 ( &gradN )[numNodes][2] );
 
   /**
    * @brief Calculate shape bubble functions values at a given point in the parent space.
@@ -408,6 +432,23 @@ calcN( localIndex const q,
        real64 ( & N )[numNodes] )
 {
   return calcN( q, N );
+}
+
+template< typename NUM_Q_POINTS >
+GEOS_HOST_DEVICE
+inline
+void H1_TriangleFace_Lagrange1_Gauss< NUM_Q_POINTS >::
+calcGradN( real64 const (&coords)[2],
+           real64 (& gradN)[numNodes][2] )
+{
+  GEOS_UNUSED_VAR( coords );
+
+  gradN[0][0] = -1.0;
+  gradN[0][1] = -1.0;
+  gradN[1][0] = 1.0;
+  gradN[1][1] = 0.0;
+  gradN[2][0] = 0.0;
+  gradN[2][1] = 1.0;
 }
 
 //*************************************************************************************************
