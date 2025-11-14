@@ -210,7 +210,7 @@ TEST( testSolverStats, testLog )
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
   std::ostringstream xmlInput;
-  xmlInput << solverLogOutput << pattern;
+  xmlInput << solverLogOutput << pattern; 
   problem.parseInputString( xmlInput.str() );
   problem.problemSetup();
   problem.applyInitialConditions();
