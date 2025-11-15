@@ -1066,22 +1066,62 @@ void FaceElementSubRegion::fixSecondaryMappings( NodeManager const & nodeManager
     {
       for( ElemPath const & path: match->second )
       {
-        // This `if` prevents from storing the same data twice.
-        if( m_2dElemToElems.m_toElementIndex.size( 1 ) == 0 || m_2dElemToElems.m_toElementIndex[e2d][0] != path.ei )
+
+
+
+        // Check if this neighbor is already assigned (avoid duplicates)
+        if( m_2dElemToElems.m_toElementIndex( e2d, 0 ) == path.ei ||
+            m_2dElemToElems.m_toElementIndex( e2d, 1 ) == path.ei )
         {
-          m_2dElemToElems.m_toElementRegion( e2d, 1 ) = path.er;
-          m_2dElemToElems.m_toElementSubRegion( e2d, 1 ) = path.esr;
-          m_2dElemToElems.m_toElementIndex( e2d, 1 ) = path.ei;
-          m_toFacesRelation( e2d, 1 ) = path.face;
-          for( localIndex const & n: path.nodes )
+          continue; // Already have this neighbor, skip
+        }
+
+        // Find first empty slot
+        localIndex slot = -1;
+        if( m_2dElemToElems.m_toElementIndex( e2d, 0 ) == -1 )
+        {
+          slot = 0; // Slot 0 is empty, use it
+        }
+        else if( m_2dElemToElems.m_toElementIndex( e2d, 1 ) == -1 )
+        {
+          slot = 1; // Slot 0 full, slot 1 empty, use slot 1
+        }
+        else
+        {
+          // Both slots full - this shouldn't happen for a fracture (max 2 neighbors)
+          GEOS_WARNING( GEOS_FMT(
+                          "Fracture '{}' element {} already has 2 neighbors ({}, {}), "
+                          "ignoring additional neighbor {}",
+                          getName(), e2d,
+                          m_2dElemToElems.m_toElementIndex( e2d, 0 ),
+                          m_2dElemToElems.m_toElementIndex( e2d, 1 ),
+                          path.ei ) );
+          continue;
+        }
+        // Assign to the empty slot
+        m_2dElemToElems.m_toElementRegion( e2d, slot ) = path.er;
+        m_2dElemToElems.m_toElementSubRegion( e2d, slot ) = path.esr;
+        m_2dElemToElems.m_toElementIndex( e2d, slot ) = path.ei;
+        m_toFacesRelation( e2d, slot ) = path.face;
+
+        // Add nodes
+        for( localIndex const & n: path.nodes )
+        {
+          auto currentNodes = m_toNodesRelation[e2d];
+          if( std::find( currentNodes.begin(), currentNodes.end(), n ) == currentNodes.end() )
           {
-            auto currentNodes = m_toNodesRelation[e2d];
-            if( std::find( currentNodes.begin(), currentNodes.end(), n ) == currentNodes.end() )
-            {
-              m_toNodesRelation.emplaceBack( e2d, n );
-            }
+            m_toNodesRelation.emplaceBack( e2d, n );
           }
         }
+
+        // If both slots now full, we're done with this element
+        if( m_2dElemToElems.m_toElementIndex( e2d, 0 ) != -1 &&
+            m_2dElemToElems.m_toElementIndex( e2d, 1 ) != -1 )
+        {
+          break; // Both neighbors found, stop searching
+        }
+
+
       }
     }
   }
