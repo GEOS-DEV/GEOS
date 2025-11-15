@@ -100,6 +100,12 @@ public:
   void calculateSingleElementGeometricQuantities( localIndex const k,
                                                   arrayView1d< real64 const > const & faceArea );
 
+  /**
+   * @brief Computes centroids for all face elements from node positions.
+   * @param[in] nodeManager Provides node reference positions.
+   */
+  void calculateElementCentersOnly( NodeManager const & nodeManager );
+
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
