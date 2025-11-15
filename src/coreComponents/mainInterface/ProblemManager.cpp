@@ -888,8 +888,6 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
         // This is a regular cell element, do full geometry calculation
         subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
       }
-
-      subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
     }
     subRegion.setMaxGlobalIndex();
   } );
