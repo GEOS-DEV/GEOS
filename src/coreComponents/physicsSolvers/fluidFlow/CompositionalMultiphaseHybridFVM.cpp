@@ -797,8 +797,6 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
         } );
       }
 
-      // CRITICAL: Move the SAME array views that were just modified back to device memory
-      // Don't get new views - use the views that evaluateBCFaceProperties actually modified
       // evaluateBCFaceProperties uses serialPolicy (host), DirichletFluxKernel uses parallelDevicePolicy (device)
       facePhaseMob.move( parallelDeviceMemorySpace, false );
       facePhaseMassDens.move( parallelDeviceMemorySpace, false );
@@ -968,12 +966,6 @@ void CompositionalMultiphaseHybridFVM::applyFaceDirichletBC( real64 const time_n
         // Mathematical procedure to enforce prescribed value in Ax = b:
         // 1. For row i: Zero all entries except diagonal, set A[i,i] = 1, set b[i] = x_spec
         // 2. For all other rows k: subtract A[k,i] * x_spec from b[k], then set A[k,i] = 0
-        //
-        // Note: Step 2 (removing column influence) should ideally be done, but in practice
-        // for boundary face DOFs in hybrid FVM, the column entries from interior faces to
-        // boundary faces are typically zero or minimal because boundary faces don't strongly
-        // couple to interior equations. The strong coupling is boundary->interior (via fluxes).
-        // For exact enforcement in non-trivial cases, column zeroing would be needed.
 
         if( localRow >= 0 && localRow < localMatrix.numRows() )
         {
