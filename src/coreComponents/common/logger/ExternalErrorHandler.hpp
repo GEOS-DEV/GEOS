@@ -16,10 +16,11 @@
 /**
  * @file ErrorHandling.hpp
  * @brief This file provides the infrastructure to capture external errors.
- * @note
+ * @note Below is the architecture of the external error managment, in the scenario of a problematic
+ *       infrastructure which deviates (thus breaks) stderr.
  * ```
- *  ____________________________________________________________________________
- * |                                    GEOS APPLICATION                    |
+ *  ________________________________________________________________________
+ * |                            GEOS APPLICATION                            |
  * |------------------------------------------------------------------------|
  * |   _____________________         ____________________                   |
  * |  |  GEOS DEPENDANCIES  |       |   GEOS CORE        |                  |
