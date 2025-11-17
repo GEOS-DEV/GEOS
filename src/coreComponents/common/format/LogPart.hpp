@@ -155,7 +155,7 @@ private:
   /// string used to separate the name/description
   static constexpr string_view m_delimiter = " : ";
   /// Active the LogPart output
-  bool m_enableOutput = false;
+  bool m_enableOutput = true;
 
   /**
    * @brief Add a description to a specific section (top or bottom)
@@ -201,14 +201,14 @@ void LogPart::addDescriptionBySection( Description & description, FormattedDescr
                    "Argument passed cannot be converted to string" );
     string const value = GEOS_FMT( "{}", args );
 
-    stdVector< string > splitValues =  divideLines( maxValueSize, value );
+    stdVector< string_view > splitValues =  divideLines< string_view >( maxValueSize, value );
     values.insert( values.end(), splitValues.begin(), splitValues.end() );
   } (), ...);
 
   description.m_values.push_back( values );
 
   size_t lineWidth = 0;
-  stdVector< string > nameDivided = divideLines( lineWidth, name );
+  stdVector< string > nameDivided = divideLines< string >( lineWidth, name );
   if( lineWidth == 0 )
     lineWidth = name.size();
   maxNameSize = std::max( maxNameSize, lineWidth );

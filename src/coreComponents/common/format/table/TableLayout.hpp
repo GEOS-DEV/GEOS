@@ -121,13 +121,13 @@ public:
     /**
      * @return The view on each cell line.
      */
-    stdVector< string > const & getLines() const
+    stdVector< string_view > const & getLines() const
     { return m_lines; }
 
     /**
      * @return The view on each cell line.
      */
-    std::vector< string > & getLines()
+    std::vector< string_view > & getLines()
     { return m_lines; }
 
     /**
@@ -154,7 +154,7 @@ private:
     /// The width of the cell, which must be constrained by the content lines length.
     size_t m_cellWidth;
     /// vector containing each cell content, separated by lines.
-    stdVector< string > m_lines;
+    stdVector< string_view > m_lines;
   };
 
   /**

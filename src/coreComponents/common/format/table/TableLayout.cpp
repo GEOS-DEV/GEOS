@@ -353,7 +353,7 @@ void PreparedTableLayout::prepareLayoutRecusive( stdVector< TableLayout::Column 
 
 void TableLayout::CellLayout::prepareLayout( string_view inputText, size_t maxLineWidth )
 {
-  m_lines = stringutilities::divideLines( m_cellWidth, inputText );
+  m_lines = stringutilities::divideLines< string_view >( m_cellWidth, inputText );
 
   if( maxLineWidth != noColumnMaxWidth && m_cellWidth > maxLineWidth )
   {
