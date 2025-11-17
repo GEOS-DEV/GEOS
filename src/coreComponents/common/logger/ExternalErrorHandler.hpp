@@ -15,6 +15,37 @@
 
 /**
  * @file ErrorHandling.hpp
+ * @brief This file provides the infrastructure to capture external errors.
+ * @note
+ * ```
+ *  ____________________________________________________________________________
+ * |                                    GEOS APPLICATION                    |
+ * |------------------------------------------------------------------------|
+ * |   _____________________         ____________________                   |
+ * |  |  GEOS DEPENDANCIES  |       |   GEOS CORE        |                  |
+ * |  |---------------------|       |--------------------|                  |
+ * |  |   _________  _____  |       |   __________       |                  |
+ * |  |  |         ||     | |       |  |          |      |                  |
+ * |  |  | LvArray || std | |       |  | loggings |------------             |                     ________
+ * |  |  |_________||_____| |       |  |__________|      |    |             |  log pipe          |        |
+ * |  | _______   |    |    |       |   ______________   |    +--------------------------------->| stdout |
+ * |  ||       |  |    |    |       |  |              |  |    |             |                    |________|
+ * |  || Hypre |--+----+--------    |  | ErrorHandler |-------+             |
+ * |  ||_______|            |  |    |  |______________|  |    |             |
+ * |  |_____________________|  |    |____________________|    |             |
+ * |                           |                              |             |
+ * |                  external |                   ___________|___________  |
+ * |                    errors |                  | OutputStreamDeviation | |      deviated       ________
+ * |                    stream |                  |                       | |     error pipe     |        |
+ * |                           -------------------------------+   x-----------------x  +-------->| stderr |
+ * |                                              |_______________________| |          |         |________|
+ * |________________________________________________________________________|          |
+ *                                                                               .............
+ *                                                                               :   HPC X   :    potencial infratructure
+ *                                                                               :   system  : <- which deviates the stderr
+ *                                                                               : messaging :    for other reasons.
+ *                                                                               :...........:
+ * ```
  */
 
 #ifndef LOGGER_EXTERNALERRORHANDLER_HPP
@@ -213,7 +244,7 @@ public:
    * @param enable Enable the feature if true, disable it otherwise.
    * @note Disabled by default.
    */
-  void enableStderrPipe( bool enable );
+  void enableStderrPipeDeviation( bool enable );
 
   /**
    * @brief Process all awaiting captured errors that were produced externally, then clear the error stream.

@@ -231,7 +231,7 @@ ExternalErrorHandler::ExternalErrorHandler():
 
 ExternalErrorHandler::~ExternalErrorHandler()
 {
-  enableStderrPipe( false );
+  enableStderrPipeDeviation( false );
 }
 
 ExternalErrorHandler & ExternalErrorHandler::instance()
@@ -240,7 +240,7 @@ ExternalErrorHandler & ExternalErrorHandler::instance()
   return instance;
 }
 
-void ExternalErrorHandler::enableStderrPipe( bool enable )
+void ExternalErrorHandler::enableStderrPipeDeviation( bool enable )
 {
   if( enable && !m_stderrDeviation )
   {

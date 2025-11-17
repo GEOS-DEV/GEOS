@@ -111,7 +111,7 @@ void setupLogger()
 
       // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
     } );
-    ExternalErrorHandler::instance().enableStderrPipe( true );
+    ExternalErrorHandler::instance().enableStderrPipeDeviation( true );
 
     ///// set signal handling behaviour /////
     LvArray::system::setSignalHandling( []( int const signal )
