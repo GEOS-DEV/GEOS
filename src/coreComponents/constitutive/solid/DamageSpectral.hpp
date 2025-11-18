@@ -25,7 +25,7 @@
 #include "DamageSpectralUtilities.hpp"
 #include "PropertyConversions.hpp"
 #include "SolidBase.hpp"
-#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 
 #define QUADRATIC_DISSIPATION 0
 
@@ -59,7 +59,7 @@ public:
                                   std::forward< PARAMS >( baseParams )... )
   {}
 
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // could maybe optimize, but general for now
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic; // could maybe optimize, but general for now
 
   using DamageUpdates< UPDATE_BASE >::smallStrainUpdate;
   using DamageUpdates< UPDATE_BASE >::saveConvergedState;
