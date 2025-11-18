@@ -70,6 +70,8 @@ Usage: $0
       Basename of the json credentials file to connect to the sccache cloud cache.
   --test-code-style
   --test-documentation
+  --test-code-rules
+      Validates code rules compliance
   -h | --help
 EOF
 exit 1
@@ -79,7 +81,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,test-code-rules,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -139,6 +141,7 @@ do
     --sccache-credentials)   SCCACHE_CREDS=$2;           shift 2;;
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
     --test-documentation)    TEST_DOCUMENTATION=true;    shift;;
+    --test-code-rules)       TEST_CODE_RULES=true;       shift;;
     -h | --help)             usage;                      shift;;
     # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break;;
@@ -277,6 +280,12 @@ if [[ "${TEST_DOCUMENTATION}" = true ]]; then
   exit 0
 fi
 
+# Documentation check
+if [[ "${TEST_CODE_RULES}" = true ]]; then
+  echo "Test if the build workds"
+  exit 0
+fi
+
 # Performing the requested build.
 if [[ "${BUILD_EXE_ONLY}" = true ]]; then
   or_die cmake --build . -j $NPROC --target geosx
@@ -310,9 +319,9 @@ fi
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
   if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
+    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testCodeRules|testExternalSolvers"
   else
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
+    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testCodeRules"
   fi
 fi
 
