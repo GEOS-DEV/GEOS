@@ -270,7 +270,6 @@ jobs:
       DOCKER_RUN_ARGS: "--cpus=32 --memory=384g -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
       DOCKER_CERTS_DIR: "/usr/local/share/ca-certificates"
       DOCKER_CERTS_UPDATE_COMMAND: "update-ca-certificates"
-      REQUIRED_LABEL: "ci: run integrated tests"
       LOCAL_BASELINE_DIR: /data/GEOS/baselines
       HOST_CONFIG: /spack-generated.cmake
 
