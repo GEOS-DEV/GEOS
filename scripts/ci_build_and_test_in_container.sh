@@ -96,6 +96,7 @@ RUN_INTEGRATED_TESTS=false
 UPLOAD_TEST_BASELINES=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
+TEST_CODE_RULES=false
 ENABLE_TRILINOS=OFF
 CODE_COVERAGE=false
 NPROC="$(nproc)"
@@ -320,9 +321,9 @@ fi
 # Run the unit tests (excluding previously ran checks).
 if [[ "${RUN_UNIT_TESTS}" = true ]]; then
   if [ ${HOSTNAME} == 'streak.llnl.gov' ] || [ ${HOSTNAME} == 'streak2.llnl.gov' ]; then
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testCodeRules|testExternalSolvers"
+    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testExternalSolvers"
   else
-    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck|testCodeRules"
+    or_die ctest --output-on-failure -E "testUncrustifyCheck|testDoxygenCheck"
   fi
 fi
 
