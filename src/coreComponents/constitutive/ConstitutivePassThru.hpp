@@ -316,8 +316,9 @@ struct ConstitutivePassThru< PorousSolidBase >
                                  PorousSolid< ElasticIsotropic, CarmanKozenyPermeability >,
                                  PorousSolid< ElasticTransverseIsotropic, CarmanKozenyPermeability >,
                                  PorousSolid< ElasticIsotropicPressureDependent, CarmanKozenyPermeability >,
-                                 PorousSolid< ElasticOrthotropic, CarmanKozenyPermeability > >::execute( constitutiveRelation,
-                                                                                                         std::forward< LAMBDA >( lambda ) );
+                                 PorousSolid< ElasticOrthotropic, CarmanKozenyPermeability >,
+                                 PorousSolid< ElasticIsotropic, PressurePermeability > >::execute( constitutiveRelation,
+                                                                                                   std::forward< LAMBDA >( lambda ) );
   }
 };
 
@@ -434,6 +435,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ElasticTransverseIsotropic, CarmanKozenyPermeability >,
                                  PorousSolid< ElasticIsotropicPressureDependent, CarmanKozenyPermeability >,
                                  PorousSolid< ElasticOrthotropic, CarmanKozenyPermeability >,
+                                 PorousSolid< ElasticIsotropic, PressurePermeability >,
                                  PorousDamageSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousDamageSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousDamageSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
@@ -472,6 +474,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ElasticTransverseIsotropic, CarmanKozenyPermeability >,
                                  PorousSolid< ElasticIsotropicPressureDependent, CarmanKozenyPermeability >,
                                  PorousSolid< ElasticOrthotropic, CarmanKozenyPermeability >,
+                                 PorousSolid< ElasticIsotropic, PressurePermeability >,
                                  PorousDamageSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousDamageSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousDamageSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,

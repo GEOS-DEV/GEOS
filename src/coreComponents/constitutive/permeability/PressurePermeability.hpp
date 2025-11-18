@@ -83,7 +83,7 @@ public:
   {
     GEOS_UNUSED_VAR( q, porosity );
 
-    real64 const deltaPressure = (m_explicitFlag)? (pressure_n - m_referencePressure[k]):(pressure - m_referencePressure[k]);
+    real64 deltaPressure = (m_explicitFlag)? (pressure_n - m_referencePressure[k]):(pressure - m_referencePressure[k]);
 
     real64 referencePermeability[3];
 
@@ -109,7 +109,12 @@ public:
 
             if( m_maxPermeability < 1.0 )
             {
-              real64 const perm = m_permeability[k][0][i]; 
+              real64 perm = m_permeability[k][0][i]; 
+
+              if ( perm < referencePermeability[i] )
+              {
+                perm = referencePermeability[i];
+              }
               m_permeability[k][0][i] = (perm > m_maxPermeability)? m_maxPermeability:perm; 
             }
           }
@@ -131,6 +136,13 @@ public:
           for( localIndex i=0; i < m_permeability[k][0].size(); i++ )
           {
             m_dPerm_dPressure[k][0][i] = 0.0; 
+
+            real64 const perm = m_permeability[k][0][i]; 
+
+            if ( perm < referencePermeability[i] )
+            {
+              m_permeability[k][0][i] = referencePermeability[i];
+            }
           }
         }
         break;
