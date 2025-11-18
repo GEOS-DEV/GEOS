@@ -56,7 +56,12 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
   m_fractureSofteningExponent( 1.0 ),
   m_fractureStress( 0.0 ),
   m_initialTemperature(),
-  m_Q( 0.0 ),
+  m_QDev( 0.0 ),
+  m_QVol( 0.0 ),
+  m_phiEqAlpha( 0.0 ),
+  m_phiEqBeta( 0.0 ),
+  m_creepH( 0.0 ),
+  m_creepI( 0.0 ),
   m_brittleDuctileTransition( 0.0 ),
   m_damageEvolutionCriterion( 0 ),
   m_cr( 0.0 ),
@@ -206,13 +211,33 @@ Geomechanics::Geomechanics( string const & name, Group * const parent ):
     setDescription( "Fracture stress" );
 
   registerWrapper( viewKeyStruct::initialTemperatureString(), &m_initialTemperature ).
-    //setApplyDefaultValue( 300.0 ).
+    setApplyDefaultValue( 300.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "initial Temperature" );
 
-  registerWrapper( viewKeyStruct::QString(), &m_Q ).
+  registerWrapper( viewKeyStruct::QDevString(), &m_QDev ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "activation energy" );
+    setDescription( "triaxial activation energy" );
+
+  registerWrapper( viewKeyStruct::QVolString(), &m_QVol ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "hydrostatic activation energy" );
+
+  registerWrapper( viewKeyStruct::phiEqAlphaString(), &m_phiEqAlpha ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "equilibrium porosity curve fitting parameter 1" );
+
+  registerWrapper( viewKeyStruct::phiEqBetaString(), &m_phiEqBeta ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "equilibrium porosity curve fitting parameter 2" );
+
+  registerWrapper( viewKeyStruct::creepHString(), &m_creepH ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "temperature dependence for equilibrium strain" );
+
+  registerWrapper( viewKeyStruct::creepIString(), &m_creepI ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "temperature dependence for equilibrium strain" );
 
   registerWrapper( viewKeyStruct::damageEvolutionCriterionString(), &m_damageEvolutionCriterion ).
     setInputFlag( InputFlags::OPTIONAL ).

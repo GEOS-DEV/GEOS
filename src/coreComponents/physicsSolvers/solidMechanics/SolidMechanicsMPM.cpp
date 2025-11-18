@@ -9066,6 +9066,7 @@ void SolidMechanicsMPM::interpolateFTable( real64 dt, real64 time_n )
     {
       m_domainL[i] = Fii_dot[i] / Fii_new[i]; // L = Fdot.Finv
       m_domainF[i] = Fii_new[i]; // L = Fdot.Finv
+      std::cout<<"Fii_new["<<i<<"] = "<<Fii_new[i]<<", m_domainF["<<i<<"] = "<<m_domainF[i]<<std::endl;
     }
   }
 }
