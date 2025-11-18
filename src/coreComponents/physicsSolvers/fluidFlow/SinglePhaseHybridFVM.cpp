@@ -96,7 +96,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
   GEOS_THROW_IF( m_isThermal,
                  GEOS_FMT( "{} {}: The thermal option is not supported by SinglePhaseHybridFVM",
                            getCatalogName(), getDataContext().toString() ),
-                 InputError );
+                 InputError, getDataContext() );
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -105,7 +105,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
   GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
                  getCatalogName() << " " << getDataContext() <<
                  ": the HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
-                 InputError );
+                 InputError, getDataContext() );
 }
 
 void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
