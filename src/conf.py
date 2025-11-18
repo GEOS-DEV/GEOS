@@ -259,10 +259,16 @@ latex_elements['preamble'] = '\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\us
 #####################################################
 # add LaTeX macros
 
-f = open('docs/sphinx/latex_macros.sty')
+f = open('/g/g11/malenda1/GEOS/src/docs/sphinx/latex_macros.sty')
 imgmath_latex_preamble = ""
-imgmath_image_format = 'svg'
+#imgmath_image_format = 'svg'
+#imgmath_latex_preamble = ""
+#do not merge the following change
+#imgmath_image_format = 'svg'
+imgmath_image_format = 'png'
 imgmath_font_size = 14
+
+
 
 for macro in f:
     # used when building latex and pdf versions
