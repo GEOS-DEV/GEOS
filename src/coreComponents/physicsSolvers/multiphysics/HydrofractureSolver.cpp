@@ -920,7 +920,7 @@ assembleForceResidualDerivativeWrtPressureAndTemperature( DomainPartition & doma
 
           real64 const thermalStress = ( thermalStress0 + thermalStress1 )/2.;
 
-          nodalForceMag -= thermalStress;
+          nodalForceMag -= thermalStress * Ja;
         }
 
         real64 nodalForce[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( Nbar );

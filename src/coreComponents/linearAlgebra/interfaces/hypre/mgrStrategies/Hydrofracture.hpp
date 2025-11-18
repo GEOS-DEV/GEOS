@@ -53,9 +53,10 @@ public:
    * @brief Constructor.
    */
   explicit Hydrofracture( arrayView1d< int const > const & )
-    : MGRStrategyBase( 4 )
+    : MGRStrategyBase( 5 )
   {
     m_labels[0].push_back( 3 );
+    m_labels[0].push_back( 4 );
 
     setupLabels();
 
@@ -84,7 +85,8 @@ public:
     setMechanicsFSolver( precond, mgrData, mgrParams.separateComponents );
 
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
-    setPressureAMG( mgrData.coarseSolver );
+    // setPressureAMG( mgrData.coarseSolver );
+    setPressureTemperatureAMG( mgrData.coarseSolver );
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMinCoarseSize( mgrData.coarseSolver.ptr, 1000 ) );
   }
 };

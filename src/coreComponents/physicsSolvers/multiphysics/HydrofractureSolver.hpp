@@ -42,6 +42,7 @@ public:
   using Base::m_rhs;
   using Base::m_solution;
   using Base::m_linearSolverParameters;
+  using Base::m_isThermal;
 
   using Base::registerWrapper;
   using Base::forDiscretizationOnMeshTargets;
@@ -134,9 +135,9 @@ public:
 
   void updateHydraulicApertureAndFracturePermeability( DomainPartition & domain );
 
-  void assembleForceResidualDerivativeWrtPressure( DomainPartition & domain,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs );
+  void assembleForceResidualDerivativeWrtPressureAndTemperature( DomainPartition & domain,
+                                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                 arrayView1d< real64 > const & localRhs );
 
   void assembleFluidMassResidualDerivativeWrtDisplacement( DomainPartition const & domain,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix );
