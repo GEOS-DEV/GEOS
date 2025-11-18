@@ -696,11 +696,11 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Threshold to treat relatively thin ( compared to grid spacing ) damaged material to avoid spurious slip surfaces" );
 
-  registerWrapper( "useDamageAsSurfaceFlag", &m_useDamageAsSurfaceFlag ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Indicates whether particle damage at the beginning of the simulation should be interpreted as a surface flag" );
+  // registerWrapper( "useDamageAsSurfaceFlag", &m_useDamageAsSurfaceFlag ).
+  //   setInputFlag( InputFlags::OPTIONAL ).
+  //   setApplyDefaultValue( 0 ).
+  //   setRestartFlags( RestartFlags::NO_WRITE ).
+  //   setDescription( "Indicates whether particle damage at the beginning of the simulation should be interpreted as a surface flag" );
 
   registerWrapper( "FSubcycles", &m_FSubcycles ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -5945,31 +5945,31 @@ real64 SolidMechanicsMPM::inverseKernel( const real64 & d ) // value of kernel f
     return x*m_neighborRadius;
 }
 
-void SolidMechanicsMPM::updateSurfaceFlagOverload( ParticleManager & particleManager )
-{
-  // Surface flags are overloaded so we can visualize surfaces and damage features simultaneously
-  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
-  {
-    arrayView1d< int > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
-    arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
-    SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
-    {
-      localIndex const p = activeParticleIndices[pp];
-      if( particleSurfaceFlag[p] < 2 )
-      {
-        if( particleDamage[p] > 0.0 ) // Activate damage field if any particles in domain have damage.
-        {
-          particleSurfaceFlag[p] = 1;
-        }
-        else
-        {
-          particleSurfaceFlag[p] = 0;
-        }
-      }
-    } );
-  } );
-}
+// void SolidMechanicsMPM::updateSurfaceFlagOverload( ParticleManager & particleManager )
+// {
+//   // Surface flags are overloaded so we can visualize surfaces and damage features simultaneously
+//   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+//   {
+//     arrayView1d< int > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
+//     arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
+//     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+//     forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+//     {
+//       localIndex const p = activeParticleIndices[pp];
+//       if( particleSurfaceFlag[p] < 2 )
+//       {
+//         if( particleDamage[p] > 0.0 ) // Activate damage field if any particles in domain have damage.
+//         {
+//           particleSurfaceFlag[p] = 1;
+//         }
+//         else
+//         {
+//           particleSurfaceFlag[p] = 0;
+//         }
+//       }
+//     } );
+//   } );
+// }
 
 void SolidMechanicsMPM::projectDamageFieldGradientToGrid( DomainPartition & domain, 
                                                           ParticleManager & particleManager,

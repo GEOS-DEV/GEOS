@@ -886,7 +886,7 @@ protected:
 
   real64 m_thinFeatureDFGThreshold;
 
-  int m_useDamageAsSurfaceFlag;
+  // int m_useDamageAsSurfaceFlag;
 
   int m_FSubcycles;
   int m_LBar;

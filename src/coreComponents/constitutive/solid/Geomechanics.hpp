@@ -1237,7 +1237,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
       real64 dphidt = -1.0*creepRateTemperatureMultiplier*std::pow( p / m_creepG ,compactionRatePressureExponent)*m_creepC*( phi_p - phi_e );  // creep compaction rate:
       real64 phi_c = std::max( phi_e, phi_p + dphidt*dt ); // unloaded porosity after creep, don't let it go below equilibrium level
       real64 evp_c = log( (phi_i - 1. ) / ( phi_c - 1. ) ); // vol. strain after creep.
-      evp_c = std::max( evp_c, - m_p3 ); // don't let porosity go negative.
+      evp_c = std::max( evp_c, -0.99999999*m_p3 ); // don't let porosity go negative.
       real64 devp = evp_c - evp;  // creep vol. strain increment
 
       real64 p_c;  // pressure after relaxation.
