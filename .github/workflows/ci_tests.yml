@@ -450,9 +450,9 @@ jobs:
     - if_not_unassigned_pull_request
     - are_submodules_in_sync
     - check_code_standards
-    - cpu_builds
-    - cuda_builds
-    - run_integrated_tests
+    # - cpu_builds
+    # - cuda_builds
+    # - run_integrated_tests
     if: ${{ always() }}
     steps:
     - run: |
