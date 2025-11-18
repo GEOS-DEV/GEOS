@@ -76,7 +76,6 @@ if read_the_docs_build:
     from subprocess import call
     call(['doxygen', doxyfile_dst])
 
-
 # -- Project information -----------------------------------------------------
 
 project = u'GEOSX'
@@ -87,7 +86,6 @@ author = u'GEOSX Contributors'
 version = u''
 # The full version, including alpha/beta/rc tags
 release = u''
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -149,7 +147,6 @@ todo_include_todos = True
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-
 # -- Theme options ----------------------------------------------
 extensions += [
     'sphinx_rtd_theme',
@@ -162,7 +159,6 @@ html_theme_options = {
     'navigation_depth': -1,
     'collapse_navigation': False
 }
-
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
@@ -190,11 +186,9 @@ html_css_files = [
     'theme_overrides.css',
 ]
 
-
 # -- Options for HTMLHelp output ---------------------------------------------
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'GEOSXdoc'
-
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -224,7 +218,6 @@ latex_documents = [
      u'Randolph Settgast', 'manual'),
 ]
 
-
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
@@ -233,7 +226,6 @@ man_pages = [
     (master_doc, 'geosx', u'GEOSX Documentation',
      [author], 1)
 ]
-
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -246,7 +238,6 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-
 # -- Extension configuration -------------------------------------------------
 
 # Added to allow figure numbering
@@ -255,14 +246,18 @@ numfig = True
 # Additional stuff for the LaTeX preamble.
 latex_elements['preamble'] = '\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage[retainorgcmds]{IEEEtrantools}\n'
 
-
 #####################################################
 # add LaTeX macros
 
-f = open('docs/sphinx/latex_macros.sty')
+f = open('/g/g11/malenda1/GEOS/src/docs/sphinx/latex_macros.sty')
 imgmath_latex_preamble = ""
-imgmath_image_format = 'svg'
+#imgmath_image_format = 'svg'
+#imgmath_latex_preamble = ""
+#do not merge the following change
+#imgmath_image_format = 'svg'
+imgmath_image_format = 'png'
 imgmath_font_size = 14
+
 
 for macro in f:
     # used when building latex and pdf versions
