@@ -2,6 +2,7 @@
 
 echo "Test code rules"
 eval pwd
+eval ls
 FILE_PATTERNS=(
           "src/coreComponents/codingUtilities/*"
           "src/coreComponents/dataRepository/*"
