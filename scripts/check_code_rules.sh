@@ -101,7 +101,7 @@ if (($MAP_VIOLATIONS_FOUND == 1)) || (($UMAP_VIOLATIONS_FOUND == 1 )); then
       echo "$element";
   done
 
-  if((MAP_VIOLATIONS_FOUND == 1 ));then
+  if((VECTOR_VIOLATIONS_FOUND == 1 ));then
     echo $'\nERROR: Forbidden std::vector usage detected'
     echo "==============================================="
   fi
