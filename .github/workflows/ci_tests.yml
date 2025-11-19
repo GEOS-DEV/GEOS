@@ -150,7 +150,8 @@ jobs:
         lfs: false
         fetch-depth: 0
         sparse-checkout: |
-          scripts
+          scripts 
+          src
     - name: Check the code rules
       run: "scripts/check_code_rules.sh"
 
