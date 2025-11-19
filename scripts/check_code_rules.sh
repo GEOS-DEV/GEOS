@@ -49,6 +49,7 @@ for file in $FILES; do
     grep -n "std::map\s*<" "$file" | while read line; do
     STR1+="   Line: $line"
     ARRAY+="$STR"
+    echo "$STR1"
     done
     VIOLATIONS_FOUND=1
   fi
