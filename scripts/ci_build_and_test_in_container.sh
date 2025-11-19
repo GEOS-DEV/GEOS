@@ -313,7 +313,7 @@ if [[ "${TEST_CODE_RULES}" = true ]]; then
       FIND_CMD="$FIND_CMD -path '$pattern' -o"
     done
     FIND_CMD="${FIND_CMD% -o}"
-
+    echo "FIND_CMD ${FIND_CMD} " 
     VIOLATIONS_FOUND=0
 
     FILES=$(eval "$FIND_CMD" 2>/dev/null || echo "");
@@ -330,7 +330,7 @@ if [[ "${TEST_CODE_RULES}" = true ]]; then
       if [ $SKIP -eq 1 ]; then
         continue
       fi
-      
+      echo "file ${file} " 
       if grep -n "std::map\s*<" "$file" ; then
         echo "Found forbidden std::map usage in: $file"
         grep -n "std::map\s*<" "$file" | while read line; do
