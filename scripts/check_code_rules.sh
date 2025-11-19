@@ -2,8 +2,7 @@
 
 echo "Test code rules"
 eval pwd
-eval ls
-eval ls ../
+eval ls src/
 FILE_PATTERNS=(
           "src/coreComponents/codingUtilities/*"
           "src/coreComponents/dataRepository/*"
@@ -26,7 +25,7 @@ FILE_PATTERNS=(
       )
 FIND_CMD="find"
 for pattern in "${FILE_PATTERNS[@]}"; do
-  FILE_PATH_PATERN+=${GEOS_BUILD_DIR}/${pattern}" "
+  FILE_PATH_PATERN+=${pattern}" "
 done
 FIND_CMD="$FIND_CMD $FILE_PATH_PATERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
 echo "FIND_CMD ${FIND_CMD} " 
