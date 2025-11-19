@@ -313,7 +313,7 @@ if [[ "${TEST_CODE_RULES}" = true ]]; then
   FIND_CMD="find"
   for pattern in "${FILE_PATTERNS[@]}"; do
     FILE_PATH_PATERN=${GEOS_BUILD_DIR}/${pattern}
-    FIND_CMD="$FIND_CMD $FILE_PATH_PATERN  -regex ".*\\(cpp\|hpp\)"
+    FIND_CMD="$FIND_CMD $FILE_PATH_PATERN"' -regex ".*\.(cpp|hpp)" -o'
   done
   FIND_CMD="${FIND_CMD% -o}"
 
