@@ -68,6 +68,7 @@ for file in $FILES; do
     UMAP_VIOLATIONS_FOUND=1
   fi
   if grep -q "std::vector\s*<" "$file" ; then
+    echo $file 
     STR_VECTOR="  Found forbidden std::vector usage in: $file"$'\n'
     while IFS= read -r line; do
       STR_VECTOR+="    $line"$'\n'
