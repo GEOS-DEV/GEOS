@@ -151,8 +151,8 @@ jobs:
         fetch-depth: 0
         sparse-checkout: |
           scripts
-    - name: Check that the baseline logs are modified if rebaselines are detected
-      run: "scripts/check_baseline_log.sh"
+    - name: Check the code rules
+      run: "scripts/check_code_rules.sh"
 
   # Matrix containing all the CPU build.
   # Those are quite fast and can efficiently benefit from the `sccache' tool to make them even faster.
