@@ -308,6 +308,7 @@ if [[ "${TEST_CODE_RULES}" = true ]]; then
         )
 
   echo "Test if the build works"
+  eval pwd
     FIND_CMD="find"
     for pattern in "${FILE_PATTERNS[@]}"; do
       FIND_CMD="$FIND_CMD -path '$pattern' -o"
