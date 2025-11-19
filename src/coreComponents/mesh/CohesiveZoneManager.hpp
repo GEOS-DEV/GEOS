@@ -268,6 +268,9 @@ public:
         }
     }
 
+    // Perform MPI sync of cohesive zone regions
+    void syncCohesiveZones();
+
 private:
 
   /**

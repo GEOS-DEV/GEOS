@@ -85,13 +85,70 @@ public:
    */
   ///@{
 
-//   /**
-//    * @brief Get the name of the constitutive in the particle region.
-//    * @tparam CONSTITUTIVE_TYPE the type of the constitutive model
-//    * @return the string_array of the constitutive names
-//    */
-//   template< typename CONSTITUTIVE_TYPE >
-//   string_array getConstitutiveNames() const;
+  /**
+   * @brief Get the global ID of each cohesive zone node.
+   * @return an arrayView1d of const node global ID
+   */
+  arrayView1d< globalIndex const > getGlobalID() const
+  { return m_globalID; }
+
+  /**
+   * @copydoc getGlobalID() const
+   */
+  arrayView1d< globalIndex > getGlobalID()
+  { return m_globalID; }
+
+  /**
+   * @brief Get the reference partitioning surface normal of each cohesive zone node.
+   * @return an arrayView2d of const node reference partitioning surface normal
+   */
+  arrayView2d< real64 const > getReferencePartitioningSurfaceNormal() const
+  { return m_referencePartitioningSurfaceNormal; }
+
+  /**
+   * @copydoc getReferencePartitioningSurfaceNormal() const
+   */
+  arrayView2d< real64 > getReferencePartitioningSurfaceNormal()
+  { return m_referencePartitioningSurfaceNormal; }
+
+  /**
+   * @brief Get the reference surface normal of each cohesive zone node.
+   * @return an arrayView2d of const node reference surface normal
+   */
+  arrayView3d< real64 const > getReferenceSurfaceNormal() const
+  { return m_referenceSurfaceNormal; }
+
+  /**
+   * @copydoc getReferenceSurfaceNormal() const
+   */
+  arrayView3d< real64 > getReferenceSurfaceNormal()
+  { return m_referenceSurfaceNormal; }
+
+  /**
+   * @brief Get the reference area of each cohesive zone node.
+   * @return an arrayView2d of const node reference area
+   */
+  arrayView2d< real64 const > getReferenceArea() const
+  { return m_referenceArea; }
+
+  /**
+   * @copydoc getReferencePosition() const
+   */
+  arrayView2d< real64 > getReferenceArea()
+  { return m_referenceArea; }
+
+  /**
+   * @brief Get the reference position of each cohesive zone node.
+   * @return an arrayView2d of const node reference position
+   */
+  arrayView2d< real64 const > getReferencePosition() const
+  { return m_referencePosition; }
+
+  /**
+   * @copydoc getReferencePosition() const
+   */
+  arrayView2d< real64 > getReferencePosition()
+  { return m_referencePosition; }
 
   ///@}
 
@@ -101,47 +158,33 @@ public:
    */
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
-    /// @return String key for the particle subregions
-    // static constexpr char const * particleSubRegions() { return "particleSubRegions"; }
+    /// @return String key for the member level field for the cohesive zone node global ID.
+    static constexpr char const * globalIDString() { return "globalID"; }
+
+    /// @return String key for the member level field for the cohesive zone node reference partitioning surface normals.
+    static constexpr char const * referencePartitioningSurfaceNormalString() { return "referencePartitioningSurfaceNormal"; }
+
+    /// @return String key for the member level field for the cohesive zone node reference surface normals.
+    static constexpr char const * referenceSurfaceNormalString() { return "referenceSurfaceNormal"; }
+
+    /// @return String key for the member level field for the cohesive zone node reference areas.
+    static constexpr char const * referenceAreaString() { return "referenceArea"; }
+
+    /// @return String key for the member level field for the cohesive zone node reference position.
+    static constexpr char const * referencePositionString() { return "referencePosition"; }
   };
 
 private:
 
   CohesiveZoneRegionBase & operator=( const CohesiveZoneRegionBase & rhs );
 
-  /// List of materials for the particle region
-  string_array m_materialList;
-
-  /// Name of the mesh body that contains this region
-  string m_meshBody;
+  array1d< globalIndex > m_globalID;
+  array2d< real64 > m_referencePartitioningSurfaceNormal;
+  array3d< real64 > m_referenceSurfaceNormal;
+  array2d< real64 > m_referenceArea;
+  array2d< real64 > m_referencePosition;
 
 };
-
-
-
-///////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////
-
-
-// /**
-//  * @brief Get the names of all constitutive models of a specific type
-//  *
-//  * @tparam CONSTITUTIVE_TYPE type of constitutive model
-//  * return string array with the names of the constitutive models
-//  */
-// template< typename CONSTITUTIVE_TYPE >
-// string_array CohesiveZoneRegionBase::getConstitutiveNames() const
-// {
-//   string_array rval;
-//   for( string const & matName : m_materialList )
-//   {
-//     if( this->getRegion( 0 ).getConstitutiveModels().hasGroup< CONSTITUTIVE_TYPE >( matName ) )
-//     {
-//       rval.emplace_back( matName );
-//     }
-//   }
-//   return rval;
-// }
 
 }
 

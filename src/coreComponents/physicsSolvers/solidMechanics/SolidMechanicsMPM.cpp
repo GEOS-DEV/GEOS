@@ -8408,9 +8408,10 @@ void SolidMechanicsMPM::computeDistanceToCrackTip( ParticleManager & particleMan
                                             particleIndices,
                                             particleVolumeView,
                                             particlePositionView,
-                                            [=]( localIndex regionIndex, localIndex subRegionIndex, localIndex particleIndex ){
-          return particleDamageGradientView[regionIndex][subRegionIndex][particleIndex][0];
-        },
+                                            [=]( localIndex regionIndex, localIndex subRegionIndex, localIndex particleIndex )
+                                            {
+                                                 return particleDamageGradientView[regionIndex][subRegionIndex][particleIndex][0];
+                                            },
                                             grad );
           damageFieldHessianTermL2NormSquared += (scaleFactor * grad[0] - 1.0)*(scaleFactor * grad[0] - 1.0); // [0][0]
           damageFieldHessianTermL2NormSquared += (scaleFactor * grad[1] * scaleFactor * grad[1]);             // [0][1]
@@ -9213,6 +9214,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
                                                                   NodeManager & nodeManager,
                                                                   MeshLevel & mesh )
 {
+  // Copy member variables to local ones for kernels
   real64 const smallMass = m_smallMass;
   int const damageFieldPartitioning = m_damageFieldPartitioning;
   integer const numSurfaceIntegrationPoints = m_numSurfaceIntegrationPoints;
@@ -9231,10 +9233,12 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
   real64 xGlobalMax[3] = {};
   LvArray::tensorOps::copy< 3 >( xGlobalMax, m_xGlobalMax );
 
+  // Grid fields
   arrayView2d< real64 > const gridMass = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridMassString() );
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
   arrayView2d< real64 const > const gridExplicitSurfaceNormal = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::gridExplicitSurfaceNormalString() );
 
+  // Map particle mass to grid
   localIndex subRegionIndex = 0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -9296,6 +9300,9 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
 
   localIndex const numNodes = nodeManager.size();
   arrayView1d< globalIndex > localToGlobalMap = nodeManager.localToGlobalMap();
+  // Currently only possible on host
+  // Would need to precompute the number of cohesive nodes, allocate array and then populate it in two separate kernels
+  // Even then there would be a race condition adding global indices to array. Some sort of atomics would be required
   forAll< serialPolicy >( numNodes, [=, &interfaceGridNodes] GEOS_HOST ( localIndex const g )
     {
       for( localIndex A = 0; A < numVelocityFields - 1; ++A )
@@ -9312,7 +9319,9 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
       }
     } );
 
-  // Collect all the nodes that belong to cohesive interfaces and distribute them to all the processes for mapping particles to
+  localIndex numLocalCohesiveGrideNodes = interfaceGridNodes.size();
+
+  // Collect all the local nodes that belong to cohesive interfaces and distribute them to all the processes for mapping particles to
   // reference grid when particle advection triggers repartitioning
   array1d< int > dataSizes( MpiWrapper::commSize() );
   MpiWrapper::allGather( LvArray::integerConversion< int >( interfaceGridNodes.size() ), dataSizes, MPI_COMM_GEOS );
@@ -9327,58 +9336,27 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
   std::partial_sum( dataSizes.begin(), dataSizes.end() - 1, displacements.begin() + 1 );
   MpiWrapper::allgatherv( interfaceGridNodes.data(), interfaceGridNodes.size(), allData.data(), dataSizes.data(), displacements.data(), MPI_COMM_GEOS );
 
-  // Sort the grid indices and move any duplicates to the end.
+  // Sort the global grid node indices and move any duplicates to the end.
   std::ptrdiff_t const numUniqueValues = LvArray::sortedArrayManipulation::makeSortedUnique( allData.begin(),
                                                                                              allData.end() );
-  // Move unique global grid node indices to member variable
+  // Move unique global grid node indices to member variable to store between time steps
   m_cohesiveNodeGlobalIndices.insert( allData.begin(), allData.begin() + numUniqueValues );
   
-    int numCohesiveNodes = m_cohesiveNodeGlobalIndices.size();
+  // The total number of cohesive grid nodes across all partitions
+  int numCohesiveNodes = m_cohesiveNodeGlobalIndices.size();
 
-  // Create new cohesive zone region
-  m_cohesiveZoneManager.addRegion( "cz1" ); // Hardcoded cohesive zone region name for now
-  m_cohesiveZoneManager.getRegion( "cz1" ).resize( numCohesiveNodes );
-  
-  // Copy reference positions of nodes and initialize state variables
-  m_cohesiveZoneManager.forCohesiveZoneRegions( [&]( CohesiveZoneRegion & czRegion )
-  {
-    arrayView1d< real64 > const globalID = czRegion.getGlobalID();
-    arrayView1d< real64 > const referencePartitioningSurfaceNormals = czRegion.getReferencePartitioningSurfaceNormal();
-    arrayView2d< real64 > const referencePosition = czRegion.getReferencePosition();
-    
-    arrayView1d< real64 > damage = czRegion.getDamage();
-
-    forAll< serialPolicy >( czRegion.size(), [=] GEOS_HOST ( localIndex const g )
-    {
-      globalIndex const mappedNode = localToGlobalMap[ g ];
-
-      if( m_cohesiveNodeGlobalIndices.contains( mappedNode ) )
-      {
-        // CC: TODO must be a better way to find index in temp arrays
-        localIndex nodeIndex = 0;
-        for( int n = 0; n < numCohesiveNodes; ++n )
-        {
-          if( m_cohesiveNodeGlobalIndices[n] == mappedNode )
-          {
-            nodeIndex = n;
-            break;
-          }
-        }
-
-      globalID[g] = m_cohesiveNodeGlobalIndices[g];
-      LvArray::tensorOps::copy< 3 >( referencePosition[g],  gridPosition[ [g]] );
-    } );
-  });
-
+  // Resize CZ reference arrays
   m_referenceCohesiveGridNodePositions.resize( numCohesiveNodes, 3 );
   m_referenceCohesiveGridNodePartitioningSurfaceNormals.resize( numCohesiveNodes, 3 );
 
+  // Get views of CZ reference arrays
   arrayView2d< real64 > const referenceCohesiveGridNodePositions = m_referenceCohesiveGridNodePositions;
   arrayView2d< real64 > const referenceCohesiveGridNodePartitioningSurfaceNormals = m_referenceCohesiveGridNodePartitioningSurfaceNormals;
 
-  array1d< int > localCohesiveGridNodes;
-
-  forAll< serialPolicy >( numNodes, [=, &localCohesiveGridNodes] GEOS_HOST ( localIndex const g )
+  // Keep track of the indices of each local cohesive node on this partition within the global array
+  array1d< int > localCohesiveGridNodes(numLocalCohesiveGrideNodes);
+  localIndex count = 0; 
+  forAll< serialPolicy >( numNodes, [=, &localCohesiveGridNodes, &count] GEOS_HOST ( localIndex const g )
     {
       globalIndex const mappedNode = localToGlobalMap[ g ];
 
@@ -9401,10 +9379,11 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
           referenceCohesiveGridNodePartitioningSurfaceNormals[nodeIndex][i] = gridExplicitSurfaceNormal[g][i];
         }
 
-        localCohesiveGridNodes.emplace_back( nodeIndex );
+        // Keep track of this ordering for the following sync
+        localCohesiveGridNodes[count++] = nodeIndex;
       }
 
-      for( localIndex fieldIndex = 0; fieldIndex < m_numVelocityFields; ++fieldIndex )
+      for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
         gridMass[g][fieldIndex] = 0.0;
       }
@@ -9416,11 +9395,11 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
 
   array1d< MPI_Request > mpiRequestIndices( numRanks );
   array1d< MPI_Request > mpiRequestPositions( numRanks );
-  array1d< MPI_Request > mpiRequestSurfaceNormals( numRanks );
+  array1d< MPI_Request > mpiRequestPartitioningSurfaceNormals( numRanks );
 
   array1d< MPI_Status > mpiStatusIndices( numRanks );
   array1d< MPI_Status > mpiStatusPositions( numRanks );
-  array1d< MPI_Status > mpiStatusSurfaceNormals( numRanks );
+  array1d< MPI_Status > mpiStatusPartitioningSurfaceNormals( numRanks );
 
   array1d< int > gridNodeIndices;
   if( rank != 0 )
@@ -9444,13 +9423,13 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
                        &mpiRequestPositions[rank] );
 
     // Send nodal positions
-    mpiRequestSurfaceNormals[rank] = MPI_REQUEST_NULL;
+    mpiRequestPartitioningSurfaceNormals[rank] = MPI_REQUEST_NULL;
     MpiWrapper::iSend( m_referenceCohesiveGridNodePartitioningSurfaceNormals.data(),
                        m_referenceCohesiveGridNodePartitioningSurfaceNormals.size(),
                        0,
                        1,
                        MPI_COMM_GEOS,
-                       &mpiRequestSurfaceNormals[rank] );
+                       &mpiRequestPartitioningSurfaceNormals[rank] );
   }
   else
   {
@@ -9471,19 +9450,21 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
                          MPI_COMM_GEOS,
                          &mpiRequestPositions[r] );
 
-      MpiWrapper::wait( &mpiRequestPositions[r], &mpiStatusPositions[r] );
+      MpiWrapper::wait( &mpiRequestPositions[r],
+                        &mpiStatusPositions[r] );
 
       // Send nodal surface normals
-      array2d< real64 > gridNodeSurfaceNormals( numCohesiveNodes, 3 );
-      mpiRequestSurfaceNormals[r] = MPI_REQUEST_NULL;
-      MpiWrapper::iRecv( gridNodeSurfaceNormals.data(),
-                         gridNodeSurfaceNormals.size(),
+      array2d< real64 > gridNodePartitioningSurfaceNormals( numCohesiveNodes, 3 );
+      mpiRequestPartitioningSurfaceNormals[r] = MPI_REQUEST_NULL;
+      MpiWrapper::iRecv( gridNodePartitioningSurfaceNormals.data(),
+                         gridNodePartitioningSurfaceNormals.size(),
                          r,
                          1,
                          MPI_COMM_GEOS,
-                         &mpiRequestSurfaceNormals[r] );
+                         &mpiRequestPartitioningSurfaceNormals[r] );
 
-      MpiWrapper::wait( &mpiRequestSurfaceNormals[r], &mpiStatusSurfaceNormals[r] );
+      MpiWrapper::wait( &mpiRequestPartitioningSurfaceNormals[r],
+                        &mpiStatusPartitioningSurfaceNormals[r] );
 
       // Combine grid positions
       for( int g = 0; g < gridNodeIndices.size(); ++g )
@@ -9491,7 +9472,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
         for( int k = 0; k < 3; ++k )
         {
           referenceCohesiveGridNodePositions[gridNodeIndices[g]][k] = gridNodePositions[gridNodeIndices[g]][k];
-          referenceCohesiveGridNodePartitioningSurfaceNormals[gridNodeIndices[g]][k] = gridNodeSurfaceNormals[gridNodeIndices[g]][k];
+          referenceCohesiveGridNodePartitioningSurfaceNormals[gridNodeIndices[g]][k] = gridNodePartitioningSurfaceNormals[gridNodeIndices[g]][k];
         }
       }
     }
@@ -9510,6 +9491,47 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
                      m_referenceCohesiveGridNodePartitioningSurfaceNormals.size(),
                      0,
                      MPI_COMM_GEOS );
+
+  // //================================ NEW CZ MANAGER ======================================================================================
+
+  // // Create new cohesive zone region and resize to fit global number of cohesive zone nodes
+  // m_cohesiveZoneManager.addRegion( "cz1" ); // Hardcoded cohesive zone region name for now, this should probably be set by the cohesive zone reference event
+  // m_cohesiveZoneManager.getRegion( "cz1" ).resize( numCohesiveNodes );
+  
+  // // Copy reference variables into cohesive zone manager (e.g. node global indices, partitioning surface normals, and reference node position)
+  // // Initialize state variables (e.g. damage = 0)
+  // m_cohesiveZoneManager.forCohesiveZoneRegions( [&]( CohesiveZoneRegion & czRegion )
+  // {
+  //   arrayView1d< real64 > const czGlobalID = czRegion.getGlobalID();
+  //   arrayView1d< real64 > const czReferencePartitioningSurfaceNormal = czRegion.getReferencePartitioningSurfaceNormal();
+  //   arrayView2d< real64 > const czReferencePosition = czRegion.getReferencePosition();
+  //   arrayView1d< real64 > const czDamage = czRegion.getDamage();
+
+  //   forAll< serialPolicy >( czRegion.size(), [=] GEOS_HOST ( localIndex const g )
+  //   {
+  //     globalIndex const mappedNode = localToGlobalMap[ g ];
+
+  //     if( m_cohesiveNodeGlobalIndices.contains( mappedNode ) )
+  //     {
+  //       // CC: TODO must be a better way to find index in temp arrays
+  //       localIndex nodeIndex = 0;
+  //       for( int n = 0; n < numCohesiveNodes; ++n )
+  //       {
+  //         if( m_cohesiveNodeGlobalIndices[n] == mappedNode )
+  //         {
+  //           nodeIndex = n;
+  //           break;
+  //         }
+  //       }
+
+  //       czGlobalID[g] = m_cohesiveNodeGlobalIndices[g];
+  //       LvArray::tensorOps::copy< 3 >( czReferencePosition[g],  gridPosition[nodeIndex] );
+  //       czDamage[g] = 0.0;
+  //     }
+  //   } );
+  // } );
+
+  // //================================ END NEW CZ MANAGER ======================================================================================
 
   // Using mapping back to particles to identify particles involved in cohesive zone calculations and precompute shape functions from
   // initial conditions

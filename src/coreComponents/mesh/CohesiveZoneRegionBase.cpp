@@ -24,10 +24,48 @@ using namespace dataRepository;
 
 
 CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * const parent ):
-  ObjectManagerBase( name, parent )
+  ObjectManagerBase( name, parent ),
+  m_globalID(),
+  m_referencePartitioningSurfaceNormal(),
+  m_referenceSurfaceNormal(),
+  m_referenceArea(),
+  m_referencePosition()
 {
 //   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
+ registerWrapper( viewKeyStruct::globalIDString(), &m_globalID ).
+    setInputFlag( InputFlags::FALSE ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Array of the global indices for cohesive grid nodes" );
+
+  registerWrapper( viewKeyStruct::referencePartitioningSurfaceNormalString(), &m_referencePartitioningSurfaceNormal ).
+    setInputFlag( InputFlags::FALSE ).
+    setPlotLevel( PlotLevel::NOPLOT ).  
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Reference partitioning surface normal for cohesive grid nodes" ).
+    reference().resizeDimension< 1 >( 3 );
+
+  registerWrapper( viewKeyStruct::referenceSurfaceNormalString(), &m_referenceSurfaceNormal ).
+    setInputFlag( InputFlags::FALSE ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Reference cohesive grid node surface normals" ).
+    reference().resizeDimension< 1, 2 >( 2, 3 );
+
+  registerWrapper( viewKeyStruct::referenceAreaString(), &m_referenceArea ).
+    setInputFlag( InputFlags::FALSE ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Reference cohesive grid node areas" ).
+    reference().resizeDimension< 1 >( 2 );;
+
+  registerWrapper( viewKeyStruct::referencePositionString(), &m_referencePosition ).
+    setInputFlag( InputFlags::FALSE ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Reference cohesive grid node positions" ).
+    reference().resizeDimension< 1 >( 3 );
 }
 
 

@@ -116,5 +116,105 @@ void CohesiveZoneManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   }
 }
 
+void CohesiveZoneManager::syncCohesiveZones()
+{
+  // this->forCohesiveZoneRegions< CohesiveZoneRegionBase >( [&]( CohesiveZoneRegionBase const & czRegion )
+  // {
+  //   arrayView1d< globalIndex > const czGlobalID = czRegion.getGloblaID();
+  //   arrayView2d< real64 > const czReferencePosition = czRegion.getReferencePosition();
+  //   arrayView3d< real64 > const czReferenceSurfaceNormal = czRegion.getReferenceSurfaceNormal();
+
+  //   // Sync initial grid positions with rank 0
+  //   int const numRanks = MpiWrapper::commSize();
+  //   int rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+
+  //   array1d< MPI_Request > mpiRequestIndices( numRanks );
+  //   array1d< MPI_Request > mpiRequestPositions( numRanks );
+  //   array1d< MPI_Request > mpiRequestSurfaceNormals( numRanks );
+
+  //   array1d< MPI_Status > mpiStatusIndices( numRanks );
+  //   array1d< MPI_Status > mpiStatusPositions( numRanks );
+  //   array1d< MPI_Status > mpiStatusSurfaceNormals( numRanks );
+
+  //   array1d< int > gridNodeIndices;
+  //   if( rank != 0 )
+  //   {
+  //     // Send list of indices to overwrite nodal positions
+  //     mpiRequestIndices[rank] = MPI_REQUEST_NULL;
+  //     MpiWrapper::iSend( localCohesiveGridNodes.data(),
+  //                        localCohesiveGridNodes.size(),
+  //                        0,
+  //                        0,
+  //                        MPI_COMM_GEOS,
+  //                        &mpiRequestIndices[rank] );
+
+  //     // Send nodal positions
+  //     mpiRequestPositions[rank] = MPI_REQUEST_NULL;
+  //     MpiWrapper::iSend( m_referenceCohesiveGridNodePositions.data(),
+  //                       m_referenceCohesiveGridNodePositions.size(),
+  //                       0,
+  //                       1,
+  //                       MPI_COMM_GEOS,
+  //                       &mpiRequestPositions[rank] );
+
+  //     // Send nodal positions
+  //     mpiRequestSurfaceNormals[rank] = MPI_REQUEST_NULL;
+  //     MpiWrapper::iSend( m_referenceCohesiveGridNodePartitioningSurfaceNormals.data(),
+  //                       m_referenceCohesiveGridNodePartitioningSurfaceNormals.size(),
+  //                       0,
+  //                       1,
+  //                       MPI_COMM_GEOS,
+  //                       &mpiRequestSurfaceNormals[rank] );
+  //   }
+  //   else
+  //   {
+  //     for( int r = 1; r < numRanks; r++ )
+  //     {
+  //       MpiWrapper::recv( gridNodeIndices,
+  //                         r,
+  //                         0,
+  //                         MPI_COMM_GEOS,
+  //                         &mpiStatusIndices[r] );
+
+  //       array2d< real64 > gridNodePositions( numCohesiveNodes, 3 );
+  //       mpiRequestPositions[r] = MPI_REQUEST_NULL;
+  //       MpiWrapper::iRecv( gridNodePositions.data(),
+  //                         gridNodePositions.size(),
+  //                         r,
+  //                         1,
+  //                         MPI_COMM_GEOS,
+  //                         &mpiRequestPositions[r] );
+
+  //       MpiWrapper::wait( &mpiRequestPositions[r], &mpiStatusPositions[r] );
+
+  //       // Send nodal surface normals
+  //       array2d< real64 > gridNodeSurfaceNormals( numCohesiveNodes, 3 );
+  //       mpiRequestSurfaceNormals[r] = MPI_REQUEST_NULL;
+  //       MpiWrapper::iRecv( gridNodeSurfaceNormals.data(),
+  //                         gridNodeSurfaceNormals.size(),
+  //                         r,
+  //                         1,
+  //                         MPI_COMM_GEOS,
+  //                         &mpiRequestSurfaceNormals[r] );
+
+  //       MpiWrapper::wait( &mpiRequestSurfaceNormals[r], &mpiStatusSurfaceNormals[r] );
+
+  //       // Combine grid positions
+  //       for( int g = 0; g < gridNodeIndices.size(); ++g )
+  //       {
+  //         for( int k = 0; k < 3; ++k )
+  //         {
+  //           referenceCohesiveGridNodePositions[gridNodeIndices[g]][k] = gridNodePositions[gridNodeIndices[g]][k];
+  //           // TODO: Check if we should be taking the max here for the partitioning surface normal?
+  //           referenceCohesiveGridNodePartitioningSurfaceNormals[gridNodeIndices[g]][k] = gridNodeSurfaceNormals[gridNodeIndices[g]][k];
+  //         }
+  //       }
+  //     }
+  //   }
+  // } );
+
+
+}
+
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CohesiveZoneManager, string const &, Group * const )
 }
