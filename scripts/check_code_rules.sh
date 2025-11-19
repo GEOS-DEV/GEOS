@@ -1,6 +1,5 @@
-#!/bin/bash
-  echo "Test if the build works"
-  eval pwd
+echo "Test if the build works"
+eval pwd
 
 if [[ "${TEST_CODE_RULES}" = true ]]; then
   echo "Test code rules"
