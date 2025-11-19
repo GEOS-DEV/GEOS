@@ -80,7 +80,7 @@ if (($MAP_VIOLATIONS_FOUND == 1)) || (($UMAP_VIOLATIONS_FOUND == 1 )); then
   echo "----------------------------------------"
 
   if((MAP_VIOLATIONS_FOUND == 1 ));then
-    echo $'ERROR: Forbidden std::map usage detected\n'
+    echo $'ERROR: Forbidden std::map usage detected'
     echo "=========================================="
   fi
 
@@ -90,7 +90,7 @@ if (($MAP_VIOLATIONS_FOUND == 1)) || (($UMAP_VIOLATIONS_FOUND == 1 )); then
   done
 
   if((UMAP_VIOLATIONS_FOUND == 1 ));then
-    echo $'\nERROR: Forbidden std::unordered_map usage detected\n'
+    echo $'\nERROR: Forbidden std::unordered_map usage detected'
     echo "======================================================"
   fi
 
@@ -100,7 +100,7 @@ if (($MAP_VIOLATIONS_FOUND == 1)) || (($UMAP_VIOLATIONS_FOUND == 1 )); then
   done
 
   if((MAP_VIOLATIONS_FOUND == 1 ));then
-    echo $'\nERROR: Forbidden std::vector usage detected\n'
+    echo $'\nERROR: Forbidden std::vector usage detected'
     echo "==============================================="
   fi
 
