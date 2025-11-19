@@ -48,6 +48,7 @@ for file in $FILES; do
     STR1="Found forbidden std::map usage in: $file"$'\n'
     grep -n "std::map\s*<" "$file" | while read line; do
     STR1+="   Line: $line"
+    echo "$STR1";
     ARRAY+="$STR1"
     done
     VIOLATIONS_FOUND=1
