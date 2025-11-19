@@ -34,20 +34,20 @@ RLFGraphColoring::~RLFGraphColoring()
 {}
 
 
-int RLFGraphColoring::colorGraph( const std::vector< camp::idx_t > & GEOS_UNUSED_PARAM( adjncy ))
+int RLFGraphColoring::colorGraph( const stdVector< camp::idx_t > & GEOS_UNUSED_PARAM( adjncy ))
 {
   return -1;
 }
 
 
-std::vector< int > RLFGraphColoring::colorGraph( const std::vector< camp::idx_t > & xadj, const std::vector< camp::idx_t > & adjncy )
+stdVector< int > RLFGraphColoring::colorGraph( const stdVector< camp::idx_t > & xadj, const stdVector< camp::idx_t > & adjncy )
 {
   return RecursiveLargestFirstColoring( xadj, adjncy );
 }
 
-std::vector< int > RLFGraphColoring::RecursiveLargestFirstColoring( const std::vector< camp::idx_t > & xadj, const std::vector< camp::idx_t > & adjncy )
+stdVector< int > RLFGraphColoring::RecursiveLargestFirstColoring( const stdVector< camp::idx_t > & xadj, const stdVector< camp::idx_t > & adjncy )
 {
-  std::vector< int > color( xadj.size() - 1, -1 );
+  stdVector< int > color( xadj.size() - 1, -1 );
   std::unordered_set< camp::idx_t > uncoloredNodes;
   for( size_t i = 0; i < (xadj.size() - 1); ++i )
   {
@@ -120,12 +120,12 @@ std::vector< int > RLFGraphColoring::RecursiveLargestFirstColoring( const std::v
   return color;
 }
 
-size_t RLFGraphColoring::getNumberOfColors( const std::vector< int > & colors ) const
+size_t RLFGraphColoring::getNumberOfColors( const stdVector< int > & colors ) const
 {
   return GraphColoringBase::getNumberOfColors( colors );
 }
 
-bool RLFGraphColoring::isColoringValid( const std::vector< camp::idx_t > & xadj, const std::vector< camp::idx_t > & adjncy, const std::vector< int > & colors ) const
+bool RLFGraphColoring::isColoringValid( const stdVector< camp::idx_t > & xadj, const stdVector< camp::idx_t > & adjncy, const stdVector< int > & colors ) const
 {
   return GraphColoringBase::isColoringValid( xadj, adjncy, colors );
 }

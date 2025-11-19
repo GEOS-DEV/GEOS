@@ -235,7 +235,7 @@ private:
   DomainPartition * m_domain = nullptr;
 
   /// Array of field descriptions
-  std::vector< FieldDescription > m_fields;
+  stdVector< FieldDescription > m_fields;
 
   /// Flag indicating that DOFs have been reordered rank-wise.
   bool m_reordered = false;

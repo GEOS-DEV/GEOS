@@ -177,7 +177,7 @@ void testPlugTopDownPerfCheck( CompositionalMultiphaseReservoirAndWells<> & solv
 {
   CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
 
-  typedef stdMap< real64, std::vector< int > > map_type;
+  typedef stdMap< real64, stdVector< int > > map_type;
   map_type refVal;
   refVal.insert( {29800.0, { 1, 1, 1, 1, 1}} );
   refVal.insert( {32400.0, { 1, 1, 1, 1, 0}} );
@@ -189,7 +189,7 @@ void testPlugTopDownPerfCheck( CompositionalMultiphaseReservoirAndWells<> & solv
   {
     perfFunction( it->first );
 
-    const std::vector< int > & refStatus = it->second;
+    const stdVector< int > & refStatus = it->second;
     wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                              MeshLevel & mesh,
                                                                              string_array const & regionNames )
@@ -219,7 +219,7 @@ void testPlugBottomUpPerfCheck( CompositionalMultiphaseReservoirAndWells<> & sol
 {
   CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
 
-  typedef stdMap< real64, std::vector< int > > map_type;
+  typedef stdMap< real64, stdVector< int > > map_type;
   map_type refVal;
   refVal.insert( {4800.0, { 1, 1, 1, 1, 1}} );
   refVal.insert( {14800.0, { 1, 1, 1, 1, 0}} );
@@ -232,7 +232,7 @@ void testPlugBottomUpPerfCheck( CompositionalMultiphaseReservoirAndWells<> & sol
   {
     perfFunction( it->first );
 
-    const std::vector< int > & refStatus = it->second;
+    const stdVector< int > & refStatus = it->second;
     wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                              MeshLevel & mesh,
                                                                              string_array const & regionNames )
@@ -262,7 +262,7 @@ void testOpenTopDownPerfCheck( CompositionalMultiphaseReservoirAndWells<> & solv
 {
   CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
 
-  typedef stdMap< real64, std::vector< int > > map_type;
+  typedef stdMap< real64, stdVector< int > > map_type;
   map_type refPerfTable;
   refPerfTable.insert( {4800.0, { 0, 0, 0, 0, 0}} );
   refPerfTable.insert( {14800.0, { 1, 0, 0, 0, 0}} );
@@ -274,7 +274,7 @@ void testOpenTopDownPerfCheck( CompositionalMultiphaseReservoirAndWells<> & solv
   {
     perfFunction( it->first );
 
-    const std::vector< int > & refStatus = it->second;
+    const stdVector< int > & refStatus = it->second;
     wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                              MeshLevel & mesh,
                                                                              string_array const & regionNames )
@@ -304,7 +304,7 @@ void testOpenBottomUpPerfCheck( CompositionalMultiphaseReservoirAndWells<> & sol
 {
   CompositionalMultiphaseWell & wellSolver = *solver.wellSolver();
 
-  typedef stdMap< real64, std::vector< int > > map_type;
+  typedef stdMap< real64, stdVector< int > > map_type;
   map_type refVal;
   refVal.insert( {4800.0, { 0, 0, 0, 0, 0}} );
   refVal.insert( {33000.0, { 1, 1, 1, 1, 1}} );
@@ -314,7 +314,7 @@ void testOpenBottomUpPerfCheck( CompositionalMultiphaseReservoirAndWells<> & sol
   {
     perfFunction( it->first );
 
-    const std::vector< int > & refStatus = it->second;
+    const stdVector< int > & refStatus = it->second;
     wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                              MeshLevel & mesh,
                                                                              string_array const & regionNames )

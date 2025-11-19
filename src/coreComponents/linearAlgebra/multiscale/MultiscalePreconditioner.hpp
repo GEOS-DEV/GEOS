@@ -100,7 +100,7 @@ private:
 
   DomainPartition & m_domain;
 
-  std::vector< LevelData > m_levels;
+  stdVector< LevelData > m_levels;
 
   std::unique_ptr< PreconditionerBase< LAI > > m_coarse_solver;
 

@@ -170,7 +170,7 @@ TEST( testXML, testMemoryCSVOutput )
   memOutput.execute( 0.0, 0.0, dummyCycle, 0, 0.0, problem.getDomainPartition() );
 
   // read the CSV output (parseFile() will throw if no CSV is generated)
-  std::vector< string > csvLines;
+  stdVector< string > csvLines;
   {
     std::ifstream is( memOutputFileName );
     EXPECT_TRUE( is.good() );
@@ -184,7 +184,7 @@ TEST( testXML, testMemoryCSVOutput )
   auto const findCSVMemoryEntry = [=]( string_view cycleStr, string_view memSpaceName ) -> bool {
     for( string const & csvLine : csvLines )
     {
-      std::vector< string > const lineEntries = stringutilities::tokenize( csvLine,
+      stdVector< string > const lineEntries = stringutilities::tokenize( csvLine,
                                                                            TableCSVFormatter::m_separator,
                                                                            false );
       EXPECT_GT( lineEntries.size(), 3 );

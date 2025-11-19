@@ -433,11 +433,11 @@ protected:
   TPFAvsMFDTPFATest() = default;
 };
 
-// Helper function to copy arrayView1d<real64 const> to std::vector<real64>
-static inline std::vector< real64 > arrayViewToVector( arrayView1d< real64 const > & arr, localIndex n )
+// Helper function to copy arrayView1d<real64 const> to stdVector<real64>
+static inline stdVector< real64 > arrayViewToVector( arrayView1d< real64 const > & arr, localIndex n )
 {
   arr.move( hostMemorySpace, false );
-  return std::vector< real64 >( arr.data(), arr.data() + n );
+  return stdVector< real64 >( arr.data(), arr.data() + n );
 }
 
 
@@ -458,8 +458,8 @@ TEST_P( TPFAvsMFDTPFATest, PressureFieldComparison )
   // Use the CMAKE-defined TEST_BINARY_DIR variable
   std::string testBinaryDir = TEST_BINARY_DIR;
 
-  std::vector< real64 > p_tpfa;
-  std::vector< real64 > p_mfd;
+  stdVector< real64 > p_tpfa;
+  stdVector< real64 > p_mfd;
   localIndex n_data_tpfa = 0;
   localIndex n_data_mfd = 0;
 

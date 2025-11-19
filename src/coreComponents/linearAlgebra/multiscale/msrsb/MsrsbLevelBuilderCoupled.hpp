@@ -98,16 +98,16 @@ private:
   void buildProlongationStructure( DofManager const & fineDofManager );
 
   /// A field description for each sub-block
-  std::vector< string > m_fields;
+  stdVector< string > m_fields;
 
   /// Subproblem selector matrices at the current level
-  std::vector< Matrix > m_selectors;
+  stdVector< Matrix > m_selectors;
 
   /// Levels for each sub-problem
-  std::vector< std::unique_ptr< MsrsbLevelBuilder< LAI > > > m_builders;
+  stdVector< std::unique_ptr< MsrsbLevelBuilder< LAI > > > m_builders;
 
   /// Sub-problem prolongators in extracted (local) form
-  std::vector< CRSMatrix< real64, globalIndex > > m_prolongationBlocks;
+  stdVector< CRSMatrix< real64, globalIndex > > m_prolongationBlocks;
 
   /// Temporary storage for combined prolongation operator (stored to avoid recreating the structure)
   CRSMatrix< real64, globalIndex > m_localProlongation;

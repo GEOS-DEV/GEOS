@@ -254,7 +254,7 @@ void writeProlongation( CRSMatrixView< real64 const, globalIndex const > const &
                         string const & prefix,
                         multiscale::MeshLevel & mesh,
                         multiscale::MeshObjectManager & fineManager,
-                        std::function< void ( multiscale::MeshLevel &, std::vector< string > const & ) > const & writeFunc );
+                        std::function< void ( multiscale::MeshLevel &, stdVector< string > const & ) > const & writeFunc );
 
 } // namespace msrsb
 } // namespace multiscale

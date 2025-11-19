@@ -327,21 +327,21 @@ static std::string generateXmlInputCompMFD( std::string const & innerProductType
   return oss.str();
 }
 
-// Helper: copy arrayView1d<real64 const> to std::vector<real64>
-static inline std::vector< real64 > arrayViewToVector( arrayView1d< real64 const > & arr )
+// Helper: copy arrayView1d<real64 const> to stdVector<real64>
+static inline stdVector< real64 > arrayViewToVector( arrayView1d< real64 const > & arr )
 {
   arr.move( hostMemorySpace, false );
-  return std::vector< real64 >( arr.data(), arr.data() + arr.size() );
+  return stdVector< real64 >( arr.data(), arr.data() + arr.size() );
 }
 
 // Helper: copy a 2D view to flat vector (row-major by phase index), accepts any 2D view type
 template< typename View2D >
-static inline std::vector< real64 > arrayView2dToVector( View2D & arr )
+static inline stdVector< real64 > arrayView2dToVector( View2D & arr )
 {
   arr.move( hostMemorySpace, false );
   localIndex nCells = arr.size( 0 );
   localIndex nCols = arr.size( 1 );
-  std::vector< real64 > out;
+  stdVector< real64 > out;
   out.reserve( static_cast< size_t >( nCells ) * static_cast< size_t >( nCols ) );
   for( localIndex i = 0; i < nCells; ++i )
   {
@@ -535,8 +535,8 @@ TEST_P( CompositionalTPFAvsMFDTPFA, PressureAndSaturationComparison )
   std::string const testBinaryDir = TEST_BINARY_DIR;
   std::string const meshFile = testBinaryDir + std::string( "/" ) + GetParam();
 
-  std::vector< real64 > p_tpfa, p_mfd;
-  std::vector< real64 > sat_tpfa, sat_mfd;  // phase volume fractions flattened [cell,phase]
+  stdVector< real64 > p_tpfa, p_mfd;
+  stdVector< real64 > sat_tpfa, sat_mfd;  // phase volume fractions flattened [cell,phase]
   localIndex n_cells_tpfa = 0, n_cells_mfd = 0;
   localIndex n_phases_tpfa = 2, n_phases_mfd = 2;  // From XML phaseNames
 

@@ -578,7 +578,7 @@ void MsrsbLevelBuilder< LAI >::writeProlongationForDebug() const
   MeshObjectManager & manager = m_location == FieldLocation::Node
                               ? m_mesh.fineMesh()->nodeManager()
                               : m_mesh.fineMesh()->cellManager();
-  auto const writeFunc = [location = m_location]( multiscale::MeshLevel & mesh, std::vector< string > const & names )
+  auto const writeFunc = [location = m_location]( multiscale::MeshLevel & mesh, stdVector< string > const & names )
   {
     return location == FieldLocation::Node
     ? mesh.writeNodeData( names )

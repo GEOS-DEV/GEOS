@@ -247,7 +247,7 @@ void fillArrayBySrcIndex( arrayView1d< INDEX const > const & map,
 template< typename FUNC >
 void copyNeighborData( ObjectManagerBase const & srcManager,
                        string const & mapKey,
-                       std::vector< integer > const & ranks,
+                       stdVector< integer > const & ranks,
                        ObjectManagerBase & dstManager,
                        FUNC && copyFunc )
 {
