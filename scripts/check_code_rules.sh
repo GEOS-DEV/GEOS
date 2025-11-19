@@ -1,8 +1,6 @@
 #!/bin/bash
 
 echo "Test code rules"
-eval pwd
-eval ls src/
 FILE_PATTERNS=(
           "src/coreComponents/codingUtilities/*"
           "src/coreComponents/dataRepository/*"
@@ -31,7 +29,8 @@ FIND_CMD="$FIND_CMD $FILE_PATH_PATERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
 echo "FIND_CMD ${FIND_CMD} " 
 VIOLATIONS_FOUND=0
 FILES=$(eval "$FIND_CMD" 2>/dev/null || echo "");
-    
+
+ARRAY=()
 for file in $FILES; do
   SKIP=0
   for exclude in "${EXCLUDE_PATTERNS[@]}"; do
@@ -46,11 +45,21 @@ for file in $FILES; do
   fi
   echo "file ${file} " 
   if grep -n "std::map\s*<" "$file" ; then
-    echo "Found forbidden std::map usage in: $file"
+    STR1="Found forbidden std::map usage in: $file"$'\n'
     grep -n "std::map\s*<" "$file" | while read line; do
-      echo "   Line: $line"
+    STR1+="   Line: $line"
+    ARRAY+="$STR"
     done
     VIOLATIONS_FOUND=1
   fi
 done
+
+for element in "${ARRAY[@]}"
+do
+    echo "$element";
+done
+
+if (($VIOLATIONS_FOUND == 1)); then 
+  exit 1;
+fi
 exit 0
