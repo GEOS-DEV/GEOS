@@ -1,5 +1,25 @@
 #!/bin/bash
 
+# while
+# ... done < <(grep -n "std::map\s*<" "$file") 
+# Process the result of grep command as a file
+# This allows everything to be handled in the same shell environment.
+check_container_usage() {
+  local container="$1"
+  local -n array_name=$2
+  local -n violation_found=$3
+  local str="  Found forbidden ${container} usage in: $file"$'\n'
+
+  if grep -q "${container}\s*<" "$file"; then
+    while IFS= read -r line; do
+      str+="    $line"$'\n'
+    done < <(grep -n "${container}\s*<" "$file")
+    
+    $array_name+=$str
+    $violation_found=1
+  fi
+}
+
 echo "Test code rules"
 FILE_PATTERNS=(
           "src/coreComponents/codingUtilities/*"
@@ -53,31 +73,10 @@ for file in $FILES; do
     continue
   fi
 
-  if grep -q "std::map\s*<" "$file" ; then
-    STR_MAP="  Found forbidden std::map usage in: $file"$'\n'
-    while IFS= read -r line; do
-      STR_MAP+="    $line"$'\n'
-    done < <(grep -n "std::map\s*<" "$file")
-    ARRAY_MAP+=("$STR_MAP")
-    MAP_VIOLATIONS_FOUND=1
-  fi
-  if grep -q "std::unordered_map\s*<" "$file" ; then
-    STR_UMAP="  Found forbidden std::unordered_map usage in: $file"$'\n'
-    while IFS= read -r line; do
-      STR_UMAP+="    $line"$'\n'
-    done < <(grep -n "std::unordered_map\s*<" "$file")
-    ARRAY_UMAP+=("$STR_UMAP")
-    UMAP_VIOLATIONS_FOUND=1
-  fi
-  if grep -q "std::vector\s*<" "$file" ; then
-    STR_VECTOR="  Found forbidden std::vector usage in: $file"$'\n'
-    while IFS= read -r line; do
-      STR_VECTOR+="    $line"$'\n'
-    done < <(grep -n "std::vector\s*<" "$file")
-    ARRAY_VECTOR+=("$STR_VECTOR")
-    VECTOR_VIOLATIONS_FOUND=1
-  fi
-  done
+  check_container_usage "std::map" ARRAY_MAP MAP_VIOLATIONS_FOUND
+  check_container_usage "std::unordered_map" ARRAY_UMAP UMAP_VIOLATIONS_FOUND
+  check_container_usage "std::vector" ARRAY_VECTOR VECTOR_VIOLATIONS_FOUND
+done
 
 if (($MAP_VIOLATIONS_FOUND == 1)) || (($UMAP_VIOLATIONS_FOUND == 1 )) || (($VECTOR_VIOLATIONS_FOUND == 1 )); then 
   echo "----------------------------------------"
