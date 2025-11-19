@@ -3,6 +3,7 @@
 echo "Test code rules"
 FILE_PATTERNS=(
           "src/coreComponents/codingUtilities/*"
+          "src/coreComponents/common/*"
           "src/coreComponents/dataRepository/*"
           "src/coreComponents/denseLinearAlgebra/*"
           "src/coreComponents/discretizationMethods/*"
