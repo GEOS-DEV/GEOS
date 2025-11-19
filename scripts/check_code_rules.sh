@@ -27,7 +27,10 @@ for pattern in "${FILE_PATTERNS[@]}"; do
 done
 FIND_CMD="$FIND_CMD $FILE_PATH_PATERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
 FILES=$(eval "$FIND_CMD" 2>/dev/null || echo "");
-VIOLATIONS_FOUND=0
+
+MAP_VIOLATIONS_FOUND=0
+UMAP_VIOLATIONS_FOUND=0
+VECTOR_VIOLATIONS_FOUND=0
 
 ARRAY_MAP=()
 ARRAY_UMAP=()
@@ -46,31 +49,37 @@ for file in $FILES; do
   fi
 
   if grep -q "std::map\s*<" "$file" ; then
-    STR_MAP="  Found forbidden std::map usage in: $file"$'\n  '
-    STR_MAP+= grep -n "std::map\s*<" "$file"
-    ARRAY_MAP+="$STR_MAP"
-    VIOLATIONS_FOUND=1
+    STR_MAP="  Found forbidden std::map usage in: $file"$'\n'
+    while IFS= read -r line; do
+      STR_MAP+="    $line"$'\n'
+    done < <(grep -n "std::map\s*<" "$file")
+    ARRAY_MAP+=("$STR_MAP")
+    MAP_VIOLATIONS_FOUND=1
   fi
   if grep -q "std::unordered_map\s*<" "$file" ; then
-    STR_UMAP="  Found forbidden std::unordered_map usage in: $file"$'\n  '
-    STR_UMAP+= grep -n "std::unordered_map\s*<" "$file"
-    ARRAY_UMAP+="$STR_UMAP"
-    VIOLATIONS_FOUND=2
+    STR_UMAP="  Found forbidden std::unordered_map usage in: $file"$'\n'
+    while IFS= read -r line; do
+      STR_UMAP+="    $line"$'\n'
+    done < <(grep -n "std::map\s*<" "$file")
+    ARRAY_UMAP+=("$STR_UMAP")
+    UMAP_VIOLATIONS_FOUND=1
   fi
   if grep -q "std::vector\s*<" "$file" ; then
-    STR_VECTOR="  Found forbidden std::vector usage in: $file"$'\n  '
-    STR_VECTOR+= grep -n "std::vector\s*<" "$file"
-    ARRAY_VECTOR+="$STR_VECTOR"
-    VIOLATIONS_FOUND=3
+    STR_VECTOR="  Found forbidden std::vector usage in: $file"$'\n'
+    while IFS= read -r line; do
+      STR_VECTOR+="    $line"$'\n'
+    done < <(grep -n "std::map\s*<" "$file")
+    ARRAY_VECTOR+=("$STR_VECTOR")
+    VECTOR_VIOLATIONS_FOUND=1
   fi
 done
 
-if (($VIOLATIONS_FOUND != 0)); then 
+if (($MAP_VIOLATIONS_FOUND == 1)) || (($UMAP_VIOLATIONS_FOUND == 1 )); then 
   echo "----------------------------------------"
   echo "SUMMARY: Code rule violations found"
   echo "----------------------------------------"
 
-  if((VIOLATIONS_FOUND == 1 ));then
+  if((MAP_VIOLATIONS_FOUND == 1 ));then
     echo $'\nERROR: Forbidden std::map usage detected\n'
   fi
 
@@ -79,7 +88,7 @@ if (($VIOLATIONS_FOUND != 0)); then
       echo "$element";
   done
 
-  if((VIOLATIONS_FOUND == 2 ));then
+  if((UMAP_VIOLATIONS_FOUND == 1 ));then
     echo $'\nERROR: Forbidden std::unordered_map usage detected\n'
   fi
 
@@ -88,7 +97,7 @@ if (($VIOLATIONS_FOUND != 0)); then
       echo "$element";
   done
 
-  if((VIOLATIONS_FOUND == 3 ));then
+  if((MAP_VIOLATIONS_FOUND == 1 ));then
     echo $'\nERROR: Forbidden std::vector usage detected\n'
   fi
 
