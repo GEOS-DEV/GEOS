@@ -46,7 +46,7 @@ namespace internal
 
 
 /**
- * Default allocator type for stdVector.
+ * Default allocator type for std::vector.
  * This can be specialized if a different allocator is needed.
  * Required to avoid recursive evaluation in StdVectorWrapper.
  * @tparam T Type of elements in the vector.
@@ -55,7 +55,7 @@ template< typename T >
 using DefaultAllocator = std::allocator< T >;
 
 /**
- * Wrapper for stdVector that allows toggling between bounds-checked access
+ * Wrapper for std::vector that allows toggling between bounds-checked access
  * (using at()) and unchecked access (using operator[]).
  * @tparam T Type of elements in the vector.
  * @tparam Allocator Allocator type for the vector.
@@ -65,11 +65,11 @@ using DefaultAllocator = std::allocator< T >;
 template< typename T,
           typename Allocator  = DefaultAllocator< T >,
           bool USE_BOUNDS_CHECKING = false >
-class StdVectorWrapper : public stdVector< T, Allocator >
+class StdVectorWrapper : public std::vector< T, Allocator >
 {
 public:
-  /// Type alias for the base class (i.e., stdVector)
-  using Base = stdVector< T, Allocator >;
+  /// Type alias for the base class (i.e., std::vector)
+  using Base = std::vector< T, Allocator >;
 
   /// We have to declare explicitly all constructor because `using Base::Base` causes bugs during compilation
   /// @cond DO_NOT_DOCUMENT
@@ -154,7 +154,7 @@ public:
 }
 
 /**
- * type alias for stdVector
+ * type alias for std::vector
  * @tparam T Type of elements in the vector.
  * @tparam Allocator Allocator type for the vector.
  */
