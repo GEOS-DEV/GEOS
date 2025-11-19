@@ -43,7 +43,7 @@ for file in $FILES; do
   if [ $SKIP -eq 1 ]; then
     continue
   fi
-  if [grep -n "std::map\s*<" "$file"] ; then
+  if grep -n "std::map\s*<" "$file" ; then
     STR1="Found forbidden std::map usage in: $file"$'\n'
     STR1+= grep -n "std::map\s*<" "$file" 
     # while read line; do
