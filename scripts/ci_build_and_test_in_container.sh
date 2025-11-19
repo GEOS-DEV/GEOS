@@ -281,9 +281,10 @@ if [[ "${TEST_DOCUMENTATION}" = true ]]; then
   or_die ctest --output-on-failure -R "testDoxygenCheck"
   exit 0
 fi
-
+echo "DEBUG -- code_rules :  ${TEST_CODE_RULES}"
 # Documentation check
 if [[ "${TEST_CODE_RULES}" = true ]]; then
+  echo "Test code rules"
   FILE_PATTERNS=(
             "src/coreComponents/codingUtilities/*"
             "src/coreComponents/dataRepository/*"
