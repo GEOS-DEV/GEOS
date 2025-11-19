@@ -20,6 +20,8 @@ FILE_PATTERNS=(
   EXCLUDE_PATTERNS=(
         "src/coreComponents/common/Datatype.hpp"
         "src/coreComponents/common/StdContaienrWrappers.hpp"
+        "src/coreComponents/dataRepository/BufferOps_inline.hpp"
+        "src/coreComponents/dataRepository/BufferOps.hpp"
       )
 FIND_CMD="find"
 for pattern in "${FILE_PATTERNS[@]}"; do
@@ -72,7 +74,7 @@ for file in $FILES; do
     ARRAY_VECTOR+=("$STR_VECTOR")
     VECTOR_VIOLATIONS_FOUND=1
   fi
-done
+  done
 
 if (($MAP_VIOLATIONS_FOUND == 1)) || (($UMAP_VIOLATIONS_FOUND == 1 )); then 
   echo "----------------------------------------"

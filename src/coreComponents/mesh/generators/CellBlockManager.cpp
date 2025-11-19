@@ -1022,7 +1022,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                   nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView(),
                                   numInternalNodesPerEdge, numNodesPerEdge, globalNodeOffset, glCoords, localNodeOffset, order]( localIndex const iter_edge )
   {
-    std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
+    stdUnorderedMap< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
     localIndex edgeHeadNode = edgeToNodesMapSource[ iter_edge ][ 0 ];
     localIndex edgeEndNode = edgeToNodesMapSource[ iter_edge ][ 1 ];
     globalIndex edgeHeadNodeG = nodeLocalToGlobalNew[ edgeHeadNode ];
@@ -1086,7 +1086,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                   faceLocalToGlobal=faceLocalToGlobal.toView(),
                                   nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView() ]( localIndex const iter_face )
   {
-    std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
+    stdUnorderedMap< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
     localIndex faceVertID[ numVerticesPerFace ];
     globalIndex faceVertGID[ numVerticesPerFace ];
     array1d< localIndex > const faceToNodeMapWork( numNodesPerFace );
@@ -1189,7 +1189,7 @@ void CellBlockManager::generateHighOrderMaps( localIndex const order,
                                     elementLocalToGlobal=elementLocalToGlobal.toView(),
                                     nodeLocalToGlobalNew=nodeLocalToGlobalNew.toView() ]( localIndex const iter_elem )
     {
-      std::unordered_map< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
+      stdUnorderedMap< std::array< localIndex, 6 >, localIndex, NodeKeyHasher< localIndex > > nodeIDs;
       localIndex elemVertID[ numVerticesPerCell];
       array1d< localIndex > const elemToNodeMapWork( numNodesPerCell );
       for( localIndex iter_node=0; iter_node < numVerticesPerCell; iter_node++ )

@@ -61,7 +61,7 @@ TEST( testDataTypes, testBoundChecking )
   // std::cout <<" sdsfs "<<  mapBoundsChecking.get_inserted(0)<< std::endl;
   // std::cout << mapBoundsChecking.get_inserted(1);
 
-  internal::StdMapWrapper< std::unordered_map< integer, integer >, true > unorderedMapBoundsChecking{{0, 1}};
+  internal::StdMapWrapper< stdUnorderedMap< integer, integer >, true > unorderedMapBoundsChecking{{0, 1}};
   EXPECT_THROW( {
     try
     {
