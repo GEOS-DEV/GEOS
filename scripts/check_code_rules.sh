@@ -5,24 +5,24 @@ eval pwd
 eval ls
 eval ls ../
 FILE_PATTERNS=(
-          "../src/coreComponents/codingUtilities/*"
-          "../src/coreComponents/dataRepository/*"
-          "../src/coreComponents/denseLinearAlgebra/*"
-          "../src/coreComponents/discretizationMethods/*"
-          "../src/coreComponents/events/*"
-          "../src/coreComponents/fieldSpecification/*"
-          "../src/coreComponents/fileIO/*"
-          "../src/coreComponents/finiteElement/*"
-          "../src/coreComponents/finiteVolume/*"
-          "../src/coreComponents/functions/*"
-          "../src/coreComponents/linearAlgebra/*"
-          "../src/coreComponents/mainInterface/*"
-          "../src/coreComponents/mesh/*"
-          "../src/coreComponents/physicsSolvers/*"
+          "src/coreComponents/codingUtilities/*"
+          "src/coreComponents/dataRepository/*"
+          "src/coreComponents/denseLinearAlgebra/*"
+          "src/coreComponents/discretizationMethods/*"
+          "src/coreComponents/events/*"
+          "src/coreComponents/fieldSpecification/*"
+          "src/coreComponents/fileIO/*"
+          "src/coreComponents/finiteElement/*"
+          "src/coreComponents/finiteVolume/*"
+          "src/coreComponents/functions/*"
+          "src/coreComponents/linearAlgebra/*"
+          "src/coreComponents/mainInterface/*"
+          "src/coreComponents/mesh/*"
+          "src/coreComponents/physicsSolvers/*"
         )
   EXCLUDE_PATTERNS=(
-        "../src/coreComponents/common/Datatype.hpp"
-        "../src/coreComponents/common/StdContaienrWrappers.hpp"
+        "src/coreComponents/common/Datatype.hpp"
+        "src/coreComponents/common/StdContaienrWrappers.hpp"
       )
 FIND_CMD="find"
 for pattern in "${FILE_PATTERNS[@]}"; do
