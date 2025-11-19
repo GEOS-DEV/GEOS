@@ -72,13 +72,12 @@ for file in $FILES; do
     while IFS= read -r line; do
       STR_VECTOR+="    $line"$'\n'
     done < <(grep -n "std::vector\s*<" "$file")
-    echo $STR_VECTOR 
     ARRAY_VECTOR+=("$STR_VECTOR")
     VECTOR_VIOLATIONS_FOUND=1
   fi
   done
 
-if (($MAP_VIOLATIONS_FOUND == 1)) || (($UMAP_VIOLATIONS_FOUND == 1 )); then 
+if (($MAP_VIOLATIONS_FOUND == 1)) || (($UMAP_VIOLATIONS_FOUND == 1 )) || (($VECTOR_VIOLATIONS_FOUND == 1 )); then 
   echo "----------------------------------------"
   echo "SUMMARY: Code rule violations found"
   echo "----------------------------------------"
