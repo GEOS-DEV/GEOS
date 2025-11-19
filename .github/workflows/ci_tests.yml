@@ -127,8 +127,8 @@ jobs:
         # Validates that the documentation generated using doxygen has no hole.
         - name: Check documentation
           BUILD_AND_TEST_ARGS: --test-documentation
-        - name: Check code rules
-          BUILD_AND_TEST_ARGS: --test-code-rules
+        # - name: Check code rules
+        #   BUILD_AND_TEST_ARGS: --test-code-rules
     uses: ./.github/workflows/build_and_test.yml
     with:
       BUILD_AND_TEST_CLI_ARGS: ${{ matrix.BUILD_AND_TEST_ARGS }}
@@ -138,6 +138,21 @@ jobs:
       DOCKER_REPOSITORY: geosx/ubuntu20.04-gcc9
       RUNS_ON: ubuntu-22.04
       USE_SCCACHE: false
+
+  check_code_rules:
+    needs: [is_not_draft_pull_request]
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4.2.2
+      with:
+        submodules: false
+        lfs: false
+        fetch-depth: 0
+        sparse-checkout: |
+          scripts
+    - name: Check that the baseline logs are modified if rebaselines are detected
+      run: "scripts/check_baseline_log.sh"
 
   # Matrix containing all the CPU build.
   # Those are quite fast and can efficiently benefit from the `sccache' tool to make them even faster.

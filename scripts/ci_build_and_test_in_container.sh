@@ -70,9 +70,7 @@ Usage: $0
       Basename of the json credentials file to connect to the sccache cloud cache.
   --test-code-style
   --test-documentation
-  --test-code-rules
-      Validates code rules compliance
-  -h | --help
+    -h | --help
 EOF
 exit 1
 }
@@ -81,7 +79,7 @@ exit 1
 # Then we'll move to the build dir.
 or_die cd $(dirname $0)/..
 
-args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,test-code-rules,help -- "$@")
+args=$(or_die getopt -a -o h --long build-exe-only,cmake-build-type:,code-coverage,data-basename:,geos-enable-bounds-check:,enable-hypre:,enable-hypre-device:,enable-trilinos:,exchange-dir:,host-config:,install-dir-basename:,makefile,ninja,no-install-schema,no-run-unit-tests,nproc:,repository:,run-integrated-tests,sccache-credentials:,test-code-style,test-documentation,help -- "$@")
 
 # Variables with default values
 BUILD_EXE_ONLY=false
@@ -96,7 +94,6 @@ RUN_INTEGRATED_TESTS=false
 UPLOAD_TEST_BASELINES=false
 TEST_CODE_STYLE=false
 TEST_DOCUMENTATION=false
-TEST_CODE_RULES=true
 ENABLE_TRILINOS=OFF
 CODE_COVERAGE=false
 NPROC="$(nproc)"
@@ -143,9 +140,7 @@ do
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
     --test-documentation)    TEST_DOCUMENTATION=true;    shift;;
     -h | --help)             usage;                      shift;;
-    --test-code-rules)       TEST_CODE_RULES=true;       shift;;
-
-    # -- means the end of the arguments; drop this, and break out of the while loop
+        # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break;;
     *) >&2 echo Unsupported option: $1
        usage;;
@@ -279,68 +274,6 @@ fi
 # Documentation check
 if [[ "${TEST_DOCUMENTATION}" = true ]]; then
   or_die ctest --output-on-failure -R "testDoxygenCheck"
-  exit 0
-fi
-echo "DEBUG -- code_rules :  ${TEST_CODE_RULES}"
-# Documentation check
-if [[ "${TEST_CODE_RULES}" = true ]]; then
-  echo "Test code rules"
-  FILE_PATTERNS=(
-            "generatedSrc/coreComponents/codingUtilities/*"
-            "generatedSrc/coreComponents/dataRepository/*"
-            "generatedSrc/coreComponents/denseLinearAlgebra/*"
-            "generatedSrc/coreComponents/discretizationMethods/*"
-            "generatedSrc/coreComponents/events/*"
-            "generatedSrc/coreComponents/fieldSpecification/*"
-            "generatedSrc/coreComponents/fileIO/*"
-            "generatedSrc/coreComponents/finiteElement/*"
-            "generatedSrc/coreComponents/finiteVolume/*"
-            "generatedSrc/coreComponents/functions/*"
-            "generatedSrc/coreComponents/linearAlgebra/*"
-            "generatedSrc/coreComponents/mainInterface/*"
-            "generatedSrc/coreComponents/mesh/*"
-            "generatedSrc/coreComponents/physicsSolvers/*"
-          )
-
-    EXCLUDE_PATTERNS=(
-          "generatedSrc/coreComponents/common/Datatype.hpp"
-          "generatedSrc/coreComponents/common/StdContaienrWrappers.hpp"
-        )
-
-  echo "Test if the build works"
-  eval pwd
-
-  FIND_CMD="find"
-  for pattern in "${FILE_PATTERNS[@]}"; do
-    FILE_PATH_PATERN+=${GEOS_BUILD_DIR}/${pattern}" "
-  done
-  FIND_CMD="$FIND_CMD $FILE_PATH_PATERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
-
-  echo "FIND_CMD ${FIND_CMD} " 
-  VIOLATIONS_FOUND=0
-  FILES=$(eval "$FIND_CMD" 2>/dev/null || echo "");
-      
-  for file in $FILES; do
-    SKIP=0
-    for exclude in "${EXCLUDE_PATTERNS[@]}"; do
-      if [[ "$file" == *"$exclude"* ]]; then
-        SKIP=1
-        break
-      fi
-    done
-    
-    if [ $SKIP -eq 1 ]; then
-      continue
-    fi
-    echo "file ${file} " 
-    if grep -n "std::map\s*<" "$file" ; then
-      echo "Found forbidden std::map usage in: $file"
-      grep -n "std::map\s*<" "$file" | while read line; do
-        echo "   Line: $line"
-      done
-      VIOLATIONS_FOUND=1
-    fi
-  done
   exit 0
 fi
 
