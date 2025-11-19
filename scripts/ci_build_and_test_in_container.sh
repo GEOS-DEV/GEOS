@@ -286,25 +286,25 @@ echo "DEBUG -- code_rules :  ${TEST_CODE_RULES}"
 if [[ "${TEST_CODE_RULES}" = true ]]; then
   echo "Test code rules"
   FILE_PATTERNS=(
-            "src/coreComponents/codingUtilities/*"
-            "src/coreComponents/dataRepository/*"
-            "src/coreComponents/denseLinearAlgebra/*"
-            "src/coreComponents/discretizationMethods/*"
-            "src/coreComponents/events/*"
-            "src/coreComponents/fieldSpecification/*"
-            "src/coreComponents/fileIO/*"
-            "src/coreComponents/finiteElement/*"
-            "src/coreComponents/finiteVolume/*"
-            "src/coreComponents/functions/*"
-            "src/coreComponents/linearAlgebra/*"
-            "src/coreComponents/mainInterface/*"
-            "src/coreComponents/mesh/*"
-            "src/coreComponents/physicsSolvers/*"
+            "generatedSrc/coreComponents/codingUtilities/*"
+            "generatedSrc/coreComponents/dataRepository/*"
+            "generatedSrc/coreComponents/denseLinearAlgebra/*"
+            "generatedSrc/coreComponents/discretizationMethods/*"
+            "generatedSrc/coreComponents/events/*"
+            "generatedSrc/coreComponents/fieldSpecification/*"
+            "generatedSrc/coreComponents/fileIO/*"
+            "generatedSrc/coreComponents/finiteElement/*"
+            "generatedSrc/coreComponents/finiteVolume/*"
+            "generatedSrc/coreComponents/functions/*"
+            "generatedSrc/coreComponents/linearAlgebra/*"
+            "generatedSrc/coreComponents/mainInterface/*"
+            "generatedSrc/coreComponents/mesh/*"
+            "generatedSrc/coreComponents/physicsSolvers/*"
           )
 
     EXCLUDE_PATTERNS=(
-          "src/coreComponents/common/Datatype.hpp"
-          "src/coreComponents/common/StdContaienrWrappers.hpp"
+          "generatedSrc/coreComponents/common/Datatype.hpp"
+          "generatedSrc/coreComponents/common/StdContaienrWrappers.hpp"
         )
 
   echo "Test if the build works"
@@ -312,7 +312,7 @@ if [[ "${TEST_CODE_RULES}" = true ]]; then
 
   FIND_CMD="find"
   for pattern in "${FILE_PATTERNS[@]}"; do
-    FILE_PATH_PATERN=${GEOS_BUILD_DIR}/${pattern}" "
+    FILE_PATH_PATERN+=${GEOS_BUILD_DIR}/${pattern}" "
   done
   FIND_CMD="$FIND_CMD $FILE_PATH_PATERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
 
