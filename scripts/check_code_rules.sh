@@ -43,12 +43,12 @@ for file in $FILES; do
   if [ $SKIP -eq 1 ]; then
     continue
   fi
-  echo "file ${file} " 
-  if grep -n "std::map\s*<" "$file" ; then
+  if [grep -n "std::map\s*<" "$file"] ; then
     STR1="Found forbidden std::map usage in: $file"$'\n'
-    grep -n "std::map\s*<" "$file" | while read line; do
-    STR1+="   Line: $line"
-    echo "$STR1";
+    STR1+= grep -n "std::map\s*<" "$file" 
+    # while read line; do
+    # STR1+="   Line: $line"
+    # echo "$STR1";
     ARRAY+="$STR1"
     done
     VIOLATIONS_FOUND=1
