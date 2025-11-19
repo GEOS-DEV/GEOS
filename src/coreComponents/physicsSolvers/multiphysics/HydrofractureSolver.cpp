@@ -1230,7 +1230,6 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( r
         string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
         SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
         real64 const defaultDensity = fluid.defaultDensity();
-        arrayView2d< real64 > const fluidInternalEnergy_n = subRegion.getReference< array2d< real64 > >( fluidName + "_internalEnergy_n" );
         arrayView1d< real64 > const massCreated  = subRegion.getField< flow::massCreated >();
         arrayView1d< real64 > const fractureCreationTime = subRegion.getField< flow::fractureCreationTime >();
 
@@ -1252,8 +1251,7 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( r
           localIndex const newElemIndex = newFractureElements[k];
           real64 initialPressure = 1.0e99;
           real64 initialAperture = 1.0e99;
-          real64 initialTemperature = 1.0e99;
-          real64 initialFluidInternalEnergy_n = 1.0e99;
+
   #ifdef GEOS_USE_SEPARATION_COEFFICIENT
           apertureF[newElemIndex] = aperture[newElemIndex];
   #endif
@@ -1283,8 +1281,6 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( r
               {
                 initialPressure = std::min( initialPressure, fluidPressure_n[fractureElementIndex] );
                 initialAperture = std::min( initialAperture, aperture[fractureElementIndex] );
-                initialTemperature = std::min( initialTemperature, fluidTemperature_n[fractureElementIndex] );
-                initialFluidInternalEnergy_n = std::min( initialFluidInternalEnergy_n, fluidInternalEnergy_n[fractureElementIndex][0] );
               }
             }
           }
@@ -1293,11 +1289,6 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( r
             fluidPressure[newElemIndex] = initialPressure > 1.0e98? 0.0:initialPressure;
             fluidPressure_n[newElemIndex] = fluidPressure[newElemIndex];
             massCreated[newElemIndex] = defaultDensity * defaultAperture * elementArea[newElemIndex];
-
-            fluidTemperature[newElemIndex] = initialTemperature > 1.0e98? 0.0:initialTemperature;
-            fluidTemperature_n[newElemIndex] = fluidTemperature[newElemIndex];
-
-            fluidInternalEnergy_n[newElemIndex][0] = initialFluidInternalEnergy_n > 1.0e98? 0.0:initialFluidInternalEnergy_n;
           }
           else if( m_newFractureInitializationType == InitializationType::Displacement )
           {
@@ -1333,6 +1324,54 @@ void HydrofractureSolver< POROMECHANICS_SOLVER >::initializeNewFractureFields( r
                                  GEOS_FMT( "New elem index = {:4d} , init aper = {:4.2e}, init press = {:4.2e} ",
                                            newElemIndex, aperture[newElemIndex], fluidPressure[newElemIndex] ) );
         } );
+
+        if( m_isThermal )
+        {
+          arrayView1d< real64 > const energy_n = subRegion.getField< fields::flow::energy_n >(); 
+
+          forAll< serialPolicy >( newFractureElements.size(), [&] ( localIndex const k )
+          {
+            localIndex const newElemIndex = newFractureElements[k];
+            real64 initialTemperature = 1.0e99;
+            real64 initialEnergy_n = 1.0e99;
+
+            arraySlice1d< localIndex const > const faceToEdges = facesToEdges[newElemIndex];
+
+            for( localIndex ke=0; ke<faceToEdges.size(); ++ke )
+            {
+              localIndex const edgeIndex = faceToEdges[ke];
+
+              auto connIter = edgesToConnectorEdges.find( edgeIndex );
+              if( connIter == edgesToConnectorEdges.end() )
+              {
+                return;
+              }
+              localIndex const connectorIndex = edgesToConnectorEdges.at( edgeIndex );
+              localIndex const numElems = fractureConnectorsToFaceElements.sizeOfArray( connectorIndex );
+
+              for( localIndex kfe=0; kfe<numElems; ++kfe )
+              {
+                localIndex const fractureElementIndex = fractureConnectorsToFaceElements[connectorIndex][kfe];
+
+                if( newFractureElements.count( fractureElementIndex ) == 0 )
+                {
+                  initialTemperature = std::min( initialTemperature, fluidTemperature_n[fractureElementIndex] );
+                  initialEnergy_n = std::min( initialEnergy_n, energy_n[fractureElementIndex] );
+                }
+              }
+            }
+            if( m_newFractureInitializationType == InitializationType::Pressure )
+            {
+              fluidTemperature[newElemIndex] = initialTemperature > 1.0e98? 0.0:initialTemperature;
+              fluidTemperature_n[newElemIndex] = fluidTemperature[newElemIndex];
+
+              energy_n[newElemIndex] = initialEnergy_n > 1.0e98? 0.0:initialEnergy_n;
+            }
+            GEOS_LOG_LEVEL_RANK_0( logInfo::SurfaceGenerator,
+                                  GEOS_FMT( "New elem index = {:4d} , init temp = {:4.2e} ",
+                                            newElemIndex, fluidTemperature[newElemIndex] ) );
+          } );
+        }
 
         if( m_newFractureInitializationType == InitializationType::Displacement )
         {
