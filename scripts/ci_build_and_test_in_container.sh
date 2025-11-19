@@ -309,37 +309,39 @@ if [[ "${TEST_CODE_RULES}" = true ]]; then
 
   echo "Test if the build works"
   eval pwd
-    FIND_CMD="find"
-    for pattern in "${FILE_PATTERNS[@]}"; do
-      FIND_CMD="$FIND_CMD -path '$pattern' -o"
-    done
-    FIND_CMD="${FIND_CMD% -o}"
-    echo "FIND_CMD ${FIND_CMD} " 
-    VIOLATIONS_FOUND=0
 
-    FILES=$(eval "$FIND_CMD" 2>/dev/null || echo "");
-        
-    for file in $FILES; do
-      SKIP=0
-      for exclude in "${EXCLUDE_PATTERNS[@]}"; do
-        if [[ "$file" == *"$exclude"* ]]; then
-          SKIP=1
-          break
-        fi
-      done
+  FIND_CMD="find"
+  for pattern in "${FILE_PATTERNS[@]}"; do
+    FILE_PATH_PATERN=${GEOS_BUILD_DIR}/${pattern}
+    FIND_CMD="$FIND_CMD $FILE_PATH_PATERN  -regex ".*\\(cpp\|hpp\)"
+  done
+  FIND_CMD="${FIND_CMD% -o}"
+
+  echo "FIND_CMD ${FIND_CMD} " 
+  VIOLATIONS_FOUND=0
+  FILES=$(eval "$FIND_CMD" 2>/dev/null || echo "");
       
-      if [ $SKIP -eq 1 ]; then
-        continue
-      fi
-      echo "file ${file} " 
-      if grep -n "std::map\s*<" "$file" ; then
-        echo "Found forbidden std::map usage in: $file"
-        grep -n "std::map\s*<" "$file" | while read line; do
-          echo "   Line: $line"
-        done
-        VIOLATIONS_FOUND=1
+  for file in $FILES; do
+    SKIP=0
+    for exclude in "${EXCLUDE_PATTERNS[@]}"; do
+      if [[ "$file" == *"$exclude"* ]]; then
+        SKIP=1
+        break
       fi
     done
+    
+    if [ $SKIP -eq 1 ]; then
+      continue
+    fi
+    echo "file ${file} " 
+    if grep -n "std::map\s*<" "$file" ; then
+      echo "Found forbidden std::map usage in: $file"
+      grep -n "std::map\s*<" "$file" | while read line; do
+        echo "   Line: $line"
+      done
+      VIOLATIONS_FOUND=1
+    fi
+  done
   exit 0
 fi
 
