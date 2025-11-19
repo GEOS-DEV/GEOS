@@ -20,7 +20,7 @@ FILE_PATTERNS=(
         )
   EXCLUDE_PATTERNS=(
         "src/coreComponents/common/Datatype.hpp"
-        "src/coreComponents/common/StdContaienrWrappers.hpp"
+        "src/coreComponents/common/StdContainerWrappers.hpp"
         "src/coreComponents/dataRepository/BufferOps_inline.hpp"
         "src/coreComponents/dataRepository/BufferOps.hpp"
       )

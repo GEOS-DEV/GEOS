@@ -47,7 +47,7 @@ protected:
 };
 
 
-void runColoringTest( GraphColoringBase & graphColoring, const std::vector< camp::idx_t > & xadj, const std::vector< camp::idx_t > & adjncy, int expectedNumberOfColors )
+void runColoringTest( GraphColoringBase & graphColoring, const stdVector< camp::idx_t > & xadj, const stdVector< camp::idx_t > & adjncy, int expectedNumberOfColors )
 {
   auto [localXadj, localAdjncy] = scatterGraphData( xadj, adjncy, MPI_COMM_GEOS );
   int color = graphColoring.colorGraph( localAdjncy );
@@ -67,8 +67,8 @@ TEST_F( GraphColoringTest, CartesianDecomposition3D6 )
 #endif
   RLFGraphColoringMPI rlfColoringMPI;
 
-  std::vector< camp::idx_t > xadj;
-  std::vector< camp::idx_t > adjncy;
+  stdVector< camp::idx_t > xadj;
+  stdVector< camp::idx_t > adjncy;
 
   if( rank == 0 )
   {
@@ -90,8 +90,8 @@ TEST_F( GraphColoringTest, CartesianDecomposition3D26 )
 #endif
   RLFGraphColoringMPI rlfColoringMPI;
 
-  std::vector< camp::idx_t > xadj;
-  std::vector< camp::idx_t > adjncy;
+  stdVector< camp::idx_t > xadj;
+  stdVector< camp::idx_t > adjncy;
 
   if( rank == 0 )
   {
@@ -116,8 +116,8 @@ TEST_F( GraphColoringTest, RandomGraphs )
   size_t const iterations = 10;
   for( size_t i = 0; i < iterations; ++i )
   {
-    std::vector< camp::idx_t > xadj;
-    std::vector< camp::idx_t > adjncy;
+    stdVector< camp::idx_t > xadj;
+    stdVector< camp::idx_t > adjncy;
 
     if( rank == 0 )
     {
@@ -136,7 +136,7 @@ TEST_F( GraphColoringTest, RandomGraphs )
 
 TEST_F( GraphColoringTest, CountPositiveDistinctColors )
 {
-  std::vector< int > colors = {1, -1, 3, 2, 1, 4, 5, 3};
+  stdVector< int > colors = {1, -1, 3, 2, 1, 4, 5, 3};
   EXPECT_EQ( GraphColoringBase::getNumberOfColors( colors, MPI_COMM_GEOS ), 6 );
 }
 

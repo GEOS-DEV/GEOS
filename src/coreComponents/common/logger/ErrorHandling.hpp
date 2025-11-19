@@ -114,9 +114,9 @@ public:
     /// the source location line corresponding to the error in the code (default is 0)
     integer m_line = 0;
     /// Additional information about the error in the input file
-    std::vector< ErrorContext > m_contextsInfo;
+    stdVector< ErrorContext > m_contextsInfo;
     /// the stack trace
-    std::vector< std::string > m_sourceCallStack;
+    stdVector< std::string > m_sourceCallStack;
 
     /**
      * @brief Construct a default Error Message
