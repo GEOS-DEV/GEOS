@@ -60,7 +60,7 @@ for file in $FILES; do
     STR_UMAP="  Found forbidden std::unordered_map usage in: $file"$'\n'
     while IFS= read -r line; do
       STR_UMAP+="    $line"$'\n'
-    done < <(grep -n "std::map\s*<" "$file")
+    done < <(grep -n "std::unordered_map\s*<" "$file")
     ARRAY_UMAP+=("$STR_UMAP")
     UMAP_VIOLATIONS_FOUND=1
   fi
@@ -68,7 +68,7 @@ for file in $FILES; do
     STR_VECTOR="  Found forbidden std::vector usage in: $file"$'\n'
     while IFS= read -r line; do
       STR_VECTOR+="    $line"$'\n'
-    done < <(grep -n "std::map\s*<" "$file")
+    done < <(grep -n "std::vector\s*<" "$file")
     ARRAY_VECTOR+=("$STR_VECTOR")
     VECTOR_VIOLATIONS_FOUND=1
   fi
