@@ -5,6 +5,7 @@ FILE_PATTERNS=(
           "src/coreComponents/codingUtilities/*"
           "src/coreComponents/common/*"
           "src/coreComponents/dataRepository/*"
+          "src/coreComponents/constitutive/*"
           "src/coreComponents/denseLinearAlgebra/*"
           "src/coreComponents/discretizationMethods/*"
           "src/coreComponents/events/*"
@@ -20,6 +21,7 @@ FILE_PATTERNS=(
         )
   EXCLUDE_PATTERNS=(
         "src/coreComponents/common/Datatype.hpp"
+        "src/coreComponents/constitutive/PVTPackage/*"
         "src/coreComponents/common/StdContainerWrappers.hpp"
         "src/coreComponents/dataRepository/BufferOps_inline.hpp"
         "src/coreComponents/dataRepository/BufferOps.hpp"
