@@ -1,3 +1,4 @@
+#!/bin/bash
 echo "Test if the build works"
 eval pwd
 
