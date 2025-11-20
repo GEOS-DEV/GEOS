@@ -251,7 +251,7 @@ buildElemToNodesImpl( AllMeshes & meshes,
   localIndex const num3dCells = LvArray::integerConversion< localIndex >( meshes.getMainMesh()->GetNumberOfCells() );
 
   localIndex num2dCells = 0;
-  std::map< string, CollocatedNodes > collocatedNodesMap;
+  stdMap< string, CollocatedNodes > collocatedNodesMap;
   for( auto & [fractureName, fractureMesh]: meshes.getFaceBlocks() )
   {
     num2dCells += fractureMesh->GetNumberOfCells();
@@ -561,7 +561,7 @@ AllMeshes loadAllMeshes( Path const & filePath,
 {
   int const lastRank = MpiWrapper::commSize() - 1;
   vtkSmartPointer< vtkDataSet > main = loadMesh( filePath, mainBlockName );
-  std::map< string, vtkSmartPointer< vtkDataSet > > faces;
+  stdMap< string, vtkSmartPointer< vtkDataSet > > faces;
 
   for( string const & faceBlockName: faceBlockNames )
   {
@@ -1008,7 +1008,7 @@ redistributeByKdTree( vtkDataSet & mesh )
   return result;
 }
 
-std::vector< int >
+stdVector< int >
 findNeighborRanks( stdVector< vtkBoundingBox > boundingBoxes )
 {
   int const numParts = LvArray::integerConversion< int >( boundingBoxes.size() );
