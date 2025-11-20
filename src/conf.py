@@ -107,8 +107,19 @@ extensions = [
     'matplotlib.sphinxext.plot_directive',
     'sphinx.ext.napoleon',
     'sphinxcontrib.plantuml',
-    'sphinxcontrib.programoutput'
+    'sphinxcontrib.programoutput',
+    'sphinxcontrib.bibtex',
+    'sphinx.ext.mathjax'
 ]
+
+bibtex_bibfiles = ["/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/Geomechanics.bib"]
+bibtex_default_style = "plain"
+bibtex_reference_style = "author_year"
+
+#math_number_all = True
+#math_eqref_format = "Eq. {number}"
+
+
 
 plantuml = "/usr/bin/java -Djava.awt.headless=true -jar /tmp/plantuml.jar"
 plantuml_output_format = "svg_img"

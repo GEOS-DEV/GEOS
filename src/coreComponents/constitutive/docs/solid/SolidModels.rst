@@ -22,4 +22,5 @@ known models.
    ModifiedCamClay
    DelftEgg
    Damage
+   Geomechanics
    ViscoPlasticity 
