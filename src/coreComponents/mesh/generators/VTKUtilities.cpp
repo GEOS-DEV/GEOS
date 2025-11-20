@@ -75,6 +75,7 @@
 #endif
 
 #include <numeric>
+#include <type_traits>
 
 
 namespace geos
@@ -640,6 +641,7 @@ partitionByCellGraph( AllMeshes & input,
       return parmetis::partition( graph.toViewConst(), elemDist, numParts, comm, numRefinements );
 #else
       GEOS_THROW( "GEOS must be built with ParMETIS support (ENABLE_PARMETIS=ON) to use 'parmetis' partitioning method", InputError );
+      return {};
 #endif
     }
     case PartitionMethod::ptscotch:
@@ -649,6 +651,7 @@ partitionByCellGraph( AllMeshes & input,
       return ptscotch::partition( graph.toViewConst(), numParts, comm );
 #else
       GEOS_THROW( "GEOS must be built with Scotch support (ENABLE_SCOTCH=ON) to use 'ptscotch' partitioning method", InputError );
+      return {};
 #endif
     }
     default:
@@ -928,8 +931,11 @@ redistributeByAreaGraphAndLayer( AllMeshes & input,
                                                        minA = idxLimits[0].first]( localIndex const i )
     {
       auto const aidx = index.Get( i, 0 );
-      GEOS_ASSERT_GE( aidx, 0 );
+
       GEOS_ASSERT_GT( std::numeric_limits< int32_t >::max(), dst[i] );
+      if constexpr ( std::is_signed_v< decltype(aidx) > )
+        GEOS_ASSERT_GE( aidx, 0 );
+
       dst[i] |= static_cast< int64_t >( aidx - minA ) << 32;
     } );
   } );

@@ -211,11 +211,11 @@ struct NodesAndElementOfFace
 {
   NodesAndElementOfFace( localIndex const duplicateFaceNodesIdx,
                          localIndex const cellIdx,
-                         localIndex const blockIdx,
+                         localIndex const blockId,
                          localIndex const faceNum ):
     duplicateFaceNodesIndex( duplicateFaceNodesIdx ),
     cellIndex( cellIdx ),
-    blockIndex( blockIdx ),
+    blockIndex( blockId ),
     faceNumber( faceNum )
   {}
 
