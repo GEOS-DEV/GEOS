@@ -23,7 +23,7 @@ check_container_usage() {
 print_violation()
 {
     local violation_found="$1"
-    local container="$2"
+    local -n container="$2"
     local targetStd="$3"
 
     if [ "$violation_found" -eq 1 ];then
@@ -107,9 +107,9 @@ if [ $MAP_VIOLATIONS_FOUND -eq 1 ] || [ $UMAP_VIOLATIONS_FOUND -eq 1 ] || [ $VEC
   echo "SUMMARY: Code rule violations found"
   echo "----------------------------------------"
 
-  print_violation MAP_VIOLATIONS_FOUND ARRAY_MAP "std::map"
-  print_violation UMAP_VIOLATIONS_FOUND ARRAY_UMAP "std::unordered_map"
-  print_violation VECTOR_VIOLATIONS_FOUND ARRAY_VECTOR "std::vector"
+  print_violation "$MAP_VIOLATIONS_FOUND" ARRAY_MAP "std::map"
+  print_violation "$UMAP_VIOLATIONS_FOUND" ARRAY_UMAP "std::unordered_map"
+  print_violation "$VECTOR_VIOLATIONS_FOUND" ARRAY_VECTOR "std::vector"
 
   echo ""
   exit 1;
