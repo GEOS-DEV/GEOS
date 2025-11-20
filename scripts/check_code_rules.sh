@@ -59,7 +59,6 @@ FILE_PATTERNS=(
         )
   EXCLUDE_PATTERNS=(
         "common/Datatype.hpp"
-        "constitutive/PVTPackage/*"
         "common/StdContainerWrappers.hpp"
         "dataRepository/BufferOps_inline.hpp"
         "dataRepository/BufferOps.hpp"
@@ -74,22 +73,17 @@ ARRAY_MAP=()
 ARRAY_UMAP=()
 ARRAY_VECTOR=()
 
-# Build the find command
 FULL_FILE_PATTERN="${FILE_PREFIX}${FILE_PATTERNS[*]}"
-FULL_EXCLUDE_PATTERN="${FILE_PREFIX}${EXCLUDE_PATTERNS[*]}"
-
+# Build the find command
 FIND_CMD="find"
 FIND_FILE_CMD="$FIND_CMD $FILE_PATH_PATERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
 FILES=$(eval "$FIND_FILE_CMD" 2>/dev/null);
-
-FIND_EXCLUDE_FILE_CMD="$FIND_CMD $FULL_EXCLUDE_PATTERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
-EXCLUDE_FILES=$(eval "$FIND_EXCLUDE_FILE_CMD" 2>/dev/null);
 
 # Main loop
 for file in $FILES; do
   SKIP=0
   echo "file : ${file}"
-  for exclude in $EXCLUDE_FILES; do
+  for exclude in "${EXCLUDE_PATTERNS[@]}"; do
     echo "   vs exclude ${exclude}"
     if [[ "$file" == *"$exclude"* ]]; then
       SKIP=1
