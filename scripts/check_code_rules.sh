@@ -79,14 +79,17 @@ FULL_FILE_PATTERN="${FILE_PREFIX}${FILE_PATTERNS[*]}"
 FULL_EXCLUDE_PATTERN="${FILE_PREFIX}${EXCLUDE_PATTERNS[*]}"
 
 FIND_CMD="find"
-FIND_CMD="$FIND_CMD $FILE_PATH_PATERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
-FILES=$(eval "$FIND_CMD" 2>/dev/null || echo "");
+FIND_FILE_CMD="$FIND_CMD $FILE_PATH_PATERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
+FILES=$(eval "$FIND_FILE_CMD" 2>/dev/null);
+
+FIND_EXCLUDE_FILE_CMD="$FIND_CMD $FULL_EXCLUDE_PATTERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
+EXCLUDE_FILES=$(eval "$FIND_EXCLUDE_FILE_CMD" 2>/dev/null);
 
 # Main loop
 for file in $FILES; do
   SKIP=0
   echo "file : ${file}"
-  for exclude in "${FULL_EXCLUDE_PATTERN[@]}"; do
+  for exclude in $EXCLUDE_FILES; do
     echo "   vs exclude ${exclude}"
     if [[ "$file" == *"$exclude"* ]]; then
       SKIP=1
