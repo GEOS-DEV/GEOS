@@ -86,6 +86,7 @@ FILES=$(eval "$FIND_CMD" 2>/dev/null || echo "");
 for file in $FILES; do
   SKIP=0
   for exclude in "${FULL_EXCLUDE_PATTERN[@]}"; do
+    echo "file : ${file} vs exclude ${exclude}"
     if [[ "$file" == *"$exclude"* ]]; then
       SKIP=1
       break
