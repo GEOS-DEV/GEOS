@@ -2,12 +2,12 @@
 
 # while
 # ... done < <(grep -n "std::map\s*<" "$file") 
-# Process the result of grep command as a file
+# Process the result of grep command as a file.
 # This allows everything to be handled in the same shell environment.
 check_container_usage() {
   local container="$1"
-  local -n array_name=$2
-  local -n violation_found=$3
+  local -n array_name="$2"
+  local -n violation_found="$3"
   local str="  Found forbidden ${container} usage in: $file"$'\n'
 
   if grep -q "${container}\s*<" "$file"; then
@@ -15,43 +15,56 @@ check_container_usage() {
       str+="    $line"$'\n'
     done < <(grep -n "${container}\s*<" "$file")
     
-    $array_name+=$str
-    $violation_found=1
+    array_name+="$str"
+    violation_found=1
   fi
 }
 
-echo "Test code rules"
+print_violation()
+{
+    local violation_found="$1"
+    local container="$2"
+    local targetStd="$3"
+
+    if [ "$violation_found" -eq 1 ];then
+      echo "ERROR: Forbidden $targetStd usage detected"
+      echo "=========================================="
+
+      for element in "${container[@]}"
+      do
+          echo "$element";
+      done
+    fi
+}
+
+# Variables initialization 
+FILE_PREFIX="src/coreComponents/"
 FILE_PATTERNS=(
-          "src/coreComponents/codingUtilities/*"
-          "src/coreComponents/common/*"
-          "src/coreComponents/dataRepository/*"
-          "src/coreComponents/constitutive/*"
-          "src/coreComponents/denseLinearAlgebra/*"
-          "src/coreComponents/discretizationMethods/*"
-          "src/coreComponents/events/*"
-          "src/coreComponents/fieldSpecification/*"
-          "src/coreComponents/fileIO/*"
-          "src/coreComponents/finiteElement/*"
-          "src/coreComponents/finiteVolume/*"
-          "src/coreComponents/functions/*"
-          "src/coreComponents/linearAlgebra/*"
-          "src/coreComponents/mainInterface/*"
-          "src/coreComponents/mesh/*"
-          "src/coreComponents/physicsSolvers/*"
+          "codingUtilities/*"
+          "common/*"
+          "dataRepository/*"
+          "constitutive/*"
+          "denseLinearAlgebra/*"
+          "discretizationMethods/*"
+          "events/*"
+          "fieldSpecification/*"
+          "fileIO/*"
+          "finiteElement/*"
+          "finiteVolume/*"
+          "functions/*"
+          "linearAlgebra/*"
+          "mainInterface/*"
+          "mesh/*"
+          "physicsSolvers/*"
         )
   EXCLUDE_PATTERNS=(
-        "src/coreComponents/common/Datatype.hpp"
-        "src/coreComponents/constitutive/PVTPackage/*"
-        "src/coreComponents/common/StdContainerWrappers.hpp"
-        "src/coreComponents/dataRepository/BufferOps_inline.hpp"
-        "src/coreComponents/dataRepository/BufferOps.hpp"
+        "common/Datatype.hpp"
+        "constitutive/PVTPackage/*"
+        "common/StdContainerWrappers.hpp"
+        "dataRepository/BufferOps_inline.hpp"
+        "dataRepository/BufferOps.hpp"
       )
-FIND_CMD="find"
-for pattern in "${FILE_PATTERNS[@]}"; do
-  FILE_PATH_PATERN+=${pattern}" "
-done
-FIND_CMD="$FIND_CMD $FILE_PATH_PATERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
-FILES=$(eval "$FIND_CMD" 2>/dev/null || echo "");
+
 
 MAP_VIOLATIONS_FOUND=0
 UMAP_VIOLATIONS_FOUND=0
@@ -60,9 +73,19 @@ VECTOR_VIOLATIONS_FOUND=0
 ARRAY_MAP=()
 ARRAY_UMAP=()
 ARRAY_VECTOR=()
+
+# Build the find command
+FULL_FILE_PATTERN="${FILE_PREFIX}${FILE_PATTERNS[*]}"
+FULL_EXCLUDE_PATTERN="${FILE_PREFIX}${EXCLUDE_PATTERNS[*]}"
+
+FIND_CMD="find"
+FIND_CMD="$FIND_CMD $FILE_PATH_PATERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
+FILES=$(eval "$FIND_CMD" 2>/dev/null || echo "");
+
+# Main loop
 for file in $FILES; do
   SKIP=0
-  for exclude in "${EXCLUDE_PATTERNS[@]}"; do
+  for exclude in "${FULL_EXCLUDE_PATTERN[@]}"; do
     if [[ "$file" == *"$exclude"* ]]; then
       SKIP=1
       break
@@ -78,40 +101,15 @@ for file in $FILES; do
   check_container_usage "std::vector" ARRAY_VECTOR VECTOR_VIOLATIONS_FOUND
 done
 
-if (($MAP_VIOLATIONS_FOUND == 1)) || (($UMAP_VIOLATIONS_FOUND == 1 )) || (($VECTOR_VIOLATIONS_FOUND == 1 )); then 
+# Print section
+if [ $MAP_VIOLATIONS_FOUND -eq 1 ] || [ $UMAP_VIOLATIONS_FOUND -eq 1 ] || [ $VECTOR_VIOLATIONS_FOUND -eq 1 ]; then 
   echo "----------------------------------------"
   echo "SUMMARY: Code rule violations found"
   echo "----------------------------------------"
 
-  if((MAP_VIOLATIONS_FOUND == 1 ));then
-    echo $'ERROR: Forbidden std::map usage detected'
-    echo "=========================================="
-  fi
-
-  for element in "${ARRAY_MAP[@]}"
-  do
-      echo "$element";
-  done
-
-  if((UMAP_VIOLATIONS_FOUND == 1 ));then
-    echo $'\nERROR: Forbidden std::unordered_map usage detected'
-    echo "======================================================"
-  fi
-
-  for element in "${ARRAY_UMAP[@]}"
-  do
-      echo "$element";
-  done
-
-  if((VECTOR_VIOLATIONS_FOUND == 1 ));then
-    echo $'\nERROR: Forbidden std::vector usage detected'
-    echo "==============================================="
-  fi
-
-  for element in "${ARRAY_VECTOR[@]}"
-  do
-      echo "$element";
-  done
+  print_violation MAP_VIOLATIONS_FOUND ARRAY_MAP "std::map"
+  print_violation UMAP_VIOLATIONS_FOUND ARRAY_UMAP "std::unordered_map"
+  print_violation VECTOR_VIOLATIONS_FOUND ARRAY_VECTOR "std::vector"
 
   echo ""
   exit 1;
