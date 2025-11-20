@@ -25,6 +25,11 @@
 #include <regex>
 #include <string_view>
 
+// signal management
+#include <csignal>
+#include <cfenv>
+#include <cstring>
+
 namespace geos
 {
 static constexpr std::string_view g_level1Start = "  - ";
@@ -68,7 +73,9 @@ std::string ErrorLogger::ErrorContext::attributeToString( ErrorLogger::ErrorCont
     case ErrorLogger::ErrorContext::Attribute::InputFile: return "inputFile";
     case ErrorLogger::ErrorContext::Attribute::InputLine: return "inputLine";
     case ErrorLogger::ErrorContext::Attribute::DataPath: return "dataPath";
-    default: return "Unknown";
+    case ErrorLogger::ErrorContext::Attribute::DetectionLoc: return "detectionLocation";
+    case ErrorLogger::ErrorContext::Attribute::Signal: return "signal";
+    default: return "unknown";
   }
 }
 
@@ -96,6 +103,39 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string_view errorM
     m_msg = std::string( errorMsg ) + m_msg;
   }
   return *this;
+}
+
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addSignalToMsg( int sig, bool toEnd )
+{
+  if( sig == SIGFPE )
+  {
+    std::string errorMsg = "Floating point error encountered: \n";
+
+    if( std::fetestexcept( FE_DIVBYZERO ) )
+      errorMsg += "- Division by zero operation.\n";
+
+    if( std::fetestexcept( FE_INEXACT ) )
+      errorMsg += "- Inexact result.\n";
+
+    if( std::fetestexcept( FE_INVALID ) )
+      errorMsg += "- Domain error occurred in an earlier floating-point operation.\n";
+
+    if( std::fetestexcept( FE_OVERFLOW ) )
+      errorMsg += "- The result of the earlier floating-point operation was too large to be representable.\n";
+
+    if( std::fetestexcept( FE_UNDERFLOW ) )
+      errorMsg += "- The result of the earlier floating-point operation was subnormal with a loss of precision.\n";
+
+    return addToMsg( errorMsg,
+                     toEnd );
+  }
+  else
+  {
+    // standard messages
+    return addToMsg( GEOS_FMT( "Signal no. {} encountered: {}\n",
+                               sig, ::strsignal( sig ) ),
+                     toEnd );
+  }
 }
 
 ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCodeLocation( std::string_view msgFile, integer msgLine )
@@ -232,27 +272,29 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg, std::ostrings
         streamMultilineYamlAttribute( errorMsg.m_cause, yamlFile, g_level2Next );
       }
 
-      // Location of the error in the code
+    // Location of the error in the code
+    if( !errorMsg.m_file.empty() )
+    {
       yamlFile << g_level1Next << "sourceLocation:\n";
       yamlFile << g_level2Next << "file: " << errorMsg.m_file << "\n";
       yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
-
-      // Information about the stack trace
-      if( !errorMsg.m_sourceCallStack.empty() )
+    }
+    // Information about the stack trace
+    if( !errorMsg.m_sourceCallStack.empty() )
+    {
+      yamlFile << g_level1Next << "sourceCallStack:\n";
+      for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
       {
-        yamlFile << g_level1Next << "sourceCallStack:\n";
-        for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
-        {
-          yamlFile << ( errorMsg.isValidStackTrace() ?
-                        GEOS_FMT( "{}frame{}: {}\n", g_level3Start, i, errorMsg.m_sourceCallStack[i] ) :
-                        GEOS_FMT( "{}{}\n", g_level3Start, errorMsg.m_sourceCallStack[i] ) );
-        }
+        yamlFile << ( errorMsg.isValidStackTrace() ?
+                      GEOS_FMT( "{}frame{}: {}\n", g_level3Start, i, errorMsg.m_sourceCallStack[i] ) :
+                      GEOS_FMT( "{}{}\n", g_level3Start, errorMsg.m_sourceCallStack[i] ) );
       }
+    }
 
       yamlFile << "\n";
       yamlFile.flush();
       errorMsg = ErrorMsg();
-      GEOS_LOG_RANK( GEOS_FMT( "The error file {} was appended.", m_filename ) );
+      GEOS_LOG_RANK( GEOS_FMT( "The error file {} has been appended.", m_filename ) );
     }
     else
     {
