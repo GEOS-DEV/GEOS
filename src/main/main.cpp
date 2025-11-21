@@ -75,7 +75,7 @@ int main( int argc, char *argv[] )
     return 0;
   }
   catch( std::exception const & e )
-  { 
+  {
     GEOS_LOG( e.what() );
     if( ErrorLogger::global().isOutputFileEnabled() )
     {
