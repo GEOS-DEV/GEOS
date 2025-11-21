@@ -235,10 +235,11 @@ private:
     bool m_isValidStackTrace = false;
   };
 
-  /**  /// The final error message displayed to standard output
+  /**  
    * @brief Retrieve all informations from the ErrorLogger and format into an ascii message
    * @param errMsg Class containing all the error/warning information
    * @param rank The rank where the error/warning happened
+   * @return The error message displayed to the standard output
    */
   static string formatMsgToAscii( ErrorLogger::ErrorMsg const & errMsg, string const & rank )
   {
