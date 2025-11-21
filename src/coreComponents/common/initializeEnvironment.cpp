@@ -105,6 +105,7 @@ void setupLogger()
         error.addCallStackInfo( stackHistory );
         error.addContextInfo(
           ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( detectionLocation ) } } } );
+
         ErrorLogger::global().flushErrorMsg( error );
       }
 
@@ -140,6 +141,7 @@ void setupLogger()
         error.addContextInfo(
           ErrorContext{ { { ErrorContext::Attribute::Signal, std::to_string( signal ) } }, 1 },
           ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( "signal handler" ) } }, 0 } );
+
         ErrorLogger::global().flushErrorMsg( error );
       }
 

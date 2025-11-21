@@ -18,7 +18,6 @@
  */
 
 #include "Units.hpp"
-#include "common/logger/Logger.hpp"
 
 namespace geos
 {
@@ -76,7 +75,6 @@ std::ostream & operator<<( std::ostream & os, TimeFormatInfo const & info )
 
 TimeFormatInfo TimeFormatInfo::fromSeconds( double const seconds )
 {
-
   double remainingSeconds = seconds < 0.0 ? -seconds : seconds;
   int const totalYears = int( remainingSeconds / YearSeconds );
   remainingSeconds -= totalYears * YearSeconds;

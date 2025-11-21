@@ -235,7 +235,7 @@ private:
     bool m_isValidStackTrace = false;
   };
 
-  /**  
+  /**
    * @brief Retrieve all informations from the ErrorLogger and format into an ascii message
    * @param errMsg Class containing all the error/warning information
    * @param rank The rank where the error/warning happened
@@ -321,7 +321,6 @@ private:
 private:
   /// The error constructed via exceptions
   ErrorMsg m_currentErrorMsg;
-
   /// Indicate whether the write to YAML command line option is enabled
   bool m_writeYaml = false;
   /// YAML file name

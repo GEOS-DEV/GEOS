@@ -1032,9 +1032,8 @@ void InitializeLogger( const std::string & rank_output_dir="" );
  */
 void FinalizeLogger();
 
-}     // namespace logger
+}   // namespace logger
 
-
-}   // namespace geos
+} // namespace geos
 
 #endif /* GEOS_COMMON_LOGGER_HPP */
