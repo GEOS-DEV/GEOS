@@ -106,7 +106,7 @@ void setupLogger()
         error.addContextInfo(
           ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( detectionLocation ) } } } );
         std::ostringstream flushoss;
-        ErrorLogger::global().flushErrorMsg( error,flushoss );
+        ErrorLogger::global().flushErrorMsg( error, flushoss );
       }
 
       // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
@@ -142,7 +142,7 @@ void setupLogger()
           ErrorContext{ { { ErrorContext::Attribute::Signal, std::to_string( signal ) } }, 1 },
           ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( "signal handler" ) } }, 0 } );
         std::ostringstream flushoss;
-        ErrorLogger::global().flushErrorMsg( error,flushoss );
+        ErrorLogger::global().flushErrorMsg( error, flushoss );
       }
 
       // call program termination

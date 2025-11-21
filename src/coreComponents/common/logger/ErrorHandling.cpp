@@ -272,24 +272,24 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg, std::ostrings
         streamMultilineYamlAttribute( errorMsg.m_cause, yamlFile, g_level2Next );
       }
 
-    // Location of the error in the code
-    if( !errorMsg.m_file.empty() )
-    {
-      yamlFile << g_level1Next << "sourceLocation:\n";
-      yamlFile << g_level2Next << "file: " << errorMsg.m_file << "\n";
-      yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
-    }
-    // Information about the stack trace
-    if( !errorMsg.m_sourceCallStack.empty() )
-    {
-      yamlFile << g_level1Next << "sourceCallStack:\n";
-      for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
+      // Location of the error in the code
+      if( !errorMsg.m_file.empty() )
       {
-        yamlFile << ( errorMsg.isValidStackTrace() ?
-                      GEOS_FMT( "{}frame{}: {}\n", g_level3Start, i, errorMsg.m_sourceCallStack[i] ) :
-                      GEOS_FMT( "{}{}\n", g_level3Start, errorMsg.m_sourceCallStack[i] ) );
+        yamlFile << g_level1Next << "sourceLocation:\n";
+        yamlFile << g_level2Next << "file: " << errorMsg.m_file << "\n";
+        yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
       }
-    }
+      // Information about the stack trace
+      if( !errorMsg.m_sourceCallStack.empty() )
+      {
+        yamlFile << g_level1Next << "sourceCallStack:\n";
+        for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
+        {
+          yamlFile << ( errorMsg.isValidStackTrace() ?
+                        GEOS_FMT( "{}frame{}: {}\n", g_level3Start, i, errorMsg.m_sourceCallStack[i] ) :
+                        GEOS_FMT( "{}{}\n", g_level3Start, errorMsg.m_sourceCallStack[i] ) );
+        }
+      }
 
       yamlFile << "\n";
       yamlFile.flush();
