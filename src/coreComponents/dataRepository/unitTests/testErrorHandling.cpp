@@ -185,8 +185,8 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
       .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
 
 
-    std::ostringstream flushoss;
-    testErrorLogger.flushErrorMsg( testErrorLogger.currentErrorMsg(), flushoss );
+
+    testErrorLogger.flushErrorMsg( testErrorLogger.currentErrorMsg() );
     endLocalLoggerTest( testErrorLogger, {
       R"(errors:)",
 

@@ -21,6 +21,7 @@
 #define INITIALIZATION_ERROR_LOGGER_HPP
 
 #include "common/DataTypes.hpp"
+#include <sstream>
 
 
 namespace geos
@@ -234,22 +235,21 @@ private:
     bool m_isValidStackTrace = false;
   };
 
-  /**
+  /**  /// The final error message displayed to standard output
    * @brief Retrieve all informations from the ErrorLogger and format into an ascii message
    * @param errMsg Class containing all the error/warning information
    * @param rank The rank where the error/warning happened
-   * @param msgoss The output stream. By default std::cout
    */
-  static void formatMsgToAscii( ErrorLogger::ErrorMsg const & errMsg, string const & rank,
-                                std::ostringstream & msgoss )
+  static string formatMsgToAscii( ErrorLogger::ErrorMsg const & errMsg, string const & rank )
   {
-
-    msgoss << "***** " << ErrorLogger::toString( errMsg.m_type ) << "\n";
-    msgoss << "***** LOCATION: " << errMsg.m_file<< "\n";
-    msgoss << "***** " << errMsg.m_cause << "\n";
-    msgoss << "***** Rank " << rank << ": " << errMsg.m_msg << "\n";
-    msgoss << errMsg.m_stringCallStack;
-    std::cout << msgoss.str() <<std::endl;
+    std::ostringstream oss;
+    oss << "***** " << ErrorLogger::toString( errMsg.m_type ) << "\n";
+    oss << "***** LOCATION: " << errMsg.m_file<< "\n";
+    oss << "***** " << errMsg.m_cause << "\n";
+    oss << "***** Rank " << rank << ": " << errMsg.m_msg << "\n";
+    oss << errMsg.m_stringCallStack;
+    std::cout << oss.str() <<std::endl;
+    return oss.str();
   }
 
   /**
@@ -315,11 +315,12 @@ private:
    *        and reset the errorMsg instance to its initial state
    * @param errorMsg a constant reference to the error
    */
-  void flushErrorMsg( ErrorMsg & errorMsg, std::ostringstream & oss );
+  void flushErrorMsg( ErrorMsg & errorMsg );
 
 private:
   /// The error constructed via exceptions
   ErrorMsg m_currentErrorMsg;
+
   /// Indicate whether the write to YAML command line option is enabled
   bool m_writeYaml = false;
   /// YAML file name

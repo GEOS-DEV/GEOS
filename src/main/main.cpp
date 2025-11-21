@@ -18,6 +18,7 @@
 #include "common/format/Format.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Units.hpp"
+#include "common/logger/ErrorHandling.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
@@ -76,8 +77,7 @@ int main( int argc, char *argv[] )
   }
   catch( std::exception const & e )
   {
-    std::ostringstream flushoss;
-    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().currentErrorMsg(), flushoss );
+    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().currentErrorMsg() );
 
     LvArray::system::callErrorHandler();
     basicCleanup();

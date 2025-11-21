@@ -156,7 +156,6 @@
   { \
     if( COND ) \
     { \
-      std::ostringstream flushoss; \
       std::ostringstream msgoss; \
       msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
       std::ostringstream causemsgsoss; \
@@ -169,7 +168,7 @@
       msgStruct.setCause( causemsgsoss.str() ); \
       msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct, flushoss ); \
+      GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \
       LvArray::system::callErrorHandler(); \
     } \
   }while( false )
@@ -224,7 +223,6 @@
   { \
     if( COND ) \
     { \
-      std::ostringstream flushoss; \
       std::ostringstream msgoss; \
       msgoss << MSG; \
       std::ostringstream causemsgsoss; \
@@ -241,11 +239,12 @@
       GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg() \
         .addToMsg( msgoss.str() ) \
         .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      ErrorLogger::formatMsgToAscii( GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg(), \
-                                     ::geos::logger::internal::g_rankString, flushoss ); \
-      throw GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )( flushoss.str()); \
+      string const asciiErrormSG = \
+        ErrorLogger::formatMsgToAscii( GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg(), \
+                                       ::geos::logger::internal::g_rankString ); \
+      throw GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )( asciiErrormSG ); \
     } \
-  } while( false )
+  }while( false )
   #elif __CUDA_ARCH__
 #define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... ) \
   do \
@@ -298,7 +297,6 @@
   { \
     if( COND ) \
     { \
-      std::ostringstream flushoss; \
       std::ostringstream msgoss; \
       msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
       std::ostringstream causemsgsoss; \
@@ -310,7 +308,7 @@
                                        __LINE__ ); \
       msgStruct.setCause( causemsgsoss.str() ); \
       msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct, flushoss ); \
+      GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \
     } \
   } while( false )
 #elif __CUDA_ARCH__
