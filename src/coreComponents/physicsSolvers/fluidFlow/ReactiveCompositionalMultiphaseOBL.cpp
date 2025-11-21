@@ -77,10 +77,10 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
 
-  this->registerWrapper( viewKeyStruct::transMultExpString(), &m_transMultExp ).
-    setApplyDefaultValue( 1.0 ).
+  this->registerWrapper( viewKeyStruct::enablePermPoroString(), &m_enablePermPoro ).
+    setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Exponent of dynamic transmissibility multiplier" );
+    setDescription( "Flag indicating whether permeability-porosity dependence is enabled" );
 
   this->registerWrapper( viewKeyStruct::allowLocalOBLChoppingString(), &m_allowOBLChopping ).
     setApplyDefaultValue( 1.0 ).
@@ -691,7 +691,7 @@ void ReactiveCompositionalMultiphaseOBL::assembleFluxTerms( real64 const dt,
         createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
                                                    m_numComponents,
                                                    m_enableEnergyBalance,
-                                                   m_transMultExp,
+                                                   m_enablePermPoro,
                                                    dofManager.rankOffset(),
                                                    elemDofKey,
                                                    getName(),

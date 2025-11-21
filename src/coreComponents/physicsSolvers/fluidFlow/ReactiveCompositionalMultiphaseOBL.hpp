@@ -249,7 +249,7 @@ public:
 
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
 
-    static constexpr char const * transMultExpString() { return "transMultExp"; }
+    static constexpr char const * enablePermPoroString() { return "enablePermPoro"; }
 
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
 
@@ -343,8 +343,8 @@ private:
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;
 
-  /// exponent of dynamic transmissibility multiplier
-  real64 m_transMultExp;
+  /// flag indicating whether permeability-porosity dependence is enabled
+  integer m_enablePermPoro;
 
   /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
   real64 m_minScalingFactor;

@@ -4363,6 +4363,8 @@ When set to 2 output convergence information to a csv-->
 		<xsd:attribute name="discretization" type="groupNameRef" use="required" />
 		<!--enableEnergyBalance => Enable energy balance calculation and temperature degree of freedom-->
 		<xsd:attribute name="enableEnergyBalance" type="integer" use="required" />
+		<!--enablePermPoro => Flag indicating whether permeability-porosity dependence is enabled-->
+		<xsd:attribute name="enablePermPoro" type="integer" default="0" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
@@ -4397,8 +4399,6 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" default="{}" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
-		<!--transMultExp => Exponent of dynamic transmissibility multiplier-->
-		<xsd:attribute name="transMultExp" type="real64" default="1" />
 		<!--useDARTSL2Norm => Use L2 norm calculation similar to one used DARTS-->
 		<xsd:attribute name="useDARTSL2Norm" type="integer" default="1" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->

@@ -78,7 +78,7 @@ public:
   // kinetic reaction
   static constexpr integer KIN_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases;
   // temperature
-  static constexpr integer TEMP_OP = KIN_OP + numDofs + 2 * numPhases + 1 + numPhases;
+  static constexpr integer TEMP_OP = numOps - 2;
 
   static constexpr real64 secondsToDaysMult = 1.0 / (60 * 60 * 24);
   static constexpr real64 pascalToBarMult = 1.0 / 1e5;
@@ -416,7 +416,7 @@ public:
    * @param[in] compFlowAccessors accessors for data associated with compositional flow
    * @param[in] permeabilityAccessors accessors for data associated with permeability
    * @param[in] dt time step size
-   * @param[in] transMultExp exponent of transmissibility multiplier
+   * @param[in] enablePermPoro flag indicating whether permeability-porosity dependence is enabled
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
@@ -425,12 +425,12 @@ public:
                          CompFlowAccessors const & compFlowAccessors,
                          PermeabilityAccessors const & permeabilityAccessors,
                          real64 const & dt,
-                         real64 const & transMultExp,
+                         integer const & enablePermPoro,
                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                          arrayView1d< real64 > const & localRhs )
     : m_rankOffset( rankOffset ),
     m_dt( dt * secondsToDaysMult ),
-    m_transMultExp ( transMultExp ),
+    m_enablePermPoro ( enablePermPoro  ),
     m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
     m_permeability( permeabilityAccessors.get( fields::permeability::permeability {} ) ),
     m_dPerm_dPres( permeabilityAccessors.get( fields::permeability::dPerm_dPressure {} ) ),
@@ -453,8 +453,8 @@ protected:
   /// Time step size
   real64 const m_dt;
 
-  /// trans multiplier exponent
-  real64 m_transMultExp;
+  /// flag indicating whether permeability-porosity dependence is enabled
+  integer m_enablePermPoro;
 
   /// Views on dof numbers
   ElementViewConst< arrayView1d< globalIndex const > > const m_dofNumber;
@@ -527,9 +527,11 @@ public:
   // capillary pressure
   static constexpr integer PC_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + numPhases;
   // porosity
-  static constexpr integer PORO_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 2 * numPhases;
+  static constexpr integer MULT_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 2 * numPhases;
+  // mobility
+  static constexpr integer LAMBDA_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 2 * numPhases + 1;
   // temperature
-  static constexpr integer TEMP_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3 * numPhases + 1;
+  static constexpr integer TEMP_OP = numDofs - 2;
 
   /// Maximum number of elements at the face
   static constexpr localIndex maxNumElems = STENCILWRAPPER::maxNumPointsInFlux;
@@ -548,7 +550,7 @@ public:
    * @param[in] compFlowAccessors accessors for data associated with compositional flow
    * @param[in] permeabilityAccessors accessors for data associated with permeability
    * @param[in] dt time step size
-   * @param[in] transMultExp exponent of transmissibility multiplier
+   * @param[in] enablePermPoro flag indicating whether permeability-porosity dependence is enabled
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
@@ -558,7 +560,7 @@ public:
                      CompFlowAccessors const & compFlowAccessors,
                      PermeabilityAccessors const & permeabilityAccessors,
                      real64 const & dt,
-                     real64 const & transMultExp,
+                     integer const & enablePermPoro,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs )
     : FluxComputeKernelBase( rankOffset,
@@ -566,7 +568,7 @@ public:
                              compFlowAccessors,
                              permeabilityAccessors,
                              dt,
-                             transMultExp,
+                             enablePermPoro,
                              localMatrix,
                              localRhs ),
     m_stencilWrapper( stencilWrapper ),
@@ -655,7 +657,7 @@ public:
 
     // first, compute the transmissibilities at this face
     // though weights are recomputed every time, the perm derivative is not used:
-    // perm/poro changes are treated differently in OBL: via m_transMultExp and PORO operator
+    // perm/poro changes are treated differently in OBL: via m_enablePermPoro and MULT operator
 
     // in case mesh geometry/configuration is not changing during simulation, weights can be computed as a preprocessing step
     m_stencilWrapper.computeWeights( iconn,
@@ -694,16 +696,30 @@ public:
 
 
     real64 transMult = 1;
-    real64 transMultD = 0;
+    real64 transMultDerI[numDofs];
+    real64 transMultDerJ[numDofs];
+    real64 mult_i, mult_j;
     real64 phasePresenceMult = 1.0;
-    if( m_transMultExp > 0 )
+    if( m_enablePermPoro )
     {
       // Calculate transmissibility multiplier:
-
-      // Take average interface porosity:
-      real64 const poroAverage = (OBLValsI[PORO_OP] + OBLValsJ[PORO_OP]) * 0.5;
-      transMultD = m_transMultExp * pow( poroAverage, m_transMultExp - 1 ) * 0.5;
-      transMult = pow( poroAverage, m_transMultExp );
+      mult_i = OBLValsI[MULT_OP];
+      mult_j = OBLValsJ[MULT_OP];
+      transMult = 2 * mult_i * mult_j / (mult_i + mult_j);
+      // Calculate derivatives of transmissibility multiplier
+      for( integer v = 0; v < numDofs; ++v )
+      {
+        transMultDerI[v] = mult_j * transMult / (mult_i + mult_j) * OBLDersI[MULT_OP][v];
+        transMultDerJ[v] = mult_i * transMult / (mult_i + mult_j) * OBLDersJ[MULT_OP][v];
+      }
+    }
+    else
+    {
+      for( integer v = 0; v < numDofs; ++v )
+      {
+        transMultDerI[v] = 0;
+        transMultDerJ[v] = 0;
+      }
     }
 
 
@@ -732,8 +748,8 @@ public:
       real64 gravPcDerJ[numDofs];
       for( integer v = 0; v < numDofs; ++v )
       {
-        gravPcDerI[v] = -(OBLDersI[GRAV_OP + p][v]) * gravCoef / 2 - OBLDersI[PC_OP + p][v];
-        gravPcDerJ[v] = -(OBLDersJ[GRAV_OP + p][v]) * gravCoef / 2 + OBLDersJ[PC_OP + p][v];
+        gravPcDerI[v] = (OBLDersI[GRAV_OP + p][v]) * gravCoef / 2 + OBLDersI[PC_OP + p][v];
+        gravPcDerJ[v] = (OBLDersJ[GRAV_OP + p][v]) * gravCoef / 2 - OBLDersJ[PC_OP + p][v];
       }
 
       real64 phaseGammaPDiff = transMult * trans * m_dt * phasePDiff;
@@ -745,15 +761,16 @@ public:
       // mass and energy outflow with effect of gravity and capillarity
       for( integer c = 0; c < numDofs; ++c )
       {
-        real64 compFlux = transMult * trans * m_dt * OBLValsUp[FLUX_OP + p * numDofs + c];
+        real64 compFlux = transMult * trans * m_dt * OBLValsUp[LAMBDA_OP + p] * OBLValsUp[FLUX_OP + p * numDofs + c];
+        real64 multDer = phasePDiff * trans * m_dt * OBLValsUp[LAMBDA_OP + p] * OBLValsUp[FLUX_OP + p * numDofs + c];
 
         stack.localFlux[c] -= phasePDiff * compFlux;       // flux operators only
         for( integer v = 0; v < numDofs; ++v )
         {
-          stack.localFluxJacobian[c][v + upOffset] -= (phaseGammaPDiff * OBLDersUp[FLUX_OP + p * numDofs + c][v] +
-                                                       trans * m_dt * phasePDiff * transMultD * OBLDersUp[PORO_OP][v] * OBLValsUp[FLUX_OP + p * numDofs + c]);
-          stack.localFluxJacobian[c][v] += compFlux * gravPcDerI[v];
-          stack.localFluxJacobian[c][numDofs + v] += compFlux * gravPcDerJ[v];
+          stack.localFluxJacobian[c][v + upOffset] -= phaseGammaPDiff * OBLValsUp[LAMBDA_OP + p] * OBLDersUp[FLUX_OP + p * numDofs + c][v] +
+                                                       phaseGammaPDiff * OBLDersUp[LAMBDA_OP + p][v] * OBLValsUp[FLUX_OP + p * numDofs + c];
+          stack.localFluxJacobian[c][v] -= compFlux * gravPcDerI[v] + multDer * transMultDerI[v];
+          stack.localFluxJacobian[c][numDofs + v] -= compFlux * gravPcDerJ[v] + multDer * transMultDerJ[v];
 
           // contribution from pressure derivative related to pDiff in phasePDiff * compFlux term
           if( v == 0 )
@@ -928,7 +945,7 @@ public:
    * @param[in] numPhases the number of fluid phases
    * @param[in] numComps the number of fluid components
    * @param[in] enableEnergyBalance flag if energy balance equation is assembled
-   * @param[in] transMultExp the number of fluid phases
+   * @param[in] enablePermPoro flag indicating whether permeability-porosity dependence is enabled
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey string to get the element degrees of freedom numbers
    * @param[in] solverName name of the solver (to name accessors)
@@ -943,7 +960,7 @@ public:
   createAndLaunch( integer const numPhases,
                    integer const numComps,
                    bool const enableEnergyBalance,
-                   real64 const & transMultExp,
+                   integer const & enablePermPoro,
                    globalIndex const rankOffset,
                    string const & dofKey,
                    string const & solverName,
@@ -968,7 +985,7 @@ public:
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
       KERNEL_TYPE kernel( rankOffset, stencilWrapper, dofNumberAccessor, compFlowAccessors, permeabilityAccessors,
-                          dt, transMultExp, localMatrix, localRhs );
+                          dt, enablePermPoro, localMatrix, localRhs );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }

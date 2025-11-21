@@ -54,7 +54,9 @@ constexpr integer COMPUTE_NUM_OPS ( integer const NP, integer const NC, bool ENE
          DOF * NP /*gradient*/ +
          DOF /*kinetic rate*/ +
          2 * NP /*gravity and capillarity*/ +
-         1 /*rock porosity*/ +
+         1 /*multiplier*/ +
+         NP /*phase mobility*/ +
+         NP /*saturation*/ +
          NP /*enthalpies*/ +
          2 /*temperature and pressure*/;
 }
