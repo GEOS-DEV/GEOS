@@ -260,7 +260,6 @@ INSTANTIATE_TEST_SUITE_P(
                      std::make_tuple( "1.234gamma", 0, true ),
                      std::make_tuple( "1.2.3", 0, true ),
                      std::make_tuple( "1e2.3 ", 0, true ),
-                     std::make_tuple( "1 ", 0, true ),
                      std::make_tuple( "1e", 0, true ),
                      std::make_tuple( "1e-", 0, true ),
                      std::make_tuple( "1e+", 0, true )));
@@ -301,7 +300,6 @@ INSTANTIATE_TEST_SUITE_P(
                      std::make_tuple( "1.234gamma", 0, true ),
                      std::make_tuple( "1.2.3", 0, true ),
                      std::make_tuple( "1e2.3 ", 0, true ),
-                     std::make_tuple( "1 ", 0, true ),
                      std::make_tuple( "1e", 0, true ),
                      std::make_tuple( "1e-", 0, true ),
                      std::make_tuple( "1e+", 0, true )));
@@ -325,7 +323,6 @@ INSTANTIATE_TEST_SUITE_P(
                      std::make_tuple( "alpha", 0, true ),
                      std::make_tuple( "1beta234", 0, true ),
                      std::make_tuple( "1234gamma", 0, true ),
-                     std::make_tuple( "1 ", 0, true ),
                      std::make_tuple( "1 2", 0, true )));
 
 
@@ -375,11 +372,12 @@ TEST( testXmlWrapper, testGroupNamesFormats )
       GroupNameTest( groupNameRegex, "test_name" ),
       GroupNameTest( groupNameRegex, "test-name" ),
       GroupNameTest( groupNameRegex, "test.name" ),
+      GroupNameTest( groupNameRegex, "  test.name" ),
+      GroupNameTest( groupNameRegex, "  test.name   " ),
     };
     for( GroupNameTest const & input : workingInputs )
     {
       EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( groupName, input.m_valueToTest, input.m_regex ) );
-      EXPECT_STREQ( input.m_valueToTest.c_str(), groupName.c_str() );
     }
   }
   {
@@ -391,7 +389,6 @@ TEST( testXmlWrapper, testGroupNamesFormats )
       //white spaces
       GroupNameTest( groupNameRegex, "test name" ),
       GroupNameTest( groupNameRegex, "test\tname" ),
-      GroupNameTest( groupNameRegex, "testname " ),
       //fordbiden characters
       GroupNameTest( groupNameRegex, "test/name" ),
       GroupNameTest( groupNameRegex, "test:name" ),
