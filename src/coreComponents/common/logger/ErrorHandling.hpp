@@ -245,7 +245,7 @@ private:
   {
     oss << "***** " << ErrorLogger::toString( errMsg.m_type ) << "\n";
     oss << "***** LOCATION: " << errMsg.m_file<< "\n";
-    oss << "***** " << errMsg.m_cause << "\n";
+    oss << "***** " << errMsg.m_cause << " l." << errMsg.m_line << "\n";
     oss << "***** Rank "
         << stringutilities::join( errMsg.m_ranksInfo, ", " )
         << ": " << errMsg.m_msg << "\n\n";
