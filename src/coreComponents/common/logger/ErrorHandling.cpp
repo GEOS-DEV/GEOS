@@ -171,7 +171,6 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addRank( int rank )
 ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string_view ossStackTrace )
 {
   std::string str = std::string( ossStackTrace );
-  m_stringCallStack = str;
   std::istringstream iss( str );
   std::string stackLine;
   std::size_t index;

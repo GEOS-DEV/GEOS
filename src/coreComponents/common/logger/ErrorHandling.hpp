@@ -21,6 +21,7 @@
 #define INITIALIZATION_ERROR_LOGGER_HPP
 
 #include "common/DataTypes.hpp"
+#include "common/format/Format.hpp"
 #include "common/format/StringUtilities.hpp"
 #include <sstream>
 
@@ -122,8 +123,6 @@ public:
     std::vector< ErrorContext > m_contextsInfo;
     /// the stack trace
     std::vector< std::string > m_sourceCallStack;
-    /// the string stack trace
-    std::string m_stringCallStack;
 
 
     /**
@@ -249,7 +248,10 @@ private:
     oss << "***** Rank "
         << stringutilities::join( errMsg.m_ranksInfo, ", " )
         << ": " << errMsg.m_msg << "\n";
-    oss << errMsg.m_stringCallStack;
+    for( size_t i = 0; i < errMsg.m_sourceCallStack.size(); i++ )
+    {
+      oss << GEOS_FMT( "      - frame{}: {}\n", i, errMsg.m_sourceCallStack[i] );
+    }
   }
 
   /**
