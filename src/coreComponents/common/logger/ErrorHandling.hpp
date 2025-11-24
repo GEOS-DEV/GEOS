@@ -20,6 +20,7 @@
 #ifndef INITIALIZATION_ERROR_LOGGER_HPP
 #define INITIALIZATION_ERROR_LOGGER_HPP
 
+#include "LvArray/src/system.hpp"
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
 #include "common/format/StringUtilities.hpp"
@@ -247,11 +248,13 @@ private:
     oss << "***** " << errMsg.m_cause << "\n";
     oss << "***** Rank "
         << stringutilities::join( errMsg.m_ranksInfo, ", " )
-        << ": " << errMsg.m_msg << "\n";
+        << ": " << errMsg.m_msg << "\n\n";
+    oss << "** StackTrace of "<< errMsg.m_sourceCallStack.size() << " frames **\n";
     for( size_t i = 0; i < errMsg.m_sourceCallStack.size(); i++ )
     {
-      oss << GEOS_FMT( "      - frame{}: {}\n", i, errMsg.m_sourceCallStack[i] );
+      oss << GEOS_FMT( "Frame {}: {}\n", i, errMsg.m_sourceCallStack[i] );
     }
+    oss << "=====";
   }
 
   /**
