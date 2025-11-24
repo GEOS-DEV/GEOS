@@ -237,10 +237,9 @@ private:
   };
 
   /**
-   * @brief Retrieve all informations from the ErrorLogger and format into an ascii message
+   * @brief Retrieve all informations from the ErrorLogger and format into a stream
    * @param errMsg Class containing all the error/warning information
-   * @param rank The rank where the error/warning happened
-   * @return The error message displayed to the standard output
+   * @param oss The stream to write the content to.
    */
   static void formatMsgToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostringstream & oss )
   {
