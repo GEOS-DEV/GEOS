@@ -36,7 +36,7 @@ VanGenuchtenCapillaryPressure::VanGenuchtenCapillaryPressure( string const & nam
   registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Minimum volume fraction value for each phase" );
+    setDescription( "Minimum volume fraction value for each phase (between 0 and 1) used to compute the capillary pressure" );
 
   registerWrapper( viewKeyStruct::phaseCapPressureExponentInvString(), &m_phaseCapPressureExponentInv ).
     setApplyDefaultValue( 0.5 ).
