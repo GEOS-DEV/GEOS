@@ -302,7 +302,6 @@ void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
                                m_filename, g_errorLogger.isOutputFileEnabled() ) );
     }
   }
-  ErrorLogger::formatMsgToAscii( errorMsg, ::geos::logger::internal::g_rankString );
 }
 
 } /* namespace geos */

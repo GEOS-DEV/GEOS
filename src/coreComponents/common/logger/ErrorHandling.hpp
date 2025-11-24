@@ -21,6 +21,7 @@
 #define INITIALIZATION_ERROR_LOGGER_HPP
 
 #include "common/DataTypes.hpp"
+#include "common/format/StringUtilities.hpp"
 #include <sstream>
 
 
@@ -241,16 +242,15 @@ private:
    * @param rank The rank where the error/warning happened
    * @return The error message displayed to the standard output
    */
-  static string formatMsgToAscii( ErrorLogger::ErrorMsg const & errMsg, string const & rank )
+  static void formatMsgToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostringstream & oss )
   {
-    std::ostringstream oss;
     oss << "***** " << ErrorLogger::toString( errMsg.m_type ) << "\n";
     oss << "***** LOCATION: " << errMsg.m_file<< "\n";
     oss << "***** " << errMsg.m_cause << "\n";
-    oss << "***** Rank " << rank << ": " << errMsg.m_msg << "\n";
+    oss << "***** Rank "
+        << stringutilities::join( errMsg.m_ranksInfo, ", " )
+        << ": " << errMsg.m_msg << "\n";
     oss << errMsg.m_stringCallStack;
-    std::cout << oss.str() <<std::endl;
-    return oss.str();
   }
 
   /**
