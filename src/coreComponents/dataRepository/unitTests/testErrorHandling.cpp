@@ -14,7 +14,6 @@
  */
 
 // forcefully enable asserts macros for this unit test
-#include <iostream>
 #define GEOS_ASSERT_ENABLED
 #include "common/logger/ErrorHandling.hpp"
 

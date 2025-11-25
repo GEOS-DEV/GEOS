@@ -20,12 +20,9 @@
 #ifndef INITIALIZATION_ERROR_LOGGER_HPP
 #define INITIALIZATION_ERROR_LOGGER_HPP
 
-#include "LvArray/src/system.hpp"
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
 #include "common/format/StringUtilities.hpp"
-#include <sstream>
-
 
 namespace geos
 {
