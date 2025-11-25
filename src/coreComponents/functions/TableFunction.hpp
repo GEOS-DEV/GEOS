@@ -58,7 +58,7 @@ public:
   };
 
   /// maximum dimensions for the coordinates in the table
-  static constexpr integer maxDimensions = 4;
+  static constexpr integer maxDimensions = 5;
 
   /**
    * @class KernelWrapper
