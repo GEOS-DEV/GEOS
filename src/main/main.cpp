@@ -66,7 +66,6 @@ int main( int argc, char *argv[] )
     GEOS_LOG_RANK_0( GEOS_FMT( "total time            {}", units::TimeFormatInfo::fromDuration( totalTime ) ) );
     GEOS_LOG_RANK_0( GEOS_FMT( "initialization time   {}", units::TimeFormatInfo::fromDuration( initTime ) ) );
     GEOS_LOG_RANK_0( GEOS_FMT( "run time              {}", units::TimeFormatInfo::fromDuration( runTime ) ) );
-
     return 0;
   }
   // A NotAnError is thrown if "-h" or "--help" option is used.
@@ -77,8 +76,8 @@ int main( int argc, char *argv[] )
   }
   catch( std::exception const & e )
   {
+    ErrorLogger::global().getErrorStream() << e.what();
     ErrorLogger::global().flushErrorMsg( ErrorLogger::global().currentErrorMsg() );
-    GEOS_LOG( e.what());
     LvArray::system::callErrorHandler();
     basicCleanup();
     std::abort();

@@ -241,7 +241,7 @@ private:
    * @param errMsg Class containing all the error/warning information
    * @param oss The stream to write the content to.
    */
-  static void formatMsgToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostringstream & oss )
+  static void formatMsgToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostream & oss )
   {
     oss << "***** " << ErrorLogger::toString( errMsg.m_type ) << "\n";
     oss << "***** LOCATION: " << errMsg.m_file<< "\n";
@@ -295,9 +295,8 @@ private:
 
   /**
    * @brief Gives acces to the error message that is currently being constructed,
-   *        potencially at various application layers
-   *        Use flushErrorMsg() when the message is fully constructed and you want it to be output
-   * @return Reference to the current instance for method chaining.
+   *        potencially at various application layers (Typically for exceptions)
+   * @return Reference to the current error message instance;
    */
   ErrorMsg & currentErrorMsg()
   { return m_currentErrorMsg; }
@@ -321,6 +320,17 @@ private:
    * @param errorMsg a constant reference to the error
    */
   void flushErrorMsg( ErrorMsg & errorMsg );
+  /**
+   * @return Return the const general log stream
+   */
+  std::ostream const & getErrorStream() const
+  { return m_stream; }
+
+  /**
+   * @return Return the reference general log stream
+   */
+  std::ostream & getErrorStream()
+  { return m_stream; }
 
 private:
   /// The error constructed via exceptions
@@ -329,6 +339,8 @@ private:
   bool m_writeYaml = false;
   /// YAML file name
   std::string_view m_filename = "errors.yaml";
+  /// The stream used for the log output. By default used std::cout
+  std::ostream&  m_stream = std::cout;
 
   /**
    * @brief Write the error message in the YAML file regarding indentation and line break

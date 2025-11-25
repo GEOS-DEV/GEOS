@@ -137,8 +137,8 @@
  * @note - Currently not available on GPU.
  *       - Possible to pre-define it in any source file (e.g. for unit tests)
  */
-#if !defined(GEOS_DEVICE_COMPILE) && !defined(GEOS_ERROR_LOGGER_INSTANCE)
-#define GEOS_ERROR_LOGGER_INSTANCE ErrorLogger::global()
+#if !defined(GEOS_DEVICE_COMPILE) && !defined(GEOS_GLOBAL_LOGGER)
+#define GEOS_GLOBAL_LOGGER ErrorLogger::global()
 #endif
 
 /**
@@ -160,6 +160,7 @@
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
       std::ostringstream __causemsgsoss; \
       __causemsgsoss << CAUSE_MESSAGE; \
+      std::cout << "TEST GEOS_ERROR_IF" << std::endl; \
       ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
                                        __msgoss.str(), \
                                        ::geos::logger::internal::g_rank, \
@@ -168,10 +169,8 @@
       msgStruct.setCause( __causemsgsoss.str() ); \
       msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \
-      std::ostringstream __asciiErrormSG; \
-      ErrorLogger::formatMsgToAscii( GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg(), __asciiErrormSG ); \
-      std::cout << __asciiErrormSG.str(); \
+      ErrorLogger::formatMsgToAscii( msgStruct, GEOS_GLOBAL_LOGGER.getErrorStream() ); \
+      GEOS_GLOBAL_LOGGER.flushErrorMsg( msgStruct ); \
       LvArray::system::callErrorHandler(); \
     } \
   }while( false )
@@ -230,20 +229,21 @@
       __msgoss << MSG; \
       std::ostringstream __causemsgsoss; \
       __causemsgsoss << CAUSE_MESSAGE; \
-      if( GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg().m_type == ErrorLogger::MsgType::Undefined ) \
+      if( GEOS_GLOBAL_LOGGER.currentErrorMsg().m_type == ErrorLogger::MsgType::Undefined ) \
       {   /* first throw site, we initialize the error message completly */ \
-        GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg() \
+        GEOS_GLOBAL_LOGGER.currentErrorMsg() \
           .setType( ErrorLogger::MsgType::Exception ) \
           .setCodeLocation( __FILE__, __LINE__ ) \
           .setCause( __causemsgsoss.str() ) \
           .addRank( ::geos::logger::internal::g_rank ) \
           .addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       } \
-      GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg() \
+      GEOS_GLOBAL_LOGGER.currentErrorMsg() \
         .addToMsg( __msgoss.str() ) \
         .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
       std::ostringstream __asciiErrormSG; \
-      ErrorLogger::formatMsgToAscii( GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg(), __asciiErrormSG ); \
+      ErrorLogger::formatMsgToAscii( GEOS_GLOBAL_LOGGER.currentErrorMsg(), \
+                                     __asciiErrormSG ); \
       throw GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )( __asciiErrormSG.str() ); \
     } \
   }while( false )
@@ -310,10 +310,8 @@
                                        __LINE__ ); \
       msgStruct.setCause( __causemsgsoss.str() ); \
       msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      GEOS_ERROR_LOGGER_INSTANCE.flushErrorMsg( msgStruct ); \
-      std::ostringstream __asciiErrormSG; \
-      ErrorLogger::formatMsgToAscii( GEOS_ERROR_LOGGER_INSTANCE.currentErrorMsg(), __asciiErrormSG ); \
-      std::cout << __asciiErrormSG.str(); \
+      ErrorLogger::formatMsgToAscii( msgStruct,  GEOS_GLOBAL_LOGGER.getErrorStream() ); \
+      GEOS_GLOBAL_LOGGER.flushErrorMsg( msgStruct ); \
     } \
   } while( false )
 #elif __CUDA_ARCH__
@@ -1037,7 +1035,7 @@ void InitializeLogger( const std::string & rank_output_dir="" );
  */
 void FinalizeLogger();
 
-}   // namespace logger
+}     // namespace logger
 
 }   // namespace geos
 
