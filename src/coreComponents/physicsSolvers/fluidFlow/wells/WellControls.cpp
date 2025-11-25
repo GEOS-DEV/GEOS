@@ -194,10 +194,10 @@ Group * WellControls::createChild( string const & childKey, string const & child
   }
   else
   {
-      GEOS_THROW_IF( true,
-                 getWrapperDataContext( viewKeyStruct::inputControlString() ) <<
-                 ": Invalid well constraint type ",
-                 InputError );
+    GEOS_THROW_IF( true,
+                   getWrapperDataContext( viewKeyStruct::inputControlString() ) <<
+                   ": Invalid well constraint type ",
+                   InputError );
   }
   return constraint;
 }
