@@ -198,26 +198,38 @@ void MultivariableNonuniformTableFunction::initializeFunction()
 
   for( integer dim = 0; dim < m_numDims; dim++ )
   {
+    if( m_axisPoints[dim] < 2 )
+    {
+      m_axisSteps[dim][0]=0.0;
+      m_axisStepInvs[dim][0]=0.0000000001;
+    }
     for( integer j=1; j<m_axisPoints[dim]; j++ )
     {
       m_axisSteps[dim][j-1] =  m_axisCoordinates[dim][j] - m_axisCoordinates[dim][j-1];
       m_axisStepInvs[dim][j-1] = 1 / m_axisSteps[dim][j-1];
+      std::cout << "set invs " << dim << " " << j-1 << " " << m_axisStepInvs[dim][j-1] << std::endl;
     }
   }
 
   m_axisPointMults[m_numDims - 1] = 1;
   m_axisHypercubeMults[m_numDims - 1] = 1;
+  std::cout << "cube " << m_numDims - 1 << " " << m_axisPointMults[m_numDims - 1] << " " <<m_axisHypercubeMults[m_numDims - 1] <<  std::endl;;
+
   for( integer dim = m_numDims - 2; dim >= 0; --dim )
   {
     m_axisPointMults[dim] = m_axisPointMults[dim + 1] * m_axisPoints[dim + 1];
+    m_axisHypercubeMults[dim] =   m_axisHypercubeMults[dim + 1] * (m_axisPoints[dim + 1] - 1);
+    if( isZero( m_axisHypercubeMults[dim] ) )
+      m_axisHypercubeMults[dim] =0;
 
-    std::cout << " dim " << dim << " point mult " << m_axisPointMults[dim+1] << " " << m_axisPoints[dim + 1]  << " ";
-    std::cout <<    m_axisHypercubeMults[dim + 1]  << "   " << m_axisPoints[dim + 1] - 1;
-    std::cout << " "  << m_axisHypercubeMults[dim + 1] * (m_axisPoints[dim + 1] - 1) << std::endl;
-    m_axisHypercubeMults[dim] = std::max( globalIndex( 1 ), m_axisHypercubeMults[dim + 1] * (m_axisPoints[dim + 1] - 1));
-    std::cout << " dim " << dim << " hypercube mult " << m_axisPointMults[dim] << " " << m_axisHypercubeMults[dim] << std::endl;
+    std::cout << "cube " << dim << " " << m_axisPointMults[dim] << " " << m_axisPointMults[dim + 1] << " " << m_axisPoints[dim + 1]  << " "<<m_axisHypercubeMults[dim + 1] *
+      (m_axisPoints[dim + 1] - 1) << " " << m_axisHypercubeMults[dim]<<std::endl;;
+
   }
-
+  for( integer dim=0; dim<m_numDims; dim++ )
+  {
+    std::cout << " dim " << dim << " point mult " << m_axisPointMults[dim] << " hypercube mult " << m_axisHypercubeMults[dim] <<std::endl;
+  }
   // check for point index overflow
   // fp type is intentional - to prevent overflow during computation and detect it later
   real64 numTablePoints = 1.0;
@@ -225,14 +237,14 @@ void MultivariableNonuniformTableFunction::initializeFunction()
   for( int dim = 0; dim < m_numDims; dim++ )
   {
     numTablePoints *= m_axisPoints[dim];
-    numTableHypercubes *= std::max( 1, m_axisPoints[dim] - 1 );
+    numTableHypercubes *=  std::max( 1, m_axisPoints[dim] - 1 );
     std::cout << dim << " " << numTablePoints << " " << numTableHypercubes << std::endl;
   }
 
 
   // check is point data size is correct
   GEOS_THROW_IF_NE_MSG( globalIndex( numTablePoints ) * m_numOps, m_pointData.size(), catalogName() << " " << getDataContext() <<
-                        ": table values array is expected to have length of " + std::to_string( globalIndex( numTablePoints ) * m_numOps ), InputError );
+                        ": table values array is expected to have length of " +  std::to_string( globalIndex( numTablePoints ) * m_numOps ), InputError );
 
   // lets limit the h ypercube storage size with 16 Gb
   real64 hypercubeStorageMemoryLimitGB = 16;

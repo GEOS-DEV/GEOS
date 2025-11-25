@@ -781,6 +781,8 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
   //m_writeLinearSystem = 2;
   bool isNewtonConverged = false;
 
+  outputSingleWellDebug( time_n, stepDt, 0, 0, 0,
+                         mesh, subRegion, dofManager, m_localMatrix.toViewConstSizes(), m_rhs.values()  );
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
     if( m_nonlinearSolverParameters.getLogLevel() > 4 )
@@ -830,8 +832,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
       }
     }
 
-    outputSingleWellDebug( time_n, stepDt, 0, newtonIter, 0,
-                           mesh, subRegion, dofManager, m_localMatrix.toViewConstSizes(), m_rhs.values()  );
+    ;
     real64 residualNorm = 0;
     {
       Timer timer( m_timers.get_inserted( "convergence check" ) );
@@ -1006,6 +1007,8 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
 
       // update derived variables (constitutive models)
       updateWellState( subRegion );
+      outputSingleWellDebug( time_n, stepDt, 0, newtonIter+1, 0,
+                             mesh, subRegion, dofManager, m_localMatrix.toViewConstSizes(), m_rhs.values()  );
     }
 
     lastResidual = residualNorm;

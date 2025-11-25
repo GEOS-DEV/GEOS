@@ -192,7 +192,15 @@ public:
   // Quantities computed from well constraint solve with this boundary condition
   // This needs to be somewhere else tjb
   void setBHP( real64 bhp ){ m_BHP=bhp;};
-  void setPhaseVolumeRates( array1d< real64 > const & phaseVolumeRates ) { m_phaseVolumeRates = phaseVolumeRates; };
+  void setPhaseVolumeRates( array1d< real64 > const & phaseVolumeRates )
+  {
+    m_phaseVolumeRates = phaseVolumeRates;
+    if( !isZero( m_phaseVolumeRates[1] ))
+    {
+      if( m_phaseVolumeRates[0]> 0 )
+        std::cout << " WellConstraintBase::setPhaseVolumeRates Liquid rate: " << m_phaseVolumeRates[0] << " Gas rate: " << m_phaseVolumeRates[1] << std::endl;
+    }
+  };
   void setTotalVolumeRate( real64 totalVolumeRate ){ m_totalVolumeRate = totalVolumeRate; };
   void setMassRate( real64 massRate ){ m_massRate = massRate; };
 

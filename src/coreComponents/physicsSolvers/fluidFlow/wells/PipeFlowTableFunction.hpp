@@ -19,7 +19,7 @@
 
 #ifndef GEOS_FUNCTIONS_PIPEFLOWTABLEFUNCTION_HPP_
 #define GEOS_FUNCTIONS_PIPEFLOWTABLEFUNCTION_HPP_
-
+#include "functions/TableFunction.hpp"
 #include "functions/MultivariableNonuniformTableFunction.hpp"
 
 #include "common/format/EnumStrings.hpp"
@@ -93,6 +93,28 @@ public:
    */
   const string & getGasFractionType() const { return m_gasFractionType; }
 
+  /**
+   * @brief Get type of gas fraction array
+   * @param[in] rate The flow rate to bracket
+   * @param[out] b0 The lower bracket index
+   * @param[out] b1 The upper bracket index
+   * @return 0 if rate is below table min, 2 if rate is above table max, else 1
+   */
+  integer getRateBracket( real64 const & rate, integer & b0, integer & b1 ) const;
+
+  /**
+   * @brief Get dQdP for bracket containing rate
+   * @param[in] phaseRates array of phase rates, indexing according to phase ordering in fluid model
+   * @param[in] whp well head pressure
+   * @param[out] ql0 liquid rate at lower bracket
+   * @param[out] ql1 liquid rate at upper bracket
+   * @param[out] bhp0 bottom hole pressure at lower bracket
+   * @param[out] bhp1 bottom hole pressure at upper bracket
+   * @return dQdP value
+   */
+
+  real64 calculatedPdQ( array1d< real64 > const & phaseRates, real64 const & whp, real64 & ql0, real64 & ql1, real64 & bhp0, real64 & bhp1 ) const;
+
   ///@}
 
   /**
@@ -123,6 +145,11 @@ public:
     /// @return String key for "wfr" array
     static constexpr char const *gasFractionArray() { return "gfr"; }
 
+    /// @return String key type of gas lift rate associated with the "gasLift" array
+    static constexpr char const *gasLiftType() { return "gasLiftType"; }
+    /// @return String key for "gasLift" array
+    static constexpr char const *gasLiftArray() { return "gasLift"; }
+
     /// @return String key for "bhp" array
     static constexpr char const *bottomHolePressureArray() { return "bottomHolePressure"; }
   }
@@ -131,7 +158,7 @@ public:
 
   void calculateBHP( array1d< real64 > const & phaseRates, real64 const & whp, real64 & bhp, integer & solveStat ) const;
 
-  void calculateWHP( real64 const & bhp, array1d< real64 > const & phaseRates, real64 & whp, integer & solveStat ) const;
+  void calculateWHP( const std::string & wellName, real64 const & bhp, array1d< real64 > const & phaseRates, real64 & whp, integer & solveStat ) const;
 
   void writeTable() const;
 
@@ -167,11 +194,17 @@ private:
   string m_gasFractionType;
   array1d< real64 > m_gfr;
 
+  /// gas lift rate
+  string m_gasLiftType;
+  array1d< real64 > m_gasLift;
+
   /// bottom hole pressure
   array1d< real64 > m_bhp;
 
   // Table function for evaluating values and derivatives
   MultivariableNonuniformTableFunction * m_tableFunction;
+  TableFunction * m_tableFunction0;
+
 };
 
 
