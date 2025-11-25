@@ -30,9 +30,9 @@ using namespace dataRepository;
 
 namespace fs = std::filesystem;
 
-// redeging logger instance to test macros with a local instance (to prevent any side effect)
-#undef GEOS_ERROR_LOGGER_INSTANCE
-#define GEOS_ERROR_LOGGER_INSTANCE testErrorLogger
+// redeging logger instance to test macros with a local instance (to prevent any side effect) 
+#undef GEOS_GLOBAL_LOGGER
+#define GEOS_GLOBAL_LOGGER testErrorLogger
 
 // declare a constant which value is the source file line (to predict the error file output).
 #define GET_LINE( lineVar ) static size_t constexpr lineVar = __LINE__
@@ -183,15 +183,14 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
       .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
+  }
+  testErrorLogger.flushErrorMsg( testErrorLogger.currentErrorMsg() );
 
+  endLocalLoggerTest( testErrorLogger, {
+    R"(errors:)",
 
-
-    testErrorLogger.flushErrorMsg( testErrorLogger.currentErrorMsg() );
-    endLocalLoggerTest( testErrorLogger, {
-      R"(errors:)",
-
-      GEOS_FMT(
-        R"(- type: Exception
+    GEOS_FMT(
+      R"(- type: Exception
     rank: 0
     message: >-
       Table input error.

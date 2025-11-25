@@ -309,7 +309,7 @@
                                        __LINE__ ); \
       msgStruct.setCause( __causemsgsoss.str() ); \
       msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      ErrorLogger::formatMsgToAscii( msgStruct,  GEOS_GLOBAL_LOGGER.getErrorStream() ); \
+      ErrorLogger::formatMsgToAscii( msgStruct, GEOS_GLOBAL_LOGGER.getErrorStream() ); \
       GEOS_GLOBAL_LOGGER.flushErrorMsg( msgStruct ); \
     } \
   } while( false )

@@ -42,7 +42,7 @@ public:
    * @enum MsgType
    * Enum listing the different types of possible errors
    */
-  enum class MsgType : integer
+  enum class MsgType
   {
     Error,
     Warning,
@@ -124,7 +124,6 @@ public:
     std::vector< ErrorContext > m_contextsInfo;
     /// the stack trace
     std::vector< std::string > m_sourceCallStack;
-
 
     /**
      * @brief Construct a default Error Message
@@ -249,12 +248,15 @@ private:
     oss << "***** Rank "
         << stringutilities::join( errMsg.m_ranksInfo, ", " )
         << ": " << errMsg.m_msg << "\n\n";
-    oss << "** StackTrace of "<< errMsg.m_sourceCallStack.size() << " frames **\n";
-    for( size_t i = 0; i < errMsg.m_sourceCallStack.size(); i++ )
+    if( errMsg.m_sourceCallStack.size() > 0 )
     {
-      oss << GEOS_FMT( "Frame {}: {}\n", i, errMsg.m_sourceCallStack[i] );
+      oss << "** StackTrace of "<< errMsg.m_sourceCallStack.size() << " frames **\n";
+      for( size_t i = 0; i < errMsg.m_sourceCallStack.size(); i++ )
+      {
+        oss << GEOS_FMT( "Frame {}: {}\n", i, errMsg.m_sourceCallStack[i] );
+      }
+      oss << "=====\n";
     }
-    oss << "=====";
   }
 
   /**
@@ -340,7 +342,7 @@ private:
   /// YAML file name
   std::string_view m_filename = "errors.yaml";
   /// The stream used for the log output. By default used std::cout
-  std::ostream&  m_stream = std::cout;
+  std::ostream & m_stream = std::cout;
 
   /**
    * @brief Write the error message in the YAML file regarding indentation and line break
