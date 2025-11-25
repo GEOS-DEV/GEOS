@@ -160,7 +160,6 @@
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
       std::ostringstream __causemsgsoss; \
       __causemsgsoss << CAUSE_MESSAGE; \
-      std::cout << "TEST GEOS_ERROR_IF" << std::endl; \
       ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
                                        __msgoss.str(), \
                                        ::geos::logger::internal::g_rank, \
