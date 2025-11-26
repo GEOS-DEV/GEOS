@@ -76,7 +76,8 @@ ReactiveBrineFluid( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "When set to 1, write PVT tables into a CSV file.\n"
-                    "If the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0." );
+                    "If the table is requested to be output in the log, and it is too large,"
+                    "a CSV file will be generated even if `writeCSV` is set to 0." );
 
   // if this is a thermal model, we need to make sure that the arrays will be properly displayed and saved to restart
   if( isThermal() )
