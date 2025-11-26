@@ -682,6 +682,13 @@ void SinglePhaseReactiveTransport::updatePorosityAndPermeability( CellElementSub
   }
 }
 
+void SinglePhaseReactiveTransport::updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const
+{
+  GEOS_MARK_FUNCTION;
+
+  FlowSolverBase::updatePorosityAndPermeability( subRegion );
+}
+
 void SinglePhaseReactiveTransport::updateMixedReactionSystem( ElementSubRegionBase & subRegion ) const
 {
   GEOS_MARK_FUNCTION;
