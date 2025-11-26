@@ -459,7 +459,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
       ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion());
 
       // Check if regions statistics are being computed
-      GEOS_ERROR_IF( !region.hasWrapper( CompositionalMultiphaseStatistics::catalogName()),
+      GEOS_ERROR_IF( !region.hasWrapper( CompositionalMultiphaseStatistics::regionStatisticsName()),
                      GEOS_FMT( "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be configured for region {} ",
                                getDataContext(), wellControls.getName(), regionName ));
 
