@@ -140,7 +140,7 @@ Use GEOS tensor types for geometric and mechanical calculations:
 ------------------------
 
 It is possible to use ``std`` library components for data on host memory, for doing so, the rule is 
-to **only use GEOS container wrappers** instead of direct standard library containers.
+to **only use GEOS ``std`` container wrappers** instead of direct standard library containers.
 
    * - Standard C++ Type
      - GEOS Type
@@ -313,7 +313,6 @@ Unit testing is not about testing every single line of code (an unrealistic goal
         return result;
       }
 
-
 Code Coverage
 ^^^^^^^^^^^^^
 
@@ -336,10 +335,11 @@ Logging
 Rules
 -----
 
-Use GEOS Logging Macros
-^^^^^^^^^^^^^^^^^^^^^^^
+Use GEOS Logging Macros (``GEOS_LOG*``)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Never use** ``std::cout``, ``std::cerr``, or ``printf`` for logging. Always use GEOS logging macros defined in ``Logger.hpp``:
+**Use of ``std::cout``, ``std::cerr``, or ``printf`` for logging must never appear** on the develop branch.
+Always use GEOS logging macros defined in ``Logger.hpp``:
 
 .. dropdown:: Example: Correct logging usage
    :icon: code
@@ -353,6 +353,7 @@ Use GEOS Logging Macros
       // GOOD - Use GEOS macros
       GEOS_LOG("Starting simulation");
       GEOS_LOG_RANK_0("Master rank initialization complete");
+
 **Available logging macros:**
 
 - ``GEOS_LOG(...)`` - Log on all ranks
@@ -701,31 +702,6 @@ Parallelism
 RAJA Kernels / CHAI Memory
 ---------------------------
 
-Use RAJA Reductions
-^^^^^^^^^^^^^^^^^^^
-
-Use RAJA reductions for summation, min, max, and other parallel operations:
-
-.. dropdown:: Example: RAJA reductions
-   :icon: code
-
-   .. code-block:: c++
-
-      RAJA::ReduceSum<parallelDeviceReduce, real64> totalSum( 0.0 );
-      RAJA::ReduceMin<parallelDeviceReduce, real64> minValue( std::numeric_limits<real64>::max() );
-      RAJA::ReduceMax<parallelDeviceReduce, real64> maxValue( std::numeric_limits<real64>::lowest() );
-      
-      forAll<parallelDevicePolicy<>>( n, [=] GEOS_HOST_DEVICE ( localIndex i )
-      {
-        totalSum += values[i];
-        minValue.min( values[i] );
-        maxValue.max( values[i] );
-      });
-      
-      real64 sum = totalSum.get();
-      real64 min = minValue.get();
-      real64 max = maxValue.get();
-
 Do Not Launch Kernels from Within Kernels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -784,12 +760,36 @@ GEOS uses CHAI for **automatic kernel memory migration**. Follow these rules:
       // Move back to host if needed for CPU operations (costly)
       data.move( hostMemorySpace );
 
+Use RAJA Reductions
+^^^^^^^^^^^^^^^^^^^
+
+Use RAJA reductions for summation, min, max, and other parallel operations:
+
+.. dropdown:: Example: RAJA reductions
+   :icon: code
+
+   .. code-block:: c++
+
+      RAJA::ReduceSum<parallelDeviceReduce, real64> totalSum( 0.0 );
+      RAJA::ReduceMin<parallelDeviceReduce, real64> minValue( std::numeric_limits<real64>::max() );
+      RAJA::ReduceMax<parallelDeviceReduce, real64> maxValue( std::numeric_limits<real64>::lowest() );
+      
+      forAll<parallelDevicePolicy<>>( n, [=] GEOS_HOST_DEVICE ( localIndex i )
+      {
+        totalSum += values[i];
+        minValue.min( values[i] );
+        maxValue.max( values[i] );
+      });
+      
+      real64 sum = totalSum.get();
+      real64 min = minValue.get();
+      real64 max = maxValue.get();
+
 MPI Communication
 -----------------
 
 Ensure All Ranks Participate in Collective Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 
 **All MPI ranks must participate in collective operations.** Beware of branch deadlocks.
 
@@ -846,11 +846,42 @@ Refer to ``MpiWrapper.hpp`` for more.
       real64 globalSum = MpiWrapper::sum( localValue );
       MpiWrapper::allGather( sendBuf, recvBuf, count );
 
+Communication Batching
+^^^^^^^^^^^^^^^^^^^^^^^
+
+**Rule: Batch Small Communications**
+  Combine multiple small messages into larger ones to reduce communication overhead.
+
+  **Rationale:** MPI has significant per-message overhead; batching improves performance.
+
+  .. code-block:: cpp
+
+    // WRONG - many small communications
+    void sendDataInefficiently( arrayView1d< real64 const > const & data,
+                                int const destination )
+    {
+      for( localIndex i = 0; i < data.size(); ++i )
+      {
+        MpiWrapper::send( &data[i], 1, destination, tag + i );  // N messages!
+      }
+    }
+    
+    // CORRECT - single batched communication
+    void sendDataEfficiently( arrayView1d< real64 const > const & data,
+                              int const destination )
+    {
+      MpiWrapper::send( data.data(), data.size(), destination, tag );  // 1 message
+    }
+
+
 Validation / Precision
 ======================
 
+Computation validation
+-----------------------
+
 Use Tolerance-Based Comparisons
----------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Always consider proper tolerance** for floating-point numbers comparisons, taking into account rounding errors, even for extreme values.
 
@@ -872,6 +903,50 @@ Use Tolerance-Based Comparisons
       real64 const scale = std::max( std::abs(a), std::abs(b) );
       if( std::abs(a - b) < relTol * scale ) { ... }
 
+Division Safety, NaN/Inf values
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- **Always verify denominators are not zero or near-zero before division**.
+
+- In General, **we should not make any computation that could result in NaN/Inf values**.
+
+.. dropdown:: Example: Division Safety
+   :icon: code
+
+  .. code-block:: cpp
+
+    // WRONG - unprotected division
+    real64 const normalizedResidual = residual / initialResidual;
+    real64 const strainRate = velocityGradient / thickness;
+
+    // CORRECT - protected division
+    real64 computeNormalizedResidual( real64 const residual, 
+                                      real64 const initialResidual )
+    {
+      if( initialResidual > machinePrecision )
+        return residual / initialResidual;
+      else
+        return residual;  // or return a flag indicating special case
+    }
+
+    // CORRECT - with error reporting
+    real64 safeDivide( real64 const numerator, 
+                       real64 const denominator,
+                       string const & context )
+    {
+      GEOS_ERROR_IF( LvArray::math::abs( denominator ) < machinePrecision,
+                     GEOS_FMT( "Division by zero in {}: denominator = {:.2e}", 
+                              context, denominator ) );
+      return numerator / denominator;
+    }
+
+Overflow Prevention
+^^^^^^^^^^^^^^^^^^^^
+
+Overflow leads to undefined behavior and memory corruption.
+
+**Validate that operations won't exceed type limits**, especially for index calculations.
+
 Use LvArray Math Utilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -887,9 +962,12 @@ The ``LvArray::math`` namespace provides safe numerical utilities, avoid LvArray
       real64 const absValue = LvArray::math::abs( value );
       real64 const maxValue = LvArray::math::max( a, b );
       real64 const minValue = LvArray::math::min( a, b );
+      
+Data repository validation
+-------------------------------
 
 Validate in postInputInitialization
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Perform cross-parameter validation as soon as possible**, and when possible **only once **.
 This can be done in the ``postInputInitialization()`` method, or later if needed, (i.e. in the 
@@ -929,7 +1007,7 @@ At the ``postInputInitialization()`` stage:
       }
 
 Additional Validation Guidelines
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Use ``setInputFlag()`` to mark parameters as ``REQUIRED`` or ``OPTIONAL``
 - Use ``setApplyDefaultValue()`` to provide sensible defaults
@@ -939,8 +1017,11 @@ Additional Validation Guidelines
 Performance
 ===========
 
+Profiling
+---------
+
 Profile When Affecting Kernel behaviour
----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When modifying performance-critical code (kernels, assembly loops, solvers):
 
@@ -966,7 +1047,7 @@ When modifying performance-critical code (kernels, assembly loops, solvers):
       cali-query -q "SELECT time.duration WHERE annotation='myKernel'" modified.cali
 
 Caliper Integration
--------------------
+^^^^^^^^^^^^^^^^^^^^
 
 Use ``GEOS_MARK_FUNCTION`` and ``Timer`` for performance tracking for the main computation functions / scopes.
 
@@ -992,8 +1073,26 @@ Use ``GEOS_MARK_FUNCTION`` and ``Timer`` for performance tracking for the main c
         }
       }
 
+Speed Optimization Rules
+-----------------------------
+
+- **Hoist Loop Invariants**, move computations that don't change during iterations outside the loop.
+- When it does not critically affect the code architecture and clarity, **Fuse multiple related kernels to reduce memory traffic and launch overhead** (i.e., statistics kernels process all physics field at once).
+- **Optimize Memory Access for Cache and Coalescing**. Access memory sequentially and ensure coalesced access, especially on GPUs.
+- **Minimize Host-Device Transfers**. Keep data on the appropriate memory space and minimize transfers.
+
+Memory Management Rules
+---------------------------------
+
+Generalities
+^^^^^^^^^^^^^^^^^^^^
+
+- **Minimize dynamic memory allocation** as much as possible, particularly in performance-critical code,
+- For frequently allocated/deallocated objects, **consider memory pools**,
+- For containers with known size, **reserve capacity upfront**.
+
 Be Const / Constexpr
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 **Use ``const`` and ``constexpr`` when possible**, enabling:
 
@@ -1001,13 +1100,7 @@ Be Const / Constexpr
 - **Code safety,** prevents accidental modification for constant contexts,
 - **Show code intention,** make code more readable.
 
-Memory Management Best Practices
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-- **Mark methods const if the method is not designed to modify** the object state,
-- **Minimize dynamic memory allocation** as much as possible, particularly in performance-critical code,
-- For frequently allocated/deallocated objects, **consider memory pools**,
-- For containers with known size, **reserve capacity upfront**.
+Also, **Mark methods const if the method is not designed to modify** the object state.
 
 Value / Const Function Arguments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1113,10 +1206,7 @@ The rule is not absolute: when the impact is not significative, and the code nee
       { return n * n + 2 * n + 1; }
 
 Provide Views to Arrays
-------------------------
-
-Provide Views to Arrays
-^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 - When possible, prefer provide views to arrays (to const data if possible).
 - This **must** be done especially for RAJA kernels, and views must be **captured by value**.
@@ -1143,6 +1233,54 @@ Why Use Views?
       // GOOD - Const view for read-only access
       arrayView1d< real64 const > constView = originalArray.toViewConst();
 
+View Lifetime Management
+------------------------
+
+**Never Outlive Parent Arrays**
+Dangling views cause segmentation faults and undefined behavior, that can be particularly hard to diagnose.
+The rule is applicable to ``arrayView*`` and ``string_view``.
+
+.. dropdown:: Example: Lifetime Management
+   :icon: code
+
+  .. code-block:: cpp
+
+    // WRONG - returning view of local array
+    arrayView1d< real64 > getDanglingView()
+    {
+      array1d< real64 > tempArray( 100 );
+      return tempArray.toView();  // DANGER: tempArray destroyed, view dangles!
+    }
+
+    // WRONG - storing view of temporary
+    class DataHolder
+    {
+      arrayView1d< real64 > m_view;
+      
+      void setData()
+      {
+        array1d< real64 > temp( 100 );
+        m_view = temp.toView();  // DANGER: temp destroyed at end of scope!
+      }
+    };
+
+    // CORRECT - return the array
+    array1d< real64 > getSafeArray()
+    {
+      array1d< real64 > result( 100 );
+      // populate...
+      return result;  // Move semantics ensure safety
+    }
+
+    // CORRECT - store array, create view when needed
+    class SafeDataHolder
+    {
+      array1d< real64 > m_data;
+      
+      arrayView1d< real64 > getView() { return m_data.toView(); }
+      arrayView1d< real64 const > getViewConst() const { return m_data.toViewConst(); }
+    };
+
 General Architecture
 ====================
 
@@ -1153,11 +1291,12 @@ Minimize coupling between components when possible **without compromising memory
 
 Principles
 ^^^^^^^^^^
-BESOIN DE VERIFIER CES REGLES
+
 - **Loose coupling:** Components should depend on interfaces, not concrete implementations,
-- **No circular dependancies:** Consider the existing dependancies, do not make components co-dependant (headers inclusion, packages referencing in ``CMakeLists.txt``)
-- **Dependency injection:** Pass dependencies explicitly rather than accessing globals, relying on **lambda**, **templates** and **minimal interfaces**,
-- **Performance exceptions:** Tight coupling is acceptable when required for performance
+- **No circular dependancies:** Consider the existing GEOS dependancies to not make components co-dependant (headers inclusion, packages referencing in ``CMakeLists.txt``, avoid tightly coupled objects),
+- **Dependency injection:** Public components should receive their dependencies from external sources. Pass required dependencies using intermediate types instead of direct implementation types, using lambda, templates, and minimal interfaces, relying on **lambda**, **templates** and **minimal interfaces** (loose coupling, testability),
+- **Performance exceptions:** Tight coupling is acceptable when required for performance,
+- **Minimize header inclusions and dependancies**.
 
 .. dropdown:: Example: Reducing coupling
    :icon: code
@@ -1242,3 +1381,56 @@ Acceptable Global Usage:
 - **Library wrappers** (MPI wrapper, system-level resources, dependancies interface)
 - **Read-only configuration** (immutable after initialization)
 - **Performance counters** (for profiling)
+
+Magic values, ``Group`` paths
+-------------------------------
+
+**Avoid magic values**:
+- **arbitrary values should not be written more than once**, define constants, consider using or extending ``PhysicsConstants.hpp`` / ``Units.hpp``,
+- Because of architecture considerations, **Avoid using full raw ``Group`` path**, especially when the path has parts unrelated to the component consulting it -> prefer as relative paths as possible,
+- ``Group`` / ``Wrapper`` name in the data repository is considered as a magic value, **use the ``getCatalogName()`` / ``getName()`` getters**,
+- **Prefer to let appear the calculus of constants** rather than writing its value directly without explaination (constexpr has no runtime cost).
+
+======================
+Physics-Specific Rules
+======================
+
+Unit Consistency
+----------------
+
+**Verify physical units**, and **document any non-S.I. units** (variable name, comments).
+**Non-S.I. units are only for internal computation use.**
+
+Physical Bounds Checking
+------------------------
+
+Unphysical values indicate errors and can cause solver failures.
+**Validate that state variables remain within physically meaningful bounds**.
+
+If a value is not strictly disallowed but does not seem possible for the model, **show a warning to the user that he can disable**.
+
+
+  .. code-block:: cpp
+
+    class ConstitutiveModel
+    {
+      void updateState( real64 const pressure,
+                       real64 const temperature,
+                       real64 const porosity )
+      {
+        // Check physical bounds
+        GEOS_ERROR_IF( pressure < 1e-5, 
+                       GEOS_FMT( "Pressure {:.2e} Pa below cavitation limit", pressure ) );
+        
+        GEOS_ERROR_IF( temperature < 0.0,
+                       GEOS_FMT( "Absolute temperature {:.2f} K is negative", temperature ) );
+        
+        GEOS_ERROR_IF( porosity < 0.0 || porosity > 1.0,
+                       GEOS_FMT( "Porosity {:.3f} outside [0,1]", porosity ) );
+        
+        // Warn about unusual but valid values, allow user to disable warning
+        GEOS_WARNING_IF( isHighTemperatureWarningEnabled && temperature > 1000.0,
+                        GEOS_FMT( "High temperature {:.0f} K may be outside model validity", 
+                                  temperature ) );
+      }
+    };
