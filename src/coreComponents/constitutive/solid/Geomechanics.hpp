@@ -1142,18 +1142,20 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     real64 m_creepActivationEnergyVolumetric = m_QVol;  // This will be a user input that can be used to fit temperature dependence.
 
     real64 creepRateTemperatureMultiplierVolumetric = 1.0;
-    std::cout<<" temperature: "<< temperature<<" m_referenceTemperature: "<< m_referenceTemperature<<std::endl;
+    //std::cout<<" temperature: "<< temperature<<" m_referenceTemperature: "<< m_referenceTemperature<<std::endl;
     if (temperature > 1.e-10 and m_referenceTemperature > 1.e-10 )
     {
-    creepRateTemperatureMultiplierVolumetric = exp(-1.0*m_creepActivationEnergyVolumetric*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) );     std::cout << "calculating creepRateTemperatureMultiplierVolumetric" << creepRateTemperatureMultiplierVolumetric << std::endl;
+    creepRateTemperatureMultiplierVolumetric = exp(-1.0*m_creepActivationEnergyVolumetric*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) );     
+    //std::cout << "calculating creepRateTemperatureMultiplierVolumetric" << creepRateTemperatureMultiplierVolumetric << std::endl;
     }
 
 
     real64 creepRateTemperatureMultiplierDeviatoric = 1.0;
-    std::cout<<" temperature: "<< temperature<<" m_referenceTemperature: "<< m_referenceTemperature<<std::endl;
+    //std::cout<<" temperature: "<< temperature<<" m_referenceTemperature: "<< m_referenceTemperature<<std::endl;
     if (temperature > 1.e-10 and m_referenceTemperature > 1.e-10 )
     {
-    creepRateTemperatureMultiplierDeviatoric = exp(-1.0*m_creepActivationEnergyDeviatoric*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) );     std::cout << "calculating creepRateTemperatureMultiplierDeviatoric" << creepRateTemperatureMultiplierDeviatoric << std::endl;
+    creepRateTemperatureMultiplierDeviatoric = exp(-1.0*m_creepActivationEnergyDeviatoric*( 1.0/(m_gasConstantR*temperature) - 1.0/(m_gasConstantR*m_referenceTemperature) ) );     
+    //std::cout << "calculating creepRateTemperatureMultiplierDeviatoric" << creepRateTemperatureMultiplierDeviatoric << std::endl;
     }
 
     real64 equilibriumPorosityPressureExponent = m_creepD;  // volumetric creep rate parameter
@@ -1229,7 +1231,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
       *(1 + (m_creepH * std::pow(std::max(temperature - m_referenceTemperature, 0.0), 2.)) );
       //+ (-m_creepI * std::max(temperature - m_referenceTemperature, 0.0)));
 
-      std::cout << "equilibriumVMShearStrain - plasticVMshearStrain: " << equilibriumVMShearStrain - plasticVMshearStrain << "equilibriumVMShearStrain" << equilibriumVMShearStrain << "plasticVMShearStrain" << plasticVMshearStrain << std::endl;
+      //std::cout << "equilibriumVMShearStrain - plasticVMshearStrain: " << equilibriumVMShearStrain - plasticVMshearStrain << "equilibriumVMShearStrain" << equilibriumVMShearStrain << "plasticVMShearStrain" << plasticVMshearStrain << std::endl;
       real64 creepVMStrainIncrement =  Dt * shearStrainRateConstant * std::max(equilibriumVMShearStrain - plasticVMshearStrain , 0.0);
       creepVMStrainIncrement = std::min(elasticVMShearStrain, creepVMStrainIncrement);  // prevent excess accumulation of plastic vm strain.
 
@@ -1275,9 +1277,9 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
                             //+ (-3.e-6 * std::pow(std::max(temperature - m_referenceTemperature, 0.0), 2.)) 
                             //- (0.0002 * std::max(temperature - m_referenceTemperature, 0.0))
                             );    
-    std::cout << "temperature" << temperature << ", referenceTemperature" << m_referenceTemperature << ", temperature-reference Temperature" << temperature - m_referenceTemperature << std::endl;
-    std::cout << "ev_p" << evp << std::endl;
-    std :: cout << "phi_p - phi_e > 1e-10 = " << phi_p - phi_e << ", phi_p = " << phi_p << ", phi_e = " << phi_e << ", p > 1.e-12 = " << p << ", evp + m_p3 > 1.e-10 " << evp + m_p3 << std::endl;
+    //std::cout << "temperature" << temperature << ", referenceTemperature" << m_referenceTemperature << ", temperature-reference Temperature" << temperature - m_referenceTemperature << std::endl;
+    //std::cout << "ev_p" << evp << std::endl;
+    //std :: cout << "phi_p - phi_e > 1e-10 = " << phi_p - phi_e << ", phi_p = " << phi_p << ", phi_e = " << phi_e << ", p > 1.e-12 = " << p << ", evp + m_p3 > 1.e-10 " << evp + m_p3 << std::endl;
     // after computing phi_e
     //phi_e = std::min(phi_e, phi_p);
 
@@ -1292,7 +1294,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
     if ( (phi_p - phi_e > 1.e-10) && (p > 1.e-12) && ( m_creepC > 1.e-16) && ( evp + m_p3 > 1.e-10 ) )
 
     {  // creep compaction
-       std :: cout << "Creep Rate Temp MultiplierVolumetric: " << creepRateTemperatureMultiplierVolumetric << std::endl;
+      //std :: cout << "Creep Rate Temp MultiplierVolumetric: " << creepRateTemperatureMultiplierVolumetric << std::endl;
       real64 dphidt = -1.0*creepRateTemperatureMultiplierVolumetric
                           *std::pow( p / pressureUnitCancellation ,compactionRatePressureExponent)
                           *m_creepC
@@ -1303,11 +1305,11 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
 
       real64 phi_c = std::max( phi_e, phi_p + dphidt*dt ); // unloaded porosity after creep, don't let it go below equilibrium level
 
-      std :: cout << "Creep compaction: dphidt = " << dphidt << ", phi_p = " << phi_p << ", phi_e = " << phi_e << ", phi_c = " << phi_c << std::endl;
+      //std :: cout << "Creep compaction: dphidt = " << dphidt << ", phi_p = " << phi_p << ", phi_e = " << phi_e << ", phi_c = " << phi_c << std::endl;
       real64 evp_c = log( (phi_i - 1. ) / ( phi_c - 1. ) ); // vol. strain after creep.
 
 
-      std::cout << "evp_C = " << evp_c << ", -m_p3 = " << - m_p3 << std::endl;
+      //std::cout << "evp_C = " << evp_c << ", -m_p3 = " << - m_p3 << std::endl;
       evp_c = std::max( evp_c, - m_p3 ); // don't let porosity go negative.
 
       real64 devp = evp_c - evp;  // creep vol. strain increment
@@ -1428,7 +1430,7 @@ int GeomechanicsUpdates::computeStep( real64 const ( & D )[6],               // 
       goto stepDivide;
     }
     else goto failedStep;     // bad substep and chi>=chimax, Step failed even with substepping
-    std :: cout << "Failed substep with chi = " << chi << ", chimax = " << chimax << std::endl;
+    //std :: cout << "Failed substep with chi = " << chi << ", chimax = " << chimax << std::endl;
   }
 
   // (7) Successful step, set value at end of step to value at end of last substep.
@@ -1937,7 +1939,7 @@ real64 GeomechanicsUpdates::computeX( const real64 & evp,
   // R2Tensor Identity = R2Tensor( 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
 
   if( evp <= -m_p3 ) { // ------------Plastic strain exceeds allowable limit--------------------------
-    std::cout << "Warning: Plastic volumetric strain more than p3." << std::endl;
+    //std::cout << "Warning: Plastic volumetric strain more than p3." << std::endl;
     // The plastic strain for this iteration has exceed the allowable
     // value.  X is not defined in this region, so we set it to a large
     // negative number.
@@ -2154,7 +2156,7 @@ int GeomechanicsUpdates::computeSubstep( real64 const ( & D )[6],         // str
   if (YIELD == 1) {  // elastic-plastic or fully-plastic substep
   // (5) Compute non-hardening return to initial yield surface:
   //     [sigma_0,d_e_p,0] = (nonhardeningReturn(sigma_trial,sigma_old,X_old,Zeta_old,K,G)
-      std::cout << "m~2129: Yield == 1" << std::endl;
+      //std::cout << "m~2129: Yield == 1" << std::endl;
     real64 I1_0,       // I1 at stress update for non-hardening return
            rJ2_0,      // rJ2 at stress update for non-hardening return
            TOL = 1e-10; // bisection convergence tolerance on vol. plastic strain (if decreased, you may need to change imax)
@@ -3075,7 +3077,7 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   // Parameters modified by damage and/or hardening
   real64 stren_h, peakI1_h, fSlope_h, ySlope_h;  
   real64 nonlinearCoher = std::pow(coher,m_fractureSofteningExponent);
-  std::cout << "buckling " << buckling << std::endl;
+  //std::cout << "buckling " << buckling << std::endl;
   stren_h = buckling*(m_stren + hardening*m_dstrendh); //  dstrendh has units of stress
   fSlope_h = nonlinearCoher*m_fSlope*( 1 + hardening*m_dfslopedh ) + ( 1. - nonlinearCoher )*m_fSlopeFailed; // dfslopedh is unitless
   peakI1_h = buckling*( m_peakI1 + hardening*m_dpeakI1dh )*nonlinearCoher*strengthScale; // dpeakI1dh has units of stress
@@ -3111,12 +3113,12 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   }
   else
   {
-	  std::cout<<"bad limit surface parameters."<<std::endl;
+	  //std::cout<<"bad limit surface parameters."<<std::endl;
   }
 
-  std::cout<<"m_peakI1 = "<<m_peakI1<<", m_stren = "<<m_stren<<", m_ySlope = "<<m_ySlope<<", m_fSlope = "<<m_fSlope<<std::endl;
-  std::cout<<"peakI1_h = "<<peakI1_h<<", stren_h = "<<stren_h<<", ySlope_h = "<<ySlope_h<<", fSlope_h = "<<fSlope_h<<std::endl;
-  std::cout<<"a1 = "<<a1<<", a2 = "<<a2<<", a3 = "<<a3<<", a4 = "<<a4<<std::endl;
+  //std::cout<<"m_peakI1 = "<<m_peakI1<<", m_stren = "<<m_stren<<", m_ySlope = "<<m_ySlope<<", m_fSlope = "<<m_fSlope<<std::endl;
+  //std::cout<<"peakI1_h = "<<peakI1_h<<", stren_h = "<<stren_h<<", ySlope_h = "<<ySlope_h<<", fSlope_h = "<<fSlope_h<<std::endl;
+  //std::cout<<"a1 = "<<a1<<", a2 = "<<a2<<", a3 = "<<a3<<", a4 = "<<a4<<std::endl;
 }
 
 

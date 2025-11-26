@@ -31,6 +31,7 @@ experiments.
 
 Model Formulation
 ========================
+The description below, plus parameter fits to organic-rich chalk can be found in (:cite:t:`Malenda1`).
 The pressure-dependent shear strength establishes a yield surface created
 through the product of the Drucker–Prager yield criterion
 :math:`F_f` and a cap function :math:`F_c` (:cite:t:`Homel1` , :cite:t:`Homel2`). The surface is projected onto shear 

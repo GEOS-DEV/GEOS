@@ -102,7 +102,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.inheritance_diagram',
-    'sphinx.ext.imgmath',
+    #'sphinx.ext.imgmath',
     'sphinxarg.ext',
     'matplotlib.sphinxext.plot_directive',
     'sphinx.ext.napoleon',
