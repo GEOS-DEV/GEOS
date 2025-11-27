@@ -902,7 +902,10 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
 
     {
       RAJA::ReduceSum< parallelDeviceReduce, localIndex > localNegativeValues( 0 );
-      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localWrongSum( 0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localSupFrac( 0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localInfFrac( 0 );
+      RAJA::ReduceMin< parallelDeviceReduce, localIndex > localMinFrac( LvArray::NumericLimits< localIndex >::max );
+      RAJA::ReduceMax< parallelDeviceReduce, localIndex > localMaxFrac( LvArray::NumericLimits< localIndex >::min );
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         real64 sumCompFrac = 0.0;
@@ -912,19 +915,31 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
           if( compFrac[ei][ic] < 0.0 )
             localNegativeValues += 1;
         }
+        localMinFrac.min( sumCompFrac );
+        localMaxFrac.max( sumCompFrac );
         if( LvArray::math::abs( sumCompFrac - 1.0 ) > 1e-6 )
-          localWrongSum += 1;
+          localSupFrac += 1;
+        if( LvArray::math::abs( sumCompFrac - 1.0 ) < 1e-6 )
+          localInfFrac += 1;
       } );
+
+      localMinFrac = MpiWrapper::min( localMinFrac.get() );
+      localMaxFrac = MpiWrapper::min( localMaxFrac.get() );
 
       localIndex const negativeValues = MpiWrapper::sum( localNegativeValues.get() );
       GEOS_ERROR_IF( negativeValues > 0,
                      GEOS_FMT( "{}: negative global component fraction values found in subregion '{}' for {} elements",
                                getName(), subRegion.getName(), negativeValues ) );
 
-      localIndex const wrongSum = MpiWrapper::sum( localWrongSum.get() );
-      GEOS_ERROR_IF( wrongSum > 0,
-                     GEOS_FMT( "{}: component fractions do not sum to 1.0 in subregion '{}' for {} elements",
-                               getName(), subRegion.getName(), wrongSum ) );
+      localIndex const totalSupFrac = MpiWrapper::sum( localSupFrac.get() );
+      localIndex const totalInfFrac = MpiWrapper::sum( localInfFrac.get() );
+      localIndex const totalWrongCompFrac = totalSupFrac + totalInfFrac;
+      localIndex const infFrac = MpiWrapper::min( localMinFrac.get() );
+      localIndex const supFrac = MpiWrapper::sum( localMaxFrac.get() );
+      GEOS_ERROR_IF( totalWrongCompFrac > 0,
+                     GEOS_FMT( "Component fractions go from {} to {} ( over {} elements ), but should always sum to 1.0",
+                               infFrac, supFrac, totalWrongCompFrac ),
+                     getDataContext());
     }
 
     // Assume global component fractions have been prescribed.

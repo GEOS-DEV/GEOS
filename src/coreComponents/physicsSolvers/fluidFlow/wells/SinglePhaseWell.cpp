@@ -167,7 +167,7 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
       ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion() );
 
       // Check if regions statistics are being computed
-      GEOS_ERROR_IF( !region.hasWrapper( SinglePhaseStatistics::catalogName()),
+      GEOS_ERROR_IF( !region.hasWrapper( SinglePhaseStatistics::regionStatisticsName()),
                      GEOS_FMT( "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
                                getDataContext(), wellControls.getName(), regionName ));
 
