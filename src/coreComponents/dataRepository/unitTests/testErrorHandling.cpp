@@ -210,12 +210,11 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
       file: {}
       line: {}
     sourceCallStack:)",
-        __FILE__, line1 ),
-      "- frame0: ",
-      "- frame1: ",
-      "- frame2: "
-    } );
-  }
+      __FILE__, line1 ),
+    "- frame0: ",
+    "- frame1: ",
+    "- frame2: "
+  } );
 }
 
 TEST( ErrorHandling, testYamlFileErrorOutput )
