@@ -924,7 +924,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       } );
 
       localMinFrac = MpiWrapper::min( localMinFrac.get() );
-      localMaxFrac = MpiWrapper::min( localMaxFrac.get() );
+      localMaxFrac = MpiWrapper::max( localMaxFrac.get() );
 
       localIndex const negativeValues = MpiWrapper::sum( localNegativeValues.get() );
       GEOS_ERROR_IF( negativeValues > 0,
