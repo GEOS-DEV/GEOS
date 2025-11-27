@@ -937,8 +937,8 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       localIndex const infFrac = MpiWrapper::min( localMinFrac.get() );
       localIndex const supFrac = MpiWrapper::sum( localMaxFrac.get() );
       GEOS_ERROR_IF( totalWrongCompFrac > 0,
-                     GEOS_FMT( "Component fractions go from {} to {} ( over {} elements ), but should always sum to 1.0",
-                               infFrac, supFrac, totalWrongCompFrac ),
+                     GEOS_FMT( "Component fractions go from {} to {} ( over {} elements ) found in subregion '{}', but should always sum to 1.0",
+                               infFrac, supFrac, totalWrongCompFrac,subRegion.getName() ),
                      getDataContext());
     }
 
