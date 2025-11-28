@@ -24,6 +24,7 @@
 #include "common/format/Format.hpp"
 #include "common/format/StringUtilities.hpp"
 #include <exception>
+#include <sstream>
 
 namespace geos
 {
@@ -382,17 +383,45 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addContextInfo( Args && ... args 
 struct Exception : public std::exception
 {
 public:
+  Exception() = default;
   Exception( std::string const & what ):
     std::exception( )
   {
     errorMsg.addToMsg( what );
   }
-  Exception(): std::exception( ){}
-
   ErrorLogger::ErrorMsg & getErrorMsg()
   { return errorMsg; }
 
+  virtual char const * what() const noexcept override
+  {
+    return m_cachedWhat.c_str();
+  }
+
+  void prepareWhat( std::string const & msg,
+                    std::string const & cause,
+                    char const * file,
+                    int line,
+                    int rank,
+                    string_view stackTrace ) noexcept
+  {
+    try
+    {
+      std::ostringstream oss;
+      oss << "***** GEOS Exception\n";
+      oss << "***** LOCATION: " << file << " l." << line << "\n";
+      oss << "***** " << cause << "\n";
+      oss << "***** Rank  " << rank << ": "<< msg <<"\n\n";
+      oss << stackTrace;
+      m_cachedWhat = oss.str();
+    } catch( ... )
+    {
+      m_cachedWhat = "GEOS Exception (formatting failed)";
+    }
+
+  }
+
 private:
+  string m_cachedWhat;
   ErrorLogger::ErrorMsg errorMsg;
 };
 

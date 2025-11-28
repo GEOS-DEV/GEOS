@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ElasticVTIWaveEquationSEMKERNEL_HPP_
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ElasticVTIWaveEquationSEMKERNEL_HPP_
 
+#include "common/logger/Logger.hpp"
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
 #include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticFields.hpp"
@@ -308,7 +309,7 @@ struct ComputeTimeStep
     }
     while (counter < 10 && numberIter < nIterMax);
 
-    GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", std::runtime_error );
+    GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", RuntimeError );
 
     real64 dt = 1.99/sqrt( LvArray::math::abs( lambdaNew ));
 

@@ -239,7 +239,11 @@
       GEOS_GLOBAL_LOGGER.currentErrorMsg() \
         .addToMsg( __msgoss.str() ) \
         .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      throw GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )(); \
+      auto ex = GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )(); \
+      ex.prepareWhat( __msgoss.str(), __causemsgsoss.str(), \
+                      __FILE__, __LINE__, \
+                      ::geos::logger::internal::g_rank,LvArray::system::stackTrace( true )  ); \
+      throw ex; \
     } \
   }while( false )
   #elif __CUDA_ARCH__

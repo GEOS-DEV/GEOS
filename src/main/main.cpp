@@ -74,14 +74,20 @@ int main( int argc, char *argv[] )
     basicCleanup();
     return 0;
   }
-  catch( geos::Exception & e)
+  catch( geos::Exception & e )
   { // GEOS generated exceptions management
-    ErrorLogger::global().flushErrorMsgTo( e.getErrorMsg() );
+    try
+    {
+      ErrorLogger::global().flushErrorMsgTo( e.getErrorMsg() );
+    } catch( ... )
+    {
+      std::cout << e.what();
+    }
     LvArray::system::callErrorHandler();
     basicCleanup();
     std::abort();
   }
-  catch( std::exception const & e)
+  catch( std::exception const & e )
   { // native exceptions management
     ErrorLogger::ErrorMsg & errMsg = GEOS_GLOBAL_LOGGER.currentErrorMsg();
     //TODO
