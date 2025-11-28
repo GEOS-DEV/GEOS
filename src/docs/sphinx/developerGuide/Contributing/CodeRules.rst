@@ -110,13 +110,15 @@ Refer to the rule of :ref:`CHAI Memory Management`.
 
    .. code-block:: c++
 
-      // BAD - Do not use std::vector
+      // BAD - Do not use std::vector for data that can be packed or kernel addressable
       std::vector<real64> values;
+      std::array<integer, 10> fixedData;
 
-      // GOOD - Use GEOS arrays
+      // GOOD - Use CHAI managed arrays for kernels
       array1d<real64> values;
       arrayView1d<real64> valuesView = values.toView();
       arrayView1d<real64 const> constView = values.toViewConst();
+      stackArray1d<integer, 10> fixedData;
 
 Tensor Types
 ^^^^^^^^^^^^
@@ -141,6 +143,8 @@ Use GEOS tensor types for geometric and mechanical calculations:
 
 It is possible to use ``std`` library components for data on host memory, for doing so, the rule is 
 to **only use GEOS ``std`` container wrappers** instead of direct standard library containers.
+
+This rule allow us to control bounds checking depending on ``GEOS_USE_BOUNDS_CHECK`` macro / ``GEOS_ENABLE_BOUNDS_CHECK`` cmake option..
 
    * - Standard C++ Type
      - GEOS Type
@@ -169,8 +173,8 @@ to **only use GEOS ``std`` container wrappers** instead of direct standard libra
       std::map<string, real64> orderedMap;
       
       // GOOD - GEOS wrappers
-      array1d<real64> data;
-      stackArray1d<integer, 10> fixedData;
+      stdVector<real64> data;
+      stdArray<integer, 10> fixedData;
       map<string, real64> orderedMap;
 
 The following standard library components are allowed:
