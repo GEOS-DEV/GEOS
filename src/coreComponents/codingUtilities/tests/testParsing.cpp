@@ -140,7 +140,7 @@ protected:
 
     geos::stdVector< T > vec;
     auto const issep_invalid = []( char const c ){ return c == '|'; };
-    EXPECT_THROW( geos::parseFile( fname, vec, issep_invalid ), std::runtime_error );
+    EXPECT_THROW( geos::parseFile( fname, vec, issep_invalid ), geos::RuntimeError );
 
     std::remove( fname.c_str() );
   }

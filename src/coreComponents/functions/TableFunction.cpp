@@ -81,7 +81,7 @@ void TableFunction::readFile( string const & filename, array1d< real64 > & targe
   {
     parseFile( filename, target, skipped );
   }
-  catch( std::runtime_error const & e )
+  catch( geos::RuntimeError const & e )
   {
     GEOS_THROW( GEOS_FMT( "{} {}: {}", catalogName(), getDataContext(), e.what() ), InputError );
   }

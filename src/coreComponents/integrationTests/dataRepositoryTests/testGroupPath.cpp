@@ -14,6 +14,7 @@
  */
 
 // Source includes
+#include "common/logger/ErrorHandling.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
@@ -21,6 +22,7 @@
 // TPL includes
 #include <gtest/gtest.h>
 #include <conduit.hpp>
+#include <sstream>
 
 // Tests the Group::getGroup() and getPath() methods
 TEST( testGroupPath, testGlobalPaths )
@@ -91,7 +93,6 @@ TEST( testGroupPath, testGlobalPaths )
 
   ProblemManager & problem = getGlobalState().getProblemManager();
   problem.parseInputString( xmlInput );
-
   for( string const & path : groupPaths )
   {
     Group const & group = problem.getGroupByPath( path );
@@ -104,13 +105,17 @@ TEST( testGroupPath, testGlobalPaths )
   {
     problem.getGroupByPath( "/Mesh/mesh2" );
   }
-  catch( const std::domain_error & e )
+  catch(  geos::Exception & e )
   {
     static constexpr auto expectedMsg = "***** Error cause: child == nullptr\n"
                                         "***** Rank 0: Group Mesh (CodeIncludedXML0, l.10) has no child named mesh2\n"
                                         "The children of Mesh are: { mesh1 }";
     // checks if the exception contains the expected message
-    GEOS_ERROR_IF_EQ_MSG( string( e.what() ).find( expectedMsg ), string::npos,
+  std::ostringstream stream;
+  geos::ErrorLogger::writeToAscii( ErrorLogger::global().currentErrorMsg(), stream );
+  std::cout << "TEST2\n "<< stream.str() << std::endl;
+  
+    GEOS_ERROR_IF_EQ_MSG( string( stream.str() ).find( expectedMsg ), string::npos,
                           "The error message was not containing the expected sequence.\n" <<
                           "  Error message :\n" << e.what() <<
                           "  expected sequence :\n" << expectedMsg );

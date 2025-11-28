@@ -128,7 +128,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
         GEOS_THROW_IF( !bodyFound,
                        GEOS_FMT( "MeshBody ({}) is specified, but not found.",
                                  targetTokens[0] ),
-                       std::domain_error );
+                       DomainError );
       }
 
       string const meshBodyName = targetTokens[0];
@@ -158,7 +158,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           GEOS_THROW_IF( !levelFound,
                          GEOS_FMT( "MeshLevel ({}) is specified, but not found.",
                                    targetTokens[1] ),
-                         std::domain_error );
+                         DomainError );
         }
       }
       else if( !meshBody.getMeshLevels().hasGroup< MeshLevel >( targetTokens[1] ) )
@@ -179,7 +179,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
         GEOS_THROW_IF( targetTokens.size() <= 4,
                        GEOS_FMT( " Object Path '{}' does not target any element sub region",
                                  objectPath ),
-                       std::runtime_error );
+                       geos::RuntimeError );
         ElementRegionManager const & elemRegionManager = meshLevel.getElemManager();
         string const elemRegionName = targetTokens[3];
         ElementRegionBase const & elemRegion = elemRegionManager.getRegion( elemRegionName );
@@ -200,7 +200,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           {
             GEOS_THROW( targetTokens[pathLevel] << " not found in path " <<
                         objectPath << std::endl << targetGroup->dumpSubGroupsNames(),
-                        std::domain_error );
+                        DomainError );
           }
         }
       }

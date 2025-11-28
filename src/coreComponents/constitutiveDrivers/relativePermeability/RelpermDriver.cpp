@@ -110,7 +110,7 @@ bool RelpermDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
 {
   // this code only makes sense in serial
 
-  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "RelpermDriver should only be run in serial", std::runtime_error );
+  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "RelpermDriver should only be run in serial", geos::RuntimeError );
 
 
   ConstitutiveManager
@@ -301,7 +301,7 @@ void RelpermDriver::compareWithBaseline()
   {
     for( integer col = 0; col < m_table.size( 1 ); ++col )
     {
-      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", geos::RuntimeError );
       file >> value;
 
       real64 const error = fabs( m_table[row][col] - value ) / ( fabs( value ) + 1 );
@@ -310,14 +310,14 @@ void RelpermDriver::compareWithBaseline()
                                                                                          << row + m_numColumns
                                                                                          << " with header)"
                                                                                          << " and column " << col + 1,
-                     std::runtime_error );
+                     geos::RuntimeError );
     }
   }
 
   // check we actually reached the end of the baseline file
 
   file >> value;
-  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", geos::RuntimeError );
 
   // success
 

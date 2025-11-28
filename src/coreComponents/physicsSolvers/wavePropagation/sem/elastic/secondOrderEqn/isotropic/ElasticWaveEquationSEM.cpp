@@ -680,7 +680,7 @@ real64 ElasticWaveEquationSEM::computeTimeStep( real64 & dtOut )
     }
     while (counter < 10 && numberIter < nIterMax);
 
-    GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", std::runtime_error );
+    GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", geos::RuntimeError );
 
     //We use 1.99 instead of 2 to have a 5% margin error
     real64 dt = 1.99/sqrt( LvArray::math::abs( lambdaNew ));

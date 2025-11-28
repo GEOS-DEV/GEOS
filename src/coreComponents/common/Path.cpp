@@ -140,7 +140,7 @@ void makeDirectory( std::string const & path )
 {
   constexpr mode_t mode = 0770; // user and group rwx permissions
   int const err = mkdir( path.c_str(), mode );
-  GEOS_THROW_IF( err && ( errno != EEXIST ), "Failed to create directory: " << path, std::runtime_error );
+  GEOS_THROW_IF( err && ( errno != EEXIST ), "Failed to create directory: " << path, geos::RuntimeError );
 }
 
 void makeDirsForPath( std::string const & path )

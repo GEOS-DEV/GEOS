@@ -579,7 +579,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
       GEOS_THROW_IF( !equilHasConverged,
                      getCatalogName() << " " << getDataContext() <<
                      ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
-                     std::runtime_error, getDataContext() );
+                     geos::RuntimeError, getDataContext() );
     } );
 
     // Step 3.4: create hydrostatic pressure table
