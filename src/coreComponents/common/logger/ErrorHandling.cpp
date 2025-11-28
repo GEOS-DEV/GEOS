@@ -228,78 +228,84 @@ void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstr
   }
 }
 
-void ErrorLogger::flushErrorMsg( ErrorLogger::ErrorMsg & errorMsg )
+void ErrorLogger::writeToYaml( ErrorMsg & errorMsg )
 {
+  std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
+  if( yamlFile.is_open() )
+  {
+    // General errors info (type, rank on which the error occured)
+    yamlFile << g_level1Start << "type: " << ErrorLogger::toString( errorMsg.m_type ) << "\n";
+    yamlFile << g_level1Next << "rank: " << stringutilities::join( errorMsg.m_ranksInfo, "," );
+    yamlFile << "\n";
+
+    // Error message
+    yamlFile << g_level1Next << "message: >-\n";
+    streamMultilineYamlAttribute( errorMsg.m_msg, yamlFile, g_level2Next );
+
+    // context information
+    if( !errorMsg.m_contextsInfo.empty() )
+    {
+      // Sort contextual information by decreasing priority
+      std::sort( errorMsg.m_contextsInfo.begin(), errorMsg.m_contextsInfo.end(),
+                 []( const ErrorLogger::ErrorContext & a, const ErrorLogger::ErrorContext & b ) {
+        return a.m_priority > b.m_priority;
+      } );
+      // Additional informations about the context of the error and priority information of each context
+      yamlFile << g_level1Next << "contexts:\n";
+      for( ErrorContext const & ctxInfo : errorMsg.m_contextsInfo )
+      {
+        yamlFile << g_level3Start << "priority: " << ctxInfo.m_priority << "\n";
+        for( auto const & [key, value] : ctxInfo.m_attributes )
+        {
+          yamlFile << g_level3Next << ErrorContext::attributeToString( key ) << ": " << value << "\n";
+        }
+      }
+    }
+
+    // error cause
+    if( !errorMsg.m_cause.empty() )
+    {
+      yamlFile << g_level1Next << "cause: >-\n";
+      streamMultilineYamlAttribute( errorMsg.m_cause, yamlFile, g_level2Next );
+    }
+
+    // Location of the error in the code
+    if( !errorMsg.m_file.empty() )
+    {
+      yamlFile << g_level1Next << "sourceLocation:\n";
+      yamlFile << g_level2Next << "file: " << errorMsg.m_file << "\n";
+      yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
+    }
+    // Information about the stack trace
+    if( !errorMsg.m_sourceCallStack.empty() )
+    {
+      yamlFile << g_level1Next << "sourceCallStack:\n";
+      for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
+      {
+        yamlFile << ( errorMsg.isValidStackTrace() ?
+                      GEOS_FMT( "{}frame{}: {}\n", g_level3Start, i, errorMsg.m_sourceCallStack[i] ) :
+                      GEOS_FMT( "{}{}\n", g_level3Start, errorMsg.m_sourceCallStack[i] ) );
+      }
+    }
+
+    yamlFile << "\n";
+    yamlFile.flush();
+    errorMsg = ErrorMsg();
+    GEOS_LOG_RANK( GEOS_FMT( "The error file {} has been appended.", m_filename ) );
+  }
+  else
+  {
+    GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing.\n- Error file: {}\n- Error file enabled = {}.\n",
+                             m_filename, g_errorLogger.isOutputFileEnabled() ) );
+  }
+}
+
+void ErrorLogger::flushErrorMsgTo( ErrorMsg & errorMsg )
+{
+  writeToAscii( errorMsg, getErrorStream() );
   if( isOutputFileEnabled() )
   {
-    std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
-    if( yamlFile.is_open() && isOutputFileEnabled() )
-    {
-      // General errors info (type, rank on which the error occured)
-      yamlFile << g_level1Start << "type: " << ErrorLogger::toString( errorMsg.m_type ) << "\n";
-      yamlFile << g_level1Next << "rank: " << stringutilities::join( errorMsg.m_ranksInfo, "," );
-      yamlFile << "\n";
-
-      // Error message
-      yamlFile << g_level1Next << "message: >-\n";
-      streamMultilineYamlAttribute( errorMsg.m_msg, yamlFile, g_level2Next );
-
-      // context information
-      if( !errorMsg.m_contextsInfo.empty() )
-      {
-        // Sort contextual information by decreasing priority
-        std::sort( errorMsg.m_contextsInfo.begin(), errorMsg.m_contextsInfo.end(),
-                   []( const ErrorLogger::ErrorContext & a, const ErrorLogger::ErrorContext & b ) {
-          return a.m_priority > b.m_priority;
-        } );
-        // Additional informations about the context of the error and priority information of each context
-        yamlFile << g_level1Next << "contexts:\n";
-        for( ErrorContext const & ctxInfo : errorMsg.m_contextsInfo )
-        {
-          yamlFile << g_level3Start << "priority: " << ctxInfo.m_priority << "\n";
-          for( auto const & [key, value] : ctxInfo.m_attributes )
-          {
-            yamlFile << g_level3Next << ErrorContext::attributeToString( key ) << ": " << value << "\n";
-          }
-        }
-      }
-
-      // error cause
-      if( !errorMsg.m_cause.empty() )
-      {
-        yamlFile << g_level1Next << "cause: >-\n";
-        streamMultilineYamlAttribute( errorMsg.m_cause, yamlFile, g_level2Next );
-      }
-
-      // Location of the error in the code
-      if( !errorMsg.m_file.empty() )
-      {
-        yamlFile << g_level1Next << "sourceLocation:\n";
-        yamlFile << g_level2Next << "file: " << errorMsg.m_file << "\n";
-        yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
-      }
-      // Information about the stack trace
-      if( !errorMsg.m_sourceCallStack.empty() )
-      {
-        yamlFile << g_level1Next << "sourceCallStack:\n";
-        for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
-        {
-          yamlFile << ( errorMsg.isValidStackTrace() ?
-                        GEOS_FMT( "{}frame{}: {}\n", g_level3Start, i, errorMsg.m_sourceCallStack[i] ) :
-                        GEOS_FMT( "{}{}\n", g_level3Start, errorMsg.m_sourceCallStack[i] ) );
-        }
-      }
-
-      yamlFile << "\n";
-      yamlFile.flush();
-      errorMsg = ErrorMsg();
-      GEOS_LOG_RANK( GEOS_FMT( "The error file {} has been appended.", m_filename ) );
-    }
-    else
-    {
-      GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing.\n- Error file: {}\n- Error file enabled = {}.\n",
-                               m_filename, g_errorLogger.isOutputFileEnabled() ) );
-    }
+    writeToYaml( errorMsg );
   }
 }
 

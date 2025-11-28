@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
 #include "common/format/StringUtilities.hpp"
+#include <exception>
 
 namespace geos
 {
@@ -35,6 +36,7 @@ class ErrorLogger
 {
 
 public:
+
   /**
    * @enum MsgType
    * Enum listing the different types of possible errors
@@ -42,6 +44,7 @@ public:
   enum class MsgType
   {
     Error,
+    ExternalError,
     Warning,
     Exception,
     Undefined
@@ -107,6 +110,8 @@ public:
   {
     /// the error type (Warning, Error or Exception)
     MsgType m_type = ErrorLogger::MsgType::Undefined;
+    /// The signal received and formatted
+    std::string m_signal;
     /// the error message that can be completed
     std::string m_msg;
     /// the cause of the error (erroneous condition, failed assertion...) if identified (optional)
@@ -233,18 +238,24 @@ private:
   };
 
   /**
-   * @brief Retrieve all informations from the ErrorLogger and format into a stream
+   * @brief Retrieve all informations from the Msg and format and write into a stream
    * @param errMsg Class containing all the error/warning information
    * @param oss The stream to write the content to.
    */
-  static void formatMsgToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostream & oss )
+  static void writeToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostream & oss )
   {
     oss << "***** " << ErrorLogger::toString( errMsg.m_type ) << "\n";
-    oss << "***** LOCATION: " << errMsg.m_file<< "\n";
-    oss << "***** " << errMsg.m_cause << " l." << errMsg.m_line << "\n";
+    if( !errMsg.m_signal.empty())
+    {
+      oss<< "***** SIGNAL: "<< errMsg.m_signal <<"\n";
+    }
+
+    oss << "***** LOCATION: " << errMsg.m_file<< " l." << errMsg.m_line << "\n";
+    oss << "***** " << errMsg.m_cause  << "\n";
     oss << "***** Rank "
         << stringutilities::join( errMsg.m_ranksInfo, ", " )
         << ": " << errMsg.m_msg << "\n\n";
+
     if( errMsg.m_sourceCallStack.size() > 0 )
     {
       oss << "** StackTrace of "<< errMsg.m_sourceCallStack.size() << " frames **\n";
@@ -318,7 +329,14 @@ private:
    *        and reset the errorMsg instance to its initial state
    * @param errorMsg a constant reference to the error
    */
-  void flushErrorMsg( ErrorMsg & errorMsg );
+  void writeToYaml( ErrorMsg & errorMsg );
+
+  /**
+   * @brief Write all the information retrieved about the error/warning message into the targeted output
+   * @param errorMsg a constant reference to the ErrorMsg
+   */
+  void flushErrorMsgTo( ErrorMsg & errorMsg );
+
   /**
    * @return Return the const general log stream
    */
@@ -360,6 +378,23 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addContextInfo( Args && ... args 
 }
 
 /// @endcond
+
+struct Exception : public std::exception
+{
+public:
+  Exception( std::string const & what ):
+    std::exception( )
+  {
+    errorMsg.addToMsg( what );
+  }
+  Exception(): std::exception( ){}
+
+  ErrorLogger::ErrorMsg & getErrorMsg()
+  { return errorMsg; }
+
+private:
+  ErrorLogger::ErrorMsg errorMsg;
+};
 
 } /* namespace geos */
 

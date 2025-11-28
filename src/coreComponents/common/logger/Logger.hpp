@@ -168,8 +168,7 @@
       msgStruct.setCause( __causemsgsoss.str() ); \
       msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      ErrorLogger::formatMsgToAscii( msgStruct, GEOS_GLOBAL_LOGGER.getErrorStream() ); \
-      GEOS_GLOBAL_LOGGER.flushErrorMsg( msgStruct ); \
+      GEOS_GLOBAL_LOGGER.flushErrorMsgTo( msgStruct ); \
       LvArray::system::callErrorHandler(); \
     } \
   }while( false )
@@ -240,10 +239,7 @@
       GEOS_GLOBAL_LOGGER.currentErrorMsg() \
         .addToMsg( __msgoss.str() ) \
         .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      std::ostringstream __asciiErrormSG; \
-      ErrorLogger::formatMsgToAscii( GEOS_GLOBAL_LOGGER.currentErrorMsg(), \
-                                     __asciiErrormSG ); \
-      throw GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )( __asciiErrormSG.str() ); \
+      throw GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )(); \
     } \
   }while( false )
   #elif __CUDA_ARCH__
@@ -307,10 +303,9 @@
                                        ::geos::logger::internal::g_rank, \
                                        __FILE__, \
                                        __LINE__ ); \
-      msgStruct.setCause( __causemsgsoss.str() ); \
+      msgStruct.setCause( __causemsgsoss.str()  ); \
       msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      ErrorLogger::formatMsgToAscii( msgStruct, GEOS_GLOBAL_LOGGER.getErrorStream() ); \
-      GEOS_GLOBAL_LOGGER.flushErrorMsg( msgStruct ); \
+      GEOS_GLOBAL_LOGGER.flushErrorMsgTo( msgStruct ); \
     } \
   } while( false )
 #elif __CUDA_ARCH__
@@ -921,22 +916,67 @@ namespace geos
 /**
  * @brief Exception class used to report errors in user input.
  */
-struct InputError : public std::runtime_error
+struct RuntimeError : public geos::Exception
+{
+  /**
+   * @brief Constructor
+   * @param what the error message
+   */
+  RuntimeError( std::string const & what ):
+    geos::Exception( what )
+  {}
+
+  RuntimeError(): geos::Exception(){}
+};
+struct LogicError : public geos::Exception
+{
+  /**
+   * @brief Constructor
+   * @param what the error message
+   */
+  LogicError( std::string const & what ):
+    geos::Exception( what )
+  {}
+
+  LogicError(): geos::Exception(){}
+};
+
+/**
+ * @brief Exception class used to report errors in user input.
+ */
+struct DomainError : public geos::Exception
+{
+  /**
+   * @brief Constructor
+   * @param what the error message
+   */
+  DomainError( std::string const & what ):
+    geos::Exception( what )
+  {}
+
+  DomainError(): geos::Exception(){}
+};
+/**
+ * @brief Exception class used to report errors in user input.
+ */
+struct InputError : public geos::Exception
 {
   /**
    * @brief Constructor
    * @param what the error message
    */
   InputError( std::string const & what ):
-    std::runtime_error( what )
+    geos::Exception( what )
   {}
+
+  InputError(): geos::Exception(){}
 
   /**
    * @brief Constructor
    * @param what the error message
    */
   InputError( char const * const what ):
-    std::runtime_error( what )
+    geos::Exception( what )
   {}
 
   /**
@@ -950,22 +990,24 @@ struct InputError : public std::runtime_error
 /**
  * @brief Exception class used to report errors in user input.
  */
-struct SimulationError : public std::runtime_error
+struct SimulationError : public geos::Exception
 {
   /**
    * @brief Constructor
    * @param what the error message
    */
   SimulationError( std::string const & what ):
-    std::runtime_error( what )
+    geos::Exception( what )
   {}
+
+  SimulationError(): geos::Exception(){}
 
   /**
    * @brief Constructor
    * @param what the error message
    */
   SimulationError( char const * const what ):
-    std::runtime_error( what )
+    geos::Exception( what )
   {}
 
   /**
@@ -983,21 +1025,23 @@ struct SimulationError : public std::runtime_error
  * expected & encountered typeid for this one (in order to manage the exception output more precisely).
  * We could also manage this by having:    BadTypeErrorABC <|--- BadTypeError< T >      /!\ compilation time
  */
-struct BadTypeError : public std::runtime_error
+struct BadTypeError : public geos::Exception
 {
   /**
    * @brief Constructor
    * @param what the error message
    */
   BadTypeError( std::string const & what ):
-    std::runtime_error( what )
+    geos::Exception( what )
   {}
+
+  BadTypeError(): geos::Exception(){}
 };
 
 /**
  * @brief Exception class used for special control flow.
  */
-class NotAnError : public std::exception
+class NotAnError : public geos::Exception
 {};
 
 namespace logger

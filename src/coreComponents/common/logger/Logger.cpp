@@ -21,6 +21,7 @@
 #include "Logger.hpp"
 #include "common/Path.hpp"
 #include "common/format/StringUtilities.hpp"
+#include "common/logger/ErrorHandling.hpp"
 
 namespace geos
 {
@@ -56,11 +57,11 @@ std::string insertExMsg( std::string const & originalMsg, std::string const & ms
 }
 
 InputError::InputError( std::exception const & subException, std::string const & msgToInsert ):
-  std::runtime_error( insertExMsg( subException.what(), msgToInsert ) )
+  geos::Exception( insertExMsg( subException.what(), msgToInsert ) )
 {}
 
 SimulationError::SimulationError( std::exception const & subException, std::string const & msgToInsert ):
-  std::runtime_error( insertExMsg( subException.what(), msgToInsert ) )
+  geos::Exception( insertExMsg( subException.what(), msgToInsert ) )
 {}
 
 namespace logger

@@ -92,10 +92,6 @@ void setupLogger()
     {
       std::string const stackHistory = LvArray::system::stackTrace( true );
 
-      GEOS_LOG( GEOS_FMT( "***** ERROR\n"
-                          "***** LOCATION: (external error, detected {})\n"
-                          "{}\n{}",
-                          detectionLocation, errorMsg, stackHistory ) );
       if( ErrorLogger::global().isOutputFileEnabled() )
       {
         ErrorLogger::ErrorMsg error;
@@ -106,7 +102,7 @@ void setupLogger()
         error.addContextInfo(
           ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( detectionLocation ) } } } );
 
-        ErrorLogger::global().flushErrorMsg( error );
+        ErrorLogger::global().flushErrorMsgTo( error );
       }
 
       // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
@@ -124,15 +120,9 @@ void setupLogger()
 
       // error message output
       std::string const stackHistory = LvArray::system::stackTrace( true );
+
       ErrorLogger::ErrorMsg error;
       error.addSignalToMsg( signal );
-
-      GEOS_LOG( GEOS_FMT( "***** ERROR\n"
-                          "***** SIGNAL: {}\n"
-                          "***** LOCATION: (external error, captured by signal handler)\n"
-                          "{}\n{}",
-                          signal, error.m_msg, stackHistory ) );
-
       if( ErrorLogger::global().isOutputFileEnabled() )
       {
         error.setType( ErrorLogger::MsgType::Error );
@@ -142,7 +132,7 @@ void setupLogger()
           ErrorContext{ { { ErrorContext::Attribute::Signal, std::to_string( signal ) } }, 1 },
           ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( "signal handler" ) } }, 0 } );
 
-        ErrorLogger::global().flushErrorMsg( error );
+        ErrorLogger::global().flushErrorMsgTo( error );
       }
 
       // call program termination

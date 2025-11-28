@@ -18,6 +18,7 @@
 #include "common/format/Format.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Units.hpp"
+#include "common/logger/ErrorHandling.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
@@ -73,10 +74,18 @@ int main( int argc, char *argv[] )
     basicCleanup();
     return 0;
   }
-  catch( std::exception const & e )
-  {
-    ErrorLogger::global().getErrorStream() << e.what();
-    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().currentErrorMsg() );
+  catch( geos::Exception & e)
+  { // GEOS generated exceptions management
+    ErrorLogger::global().flushErrorMsgTo( e.getErrorMsg() );
+    LvArray::system::callErrorHandler();
+    basicCleanup();
+    std::abort();
+  }
+  catch( std::exception const & e)
+  { // native exceptions management
+    ErrorLogger::ErrorMsg & errMsg = GEOS_GLOBAL_LOGGER.currentErrorMsg();
+    //TODO
+    ErrorLogger::global().flushErrorMsgTo( errMsg );
     LvArray::system::callErrorHandler();
     basicCleanup();
     std::abort();
