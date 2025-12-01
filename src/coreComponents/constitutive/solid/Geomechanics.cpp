@@ -23,9 +23,7 @@ namespace geos
 using namespace dataRepository;
 namespace constitutive
 {
-
-Geomechanics::Geomechanics( string const & name,
-                            Group * const parent ):
+Geomechanics::Geomechanics( string const & name, Group * const parent ):
   SolidBase( name, parent ),
   m_b0( 0.0 ),
   m_b1( 0.0 ),
@@ -62,13 +60,13 @@ Geomechanics::Geomechanics( string const & name,
   m_brittleDuctileTransition( 0.0 ),
   m_damageEvolutionCriterion( 0 ),
   m_cr( 0.0 ),
-  m_fluidBulkModulus( 0.0 ),
+  m_fluidBulkModulus(0.0 ),
   m_fluidInitialPressure( 0.0 ),
   m_enableBuckling( 0 ),
   m_bucklingLength( 1. ),
   m_bucklingAmplitude( 0. ),
   m_enableCreep( 0 ),
-  m_creepC0( 0.0 ),
+  m_creepC0( 0.0),
   m_creepC1( 0.0 ),
   m_creepC2( 0.0 ),
   m_creepA( 0.0 ),
@@ -249,7 +247,7 @@ Geomechanics::Geomechanics( string const & name,
 
   registerWrapper( viewKeyStruct::bucklingLengthString(), &m_bucklingLength ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Buckling Length" );
+    setDescription( "Buckling Length" );    
 
   registerWrapper( viewKeyStruct::bucklingAmplitudeString(), &m_bucklingAmplitude ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -274,7 +272,7 @@ Geomechanics::Geomechanics( string const & name,
   registerWrapper( viewKeyStruct::creepAString(), &m_creepA ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Creep A parameter" );
-
+  
   registerWrapper( viewKeyStruct::creepBString(), &m_creepB ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Creep B parameter" );
@@ -282,7 +280,7 @@ Geomechanics::Geomechanics( string const & name,
   registerWrapper( viewKeyStruct::creepCString(), &m_creepC ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Creep C parameter" );
-
+  
   registerWrapper( viewKeyStruct::creepDString(), &m_creepD ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Creep D parameter" );
@@ -327,12 +325,12 @@ Geomechanics::Geomechanics( string const & name,
   registerWrapper( viewKeyStruct::bulkModulusString(), &m_bulkModulus ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Bulk modulus" );
-
+  
   registerWrapper( viewKeyStruct::shearModulusString(), &m_shearModulus ).
-    setInputFlag( InputFlags::FALSE ).
-    setDescription( "Shear modulus" );
+    setInputFlag( InputFlags::FALSE).
+    setDescription( "Shear modulus");
 
-  registerWrapper( viewKeyStruct::velocityGradientString(), &m_velocityGradient ).
+  registerWrapper( viewKeyStruct::velocityGradientString(), &m_velocityGradient).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Velocity gradient" );
@@ -345,7 +343,7 @@ Geomechanics::Geomechanics( string const & name,
     setApplyDefaultValue( 1.0 ).
     setDescription( "Array of element/particle deformation gradient values" );
 
-  registerWrapper( viewKeyStruct::plasticStrainString(), &m_plasticStrain ).
+  registerWrapper( viewKeyStruct::plasticStrainString(), &m_plasticStrain).
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "Plastic strain" );
@@ -380,14 +378,14 @@ Geomechanics::~Geomechanics()
 {}
 
 void Geomechanics::allocateConstitutiveData( dataRepository::Group & parent,
-                                             localIndex const numConstitutivePointsPerParentIndex )
+                                              localIndex const numConstitutivePointsPerParentIndex )
 {
   SolidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
   m_bulkModulus.resize( 0 );
   m_shearModulus.resize( 0 );
   m_velocityGradient.resize( 0, 3, 3 );
   m_materialDirection.resize( 0, 3 );
-  m_deformationGradient.resize( 0, 3, 3 );
+  m_deformationGradient.resize( 0, 3, 3);
   m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_porosity.resize( 0, numConstitutivePointsPerParentIndex );
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
@@ -396,45 +394,43 @@ void Geomechanics::allocateConstitutiveData( dataRepository::Group & parent,
 
 void Geomechanics::postInputInitialization()
 {
-  SolidBase::postInputInitialization();
-  GEOS_THROW_IF( m_b0 <= 0.0, "b0 must be greater than 0", InputError );
-  // GEOS_THROW_IF( m_b1 <= 0.0, "b1 must be greater than 0", InputError );
-  // GEOS_THROW_IF( m_b2 <= 0.0, "b2 must be greater than 0", InputError );
-  // GEOS_THROW_IF( m_b3 <= 0.0, "b3 must be greater than 0", InputError );
-  // GEOS_THROW_IF( m_b4 <= 0.0, "b4 must be greater than 0", InputError );
+    SolidBase::postInputInitialization();
+    GEOS_THROW_IF( m_b0 <= 0.0, "b0 must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_b1 <= 0.0, "b1 must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_b2 <= 0.0, "b2 must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_b3 <= 0.0, "b3 must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_b4 <= 0.0, "b4 must be greater than 0", InputError );
 
-  //GEOS_THROW_IF( m_damageEvolutionCriterionPressure == 0. && m_damageEvolutionCriterionDilation == 0., "choose pressure or dilation",
-  // InputError );
+    //GEOS_THROW_IF( m_damageEvolutionCriterionPressure == 0. && m_damageEvolutionCriterionDilation == 0., "choose pressure or dilation", InputError );
 
-  //GEOS_THROW_IF( m_damageEvolutionCriterionPressure > 0. && m_damageEvolutionCriterionDilation > 0., "choose pressure or dilation",
-  // InputError );
+    //GEOS_THROW_IF( m_damageEvolutionCriterionPressure > 0. && m_damageEvolutionCriterionDilation > 0., "choose pressure or dilation", InputError );
 
 
-  GEOS_THROW_IF( m_g0 < 0.0, "g0 must be greater than or equal to 0", InputError );
-  // GEOS_THROW_IF( m_g1 <= 0.0, "g1 must be greater than 0", InputError );
-  // GEOS_THROW_IF( m_g2 <= 0.0, "g2 must be greater than 0", InputError );
-  // GEOS_THROW_IF( m_g3 <= 0.0, "g3 must be greater than 0", InputError );
-  // GEOS_THROW_IF( m_g4 <= 0.0, "g4 must be greater than 0", InputError );
+    GEOS_THROW_IF( m_g0 < 0.0, "g0 must be greater than or equal to 0", InputError );
+    // GEOS_THROW_IF( m_g1 <= 0.0, "g1 must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_g2 <= 0.0, "g2 must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_g3 <= 0.0, "g3 must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_g4 <= 0.0, "g4 must be greater than 0", InputError );
 
-  GEOS_THROW_IF( m_p0 > 0.0, "p0 must be less than 0", InputError );
-  // GEOS_THROW_IF( m_p1 <= 0.0, "p1 must be greater than 0", InputError );
-  // GEOS_THROW_IF( m_p2 <= 0.0, "p2 must be greater than 0", InputError );
-  GEOS_THROW_IF( m_p3 <= 0.0, "p3 must be greater than 0", InputError );
-  // GEOS_THROW_IF( m_p4 <= 0.0, "p4 must be greater than 0", InputError );
+    GEOS_THROW_IF( m_p0 > 0.0, "p0 must be less than 0", InputError );
+    // GEOS_THROW_IF( m_p1 <= 0.0, "p1 must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_p2 <= 0.0, "p2 must be greater than 0", InputError );
+    GEOS_THROW_IF( m_p3 <= 0.0, "p3 must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_p4 <= 0.0, "p4 must be greater than 0", InputError );
 
-  // GEOS_THROW_IF( m_peakI1 <= 0.0, "peakI1 must be greater than 0", InputError );
-  GEOS_THROW_IF( m_fSlope < 0.0, "fSlope must be greater than 0", InputError );
-  GEOS_THROW_IF( m_fSlopeFailed > m_fSlope, "fSlopeFailed must be less than fSlope", InputError );
-  // GEOS_THROW_IF( m_ySlope <= 0.0, "ySlope must be greater than 0", InputError );
-  // GEOS_THROW_IF( m_stren <= 0.0, "stren must be greater than 0", InputError );
-  GEOS_THROW_IF( m_beta <= 0.0, "beta must be greater than 0", InputError );
-  // GEOS_THROW_IF( m_t1RateDependence <= 0.0, "t1RateDependence must be greater than 0", InputError );
-  // GEOS_THROW_IF( m_t2RateDependence <= 0.0, "t2RateDependence must be greater than 0", InputError );
-  // GEOS_THROW_IF( m_fractureEnergyReleaseRate <= 0.0, "fractureEnergyReleaseRate must be greater than 0", InputError );
-  GEOS_THROW_IF( m_fractureSofteningExponent <= 0.0, "fracture softening exponent must be greater than 0", InputError );
-  GEOS_THROW_IF( m_cr <= 0.0, "cr must be 0 < CR < 1", InputError );
-  // GEOS_THROW_IF( m_fluidBulkModulus <= 0.0, "fluidBulkModulus must be greater than 0", InputError );
-  // GEOS_THROW_IF( m_initialFluidPressure <= 0.0, "initialFluidPressure must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_peakI1 <= 0.0, "peakI1 must be greater than 0", InputError );
+    GEOS_THROW_IF( m_fSlope < 0.0, "fSlope must be greater than 0", InputError );
+    GEOS_THROW_IF( m_fSlopeFailed > m_fSlope, "fSlopeFailed must be less than fSlope", InputError );
+    // GEOS_THROW_IF( m_ySlope <= 0.0, "ySlope must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_stren <= 0.0, "stren must be greater than 0", InputError );
+    GEOS_THROW_IF( m_beta <= 0.0, "beta must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_t1RateDependence <= 0.0, "t1RateDependence must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_t2RateDependence <= 0.0, "t2RateDependence must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_fractureEnergyReleaseRate <= 0.0, "fractureEnergyReleaseRate must be greater than 0", InputError );
+    GEOS_THROW_IF( m_fractureSofteningExponent <= 0.0, "fracture softening exponent must be greater than 0", InputError);
+    GEOS_THROW_IF( m_cr <= 0.0, "cr must be 0 < CR < 1", InputError );
+    // GEOS_THROW_IF( m_fluidBulkModulus <= 0.0, "fluidBulkModulus must be greater than 0", InputError );
+    // GEOS_THROW_IF( m_initialFluidPressure <= 0.0, "initialFluidPressure must be greater than 0", InputError );
 
 }
 

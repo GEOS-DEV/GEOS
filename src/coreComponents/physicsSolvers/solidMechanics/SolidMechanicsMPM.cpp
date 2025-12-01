@@ -5984,8 +5984,6 @@ void SolidMechanicsMPM::triggerEvents( const real64 dt,
                                                      deviator,
                                                      stress );
                   LvArray::tensorOps::copy< 6 >( constitutiveOldStress[p][0], stress );
-
-
                 } );
             }
           }
@@ -10681,7 +10679,6 @@ void SolidMechanicsMPM::enforceCohesiveLaw( ParticleManager & particleManager,
         tempGridDisplacementLocal[g][fieldIndex][i] = 0.0;
         // tempGridCenterOfVolumeLocal[g][fieldIndex][i] = 0.0;
         tempGridParticleSurfaceNormalLocal[g][fieldIndex][i] = 0.0;
-
         tempGridCohesiveTraction[g][fieldIndex][i] = 0.0;
 
         for( int j = 0; j < m_numDims; ++j )
