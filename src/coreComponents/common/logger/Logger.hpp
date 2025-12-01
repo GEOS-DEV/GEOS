@@ -25,7 +25,7 @@
 #include "common/GeosxMacros.hpp"
 #include "common/format/Format.hpp"
 #include "LvArray/src/Macros.hpp"
-#include "common/logger/ErrorHandling.hpp"
+#include "common/logger/GeosExceptions.hpp"
 
 // System includes
 #include <stdexcept>
@@ -916,137 +916,6 @@
 
 namespace geos
 {
-
-/**
- * @brief Exception class used to report errors in user input.
- */
-struct RuntimeError : public geos::Exception
-{
-  /**
-   * @brief Constructor
-   * @param what the error message
-   */
-  RuntimeError( std::string const & what ):
-    geos::Exception( what )
-  {}
-
-  RuntimeError(): geos::Exception(){}
-};
-struct LogicError : public geos::Exception
-{
-  /**
-   * @brief Constructor
-   * @param what the error message
-   */
-  LogicError( std::string const & what ):
-    geos::Exception( what )
-  {}
-
-  LogicError(): geos::Exception(){}
-};
-
-/**
- * @brief Exception class used to report errors in user input.
- */
-struct DomainError : public geos::Exception
-{
-  /**
-   * @brief Constructor
-   * @param what the error message
-   */
-  DomainError( std::string const & what ):
-    geos::Exception( what )
-  {}
-
-  DomainError(): geos::Exception(){}
-};
-/**
- * @brief Exception class used to report errors in user input.
- */
-struct InputError : public geos::Exception
-{
-  /**
-   * @brief Constructor
-   * @param what the error message
-   */
-  InputError( std::string const & what ):
-    geos::Exception( what )
-  {}
-
-  InputError(): geos::Exception(){}
-
-  /**
-   * @brief Constructor
-   * @param what the error message
-   */
-  InputError( char const * const what ):
-    geos::Exception( what )
-  {}
-
-  /**
-   * @brief Constructs an InputError from an underlying exception.
-   * @param subException The exception on which the created one is based.
-   * @param msgToInsert The error message that will be inserted in the subException error message.
-   */
-  InputError( std::exception const & subException, std::string const & msgToInsert );
-};
-
-/**
- * @brief Exception class used to report errors in user input.
- */
-struct SimulationError : public geos::Exception
-{
-  /**
-   * @brief Constructor
-   * @param what the error message
-   */
-  SimulationError( std::string const & what ):
-    geos::Exception( what )
-  {}
-
-  SimulationError(): geos::Exception(){}
-
-  /**
-   * @brief Constructor
-   * @param what the error message
-   */
-  SimulationError( char const * const what ):
-    geos::Exception( what )
-  {}
-
-  /**
-   * @brief Construct a SimulationError from an underlying exception.
-   * @param subException An exception to base this new one on.
-   * @param msgToInsert The error message.
-   * It will be inserted before the error message inside of subException.
-   */
-  SimulationError( std::exception const & subException, std::string const & msgToInsert );
-};
-
-/**
- * @brief Exception class used to report errors from type conversion
- * @todo (ErrorManager EPIC #2940) Consider adding a way to precise custom exception parameters, to add
- * expected & encountered typeid for this one (in order to manage the exception output more precisely).
- * We could also manage this by having:    BadTypeErrorABC <|--- BadTypeError< T >      /!\ compilation time
- */
-struct BadTypeError : public geos::Exception
-{
-  /**
-   * @brief Constructor
-   * @param what the error message
-   */
-  BadTypeError( std::string const & what ):
-    geos::Exception( what )
-  {}
-
-  BadTypeError(): geos::Exception(){}
-};
-
-/**
- * @brief Exception class used for special control flow.
- */
-class NotAnError : public geos::Exception
-{};
 
 namespace logger
 {
