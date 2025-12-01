@@ -9219,6 +9219,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
   int const damageFieldPartitioning = m_damageFieldPartitioning;
   integer const numSurfaceIntegrationPoints = m_numSurfaceIntegrationPoints;
   int const numVelocityFields = m_numVelocityFields;
+  int const numContactGroups = m_numContactGroups;
   int const czVolumeNormalization = m_czVolumeNormalization;
   AreaIntegrationOption const areaIntegrationMethod = m_areaIntegrationMethod;
 
@@ -9280,7 +9281,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
                                                                                                                                            // field
           }
 
-          localIndex const fieldIndex = nodeFlag * m_numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
+          localIndex const fieldIndex = nodeFlag * numContactGroups + particleGroup[p]; // This ranges from 0 to nMatFields-1
 
           particleCohesiveFieldMapping[p][g] = fieldIndex;
 
@@ -9363,6 +9364,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
       if( m_cohesiveNodeGlobalIndices.contains( mappedNode ) )
       {
         // CC: TODO must be a better way to find index in temp arrays
+        // Need to know the index of the current node inside the list of cohesive nodes
         localIndex nodeIndex = 0;
         for( int n = 0; n < numCohesiveNodes; ++n )
         {

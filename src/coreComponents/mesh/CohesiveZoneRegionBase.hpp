@@ -89,14 +89,14 @@ public:
    * @brief Get the global ID of each cohesive zone node.
    * @return an arrayView1d of const node global ID
    */
-  arrayView1d< globalIndex const > getGlobalID() const
-  { return m_globalID; }
+  SortedArrayView< globalIndex const > getGlobalID() const
+  { return m_globalID.toViewConst(); }
 
   /**
-   * @copydoc getGlobalID() const
+   * @copydoc getGlobalID()
    */
-  arrayView1d< globalIndex > getGlobalID()
-  { return m_globalID; }
+  SortedArrayView< globalIndex const > getGlobalID()
+  { return m_globalID.toView(); }
 
   /**
    * @brief Get the reference partitioning surface normal of each cohesive zone node.
@@ -178,7 +178,7 @@ private:
 
   CohesiveZoneRegionBase & operator=( const CohesiveZoneRegionBase & rhs );
 
-  array1d< globalIndex > m_globalID;
+  SortedArray< globalIndex > m_globalID;
   array2d< real64 > m_referencePartitioningSurfaceNormal;
   array3d< real64 > m_referenceSurfaceNormal;
   array2d< real64 > m_referenceArea;

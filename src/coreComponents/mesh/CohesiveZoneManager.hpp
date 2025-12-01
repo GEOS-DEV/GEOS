@@ -25,6 +25,9 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 
+#include "mesh/NodeManager.hpp"
+#include "mesh/ParticleManager.hpp"
+
 namespace geos
 {
 
@@ -268,8 +271,8 @@ public:
         }
     }
 
-    // Perform MPI sync of cohesive zone regions
-    void syncCohesiveZones();
+    void initializeReferenceConfiguration( NodeManager & nodeManager,
+                                           ParticleManager & particleManager );
 
 private:
 

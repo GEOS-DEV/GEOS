@@ -19,6 +19,7 @@
 
 #include "common/TimingMacros.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsMPM.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 
 #include "mesh/MeshManager.hpp"
@@ -116,104 +117,164 @@ void CohesiveZoneManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   }
 }
 
-void CohesiveZoneManager::syncCohesiveZones()
+void CohesiveZoneManager::initializeReferenceConfiguration( NodeManager & nodeManager,
+                                                            ParticleManager & particleManager )
 {
-  // this->forCohesiveZoneRegions< CohesiveZoneRegionBase >( [&]( CohesiveZoneRegionBase const & czRegion )
+  GEOS_UNUSED_VAR( particleManager );
+
+  // Grid fields
+  // int const numNodes = nodeManager.size();
+  auto & nodeGlobalToLocalMap = nodeManager.globalToLocalMap();
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const gridPosition = nodeManager.referencePosition();
+  arrayView2d< real64 const > const gridExplicitSurfaceNormal = nodeManager.getReference< array2d< real64 > >( SolidMechanicsMPM::viewKeyStruct::gridExplicitSurfaceNormalString() );
+
+  this->forCohesiveZoneRegions< CohesiveZoneRegionBase >( [&]( CohesiveZoneRegionBase & czRegion )
+  {
+    SortedArrayView< globalIndex const > const globalID = czRegion.getGlobalID();
+    arrayView2d< real64 > referencePosition = czRegion.getReferencePosition();
+    arrayView2d< real64 > referencePartitioningSurfaceNormal = czRegion.getReferencePartitioningSurfaceNormal();
+    
+    array1d< localIndex > indexInGlobalCZArray; // Perhaps this should be initialized to size given we know the count of local cohesive grid nodes from beginning of initialization
+    array1d< localIndex > localNodalIndex;
+
+    // Following in current form must be done in serial
+    // Unsure how best to parallelize it without race conditions or loss of efficiency
+    // This is also only be performde once at CZ initialization
+    int const numCohesiveNodes = czRegion.size();
+    for( int g  = 0; g < numCohesiveNodes; ++g )
+    {
+      // Check if global index of cohesive zone is on this partition
+      // if( nodeGlobalToLocalMap.contains( globalID[g] ) ) // C++ 20
+      if( nodeGlobalToLocalMap.find( globalID[g] ) != nodeGlobalToLocalMap.end() )
+      {
+        indexInGlobalCZArray.emplace_back( g );
+        localNodalIndex.emplace_back( nodeGlobalToLocalMap.at( globalID[g] ) );
+      }
+    }
+
+    // Load nodal reference fields into reference arrays to perform global sync
+    arrayView1d< localIndex > indexInGlobalCZArrayView = indexInGlobalCZArray;
+    arrayView1d< localIndex > localNodalIndexView = localNodalIndex;
+    forAll< serialPolicy >( indexInGlobalCZArray.size(), [=] GEOS_HOST ( localIndex const g ) 
+    {
+      localIndex czIndex = indexInGlobalCZArrayView[g];
+      localIndex nodeIndex = localNodalIndexView[g];
+      LvArray::tensorOps::copy< 3 >( referencePosition[czIndex], gridPosition[nodeIndex] );
+      LvArray::tensorOps::copy< 3 >( referencePartitioningSurfaceNormal[czIndex], gridExplicitSurfaceNormal[nodeIndex] );
+    } );
+
+    // Sync initial reference nodal values with rank 0
+    int const numRanks = MpiWrapper::commSize();
+    int rank = MpiWrapper::commRank( MPI_COMM_GEOS );
+
+    array1d< MPI_Request > mpiRequestIndices( numRanks );
+    array1d< MPI_Request > mpiRequestPositions( numRanks );
+    array1d< MPI_Request > mpiRequestPartitioningSurfaceNormals( numRanks );
+
+    array1d< MPI_Status > mpiStatusIndices( numRanks );
+    array1d< MPI_Status > mpiStatusPositions( numRanks );
+    array1d< MPI_Status > mpiStatusPartitioningSurfaceNormals( numRanks );
+
+    array1d< int > nodalIndices;
+    if( rank != 0 )
+    {
+      // Send list of indices to overwrite nodal positions
+      mpiRequestIndices[rank] = MPI_REQUEST_NULL;
+      MpiWrapper::iSend( indexInGlobalCZArray.data(),
+                         indexInGlobalCZArray.size(),
+                         0,
+                         0,
+                         MPI_COMM_GEOS,
+                         &mpiRequestIndices[rank] );
+
+      // Send nodal positions
+      mpiRequestPositions[rank] = MPI_REQUEST_NULL;
+      MpiWrapper::iSend( referencePosition.data(),
+                         referencePosition.size(),
+                         0,
+                         1,
+                         MPI_COMM_GEOS,
+                         &mpiRequestPositions[rank] );
+
+      // Send nodal positions
+      mpiRequestPartitioningSurfaceNormals[rank] = MPI_REQUEST_NULL;
+      MpiWrapper::iSend( referencePartitioningSurfaceNormal.data(),
+                         referencePartitioningSurfaceNormal.size(),
+                         0,
+                         1,
+                         MPI_COMM_GEOS,
+                         &mpiRequestPartitioningSurfaceNormals[rank] );
+    }
+    else
+    {
+      for( int r = 1; r < numRanks; r++ )
+      {
+        MpiWrapper::recv( nodalIndices,
+                          r,
+                          0,
+                          MPI_COMM_GEOS,
+                          &mpiStatusIndices[r] );
+
+        array2d< real64 > nodalReferencePositions( numCohesiveNodes, 3 );
+        mpiRequestPositions[r] = MPI_REQUEST_NULL;
+        MpiWrapper::iRecv( nodalReferencePositions.data(),
+                           nodalReferencePositions.size(),
+                           r,
+                           1,
+                           MPI_COMM_GEOS,
+                           &mpiRequestPositions[r] );
+
+        MpiWrapper::wait( &mpiRequestPositions[r], &mpiStatusPositions[r] );
+
+        // Send nodal surface normals
+        array2d< real64 > nodalReferencePartitioningSurfaceNormals( numCohesiveNodes, 3 );
+        mpiRequestPartitioningSurfaceNormals[r] = MPI_REQUEST_NULL;
+        MpiWrapper::iRecv( nodalReferencePartitioningSurfaceNormals.data(),
+                           nodalReferencePartitioningSurfaceNormals.size(),
+                           r,
+                           1,
+                           MPI_COMM_GEOS,
+                           &mpiRequestPartitioningSurfaceNormals[r] );
+
+        MpiWrapper::wait( &mpiRequestPartitioningSurfaceNormals[r], &mpiStatusPartitioningSurfaceNormals[r] );
+
+        // Combine grid positions
+        for( int g = 0; g < nodalIndices.size(); ++g )
+        {
+          localIndex n = nodalIndices[g];
+          LvArray::tensorOps::copy< 3 >( referencePosition[n], nodalReferencePositions[n] );
+          // TODO: Check if we should be taking the max here for the partitioning surface normal?
+          LvArray::tensorOps::copy< 3 >( referencePartitioningSurfaceNormal[n], nodalReferencePartitioningSurfaceNormals[n] );
+        }
+      }
+    }
+
+    // Wait for everything to complete
+    MpiWrapper::barrier();
+
+    // Scatter complete reference values back to other ranks
+    MpiWrapper::bcast( referencePosition.data(),
+                       referencePosition.size(),
+                       0,
+                       MPI_COMM_GEOS );
+
+    MpiWrapper::bcast( referencePartitioningSurfaceNormal.data(),
+                       referencePartitioningSurfaceNormal.size(),
+                       0,
+                       MPI_COMM_GEOS );
+  } );
+
+  // // Re-zero grid mass
+  // // This may or may not be inside the above lambda for cz regions
+  // forAll< serialPolicy >( numNodes, [=] GEOS_HOST ( localIndex const g )
   // {
-  //   arrayView1d< globalIndex > const czGlobalID = czRegion.getGloblaID();
-  //   arrayView2d< real64 > const czReferencePosition = czRegion.getReferencePosition();
-  //   arrayView3d< real64 > const czReferenceSurfaceNormal = czRegion.getReferenceSurfaceNormal();
+  //   globalIndex const mappedNode = localToGlobalMap[ g ];
 
-  //   // Sync initial grid positions with rank 0
-  //   int const numRanks = MpiWrapper::commSize();
-  //   int rank = MpiWrapper::commRank( MPI_COMM_GEOS );
-
-  //   array1d< MPI_Request > mpiRequestIndices( numRanks );
-  //   array1d< MPI_Request > mpiRequestPositions( numRanks );
-  //   array1d< MPI_Request > mpiRequestSurfaceNormals( numRanks );
-
-  //   array1d< MPI_Status > mpiStatusIndices( numRanks );
-  //   array1d< MPI_Status > mpiStatusPositions( numRanks );
-  //   array1d< MPI_Status > mpiStatusSurfaceNormals( numRanks );
-
-  //   array1d< int > gridNodeIndices;
-  //   if( rank != 0 )
+  //   for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
   //   {
-  //     // Send list of indices to overwrite nodal positions
-  //     mpiRequestIndices[rank] = MPI_REQUEST_NULL;
-  //     MpiWrapper::iSend( localCohesiveGridNodes.data(),
-  //                        localCohesiveGridNodes.size(),
-  //                        0,
-  //                        0,
-  //                        MPI_COMM_GEOS,
-  //                        &mpiRequestIndices[rank] );
-
-  //     // Send nodal positions
-  //     mpiRequestPositions[rank] = MPI_REQUEST_NULL;
-  //     MpiWrapper::iSend( m_referenceCohesiveGridNodePositions.data(),
-  //                       m_referenceCohesiveGridNodePositions.size(),
-  //                       0,
-  //                       1,
-  //                       MPI_COMM_GEOS,
-  //                       &mpiRequestPositions[rank] );
-
-  //     // Send nodal positions
-  //     mpiRequestSurfaceNormals[rank] = MPI_REQUEST_NULL;
-  //     MpiWrapper::iSend( m_referenceCohesiveGridNodePartitioningSurfaceNormals.data(),
-  //                       m_referenceCohesiveGridNodePartitioningSurfaceNormals.size(),
-  //                       0,
-  //                       1,
-  //                       MPI_COMM_GEOS,
-  //                       &mpiRequestSurfaceNormals[rank] );
-  //   }
-  //   else
-  //   {
-  //     for( int r = 1; r < numRanks; r++ )
-  //     {
-  //       MpiWrapper::recv( gridNodeIndices,
-  //                         r,
-  //                         0,
-  //                         MPI_COMM_GEOS,
-  //                         &mpiStatusIndices[r] );
-
-  //       array2d< real64 > gridNodePositions( numCohesiveNodes, 3 );
-  //       mpiRequestPositions[r] = MPI_REQUEST_NULL;
-  //       MpiWrapper::iRecv( gridNodePositions.data(),
-  //                         gridNodePositions.size(),
-  //                         r,
-  //                         1,
-  //                         MPI_COMM_GEOS,
-  //                         &mpiRequestPositions[r] );
-
-  //       MpiWrapper::wait( &mpiRequestPositions[r], &mpiStatusPositions[r] );
-
-  //       // Send nodal surface normals
-  //       array2d< real64 > gridNodeSurfaceNormals( numCohesiveNodes, 3 );
-  //       mpiRequestSurfaceNormals[r] = MPI_REQUEST_NULL;
-  //       MpiWrapper::iRecv( gridNodeSurfaceNormals.data(),
-  //                         gridNodeSurfaceNormals.size(),
-  //                         r,
-  //                         1,
-  //                         MPI_COMM_GEOS,
-  //                         &mpiRequestSurfaceNormals[r] );
-
-  //       MpiWrapper::wait( &mpiRequestSurfaceNormals[r], &mpiStatusSurfaceNormals[r] );
-
-  //       // Combine grid positions
-  //       for( int g = 0; g < gridNodeIndices.size(); ++g )
-  //       {
-  //         for( int k = 0; k < 3; ++k )
-  //         {
-  //           referenceCohesiveGridNodePositions[gridNodeIndices[g]][k] = gridNodePositions[gridNodeIndices[g]][k];
-  //           // TODO: Check if we should be taking the max here for the partitioning surface normal?
-  //           referenceCohesiveGridNodePartitioningSurfaceNormals[gridNodeIndices[g]][k] = gridNodeSurfaceNormals[gridNodeIndices[g]][k];
-  //         }
-  //       }
-  //     }
+  //     gridMass[g][fieldIndex] = 0.0;
   //   }
   // } );
-
-
 }
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, CohesiveZoneManager, string const &, Group * const )
