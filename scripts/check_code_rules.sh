@@ -40,22 +40,22 @@ print_violation()
 # Variables initialization 
 FILE_PREFIX="src/coreComponents/"
 FILE_PATTERNS=(
-          "codingUtilities/*"
-          "common/*"
-          "dataRepository/*"
-          "constitutive/*"
-          "denseLinearAlgebra/*"
-          "discretizationMethods/*"
-          "events/*"
-          "fieldSpecification/*"
-          "fileIO/*"
-          "finiteElement/*"
-          "finiteVolume/*"
-          "functions/*"
-          "linearAlgebra/*"
-          "mainInterface/*"
-          "mesh/*"
-          "physicsSolvers/*"
+          "codingUtilities"
+          "common"
+          "dataRepository"
+          "constitutive"
+          "denseLinearAlgebra"
+          "discretizationMethods"
+          "events"
+          "fieldSpecification"
+          "fileIO"
+          "finiteElement"
+          "finiteVolume"
+          "functions"
+          "linearAlgebra"
+          "mainInterface"
+          "mesh"
+          "physicsSolvers"
         )
   EXCLUDE_PATTERNS=(
         "common/Datatype.hpp"     
@@ -72,18 +72,14 @@ ARRAY_MAP=()
 ARRAY_UMAP=()
 ARRAY_VECTOR=()
 
-FULL_FILE_PATTERN=()
+FILE_PATH_ARGS=()
 for pattern in "${FILE_PATTERNS[@]}"; do
-    FULL_FILE_PATTERN+=("${FILE_PREFIX}${pattern}")
+    if [ -d "${FILE_PREFIX}${pattern}" ]; then
+      FILE_PATH_ARGS+=("${FILE_PREFIX}${pattern}")
+    fi
 done
 
-FILE_PATH_PATTERN=""
-for pattern in "${FULL_FILE_PATTERN[@]}"; do
-    FILE_PATH_PATTERN+="$pattern "
-done
-
-FIND_FILE_CMD="find $FILE_PATH_PATTERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
-FILES=$(eval "$FIND_FILE_CMD" 2>/dev/null);
+FILES=$(find "${FILE_PATH_ARGS[@]}" -type f \( -name "*.hpp" -o -name "*.cpp" \) 2>/dev/null)
 
 # Main loop
 for file in $FILES; do
