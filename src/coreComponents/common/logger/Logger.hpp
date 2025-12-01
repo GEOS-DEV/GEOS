@@ -168,7 +168,7 @@
       msgStruct.setCause( __causemsgsoss.str() ); \
       msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      GEOS_GLOBAL_LOGGER.flushErrorMsgTo( msgStruct ); \
+      GEOS_GLOBAL_LOGGER.flushErrorMsg( msgStruct ); \
       LvArray::system::callErrorHandler(); \
     } \
   }while( false )
@@ -309,7 +309,7 @@
                                        __LINE__ ); \
       msgStruct.setCause( __causemsgsoss.str()  ); \
       msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      GEOS_GLOBAL_LOGGER.flushErrorMsgTo( msgStruct ); \
+      GEOS_GLOBAL_LOGGER.flushErrorMsg( msgStruct ); \
     } \
   } while( false )
 #elif __CUDA_ARCH__

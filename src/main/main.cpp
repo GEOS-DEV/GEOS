@@ -76,25 +76,18 @@ int main( int argc, char *argv[] )
   }
   catch( geos::Exception & e )
   { // GEOS generated exceptions management
-    try
-    {
-      ErrorLogger::global().flushErrorMsgTo( e.getErrorMsg() );
-    } catch( ... )
-    {
-      std::cout << e.what();
-    }
-    LvArray::system::callErrorHandler();
+    ErrorLogger::global().flushErrorMsg( e.getErrorMsg() );
     basicCleanup();
-    std::abort();
+    // lvarray error handler is just program termination
+    LvArray::system::callErrorHandler();
   }
   catch( std::exception const & e )
   { // native exceptions management
     ErrorLogger::ErrorMsg & errMsg = GEOS_GLOBAL_LOGGER.currentErrorMsg();
-    //TODO
-    ErrorLogger::global().flushErrorMsgTo( errMsg );
-    LvArray::system::callErrorHandler();
+    ErrorLogger::global().flushErrorMsg( errMsg );
     basicCleanup();
-    std::abort();
+    // lvarray error handler is just program termination
+    LvArray::system::callErrorHandler();
   }
   return 0;
 }

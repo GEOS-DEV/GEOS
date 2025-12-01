@@ -278,12 +278,6 @@ private:
   GEOS_HOST static ErrorLogger & global();
 
   /**
-   * @return true if the YAML file output is enabled
-   */
-  bool isOutputFileEnabled() const
-  { return m_writeYaml; }
-
-  /**
    * @brief Enable the YAML file output, which is false by default
    * @param value A value of true enable the file writing
    */
@@ -336,7 +330,7 @@ private:
    * @brief Write all the information retrieved about the error/warning message into the targeted output
    * @param errorMsg a constant reference to the ErrorMsg
    */
-  void flushErrorMsgTo( ErrorMsg & errorMsg );
+  void flushErrorMsg( ErrorMsg & errorMsg );
 
   /**
    * @return Return the const general log stream
@@ -359,6 +353,13 @@ private:
   std::string_view m_filename = "errors.yaml";
   /// The stream used for the log output. By default used std::cout
   std::ostream & m_stream = std::cout;
+
+
+  /**
+   * @return true if the YAML file output is enabled
+   */
+  bool isOutputFileEnabled() const
+  { return m_writeYaml; }
 
   /**
    * @brief Write the error message in the YAML file regarding indentation and line break
@@ -392,6 +393,11 @@ public:
   ErrorLogger::ErrorMsg & getErrorMsg()
   { return errorMsg; }
 
+  /**
+   * @brief system fallback to get description content if error system does not achieve to output the ErrorMsg
+     can also provide exception information to debuggers
+   * @return returns an explanatory string
+   */
   virtual char const * what() const noexcept override
   {
     return m_cachedWhat.c_str();

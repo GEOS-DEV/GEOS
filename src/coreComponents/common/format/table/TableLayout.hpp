@@ -23,7 +23,6 @@
 #include "common/DataTypes.hpp"
 #include "TableTypes.hpp"
 #include <variant>
-#include "common/logger/Logger.hpp"
 
 
 namespace geos

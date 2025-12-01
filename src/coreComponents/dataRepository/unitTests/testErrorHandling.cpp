@@ -183,7 +183,7 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
       .addContextInfo( additionalContext.getContextInfo() )
       .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
   }
-  testErrorLogger.flushErrorMsgTo( testErrorLogger.currentErrorMsg() );
+  testErrorLogger.flushErrorMsg( testErrorLogger.currentErrorMsg() );
 
   endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",

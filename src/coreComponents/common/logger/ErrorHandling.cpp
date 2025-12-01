@@ -300,7 +300,7 @@ void ErrorLogger::writeToYaml( ErrorMsg & errorMsg )
   }
 }
 
-void ErrorLogger::flushErrorMsgTo( ErrorMsg & errorMsg )
+void ErrorLogger::flushErrorMsg( ErrorMsg & errorMsg )
 {
   writeToAscii( errorMsg, getErrorStream() );
   if( isOutputFileEnabled() )
