@@ -18,7 +18,6 @@
 #include "common/format/Format.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Units.hpp"
-#include "common/logger/ErrorHandling.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
@@ -66,6 +65,7 @@ int main( int argc, char *argv[] )
     GEOS_LOG_RANK_0( GEOS_FMT( "total time            {}", units::TimeFormatInfo::fromDuration( totalTime ) ) );
     GEOS_LOG_RANK_0( GEOS_FMT( "initialization time   {}", units::TimeFormatInfo::fromDuration( initTime ) ) );
     GEOS_LOG_RANK_0( GEOS_FMT( "run time              {}", units::TimeFormatInfo::fromDuration( runTime ) ) );
+
     return 0;
   }
   // A NotAnError is thrown if "-h" or "--help" option is used.

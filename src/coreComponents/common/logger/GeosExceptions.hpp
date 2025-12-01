@@ -23,6 +23,9 @@
 namespace geos
 {
 
+/**
+ * @brief Geos Exception used in GEOS_THROW
+ */
 struct Exception : public std::exception
 {
 public:

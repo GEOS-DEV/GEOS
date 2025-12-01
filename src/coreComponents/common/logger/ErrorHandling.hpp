@@ -237,9 +237,9 @@ private:
   };
 
   /**
-   * @brief Retrieve all informations from the Msg and format and write into a stream
+   * @brief Retrieve all informations from the ErrorMsg and format and write into a stream.
    * @param errMsg Class containing all the error/warning information
-   * @param oss The stream to write the content to.
+   * @param oss The output stream to write the content to.
    */
   static void writeToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostream & oss )
   {

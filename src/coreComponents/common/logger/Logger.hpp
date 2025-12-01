@@ -928,7 +928,7 @@ extern std::string g_rankString;
 
 extern std::ostream * g_rankStream;
 
-}       // namespace internal
+} // namespace internal
 
 #if defined(GEOS_USE_MPI)
 /**
@@ -950,8 +950,8 @@ void InitializeLogger( const std::string & rank_output_dir="" );
  */
 void FinalizeLogger();
 
-}     // namespace logger
+}   // namespace logger
 
-}   // namespace geos
+} // namespace geos
 
 #endif /* GEOS_COMMON_LOGGER_HPP */

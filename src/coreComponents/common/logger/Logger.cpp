@@ -20,8 +20,6 @@
 // Source includes
 #include "Logger.hpp"
 #include "common/Path.hpp"
-#include "common/format/StringUtilities.hpp"
-#include "common/logger/ErrorHandling.hpp"
 
 namespace geos
 {
