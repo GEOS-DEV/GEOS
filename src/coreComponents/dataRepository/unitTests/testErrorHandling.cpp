@@ -29,7 +29,7 @@ using namespace dataRepository;
 
 namespace fs = std::filesystem;
 
-// redeging logger instance to test macros with a local instance (to prevent any side effect) 
+// redeging logger instance to test macros with a local instance (to prevent any side effect)
 #undef GEOS_GLOBAL_LOGGER
 #define GEOS_GLOBAL_LOGGER testErrorLogger
 
@@ -182,6 +182,17 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
       .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
+
+    string const whatExpected = GEOS_FMT( "***** GEOS Exception\n"
+                                          "***** LOCATION: {} l.{}\n"
+                                          "***** Error cause: testValue == 5\n"
+                                          "***** Rank  0: Empty Group: Base Test Class (file.xml, l.23)",
+                                          testErrorLogger.currentErrorMsg().m_file, line1 );
+
+    GEOS_ERROR_IF_EQ_MSG( string( ex.what() ).find( whatExpected ), string::npos,
+                          "The error message was not containing the expected sequence.\n" <<
+                          "  Error message :\n" << ex.what() <<
+                          "  expected sequence :\n" << whatExpected );
   }
   testErrorLogger.flushErrorMsg( testErrorLogger.currentErrorMsg() );
 

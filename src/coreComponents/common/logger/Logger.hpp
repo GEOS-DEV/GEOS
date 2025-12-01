@@ -23,7 +23,6 @@
 // Source incldes
 #include "common/GeosxConfig.hpp"
 #include "common/GeosxMacros.hpp"
-#include "common/format/Format.hpp"
 #include "LvArray/src/Macros.hpp"
 #include "common/logger/GeosExceptions.hpp"
 
@@ -242,7 +241,7 @@
       auto ex = GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )(); \
       ex.prepareWhat( __msgoss.str(), __causemsgsoss.str(), \
                       __FILE__, __LINE__, \
-                      ::geos::logger::internal::g_rank,LvArray::system::stackTrace( true )  ); \
+                      ::geos::logger::internal::g_rank, LvArray::system::stackTrace( true )  ); \
       throw ex; \
     } \
   }while( false )
