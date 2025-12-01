@@ -74,6 +74,10 @@ ARRAY_UMAP=()
 ARRAY_VECTOR=()
 
 FULL_FILE_PATTERN="${FILE_PREFIX}${FILE_PATTERNS[*]}"
+FILE_PATH_PATERN=""
+for pattern in "${FULL_FILE_PATTERN[@]}"; do
+  FILE_PATH_PATERN+=${pattern}" "
+done
 # Build the find command
 FIND_FILE_CMD="$FIND_CMD $FILE_PATH_PATERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
 FILES=$(eval "$FIND_FILE_CMD" 2>/dev/null);
