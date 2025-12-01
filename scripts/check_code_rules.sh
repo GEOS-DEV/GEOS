@@ -75,7 +75,7 @@ ARRAY_VECTOR=()
 
 FULL_FILE_PATTERN="${FILE_PREFIX}${FILE_PATTERNS[*]}"
 # Build the find command
-FIND_FILE_CMD="find ' \( -name "*.hpp" -o -name "*.cpp" \)'
+FIND_FILE_CMD="$FIND_CMD $FILE_PATH_PATERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
 FILES=$(eval "$FIND_FILE_CMD" 2>/dev/null);
 
 # Main loop
