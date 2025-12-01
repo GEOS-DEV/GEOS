@@ -58,8 +58,7 @@ FILE_PATTERNS=(
           "physicsSolvers/*"
         )
   EXCLUDE_PATTERNS=(
-        "common/Datatype.hpp"
-        "common/StdContainerWrappers.hpp"
+        "common/Datatype.hpp"     
         "dataRepository/BufferOps_inline.hpp"
         "dataRepository/BufferOps.hpp"
       )
@@ -73,13 +72,17 @@ ARRAY_MAP=()
 ARRAY_UMAP=()
 ARRAY_VECTOR=()
 
-FULL_FILE_PATTERN="${FILE_PREFIX}${FILE_PATTERNS[*]}"
-FILE_PATH_PATERN=""
-for pattern in "${FULL_FILE_PATTERN[@]}"; do
-  FILE_PATH_PATERN+=${pattern}" "
+FULL_FILE_PATTERN=()
+for pattern in "${FILE_PATTERNS[@]}"; do
+    FULL_FILE_PATTERN+=("${FILE_PREFIX}${pattern}")
 done
-# Build the find command
-FIND_FILE_CMD="$FIND_CMD $FILE_PATH_PATERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
+
+FILE_PATH_PATTERN=""
+for pattern in "${FULL_FILE_PATTERN[@]}"; do
+    FILE_PATH_PATTERN+="$pattern "
+done
+
+FIND_FILE_CMD="find $FILE_PATH_PATTERN"' \( -name "*.hpp" -o -name "*.cpp" \)'
 FILES=$(eval "$FIND_FILE_CMD" 2>/dev/null);
 
 # Main loop
