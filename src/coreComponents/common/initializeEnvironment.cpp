@@ -92,18 +92,15 @@ void setupLogger()
     {
       std::string const stackHistory = LvArray::system::stackTrace( true );
 
-      if( ErrorLogger::global().isOutputFileEnabled() )
-      {
-        ErrorLogger::ErrorMsg error;
-        error.setType( ErrorLogger::MsgType::Error );
-        error.addToMsg( errorMsg );
-        error.addRank( ::geos::logger::internal::g_rank );
-        error.addCallStackInfo( stackHistory );
-        error.addContextInfo(
-          ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( detectionLocation ) } } } );
+      ErrorLogger::ErrorMsg error;
+      error.setType( ErrorLogger::MsgType::Error );
+      error.addToMsg( errorMsg );
+      error.addRank( ::geos::logger::internal::g_rank );
+      error.addCallStackInfo( stackHistory );
+      error.addContextInfo(
+        ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( detectionLocation ) } } } );
 
-        ErrorLogger::global().flushErrorMsgTo( error );
-      }
+      ErrorLogger::global().flushErrorMsg( error );
 
       // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
     } );
@@ -123,17 +120,15 @@ void setupLogger()
 
       ErrorLogger::ErrorMsg error;
       error.addSignalToMsg( signal );
-      if( ErrorLogger::global().isOutputFileEnabled() )
-      {
-        error.setType( ErrorLogger::MsgType::Error );
-        error.addRank( ::geos::logger::internal::g_rank );
-        error.addCallStackInfo( stackHistory );
-        error.addContextInfo(
-          ErrorContext{ { { ErrorContext::Attribute::Signal, std::to_string( signal ) } }, 1 },
-          ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( "signal handler" ) } }, 0 } );
+      error.setType( ErrorLogger::MsgType::Error );
+      error.addRank( ::geos::logger::internal::g_rank );
+      error.addCallStackInfo( stackHistory );
+      error.addContextInfo(
+        ErrorContext{ { { ErrorContext::Attribute::Signal, std::to_string( signal ) } }, 1 },
+        ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( "signal handler" ) } }, 0 } );
 
-        ErrorLogger::global().flushErrorMsgTo( error );
-      }
+      ErrorLogger::global().flushErrorMsg( error );
+
 
       // call program termination
       LvArray::system::callErrorHandler();
