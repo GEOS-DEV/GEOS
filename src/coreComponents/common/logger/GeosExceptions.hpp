@@ -30,11 +30,20 @@ struct Exception : public std::exception
 {
 public:
   Exception() = default;
+
+  /**
+   * @brief Constructor
+   * @param what The error message describing the exception
+   */
   Exception( std::string const & what ):
     std::exception( )
   {
     errorMsg.addToMsg( what );
   }
+
+  /**
+   * @return Reference to the ErrorMsg object
+   */
   ErrorLogger::ErrorMsg & getErrorMsg()
   { return errorMsg; }
 
@@ -49,6 +58,15 @@ public:
     return m_cachedWhat.c_str();
   }
 
+  /**
+   * @brief Prepare and cache the formatted exception message
+   * @param msg The main error message
+   * @param cause The cause of the exception
+   * @param file The source file where the exception occurred
+   * @param line The line number where the exception occurred
+   * @param rank The MPI rank
+   * @param stackTrace The stack trace at the point of exception
+   */
   void prepareWhat( std::string const & msg,
                     std::string const & cause,
                     char const * file,
@@ -73,7 +91,9 @@ public:
   }
 
 private:
+  /// Formatted exception message for what() method
   string m_cachedWhat;
+  /// Error message logger for structured error reporting
   ErrorLogger::ErrorMsg errorMsg;
 };
 
@@ -102,6 +122,9 @@ struct LogicError : public geos::Exception
     geos::Exception( what )
   {}
 
+  /**
+   * @brief Default constructor
+   */
   LogicError(): geos::Exception(){}
 };
 
@@ -118,6 +141,9 @@ struct DomainError : public geos::Exception
     geos::Exception( what )
   {}
 
+  /**
+   * @brief Default constructor
+   */
   DomainError(): geos::Exception(){}
 };
 /**
@@ -133,6 +159,9 @@ struct InputError : public geos::Exception
     geos::Exception( what )
   {}
 
+  /**
+   * @brief Default constructor
+   */
   InputError(): geos::Exception(){}
 
   /**
@@ -164,6 +193,9 @@ struct SimulationError : public geos::Exception
     geos::Exception( what )
   {}
 
+  /**
+   * @brief Default constructor
+   */
   SimulationError(): geos::Exception(){}
 
   /**
@@ -199,6 +231,9 @@ struct BadTypeError : public geos::Exception
     geos::Exception( what )
   {}
 
+  /**
+   * @brief Default constructor
+   */
   BadTypeError(): geos::Exception(){}
 };
 
