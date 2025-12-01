@@ -70,7 +70,7 @@ Usage: $0
       Basename of the json credentials file to connect to the sccache cloud cache.
   --test-code-style
   --test-documentation
-    -h | --help
+  -h | --help
 EOF
 exit 1
 }
@@ -140,7 +140,7 @@ do
     --test-code-style)       TEST_CODE_STYLE=true;       shift;;
     --test-documentation)    TEST_DOCUMENTATION=true;    shift;;
     -h | --help)             usage;                      shift;;
-        # -- means the end of the arguments; drop this, and break out of the while loop
+    # -- means the end of the arguments; drop this, and break out of the while loop
     --) shift; break;;
     *) >&2 echo Unsupported option: $1
        usage;;
