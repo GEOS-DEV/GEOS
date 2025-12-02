@@ -98,7 +98,7 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0 ).
-    setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
+    setDescription( "Maximum (absolute) allowed change in the composition fraction of any component within a single time step, in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::maxRelativeCompDensChangeString(), &m_maxRelativeCompDensChange ).
     setSizedFromParent( 0 ).
@@ -393,8 +393,7 @@ void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition co
 
 void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n,
                                                            real64 const & GEOS_UNUSED_PARAM( dt ),
-                                                           WellElementSubRegion const & subRegion,
-                                                           ElementRegionManager const & elemManager )
+                                                           WellElementSubRegion const & subRegion )
 {
   GEOS_UNUSED_VAR( time_n );
   WellControls & wellControls = getWellControls( subRegion );
@@ -420,17 +419,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
                      GEOS_FMT( "{}: Region {} is not a target of the reservoir solver and cannot be used for referenceReservoirRegion in WellControl {}.",
                                getDataContext(), regionName, wellControls.getName() ) );
 
-      ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion());
 
-      // Check if regions statistics are being computed
-      GEOS_ERROR_IF( !region.hasWrapper( CompositionalMultiphaseStatistics::catalogName()),
-                     GEOS_FMT( "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be configured for region {} ",
-                               getDataContext(), wellControls.getName(), regionName ));
-
-      CompositionalMultiphaseStatistics::RegionStatistics const & stats = region.getReference< CompositionalMultiphaseStatistics::RegionStatistics >(
-        CompositionalMultiphaseStatistics::regionStatisticsName() );
-      wellControls.setRegionAveragePressure( stats.averagePressure );
-      wellControls.setRegionAverageTemperature( stats.averageTemperature );
     }
   }
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
@@ -563,7 +552,7 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
 
 }
 
-void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubRegion & subRegion )
+void CompositionalMultiphaseWell::updateVolRatesForConstraint( ElementRegionManager const & elemManager, WellElementSubRegion const & subRegion )
 {
   GEOS_MARK_FUNCTION;
 
@@ -959,18 +948,16 @@ void CompositionalMultiphaseWell::updateState( DomainPartition & domain )
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
   {
-    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          WellElementSubRegion & subRegion )
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                WellElementSubRegion & subRegion )
     {
       WellControls & wellControls = getWellControls( subRegion );
       if( wellControls.getWellState())
       {
-#if 1
-        real64 const maxRegionPhaseVolFrac = updateWellState( subRegion );
-#else
-        real64 const maxRegionPhaseVolFrac = updateSubRegionState( subRegion );
 
-#endif
+        real64 const maxRegionPhaseVolFrac = updateWellState( subRegion );
+
         maxPhaseVolFrac = LvArray::math::max( maxRegionPhaseVolFrac, maxPhaseVolFrac );
       }
     } );
@@ -983,7 +970,7 @@ void CompositionalMultiphaseWell::updateState( DomainPartition & domain )
 
 }
 
-real64 CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
+real64 CompositionalMultiphaseWell::updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
 {
   real64 maxPhaseVolChange=0.0;
   WellControls & wellControls = getWellControls( subRegion );
@@ -2490,7 +2477,7 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition &
 
       if( wellControls.isWellOpen( )  )
       {
-        updateSubRegionState( subRegion );
+        updateSubRegionState( elemManager, subRegion );
       }
     } );
   } );
@@ -2773,9 +2760,9 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
         MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
         fluid.saveConvergedState();
 
-        validateWellConstraints( time_n, dt, subRegion, elemManager );
+        validateWellConstraints( time_n, dt, subRegion );
 
-        updateSubRegionState( subRegion );
+        updateSubRegionState( elemManager, subRegion );
       }
     } )
     ;

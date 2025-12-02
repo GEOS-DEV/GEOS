@@ -163,6 +163,7 @@ public:
 
   /**
    * @brief Recompute the volumetric rate that are used in the well constraints
+   * @param elemManager the well region manager
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
   virtual void calculateReferenceElementRates( WellElementSubRegion & subRegion );
@@ -200,10 +201,18 @@ public:
   virtual void updateState( DomainPartition & domain ) override;
 
   /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
+   * @brief Recompute all dependent quantities from primary variables (including constitutive
+   * models)
+   * @param domain the domain containing the mesh and fields
+   */
+  virtual real64 updateWellState( WellElementSubRegion & subRegion ) override;
+  virtual void updateState( DomainPartition & domain ) override;
+
+  /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
-  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
 
   /**
    * @brief function to assemble the linear system matrix and rhs
@@ -371,12 +380,19 @@ private:
    * @param time_n the time at the beginning of the time step
    * @param dt the time step dt
    * @param subRegion the well subRegion
-   * @param elemManager the element manager
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion,
-                                        ElementRegionManager const & elemManager ) override;
+                                        WellElementSubRegion const & subRegion ,ElementRegionManager const & elemManager 
+                                      ) override;
+
+  virtual bool evaluateConstraints( real64 const & time_n,
+                                    WellElementSubRegion & subRegion ) override;
+
+  /**
+   * @brief Create well separator
+   */
+  void createSeparator();
 
   virtual bool evaluateConstraints( real64 const & time_n,
                                     WellElementSubRegion & subRegion ) override;

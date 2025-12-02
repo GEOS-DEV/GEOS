@@ -300,6 +300,12 @@ public:
                                             ElementRegionManager const & GEOS_UNUSED_PARAM( elemManager ),
                                             WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ) ){}
 
+
+  virtual void computeWellPerforationRates( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                                            real64 const & GEOS_UNUSED_PARAM( dt ),
+                                            ElementRegionManager const & GEOS_UNUSED_PARAM( elemManager ),
+                                            WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ) ){}
+
   /**
    * @brief Recompute the perforation rates for all the wells
    * @param domain the domain containing the mesh and fields
@@ -425,8 +431,7 @@ protected:
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion,
-                                        ElementRegionManager const & elemManager ) = 0;
+                                        WellElementSubRegion const & subRegion ) = 0;
 
   virtual void printRates( real64 const & time_n,
                            real64 const & dt,

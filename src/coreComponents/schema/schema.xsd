@@ -1292,9 +1292,11 @@ When set to "error", output a throw.
 		<!--pressureInfluenceFunctionName => Name of the table describing the pressure influence function
 . If not provided, we use a default pressure influence function-->
 		<xsd:attribute name="pressureInfluenceFunctionName" type="groupNameRef" default="" />
-		<!--scale => Scale factor for value of the boundary condition.-->
+		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--setNames => Name of sets that boundary condition is applied to.-->
+		<!--setNames => Names of sets that the boundary condition is applied to.
+A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
+A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -1309,7 +1311,8 @@ When set to "error", output a throw.
 		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--component => Component of field (if tensor) to apply boundary condition to.-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.
+The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
 		<xsd:attribute name="component" type="integer" default="-1" />
 		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
@@ -1321,7 +1324,8 @@ When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
 		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
-		<!--fieldName => Name of field that boundary condition is applied to.-->
+		<!--fieldName => Name of field that boundary condition is applied to.
+A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
@@ -1329,9 +1333,11 @@ When set to "error", output a throw.
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
-		<!--scale => Scale factor for value of the boundary condition.-->
+		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--setNames => Name of sets that boundary condition is applied to.-->
+		<!--setNames => Names of sets that the boundary condition is applied to.
+A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
+A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -1341,7 +1347,8 @@ When set to "error", output a throw.
 		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--component => Component of field (if tensor) to apply boundary condition to.-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.
+The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
 		<xsd:attribute name="component" type="integer" default="-1" />
 		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
@@ -1353,7 +1360,8 @@ When set to "warning", output a warning.
 When set to "error", output a throw.
 -->
 		<xsd:attribute name="errorSetMode" type="geos_FieldSpecificationBase_SetErrorMode" default="error" />
-		<!--fieldName => Name of field that boundary condition is applied to.-->
+		<!--fieldName => Name of field that boundary condition is applied to.
+A field can represent a physical variable. (pressure, temperature, global composition fraction of the fluid, ...)-->
 		<xsd:attribute name="fieldName" type="groupNameRef" default="" />
 		<!--functionName => Name of function that specifies variation of the boundary condition.-->
 		<xsd:attribute name="functionName" type="groupNameRef" default="" />
@@ -1361,9 +1369,11 @@ When set to "error", output a throw.
 		<xsd:attribute name="initialCondition" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
-		<!--scale => Scale factor for value of the boundary condition.-->
+		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--setNames => Name of sets that boundary condition is applied to.-->
+		<!--setNames => Names of sets that the boundary condition is applied to.
+A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
+A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -1403,7 +1413,7 @@ When set to "error", output a throw.
 		<xsd:attribute name="maxNumberOfEquilibrationIterations" type="integer" default="5" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
-		<!--scale => Scale factor for value of the boundary condition.-->
+		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--temperatureVsElevationTableName => Name of the table specifying the (temperature [K] vs elevation) relationship-->
 		<xsd:attribute name="temperatureVsElevationTableName" type="groupNameRef" default="" />
@@ -1415,7 +1425,8 @@ When set to "error", output a throw.
 		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--component => Component of field (if tensor) to apply boundary condition to.-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.
+The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
 		<xsd:attribute name="component" type="integer" default="-1" />
 		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
@@ -1433,9 +1444,11 @@ When set to "error", output a throw.
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--reflectivity => Desired reflectivity of the PML region, used to compute the damping profile-->
 		<xsd:attribute name="reflectivity" type="real32" default="0.001" />
-		<!--scale => Scale factor for value of the boundary condition.-->
+		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--setNames => Name of sets that boundary condition is applied to.-->
+		<!--setNames => Names of sets that the boundary condition is applied to.
+A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
+A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--thicknessMaxXYZ => Thickness of the PML region, at right, back, and bottom sides, used to compute the damping profile-->
 		<xsd:attribute name="thicknessMaxXYZ" type="R1Tensor32" default="{-1,-1,-1}" />
@@ -1457,7 +1470,8 @@ When set to "error", output a throw.
 		<xsd:attribute name="bcApplicationTableName" type="groupNameRef" default="" />
 		<!--beginTime => Time at which the boundary condition will start being applied.-->
 		<xsd:attribute name="beginTime" type="real64" default="-1e+99" />
-		<!--component => Component of field (if tensor) to apply boundary condition to.-->
+		<!--component => Component of field (if tensor) to apply boundary condition to.
+The component must use the order in which the phaseNames have been defined in the Constitutive Element.-->
 		<xsd:attribute name="component" type="integer" default="-1" />
 		<!--direction => Direction to apply boundary condition to.-->
 		<xsd:attribute name="direction" type="R1Tensor" default="{0,0,0}" />
@@ -1477,7 +1491,9 @@ When set to "error", output a throw.
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
 		<!--scale => Multiplier of the functionName value. If no functionName is provided, this value is used directly.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
-		<!--setNames => Name of sets that boundary condition is applied to.-->
+		<!--setNames => Names of sets that the boundary condition is applied to.
+A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
+A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -1507,11 +1523,13 @@ When set to "error", output a throw.
 		<xsd:attribute name="nodalScaleFlag" type="integer" default="0" />
 		<!--objectPath => Path to the target field-->
 		<xsd:attribute name="objectPath" type="groupNameRef" default="" />
-		<!--scale => Scale factor for value of the boundary condition.-->
+		<!--scale => Apply a scaling factor for the value of the boundary condition.-->
 		<xsd:attribute name="scale" type="real64" default="0" />
 		<!--scaleSet => (no description available)-->
 		<xsd:attribute name="scaleSet" type="real64_array" default="{0}" />
-		<!--setNames => Name of sets that boundary condition is applied to.-->
+		<!--setNames => Names of sets that the boundary condition is applied to.
+A set can contain heterogeneous elements in the mesh (volumes, nodes, faces, edges).
+A set can be be defined by a 'Geometry' component, or correspond to imported sets in case of an external mesh-->
 		<xsd:attribute name="setNames" type="groupNameRef_array" use="required" />
 		<!--tractionType => Type of traction boundary condition. Options are:
 vector - traction is applied to the faces as specified from the scale and direction,
@@ -2521,7 +2539,8 @@ Information output from lower logLevels is added with the desired log level
  - Output timing information
  - The statistics (minimal, maximal, average and sum) of memory usage of each Umpire memory pool across all ranks.-->
 		<xsd:attribute name="logLevel" type="integer" default="1" />
-		<!--writeCSV => When set to 1, write the same statistics as the 'logLevel' allows to output in a CSV file-->
+		<!--writeCSV => When set to 1, write the statistics into a CSV file.
+When set to 0, no output-->
 		<xsd:attribute name="writeCSV" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -3167,7 +3186,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
-		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction in a Newton iteration-->
+		<!--maxCompFractionChange => Maximum (absolute) allowed change in the composition fraction of any component within a single time step, in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.5" />
 		<!--maxRelativeCompDensChange => Maximum (relative) change in a component density in a Newton iteration-->
 		<xsd:attribute name="maxRelativeCompDensChange" type="real64" default="1.79769e+208" />
@@ -3201,7 +3220,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="targetCompFracChangeInTimeStep" type="real64" default="1.79769e+308" />
 		<!--targetFlowCFL => Target CFL condition `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when computing the next timestep.-->
 		<xsd:attribute name="targetFlowCFL" type="real64" default="-1" />
-		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in phase volume fraction in a time step-->
+		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in the phase volume fraction within a single time step.-->
 		<xsd:attribute name="targetPhaseVolFractionChangeInTimeStep" type="real64" default="0.2" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -3288,7 +3307,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
-		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction in a Newton iteration-->
+		<!--maxCompFractionChange => Maximum (absolute) allowed change in the composition fraction of any component within a single time step, in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="0.5" />
 		<!--maxRelativeCompDensChange => Maximum (relative) change in a component density in a Newton iteration-->
 		<xsd:attribute name="maxRelativeCompDensChange" type="real64" default="1.79769e+208" />
@@ -3312,7 +3331,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0.5" />
 		<!--targetCompFracChangeInTimeStep => Target change in component fraction in a time step-->
 		<xsd:attribute name="targetCompFracChangeInTimeStep" type="real64" default="1.79769e+308" />
-		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in phase volume fraction in a time step-->
+		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in the phase volume fraction within a single time step.-->
 		<xsd:attribute name="targetPhaseVolFractionChangeInTimeStep" type="real64" default="0.2" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -3560,7 +3579,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
-		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
+		<!--maxCompFractionChange => Maximum (absolute) allowed change in the composition fraction of any component within a single time step, in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
 		<!--maxRelativeCompDensChange => Maximum (relative) change in a component density between two Newton iterations-->
 		<xsd:attribute name="maxRelativeCompDensChange" type="real64" default="1.79769e+208" />
@@ -3580,7 +3599,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--useTotalMassEquation => Use total mass equation-->
 		<xsd:attribute name="useTotalMassEquation" type="integer" default="1" />
-		<!--writeCSV => When set to 1, write the rates into a CSV file-->
+		<!--writeCSV => When set to 1, write the rates into a CSV file.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
@@ -3631,6 +3650,7 @@ Setting cycleFrequency='1' will update the pressure every timestep, note that is
 		<xsd:attribute name="surfacePressure" type="real64" default="0" />
 		<!--surfaceTemperature => Surface temperature used to compute volumetric rates when surface conditions are used [K]-->
 		<xsd:attribute name="surfaceTemperature" type="real64" default="0" />
+
 		<!--type => Well type. Valid options:
 * producer
 * injector-->
@@ -4223,7 +4243,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="maxSequentialTemperatureChange" type="real64" default="0.1" />
 		<!--solutionChangeScalingFactor => Damping factor for solution change targets-->
 		<xsd:attribute name="solutionChangeScalingFactor" type="real64" default="0.5" />
-		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in phase volume fraction in a time step-->
+		<!--targetPhaseVolFractionChangeInTimeStep => Target (absolute) change in the phase volume fraction within a single time step.-->
 		<xsd:attribute name="targetPhaseVolFractionChangeInTimeStep" type="real64" default="0.2" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="groupNameRef_array" use="required" />
@@ -4811,7 +4831,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxAbsolutePressureChange => Maximum (absolute) pressure change in a Newton iteration-->
 		<xsd:attribute name="maxAbsolutePressureChange" type="real64" default="-1" />
-		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
+		<!--maxCompFractionChange => Maximum (absolute) change in the composition fraction of any component within a single time step, in a Newton iteration-->
 		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
 		<!--maxSequentialPressureChange => Maximum (absolute) pressure change in a sequential iteration, used for outer loop convergence check-->
 		<xsd:attribute name="maxSequentialPressureChange" type="real64" default="100000" />
@@ -5518,7 +5538,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="useNewCode" type="integer" default="1" />
 		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
 		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
-		<!--writeCSV => When set to 1, write the rates into a CSV file-->
+		<!--writeCSV => When set to 1, write the rates into a CSV file.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
@@ -6496,7 +6516,7 @@ Information output from lower logLevels is added with the desired log level
 		<xsd:attribute name="defaultGrainBulkModulus" type="real64" use="required" />
 		<!--defaultPorosityTEC => Default thermal expansion coefficient-->
 		<xsd:attribute name="defaultPorosityTEC" type="real64" default="0" />
-		<!--defaultReferencePorosity => Default value of the reference porosity-->
+		<!--defaultReferencePorosity => The default porosity value of the rock at the reference pressure-->
 		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
 		<!--useUniaxialFixedStress => Flag enabling uniaxial approximation in fixed stress update-->
 		<xsd:attribute name="useUniaxialFixedStress" type="integer" default="0" />
@@ -6506,7 +6526,7 @@ Information output from lower logLevels is added with the desired log level
 	<xsd:complexType name="BlackOilFluidType">
 		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
@@ -6542,7 +6562,7 @@ The expected format is "{ gasExp, oilExp }", in that order-->
 		<!--gasOilRelPermMaxValue => Maximum rel perm value for the pair (gas phase, oil phase) at residual water saturation
 The expected format is "{ gasMax, oilMax }", in that order-->
 		<xsd:attribute name="gasOilRelPermMaxValue" type="real64_array" default="{0}" />
-		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
+		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase (between 0 and 1) used to compute the relative permeability -->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
@@ -6570,7 +6590,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="BrooksCoreyRelativePermeabilityType">
-		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
+		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase (between 0 and 1) used to compute the relative permeability -->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
@@ -6606,7 +6626,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
 		<!--checkPhasePresence => Check phase presence when computing density and viscosity-->
 		<xsd:attribute name="checkPhasePresence" type="integer" default="0" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
@@ -6625,7 +6645,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--writeCSV => When set to 1, write PVT tables into a CSV file.
- if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
+if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -6635,7 +6655,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
 		<!--checkPhasePresence => Check phase presence when computing density and viscosity-->
 		<xsd:attribute name="checkPhasePresence" type="integer" default="0" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
@@ -6654,7 +6674,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--writeCSV => When set to 1, write PVT tables into a CSV file.
- if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
+if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -6664,7 +6684,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
 		<!--checkPhasePresence => Check phase presence when computing density and viscosity-->
 		<xsd:attribute name="checkPhasePresence" type="integer" default="0" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
@@ -6683,7 +6703,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--writeCSV => When set to 1, write PVT tables into a CSV file.
- if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
+if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -6693,7 +6713,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
 		<!--checkPhasePresence => Check phase presence when computing density and viscosity-->
 		<xsd:attribute name="checkPhasePresence" type="integer" default="0" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
@@ -6712,7 +6732,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<!--solubilityTableNames => Names of solubility tables for each phase-->
 		<xsd:attribute name="solubilityTableNames" type="string_array" default="{}" />
 		<!--writeCSV => When set to 1, write PVT tables into a CSV file.
- if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
+if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -6762,7 +6782,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="componentCriticalPressure" type="real64_array" use="required" />
 		<!--componentCriticalTemperature => Component critical temperatures-->
 		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
@@ -6790,7 +6810,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
 		<!--componentCriticalVolume => Component critical volumes-->
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
@@ -6850,7 +6870,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
 		<!--componentCriticalVolume => Component critical volumes-->
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
@@ -6891,7 +6911,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
 		<!--componentCriticalVolume => Component critical volumes-->
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
@@ -6935,7 +6955,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
 		<!--componentCriticalVolume => Component critical volumes-->
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
@@ -6989,7 +7009,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
 		<!--componentCriticalVolume => Component critical volumes-->
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
@@ -7029,7 +7049,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
 		<!--componentCriticalVolume => Component critical volumes-->
 		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
@@ -7063,7 +7083,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSinglePhaseFluidType">
-		<!--compressibility => Fluid compressibility-->
+		<!--compressibility => Fluid compressibility [Pa^-1]-->
 		<xsd:attribute name="compressibility" type="real64" default="0" />
 		<!--defaultDensity => Default value for density.-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
@@ -7076,7 +7096,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<xsd:attribute name="densityModelType" type="geos_constitutive_ExponentApproximationType" default="exponential" />
 		<!--referenceDensity => Reference fluid density-->
 		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
-		<!--referencePressure => Reference pressure-->
+		<!--referencePressure => Reference pressure [Pa]-->
 		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--referenceViscosity => Reference fluid viscosity-->
 		<xsd:attribute name="referenceViscosity" type="real64" default="0.001" />
@@ -7314,7 +7334,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 	<xsd:complexType name="DeadOilFluidType">
 		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
@@ -7550,7 +7570,7 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 	<xsd:complexType name="InvariantImmiscibleFluidType">
 		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
-		<!--componentMolarWeight => Molar weights of components-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of fluid components (e.g. CH4, H2O, C5H12)-->
 		<xsd:attribute name="componentNames" type="string_array" use="required" />
@@ -8004,7 +8024,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="pressureModelType" type="geos_constitutive_PressureModelType" default="Hyperbolic" />
 		<!--referencePermeabilityComponents => Reference xx, yy and zz components of a diagonal permeability tensor.-->
 		<xsd:attribute name="referencePermeabilityComponents" type="R1Tensor" use="required" />
-		<!--referencePressure => Reference pressure for the pressure permeability model-->
+		<!--referencePressure => Reference pressure for the pressure permeability model [Pa]-->
 		<xsd:attribute name="referencePressure" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -8015,11 +8035,11 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="PressurePorosityType">
-		<!--compressibility => Solid compressibility-->
+		<!--compressibility => Solid compressibility [Pa^-1]-->
 		<xsd:attribute name="compressibility" type="real64" use="required" />
-		<!--defaultReferencePorosity => Default value of the reference porosity-->
+		<!--defaultReferencePorosity => The default porosity value of the rock at the reference pressure-->
 		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
-		<!--referencePressure => Reference pressure for solid compressibility-->
+		<!--referencePressure => Reference pressure for solid compressibility [Pa]-->
 		<xsd:attribute name="referencePressure" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -8033,7 +8053,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantPorosityType">
-		<!--defaultReferencePorosity => Default value of the reference porosity-->
+		<!--defaultReferencePorosity => The default porosity value of the rock at the reference pressure-->
 		<xsd:attribute name="defaultReferencePorosity" type="real64" use="required" />
 		<!--maxProppantConcentration => Maximum proppant concentration -->
 		<xsd:attribute name="maxProppantConcentration" type="real64" use="required" />
@@ -8043,7 +8063,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 	<xsd:complexType name="ProppantSlurryFluidType">
 		<!--componentNames => List of fluid component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
-		<!--compressibility => Fluid compressibility-->
+		<!--compressibility => Fluid compressibility [Pa^-1]-->
 		<xsd:attribute name="compressibility" type="real64" default="0" />
 		<!--defaultComponentDensity => Default value for the component density.-->
 		<xsd:attribute name="defaultComponentDensity" type="real64_array" default="{0}" />
@@ -8059,7 +8079,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="maxProppantConcentration" type="real64" default="0.6" />
 		<!--referenceDensity => Reference fluid density-->
 		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
-		<!--referencePressure => Reference pressure-->
+		<!--referencePressure => Reference pressure [Pa]-->
 		<xsd:attribute name="referencePressure" type="real64" default="100000" />
 		<!--referenceProppantDensity => Reference proppant density-->
 		<xsd:attribute name="referenceProppantDensity" type="real64" default="1400" />
@@ -8115,7 +8135,7 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 	<xsd:complexType name="ReactiveBrineType">
 		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
@@ -8130,7 +8150,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--writeCSV => When set to 1, write PVT tables into a CSV file.
-If the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
+If the table is requested to be output in the log, and it is too large,a CSV file will be generated even if `writeCSV` is set to 0.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -8138,7 +8158,7 @@ If the table is requested to be output in the log, and it is too large, a CSV fi
 	<xsd:complexType name="ReactiveBrineThermalType">
 		<!--checkPVTTablesRanges => Enable (1) or disable (0) an error when the input pressure or temperature of the PVT tables is out of range.-->
 		<xsd:attribute name="checkPVTTablesRanges" type="integer" default="1" />
-		<!--componentMolarWeight => Component molar weights-->
+		<!--componentMolarWeight => Component molar weights [kg/mol]-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" default="{0}" />
 		<!--componentNames => List of component names-->
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
@@ -8153,7 +8173,7 @@ Even if `writeCSV ="0"`, if the table is too large for the log, a csv file will 
 		<!--phasePVTParaFiles => Names of the files defining the parameters of the viscosity and density models-->
 		<xsd:attribute name="phasePVTParaFiles" type="path_array" use="required" />
 		<!--writeCSV => When set to 1, write PVT tables into a CSV file.
-If the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0.-->
+If the table is requested to be output in the log, and it is too large,a CSV file will be generated even if `writeCSV` is set to 0.-->
 		<xsd:attribute name="writeCSV" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
@@ -8276,7 +8296,7 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ThermalCompressibleSinglePhaseFluidType">
-		<!--compressibility => Fluid compressibility-->
+		<!--compressibility => Fluid compressibility [Pa^-1]-->
 		<xsd:attribute name="compressibility" type="real64" default="0" />
 		<!--defaultDensity => Default value for density.-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
@@ -8296,7 +8316,7 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 		<xsd:attribute name="referenceDensity" type="real64" default="1000" />
 		<!--referenceInternalEnergy => Reference fluid internal energy-->
 		<xsd:attribute name="referenceInternalEnergy" type="real64" default="0.001" />
-		<!--referencePressure => Reference pressure-->
+		<!--referencePressure => Reference pressure [Pa]-->
 		<xsd:attribute name="referencePressure" type="real64" default="0" />
 		<!--referenceTemperature => Reference temperature-->
 		<xsd:attribute name="referenceTemperature" type="real64" default="0" />
@@ -8357,7 +8377,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phaseCapPressureExponentInv" type="real64_array" default="{0.5}" />
 		<!--phaseCapPressureMultiplier => Entry pressure value for each phase-->
 		<xsd:attribute name="phaseCapPressureMultiplier" type="real64_array" default="{1}" />
-		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
+		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase (between 0 and 1) used to compute the capillary pressure-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />

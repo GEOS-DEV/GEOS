@@ -140,8 +140,7 @@ string SinglePhaseWell::resElementDofName() const
 
 void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
                                                real64 const & GEOS_UNUSED_PARAM( dt ),
-                                               WellElementSubRegion const & subRegion,
-                                               ElementRegionManager const & elemManager )
+                                               WellElementSubRegion const & subRegion )
 {
   GEOS_UNUSED_VAR( time_n ); // tjb this will be needed with validation against tables
   WellControls & wellControls = getWellControls( subRegion );
@@ -391,6 +390,21 @@ void SinglePhaseWell::updateSeparator( WellElementSubRegion & subRegion )
   }
   else
   {
+    if( !wellControls.referenceReservoirRegion().empty() )
+    {
+      ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion() );
+      GEOS_ERROR_IF ( !region.hasWrapper( SinglePhaseStatistics::regionStatisticsName()),
+                      GEOS_FMT( "{}: WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
+                                getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ) );
+
+      SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >( SinglePhaseStatistics::regionStatisticsName() );
+      GEOS_ERROR_IF( stats.averagePressure <= 0.0,
+                     GEOS_FMT(
+                       "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
+                       getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ));
+      wellControls.setRegionAveragePressure( stats.averagePressure );
+      wellControls.setRegionAverageTemperature( stats.averageTemperature );
+    }
     // use region conditions
     flashPressure = wellControls.getRegionAveragePressure();
     if( flashPressure < 0.0 )
@@ -545,7 +559,7 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
               subRegion.size(),
               perforationData.getNumPerforationsGlobal(),
               wellControls,
-              0.0,     // initialization done at t = 0
+              0.0,           // initialization done at t = 0
               resSinglePhaseFlowAccessors.get( flow::pressure{} ),
               resSinglePhaseFlowAccessors.get( flow::temperature{} ),
               resSingleFluidAccessors.get( fields::singlefluid::density{} ),
@@ -704,7 +718,7 @@ void SinglePhaseWell::shutDownWell( real64 const time_n,
                                                     rankOffset,
                                                     localMatrix,
                                                     rhsValue,
-                                                    pres[ei],   // freeze the current pressure value
+                                                    pres[ei],       // freeze the current pressure value
                                                     pres[ei] );
         localRhs[localRow] = rhsValue;
 
@@ -713,7 +727,7 @@ void SinglePhaseWell::shutDownWell( real64 const time_n,
                                                     rankOffset,
                                                     localMatrix,
                                                     rhsValue,
-                                                    connRate[ei],   // freeze the current pressure value
+                                                    connRate[ei],       // freeze the current pressure value
                                                     connRate[ei] );
         localRhs[localRow + 1] = rhsValue;
 
@@ -1619,7 +1633,7 @@ void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
         subRegion.getField< well::connectionRate_n >();
       connRate.setValues< parallelDevicePolicy<> >( connRate_n );
 
-      updateSubRegionState( subRegion );
+      updateSubRegionState( elemManager, subRegion );
     } );
   } );
 }
@@ -1679,9 +1693,9 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
         getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
       fluid.saveConvergedState();
 
-      validateWellConstraints( time, dt, subRegion, elemManager );
+      validateWellConstraints( time, dt, subRegion );
 
-      updateSubRegionState( subRegion );
+      updateSubRegionState( elemManager, subRegion );
     } );
   } );
 }
