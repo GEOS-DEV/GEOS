@@ -17,22 +17,29 @@
  * @file CompositionalMultiphaseStatistics.hpp
  */
 
-#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICS_HPP_
-#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICS_HPP_
+#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICSTASK_HPP_
+#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICSTASK_HPP_
 
+#include "common/DataTypes.hpp"
+#include "common/format/table/TableFormatter.hpp"
+#include "common/format/table/TableLayout.hpp"
 #include "physicsSolvers/FieldStatisticsBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsAggregator.hpp"
 
 namespace geos
 {
 
 class CompositionalMultiphaseBase;
 
+namespace compositionalMultiphaseStatistics
+{
+
 /**
- * @class CompositionalMultiphaseStatistics
+ * @class CompositionalMultiphaseStatistics::Task
  *
  * Task class allowing for the computation of aggregate statistics in compositional multiphase simulations
  */
-class CompositionalMultiphaseStatistics : public FieldStatisticsBase< CompositionalMultiphaseBase >
+class StatsTask : public FieldStatisticsBase< CompositionalMultiphaseBase >
 {
 public:
 
@@ -41,15 +48,10 @@ public:
    * @param[in] name the name of the task coming from the xml
    * @param[in] parent the parent group of the task
    */
-  CompositionalMultiphaseStatistics( const string & name,
-                                     Group * const parent );
+  StatsTask( const string & name, dataRepository::Group * const parent );
 
   /// Accessor for the catalog name
   static string catalogName() { return "CompositionalMultiphaseStatistics"; }
-
-  /// Accessor for the region statistics catalog name
-  static string regionStatisticsName() { return "regionStatistics"; }
-
 
   /**
    * @defgroup Tasks Interface Functions
@@ -67,43 +69,6 @@ public:
 
   /**@}*/
 
-  struct RegionStatistics
-  {
-    /// average region pressure
-    real64 averagePressure;
-    /// minimum region pressure
-    real64 minPressure;
-    /// maximum region pressure
-    real64 maxPressure;
-
-    /// minimum region delta pressure
-    real64 minDeltaPressure;
-    /// maximum region delta pressure
-    real64 maxDeltaPressure;
-
-    /// average region temperature
-    real64 averageTemperature;
-    /// minimum region temperature
-    real64 minTemperature;
-    /// maximum region temperature
-    real64 maxTemperature;
-
-    /// total region pore volume
-    real64 totalPoreVolume;
-    /// total region uncompacted pore volume
-    real64 totalUncompactedPoreVolume;
-    /// phase region phase pore volume
-    array1d< real64 > phasePoreVolume;
-
-    /// region phase mass (trapped and non-trapped, immobile and mobile)
-    array1d< real64 > phaseMass;
-    /// trapped region phase mass
-    array1d< real64 > trappedPhaseMass;
-    /// immobile region phase mass
-    array1d< real64 > immobilePhaseMass;
-    /// region component mass
-    array2d< real64 > componentMass;
-  };
 private:
 
   using Base = FieldStatisticsBase< CompositionalMultiphaseBase >;
@@ -117,37 +82,36 @@ private:
     constexpr static char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
     /// String for the flag deciding the computation of the region statistics
     constexpr static char const * computeRegionStatisticsString() { return "computeRegionStatistics"; }
-    /// String for the region statistics
-    constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
     /// String for the relperm threshold
     constexpr static char const * relpermThresholdString() { return "relpermThreshold"; }
   };
 
 
-
-  /**
-   * @brief Compute some statistics on the reservoir (average field pressure, etc)
-   * @param[in] time current time
-   * @param[in] mesh the mesh level object
-   * @param[in] regionNames the array of target region names
-   */
-  void computeRegionStatistics( real64 const time,
-                                MeshLevel & mesh,
-                                string_array const & regionNames ) const;
-
-  /**
-   * @brief Compute CFL numbers
-   * @param[in] time current time
-   * @param[in] dt the time step size
-   * @param[in] domain the domain partition
-   */
-  void computeCFLNumbers( real64 const time,
-                          real64 const dt,
-                          DomainPartition & domain ) const;
-
   void postInputInitialization() override;
 
   void registerDataOnMesh( Group & meshBodies ) override;
+
+  void prepareFluidMetaData();
+
+  void prepareLogTableLayouts( string_view tableName );
+
+  void prepareCsvTableLayouts( string_view tableName );
+
+  void outputLogStats( real64 statsTime,
+                       MeshLevel & mesh,
+                       string_array const & regionNames );
+
+  void outputCsvStats( real64 statsTime,
+                       MeshLevel & mesh,
+                       string_array const & regionNames );
+
+  /// For each discretization (MeshLevel name), table formatter for log output.
+  stdMap< string, std::unique_ptr< TableFormatter > > m_logFormatters;
+
+  /// For each discretization (MeshLevel name), table formatter for csv output.
+  stdMap< string, std::unique_ptr< TableFormatter > > m_csvFormatters;
+
+  StatsAggregator m_aggregator;
 
   /// Flag to decide whether CFL numbers are computed or not
   integer m_computeCFLNumbers;
@@ -158,9 +122,19 @@ private:
   /// Threshold to decide whether a phase is considered "mobile" or not
   real64 m_relpermThreshold;
 
+  struct FluidMetaData
+  {
+    integer m_numPhases;
+    integer m_numComps;
+    stdVector< string > m_phaseNames;
+    stdVector< string > m_compNames;
+    stdVector< stdVector< string > > m_phaseCompNames;
+  } m_fluid;
+
 };
 
+} /* namespace compositionalMultiphaseStatistics */
 
 } /* namespace geos */
 
-#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICS_HPP_ */
+#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICSTASK_HPP_ */

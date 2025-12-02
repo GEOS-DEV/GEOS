@@ -22,7 +22,8 @@ set( fluidFlowSolvers_headers
      FlowSolverBaseFields.hpp
      CompositionalMultiphaseBase.hpp
      CompositionalMultiphaseBaseFields.hpp
-     CompositionalMultiphaseStatistics.hpp
+     CompositionalMultiphaseStatisticsAggregator.hpp
+     CompositionalMultiphaseStatisticsTask.hpp
      CompositionalMultiphaseFVM.hpp
      CompositionalMultiphaseHybridFVM.hpp
      CompositionalMultiphaseUtilities.hpp
@@ -129,7 +130,8 @@ set( fluidFlowSolvers_headers
 set( fluidFlowSolvers_sources
      CompositionalMultiphaseBase.cpp
      CompositionalMultiphaseFVM.cpp
-     CompositionalMultiphaseStatistics.cpp
+     CompositionalMultiphaseStatisticsAggregator.cpp
+     CompositionalMultiphaseStatisticsTask.cpp
      CompositionalMultiphaseHybridFVM.cpp
      ImmiscibleMultiphaseFlow.cpp
      ReactiveCompositionalMultiphaseOBL.cpp

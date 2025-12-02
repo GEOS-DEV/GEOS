@@ -17,78 +17,36 @@
  * @file CompositionalMultiphaseStatistics.cpp
  */
 
-#include "CompositionalMultiphaseStatistics.hpp"
+#include "CompositionalMultiphaseStatisticsAggregator.hpp"
 
-#include "mesh/DomainPartition.hpp"
-#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
-#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
-#include "constitutive/solid/CoupledSolidBase.hpp"
-#include "physicsSolvers/LogLevelsInfo.hpp"
-#include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
+#include "common/logger/Logger.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/StatisticsKernel.hpp"
-#include "common/format/table/TableData.hpp"
-#include "common/format/table/TableFormatter.hpp"
-#include "common/format/table/TableLayout.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include <ostream>
 
 
 namespace geos
 {
 
+namespace compositionalMultiphaseStatistics
+{
+
 using namespace constitutive;
-using namespace fields;
+// using namespace fields;
 using namespace dataRepository;
 
-CompositionalMultiphaseStatistics::CompositionalMultiphaseStatistics( const string & name,
-                                                                      Group * const parent ):
-  Base( name, parent ),
-  m_computeCFLNumbers( 0 ),
-  m_computeRegionStatistics( 1 )
+StatsAggregator::StatsAggregator():
+  m_params(),
+  m_cflStats(),
+  m_isRegionStatsEnabled( false ),
+  m_isCFLNumberEnabled( false )
+{}
+
+void StatsAggregator::enableRegionStatistics( dataRepository::Group & meshBodies )
 {
-  registerWrapper( viewKeyStruct::computeCFLNumbersString(), &m_computeCFLNumbers ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to decide whether CFL numbers are computed or not" );
-
-  registerWrapper( viewKeyStruct::computeRegionStatisticsString(), &m_computeRegionStatistics ).
-    setApplyDefaultValue( 1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to decide whether region statistics are computed or not" );
-
-  registerWrapper( viewKeyStruct::relpermThresholdString(), &m_relpermThreshold ).
-    setApplyDefaultValue( 1e-6 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to decide whether a phase is considered mobile (when the relperm is above the threshold) or immobile (when the relperm is below the threshold) in metric 2" );
-
-  addLogLevel< logInfo::CFL >();
-  addLogLevel< logInfo::Statistics >();
-}
-
-void CompositionalMultiphaseStatistics::postInputInitialization()
-{
-  Base::postInputInitialization();
-
-  if( dynamicCast< CompositionalMultiphaseHybridFVM * >( m_solver ) && m_computeCFLNumbers != 0 )
-  {
-    GEOS_THROW( GEOS_FMT( "{} {}: the option to compute CFL numbers is incompatible with CompositionalMultiphaseHybridFVM",
-                          catalogName(), getDataContext() ),
-                InputError );
-  }
-}
-
-void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
-{
-  // the fields have to be registered in "registerDataOnMesh" (and not later)
-  // otherwise they cannot be targeted by TimeHistory
-
-  // for now, this guard is needed to avoid breaking the xml schema generation
-  if( m_solver == nullptr )
-  {
-    return;
-  }
+  GEOS_ASSERT_NE( m_solver, nullptr );
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                               MeshLevel & mesh,
@@ -99,126 +57,36 @@ void CompositionalMultiphaseStatistics::registerDataOnMesh( Group & meshBodies )
     integer const numPhases = m_solver->numFluidPhases();
     integer const numComps = m_solver->numFluidComponents();
 
-    // if we have to report region statistics, we have to register them first here
-    if( m_computeRegionStatistics )
+    for( size_t i = 0; i < regionNames.size(); ++i )
     {
-      for( size_t i = 0; i < regionNames.size(); ++i )
-      {
-        ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
+      ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
 
-        region.registerWrapper< RegionStatistics >( viewKeyStruct::regionStatisticsString() ).
-          setRestartFlags( RestartFlags::NO_WRITE );
-        region.excludeWrappersFromPacking( { viewKeyStruct::regionStatisticsString() } );
-        RegionStatistics & stats = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
+      region.registerWrapper< RegionStatistics >( viewKeyStruct::regionStatisticsString() ).
+        setRestartFlags( RestartFlags::NO_WRITE );
+      region.excludeWrappersFromPacking( { viewKeyStruct::regionStatisticsString() } );
+      RegionStatistics & stats = region.getReference< RegionStatistics >( viewKeyStruct::regionStatisticsString() );
 
-        stats.phasePoreVolume.resizeDimension< 0 >( numPhases );
-        stats.phaseMass.resizeDimension< 0 >( numPhases );
-        stats.trappedPhaseMass.resizeDimension< 0 >( numPhases );
-        stats.immobilePhaseMass.resizeDimension< 0 >( numPhases );
-        stats.componentMass.resizeDimension< 0, 1 >( numPhases, numComps );
-
-        if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
-        {
-          auto addStatsValue = []( std::ostringstream & pstatsLayout, TableLayout & ptableLayout,
-                                   string const & description, string_view punit,
-                                   integer pnumPhases, integer pnumComps = 0 )
-          {
-            for( int ip = 0; ip < pnumPhases; ++ip )
-            {
-              if( pnumComps == 0 )
-              {
-                pstatsLayout << description << " (phase " << ip << ") [" << punit << "]";
-              }
-              else
-              {
-                for( int ic = 0; ic < pnumComps; ++ic )
-                {
-                  pstatsLayout << description << " (component " << ic << " / phase " << ip << ") [" << punit << "]";
-                  if( ic == 0 )
-                  {
-                    pstatsLayout << ",";
-                  }
-                }
-              }
-              if( ip == 0 )
-              {
-                pstatsLayout << ",";
-              }
-            }
-
-            ptableLayout.addColumn( pstatsLayout.str());
-            pstatsLayout.str( "" );
-          };
-
-          string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
-
-          TableLayout tableLayout( {
-              TableLayout::Column().setName( "Time [s]" ),
-              TableLayout::Column().setName( "Min pressure [Pa]" ),
-              TableLayout::Column().setName( "Average pressure [Pa]" ),
-              TableLayout::Column().setName( "Max pressure [Pa]" ),
-              TableLayout::Column().setName( "Min delta pressure [Pa]" ),
-              TableLayout::Column().setName( "Max delta pressure [Pa]" ),
-              TableLayout::Column().setName( "Min temperature [Pa]" ),
-              TableLayout::Column().setName( "Average temperature [Pa]" ),
-              TableLayout::Column().setName( "Max temperature [Pa]" ),
-              TableLayout::Column().setName( "Total dynamic pore volume [rm^3]" ),
-            } );
-
-          std::ostringstream statsLayout;
-          addStatsValue( statsLayout, tableLayout, "Phase dynamic pore volume", "rm^3", numPhases );
-          addStatsValue( statsLayout, tableLayout, "Phase mass", massUnit, numPhases );
-          addStatsValue( statsLayout, tableLayout, "Trapped phase mass (metric 1)", massUnit, numPhases );
-          addStatsValue( statsLayout, tableLayout, "Non-trapped phase mass (metric 1)", massUnit, numPhases );
-          addStatsValue( statsLayout, tableLayout, "Immobile phase mass (metric 2)", massUnit, numPhases );
-          addStatsValue( statsLayout, tableLayout, "Mobile phase mass (metric 2)", massUnit, numPhases );
-          addStatsValue( statsLayout, tableLayout, "Component mass", massUnit, numPhases, numComps );
-
-          std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv" );
-          TableCSVFormatter csvFormatter( tableLayout );
-          outputFile << csvFormatter.headerToString();
-        }
-      }
+      stats.phasePoreVolume.resizeDimension< 0 >( numPhases );
+      stats.phaseMass.resizeDimension< 0 >( numPhases );
+      stats.trappedPhaseMass.resizeDimension< 0 >( numPhases );
+      stats.immobilePhaseMass.resizeDimension< 0 >( numPhases );
+      stats.componentMass.resizeDimension< 0, 1 >( numPhases, numComps );
     }
   } );
-
-  // if we have to compute CFL numbers later, we need to register additional variables
-  if( m_computeCFLNumbers )
-  {
-    m_solver->registerDataForCFL( meshBodies );
-  }
+  m_isRegionStatsEnabled = true;
 }
 
-bool CompositionalMultiphaseStatistics::execute( real64 const time_n,
-                                                 real64 const dt,
-                                                 integer const GEOS_UNUSED_PARAM( cycleNumber ),
-                                                 integer const GEOS_UNUSED_PARAM( eventCounter ),
-                                                 real64 const GEOS_UNUSED_PARAM( eventProgress ),
-                                                 DomainPartition & domain )
+void StatsAggregator::enableCFLStatistics( dataRepository::Group & meshBodies )
 {
-  m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                          MeshLevel & mesh,
-                                                                          string_array const & regionNames )
-  {
-    if( m_computeRegionStatistics )
-    {
-      // current time is time_n + dt
-      computeRegionStatistics( time_n + dt, mesh, regionNames );
-    }
-  } );
+  GEOS_ASSERT_NE( m_solver, nullptr );
 
-  if( m_computeCFLNumbers )
-  {
-    // current time is time_n + dt
-    computeCFLNumbers( time_n + dt, dt, domain );
-  }
-
-  return false;
+  m_solver->registerDataForCFL( meshBodies );
+  m_isCFLNumberEnabled = true;
 }
 
-void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const time,
-                                                                 MeshLevel & mesh,
-                                                                 string_array const & regionNames ) const
+void StatsAggregator::computeDiscretizationStatistics( real64 const time,
+                                                       MeshLevel & mesh,
+                                                       string_array const & regionNames ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -260,11 +128,11 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
 
     arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const pres = subRegion.getField< flow::pressure >();
-    arrayView1d< real64 const > const temp = subRegion.getField< flow::temperature >();
+    arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+    arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-      subRegion.getField< flow::phaseVolumeFraction >();
-    arrayView1d< real64 const > const deltaPres = subRegion.getField< flow::deltaPressure >();
+      subRegion.getField< fields::flow::phaseVolumeFraction >();
+    arrayView1d< real64 const > const deltaPres = subRegion.getField< fields::flow::deltaPressure >();
 
     Group const & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
 
@@ -306,7 +174,7 @@ void CompositionalMultiphaseStatistics::computeRegionStatistics( real64 const ti
       launch< parallelDevicePolicy<> >( subRegion.size(),
                                         numComps,
                                         numPhases,
-                                        m_relpermThreshold,
+                                        m_params.m_relpermThreshold,
                                         elemGhostRank,
                                         volume,
                                         pres,
@@ -552,5 +420,7 @@ void CompositionalMultiphaseStatistics::computeCFLNumbers( real64 const time,
 REGISTER_CATALOG_ENTRY( TaskBase,
                         CompositionalMultiphaseStatistics,
                         string const &, dataRepository::Group * const )
+
+} /* namespace compositionalMultiphaseStatistics */
 
 } /* namespace geos */
