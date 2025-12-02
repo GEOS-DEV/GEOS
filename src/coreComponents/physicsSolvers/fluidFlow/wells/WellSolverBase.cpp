@@ -56,7 +56,7 @@ WellSolverBase::WellSolverBase( string const & name,
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "When set to 1, write the rates into a CSV file" );
+    setDescription( "When set to 1, write the rates into a CSV file." );
 
   this->registerWrapper( viewKeyStruct::timeStepFromTablesFlagString(), &m_timeStepFromTables ).
     setApplyDefaultValue( 0 ).
@@ -74,7 +74,8 @@ Group * WellSolverBase::createChild( string const & childKey, string const & chi
     PhysicsSolverBase::groupKeyStruct::nonlinearSolverParametersString(),
   };
   GEOS_ERROR_IF( childTypes.count( childKey ) == 0,
-                 CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
+                 CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ),
+                 getDataContext() );
   if( childKey == keys::wellControls )
   {
     return &registerGroup< WellControls >( childName );

@@ -72,7 +72,30 @@ public:
   /// deleted move operator
   CoupledSolver & operator=( CoupledSolver && ) = delete;
 
+  template< typename T >
+  void throwSolversNotFound( std::ostringstream & errorMessage, string const & solverType )
+  {
+    string_array availableSolvers;
 
+    this->getParent().template forSubGroups< T >( [&]( T & group )
+    {
+
+      availableSolvers.emplace_back( group.getName());
+
+    } );
+
+    if( availableSolvers.empty() )
+    {
+      errorMessage << GEOS_FMT( "No {} solver has been found.", solverType );
+    }
+    else
+    {
+      errorMessage << GEOS_FMT( "Available {} solvers are: {}. ", solverType,
+                                stringutilities::join( availableSolvers, ", " ) );
+    }
+
+    GEOS_THROW( errorMessage.str(), InputError );
+  }
   /**
    * @brief Utility function to set the subsolvers pointers using the names provided by the user
    */
@@ -84,13 +107,17 @@ public:
       using SolverPtr = TYPEOFREF( solver );
       using SolverType = TYPEOFPTR( SolverPtr {} );
       auto const & solverName = m_names[idx()];
-      auto const & solverType = LvArray::system::demangleType< SolverType >();
       solver = this->getParent().template getGroupPointer< SolverType >( solverName );
-      GEOS_THROW_IF( solver == nullptr,
-                     GEOS_FMT( "{}: Could not find solver '{}' of type {}",
-                               getDataContext(),
-                               solverName, solverType ),
-                     InputError );
+      if( solver== nullptr )
+      {
+        string const solverWrapperKey = SolverType::coupledSolverAttributePrefix() + "SolverName";
+        std::ostringstream errorMessage;
+        errorMessage << GEOS_FMT( "{}: Could not find solver named '{}'.\n",
+                                  getWrapperDataContext( solverWrapperKey ), solverName );
+        throwSolversNotFound< SolverType >( errorMessage, SolverType::coupledSolverAttributePrefix() );
+      }
+
+
       GEOS_LOG_LEVEL_RANK_0( logInfo::Coupling,
                              GEOS_FMT( "{}: found {} solver named {}",
                                        getName(), solver->getCatalogName(), solverName ) );
@@ -250,12 +277,10 @@ public:
   updateAndWriteConvergenceStep( real64 const & time_n, real64 const & dt,
                                  integer const cycleNumber, integer const iteration ) override
   {
+    PhysicsSolverBase::updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iteration );
     forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
     {
-      if( m_writeStatisticsCSV >= 2 )
-      {
-        solver->updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iteration );
-      }
+      solver->updateAndWriteConvergenceStep( time_n, dt, cycleNumber, iteration );
     } );
   }
 
@@ -398,6 +423,16 @@ public:
       result &= solver->resetConfigurationToDefault( domain );
     } );
     return result;
+  }
+
+  virtual void
+  synchronizeNonlinearSolverParameters() override
+  {
+    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    {
+      solver->getNonlinearSolverParameters() = getNonlinearSolverParameters();
+      solver->synchronizeNonlinearSolverParameters();
+    } );
   }
 
 protected:
@@ -699,12 +734,7 @@ protected:
                              EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential ),
                              NonlinearSolverParameters::viewKeysStruct::lineSearchActionString(),
                              EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
-                   InputError );
-
-    if( !isSequential )
-    {
-      synchronizeNonlinearSolverParameters();
-    }
+                   InputError, getNonlinearSolverParameters().getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::couplingTypeString() ) );
 
     if( m_nonlinearSolverParameters.m_nonlinearAccelerationType != NonlinearSolverParameters::NonlinearAccelerationType::None )
     {
@@ -721,13 +751,15 @@ protected:
                  InputError );
   }
 
-  virtual void
-  synchronizeNonlinearSolverParameters() override
+  virtual void initializePreSubGroups() override
   {
-    forEachArgInTuple( m_solvers, [&]( auto & solver, auto )
+    PhysicsSolverBase::initializePreSubGroups();
+
+    bool const isSequential = getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::Sequential;
+    if( !isSequential )
     {
-      solver->getNonlinearSolverParameters() = getNonlinearSolverParameters();
-    } );
+      synchronizeNonlinearSolverParameters();
+    }
   }
 
   virtual void startSequentialIteration( integer const & iter,

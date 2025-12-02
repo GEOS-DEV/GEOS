@@ -80,23 +80,29 @@ void ElasticIsotropicPressureDependent::postInputInitialization()
   if( Cr >= 0.0 )
   {
     ++numConstantsSpecified;
-    errorCheck += "Cr, ";
+    errorCheck += "Cr ";
   }
   if( G >= 0.0 )
   {
     ++numConstantsSpecified;
-    errorCheck += "G, ";
+    errorCheck += "G ";
   }
   errorCheck += ")";
 
   GEOS_ERROR_IF( numConstantsSpecified != 2,
-                 getFullName() << ": A specific pair of elastic constants is required: (Cr, G). " );
+                 GEOS_FMT( "{}: A specific pair of elastic constants is required: ( Cr G ), specified: {}",
+                           getFullName(), errorCheck ) );
+  GEOS_THROW_IF( m_defaultRefPressure >= 0,
+                 GEOS_FMT( "{}: Reference pressure must be negative", getFullName() ),
+                 InputError );
   GEOS_THROW_IF( m_defaultRecompressionIndex <= 0,
-                 getFullName() << ": Non-positive recompression index detected " << m_defaultRecompressionIndex, InputError );
-  real64 poisson = conversions::bulkModAndShearMod::toPoissonRatio( -1 * m_defaultRefPressure / m_defaultRecompressionIndex, m_defaultShearModulus );
+                 GEOS_FMT( "{}: Non-positive recompression index detected {}", getFullName(), m_defaultRecompressionIndex ),
+                 InputError, getDataContext() );
+  real64 poisson =
+    conversions::bulkModAndShearMod::toPoissonRatio( -1 * m_defaultRefPressure / m_defaultRecompressionIndex, m_defaultShearModulus );
   GEOS_THROW_IF( poisson < 0,
-                 getFullName() << ": Elastic parameters lead to negative Poisson ratio at reference pressure ", InputError );
-
+                 GEOS_FMT( "{}: Elastic parameters lead to negative Poisson ratio at reference pressure", getFullName() ),
+                 InputError, getDataContext() );
 
   // set results as array default values
 

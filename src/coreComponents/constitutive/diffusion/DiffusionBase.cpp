@@ -60,7 +60,7 @@ void DiffusionBase::postInputInitialization()
   GEOS_THROW_IF( numPhases != m_defaultPhaseDiffusivityMultiplier.size(),
                  GEOS_FMT( "{}: the arrays in `{}` and `{}` must have the same size",
                            getFullName(), viewKeyStruct::phaseNamesString(), viewKeyStruct::defaultPhaseDiffusivityMultiplierString() ),
-                 InputError );
+                 InputError, getDataContext() );
 }
 
 void DiffusionBase::allocateConstitutiveData( Group & parent, localIndex const numPts )
