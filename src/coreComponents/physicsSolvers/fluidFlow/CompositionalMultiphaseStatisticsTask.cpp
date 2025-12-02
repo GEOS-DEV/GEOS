@@ -27,6 +27,7 @@
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
+#include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
@@ -233,7 +234,7 @@ void StatsTask::outputLogStats( real64 const statsTime,
                                 MeshLevel & mesh,
                                 string_array const & regionNames )
 {
-  auto const formatterIter = m_logFormatters.find( mesh.getName());
+  auto const formatterIter = m_logFormatters.find( mesh.getName() );
   if( formatterIter==m_logFormatters.end())
     return;
 
@@ -241,13 +242,15 @@ void StatsTask::outputLogStats( real64 const statsTime,
   TableData tableData;
   static constexpr auto merge = CellType::MergeNext;
 
+  string_view massUnit = units::getSymbol( m_aggregator.getSolver()->getMassUnit() );
+  string_view pressureUnit = units::getSymbol( units::Pressure );
+  string_view tempUnit = units::getSymbol( units::Temperature );
+  string_view resVolUnit = units::getSymbol( units::ReservoirVolume );
+
   tableData.addRow( "Statistics time", merge, merge, statsTime );
-  forRegionStatistics( []( string_view regionName, RegionStatistics const & stats )
+  m_aggregator.forRegionStatistics( MeshLevel & mesh,
+                                    [&]( string_view regionName, RegionStatistics const & stats )
   {
-    string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
-    string_view pressureUnit = units::getSymbol( units::Pressure );
-    string_view tempUnit = units::getSymbol( units::Temperature );
-    string_view resVolUnit = "rm3";
 
     tableData.addRow( merge, merge, merge, "" );
 
@@ -267,54 +270,54 @@ void StatsTask::outputLogStats( real64 const statsTime,
 
     tableData.addRow( GEOS_FMT( "Total dynamic pore volume [{}]", resVolUnit ), CellType::MergeNext, CellType::MergeNext, stats.totalPoreVolume );
     tableData.addRow( GEOS_FMT( "Phase dynamic pore volume [{}]", resVolUnit ),
-                      stringutilities::joinLambda( phaseNames, "\n", []( auto data ) { return data[0]; } ),
+                      stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto data ) { return data[0]; } ),
                       CellType::MergeNext,
                       stringutilities::joinLambda( stats.phasePoreVolume, "\n", []( auto data ) { return data[0]; } ) );
 
     tableData.addSeparator();
 
     tableData.addRow( GEOS_FMT( "Phase mass [{}]", massUnit ),
-                      stringutilities::joinLambda( phaseNames, "\n", []( auto data ) { return data[0]; } ),
+                      stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto data ) { return data[0]; } ),
                       CellType::MergeNext,
                       stringutilities::joinLambda( stats.phaseMass, "\n", []( auto data ) { return data[0]; } ) );
 
     tableData.addSeparator();
 
     tableData.addRow( GEOS_FMT( "Trapped phase mass (metric 1) [{}]", massUnit ),
-                      stringutilities::joinLambda( phaseNames, "\n", []( auto value ) { return value[0]; } ),
+                      stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto value ) { return value[0]; } ),
                       CellType::MergeNext,
                       stringutilities::joinLambda( stats.trappedPhaseMass, "\n", []( auto value ) { return value[0]; } ) );
     tableData.addRow( GEOS_FMT( "Non-trapped phase mass (metric 1) [{}]", massUnit ),
-                      stringutilities::joinLambda( phaseNames, "\n", []( auto value ) { return value[0]; } ),
+                      stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto value ) { return value[0]; } ),
                       CellType::MergeNext,
-                      stringutilities::joinLambda( nonTrappedPhaseMass, "\n", []( auto value ) { return value[0]; } ) );
+                      stringutilities::joinLambda( stats.nonTrappedPhaseMass, "\n", []( auto value ) { return value[0]; } ) );
 
     tableData.addSeparator();
 
     tableData.addRow( GEOS_FMT( "Immobile phase mass (metric 2) [{}]", massUnit ),
-                      stringutilities::joinLambda( phaseNames, "\n", []( auto value ) { return value[0]; } ),
+                      stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto value ) { return value[0]; } ),
                       CellType::MergeNext,
                       stringutilities::joinLambda( stats.immobilePhaseMass, "\n", []( auto value ) { return value[0]; } )  );
     tableData.addRow( GEOS_FMT( "Mobile phase mass (metric 2) [{}]", massUnit ),
-                      stringutilities::joinLambda( phaseNames, "\n", []( auto value ) { return value[0]; } ),
+                      stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto value ) { return value[0]; } ),
                       CellType::MergeNext,
-                      stringutilities::joinLambda( mobilePhaseMass, "\n", []( auto value ) { return value[0]; } ) );
+                      stringutilities::joinLambda( stats.mobilePhaseMass, "\n", []( auto value ) { return value[0]; } ) );
 
     tableData.addSeparator();
 
     tableData.addRow( GEOS_FMT( "Component mass [{}]", massUnit ),
-                      stringutilities::join( phaseCompName, '\n' ),
+                      stringutilities::join( m_fluid.m_phaseCompNames, '\n' ),
                       CellType::MergeNext,
-                      stringutilities::join( massValues, '\n' ) );
+                      stringutilities::join( stats.componentMass, '\n' ) );
 
     tableData.addSeparator();
   } );
 }
 
-}   /* namespace compositionalMultiphaseStatistics */
-
 REGISTER_CATALOG_ENTRY( TaskBase,
-                        compositionalMultiphaseStatistics::StatsTask,
+                        StatsTask,
                         string const &, dataRepository::Group * const )
+
+}   /* namespace compositionalMultiphaseStatistics */
 
 } /* namespace geos */

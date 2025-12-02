@@ -46,16 +46,16 @@ StatsAggregator::StatsAggregator():
 
 void StatsAggregator::enableRegionStatistics( dataRepository::Group & meshBodies )
 {
-  GEOS_ASSERT_NE( m_solver, nullptr );
+  GEOS_ERROR_IF_EQ_MSG( m_solver, nullptr, "Flow solver must be set." );
+
+  integer const numPhases = m_solver->numFluidPhases();
+  integer const numComps = m_solver->numFluidComponents();
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                               MeshLevel & mesh,
                                                               string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
-
-    integer const numPhases = m_solver->numFluidPhases();
-    integer const numComps = m_solver->numFluidComponents();
 
     for( size_t i = 0; i < regionNames.size(); ++i )
     {
@@ -69,7 +69,9 @@ void StatsAggregator::enableRegionStatistics( dataRepository::Group & meshBodies
       stats.phasePoreVolume.resizeDimension< 0 >( numPhases );
       stats.phaseMass.resizeDimension< 0 >( numPhases );
       stats.trappedPhaseMass.resizeDimension< 0 >( numPhases );
+      stats.nonTrappedPhaseMass.resizeDimension< 0 >( numPhases );
       stats.immobilePhaseMass.resizeDimension< 0 >( numPhases );
+      stats.mobilePhaseMass.resizeDimension< 0 >( numPhases );
       stats.componentMass.resizeDimension< 0, 1 >( numPhases, numComps );
     }
   } );
@@ -78,15 +80,15 @@ void StatsAggregator::enableRegionStatistics( dataRepository::Group & meshBodies
 
 void StatsAggregator::enableCFLStatistics( dataRepository::Group & meshBodies )
 {
-  GEOS_ASSERT_NE( m_solver, nullptr );
+  GEOS_ERROR_IF_EQ_MSG( m_solver, nullptr, "Flow solver must be set." );
 
   m_solver->registerDataForCFL( meshBodies );
   m_isCFLNumberEnabled = true;
 }
 
-void StatsAggregator::computeDiscretizationStatistics( real64 const time,
-                                                       MeshLevel & mesh,
-                                                       string_array const & regionNames ) const
+bool StatsAggregator::computeRegionsStatistics( real64 const time,
+                                                MeshLevel & mesh,
+                                                string_array const & regionNames ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -117,7 +119,9 @@ void StatsAggregator::computeDiscretizationStatistics( real64 const time,
 
     stats.phaseMass.setValues< serialPolicy >( 0.0 );
     stats.trappedPhaseMass.setValues< serialPolicy >( 0.0 );
+    stats.nonTrappedPhaseMass.setValues< serialPolicy >( 0.0 );
     stats.immobilePhaseMass.setValues< serialPolicy >( 0.0 );
+    stats.mobilePhaseMass.setValues< serialPolicy >( 0.0 );
     stats.componentMass.setValues< serialPolicy >( 0.0 );
   }
 
@@ -289,18 +293,14 @@ void StatsAggregator::computeDiscretizationStatistics( real64 const time,
       stats.averagePressure = 0.0;
       stats.averageTemperature = 0.0;
       GEOS_LOG_LEVEL_RANK_0( logInfo::Statistics,
-                             GEOS_FMT( "{}, {}: Cannot compute average pressure because region pore volume is zero.",
-                                       getName(), regionNames[i] ) );
+                             GEOS_FMT( "Cannot compute average pressure because region pore volume is zero in region '{}'.",
+                                       regionNames[i] ) );
     }
 
-
-    // helpers to report statistics
-    array1d< real64 > nonTrappedPhaseMass( numPhases );
-    array1d< real64 > mobilePhaseMass( numPhases );
     for( integer ip = 0; ip < numPhases; ++ip )
     {
-      nonTrappedPhaseMass[ip] = stats.phaseMass[ip] - stats.trappedPhaseMass[ip];
-      mobilePhaseMass[ip] = stats.phaseMass[ip] - stats.immobilePhaseMass[ip];
+      stats.nonTrappedPhaseMass[ip] = stats.phaseMass[ip] - stats.trappedPhaseMass[ip];
+      stats.mobilePhaseMass[ip] = stats.phaseMass[ip] - stats.immobilePhaseMass[ip];
     }
 
     string_view massUnit = units::getSymbol( m_solver->getMassUnit() );

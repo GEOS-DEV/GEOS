@@ -20,6 +20,7 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICSAGGREGATOR_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICSAGGREGATOR_HPP_
 
+#include "common/StdContainerWrappers.hpp"
 #include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshLevel.hpp"
@@ -75,8 +76,12 @@ struct RegionStatistics
   array1d< real64 > phaseMass;
   /// trapped region phase mass
   array1d< real64 > trappedPhaseMass;
+  /// non-trapped region phase mass
+  array1d< real64 > nonTrappedPhaseMass;
   /// immobile region phase mass
   array1d< real64 > immobilePhaseMass;
+  /// mobile region phase mass
+  array1d< real64 > mobilePhaseMass;
   /// region component mass
   array2d< real64 > componentMass;
 
@@ -107,7 +112,7 @@ public:
     constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
   };
 
-  using RegionFunctor = std::function< void (string, RegionStatistics const &) >;
+  using RegionFunctor = std::function< void (string_view, RegionStatistics const &) >;
 
   StatsAggregator();
 
@@ -124,14 +129,14 @@ public:
   //                          std::function< void(MeshLevel const &,
   //                                              string_array const & regionNames) > functor ) const;
 
-  // void forRegionStatistics( DomainPartition const &,
-  //                           MeshLevel const & mesh,
-  //                           RegionFunctor functor ) const;
+  void forRegionStatistics( DomainPartition const &,
+                            MeshLevel const & mesh,
+                            RegionFunctor functor ) const;
 
   /**
-   * @brief Register the results structs & wrappers so they will be targeted by TimeHistory output
+   * @brief Enable the computation of region statistics, initialize data structure to collect them.
+   *        Register the resulting data wrappers so they will be targeted by TimeHistory output
    * @note Must be called in "registerDataOnMesh" initialization phase
-   * @param solver The flow solver
    * @param meshBodies The Group containing the MeshBody objects
    */
   void enableRegionStatistics( dataRepository::Group & meshBodies );
@@ -139,20 +144,21 @@ public:
   /**
    * @brief Register the results structs & wrappers so they will be targeted by TimeHistory output
    * @note Must be called in "registerDataOnMesh" initialization phase
-   * @param solver The flow solver
    * @param meshBodies The Group containing the MeshBody objects
    */
   void enableCFLStatistics( dataRepository::Group & meshBodies );
 
   /**
    * @brief Compute some statistics on a given mesh discretization (average field pressure, etc)
+   *        Results are reduced on rank 0, and broadcasted over all ranks.
    * @param[in] time current time
    * @param[in] mesh the mesh level object
    * @param[in] regionNames the array of target region names
+   * return false if 
    */
-  void computeDiscretizationStatistics( real64 const time,
-                                        MeshLevel & mesh,
-                                        string_array const & regionNames ) const;
+  bool computeRegionsStatistics( real64 const time,
+                                 MeshLevel & mesh,
+                                 string_array const & regionNames ) const;
 
   /**
    * @brief Compute CFL numbers
@@ -167,6 +173,12 @@ public:
   CFLStatistics const & getCFLStatistics() const
   { return m_cflStats; }
 
+  CompositionalMultiphaseBase const * getSolver() const
+  { return m_solver; }
+
+  stdVector< string_view > const & getIssues() const
+  { return m_issues; }
+
 private:
 
   CompositionalMultiphaseBase * m_solver;
@@ -174,6 +186,8 @@ private:
   AggregatorParameters m_params;
 
   CFLStatistics m_cflStats;
+
+  stdVector< string_view > m_issues;
 
   bool m_isRegionStatsEnabled;
 
