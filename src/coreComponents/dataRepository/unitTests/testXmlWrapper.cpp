@@ -481,6 +481,7 @@ TEST( testXmlWrapper, testGroupNamesArrayFormats )
       GroupNameTest( groupNameRefArrayRegex, "{element with space, another}" ),
       GroupNameTest( groupNameRefArrayRegex, "{element, element with space, 123.456, a-b}" ),
       GroupNameTest( groupNameRefArrayRegex, "{ space at ends } " ),
+      GroupNameTest( groupNameRefArrayRegex, "{valuewith,,commas }" ),
       GroupNameTest( groupNameRefArrayRegex, "{ value with , commas }" ),
       GroupNameTest( groupNameRefArrayRegex, "{{groupname}}" ),
     };
