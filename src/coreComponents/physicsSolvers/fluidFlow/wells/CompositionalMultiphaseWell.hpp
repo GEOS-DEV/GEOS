@@ -169,10 +169,9 @@ public:
 
   /**
    * @brief Recompute the volumetric rates that are used in the well constraints
-   * @param elemManager the well region manager containing the well
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void updateVolRatesForConstraint( ElementRegionManager const & elemManager, WellElementSubRegion const & subRegion );
+  void updateVolRatesForConstraint( WellElementSubRegion const & subRegion );
 
   /**
    * @brief Recompute the current BHP pressure
@@ -190,10 +189,10 @@ public:
 
   /**
    * @brief Update well separator using current values of pressure and composition at the reference element
-   * @param subRegion the well subregion containing all the primary and dependent fields
-   * @param targetIndex the targetIndex of the subRegion
+   * @param elemManager the element region manager
+
    */
-  void updateSeparator( WellElementSubRegion & subRegion );
+  void updateSeparator( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion );
 
   /**
    * @brief  Calculate well rates at reference element
@@ -237,7 +236,12 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual real64 updateWellState( WellElementSubRegion & subRegion ) override;
+  virtual real64 updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+  /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive
+   * models)
+   * @param domain the domain containing the mesh and fields
+   */
   virtual void updateState( DomainPartition & domain ) override;
 
   virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;

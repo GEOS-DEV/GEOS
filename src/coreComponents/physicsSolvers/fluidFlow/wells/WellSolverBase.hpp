@@ -274,9 +274,15 @@ public:
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive
    * models)
+   * @param elemManager the element region manager
+   * @param subRegion the well subRegion containing the well elements and their associated fields
+   */
+  virtual real64 updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
+  /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive
+   * models)
    * @param domain the domain containing the mesh and fields
    */
-  virtual real64 updateWellState( WellElementSubRegion & subRegion ) = 0;
   virtual void updateState( DomainPartition & domain ) override;
 
   /**
@@ -289,16 +295,10 @@ public:
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive
    * models)
-   * @param subRegion the well subRegion containing the well elements and their associated
+   * @param elemManager the element region manager
    * fields
    */
-  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
-
-
-  virtual void computeWellPerforationRates( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                            real64 const & GEOS_UNUSED_PARAM( dt ),
-                                            ElementRegionManager const & GEOS_UNUSED_PARAM( elemManager ),
-                                            WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ) ){}
+  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
 
 
   virtual void computeWellPerforationRates( real64 const & GEOS_UNUSED_PARAM( time_n ),

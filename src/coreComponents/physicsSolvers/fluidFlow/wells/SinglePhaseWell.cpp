@@ -164,21 +164,10 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
                      GEOS_FMT( "{}: Region {} is not a target of the reservoir solver and cannot be used for referenceReservoirRegion in WellControl {}.",
                                getDataContext(), regionName, wellControls.getName() ) );
 
-      ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion() );
-
-      // Check if regions statistics are being computed
-      GEOS_ERROR_IF( !region.hasWrapper( SinglePhaseStatistics::catalogName()),
-                     GEOS_FMT( "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
-                               getDataContext(), wellControls.getName(), regionName ));
-
-      SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >( SinglePhaseStatistics::regionStatisticsName() );
-      wellControls.setRegionAveragePressure( stats.averagePressure );
-      wellControls.setRegionAverageTemperature( stats.averageTemperature );
     }
   }
-  #if 0 // tjb vix this
-  WellControls::Control currentControl = wellControls.getControl();
-
+  // tjb WellControls::Control currentControl = wellControls.getControl();
+#if 0
   real64 const targetTotalRate = wellControls.getTargetTotalRate( time_n );
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( time_n );
   GEOS_THROW_IF( currentControl == WellControls::Control::PHASEVOLRATE,
@@ -194,7 +183,7 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
   GEOS_THROW_IF( !isZero( targetPhaseRate ),
                  "WellControls " << wellControls.getDataContext() <<
                  ": Target phase rate cannot be used for SinglePhaseWell",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
 #endif
 }
 
@@ -356,7 +345,7 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
     singlePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, temp );
   } );
 }
-void SinglePhaseWell::updateSeparator( WellElementSubRegion & subRegion )
+void SinglePhaseWell::updateSeparator( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
 {
   GEOS_MARK_FUNCTION;
 
@@ -392,18 +381,19 @@ void SinglePhaseWell::updateSeparator( WellElementSubRegion & subRegion )
   {
     if( !wellControls.referenceReservoirRegion().empty() )
     {
-      ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion() );
-      GEOS_ERROR_IF ( !region.hasWrapper( SinglePhaseStatistics::regionStatisticsName()),
+      ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion());
+      GEOS_ERROR_IF ( !region.hasWrapper( SinglePhaseStatistics::regionStatisticsName() ),
                       GEOS_FMT( "{}: WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
                                 getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ) );
 
-      SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >( SinglePhaseStatistics::regionStatisticsName() );
-      GEOS_ERROR_IF( stats.averagePressure <= 0.0,
-                     GEOS_FMT(
-                       "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
-                       getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ));
+      SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >(
+        SinglePhaseStatistics::regionStatisticsName() );
       wellControls.setRegionAveragePressure( stats.averagePressure );
       wellControls.setRegionAverageTemperature( stats.averageTemperature );
+      GEOS_ERROR_IF( stats.averagePressure <= 0.0,
+                     GEOS_FMT( "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be configured for region {} ",
+                               getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ));
+
     }
     // use region conditions
     flashPressure = wellControls.getRegionAveragePressure();
@@ -461,7 +451,7 @@ void SinglePhaseWell::updateSeparator( WellElementSubRegion & subRegion )
   } );
 }
 
-real64 SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
+real64 SinglePhaseWell::updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
 {
   WellControls & wellControls = getWellControls( subRegion );
   if( wellControls.getWellState())
@@ -473,7 +463,7 @@ real64 SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
 
     // update density in the well elements
     updateFluidModel( subRegion );
-    updateSeparator( subRegion );   //  Calculate fluid properties at control conditions
+    updateSeparator( elemManager, subRegion );   //  Calculate fluid properties at control conditions
 
     // Calculate the reference element rates
     calculateReferenceElementRates( subRegion );
@@ -489,7 +479,7 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
   GEOS_UNUSED_VAR( domain );
   WellControls & wellControls = getWellControls( subRegion );
   PerforationData const & perforationData = *subRegion.getPerforationData();
-
+  ElementRegionManager const & elemManager = mesh.getElemManager();
   // get the info stored on well elements
   arrayView1d< real64 const > const wellElemGravCoef =
     subRegion.getField< well::gravityCoefficient >();
@@ -547,8 +537,9 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
 
     // TODO: change the way we access the flowSolver here
     SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
-    PresTempInitializationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( mesh.getElemManager(), flowSolver.getName() );
-    PresTempInitializationKernel::SingleFluidAccessors resSingleFluidAccessors( mesh.getElemManager(), flowSolver.getName() );
+
+    PresTempInitializationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( elemManager, flowSolver.getName() );
+    PresTempInitializationKernel::SingleFluidAccessors resSingleFluidAccessors( elemManager, flowSolver.getName() );
 
     // 1) Loop over all perforations to compute an average density
     // 2) Initialize the reference pressure
@@ -574,7 +565,7 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
     // 4) Recompute the pressure-dependent properties
     // Note: I am leaving that here because I would like to use the perforationRates (computed in UpdateState)
     //       to better initialize the rates
-    updateSubRegionState( subRegion );
+    updateSubRegionState( elemManager, subRegion );
 
     string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
     SingleFluidBase & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
@@ -607,7 +598,7 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
     // setup for restart
     if( wellControls.getCurrentConstraint() == nullptr )
     {
-      updateSubRegionState( subRegion );
+      updateSubRegionState( elemManager, subRegion );
       if( wellControls.isProducer() )
       {
         wellControls.forSubGroups< MinimumBHPConstraint, ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >,
@@ -736,11 +727,11 @@ void SinglePhaseWell::shutDownWell( real64 const time_n,
   } );
 }
 
-real64 SinglePhaseWell::updateWellState( WellElementSubRegion & subRegion )
+real64 SinglePhaseWell::updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
 {
   GEOS_MARK_FUNCTION;
 
-  updateSubRegionState( subRegion );
+  updateSubRegionState( elemManager, subRegion );
   return 0.0;
 }
 void SinglePhaseWell::updateState( DomainPartition & domain )
@@ -751,13 +742,14 @@ void SinglePhaseWell::updateState( DomainPartition & domain )
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
   {
-    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          WellElementSubRegion & subRegion )
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                WellElementSubRegion & subRegion )
     {
       WellControls & wellControls = getWellControls( subRegion );
       if( wellControls.getWellState())
       {
-        updateWellState( subRegion );
+        updateWellState( elemManager, subRegion );
       }
     } );
   } );
