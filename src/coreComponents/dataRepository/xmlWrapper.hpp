@@ -353,8 +353,8 @@ stringToInputVariable( T & target, string const & value, Regex const & regex )
   validateString( value, regex );
 
   std::istringstream ss( value );
-  ss >> target;
-  GEOS_THROW_IF( ss.fail(),
+  ss >> target >> std::ws;
+  GEOS_THROW_IF( ss.fail() || !ss.eof(), 
                  "Error detected while parsing string \"" << value <<
                  "\" to type " << LvArray::system::demangleType< T >(),
                  InputError );

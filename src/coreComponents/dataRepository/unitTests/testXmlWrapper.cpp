@@ -378,6 +378,10 @@ TEST( testXmlWrapper, testGroupNamesFormats )
     for( GroupNameTest const & input : workingInputs )
     {
       EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( groupName, input.m_valueToTest, input.m_regex ) );
+      std::string groupNameComp;
+      std::istringstream ss( input.m_valueToTest );
+      ss >> groupNameComp >> std::ws;
+      EXPECT_STREQ( groupNameComp.c_str(), groupName.c_str() );
     }
   }
   {
@@ -394,6 +398,91 @@ TEST( testXmlWrapper, testGroupNamesFormats )
       GroupNameTest( groupNameRegex, "test:name" ),
       GroupNameTest( groupNameRegex, "test;name" ),
       GroupNameTest( groupNameRegex, "test\\name" ),
+    };
+    for( GroupNameTest const & input : erroneousInputs )
+    {
+      EXPECT_THROW( xmlWrapper::stringToInputVariable( groupName, input.m_valueToTest, input.m_regex ),
+                    InputError ) << "Parsing input '"<< input.m_valueToTest
+                                 << "' with regex '" << input.m_regex.m_regexStr << "' didn't throw an InputError as expected.";
+    }
+  }
+}
+TEST( testXmlWrapper, testGroupNamesArrayFormats )
+{
+  struct GroupNameTest
+  {
+    Regex const & m_regex;
+    string m_valueToTest;
+    GroupNameTest( Regex const & regex, string_view valueToTest ):
+      m_regex( regex ), m_valueToTest( valueToTest ) {}
+  };
+
+  Regex const & groupNameRefArrayRegex = rtTypes::getTypeRegex< string >( rtTypes::CustomTypes::groupNameRefArray );
+  string groupName;
+
+  {
+    stdVector< GroupNameTest > workingInputs = {
+      GroupNameTest( groupNameRefArrayRegex, "{}" ),
+      GroupNameTest( groupNameRefArrayRegex, " {} " ),
+      GroupNameTest( groupNameRefArrayRegex, " \t {} \n " ),
+      GroupNameTest( groupNameRefArrayRegex, "{groupName}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{123name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{name123}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{a-Z0-9./*[]-_,}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{name.with-special_chars}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{path/to/resource*}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{[arrayElement]}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{name1,name2,name3}" ),
+    };
+    for( GroupNameTest const & input : workingInputs )
+    {
+      EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( groupName, input.m_valueToTest, input.m_regex ) );
+      std::string groupNameComp;
+      std::istringstream ss( input.m_valueToTest );
+      ss >> groupNameComp >> std::ws;
+      EXPECT_STREQ( groupNameComp.c_str(), groupName.c_str() );
+    }
+  }
+  {
+    stdVector< GroupNameTest > erroneousInputs = {
+      GroupNameTest( groupNameRefArrayRegex, "" ),
+      GroupNameTest( groupNameRefArrayRegex, " " ),
+      GroupNameTest( groupNameRefArrayRegex, " \t " ),
+      GroupNameTest( groupNameRefArrayRegex, "{\t}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test:name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test;name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test\\name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test|name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test^name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test$name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test&name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test#name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test!name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test%name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test@name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test(name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test)name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test=name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test+name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test<name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test>name}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test\tname}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test\nname}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{test\rname}" ),
+      GroupNameTest( groupNameRefArrayRegex, "groupName" ),
+      GroupNameTest( groupNameRefArrayRegex, "{groupName" ),
+      GroupNameTest( groupNameRefArrayRegex, "groupName}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{groupName}} " ),
+      GroupNameTest( groupNameRefArrayRegex, "{}groupName" ),
+      GroupNameTest( groupNameRefArrayRegex, "groupName{}" ),
+      GroupNameTest( groupNameRefArrayRegex, "test{groupName}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{groupName}test" ),
+      GroupNameTest( groupNameRefArrayRegex, "{groupName} test" ),
+      GroupNameTest( groupNameRefArrayRegex, "{element with space, another}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{element, element with space, 123.456, a-b}" ),
+      GroupNameTest( groupNameRefArrayRegex, "{ space at ends } " ),
+      GroupNameTest( groupNameRefArrayRegex, "{ value with , commas }" ),
+      GroupNameTest( groupNameRefArrayRegex, "{{groupname}}" ),
     };
     for( GroupNameTest const & input : erroneousInputs )
     {
