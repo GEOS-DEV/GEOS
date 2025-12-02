@@ -68,10 +68,6 @@ MAP_VIOLATIONS_FOUND=0
 UMAP_VIOLATIONS_FOUND=0
 VECTOR_VIOLATIONS_FOUND=0
 
-ARRAY_MAP=()
-ARRAY_UMAP=()
-ARRAY_VECTOR=()
-
 FILE_PATH_ARGS=()
 for pattern in "${FILE_PATTERNS[@]}"; do
     if [ -d "${FILE_PREFIX}${pattern}" ]; then
@@ -80,13 +76,15 @@ for pattern in "${FILE_PATTERNS[@]}"; do
 done
 
 ARRAY_FILES=()
+# mapfile used for reading input lines into an array; -d $'\0': Specifies that the delimiter is (\0).
 # -print0 : ask find to separate file paths by (\0)
-# mapfile used for reading input line sinto an array; -d $'\0': Specifies that the delimiter is (\0).
 mapfile -d $'\0' ARRAY_FILES < <(find "${FILE_PATH_ARGS[@]}" -type f \( -name "*.hpp" -o -name "*.cpp" \) -print0 2>/dev/null)
 
+ARRAY_MAP=()
+ARRAY_UMAP=()
+ARRAY_VECTOR=()
 # Main loop
 for file in ${ARRAY_FILES[@]}; do
-  echo $file
   SKIP=0
   for exclude in "${EXCLUDE_PATTERNS[@]}"; do
     if [[ "$file" == *"$exclude"* ]]; then
