@@ -356,6 +356,6 @@ Parameters, User Inputs
 References
 ========================
 
-.. bibliography::
+.. bibliography:: 
    :cited:
    :style: plain

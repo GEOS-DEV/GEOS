@@ -3085,6 +3085,7 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
 
   if (fSlope_h > 0.0 && peakI1_h >= 0.0 && isZero( m_stren ) && isZero( ySlope_h) )
   {// ----------------------------------------------Linear Drucker-Prager
+    cout << "Linear Drucker-Prager" << endl;
     a1 = peakI1_h * fSlope_h;
     a2 = 0.0;
     a3 = 0.0;
@@ -3092,6 +3093,8 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   }
   else if ( isZero( fSlope_h ) && isZero( peakI1_h ) && stren_h > 0.0 && isZero( ySlope_h ) )
   { // ------------------------------------------------------- Von Mises
+    cout << "Von Mises" << endl;
+
     a1 = stren_h*nonlinearCoher;
     a2 = 0.0;
     a3 = 0.0;
@@ -3099,6 +3102,8 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   }
   else if ( fSlope_h > 0.0 && isZero( ySlope_h ) && stren_h > 0.0 && isZero( peakI1_h ) )
   { // ------------------------------------------------------- 0 PEAKI1 to vonMises
+    cout << "0 PeakI1 to vonMises" << endl;
+
     a1 = stren_h;
     a2 = fSlope_h / stren_h;
     a3 = stren_h;
@@ -3106,6 +3111,7 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   }
   else if (fSlope_h > ySlope_h && ySlope_h > 0.0 && stren_h > ySlope_h*peakI1_h && peakI1_h >= 0.0)
   { // ------------------------------------------------------- Nonlinear Drucker-Prager
+    cout << "Nonlinear Drucker-Prager" << endl;
     a1 = stren_h;
     a2 = (fSlope_h-ySlope_h )/(stren_h - ySlope_h*peakI1_h);
     a3 = (stren_h-ySlope_h*peakI1_h)*std::exp(-a2*peakI1_h);
@@ -3113,7 +3119,7 @@ void GeomechanicsUpdates::computeLimitParameters( real64 & a1,
   }
   else
   {
-	  //std::cout<<"bad limit surface parameters."<<std::endl;
+	  cout<<"bad limit surface parameters."<<endl;
   }
 
   //std::cout<<"m_peakI1 = "<<m_peakI1<<", m_stren = "<<m_stren<<", m_ySlope = "<<m_ySlope<<", m_fSlope = "<<m_fSlope<<std::endl;

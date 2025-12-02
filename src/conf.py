@@ -112,7 +112,15 @@ extensions = [
     'sphinx.ext.mathjax'
 ]
 
-bibtex_bibfiles = ["/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/Geomechanics.bib"]
+bibtex_bibfiles = ["/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/Geomechanics.bib",
+                   "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/StrainHardeningPolymer.bib"]
+
+#bibtex_bibfiles = [
+#  "coreComponents/constitutive/docs/solid/Geomechanics.bib",
+#  "coreComponents/constitutive/docs/solid/StrainHardeningPolymer.bib",
+#]
+
+
 bibtex_default_style = "plain"
 bibtex_reference_style = "author_year"
 
