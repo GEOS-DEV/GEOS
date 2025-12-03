@@ -20,7 +20,8 @@
 #ifndef GEOS_MESH_COHESIVEZONEMANAGER_HPP
 #define GEOS_MESH_COHESIVEZONEMANAGER_HPP
 
-#include "CohesiveZoneRegionBase.hpp"
+#include "mesh/CohesiveZoneRegionBase.hpp"
+#include "mesh/CohesiveZoneRegion.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
@@ -78,7 +79,14 @@ public:
     */
     virtual ~CohesiveZoneManager() override;
 
-    localIndex numRegions() const;
+    /**
+    * @brief Get the number of regions.
+    * @return number of regions
+    */
+    localIndex numRegions() const
+    {
+        return this->getRegions().size();
+    }
 
     /**
     * @brief Get the number of nodes in all cohesive zone regions of type T.
@@ -90,7 +98,7 @@ public:
         localIndex numNode = 0;
         this->forCohesiveZoneRegions< T >( [&]( CohesiveZoneRegionBase const & cohesiveZoneRegion )
         {
-        numNode += cohesiveZoneRegion.size();
+            numNode += cohesiveZoneRegion.size();
         } );
         return numNode;
     }
@@ -116,6 +124,24 @@ public:
   {
     return this->getGroup( groupKeyStruct::cohesiveZoneRegionsGroup() ).getGroup< T >( key );
   }
+
+    /**
+    * @brief Get a collection of cohesive zone regions
+    * @return reference to immutable subGroupMap
+    */
+    subGroupMap const & getRegions() const
+    {
+        return this->getGroup( groupKeyStruct::cohesiveZoneRegionsGroup() ).getSubGroups();
+    }
+
+    /**
+    * @brief Get a collection of cohesive zone regions.
+    * @return reference to mutable subGroupMap
+    */
+    subGroupMap & getRegions()
+    {
+        return this->getGroup( groupKeyStruct::cohesiveZoneRegionsGroup() ).getSubGroups();
+    }
 
     /**
     * @brief Create a new CohesiveZoneRegion object as a child of this group.
@@ -159,7 +185,7 @@ public:
     template< typename LAMBDA >
     void forCohesiveZoneRegions( LAMBDA && lambda )
     {
-        forCohesiveZoneRegions< CohesiveZoneRegionBase >( std::forward< LAMBDA >( lambda ) );
+        forCohesiveZoneRegions< CohesiveZoneRegion >( std::forward< LAMBDA >( lambda ) );
     }
 
     /**
@@ -171,7 +197,7 @@ public:
     template< typename LAMBDA >
     void forCohesiveZoneRegions( LAMBDA && lambda ) const
     {
-        forCohesiveZoneRegions< CohesiveZoneRegionBase >( std::forward< LAMBDA >( lambda ) );
+        forCohesiveZoneRegions< CohesiveZoneRegion >( std::forward< LAMBDA >( lambda ) );
     }
 
     /**
@@ -217,7 +243,7 @@ public:
     template< typename LAMBDA >
     void forCohesiveZoneRegionsComplete( LAMBDA && lambda )
     {
-        forCohesiveZoneRegionsComplete< CohesiveZoneRegionBase >( std::forward< LAMBDA >( lambda ) );
+        forCohesiveZoneRegionsComplete< CohesiveZoneRegion >( std::forward< LAMBDA >( lambda ) );
     }
 
     /**
@@ -228,7 +254,7 @@ public:
     template< typename LAMBDA >
     void forCohesiveZoneRegionsComplete( LAMBDA && lambda ) const
     {
-        forCohesiveZoneRegionsComplete< CohesiveZoneRegionBase >( std::forward< LAMBDA >( lambda ) );
+        forCohesiveZoneRegionsComplete< CohesiveZoneRegion >( std::forward< LAMBDA >( lambda ) );
     }
 
     /**
@@ -243,7 +269,7 @@ public:
         for( localIndex er=0; er<this->numRegions(); ++er )
         {
             CohesiveZoneRegionBase & region = this->getRegion( er );
-
+            
             Group::applyLambdaToContainer< REGIONTYPE, REGIONTYPES... >( region, [&]( auto & castedRegion )
             {
                 lambda( er, castedRegion );
@@ -271,7 +297,12 @@ public:
         }
     }
 
-    void initializeReferenceConfiguration( NodeManager & nodeManager,
+    void initializeReferenceConfiguration( int const numDims,
+                                           real64 const smallMass,
+                                           int const numVelocityFields,
+                                           stdVector< array2d< localIndex > > const & mappedNodes,
+                                           stdVector< array2d< real64 > > const & shapeFunctionValues, 
+                                           NodeManager & nodeManager,
                                            ParticleManager & particleManager );
 
 private:
@@ -286,6 +317,12 @@ private:
    * @return reference to this object
    */
   CohesiveZoneManager & operator=( const CohesiveZoneManager & );
+
+  // Mapped fields
+  array2d< real64 > m_mass;
+  array2d< real64 > m_volume;
+  array3d< real64 > m_surfaceNormal;
+  array3d< real64 > m_surfacePosition;
 
 };
 

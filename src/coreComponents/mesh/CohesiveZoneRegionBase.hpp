@@ -92,11 +92,10 @@ public:
   SortedArrayView< globalIndex const > getGlobalID() const
   { return m_globalID.toViewConst(); }
 
-  /**
-   * @copydoc getGlobalID()
-   */
-  SortedArrayView< globalIndex const > getGlobalID()
-  { return m_globalID.toView(); }
+  void setGlobalID(SortedArrayView< globalIndex const > const & globalID )
+  {
+    m_globalID.insert( globalID.begin(), globalID.end() );
+  }
 
   /**
    * @brief Get the reference partitioning surface normal of each cohesive zone node.
@@ -178,12 +177,22 @@ private:
 
   CohesiveZoneRegionBase & operator=( const CohesiveZoneRegionBase & rhs );
 
+  // Indices of fields for either side of the cohesive zone
+  localIndex field0;
+  localIndex field1;
+
+  // Reference fields
   SortedArray< globalIndex > m_globalID;
   array2d< real64 > m_referencePartitioningSurfaceNormal;
   array3d< real64 > m_referenceSurfaceNormal;
   array2d< real64 > m_referenceArea;
   array2d< real64 > m_referencePosition;
 
+  // // Mapped fields
+  // array2d< real64 > m_mass;
+  // array2d< real64 > m_volume;
+  // array3d< real64 > m_surfaceNormal;
+  // array3d< real64 > m_surfacePosition;
 };
 
 }

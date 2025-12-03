@@ -2451,7 +2451,7 @@ void SolidMechanicsMPM::initialize( NodeManager & nodeManager,
         throw std::ios_base::failure( std::strerror( errno ) );
       }
       file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-      file << "Time, Sxx, Syy, Szz, Syz, Sxz, Sxy, Density, Damage, Internal Energy, Kinetic Energy, epxx, epyy, epzz, epyz, epxz, epxy, volume" << std::endl;
+      file << "Time, Sxx, Syy, Szz, Syz, Sxz, Sxy, Density, Damage, Internal Energy, Kinetic Energy, epxx, epyy, epzz, epyz, epxz, epxy, volume, Temperature, F00, F11, F22" << std::endl;
     }
     MpiWrapper::barrier( MPI_COMM_GEOS ); // wait for the header to be written
 
@@ -9492,44 +9492,38 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
                      0,
                      MPI_COMM_GEOS );
 
-  // //================================ NEW CZ MANAGER ======================================================================================
+  //================================ NEW CZ MANAGER ======================================================================================
 
-  // // Create new cohesive zone region and resize to fit global number of cohesive zone nodes
-  // m_cohesiveZoneManager.addRegion( "cz1" ); // Hardcoded cohesive zone region name for now, this should probably be set by the cohesive zone reference event
-  // m_cohesiveZoneManager.getRegion( "cz1" ).resize( numCohesiveNodes );
-  
-  // // Copy reference variables into cohesive zone manager (e.g. node global indices, partitioning surface normals, and reference node position)
-  // // Initialize state variables (e.g. damage = 0)
-  // m_cohesiveZoneManager.forCohesiveZoneRegions( [&]( CohesiveZoneRegion & czRegion )
-  // {
-  //   arrayView1d< real64 > const czGlobalID = czRegion.getGlobalID();
-  //   arrayView1d< real64 > const czReferencePartitioningSurfaceNormal = czRegion.getReferencePartitioningSurfaceNormal();
-  //   arrayView2d< real64 > const czReferencePosition = czRegion.getReferencePosition();
-  //   arrayView1d< real64 > const czDamage = czRegion.getDamage();
+  // Create new cohesive zone region and resize to fit global number of cohesive zone nodes
+  m_cohesiveZoneManager->createChild( "CohesiveZoneRegion", "cz1" ); // Hardcoded cohesive zone region name for now, this should probably be set by the cohesive zone reference event
+  CohesiveZoneRegionBase & czRegion = m_cohesiveZoneManager->getRegion( "cz1" );
+  czRegion.resize( numCohesiveNodes );
+  czRegion.setGlobalID( m_cohesiveNodeGlobalIndices.toViewConst() );
+  // m_cohesiveZoneManager->initializeReferenceConfiguration( m_numDims,
+  //                                                          m_smallMass,
+  //                                                          m_numVelocityFields,
+  //                                                          m_mappedNodes,
+  //                                                          m_shapeFunctionValues,
+  //                                                          nodeManager,
+  //                                                          particleManager );
 
-  //   forAll< serialPolicy >( czRegion.size(), [=] GEOS_HOST ( localIndex const g )
-  //   {
-  //     globalIndex const mappedNode = localToGlobalMap[ g ];
+  // Debugging
+  m_cohesiveZoneManager->forCohesiveZoneRegions( [&]( CohesiveZoneRegion & czRegion )
+  {
+    SortedArrayView< globalIndex const > czGlobalID = czRegion.getGlobalID();
+    arrayView2d< real64 > const czReferencePartitioningSurfaceNormal = czRegion.getReferencePartitioningSurfaceNormal();
+    arrayView2d< real64 > czReferencePosition = czRegion.getReferencePosition();
+    arrayView1d< real64 > const czDamage = czRegion.getDamage();
 
-  //     if( m_cohesiveNodeGlobalIndices.contains( mappedNode ) )
-  //     {
-  //       // CC: TODO must be a better way to find index in temp arrays
-  //       localIndex nodeIndex = 0;
-  //       for( int n = 0; n < numCohesiveNodes; ++n )
-  //       {
-  //         if( m_cohesiveNodeGlobalIndices[n] == mappedNode )
-  //         {
-  //           nodeIndex = n;
-  //           break;
-  //         }
-  //       }
-
-  //       czGlobalID[g] = m_cohesiveNodeGlobalIndices[g];
-  //       LvArray::tensorOps::copy< 3 >( czReferencePosition[g],  gridPosition[nodeIndex] );
-  //       czDamage[g] = 0.0;
-  //     }
-  //   } );
-  // } );
+    forAll< serialPolicy >( czRegion.size(), [=] GEOS_HOST ( localIndex const g )
+    {
+      GEOS_LOG_RANK( "g: " << g << ", " << 
+                     "czGlobalID: " << czGlobalID[g] << ", " << 
+                     "czDmg: " << czDamage[g] << ", " << 
+                     "czRefPos: {" << czReferencePosition[g][0] << ", " << czReferencePosition[g][1] << ", "  << czReferencePosition[g][2] << "}" << ", " <<
+                     "czRefSurfNorm: {" << czReferencePartitioningSurfaceNormal[g][0] << ", " << czReferencePartitioningSurfaceNormal[g][1] << ", "  << czReferencePartitioningSurfaceNormal[g][2] << "}" );
+    } );
+  } );
 
   // //================================ END NEW CZ MANAGER ======================================================================================
 
@@ -9592,6 +9586,8 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
     } );
     ++subRegionIndex;
   } );
+
+  
 
   // Now we need to compute the grid area at cohesive initialization
   // We map the surface position of each particle ( vector from particle center to interface surface ), this is also the particle surface
@@ -9668,7 +9664,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
               {
                 tempGridParticleSurfaceNormalLocal[nodeIndex][fieldIndex][i] += particleMass[p] * particleSurfaceNormal[p][i] * shapeFunctionValue;
                 tempGridSurfacePositionLocal[nodeIndex][fieldIndex][i] += particleMass[p] *
-                                                                          (  particlePosition[p][i] - referenceCohesiveGridNodePositions[nodeIndex][i] + particleSurfacePosition[p][i] ) *
+                                                                          ( particlePosition[p][i] - referenceCohesiveGridNodePositions[nodeIndex][i] + particleSurfacePosition[p][i] ) *
                                                                           shapeFunctionValue;
               }
 
@@ -17173,8 +17169,9 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   RAJA::ReduceSum< parallelDeviceReduce, real64 > boxMass( 0.0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > boxParticleReferenceVolume( 0.0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > boxDamage( 0.0 );
-  RAJA::ReduceSum< parallelDeviceReduce, real64 > boxInternalEnergy( 0.0 );
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > boxInternalEnergy( 0.0 ); 
   RAJA::ReduceSum< parallelDeviceReduce, real64 > boxKineticEnergy( 0.0 );
+  RAJA::ReduceSum< parallelDeviceReduce, real64 > boxTemperature( 0.0 );
   RAJA::ReduceSum< parallelDeviceReduce, real64 > boxMatVolume( 0.0 );
 
   // real64 boxInternalForce[3] = {};
@@ -17197,6 +17194,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     arrayView2d< real64 const > const particlePlasticStrain = subRegion.getField< fields::mpm::particlePlasticStrain >();
     arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
     arrayView1d< real64 > const particleKineticEnergy = subRegion.getField< fields::mpm::particleKineticEnergy >();
+    arrayView1d< real64 const > const particleTemperature = subRegion.getField< fields::mpm::particleTemperature >();
 
     arrayView1d< real64 const > particleInternalEnergy;
     if( computeInternalEnergyAndTemperature == 1 )
@@ -17208,8 +17206,16 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
     // Need to convert to parallelDevicePolicy and incorporate RAJA reductions
     forAll< serialPolicy >( activeParticleIndices.size(),
-                            [=, &boxMass, &boxParticleReferenceVolume, &boxStress, &boxPlasticStrain, &boxDamage, &boxMatVolume, &boxInternalEnergy,
-                             &boxKineticEnergy] GEOS_HOST ( localIndex const pp )
+                            [=, 
+                             &boxMass,
+                             &boxParticleReferenceVolume,
+                             &boxStress,
+                             &boxPlasticStrain,
+                             &boxDamage,
+                             &boxInternalEnergy,
+                             &boxKineticEnergy,
+                             &boxTemperature,
+                             &boxMatVolume] GEOS_HOST ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
         real64 x = particlePosition[p][0];
@@ -17222,12 +17228,14 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
           boxMass += particleMass[p];
           boxMatVolume += particleVolume[p];
           boxParticleReferenceVolume += particleReferenceVolume[p];
-          boxKineticEnergy += particleKineticEnergy[p] * particleVolume[p];
+          boxKineticEnergy += particleKineticEnergy[p] * particleMass[p];
 
           if( computeInternalEnergyAndTemperature == 1 )
           {
-            boxInternalEnergy += particleInternalEnergy[p] * particleVolume[p];
+            boxInternalEnergy += particleInternalEnergy[p] * particleMass[p];
           }
+
+          boxTemperature += particleTemperature[p] * particleMass[p];
 
           for( int i=0; i<6; ++i )
           {
@@ -17241,7 +17249,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
 
   // Additive sync: sxx, syy, szz, sxy, syz, sxz, mass, particle volume, damage
   // Check the voigt indexing of stress
-  real64 boxSums[18];
+  real64 boxSums[19];
   boxSums[0] = boxStress[0].get();       // sig_xx * volume
   boxSums[1] = boxStress[1].get();       // sig_yy * volume
   boxSums[2] = boxStress[2].get();       // sig_zz * volume
@@ -17261,6 +17269,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
   boxSums[15] = boxPlasticStrain[4].get(); // plasticStrain_xz
   boxSums[16] = boxPlasticStrain[5].get(); // plasticStrain_xy
   boxSums[17] = boxMatVolume.get();
+  boxSums[18] = boxTemperature.get();      // temperature * mass (this is an abitrary choice, could be volume weighted)
 
   // Do an MPI sync to total these values and write from proc0 to a file.  Also compute global F
   // so file is directly plottable in excel as CSV or something.
@@ -17293,8 +17302,7 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
     }
     //make sure write fails with exception if something is wrong
     file.exceptions( file.exceptions() | std::ios::failbit | std::ifstream::badbit );
-    // time | sig_xx | sig_yy | sig_zz | sig_xy | sig_yz | sig_zx | density | damage | internal energy | kinetic energy | epxx | epyy | epzz
-    // | epyz | epxz | epxy | total particle volume
+    // time | sig_xx | sig_yy | sig_zz | sig_xy | sig_yz | sig_zx | density | damage | internal energy | kinetic energy | epxx | epyy | epzz | epyz | epxz | epxy | total particle volume | particleTemperature | F00 | F11 | F22
     file << time_n + dt           // Time
          << ","
          << boxSums[0] / boxVolume // sig_xx
@@ -17330,7 +17338,14 @@ void SolidMechanicsMPM::computeAndWriteBoxAverage( const real64 dt,
          << boxSums[16] / boxSums[17] // ep_xz
          << ", "
          << boxSums[17] // material volume
-         << std::endl;
+         << ", "
+         << boxSums[18] / boxMass
+         << ", "
+         << m_domainF[0]
+         << ", "
+         << m_domainF[1]
+         << ", "
+         << m_domainF[2] << std::endl;
     file.close();
   }
 }
