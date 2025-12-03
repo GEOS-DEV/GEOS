@@ -250,9 +250,10 @@ public:
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @param elemManager the elemManager containing the well
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
-  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
+  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
 
   /**
    * @brief Recompute the perforation rates for all the wells
@@ -320,8 +321,7 @@ protected:
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion,
-                                        ElementRegionManager const & elemManager ) = 0;
+                                        WellElementSubRegion const & subRegion ) = 0;
 
   virtual void printRates( real64 const & time_n,
                            real64 const & dt,
