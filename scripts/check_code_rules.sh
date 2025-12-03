@@ -1,5 +1,10 @@
 #!/bin/bash
 
+
+################################
+## I. Function initializations
+################################
+
 # while
 # ... done < <(grep -n "std::map\s*<" "$file") 
 # Process the result of grep command as a file.
@@ -37,7 +42,10 @@ print_violation()
     fi
 }
 
-# Variables initialization 
+################################
+## II. INITIALISATION GLOBALE 
+################################
+
 FILE_PREFIX="src/coreComponents/"
 FILE_PATTERNS=(
           "codingUtilities"
@@ -58,15 +66,13 @@ FILE_PATTERNS=(
           "physicsSolvers"
         )
   EXCLUDE_PATTERNS=(
-        "common/Datatype.hpp"     
-        "dataRepository/BufferOps_inline.hpp"
-        "dataRepository/BufferOps.hpp"
+        "Datatype.hpp"     
+        "StdContainerWrappers.hpp"     
+        "BufferOps_inline.hpp"
+        "BufferOps.hpp"
+        "PVTPackage"
+        "hdf5_interface"
       )
-
-
-MAP_VIOLATIONS_FOUND=0
-UMAP_VIOLATIONS_FOUND=0
-VECTOR_VIOLATIONS_FOUND=0
 
 FILE_PATH_ARGS=()
 for pattern in "${FILE_PATTERNS[@]}"; do
@@ -75,28 +81,47 @@ for pattern in "${FILE_PATTERNS[@]}"; do
     fi
 done
 
+EXCLUDE_EXPRESSION=()
+for pattern in "${EXCLUDE_PATTERNS[@]}"; do
+    if [[ ! "$pattern" == *".hpp"* ]]; then
+      echo "(-path "*/$pattern" -prune -o )"
+      EXCLUDE_EXPRESSION+=( -path "*/$pattern" -prune -o )
+    else
+      echo "(  -name "*${pattern}" -o )"
+      EXCLUDE_EXPRESSION+=( -name "*${pattern}" -o )
+    fi
+done
+
+echo "======================================================"
+echo -e "            TREE LIST OF FILES FOUND            "
+echo "======================================================"
+
+if [ ${#FILE_PATH_ARGS[@]} -gt 0 ]; then
+    find "${FILE_PATH_ARGS[@]}" "${EXCLUDE_EXPRESSION[@]}" -type d -print  | sort | while IFS= read -r dir; do
+        echo -e "->" $(echo "$dir" | sed 's/[]^$*.[]/\\&/g' | sed 's/\// |---/g')
+    done
+fi
+
 ARRAY_FILES=()
 # mapfile used for reading input lines into an array; -d $'\0': Specifies that the delimiter is (\0).
-# -print0 : ask find to separate file paths by (\0)
-mapfile -d $'\0' ARRAY_FILES < <(find "${FILE_PATH_ARGS[@]}" -type f \( -name "*.hpp" -o -name "*.cpp" \) -print0 2>/dev/null)
+# -print0 : ask find to separate file paths by '\0'
+mapfile -d $'\0' ARRAY_FILES < <(find "${FILE_PATH_ARGS[@]}" "${EXCLUDE_EXPRESSION[@]}" \
+                                      -type f \( -name "*.hpp" -o -name "*.cpp" -o  -name "*.hpp.template" -o -name "*.cpp.template" \) \
+                                      -print0 2>/dev/null)
 
 ARRAY_MAP=()
 ARRAY_UMAP=()
 ARRAY_VECTOR=()
-# Main loop
-for file in ${ARRAY_FILES[@]}; do
-  SKIP=0
-  for exclude in "${EXCLUDE_PATTERNS[@]}"; do
-    if [[ "$file" == *"$exclude"* ]]; then
-      SKIP=1
-      break
-    fi
-  done
-  
-  if [ $SKIP -eq 1 ]; then
-    continue
-  fi
 
+MAP_VIOLATIONS_FOUND=0
+UMAP_VIOLATIONS_FOUND=0
+VECTOR_VIOLATIONS_FOUND=0
+
+################################
+## III. MAIN LOOP
+################################
+
+for file in ${ARRAY_FILES[@]}; do
   check_container_usage "std::map" ARRAY_MAP MAP_VIOLATIONS_FOUND
   check_container_usage "std::unordered_map" ARRAY_UMAP UMAP_VIOLATIONS_FOUND
   check_container_usage "std::vector" ARRAY_VECTOR VECTOR_VIOLATIONS_FOUND
