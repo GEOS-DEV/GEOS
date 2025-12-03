@@ -7,8 +7,10 @@ Any developer who updates the baseline ID in the .integrated_tests.yaml file is 
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
 PR #3795 (2025-11-18) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3795-14758-e5f880d.tar.gz>
-=====================
 Addition of multiphase initialisation
+
+PR #3829 (2025-11-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3829-14878-fdcd94e.tar.gz>
+Fix validation of average region stat needed by option
 
 PR #3522 (2025-11-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3522-14736-f07298f.tar.gz>
 =====================

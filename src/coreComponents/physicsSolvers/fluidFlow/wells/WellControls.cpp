@@ -127,8 +127,9 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( "" ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of reservoir region used for obtaining average region pressure used in volume rate constraint calculations.\n"
-                    "Frequency of pressure update is set in Single/CompositionalMultiPhaseStatistics definition.\n"
-                    "Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint properties" );
+                    "Frequency of pressure update is set in SinglePhase/CompositionalMultiphaseStatistics definition.\n"
+                    "Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint properties"
+                    "Note the event associated with the statists task must be entered before the solver event.\n" );
 
   registerWrapper( viewKeyStruct::surfacePressureString(), &m_surfacePres ).
     setDefaultValue( 0 ).
