@@ -84,10 +84,8 @@ done
 EXCLUDE_EXPRESSION=()
 for pattern in "${EXCLUDE_PATTERNS[@]}"; do
     if [[ ! "$pattern" == *".hpp"* ]]; then
-      echo "(-path "*/$pattern" -prune -o )"
       EXCLUDE_EXPRESSION+=( -path "*/$pattern" -prune -o )
     else
-      echo "(  -name "*${pattern}" -o )"
       EXCLUDE_EXPRESSION+=( -name "*${pattern}" -o )
     fi
 done
