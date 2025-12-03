@@ -501,7 +501,6 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
                  "Target phase rate cannot be negative for producers",
                  InputError, wellControls.getDataContext() );
   GEOS_THROW_IF( wellControls.isProducer() && !isZero( targetTotalRate ),
-                 "WellControls " << wellControls.getDataContext() <<
                  "Target total rate cannot be used for producers",
                  InputError, wellControls.getDataContext() );
 

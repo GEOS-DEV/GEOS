@@ -766,7 +766,7 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
     }
     else
     {
-      GEOS_ERROR( getDataContext() << "This option is not supported yet" );
+      GEOS_ERROR( "This option is not supported yet", getDataContext() );
     }
   } );
 }
@@ -791,7 +791,7 @@ real64 ElasticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                      DomainPartition & domain,
                                                      integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
-  GEOS_ERROR( getDataContext() << "Backward propagation for the elastic wave propagator not yet implemented" );
+  GEOS_ERROR( "Backward propagation for the elastic wave propagator not yet implemented", getDataContext() );
   real64 dtOut = explicitStepInternal( time_n, dt, domain );
   return dtOut;
 }
@@ -1096,12 +1096,12 @@ void ElasticWaveEquationSEM::cleanup( real64 const time_n,
 
 void ElasticWaveEquationSEM::initializePML()
 {
-  GEOS_ERROR( getDataContext() << "PML for the elastic wave propagator not yet implemented" );
+  GEOS_ERROR( "PML for the elastic wave propagator not yet implemented", getDataContext() );
 }
 
 void ElasticWaveEquationSEM::applyPML( real64 const, DomainPartition & )
 {
-  GEOS_ERROR( getDataContext() << "PML for the elastic wave propagator not yet implemented" );
+  GEOS_ERROR( "PML for the elastic wave propagator not yet implemented", getDataContext() );
 }
 
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, ElasticWaveEquationSEM, string const &, dataRepository::Group * const )

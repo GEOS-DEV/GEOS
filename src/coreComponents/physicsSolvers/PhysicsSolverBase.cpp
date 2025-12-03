@@ -182,7 +182,7 @@ void PhysicsSolverBase::generateMeshTargetsFromTargetRegions( Group const & mesh
     {
       string const meshBodyName = targetTokens[0];
       GEOS_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
-                     viewKeyStruct::targetRegionsString() << "MeshBody (" <<
+                     viewKeyStruct::targetRegionsString() << ": MeshBody (" <<
                      meshBodyName << ") is specified in targetRegions, but does not exist.",
                      getWrapperDataContext( viewKeyStruct::targetRegionsString() ) );
 
