@@ -23,6 +23,8 @@
 #ifndef GEOS_COMMON_FORMAT_TABLETYPES_HPP
 #define GEOS_COMMON_FORMAT_TABLETYPES_HPP
 
+#include "common/DataTypes.hpp"
+
 namespace geos
 {
 
