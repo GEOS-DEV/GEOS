@@ -51,7 +51,7 @@ public:
    * @brief System fallback to get description content if error system does not achieve to output the ErrorMsg
      can also provide exception information to debuggers
    * @return Returns The exception message
-   * @note We does not allow to override what(), it's the GEOS_THROW responsability to give the exception message
+   * @note We does not allow to override what(), it's the GEOS_THROW responsability to write-in the exception message
    */
   virtual char const * what() const noexcept override final
   {
