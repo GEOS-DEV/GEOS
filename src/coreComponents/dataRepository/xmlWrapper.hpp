@@ -350,10 +350,10 @@ template< typename T >
 std::enable_if_t< traits::CanStreamInto< std::istringstream, T > >
 stringToInputVariable( T & target, string const & value, Regex const & regex )
 {
-  string_view stringTrimed = stringutilities::trimSpaces(value);
-  validateString( string(stringTrimed), regex );
+  string_view stringTrimed = stringutilities::trimSpaces( value );
+  validateString( string( stringTrimed ), regex );
 
-  std::istringstream ss( (string(stringTrimed)) );
+  std::istringstream ss( (string( stringTrimed )) );
   ss >> target;
   GEOS_THROW_IF( ss.fail() || !ss.eof(),
                  "Error detected while parsing string \"" << value <<
