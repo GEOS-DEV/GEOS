@@ -923,9 +923,6 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
           localTooLowFracCount += 1;
       } );
 
-      localMinFrac = MpiWrapper::min( localMinFrac.get() );
-      localMaxFrac = MpiWrapper::max( localMaxFrac.get() );
-
       localIndex const negativeValues = MpiWrapper::sum( localNegativeValues.get() );
       GEOS_ERROR_IF( negativeValues > 0,
                      GEOS_FMT( "{}: negative global component fraction values found in subregion '{}' for {} elements",
