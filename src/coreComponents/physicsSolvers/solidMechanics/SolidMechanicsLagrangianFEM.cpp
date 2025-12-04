@@ -36,6 +36,7 @@
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/Kinematics.h"
+#include "linearAlgebra/multiscale/MultiscalePreconditioner.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -137,9 +138,12 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
   linParams.dofsPerNode = 3;
   linParams.amg.numFunctions = linParams.dofsPerNode;
+  linParams.multiscale.fieldName = fields::solidMechanics::totalDisplacement::key();
+  linParams.multiscale.label = "mech";
 
   // Must change default value to avoid being overwritten if attribute not specified in XML
   m_linearSolverParameters.getWrapper< integer >( LinearSolverParametersInput::viewKeyStruct::amgSeparateComponentsString() ).setApplyDefaultValue( true );
+  m_linearSolverParameters.getWrapper< integer >( LinearSolverParametersInput::viewKeyStruct::amgNumFunctionsString() ).setApplyDefaultValue( 3 );
 }
 
 void SolidMechanicsLagrangianFEM::postInputInitialization()
@@ -164,8 +168,9 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
-      subRegion.registerField< solidMechanics::strain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
-      subRegion.registerField< solidMechanics::plasticStrain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
+      subRegion.registerField< solidMechanics::averageStrain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
+      subRegion.registerField< solidMechanics::averagePlasticStrain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
+      subRegion.registerField< solidMechanics::averageStress >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
     } );
 
     NodeManager & nodes = meshLevel.getNodeManager();
@@ -738,13 +743,13 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
         "The problem may be ill-posed.\n";
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[0] == 0, // target set is empty
                        GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'x' ) );
+                                 getCatalogName(), getDataContext(), 'x' ), getDataContext() );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[1] == 0, // target set is empty
                        GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'y' ) );
+                                 getCatalogName(), getDataContext(), 'y' ), getDataContext() );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[2] == 0, // target set is empty
                        GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'z' ) );
+                                 getCatalogName(), getDataContext(), 'z' ), getDataContext() );
     }
   }
 
@@ -949,29 +954,32 @@ void SolidMechanicsLagrangianFEM::implicitStepComplete( real64 const & GEOS_UNUS
       string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
       SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
 
+      arrayView3d< real64 const, solid::STRESS_USD > const stress = constitutiveRelation.getStress();
 
-      solidMechanics::arrayView2dLayoutStrain strain = subRegion.getField< solidMechanics::strain >();
-      solidMechanics::arrayView2dLayoutStrain plasticStrain = subRegion.getField< solidMechanics::plasticStrain >();
+      solidMechanics::arrayView2dLayoutStrain avgStrain = subRegion.getField< solidMechanics::averageStrain >();
+      solidMechanics::arrayView2dLayoutStrain avgPlasticStrain = subRegion.getField< solidMechanics::averagePlasticStrain >();
+      solidMechanics::arrayView2dLayoutAvgStress avgStress = subRegion.getField< solidMechanics::averageStress >();
 
       constitutive::ConstitutivePassThru< SolidBase >::execute( constitutiveRelation, [&] ( auto & solidModel )
       {
-
         using SOLID_TYPE = TYPEOFREF( solidModel );
 
         finiteElement::FiniteElementBase & subRegionFE = subRegion.template getReference< finiteElement::FiniteElementBase >( this->getDiscretizationName());
         finiteElement::FiniteElementDispatchHandler< BASE_FE_TYPES >::dispatch3D( subRegionFE, [&] ( auto const finiteElement )
         {
           using FE_TYPE = decltype( finiteElement );
-          AverageStrainOverQuadraturePointsKernelFactory::createAndLaunch< FE_TYPE, SOLID_TYPE, parallelDevicePolicy<> >( nodeManager,
-                                                                                                                          mesh.getEdgeManager(),
-                                                                                                                          mesh.getFaceManager(),
-                                                                                                                          subRegion,
-                                                                                                                          finiteElement,
-                                                                                                                          solidModel,
-                                                                                                                          disp,
-                                                                                                                          uhat,
-                                                                                                                          strain,
-                                                                                                                          plasticStrain );
+          AverageStressStrainOverQuadraturePointsKernelFactory::createAndLaunch< FE_TYPE, SOLID_TYPE, parallelDevicePolicy<> >( nodeManager,
+                                                                                                                                mesh.getEdgeManager(),
+                                                                                                                                mesh.getFaceManager(),
+                                                                                                                                subRegion,
+                                                                                                                                finiteElement,
+                                                                                                                                solidModel,
+                                                                                                                                disp,
+                                                                                                                                uhat,
+                                                                                                                                avgStrain,
+                                                                                                                                avgPlasticStrain,
+                                                                                                                                stress,
+                                                                                                                                avgStress );
         } );
 
 
@@ -1007,11 +1015,23 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
                                                bool const setSparsity )
 {
   GEOS_MARK_FUNCTION;
+
   PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
-  SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
-                                                  dofManager.numGlobalDofs(),
-                                                  8*8*3*1.2 );
+  if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
+  {
+    m_precond = createPreconditioner( domain );
+  }
+}
+
+void SolidMechanicsLagrangianFEM::setSparsityPattern( DomainPartition & domain,
+                                                      DofManager & dofManager,
+                                                      CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),
+                                                      SparsityPattern< globalIndex > & pattern )
+{
+  pattern.resize( dofManager.numLocalDofs(),
+                  dofManager.numGlobalDofs(),
+                  8*8*3*1.2 );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -1025,21 +1045,15 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
       fillSparsity< CellElementSubRegion,
                     solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
                                                                                           regionNames,
-                                                                                          this->getDiscretizationName(),
+                                                                                          getDiscretizationName(),
                                                                                           dofNumber,
                                                                                           dofManager.rankOffset(),
-                                                                                          sparsityPattern );
+                                                                                          pattern );
 
 
   } );
 
-  sparsityPattern.compress();
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );
-
-  if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
-  {
-    m_precond = createPreconditioner( domain );
-  }
+  pattern.compress();
 }
 
 void SolidMechanicsLagrangianFEM::computeRigidBodyModes( DomainPartition & domain ) const
@@ -1071,6 +1085,10 @@ SolidMechanicsLagrangianFEM::createPreconditioner( DomainPartition & domain ) co
 
   switch( linParams.preconditionerType )
   {
+    case LinearSolverParameters::PreconditionerType::multiscale:
+    {
+      return std::make_unique< MultiscalePreconditioner< LAInterface > >( linParams, domain );
+    }
     default:
     {
       return PhysicsSolverBase::createPreconditioner( domain );
@@ -1357,6 +1375,17 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                                          domain.getNeighbors(),
                                                          true );
   } );
+}
+
+void SolidMechanicsLagrangianFEM::solveLinearSystem( DofManager const & dofManager,
+                                                     ParallelMatrix & matrix,
+                                                     ParallelVector & rhs,
+                                                     ParallelVector & solution )
+{
+  // Flip system sign to ensure matrix is positive definite
+  matrix.scale( -1.0 );
+  rhs.scale( -1.0 );
+  PhysicsSolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition & domain )
