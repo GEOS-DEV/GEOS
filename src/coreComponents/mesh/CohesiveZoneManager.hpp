@@ -297,14 +297,6 @@ public:
         }
     }
 
-    void initializeReferenceConfiguration( int const numDims,
-                                           real64 const smallMass,
-                                           int const numVelocityFields,
-                                           stdVector< array2d< localIndex > > const & mappedNodes,
-                                           stdVector< array2d< real64 > > const & shapeFunctionValues, 
-                                           NodeManager & nodeManager,
-                                           ParticleManager & particleManager );
-
 private:
 
   /**

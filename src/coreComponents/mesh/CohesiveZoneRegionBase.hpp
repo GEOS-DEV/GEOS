@@ -183,10 +183,10 @@ private:
 
   // Reference fields
   SortedArray< globalIndex > m_globalID;
+  array2d< real64 > m_referencePosition;
   array2d< real64 > m_referencePartitioningSurfaceNormal;
   array3d< real64 > m_referenceSurfaceNormal;
   array2d< real64 > m_referenceArea;
-  array2d< real64 > m_referencePosition;
 
   // // Mapped fields
   // array2d< real64 > m_mass;

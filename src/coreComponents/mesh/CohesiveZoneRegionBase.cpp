@@ -26,10 +26,10 @@ using namespace dataRepository;
 CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_globalID(),
+  m_referencePosition(),
   m_referencePartitioningSurfaceNormal(),
   m_referenceSurfaceNormal(),
-  m_referenceArea(),
-  m_referencePosition()
+  m_referenceArea()
 {
 //   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -38,6 +38,13 @@ CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * con
     setPlotLevel( PlotLevel::NOPLOT ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Array of the global indices for cohesive grid nodes" );
+
+  registerWrapper( viewKeyStruct::referencePositionString(), &m_referencePosition ).
+    setInputFlag( InputFlags::FALSE ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::WRITE_AND_READ ).
+    setDescription( "Reference cohesive grid node positions" ).
+    reference().resizeDimension< 1 >( 3 );
 
   registerWrapper( viewKeyStruct::referencePartitioningSurfaceNormalString(), &m_referencePartitioningSurfaceNormal ).
     setInputFlag( InputFlags::FALSE ).
@@ -58,14 +65,7 @@ CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * con
     setPlotLevel( PlotLevel::NOPLOT ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Reference cohesive grid node areas" ).
-    reference().resizeDimension< 1 >( 2 );;
-
-  registerWrapper( viewKeyStruct::referencePositionString(), &m_referencePosition ).
-    setInputFlag( InputFlags::FALSE ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Reference cohesive grid node positions" ).
-    reference().resizeDimension< 1 >( 3 );
+    reference().resizeDimension< 1 >( 2 );
 }
 
 

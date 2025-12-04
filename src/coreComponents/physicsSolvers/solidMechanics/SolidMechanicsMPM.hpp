@@ -712,9 +712,8 @@ public:
                                          arraySlice2d< real64 const > const rVectors,
                                          real64 distanceToSurface );
 
-  void computeCohesiveTraction( localIndex g,
-                                localIndex a,
-                                localIndex b,
+  void computeCohesiveTraction( int const preventCZInterpentration,
+                                int const enableCohesiveFailure,
                                 real64 mA,
                                 real64 mB,
                                 arraySlice1d< real64 const > const dA,
@@ -724,7 +723,10 @@ public:
                                 arraySlice1d< real64 const > const nA,
                                 arraySlice1d< real64 const > const nB,
                                 arraySlice1d< real64 > const tA,
-                                arraySlice1d< real64 > const tB );
+                                arraySlice1d< real64 > const tB,
+                                real64 & maxNormalDisplacement,
+                                real64 & maxTangentialDisplacement,
+                                real64 & damage );
 
   void uncoupledCohesiveLaw( real64 normalDisplacement,
                              real64 tangentialDisplacement,
@@ -1235,13 +1237,6 @@ protected:
   real64 m_polymerCZMaxStretch;
 
   SortedArray< globalIndex >  m_cohesiveNodeGlobalIndices;
-  array2d< real64 > m_referenceCohesiveGridNodePartitioningSurfaceNormals;
-  array2d< real64 > m_referenceCohesiveGridNodeAreas;
-  array2d< real64 > m_referenceCohesiveGridNodePositions;
-  array3d< real64 > m_maxCohesiveGridNodeNormalDisplacement;
-  array3d< real64 > m_maxCohesiveGridNodeTangentialDisplacement;
-  array2d< real64 > m_cohesiveGridNodeDamages;
-  array3d< real64 > m_referenceCohesiveGridNodeSurfaceNormals;
 
   // Neighborlist options
   int m_needsNeighborList;
