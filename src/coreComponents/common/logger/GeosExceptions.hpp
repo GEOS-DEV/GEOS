@@ -112,6 +112,10 @@ struct RuntimeError : public geos::Exception
 
   RuntimeError(): geos::Exception(){}
 };
+
+/**
+ * @brief Exception class used to report bad GEOS state
+ */
 struct LogicError : public geos::Exception
 {
   /**
