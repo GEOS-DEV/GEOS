@@ -46,7 +46,7 @@ PressurePermeability::PressurePermeability( string const & name, Group * const p
   
   registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
     setApplyDefaultValue( -1.0 ).
-    setDescription( "Reference pressure for the pressure permeability model" );
+    setDescription( "Reference pressure for the pressure permeability model [Pa]" );
 
   registerWrapper( viewKeyStruct::referencePermeabilityString(), &m_referencePermeability ).
     setApplyDefaultValue( 0.0 ).
