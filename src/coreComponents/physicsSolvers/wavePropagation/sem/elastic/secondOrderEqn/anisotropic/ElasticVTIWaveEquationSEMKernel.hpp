@@ -20,7 +20,6 @@
 #ifndef GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ElasticVTIWaveEquationSEMKERNEL_HPP_
 #define GEOS_PHYSICSSOLVERS_WAVEPROPAGATION_ElasticVTIWaveEquationSEMKERNEL_HPP_
 
-#include "common/logger/Logger.hpp"
 #include "finiteElement/kernelInterface/KernelBase.hpp"
 #include "physicsSolvers/wavePropagation/shared/WaveSolverUtils.hpp"
 #include "physicsSolvers/wavePropagation/sem/elastic/shared/ElasticFields.hpp"

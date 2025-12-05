@@ -128,7 +128,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
         GEOS_THROW_IF( !bodyFound,
                        GEOS_FMT( "MeshBody ({}) is specified, but not found.",
                                  targetTokens[0] ),
-                       DomainError );
+                       geos::DomainError );
       }
 
       string const meshBodyName = targetTokens[0];
@@ -158,7 +158,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           GEOS_THROW_IF( !levelFound,
                          GEOS_FMT( "MeshLevel ({}) is specified, but not found.",
                                    targetTokens[1] ),
-                         DomainError );
+                         geos::DomainError );
         }
       }
       else if( !meshBody.getMeshLevels().hasGroup< MeshLevel >( targetTokens[1] ) )
@@ -200,7 +200,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
           {
             GEOS_THROW( targetTokens[pathLevel] << " not found in path " <<
                         objectPath << std::endl << targetGroup->dumpSubGroupsNames(),
-                        DomainError );
+                        geos::DomainError );
           }
         }
       }

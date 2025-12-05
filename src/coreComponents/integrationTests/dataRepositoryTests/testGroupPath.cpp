@@ -22,7 +22,6 @@
 // TPL includes
 #include <gtest/gtest.h>
 #include <conduit.hpp>
-#include <sstream>
 
 // Tests the Group::getGroup() and getPath() methods
 TEST( testGroupPath, testGlobalPaths )
@@ -93,6 +92,7 @@ TEST( testGroupPath, testGlobalPaths )
 
   ProblemManager & problem = getGlobalState().getProblemManager();
   problem.parseInputString( xmlInput );
+
   for( string const & path : groupPaths )
   {
     Group const & group = problem.getGroupByPath( path );
@@ -113,7 +113,6 @@ TEST( testGroupPath, testGlobalPaths )
     // checks if the exception contains the expected message
     std::ostringstream stream;
     geos::ErrorLogger::writeToAscii( ErrorLogger::global().currentErrorMsg(), stream );
-    std::cout << "TEST2\n "<< stream.str() << std::endl;
 
     GEOS_ERROR_IF_EQ_MSG( string( stream.str() ).find( expectedMsg ), string::npos,
                           "The error message was not containing the expected sequence.\n" <<

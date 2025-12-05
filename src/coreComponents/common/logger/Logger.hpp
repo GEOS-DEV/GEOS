@@ -20,9 +20,7 @@
 #ifndef GEOS_COMMON_LOGGER_HPP
 #define GEOS_COMMON_LOGGER_HPP
 
-// Source incldes
-#include "common/GeosxConfig.hpp"
-#include "common/GeosxMacros.hpp"
+// Source includes
 #include "LvArray/src/Macros.hpp"
 #include "common/logger/GeosExceptions.hpp"
 

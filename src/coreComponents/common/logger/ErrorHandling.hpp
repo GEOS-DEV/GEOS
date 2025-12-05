@@ -325,7 +325,8 @@ private:
   void writeToYaml( ErrorMsg & errorMsg );
 
   /**
-   * @brief Write all the information retrieved about the error/warning message into the targeted output
+   * @brief Write all the information retrieved about the error/warning message into the output stream specified and
+   * optionnaly into a yaml file
    * @param errorMsg a constant reference to the ErrorMsg
    */
   void flushErrorMsg( ErrorMsg & errorMsg );
