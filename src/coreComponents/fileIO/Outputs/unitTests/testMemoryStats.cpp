@@ -185,8 +185,8 @@ TEST( testXML, testMemoryCSVOutput )
     for( string const & csvLine : csvLines )
     {
       stdVector< string > const lineEntries = stringutilities::tokenize( csvLine,
-                                                                           TableCSVFormatter::m_separator,
-                                                                           false );
+                                                                         TableCSVFormatter::m_separator,
+                                                                         false );
       EXPECT_GT( lineEntries.size(), 3 );
       if( lineEntries[0] == cycleStr && lineEntries[2] == memSpaceName )
       { // we found the line coresponding to the given cycle & memory-space

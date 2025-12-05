@@ -519,7 +519,7 @@ void TableTextFormatter::populateErrorCellsLayout( PreparedTableLayout const & t
       errorCellsLayout.push_back(
         {
           stdVector< TableLayout::CellLayout >( nbCells,
-                                                  TableLayout::CellLayout( CellType::MergeNext ) ),
+                                                TableLayout::CellLayout( CellType::MergeNext ) ),
           1 // subLines count
         } );
       errorCellsLayout.back().cells.back().m_cellType = CellType::Value;
@@ -532,7 +532,7 @@ void TableTextFormatter::populateErrorCellsLayout( PreparedTableLayout const & t
   errorCellsLayout.push_back(
     {
       stdVector< TableLayout::CellLayout >( nbCells,
-                                              TableLayout::CellLayout( CellType::Separator ) ),
+                                            TableLayout::CellLayout( CellType::Separator ) ),
       1 // subLines count
     } );
 
