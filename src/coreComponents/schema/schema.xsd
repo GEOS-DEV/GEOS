@@ -20,27 +20,27 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_dataRepository_PlotLevel">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[+-]?[\d]+\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[+-]?[\d]+\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="globalIndex_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="groupName">
@@ -60,42 +60,42 @@
 	</xsd:simpleType>
 	<xsd:simpleType name="integer">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[+-]?[\d]+\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="integer_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|[+-]?[\d]+" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*[+-]?[\d]+\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array2d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="localIndex_array3d">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*(([+-]?[\d]+\s*,\s*)*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
+			<xsd:pattern value=".*[\[\]`$].*|\s*\{\s*(\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*,\s*)*\{\s*(\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*,\s*)*\{\s*((\s*[+-]?[\d]+\s*,\s*)*\s*[+-]?[\d]+\s*)?\}\s*\}\s*\}\s*" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="mapPair">
@@ -3653,8 +3653,9 @@ Information output from lower logLevels is added with the desired log level
 		<!--referenceElevation => Reference elevation where BHP control is enforced [m]-->
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
 		<!--referenceReservoirRegion => Name of reservoir region used for obtaining average region pressure used in volume rate constraint calculations.
-Frequency of pressure update is set in Single/CompositionalMultiPhaseStatistics definition.
-Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint properties-->
+Frequency of pressure update is set in SinglePhase/CompositionalMultiphaseStatistics definition.
+Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint propertiesNote the event associated with the statists task must be entered before the solver event.
+-->
 		<xsd:attribute name="referenceReservoirRegion" type="groupNameRef" default="" />
 		<!--statusTableName => Name of the well status table when the status of the well is a time dependent function. 
 If the status function evaluates to a positive value at the current time, the well will be open otherwise the well will be shut.-->

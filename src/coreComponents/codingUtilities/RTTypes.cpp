@@ -151,7 +151,7 @@ rtTypes::RegexMapType rtTypes::createBasicTypesRegexMap()
   // string_view const ru = "[\\d]+";// unused
 
   string_view const intDesc = "Input value must be a signed int (eg. -123, 455, +789, etc.)";
-  string_view const intRegex = "[+-]?[\\d]+";
+  string_view const intRegex = "\\s*[+-]?[\\d]+\\s*";
 
   // Explanation of parts:
   // [+-]?[\\d]*  matches an optional +/- at the beginning, any numbers preceding the decimal
