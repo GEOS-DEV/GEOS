@@ -153,7 +153,7 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param stack Variables allocated on the stack as filled by @ref setupStack.
    * @param J Array to contain the Jacobian matrix at the quadrature point.
-   * @return The determinant of the Jacobian matrix.
+   * @return The determinant of the Jacobian matrix multiplied by the quadrature weight.
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -164,7 +164,6 @@ public:
                        real64 (& J)[3][3] )
   {
     {
-      GEOS_UNUSED_VAR( q, X, stack );
       for( localIndex i = 0; i < 3; ++i )
       {
         for( localIndex j = 0; j < 3; ++j )
@@ -172,7 +171,7 @@ public:
           J[i][j] = ( i == j ) ? 1.0 : 0.0;
         }
       }
-      return 1.0;
+      return stack.quadratureWeight; // * 1.0;
     }
   }
 
@@ -480,7 +479,7 @@ public:
    * @param q Index of the quadrature point.
    * @param X Array containing the coordinates of the support points.
    * @param J Array to contain the Jacobian matrix at the quadrature point.
-   * @return The determinant of the Jacobian matrix.
+   * @return The determinant of the Jacobian matrix multiplied by the quadrature weight.
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE

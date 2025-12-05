@@ -265,7 +265,7 @@ public:
    * @param q Index of the quadrature point.
    * @param X Array containing the coordinates of the support points.
    * @param J Array to contain the Jacobian matrix at the quadrature point.
-   * @return The determinant of the Jacobian matrix.
+   * @return The determinant of the Jacobian matrix multiplied by the quadrature weight.
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE
@@ -280,7 +280,7 @@ public:
    * @param X Array containing the coordinates of the support points.
    * @param stack Variables allocated on the stack as filled by @ref setupStack.
    * @param J Array to contain the Jacobian matrix at the quadrature point.
-   * @return The determinant of the Jacobian matrix.
+   * @return The determinant of the Jacobian matrix multiplied by the quadrature weight.
    */
   GEOS_HOST_DEVICE
   GEOS_FORCE_INLINE

@@ -88,7 +88,7 @@ public:
       constexpr localIndex numQuadraturePoints = FE_TYPE::numQuadraturePoints;
       constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
       real64 xLocal[numNodesPerElement][3] = { { 0 } };
-      
+
       localIndex const numSupportPoints = finiteElement->getNumSupportPoints( );
       for( localIndex a = 0; a < numSupportPoints; ++a )
       {
@@ -100,9 +100,9 @@ public:
         real64 const quadratureStress[6] = LVARRAY_TENSOROPS_INIT_LOCAL_6 ( m_stress[er][esr][m_solidMaterialFullIndex[er]][ei][q] );
         real64 dNdX[numNodesPerElement][3] = {{0}};
         real64 J[3][3] = {{0}};
-        real64 const detJ = FE_TYPE::calcJacobian( q, xLocal, feStack, J );
+        real64 const detJxW = FE_TYPE::calcJacobian( q, xLocal, feStack, J );
         FE_TYPE::calcGradN( q, xLocal, feStack, dNdX );
-        surfaceGenerationKernelsHelpers::computeNodalForce(quadratureStress, dNdX[targetNode], detJ, force);
+        surfaceGenerationKernelsHelpers::computeNodalForce(quadratureStress, dNdX[targetNode], detJxW, force);
       }
     } );
 
@@ -178,7 +178,7 @@ public:
       constexpr localIndex numQuadraturePoints = FE_TYPE::numQuadraturePoints;
       constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
       real64 xLocal[numNodesPerElement][3] = {{0}};
-      
+
       localIndex const numSupportPoints = finiteElement->getNumSupportPoints( );
       for( localIndex a = 0; a < numSupportPoints; ++a )
       {
@@ -193,9 +193,9 @@ public:
 
         real64 dNdX[numNodesPerElement][3] = {{0}};
         real64 J[3][3] = {{0}};
-        real64 const detJ = FE_TYPE::calcJacobian( q, xLocal, feStack, J );
+        real64 const detJxW = FE_TYPE::calcJacobian( q, xLocal, feStack, J );
         FE_TYPE::calcGradN( q, xLocal, feStack, dNdX );
-        surfaceGenerationKernelsHelpers::computeNodalForce( totalStress, dNdX[targetNode], detJ, force );
+        surfaceGenerationKernelsHelpers::computeNodalForce( totalStress, dNdX[targetNode], detJxW, force );
       }
     } );
 

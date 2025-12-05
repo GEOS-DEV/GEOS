@@ -317,18 +317,25 @@ void SolidMechanicsLagrangianFEM::initializeMass( MeshLevel & mesh, CellElementS
   {
     using FE_TYPE = TYPEOFREF( element );
 
-    typename FE_TYPE::StackVariables feStack;
-    localIndex const numSupportPoints = element.getNumSupportPoints( feStack );
+    typename FE_TYPE::MeshData< CellElementSubRegion > meshdata;
+    FE_TYPE::template fillMeshData< CellElementSubRegion >( nodes,
+                                                            mesh.getEdgeManager(),
+                                                            mesh.getFaceManager(),
+                                                            subRegion,
+                                                            meshdata );
     constexpr localIndex maxSupportPoints = FE_TYPE::maxSupportPoints;
     constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
     forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
-      real64 N[maxSupportPoints];
+      real64 N[ maxSupportPoints ];
       real64 xLocal[ numNodesPerElem ][3];
       real64 J[3][3];
-      real64 detJ = 0.0;
+      real64 detJxW = 0.0;
+      typename FE_TYPE::StackVariables feStack;
+      element.template setup< FE_TYPE >( ei, meshdata, feStack );
+      localIndex const numSupportPoints = element.getNumSupportPoints( feStack );
 
       for( localIndex a = 0; a < numSupportPoints; ++a )
       {
@@ -342,10 +349,10 @@ void SolidMechanicsLagrangianFEM::initializeMass( MeshLevel & mesh, CellElementS
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         FE_TYPE::calcN( q, feStack, N );
-        detJ = FE_TYPE::calcJacobian( q, xLocal, feStack, J );
+        detJxW = FE_TYPE::calcJacobian( q, xLocal, feStack, J );
         for( localIndex a = 0; a < numSupportPoints; ++a )
         {
-          mass[ elemsToNodes[ ei ][ a ] ] += rho[ ei ][ q ] * detJ * N[ a ];
+          mass[ elemsToNodes[ ei ][ a ] ] += rho[ ei ][ q ] * detJxW * N[ a ];
         }
       }
     } );

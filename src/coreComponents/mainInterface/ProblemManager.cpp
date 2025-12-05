@@ -961,7 +961,7 @@ map< std::tuple< string, string, string, string >, localIndex > ProblemManager::
           }
         }
 
-      for( auto const & regionName : regionNames )
+        for( auto const & regionName : regionNames )
         {
           if( elemManager.hasRegion( regionName ) )
           {

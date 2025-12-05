@@ -4002,18 +4002,18 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
                 real64 dNdX[numNodesPerElement][3] = {{0}};
                 real64 J[3][3] = {{0}};
 
-                real64 const detJ = FE_TYPE::calcJacobian(q, xLocal, feStack, J);
+                real64 const detJxW = FE_TYPE::calcJacobian(q, xLocal, feStack, J);
                 FE_TYPE::calcGradN(q, xLocal, feStack, dNdX);
 
                 temp[0] -= (subregionStress(ei, q, 0) * dNdX[n][0] +
                             subregionStress(ei, q, 5) * dNdX[n][1] +
-                            subregionStress(ei, q, 4) * dNdX[n][2]) * detJ;
+                            subregionStress(ei, q, 4) * dNdX[n][2]) * detJxW;
                 temp[1] -= (subregionStress(ei, q, 5) * dNdX[n][0] +
                             subregionStress(ei, q, 1) * dNdX[n][1] +
-                            subregionStress(ei, q, 3) * dNdX[n][2]) * detJ;
+                            subregionStress(ei, q, 3) * dNdX[n][2]) * detJxW;
                 temp[2] -= (subregionStress(ei, q, 4) * dNdX[n][0] +
                             subregionStress(ei, q, 3) * dNdX[n][1] +
-                            subregionStress(ei, q, 2) * dNdX[n][2]) * detJ;
+                            subregionStress(ei, q, 2) * dNdX[n][2]) * detJxW;
               }
             } );
 
