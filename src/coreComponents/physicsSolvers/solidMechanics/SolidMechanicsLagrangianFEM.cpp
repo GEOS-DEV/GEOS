@@ -327,7 +327,7 @@ void SolidMechanicsLagrangianFEM::initializeMass( MeshLevel & mesh, CellElementS
     constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
-    forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    forAll< serialPolicy >( subRegion.size(), [&] ( localIndex const ei )
     {
       real64 N[ maxSupportPoints ];
       real64 xLocal[ numNodesPerElem ][3];
