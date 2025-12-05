@@ -917,9 +917,9 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
         }
         localMinFrac.min( sumCompFrac );
         localMaxFrac.max( sumCompFrac );
-        if( LvArray::math::abs( sumCompFrac ) > 1 + 1e-6 )
+        if( sumCompFrac > 1 + 1e-6 )
           localTooHighFracCount += 1;
-        if( LvArray::math::abs( sumCompFrac ) < 1 - 1e-6 )
+        if( sumCompFrac < 1 - 1e-6 )
           localTooLowFracCount += 1;
       } );
 
