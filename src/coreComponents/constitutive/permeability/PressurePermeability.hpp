@@ -111,10 +111,10 @@ public:
             {
               real64 perm = m_permeability[k][0][i]; 
 
-              if ( perm < referencePermeability[i] )
-              {
-                perm = referencePermeability[i];
-              }
+              // if ( perm < referencePermeability[i] )
+              // {
+              //   perm = referencePermeability[i];
+              // }
               m_permeability[k][0][i] = (perm > m_maxPermeability)? m_maxPermeability:perm; 
             }
           }
@@ -137,12 +137,12 @@ public:
           {
             m_dPerm_dPressure[k][0][i] = 0.0; 
 
-            real64 const perm = m_permeability[k][0][i]; 
+            // real64 const perm = m_permeability[k][0][i]; 
 
-            if ( perm < referencePermeability[i] )
-            {
-              m_permeability[k][0][i] = referencePermeability[i];
-            }
+            // if ( perm < referencePermeability[i] )
+            // {
+            //   m_permeability[k][0][i] = referencePermeability[i];
+            // }
           }
         }
         break;
