@@ -322,7 +322,7 @@ void SolidMechanicsLagrangianFEM::initializeMass( MeshLevel & mesh, CellElementS
                                                             mesh.getEdgeManager(),
                                                             mesh.getFaceManager(),
                                                             subRegion,
-                                                            meshdata );
+                                                            meshData );
     constexpr localIndex maxSupportPoints = FE_TYPE::maxSupportPoints;
     constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
@@ -334,7 +334,7 @@ void SolidMechanicsLagrangianFEM::initializeMass( MeshLevel & mesh, CellElementS
       real64 J[3][3];
       real64 detJxW = 0.0;
       typename FE_TYPE::StackVariables feStack;
-      element.template setup< FE_TYPE >( ei, meshdata, feStack );
+      element.template setup< FE_TYPE >( ei, meshData, feStack );
       localIndex const numSupportPoints = element.getNumSupportPoints( feStack );
 
       for( localIndex a = 0; a < numSupportPoints; ++a )
