@@ -102,7 +102,7 @@ public:
         real64 J[3][3] = {{0}};
         real64 const detJxW = FE_TYPE::calcJacobian( q, xLocal, feStack, J );
         FE_TYPE::calcGradN( q, xLocal, feStack, dNdX );
-        surfaceGenerationKernelsHelpers::computeNodalForce(quadratureStress, dNdX[targetNode], detJxW, force);
+        surfaceGenerationKernelsHelpers::computeNodalForce( quadratureStress, dNdX[targetNode], detJxW, force );
       }
     } );
 

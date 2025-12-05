@@ -3986,15 +3986,15 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
             finiteElement::FiniteElementDispatchHandler< ALL_FE_TYPES >::dispatch3D( *finiteElement, [ & ]( auto const & fe )
             {
 
-              using FE_TYPE = TYPEOFREF(fe);
+              using FE_TYPE = TYPEOFREF( fe );
               typename FE_TYPE::StackVariables feStack;
               constexpr localIndex numQuadraturePoints = FE_TYPE::numQuadraturePoints;
               constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
               real64 xLocal[numNodesPerElement][3] = {{0}};
               localIndex const numSupportPoints = finiteElement->getNumSupportPoints();
-              for (localIndex a = 0; a < numSupportPoints; ++a)
+              for( localIndex a = 0; a < numSupportPoints; ++a )
               {
-                LvArray::tensorOps::copy<3>(xLocal[a], X[elementsToNodes(ei, a)]);
+                LvArray::tensorOps::copy< 3 >( xLocal[a], X[elementsToNodes( ei, a )] );
               }
 
               for( localIndex q = 0; q < numQuadraturePoints; ++q )
@@ -4002,18 +4002,18 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
                 real64 dNdX[numNodesPerElement][3] = {{0}};
                 real64 J[3][3] = {{0}};
 
-                real64 const detJxW = FE_TYPE::calcJacobian(q, xLocal, feStack, J);
-                FE_TYPE::calcGradN(q, xLocal, feStack, dNdX);
+                real64 const detJxW = FE_TYPE::calcJacobian( q, xLocal, feStack, J );
+                FE_TYPE::calcGradN( q, xLocal, feStack, dNdX );
 
-                temp[0] -= (subregionStress(ei, q, 0) * dNdX[n][0] +
-                            subregionStress(ei, q, 5) * dNdX[n][1] +
-                            subregionStress(ei, q, 4) * dNdX[n][2]) * detJxW;
-                temp[1] -= (subregionStress(ei, q, 5) * dNdX[n][0] +
-                            subregionStress(ei, q, 1) * dNdX[n][1] +
-                            subregionStress(ei, q, 3) * dNdX[n][2]) * detJxW;
-                temp[2] -= (subregionStress(ei, q, 4) * dNdX[n][0] +
-                            subregionStress(ei, q, 3) * dNdX[n][1] +
-                            subregionStress(ei, q, 2) * dNdX[n][2]) * detJxW;
+                temp[0] -= (subregionStress( ei, q, 0 ) * dNdX[n][0] +
+                            subregionStress( ei, q, 5 ) * dNdX[n][1] +
+                            subregionStress( ei, q, 4 ) * dNdX[n][2]) * detJxW;
+                temp[1] -= (subregionStress( ei, q, 5 ) * dNdX[n][0] +
+                            subregionStress( ei, q, 1 ) * dNdX[n][1] +
+                            subregionStress( ei, q, 3 ) * dNdX[n][2]) * detJxW;
+                temp[2] -= (subregionStress( ei, q, 4 ) * dNdX[n][0] +
+                            subregionStress( ei, q, 3 ) * dNdX[n][1] +
+                            subregionStress( ei, q, 2 ) * dNdX[n][2]) * detJxW;
               }
             } );
 
