@@ -163,16 +163,16 @@ public:
                        StackVariables const & stack,
                        real64 (& J)[3][3] )
   {
+    GEOS_UNUSED_VAR( q );
+    GEOS_UNUSED_VAR( X );
+    for( localIndex i = 0; i < 3; ++i )
     {
-      for( localIndex i = 0; i < 3; ++i )
+      for( localIndex j = 0; j < 3; ++j )
       {
-        for( localIndex j = 0; j < 3; ++j )
-        {
-          J[i][j] = ( i == j ) ? 1.0 : 0.0;
-        }
+        J[i][j] = ( i == j ) ? 1.0 : 0.0;
       }
-      return stack.quadratureWeight; // * 1.0;
     }
+    return stack.quadratureWeight; // * 1.0;
   }
 
   /**
