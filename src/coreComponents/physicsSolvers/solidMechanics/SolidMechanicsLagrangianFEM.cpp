@@ -317,7 +317,7 @@ void SolidMechanicsLagrangianFEM::initializeMass( MeshLevel & mesh, CellElementS
   {
     using FE_TYPE = TYPEOFREF( element );
 
-    typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData;
+    typename FE_TYPE::template MeshData< CellElementSubRegion > meshData;
     FE_TYPE::template fillMeshData< CellElementSubRegion >( nodes,
                                                             mesh.getEdgeManager(),
                                                             mesh.getFaceManager(),
