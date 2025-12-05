@@ -1,0 +1,107 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ cb1 }"
+      materialList="{ porousRock, water }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"      
+      defaultAperture="2e-5"
+      materialList="{ water, fractureFilling, fractureContact, hApertureModel }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="1e-3"
+      referencePressure="0.0"
+      referenceDensity="1000"
+      compressibility="5e-10"
+      referenceViscosity="1e-3"
+      viscosibility="0.0"/>
+
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1e-16, 1e-16, 1e-16 }"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      defaultGrainBulkModulus="1e20"
+      defaultReferencePorosity="0.01"/>
+
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultBulkModulus="51.7e9"
+      defaultShearModulus="20.0e9"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"
+      transversalPermeability="1e-16"/>
+
+    <FrictionlessContact
+      name="fractureContact"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>  
+  </Constitutive>
+
+  <Geometry>
+    <Box
+      name="MF2Frac"
+      xMin="{ -0.01, -0.21, -0.21 }"
+      xMax="{ 0.01, 0.21, 0.21 }" />
+
+    <Box
+      name="source"
+      xMin="{ -0.01, -0.11, -0.11 }"
+      xMax="{ 0.01, 0.11, 0.11 }" />
+
+    <Box
+      name="core"
+      xMin="{ -0.01, -2000.1, -0.51 }"
+      xMax="{ 0.01, 2000.1, 0.51 }"/>
+  </Geometry>
+
+  
+</Problem>
+
