@@ -614,7 +614,7 @@ H1_Wedge_Lagrange1_Gauss6_impl::calcJacobian( localIndex const q,
   }
   jacobianTransformation( q, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
-  return detJ;
+  return detJ * weight;
 }
 
 GEOS_HOST_DEVICE

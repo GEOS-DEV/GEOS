@@ -306,7 +306,6 @@ void SolidMechanicsLagrangianFEM::initializeMass( MeshLevel & mesh, CellElementS
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodes.referencePosition();
 
   arrayView1d< real64 > & mass = nodes.getField< solidMechanics::mass >();
-  mass.zero(); // assign to zero so that accumulation below works properly
 
   SolidBase & solid = getConstitutiveModel< SolidBase >( subRegion );
   arrayView2d< real64 const > const rho = solid.getDensity();
@@ -324,7 +323,7 @@ void SolidMechanicsLagrangianFEM::initializeMass( MeshLevel & mesh, CellElementS
     constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    forAll< serialPolicy >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
       real64 N[maxSupportPoints];
       real64 xLocal[ numNodesPerElem ][3];
@@ -368,6 +367,8 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
     ElementRegionManager & elementRegionManager = mesh.getElemManager();
     FaceManager const & faceManager = mesh.getFaceManager();
     EdgeManager const & edgeManager = mesh.getEdgeManager();
+    arrayView1d< real64 > & mass = nodes.getField< solidMechanics::mass >();
+    mass.zero(); // assign to zero so that accumulation below works properly
 
     arrayView1d< integer const > const & nodeGhostRank = nodes.ghostRank();
 
@@ -466,7 +467,6 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
                               m_nonSendOrReceiveNodes.end() );
       } );
     } );
-
   } );
 }
 

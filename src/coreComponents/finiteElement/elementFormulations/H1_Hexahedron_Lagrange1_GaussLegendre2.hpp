@@ -652,7 +652,7 @@ H1_Hexahedron_Lagrange1_GaussLegendre2_impl::calcJacobian( localIndex const q,
   LagrangeBasis1::TensorProduct3D::multiIndex( q, qa, qb, qc );
   jacobianTransformation( qa, qb, qc, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
-  return detJ;
+  return detJ*weight;
 }
 
 GEOS_HOST_DEVICE

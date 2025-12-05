@@ -570,7 +570,7 @@ H1_Pyramid_Lagrange1_Gauss5_impl::calcJacobian( localIndex const q,
   }
   jacobianTransformation( q, X, J );
   real64 const detJ = LvArray::tensorOps::determinant< 3 >( J );
-  return detJ;
+  return detJ * quadratureWeight( q );
 }
 
 GEOS_HOST_DEVICE

@@ -975,7 +975,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::calcGradN( localIndex cons
 
   applyTransformationToParentGradients( q, J, gradN );
 
-  return detJ;
+  return detJ * GL_BASIS::weight( qa ) * GL_BASIS::weight( qb ) * GL_BASIS::weight( qc );
 }
 //*************************************************************************************************
 template< typename GL_BASIS >
@@ -1069,7 +1069,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::calcGradNWithCorners( loca
 
   applyTransformationToParentGradients( q, J, gradN );
 
-  return detJ;
+  return detJ * GL_BASIS::weight( qa ) * GL_BASIS::weight( qb ) * GL_BASIS::weight( qc );
 }
 //*************************************************************************************************
 template< typename GL_BASIS >
