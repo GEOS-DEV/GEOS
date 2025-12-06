@@ -2,9 +2,11 @@
 set( dataRepository_tests
      testBufferOps.cpp
      testDefaultValue.cpp
+     testDeprecatedGroup.cpp
      testDocumentationGeneration.cpp
      testErrorHandling.cpp
      testObjectCatalog.cpp
+     testObsoleteGroup.cpp
      testPacking.cpp
      testWrapperHelpers.cpp
      testWrapper.cpp

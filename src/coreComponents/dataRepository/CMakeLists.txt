@@ -27,6 +27,7 @@ set( dataRepository_headers
      BufferOps_inline.hpp
      ConduitRestart.hpp
      DefaultValue.hpp
+     DeprecatedGroup.hpp
      ExecutableGroup.hpp
      Group.hpp
      HistoryDataSpec.hpp
@@ -37,6 +38,7 @@ set( dataRepository_headers
      LogLevelsRegistry.hpp
      MappedVector.hpp
      ObjectCatalog.hpp
+     ObsoleteGroup.hpp
      ReferenceWrapper.hpp
      RestartFlags.hpp
      Utilities.hpp
