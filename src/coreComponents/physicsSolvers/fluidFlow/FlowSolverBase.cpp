@@ -656,7 +656,7 @@ void FlowSolverBase::updateHydraulicAperture( SurfaceElementSubRegion & subRegio
   GEOS_MARK_FUNCTION;
   
   arrayView1d< real64 const > const & pressure = subRegion.getField< fields::flow::pressure >();
-  arrayView1d< real64 > const & newHydraulicAperture = subRegion.getField< fields::flow::hydraulicAperture >();
+  arrayView1d< real64 > & newHydraulicAperture = subRegion.getField< fields::flow::hydraulicAperture >();
   arrayView2d< real64 const > const & normalVector = subRegion.getField< fields::normalVector >(); // mesh/MeshFields.hpp
   
   string const & hydraulicApertureRelationName = 
@@ -665,7 +665,7 @@ void FlowSolverBase::updateHydraulicAperture( SurfaceElementSubRegion & subRegio
     this->template getConstitutiveModel< BartonBandisStressPathDriven >( subRegion, hydraulicApertureRelationName );
 
   BartonBandisStressPathDrivenUpdates hydraulicApertureWrapper = hydraulicApertureModel.createKernelWrapper(); 
-
+  
   real64 sumAperture = 0.0;
   forAll< parallelDevicePolicy<> >( subRegion.size(), [&] GEOS_DEVICE ( localIndex const k )
   {
@@ -674,17 +674,21 @@ void FlowSolverBase::updateHydraulicAperture( SurfaceElementSubRegion & subRegio
     normal[1] = normalVector[k][1];
     normal[2] = normalVector[k][2];
     
+    //real64 nada = hydraulicApertureWrapper.computeHydraulicAperture( pressure[k], normal );
+    //nada += 0.0;
     newHydraulicAperture[k] = hydraulicApertureWrapper.computeHydraulicAperture( pressure[k], normal );
 
     sumAperture += newHydraulicAperture[k];
   } );
 
-  real64 const averageAperture = sumAperture / subRegion.size();
+  /*real64 const averageAperture = sumAperture / subRegion.size();
 
   forAll< parallelDevicePolicy<> >( subRegion.size(), [&newHydraulicAperture, averageAperture] GEOS_DEVICE ( localIndex const k )
   {
     newHydraulicAperture[k] = averageAperture;
-  } );
+  } );*/
+   
+  GEOS_LOG_RANK_0("*** averageAperture");
 }
 
 

@@ -40,14 +40,12 @@ class BartonBandisStressPathDrivenUpdates
 public:
 
   BartonBandisStressPathDrivenUpdates( real64 const aperture0,
-                                       real64 const referenceNormalStress,
                                        real64 const biot,
                                        real64 const poisson,
                                        real64 const normalStiffness,
                                        real64 const referencePressure,
                                        R1Tensor const &referenceTotalStress)
     : m_aperture0( aperture0 ),
-      m_referenceNormalStress( referenceNormalStress ),
       m_biot( biot ),
       m_poisson( poisson ),
       m_normalStiffness( normalStiffness ), // Kni
@@ -87,7 +85,6 @@ public:
 
 private:
   real64 m_aperture0;
-  real64 m_referenceNormalStress;
   
   real64 m_biot;
   real64 m_poisson;
@@ -136,7 +133,6 @@ public:
 
   struct viewKeyStruct : public HydraulicApertureBase::viewKeyStruct
   {
-    static constexpr char const * referenceNormalStressString() { return "referenceNormalStress"; }
     static constexpr char const * biotString()                  { return "biot"; }
     static constexpr char const * poissonString()               { return "poisson"; }
     static constexpr char const * normalStiffnessString()       { return "normalStiffness"; }
@@ -149,8 +145,6 @@ protected:
   virtual void postInputInitialization() override;
 
 private:
-  real64 m_referenceNormalStress;
-
   real64 m_biot;
   real64 m_poisson;
   real64 m_normalStiffness; // Kni  
@@ -188,6 +182,7 @@ real64 BartonBandisStressPathDrivenUpdates::computeHydraulicAperture( real64 con
   // minus the closure from the free-stress state to the current state
   real64 const newHydraulicAperture = maximumFractureClosure - fractureClosure;
 
+  GEOS_LOG_RANK_0("*** " << pressure <<"\t"<< maximumFractureClosure << "\t" << newHydraulicAperture << "\t" << sigmaN_N);
   return newHydraulicAperture;
 }
 

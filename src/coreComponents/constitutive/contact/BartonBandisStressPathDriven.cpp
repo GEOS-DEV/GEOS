@@ -30,14 +30,10 @@ namespace constitutive
 using namespace dataRepository;
 
 BartonBandisStressPathDriven::BartonBandisStressPathDriven( string const & name, Group * const parent ):
-  HydraulicApertureBase( name, parent ),
-  m_referenceNormalStress( 0.0 )
+  HydraulicApertureBase( name, parent )
 {
   setInputFlags( InputFlags::REQUIRED );
 
-  registerWrapper( viewKeyStruct::referenceNormalStressString(), &m_referenceNormalStress ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Reference normal stress." );
   registerWrapper( viewKeyStruct::biotString(), &m_biot ).
     setApplyDefaultValue( 1.0 ). 
     setInputFlag( InputFlags::REQUIRED ).
@@ -62,16 +58,15 @@ BartonBandisStressPathDriven::BartonBandisStressPathDriven( string const & name,
 
 void BartonBandisStressPathDriven::postInputInitialization()
 {
-  GEOS_THROW_IF( m_referenceNormalStress <= 0.0,
-                 getFullName() << ": The provided reference stress is zero or negative. Value: " << m_referenceNormalStress,
-                 InputError );
+  //GEOS_THROW_IF( m_referenceNormalStress <= 0.0,
+  //               getFullName() << ": The provided reference stress is zero or negative. Value: " << m_referenceNormalStress,
+  //               InputError );
 
 }
 
 BartonBandisStressPathDrivenUpdates BartonBandisStressPathDriven::createKernelWrapper() const
 {
   return KernelWrapper( m_aperture0, 
-                        m_referenceNormalStress, 
                         m_biot, 
                         m_poisson, 
                         m_normalStiffness, 
