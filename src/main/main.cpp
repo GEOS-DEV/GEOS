@@ -82,7 +82,7 @@ int main( int argc, char *argv[] )
   }
   catch( std::exception const & e )
   { // native exceptions management
-    ErrorLogger::ErrorMsg & errMsg = GEOS_GLOBAL_LOGGER.currentErrorMsg();
+    ErrorLogger::ErrorMsg & errMsg = ErrorLogger::global().currentErrorMsg();
     ErrorLogger::global().flushErrorMsg( errMsg );
     basicCleanup();
     // lvarray error handler is just program termination
