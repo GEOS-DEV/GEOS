@@ -236,35 +236,7 @@ private:
     bool m_isValidStackTrace = false;
   };
 
-  /**
-   * @brief Retrieve all informations from the ErrorMsg and format and write into a stream.
-   * @param errMsg Class containing all the error/warning information
-   * @param oss The output stream to write the content to.
-   */
-  static void writeToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostream & oss )
-  {
-    oss << "***** " << ErrorLogger::toString( errMsg.m_type ) << "\n";
-    if( !errMsg.m_signal.empty())
-    {
-      oss<< "***** SIGNAL: "<< errMsg.m_signal <<"\n";
-    }
-
-    oss << "***** LOCATION: " << errMsg.m_file<< " l." << errMsg.m_line << "\n";
-    oss << "***** " << errMsg.m_cause  << "\n";
-    oss << "***** Rank "
-        << stringutilities::join( errMsg.m_ranksInfo, ", " )
-        << ": " << errMsg.m_msg << "\n\n";
-
-    if( errMsg.m_sourceCallStack.size() > 0 )
-    {
-      oss << "** StackTrace of "<< errMsg.m_sourceCallStack.size() << " frames **\n";
-      for( size_t i = 0; i < errMsg.m_sourceCallStack.size(); i++ )
-      {
-        oss << GEOS_FMT( "Frame {}: {}\n", i, errMsg.m_sourceCallStack[i] );
-      }
-      oss << "=====\n";
-    }
-  }
+  static void writeToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostream & oss );
 
   /**
    * @return Global instance of the ErrorLogger class used for error/warning reporting.
