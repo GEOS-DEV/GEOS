@@ -41,17 +41,21 @@ print_violation()
 ## II. GLOBAL INITIALIZATION  
 ################################
 
-declare -A FORBIDDEN_CONTAINER_MAP=(
-    ["std::map"]="0"
-    ["std::unordered_map"]="0"
-    ["std::vector"]="0"
+FORBIDDEN_EXPRESSIONS=(
+          "std::map"     
+          "std::unordered_map"
+          "std::vector"
 )
 
-declare -A ERRORS_CONTAINER=(
-  ["std::map"]=""
-  ["std::unordered_map"]=""
-  ["std::vector"]=""
-)
+declare -A FORBIDDEN_CONTAINER_MAP=()
+for exp in "${FORBIDDEN_EXPRESSIONS[@]}"; do
+    FORBIDDEN_CONTAINER_MAP["$exp"]=0
+done
+
+declare -A ERRORS_CONTAINER=()
+for exp in "${FORBIDDEN_EXPRESSIONS[@]}"; do
+    ERRORS_CONTAINER["$exp"]=""
+done
 
 FILE_PREFIX="src/coreComponents/"
 FILE_PATTERNS=(
@@ -75,7 +79,7 @@ FILE_PATTERNS=(
 
 EXCLUDE_PATTERNS=(
           "Datatype.hpp"     
-          # "StdContainerWrappers.hpp"     
+          "StdContainerWrappers.hpp"     
           "BufferOps_inline.hpp"
           "BufferOps.hpp"
           "PVTPackage"
