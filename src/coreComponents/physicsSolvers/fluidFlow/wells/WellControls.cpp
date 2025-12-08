@@ -72,7 +72,7 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Target bottom-hole pressure [Pa]" );
+    setDescription( "The target bottom-hole pressure [Pa] for the well." );
 
   registerWrapper( viewKeyStruct::targetTotalRateString(), &m_targetTotalRate ).
     setDefaultValue( 0.0 ).
@@ -108,7 +108,7 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( -1 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Global component densities of the injection stream [moles/m^3 or kg/m^3]" );
+    setDescription( "Defines the global component fractions of the injected fluid." );
 
   registerWrapper( viewKeyStruct::injectionTemperatureString(), &m_injectionTemperature ).
     setDefaultValue( -1 ).
@@ -127,8 +127,9 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( "" ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of reservoir region used for obtaining average region pressure used in volume rate constraint calculations.\n"
-                    "Frequency of pressure update is set in Single/CompositionalMultiPhaseStatistics definition.\n"
-                    "Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint properties" );
+                    "Frequency of pressure update is set in SinglePhase/CompositionalMultiphaseStatistics definition.\n"
+                    "Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint properties"
+                    "Note the event associated with the statists task must be entered before the solver event.\n" );
 
   registerWrapper( viewKeyStruct::surfacePressureString(), &m_surfacePres ).
     setDefaultValue( 0 ).

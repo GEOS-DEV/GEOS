@@ -140,10 +140,10 @@ public:
 
   /**
    * @brief Recompute the volumetric rates that are used in the well constraints
+   * @param elemManager the well region manager containing the well
    * @param subRegion the well subregion containing all the primary and dependent fields
-   * @param targetIndex the targetIndex of the subRegion
    */
-  void updateVolRatesForConstraint( WellElementSubRegion & subRegion );
+  void updateVolRatesForConstraint( ElementRegionManager const & elemManager, WellElementSubRegion const & subRegion );
 
   /**
    * @brief Recompute the current BHP pressure
@@ -185,7 +185,7 @@ public:
    */
   virtual void updateState( DomainPartition & domain ) override;
 
-  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
@@ -345,8 +345,7 @@ protected:
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion,
-                                        ElementRegionManager const & elemManager ) override;
+                                        WellElementSubRegion const & subRegion ) override;
 
   /**
    * @brief Create well separator
