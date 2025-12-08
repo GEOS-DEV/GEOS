@@ -43,8 +43,23 @@ print_violation()
 }
 
 ################################
-## II. INITIALISATION GLOBALE 
+## II. GLOBAL INITIALIZATION  
 ################################
+
+declare -A CONTAINER_MAP
+CONTAINER_MAP=(
+    ["std::map"]="MAP"
+    ["std::unordered_map"]="UMAP"
+    ["std::vector"]="VECTOR"
+)
+
+ARRAY_MAP=()
+ARRAY_UMAP=()
+ARRAY_VECTOR=()
+
+MAP_VIOLATIONS_FOUND=0
+UMAP_VIOLATIONS_FOUND=0
+VECTOR_VIOLATIONS_FOUND=0
 
 FILE_PREFIX="src/coreComponents/"
 FILE_PATTERNS=(
@@ -65,14 +80,14 @@ FILE_PATTERNS=(
           "mesh"
           "physicsSolvers"
         )
-  EXCLUDE_PATTERNS=(
-        "Datatype.hpp"     
-        "StdContainerWrappers.hpp"     
-        "BufferOps_inline.hpp"
-        "BufferOps.hpp"
-        "PVTPackage"
-        "hdf5_interface"
-      )
+EXCLUDE_PATTERNS=(
+          "Datatype.hpp"     
+          "StdContainerWrappers.hpp"     
+          "BufferOps_inline.hpp"
+          "BufferOps.hpp"
+          "PVTPackage"
+          "hdf5_interface"
+    )
 
 FILE_PATH_ARGS=()
 for pattern in "${FILE_PATTERNS[@]}"; do
@@ -86,7 +101,7 @@ for pattern in "${EXCLUDE_PATTERNS[@]}"; do
     if [[ ! "$pattern" == *".hpp"* ]]; then
       EXCLUDE_EXPRESSION+=( -path "*/$pattern" -prune -o )
     else
-      EXCLUDE_EXPRESSION+=( -name "*${pattern}" -o )
+      EXCLUDE_EXPRESSION+=( -name "*${pattern}" -prune -o )
     fi
 done
 
@@ -107,22 +122,18 @@ mapfile -d $'\0' ARRAY_FILES < <(find "${FILE_PATH_ARGS[@]}" "${EXCLUDE_EXPRESSI
                                       -type f \( -name "*.hpp" -o -name "*.cpp" -o  -name "*.hpp.template" -o -name "*.cpp.template" \) \
                                       -print0 2>/dev/null)
 
-ARRAY_MAP=()
-ARRAY_UMAP=()
-ARRAY_VECTOR=()
-
-MAP_VIOLATIONS_FOUND=0
-UMAP_VIOLATIONS_FOUND=0
-VECTOR_VIOLATIONS_FOUND=0
-
 ################################
 ## III. MAIN LOOP
 ################################
 
 for file in ${ARRAY_FILES[@]}; do
-  check_container_usage "std::map" ARRAY_MAP MAP_VIOLATIONS_FOUND
-  check_container_usage "std::unordered_map" ARRAY_UMAP UMAP_VIOLATIONS_FOUND
-  check_container_usage "std::vector" ARRAY_VECTOR VECTOR_VIOLATIONS_FOUND
+  for container_name in "${!CONTAINER_MAP[@]}"; do
+    prefix="${CONTAINER_MAP[$container_name]}"
+    var_violation="${prefix}_VIOLATIONS_FOUND"
+    var_name_array="ARRAY_${prefix}"
+
+    check_container_usage "$container_name" "$var_name_array" "$var_violation"
+  done
 done
 
 # Print section
@@ -130,11 +141,14 @@ if [ $MAP_VIOLATIONS_FOUND -eq 1 ] || [ $UMAP_VIOLATIONS_FOUND -eq 1 ] || [ $VEC
   echo "----------------------------------------"
   echo "SUMMARY: Code rule violations found"
   echo "----------------------------------------"
+  for container_name in "${!CONTAINER_MAP[@]}"; do
+    prefix="${CONTAINER_MAP[$container_name]}"
+    var_violation="${prefix}_VIOLATIONS_FOUND"
+    var_name_array="ARRAY_${prefix}"
+    actual_count="${!var_violation}"
 
-  print_violation "$MAP_VIOLATIONS_FOUND" ARRAY_MAP "std::map"
-  print_violation "$UMAP_VIOLATIONS_FOUND" ARRAY_UMAP "std::unordered_map"
-  print_violation "$VECTOR_VIOLATIONS_FOUND" ARRAY_VECTOR "std::vector"
-
+    print_violation "$actual_count" "$var_name_array" "$container_name"
+  done
   echo ""
   exit 1;
 fi
