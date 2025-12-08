@@ -10,35 +10,30 @@
 # Process the result of grep command as a file.
 # This allows everything to be handled in the same shell environment.
 check_container_usage() {
-  local container="$1"
-  local -n array_name="$2"
-  local -n violation_found="$3"
-  local str="  Found forbidden ${container} usage in: $file"$'\n'
+  local container_name="$1"
+  local str="  Found forbidden ${container_name} usage in: $file"$'\n'
 
-  if grep -q "${container}\s*<" "$file"; then
+  if grep -q "${container_name}\s*<" "$file"; then
     while IFS= read -r line; do
       str+="    $line"$'\n'
-    done < <(grep -n "${container}\s*<" "$file")
-    
-    array_name+="$str"
-    violation_found=1
+    done < <(grep -n "${container_name}\s*<" "$file")
+
+    ERRORS_CONTAINER[$container_name]+="$str"
+    ((FORBIDDEN_CONTAINER_MAP["$container_name"]++))
   fi
 }
 
 print_violation()
 {
-    local violation_found="$1"
-    local -n container="$2"
-    local targetStd="$3"
+    local container_name="$1"
 
-    if [ "$violation_found" -eq 1 ];then
-      echo "ERROR: Forbidden $targetStd usage detected"
+    if [ "${FORBIDDEN_CONTAINER_MAP[$container_name]}" -eq 1 ];then
+      echo $'\n'
+      echo "ERROR: Forbidden $container_name usage detected"
       echo "=========================================="
 
-      for element in "${container[@]}"
-      do
-          echo "$element";
-      done
+      printf '%s' "${ERRORS_CONTAINER[$container_name]}"
+
     fi
 }
 
@@ -46,20 +41,17 @@ print_violation()
 ## II. GLOBAL INITIALIZATION  
 ################################
 
-declare -A CONTAINER_MAP
-CONTAINER_MAP=(
-    ["std::map"]="MAP"
-    ["std::unordered_map"]="UMAP"
-    ["std::vector"]="VECTOR"
+declare -A FORBIDDEN_CONTAINER_MAP=(
+    ["std::map"]="0"
+    ["std::unordered_map"]="0"
+    ["std::vector"]="0"
 )
 
-ARRAY_MAP=()
-ARRAY_UMAP=()
-ARRAY_VECTOR=()
-
-MAP_VIOLATIONS_FOUND=0
-UMAP_VIOLATIONS_FOUND=0
-VECTOR_VIOLATIONS_FOUND=0
+declare -A ERRORS_CONTAINER=(
+  ["std::map"]=""
+  ["std::unordered_map"]=""
+  ["std::vector"]=""
+)
 
 FILE_PREFIX="src/coreComponents/"
 FILE_PATTERNS=(
@@ -79,15 +71,16 @@ FILE_PATTERNS=(
           "mainInterface"
           "mesh"
           "physicsSolvers"
-        )
+)
+
 EXCLUDE_PATTERNS=(
           "Datatype.hpp"     
-          "StdContainerWrappers.hpp"     
+          # "StdContainerWrappers.hpp"     
           "BufferOps_inline.hpp"
           "BufferOps.hpp"
           "PVTPackage"
           "hdf5_interface"
-    )
+)
 
 FILE_PATH_ARGS=()
 for pattern in "${FILE_PATTERNS[@]}"; do
@@ -116,7 +109,7 @@ if [ ${#FILE_PATH_ARGS[@]} -gt 0 ]; then
 fi
 
 ARRAY_FILES=()
-# mapfile used for reading input lines into an array; -d $'\0': Specifies that the delimiter is (\0).
+# mapfile used for reading inMAPput lines into an array; -d $'\0': Specifies that the delimiter is (\0).
 # -print0 : ask find to separate file paths by '\0'
 mapfile -d $'\0' ARRAY_FILES < <(find "${FILE_PATH_ARGS[@]}" "${EXCLUDE_EXPRESSION[@]}" \
                                       -type f \( -name "*.hpp" -o -name "*.cpp" -o  -name "*.hpp.template" -o -name "*.cpp.template" \) \
@@ -127,31 +120,28 @@ mapfile -d $'\0' ARRAY_FILES < <(find "${FILE_PATH_ARGS[@]}" "${EXCLUDE_EXPRESSI
 ################################
 
 for file in ${ARRAY_FILES[@]}; do
-  for container_name in "${!CONTAINER_MAP[@]}"; do
-    prefix="${CONTAINER_MAP[$container_name]}"
-    var_violation="${prefix}_VIOLATIONS_FOUND"
-    var_name_array="ARRAY_${prefix}"
-
-    check_container_usage "$container_name" "$var_name_array" "$var_violation"
+  for container_name in "${!FORBIDDEN_CONTAINER_MAP[@]}"; do
+    check_container_usage "$container_name"
   done
 done
 
 # Print section
-if [ $MAP_VIOLATIONS_FOUND -eq 1 ] || [ $UMAP_VIOLATIONS_FOUND -eq 1 ] || [ $VECTOR_VIOLATIONS_FOUND -eq 1 ]; then 
-  echo "----------------------------------------"
-  echo "SUMMARY: Code rule violations found"
-  echo "----------------------------------------"
-  for container_name in "${!CONTAINER_MAP[@]}"; do
-    prefix="${CONTAINER_MAP[$container_name]}"
-    var_violation="${prefix}_VIOLATIONS_FOUND"
-    var_name_array="ARRAY_${prefix}"
-    actual_count="${!var_violation}"
+for key in "${!FORBIDDEN_CONTAINER_MAP[@]}"; do
+    if [[ "${FORBIDDEN_CONTAINER_MAP[$key]}" == "1" ]]; then
+      echo $'\n'
+      echo "----------------------------------------"
+      echo "SUMMARY: Code rule violations found"
+      echo "----------------------------------------"
 
-    print_violation "$actual_count" "$var_name_array" "$container_name"
-  done
-  echo ""
-  exit 1;
-fi
+      for container_name in "${!FORBIDDEN_CONTAINER_MAP[@]}"; do
+        print_violation "$container_name"
+      done
+      
+      echo ""
+      exit 1;
+    fi
+done
 
+echo $'\n'
 echo "No code rule violations found"
 exit 0
