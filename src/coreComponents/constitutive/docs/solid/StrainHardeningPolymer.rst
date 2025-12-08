@@ -5,16 +5,157 @@ Strain Hardening Polymer Model
 ############################################
 
 
-Overview
+Overview of Model Formulation
 ========================
-This damage model is intended for use with damage-field partitioning (DFG) within the
-MPM solver, but can also be used without DFG by any solver. It is only appropriate for
-schemes implementing explicit time integration. 
+This description of the Strain Hardening Polymer Model is sourced from :cite:t:`Klompen2005` and references within.
+In the constitutive model used, a distinction is made concerning the contribution
+of secondary interactions between polymer chains, that determine the (visco-)
+elastic properties at small deformations and plastic flow, and the entangled polymer
+network that governs strain hardening.
+
+
+
+Accordingly, the total Cauchy stress math::'\sigma' is decomposed in a driving stress
+\sigma_s, and a hardening stress \sigma_r:
+
+
+.. math::
+
+   \sigma = \sigma_s + \sigma_r
+
+
+Hardening is modelled with a neo-Hookean relation such that math::'G_r' is a strain hardening modulus and math::\tilde{B}^d is the deviatoric part of the isochoric left Cauchy-Green deformation tensor. 
+
+.. math::
+
+   \sigma_r = G_r +  \tilde{B}^d
+
+
+The driving stress is decomposed into a deviatoric part :math:`\boldsymbol{\sigma}^{d}_{s}` and a hydrostatic part :math:`\boldsymbol{\sigma}^{h}_{s}`:
+
+.. math::
+
+   \boldsymbol{\sigma}^{d}_{s} = G\,\tilde{\mathbf{B}}^{e}_{d},
+   \qquad
+   \boldsymbol{\sigma}^{h}_{s} = \kappa\,(J-1)\,\mathbf{I},
+
+where :math:`G` is the shear modulus, :math:`\tilde{\mathbf{B}}^{e}_{d}` the deviatoric part of the isochoric elastic left Cauchy–Green tensor, :math:`\kappa` the bulk modulus, :math:`J` the volume-change factor, and :math:`\mathbf{I}` the identity tensor. The evolution of :math:`J` and :math:`\tilde{\mathbf{B}}^{e}` is
+
+.. math::
+
+   \dot{J} = J\,\operatorname{tr}(\mathbf{D}),
+   \qquad
+   \stackrel{\circ}{\tilde{\mathbf{B}}^{e}}
+   = (\mathbf{D}^{d}-\mathbf{D}^{p})\cdot\tilde{\mathbf{B}}^{e}
+     + \tilde{\mathbf{B}}^{e}\cdot(\mathbf{D}^{d}-\mathbf{D}^{p}),
+
+where :math:`\stackrel{\circ}{\tilde{\mathbf{B}}^{e}}` denotes the Jaumann rate of :math:`\tilde{\mathbf{B}}^{e}`, :math:`\mathbf{D}^{d}` is the deviatoric part of the rate-of-deformation tensor, and :math:`\mathbf{D}^{p}` its plastic part.
+
+A non-Newtonian flow rule with a stress-dependent Eyring viscosity relates the plastic deformation rate to the deviatoric driving stress:
+
+.. math::
+
+   \mathbf{D}^{p} = \frac{\boldsymbol{\sigma}^{d}_{s}}{2\,\eta(T,p,\bar{\tau},D)}.
+
+The viscosity depends strongly on the equivalent stress :math:`\bar{\tau}` and is extended to include pressure dependence (:math:`\mu`) and intrinsic strain softening (:math:`D`):
+
+.. math::
+
+   \eta(T,p,\bar{\tau},D)
+   = A_{0}(T)\,\tau_{0}\,
+     \exp\!\Bigl(\tfrac{\mu\,p}{\tau_{0}}\Bigr)\,
+     \frac{\bar{\tau}/\tau_{0}}{\sinh\!\bigl(\bar{\tau}/\tau_{0}\bigr)}\,
+     \exp(-D),
+
+with the temperature-dependent prefactor
+
+.. math::
+
+   A_{0}(T) = A_{0}\,\exp\!\Bigl(\tfrac{\Delta U}{R\,T}\Bigr),
+
+where :math:`A_{0}` is a constant, :math:`\Delta U` the activation energy, :math:`R` the gas constant, and :math:`T` the
+ absolute temperature. The characteristic stress, pressure, and von Mises-type equivalent stress are
+
+.. math::
+
+   \tau_{0} = \frac{k\,T}{V^{*}},\qquad
+   p = -\tfrac{1}{3}\operatorname{tr}(\boldsymbol{\sigma}),\qquad
+   \bar{\tau} = \sqrt{\tfrac{1}{2}\,\operatorname{tr}\!\bigl(\boldsymbol{\sigma}^{d}_{s}\cdot\boldsymbol{\sigma}^{d}_{s}\bigr)}.
+
+
+with :math:`V^{*}` the activation volume and :math:`k` Boltzmann’s constant.
+
+The intrinsic strain softening is represented by the structural parameter :math:`D`,
+which evolves from an initial value :math:`D_{0}` to an equilibrium value
+:math:`D_{\infty} > D_{0}` with increasing equivalent plastic strain
+:math:`\bar{\gamma}_{p}`, thereby strongly reducing the viscosity :math:`\eta`.
+In general form,
+
+.. math::
+
+   D(\bar{\gamma}_{p}) = D_{\infty}\,R_{\gamma}(\bar{\gamma}_{p}),
+
+where :math:`R_{\gamma}` increases monotonically from an initial value
+:math:`R_{\gamma}(0)\le 1` to :math:`1` with equivalent plastic strain. The
+equivalent plastic strain rate is defined as
+
+.. math::
+
+   \dot{\bar{\gamma}}_{p} \;=\; \sqrt{\,2\,\mathrm{tr}\!\bigl(\mathbf{D}^{p}\cdot\mathbf{D}^{p}\bigr)}\,,
+
+with :math:`\mathbf{D}^{p}` the plastic part of the rate-of-deformation tensor.
+
+In the specific (first-order, phenomenological) evolution, :math:`D` represents the density of shear-transformation sites inferred
+from PALS measurements. Since the initial value
+:math:`D_{0}=D_{\infty}\,R_{\gamma}(0)` depends on thermal history, a new
+:math:`D_{0}` must be determined for each sample with a different history (via
+PALS or numerical fitting).
+
+
+.. _strain_hardening_rates_initial_shear_transform_site_densities:
+.. figure:: strain_hardening_rates_initial_shear_transform_site_densities.png
+   :align: center
+   :width: 1200
+
+   A) Change of stress versus strain with different strain rates. B) Evolution of shear
+   transformation site density versus plastic strain for different initial densities. C)
+   Stress–strain curves translated into :math:`\sigma_{\mathrm{rej}}` (flow stress of the fully
+   rejuvenated state), :math:`\Delta\sigma_{y}` (yield drop), and :math:`\sigma_{r}` (strain-hardening stress).
+
+
+
+Relaxation Term
+-------------------------------------------------------------
+Softening with magnitude of plastic deviatoric strain (material is plastically incompressible, so this equals the magnitude of the total strain).
+This is the effect of loss of strength with plastic deformation.
+
+
+.. math::
+
+   R_{\gamma}\!\left(\gamma_{p};\, r_{0}, r_{1}, r_{2}\right)
+   \;=\; r_{0}\,\exp\!\left[-\left(\frac{\gamma_{p}}{r_{1}}\right)^{r_{2}}\right]
 
 
 
 
-Model Formulation
+.. only:: html
+
+   .. raw:: html
+
+      <div style="height:40px"></div>
+
+
+
+
+
+.. _strain_hardening_relaxation_terms:
+.. figure:: strain_hardening_relaxation_terms.png
+   :align: center
+   :width: 1200
+
+   Changes in relaxation terms. 
+
+Model Implementation
 ========================
 First, we store the trial stress for computing the plastic strain increment. 
 
@@ -70,8 +211,15 @@ constitutive model operates in the material (unrotated) configuration. By comput
 and finally the principal stretches and directions from the right stretch tensor, the model isolates the true material deformation needed 
 for subsequent yield, hardening, and damage computations.
 
+.. only:: html
 
-**Step 1: Compute the rotation tensor transpose**
+   .. raw:: html
+
+      <div style="height:40px"></div>
+
+
+Step 1: Compute the rotation tensor transpose
+-------------------------------------------------------------
 
 The tensor ``beginningRotation`` stores the rotation :math:`R` from the polar decomposition
 of the deformation gradient. Its transpose :math:`R^{\mathsf{T}}` is computed and stored in
@@ -89,7 +237,17 @@ of the deformation gradient. Its transpose :math:`R^{\mathsf{T}}` is computed an
    oldPlasticStrain[4] *= 0.5;
    oldPlasticStrain[5] *= 0.5;
 
-**Step 2: Extract the plastic strain tensor and convert to tensor form**
+
+
+.. only:: html
+
+   .. raw:: html
+
+      <div style="height:40px"></div>
+
+
+Step 2: Extract the plastic strain tensor and convert to tensor form
+-------------------------------------------------------------
 
 ``m_plasticStrain[k][q]`` is stored in engineering-strain Voigt notation.  
 The shear components (indices 3–5) must be halved to convert from engineering shear
@@ -108,7 +266,18 @@ to tensorial shear strain. This produces ``oldPlasticStrain`` in true tensor for
                                                  oldPlasticStrain );
 
 
-**Step 3: Unrotate the plastic strain**
+
+.. only:: html
+
+   .. raw:: html
+
+      <div style="height:40px"></div>
+
+
+
+
+Step 3: Unrotate the plastic strain
+-------------------------------------------------------------
 
 The following unrotates the plastic strain tensor and produces the plastic strain in the material configuration.
 
@@ -123,7 +292,20 @@ The following unrotates the plastic strain tensor and produces the plastic strai
    unrotatedOldPlasticStrain[4] *= 2.0;
    unrotatedOldPlasticStrain[5] *= 2.0;
 
-**Step 4: Return to engineering shear strain**
+
+
+
+
+.. only:: html
+
+   .. raw:: html
+
+      <div style="height:40px"></div>
+
+
+
+Step 4: Return to engineering shear strain
+-------------------------------------------------------------
 
 After unrotation, the tensorial shear strains are converted back to engineering form:
 
@@ -139,7 +321,14 @@ After unrotation, the tensorial shear strains are converted back to engineering 
                                                  m_deformationGradient[k] );
 
 
-**Step 5: Compute the unrotated deformation gradient**
+.. only:: html
+
+   .. raw:: html
+
+      <div style="height:40px"></div>
+
+Step 5: Compute the unrotated deformation gradient
+-------------------------------------------------------------
 
 The deformation gradient is unrotated using the following. This isolates the **right stretch tensor** contained in :math:`F^{\text{unrot}}`.
 
@@ -155,7 +344,15 @@ The deformation gradient is unrotated using the following. This isolates the **r
    LvArray::tensorOps::denseToSymmetric< 3 >( U, unrotatedDeformationGradient );
 
 
-**Step 6: Extract the symmetric right stretch tensor and Compute principal stretches and directions**
+.. only:: html
+
+   .. raw:: html
+
+      <div style="height:40px"></div>
+
+
+Step 6: Extract the symmetric right stretch tensor and Compute principal stretches and directions
+-------------------------------------------------------------
 
 The symmetric tensor :math:`U` is extracted from the unrotated deformation gradient,
 representing the **right stretch** from the polar decomposition:
@@ -180,6 +377,9 @@ This completes the calculation of the unrotated, principal-stretch representatio
 Then we find the largest eigenvalues and compare them to the maximum allowable 
 failure stretch, which is temperature dependent via the ``thermalSoftening`` function
 
+
+
+
 .. code-block:: cpp
 
    real64 failureStretch = m_maximumStretch * StrainHardeningPolymerUpdates::thermalSoftening(m_temperature[k], m_maximumStretchT0, m_maximumStretchA, m_maximumStretchB );     
@@ -187,9 +387,15 @@ failure stretch, which is temperature dependent via the ``thermalSoftening`` fun
 
 
 
+.. only:: html
+
+   .. raw:: html
+
+      <div style="height:40px"></div>
 
 
-**Step 7: Damage check based on maximum principal stretch**
+Step 7: Damage check based on maximum principal stretch
+-------------------------------------------------------------
 
 The array ``stretch`` contains the three principal stretches
 :math:`\lambda_i`. The loop computes the maximum principal stretch
@@ -212,9 +418,15 @@ This corresponds to complete loss of load-carrying capacity at that
 integration point.
 
 
+.. only:: html
+
+   .. raw:: html
+
+      <div style="height:40px"></div>
 
 
-**Step 8: Parameters for the return-to-yield iteration**
+Step 8: Parameters for the return-to-yield iteration
+-------------------------------------------------------------
 
 The variables ``tol`` and ``maxEvals`` set the numerical controls for
 the iterative return-to-yield algorithm used later in the update:
@@ -231,9 +443,18 @@ Newton solver may be more efficient and robust.
 
 
 
+.. only:: html
+
+   .. raw:: html
+
+      <div style="height:40px"></div>
 
 
-**Step 9: Apply thermal-softening to our plasticity parameters**
+
+
+Step 9 – Apply thermal-softening to the plasticity parameters
+-------------------------------------------------------------
+
 
 We incorporate a temperature dependence of thermal softening for the yield strength, 
 strain hardening slope, and shear softening magnitude through the thermalSoftening function defined below.
@@ -249,21 +470,34 @@ a base yield strength, a strain-hardening term, and a shear-softening
 term, each scaled by the thermal-softening function
 :math:`s_\theta(T; T_0, A, B)`:
 
+
+
 .. math::
 
-   \sigma_{y,0}
-   &= \texttt{m_defaultYieldStrength} \;
-      s_\theta\bigl(T_k; T_{0,y}, A_y, B_y\bigr), \\[4pt]
-   G_r
-   &= \texttt{m_strainHardeningSlope} \;
-      s_\theta\bigl(T_k; T_{0,Gr}, A_{Gr}, B_{Gr}\bigr), \\[4pt]
-   r_0
-   &= \texttt{m_shearSofteningMagnitude} \;
-      s_\theta\bigl(T_k; T_{0,r}, A_r, B_r\bigr).
+
+   \sigma_{y}(T)
+   &= \sigma_{T0} \;
+      \times s_\theta\bigl(T; T_0, \sigma_A, \sigma_B), \\[4pt]
+   G_r(T)
+   &= G_{T0} \;
+      \times s_\theta\bigl(T; T_0, G_{r,A}, G_{r,B}), \\[4pt]
+   r_0(T)
+   &= r_{0,T0} \;
+      \times s_\theta\bigl(T; T_0, r_{0,A}, r_{0,B}).
+
+
+where 
+
+
+.. math::
+
+   s_\theta = 1 + \frac{\texttt{parameter}_A}{1 + \exp\!\bigl(\texttt{parameter}_B\,(T - T_0)\bigr)}
+
 
 Here :math:`T_k = \texttt{m_temperature}[k]` is the material-point
 temperature, and each parameter :math:`(T_0, A, B)` defines the
 temperature dependence of one contribution via the :math:`s_\theta` function below. 
+
 
 
 .. code-block:: cpp
@@ -290,7 +524,15 @@ These quantities (``yield0``, ``strainHardeningSlope``, and
 yield strength used in the plastic return.
 
 
-**Step 10: We then conduct a fixed-point iteration to find plastic strain and consistent return to updated yield surface**
+.. only:: html
+
+   .. raw:: html
+
+      <div style="height:40px"></div>
+
+
+Step 10: We then conduct a fixed-point iteration to find plastic strain and consistent return to updated yield surface
+-------------------------------------------------------------
 
 For this, we make a workspace to hold the current unrotated plastic strain and a workspace 
 to accumulate how much strain is added during the step
@@ -454,6 +696,15 @@ We check if the yield strength has converged. If it has, we finalize the plastic
 
 
 Otherwise, we set the old yield strength to the current yield strength and continue the iteration.
+
+
+
+Parameters, User Inputs
+========================
+
+.. include:: /coreComponents/schema/docs/StrainHardeningPolymerParameterTable.rst
+
+
 
 References
 ==========

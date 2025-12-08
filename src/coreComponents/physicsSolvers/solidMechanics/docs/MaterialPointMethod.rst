@@ -328,6 +328,9 @@ Transversely isotropic constitutive model defined by a basal plane material dire
 Geomechanics
 -------------------------
 
+StrainHardeningPolymer
+-------------------------
+
 
 Weibull Variability
 =========================

@@ -23,4 +23,5 @@ known models.
    DelftEgg
    Damage
    Geomechanics
+   StrainHardeningPolymer
    ViscoPlasticity 
