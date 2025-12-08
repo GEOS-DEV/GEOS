@@ -132,9 +132,9 @@ void TableFunction::initializeFunction()
     // 1D Table
     m_coordinates.appendArray( m_tableCoordinates1D.begin(), m_tableCoordinates1D.end() );
     GEOS_THROW_IF_NE_MSG( m_tableCoordinates1D.size(), m_values.size(),
-                          GEOS_FMT( "{} {}: 1D table function coordinates and values must have the same length",
-                                    catalogName(), getDataContext() ),
-                          InputError );
+                          GEOS_FMT( "{}: 1D table function coordinates and values must have the same length",
+                                    catalogName()),
+                          InputError, getDataContext()  );
   }
   else
   {

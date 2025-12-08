@@ -319,13 +319,13 @@ public:
   {
     Group * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getDataContext() << " has no child named " << key << std::endl
-                            << dumpSubGroupsNames(),
+                   "Group has no child named " << key << std::endl
+                                               << dumpSubGroupsNames(),
                    std::domain_error, getDataContext() );
     T * const castedChild = dynamicCast< T * >( child );
     GEOS_THROW_IF( castedChild == nullptr,
-                   GEOS_FMT( "{} was expected to be a '{}'.",
-                             child->getDataContext(), LvArray::system::demangleType< T >() ),
+                   GEOS_FMT( "was expected to be a '{}'.",
+                             LvArray::system::demangleType< T >() ),
                    BadTypeError, child->getDataContext() );
     return *castedChild;
   }
@@ -338,13 +338,13 @@ public:
   {
     Group const * const child = m_subGroups[ key ];
     GEOS_THROW_IF( child == nullptr,
-                   "Group " << getDataContext() << " has no child named " << key << std::endl
-                            << dumpSubGroupsNames(),
+                   "Group has no child named " << key << std::endl
+                                               << dumpSubGroupsNames(),
                    std::domain_error, getDataContext() );
     T const * const castedChild = dynamicCast< T const * >( child );
     GEOS_THROW_IF( castedChild == nullptr,
-                   GEOS_FMT( "{} was expected to be a '{}'.",
-                             child->getDataContext(), LvArray::system::demangleType< T >() ),
+                   GEOS_FMT( "was expected to be a '{}'.",
+                             LvArray::system::demangleType< T >() ),
                    BadTypeError, child->getDataContext() );
     return *castedChild;
   }
@@ -1124,7 +1124,7 @@ public:
   {
     WrapperBase const * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
+                   "Group has no wrapper named " << key << std::endl
                             << dumpWrappersNames(),
                    std::domain_error, getDataContext() );
 
@@ -1139,7 +1139,7 @@ public:
   {
     WrapperBase * const wrapper = m_wrappers[ key ];
     GEOS_THROW_IF( wrapper == nullptr,
-                   "Group " << getDataContext() << " has no wrapper named " << key << std::endl
+                   "Group has no wrapper named " << key << std::endl
                             << dumpWrappersNames(),
                    std::domain_error, getDataContext() );
 
@@ -1364,7 +1364,7 @@ public:
   Group & getParent()
   {
     GEOS_THROW_IF( m_parent == nullptr,
-                   "Group at " << getDataContext() << " does not have a parent.",
+                   "Group does not have a parent.",
                    std::domain_error, getDataContext() );
     return *m_parent;
   }
@@ -1375,7 +1375,7 @@ public:
   Group const & getParent() const
   {
     GEOS_THROW_IF( m_parent == nullptr,
-                   "Group at " << getDataContext() << " does not have a parent.",
+                   "Group does not have a parent.",
                    std::domain_error, getDataContext() );
     return *m_parent;
   }

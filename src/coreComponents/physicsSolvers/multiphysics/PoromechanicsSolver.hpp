@@ -475,15 +475,15 @@ protected:
       GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(),
                                 poromechanicsTargetRegionNames[i] )
                      == solidMechanicsTargetRegionNames.end(),
-                     GEOS_FMT( "{} {}: region {} must be a target region of {}",
-                               this->getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i],
-                               this->solidMechanicsSolver()->getDataContext() ),
-                     InputError );
+                     GEOS_FMT( "{}: region {} must be a target region of {}",
+                               this->getCatalogName(), poromechanicsTargetRegionNames[i],
+                               this->solidMechanicsSolver()->getCatalogName() ),
+                     InputError, this->getDataContext(), this->solidMechanicsSolver()->getDataContext());
       GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
                      == flowTargetRegionNames.end(),
-                     GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
-                               this->getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], this->flowSolver()->getDataContext() ),
-                     InputError );
+                     GEOS_FMT( "{} : region `{}` must be a target region of `{}`",
+                               this->getCatalogName(), poromechanicsTargetRegionNames[i], this->flowSolver()->getCatalogName() ),
+                     InputError, this->getDataContext(), this->solidMechanicsSolver()->getDataContext() );
     }
   }
 
