@@ -123,7 +123,7 @@ mapfile -d $'\0' ARRAY_FILES < <(find "${FILE_PATH_ARGS[@]}" "${EXCLUDE_EXPRESSI
 ## III. MAIN LOOP
 ################################
 
-for file in ${ARRAY_FILES[@]}; do
+for file in "${ARRAY_FILES[@]}"; do
   for container_name in "${!FORBIDDEN_CONTAINER_MAP[@]}"; do
     check_container_usage "$container_name"
   done
