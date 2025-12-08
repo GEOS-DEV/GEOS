@@ -236,6 +236,11 @@ private:
     bool m_isValidStackTrace = false;
   };
 
+  /**
+   * @brief Format all information in ErrorMsg and write it to the specified output stream
+   * @param errMsg The struct containing the error/warning object
+   * @param oss The output stream
+   */
   static void writeToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostream & oss );
 
   /**
