@@ -360,12 +360,10 @@ jobs:
             ENABLE_TRILINOS: OFF
             GEOS_ENABLE_BOUNDS_CHECK: OFF
             DOCKER_REPOSITORY: geosx/rockylinux8-clang17-cuda12.9.1
-            RUNS_ON: streak2
-            NPROC: 8
-#            DOCKER_RUN_ARGS: "--cpus=8 --memory=256g --runtime=nvidia --gpus all -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
-#            DOCKER_CERTS_DIR: "/usr/local/share/ca-certificates"
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/ca-trust/source/anchors/:/etc/pki/ca-trust/source/anchors/llnl:ro"
-            DOCKER_CERTS_DIR: "/etc/pki/ca-trust/source/anchors"
+            RUNS_ON: streak0
+            NPROC: 16
+            DOCKER_RUN_ARGS: "--cpus=16 --memory=448g --runtime=nvidia --gpus all -v /etc/pki/ca-trust/source/anchors/:/usr/local/share/ca-certificates/llnl:ro"
+            DOCKER_CERTS_DIR: "/usr/local/share/ca-certificates"
             DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"
             HOST_CONFIG: /spack-generated.cmake
           
