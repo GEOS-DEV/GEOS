@@ -98,6 +98,8 @@ void StatsTask::registerDataOnMesh( Group & meshBodies )
     return;
   }
 
+  getGroupByPath( "/" ).printDataHierarchy();
+
   prepareFluidMetaData();
 
   if( m_computeRegionStatistics )
@@ -176,17 +178,17 @@ void StatsTask::prepareCsvTableLayouts( string_view meshName )
   string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
 
   TableLayout tableLayout( {
-        TableLayout::Column().setName( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ))),
-        TableLayout::Column().setName( "Region" ), // TODO : mention this change in PR description
-        TableLayout::Column().setName( GEOS_FMT( "Min pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
-        TableLayout::Column().setName( GEOS_FMT( "Average pressure [{}]", units::getSymbol( units::Unit::Pressure )) ),
-        TableLayout::Column().setName( GEOS_FMT( "Max pressure [{}]", units::getSymbol( units::Unit::Pressure ) ) ),
-        TableLayout::Column().setName( GEOS_FMT( "Min delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
-        TableLayout::Column().setName( GEOS_FMT( "Max delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
-        TableLayout::Column().setName( GEOS_FMT( "Min temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
-        TableLayout::Column().setName( GEOS_FMT( "Average temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
-        TableLayout::Column().setName( GEOS_FMT( "Max temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
-        TableLayout::Column().setName( GEOS_FMT( "Total dynamic pore volume [{}]", units::getSymbol( units::Unit::ReservoirVolume ) )),
+        TableLayout::Column( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ))),
+        TableLayout::Column( "Region" ), // TODO : mention this change in PR description
+        TableLayout::Column( GEOS_FMT( "Min pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+        TableLayout::Column( GEOS_FMT( "Average pressure [{}]", units::getSymbol( units::Unit::Pressure )) ),
+        TableLayout::Column( GEOS_FMT( "Max pressure [{}]", units::getSymbol( units::Unit::Pressure ) ) ),
+        TableLayout::Column( GEOS_FMT( "Min delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+        TableLayout::Column( GEOS_FMT( "Max delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+        TableLayout::Column( GEOS_FMT( "Min temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
+        TableLayout::Column( GEOS_FMT( "Average temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
+        TableLayout::Column( GEOS_FMT( "Max temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
+        TableLayout::Column( GEOS_FMT( "Total dynamic pore volume [{}]", units::getSymbol( units::Unit::ReservoirVolume ) )),
       } );
   addPhaseColumns( tableLayout, "Phase dynamic pore volume", units::getSymbol( units::Unit::ReservoirVolume ), numPhases );
   addPhaseColumns( tableLayout, "Phase mass", massUnit, numPhases );
@@ -196,8 +198,8 @@ void StatsTask::prepareCsvTableLayouts( string_view meshName )
   addPhaseColumns( tableLayout, "Mobile phase mass (metric 2)", massUnit, numPhases );
   addPhaseCompColumns( tableLayout, "Component mass", massUnit, numPhases, numComps );
 
-  auto csvFormatter = std::make_unique< TableCSVFormatter >( tableLayout );
-  m_csvFormatters.emplace( meshName, std::move( csvFormatter ) );
+  auto & csvFormatter = m_csvFormatters.get_inserted( string( meshName ) );
+  csvFormatter = std::move( std::make_unique< TableCSVFormatter >( tableLayout ) );
 
   // output CSV header
   std::ofstream outputFile( getCsvFileName( meshName ) );
