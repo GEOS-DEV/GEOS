@@ -270,7 +270,7 @@ else
     # -------------------------------------------------------------------------- #
     : ${sroot:="/data/saet/${USER}/src"} ; 
     # : ${croot:="/mnt/resource/${USER}/src"} ; 
-    : ${iroot:="/data/saet/${USER}/software"} ;
+    : ${iroot:="/data/saet/hpcrnd/software"} ;
 fi
 : ${croot:="/dev/shm/${USER}/src"} ; 
 
@@ -291,7 +291,8 @@ if [ -n "${TPL_BRANCH}" ]; then
 fi
 
 export GEOS_EFFECTIVE_BRANCH=${GEOS_BRANCH:=${GEOS_MAIN_BRANCH}}
-export BRANCH TPL_BRANCH GEOS_BRANCH
+export TPL_EFFECTIVE_BRANCH=${TPL_BRANCH:=${TPL_MAIN_BRANCH}}
+export BRANCH TPL_BRANCH GEOS_BRANCH GEOS_EFFECTIVE_BRANCH
 
 ### ======================================================================= ####
 ## Last GEOS_BRANCH that builds
@@ -329,7 +330,7 @@ umask 0022
 # -------------------------------------------------------------------------- #
 # Create sroot or set it to pwd and manage source directories
 # echo "## $0 PRE Note : sroot=$sroot "  ;
-if [ ! -d $sroot ]; then
+if [[ ! -d $sroot ]]; then
     mkdir -p $sroot ; RC=$?
     if [ $RC -ne 0 ]; then
 	echo "## $0 Warning : I cannot create $sroot ! Setting sroot = $(pwd) "  ;
@@ -376,9 +377,9 @@ echo "## GEOS : GEOS_VER=$GEOS_VER"
 : ${VER:="$GEOS_VER"} ;
 # : ${VER:="0.2.0${projdir}"} ;
   STACK="${HOST_CONFIG_BASE}-${build_type}"
-  BUILDIR="build-${STACK}"
+  BUILDDIR="build-${STACK}"
   INSTALLDIR="install-${STACK}"
-  export GEOSX_VENV="${BUILDIR}--$GEOSX_VENV" BUILDIR INSTALLDIR
+  export GEOSX_VENV="${BUILDDIR}--$GEOSX_VENV" BUILDDIR INSTALLDIR
 # -------------------------------------------------------------------------- #
 
 # Manage and create local build cache directory
@@ -404,11 +405,11 @@ if [[ "${LCACHE}" == "0" ]] ; then
 else
     broot=$croot; 
 fi
-export TPL_BUILD_DIR=${broot}/${PKG}/${TPL_PKG}/$BUILDIR
-export GEOSX_BUILD_DIR=${broot}/${PKG}/${PKG}/$BUILDIR
+export TPL_BUILD_DIR=${broot}/${PKG}/${TPL_PKG}/$BUILDDIR
+export GEOSX_BUILD_DIR=${broot}/${PKG}/${PKG}/$BUILDDIR
 
 # Manage installation directories
-if [ "${CHAP}" == "1" ]; then
+if [[ "${CHAP}" == "1" ]]; then
 
     echo "## $0 Note : /chap public installation "  ;
     export iroot="/chap"
@@ -426,7 +427,7 @@ if [ "${CHAP}" == "1" ]; then
 else
 
     echo "## $0 Note : /data/saet/software installation "  ;
-    if [ ! -d $iroot ]; then
+    if [[ ! -d $iroot ]]; then
 	mkdir -p $iroot ; RC=$?
 	if [ $RC -ne 0 ]; then
 	    echo "## $0 Warning : I cannot create $iroot ! Setting iroot = $(pwd) "  ;
@@ -457,12 +458,12 @@ fi
 # Installation directories
 # Check and create TPL installation path
 if [[ "${TPL}" == "1" && "${BUILD}" == "1" ]]; then
-    [ ! -d $prefix_tpl ] && mkdir -p $prefix_tpl;  # prefix_tpl=$(readlink -f $prefix_tpl);
+   [[ ! -d $prefix_tpl ]] && mkdir -p $prefix_tpl;  # prefix_tpl=$(readlink -f $prefix_tpl);
 fi
 
 # Check and create GEOS installation path
 if [[ "${GEOS}" == "1" && "${BUILD}" == "1" && "${GEOS_INSTALL}" != "0" ]]; then 
-    [ ! -d $prefix_geosx ] && mkdir -p $prefix_geosx;  # prefix_geosx=$(readlink -f $prefix_geosx);
+   [[ ! -d $prefix_geosx ]] && mkdir -p $prefix_geosx;  # prefix_geosx=$(readlink -f $prefix_geosx);
 fi
 
 # Allow to use existing TPL installation possibly from a common location by setting it to GEOSX_TPL_DIR
@@ -474,7 +475,7 @@ export GEOS_TPL_DIR=$GEOSX_TPL_DIR
 export GEOSX_DIR=${prefix_geosx}
 
 
-if [ ${V} -ge 1 ]; then 
+if [[ ${V} -ge 1 ]]; then 
     echo "## $0 Note :  
 #    prefix_geosx=$prefix_geosx ; isuffix_geosx=$isuffix_geosx 
 #    prefix_tpl=$prefix_tpl ; isuffix_tpl=$isuffix_tpl"
@@ -536,7 +537,8 @@ if [ ${V} -gt 0 ]; then
     echo "# srcpath         = ${srcpath} ; the file directory root where GEOS and TPL will be cloned" 
     echo "# scrpath dir     = ${scrpath} ; the file directory root these scripts reside on " 
     echo "# Script dir/name = ${scrdir}/$(basename $0) ; full pathname of this script"
-    echo "# BUILDIR         = ${BUILDIR}" 
+    echo "# BUILDDIR         = ${BUILDDIR}" 
+    echo "# INSTALLDIR      = ${INSTALLDIR}" 
     echo "# LCACHE          = ${LCACHE} : 0 = no cache; 1 = use cache; 2 = clear cache before building; 3 = copy GEOS cached build to \$sroot; 4 = copy entire cache back" 
     echo "# CTEST           = ${CTEST} : 0 = don't run tests; 1 = run tests " 
     if [ ${V} -gt 1 ]; then 
@@ -589,7 +591,7 @@ if [ "${INIT_ONLY}" != "1" ]; then
 	    fi
 	fi
 
-	if [ "${GEOS_UPDATE}" == "1"  ] ; then 
+	if [[ "${GEOS_UPDATE}" == "1" && "${CLONE}" != "1" ]] ; then 
 	    cd ${PKG}
 	    echo "## GEOS : Updating ${PKG} at $(pwd) (also update the GEOS/host-configs before configuring and building TPL) "
 	    echo "## Origin : ${gitGEOS}"
@@ -614,7 +616,7 @@ if [ "${INIT_ONLY}" != "1" ]; then
 	    git submodule update --init src/coreComponents/LvArray
 	    git submodule update --init src/coreComponents/fileIO/coupling/hdf5_interface
 	    git submodule update --init src/coreComponents/constitutive/PVTPackage
-	    git submodule update --init scripts/uberenv
+	    # git submodule update --init scripts/uberenv
 	    
 	    # Populate $srcpath/$PKG/host-configs/CVX with CVX specific host_configs 
 	    if [[ $CVX_HOSTCONFIGS == 1 ]]; then 
@@ -650,7 +652,7 @@ if [ "${INIT_ONLY}" != "1" ]; then
 	    # https://github.com/GEOS/thirdPartyLibs.git
 	fi
 
-	if [[ "${TPL_UPDATE}" == "1" ]] ; then 
+	if [[ "${TPL_UPDATE}" == "1" && "${CLONE}" != "1" ]] ; then 
 	    # Update the TPL packages 
 	    cd ${TPL_SOURCES_DIR}
 	    echo "## TPL : Updating ${TPL_PKG} at $(pwd) ( should== $TPL_SOURCES_DIR ) "
@@ -679,7 +681,7 @@ if [ "${INIT_ONLY}" != "1" ]; then
 		exit $RC;
 	    fi
 
-	    if [[ "${TPL_UPDATE}" == "1" ]] ; then 
+	    if [[ "${TPL_UPDATE}" == "1" && "${CLONE}" != "1" ]] ; then 
 		echo "## TPL : Updating branch (git pull branch=${TPL_BRANCH}) "
 		git pull || RCerror $0 $? "(TPL) Cannot git pull "
 		git-lfs pull || RCerror $0 $? "(TPL) Cannot git-lfs pull "
@@ -709,10 +711,10 @@ if [ "${INIT_ONLY}" != "1" ]; then
 	    fi
 
 	    # At either TPL_SOURCES_DIR or $croot/$PKG/${TPL_PKG}
-	    # BUILDIR="build-${CONFIG_NAME}-${build_type}"
-	    if [ ! -d ${BUILDIR} ]; then
-		echo "## TPL : Creating ${BUILDIR} at $(pwd) "
-		mkdir -p ${BUILDIR}; 
+	    # BUILDDIR="build-${CONFIG_NAME}-${build_type}"
+	    if [ ! -d ${BUILDDIR} ]; then
+		echo "## TPL : Creating ${BUILDDIR} at $(pwd) "
+		mkdir -p ${BUILDDIR}; 
 	    fi
 
 	    # Which parts of TPL to build ; 0 ; all; or, target list
@@ -728,15 +730,15 @@ if [ "${INIT_ONLY}" != "1" ]; then
 		$ECHO $CVX_PYTHON3 scripts/config-build.py "$TPL_CMAKE_VARS" -hc $HOST_CONFIG_FILENAME -DSCOTCH_NUM_PROC=1 \
 		    -bt ${BUILD_TYPE} -DGEOSX_TPL_DIR=$GEOSX_TPL_DIR -ip $GEOSX_TPL_DIR -DNUM_PROC=${NUM_PROC} |& tee Config-TPL-${DT_GEOSX}.log  
  
-		cd ./${BUILDIR}
-		export TPL_BUILDIR_PATH=$(readlink -f $(pwd))
-		echo "## TPL : Building thirdPartyLibs at TPL_BUILD_DIR=$TPL_BUILD_DIR ( TPL_BUILDIR_PATH=$TPL_BUILDIR_PATH == $TPL_BUILD_DIR ) "
+		cd ./${BUILDDIR}
+		export TPL_BUILDDIR_PATH=$(readlink -f $(pwd))
+		echo "## TPL : Building thirdPartyLibs at TPL_BUILD_DIR=$TPL_BUILD_DIR ( TPL_BUILDDIR_PATH=$TPL_BUILDDIR_PATH == $TPL_BUILD_DIR ) "
 		make -k |& tee Make-${DT_GEOSX}.log 
 	    else 
 		# Only rebuild list of TPL targets
-		cd ./${BUILDIR}
-		export TPL_BUILDIR_PATH=$(readlink -f $(pwd))
-		echo "## TPL : Re-Building thirdPartyLibs at TPL_BUILD_DIR=$TPL_BUILD_DIR ( TPL_BUILDIR_PATH=$TPL_BUILDIR_PATH == $TPL_BUILD_DIR ) "
+		cd ./${BUILDDIR}
+		export TPL_BUILDDIR_PATH=$(readlink -f $(pwd))
+		echo "## TPL : Re-Building thirdPartyLibs at TPL_BUILD_DIR=$TPL_BUILD_DIR ( TPL_BUILDDIR_PATH=$TPL_BUILDDIR_PATH == $TPL_BUILD_DIR ) "
 		VERBOSE=1 make ${TPL_BUILD_ONLY} -k |& tee Make-TPL_BUILD_ONLY-${DT_GEOSX}.log 
 	    fi
 	    ln -s $GEOSX_TPL_DIR
@@ -816,14 +818,14 @@ $(env | egrep 'root|fix|Python3|PYTH|ENV|ENABLE(.*)|TPL|GEOS|CONF|CACHE|CUDA|ARC
 	    ## GEOS Configuration step
 	    echo "## GEOS : Now at $(pwd) "
 
-	    if [ ! -d ${BUILDIR} ]; then
-		echo "## GEOS : Creating BUILDIR=${BUILDIR} at $(pwd) "
-		mkdir -p ${BUILDIR};
+	    if [ ! -d ${BUILDDIR} ]; then
+		echo "## GEOS : Creating BUILDDIR=${BUILDDIR} at $(pwd) "
+		mkdir -p ${BUILDDIR};
 	    fi
-	    echo "## GEOS : BUILDIR=${BUILDIR} at $(pwd) "
+	    echo "## GEOS : BUILDDIR=${BUILDDIR} at $(pwd) "
 	    ## MikeT: Check if the GEOSX_BUILD_DIR is the same as the one already set
 	    echo "## GEOS : GEOSX_BUILD_DIR=$GEOSX_BUILD_DIR (Pre)"
-	    export GEOSX_BUILD_DIR=$(readlink -f ${BUILDIR})
+	    export GEOSX_BUILD_DIR=$(readlink -f ${BUILDDIR})
  	    echo "## GEOS : GEOSX_BUILD_DIR=$GEOSX_BUILD_DIR (Post)"
 	    
 	    # GEOS_REBUILD == 1 does not install/rebuild ATS or Python Tools
@@ -833,7 +835,7 @@ $(env | egrep 'root|fix|Python3|PYTH|ENV|ENABLE(.*)|TPL|GEOS|CONF|CACHE|CUDA|ARC
 		    # Prepare virtual environment for Python tools and Designate compiler for mpi4py 
 		    # GEOSX_BUILD_VENV
 
-		    # Setup virtual environment as ../$BUILDIR--$GEOSX_VENV a peer dir to $BUILDIR
+		    # Setup virtual environment as ../$BUILDDIR--$GEOSX_VENV a peer dir to $BUILDDIR
 		    export GEOSX_BUILD_VENV_DIR=${GEOSX_TPL_DIR}/$GEOSX_VENV
 		    export GEOSX_INSTALL_VENV_DIR=${GEOSX_BUILD_VENV_DIR}
 		    
@@ -1030,20 +1032,20 @@ $(env | egrep 'root|fix|Python3|PYTH|ENV|ENABLE(.*)|TPL|GEOS|CONF|CACHE|CUDA|ARC
 	pushd $GEOSX_BUILD_DIR
 
 	# if [ ${LCACHE} -gt 0 ]; then
-	#     pushd $croot/$PKG/$PKG/$BUILDIR
+	#     pushd $croot/$PKG/$PKG/$BUILDDIR
 	# else
-	#     pushd $sroot/$PKG/$PKG/$BUILDIR
+	#     pushd $sroot/$PKG/$PKG/$BUILDDIR
 	# fi
-	echo "## GEOS : Running ctest -V on $BUILDIR at $GEOSX_BUILD_DIR. If there is no $BUILDIR, this will fail."
+	echo "## GEOS : Running ctest -V on $BUILDDIR at $GEOSX_BUILD_DIR. If there is no $BUILDDIR, this will fail."
 	ctest -V |& tee CTEST-${CONFIG_NAME}_${DT_GEOSX}.log 
 
 	if [ ${LCACHE} -gt 0 ]; then
-	    echo "## GEOS : Syncing $croot/$PKG/$PKG/$BUILDIR/Testing_${DT_GEOSX} --> $sroot/$PKG/$PKG/$BUILDIR"
-	    mkdir -p $sroot/$PKG/$PKG/$BUILDIR
-	    mv $croot/$PKG/$PKG/$BUILDIR/Testing $croot/$PKG/$PKG/$BUILDIR/Testing_${DT_GEOSX}
-	    rsync -a${RSYNCV} $croot/$PKG/$PKG/$BUILDIR/Testing_${DT_GEOSX} $sroot/$PKG/$PKG/$BUILDIR    
+	    echo "## GEOS : Syncing $croot/$PKG/$PKG/$BUILDDIR/Testing_${DT_GEOSX} --> $sroot/$PKG/$PKG/$BUILDDIR"
+	    mkdir -p $sroot/$PKG/$PKG/$BUILDDIR
+	    mv $croot/$PKG/$PKG/$BUILDDIR/Testing $croot/$PKG/$PKG/$BUILDDIR/Testing_${DT_GEOSX}
+	    rsync -a${RSYNCV} $croot/$PKG/$PKG/$BUILDDIR/Testing_${DT_GEOSX} $sroot/$PKG/$PKG/$BUILDDIR    
 	else
-	    mv $sroot/$PKG/$PKG/$BUILDIR/Testing $sroot/$PKG/$PKG/$BUILDIR/Testing_${DT_GEOSX}
+	    mv $sroot/$PKG/$PKG/$BUILDDIR/Testing $sroot/$PKG/$PKG/$BUILDDIR/Testing_${DT_GEOSX}
 	fi 
 	TS_CTEST_1=$(date "+ %s.%N")
     fi
@@ -1085,16 +1087,16 @@ fi
 if [[ "${GEOS}" == "1" && "${BUILD_ONLY}" == "1" ]] || [[ "${INIT_ONLY}" == "1" ]] ; then 
     pushd $GEOSX_BUILD_DIR
     # if [ ${LCACHE} -gt 0 ]; then
-    # 	pushd $croot/$PKG/$PKG/$BUILDIR
+    # 	pushd $croot/$PKG/$PKG/$BUILDDIR
     # else
-    # 	pushd $sroot/$PKG/$PKG/$BUILDIR
+    # 	pushd $sroot/$PKG/$PKG/$BUILDDIR
     # fi
 fi
 
 if [[ $PUBLISH_INIT == 1 ]]; then 
 
     echo "## $0 Note : "
-    echo "#     building $PKG modulefile ${modfile} at $GEOSX_BUILD_DIR=$GEOSX_BUILD_DIR (pwd=$(pwd))"
+    echo "#     Building $PKG modulefile ${modfile} at GEOSX_BUILD_DIR=$GEOSX_BUILD_DIR (pwd=$(pwd))"
 
     cat > $modfile  << EOF
 #%Module1.0#####################################################################
@@ -1107,6 +1109,7 @@ if [[ $PUBLISH_INIT == 1 ]]; then
 ##
 ## PKG           : ${PKG}
 ## VER           : ${VER}
+## HOST_CONFIG_FILENAME : ${HOST_CONFIG_FILENAME}
 ## ${PKG}_BRANCH   : ${GEOS_EFFECTIVE_BRANCH}
 ## TPL_BRANCH    : ${TPL_BRANCH}
 ## STACK         : ${STACK}
@@ -1131,16 +1134,22 @@ set geosx_dir               "${GEOSX_DIR}"
 setenv GEOSX_DIR            "\$geosx_dir"
 setenv GEOSX_HOME           "\$geosx_dir"
 setenv GEOSX_ROOT           "\$geosx_dir"
-setenv GEOSX_CONFIG_NAME    ${CONFIG_NAME}
-setenv GEOSX_VER            ${VER}
+setenv HOST_CONFIG_BASE     "${HOST_CONFIG_BASE}"
+setenv GEOSX_CONFIG_NAME    "${CONFIG_NAME}"
+setenv HOST_CONFIG_FILENAME "${HOST_CONFIG_FILENAME}"
+setenv GEOSX_VER            "${VER}"
 setenv GEOS_BRANCH          "${GEOS_EFFECTIVE_BRANCH}"
 setenv GEOSX_PREREQ_MODULES        "${MODULES}"
 setenv GEOSX_ALL_MODULES           "${MODULES} ${mroot}/${modfile}"
-setenv TPL_BRANCH                  "${TPL_BRANCH}"
+setenv TPL_BRANCH                  "${TPL_EFFECTIVE_BRANCH}"
 setenv GEOSX_TPL_DIR               "${GEOSX_TPL_DIR}"
 setenv GEOSX_DIR                   "\${geosx_dir}"
 setenv GEOSX_BUILD_DIR             "${GEOSX_BUILD_DIR}"
 setenv TPL_BUILD_DIR               "${TPL_BUILD_DIR}"
+setenv BUILD_TYPE		   "${BUILD_TYPE}"
+setenv build_type		   "${build_type}"
+setenv BUILDDIR			   "${BUILDDIR}"
+setenv INSTALLDIR		   "${INSTALLDIR}"
 setenv GEOSX_VENV                  "${GEOSX_VENV}"
 setenv GEOSX_BUILD_VENV_DIR        "${GEOSX_BUILD_VENV_DIR}"
 setenv GEOSX_INSTALL_VENV_DIR      "${GEOSX_INSTALL_VENV_DIR}"
@@ -1157,12 +1166,12 @@ prepend-path    PATH        "\$geosx_dir/bin"
 setenv GCC_VER              "$GCC_VER"
 setenv HOST_COMPILER        "${HOST_COMPILER}"
 setenv CUDA_VER             "$CUDA_VER"
-setenv sroot                $sroot
-setenv iroot                $iroot
-setenv croot                $croot
+setenv sroot                "$sroot"
+setenv iroot                "$iroot"
+setenv croot                "$croot"
 
-setenv MPI            $MPI
-setenv MPI_VER        $MPI_VER
+setenv MPI            "$MPI"
+setenv MPI_VER        "$MPI_VER"
 
 EOF
 
@@ -1340,7 +1349,7 @@ EOF
    module load "${mroot}/${modfile}"
    # module load ${MODULES} "${mroot}/${modfile}"
  else
-   echo "## $0 Note : "
+   echo "## \${BASH_SOURCE[0]} Note : "
    echo "## to work properly, script \${BASH_SOURCE[0]} must be sourced :"
    echo "\$ source \${BASH_SOURCE[0]}"
 fi
@@ -1376,8 +1385,8 @@ EOF
 
     # INIT_ONLY != 0
     if [ ${LCACHE} -eq 3 ]; then
-	echo "## GEOS : Syncing $croot/$PKG/$PKG/$BUILDIR --> $sroot/$PKG/$PKG "
-	rsync -a${RSYNCV} $croot/$PKG/$PKG/$BUILDIR $sroot/$PKG/$PKG
+	echo "## GEOS : Syncing $croot/$PKG/$PKG/$BUILDDIR --> $sroot/$PKG/$PKG "
+	rsync -a${RSYNCV} $croot/$PKG/$PKG/$BUILDDIR $sroot/$PKG/$PKG
     elif [  ${LCACHE} -ge 4  ]; then
 	echo "## Syncing EVERYTHING ! $croot/$PKG --> $sroot "
 	rsync -a${RSYNCV} $croot/$PKG $sroot

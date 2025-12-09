@@ -58,7 +58,7 @@ export gitTPL gitGEOS
 
 : ${CUDA:="12"} 
 
-: ${mpi:="mpi"}
+: ${mpi:="intel/oneapi/mpi/latest"}
 # : ${mpi:="mpi/2021.5.1 UCX_1.13.0"}
 # : ${mpi:="mpi UCX_1.13.0"}
 : ${comp:="gcc/14.2.0-rh8"}

@@ -1,1 +1,1 @@
-GPU-OPTO3-Hypre-GCC-CUDA-MPI-OMP.cmake
+GPU-Hypre-GCC-CUDA-MPI-OMP.cmake

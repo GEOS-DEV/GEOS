@@ -57,7 +57,7 @@ export H=$(hostname)
 export gitTPL gitGEOS 
 
 : ${CUDA:="12"} 
-: ${mpi:="mpi"}
+: ${mpi:="intel/oneapi/mpi/latest"}
 
 if [[ "$CUDA" == "12" ]]; then
     : ${gpu_comp:="CUDA/12.6"}
