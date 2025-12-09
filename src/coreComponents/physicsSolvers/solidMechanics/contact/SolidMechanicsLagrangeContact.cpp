@@ -213,26 +213,13 @@ void SolidMechanicsLagrangeContact::initializePreSubGroups()
 
 }
 
-void SolidMechanicsLagrangeContact::setupSystem( DomainPartition & domain,
-                                                 DofManager & dofManager,
-                                                 CRSMatrix< real64, globalIndex > & localMatrix,
-                                                 ParallelVector & rhs,
-                                                 ParallelVector & solution,
-                                                 bool const GEOS_UNUSED_PARAM( setSparsity ) )
+void SolidMechanicsLagrangeContact::setSparsityPattern( DomainPartition & domain,
+                                                        DofManager & dofManager,
+                                                        CRSMatrix< real64, globalIndex > & localMatrix,
+                                                        SparsityPattern< globalIndex > & pattern )
 {
-  if( m_precond )
-  {
-    m_precond->clear();
-  }
-
-  // setup monolithic coupled system
-  PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, true ); // "true" is to force setSparsity
-
-  if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
-  {
-    createPreconditioner( domain );
-  }
-
+  // avoid calling SolidMechanicsLagrangianFEM::setSparsityPattern
+  PhysicsSolverBase::setSparsityPattern( domain, dofManager, localMatrix, pattern );
 }
 
 void SolidMechanicsLagrangeContact::implicitStepSetup( real64 const & time_n,
@@ -1843,7 +1830,8 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
           }
         }
         GEOS_ERROR_IF( realNodes != 2,
-                       getDataContext() << ": An edge shared by two fracture elements must have 2 nodes." );
+                       getDataContext() << ": An edge shared by two fracture elements must have 2 nodes.",
+                       getDataContext() );
         edge.resize( realNodes );
 
         // Compute nodal area factor

@@ -6,6 +6,14 @@ restartcheck_params["rtol"] = 1.0E-5
 
 decks = [
     TestDeck(
+        name="resvol_constraint",
+        description=
+        "Compositional multiphase well test (1D displacement, 2-phase 4-component, 2 wells, reservoir volume well constraint)",
+        partitions=[(1, 1, 1), (2, 1, 1)],
+        restart_step=5,
+        check_step=10,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
         name="compositional_multiphase_wells_1d",
         description=
         "Compositional multiphase well test (1D displacement, 2-phase 4-component, 2 wells)",
@@ -124,7 +132,21 @@ decks = [
         partitions=[(1, 1, 1), (1, 1, 4)],
         restart_step=65,
         check_step=195,
-        restartcheck_params=RestartcheckParameters(**restartcheck_params))
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="dome_soreide_whitson_smoke",
+        description="Injection into a depleted reservoir using the Soreide Whitson EoS",
+        partitions=[(1, 1, 1), (2, 2, 1)],
+        restart_step=50,
+        check_step=150,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="dome_kvalue_smoke",
+        description="Injection into a depleted reservoir using a K-Value model",
+        partitions=[(1, 1, 1), (2, 2, 1)],
+        restart_step=50,
+        check_step=150,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params))         
 ]
 
 generate_geos_tests(decks)
