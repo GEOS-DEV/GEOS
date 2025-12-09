@@ -201,6 +201,9 @@
       asm ( "trap;" ); \
     } \
   } while( false )
+#else
+  // TODO: add HIP path
+#define GEOS_ERROR_IF_CAUSE( COND, CAUSE_MESSAGE, ... )
 #endif
 
 /**
@@ -283,6 +286,9 @@
       asm ( "trap;" ); \
     } \
   } while( false )
+#else
+  // TODO: add HIP path
+#define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... )
 #endif
 
 /**
@@ -360,6 +366,9 @@
       asm ( "trap;" ); \
     } \
   } while( false )
+#else
+  // TODO: add HIP path
+#define GEOS_WARNING_IF_CAUSE( COND, CAUSE_MESSAGE, ... )
 #endif
 
 /**
