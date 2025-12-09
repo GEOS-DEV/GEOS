@@ -14,7 +14,7 @@
  */
 
 /**
- * @file CompositionalMultiphaseStatistics.hpp
+ * @file CompositionalMultiphaseStatisticsAggregator.hpp
  */
 
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICSAGGREGATOR_HPP_
@@ -41,75 +41,110 @@ struct AggregatorParameters
   // TODO: add other params like views and stuff
 };
 
-struct RegionStatistics
+/**
+ * @brief Output data group to contain the result of a given stat aggregator on the dataRepository.
+ *        Attributes are public since the class is a POD. Can it be replaced by a wrapped-struct?
+ */
+class RegionStatistics : public dataRepository::Group
 {
+public:
+
   /// Time of statistics computation
-  real64 time;
+  real64 m_time;
 
   /// average region pressure
-  real64 averagePressure;
+  real64 m_averagePressure;
   /// minimum region pressure
-  real64 minPressure;
+  real64 m_minPressure;
   /// maximum region pressure
-  real64 maxPressure;
+  real64 m_maxPressure;
 
   /// minimum region delta pressure
-  real64 minDeltaPressure;
+  real64 m_minDeltaPressure;
   /// maximum region delta pressure
-  real64 maxDeltaPressure;
+  real64 m_maxDeltaPressure;
 
   /// average region temperature
-  real64 averageTemperature;
+  real64 m_averageTemperature;
   /// minimum region temperature
-  real64 minTemperature;
+  real64 m_minTemperature;
   /// maximum region temperature
-  real64 maxTemperature;
+  real64 m_maxTemperature;
 
   /// total region pore volume
-  real64 totalPoreVolume;
+  real64 m_totalPoreVolume;
   /// total region uncompacted pore volume
-  real64 totalUncompactedPoreVolume;
+  real64 m_totalUncompactedPoreVolume;
   /// phase region phase pore volume
-  array1d< real64 > phasePoreVolume;
+  array1d< real64 > m_phasePoreVolume;
 
   /// region phase mass (trapped and non-trapped, immobile and mobile)
-  array1d< real64 > phaseMass;
+  array1d< real64 > m_phaseMass;
   /// trapped region phase mass
-  array1d< real64 > trappedPhaseMass;
+  array1d< real64 > m_trappedPhaseMass;
   /// non-trapped region phase mass
-  array1d< real64 > nonTrappedPhaseMass;
+  array1d< real64 > m_nonTrappedPhaseMass;
   /// immobile region phase mass
-  array1d< real64 > immobilePhaseMass;
+  array1d< real64 > m_immobilePhaseMass;
   /// mobile region phase mass
-  array1d< real64 > mobilePhaseMass;
+  array1d< real64 > m_mobilePhaseMass;
   /// region component mass
-  array2d< real64 > componentMass;
+  array2d< real64 > m_componentMass;
 
   // TODO: -> split to struct PressureStats...MassStats:
   // - VKS for struct name ("pressureStats"..."massStats")
   // - current RegionStatistics struct bits
+
+  /**
+   * @brief Construct a new Region Statistics object
+   * @param name instance name in data-repository
+   * @param parent the instance parent in data-repository
+   */
+  RegionStatistics( const string & name, dataRepository::Group * const parent );
 };
 
-struct CFLStatistics
+/**
+ * @brief Output data group to contain the result of a given stat aggregator on the dataRepository.
+ *        Attributes are public since the class is a POD. Can it be replaced by a wrapped-struct?
+ */
+class CFLStatistics : public dataRepository::Group
 {
+public:
   /// Time of statistics computation
-  real64 time;
+  real64 m_time;
 
   /// Maximum Courant Friedrichs Lewy number in the grid for each phase
-  real64 maxPhaseCFL;
+  real64 m_maxPhaseCFL;
 
   /// Maximum Courant-Friedrichs-Lewy number in the grid for each component
-  real64 maxCompCFL;
+  real64 m_maxCompCFL;
+
+  /**
+   * @brief Construct a new CFLStatistics object
+   * @param name instance name in data-repository
+   * @param parent the instance parent in data-repository
+   */
+  CFLStatistics( const string & name, dataRepository::Group * const parent );
 };
 
+/**
+ * @brief Reponsible of computing physical statistics over the grid, registering the result in the
+ *        data repository, but not storing / outputing it by itself. It does not have mutable state
+ *        except the encountered issues.
+ */
 class StatsAggregator
 {
 public:
 
-  struct viewKeyStruct
+  /**
+   * @brief the associated view keys
+   */
+  struct VKStruct
   {
-    /// String for the region statistics
+    /// String for the region statistics group
     constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
+    /// String for the cfl statistics group
+    constexpr static char const * cflStatisticsString() { return "cflStatistics"; }
   };
 
   using RegionFunctor = std::function< void (string_view, RegionStatistics const &) >;
@@ -129,8 +164,7 @@ public:
   //                          std::function< void(MeshLevel const &,
   //                                              string_array const & regionNames) > functor ) const;
 
-  void forRegionStatistics( DomainPartition const &,
-                            MeshLevel const & mesh,
+  void forRegionStatistics( MeshLevel const & mesh,
                             RegionFunctor functor ) const;
 
   /**
@@ -154,29 +188,33 @@ public:
    * @param[in] time current time
    * @param[in] mesh the mesh level object
    * @param[in] regionNames the array of target region names
-   * return false if 
+   * @return false if there was a problem that prevented the statistics to be computed correctly.
    */
   bool computeRegionsStatistics( real64 const time,
                                  MeshLevel & mesh,
-                                 string_array const & regionNames ) const;
+                                 string_array const & regionNames );
 
   /**
    * @brief Compute CFL numbers
    * @param[in] time current time
    * @param[in] dt the time step size
    * @param[in] domain the domain partition
+   * @return false if there was a problem that prevented the statistics to be computed correctly.
    */
-  void computeCFLNumbers( real64 const time,
+  bool computeCFLNumbers( real64 const time,
                           real64 const dt,
-                          DomainPartition & domain ) const;
+                          DomainPartition & domain );
 
-  CFLStatistics const & getCFLStatistics() const
-  { return m_cflStats; }
+  CFLStatistics * getCFLStatistics( DomainPartition & domain ) const
+  {return domain.getGroupPointer< CFLStatistics >( VKStruct::cflStatisticsString() ); }
 
   CompositionalMultiphaseBase const * getSolver() const
   { return m_solver; }
 
-  stdVector< string_view > const & getIssues() const
+  /**
+   * @return The encountered issues during the last computing method call.
+   */
+  stdVector< string > const & getIssues() const
   { return m_issues; }
 
 private:
@@ -185,9 +223,7 @@ private:
 
   AggregatorParameters m_params;
 
-  CFLStatistics m_cflStats;
-
-  stdVector< string_view > m_issues;
+  stdVector< string > m_issues;
 
   bool m_isRegionStatsEnabled;
 

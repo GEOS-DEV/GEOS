@@ -20,9 +20,11 @@
 #include "CompositionalMultiphaseStatisticsTask.hpp"
 
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/StdContainerWrappers.hpp"
 #include "common/format/Format.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/MeshLevel.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
@@ -36,6 +38,7 @@
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
 #include <memory>
+#include <string>
 
 
 namespace geos
@@ -106,7 +109,7 @@ void StatsTask::registerDataOnMesh( Group & meshBodies )
 
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                               MeshLevel & mesh,
-                                                              string_array const & regionNames )
+                                                              string_array const & )
   {
     prepareLogTableLayouts( mesh.getName() );
     prepareCsvTableLayouts( mesh.getName() );
@@ -126,7 +129,7 @@ void StatsTask::prepareFluidMetaData()
 
   m_fluid.m_phaseCompNames.resize(
     m_fluid.m_numPhases,
-    stdVector< string >( m_fluid.m_numComps, {} ) );
+    stdVector< string >( m_fluid.m_numComps, string() ) );
 
   for( int ip = 0; ip < m_fluid.m_numPhases; ++ip )
     for( int ic = 0; ic < m_fluid.m_numComps; ++ic )
@@ -142,7 +145,7 @@ void StatsTask::prepareLogTableLayouts( string_view meshName )
   TableLayout const tableLayout = TableLayout()
                                     .setTitle( GEOS_FMT( "{}: mesh {}", getName(), meshName ) );
 
-  m_csvFormatters.emplace( meshName, std::make_unique< TableTextFormatter >( tableLayout ) );
+  m_logFormatters.emplace( meshName, std::make_unique< TableTextFormatter >( tableLayout ) );
 }
 
 void StatsTask::prepareCsvTableLayouts( string_view meshName )
@@ -173,19 +176,19 @@ void StatsTask::prepareCsvTableLayouts( string_view meshName )
   string_view massUnit = units::getSymbol( m_solver->getMassUnit() );
 
   TableLayout tableLayout( {
-      TableLayout::Column().setName( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ))),
-      TableLayout::Column().setName( "Region" ),   // TODO : mention this change in PR description
-      TableLayout::Column().setName( GEOS_FMT( "Min pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
-      TableLayout::Column().setName( GEOS_FMT( "Average pressure [{}]", units::getSymbol( units::Unit::Pressure )) ),
-      TableLayout::Column().setName( GEOS_FMT( "Max pressure [{}]", units::getSymbol( units::Unit::Pressure ) ) ),
-      TableLayout::Column().setName( GEOS_FMT( "Min delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
-      TableLayout::Column().setName( GEOS_FMT( "Max delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
-      TableLayout::Column().setName( GEOS_FMT( "Min temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
-      TableLayout::Column().setName( GEOS_FMT( "Average temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
-      TableLayout::Column().setName( GEOS_FMT( "Max temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
-      TableLayout::Column().setName( GEOS_FMT( "Total dynamic pore volume [{}]", units::getSymbol( units::Unit::ReservoirVolume ) )),
-    } );
-  addPhaseColumns( tableLayout, "Phase dynamic pore volume", units::getSymbol( units::Unit::ReservoirVolume ) ), numPhases );
+        TableLayout::Column().setName( GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ))),
+        TableLayout::Column().setName( "Region" ), // TODO : mention this change in PR description
+        TableLayout::Column().setName( GEOS_FMT( "Min pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+        TableLayout::Column().setName( GEOS_FMT( "Average pressure [{}]", units::getSymbol( units::Unit::Pressure )) ),
+        TableLayout::Column().setName( GEOS_FMT( "Max pressure [{}]", units::getSymbol( units::Unit::Pressure ) ) ),
+        TableLayout::Column().setName( GEOS_FMT( "Min delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+        TableLayout::Column().setName( GEOS_FMT( "Max delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))),
+        TableLayout::Column().setName( GEOS_FMT( "Min temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
+        TableLayout::Column().setName( GEOS_FMT( "Average temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
+        TableLayout::Column().setName( GEOS_FMT( "Max temperature [{}]", units::getSymbol( units::Unit::Temperature ) )),
+        TableLayout::Column().setName( GEOS_FMT( "Total dynamic pore volume [{}]", units::getSymbol( units::Unit::ReservoirVolume ) )),
+      } );
+  addPhaseColumns( tableLayout, "Phase dynamic pore volume", units::getSymbol( units::Unit::ReservoirVolume ), numPhases );
   addPhaseColumns( tableLayout, "Phase mass", massUnit, numPhases );
   addPhaseColumns( tableLayout, "Trapped phase mass (metric 1)", massUnit, numPhases );
   addPhaseColumns( tableLayout, "Non-trapped phase mass (metric 1)", massUnit, numPhases );
@@ -197,10 +200,13 @@ void StatsTask::prepareCsvTableLayouts( string_view meshName )
   m_csvFormatters.emplace( meshName, std::move( csvFormatter ) );
 
   // output CSV header
-  std::ofstream outputFile( GEOS_FMT( "{}/{}.csv", m_outputDir, meshName ));
+  std::ofstream outputFile( getCsvFileName( meshName ) );
   outputFile << csvFormatter->headerToString();
   GEOS_LOG( GEOS_FMT( "table {} : {}", meshName, csvFormatter->headerToString() ) );     // TODO : remove this log
 }
+
+string StatsTask::getCsvFileName( string_view meshName ) const
+{ return GEOS_FMT( "{}/{}.csv", m_outputDir, meshName ); }
 
 bool StatsTask::execute( real64 const time_n,
                          real64 const dt,
@@ -232,13 +238,16 @@ bool StatsTask::execute( real64 const time_n,
 
 void StatsTask::outputLogStats( real64 const statsTime,
                                 MeshLevel & mesh,
-                                string_array const & regionNames )
+                                string_array const & )
 {
+  if( MpiWrapper::commRank() > 0 || !isLogLevelActive< logInfo::Statistics >( this->getLogLevel() ) )
+    return;
+
   auto const formatterIter = m_logFormatters.find( mesh.getName() );
   if( formatterIter==m_logFormatters.end())
     return;
 
-  TableFormatter const & formatter = *formatterIter->second;
+  TableTextFormatter const & formatter = *formatterIter->second;
   TableData tableData;
   static constexpr auto merge = CellType::MergeNext;
 
@@ -248,7 +257,7 @@ void StatsTask::outputLogStats( real64 const statsTime,
   string_view resVolUnit = units::getSymbol( units::ReservoirVolume );
 
   tableData.addRow( "Statistics time", merge, merge, statsTime );
-  m_aggregator.forRegionStatistics( MeshLevel & mesh,
+  m_aggregator.forRegionStatistics( mesh,
                                     [&]( string_view regionName, RegionStatistics const & stats )
   {
 
@@ -260,57 +269,106 @@ void StatsTask::outputLogStats( real64 const statsTime,
     tableData.addSeparator();
 
     tableData.addRow( GEOS_FMT( "Pressure [{}]", pressureUnit ),
-                      stats.minPressure, stats.averagePressure, stats.maxPressure );
+                      stats.m_minPressure, stats.m_averagePressure, stats.m_maxPressure );
     tableData.addRow( GEOS_FMT( "Delta pressure [{}]", pressureUnit ),
-                      stats.minDeltaPressure, "/", stats.maxDeltaPressure );
+                      stats.m_minDeltaPressure, "/", stats.m_maxDeltaPressure );
     tableData.addRow( GEOS_FMT( "Temperature [{}]", tempUnit ),
-                      stats.minTemperature, stats.averageTemperature, stats.maxTemperature );
+                      stats.m_minTemperature, stats.m_averageTemperature, stats.m_maxTemperature );
 
     tableData.addSeparator();
 
-    tableData.addRow( GEOS_FMT( "Total dynamic pore volume [{}]", resVolUnit ), CellType::MergeNext, CellType::MergeNext, stats.totalPoreVolume );
+    tableData.addRow( GEOS_FMT( "Total dynamic pore volume [{}]", resVolUnit ), CellType::MergeNext, CellType::MergeNext, stats.m_totalPoreVolume );
     tableData.addRow( GEOS_FMT( "Phase dynamic pore volume [{}]", resVolUnit ),
                       stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto data ) { return data[0]; } ),
                       CellType::MergeNext,
-                      stringutilities::joinLambda( stats.phasePoreVolume, "\n", []( auto data ) { return data[0]; } ) );
+                      stringutilities::joinLambda( stats.m_phasePoreVolume, "\n", []( auto data ) { return data[0]; } ) );
 
     tableData.addSeparator();
 
     tableData.addRow( GEOS_FMT( "Phase mass [{}]", massUnit ),
                       stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto data ) { return data[0]; } ),
                       CellType::MergeNext,
-                      stringutilities::joinLambda( stats.phaseMass, "\n", []( auto data ) { return data[0]; } ) );
+                      stringutilities::joinLambda( stats.m_phaseMass, "\n", []( auto data ) { return data[0]; } ) );
 
     tableData.addSeparator();
 
     tableData.addRow( GEOS_FMT( "Trapped phase mass (metric 1) [{}]", massUnit ),
                       stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto value ) { return value[0]; } ),
                       CellType::MergeNext,
-                      stringutilities::joinLambda( stats.trappedPhaseMass, "\n", []( auto value ) { return value[0]; } ) );
+                      stringutilities::joinLambda( stats.m_trappedPhaseMass, "\n", []( auto value ) { return value[0]; } ) );
     tableData.addRow( GEOS_FMT( "Non-trapped phase mass (metric 1) [{}]", massUnit ),
                       stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto value ) { return value[0]; } ),
                       CellType::MergeNext,
-                      stringutilities::joinLambda( stats.nonTrappedPhaseMass, "\n", []( auto value ) { return value[0]; } ) );
+                      stringutilities::joinLambda( stats.m_nonTrappedPhaseMass, "\n", []( auto value ) { return value[0]; } ) );
 
     tableData.addSeparator();
 
     tableData.addRow( GEOS_FMT( "Immobile phase mass (metric 2) [{}]", massUnit ),
                       stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto value ) { return value[0]; } ),
                       CellType::MergeNext,
-                      stringutilities::joinLambda( stats.immobilePhaseMass, "\n", []( auto value ) { return value[0]; } )  );
+                      stringutilities::joinLambda( stats.m_immobilePhaseMass, "\n", []( auto value ) { return value[0]; } )  );
     tableData.addRow( GEOS_FMT( "Mobile phase mass (metric 2) [{}]", massUnit ),
                       stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto value ) { return value[0]; } ),
                       CellType::MergeNext,
-                      stringutilities::joinLambda( stats.mobilePhaseMass, "\n", []( auto value ) { return value[0]; } ) );
+                      stringutilities::joinLambda( stats.m_mobilePhaseMass, "\n", []( auto value ) { return value[0]; } ) );
 
     tableData.addSeparator();
 
     tableData.addRow( GEOS_FMT( "Component mass [{}]", massUnit ),
-                      stringutilities::join( m_fluid.m_phaseCompNames, '\n' ),
+                      "TODO" /*stringutilities::join( m_fluid.m_phaseCompNames, '\n' )*/,
                       CellType::MergeNext,
-                      stringutilities::join( stats.componentMass, '\n' ) );
+                      stringutilities::join( stats.m_componentMass, '\n' ) );
 
     tableData.addSeparator();
+  } );
+
+  GEOS_LOG_RANK_0( formatter.toString( tableData ) );
+}
+
+void StatsTask::outputCsvStats( real64 statsTime,
+                                MeshLevel & mesh,
+                                string_array const & )
+{
+  if( MpiWrapper::commRank() > 0 || m_writeCSV == 0 )
+    return;
+
+  m_aggregator.forRegionStatistics( mesh,
+                                    [&]( string_view meshName, RegionStatistics const & stats )
+  {
+    TableData tableData;
+    stdVector< string > row;
+    row.reserve( m_csvFormatters.at( string( meshName ))->getLayout().getTotalLowermostColumnCount() );
+
+    auto addPhaseValues = []( auto & list, auto const & values )
+    {
+      for( auto value : values )
+        list.emplace_back( std::to_string( value ) );
+    };
+
+    row.insert( row.begin(),
+                { std::to_string( statsTime ),
+                  std::to_string( stats.m_minPressure ),
+                  std::to_string( stats.m_averagePressure ),
+                  std::to_string( stats.m_maxPressure ),
+                  std::to_string( stats.m_minDeltaPressure ),
+                  std::to_string( stats.m_maxDeltaPressure ),
+                  std::to_string( stats.m_minTemperature ),
+                  std::to_string( stats.m_averageTemperature ),
+                  std::to_string( stats.m_maxTemperature ),
+                  std::to_string( stats.m_totalPoreVolume ),
+                } );
+    addPhaseValues( row, stats.m_phasePoreVolume );
+    addPhaseValues( row, stats.m_phaseMass );
+    addPhaseValues( row, stats.m_trappedPhaseMass );
+    addPhaseValues( row, stats.m_nonTrappedPhaseMass );
+    addPhaseValues( row, stats.m_immobilePhaseMass );
+    addPhaseValues( row, stats.m_mobilePhaseMass );
+    addPhaseValues( row, stats.m_componentMass ); // TODO verify phase / comp ordering
+
+    std::ofstream outputFile( getCsvFileName( mesh.getName() ), std::ios_base::app );
+    TableCSVFormatter const csvOutput;
+    outputFile << csvOutput.dataToString( tableData );
+    outputFile.close();
   } );
 }
 

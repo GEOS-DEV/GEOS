@@ -14,7 +14,7 @@
  */
 
 /**
- * @file CompositionalMultiphaseStatistics.hpp
+ * @file CompositionalMultiphaseStatisticsTask.hpp
  */
 
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICSTASK_HPP_
@@ -97,6 +97,8 @@ private:
 
   void prepareCsvTableLayouts( string_view tableName );
 
+  string getCsvFileName( string_view meshName ) const;
+
   void outputLogStats( real64 statsTime,
                        MeshLevel & mesh,
                        string_array const & regionNames );
@@ -106,10 +108,10 @@ private:
                        string_array const & regionNames );
 
   /// For each discretization (MeshLevel name), table formatter for log output.
-  stdMap< string, std::unique_ptr< TableFormatter > > m_logFormatters;
+  stdMap< string, std::unique_ptr< TableTextFormatter > > m_logFormatters;
 
   /// For each discretization (MeshLevel name), table formatter for csv output.
-  stdMap< string, std::unique_ptr< TableFormatter > > m_csvFormatters;
+  stdMap< string, std::unique_ptr< TableCSVFormatter > > m_csvFormatters;
 
   StatsAggregator m_aggregator;
 
