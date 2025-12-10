@@ -315,7 +315,7 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
     ErrorLogger::writeToAscii( currErrorMsg, oss );
     GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
                           "The error message was not containing the expected sequence.\n" <<
-                           "The error message was not containing the expected sequence.\n" <<
+                          "The error message was not containing the expected sequence.\n" <<
                           "  Error message :\n" <<oss.str() <<
                           "  expected sequence :\n" << streamExpected );
   }
