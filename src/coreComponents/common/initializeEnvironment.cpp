@@ -90,6 +90,13 @@ void setupLogger()
     ExternalErrorHandler::instance().setErrorHandling( []( string_view errorMsg,
                                                            string_view detectionLocation )
     {
+      // Filter out INFO level messages from external libraries (e.g., VTK)
+      if( errorMsg.find( "INFO|" ) != string_view::npos )
+      {
+        // Just print the message without error formatting
+        GEOS_LOG( errorMsg );
+        return;
+      }
       std::string const stackHistory = LvArray::system::stackTrace( true );
 
       GEOS_LOG( GEOS_FMT( "***** ERROR\n"
