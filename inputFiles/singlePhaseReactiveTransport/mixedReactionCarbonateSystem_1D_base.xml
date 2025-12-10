@@ -8,7 +8,6 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Region1 }"
       writeLinearSystem="0"
-      isUpdateReactivePorosity="1"
       logLevel="2">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -41,11 +40,11 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      compressibility="0"
+      compressibility="0.0"
       viscosibility="0.0"
       chemicalSystemType="carbonate"/>
 
-    <ReactiveSolidConstantPermeability
+    <CompressibleSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
@@ -54,12 +53,11 @@
     <NullModel
       name="nullSolid"/>
 
-    <ReactivePorosity
+    <PressurePorosity
       name="rockPorosity"
       defaultReferencePorosity="0.1"
-      defaultInitialVolumeFractions="{ 0.1 }"
-      molarWeights="{ 0.100087 }"
-      mineralDensities="{ 2710 }"/>
+      referencePressure="0.0"
+      compressibility="0.0"/>
 
     <ConstantPermeability
       name="rockPerm"
@@ -98,8 +96,8 @@
 
     <FieldSpecification
       name="sinkPressure"
-      setNames="{ sink }"
-      objectPath="ElementRegions/Region1/block1"
+      setNames="{ xpos }"
+      objectPath="faceManager"
       fieldName="pressure"
       scale="1.0e6"/>
 
@@ -128,11 +126,6 @@
       name="kineticRateCollection"
       objectPath="ElementRegions/Region1/block1"
       fieldName="water_kineticReactionRates"/>
-
-    <PackCollection
-      name="porosityCollection"
-      objectPath="ElementRegions/Region1/block1"
-      fieldName="rockPorosity_porosity"/>
   </Tasks>
 
   <Outputs>
@@ -151,12 +144,10 @@
       sources="{ /Tasks/kineticRateCollection }"
       filename="kineticReactionHistory"/>
 
-    <TimeHistory
-      name="porosityHistoryOutput"
-      sources="{ /Tasks/porosityCollection }"
-      filename="porosityHistory"/>
-
     <VTK
       name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 </Problem>
