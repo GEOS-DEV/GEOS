@@ -2,11 +2,11 @@
 
 <Problem>
   <Included>
-    <File name="./MoMaS_base.xml" />
-    <File name="./MoMaS_advective_base.xml" />
-    <File name="./MoMaS_initialAggregate.xml" />
-    <File name="./MoMaS_logConc.xml" />
-    <File name="./MoMaS_initialPrimaryConc.xml" />
+    <File name="./MoMaSEasy_1D_base.xml" />
+    <File name="./MoMaSEasy_1DAdvective_base.xml" />
+    <File name="./MoMaSEasy_initialAggregate.xml" />
+    <File name="./MoMaSEasy_logConc.xml" />
+    <File name="./MoMaSEasy_initialPrimaryConc.xml" />
   </Included>
 
   <Mesh>
@@ -21,13 +21,6 @@
       nz="{ 1 }"
       cellBlockNames="{ cb-0_0_0, cb-1_0_0, cb-2_0_0, cb-3_0_0, cb-4_0_0, cb-5_0_0 }"/>
   </Mesh>
-
-  <Geometry>
-    <Box
-      name="sink"
-      xMin="{ 2.099, -0.01, -0.01 }"
-      xMax="{ 3.101, 1.01, 1.01 }"/>
-  </Geometry>
 
   <Events
     maxTime="5000">

@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./mixedReactionCarbonateSystemPorosityUpdate_base.xml" />
+    <File name="./mixedReactionCarbonateSystem_1D_base.xml" />
     <File name="./mixedReactionCarbonateSystem_initialAggregate.xml" />
     <File name="./mixedReactionCarbonateSystem_initialPrimaryConc.xml" />
     <File name="./mixedReactionCarbonateSystem_logConc.xml" />
@@ -15,7 +15,7 @@
       xCoords="{ 0, 10 }"
       yCoords="{ 0, 1 }"
       zCoords="{ 0, 1 }"
-      nx="{ 10 }"
+      nx="{ 100 }"
       ny="{ 1 }"
       nz="{ 1 }"
       cellBlockNames="{ block1 }"/>
@@ -25,12 +25,7 @@
     <Box
       name="source"
       xMin="{ -0.01, -0.01, -0.01 }"
-      xMax="{ 1.01, 1.01, 1.01 }"/>
-
-    <Box
-      name="sink"
-      xMin="{ 8.99, -0.01, -0.01 }"
-      xMax="{ 10.01, 1.01, 1.01 }"/>
+      xMax="{ 0.11, 1.01, 1.01 }"/>
   </Geometry>
 
   <Events
@@ -68,18 +63,14 @@
       target="/Outputs/kineticReactionHistoryOutput"/>
 
     <PeriodicEvent
-      name="porosityCollection"
-      cycleFrequency="1"
-      target="/Tasks/porosityCollection"/>
-    <PeriodicEvent
-      name="porosityTimeHistoryOutput"
-      cycleFrequency="1"
-      target="/Outputs/porosityHistoryOutput"/>
-
-    <PeriodicEvent
       name="solverApplications"
       forceDt="1"
       target="/Solvers/SinglePhaseReactiveFlow"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="10"
+      target="/Outputs/restartOutput"/>
   </Events>
 
 </Problem>

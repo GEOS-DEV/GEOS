@@ -21,7 +21,7 @@
         logLevel="2"
         maxAllowedResidualNorm="1e100"/>
       <LinearSolverParameters
-        directParallel="1"/>
+        solverType="gmres"/>
     </SinglePhaseReactiveTransport>
   </Solvers>
 
