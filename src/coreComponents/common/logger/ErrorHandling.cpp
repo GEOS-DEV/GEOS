@@ -48,28 +48,46 @@ ErrorLogger g_errorLogger{};
  */
 void ErrorLogger::writeToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostream & oss )
 {
+  /// HEADER
   oss << "***** " << ErrorLogger::toString( errMsg.m_type ) << "\n";
   if( !errMsg.m_signal.empty())
   {
     oss<< "***** SIGNAL: "<< errMsg.m_signal <<"\n";
   }
-
   oss << "***** LOCATION: " << errMsg.m_file<< " l." << errMsg.m_line << "\n";
   oss << "***** " << errMsg.m_cause  << "\n";
   oss << "***** Rank " << stringutilities::join( errMsg.m_ranksInfo, ", " ) << "\n";
 
-  for( ErrorLogger::ErrorContext const & ctxInfo : errMsg.m_contextsInfo )
+  std::vector< ErrorLogger::ErrorContext > const contextsInfo = errMsg.m_contextsInfo;
+  /// ERROR CONTEXT
+  if( contextsInfo.empty())
   {
-    for( auto const & [key, value] : ctxInfo.m_attributes )
-    {
-      oss << ErrorLogger::ErrorContext::attributeToString( key ) << ": " << value << "\n";
-    }
+    oss << "***** Message :\n";
+    oss << errMsg.m_msg << "\n";
   }
-  oss << errMsg.m_msg << "\n\n";
+  else
+  {
+    if( contextsInfo.size() >= 1 )
+    {
 
+      oss << "***** Message from "   << contextsInfo.front().m_dataDisplayString<< ":\n";
+      oss << errMsg.m_msg << "\n";
+    }
+
+    if( contextsInfo.size() > 1 )
+    {
+      oss << "***** Additional contexts:\n";
+      for( size_t i = 1; i< contextsInfo.size(); i++ )
+      {
+        oss << "***** - "  << contextsInfo[i].m_dataDisplayString << "\n";
+      }
+    }
+
+  }
+  ///STACKTRACE
   if( errMsg.m_sourceCallStack.size() > 0 )
   {
-    oss << "** StackTrace of "<< errMsg.m_sourceCallStack.size() << " frames **\n";
+    oss << "\n** StackTrace of "<< errMsg.m_sourceCallStack.size() << " frames **\n";
     for( size_t i = 0; i < errMsg.m_sourceCallStack.size(); i++ )
     {
       oss << GEOS_FMT( "Frame {}: {}\n", i, errMsg.m_sourceCallStack[i] );

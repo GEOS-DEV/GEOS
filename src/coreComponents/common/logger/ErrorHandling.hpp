@@ -79,6 +79,9 @@ public:
     /// The key is a field of the Attribute enumeration and is converted to a string for writing in the YAML
     map< Attribute, std::string > m_attributes;
 
+    /// String containing the target object name followed by the the file and line declaring it.
+    string m_dataDisplayString;
+
     /**
      * @brief Priority level assigned to an error context.
      * @details Used to prioritize contextes (higher values = more relevant). Default is 0.

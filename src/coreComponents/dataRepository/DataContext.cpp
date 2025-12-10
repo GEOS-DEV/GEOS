@@ -112,7 +112,8 @@ ErrorLogger::ErrorContext DataFileContext::getContextInfo() const
 {
   ErrorLogger::ErrorContext ctxInfo{
     { { ErrorLogger::ErrorContext::Attribute::InputFile, m_filePath },
-      { ErrorLogger::ErrorContext::Attribute::InputLine, std::to_string( m_line )} } // m_attributes
+      { ErrorLogger::ErrorContext::Attribute::InputLine, std::to_string( m_line )} },
+    toString()
   };
   return ctxInfo;
 }
