@@ -173,7 +173,7 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
   // Stacked exception test (contexts must appear sorted by priority)
   try
   {
-    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group: " << context.toString(), geos::DomainError, context );
+    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError, context );
   }
   catch( geos::DomainError const & ex )
   {
@@ -186,7 +186,7 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
     string const whatExpected = GEOS_FMT( "***** GEOS Exception\n"
                                           "***** LOCATION: {} l.{}\n"
                                           "***** Error cause: testValue == 5\n"
-                                          "***** Rank  0: Empty Group: Base Test Class (file.xml, l.23)",
+                                          "***** Rank  0: Empty Group",
                                           testErrorLogger.currentErrorMsg().m_file, line1 );
 
     GEOS_ERROR_IF_EQ_MSG( string( ex.what() ).find( whatExpected ), string::npos,
@@ -204,7 +204,7 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
     rank: 0
     message: >-
       Table input error.
-      Empty Group: Base Test Class (file.xml, l.23)
+      Empty Group
     contexts:
       - priority: 2
         inputFile: /path/to/file.xml
@@ -273,6 +273,52 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
     "- frame1: ",
     "- frame2: "
   } );
+}
+
+
+TEST( ErrorHandling, testLogFileExceptionOutput )
+{
+  ErrorLogger testErrorLogger;
+
+  size_t line1;
+
+  try
+  {
+    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError, context );
+  }
+  catch( geos::DomainError const & ex )
+  {
+    string const errorMsg = "Table input error.\n";
+    ErrorLogger::ErrorMsg currErrorMsg = testErrorLogger.currentErrorMsg();
+    currErrorMsg
+      .addToMsg( errorMsg )
+      .addContextInfo( additionalContext.getContextInfo() )
+      .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
+
+    string const streamExpected = GEOS_FMT(
+      "***** Exception\n"
+      "***** LOCATION: {} l.{}\n"
+      "***** {}\n"
+      "***** Rank 0\n"
+      "***** Message from {}:\n"
+      "{}\n"
+      "***** Additional contexts:\n"
+      "***** - {}\n"
+      "***** - {}\n",
+      currErrorMsg.m_file, line1,
+      currErrorMsg.m_cause,
+      context.toString(),
+      currErrorMsg.m_msg,
+      additionalContext.toString(),
+      importantAdditionalContext.toString(), currErrorMsg.m_sourceCallStack );
+    std::ostringstream oss;
+    ErrorLogger::writeToAscii( currErrorMsg, oss );
+    GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
+                          "The error message was not containing the expected sequence.\n" <<
+                           "The error message was not containing the expected sequence.\n" <<
+                          "  Error message :\n" <<oss.str() <<
+                          "  expected sequence :\n" << streamExpected );
+  }
 }
 
 TEST( ErrorHandling, testYamlFileAssertOutput )
