@@ -425,7 +425,7 @@ pushDataToConduitNode( Array< T, NDIM, PERMUTATION > const & var,
   node[ "__dimensions__" ].set( dimensionType, temp );
 
   // Create a copy of the permutation
-  constexpr std::array< camp::idx_t, NDIM > const perm = RAJA::as_array< PERMUTATION >::get();
+  constexpr std::array< camp::idx_t, NDIM > const perm = to_stdArray( RAJA::as_array< PERMUTATION >::get());
   for( int i = 0; i < NDIM; ++i )
   {
     temp[ i ] = perm[ i ];
@@ -454,7 +454,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   conduit::Node const & permutationNode = node.fetch_existing( "__permutation__" );
   GEOS_ERROR_IF_NE( permutationNode.dtype().number_of_elements(), totalNumDimensions );
 
-  constexpr std::array< camp::idx_t, NDIM > const perm = RAJA::as_array< PERMUTATION >::get();
+  constexpr std::array< camp::idx_t, NDIM > const perm = to_stdArray( RAJA::as_array< PERMUTATION >::get());
   camp::idx_t const * const permFromConduit = permutationNode.value();
   for( int i = 0; i < NDIM; ++i )
   {

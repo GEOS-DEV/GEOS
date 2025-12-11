@@ -56,6 +56,16 @@ public:
   using CatalogInterface = dataRepository::CatalogInterface< FieldSpecificationBase,
                                                              string const &,
                                                              dataRepository::Group * const >;
+  /**
+   * @enum  SetErrorMode
+   * @brief Indicate the error handling mode.
+   */
+  enum class SetErrorMode : integer
+  {
+    silent,
+    error,
+    warning
+  };
 
   /**
    * @brief static function to return static catalog.
@@ -392,6 +402,8 @@ public:
     constexpr static char const * beginTimeString() { return "beginTime"; }
     /// @return The key for endTime
     constexpr static char const * endTimeString() { return "endTime"; }
+    /// @return The key errorSetMode
+    constexpr static char const * errorSetModeString() { return "errorSetMode"; }
   };
 
   /**
@@ -591,6 +603,8 @@ private:
   /// The name of a function used to turn on and off the boundary condition.
   string m_bcApplicationFunctionName;
 
+  /// Enum containing the possible output modes when an error occur
+  SetErrorMode m_emptySetErrorMode;
 };
 
 
@@ -622,8 +636,13 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
       }
       catch( std::exception const & e )
       {
-        throw InputError( e, GEOS_FMT( "Error while reading {}:\n",
-                                       getWrapperDataContext( viewKeyStruct::functionNameString() ) ) );
+        string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
+                                          getWrapperDataContext( viewKeyStruct::functionNameString() ) );
+        ErrorLogger::global().currentErrorMsg()
+          .addToMsg( errorMsg )
+          .addContextInfo( getWrapperDataContext( viewKeyStruct::functionNameString() ).getContextInfo()
+                             .setPriority( 1 ) );
+        throw InputError( e, errorMsg );
       }
     }();
 
@@ -870,6 +889,15 @@ void FieldSpecificationBase::zeroSystemRowsForBoundaryCondition( SortedArrayView
     }
   } );
 }
+
+
+/**
+ * @brief Indicate the error handling mode
+ */
+ENUM_STRINGS( FieldSpecificationBase::SetErrorMode,
+              "silent",
+              "error",
+              "warning" );
 
 }
 

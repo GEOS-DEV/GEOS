@@ -129,7 +129,7 @@ void AquiferBoundaryCondition::postInputInitialization()
     GEOS_THROW_IF( !functionManager.hasGroup( m_pressureInfluenceFunctionName ),
                    getCatalogName() << " " << getDataContext() <<
                    ": the pressure influence table " << m_pressureInfluenceFunctionName << " could not be found",
-                   InputError );
+                   InputError, getDataContext() );
 
     TableFunction const & pressureInfluenceFunction = functionManager.getGroup< TableFunction >( m_pressureInfluenceFunctionName );
     GEOS_THROW_IF( pressureInfluenceFunction.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
@@ -137,7 +137,7 @@ void AquiferBoundaryCondition::postInputInitialization()
                    ": The interpolation method for the pressure influence function table " <<
                    pressureInfluenceFunction.getDataContext() <<
                    " should be TableFunction::InterpolationType::Linear",
-                   InputError );
+                   InputError, getDataContext() );
   }
 
   computeTimeConstant();

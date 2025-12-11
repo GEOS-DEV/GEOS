@@ -25,6 +25,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
 #include "physicsSolvers/multiphysics/PoromechanicsFields.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/contact/HydraulicApertureBase.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -125,6 +126,8 @@ public:
                              this->solidMechanicsSolver()->getName(),
                              EnumStrings< SolidMechanicsLagrangianFEM::TimeIntegrationOption >::toString( SolidMechanicsLagrangianFEM::TimeIntegrationOption::QuasiStatic ) ),
                    InputError );
+
+    setMGRStrategy();
   }
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override final
@@ -152,7 +155,7 @@ public:
     GEOS_THROW_IF( m_stabilizationType == stabilization::StabilizationType::Local,
                    this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
                    ": Local stabilization has been temporarily disabled",
-                   InputError );
+                   InputError, this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) );
 
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -252,6 +255,59 @@ public:
     flowSolver()->setupDofs( domain, dofManager );
     this->setupCoupling( domain, dofManager );
   }
+
+  virtual void setupCoupling( DomainPartition const & GEOS_UNUSED_PARAM( domain ),
+                              DofManager & dofManager ) const override
+  {
+    dofManager.addCoupling( fields::solidMechanics::totalDisplacement::key(),
+                            getFlowDofKey(),
+                            DofManager::Connector::Elem );
+  }
+
+  virtual void assembleSystem( real64 const time,
+                               real64 const dt,
+                               DomainPartition & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) override
+  {
+    GEOS_MARK_FUNCTION;
+
+    // Steps 1 and 2: compute element-based terms (mechanics and local flow terms)
+    assembleElementBasedTerms( time,
+                               dt,
+                               domain,
+                               dofManager,
+                               localMatrix,
+                               localRhs );
+
+    // Step 3: compute the fluxes (face-based contributions)
+
+    if( m_stabilizationType == stabilization::StabilizationType::Global ||
+        m_stabilizationType == stabilization::StabilizationType::Local )
+    {
+      this->flowSolver()->assembleStabilizedFluxTerms( dt,
+                                                       domain,
+                                                       dofManager,
+                                                       localMatrix,
+                                                       localRhs );
+    }
+    else
+    {
+      this->flowSolver()->assembleFluxTerms( dt,
+                                             domain,
+                                             dofManager,
+                                             localMatrix,
+                                             localRhs );
+    }
+  }
+
+  virtual void assembleElementBasedTerms( real64 const time_n,
+                                          real64 const dt,
+                                          DomainPartition & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs ) = 0;
 
   virtual bool checkSequentialConvergence( integer const cycleNumber,
                                            integer const iter,
@@ -403,6 +459,33 @@ public:
   }
 
 protected:
+
+  virtual void initializePostInitialConditionsPreSubGroups() override
+  {
+    Base::initializePostInitialConditionsPreSubGroups();
+
+    string_array const & poromechanicsTargetRegionNames =
+      this->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
+    string_array const & solidMechanicsTargetRegionNames =
+      this->solidMechanicsSolver()->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
+    string_array const & flowTargetRegionNames =
+      this->flowSolver()->template getReference< string_array >( PhysicsSolverBase::viewKeyStruct::targetRegionsString() );
+    for( size_t i = 0; i < poromechanicsTargetRegionNames.size(); ++i )
+    {
+      GEOS_THROW_IF( std::find( solidMechanicsTargetRegionNames.begin(), solidMechanicsTargetRegionNames.end(),
+                                poromechanicsTargetRegionNames[i] )
+                     == solidMechanicsTargetRegionNames.end(),
+                     GEOS_FMT( "{} {}: region {} must be a target region of {}",
+                               this->getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i],
+                               this->solidMechanicsSolver()->getDataContext() ),
+                     InputError );
+      GEOS_THROW_IF( std::find( flowTargetRegionNames.begin(), flowTargetRegionNames.end(), poromechanicsTargetRegionNames[i] )
+                     == flowTargetRegionNames.end(),
+                     GEOS_FMT( "{} {}: region `{}` must be a target region of `{}`",
+                               this->getCatalogName(), this->getDataContext(), poromechanicsTargetRegionNames[i], this->flowSolver()->getDataContext() ),
+                     InputError );
+    }
+  }
 
   template< typename TYPE_LIST,
             typename KERNEL_WRAPPER,
@@ -588,12 +671,18 @@ protected:
                                                                                     string_array const & regionNames )
       {
 
-        mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                              auto & subRegion )
+
+        mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                                                       auto & subRegion )
         {
           // update the porosity after a change in displacement (after mechanics solve)
           // or a change in pressure/temperature (after a flow solve)
           flowSolver()->updatePorosityAndPermeability( subRegion );
+        } );
+        mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                              auto & subRegion )
+
+        {
           // update bulk density to reflect porosity change into mechanics
           updateBulkDensity( subRegion );
         } );
@@ -654,7 +743,11 @@ protected:
     } );
   }
 
+  virtual void setMGRStrategy() = 0;
+
   virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) = 0;
+
+  virtual string getFlowDofKey() const = 0;
 
   virtual void validateNonlinearAcceleration() override
   {
