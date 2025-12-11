@@ -62,8 +62,8 @@ ExternalMeshGeneratorBase::ExternalMeshGeneratorBase( string const & name,
 
 void ExternalMeshGeneratorBase::postInputInitialization()
 {
-  auto const checkSizes = [this]( string_array const & from, string_array const & to,
-                                  string const & fromKey, string const & toKey )
+  auto const checkSizes = [&]( string_array const & from, string_array const & to,
+                               string const & fromKey, string const & toKey )
   {
     GEOS_THROW_IF_NE_MSG( from.size(), to.size(),
                           getWrapperDataContext( fromKey ) <<
@@ -74,7 +74,7 @@ void ExternalMeshGeneratorBase::postInputInitialization()
   checkSizes( m_volumicFieldsToImport, m_volumicFieldsInGEOS, viewKeyStruct::volumicFieldsToImportString(), viewKeyStruct::volumicFieldsInGEOSString() );
   checkSizes( m_surfacicFieldsToImport, m_surfacicFieldsInGEOS, viewKeyStruct::surfacicFieldsToImportString(), viewKeyStruct::surfacicFieldsInGEOSString() );
 
-  auto const checkDuplicates = [this]( string_array const & v, string const & key )
+  auto const checkDuplicates = [&]( string_array const & v, string const & key )
   {
     std::set< string > const tmp{ v.begin(), v.end() };
     bool const hasDuplicates = tmp.size() != LvArray::integerConversion< std::size_t >( v.size() );
