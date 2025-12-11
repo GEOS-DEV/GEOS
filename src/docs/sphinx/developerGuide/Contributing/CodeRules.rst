@@ -234,7 +234,7 @@ Keep Doxygen comments and naming as clear as possible. Keep in mind that it is t
    :icon: code
 
    .. code-block:: c++
-      // GOOD - Documentation that gives useful information about what the function *does*, without
+      // GOOD - The documentation gives useful information about what the function *does*, without
       //        going into theorical knowledge nor implementation details.
       /**
        * @brief Computes the residual for the nonlinear solver.
