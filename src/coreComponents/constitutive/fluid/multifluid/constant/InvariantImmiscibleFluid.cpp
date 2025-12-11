@@ -14,10 +14,10 @@ InvariantImmiscibleFluid::InvariantImmiscibleFluid( string const & name, Group *
   getWrapperBase( viewKeyStruct::componentNamesString() )
     .setInputFlag( dataRepository::InputFlags::REQUIRED );
 
-  getWrapperBase( viewKeyStruct::componentMolarWeightString() )
+  getWrapperBase( viewKeyStruct::phaseNamesString() )
     .setInputFlag( dataRepository::InputFlags::REQUIRED );
 
-  getWrapperBase( viewKeyStruct::phaseNamesString() )
+  getWrapperBase( viewKeyStruct::componentMolarWeightString() )
     .setInputFlag( dataRepository::InputFlags::REQUIRED );
 
   // Densities: constant phase densities

@@ -511,7 +511,7 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
   // TODO: split the well elements that contain multiple perforations, so that no element is shared
   GEOS_THROW_IF( sharedElems.size() > 0,
                  "Well " << lineBlock.getDataContext() << " contains shared well elements",
-                 InputError );
+                 InputError, lineBlock.getDataContext() );
 
   // In Steps 1 and 2 we determine the local objects on this rank (elems and nodes)
   // Once this is done, in Steps 3, 4, and 5, we update the nodeManager and wellElementSubRegion (size, maps)
@@ -664,7 +664,7 @@ void WellElementSubRegion::checkPartitioningValidity( LineBlockABC const & lineB
                      " The main reason for this error is that there may be no perforation" <<
                      " in the bottom well element of the well, which is required to have" <<
                      " a well-posed problem.",
-                     InputError );
+                     InputError, lineBlock.getDataContext() );
 
       if( elemStatusGlobal[prevGlobal] == WellElemParallelStatus::LOCAL )
       {

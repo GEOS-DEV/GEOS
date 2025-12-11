@@ -70,7 +70,8 @@ Group::CatalogInterface::CatalogType & Group::getCatalog()
 void Group::deregisterWrapper( string const & name )
 {
   GEOS_ERROR_IF( !hasWrapper( name ),
-                 "Wrapper " << name << " doesn't exist in Group" << getDataContext() << '.' );
+                 "Wrapper " << name << " doesn't exist in Group" << getDataContext() << '.',
+                 getDataContext() );
   m_wrappers.erase( name );
   m_conduitNode.remove( name );
 }
@@ -244,7 +245,7 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode,
                                "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
                                getDataContext(), targetNode.path(), attributeName,
                                dumpInputOptions() ),
-                     InputError );
+                     InputError, getDataContext() );
     }
   }
 }
