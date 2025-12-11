@@ -91,6 +91,7 @@ void setupLogger()
                                                            string_view detectionLocation )
     {
       // Filter out INFO level messages from external libraries (e.g., VTK)
+      // TODO: use dedicated functions to make the process easier to read ( error / signal lambda would calls either an error function or an info function, depending on a filtering function )
       if( errorMsg.find( "INFO|" ) != string_view::npos )
       {
         // Just print the message without error formatting
