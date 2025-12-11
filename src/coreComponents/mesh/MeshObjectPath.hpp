@@ -44,7 +44,7 @@ public:
    * The third key is the name of an ElementRegion
    * The third value is a vector of subregion names
    */
-  using permutationMapType = std::map< string, std::map< string, std::map< string, stdVector< string > > > >;
+  using permutationMapType = stdMap< string, stdMap< string, stdMap< string, stdVector< string > > > >;
 
   /**
    * @brief Contains enums for the types of objects
@@ -57,6 +57,10 @@ public:
     elems,  ///< a ElementManager
     invalid ///< an invalide object
   };
+
+  /// @brief alias for the map allowing to know the existance of given element types (node, edge, cell...)
+  /// with localIndex = 0 | 1 ( exist / not existing)
+  using SetNameToTypesMap = stdMap< string, stdMap< MeshObjectPath::ObjectTypes, localIndex > >;
 
   /**
    * @brief Construct a new Mesh Object Path object
@@ -148,6 +152,21 @@ public:
             typename FUNC >
   void forObjectsInPath( MeshLevel & level, FUNC && func ) const;
 
+/**
+ * @brief Given an objectType and a setName from the current fieldSpecification, iterate over all managers;
+ * if the setName exists in the manager, return the associated ObjectTypes.
+ * @tparam TYPE The current type to be tested
+ * @tparam NEXT_TYPES The remaining Types
+ * @tparam FUNC The type of function that is executed on the OBJECT_TYPE
+ * @param mesh Holds all the managers.
+ * @param setName The setName to be evaluated in all the managers
+ * @param func The function that is executed on the OBJECT_TYPE
+ */
+  template< typename TYPE, typename ... NEXT_TYPES,
+            typename FUNC >
+  void forManagersForSetName( MeshLevel const & mesh, string const & setName,
+                              FUNC && func ) const;
+
 #if defined(MESH_OBJECT_PATH_PRIVATE_FUNCTION_UNIT_TESTING)
   template< typename OBJECT_TYPE >
   bool testCheckObjectTypeConsistency()
@@ -177,13 +196,13 @@ private:
    */
   template< typename OBJECT_TYPE,
             typename FUNC >
-  void forObjectsInPath( std::pair< string const, std::map< string, stdVector< string > > > const & levelPair,
+  void forObjectsInPath( std::pair< string const, stdMap< string, stdVector< string > > > const & levelPair,
                          MeshLevel & meshLevel,
                          FUNC && func ) const;
 
   template< typename OBJECT_TYPE,
             typename FUNC >
-  void forObjectsInPath( std::pair< string const, std::map< string, stdVector< string > > > const & levelPair,
+  void forObjectsInPath( std::pair< string const, stdMap< string, stdVector< string > > > const & levelPair,
                          MeshLevel const & meshLevel,
                          FUNC && func ) const;
 
@@ -273,7 +292,7 @@ bool MeshObjectPath::checkObjectTypeConsistency() const
 
 template< typename OBJECT_TYPE,
           typename FUNC >
-void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string, stdVector< string > > > const & levelPair,
+void MeshObjectPath::forObjectsInPath( std::pair< string const, stdMap< string, stdVector< string > > > const & levelPair,
                                        MeshLevel & meshLevel,
                                        FUNC && func ) const
 {
@@ -285,7 +304,7 @@ void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string
 
 template< typename OBJECT_TYPE,
           typename FUNC >
-void MeshObjectPath::forObjectsInPath( std::pair< string const, std::map< string, stdVector< string > > > const & levelPair,
+void MeshObjectPath::forObjectsInPath( std::pair< string const, stdMap< string, stdVector< string > > > const & levelPair,
                                        MeshLevel const & meshLevel,
                                        FUNC && func ) const
 {
@@ -384,6 +403,46 @@ void MeshObjectPath::forObjectsInPath( MeshLevel & meshLevel,
       }
     }
   }
+}
+
+template< typename TYPE, typename ... NEXT_TYPES,
+          typename FUNC >
+void MeshObjectPath::forManagersForSetName( MeshLevel const & mesh, string const & setName,
+                                            FUNC && func ) const
+{
+  mesh.forSubGroups< TYPE >( [&]( dataRepository::Group const & targetManager )
+  {
+    TYPE const * manager = dynamic_cast< TYPE const * >( &targetManager );
+
+    if( manager != nullptr )
+    {
+      if( manager->sets().hasWrapper( setName ))
+      {
+        auto const & targetSet = manager->getSet( setName );
+        if( std::is_same_v< TYPE, NodeManager > &&
+            getObjectType() !=  MeshObjectPath::ObjectTypes::nodes &&
+            targetSet.size() > 0 )
+        {
+          func( MeshObjectPath::ObjectTypes::nodes, setName );
+        }
+        else if( std::is_same_v< TYPE, EdgeManager >  &&
+                 getObjectType() !=  MeshObjectPath::ObjectTypes::edges &&
+                 targetSet.size() > 0 )
+        {
+          func( MeshObjectPath::ObjectTypes::edges, setName );
+        }
+        else if( std::is_same_v< TYPE, FaceManager > &&
+                 getObjectType() !=  MeshObjectPath::ObjectTypes::faces &&
+                 targetSet.size() > 0 )
+        {
+          func( MeshObjectPath::ObjectTypes::faces, setName );
+        }
+      }
+    }
+  } );
+
+  if constexpr ( sizeof...(NEXT_TYPES) > 0 )
+    forManagersForSetName< NEXT_TYPES... >( mesh, setName, func );
 }
 
 

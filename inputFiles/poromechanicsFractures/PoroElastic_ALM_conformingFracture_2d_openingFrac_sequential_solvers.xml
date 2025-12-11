@@ -1,0 +1,78 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0}">
+
+    <SinglePhasePoromechanicsConformingFracturesALM
+      name="poroSolver"
+      targetRegions="{ Domain, Fracture }"
+      initialDt="1e-3"
+      flowSolverName="flowSolver"
+      solidSolverName="fractureMechSolver"
+      logLevel="1">
+      <NonlinearSolverParameters
+        couplingType="Sequential"  
+        lineSearchAction="None"
+        subcycling="1"
+        maxTimeStepCuts="1"
+        newtonMaxIter="10"
+        maxNumConfigurationAttempts="10"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"/>
+    </SinglePhasePoromechanicsConformingFracturesALM>
+
+    <SolidMechanicsAugmentedLagrangianContact
+      name="fractureMechSolver"
+      logLevel="2"
+      simultaneous="0"
+      symmetric="0"
+      iterPenaltyN="100.0"
+      iterPenaltyT="10.0"
+      tolTauLimit="1.e-02"
+      tolJumpN="1.e-7"
+      tolJumpT="1.e-4"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      targetRegions="{ Domain, Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        logLevel="2"
+        maxNumConfigurationAttempts="50"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        lineSearchMaxCuts="4"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"/>
+      <!--<LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"
+        krylovTol="1.0e-6"
+        logLevel="1"/>-->
+    </SolidMechanicsAugmentedLagrangianContact>
+
+    <SinglePhaseFVM
+      name="flowSolver"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Domain, Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-2"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"/>
+    </SinglePhaseFVM>
+
+    <SurfaceGenerator
+      logLevel="0"
+      name="SurfaceGen"
+      targetRegions="{ Domain }"
+      fractureRegion="Fracture"
+      initialRockToughness="1e6"
+      mpiCommOrder="1"/>
+  </Solvers>
+</Problem>

@@ -1223,7 +1223,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
   Group fakeGroup( elemRegion.getName(), conduitNode );
 
   localIndex numElems = 0;
-  stdVector< std::map< string, WrapperBase const * > > viewPointers;
+  stdVector< stdMap< string, WrapperBase const * > > viewPointers;
 
   viewPointers.resize( elemRegion.numSubRegions() );
   elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
@@ -1239,7 +1239,7 @@ void SiloFile::writeElementRegionSilo( ElementRegionBase const & elemRegion,
       {
         // the field name is the key to the map
         string const & fieldName = wrapper.getName();
-        viewPointers[esr][fieldName] = &wrapper;
+        viewPointers[esr].get_inserted( fieldName ) = &wrapper;
 
         types::dispatch( types::ListofTypeList< types::StandardArrays >{}, [&]( auto tupleOfTypes )
         {
