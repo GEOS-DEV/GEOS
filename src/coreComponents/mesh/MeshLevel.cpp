@@ -503,7 +503,6 @@ void MeshLevel::generateSets()
       arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
 
       SortedArray< localIndex > & targetSet = elementSets.getReference< SortedArray< localIndex > >( setName );
-      targetSet.clear();
       for( localIndex k = 0; k < subRegion.size(); ++k )
       {
         localIndex const numNodes = subRegion.numNodesPerElement( k );

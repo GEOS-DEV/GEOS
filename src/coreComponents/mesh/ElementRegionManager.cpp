@@ -272,7 +272,6 @@ void ElementRegionManager::buildSets( NodeManager const & nodeManager )
       arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
 
       SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName, true ).reference();
-      targetSet.clear();
       for( localIndex k = 0; k < subRegion.size(); ++k )
       {
         localIndex const numNodes = subRegion.numNodesPerElement( k );

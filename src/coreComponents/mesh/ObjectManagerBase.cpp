@@ -90,7 +90,6 @@ ObjectManagerBase::CatalogInterface::CatalogType & ObjectManagerBase::getCatalog
 SortedArray< localIndex > & ObjectManagerBase::createSet( const string & newSetName )
 {
   auto & set = m_sets.registerWrapper< SortedArray< localIndex > >( newSetName, true ).reference();
-  set.clear();
   return set;
 }
 
