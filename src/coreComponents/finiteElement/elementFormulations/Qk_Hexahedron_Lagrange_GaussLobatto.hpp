@@ -1088,7 +1088,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::calcGradNWithCorners( real
 
   applyTransformationToParentGradients( coords, J, gradN );
 
-  return detJ * GL_BASIS::weight( qa ) * GL_BASIS::weight( qb ) * GL_BASIS::weight( qc );
+  return detJ;
 }
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
