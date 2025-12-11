@@ -15,10 +15,11 @@ types of oil with negligible amounts of dissolved gas.
 Specifically, fluid density is computed as
 
 .. math::
-   \rho(p) = \rho_0 e^{c_\rho(p - p_0)}
+   \rho(p) = \rho_0 ( e^{c_\rho(p - p_0)} + e^{\beta_f (T - T_0)} )
 
 where :math:`c_\rho` is compressibility, :math:`p_0` is reference pressure, :math:`\rho_0` is
-density at reference pressure.
+density at reference pressure, :math:`\beta_f` is the fluid thermal expansion coefficient, :math:`T_0` is reference temperature.
+
 Similarly,
 
 .. math::

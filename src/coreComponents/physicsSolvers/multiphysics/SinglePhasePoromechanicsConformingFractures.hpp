@@ -88,6 +88,14 @@ public:
       GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
   }
 
+  virtual void assembleSystem( real64 const time_n,
+                               real64 const dt,
+                               DomainPartition & domain,
+                               DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) override
+  { Base::assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs ); }
+
   /**@}*/
 
 protected:
@@ -97,18 +105,6 @@ protected:
                                                                    DofManager const & dofManager,
                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                    arrayView1d< real64 > const & localRhs ) override;
-
-private:
-
-  /**
-   * @Brief add the sparsity pattern induced by the flux-aperture coupling
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param pattern the sparsity pattern
-   */
-  void addTransmissibilityCouplingPattern( DomainPartition const & domain,
-                                           DofManager const & dofManager,
-                                           SparsityPatternView< globalIndex > const & pattern ) const;
 
   virtual integer numFluidComponents() const override { return 1; }
 
