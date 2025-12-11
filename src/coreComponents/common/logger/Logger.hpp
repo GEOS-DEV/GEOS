@@ -201,9 +201,22 @@
       asm ( "trap;" ); \
     } \
   } while( false )
-#else
-  // TODO: add HIP path
-#define GEOS_ERROR_IF_CAUSE( COND, CAUSE_MESSAGE, ... )
+#elif __HIP_DEVICE_COMPILE__
+#define GEOS_ERROR_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      constexpr char const * formatString = "***** ERROR\n" \
+                                            "***** LOCATION" LOCATION "\n" \
+                                            "***** BLOCK:  [%u, %u, %u]\n" \
+                                            "***** THREAD: [%u, %u, %u]\n" \
+                                            "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+                                            "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
+      asm volatile ( "s_trap 2" ); \
+    } \
+  } while( false )
 #endif
 
 /**
@@ -286,9 +299,22 @@
       asm ( "trap;" ); \
     } \
   } while( false )
-#else
-  // TODO: add HIP path
-#define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... )
+#elif __HIP_DEVICE_COMPILE__
+#define GEOS_THROW_IF_CAUSE( COND, CAUSE_MESSAGE, MSG, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      static char const formatString[] = "***** ERROR\n" \
+                                         "***** LOCATION" LOCATION "\n" \
+                                                                   "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                   "***** THREAD: [%u, %u, %u]\n" \
+                                                                   "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+                                                                                                       "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
+      asm volatile ( "s_trap 2" ); \
+    } \
+  } while( false )
 #endif
 
 /**
@@ -366,9 +392,22 @@
       asm ( "trap;" ); \
     } \
   } while( false )
-#else
-  // TODO: add HIP path
-#define GEOS_WARNING_IF_CAUSE( COND, CAUSE_MESSAGE, ... )
+#elif __HIP_DEVICE_COMPILE__
+#define GEOS_WARNING_IF_CAUSE( COND, CAUSE_MESSAGE, ... ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      static char const formatString[] = "***** WARNING\n" \
+                                         "***** LOCATION" LOCATION "\n" \
+                                                                   "***** BLOCK:  [%u, %u, %u]\n" \
+                                                                   "***** THREAD: [%u, %u, %u]\n" \
+                                                                   "***** " STRINGIZE( CAUSE_MESSAGE ) "\n" \
+                                                                                                       "***** " STRINGIZE( GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ) ) "\n\n"; \
+      printf( formatString, blockIdx.x, blockIdx.y, blockIdx.z, threadIdx.x, threadIdx.y, threadIdx.z ); \
+      asm volatile ( "s_trap 2" ); \
+    } \
+  } while( false )
 #endif
 
 /**
