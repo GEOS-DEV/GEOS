@@ -1005,7 +1005,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::calcJacobian( localIndex c
     }
   }
   jacobianTransformation( qa, qb, qc, Xmesh, J );
-  return LvArray::tensorOps::determinant< 3 >( J );
+  return LvArray::tensorOps::determinant< 3 >( J ) * GL_BASIS::weight( qa ) * GL_BASIS::weight( qb ) * GL_BASIS::weight( qc );
 }
 
 template< typename GL_BASIS >
@@ -1036,7 +1036,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::calcGradN( real64 const (&
 
   applyTransformationToParentGradients( coords, J, gradN );
 
-  return detJ;
+  return detJ * GL_BASIS::weight( qa ) * GL_BASIS::weight( qb ) * GL_BASIS::weight( qc );
 }
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
@@ -1088,7 +1088,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::calcGradNWithCorners( real
 
   applyTransformationToParentGradients( coords, J, gradN );
 
-  return detJ;
+  return detJ * GL_BASIS::weight( qa ) * GL_BASIS::weight( qb ) * GL_BASIS::weight( qc );
 }
 template< typename GL_BASIS >
 GEOS_HOST_DEVICE
