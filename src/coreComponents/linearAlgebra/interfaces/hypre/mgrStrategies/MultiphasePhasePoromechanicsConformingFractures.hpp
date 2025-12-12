@@ -59,8 +59,8 @@ public:
   /**
    * @brief Constructor.
    */
-  explicit MultiPhasePoromechanicsConformingFractures( arrayView1d< int const > const & )
-    : LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] + numComponentsPerField[1] + 3 ) 
+  explicit MultiphasePhasePoromechanicsConformingFractures( arrayView1d< int const > const & numComponentsPerField)
+    : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] + 3 + numComponentsPerField[1] ) )
   {
 
     // we keep u, dens and p - elim lag mult
@@ -73,13 +73,13 @@ public:
     m_labels[0].push_back( 6 );
     // we keep dens and p - elim u 
     HYPRE_Int const numResLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[1] );
-    m_labels[1].resize( m_numResLabels );
+    m_labels[1].resize( numResLabels );
     std::iota( m_labels[1].begin(), m_labels[1].end(), 7);
     m_labels[1].push_back( 6 );
     // we keep p - elim total density
-    m_label[2].resize( m_numResLabels - 1);
+    m_labels[2].resize( numResLabels - 1);
     std::iota( m_labels[2].begin(), m_labels[2].end(), 7);
-    m_label[2].push_back( 6 );
+    m_labels[2].push_back( 6 );
     // we keep only p
     m_labels[3].push_back( 6 );
 
