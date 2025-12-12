@@ -67,14 +67,7 @@ bool VolumeRateConstraint::checkViolation( WellConstraintBase const & currentCon
 {
   real64 const currentValue = currentConstraint.totalVolumeRate();
   real64 const constraintValue = this->getConstraintValue( currentTime );
-  if( this->m_rateSign < 0.0 )
-  {
-    return currentValue < constraintValue;
-  }
-  else
-  {
-    return currentValue > constraintValue;
-  }
+  return ( LvArray::math::abs( currentValue ) > LvArray::math::abs( constraintValue ) );
 }
 
 } //namespace geos

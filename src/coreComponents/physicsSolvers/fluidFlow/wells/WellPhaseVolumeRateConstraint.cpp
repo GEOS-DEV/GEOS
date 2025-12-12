@@ -75,14 +75,7 @@ bool PhaseVolumeRateConstraint::checkViolation( WellConstraintBase const & curre
 {
   real64 const currentValue = currentConstraint.phaseVolumeRates()[m_phaseIndex];
   real64 const constraintValue =  getConstraintValue( currentTime );
-  if( m_rateSign < 0.0 )
-  {
-    return currentValue < constraintValue;
-  }
-  else
-  {
-    return currentValue > constraintValue;
-  }
+  return ( LvArray::math::abs( currentValue ) > LvArray::math::abs( constraintValue ) );
 }
 
 } //namespace geos

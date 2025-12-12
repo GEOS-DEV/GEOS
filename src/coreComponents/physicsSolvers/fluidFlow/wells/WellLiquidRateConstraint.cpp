@@ -70,16 +70,7 @@ bool LiquidRateConstraint::checkViolation( WellConstraintBase const & currentCon
 {
   real64 const currentValue = currentConstraint.liquidRate();
   real64 const constraintValue = this->getConstraintValue( currentTime );
-  if( this->m_rateSign < 0.0 )
-  {
-    // production: violated when current < constraint
-    return currentValue < constraintValue;
-  }
-  else
-  {
-    // injection: violated when current > constraint
-    return currentValue > constraintValue;
-  }
+  return ( LvArray::math::abs( currentValue ) <= LvArray::math::abs( constraintValue ) );
 }
 
 } //namespace geos

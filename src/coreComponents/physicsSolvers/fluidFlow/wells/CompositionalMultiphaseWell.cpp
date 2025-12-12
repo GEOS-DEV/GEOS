@@ -2510,11 +2510,11 @@ void CompositionalMultiphaseWell::assembleWellConstraintTerms( real64 const & ti
 
 
   // the rank that owns the reference well element is responsible for the calculations below.
-  if( !subRegion.isLocallyOwned() )
+  WellControls & wellControls = getWellControls( subRegion );
+  if( !subRegion.isLocallyOwned() || !( wellControls.getWellStatus() == WellControls::Status::OPEN ))
   {
     return;
   }
-  WellControls & wellControls = getWellControls( subRegion );
 
   if( wellControls.isProducer() )
   {
@@ -2982,7 +2982,7 @@ bool CompositionalMultiphaseWell::evaluateConstraints( real64 const & time_n,
                          limitingConstraint->totalVolumeRate() << " " << limitingConstraint->massRate());
     }
   }
-
+  constraintList.erase( std::find( constraintList.begin(), constraintList.end(), limitingConstraint ) );
 
   // Check current against other constraints
   for( auto & constraint : constraintList )
@@ -3001,8 +3001,8 @@ bool CompositionalMultiphaseWell::evaluateConstraints( real64 const & time_n,
         constraint->setTotalVolumeRate ( wellControls.getReference< real64 >(
                                            CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() ));
         constraint->setMassRate( wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentMassRateString() ));
-        GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
-                           " Well " << subRegion.getName() << " New Limiting Constraint " << constraint->getName() << " "  << constraint->getConstraintValue( time_n )  );
+        GEOS_LOG_RANK_IF ( subRegion.isLocallyOwned(),
+                           " Well " << subRegion.getName() << " Control switch " << constraint->getName() << " "  << constraint->getConstraintValue( time_n )  );
       }
     }
   }

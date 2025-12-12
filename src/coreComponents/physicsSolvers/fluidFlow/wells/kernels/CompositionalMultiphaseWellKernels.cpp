@@ -654,7 +654,7 @@ RateInitializationKernel::
 
       forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
       {
-        connRate[iwelem] = LvArray::math::max( 0.1 * constraintVal * phaseDens[iwelem][0][targetPhaseIndex], -1e3 );
+        connRate[iwelem] = constraintVal * phaseDens[iwelem][0][targetPhaseIndex];
       } );
     }
     else if( controlType == ConstraintTypeId::TOTALVOLRATE )
@@ -669,6 +669,17 @@ RateInitializationKernel::
       forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
       {
         connRate[iwelem] = constraintVal;
+      } );
+    }
+    else if( controlType == ConstraintTypeId::BHP )
+    {
+      // this assumes phase control presen
+      integer const targetPhaseIndex = wellControls.getConstraintPhaseIndex();
+
+      forAll< parallelDevicePolicy<> >( subRegionSize, [&] GEOS_HOST_DEVICE ( localIndex const iwelem )
+      {
+
+        connRate[iwelem] = LvArray::math::max( 0.1 * constraintVal * phaseDens[iwelem][0][targetPhaseIndex], -1e3 );
       } );
     }
   }
@@ -699,6 +710,13 @@ RateInitializationKernel::
       forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
       {
         connRate[iwelem] = constraintVal;
+      } );
+    }
+    else if( controlType == ConstraintTypeId::BHP )
+    {
+      forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
+      {
+        connRate[iwelem] = LvArray::math::min( 0.1 * constraintVal * totalDens[iwelem][0], 1e3 );
       } );
     }
   }
