@@ -1,0 +1,149 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file SinglePhasePoromechanicsConformingFractures.hpp
+ */
+
+#ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSMULIPHASEPROMECHANICSCONFORMINGFRACTURES_HPP_
+#define GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSMULIPHASEPROMECHANICSCONFORMINGFRACTURES_HPP_
+
+#include "linearAlgebra/interfaces/hypre/HypreMGR.hpp"
+
+namespace geos
+{
+
+namespace hypre
+{
+
+namespace mgr
+{
+
+/**
+ * @brief MultiPhasePoromechanicsConformingFractures strategy.
+ *
+ * dofLabel: 0 = displacement, x-component
+ * dofLabel: 1 = displacement, y-component
+ * dofLabel: 2 = displacement, z-component
+ * dofLabel: 3 = face-centered lagrange multiplier (tn)
+ * dofLabel: 4 = face-centered lagrange multiplier (tt1)
+ * dofLabel: 5 = face-centered lagrange multiplier (tt2)
+ * dofLabel: 6 = pressure (cell elem + fracture elems)
+ * dofLabel: 7 = density (cell elem + fracture elems)
+ * dofLabel: ... = densities
+ * dofLabel: numLabels - 1 = largest density / vol constaint
+ *
+ * Ingredients:
+ * 1. Level 0: F-points lag mult (3,4,5), C-points displacements, pressure and densities (0,1,2,6,7...)
+ * 2. Level 1: F-points displacement (0,1,2), C-points pressure and densities (6,7...)
+ * 3. Level 2: F-points volume constaint (n) and C-points pressure (6,7...,n-1)
+ * 4. Level 3: F-points densities (7,..,n-1) and C-points pressure (6)
+ * 6. Global smoother: none
+ */
+class MultiphasePhasePoromechanicsConformingFractures : public MGRStrategyBase< 4 >
+{
+public:
+
+  /**
+   * @brief Constructor.
+   */
+  explicit MultiPhasePoromechanicsConformingFractures( arrayView1d< int const > const & )
+    : LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] + numComponentsPerField[1] + 3 ) 
+  {
+
+    // we keep u, dens and p - elim lag mult
+    m_labels[0].resize( m_numBlocks - 3 );
+    std::iota( m_labels[0].begin(), m_labels[0].end(), 7);
+
+    m_labels[0].push_back( 0 );
+    m_labels[0].push_back( 1 );
+    m_labels[0].push_back( 2 );
+    m_labels[0].push_back( 6 );
+    // we keep dens and p - elim u 
+    HYPRE_Int const numResLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[1] );
+    m_labels[1].resize( m_numResLabels );
+    std::iota( m_labels[1].begin(), m_labels[1].end(), 7);
+    m_labels[1].push_back( 6 );
+    // we keep p - elim total density
+    m_label[2].resize( m_numResLabels - 1);
+    std::iota( m_labels[2].begin(), m_labels[2].end(), 7);
+    m_label[2].push_back( 6 );
+    // we keep only p
+    m_labels[3].push_back( 6 );
+
+
+    setupLabels();
+
+    // Level 0 - lag mult
+    m_levelFRelaxType[0]          = MGRFRelaxationType::l1jacobi;
+    m_levelFRelaxIters[0]         = 1;
+    m_levelInterpType[0]          = MGRInterpolationType::blockJacobi;
+    m_levelRestrictType[0]        = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[0]    = MGRCoarseGridMethod::galerkin;
+    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
+    
+    // Level 1 - displacement
+    m_levelFRelaxType[1]          = MGRFRelaxationType::amgVCycle;
+    m_levelFRelaxIters[1]         = 1;
+    m_levelInterpType[1]          = MGRInterpolationType::jacobi;
+    m_levelRestrictType[1]        = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[1]    = MGRCoarseGridMethod::nonGalerkin;
+    m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::none;
+    
+    // Level 2 - total densities 
+    m_levelFRelaxType[1]          = MGRFRelaxationType::jacobi;
+    m_levelFRelaxIters[1]         = 1;
+    m_levelInterpType[1]          = MGRInterpolationType::jacobi;
+    m_levelRestrictType[1]        = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[1]    = MGRCoarseGridMethod::galerkin;
+    m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::none;
+
+    // Level 3 - remaining densities
+    m_levelFRelaxType[2]          = MGRFRelaxationType::none;
+    m_levelInterpType[2]          = MGRInterpolationType::injection;
+    m_levelRestrictType[2]        = MGRRestrictionType::blockColLumped; // True-IMPES
+    m_levelCoarseGridMethod[2]    = MGRCoarseGridMethod::galerkin;
+    m_levelGlobalSmootherType[2]  = MGRGlobalSmootherType::ilu0;
+    m_levelGlobalSmootherIters[2] = 1;
+
+  }
+
+  /**
+   * @brief Setup the MGR strategy.
+   * @param precond preconditioner wrapper
+   * @param mgrData auxiliary MGR data
+   */
+  void setup( LinearSolverParameters::MGR const & mgrParams,
+              HyprePrecWrapper & precond,
+              HypreMGRData & mgrData )
+  {
+    setReduction( precond, mgrData );
+    // Configure the BoomerAMG solver used as mgr coarse solver for the displacement reduced system
+    // (note that no separate displacement component approach is used here)
+    setDisplacementAMG( mgrData.mechSolver, mgrParams.separateComponents );
+    // HYPRE_MGRSetFSolver( precond.ptr, mgrData.mechSolver.solve, mgrData.mechSolver.setup, mgrData.mechSolver.ptr );
+    // TODO equiv setMechanicFSolver() 
+    // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
+    setPressureAMG( mgrData.coarseSolver );
+  }
+};
+
+} // namespace mgr
+
+} // namespace hypre
+
+
+}
+#endif /* GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSMULIPHASEPROMECHANICSCONFORMINGFRACTURES_HPP_ */

@@ -319,7 +319,8 @@ struct LinearSolverParameters
       lagrangianContactMechanics,                ///< Lagrangian contact mechanics
       augmentedLagrangianContactMechanics,       ///< Augmented Lagrangian contact mechanics
       lagrangianContactMechanicsBubbleStab,      ///< Lagrangian contact mechanics with bubble stabilization
-      solidMechanicsEmbeddedFractures            ///< Embedded fractures mechanics
+      solidMechanicsEmbeddedFractures,           ///< Embedded fractures mechanics
+      multiphasePhasePoromechanicsConformingFractures ///< Multiphase Lag contact mechanics
     };
 
     StrategyType strategy = StrategyType::invalid; ///< Predefined MGR solution strategy (solver specific)
