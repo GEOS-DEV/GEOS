@@ -1005,7 +1005,7 @@ Qk_Hexahedron_Lagrange_GaussLobatto_impl< GL_BASIS >::calcJacobian( localIndex c
     }
   }
   jacobianTransformation( qa, qb, qc, Xmesh, J );
-  return LvArray::tensorOps::determinant< 3 >( J ) * GL_BASIS::weight( qa ) * GL_BASIS::weight( qb ) * GL_BASIS::weight( qc );
+  return LvArray::tensorOps::determinant< 3 >( J );
 }
 
 template< typename GL_BASIS >
