@@ -49,7 +49,7 @@ public:
   /**
    * @brief Default destructor for the EventManager
    */
-  virtual ~MPMEventManager() override;
+  virtual ~MPMEventManager() override = default;
 
   /**
    * @brief Create a child MPMEventManager

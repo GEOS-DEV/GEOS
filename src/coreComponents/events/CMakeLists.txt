@@ -45,7 +45,7 @@ set( events_headers
      mpmEvents/DeformationUpdateMPMEvent.hpp
      mpmEvents/BoreholePressureMPMEvent.hpp
      mpmEvents/ConfiningPressureMPMEvent.hpp
-     mpmEvents/CohesiveZoneReferenceMPMEvent.hpp
+     mpmEvents/CohesiveZoneMPMEvent.hpp
      mpmEvents/ResetDeformationGradientMPMEvent.hpp
      mpmEvents/TemperatureProfileMPMEvent.hpp
    )
@@ -76,7 +76,7 @@ set( events_sources
      mpmEvents/DeformationUpdateMPMEvent.cpp
      mpmEvents/BoreholePressureMPMEvent.cpp
      mpmEvents/ConfiningPressureMPMEvent.cpp
-     mpmEvents/CohesiveZoneReferenceMPMEvent.cpp
+     mpmEvents/CohesiveZoneMPMEvent.cpp
      mpmEvents/BoreholePressureMPMEvent.cpp
      mpmEvents/ResetDeformationGradientMPMEvent.cpp
      mpmEvents/TemperatureProfileMPMEvent.cpp

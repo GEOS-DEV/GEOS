@@ -21,6 +21,12 @@
 namespace geos
 {
 
+namespace constitutive
+{
+class CohesiveZoneBase;
+}
+
+
 /**
  * @class CohesiveZoneRegionBase
  * @brief The CohesiveZoneRegionBase is the base class to manage the cohesive zone data stored at the node level.
@@ -85,6 +91,33 @@ public:
    */
   ///@{
 
+  localIndex getFieldA() const { return m_fieldA; }
+
+  localIndex getFieldB() const { return m_fieldB; }
+
+  /**
+   * @brief Get a pointer to the constitutive model.
+   * @tparam T The type of the constitutive model.
+   * @param name The name of the constitutive model.
+   * @return A pointer to the constitutive model.
+   */
+  template< typename T = constitutive::CohesiveZoneBase >
+  T const & getConstitutiveModel() const
+  { return this->getGroup< T >( m_constitutiveModelName ); }
+
+  /**
+   * @copydoc getConstitutiveModel() const
+   */
+  template< typename T = constitutive::CohesiveZoneBase >
+  T & getConstitutiveModel()
+  { return this->getGroup< T >( m_constitutiveModelName ); }
+
+  void setConstitutiveModelName( string const & constitutiveModelName ) { m_constitutiveModelName = constitutiveModelName; }
+  string const & getConstitutiveModelName() const { return m_constitutiveModelName; }
+
+  void setInitialized( int const & initialized ) { m_initialized = initialized; }
+  int isInitalized() const { return m_initialized; }
+
   /**
    * @brief Get the global ID of each cohesive zone node.
    * @return an arrayView1d of const node global ID
@@ -96,6 +129,14 @@ public:
   {
     m_globalID.insert( globalID.begin(), globalID.end() );
   }
+
+  void setCZVolumeNormalization( int const & czVolumeNormalization ) { m_czVolumeNormalization = czVolumeNormalization; }
+  void setComputeParticleSurfaceNormalsAndPositions( int const & computeParticleSurfaceNormalsAndPositions ) { m_computeParticleSurfaceNormalsAndPositions = computeParticleSurfaceNormalsAndPositions; }
+  void setNormalsAndPositionsMethod( int const & normalsAndPositionsMethod ) { m_normalsAndPositionsMethod = normalsAndPositionsMethod; }
+
+  int getCZVolumeNormalization() const { return m_czVolumeNormalization; }
+  int getComputeNormalsAndPositions() const { return m_computeParticleSurfaceNormalsAndPositions; }
+  int getNormalsAndPositionsMethod() const { return m_normalsAndPositionsMethod; }
 
   /**
    * @brief Get the reference partitioning surface normal of each cohesive zone node.
@@ -177,9 +218,16 @@ private:
 
   CohesiveZoneRegionBase & operator=( const CohesiveZoneRegionBase & rhs );
 
+  int m_initialized;
+  int m_czVolumeNormalization;
+  int m_computeParticleSurfaceNormalsAndPositions;
+  int m_normalsAndPositionsMethod; // Should be the enum from SolidMechanicsMPM, but currently circular dependences that needs to be resolved
+
+  string m_constitutiveModelName;
+
   // Indices of fields for either side of the cohesive zone
-  localIndex field0;
-  localIndex field1;
+  localIndex m_fieldA;
+  localIndex m_fieldB;
 
   // Reference fields
   SortedArray< globalIndex > m_globalID;
@@ -187,12 +235,6 @@ private:
   array2d< real64 > m_referencePartitioningSurfaceNormal;
   array3d< real64 > m_referenceSurfaceNormal;
   array2d< real64 > m_referenceArea;
-
-  // // Mapped fields
-  // array2d< real64 > m_mass;
-  // array2d< real64 > m_volume;
-  // array3d< real64 > m_surfaceNormal;
-  // array3d< real64 > m_surfacePosition;
 };
 
 }

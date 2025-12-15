@@ -30,8 +30,6 @@ namespace geos
  *
  * The ParticleRegion class contains the functionality to support the concept of a ParticleRegion in the element
  * hierarchy. ParticleRegion derives from ParticleRegionBase and has an entry in the ObjectManagerBase catalog.
- *
- *
  */
 class ParticleRegion : public ParticleRegionBase
 {

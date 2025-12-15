@@ -27,7 +27,7 @@ MPMEventBase::MPMEventBase( string const & name,
                             Group * const parent ):
   Group( name, parent ),
   m_startTime( 0.0 ),
-  m_endTime( DBL_MAX ),
+  m_endTime( 1e16 ), // Might overflow if set to DBL_MAX
   m_isComplete( 0 )
 {
   registerWrapper( viewKeyStruct::startTimeString(), &m_startTime ).

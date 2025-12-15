@@ -534,9 +534,12 @@ private:
   dataRepository::Group m_constitutiveModels;
 
 protected:
+  /// Type of particles in this subregion.
+  ParticleType m_particleType;
+  
   /// Boolean indicating whether the particle subregion contains particles needing r-vectors defining their domain extent.
   bool m_hasRVectors;
-
+  
   /// The number of vertices each particle has
   int m_numVerticesPerParticle;
 
@@ -578,9 +581,6 @@ protected:
 
   /// Member level field for the current particle volume.
   array1d< real64 > m_particleVolume;
-
-  /// Type of particles in this subregion.
-  ParticleType m_particleType;
 
   /// current half-R-vectors (center to face)
   array3d< real64 > m_particleRVectors;

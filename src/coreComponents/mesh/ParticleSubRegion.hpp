@@ -85,13 +85,6 @@ public:
    */
   void copyFromParticleBlock( ParticleBlockABC & particleBlock );
 
-  // /**
-  //  * @brief Fill the ParticleSubRegion by copying those of the source ParticleSubRegion
-  //  * @param particleSubRegion the ParticleSubRegion which properties (connectivity info) will be copied.
-  //  */
-  // void copyFromParticleSubRegion( ParticleSubRegion & particleSubRegion );
-  ///@}
-
   /**
    * @brief struct to serve as a container for variable strings and keys
    * @struct viewKeyStruct

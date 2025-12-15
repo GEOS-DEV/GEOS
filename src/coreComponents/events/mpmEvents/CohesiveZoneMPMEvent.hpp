@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CohesiveZoneReferenceMPMEvent.hpp
+ * @file CohesiveZoneMPMEvent.hpp
  */
 
-#ifndef GEOSX_COHESIVEZONEREFERENCE_MPMEVENT_HPP_
-#define GEOSX_COHESIVEZONEREFERENCE_MPMEVENT_HPP_
+#ifndef GEOSX_COHESIVEZONE_MPMEVENT_HPP_
+#define GEOSX_COHESIVEZONE_MPMEVENT_HPP_
 
 #include "MPMEventBase.hpp"
 
@@ -27,36 +27,54 @@ namespace geos
 {
 
 /**
- * @class CohesiveZoneReferenceMPMEvent
+ * @class CohesiveZoneMPMEvent
  *
  * This class implements the material swap mpm event for the solid mechanics material point method solver
  */
-class CohesiveZoneReferenceMPMEvent : public MPMEventBase
+class CohesiveZoneMPMEvent : public MPMEventBase
 {
 public:
   /// @copydoc geos::dataRepository::Group::Group( string const & name, Group * const parent )
-  CohesiveZoneReferenceMPMEvent( const string & name,
+  CohesiveZoneMPMEvent( const string & name,
                                  Group * const parent );
 
   /// Destructor
-  virtual ~CohesiveZoneReferenceMPMEvent() override;
+  virtual ~CohesiveZoneMPMEvent() override;
 
   /**
    * @brief Catalog name interface.
    * @return This type's catalog name.
    **/
-  static string catalogName() { return "CohesiveZoneReference"; }
+  static string catalogName() { return "CohesiveZone"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
+  string const & getConstitutiveModelName() { return m_constitutiveModelName; }
+
+  //  /**
+  //   * @brief Create a new CohesiveZoneBase object as a child of this group.
+  //   * @param childKey catalog key of the new CohesiveZoneBase derived type to create
+  //   * @param childName name of the new CohesiveZoneBase object
+  //   * @return pointer to the created CohesiveZoneBase object
+  //   */
+  // virtual Group * createChild( string const & childKey, string const & childName ) override;
+
   /// @cond DO_NOT_DOCUMENT
   struct viewKeyStruct
-  {} CohesiveZoneReferenceMPMEventViewKeys;
+  { 
+    static constexpr char const * constitutiveModelString() { return "constitutiveModel"; }
+    static constexpr char const * czVolumeNormalizationString() { return "czVolumeNormalization"; }
+    static constexpr char const * computeNormalsAndPositionsString() { return "computeNormalsAndPositions"; }
+    static constexpr char const * normalsAndPositionsMethodString() { return "normalsAndPositionsMethod"; }
+  } CohesiveZoneMPMEventViewKeys;
   /// @endcond
 
   int getCZVolumeNormalization() const { return m_czVolumeNormalization; }
   int getComputeNormalsAndPositions() const { return m_computeNormalsAndPositions; }
   SolidMechanicsMPM::NormalsAndPositionsMethodOption getNormalsAndPositionsMethod() const { return m_normalsAndPositionsMethod; }
+
+private:
+  string m_constitutiveModelName;
 
 protected:
   virtual void postInputInitialization() override final;
@@ -68,4 +86,4 @@ protected:
 
 } /* namespace geos */
 
-#endif /* GEOSX_COHESIVEZONEREFERENCE_MPMEVENT_HPP_ */
+#endif /* GEOSX_COHESIVEZONE_MPMEVENT_HPP_ */

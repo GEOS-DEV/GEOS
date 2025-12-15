@@ -24,6 +24,10 @@
 #include "ConstitutivePassThruHandler.hpp"
 #include "NullModel.hpp"
 #include "ContinuumBase.hpp"
+#include "cohesiveZone/CohesiveZoneBase.hpp"
+#include "cohesiveZone/UncoupledCohesiveZone.hpp"
+#include "cohesiveZone/CoupledCohesiveZone.hpp"
+#include "cohesiveZone/PolymerCohesiveZone.hpp"
 #include "gas/Gas.hpp"
 #include "solid/Damage.hpp"
 #include "solid/DamageVolDev.hpp"
@@ -248,6 +252,37 @@ struct ConstitutivePassThruMPM< ContinuumBase >
                                                  std::forward< LAMBDA >( lambda ) );
   }
 };
+
+
+/**
+ * @struct ConstitutivePassThruCohesiveZone
+ */
+template< typename BASETYPE >
+struct ConstitutivePassThruCohesiveZone;
+
+/**
+ * Specialization for models that derive from CohesiveZoneBase that are used by the MPM solver.
+ * NOTE: this is only a temporary dispatch to reduce the compilation time.
+ */
+template<>
+struct ConstitutivePassThruCohesiveZone< CohesiveZoneBase >
+{
+
+  // NOTE: The switch order here can be fragile if a model derives from another
+  //       model, as the dynamic_cast will also cast to a base version.
+  //       Models should be ordered such that children come before parents.
+
+  template< typename LAMBDA >
+  static
+  void execute( CohesiveZoneBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< PolymerCohesiveZone,
+                                 CoupledCohesiveZone,
+                                 UncoupledCohesiveZone >::execute( constitutiveRelation,
+                                                                   std::forward< LAMBDA >( lambda ) );
+  }
+};
+
 
 /**
  * @struct ConstitutivePassThruTriaxialDriver

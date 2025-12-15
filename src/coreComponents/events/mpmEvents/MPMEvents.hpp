@@ -34,5 +34,5 @@
 #include "events/mpmEvents/BoreholePressureMPMEvent.hpp"
 #include "events/mpmEvents/ConfiningPressureMPMEvent.hpp"
 #include "events/mpmEvents/TemperatureProfileMPMEvent.hpp"
-#include "events/mpmEvents/CohesiveZoneReferenceMPMEvent.hpp"
+#include "events/mpmEvents/CohesiveZoneMPMEvent.hpp"
 #endif /* GEOSX_MPMEVENTS_HPP_ */

@@ -278,17 +278,12 @@ public:
                                  string const & finiteElementName,
                                  real64 const dt,
                                  std::string const & elementListName );
-
-  /**
-   * Applies displacement boundary conditions to the system for implicit time integration
-   * @param time The time to use for any lookups associated with this BC
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param domain The DomainPartition.
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param solution the solution vector
-   */
-
+                                 
+  struct groupKeyStruct : PhysicsSolverBase::groupKeyStruct
+  {
+    static constexpr char const * mpmEventManagerString() { return "MPMEvents"; };
+    static constexpr char const * cohesiveZoneManagerString() { return "CohesiveZoneManager"; };
+  };
 
   struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
   {
@@ -351,13 +346,6 @@ public:
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
 
-  /// Child group viewKeys
-  struct groupKeysStruct
-  {
-    dataRepository::GroupKey mpmEventManager = { "MPMEvents" }; ///< MPM Events key
-    dataRepository::GroupKey cohesiveZoneManager = { "CohesiveZones" };
-  } groupKeys; ///< Child group viewKeys
-
   void initialize( NodeManager & nodeManager,
                    ParticleManager & particleManager,
                    SpatialPartition & partition );
@@ -373,6 +361,7 @@ public:
 
   void triggerEvents( const real64 dt,
                       const real64 time_n,
+                      DomainPartition & domain,
                       ParticleManager & particleManager,
                       SpatialPartition & partition );
 
@@ -705,46 +694,13 @@ public:
                        real64 const (&normal)[3],
                        real64 ( &projection )[3] );
 
-  void enforceCohesiveLaw( ParticleManager & particleManager,
+  void enforceCohesiveLaw( real64 dt,
+                           ParticleManager & particleManager,
                            NodeManager & nodeManager );
 
   void computeDistanceToParticleSurface( real64 ( &normal )[3],
                                          arraySlice2d< real64 const > const rVectors,
                                          real64 distanceToSurface );
-
-  void computeCohesiveTraction( int const preventCZInterpentration,
-                                int const enableCohesiveFailure,
-                                real64 mA,
-                                real64 mB,
-                                arraySlice1d< real64 const > const dA,
-                                arraySlice1d< real64 const > const dB,
-                                real64 const (&aA )[3],
-                                real64 const (&aB )[3],
-                                arraySlice1d< real64 const > const nA,
-                                arraySlice1d< real64 const > const nB,
-                                arraySlice1d< real64 > const tA,
-                                arraySlice1d< real64 > const tB,
-                                real64 & maxNormalDisplacement,
-                                real64 & maxTangentialDisplacement,
-                                real64 & damage );
-
-  void uncoupledCohesiveLaw( real64 normalDisplacement,
-                             real64 tangentialDisplacement,
-                             real64 & normalStress,
-                             real64 & shearStress,
-                             real64 & damage );
-
-  void needlemanXuCohesiveLaw( real64 normalDisplacement,
-                               real64 tangentialDisplacement,
-                               real64 & normalStress,
-                               real64 & shearStress,
-                               real64 & damage );
-
-  void polymerCohesiveLaw( real64 normalDisplacement,
-                           real64 tangentialDisplacement,
-                           real64 & normalStress,
-                           real64 & shearStress,
-                           real64 & damage );
 
   void updateGridBoreholeStress( NodeManager & nodeManager );
 
@@ -1206,37 +1162,11 @@ protected:
   GPUSchemeOption m_gpuScheme;
 
   // Cohesive zone options
-  CohesiveZoneManager * m_cohesiveZoneManager;
-  int m_referenceCohesiveZone;
-  int m_enableCohesiveLaws;
   AreaIntegrationOption m_areaIntegrationMethod;
-  int m_czVolumeNormalization;
-  CohesiveLawOption m_cohesiveLaw;
-  int m_enableCohesiveFailure;
-  int m_preventCZInterpentration;
-  real64 m_normalForceConstant;
-  real64 m_shearForceConstant;
-  real64 m_totalBinderVolume;
-
   real64 m_numSurfaceIntegrationPoints;
-  real64 m_maxCohesiveNormalStress;
-  real64 m_maxCohesiveShearStress;
-  real64 m_characteristicNormalDisplacement;
-  real64 m_characteristicTangentialDisplacement;
-  real64 m_maxCohesiveNormalDisplacement;
-  real64 m_maxCohesiveTangentialDisplacement;
-
+  int m_preventCZInterpentration;
+  real64 m_totalBinderVolume;
   real64 m_polymerCZThickness;
-  real64 m_polymerCZBulkModulus;
-  real64 m_polymerCZShearModulus;
-  real64 m_polymerCZYieldStrength0;
-  real64 m_polymerCZR0;
-  real64 m_polymerCZR1;
-  real64 m_polymerCZR2;
-  real64 m_polymerCZGr;
-  real64 m_polymerCZMaxStretch;
-
-  SortedArray< globalIndex >  m_cohesiveNodeGlobalIndices;
 
   // Neighborlist options
   int m_needsNeighborList;
@@ -1273,8 +1203,6 @@ protected:
 
   // Event options
   int m_useEvents;                   // Events flag
-  MPMEventManager * m_mpmEventManager;
-
   int m_surfaceHealing;
 
   // Method of manufactured solutions (MMS) options

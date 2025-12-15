@@ -80,6 +80,18 @@ public:
     virtual ~CohesiveZoneManager() override;
 
     /**
+    * @brief Determines if a CohesiveZoneRegion with the input name exists.
+    * @tparam T The type of CohesiveZoneRegion. May be a specific derived type of CohesiveZoneRegion.
+    * @param name The name/key of the CohesiveZoneRegion
+    * @return true if the region exists, false if not.
+    */
+    template< typename T=CohesiveZoneRegionBase >
+    bool hasRegion( string const & name ) const
+    {
+        return this->getGroup( groupKeyStruct::cohesiveZoneRegionsGroup() ).hasGroup< T >( name );
+    }
+
+    /**
     * @brief Get the number of regions.
     * @return number of regions
     */
@@ -103,27 +115,27 @@ public:
         return numNode;
     }
 
-  /**
-   * @brief Get a cohesive zone region.
-   * @param key The key of cohesive zone region, either name or number.
-   * @return Reference to const T.
-   */
-  template< typename T=CohesiveZoneRegionBase, typename KEY_TYPE=void >
-  T const & getRegion( KEY_TYPE const & key ) const
-  {
-    return this->getGroup( groupKeyStruct::cohesiveZoneRegionsGroup() ).getGroup< T >( key );
-  }
+    /**
+    * @brief Get a cohesive zone region.
+    * @param key The key of cohesive zone region, either name or number.
+    * @return Reference to const T.
+    */
+    template< typename T=CohesiveZoneRegionBase, typename KEY_TYPE=void >
+    T const & getRegion( KEY_TYPE const & key ) const
+    {
+        return this->getGroup( groupKeyStruct::cohesiveZoneRegionsGroup() ).getGroup< T >( key );
+    }
 
-  /**
-   * @brief Get a cohesive zone region.
-   * @param key The key of the cohesive zone region, either name or number.
-   * @return Reference to T.
-   */
-  template< typename T=CohesiveZoneRegionBase, typename KEY_TYPE=void >
-  T & getRegion( KEY_TYPE const & key )
-  {
-    return this->getGroup( groupKeyStruct::cohesiveZoneRegionsGroup() ).getGroup< T >( key );
-  }
+    /**
+    * @brief Get a cohesive zone region.
+    * @param key The key of the cohesive zone region, either name or number.
+    * @return Reference to T.
+    */
+    template< typename T=CohesiveZoneRegionBase, typename KEY_TYPE=void >
+    T & getRegion( KEY_TYPE const & key )
+    {
+        return this->getGroup( groupKeyStruct::cohesiveZoneRegionsGroup() ).getGroup< T >( key );
+    }
 
     /**
     * @brief Get a collection of cohesive zone regions
@@ -150,7 +162,30 @@ public:
     * @return pointer to the created CohesiveZone object
     */
     virtual Group * createChild( string const & childKey, string const & childName ) override;
-    //  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
+    
+    /**
+    * @brief Add a cohesive zone region.
+    * @param regionName The name of the cohesive zone region, either name or number, to create.
+    * @return Reference to the new cohesive zone region.
+    */
+    template< typename T=CohesiveZoneRegionBase >
+    T & addRegion( string const & regionName )
+    {
+        (void) createChild( T::catalogName(), regionName );
+        return this->getGroup( groupKeyStruct::cohesiveZoneRegionsGroup() ).getGroup< T >( regionName );
+    }
+
+    /**
+    * @brief Remove a cohesive zone region.
+    * @param regionName The name of the cohesive zone region, either name or number, to remove.
+    */
+    template< typename T=CohesiveZoneRegionBase >
+    void removeRegion( string const & regionName )
+    {
+        GEOS_ERROR_IF( !hasRegion< T >( regionName ), "Attempted to remove nonexistant cohesive zone region : " << regionName << "!" );
+        Group & cohesiveZoneRegions = this->getGroup( CohesiveZoneManager::groupKeyStruct::cohesiveZoneRegionsGroup() );
+        cohesiveZoneRegions.deregisterGroup( regionName );
+    }
 
     /**
     * @brief Expand any catalogs in the data structure
@@ -309,13 +344,6 @@ private:
    * @return reference to this object
    */
   CohesiveZoneManager & operator=( const CohesiveZoneManager & );
-
-  // Mapped fields
-  array2d< real64 > m_mass;
-  array2d< real64 > m_volume;
-  array3d< real64 > m_surfaceNormal;
-  array3d< real64 > m_surfacePosition;
-
 };
 
 
