@@ -915,7 +915,10 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
 
     {
       RAJA::ReduceSum< parallelDeviceReduce, localIndex > localNegativeValues( 0 );
-      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localWrongSum( 0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localTooHighFracCount( 0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localTooLowFracCount( 0 );
+      RAJA::ReduceMin< parallelDeviceReduce, localIndex > localMinFrac( LvArray::NumericLimits< localIndex >::max );
+      RAJA::ReduceMax< parallelDeviceReduce, localIndex > localMaxFrac( LvArray::NumericLimits< localIndex >::min );
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         real64 sumCompFrac = 0.0;
@@ -925,8 +928,12 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
           if( compFrac[ei][ic] < 0.0 )
             localNegativeValues += 1;
         }
-        if( LvArray::math::abs( sumCompFrac - 1.0 ) > 1e-6 )
-          localWrongSum += 1;
+        localMinFrac.min( sumCompFrac );
+        localMaxFrac.max( sumCompFrac );
+        if( sumCompFrac > 1 + 1e-6 )
+          localTooHighFracCount += 1;
+        if( sumCompFrac < 1 - 1e-6 )
+          localTooLowFracCount += 1;
       } );
 
       localIndex const negativeValues = MpiWrapper::sum( localNegativeValues.get() );
@@ -934,10 +941,19 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
                      GEOS_FMT( "{}: negative global component fraction values found in subregion '{}' for {} elements",
                                getName(), subRegion.getName(), negativeValues ) );
 
-      localIndex const wrongSum = MpiWrapper::sum( localWrongSum.get() );
-      GEOS_ERROR_IF( wrongSum > 0,
-                     GEOS_FMT( "{}: component fractions do not sum to 1.0 in subregion '{}' for {} elements",
-                               getName(), subRegion.getName(), wrongSum ) );
+      localIndex const totalSupFrac = MpiWrapper::sum( localTooHighFracCount.get() );
+      localIndex const totalInfFrac = MpiWrapper::sum( localTooLowFracCount.get() );
+      localIndex const totalWrongCompFrac = totalSupFrac + totalInfFrac;
+      localIndex const minFrac  = MpiWrapper::min( localMinFrac.get() );
+      localIndex const maxFrac  = MpiWrapper::sum( localMaxFrac.get() );
+      GEOS_ERROR_IF( totalWrongCompFrac > 0,
+                     GEOS_FMT( "{} component fractions do not sum to 1.0 in subregion '{}'!\n"
+                               "{} are too low ; {} are too high ; component fractions sum range is from {} to {}.\n"
+                               "Consider adding field specification to initialize the '{}' field.",
+                               totalWrongCompFrac, subRegion.getName(),
+                               localTooLowFracCount.get(), localTooHighFracCount.get(), minFrac, maxFrac,
+                               fields::flow::globalCompFraction::key() ),
+                     getDataContext());
     }
 
     // Assume global component fractions have been prescribed.
