@@ -589,10 +589,10 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 
     //Randomize p values
     srand( time( NULL ));
-    for( localIndex a = 0; a < sizeNode; ++a )
+    forAll<EXEC_POLICY> ( 0, [=] GEOS_HOST_DEVICE ( localIndex const a )
     {
       p[a] = (real64)rand()/(real64) RAND_MAX;
-    }
+    } );
 
     //Step 1: Normalize randomized pressure
     real64 normP= 0.0;
@@ -711,7 +711,7 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition &
     {
       real64 const value = bc.getScale();
 
-      for( localIndex i = 0; i < targetSet.size(); ++i )
+      forAll<EXEC_POLICY>( 0, [=] GEOS_HOST_DEVICE ( localIndex const i )
       {
         localIndex const kf = targetSet[ i ];
         freeSurfaceFaceIndicator[kf] = 1;
@@ -726,7 +726,7 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition &
           p_n[dof]   = value;
           p_nm1[dof] = value;
         }
-      }
+      } );
     }
     else
     {
