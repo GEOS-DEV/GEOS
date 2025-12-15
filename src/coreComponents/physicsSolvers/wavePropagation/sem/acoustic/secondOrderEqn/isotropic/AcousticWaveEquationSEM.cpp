@@ -47,82 +47,35 @@ namespace geos
 namespace
 {
 
-GEOS_FORCE_INLINE
-bool isNanOrInf( real32 const v )
+struct ApplyFreeSurfaceBCKernel
 {
-  return std::isnan( static_cast< double >( v ) ) || !std::isfinite( static_cast< double >( v ) );
-}
-
-template< typename Array1D >
-void checkArray1dFinite( string const & label,
-                         Array1D const & arr,
-                         string const & solverName,
-                         real64 const time_n,
-                         real64 const dt )
-{
-  for( localIndex i = 0; i < arr.size(); ++i )
+  template< typename POLICY >
+  static void launch( SortedArrayView< localIndex const > const & targetSet,
+                      ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                      arrayView1d< localIndex > const & freeSurfaceFaceIndicator,
+                      arrayView1d< localIndex > const & freeSurfaceNodeIndicator,
+                      arrayView1d< real32 > const & p_np1,
+                      arrayView1d< real32 > const & p_n,
+                      arrayView1d< real32 > const & p_nm1,
+                      real32 const & value )
   {
-    real32 const v = arr[i];
-    if( isNanOrInf( v ) )
+    forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
     {
-      GEOS_ERROR( solverName << ": NaN/Inf detected in " << label
-                            << " at localIndex=" << i
-                            << " value=" << static_cast< double >( v )
-                            << " time_n=" << time_n
-                            << " dt=" << dt
-                            << " mpiRank=" << MpiWrapper::commRank() );
-    }
-  }
-}
-
-template< typename Array1D, typename CoordView2D >
-void checkNodeFieldFinite( string const & label,
-                           Array1D const & field,
-                           CoordView2D const X,
-                           string const & solverName,
-                           real64 const time_n,
-                           real64 const dt )
-{
-  for( localIndex a = 0; a < field.size(); ++a )
-  {
-    real32 const v = field[a];
-    if( isNanOrInf( v ) )
-    {
-      GEOS_ERROR( solverName << ": NaN/Inf detected in " << label
-                            << " at node localIndex=" << a
-                            << " value=" << static_cast< double >( v )
-                            << " X={" << X( a, 0 ) << "," << X( a, 1 ) << "," << X( a, 2 ) << "}"
-                            << " time_n=" << time_n
-                            << " dt=" << dt
-                            << " mpiRank=" << MpiWrapper::commRank() );
-    }
-  }
-}
-
-template< typename Array2D >
-void checkArray2dFinite( string const & label,
-                         Array2D const & arr,
-                         string const & solverName,
-                         real64 const time_n,
-                         real64 const dt )
-{
-  for( localIndex i = 0; i < arr.size( 0 ); ++i )
-  {
-    for( localIndex j = 0; j < arr.size( 1 ); ++j )
-    {
-      real32 const v = arr[i][j];
-      if( isNanOrInf( v ) )
+      localIndex const kf = targetSet[i];
+      freeSurfaceFaceIndicator[kf] = 1;
+      localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+      for( localIndex a = 0; a < numNodes; ++a )
       {
-        GEOS_ERROR( solverName << ": NaN/Inf detected in " << label
-                              << " at (" << i << "," << j << ")"
-                              << " value=" << static_cast< double >( v )
-                              << " time_n=" << time_n
-                              << " dt=" << dt
-                              << " mpiRank=" << MpiWrapper::commRank() );
+        localIndex const dof = faceToNodeMap( kf, a );
+        freeSurfaceNodeIndicator[dof] = 1;
+        p_np1[dof] = value;
+        p_n[dof]   = value;
+        p_nm1[dof] = value;
       }
-    }
+    } );
   }
-}
+};
+
 
 }
 
@@ -483,22 +436,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       } );
     } );
 
-    // Host-side NaN/Inf checks: move back from device, scan, then move to device again.
-    {
-      auto & X32 = nodeManager.getField< fields::referencePosition32 >();
-      X32.move( hostMemorySpace, false );
-      mass.move( hostMemorySpace, false );
-      damping.move( hostMemorySpace, false );
-
-      auto const X = X32.toViewConst();
-      checkNodeFieldFinite( "acousticMassVector (after init assembly)", mass, X, getName(), 0.0, 0.0 );
-      checkNodeFieldFinite( "dampingVector (after init assembly)", damping, X, getName(), 0.0, 0.0 );
-
-      // Move back so subsequent device kernels see device-resident data.
-      mass.move( parallelDeviceMemorySpace, false );
-      damping.move( parallelDeviceMemorySpace, false );
-      X32.move( parallelDeviceMemorySpace, false );
-    }
     // Here we compute the timeStep only one time (beginning of the simulation).
     if( m_timestepStabilityLimit==1 )
     {
@@ -589,10 +526,10 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
 
     //Randomize p values
     srand( time( NULL ));
-    forAll<EXEC_POLICY> ( 0, [=] GEOS_HOST_DEVICE ( localIndex const a )
+    for( localIndex a = 0; a < sizeNode; ++a )
     {
       p[a] = (real64)rand()/(real64) RAND_MAX;
-    } );
+    }
 
     //Step 1: Normalize randomized pressure
     real64 normP= 0.0;
@@ -709,24 +646,15 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition &
 
     if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
     {
-      real64 const value = bc.getScale();
-
-      forAll<EXEC_POLICY>( 0, [=] GEOS_HOST_DEVICE ( localIndex const i )
-      {
-        localIndex const kf = targetSet[ i ];
-        freeSurfaceFaceIndicator[kf] = 1;
-
-        localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
-        for( localIndex a=0; a < numNodes; ++a )
-        {
-          localIndex const dof = faceToNodeMap( kf, a );
-          freeSurfaceNodeIndicator[dof] = 1;
-
-          p_np1[dof] = value;
-          p_n[dof]   = value;
-          p_nm1[dof] = value;
-        }
-      } );
+      real32 const value = static_cast< real32 >( bc.getScale() );
+      ApplyFreeSurfaceBCKernel::launch< EXEC_POLICY >( targetSet,
+                                                       faceToNodeMap,
+                                                       freeSurfaceFaceIndicator,
+                                                       freeSurfaceNodeIndicator,
+                                                       p_np1,
+                                                       p_n,
+                                                       p_nm1,
+                                                       value );
     }
     else
     {
@@ -1467,37 +1395,6 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
       }
     } );
   }
-
-  // Host-side NaN/Inf checks after pressure update. This forces a device->host move so we can
-  // catch the first bad value and report it with context.
-  {
-    auto & X32 = nodeManager.getField< fields::referencePosition32 >();
-
-    X32.move( hostMemorySpace, false );
-    mass.move( hostMemorySpace, false );
-    damping.move( hostMemorySpace, false );
-    p_n.move( hostMemorySpace, false );
-    p_np1.move( hostMemorySpace, false );
-    stiffnessVector.move( hostMemorySpace, false );
-    rhs.move( hostMemorySpace, false );
-
-    auto const X = X32.toViewConst();
-    checkNodeFieldFinite( "acousticMassVector (during timestep)", mass, X, getName(), time_n, dt );
-    checkNodeFieldFinite( "dampingVector (during timestep)", damping, X, getName(), time_n, dt );
-    checkNodeFieldFinite( "Pressure_n (during timestep)", p_n, X, getName(), time_n, dt );
-    checkNodeFieldFinite( "Pressure_np1 (during timestep)", p_np1, X, getName(), time_n, dt );
-    checkNodeFieldFinite( "stiffnessVector (during timestep)", stiffnessVector, X, getName(), time_n, dt );
-    checkNodeFieldFinite( "rhs (during timestep)", rhs, X, getName(), time_n, dt );
-
-    // Move back so later device kernels (and field sync) operate normally.
-    mass.move( parallelDeviceMemorySpace, false );
-    damping.move( parallelDeviceMemorySpace, false );
-    p_n.move( parallelDeviceMemorySpace, false );
-    p_np1.move( parallelDeviceMemorySpace, false );
-    stiffnessVector.move( parallelDeviceMemorySpace, false );
-    rhs.move( parallelDeviceMemorySpace, false );
-    X32.move( parallelDeviceMemorySpace, false );
-  }
 }
 
 void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
@@ -1537,23 +1434,11 @@ void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
                                 domain.getNeighbors(),
                                 true );
 
-  // Host-side NaN/Inf check after synchronization.
-  {
-    p_np1.move( hostMemorySpace, false );
-    checkArray1dFinite( "Pressure_np1 (after synchronizeFields)", p_np1, getName(), time_n, dt );
-    p_np1.move( parallelDeviceMemorySpace, false );
-  }
   // compute the seismic traces since last step.
   arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
 
   computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
 
-  // Host-side NaN/Inf check on receiver traces after the device interpolation.
-  {
-    m_pressureNp1AtReceivers.move( hostMemorySpace, false );
-    checkArray2dFinite( "pressureNp1AtReceivers (after computeAllSeismoTraces)", m_pressureNp1AtReceivers, getName(), time_n, dt );
-    m_pressureNp1AtReceivers.move( parallelDeviceMemorySpace, false );
-  }
   incrementIndexSeismoTrace( time_n );
 
   if( m_usePML )
@@ -1607,13 +1492,6 @@ void AcousticWaveEquationSEM::cleanup( real64 const time_n,
     arrayView1d< real32 const > const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
     arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
     computeAllSeismoTraces( time_n, 0.0, p_np1, p_n, pReceivers );
-
-    // Host-side NaN/Inf check before output.
-    {
-      m_pressureNp1AtReceivers.move( hostMemorySpace, false );
-      checkArray2dFinite( "pressureNp1AtReceivers (cleanup)", m_pressureNp1AtReceivers, getName(), time_n, 0.0 );
-      m_pressureNp1AtReceivers.move( parallelDeviceMemorySpace, false );
-    }
 
     WaveSolverUtils::writeSeismoTrace( "seismoTraceReceiver", getName(), m_outputSeismoTrace, m_receiverConstants.size( 0 ),
                                        m_receiverIsLocal, m_nsamplesSeismoTrace, pReceivers );
