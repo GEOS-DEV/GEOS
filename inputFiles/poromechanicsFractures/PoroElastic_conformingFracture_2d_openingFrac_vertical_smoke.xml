@@ -10,6 +10,13 @@
       name="./PoroElastic_conformingFracture_2d_openingFrac_base.xml"/>
   </Included> 
 
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA_stab"/>  
+    </FiniteVolume>
+  </NumericalMethods>
+
   <Mesh>
     <InternalMesh
       name="mesh1"
