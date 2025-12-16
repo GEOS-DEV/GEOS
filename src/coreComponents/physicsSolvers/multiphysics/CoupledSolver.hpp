@@ -72,7 +72,30 @@ public:
   /// deleted move operator
   CoupledSolver & operator=( CoupledSolver && ) = delete;
 
+  template< typename T >
+  void throwSolversNotFound( std::ostringstream & errorMessage, string const & solverType )
+  {
+    string_array availableSolvers;
 
+    this->getParent().template forSubGroups< T >( [&]( T & group )
+    {
+
+      availableSolvers.emplace_back( group.getName());
+
+    } );
+
+    if( availableSolvers.empty() )
+    {
+      errorMessage << GEOS_FMT( "No {} solver has been found.", solverType );
+    }
+    else
+    {
+      errorMessage << GEOS_FMT( "Available {} solvers are: {}. ", solverType,
+                                stringutilities::join( availableSolvers, ", " ) );
+    }
+
+    GEOS_THROW( errorMessage.str(), InputError );
+  }
   /**
    * @brief Utility function to set the subsolvers pointers using the names provided by the user
    */
@@ -84,13 +107,17 @@ public:
       using SolverPtr = TYPEOFREF( solver );
       using SolverType = TYPEOFPTR( SolverPtr {} );
       auto const & solverName = m_names[idx()];
-      auto const & solverType = LvArray::system::demangleType< SolverType >();
       solver = this->getParent().template getGroupPointer< SolverType >( solverName );
-      GEOS_THROW_IF( solver == nullptr,
-                     GEOS_FMT( "{}: Could not find solver '{}' of type {}",
-                               getDataContext(),
-                               solverName, solverType ),
-                     InputError );
+      if( solver== nullptr )
+      {
+        string const solverWrapperKey = SolverType::coupledSolverAttributePrefix() + "SolverName";
+        std::ostringstream errorMessage;
+        errorMessage << GEOS_FMT( "{}: Could not find solver named '{}'.\n",
+                                  getWrapperDataContext( solverWrapperKey ), solverName );
+        throwSolversNotFound< SolverType >( errorMessage, SolverType::coupledSolverAttributePrefix() );
+      }
+
+
       GEOS_LOG_LEVEL_RANK_0( logInfo::Coupling,
                              GEOS_FMT( "{}: found {} solver named {}",
                                        getName(), solver->getCatalogName(), solverName ) );
@@ -707,7 +734,7 @@ protected:
                              EnumStrings< NonlinearSolverParameters::CouplingType >::toString( NonlinearSolverParameters::CouplingType::Sequential ),
                              NonlinearSolverParameters::viewKeysStruct::lineSearchActionString(),
                              EnumStrings< NonlinearSolverParameters::LineSearchAction >::toString( NonlinearSolverParameters::LineSearchAction::None ) ),
-                   InputError );
+                   InputError, getNonlinearSolverParameters().getWrapperDataContext( NonlinearSolverParameters::viewKeysStruct::couplingTypeString() ) );
 
     if( m_nonlinearSolverParameters.m_nonlinearAccelerationType != NonlinearSolverParameters::NonlinearAccelerationType::None )
     {

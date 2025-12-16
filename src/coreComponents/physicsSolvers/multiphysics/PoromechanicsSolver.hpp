@@ -155,7 +155,7 @@ public:
     GEOS_THROW_IF( m_stabilizationType == stabilization::StabilizationType::Local,
                    this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
                    ": Local stabilization has been temporarily disabled",
-                   InputError );
+                   InputError, this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) );
 
     DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -671,12 +671,18 @@ protected:
                                                                                     string_array const & regionNames )
       {
 
-        mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                              auto & subRegion )
+
+        mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                                                       auto & subRegion )
         {
           // update the porosity after a change in displacement (after mechanics solve)
           // or a change in pressure/temperature (after a flow solve)
           flowSolver()->updatePorosityAndPermeability( subRegion );
+        } );
+        mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                              auto & subRegion )
+
+        {
           // update bulk density to reflect porosity change into mechanics
           updateBulkDensity( subRegion );
         } );

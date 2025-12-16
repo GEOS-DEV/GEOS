@@ -22,7 +22,7 @@ InvariantImmiscibleFluid::InvariantImmiscibleFluid( string const & name, Group *
 
   registerWrapper( viewKeyStruct::componentMolarWeightString(), &m_componentMolarWeight )
     .setInputFlag( dataRepository::InputFlags::REQUIRED )
-    .setDescription( "Molar weights of components" );
+    .setDescription( "Component molar weights [kg/mol]" );
 
   // Densities: constant phase densities
   registerWrapper( "densities", &m_densities )

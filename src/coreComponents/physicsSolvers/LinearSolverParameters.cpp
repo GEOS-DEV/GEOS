@@ -817,22 +817,28 @@ void LinearSolverParametersInput::postInputInitialization()
 
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.stopIfError ) == 0,
                  getWrapperDataContext( viewKeyStruct::stopIfErrorString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::stopIfErrorString() ) );
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.checkResidual ) == 0,
                  getWrapperDataContext( viewKeyStruct::directCheckResidualString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::directCheckResidualString() ) );
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.equilibrate ) == 0,
                  getWrapperDataContext( viewKeyStruct::directEquilString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::directEquilString() ) );
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0,
                  getWrapperDataContext( viewKeyStruct::directReplTinyPivotString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::directReplTinyPivotString() ) );
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0,
                  getWrapperDataContext( viewKeyStruct::directIterRefString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::directIterRefString() ) );
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.parallel ) == 0,
                  getWrapperDataContext( viewKeyStruct::directParallelString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::directParallelString() ) );
 
   GEOS_ERROR_IF_LT_MSG( m_parameters.krylov.maxIterations, 0,
                         getWrapperDataContext( viewKeyStruct::krylovMaxIterString() ) <<
