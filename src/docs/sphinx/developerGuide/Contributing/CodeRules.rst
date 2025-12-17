@@ -178,7 +178,7 @@ This rule allow us to control bounds checking depending on ``GEOS_USE_BOUNDS_CHE
       map<string, real64> orderedMap;
 
 The following standard library components are allowed:
-- ``std::pair``, ``std::tuple`` for temporary structures, but beware of memory allocation, sometimes struct are to prefer.
+- ``std::pair``, ``std::tuple`` for temporary structures, `sometimes struct are to prefer <https://godbolt.org/z/KE7TEMx7d>`_.
 - ``std::function`` for callbacks
 - ``std::optional`` for optional return values
 - ``std::move``, ``std::forward`` for move semantics
@@ -228,7 +228,7 @@ User-facing features must be documented in the Sphinx RST documentation (``src/d
 Doxygen & Naming (Developer-Oriented)
 """"""""""""""""""""""""""""""""""""""
 
-Keep Doxygen comments and naming as clear as possible. Keep in mind that it is target to developers from other domains.
+Keep Doxygen comments and naming as clear as possible. Variable names and inline comments should provide help for developers even if they are not experts in the domain.  
 
 .. dropdown:: Example: Doxygen documentation
    :icon: code
@@ -253,7 +253,7 @@ Keep Doxygen comments and naming as clear as possible. Keep in mind that it is t
                               real64 const dt,
                               arrayView1d<real64> const & residual );
 
-      // BAD - Documentation does not tell anything about the point of this function.
+      // BAD - documentation does not provide useful information beyond the function name.
       /**
         * @brief Compute CFL numbers
         * @param[in] time current time
@@ -271,8 +271,9 @@ Testing
 Unit Tests
 ^^^^^^^^^^
 
-**Always provide unit tests** to ensure code behaves according to expectations.
-Unit testing is not about testing every single line of code (an unrealistic goal), but about *verifying assumptions and preventing regressions*. Don't assume your code works as intended—prove it with tests.
+**Always provide unit tests** to ensure every function behaves according to expectations.
+Unit testing is not about testing every single line of code (an unrealistic goal), but about *verifying assumptions and preventing regressions*. Do not assume that your code will always work as intended — protect it with unit tests.
+
 - Focus on **critical logic** (core functionality and algorithms), **edge cases** (extreme, erroneous, empty values).
 - **Use GoogleTest framework**.
 - In GEOS, the goal of unit test is never to take position on the validity of physical results (this is the point of integrated-tests).
@@ -307,6 +308,19 @@ Unit testing is not about testing every single line of code (an unrealistic goal
         EXPECT_THROW( component.compute( -1.0 ), std::invalid_argument );
       }
 
+      // Test the `testMyFunc()` function for GPU (geos::parallelDevicePolicy, if applicable) and
+      // CPU scenario (serialPolicy)
+      #ifdef GEOS_USE_DEVICE
+      TEST( MyFuncTests, testMyFuncDevice )
+      {
+        testMyFunc< geos::parallelDevicePolicy< > >();
+      }
+      #endif
+      TEST( MyFuncTests, testMyFuncHost )
+      {
+        testMyFunc< serialPolicy >();
+      }
+
       // entry point of the test binary
       int main( int argc, char * * argv )
       {
@@ -321,14 +335,14 @@ Code Coverage
 ^^^^^^^^^^^^^
 
 **Code coverage should never decrease.** New code contributions must maintain or improve overall code coverage.
-Use code-cov reports to identify untested code paths.
+Use code-cov to report untested code paths.
 
-Integrated Tests & examples
+Integrated Tests & Examples  
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Every XML-usable & serializable component must have examples (at least, have an integrated-test case):**
-- Each different usage pattern requires its own example,
-- Examples must be ran as integrated tests to guaranty they keep valid,
+**Always provide an example or an integrated test for every XML-usable & serializable component:**  
+- Each usage pattern should have its own dedicated example,  
+- Examples must run as part of the integrated tests to protect features against regressions,  
 - Place examples in ``examples/`` directory, and integrated tests in ``inputFiles/``,
 
 For more info, please refer to :ref:`IntegratedTests.rst`.
@@ -339,7 +353,7 @@ Logging
 Rules
 -----
 
-Use GEOS Logging Macros (``GEOS_LOG*``)
+GEOS Logging Macros (``GEOS_LOG*``)  
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Use of ``std::cout``, ``std::cerr``, or ``printf`` for logging must never appear** on the develop branch.
@@ -368,7 +382,7 @@ Always use GEOS logging macros defined in ``Logger.hpp``:
 - ``GEOS_LOG_RANK(msg)`` - Log to rank-specific output stream
 - ``GEOS_LOG_RANK_VAR(var)`` - Log variable on rank stream
 
-Use Log Levels
+Using Log Levels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Logging should be meaningful and controlled**:
@@ -412,7 +426,7 @@ See :doc:`LogLevels` for using / adding log level (e.g., ``logInfo::Convergence`
 Logging in RAJA Kernels
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Logging inside RAJA kernels only for DEBUG purposes** and must never appear on the develop branch.
+**Logging inside RAJA kernels should only be done for debugging purposes** and must never appear on the develop branch.  
 
 **Rationale:** Logging on GPU can:
 - Reserve cache lines and degrade performance,
@@ -497,7 +511,7 @@ Error Management
 ================
 
 - **Developpers must provide runtime validations** of their code behaviour,
-- for runtime validation fails that can be encountered by users, **meaningful messages and context must be provided**.
+- For runtime validation fails that can be triggered by users, **meaningful messages and context must be provided** to help troubleshooting.  
 
 Errors (GEOS_ERROR*)
 --------------------
@@ -586,7 +600,7 @@ do not serve as an alternative code path to consult a behaviour state.
 
 - **Performance:** Exception handling is expensive, especially with stack unwinding,
 - **Predictability:** Catching and continuing makes behaviour unpredictable and hard to debug,
-- **Safety:** The error state may have corrupted simulation data, broke the code path at an unexpected place, and/or left the system in an invalid state.
+- **Safety:** The error state may have corrupted simulation data, broken the code path at an unexpected place, and/or left the system in an invalid state.  
 
 .. dropdown:: Example: Exception handling anti-pattern
    :icon: code
@@ -622,7 +636,7 @@ Use ``GEOS_WARNING*`` macros when:
 
 - An issue is detected but **simulation can continue**
 - Simulation may be **affected but not completly invalid**
-- User should be notified of a **potential problem**
+- The user should be notified of a **potential problem**  
 
 .. dropdown:: Example: Warning usage
    :icon: code
@@ -638,10 +652,10 @@ Use ``GEOS_WARNING*`` macros when:
 Errors & Warning in RAJA Kernels
 --------------------------------
 
-Same rule as logging: **Error and warning output inside RAJA kernels only for DEBUG purposes** and must never appear on the develop branch.
+Similarly to Logging, **error and warning output inside RAJA kernels is only for debugging purposes** and must never appear on the develop branch.  
 
 - GPU kernel errors cause immediate kernel termination, adding potentially costly branches,
-- Error handling on device has significant performance & cache impact,
+- Error handling on device has significant performance and cache impact,  
 - GPU error handling may be unsupported depending on the platform / device,
 - Can cause deadlocks in parallel execution.
 
@@ -881,7 +895,7 @@ Communication Batching
 Validation / Precision
 ======================
 
-Computation validation
+Computation Validation  
 -----------------------
 
 Use Tolerance-Based Comparisons
@@ -907,10 +921,10 @@ Use Tolerance-Based Comparisons
       real64 const scale = std::max( std::abs(a), std::abs(b) );
       if( std::abs(a - b) < relTol * scale ) { ... }
 
-Division Safety, NaN/Inf values
+Division Safety, NaN/Inf Values  
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- **Always verify denominators are not zero or near-zero before division**.
+- **Always verify that denominators are not zero or near-zero before a division**.  
 
 - In General, **we should not make any computation that could result in NaN/Inf values**.
 
@@ -1024,7 +1038,7 @@ Performance
 Profiling
 ---------
 
-Profile When Affecting Kernel behaviour
+Profile When Affecting Kernel Behaviour  
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When modifying performance-critical code (kernels, assembly loops, solvers):
@@ -1081,7 +1095,7 @@ Speed Optimization Rules
 -----------------------------
 
 - **Hoist Loop Invariants**, move computations that don't change during iterations outside the loop.
-- When it does not critically affect the code architecture and clarity, **Fuse multiple related kernels to reduce memory traffic and launch overhead** (i.e., statistics kernels process all physics field at once).
+- When it does not critically affect the code architecture and clarity, **fuse multiple related kernels to reduce memory traffic and launch overhead** (i.e., statistics kernels process all physics field at once).  
 - **Optimize Memory Access for Cache and Coalescing**. Access memory sequentially and ensure coalesced access, especially on GPUs.
 - **Minimize Host-Device Transfers**. Keep data on the appropriate memory space and minimize transfers.
 
@@ -1104,7 +1118,7 @@ Be Const / Constexpr
 - **Code safety,** prevents accidental modification for constant contexts,
 - **Show code intention,** make code more readable.
 
-Also, **Mark methods const if the method is not designed to modify** the object state.
+Also, **mark methods const if the method is not designed to modify** the object state.  
 
 Value / Const Function Arguments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1297,7 +1311,7 @@ Principles
 ^^^^^^^^^^
 
 - **Loose coupling:** Components should depend on interfaces, not concrete implementations,
-- **No circular dependancies:** Consider the existing GEOS dependancies to not make components co-dependant (headers inclusion, packages referencing in ``CMakeLists.txt``, avoid tightly coupled objects),
+- **No circular dependencies:** Consider the existing GEOS dependencies to not make components co-dependent (headers inclusion, packages referencing in ``CMakeLists.txt``, avoid tightly coupled objects),  
 - **Dependency injection:** Public components should receive their dependencies from external sources. Pass required dependencies using intermediate types instead of direct implementation types, using lambda, templates, and minimal interfaces, relying on **lambda**, **templates** and **minimal interfaces** (loose coupling, testability),
 - **Performance exceptions:** Tight coupling is acceptable when required for performance,
 - **Minimize header inclusions and dependancies**.
