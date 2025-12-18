@@ -2755,17 +2755,17 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="youngModulus" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicFiniteStrainType">
-		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<!--bulkModulus => Bulk modulus-->
 		<xsd:attribute name="bulkModulus" type="real64_array" />
-		<!--density => Material Density-->
+		<!--density => Material density-->
 		<xsd:attribute name="density" type="real64_array2d" />
-		<!--oldStress => Previous Material Stress-->
+		<!--oldStress => Previous material stress-->
 		<xsd:attribute name="oldStress" type="real64_array3d" />
-		<!--shearModulus => Elastic Shear Modulus Field-->
+		<!--shearModulus => Shear modulus-->
 		<xsd:attribute name="shearModulus" type="real64_array" />
-		<!--stress => Current Material Stress-->
+		<!--stress => Current material stress-->
 		<xsd:attribute name="stress" type="real64_array3d" />
-		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
+		<!--thermalExpansionCoefficient => Thermal expansion coefficient-->
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicPressureDependentType">

@@ -3,7 +3,7 @@
 set( gtest_geosx_tests
      testDamage.cpp )
 
-set( dependencyList gtest blas lapack constitutive ${parallelDeps} )
+set( dependencyList gtest mainInterface blas lapack constitutive ${parallelDeps} )
 
 if( ENABLE_CUDA AND ENABLE_CUDA_NVTOOLSEXT )
   list( APPEND dependencyList CUDA::nvToolsExt )
