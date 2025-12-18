@@ -22,7 +22,7 @@
 
 #include "ElasticIsotropic.hpp"
 #include "PropertyConversions.hpp"
-#include "SolidModelDiscretizationOpsFullyAnisotroipic.hpp"
+#include "SolidModelDiscretizationOpsFullyAnisotropic.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geos{
@@ -64,7 +64,7 @@ public:
   ElasticIsotropicFiniteStrainUpdates & operator=( ElasticIsotropicFiniteStrainUpdates && ) =  delete;
 
   /// Use the uncompressed version of the stiffness bilinear form
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotroipic; // typo in "Anisotroipic"
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic;
 
   // // Bring in base implementations to prevent hiding warnings
   // using ElasticIsotropicUpdates::smallStrainNoStateUpdate;
