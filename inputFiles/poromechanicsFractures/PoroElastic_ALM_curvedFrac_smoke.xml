@@ -1,0 +1,102 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File
+      name="./curvedFrac_smoke.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhasePoromechanicsConformingFracturesALM
+      name="poroFractureSolver"
+      targetRegions="{ Region, Reservoir, Fracture }" 
+      initialDt="1e-3"
+      flowSolverName="singlePhaseFlowSolver"
+      solidSolverName="fractureMechSolver"
+      logLevel="1">
+      <NonlinearSolverParameters
+        couplingType="Sequential"  
+        lineSearchAction="None"
+        subcycling="1"
+        maxTimeStepCuts="1"
+        newtonTol="1e0"
+        newtonMaxIter="10"
+        maxAllowedResidualNorm="1e+15"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"
+        krylovTol="1.0e-8"
+        logLevel="1"/>
+    </SinglePhasePoromechanicsConformingFracturesALM>
+
+    <SolidMechanicsAugmentedLagrangianContact
+      name="fractureMechSolver"
+      logLevel="2"
+      simultaneous="1"
+      symmetric="1"
+      iterPenaltyN="10.0"
+      iterPenaltyT="10.0"
+      tolJumpN="1.e-05"
+      tolJumpT="1.e-04"
+      tolTauLimit="1.e-02"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      targetRegions="{ Region, Reservoir, Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        logLevel="2"
+        maxNumConfigurationAttempts="50"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        lineSearchMaxCuts="4"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"
+        krylovTol="1.0e-8"
+        logLevel="1"/>
+    </SolidMechanicsAugmentedLagrangianContact>
+
+    <SinglePhaseFVM 
+      name="singlePhaseFlowSolver"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Region, Reservoir, Fracture }" > 
+      <NonlinearSolverParameters
+        newtonTol="1.0e-2"
+        newtonMaxIter="8"
+        allowNonConverged="1"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"
+        krylovTol="1.0e-8"
+        logLevel="1"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <Events
+    maxTime="30.0">
+
+    <PeriodicEvent
+      name="solverApplications"
+      beginTime="0.0"
+      endTime="100.0"
+      forceDt="10.0"
+      target="/Solvers/poroFractureSolver"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="10.0"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="restart"
+      timeFrequency="10.0"
+      target="/Outputs/restarts"/>
+  </Events>
+ 
+</Problem>
