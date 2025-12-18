@@ -193,15 +193,15 @@ void SurfaceGenerator::postInputInitialization()
   static const std::set< integer > binaryOptions = { 0, 1 };
 
   GEOS_ERROR_IF( binaryOptions.count( m_isPoroelastic ) == 0,
-                 viewKeyStruct::isPoroelasticString() << " option can be either 0 (false) or 1 (true)",
+                 "option can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::isPoroelasticString() ) );
 
   GEOS_ERROR_IF( binaryOptions.count( m_nodeBasedSIF ) == 0,
-                 viewKeyStruct::nodeBasedSIFString() << " option can be either 0 (false) or 1 (true)",
+                 "option can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::nodeBasedSIFString() ) );
 
   GEOS_ERROR_IF( binaryOptions.count( m_mpiCommOrder ) == 0,
-                 viewKeyStruct::mpiCommOrderString() << " option can be either 0 (false) or 1 (true)",
+                 "option can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::mpiCommOrderString() ) );
 }
 

@@ -69,22 +69,19 @@ void BrineSalinity::postInputInitializationImpl( MultiFluidBase const * fluid,
   real64 constexpr epsilon = MultiFluidConstants::epsilon;
 
   GEOS_THROW_IF_LT_MSG( m_salinity, -epsilon,
-                        GEOS_FMT( "{}: invalid salinity value provided in '{}'. Salinity should not be negative.",
-                                  fluid->getFullName(),
+                        GEOS_FMT( "invalid salinity value provided in '{}'. Salinity should not be negative.",
                                   viewKeyStruct::salinityString() ),
-                        InputError );
+                        InputError, fluid->getDataContext() );
 
   GEOS_THROW_IF_LT_MSG( m_waterCompressibility, epsilon,
-                        GEOS_FMT( "{}: invalid salinity value provided in '{}'. Compressibility should be positive.",
-                                  fluid->getFullName(),
+                        GEOS_FMT( "invalid salinity value provided in '{}'. Compressibility should be positive.",
                                   viewKeyStruct::waterCompressibilityString() ),
-                        InputError );
+                        InputError, fluid->getDataContext() );
 
   GEOS_THROW_IF_LT_MSG( m_saltMolarWeight, epsilon,
-                        GEOS_FMT( "{}: invalid salt molar weight value provided in '{}'. Molar weight should be positive.",
-                                  fluid->getFullName(),
+                        GEOS_FMT( "invalid salt molar weight value provided in '{}'. Molar weight should be positive.",
                                   viewKeyStruct::saltMolarWeightString() ),
-                        InputError );
+                        InputError, fluid->getDataContext() );
 }
 
 } // end namespace compositional

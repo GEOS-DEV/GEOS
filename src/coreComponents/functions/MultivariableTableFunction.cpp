@@ -35,7 +35,7 @@ MultivariableTableFunction::MultivariableTableFunction( const string & name,
 void MultivariableTableFunction::initializeFunctionFromFile( string const & filename )
 {
   std::ifstream file( filename.c_str() );
-  GEOS_THROW_IF( !file, catalogName() << " : could not read input file " << filename,
+  GEOS_THROW_IF( !file, "Could not read input file " << filename,
                  InputError, getDataContext() );
 
   integer numDims, numOps;
@@ -52,15 +52,15 @@ void MultivariableTableFunction::initializeFunctionFromFile( string const & file
   GEOS_THROW_IF( !file, "Can`t read number of interpolatored operators", InputError, getDataContext() );
 
   // assume no more than 10 dimensions
-  GEOS_THROW_IF_LT_MSG( numDims, 1, catalogName() << " : positive integer value expected",
+  GEOS_THROW_IF_LT_MSG( numDims, 1, "Positive integer value expected",
                         InputError, getDataContext() );
-  GEOS_THROW_IF_GT_MSG( numDims, 10, catalogName() << " : maximum 10 dimensions expected",
+  GEOS_THROW_IF_GT_MSG( numDims, 10, "Maximum 10 dimensions expected",
                         InputError, getDataContext() );
 
   // assume no more than 100 operators
-  GEOS_THROW_IF_LT_MSG( numOps, 1, catalogName() << " : positive integer value expected",
+  GEOS_THROW_IF_LT_MSG( numOps, 1, "Positive integer value expected",
                         InputError, getDataContext() );
-  GEOS_THROW_IF_GT_MSG( numOps, 100, catalogName() << " : maximum 100 operators expected",
+  GEOS_THROW_IF_GT_MSG( numOps, 100, "Maximum 100 operators expected",
                         InputError, getDataContext() );
 
   axisMinimums.resize( numDims );
@@ -72,17 +72,17 @@ void MultivariableTableFunction::initializeFunctionFromFile( string const & file
   for( integer i = 0; i < numDims; i++ )
   {
     file >> axisPoints[i];
-    GEOS_THROW_IF( !file, catalogName() << " : can`t read the number of points for axis " + std::to_string( i ),
+    GEOS_THROW_IF( !file, "Can`t read the number of points for axis " + std::to_string( i ),
                    InputError, getDataContext() );
-    GEOS_THROW_IF_LE_MSG( axisPoints[i], 1, catalogName() << " : minimum 2 discretization point per axis are expected",
+    GEOS_THROW_IF_LE_MSG( axisPoints[i], 1, " Minimum 2 discretization point per axis are expected",
                           InputError, getDataContext() );
     file >> axisMinimums[i];
-    GEOS_THROW_IF( !file, catalogName() << " : can`t read minimum value for axis " + std::to_string( i ),
+    GEOS_THROW_IF( !file, "Can`t read minimum value for axis " + std::to_string( i ),
                    InputError, getDataContext() );
     file >> axisMaximums[i];
-    GEOS_THROW_IF( !file, catalogName() << " : can`t read maximum value for axis " + std::to_string( i ),
+    GEOS_THROW_IF( !file, "Can`t read maximum value for axis " + std::to_string( i ),
                    InputError, getDataContext() );
-    GEOS_THROW_IF_LT_MSG( axisMaximums[i], axisMinimums[i], catalogName() << " : maximum axis value is expected to be larger than minimum",
+    GEOS_THROW_IF_LT_MSG( axisMaximums[i], axisMinimums[i], "Maximum axis value is expected to be larger than minimum",
                           InputError, getDataContext() );
 
     numPointsTotal *= axisPoints[i];
@@ -92,8 +92,7 @@ void MultivariableTableFunction::initializeFunctionFromFile( string const & file
   real64 pointStorageMemoryLimitGB = 1;
 
   GEOS_THROW_IF_GT_MSG( numPointsTotal * numOps, pointStorageMemoryLimitGB * 1024 * 1024 * 1024 / 8,
-                        catalogName() <<
-                        " : point storage size exceeds " + std::to_string( pointStorageMemoryLimitGB ) +
+                        "Point storage size exceeds " + std::to_string( pointStorageMemoryLimitGB ) +
                         " Gb, please reduce number of points",
 
                         InputError, getDataContext() );
@@ -106,14 +105,14 @@ void MultivariableTableFunction::initializeFunctionFromFile( string const & file
     for( auto j = 0; j < numOps; j++ )
     {
       file >> m_pointData[i * numOps + j];
-      GEOS_THROW_IF( !file, catalogName() << " : table file is shorter than expected",
+      GEOS_THROW_IF( !file, "Table file is shorter than expected",
                      InputError, getDataContext() );
     }
   }
   real64 value;
 
   file >> value;
-  GEOS_THROW_IF( file, catalogName() << " : table file is longer than expected",
+  GEOS_THROW_IF( file, "Table file is longer than expected",
                  InputError, getDataContext() );
 
   file.close();
@@ -174,14 +173,14 @@ void MultivariableTableFunction::initializeFunction()
   // check input
 
 
-  GEOS_THROW_IF_NE_MSG( m_numDims, m_axisMinimums.size(), catalogName() <<
-                        " : single minimum value is expected for each of " + std::to_string( m_numDims ) + "dimensions",
+  GEOS_THROW_IF_NE_MSG( m_numDims, m_axisMinimums.size(),
+                        "Single minimum value is expected for each of " + std::to_string( m_numDims ) + "dimensions",
                         InputError, getDataContext() );
-  GEOS_THROW_IF_NE_MSG( m_numDims, m_axisMaximums.size(), catalogName() <<
-                        " : single maxumum value is expected for each of " + std::to_string( m_numDims ) + "dimensions",
+  GEOS_THROW_IF_NE_MSG( m_numDims, m_axisMaximums.size(),
+                        "Single maxumum value is expected for each of " + std::to_string( m_numDims ) + "dimensions",
                         InputError, getDataContext() );
-  GEOS_THROW_IF_NE_MSG( m_numDims, m_axisPoints.size(), catalogName() <<
-                        "single number is expected for each of " + std::to_string( m_numDims ) + "dimensions",
+  GEOS_THROW_IF_NE_MSG( m_numDims, m_axisPoints.size(),
+                        "Single number is expected for each of " + std::to_string( m_numDims ) + "dimensions",
                         InputError, getDataContext() );
 
   m_axisSteps.resize( m_numDims );
@@ -217,16 +216,15 @@ void MultivariableTableFunction::initializeFunction()
 
 
   // check is point data size is correct
-  GEOS_THROW_IF_NE_MSG( globalIndex( numTablePoints ) * m_numOps, m_pointData.size(), catalogName() <<
-                        " : table values array is expected to have length of " + std::to_string( globalIndex( numTablePoints ) * m_numOps ),
+  GEOS_THROW_IF_NE_MSG( globalIndex( numTablePoints ) * m_numOps, m_pointData.size(),
+                        "Table values array is expected to have length of " + std::to_string( globalIndex( numTablePoints ) * m_numOps ),
                         InputError, getDataContext() );
 
   // lets limit the hypercube storage size with 16 Gb
   real64 hypercubeStorageMemoryLimitGB = 16;
 
   GEOS_THROW_IF_GT_MSG( numTableHypercubes * m_numVerts * m_numOps, hypercubeStorageMemoryLimitGB * 1024 * 1024 * 1024 / 8,
-                        catalogName() <<
-                        " : hypercube storage size exceeds " + std::to_string( hypercubeStorageMemoryLimitGB ) +
+                        "Hypercube storage size exceeds " + std::to_string( hypercubeStorageMemoryLimitGB ) +
                         " Gb, please reduce number of points",
                         InputError, getDataContext() );
 

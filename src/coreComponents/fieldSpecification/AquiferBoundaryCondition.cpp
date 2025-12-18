@@ -115,7 +115,7 @@ AquiferBoundaryCondition::AquiferBoundaryCondition( string const & name, Group *
 void AquiferBoundaryCondition::postInputInitialization()
 {
   GEOS_THROW_IF_LE_MSG( m_permeability, 0.0,
-                        getCatalogName() << ": the aquifer permeability cannot be equal to zero or negative",
+                        "The aquifer permeability cannot be equal to zero or negative",
                         InputError, getDataContext() );
 
   if( m_pressureInfluenceFunctionName.empty() )
@@ -126,12 +126,12 @@ void AquiferBoundaryCondition::postInputInitialization()
   {
     FunctionManager const & functionManager = FunctionManager::getInstance();
     GEOS_THROW_IF( !functionManager.hasGroup( m_pressureInfluenceFunctionName ),
-                   getCatalogName() << " : the pressure influence table " << m_pressureInfluenceFunctionName << " could not be found",
+                   "The pressure influence table " << m_pressureInfluenceFunctionName << " could not be found",
                    InputError, getDataContext() );
 
     TableFunction const & pressureInfluenceFunction = functionManager.getGroup< TableFunction >( m_pressureInfluenceFunctionName );
     GEOS_THROW_IF( pressureInfluenceFunction.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
-                   getCatalogName() << " : The interpolation method for the pressure influence function table " <<
+                   "The interpolation method for the pressure influence function table " <<
                    " should be TableFunction::InterpolationType::Linear",
                    InputError, pressureInfluenceFunction.getDataContext(), getDataContext() );
   }
@@ -140,18 +140,15 @@ void AquiferBoundaryCondition::postInputInitialization()
   computeInfluxConstant();
 
   GEOS_THROW_IF_LE_MSG( m_timeConstant, 0.0,
-                        getCatalogName() <<
-                        " : the aquifer time constant is equal to zero or negative, the simulation cannot procede",
+                        "The aquifer time constant is equal to zero or negative, the simulation cannot procede",
                         InputError, getDataContext() );
 
   GEOS_THROW_IF_LE_MSG( m_influxConstant, 0.0,
-                        getCatalogName() <<
-                        " : the aquifer influx constant is equal to zero or negative, the simulation cannot procede",
+                        "The aquifer influx constant is equal to zero or negative, the simulation cannot procede",
                         InputError, getDataContext() );
 
   GEOS_THROW_IF_NE_MSG( m_phaseComponentFraction.size(), LvArray::integerConversion< int >( m_phaseComponentNames.size() ),
-                        getCatalogName() <<
-                        " : the sizes of " << viewKeyStruct::aquiferWaterPhaseComponentFractionString() <<
+                        "The sizes of " << viewKeyStruct::aquiferWaterPhaseComponentFractionString() <<
                         " and " << viewKeyStruct::aquiferWaterPhaseComponentNamesString() << " are inconsistent",
                         InputError, getDataContext() );
 

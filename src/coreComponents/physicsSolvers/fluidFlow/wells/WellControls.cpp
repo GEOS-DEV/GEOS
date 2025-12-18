@@ -241,7 +241,7 @@ void WellControls::postInputInitialization()
   // When the simulation starts from a restart file, we don't want to use the inputControl,
   // because the control may have switched in the simulation that generated the restart
   GEOS_THROW_IF( m_inputControl == Control::UNINITIALIZED,
-                 viewKeyStruct::inputControlString() <<  " Input well control cannot be uninitialized",
+                 "Input well control cannot be uninitialized",
                  InputError, getWrapperDataContext( viewKeyStruct::inputControlString() ) );
 
   if( m_currentControl == Control::UNINITIALIZED )
@@ -251,21 +251,20 @@ void WellControls::postInputInitialization()
 
   // 1.a) check target BHP
   GEOS_THROW_IF( m_targetBHP < 0,
-                 viewKeyStruct::targetBHPString() <<
                  "Target bottom-hole pressure is negative",
                  InputError, getWrapperDataContext( viewKeyStruct::targetBHPString() ) );
 
   // 1.b) check target rates
   GEOS_THROW_IF( m_targetTotalRate < 0,
-                 viewKeyStruct::targetTotalRateString() << " Target rate is negative",
+                 "Target rate is negative",
                  InputError, getWrapperDataContext( viewKeyStruct::targetTotalRateString() ) );
 
   GEOS_THROW_IF( m_targetPhaseRate < 0,
-                 viewKeyStruct::targetPhaseRateString() << " Target oil rate is negative",
+                 "Target oil rate is negative",
                  InputError, getWrapperDataContext( viewKeyStruct::targetPhaseRateString() ) );
 
   GEOS_THROW_IF( m_targetMassRate < 0,
-                 viewKeyStruct::targetMassRateString() << " Target mass rate is negative",
+                 "Target mass rate is negative",
                  InputError, getWrapperDataContext( viewKeyStruct::targetMassRateString() ) );
 
   GEOS_THROW_IF( (m_injectionStream.empty()  && m_injectionTemperature >= 0) ||
@@ -292,18 +291,18 @@ void WellControls::postInputInitialization()
     for( localIndex ic = 0; ic < m_injectionStream.size(); ++ic )
     {
       GEOS_ERROR_IF( m_injectionStream[ic] < 0.0 || m_injectionStream[ic] > 1.0,
-                     viewKeyStruct::injectionStreamString()<< " Invalid injection stream",
+                     "Invalid injection stream",
                      getWrapperDataContext( viewKeyStruct::injectionStreamString() ) );
       sum += m_injectionStream[ic];
     }
     GEOS_THROW_IF( LvArray::math::abs( 1.0 - sum ) > std::numeric_limits< real64 >::epsilon(),
-                   viewKeyStruct::injectionStreamString() << " Invalid injection stream",
+                   "Invalid injection stream",
                    InputError, getWrapperDataContext( viewKeyStruct::injectionStreamString() ) );
   }
 
   // 3) check the flag for surface / reservoir conditions
   GEOS_THROW_IF( m_useSurfaceConditions != 0 && m_useSurfaceConditions != 1,
-                 viewKeyStruct::useSurfaceConditionsString() << " The flag to select surface/reservoir conditions must be equal to 0 or 1",
+                 "The flag to select surface/reservoir conditions must be equal to 0 or 1",
                  InputError, getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) );
 
   // 4) check that at least one rate constraint has been defined

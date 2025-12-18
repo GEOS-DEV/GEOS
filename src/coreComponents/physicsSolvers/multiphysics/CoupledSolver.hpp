@@ -268,7 +268,7 @@ public:
     }
     else
     {
-      GEOS_ERROR("Invalid coupling type option.",getDataContext() );
+      GEOS_ERROR( "Invalid coupling type option.", getDataContext() );
       return 0;
     }
 
@@ -708,7 +708,7 @@ protected:
       }
       else
       {
-        GEOS_ERROR( "Invalid sequential convergence criterion.",getDataContext() );
+        GEOS_ERROR( "Invalid sequential convergence criterion.", getDataContext() );
       }
 
       if( isConverged )

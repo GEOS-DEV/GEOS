@@ -79,47 +79,39 @@ PerfectlyMatchedLayer::PerfectlyMatchedLayer( string const & name, Group * const
 void PerfectlyMatchedLayer::postInputInitialization()
 {
   GEOS_THROW_IF( (m_xMax[0]<m_xMin[0] || m_xMax[1]<m_xMin[1] || m_xMax[2]<m_xMin[2]),
-                 getCatalogName() << " "
-                                  << viewKeyStruct::xMinString()
-                                  << " must be smaller than "
-                                  << viewKeyStruct::xMaxString(),
+                 viewKeyStruct::xMinString()
+                 << " must be smaller than "
+                 << viewKeyStruct::xMaxString(),
                  InputError, getDataContext() );
 
   GEOS_THROW_IF( (m_reflectivity<=0 || m_reflectivity>1),
-                 getCatalogName() << " "
-                                  << viewKeyStruct::reflectivityString()
-                                  << " must satisfy 0 < reflectivity <= 1",
+                 viewKeyStruct::reflectivityString()
+                 << " must satisfy 0 < reflectivity <= 1",
                  InputError, getDataContext() );
 
   GEOS_LOG_RANK_0_IF( (m_xMin[0]<smallestXMin || m_xMin[1]<smallestXMin || m_xMin[2]<smallestXMin),
-                      getCatalogName() << " " << getDataContext() << " "
-                                       << viewKeyStruct::xMinString()
-                                       << " will be computed internally" );
+                      viewKeyStruct::xMinString()
+                      << " will be computed internally" );
 
   GEOS_LOG_RANK_0_IF( (m_xMax[0]>largestXMax || m_xMax[1]>largestXMax || m_xMax[2]>largestXMax),
-                      getCatalogName() << " " << getDataContext() << " "
-                                       << viewKeyStruct::xMaxString()
-                                       << " will be computed internally" );
+                      viewKeyStruct::xMaxString()
+                      << " will be computed internally" );
 
   GEOS_LOG_RANK_0_IF( (m_thicknessMinXYZ[0]<0 || m_thicknessMinXYZ[1]<0 || m_thicknessMinXYZ[2]<0),
-                      getCatalogName() << " " << getDataContext() << " "
-                                       << viewKeyStruct::thicknessMinXYZString()
-                                       << " will be computed internally" );
+                      viewKeyStruct::thicknessMinXYZString()
+                      << " will be computed internally" );
 
   GEOS_LOG_RANK_0_IF( (m_thicknessMaxXYZ[0]<0 || m_thicknessMaxXYZ[1]<0 || m_thicknessMaxXYZ[2]<0),
-                      getCatalogName() << " " << getDataContext() << " "
-                                       << viewKeyStruct::thicknessMaxXYZString()
-                                       << " will be computed internally" );
+                      viewKeyStruct::thicknessMaxXYZString()
+                      << " will be computed internally" );
 
   GEOS_LOG_RANK_0_IF( (m_waveSpeedMinXYZ[0]<0 || m_waveSpeedMinXYZ[1]<0 || m_waveSpeedMinXYZ[2]<0),
-                      getCatalogName() << " " << getDataContext() << " "
-                                       << viewKeyStruct::waveSpeedMinXYZString()
-                                       << " will be computed internally" );
+                      viewKeyStruct::waveSpeedMinXYZString()
+                      << " will be computed internally" );
 
   GEOS_LOG_RANK_0_IF( (m_waveSpeedMaxXYZ[0]<0 || m_waveSpeedMaxXYZ[1]<0 || m_waveSpeedMaxXYZ[2]<0),
-                      getCatalogName() << " " << getDataContext() << " "
-                                       << viewKeyStruct::waveSpeedMaxXYZString()
-                                       << " will be computed internally" );
+                      viewKeyStruct::waveSpeedMaxXYZString()
+                      << " will be computed internally" );
 }
 
 

@@ -39,17 +39,17 @@ void DeadOilFluid::postInputInitialization()
 
   integer const numComps = numFluidComponents();
   GEOS_THROW_IF( numComps != 2 && numComps != 3,
-                 GEOS_FMT( "{}: this model only supports 2 or 3 components", getFullName() ),
+                 "this model only supports 2 or 3 components",
                  InputError, getDataContext() );
 }
 
 void DeadOilFluid::readInputDataFromPVTFiles()
 {
   GEOS_THROW_IF_NE_MSG( m_tableFiles.size(), numFluidPhases(),
-                        GEOS_FMT( "{}: the number of table files must be equal to the number of phases", getFullName() ),
-                        InputError );
+                        "the number of table files must be equal to the number of phases",
+                        InputError, getDataContext() );
   GEOS_THROW_IF( m_formationVolFactorTableNames.size() > 0.0 || m_viscosityTableNames.size() > 0.0,
-                 GEOS_FMT( "{}: input is redundant (both TableFunction names and pvt files)", getFullName() ),
+                 "input is redundant (both TableFunction names and pvt files)",
                  InputError, getDataContext() );
 
   array1d< array1d< real64 > > tableValues;
@@ -72,7 +72,7 @@ void DeadOilFluid::readInputDataFromPVTFiles()
 void DeadOilFluid::readInputDataFromTableFunctions()
 {
   GEOS_THROW_IF( !m_tableFiles.empty(),
-                 GEOS_FMT( "{}: input is redundant (both TableFunction names and pvt files)", getFullName() ),
+                 "input is redundant (both TableFunction names and pvt files)",
                  InputError, getDataContext() );
 
   integer const ipWater = m_phaseOrder[PhaseType::WATER];
@@ -86,8 +86,8 @@ void DeadOilFluid::readInputDataFromTableFunctions()
     auto const errorIfPositiveValue = [&]( real64 const value, auto const & attribute )
     {
       GEOS_THROW_IF_GT_MSG( value, 0.0,
-                            GEOS_FMT( "{}: if water is absent, attribute '{}' is not redundant", getFullName(), attribute ),
-                            InputError );
+                            GEOS_FMT( "if water is absent, attribute '{}' is not redundant", attribute ),
+                            InputError, getDataContext() );
     };
     errorIfPositiveValue( m_waterParams.referencePressure, viewKeyStruct::waterRefPressureString() );
     errorIfPositiveValue( m_waterParams.formationVolFactor, viewKeyStruct::waterFormationVolumeFactorString() );
@@ -97,11 +97,11 @@ void DeadOilFluid::readInputDataFromTableFunctions()
 
   size_t const numExpectedTables = (ipGas >= 0) ? 2 : 1;
   GEOS_THROW_IF_NE_MSG( m_formationVolFactorTableNames.size(), numExpectedTables,
-                        GEOS_FMT( "{}: one formation volume factor table must be provided for each hydrocarbon phase", getFullName() ),
-                        InputError );
+                        "one formation volume factor table must be provided for each hydrocarbon phase",
+                        InputError, getDataContext() );
   GEOS_THROW_IF_NE_MSG( m_viscosityTableNames.size(), numExpectedTables,
-                        GEOS_FMT( "{}: one viscosity table must be provided for each hydrocarbon phase", getFullName() ),
-                        InputError );
+                        "one viscosity table must be provided for each hydrocarbon phase",
+                        InputError, getDataContext() );
 
   for( integer ip = 0; ip < numFluidPhases(); ++ip )
   {
@@ -115,10 +115,10 @@ void DeadOilFluid::readInputDataFromTableFunctions()
   for( integer iph = 0; iph < m_hydrocarbonPhaseOrder.size(); ++iph )
   {
     GEOS_THROW_IF( !functionManager.hasGroup( m_formationVolFactorTableNames[iph] ),
-                   GEOS_FMT( "{}: formation volume factor table '{}' not found", getFullName(), m_formationVolFactorTableNames[iph] ),
+                   GEOS_FMT( "formation volume factor table '{}' not found", m_formationVolFactorTableNames[iph] ),
                    InputError, getDataContext() );
     GEOS_THROW_IF( !functionManager.hasGroup( m_viscosityTableNames[iph] ),
-                   GEOS_FMT( "{}: viscosity table '{}' not found", getFullName(), m_viscosityTableNames[iph] ),
+                   GEOS_FMT( "viscosity table '{}' not found", m_viscosityTableNames[iph] ),
                    InputError, getDataContext() );
   }
 }

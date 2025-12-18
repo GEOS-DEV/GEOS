@@ -1321,7 +1321,7 @@ void SolidMechanicsLagrangeContact::computeFaceNodalArea( localIndex const kf0,
   }
   else
   {
-    GEOS_ERROR( "SolidMechanicsLagrangeContact : face with " << numNodesPerFace <<
+    GEOS_ERROR( "Face with " << numNodesPerFace <<
                 " nodes. Only triangles and quadrilaterals and PEBI prisms up to 11 sides are supported.",
                 getDataContext() );
   }

@@ -64,8 +64,8 @@ void BrooksCoreyRelativePermeability::postInputInitialization()
   auto const checkInputSize = [&]( auto const & array, auto const & attribute )
   {
     GEOS_THROW_IF_NE_MSG( array.size(), LvArray::integerConversion< int >( m_phaseNames.size()),
-                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid number of values in attribute '{}'", attribute ),
+                          InputError, getDataContext() );
   };
   checkInputSize( m_phaseMinVolumeFraction, viewKeyStruct::phaseMinVolumeFractionString() );
   checkInputSize( m_phaseRelPermExponent, viewKeyStruct::phaseRelPermExponentString() );
@@ -76,31 +76,31 @@ void BrooksCoreyRelativePermeability::postInputInitialization()
   {
     auto const errorMsg = [&]( auto const & attribute )
     {
-      return GEOS_FMT( "{}: invalid value at {}[{}]", getFullName(), attribute, ip );
+      return GEOS_FMT( "invalid value at {}[{}]", attribute, ip );
     };
 
     GEOS_THROW_IF_LT_MSG( m_phaseMinVolumeFraction[ip], 0.0,
                           errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
-                          InputError );
+                          InputError, getDataContext() );
     GEOS_THROW_IF_GT_MSG( m_phaseMinVolumeFraction[ip], 1.0,
                           errorMsg( viewKeyStruct::phaseMinVolumeFractionString() ),
-                          InputError );
+                          InputError, getDataContext() );
     m_volFracScale -= m_phaseMinVolumeFraction[ip];
 
     GEOS_THROW_IF_LT_MSG( m_phaseRelPermExponent[ip], 0.0,
                           errorMsg( viewKeyStruct::phaseRelPermExponentString() ),
-                          InputError );
+                          InputError, getDataContext() );
     GEOS_THROW_IF_LT_MSG( m_phaseRelPermMaxValue[ip], 0.0,
                           errorMsg( viewKeyStruct::phaseRelPermMaxValueString() ),
-                          InputError );
+                          InputError, getDataContext() );
     GEOS_THROW_IF_GT_MSG( m_phaseRelPermMaxValue[ip], 1.0,
                           errorMsg( viewKeyStruct::phaseRelPermMaxValueString() ),
-                          InputError );
+                          InputError, getDataContext() );
   }
 
   GEOS_THROW_IF_LT_MSG( m_volFracScale, 0.0,
-                        GEOS_FMT( "{}: sum of min volume fractions exceeds 1.0", getFullName() ),
-                        InputError );
+                        "sum of min volume fractions exceeds 1.0",
+                        InputError, getDataContext() );
 }
 
 BrooksCoreyRelativePermeability::KernelWrapper

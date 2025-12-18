@@ -293,8 +293,8 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   }
   else
   {
-    GEOS_ERROR( getWrapperDataContext( viewKeyStruct::strainTheoryString() ) <<
-                "Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain" );
+    GEOS_ERROR( "Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain",
+                getWrapperDataContext( viewKeyStruct::strainTheoryString() ) );
   }
 
   return rval;

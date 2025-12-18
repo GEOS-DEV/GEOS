@@ -169,7 +169,7 @@ void WellSolverBase::initializePostSubGroups()
       {
         TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfStatusTableName[i] );
         GEOS_THROW_IF( tableFunction->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                       "WellSolverBase : The interpolation method for the perforation status table "
+                       "The interpolation method for the perforation status table "
                        << tableFunction->getName() << " should be TableFunction::InterpolationType::Lower",
                        InputError, getDataContext() );
       }

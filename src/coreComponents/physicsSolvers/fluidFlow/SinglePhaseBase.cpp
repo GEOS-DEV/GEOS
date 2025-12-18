@@ -414,8 +414,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 
     // check that the gravity vector is aligned with the z-axis
     GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
-                   getCatalogName() <<
-                   " : the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
+                   "The gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
                    ") is not aligned with the z-axis. \n"
                    "This is incompatible with the " << bc.getCatalogName() << " " << bc.getName() <<
                    "used in this simulation. To proceed, you can either: \n" <<
@@ -425,19 +424,19 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
 
     // ensure that the temperature tables are defined for thermal simulations
     GEOS_THROW_IF( m_isThermal && bc.getTemperatureVsElevationTableName().empty(),
-                   getCatalogName() << " : " << EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString()
-                                    << " must be provided for a thermal simulation",
+                   EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString()
+                   << " must be provided for a thermal simulation",
                    InputError, getDataContext(), bc.getDataContext() );
 
     //ensure that compositions are empty
     GEOS_THROW_IF( !bc.getComponentFractionVsElevationTableNames().empty(),
-                   getCatalogName() << " : " << EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString()
-                                    << " must not be provided for a single phase simulation.",
+                   EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString()
+                   << " must not be provided for a single phase simulation.",
                    InputError, getDataContext(), bc.getDataContext() );
 
     GEOS_THROW_IF( !bc.getComponentNames().empty(),
-                   getCatalogName() << " : " << EquilibriumInitialCondition::viewKeyStruct::componentNamesString()
-                                    << " must not be provided for a single phase simulation.",
+                   EquilibriumInitialCondition::viewKeyStruct::componentNamesString()
+                   << " must not be provided for a single phase simulation.",
                    InputError, getDataContext(), bc.getDataContext() );
   } );
 
@@ -574,8 +573,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
                                                                           pressureValues.toView() );
 
       GEOS_THROW_IF( !equilHasConverged,
-                     getCatalogName() <<
-                     " : hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
+                     "Hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
                      std::runtime_error, getDataContext() );
     } );
 

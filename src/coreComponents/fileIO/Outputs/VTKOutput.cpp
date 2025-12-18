@@ -120,20 +120,20 @@ void VTKOutput::postInputInitialization()
   string const onlyPlotSpecifiedFieldNamesString = viewKeysStruct::onlyPlotSpecifiedFieldNames;
 
   GEOS_THROW_IF( ( m_onlyPlotSpecifiedFieldNames != 0 ) && m_fieldNames.empty(),
-                 GEOS_FMT( "{} : the flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
+                 GEOS_FMT( "The flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
                            catalogName(), onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
                  InputError, getDataContext() );
 
   GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames != 0 ),
                       GEOS_FMT(
-                        "{} `{}`: found {} fields to plot in `{}`. These fields will be output regardless of the `plotLevel` specified by the user. No other field will be output.",
-                        catalogName(), getDataContext(),
+                        "`{}`: found {} fields to plot in `{}`. These fields will be output regardless of the `plotLevel` specified by the user. No other field will be output.",
+                        getDataContext(),
                         std::to_string( m_fieldNames.size() ), fieldNamesString ) );
 
   GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames == 0 ),
                       GEOS_FMT(
-                        "{} `{}`: found {} fields to plot in `{}`, in addition to all fields with `plotLevel` smaller or equal to {}.",
-                        catalogName(), getDataContext(),
+                        "`{}`: found {} fields to plot in `{}`, in addition to all fields with `plotLevel` smaller or equal to {}.",
+                        getDataContext(),
                         std::to_string( m_fieldNames.size() ), fieldNamesString, m_plotLevel ) );
 
   GEOS_ERROR_IF( m_writeFaceElementsAs3D,

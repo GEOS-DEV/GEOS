@@ -194,7 +194,7 @@ void AcousticWaveEquationDG::precomputeSourceAndReceiverTerm( MeshLevel & baseMe
   {
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Tetrahedron,
                    "Invalid type of element, the acoustic DG solver is designed for tetrahedral meshes only  ",
-                   InputError );
+                   InputError, getDataContext() );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & baseElemsToNodes = baseMesh.getElemManager().getRegion( er ).getSubRegion< CellElementSubRegion >( esr ).nodeList();
@@ -286,7 +286,7 @@ void AcousticWaveEquationDG::initializePostInitialConditionsPreSubGroups()
       {
         GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Tetrahedron,
                        "Invalid type of element, the acoustic DG solver is designed for tetrahedral meshes only  ",
-                       InputError );
+                       InputError, getDataContext() );
 
 
         finiteElement::FiniteElementBase const &

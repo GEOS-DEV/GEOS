@@ -126,16 +126,13 @@ void CompositionalMultiphaseWell::postInputInitialization()
   WellSolverBase::postInputInitialization();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                        viewKeyStruct::maxCompFracChangeString() <<
                         "The maximum absolute change in component fraction must smaller or equal to 1.0",
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
   GEOS_ERROR_IF_LT_MSG( m_maxCompFracChange, 0.0,
-                        viewKeyStruct::maxCompFracChangeString() <<
                         "The maximum absolute change in component fraction must larger or equal to 0.0",
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
 
   GEOS_ERROR_IF_LE_MSG( m_maxRelativeCompDensChange, 0.0,
-                        viewKeyStruct::maxRelativeCompDensChangeString() <<
                         "The maximum relative change in component density must be larger than 0.0",
                         getWrapperDataContext( viewKeyStruct::maxRelativeCompDensChangeString() ) );
 }
@@ -407,28 +404,24 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
 
     integer const streamSize = injectionStream.size();
     GEOS_THROW_IF( ( streamSize == 0 ),
-                   "WellControls " << wellControls.getName() <<
                    " : Injection stream not specified for well " << subRegion.getName(),
-                   InputError );
+                   InputError, wellControls.getDataContext() );
     GEOS_THROW_IF( ( streamSize != m_numComponents ),
-                   "WellControls " << wellControls.getName() <<
                    " : Injection stream for well " << subRegion.getName() << " should have " <<
                    m_numComponents << " components.",
-                   InputError );
+                   InputError, wellControls.getDataContext() );
 
     real64 compFracSum = 0;
     for( integer ic = 0; ic < m_numComponents; ++ic )
     {
       real64 const compFrac = injectionStream[ic];
       GEOS_THROW_IF( ( compFrac < 0.0 ) || ( compFrac > 1.0 ),
-                     "WellControls " << wellControls.getName() <<
                      "Invalid injection stream for well " << subRegion.getName(),
                      InputError, wellControls.getDataContext() );
       compFracSum += compFrac;
     }
     GEOS_THROW_IF( ( compFracSum < 1.0 - std::numeric_limits< real64 >::epsilon() ) ||
                    ( compFracSum > 1.0 + std::numeric_limits< real64 >::epsilon() ),
-                   "WellControls " << wellControls.getName() <<
                    "Invalid injection stream for well " << subRegion.getName(),
                    InputError, wellControls.getDataContext() );
   }

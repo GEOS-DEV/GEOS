@@ -130,11 +130,11 @@ void ReactiveBrineFluid< PHASE > ::postInputInitialization()
   ReactiveMultiFluid::postInputInitialization();
 
   GEOS_THROW_IF_NE_MSG( numFluidPhases(), 1,
-                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                        InputError );
+                        "invalid number of phases",
+                        InputError, getDataContext() );
   GEOS_THROW_IF_NE_MSG( m_phasePVTParaFiles.size(), 1,
-                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName() ),
-                        InputError );
+                        "invalid number of values in attribute ",
+                        InputError, getDataContext() );
 
   createPVTModels();
 }
@@ -185,7 +185,7 @@ void ReactiveBrineFluid< PHASE > ::createPVTModels()
         }
         else
         {
-          GEOS_THROW( GEOS_FMT( "{}: invalid PVT function type '{}'", getFullName(), strs[0] ), InputError );
+          GEOS_THROW( GEOS_FMT( "invalid PVT function type '{}'", strs[0] ), InputError, getDataContext() );
         }
       }
     }

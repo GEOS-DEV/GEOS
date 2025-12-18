@@ -83,7 +83,7 @@ void TableFunction::readFile( string const & filename, array1d< real64 > & targe
   }
   catch( std::runtime_error const & e )
   {
-    GEOS_THROW( GEOS_FMT( "{}: {}", catalogName(), e.what() ), InputError, getDataContext()  );
+    GEOS_THROW( e.what(), InputError, getDataContext()  );
   }
 }
 
@@ -103,8 +103,7 @@ void TableFunction::setTableCoordinates( array1d< real64_array > const & coordin
     for( localIndex j = 1; j < coordinates[i].size(); ++j )
     {
       GEOS_THROW_IF( coordinates[i][j] - coordinates[i][j-1] <= 0,
-                     GEOS_FMT( "{} : coordinates must be strictly increasing, but axis {} is not",
-                               catalogName(), i ),
+                     GEOS_FMT( "coordinates must be strictly increasing, but axis {} is not", i ),
                      InputError, getDataContext() );
     }
     m_coordinates.appendArray( coordinates[i].begin(), coordinates[i].end() );
@@ -132,8 +131,7 @@ void TableFunction::initializeFunction()
     // 1D Table
     m_coordinates.appendArray( m_tableCoordinates1D.begin(), m_tableCoordinates1D.end() );
     GEOS_THROW_IF_NE_MSG( m_tableCoordinates1D.size(), m_values.size(),
-                          GEOS_FMT( "{}: 1D table function coordinates and values must have the same length",
-                                    catalogName()),
+                          "1D table function coordinates and values must have the same length",
                           InputError, getDataContext()  );
   }
   else
@@ -165,16 +163,14 @@ void TableFunction::reInitializeFunction()
     for( localIndex j = 1; j < m_coordinates[ii].size(); ++j )
     {
       GEOS_THROW_IF( m_coordinates[ii][j] - m_coordinates[ii][j-1] <= 0,
-                     GEOS_FMT( "{} : coordinates must be strictly increasing, but axis {} is not",
-                               catalogName(), ii ),
+                     GEOS_FMT( "Coordinates must be strictly increasing, but axis {} is not", ii ),
                      InputError, getDataContext() );
     }
   }
   if( m_coordinates.size() > 0 && !m_values.empty() ) // coordinates and values have been set
   {
     GEOS_THROW_IF_NE_MSG( increment, m_values.size(),
-                          GEOS_FMT( "{} : number of values does not match total number of table coordinates",
-                                    catalogName()  ),
+                          "Number of values does not match total number of table coordinates",
                           InputError, getDataContext() );
   }
 

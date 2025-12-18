@@ -51,11 +51,11 @@ void DiffusionBase::postInputInitialization()
 
   integer const numPhases = numFluidPhases();
   GEOS_THROW_IF_LT_MSG( numPhases, 2,
-                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                        InputError );
+                        "invalid number of phases",
+                        InputError, getDataContext() );
   GEOS_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
-                        GEOS_FMT( "{}: invalid number of phases", getFullName() ),
-                        InputError );
+                        "invalid number of phases",
+                        InputError, getDataContext() );
 
   GEOS_THROW_IF( numPhases != m_defaultPhaseDiffusivityMultiplier.size(),
                  GEOS_FMT( "{}: the arrays in `{}` and `{}` must have the same size",

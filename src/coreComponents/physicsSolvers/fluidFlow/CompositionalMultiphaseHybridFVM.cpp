@@ -123,11 +123,11 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
   GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
-                 getCatalogName() <<" : the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
+                 "The HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
                  InputError, getDataContext() );
 
   GEOS_THROW_IF( m_hasCapPressure,
-                 getCatalogName() << " : capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
+                 "Capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
                  InputError, getDataContext() );
 }
 
@@ -145,8 +145,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
   if( dynamicCast< QuasiRTInnerProduct const * >( &mimeticInnerProductBase )  ||
       dynamicCast< SimpleInnerProduct const * >( &mimeticInnerProductBase ) )
   {
-    GEOS_ERROR( getCatalogName() << " " <<
-                "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM",
+    GEOS_ERROR( "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM",
                 getDataContext() );
   }
 
@@ -179,8 +178,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     } );
 
     GEOS_THROW_IF( minVal.get() <= 0.0,
-                   getCatalogName() <<
-                   ": the transmissibility multipliers used in SinglePhaseHybridFVM must be strictly larger than 0.0",
+                   "The transmissibility multipliers used in SinglePhaseHybridFVM must be strictly larger than 0.0",
                    std::runtime_error, getDataContext() );
 
     // Initialize face-based constitutive property arrays to zero to prevent uninitialized memory usage on GPU

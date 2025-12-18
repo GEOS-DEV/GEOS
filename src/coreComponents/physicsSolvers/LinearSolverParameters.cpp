@@ -816,53 +816,53 @@ void LinearSolverParametersInput::postInputInitialization()
   static const std::set< integer > binaryOptions = { 0, 1 };
 
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.stopIfError ) == 0,
-                 viewKeyStruct::stopIfErrorString() << " : can be either 0 (false) or 1 (true)",
+                 "Value can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::stopIfErrorString() ) );
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.checkResidual ) == 0,
-                 viewKeyStruct::directCheckResidualString() << " : can be either 0 (false) or 1 (true)",
+                 "Value can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::directCheckResidualString() ) );
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.equilibrate ) == 0,
-                 viewKeyStruct::directEquilString() << " : can be either 0 (false) or 1 (true)",
+                 "Value can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::directEquilString() ) );
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.replaceTinyPivot ) == 0,
-                 viewKeyStruct::directReplTinyPivotString() << " : can be either 0 (false) or 1 (true)",
+                 "Value can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::directReplTinyPivotString() ) );
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.iterativeRefine ) == 0,
-                 viewKeyStruct::directIterRefString() << " : can be either 0 (false) or 1 (true)",
+                 "Value can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::directIterRefString() ) );
   GEOS_ERROR_IF( binaryOptions.count( m_parameters.direct.parallel ) == 0,
-                 viewKeyStruct::directParallelString() << " : can be either 0 (false) or 1 (true)",
+                 "Value can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::directParallelString() ) );
 
   GEOS_ERROR_IF_LT_MSG( m_parameters.krylov.maxIterations, 0,
-                        viewKeyStruct::krylovMaxIterString() << ": Invalid value.",
+                        "Invalid value.",
                         getWrapperDataContext( viewKeyStruct::krylovMaxIterString() ) );
   GEOS_ERROR_IF_LT_MSG( m_parameters.krylov.maxRestart, 0,
-                        viewKeyStruct::krylovMaxRestartString() << ": Invalid value.",
+                        "Invalid value.",
                         getWrapperDataContext( viewKeyStruct::krylovMaxRestartString() ) );
 
   GEOS_ERROR_IF_LT_MSG( m_parameters.krylov.relTolerance, 0.0,
-                        viewKeyStruct::krylovTolString() << ": Invalid value.",
+                        "Invalid value.",
                         getWrapperDataContext( viewKeyStruct::krylovTolString() ) );
   GEOS_ERROR_IF_GT_MSG( m_parameters.krylov.relTolerance, 1.0,
-                        viewKeyStruct::krylovTolString() << ": Invalid value.",
+                        "Invalid value.",
                         getWrapperDataContext( viewKeyStruct::krylovTolString() ) );
 
   GEOS_ERROR_IF_LT_MSG( m_parameters.ifact.fill, 0,
-                        viewKeyStruct::iluFillString() << ": Invalid value.",
+                        "Invalid value.",
                         getWrapperDataContext( viewKeyStruct::iluFillString() ) );
   GEOS_ERROR_IF_LT_MSG( m_parameters.ifact.threshold, 0.0,
-                        viewKeyStruct::iluThresholdString() << ": Invalid value.",
+                        "Invalid value.",
                         getWrapperDataContext( viewKeyStruct::iluThresholdString() ) );
 
   GEOS_ERROR_IF_LT_MSG( m_parameters.amg.numSweeps, 0,
-                        viewKeyStruct::amgNumSweepsString() << ": Invalid value.",
+                        "Invalid value.",
                         getWrapperDataContext( viewKeyStruct::amgNumSweepsString() ) );
   GEOS_ERROR_IF_LT_MSG( m_parameters.amg.threshold, 0.0,
-                        viewKeyStruct::amgThresholdString() << ": Invalid value.",
+                        "Invalid value.",
                         getWrapperDataContext( viewKeyStruct::amgThresholdString() ) );
   GEOS_ERROR_IF_GT_MSG( m_parameters.amg.threshold, 1.0,
-                        viewKeyStruct::amgThresholdString() << ": Invalid value.",
+                        "Invalid value.",
                         getWrapperDataContext( viewKeyStruct::amgThresholdString() ) );
 
   // TODO input validation for other AMG parameters ?

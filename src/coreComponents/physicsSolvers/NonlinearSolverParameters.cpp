@@ -227,25 +227,25 @@ void NonlinearSolverParameters::postInputInitialization()
   {
     // check oscillation parameters
     GEOS_ERROR_IF_LE_MSG( m_oscillationScalingFactor, 0.0,
-                          viewKeysStruct::oscillationScalingFactorString() << "should be positive",
+                          viewKeysStruct::oscillationScalingFactorString() << " should be positive",
                           getWrapperDataContext( viewKeysStruct::oscillationScalingFactorString()) );
     GEOS_ERROR_IF_GT_MSG( m_oscillationScalingFactor, 1.0,
-                          viewKeysStruct::oscillationScalingFactorString() << "can not be more than 1.0",
+                          viewKeysStruct::oscillationScalingFactorString() << " can not be more than 1.0",
                           getWrapperDataContext( viewKeysStruct::oscillationScalingFactorString()) );
     GEOS_ERROR_IF_LT_MSG( m_oscillationCheckDepth, 2,
-                          viewKeysStruct::oscillationCheckDepthString() << "can not be less than 2",
+                          viewKeysStruct::oscillationCheckDepthString() << " can not be less than 2",
                           getWrapperDataContext( viewKeysStruct::oscillationCheckDepthString()) );
     GEOS_ERROR_IF_LE_MSG( m_oscillationTolerance, 0.0,
-                          viewKeysStruct::oscillationToleranceString() << "should be positive",
+                          viewKeysStruct::oscillationToleranceString() << " should be positive",
                           getWrapperDataContext( viewKeysStruct::oscillationToleranceString()) );
     GEOS_ERROR_IF_GE_MSG( m_oscillationTolerance, 1.0,
-                          viewKeysStruct::oscillationToleranceString() << "can not be more than 1.0",
+                          viewKeysStruct::oscillationToleranceString() << " can not be more than 1.0",
                           getWrapperDataContext( viewKeysStruct::oscillationToleranceString()) );
     GEOS_ERROR_IF_LT_MSG( m_oscillationFraction, 0.0,
-                          viewKeysStruct::oscillationFractionString() << "can not be negative",
+                          viewKeysStruct::oscillationFractionString() << " can not be negative",
                           getWrapperDataContext( viewKeysStruct::oscillationFractionString()) );
     GEOS_ERROR_IF_GT_MSG( m_oscillationFraction, 1.0,
-                          viewKeysStruct::oscillationFractionString() << "can not be more than 1.0",
+                          viewKeysStruct::oscillationFractionString() << " can not be more than 1.0",
                           getWrapperDataContext( viewKeysStruct::oscillationFractionString()) );
   }
 

@@ -44,7 +44,7 @@ void PerfectlyPlastic::postInputInitialization()
 {
   ElasticIsotropic::postInputInitialization();
 
-  GEOS_THROW_IF( m_defaultYieldStress < 0.0, "Negative yield stress detected", InputError );
+  GEOS_THROW_IF( m_defaultYieldStress < 0.0, "Negative yield stress detected", InputError, getDataContext() );
 
   getField< fields::solid::yieldStress >().setApplyDefaultValue( m_defaultYieldStress );
 }

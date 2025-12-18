@@ -79,7 +79,8 @@ void TractionBoundaryCondition::postInputInitialization()
   {
     GEOS_ERROR_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) < 1e-20,
                    viewKeyStruct::directionString() << " is required for " <<
-                   viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
+                   viewKeyStruct::tractionTypeString() << " = " <<
+                   EnumStrings< TractionType >::toString( TractionType::vector )  <<
                    ", but appears to be unspecified",
                    getDataContext() );
   }
@@ -87,7 +88,8 @@ void TractionBoundaryCondition::postInputInitialization()
   {
     GEOS_LOG_RANK_0_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) > 1e-20,
                         viewKeyStruct::directionString() << " is not required unless " <<
-                        viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
+                        viewKeyStruct::tractionTypeString() << " = " <<
+                        EnumStrings< TractionType >::toString( TractionType::vector ) <<
                         ", but appears to be specified" );
   }
 
@@ -95,11 +97,13 @@ void TractionBoundaryCondition::postInputInitialization()
 
   GEOS_LOG_RANK_0_IF( inputStressRead && m_tractionType != TractionType::stress,
                       viewKeyStruct::inputStressString() << " is specified, but " <<
-                      viewKeyStruct::tractionTypeString() << " != " << TractionType::stress <<
+                      viewKeyStruct::tractionTypeString() << " != " <<
+                      EnumStrings< TractionType >::toString( TractionType::stress ) <<
                       ", so value of " << viewKeyStruct::inputStressString() << " is unused." );
 
   GEOS_ERROR_IF( !inputStressRead && m_tractionType == TractionType::stress,
-                 viewKeyStruct::tractionTypeString() << " = " << TractionType::stress <<
+                 viewKeyStruct::tractionTypeString() << " = " <<
+                 EnumStrings< TractionType >::toString( TractionType::stress ) <<
                  ", but " << viewKeyStruct::inputStressString() << " is not specified.",
                  getDataContext() );
 

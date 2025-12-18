@@ -247,7 +247,7 @@ void Group::processInputFile( xmlWrapper::xmlNode const & targetNode,
     if( !xmlWrapper::isFileMetadataAttribute( attributeName ) )
     {
       GEOS_THROW_IF( processedAttributes.count( attributeName ) == 0,
-                     GEOS_FMT( "Error in {}: XML Node at '{}' contains unused attribute '{}'.\n"
+                     GEOS_FMT( "XML Node at '{}' contains unused attribute '{}'.\n"
                                "Valid attributes are:\n{}\nFor more details, please refer to documentation at:\n"
                                "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
                                targetNode.path(), attributeName, dumpInputOptions() ),

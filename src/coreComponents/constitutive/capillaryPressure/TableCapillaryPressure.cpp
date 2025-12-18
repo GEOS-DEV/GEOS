@@ -109,10 +109,9 @@ void TableCapillaryPressure::initializePreSubGroups()
   if( numPhases == 2 )
   {
     GEOS_THROW_IF( !functionManager.hasGroup( m_wettingNonWettingCapPresTableName ),
-                   GEOS_FMT( "{}: the table function named {} could not be found",
-                             getFullName(),
+                   GEOS_FMT( "the table function named {} could not be found",
                              m_wettingNonWettingCapPresTableName ),
-                   InputError );
+                   InputError, getDataContext() );
     TableFunction const & capPresTable = functionManager.getGroup< TableFunction >( m_wettingNonWettingCapPresTableName );
     bool const capPresMustBeIncreasing = ( m_phaseOrder[PhaseType::WATER] < 0 )
       ? true   // pc on the gas phase, function must be increasing

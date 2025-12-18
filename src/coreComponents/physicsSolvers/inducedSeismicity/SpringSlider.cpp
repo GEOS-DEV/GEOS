@@ -90,7 +90,7 @@ void SpringSlider< RSSOLVER_TYPE >::registerDataOnMesh( Group & meshBodies )
       string & frictionLawName = subRegion.getReference< string >( viewKeyStruct::frictionLawNameString() );
       frictionLawName = PhysicsSolverBase::getConstitutiveName< FrictionBase >( subRegion );
       GEOS_ERROR_IF( frictionLawName.empty(),
-                     GEOS_FMT( "FrictionBase model not found on subregion {}", subRegion.getName() ),
+                     GEOS_FMT( "Model not found on subregion {}", subRegion.getName() ),
                      this->getDataContext(), subRegion.getDataContext() );
     } );
   } );

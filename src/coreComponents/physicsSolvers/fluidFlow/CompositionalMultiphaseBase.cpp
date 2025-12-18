@@ -198,60 +198,46 @@ void CompositionalMultiphaseBase::postInputInitialization()
   FlowSolverBase::postInputInitialization();
 
   GEOS_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                        viewKeyStruct::maxCompFracChangeString() <<
                         "The maximum absolute change in component fraction in a Newton iteration must be smaller or equal to 1.0",
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxCompFracChange, 0.0,
-                        viewKeyStruct::maxCompFracChangeString() <<
                         "The maximum absolute change in component fraction in a Newton iteration must be larger than 0.0",
                         getWrapperDataContext( viewKeyStruct::maxCompFracChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativePresChange, 0.0,
-                        viewKeyStruct::maxRelativePresChangeString() <<
                         "The maximum relative change in pressure in a Newton iteration must be larger than 0.0",
                         getWrapperDataContext( viewKeyStruct::maxRelativePresChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativeTempChange, 0.0,
-                        viewKeyStruct::maxRelativeTempChangeString() <<
                         "The maximum relative change in temperature in a Newton iteration must be larger than 0.0",
                         getWrapperDataContext( viewKeyStruct::maxRelativeTempChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_maxRelativeCompDensChange, 0.0,
-                        viewKeyStruct::maxRelativeCompDensChangeString() <<
                         "The maximum relative change in component density in a Newton iteration must be larger than 0.0",
                         getWrapperDataContext( viewKeyStruct::maxRelativeCompDensChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetRelativePresChange, 0.0,
-                        viewKeyStruct::targetRelativePresChangeString() <<
                         "The target relative change in pressure in a time step must be larger than 0.0",
                         getWrapperDataContext( viewKeyStruct::targetRelativePresChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetRelativeTempChange, 0.0,
-                        viewKeyStruct::targetRelativeTempChangeString() <<
                         "The target relative change in temperature in a time step must be larger than 0.0",
                         getWrapperDataContext( viewKeyStruct::targetRelativeTempChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetPhaseVolFracChange, 0.0,
-                        viewKeyStruct::targetPhaseVolFracChangeString() <<
                         "The target change in phase volume fraction in a time step must be larger than 0.0",
                         getWrapperDataContext( viewKeyStruct::targetPhaseVolFracChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetRelativeCompDensChange, 0.0,
-                        viewKeyStruct::targetRelativeCompDensChangeString() <<
                         "The target change in component density in a time step must be larger than 0.0",
                         getWrapperDataContext( viewKeyStruct::targetRelativeCompDensChangeString() ) );
   GEOS_ERROR_IF_LE_MSG( m_targetCompFracChange, 0.0,
-                        viewKeyStruct::targetCompFracChangeString() <<
                         "The target change in component fraction in a time step must be larger than 0.0",
                         getWrapperDataContext( viewKeyStruct::targetCompFracChangeString() ) );
 
   GEOS_ERROR_IF_LT_MSG( m_solutionChangeScalingFactor, 0.0,
-                        viewKeyStruct::solutionChangeScalingFactorString() <<
                         "The solution change scaling factor must be larger or equal to 0.0",
                         getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ));
   GEOS_ERROR_IF_GT_MSG( m_solutionChangeScalingFactor, 1.0,
-                        viewKeyStruct::solutionChangeScalingFactorString() <<
                         "The solution change scaling factor must be smaller or equal to 1.0",
                         getWrapperDataContext( viewKeyStruct::solutionChangeScalingFactorString() ));
   GEOS_ERROR_IF_LE_MSG( m_minScalingFactor, 0.0,
-                        viewKeyStruct::minScalingFactorString() <<
                         "The minumum scaling factor must be larger than 0.0",
                         getWrapperDataContext( viewKeyStruct::minScalingFactorString() ));
   GEOS_ERROR_IF_GT_MSG( m_minScalingFactor, 1.0,
-                        viewKeyStruct::minScalingFactorString() <<
                         "The minumum scaling factor must be smaller or equal to 1.0",
                         getWrapperDataContext( viewKeyStruct::minScalingFactorString() ));
 
@@ -1133,8 +1119,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
     // check that the gravity vector is aligned with the z-axis
     GEOS_THROW_IF( !isZero( gravVector[0] ) || !isZero( gravVector[1] ),
-                   getCatalogName() <<
-                   " : the gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
+                   "The gravity vector specified in this simulation (" << gravVector[0] << " " << gravVector[1] << " " << gravVector[2] <<
                    ") is not aligned with the z-axis. \n"
                    "This is incompatible with the " << bc.getCatalogName() <<
                    " used in this simulation. To proceed, you can either: \n" <<
@@ -1144,12 +1129,12 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
     // ensure that the temperature and composition tables are defined
     GEOS_THROW_IF( bc.getTemperatureVsElevationTableName().empty(),
-                   getCatalogName() << " : " << EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString()
-                                    << " must be provided for a multiphase simulation",
+                   EquilibriumInitialCondition::viewKeyStruct::temperatureVsElevationTableNameString()
+                   << " must be provided for a multiphase simulation",
                    InputError, bc.getDataContext() );
     GEOS_THROW_IF( bc.getComponentFractionVsElevationTableNames().empty(),
-                   getCatalogName() << "" << EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString()
-                                    << " must be provided for a multiphase simulation",
+                   EquilibriumInitialCondition::viewKeyStruct::componentFractionVsElevationTableNamesString()
+                   << " must be provided for a multiphase simulation",
                    InputError, bc.getDataContext() );
   } );
 
@@ -1264,8 +1249,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       string_array const & phaseNames = fluid.phaseNames();
       auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
       GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
-                     getCatalogName() <<  " : phase name " <<
-                     initPhaseName << " not found in the phases of " << fluid.getName(),
+                     "Phase name " << initPhaseName << " not found in the phases of " << fluid.getName(),
                      InputError, getDataContext(), fluid.getDataContext() );
       integer const ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
 
@@ -1298,15 +1282,13 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                                                pressureValues.toView() );
 
         GEOS_THROW_IF( returnValue ==  isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
-                       getCatalogName() <<
-                       " : hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
+                       "Hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
                        "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
                        "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
                        std::runtime_error, getDataContext() );
 
         GEOS_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
-                            getCatalogName() << " " << getDataContext() <<
-                            " : currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
+                            "Currently, GEOS assumes that there is only one mobile phase when computing the hydrostatic pressure. \n" <<
                             "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n" <<
                             "Please make sure that only one phase is mobile at the beginning of the simulation. \n" <<
                             "If this is not the case, the problem will not be at equilibrium when the simulation starts" );

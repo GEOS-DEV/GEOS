@@ -134,8 +134,8 @@ void CompositionalMultiphaseFVM::postInputInitialization()
 
     if( m_dbcParams.useDBC ) // z_c formulation is not compatible with DBC
     {
-      GEOS_ERROR( GEOS_FMT( " '{}' is not compatible with {}",
-                            formulationName, viewKeyStruct::useDBCString() ), getDataContext() );
+      GEOS_ERROR( GEOS_FMT( " '{}' is not compatible", formulationName ),
+                  getWrapperDataContext( viewKeyStruct::useDBCString() ) );
     }
 
     DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );

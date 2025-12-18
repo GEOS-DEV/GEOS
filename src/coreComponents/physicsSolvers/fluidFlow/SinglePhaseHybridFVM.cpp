@@ -94,7 +94,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
   SinglePhaseBase::initializePreSubGroups();
 
   GEOS_THROW_IF( m_isThermal,
-                 GEOS_FMT( "{} : The thermal option is not supported by SinglePhaseHybridFVM", getCatalogName() ),
+                 "The thermal option is not supported by SinglePhaseHybridFVM",
                  InputError, getDataContext() );
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -102,7 +102,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
   GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
-                 getCatalogName() << " : the HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
+                 "The HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
                  InputError, getDataContext() );
 }
 
@@ -137,8 +137,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
     } );
 
     GEOS_THROW_IF_LE_MSG( minVal.get(), 0.0,
-                          getCatalogName() <<
-                          " The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
+                          "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
                           std::runtime_error );
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();

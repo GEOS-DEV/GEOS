@@ -117,7 +117,7 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
     }
     catch( const std::invalid_argument & e )
     {
-      GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+      GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value", functionName ), InputError );
     }
 
     array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
@@ -167,7 +167,7 @@ TableFunction const * makeBrineEnthalpyTable( string_array const & inputParams,
     }
     catch( std::invalid_argument const & e )
     {
-      GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
+      GEOS_THROW( GEOS_FMT( "{}: invalid model parameter value", functionName ), InputError );
     }
 
     array1d< real64 > enthalpies( tableCoords.nTemperatures() );

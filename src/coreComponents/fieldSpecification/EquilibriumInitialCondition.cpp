@@ -98,16 +98,15 @@ void EquilibriumInitialCondition::postInputInitialization()
   if( !m_componentFractionVsElevationTableNames.empty() )
   {
     GEOS_THROW_IF( m_componentFractionVsElevationTableNames.size() <= 1,
-                   getCatalogName() <<
-                   " :  at least two component names must be specified in " << viewKeyStruct::componentNamesString(),
+                   "At least two component names must be specified in " << viewKeyStruct::componentNamesString(),
                    InputError, getDataContext() );
     GEOS_THROW_IF( m_componentFractionVsElevationTableNames.size() != m_componentNames.size(),
-                   getCatalogName() << " :  mismatch between the size of " <<
+                   "Mismatch between the size of " <<
                    viewKeyStruct::componentNamesString() <<
                    " and " << viewKeyStruct::componentFractionVsElevationTableNamesString(),
                    InputError, getDataContext() );
     GEOS_THROW_IF( m_componentNames.size() >= 2 && m_initPhaseName.empty(),
-                   getCatalogName() << " :  for now, the keyword: " <<
+                   "For now, the keyword: " <<
                    viewKeyStruct::initPhaseNameString() << " must be filled for a multiphase simulation",
                    InputError, getDataContext() );
 
@@ -115,20 +114,18 @@ void EquilibriumInitialCondition::postInputInitialization()
     for( size_t ic = 0; ic < m_componentNames.size(); ++ic )
     {
       GEOS_THROW_IF( m_componentFractionVsElevationTableNames[ic].empty(),
-                     getCatalogName() <<
-                     " :  the component fraction vs elevation table name is missing for component " << ic,
+                     "The component fraction vs elevation table name is missing for component " << ic,
                      InputError, getDataContext() );
 
       GEOS_THROW_IF( !m_componentFractionVsElevationTableNames[ic].empty() &&
                      !functionManager.hasGroup( m_componentFractionVsElevationTableNames[ic] ),
-                     getCatalogName() << " :  the component fraction vs elevation table " <<
+                     "The component fraction vs elevation table " <<
                      m_componentFractionVsElevationTableNames[ic] << " could not be found"  << " for component " << ic,
                      InputError, getDataContext() );
 
       TableFunction const & compFracTable = functionManager.getGroup< TableFunction >( m_componentFractionVsElevationTableNames[ic] );
       GEOS_THROW_IF( compFracTable.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
-                     getCatalogName() <<
-                     " :  the interpolation method for the component fraction vs elevation table " <<
+                     "The interpolation method for the component fraction vs elevation table " <<
                      compFracTable.getName() << " should be TableFunction::InterpolationType::Linear",
                      InputError, getDataContext() );
 
@@ -139,14 +136,13 @@ void EquilibriumInitialCondition::postInputInitialization()
   {
 
     GEOS_THROW_IF( !functionManager.hasGroup( m_temperatureVsElevationTableName ),
-                   getCatalogName() << " :  the temperature vs elevation table " <<
+                   "The temperature vs elevation table " <<
                    m_temperatureVsElevationTableName << " could not be found",
                    InputError, getDataContext() );
 
     TableFunction const & tempTable = functionManager.getGroup< TableFunction >( m_temperatureVsElevationTableName );
     GEOS_THROW_IF( tempTable.getInterpolationMethod() != TableFunction::InterpolationType::Linear,
-                   getCatalogName() <<
-                   " :  The interpolation method for the temperature vs elevation table " << tempTable.getName() <<
+                   "The interpolation method for the temperature vs elevation table " << tempTable.getName() <<
                    " should be TableFunction::InterpolationType::Linear",
                    InputError, getDataContext() );
   }
@@ -166,8 +162,7 @@ void EquilibriumInitialCondition::initializePreSubGroups()
       TableFunction const & compFracTable = functionManager.getGroup< TableFunction >( m_componentFractionVsElevationTableNames[ic] );
       arrayView1d< real64 const > compFracValues = compFracTable.getValues();
       GEOS_THROW_IF( compFracValues.size() <= 1,
-                     getCatalogName() <<
-                     " :  the component fraction vs elevation table " << compFracTable.getName() <<
+                     "The component fraction vs elevation table " << compFracTable.getName() <<
                      " must contain at least two values",
                      InputError, getDataContext() );
 
@@ -175,8 +170,7 @@ void EquilibriumInitialCondition::initializePreSubGroups()
       if( ic >= 1 )
       {
         GEOS_THROW_IF( tableSizes[ic] != tableSizes[ic-1],
-                       getCatalogName() <<
-                       " :  all the component fraction vs elevation tables must contain the same number of values",
+                       "All the component fraction vs elevation tables must contain the same number of values",
                        InputError, getDataContext() );
       }
     }
@@ -197,16 +191,14 @@ void EquilibriumInitialCondition::initializePreSubGroups()
         if( ic >= 1 )
         {
           GEOS_THROW_IF( !isZero( elevation[ic][i] - elevation[ic-1][i] ),
-                         getCatalogName() <<
-                         " :  the elevation values must be the same in all the component vs elevation tables",
+                         "The elevation values must be the same in all the component vs elevation tables",
                          InputError, getDataContext() );
         }
 
         if( ic == m_componentNames.size() - 1 )
         {
           GEOS_THROW_IF( !isZero( sumCompFrac[i] - 1 ),
-                         getCatalogName() <<
-                         " :  at a given elevation, the component fraction sum must be equal to one",
+                         "At a given elevation, the component fraction sum must be equal to one",
                          InputError, getDataContext() );
         }
       }
