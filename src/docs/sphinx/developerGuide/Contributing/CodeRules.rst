@@ -132,11 +132,11 @@ Use GEOS tensor types for geometric and mechanical calculations:
    * - Type
      - Description
    * - ``R1Tensor``
-     - 3D vector (real64)
+     - 3D vector (real64, default choice over 32bit counterpart)
    * - ``R1Tensor32``
      - 3D vector (real32)
    * - ``R2SymTensor``
-     - Symmetric 6-component tensor (Voigt notation)
+     - Symmetric 6-component tensor (`Voigt notation <https://fr.wikipedia.org/wiki/Notation_de_Voigt>`_)
 
 ``std`` Standard Library
 ------------------------
@@ -178,7 +178,7 @@ This rule allow us to control bounds checking depending on ``GEOS_USE_BOUNDS_CHE
       map<string, real64> orderedMap;
 
 The following standard library components are allowed:
-- ``std::pair``, ``std::tuple`` for temporary structures, `sometimes struct are to prefer <https://godbolt.org/z/KE7TEMx7d>`_.
+- ``std::pair``, ``std::tuple`` for temporary structures, `but sometimes struct are to prefer <https://godbolt.org/z/KE7TEMx7d>`_.
 - ``std::function`` for callbacks
 - ``std::optional`` for optional return values
 - ``std::move``, ``std::forward`` for move semantics
@@ -340,7 +340,8 @@ Use code-cov to report untested code paths.
 Integrated Tests & Examples  
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Always provide an example or an integrated test for every XML-usable & serializable component:**  
+**Always provide an example or an integrated test for every XML-usable & serializable component:**
+
 - Each usage pattern should have its own dedicated example,  
 - Examples must run as part of the integrated tests to protect features against regressions,  
 - Place examples in ``examples/`` directory, and integrated tests in ``inputFiles/``,
@@ -386,6 +387,7 @@ Using Log Levels
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Logging should be meaningful and controlled**:
+
 - When possible, **use ``GEOS_LOG_LEVEL_RANK*`` macros with appropriate ``logInfo``** to allow output filtering,
 - **Avoid unnecessary logging**, prefer rank 0 logging for global information to avoid redundant output,
 - **Consider logs performance impact** (output flush frequency, formatting).
@@ -428,11 +430,15 @@ Logging in RAJA Kernels
 
 **Logging inside RAJA kernels should only be done for debugging purposes** and must never appear on the develop branch.  
 
-**Rationale:** Logging on GPU can:
-- Reserve cache lines and degrade performance,
-- Cause race conditions in output,
-- Generate massive amounts of output,
-- Produce unpredictable behaviour (e.g. runtime crashes on AMD).
+.. dropdown:: Why logging on GPU is not allowed on production code?
+  :icon: info
+
+  Logging on GPU can:
+
+  - Reserve cache lines and degrade performance,
+  - Cause race conditions in output,
+  - Generate massive amounts of output,
+  - Produce unpredictable behaviour (e.g. runtime crashes on AMD).
 
 .. dropdown:: Example: Debug-only kernel logging
    :icon: code
@@ -596,7 +602,7 @@ Never Catch and Continue
 **Do not catch exceptions and continue execution**. Exceptions in GEOS indicate serious problems, they
 do not serve as an alternative code path to consult a behaviour state.
 
-**Rationale:**
+Why not to use exceptions for anything else than passing information up to the call stack:
 
 - **Performance:** Exception handling is expensive, especially with stack unwinding,
 - **Predictability:** Catching and continuing makes behaviour unpredictable and hard to debug,
@@ -654,10 +660,13 @@ Errors & Warning in RAJA Kernels
 
 Similarly to Logging, **error and warning output inside RAJA kernels is only for debugging purposes** and must never appear on the develop branch.  
 
-- GPU kernel errors cause immediate kernel termination, adding potentially costly branches,
-- Error handling on device has significant performance and cache impact,  
-- GPU error handling may be unsupported depending on the platform / device,
-- Can cause deadlocks in parallel execution.
+.. dropdown:: Why errors are forbidden on GPU in production code?
+  :icon: info
+
+  - GPU kernel errors cause immediate kernel termination, adding potentially costly branches,
+  - Error handling on device has significant performance and cache impact,  
+  - GPU error handling may be unsupported depending on the platform / device,
+  - Can cause deadlocks in parallel execution.
 
 .. dropdown:: Example: Kernel error handling (debug only)
    :icon: code
@@ -843,6 +852,7 @@ Always Use MpiWrapper
 ^^^^^^^^^^^^^^^^^^^^^
 
 **Always use ``MpiWrapper`` instead of raw MPI calls.**
+
 Refer to ``MpiWrapper.hpp`` for more.
 
 .. dropdown:: Example: Using MpiWrapper
@@ -867,10 +877,15 @@ Refer to ``MpiWrapper.hpp`` for more.
 Communication Batching
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-**Rule: Batch Small Communications**
-  Combine multiple small messages into larger ones to reduce communication overhead.
+**Batch small communications as much as possible**.
 
-  **Rationale:** MPI has significant per-message overhead; batching improves performance.
+.. dropdown:: Why?
+  :icon: info
+
+  As MPI has significant per-message overhead, combining multiple small messages into larger ones can reduce communication overhead.
+
+.. dropdown:: Example: Batching MPI communication
+   :icon: code
 
   .. code-block:: cpp
 
@@ -914,7 +929,7 @@ Use Tolerance-Based Comparisons
 
       // GOOD - Absolute tolerance
       real64 const absTol = 1.0e-12;
-      if( std::abs(value) < absTol ) { ... }
+      if( LvArray::math::abs(value) < absTol ) { ... }
 
       // GOOD - Relative tolerance
       real64 const relTol = 1.0e-8;
@@ -925,7 +940,6 @@ Division Safety, NaN/Inf Values
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - **Always verify that denominators are not zero or near-zero before a division**.  
-
 - In General, **we should not make any computation that could result in NaN/Inf values**.
 
 .. dropdown:: Example: Division Safety
@@ -961,9 +975,7 @@ Division Safety, NaN/Inf Values
 Overflow Prevention
 ^^^^^^^^^^^^^^^^^^^^
 
-Overflow leads to undefined behavior and memory corruption.
-
-**Validate that operations won't exceed type limits**, especially for index calculations.
+Overflow leads to undefined behavior and memory corruption. **Validate that operations won't exceed type / container limits**, especially for index calculations.
 
 Use LvArray Math Utilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1124,6 +1136,7 @@ Value / Const Function Arguments
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Pass large and non-trivially copyable objects by const reference**:
+
 - A "large" size can be defined as "more that 16 bytes, ", which is 2 pointers, 2 integer / index, or 2 double,
 - An object is non-trivially copyable objects when it needs to perform sub-allocation when being copied,
 
@@ -1198,9 +1211,12 @@ This rule imply the following:
 - **A reference may never be null**,
 - In a given method, **``this`` may never be null**.
 
-Passing a pointer or reference parameter show the intention of modifying the underlying object.
-The difference of the two practices is that passing a pointer means that we consider that the 
-underlying object can be null.
+.. dropdown:: Why?
+  :icon: info
+
+  Passing a pointer or reference parameter show the intention of modifying the underlying object.
+  The difference of the two practices is that passing a pointer means that we consider that the 
+  underlying object can be null.
 
 Constexpr for Compile-Time Constants
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1231,11 +1247,12 @@ Provide Views to Arrays
 
 The rule is generalizable to ``string_view`` for strings, but not applicable in GPU context.
 
-Why Use Views?
+.. dropdown:: Why Use Views?
+  :icon: info
 
-- **No memory allocation:** Views are lightweight references
-- **Mutability correctness:** Can provide ``const`` read-only access to inner data
-- **GPU compatibility:** Views work seamlessly on device
+  - **No memory allocation:** Views are lightweight references
+  - **Mutability correctness:** Can provide ``const`` read-only access to inner data
+  - **GPU compatibility:** Views work seamlessly on device
 
 .. dropdown:: Example: Views for arrays
    :icon: code
@@ -1293,10 +1310,11 @@ The rule is applicable to ``arrayView*`` and ``string_view``.
     // CORRECT - store array, create view when needed
     class SafeDataHolder
     {
-      array1d< real64 > m_data;
-      
+    public:
       arrayView1d< real64 > getView() { return m_data.toView(); }
       arrayView1d< real64 const > getViewConst() const { return m_data.toViewConst(); }
+    private:
+      array1d< real64 > m_data;
     };
 
 General Architecture
@@ -1355,12 +1373,13 @@ Avoid Globals and Mutable State
 **Minimize mutable global states when possible.**
 Prefer passing context explicitly.
 
-Why to avoid globals:
+.. dropdown:: Why to avoid globals?
+  :icon: info
 
-- **Thread safety:** Globals can cause race conditions in parallel code
-- **Testability:** Hard to test code that depends on global state
-- **Predictability:** Global state makes code behaviour harder to understand
-- **Encapsulation:** Violates modularity principles
+  - **Thread safety:** Globals can cause race conditions in parallel code
+  - **Testability:** Hard to test code that depends on global state
+  - **Predictability:** Global state makes code behaviour harder to understand
+  - **Encapsulation:** Violates modularity principles
 
 .. dropdown:: Example: Avoiding global state
    :icon: code
@@ -1404,6 +1423,7 @@ Magic values, ``Group`` paths
 -------------------------------
 
 **Avoid magic values**:
+
 - **arbitrary values should not be written more than once**, define constants, consider using or extending ``PhysicsConstants.hpp`` / ``Units.hpp``,
 - Because of architecture considerations, **Avoid using full raw ``Group`` path**, especially when the path has parts unrelated to the component consulting it -> prefer as relative paths as possible,
 - ``Group`` / ``Wrapper`` name in the data repository is considered as a magic value, **use the ``getCatalogName()`` / ``getName()`` getters**,
@@ -1427,6 +1447,8 @@ Unphysical values indicate errors and can cause solver failures.
 
 If a value is not strictly disallowed but does not seem possible for the model, **show a warning to the user that he can disable**.
 
+.. dropdown:: Example: Avoiding global state
+   :icon: code
 
   .. code-block:: cpp
 
