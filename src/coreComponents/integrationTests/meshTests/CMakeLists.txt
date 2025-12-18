@@ -1,6 +1,5 @@
 # Specify list of tests
 set( gtest_geosx_tests
-     testMeshEnums.cpp
      testMeshGeneration.cpp
      testNeighborCommunicator.cpp
      testElementRegions.cpp )

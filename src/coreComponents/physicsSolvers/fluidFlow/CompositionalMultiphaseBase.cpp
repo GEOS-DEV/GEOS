@@ -115,7 +115,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.2 ).
-    setDescription( "Target (absolute) change in phase volume fraction in a time step" );
+    setDescription( "Target (absolute) change in the phase volume fraction within a single time step." );
   this->registerWrapper( viewKeyStruct::targetRelativeCompDensChangeString(), &m_targetRelativeCompDensChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -131,7 +131,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.5 ).
-    setDescription( "Maximum (absolute) change in a component fraction in a Newton iteration" );
+    setDescription( "Maximum (absolute) allowed change in the composition fraction of any component within a single time step, in a Newton iteration" );
   this->registerWrapper( viewKeyStruct::maxRelativePresChangeString(), &m_maxRelativePresChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -614,11 +614,11 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition co
       GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
                      GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
                                getDataContext(), fluid.getDataContext() ),
-                     InputError );
+                     InputError, getDataContext(), fluid.getDataContext() );
       GEOS_THROW_IF( !m_isThermal && isFluidModelThermal,
                      GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model {}, but the solver options are incompatible with the thermal option",
                                getDataContext(), fluid.getDataContext() ),
-                     InputError );
+                     InputError, getDataContext(), fluid.getDataContext() );
 
       string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
       RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
@@ -902,7 +902,10 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
 
     {
       RAJA::ReduceSum< parallelDeviceReduce, localIndex > localNegativeValues( 0 );
-      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localWrongSum( 0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localTooHighFracCount( 0 );
+      RAJA::ReduceSum< parallelDeviceReduce, localIndex > localTooLowFracCount( 0 );
+      RAJA::ReduceMin< parallelDeviceReduce, localIndex > localMinFrac( LvArray::NumericLimits< localIndex >::max );
+      RAJA::ReduceMax< parallelDeviceReduce, localIndex > localMaxFrac( LvArray::NumericLimits< localIndex >::min );
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
         real64 sumCompFrac = 0.0;
@@ -912,8 +915,12 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
           if( compFrac[ei][ic] < 0.0 )
             localNegativeValues += 1;
         }
-        if( LvArray::math::abs( sumCompFrac - 1.0 ) > 1e-6 )
-          localWrongSum += 1;
+        localMinFrac.min( sumCompFrac );
+        localMaxFrac.max( sumCompFrac );
+        if( sumCompFrac > 1 + 1e-6 )
+          localTooHighFracCount += 1;
+        if( sumCompFrac < 1 - 1e-6 )
+          localTooLowFracCount += 1;
       } );
 
       localIndex const negativeValues = MpiWrapper::sum( localNegativeValues.get() );
@@ -921,10 +928,19 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
                      GEOS_FMT( "{}: negative global component fraction values found in subregion '{}' for {} elements",
                                getName(), subRegion.getName(), negativeValues ) );
 
-      localIndex const wrongSum = MpiWrapper::sum( localWrongSum.get() );
-      GEOS_ERROR_IF( wrongSum > 0,
-                     GEOS_FMT( "{}: component fractions do not sum to 1.0 in subregion '{}' for {} elements",
-                               getName(), subRegion.getName(), wrongSum ) );
+      localIndex const totalSupFrac = MpiWrapper::sum( localTooHighFracCount.get() );
+      localIndex const totalInfFrac = MpiWrapper::sum( localTooLowFracCount.get() );
+      localIndex const totalWrongCompFrac = totalSupFrac + totalInfFrac;
+      localIndex const minFrac  = MpiWrapper::min( localMinFrac.get() );
+      localIndex const maxFrac  = MpiWrapper::sum( localMaxFrac.get() );
+      GEOS_ERROR_IF( totalWrongCompFrac > 0,
+                     GEOS_FMT( "{} component fractions do not sum to 1.0 in subregion '{}'!\n"
+                               "{} are too low ; {} are too high ; component fractions sum range is from {} to {}.\n"
+                               "Consider adding field specification to initialize the '{}' field.",
+                               totalWrongCompFrac, subRegion.getName(),
+                               localTooLowFracCount.get(), localTooHighFracCount.get(), minFrac, maxFrac,
+                               fields::flow::globalCompFraction::key() ),
+                     getDataContext());
     }
 
     // Assume global component fractions have been prescribed.
@@ -1092,14 +1108,14 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
   // Step 1: count individual equilibriums (there may be multiple ones)
 
-  std::map< string, localIndex > equilNameToEquilId;
+  stdMap< string, localIndex > equilNameToEquilId;
   localIndex equilCounter = 0;
 
   fsManager.forSubGroups< EquilibriumInitialCondition >( [&] ( EquilibriumInitialCondition const & bc )
   {
 
     // collect all the equilibrium names to idx
-    equilNameToEquilId[bc.getName()] = equilCounter;
+    equilNameToEquilId.insert( {bc.getName(), equilCounter} );
     equilCounter++;
 
     // check that the gravity vector is aligned with the z-axis
@@ -1111,7 +1127,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                    "used in this simulation. To proceed, you can either: \n" <<
                    "   - Use a gravityVector aligned with the z-axis, such as (0.0,0.0,-9.81)\n" <<
                    "   - Remove the hydrostatic equilibrium initial condition from the XML file",
-                   InputError );
+                   InputError, getDataContext(), bc.getDataContext() );
 
     // ensure that the temperature and composition tables are defined
     GEOS_THROW_IF( bc.getTemperatureVsElevationTableName().empty(),
@@ -1224,13 +1240,13 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       GEOS_THROW_IF( fluid.componentNames().size() != componentNames.size(),
                      "Mismatch in number of components between constitutive model "
                      << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
-                     InputError );
+                     InputError, fluid.getDataContext(), fs.getDataContext() );
       for( integer ic = 0; ic < fluid.numFluidComponents(); ++ic )
       {
         GEOS_THROW_IF( fluid.componentNames()[ic] != componentNames[ic],
                        "Mismatch in component names between constitutive model "
                        << fluid.getDataContext() << " and the Equilibrium initial condition " << fs.getDataContext(),
-                       InputError );
+                       InputError, fluid.getDataContext(), fs.getDataContext() );
       }
 
       // Note: for now, we assume that the reservoir is in a single-phase state at initialization
@@ -1239,7 +1255,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
       GEOS_THROW_IF( itPhaseNames == std::end( phaseNames ),
                      getCatalogName() << " " << getDataContext() << ": phase name " <<
                      initPhaseName << " not found in the phases of " << fluid.getDataContext(),
-                     InputError );
+                     InputError, getDataContext(), fluid.getDataContext() );
       integer const ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
 
       // Step 3.4: compute the hydrostatic pressure values
@@ -1275,7 +1291,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                        ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
                        "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
                        "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
-                       std::runtime_error );
+                       std::runtime_error, getDataContext() );
 
         GEOS_LOG_RANK_0_IF( returnValue == isothermalCompositionalMultiphaseBaseKernels::HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
                             getCatalogName() << " " << getDataContext() <<
@@ -1335,7 +1351,8 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
 
       GEOS_ERROR_IF( minPressure.get() < 0.0,
                      GEOS_FMT( "{}: A negative pressure of {} Pa was found during hydrostatic initialization in region/subRegion {}/{}",
-                               getDataContext(), minPressure.get(), region.getName(), subRegion.getName() ) );
+                               getDataContext(), minPressure.get(), region.getName(), subRegion.getName() ),
+                     getDataContext() );
     } );
   } );
 }
@@ -1374,10 +1391,12 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 }
 
 void
-CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                                real64 const & GEOS_UNUSED_PARAM( dt ),
+CompositionalMultiphaseBase::implicitStepSetup( real64 const & time_n,
+                                                real64 const & dt,
                                                 DomainPartition & domain )
 {
+  PhysicsSolverBase::implicitStepSetup( time_n, dt, domain );
+
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
@@ -1388,7 +1407,6 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM
                                                                                 auto & subRegion )
     {
       saveConvergedState( subRegion );
-
       // update porosity, permeability
       updatePorosityAndPermeability( subRegion );
       // update all fluid properties
@@ -1526,13 +1544,13 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
   // Step 1: count individual source flux boundary conditions
 
-  std::map< string, localIndex > bcNameToBcId;
+  stdMap< string, localIndex > bcNameToBcId;
   localIndex bcCounter = 0;
 
   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
   {
     // collect all the bc names to idx
-    bcNameToBcId[bc.getName()] = bcCounter;
+    bcNameToBcId.insert( {bc.getName(), bcCounter} );
     bcCounter++;
   } );
 
@@ -1847,7 +1865,9 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ) );
+    GEOS_ERROR_IF( !bcConsistent,
+                   GEOS_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getDataContext() ),
+                   getDataContext() );
   }
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -2469,6 +2489,8 @@ real64 CompositionalMultiphaseBase::setNextDtBasedOnStateChange( real64 const & 
 void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
+
+  PhysicsSolverBase::resetStateToBeginningOfStep( domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,

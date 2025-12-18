@@ -13,7 +13,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
+#include "integrationTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 #include "common/DataTypes.hpp"
 #include "mainInterface/initialization.hpp"
@@ -154,7 +154,7 @@ char const * xmlInput =
   <Geometry>
     <Box
       name="sink"
-      xMin="{ 89.99, 89.99, -0.01 }"
+      xMin="{ 49.99, 49.99, -0.01 }"
       xMax="{ 101.01, 101.01, 1.01 }"/>
 
     

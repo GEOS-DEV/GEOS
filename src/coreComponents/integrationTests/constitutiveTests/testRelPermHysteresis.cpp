@@ -16,10 +16,10 @@
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/DataTypes.hpp"
-#include "constitutiveTestHelpers.hpp"
+#include "constitutive/relativePermeability/unitTests/constitutiveTestHelpers.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
-#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
+#include "integrationTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 using namespace geos;
 using namespace geos::testing;
@@ -121,6 +121,7 @@ TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string
   auto & imbibitionGasTableName = relPerm.getReference< string >( keys::imbibitionNonWettingRelPermTableNameString() );
   imbibitionGasTableName = "imbibitionGas_swg";
 
+  relPerm.allocateConstitutiveData( parent, 1 );
   relPerm.postInputInitializationRecursive();
   relPerm.initialize(); // to test all the checks
   return relPerm;

@@ -396,6 +396,7 @@ PhillipsBrineDensity::makeVolumeShiftTable( string const & name,
   volumeShiftTable->setTableCoordinates( tableCoords, { units::Pressure, units::Temperature } );
   volumeShiftTable->setTableValues( volumeShift, units::MolarVolume );
   volumeShiftTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  volumeShiftTable->initializeFunction();
   return volumeShiftTable;
 }
 

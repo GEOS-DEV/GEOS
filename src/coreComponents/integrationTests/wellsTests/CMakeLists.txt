@@ -1,7 +1,6 @@
 # Specify list of tests
 set( gtest_geosx_tests
-     testReservoirSinglePhaseMSWells.cpp
-     testWellEnums.cpp )
+     testReservoirSinglePhaseMSWells.cpp )
 
 set( tplDependencyList ${parallelDeps} gtest )
 
@@ -9,6 +8,7 @@ set( dependencyList mainInterface )
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
+          testOpenClosePerf.cpp
           testReservoirCompositionalMultiphaseMSWells.cpp
           testReservoirThermalSinglePhaseMSWells.cpp
           testReservoirThermalSinglePhaseMSWells_RateInj.cpp

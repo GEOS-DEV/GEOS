@@ -60,7 +60,7 @@ set( constitutive_headers
      fluid/multifluid/MultiFluidConstants.hpp
      fluid/multifluid/MultiFluidUtils.hpp
      fluid/multifluid/MultiFluidFields.hpp
-     fluid/multifluid/constant/InvariantImmiscibleFluid.hpp     
+     fluid/multifluid/constant/InvariantImmiscibleFluid.hpp
      fluid/multifluid/blackOil/BlackOilFluidBase.hpp
      fluid/multifluid/blackOil/BlackOilFluid.hpp
      fluid/multifluid/blackOil/DeadOilFluid.hpp
@@ -106,6 +106,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/models/ImmiscibleWaterDensity.hpp
      fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.hpp
      fluid/multifluid/compositional/models/ImmiscibleWaterViscosity.hpp
+     fluid/multifluid/compositional/models/KValueFlashModel.hpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.hpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity_Impl.hpp
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.hpp
@@ -120,6 +121,7 @@ set( constitutive_headers
      fluid/multifluid/compositional/parameters/EquationOfState.hpp
      fluid/multifluid/compositional/parameters/FlashParameters.hpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.hpp
+     fluid/multifluid/compositional/parameters/KValueFlashParameters.hpp
      fluid/multifluid/compositional/parameters/ModelParameters.hpp
      fluid/multifluid/compositional/parameters/PhaseType.hpp
      fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.hpp
@@ -191,22 +193,22 @@ set( constitutive_headers
      solid/ElasticIsotropicFiniteStrain.hpp
      solid/InvariantDecompositions.hpp
      solid/PorousDamageSolid.hpp
-     solid/PerfectlyPlastic.hpp     
+     solid/PerfectlyPlastic.hpp
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
      solid/SolidUtilities.hpp
      solid/SolidInternalEnergy.hpp
      solid/SolidModelDiscretizationOps.hpp
-     solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
+     solid/SolidModelDiscretizationOpsFullyAnisotropic.hpp
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
      solid/SolidModelDiscretizationOpsOrthotropic.hpp
      solid/CeramicDamage.hpp
+     solid/SolidFields.hpp
      solid/porosity/PorosityFields.hpp
      solid/porosity/BiotPorosity.hpp
      solid/porosity/PorosityBase.hpp
-     solid/porosity/PorosityFields.hpp
      solid/porosity/PressurePorosity.hpp
      solid/porosity/ProppantPorosity.hpp
      thermalConductivity/MultiPhaseConstantThermalConductivity.hpp
@@ -272,6 +274,7 @@ set( constitutive_sources
      fluid/multifluid/compositional/models/ImmiscibleWaterDensity.cpp
      fluid/multifluid/compositional/models/ImmiscibleWaterFlashModel.cpp
      fluid/multifluid/compositional/models/ImmiscibleWaterViscosity.cpp
+     fluid/multifluid/compositional/models/KValueFlashModel.cpp
      fluid/multifluid/compositional/models/LohrenzBrayClarkViscosity.cpp
      fluid/multifluid/compositional/models/NegativeTwoPhaseFlashModel.cpp
      fluid/multifluid/compositional/models/PhillipsBrineDensity.cpp
@@ -281,6 +284,7 @@ set( constitutive_sources
      fluid/multifluid/compositional/parameters/CriticalVolume.cpp
      fluid/multifluid/compositional/parameters/FlashParameters.cpp
      fluid/multifluid/compositional/parameters/ImmiscibleWaterParameters.cpp
+     fluid/multifluid/compositional/parameters/KValueFlashParameters.cpp
      fluid/multifluid/compositional/parameters/PhaseType.cpp
      fluid/multifluid/compositional/parameters/PressureTemperatureCoordinates.cpp
      fluid/multifluid/compositional/CompositionalMultiphaseFluid.cpp
@@ -390,4 +394,7 @@ install( TARGETS constitutive LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 if( GEOS_ENABLE_TESTS )
   add_subdirectory( unitTests )
+  add_subdirectory( relativePermeability/unitTests )
+  add_subdirectory( capillaryPressure/unitTests )
+  add_subdirectory( solid/unitTests )
 endif( )

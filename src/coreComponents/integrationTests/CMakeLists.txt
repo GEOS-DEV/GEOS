@@ -19,17 +19,14 @@ ProblemManager.
 #]]
 
 add_subdirectory( tableFunctionsFileTests )
-add_subdirectory( toolchain )
 add_subdirectory( testingUtilities )
 add_subdirectory( xmlTests )
-add_subdirectory( virtualElementTests )
 add_subdirectory( linearAlgebraTests )
 add_subdirectory( dataRepositoryTests )
 add_subdirectory( fieldSpecificationTests )
 add_subdirectory( constitutiveTests )
 add_subdirectory( meshTests )
-add_subdirectory( finiteVolumeTests )
-add_subdirectory( fileIOTests )
+add_subdirectory( solverStatisticsTests )
 if( GEOS_ENABLE_FLUIDFLOW )
   add_subdirectory( fluidFlowTests )
 endif()

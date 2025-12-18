@@ -213,7 +213,7 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   {
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
                    getDataContext() << ": Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
-                   InputError );
+                   InputError, getDataContext() );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
@@ -416,7 +416,7 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
 // Here for retrocompatibily
 real64 AcousticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                                real64 const & dt,
-                                                               integer cycleNumber,
+                                                               integer const cycleNumber,
                                                                DomainPartition & domain,
                                                                integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
@@ -428,7 +428,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & ti
 
 real64 AcousticFirstOrderWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                                 real64 const & dt,
-                                                                integer cycleNumber,
+                                                                integer const cycleNumber,
                                                                 DomainPartition & domain,
                                                                 integer GEOS_UNUSED_PARAM( computeGradient ) )
 {

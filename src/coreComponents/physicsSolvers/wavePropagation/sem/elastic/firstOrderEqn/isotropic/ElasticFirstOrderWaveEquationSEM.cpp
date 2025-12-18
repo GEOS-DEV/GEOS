@@ -263,7 +263,8 @@ void ElasticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLeve
 
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
                    getDataContext() << ": Invalid type of element, the elastic solver is designed for hexahedral meshes only (C3D8) ",
-                   InputError );
+                   InputError, getDataContext(),
+                   elementSubRegion.getDataContext().getContextInfo().setPriority( -1 ) );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
@@ -482,7 +483,7 @@ void ElasticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, Do
 
 real64 ElasticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                               real64 const & dt,
-                                                              integer cycleNumber,
+                                                              integer const cycleNumber,
                                                               DomainPartition & domain,
                                                               integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
@@ -494,7 +495,7 @@ real64 ElasticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & tim
 
 real64 ElasticFirstOrderWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                                real64 const & dt,
-                                                               integer cycleNumber,
+                                                               integer const cycleNumber,
                                                                DomainPartition & domain,
                                                                integer GEOS_UNUSED_PARAM( computeGradient ) )
 {

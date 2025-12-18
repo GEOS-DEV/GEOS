@@ -18,6 +18,7 @@
  */
 
 #include "ElasticIsotropicPressureDependent.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -26,15 +27,7 @@ namespace constitutive
 {
 
 ElasticIsotropicPressureDependent::ElasticIsotropicPressureDependent( string const & name, Group * const parent ):
-  SolidBase( name, parent ),
-  m_defaultRefPressure(),
-  m_defaultRefStrainVol(),
-  m_defaultRecompressionIndex(),
-  m_defaultShearModulus(),
-  m_refPressure(),
-  m_refStrainVol(),
-  m_recompressionIndex(),
-  m_shearModulus()
+  SolidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultRefPressureString(), &m_defaultRefPressure ).
     setApplyDefaultValue( -1.0 ).
@@ -64,18 +57,12 @@ ElasticIsotropicPressureDependent::ElasticIsotropicPressureDependent( string con
     setApplyDefaultValue( -1 ).
     setDescription( "Reference Volumetric Strain" );
 
-  registerWrapper( viewKeyStruct::recompressionIndexString(), &m_recompressionIndex ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Recompression Index Field" );
+  // register fields
 
-  registerWrapper( viewKeyStruct::shearModulusString(), &m_shearModulus ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Shear Modulus" );
+  registerField< fields::solid::recompressionIndex >( &m_recompressionIndex );
+
+  registerField< fields::solid::shearModulus >( &m_shearModulus );
 }
-
-
-ElasticIsotropicPressureDependent::~ElasticIsotropicPressureDependent()
-{}
 
 
 void ElasticIsotropicPressureDependent::postInputInitialization()
@@ -93,35 +80,42 @@ void ElasticIsotropicPressureDependent::postInputInitialization()
   if( Cr >= 0.0 )
   {
     ++numConstantsSpecified;
-    errorCheck += "Cr, ";
+    errorCheck += "Cr ";
   }
   if( G >= 0.0 )
   {
     ++numConstantsSpecified;
-    errorCheck += "G, ";
+    errorCheck += "G ";
   }
   errorCheck += ")";
 
   GEOS_ERROR_IF( numConstantsSpecified != 2,
-                 getFullName() << ": A specific pair of elastic constants is required: (Cr, G). " );
+                 GEOS_FMT( "{}: A specific pair of elastic constants is required: ( Cr G ), specified: {}",
+                           getFullName(), errorCheck ) );
+  GEOS_THROW_IF( m_defaultRefPressure >= 0,
+                 GEOS_FMT( "{}: Reference pressure must be negative", getFullName() ),
+                 InputError );
   GEOS_THROW_IF( m_defaultRecompressionIndex <= 0,
-                 getFullName() << ": Non-positive recompression index detected " << m_defaultRecompressionIndex, InputError );
-  real64 poisson = conversions::bulkModAndShearMod::toPoissonRatio( -1 * m_defaultRefPressure / m_defaultRecompressionIndex, m_defaultShearModulus );
+                 GEOS_FMT( "{}: Non-positive recompression index detected {}", getFullName(), m_defaultRecompressionIndex ),
+                 InputError, getDataContext() );
+  real64 poisson =
+    conversions::bulkModAndShearMod::toPoissonRatio( -1 * m_defaultRefPressure / m_defaultRecompressionIndex, m_defaultShearModulus );
   GEOS_THROW_IF( poisson < 0,
-                 getFullName() << ": Elastic parameters lead to negative Poisson ratio at reference pressure ", InputError );
-
+                 GEOS_FMT( "{}: Elastic parameters lead to negative Poisson ratio at reference pressure", getFullName() ),
+                 InputError, getDataContext() );
 
   // set results as array default values
-  this->getWrapper< real64 >( viewKeyStruct::refPressureString() ).
+
+  getWrapper< real64 >( viewKeyStruct::refPressureString() ).
     setApplyDefaultValue( m_defaultRefPressure );
 
-  this->getWrapper< real64 >( viewKeyStruct::refStrainVolString() ).
+  getWrapper< real64 >( viewKeyStruct::refStrainVolString() ).
     setApplyDefaultValue( m_defaultRefStrainVol );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::recompressionIndexString() ).
+  getField< fields::solid::recompressionIndex >().
     setApplyDefaultValue( m_defaultRecompressionIndex );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString() ).
+  getField< fields::solid::shearModulus >().
     setApplyDefaultValue( m_defaultShearModulus );
 
 }

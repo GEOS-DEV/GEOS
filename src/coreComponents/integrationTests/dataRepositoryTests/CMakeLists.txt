@@ -1,9 +1,7 @@
 # Specify list of tests
 set( dataRepository_tests
-     testObjectCatalog.cpp
      testRestartBasic.cpp
      testRestartExtended.cpp
-     testWrapperHelpers.cpp
      testGroupPath.cpp )
 
 set( tplDependencyList ${parallelDeps} gtest )

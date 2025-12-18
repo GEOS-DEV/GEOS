@@ -25,6 +25,7 @@
 #include "physicsSolvers/multiphysics/MultiphasePoromechanicsConformingFractures.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsConformingFractures.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsConformingFracturesALM.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsEmbeddedFractures.hpp"
 #include "physicsSolvers/multiphysics/HydrofractureSolver.hpp"
 #include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
@@ -76,7 +77,7 @@ postInputInitialization()
                            getWrapperDataContext( viewKeyStruct::poromechanicsSolverNameString() ),
                            POROMECHANICS_SOLVER::catalogName(),
                            m_poromechanicsSolverName ),
-                 InputError );
+                 InputError, getWrapperDataContext( viewKeyStruct::poromechanicsSolverNameString() ) );
 
   m_poromechanicsSolver = &physicsSolverManager.getGroup< POROMECHANICS_SOLVER >( m_poromechanicsSolverName );
 
@@ -89,7 +90,7 @@ postInputInitialization()
                              getWrapperDataContext( viewKeyStruct::solidMechanicsStatisticsNameString() ),
                              SolidMechanicsStatistics::catalogName(),
                              m_solidMechanicsStatisticsName ),
-                   InputError );
+                   InputError, getWrapperDataContext( viewKeyStruct::solidMechanicsStatisticsNameString() ) );
 
     m_solidMechanicsStatistics = &tasksManager.getGroup< SolidMechanicsStatistics >( m_solidMechanicsStatisticsName );
   }
@@ -139,18 +140,25 @@ namespace
 typedef PoromechanicsInitialization< MultiphasePoromechanics<> > MultiphasePoromechanicsInitialization;
 typedef PoromechanicsInitialization< MultiphasePoromechanicsConformingFractures<> > MultiphasePoromechanicsConformingFracturesInitialization;
 typedef PoromechanicsInitialization< MultiphasePoromechanics< CompositionalMultiphaseReservoirAndWells<> > > MultiphaseReservoirPoromechanicsInitialization;
+typedef PoromechanicsInitialization< MultiphasePoromechanicsConformingFractures< CompositionalMultiphaseReservoirAndWells<> > >
+  CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanics<> > SinglePhasePoromechanicsInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanicsConformingFractures<> > SinglePhasePoromechanicsConformingFracturesInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanicsConformingFractures< SinglePhaseReservoirAndWells<> > > SinglePhaseReservoirPoromechanicsConformingFracturesInitialization;
+typedef PoromechanicsInitialization< SinglePhasePoromechanicsConformingFracturesALM<> > SinglePhasePoromechanicsConformingFracturesALMInitialization;
+typedef PoromechanicsInitialization< SinglePhasePoromechanicsConformingFracturesALM< SinglePhaseReservoirAndWells<> > > SinglePhaseReservoirPoromechanicsConformingFracturesALMInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanicsEmbeddedFractures > SinglePhasePoromechanicsEmbeddedFracturesInitialization;
 typedef PoromechanicsInitialization< SinglePhasePoromechanics< SinglePhaseReservoirAndWells<> > > SinglePhaseReservoirPoromechanicsInitialization;
 typedef PoromechanicsInitialization< HydrofractureSolver< SinglePhasePoromechanics<> > > HydrofractureInitialization;
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphasePoromechanicsConformingFracturesInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, MultiphaseReservoirPoromechanicsInitialization, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( TaskBase, CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsConformingFracturesInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhaseReservoirPoromechanicsConformingFracturesInitialization, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsConformingFracturesALMInitialization, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( TaskBase, SinglePhaseReservoirPoromechanicsConformingFracturesALMInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhasePoromechanicsEmbeddedFracturesInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, SinglePhaseReservoirPoromechanicsInitialization, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( TaskBase, HydrofractureInitialization, string const &, Group * const )

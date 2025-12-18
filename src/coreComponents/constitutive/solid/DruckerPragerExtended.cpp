@@ -18,6 +18,7 @@
  */
 
 #include "DruckerPragerExtended.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -26,19 +27,7 @@ namespace constitutive
 {
 
 DruckerPragerExtended::DruckerPragerExtended( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_defaultInitialFrictionAngle(),
-  m_defaultResidualFrictionAngle(),
-  m_defaultDilationRatio(),
-  m_defaultCohesion(),
-  m_defaultHardening(),
-  m_initialFriction(),
-  m_residualFriction(),
-  m_dilationRatio(),
-  m_pressureIntercept(),
-  m_hardening(),
-  m_newState(),
-  m_oldState()
+  ElasticIsotropic( name, parent )
 {
   // register default values
 
@@ -69,48 +58,28 @@ DruckerPragerExtended::DruckerPragerExtended( string const & name, Group * const
 
   // register fields
 
-  registerWrapper( viewKeyStruct::initialFrictionString(), &m_initialFriction ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Initial yield surface slope" );
+  registerField< fields::solid::initialFriction >( &m_initialFriction );
 
-  registerWrapper( viewKeyStruct::residualFrictionString(), &m_residualFriction ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Residual yield surface slope" );
+  registerField< fields::solid::residualFriction >( &m_residualFriction );
 
-  registerWrapper( viewKeyStruct::dilationRatioString(), &m_dilationRatio ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Plastic potential slope ratio" );
+  registerField< fields::solid::dilation >( &m_dilationRatio );
 
-  registerWrapper( viewKeyStruct::pressureInterceptString(), &m_pressureIntercept ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Pressure point at cone vertex" );
+  registerField< fields::solid::pressureIntercept >( &m_pressureIntercept );
 
-  registerWrapper( viewKeyStruct::hardeningString(), &m_hardening ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Hardening parameter" );
+  registerField< fields::solid::hardening >( &m_hardening );
 
-  registerWrapper( viewKeyStruct::newStateString(), &m_newState ).
-    setApplyDefaultValue( 0.0 ).
-    setPlotLevel( dataRepository::PlotLevel::LEVEL_3 ).
-    setDescription( "New equivalent plastic shear strain" );
+  registerField< fields::solid::state >( &m_newState );
 
-  registerWrapper( viewKeyStruct::oldStateString(), &m_oldState ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Old equivalent plastic shear strain" );
+  registerField< fields::solid::oldState >( &m_oldState );
 }
 
 
-DruckerPragerExtended::~DruckerPragerExtended()
-{}
-
-
-void DruckerPragerExtended::allocateConstitutiveData( dataRepository::Group & parent,
-                                                      localIndex const numConstitutivePointsPerParentIndex )
+void DruckerPragerExtended::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  m_newState.resize( 0, numConstitutivePointsPerParentIndex );
-  m_oldState.resize( 0, numConstitutivePointsPerParentIndex );
+  m_newState.resize( 0, numPts );
+  m_oldState.resize( 0, numPts );
 
-  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 }
 
 
@@ -119,17 +88,23 @@ void DruckerPragerExtended::postInputInitialization()
   ElasticIsotropic::postInputInitialization();
 
   GEOS_THROW_IF( m_defaultCohesion < 0,
-                 getFullName() << ": Negative cohesion value detected", InputError );
+                 getFullName() << ": Negative cohesion value detected",
+                 InputError, getDataContext() );
   GEOS_THROW_IF( m_defaultInitialFrictionAngle < 0,
-                 getFullName() << ": Negative initial friction angle detected", InputError );
+                 getFullName() << ": Negative initial friction angle detected",
+                 InputError, getDataContext() );
   GEOS_THROW_IF( m_defaultResidualFrictionAngle < 0,
-                 getFullName() << ": Negative residual friction angle detected", InputError );
+                 getFullName() << ": Negative residual friction angle detected",
+                 InputError, getDataContext() );
   GEOS_THROW_IF( m_defaultDilationRatio < 0,
-                 getFullName() << ": Dilation ratio out of [0,1] range detected", InputError );
+                 getFullName() << ": Dilation ratio out of [0,1] range detected",
+                 InputError, getDataContext() );
   GEOS_THROW_IF( m_defaultDilationRatio > 1,
-                 getFullName() << ": Dilation ratio out of [0,1] range detected", InputError );
+                 getFullName() << ": Dilation ratio out of [0,1] range detected",
+                 InputError, getDataContext() );
   GEOS_THROW_IF( m_defaultHardening < 0,
-                 getFullName() << ": Negative hardening parameter detected", InputError );
+                 getFullName() << ": Negative hardening parameter detected",
+                 InputError, getDataContext() );
 
   // convert from Mohr-Coulomb constants to Drucker-Prager constants, assuming DP
   // passes through the triaxial tension corners of the MC surface.
@@ -144,19 +119,19 @@ void DruckerPragerExtended::postInputInitialization()
 
   // set results as array default values
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::initialFrictionString() ).
+  getWrapper< array1d< real64 > >( fields::solid::initialFriction::key()).
     setApplyDefaultValue( F_i );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::residualFrictionString() ).
+  getWrapper< array1d< real64 > >( fields::solid::residualFriction::key() ).
     setApplyDefaultValue( F_r );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::pressureInterceptString() ).
+  getWrapper< array1d< real64 > >( fields::solid::pressureIntercept::key() ).
     setApplyDefaultValue( P );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::dilationRatioString() ).
+  getWrapper< array1d< real64 > >( fields::solid::dilation::key() ).
     setApplyDefaultValue( m_defaultDilationRatio );
 
-  getWrapper< array1d< real64 > >( viewKeyStruct::hardeningString() ).
+  getWrapper< array1d< real64 > >( fields::solid::hardening::key() ).
     setApplyDefaultValue( m_defaultHardening );
 }
 
