@@ -36,6 +36,7 @@
 #include "solid/ElasticIsotropicPressureDependent.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/ElasticOrthotropic.hpp"
+#include "solid/ElasticIsotropicFiniteStrain.hpp"
 #include "solid/PorousSolid.hpp"
 #include "solid/PorousDamageSolid.hpp"
 #include "solid/CompressibleSolid.hpp"
@@ -164,6 +165,7 @@ struct ConstitutivePassThru< SolidBase >
                                  ModifiedCamClay,
                                  DelftEgg,
                                  DruckerPrager,
+                                 ElasticIsotropicFiniteStrain,
                                  ElasticIsotropic,
                                  ElasticTransverseIsotropic,
                                  ElasticIsotropicPressureDependent,
@@ -237,6 +239,7 @@ struct ConstitutivePassThruTriaxialDriver< SolidBase >
                                  ModifiedCamClay,
                                  DelftEgg,
                                  DruckerPrager,
+                                 ElasticIsotropicFiniteStrain,
                                  ElasticIsotropic,
                                  ElasticTransverseIsotropic,
                                  ElasticIsotropicPressureDependent,

@@ -188,6 +188,7 @@ set( constitutive_headers
      solid/ElasticIsotropicPressureDependent.hpp
      solid/ElasticTransverseIsotropic.hpp
      solid/ElasticOrthotropic.hpp
+     solid/ElasticIsotropicFiniteStrain.hpp
      solid/InvariantDecompositions.hpp
      solid/PorousDamageSolid.hpp
      solid/PerfectlyPlastic.hpp     
@@ -335,6 +336,7 @@ set( constitutive_sources
      solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
      solid/ElasticOrthotropic.cpp
+     solid/ElasticIsotropicFiniteStrain.cpp
      solid/PorousDamageSolid.cpp
      solid/PerfectlyPlastic.cpp
      solid/PorousSolid.cpp

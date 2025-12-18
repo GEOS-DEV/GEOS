@@ -158,6 +158,143 @@ struct SolidUtilities
   }
 
   /**
+   * @brief Perform a finite-difference check of the stiffness computation
+   *
+   * This method uses several stress evaluations and finite differencing to
+   * approximate the 9x9 stiffness matrix, and then computes an error between
+   * the coded stiffness method and the finite difference version.
+   *
+   * @note This method only works for models providing the finiteStrainUpdate
+   * method returning a 9x9 stiffness.
+   *
+   * @param solid the solid kernel wrapper
+   * @param k the element number
+   * @param q the quadrature index
+   * @param elasticDeformGrad elastic deformation gradient (on top of which a FD perturbation will be added)
+   * @param print flag to decide if debug output is printed or not
+   */
+  template< typename SOLID_TYPE >
+  GEOS_HOST_DEVICE
+  static bool
+  checkFiniteStrainStiffness( SOLID_TYPE const & solid,
+                              localIndex k,
+                              localIndex q,
+                              real64 const ( &elasticDeformGrad )[3][3],
+                              bool print = false )
+  {
+    real64 firstPiolaStress[3][3] = {};
+    real64 stiffness[9][9] = {};
+    solid.finiteStrainUpdate(0, 0, elasticDeformGrad, firstPiolaStress, stiffness);
+
+    real64 stiffnessFD[9][9] = {};
+    SolidUtilities::computeFiniteStrainFiniteDifferenceStiffness(solid, 0, 0, elasticDeformGrad, stiffnessFD);
+
+    real64 error = 0;
+    real64 norm = 0;
+    real64 rerr = 0;
+
+    for( localIndex i = 0; i < 9; ++i )
+    {
+      for( localIndex j = 0; j < 9; ++j )
+      {
+        error += pow( stiffnessFD[i][j] - stiffness[i][j], 2.0 );
+        norm += pow( stiffness[i][j], 2.0 );
+      }
+    }
+    error = sqrt(error);
+    norm = sqrt(norm);
+    rerr = error / norm;
+
+    if( print )
+    {
+      for( localIndex i = 0; i < 9; ++i )
+      {
+        for( localIndex j = 0; j < 6; ++j )
+        {
+          // printf( "[%12.5e vs %12.5e] ", stiffnessFD[i][j], stiffness[i][j] );
+          printf( "%12.5e ", fabs(stiffnessFD[i][j] - stiffness[i][j]) );
+        }
+        printf( "\n" );
+      }
+
+      printf("Abs err = %12.5e, Rel err = %12.5e\n", error, rerr);
+    }
+
+    return (rerr < 1e-3);
+  }
+
+  /**
+   * @brief Perform a finite-difference stiffness computation for finite strain material model
+   *
+   * This method uses stress evaluations and finite differencing to
+   * approximate the 9x9 stiffness matrix.
+   *
+   * @note This method only works for models providing the finiteStrainUpdate
+   * method returning a 9x9 stiffness, as it will primarily be used to check
+   * the hand coded tangent against a finite difference reference.
+   *
+   * @param solid the solid kernel wrapper
+   * @param k the element number
+   * @param q the quadrature index
+   * @param elasticDeformGrad elastic deformation gradient (on top of which a FD perturbation will be added)
+   * @param stiffnessFD finite different stiffness approximation
+   */
+  template< typename SOLID_TYPE >
+  GEOS_HOST_DEVICE
+  static void
+  computeFiniteStrainFiniteDifferenceStiffness( SOLID_TYPE const & solid,
+                                                localIndex k,
+                                                localIndex q,
+                                                real64 const ( &elasticDeformGrad )[3][3],
+                                                real64 ( & stiffnessFD )[9][9] )
+  {
+    real64 eps = 1e-7;
+    real64 F[3][3] = {};
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        F[i][j] = elasticDeformGrad[i][j];
+      }
+    }
+
+    real64 fInv[3][3] = {};
+    real64 totalElasticStrain[6] = {};
+    real64 eigenValues[3] = {};
+    real64 eigenVectors[3][3] = {};
+    real64 eigenVectorsT[3][3] = {};
+
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        // plus
+        real64 P_plus[3][3] = {};
+        F[i][j] += eps;
+        LvArray::tensorOps::invert<3>(fInv, F);
+
+        solid.computeLogElasticStrain(F, totalElasticStrain, eigenValues, eigenVectors, eigenVectorsT);
+        solid.finiteStrainUpdate_StressOnly(k, q, totalElasticStrain, fInv, P_plus);
+        F[i][j] -= eps;
+
+        // minus
+        real64 P_minus[3][3] = {};
+        F[i][j] -= eps;
+        LvArray::tensorOps::invert<3>(fInv, F);
+
+        solid.computeLogElasticStrain(F, totalElasticStrain, eigenValues, eigenVectors, eigenVectorsT);
+        solid.finiteStrainUpdate_StressOnly(k, q, totalElasticStrain, fInv, P_minus);
+        F[i][j] += eps;
+
+        int col = 3 * i + j;
+        for (int m = 0; m < 3; ++m) {
+          for (int n = 0; n < 3; ++n) {
+            // row major flattening
+            int row = 3 * m + n;
+            stiffnessFD[row][col] = (P_plus[m][n] - P_minus[m][n]) / (2 * eps);
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * @brief Hypo update (small strain, large rotation).
    *
    * This function uses a call to the small strain update, followed by
