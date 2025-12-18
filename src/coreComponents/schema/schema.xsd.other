@@ -526,7 +526,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--fractureStencil => (no description available)-->
 		<xsd:attribute name="fractureStencil" type="geos_SurfaceElementStencil" />
 		<!--targetRegions => List of regions to build the stencil for-->
-		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-geos_internal_StdVectorWrapper_lt_string_cm_-std_allocator_lt_string-_gt__cm_-false_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
+		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-geos_internal_StdVectorWrapper_lt_string_cm_-std_allocator_lt_string-_gt__cm_-true_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -981,10 +981,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
 		</xsd:choice>
-		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geos_mapBase_lt_std_pair_lt_string_cm_-string-_gt__cm_-std_vector_lt_string_cm_-std_allocator_lt_string-_gt_-_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
+		<!--numTimestepsSinceLastDtCut => (no description available)-->
+		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1650,7 +1648,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="MeshBodies" type="MeshBodiesType" />
 		</xsd:choice>
 		<!--Neighbors => (no description available)-->
-		<xsd:attribute name="Neighbors" type="geos_internal_StdVectorWrapper_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt__cm_-false_gt_" />
+		<xsd:attribute name="Neighbors" type="geos_internal_StdVectorWrapper_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt__cm_-true_gt_" />
 		<!--partitionManager => (no description available)-->
 		<xsd:attribute name="partitionManager" type="geos_PartitionBase" />
 	</xsd:complexType>
@@ -1695,6 +1693,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="DelftEgg" type="DelftEggType" />
 			<xsd:element name="DruckerPrager" type="DruckerPragerType" />
 			<xsd:element name="ElasticIsotropic" type="ElasticIsotropicType" />
+			<xsd:element name="ElasticIsotropicFiniteStrain" type="ElasticIsotropicFiniteStrainType" />
 			<xsd:element name="ElasticIsotropicPressureDependent" type="ElasticIsotropicPressureDependentType" />
 			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
@@ -2754,6 +2753,20 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 		<!--youngModulus => Young's modulus (per-cell, used when imported from external mesh; converted to bulk/shear modulus at initialization)-->
 		<xsd:attribute name="youngModulus" type="real64_array" />
+	</xsd:complexType>
+	<xsd:complexType name="ElasticIsotropicFiniteStrainType">
+		<!--bulkModulus => Elastic Bulk Modulus Field-->
+		<xsd:attribute name="bulkModulus" type="real64_array" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--shearModulus => Elastic Shear Modulus Field-->
+		<xsd:attribute name="shearModulus" type="real64_array" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
+		<!--thermalExpansionCoefficient => Linear Thermal Expansion Coefficient Field-->
+		<xsd:attribute name="thermalExpansionCoefficient" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicPressureDependentType">
 		<!--density => Material density-->

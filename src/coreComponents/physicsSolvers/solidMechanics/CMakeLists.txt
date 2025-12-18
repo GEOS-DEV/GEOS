@@ -36,6 +36,8 @@ set( solidMechanicsSolvers_headers
      kernels/ImplicitSmallStrainNewmark_impl.hpp
      kernels/ImplicitSmallStrainQuasiStatic.hpp
      kernels/ImplicitSmallStrainQuasiStatic_impl.hpp
+     kernels/ImplicitFiniteStrainQuasiStatic.hpp
+     kernels/ImplicitFiniteStrainQuasiStatic_impl.hpp
      SolidMechanicsInitialization.hpp
      SolidMechanicsStateReset.hpp
      SolidMechanicsStatistics.hpp

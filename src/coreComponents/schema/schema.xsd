@@ -819,6 +819,10 @@
 					<xsd:selector xpath="ElasticIsotropic" />
 					<xsd:field xpath="@name" />
 				</xsd:unique>
+				<xsd:unique name="domainConstitutiveElasticIsotropicFiniteStrainUniqueName">
+					<xsd:selector xpath="ElasticIsotropicFiniteStrain" />
+					<xsd:field xpath="@name" />
+				</xsd:unique>
 				<xsd:unique name="domainConstitutiveElasticIsotropicPressureDependentUniqueName">
 					<xsd:selector xpath="ElasticIsotropicPressureDependent" />
 					<xsd:field xpath="@name" />
@@ -3880,6 +3884,8 @@ When set to `all` output both convergence & iteration information to a csv.-->
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
+		<!--allowNonConvergedLinearSolverSolution => Cut time step if linear solution fail without going until max nonlinear iterations.-->
+		<xsd:attribute name="allowNonConvergedLinearSolverSolution" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
@@ -3889,7 +3895,16 @@ When set to `all` output both convergence & iteration information to a csv.-->
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Sets the level of information to write in the standard output (the console typically).
-Information output from lower logLevels is added with the desired log level-->
+Information output from lower logLevels is added with the desired log level
+1
+ - Convergence information
+ - Linear solver information
+ - Output residual norm
+ - Solution information (scaling, maximum changes, quality check)
+ - Time step information
+ - Solver timers information
+2
+ - The summary of declared fields and coupling-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--surfaceGeneratorName => Name of the surface generator to use-->
 		<xsd:attribute name="surfaceGeneratorName" type="string" default="" />
@@ -3899,6 +3914,8 @@ Information output from lower logLevels is added with the desired log level-->
 * QuasiStatic
 *ImplicitTransient-->
 		<xsd:attribute name="timeIntegrationOption" type="geos_Electrostatics_TimeIntegrationOption" default="QuasiStatic" />
+		<!--usePhysicsScaling => Enable physics-based scaling of the linear system. Default: true.-->
+		<xsd:attribute name="usePhysicsScaling" type="integer" default="1" />
 		<!--writeLinearSystem => Write matrix, rhs, solution to screen ( = 1) or file ( = 2).-->
 		<xsd:attribute name="writeLinearSystem" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -7099,6 +7116,7 @@ Information output from lower logLevels is added with the desired log level
 			<xsd:element name="DelftEgg" type="DelftEggType" />
 			<xsd:element name="DruckerPrager" type="DruckerPragerType" />
 			<xsd:element name="ElasticIsotropic" type="ElasticIsotropicType" />
+			<xsd:element name="ElasticIsotropicFiniteStrain" type="ElasticIsotropicFiniteStrainType" />
 			<xsd:element name="ElasticIsotropicPressureDependent" type="ElasticIsotropicPressureDependentType" />
 			<xsd:element name="ElasticOrthotropic" type="ElasticOrthotropicType" />
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
@@ -8077,6 +8095,22 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="ElasticIsotropicFiniteStrainType">
+		<!--defaultBulkModulus => Default Bulk Modulus Parameter-->
+		<xsd:attribute name="defaultBulkModulus" type="real64" default="-1" />
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultDrainedLinearTEC => Default Linear Thermal Expansion Coefficient of the Solid Rock Frame-->
+		<xsd:attribute name="defaultDrainedLinearTEC" type="real64" default="0" />
+		<!--defaultPoissonRatio => Default Poisson's Ratio-->
+		<xsd:attribute name="defaultPoissonRatio" type="real64" default="-1" />
+		<!--defaultShearModulus => Default Shear Modulus Parameter-->
+		<xsd:attribute name="defaultShearModulus" type="real64" default="-1" />
+		<!--defaultYoungModulus => Default Young's Modulus-->
+		<xsd:attribute name="defaultYoungModulus" type="real64" default="-1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="groupName" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="ElasticIsotropicPressureDependentType">
 		<!--defaultDensity => Default Material Density-->
 		<xsd:attribute name="defaultDensity" type="real64" use="required" />
@@ -8167,7 +8201,7 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 	</xsd:complexType>
 	<xsd:complexType name="ElectroChemistryBaseType">
 		<!--defaultConductivity => Default Electro Conductivity-->
-		<xsd:attribute name="defaultConductivity" type="real64" default="1" />
+		<xsd:attribute name="defaultConductivity" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
