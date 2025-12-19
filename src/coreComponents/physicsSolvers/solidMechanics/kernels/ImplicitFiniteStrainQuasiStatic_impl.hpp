@@ -17,8 +17,8 @@
  * @file ImplicitFinitStrainQuasiStatic_impl.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITFINITSTRAINQUASISTATIC_IMPL_HPP_
-#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITFINITSTRAINQUASISTATIC_IMPL_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITFINITESTRAINQUASISTATIC_IMPL_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITFINITESTRAINQUASISTATIC_IMPL_HPP_
 
 #include "ImplicitFinitStrainQuasiStatic.hpp"
 namespace geos
@@ -85,9 +85,8 @@ void ImplicitFiniteStrainQuasiStatic<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE>
   real64 dNdX[numNodesPerElem][3];
   real64 const detJxW = m_finiteElementSpace.template getGradN<FE_TYPE>(k, q, stack.xLocal, stack.feStack, dNdX);
 
-  real64 stress[6] = {0};
-
-  typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
+  real64 stress[3][3] = { {0} };
+  real64 stiffness[9][9] = { {0} };
 
   real64 dUhatdX[3][3] = { {0} };
   real64 dUdX[3][3] = { {0} };
@@ -101,11 +100,31 @@ void ImplicitFiniteStrainQuasiStatic<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE>
   LvArray::tensorOps::add<3, 3>(F, dUhatdX);
   LvArray::tensorOps::addIdentity< 3 >(F, 1.0);
 
-  m_constitutiveUpdate.finiteStrainUpdate(k, q, m_dt, F, stress, stiffness);
+  m_constitutiveUpdate.finiteStrainUpdate(k, q, F, stress, stiffness);
+
+  stressModifier(stress);
+
+  for (localIndex i = 0; i < 3; ++i) {
+    for (localIndex j = 0; j < 3; ++j) {
+      stress[i][j] *= -detJxW;
+    }
+  }
+
+  real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJxW,
+                                   m_gravityVector[1] * m_density( k, q )* detJxW,
+                                   m_gravityVector[2] * m_density( k, q )* detJxW };
+
+  real64 N[numNodesPerElem];
+  FE_TYPE::calcN( q, stack.feStack, N );
+  FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
+                                   stress,
+                                   N,
+                                   gravityForce,
+                                   reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
 }
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geos
 
-#endif // GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITFINITSTRAINQUASISTATIC_IMPL_HPP_
+#endif // GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITFINITESTRAINQUASISTATIC_IMPL_HPP_

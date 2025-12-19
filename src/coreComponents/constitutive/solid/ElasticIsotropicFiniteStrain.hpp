@@ -177,10 +177,6 @@ void ElasticIsotropicFiniteStrainUpdates::computeMaterialTangentColumn(
   real64 dtau_voigt[6] = {};
   real64 deltaTau[3][3] = {};
   LvArray::tensorOps::Ri_eq_AijBj<6, 6>(dtau_voigt, dtau_dEe, deltaEe);
-  // scale back
-  dtau_voigt[3] *= 0.5;
-  dtau_voigt[4] *= 0.5;
-  dtau_voigt[5] *= 0.5;
   LvArray::tensorOps::symmetricToDense<3>(deltaTau, dtau_voigt);
 
   // deltaTau * F^-T
@@ -198,10 +194,6 @@ void ElasticIsotropicFiniteStrainUpdates::finiteStrainNoStateUpdate_StressOnly(l
 {
   this->smallStrainNoStateUpdate_StressOnly(k, q, totalElasticStrain, kirchhoffStress);
 
-  // scale back
-  kirchhoffStress[3] *= 0.5;
-  kirchhoffStress[4] *= 0.5;
-  kirchhoffStress[5] *= 0.5;
   LvArray::tensorOps::Rij_eq_symAikBjk<3>(firstPiolaStress, kirchhoffStress, fInv);
 }
 
@@ -216,7 +208,7 @@ void ElasticIsotropicFiniteStrainUpdates::finiteStrainUpdate_StressOnly(localInd
   real64 kirchhoffStress[6] = {};
   finiteStrainNoStateUpdate_StressOnly(k, q, totalElasticStrain, fInv, firstPiolaStress, kirchhoffStress);
 
-  // Can only save the symmetric kirchhoff stress right now, the shear stress compoenents are scaled back by 0.5
+  // Can only save the symmetric kirchhoff stress right now
   LvArray::tensorOps::copy<6>(m_oldStress[k][q], m_newStress[k][q]);
   LvArray::tensorOps::copy<6>(m_newStress[k][q], kirchhoffStress);
 }
@@ -329,7 +321,7 @@ void ElasticIsotropicFiniteStrainUpdates::finiteStrainUpdate(localIndex const k,
   real64 kirchhoffStress[6] = {};
   finiteStrainNoStateUpdate(k, q, elasticDeformGrad, firstPiolaStress, kirchhoffStress, stiffness);
 
-  // Can only save the symmetric kirchhoff stress right now, the shear stress compoenents are scaled back by 0.5
+  // Can only save the symmetric kirchhoff stress right now
   LvArray::tensorOps::copy<6>(m_oldStress[k][q], m_newStress[k][q]);
   LvArray::tensorOps::copy<6>(m_newStress[k][q], kirchhoffStress);
 }
