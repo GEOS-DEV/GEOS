@@ -15,20 +15,20 @@ network that governs strain hardening.
 
 
 
-Accordingly, the total Cauchy stress math::'\sigma' is decomposed in a driving stress
-\sigma_s, and a hardening stress \sigma_r:
+Accordingly, the total Cauchy stress :math::'\sigma' is decomposed in a driving stress
+:math::'\sigma_s', and a hardening stress :math::'\sigma_H':
 
 
 .. math::
 
-   \sigma = \sigma_s + \sigma_r
+   \sigma = \sigma_s + \sigma_H
 
 
-Hardening is modelled with a neo-Hookean relation such that math::'G_r' is a strain hardening modulus and math::\tilde{B}^d is the deviatoric part of the isochoric left Cauchy-Green deformation tensor. 
+Hardening is modelled with a neo-Hookean relation such that :math:`G_r` is a strain hardening modulus and :math:`\tilde{B}^d` is the deviatoric part of the isochoric left Cauchy-Green deformation tensor. 
 
 .. math::
 
-   \sigma_r = G_r +  \tilde{B}^d
+   \sigma_H = G_r +  \tilde{B}^d
 
 
 The driving stress is decomposed into a deviatoric part :math:`\boldsymbol{\sigma}^{d}_{s}` and a hydrostatic part :math:`\boldsymbol{\sigma}^{h}_{s}`:
@@ -124,6 +124,10 @@ PALS or numerical fitting).
 
 
 
+
+
+
+
 Relaxation Term
 -------------------------------------------------------------
 Softening with magnitude of plastic deviatoric strain (material is plastically incompressible, so this equals the magnitude of the total strain).
@@ -137,7 +141,6 @@ This is the effect of loss of strength with plastic deformation.
 
 
 
-
 .. only:: html
 
    .. raw:: html
@@ -145,15 +148,36 @@ This is the effect of loss of strength with plastic deformation.
       <div style="height:40px"></div>
 
 
-
-
-
-.. _strain_hardening_relaxation_terms:
-.. figure:: strain_hardening_relaxation_terms.png
+.. _strain_hardening_r0_r1_r2:
+.. figure:: strain_hardening_polymer_r0_r1_r2.png
    :align: center
    :width: 1200
 
    Changes in relaxation terms. 
+
+
+
+Hardening Term
+-------------------------------------------------------------
+Hardening is defined to depend on the maximum principal stretch (:math:`\lambda_{\max}`).  So there is hardening in uniaxial stress compaction because of Poisson expansion (:math:`\lambda_2=\lambda_3` will be max stretch).
+
+.. math::
+
+   \sigma_H(G_r, \lambda)
+   =
+   G_r \left( \lambda^{2} - \lambda^{-1} \right)
+
+
+
+.. _strain_hardening_k_sigmay_Gr:
+.. figure:: strain_hardening_polymer_k_sigmay_Gr_V2.png
+   :align: center
+   :width: 1200
+
+   Changes with hardening.
+
+
+
 
 Model Implementation
 ========================
