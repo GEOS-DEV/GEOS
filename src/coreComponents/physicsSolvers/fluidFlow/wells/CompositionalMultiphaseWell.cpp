@@ -1679,7 +1679,7 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
       WellControls const & wellControls = getWellControls( subRegion );
 
       // step 1: compute the norm in the subRegion
-      if( wellControls.isWellOpen( ) )
+      if( true )  // tjb wellControls.isWellOpen( ) )
       {
         if( isThermal() )
         {
