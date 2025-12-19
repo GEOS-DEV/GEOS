@@ -1,0 +1,50 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File
+      name="./curvedFrac_base.xml"/>
+  </Included>
+
+  <Mesh>
+    <VTKMesh
+      name="mesh1"
+      useGlobalIds="1"
+      faceBlocks="{ fracture }"
+      file="curvedFrac_coarse.vtm"/>
+  </Mesh>
+
+
+  <Geometry>
+    <Box
+      name="zmin"
+      xMin="{   -0.01,   -0.01, -4000.01 }"
+      xMax="{ 6000.01, 6000.01, -3999.99 }"/>
+
+    <Box
+      name="zmax"
+      xMin="{   -0.01,   -0.01,  -0.01 }"
+      xMax="{ 6000.01, 6000.01,   0.01 }"/>
+
+    <Box
+      name="xmin"
+      xMin="{ -0.01,   -0.01, -4000.01 }"
+      xMax="{  0.01, 6000.01,     0.01 }"/>
+
+    <Box
+      name="xmax"
+      xMin="{ 5999.99,   -0.01, -4000.01 }"
+      xMax="{ 6000.01, 6000.01,     0.01 }"/>
+
+    <Box
+      name="ymin"
+      xMin="{   -0.01, -0.01, -4000.01 }"
+      xMax="{ 6000.01,  0.01,     0.01 }"/>
+
+    <Box
+      name="ymax"
+      xMin="{   -0.01, 5999.99, -4000.01 }"
+      xMax="{ 6000.01, 6000.01,     0.01 }"/>
+  </Geometry>
+
+</Problem>
