@@ -57,6 +57,7 @@ set( multiPhysicsSolvers_headers
     poromechanicsKernels/ThermalSinglePhasePoromechanicsEFEM_impl.hpp
     poromechanicsKernels/ThermalSinglePhasePoromechanicsConformingFractures.hpp
     poromechanicsKernels/ThermalSinglePhasePoromechanicsEmbeddedFractures.hpp
+    IFENNPoromechanics.hpp
     SinglePhasePoromechanics.hpp
     SinglePhasePoromechanicsEmbeddedFractures.hpp
     SinglePhasePoromechanicsConformingFractures.hpp
@@ -76,6 +77,7 @@ set( multiPhysicsSolvers_sources
     PhaseFieldPoromechanicsSolver.cpp
     PoromechanicsInitialization.cpp
     SinglePhasePoromechanics.cpp
+    IFENNPoromechanics.cpp
     SinglePhasePoromechanicsEmbeddedFractures.cpp
     SinglePhasePoromechanicsConformingFractures.cpp
     SinglePhasePoromechanicsConformingFracturesALM.cpp
