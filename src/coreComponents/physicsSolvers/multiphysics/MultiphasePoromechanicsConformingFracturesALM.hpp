@@ -14,24 +14,24 @@
  */
 
 /**
- * @file MultiPhasePoromechanicsConformingFracturesALM.hpp
+ * @file MultiphasePoromechanicsConformingFracturesALM.hpp
  */
 
 #ifndef GEOS_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP_
 #define GEOS_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP_
 
-#include "physicsSolvers/multiphysics/MultiPhasePoromechanics.hpp"
+#include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/solidMechanics/contact/SolidMechanicsAugmentedLagrangianContact.hpp"
 
 namespace geos
 {
 
-template< typename FLOW_SOLVER = MultiPhaseBase >
-class MultiPhasePoromechanicsConformingFracturesALM : public MultiPhasePoromechanics< FLOW_SOLVER, SolidMechanicsAugmentedLagrangianContact >
+template< typename FLOW_SOLVER = MultiphaseBase >
+class MultiphasePoromechanicsConformingFracturesALM : public MultiphasePoromechanics< FLOW_SOLVER, SolidMechanicsAugmentedLagrangianContact >
 {
 public:
 
-  using Base = MultiPhasePoromechanics< FLOW_SOLVER, SolidMechanicsAugmentedLagrangianContact >;
+  using Base = MultiphasePoromechanics< FLOW_SOLVER, SolidMechanicsAugmentedLagrangianContact >;
   using Base::m_solvers;
   using Base::m_dofManager;
   using Base::m_localMatrix;
@@ -42,27 +42,27 @@ public:
   static string coupledSolverAttributePrefix() { return "poromechanicsConformingFracturesALM"; }
 
   /**
-   * @brief main constructor for MultiPhasePoromechanicsConformingFracturesALM objects
-   * @param name the name of this instantiation of MultiPhasePoromechanicsConformingFracturesALM in the repository
-   * @param parent the parent group of this instantiation of MultiPhasePoromechanicsConformingFracturesALM
+   * @brief main constructor for MultiphasePoromechanicsConformingFracturesALM objects
+   * @param name the name of this instantiation of MultiphasePoromechanicsConformingFracturesALM in the repository
+   * @param parent the parent group of this instantiation of MultiphasePoromechanicsConformingFracturesALM
    */
-  MultiPhasePoromechanicsConformingFracturesALM( const string & name,
+  MultiphasePoromechanicsConformingFracturesALM( const string & name,
                                                  dataRepository::Group * const parent );
 
   /// Destructor for the class
-  ~MultiPhasePoromechanicsConformingFracturesALM() override {}
+  ~MultiphasePoromechanicsConformingFracturesALM() override {}
 
   /**
    * @brief name of the node manager in the object catalog
-   * @return string that contains the catalog name to generate a new MultiPhasePoromechanicsConformingFracturesALM object through the
+   * @return string that contains the catalog name to generate a new MultiphasePoromechanicsConformingFracturesALM object through the
    * object
    * catalog.
    */
   static string catalogName()
   {
-    if constexpr ( std::is_same_v< FLOW_SOLVER, MultiPhaseBase > )
+    if constexpr ( std::is_same_v< FLOW_SOLVER, MultiphaseBase > )
     {
-      return "MultiPhasePoromechanicsConformingFracturesALM";
+      return "MultiphasePoromechanicsConformingFracturesALM";
     }
     else
     {
@@ -200,7 +200,7 @@ private:
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
-  string const m_pressureKey = MultiPhaseBase::viewKeyStruct::elemDofFieldString();
+  string const m_pressureKey = MultiphaseBase::viewKeyStruct::elemDofFieldString();
 
 };
 
