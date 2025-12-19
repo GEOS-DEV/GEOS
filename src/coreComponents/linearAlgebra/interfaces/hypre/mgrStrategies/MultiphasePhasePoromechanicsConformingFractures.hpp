@@ -65,6 +65,7 @@ public:
 
     // we keep u, dens and p - elim lag mult
     m_labels[0].resize( m_numBlocks - 3 );
+    
     std::iota( m_labels[0].begin(), m_labels[0].end(), 7);
 
     m_labels[0].push_back( 0 );

@@ -103,8 +103,10 @@ protected:
 
   virtual void setMGRStrategy() override
   {
+    LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
     if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
-      GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
+      linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePhasePoromechanicsConformingFractures;
+      // GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
   }
 
   /**
