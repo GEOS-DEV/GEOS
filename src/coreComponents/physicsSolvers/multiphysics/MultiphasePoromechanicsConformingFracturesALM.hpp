@@ -26,7 +26,7 @@
 namespace geos
 {
 
-template< typename FLOW_SOLVER = MultiphaseBase >
+template< typename FLOW_SOLVER = CompositionalMultiphaseBase >
 class MultiphasePoromechanicsConformingFracturesALM : public MultiphasePoromechanics< FLOW_SOLVER, SolidMechanicsAugmentedLagrangianContact >
 {
 public:
@@ -60,7 +60,7 @@ public:
    */
   static string catalogName()
   {
-    if constexpr ( std::is_same_v< FLOW_SOLVER, MultiphaseBase > )
+    if constexpr ( std::is_same_v< FLOW_SOLVER, CompositionalMultiphaseBase > )
     {
       return "MultiphasePoromechanicsConformingFracturesALM";
     }
@@ -200,7 +200,7 @@ private:
 
   std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
 
-  string const m_pressureKey = MultiphaseBase::viewKeyStruct::elemDofFieldString();
+  string const m_pressureKey = CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString();
 
 };
 

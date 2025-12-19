@@ -23,7 +23,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsStatistics.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/MultiphasePoromechanicsConformingFractures.hpp"
-#include "physicsSolvers/multiphysics/MultiPhasePoromechanicsConformingFracturesALM.hpp"
+#include "physicsSolvers/multiphysics/MultiphasePoromechanicsConformingFracturesALM.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanics.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsConformingFractures.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsConformingFracturesALM.hpp"
