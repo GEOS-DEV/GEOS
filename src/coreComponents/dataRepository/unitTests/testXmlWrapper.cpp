@@ -386,10 +386,7 @@ TEST( testXmlWrapper, testGroupNamesFormats )
     for( GroupNameTest const & input : workingInputs )
     {
       EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( groupName, input.m_valueToTest, input.m_regex ) );
-      std::string groupNameComp;
-      std::istringstream ss( input.m_valueToTest );
-      ss >> groupNameComp >> std::ws;
-      EXPECT_STREQ( groupNameComp.c_str(), groupName.c_str() );
+      EXPECT_STREQ( groupName.c_str(), groupName.c_str() );
     }
   }
   {
@@ -406,6 +403,8 @@ TEST( testXmlWrapper, testGroupNamesFormats )
       GroupNameTest( groupNameRegex, "test:name" ),
       GroupNameTest( groupNameRegex, "test;name" ),
       GroupNameTest( groupNameRegex, "test\\name" ),
+      GroupNameTest( groupNameRegex, "{[arrayElement]}" ),
+      GroupNameTest( groupNameRegex, "{name1,name2,name3}" ),
     };
     for( GroupNameTest const & input : erroneousInputs )
     {
@@ -445,10 +444,7 @@ TEST( testXmlWrapper, testGroupNamesArrayFormats )
     for( GroupNameTest const & input : workingInputs )
     {
       EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( groupName, input.m_valueToTest, input.m_regex ) );
-      std::string groupNameComp;
-      std::istringstream ss( input.m_valueToTest );
-      ss >> groupNameComp >> std::ws;
-      EXPECT_STREQ( groupNameComp.c_str(), groupName.c_str() );
+      EXPECT_STREQ( groupName.c_str(), groupName.c_str() );
     }
   }
   {
