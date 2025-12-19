@@ -75,7 +75,7 @@ int main( int argc, char *argv[] )
   }
   catch( geos::Exception & e )
   { // GEOS generated exceptions management
-    ErrorLogger::global().flushErrorMsg(  ErrorLogger::global().currentErrorMsg() );
+    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().currentErrorMsg() );
     basicCleanup();
     // lvarray error handler is just program termination
     LvArray::system::callErrorHandler();

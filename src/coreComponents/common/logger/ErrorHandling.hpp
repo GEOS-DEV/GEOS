@@ -70,10 +70,20 @@ public:
       Signal,
     };
 
+    /**
+     * @brief Construct to initialize ErrorContext given a string containing the context and his attribute
+     * @param dataDisplayString String containing the target object name followed by the the file and line declaring it.
+     * @param attributes Map containing contextual information about the error
+     */
     ErrorContext( string dataDisplayString, map< Attribute, std::string >  attributes ):
       m_dataDisplayString( dataDisplayString ),
       m_attributes( attributes ) {};
 
+    /**
+     * @brief Construct to initialize ErrorContext given a string containing the context and his priority
+     * @param attributes Map containing contextual information about the error
+     * @param priority Priority level assigned to an error context.
+     */
     ErrorContext( map< Attribute, std::string >  attributes, integer priority ):
       m_dataDisplayString( "" ),
       m_attributes( attributes ),
