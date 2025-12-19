@@ -90,7 +90,7 @@ void Perforation::postInputInitialization()
   {
     // Table name provided as input, check that it exists
     GEOS_THROW_IF( !functionManager.hasGroup< TableFunction >( m_perfStatusTableName ),
-                   GEOS_FMT( "{}: missing perforation status table `{}`", m_perfStatusTableName ),
+                   GEOS_FMT( "missing perforation status table `{}`", m_perfStatusTableName ),
                    InputError, getDataContext()  );
   }
 

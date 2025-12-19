@@ -95,9 +95,10 @@ void ElasticIsotropic::postInputInitialization()
   errorCheck += ")";
 
   GEOS_ERROR_IF( numConstantsSpecified != 2,
-                 getFullName() << ": A specific pair of elastic constants is required. " <<
+                 "A specific pair of elastic constants is required. " <<
                  "Either (K,G), (K,E), (G,E), (K,nu), (G,nu) or (E,nu). " <<
-                 "You have specified " << errorCheck );
+                 "You have specified " << errorCheck,
+                 getDataContext() );
 
   if( nu > -0.5 && nu < 0.5 && E > 0.0 )
   {
@@ -131,8 +132,9 @@ void ElasticIsotropic::postInputInitialization()
   }
   else
   {
-    GEOS_ERROR( getFullName() << ": Invalid specification for default elastic constants. " <<
-                errorCheck << " has been specified." );
+    GEOS_ERROR( "Invalid specification for default elastic constants. " <<
+                errorCheck << " has been specified.",
+                getDataContext() );
   }
 
   // set results as array default values

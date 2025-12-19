@@ -113,7 +113,7 @@ void VanGenuchtenBakerRelativePermeability::postInputInitialization()
   }
 
   GEOS_THROW_IF_LT_MSG( m_volFracScale, 0.0,
-                        GEOS_FMT( "sum of min volume fractions exceeds 1.0", getFullName() ),
+                        "sum of min volume fractions exceeds 1.0",
                         InputError, getDataContext() );
 
   for( integer ip = 0; ip < 2; ++ip )

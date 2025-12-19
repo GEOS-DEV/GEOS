@@ -60,7 +60,7 @@ void SourceFluxStatsAggregator::postInputInitialization()
     GEOS_WARNING_IF( m_fluxNames.empty(),
                      GEOS_FMT( "No {} was found in {}.",
                                SourceFluxBoundaryCondition::catalogName(), fsManager.getName() ),
-                     getDataContext(), fsManager.getDataContext() );
+                     getDataContext(), fsManager.getDataContext(), getDataContext() );
   }
   else
   {
@@ -70,7 +70,7 @@ void SourceFluxStatsAggregator::postInputInitialization()
                      GEOS_FMT( "No {} named {} was found in {}.",
                                SourceFluxBoundaryCondition::catalogName(),
                                fluxName, fsManager.getName() ),
-                     getDataContext(), fsManager.getDataContext()  );
+                     getDataContext(), fsManager.getDataContext(), getDataContext()  );
     }
   }
 

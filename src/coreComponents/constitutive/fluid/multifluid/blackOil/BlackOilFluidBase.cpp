@@ -190,14 +190,14 @@ void BlackOilFluidBase::postInputInitialization()
 
   // Number of components should be at least equal to number of phases
   GEOS_THROW_IF_LT_MSG( numFluidComponents(), numFluidPhases(),
-                        GEOS_FMT( "{} number of components ({}) must be at least number of phases ({})",
-                                  viewKeyStruct::componentNamesString(), numFluidComponents(), numFluidPhases() ),
-                        InputError, getDataContext()  );
+                        GEOS_FMT( "number of components ({}) must be at least number of phases ({})",
+                                  numFluidComponents(), numFluidPhases() ),
+                        InputError, getWrapperDataContext( viewKeyStruct::componentNamesString()), getDataContext()  );
 
   auto const checkInputSize = [&]( auto const & array, auto const & attribute )
   {
     GEOS_THROW_IF_NE_MSG( LvArray::integerConversion< size_t >( array.size()), m_phaseNames.size(),
-                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
+                          GEOS_FMT( "invalid number of values in attribute '{}'", attribute ),
                           InputError, getDataContext()  );
   };
   checkInputSize( m_surfacePhaseMassDensity, viewKeyStruct::surfacePhaseMassDensitiesString() );
@@ -281,7 +281,7 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
 void BlackOilFluidBase::createAllKernelWrappers()
 {
   GEOS_THROW_IF( m_hydrocarbonPhaseOrder.size() != 1 && m_hydrocarbonPhaseOrder.size() != 2,
-                 GEOS_FMT( "the number of hydrocarbon phases must be 1 (oil) or 2 (oil+gas)", getFullName() ),
+                 "the number of hydrocarbon phases must be 1 (oil) or 2 (oil+gas)",
                  InputError, getDataContext() );
 
   if( m_formationVolFactorTableKernels.empty() && m_viscosityTableKernels.empty() )
@@ -312,7 +312,7 @@ void BlackOilFluidBase::validateTable( TableFunction const & table,
   for( localIndex i = 3; i < property.size(); ++i )
   {
     GEOS_THROW_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
-                   GEOS_FMT( " in table '{}', viscosity values must be monotone", table.getName() ),
+                   GEOS_FMT( "in table '{}', viscosity values must be monotone", table.getName() ),
                    InputError, getDataContext() );
   }
 

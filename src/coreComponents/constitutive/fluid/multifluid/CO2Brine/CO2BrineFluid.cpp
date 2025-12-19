@@ -239,10 +239,13 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::postInputInitialization()
   bool const hasParamFile = !m_flashModelParaFile.empty();
   bool const hasTables = !m_solubilityTables.empty();
   GEOS_THROW_IF( hasParamFile == hasTables,
-                 GEOS_FMT( "{}: One and only one of {} or {} should be specified", getFullName(),
+                 GEOS_FMT( "One and only one of {} or {} should be specified",
                            viewKeyStruct::flashModelParaFileString(),
                            viewKeyStruct::solubilityTablesString() ),
-                 InputError, getDataContext() );
+                 InputError,
+                 getWrapperDataContext( viewKeyStruct::flashModelParaFileString()),
+                 getWrapperDataContext( viewKeyStruct::solubilityTablesString()),
+                 getDataContext() );
 
   // NOTE: for now, the names of the phases are still hardcoded here
   // Later, we could read them from the XML file and we would then have a general class here
@@ -277,7 +280,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
       if( !strs.empty() )
       {
         GEOS_THROW_IF( strs.size() < 2,
-                       GEOS_FMT( "{}: missing PVT model in line '{}'", getFullName(), str ),
+                       GEOS_FMT( "missing PVT model in line '{}'", str ),
                        InputError, getDataContext() );
 
         if( strs[0] == "DensityFun" )
@@ -377,7 +380,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
       if( !strs.empty() )
       {
         GEOS_THROW_IF( strs.size() < 2,
-                       GEOS_FMT( "{}: missing flash model in line '{}'", getFullName(), str ),
+                       GEOS_FMT( "missing flash model in line '{}'", str ),
                        InputError, getDataContext() );
 
         if( strs[0] == "FlashModel" )
@@ -435,7 +438,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
   }
 
   GEOS_THROW_IF( m_flash == nullptr,
-                 GEOS_FMT( "{}: flash model {} not found in input files", getFullName(), FLASH::catalogName() ),
+                 GEOS_FMT( " flash model {} not found in input files", FLASH::catalogName() ),
                  InputError, getDataContext() );
 }
 

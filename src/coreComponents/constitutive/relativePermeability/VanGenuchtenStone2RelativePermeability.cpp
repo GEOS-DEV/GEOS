@@ -73,7 +73,7 @@ void VanGenuchtenStone2RelativePermeability::postInputInitialization()
   RelativePermeabilityBase::postInputInitialization();
 
   GEOS_THROW_IF( m_phaseOrder[PhaseType::OIL] < 0,
-                 GEOS_FMT( "reference oil phase has not been defined and must be included in model", getFullName() ),
+                 "reference oil phase has not been defined and must be included in model",
                  InputError, getDataContext() );
 
   auto const checkInputSize = [&]( auto const & array, localIndex const expected, auto const & attribute )
@@ -113,7 +113,7 @@ void VanGenuchtenStone2RelativePermeability::postInputInitialization()
   }
 
   GEOS_THROW_IF_LT_MSG( m_volFracScale, 0.0,
-                        GEOS_FMT( "sum of min volume fractions exceeds 1.0", getFullName() ),
+                        "sum of min volume fractions exceeds 1.0",
                         InputError, getDataContext() );
 
   for( integer ip = 0; ip < 2; ++ip )

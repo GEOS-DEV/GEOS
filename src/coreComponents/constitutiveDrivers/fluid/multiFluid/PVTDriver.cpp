@@ -115,14 +115,12 @@ void PVTDriver::postInputInitialization()
                  getWrapperDataContext( viewKeyStruct::outputPhaseCompositionString() ) );
 
   GEOS_WARNING_IF( m_precision < minPrecision,
-                   GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
-                             getWrapperDataContext( viewKeyStruct::precisionString() ),
+                   GEOS_FMT( "option should be between {} and {}. A value of {} will be used.",
                              minPrecision, maxPrecision, minPrecision ),
                    getWrapperDataContext( viewKeyStruct::precisionString() ));
 
   GEOS_WARNING_IF( maxPrecision < m_precision,
-                   GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
-                             getWrapperDataContext( viewKeyStruct::precisionString() ),
+                   GEOS_FMT( "option should be between {} and {}. A value of {} will be used.",
                              minPrecision, maxPrecision, maxPrecision ),
                    getWrapperDataContext( viewKeyStruct::precisionString() ) );
 

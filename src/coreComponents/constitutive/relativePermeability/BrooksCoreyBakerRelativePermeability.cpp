@@ -119,7 +119,7 @@ void BrooksCoreyBakerRelativePermeability::postInputInitialization()
   {
     auto const errorMsg = [&]( auto const & attribute )
     {
-      return GEOS_FMT( "invalid value at {}[{}]", getFullName(), attribute, ip );
+      return GEOS_FMT( "invalid value at {}[{}]", attribute, ip );
     };
     if( m_phaseOrder[PhaseType::WATER] >= 0 )
     {

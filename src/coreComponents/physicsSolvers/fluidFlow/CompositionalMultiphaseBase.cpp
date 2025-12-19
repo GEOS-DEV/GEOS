@@ -362,7 +362,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
   }
   else
   {
-    GEOS_ERROR( GEOS_FMT( "{}: unknown formulation type", getDataContext() ) );
+    GEOS_ERROR( "unknown formulation type", getDataContext() );
   }
 
   // 2. Register and resize all fields as necessary
@@ -924,8 +924,9 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
 
       localIndex const negativeValues = MpiWrapper::sum( localNegativeValues.get() );
       GEOS_ERROR_IF( negativeValues > 0,
-                     GEOS_FMT( "{}: negative global component fraction values found in subregion '{}' for {} elements",
-                               getName(), subRegion.getName(), negativeValues ) );
+                     GEOS_FMT( "negative global component fraction values found in subregion '{}' for {} elements",
+                               subRegion.getName(), negativeValues ),
+                     getDataContext(), subRegion.getDataContext()  );
 
       localIndex const totalSupFrac = MpiWrapper::sum( localTooHighFracCount.get() );
       localIndex const totalInfFrac = MpiWrapper::sum( localTooLowFracCount.get() );

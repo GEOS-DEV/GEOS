@@ -723,16 +723,18 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( ElementRegionMana
     {
       ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion());
       GEOS_ERROR_IF ( !region.hasWrapper( CompositionalMultiphaseStatistics::regionStatisticsName() ),
-                      GEOS_FMT( "{}: WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be configured for region {} ",
-                                getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ) );
+                      GEOS_FMT( "WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be configured for region {} ",
+                                wellControls.getName(), wellControls.referenceReservoirRegion() ),
+                      getDataContext() );
 
       CompositionalMultiphaseStatistics::RegionStatistics const & stats = region.getReference< CompositionalMultiphaseStatistics::RegionStatistics >(
         CompositionalMultiphaseStatistics::regionStatisticsName() );
       wellControls.setRegionAveragePressure( stats.averagePressure );
       wellControls.setRegionAverageTemperature( stats.averageTemperature );
       GEOS_ERROR_IF( stats.averagePressure <= 0.0,
-                     GEOS_FMT( "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be configured for region {} ",
-                               getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ));
+                     GEOS_FMT( "No region average quantities computed.  WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be configured for region {} ",
+                               wellControls.getName(), wellControls.referenceReservoirRegion() ),
+                     getDataContext());
     }
     // If flashPressure is not set by region the value is defaulted to -1 and indicates to use top segment conditions
     flashPressure = wellControls.getRegionAveragePressure();

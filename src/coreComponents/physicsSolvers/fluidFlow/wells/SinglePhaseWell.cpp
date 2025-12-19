@@ -294,14 +294,16 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
     {
       ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion() );
       GEOS_ERROR_IF ( !region.hasWrapper( SinglePhaseStatistics::regionStatisticsName()),
-                      GEOS_FMT( "{}: WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
-                                getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ) );
+                      GEOS_FMT( "WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
+                                wellControls.getName(), wellControls.referenceReservoirRegion() ),
+                      getDataContext() );
 
       SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >( SinglePhaseStatistics::regionStatisticsName() );
       GEOS_ERROR_IF( stats.averagePressure <= 0.0,
                      GEOS_FMT(
-                       "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
-                       getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ));
+                       "No region average quantities computed.  WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
+                       wellControls.getName(), wellControls.referenceReservoirRegion() ),
+                     getDataContext());
       wellControls.setRegionAveragePressure( stats.averagePressure );
       wellControls.setRegionAverageTemperature( stats.averageTemperature );
     }

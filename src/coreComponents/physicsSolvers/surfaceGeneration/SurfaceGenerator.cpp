@@ -3205,7 +3205,8 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
 
               if( tralingNodeID == std::numeric_limits< localIndex >::max())
               {
-                GEOS_ERROR( "The triangular trailing face has three tip nodes but cannot find the other trailing face containing the trailing node.", getDataContext() );
+                GEOS_ERROR( "The triangular trailing face has three tip nodes but cannot find the other trailing face containing the trailing node.",
+                            getDataContext() );
               }
             }
             else if( unpinchedNodeID.size() == 1 )

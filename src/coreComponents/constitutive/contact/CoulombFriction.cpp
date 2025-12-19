@@ -52,7 +52,7 @@ CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
 void CoulombFriction::postInputInitialization()
 {
   GEOS_THROW_IF( m_frictionCoefficient < 0.0,
-                 getFullName() << ": The provided friction coefficient is less than zero. Value: " << m_frictionCoefficient,
+                 ": The provided friction coefficient is less than zero. Value: " << m_frictionCoefficient,
                  InputError, getDataContext() );
 
 }

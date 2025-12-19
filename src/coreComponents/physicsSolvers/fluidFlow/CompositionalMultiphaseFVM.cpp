@@ -188,9 +188,10 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
   if( m_scalingType == ScalingType::Local &&
       m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None )
   {
-    GEOS_ERROR( GEOS_FMT( "{}: line search is not supported for {} = {}",
-                          getName(), viewKeyStruct::scalingTypeString(),
-                          EnumStrings< ScalingType >::toString( ScalingType::Local )) );
+    GEOS_ERROR( GEOS_FMT( "line search is not supported for {} = {}",
+                          viewKeyStruct::scalingTypeString(),
+                          EnumStrings< ScalingType >::toString( ScalingType::Local )),
+                getDataContext());
   }
 
   m_linearSolverParameters.get().mgr.strategy = m_isThermal

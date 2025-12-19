@@ -119,7 +119,7 @@ void ImmiscibleWaterParameters::postInputInitializationImpl( MultiFluidBase cons
   auto const checkLowerBound = [&]( real64 const & value, real64 const & bound, string const & attribute )
   {
     GEOS_THROW_IF_LT_MSG( value, bound,
-                          GEOS_FMT( "{}: invalid number of value in attribute '{}'. Should be greater than {}",
+                          GEOS_FMT( "invalid number of value in attribute '{}'. Should be greater than {}",
                                     bound, attribute ),
                           InputError, fluid->getDataContext() );
   };

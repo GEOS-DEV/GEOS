@@ -90,7 +90,8 @@ void ElasticIsotropicPressureDependent::postInputInitialization()
   errorCheck += ")";
 
   GEOS_ERROR_IF( numConstantsSpecified != 2,
-                 GEOS_FMT( "A specific pair of elastic constants is required: ( Cr G ), specified: {}", errorCheck ) );
+                 GEOS_FMT( "A specific pair of elastic constants is required: ( Cr G ), specified: {}", errorCheck ),
+                 getDataContext() );
   GEOS_THROW_IF( m_defaultRefPressure >= 0,
                  "Reference pressure must be negative",
                  InputError, getDataContext() );
