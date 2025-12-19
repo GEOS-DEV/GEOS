@@ -41,8 +41,8 @@ string WrapperContext::toString() const
 ErrorLogger::ErrorContext WrapperContext::getContextInfo() const
 {
   ErrorLogger::ErrorContext ctxInfo{
-    { { ErrorLogger::ErrorContext::Attribute::DataPath, GEOS_FMT( "{}/{}", m_group.getPath(), m_typeName ) } },
-    toString()
+    toString(),
+    {{ ErrorLogger::ErrorContext::Attribute::DataPath, GEOS_FMT( "{}/{}", m_group.getPath(), m_typeName ) } },
   };
   return ctxInfo;
 }

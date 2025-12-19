@@ -70,24 +70,14 @@ public:
       Signal,
     };
 
-    /// The map contains contextual information about the error
-    /// It could be something like
-    /// "file" = "/path/to/file.xml"
-    /// "line" = "24"
-    /// or something like
-    /// "dataPath" = "/Functions/co2brine_philipsDensityTable
-    /// The key is a field of the Attribute enumeration and is converted to a string for writing in the YAML
-    map< Attribute, std::string > m_attributes;
+    ErrorContext( string dataDisplayString, map< Attribute, std::string >  attributes ):
+      m_dataDisplayString( dataDisplayString ),
+      m_attributes( attributes ) {};
 
-    /// String containing the target object name followed by the the file and line declaring it.
-    string m_dataDisplayString;
-
-    /**
-     * @brief Priority level assigned to an error context.
-     * @details Used to prioritize contextes (higher values = more relevant). Default is 0.
-     *
-     */
-    integer m_priority = 0;
+    ErrorContext( map< Attribute, std::string >  attributes, integer priority ):
+      m_dataDisplayString( "" ),
+      m_attributes( attributes ),
+      m_priority( priority ) {};
 
     /**
      * @brief Set the priority value of the current error context information
@@ -103,6 +93,25 @@ public:
      * @return a string representation of the enumeration value
      */
     static std::string attributeToString( Attribute attribute );
+
+    /// String containing the target object name followed by the the file and line declaring it.
+    string m_dataDisplayString;
+
+    /// The map contains contextual information about the error
+    /// It could be something like
+    /// "file" = "/path/to/file.xml"
+    /// "line" = "24"
+    /// or something like
+    /// "dataPath" = "/Functions/co2brine_philipsDensityTable
+    /// The key is a field of the Attribute enumeration and is converted to a string for writing in the YAML
+    map< Attribute, std::string > m_attributes;
+
+    /**
+     * @brief Priority level assigned to an error context.
+     * @details Used to prioritize contextes (higher values = more relevant). Default is 0.
+     *
+     */
+    integer m_priority = 0;
   };
 
   /**
@@ -112,8 +121,6 @@ public:
   {
     /// the error type (Warning, Error or Exception)
     MsgType m_type = ErrorLogger::MsgType::Undefined;
-    /// The signal received and formatted
-    std::string m_signal;
     /// the error message that can be completed
     std::string m_msg;
     /// the cause of the error (erroneous condition, failed assertion...) if identified (optional)
@@ -240,13 +247,6 @@ private:
   };
 
   /**
-   * @brief Format all information in ErrorMsg and write it to the specified output stream
-   * @param errMsg The struct containing the error/warning object
-   * @param oss The output stream
-   */
-  static void writeToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostream & oss );
-
-  /**
    * @return Global instance of the ErrorLogger class used for error/warning reporting.
    * @details This global instance is used across the codebase to log errors, warnings, and exceptions,
    *          and to write structured output of errors. It is used through the logging macros.
@@ -296,6 +296,13 @@ private:
    * @return the string representation of the message type
    */
   static std::string toString( MsgType type );
+
+  /**
+   * @brief Format all information in ErrorMsg and write it to the specified output stream
+   * @param errMsg The struct containing the error/warning object
+   * @param oss The output stream
+   */
+  static void writeToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostream & oss );
 
   /**
    * @brief Write all the information retrieved about the error/warning message into the YAML file

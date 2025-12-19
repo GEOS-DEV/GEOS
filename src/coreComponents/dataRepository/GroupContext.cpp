@@ -57,8 +57,8 @@ string GroupContext::toString() const
 ErrorLogger::ErrorContext GroupContext::getContextInfo() const
 {
   ErrorLogger::ErrorContext ctxInfo{
-    { { ErrorLogger::ErrorContext::Attribute::DataPath, GEOS_FMT( "{}/{}", m_group.getPath(), m_targetName )} },
-    toString()
+    toString(),
+    { { ErrorLogger::ErrorContext::Attribute::DataPath, GEOS_FMT( "{}/{}", m_group.getPath(), m_targetName )} }
   };
   return ctxInfo;
 }

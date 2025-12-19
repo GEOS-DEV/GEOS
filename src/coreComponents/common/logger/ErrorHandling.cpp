@@ -41,85 +41,9 @@ static constexpr std::string_view g_level3Next =  "        ";
 
 ErrorLogger g_errorLogger{};
 
-/**
- * @brief Retrieve all informations from the ErrorMsg and format and write into a stream.
- * @param errMsg Class containing all the error/warning information
- * @param oss The output stream to write the content to.
- */
-void ErrorLogger::writeToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostream & oss )
-{
-  /// HEADER
-  oss << "***** " << ErrorLogger::toString( errMsg.m_type ) << "\n";
-  if( !errMsg.m_signal.empty())
-  {
-    oss<< "***** SIGNAL: "<< errMsg.m_signal <<"\n";
-  }
-  oss << "***** LOCATION: " << errMsg.m_file<< " l." << errMsg.m_line << "\n";
-  oss << "***** " << errMsg.m_cause  << "\n";
-  oss << "***** Rank " << stringutilities::join( errMsg.m_ranksInfo, ", " ) << "\n";
-
-  std::vector< ErrorLogger::ErrorContext > const contextsInfo = errMsg.m_contextsInfo;
-  /// ERROR CONTEXT
-  if( contextsInfo.empty())
-  {
-    oss << "***** Message :\n";
-    oss << errMsg.m_msg << "\n";
-  }
-  else
-  {
-    if( contextsInfo.size() >= 1 )
-    {
-
-      oss << "***** Message from "   << contextsInfo.front().m_dataDisplayString<< ":\n";
-      oss << errMsg.m_msg << "\n";
-    }
-
-    if( contextsInfo.size() > 1 )
-    {
-      oss << "***** Additional contexts:\n";
-      for( size_t i = 1; i< contextsInfo.size(); i++ )
-      {
-        oss << "***** - "  << contextsInfo[i].m_dataDisplayString << "\n";
-      }
-    }
-
-  }
-  ///STACKTRACE
-  if( errMsg.m_sourceCallStack.size() > 0 )
-  {
-    oss << "\n** StackTrace of "<< errMsg.m_sourceCallStack.size() << " frames **\n";
-    for( size_t i = 0; i < errMsg.m_sourceCallStack.size(); i++ )
-    {
-      oss << GEOS_FMT( "Frame {}: {}\n", i, errMsg.m_sourceCallStack[i] );
-    }
-    oss << "=====\n";
-  }
-}
-
 ErrorLogger & ErrorLogger::global()
 { return g_errorLogger; }
 
-void ErrorLogger::createFile()
-{
-  if( stringutilities::endsWith( m_filename, ".yaml" ) )
-  {
-    std::ofstream yamlFile( std::string( m_filename ), std::ios::out );
-    if( yamlFile.is_open() )
-    {
-      yamlFile << "errors: \n\n";
-      yamlFile.close();
-    }
-    else
-    {
-      GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
-    }
-  }
-  else
-  {
-    enableFileOutput( false );
-    GEOS_LOG_RANK( GEOS_FMT( "{} is a bad file name argument. The file must be in yaml format.", m_filename ) );
-  }
-}
 
 std::string ErrorLogger::ErrorContext::attributeToString( ErrorLogger::ErrorContext::Attribute attribute )
 {
@@ -250,17 +174,6 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string_vie
   return *this;
 }
 
-std::string ErrorLogger::toString( ErrorLogger::MsgType type )
-{
-  switch( type )
-  {
-    case ErrorLogger::MsgType::Error: return "Error";
-    case ErrorLogger::MsgType::Warning: return "Warning";
-    case ErrorLogger::MsgType::Exception: return "Exception";
-    default: return "Unknown";
-  }
-}
-
 void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile,
                                                 std::string_view indent )
 {
@@ -280,6 +193,101 @@ void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstr
     yamlFile << indent << msgLine << "\n";
     // Move to the next line
     i = index + 1;
+  }
+}
+
+void ErrorLogger::createFile()
+{
+  if( stringutilities::endsWith( m_filename, ".yaml" ) )
+  {
+    std::ofstream yamlFile( std::string( m_filename ), std::ios::out );
+    if( yamlFile.is_open() )
+    {
+      yamlFile << "errors: \n\n";
+      yamlFile.close();
+    }
+    else
+    {
+      GEOS_LOG_RANK( GEOS_FMT( "Unable to open error file for writing: {}", m_filename ) );
+    }
+  }
+  else
+  {
+    enableFileOutput( false );
+    GEOS_LOG_RANK( GEOS_FMT( "{} is a bad file name argument. The file must be in yaml format.", m_filename ) );
+  }
+}
+
+std::string ErrorLogger::toString( ErrorLogger::MsgType type )
+{
+  switch( type )
+  {
+    case ErrorLogger::MsgType::Error: return "Error";
+    case ErrorLogger::MsgType::Warning: return "Warning";
+    case ErrorLogger::MsgType::Exception: return "Exception";
+    default: return "Unknown";
+  }
+}
+
+/**
+ * @brief Retrieve all informations from the ErrorMsg and format and write into a stream.
+ * @param errMsg Class containing all the error/warning information
+ * @param oss The output stream to write the content to.
+ */
+void ErrorLogger::writeToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostream & oss )
+{
+  /// HEADER
+  oss << "***** " << ErrorLogger::toString( errMsg.m_type ) << "\n";
+  if( !errMsg.m_file.empty())
+  {
+    oss << "***** LOCATION: " << errMsg.m_file;
+    if( errMsg.m_line > 0 )
+    {
+      oss << " l." << errMsg.m_line;
+    }
+    oss << "\n";
+  }
+  if( !errMsg.m_cause.empty())
+  {
+    oss << "***** " << errMsg.m_cause << "\n";
+  }
+  oss << "***** Rank " << stringutilities::join( errMsg.m_ranksInfo, ", " ) << "\n";
+
+  std::vector< ErrorLogger::ErrorContext > const contextsInfo = errMsg.m_contextsInfo;
+  /// ERROR CONTEXT
+  if( contextsInfo.empty())
+  {
+    oss << "***** Message :\n";
+    oss << errMsg.m_msg << "\n";
+  }
+  else
+  {
+    if( contextsInfo.size() >= 1 )
+    {
+
+      oss << "***** Message from "   << contextsInfo.front().m_dataDisplayString<< ":\n";
+      oss << errMsg.m_msg << "\n";
+    }
+
+    if( contextsInfo.size() > 1 )
+    {
+      oss << "***** Additional contexts:\n";
+      for( size_t i = 1; i< contextsInfo.size(); i++ )
+      {
+        oss << "***** - "  << contextsInfo[i].m_dataDisplayString << "\n";
+      }
+    }
+
+  }
+  ///STACKTRACE
+  if( errMsg.m_sourceCallStack.size() > 0 )
+  {
+    oss << "\n** StackTrace of "<< errMsg.m_sourceCallStack.size() << " frames **\n";
+    for( size_t i = 0; i < errMsg.m_sourceCallStack.size(); i++ )
+    {
+      oss << GEOS_FMT( "Frame {}: {}\n", i, errMsg.m_sourceCallStack[i] );
+    }
+    oss << "=====\n";
   }
 }
 
