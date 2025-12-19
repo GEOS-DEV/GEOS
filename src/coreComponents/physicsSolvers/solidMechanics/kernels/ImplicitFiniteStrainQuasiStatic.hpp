@@ -17,8 +17,8 @@
  * @file ImplicitFiniteStrainQuasistatic.hpp
  */
 
-#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITFINITSTRAINQUASISTATIC_HPP_
-#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITFINITSTRAINQUASISTATIC_HPP_
+#ifndef GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITFINITESTRAINQUASISTATIC_HPP_
+#define GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITFINITESTRAINQUASISTATIC_HPP_
 
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
@@ -123,7 +123,7 @@ public:
     real64 uhat_local[numNodesPerElem][numDofPerTrialSupportPoint];
 
     /// Stack storage for the constitutive stiffness at a quadrature point.
-    real64 constitutiveStiffness[ 6 ][ 6 ];
+    real64 constitutiveStiffness[ 9 ][ 9 ];
   };
   //*****************************************************************************
 
@@ -165,7 +165,7 @@ public:
      * @param stress The stress array.
      */
     GEOS_HOST_DEVICE inline constexpr
-    void operator() ( real64 (& stress)[6] )
+    void operator() ( real64 (& stress)[3][3] )
     {
       GEOS_UNUSED_VAR( stress );
     }
@@ -186,7 +186,49 @@ public:
   void quadraturePointKernel(localIndex const k, localIndex const q, StackVariables & stack,
                              STRESS_MODIFIER && stressModifier = NoOpFunctors{}) const;
 
-}
+  /**
+   * @copydoc geos::finiteElement::ImplicitKernelBase::complete
+   */
+  GEOS_HOST_DEVICE
+  inline
+  real64 complete( localIndex const k,
+                   StackVariables & stack ) const;
+
+  /**
+   * @copydoc geos::finiteElement::KernelBase::kernelLaunch
+   */
+  template< typename POLICY,
+            typename KERNEL_TYPE >
+  static real64
+  kernelLaunch( localIndex const numElems,
+                KERNEL_TYPE const & kernelComponent );
+
+protected:
+  /// The array containing the nodal position array.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+
+  /// The rank-global displacement array.
+  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const m_disp;
+
+  /// The rank-global incremental displacement array.
+  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > const m_uhat;
+
+  /// The gravity vector.
+  real64 const m_gravityVector[3];
+
+  /// The rank global density
+  arrayView2d< real64 const > const m_density;
+
+};
+
+/// The factory used to construct a QuasiStatic kernel.
+using QuasiStaticFactory = finiteElement::KernelFactory< ImplicitFiniteStrainQuasiStatic,
+                                                         arrayView1d< globalIndex const > const,
+                                                         globalIndex,
+                                                         CRSMatrixView< real64, globalIndex const > const,
+                                                         arrayView1d< real64 > const,
+                                                         real64 const,
+                                                         real64 const (&)[3] >;
 
 } // namespace solidMechanicsLagrangianFEMKernels
 
@@ -194,4 +236,4 @@ public:
 
 #include "finiteElement/kernelInterface/SparsityKernelBase.hpp"
 
-#endif // GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITFINITSTRAINQUASISTATIC_HPP_
+#endif // GEOS_PHYSICSSOLVERS_SOLIDMECHANICS_KERNELS_IMPLCITFINITESTRAINQUASISTATIC_HPP_
