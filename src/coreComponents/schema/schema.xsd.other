@@ -2823,6 +2823,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="jFuncMultiplier" type="real64_array2d" />
 		<!--phaseCapPressure => Phase capillary pressure-->
 		<xsd:attribute name="phaseCapPressure" type="real64_array3d" />
+		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
+		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" />
 		<!--phaseOrder => (no description available)-->
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseTypes => (no description available)-->
@@ -3198,6 +3200,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="real64_array4d" />
 		<!--phaseCapPressure => Phase capillary pressure-->
 		<xsd:attribute name="phaseCapPressure" type="real64_array3d" />
+		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
+		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" />
 		<!--phaseOrder => (no description available)-->
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseTypes => (no description available)-->

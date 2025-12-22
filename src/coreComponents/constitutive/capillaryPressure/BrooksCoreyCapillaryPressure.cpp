@@ -31,11 +31,6 @@ BrooksCoreyCapillaryPressure::BrooksCoreyCapillaryPressure( string const & name,
                                                             Group * const parent )
   : CapillaryPressureBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::phaseMinVolumeFractionString(), &m_phaseMinVolumeFraction ).
-    setApplyDefaultValue( 0.0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Minimum volume fraction value for each phase" );
-
   registerWrapper( viewKeyStruct::phaseCapPressureExponentInvString(), &m_phaseCapPressureExponentInv ).
     setApplyDefaultValue( 2.0 ).
     setInputFlag( InputFlags::OPTIONAL ).

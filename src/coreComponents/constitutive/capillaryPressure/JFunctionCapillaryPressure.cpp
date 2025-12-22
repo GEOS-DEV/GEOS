@@ -115,6 +115,9 @@ JFunctionCapillaryPressure::JFunctionCapillaryPressure( std::string const & name
                     toString( PermeabilityDirection::Y ) + " - only use the permeability in the y direction,\n" +
                     toString( PermeabilityDirection::Z ) + " - only use the permeability in the z direction." );
 
+  getWrapperBase( viewKeyStruct::phaseMinVolumeFractionString() )
+    .setInputFlag( InputFlags::FALSE );
+
   registerField< fields::cappres::jFuncMultiplier >( &m_jFuncMultiplier );
 }
 
@@ -126,6 +129,9 @@ void JFunctionCapillaryPressure::postInputInitialization()
   GEOS_THROW_IF( numPhases != 2 && numPhases != 3,
                  "the expected number of fluid phases is either two, or three",
                  InputError, getDataContext() );
+
+  // Populate the minimum phase volume fractions
+  m_phaseMinVolumeFraction.resize( numPhases );
 
   if( numPhases == 2 )
   {
@@ -290,6 +296,9 @@ void JFunctionCapillaryPressure::createAllTableKernelWrappers()
   {
     TableFunction const & jFuncTable = functionManager.getGroup< TableFunction >( m_wettingNonWettingJFuncTableName );
     m_jFuncKernelWrappers.emplace_back( jFuncTable.createKernelWrapper() );
+
+    // Populate the end-points from the tables
+    TableCapillaryPressureHelpers::populateMinPhaseVolumeFraction( m_phaseOrder.toSliceConst(), jFuncTable, m_phaseMinVolumeFraction );
   }
   else if( numPhases == 3 )
   {
@@ -298,6 +307,9 @@ void JFunctionCapillaryPressure::createAllTableKernelWrappers()
     m_jFuncKernelWrappers.emplace_back( jFuncTableWI.createKernelWrapper() );
     TableFunction const & jFuncTableNWI = functionManager.getGroup< TableFunction >( m_nonWettingIntermediateJFuncTableName );
     m_jFuncKernelWrappers.emplace_back( jFuncTableNWI.createKernelWrapper() );
+
+    // Populate the end-points from the tables
+    TableCapillaryPressureHelpers::populateMinPhaseVolumeFraction( m_phaseOrder.toSliceConst(), jFuncTableWI, jFuncTableNWI, m_phaseMinVolumeFraction );
   }
 }
 

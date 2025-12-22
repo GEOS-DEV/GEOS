@@ -73,6 +73,10 @@ EquilibriumInitialCondition::EquilibriumInitialCondition( string const & name, G
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the table specifying the (temperature [K] vs elevation) relationship" );
 
+  registerWrapper( viewKeyStruct::phaseContactsString(), &m_phaseContacts ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Phase contacts' elevations [m]" );
+
   getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
   setFieldName( catalogName() );
@@ -104,14 +108,40 @@ void EquilibriumInitialCondition::postInputInitialization()
                    "Mismatch between the size of " <<
                    viewKeyStruct::componentNamesString() <<
                    " and " << viewKeyStruct::componentFractionVsElevationTableNamesString(),
-                   InputError, getDataContext() );
-    GEOS_THROW_IF( m_componentNames.size() >= 2 && m_initPhaseName.empty(),
-                   "For now, the keyword: " <<
-                   viewKeyStruct::initPhaseNameString() << " must be filled for a multiphase simulation",
-                   InputError, getDataContext() );
+                   InputError );
 
-    array1d< localIndex > tableSizes( m_componentNames.size() );
-    for( size_t ic = 0; ic < m_componentNames.size(); ++ic )
+    integer const numberOfComponents = static_cast< integer >(m_componentNames.size());
+
+    if( 1 < numberOfComponents )
+    {
+      integer const numberOfContacts = static_cast< integer >(m_phaseContacts.size());
+      GEOS_THROW_IF( m_initPhaseName.empty() && numberOfContacts == 0,
+                     ": for a multiphase simulation either the initial phase name must be provided using "
+                     << viewKeyStruct::initPhaseNameString() << " or the phase contact elevations number be provided using "
+                     << viewKeyStruct::phaseContactsString(),
+                     InputError, getDataContext() );
+
+      if( !m_initPhaseName.empty() && 0 < numberOfContacts )
+      {
+        GEOS_WARNING( "both " << viewKeyStruct::initPhaseNameString() << " and " << viewKeyStruct::phaseContactsString()
+                              << " have been specified. The phase contacts will be ignored and single phase initialisation performed",
+                      getDataContext() );
+      }
+
+      // Contacts if provided must be non-decreasing
+      if( 1 < numberOfContacts )
+      {
+        for( integer i = 1; i < numberOfContacts; i++ )
+        {
+          GEOS_THROW_IF( m_phaseContacts[i] - m_phaseContacts[i-1] < -LvArray::NumericLimits< real64 >::epsilon,
+                         "The phase contacts must be increasing",
+                         InputError, getDataContext() );
+        }
+      }
+    }
+
+    array1d< localIndex > tableSizes( numberOfComponents );
+    for( integer ic = 0; ic < numberOfComponents; ++ic )
     {
       GEOS_THROW_IF( m_componentFractionVsElevationTableNames[ic].empty(),
                      "The component fraction vs elevation table name is missing for component " << ic,
