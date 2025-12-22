@@ -63,6 +63,9 @@ TableCapillaryPressure::TableCapillaryPressure( std::string const & name,
                     string( viewKeyStruct::wettingNonWettingCapPresTableNameString() ) +
                     " to specify the table names" );
 
+  getWrapperBase( viewKeyStruct::phaseMinVolumeFractionString() )
+    .setInputFlag( InputFlags::FALSE );
+
   registerWrapper( viewKeyStruct::capPresWrappersString(), &m_capPresKernelWrappers ).
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
@@ -77,6 +80,9 @@ void TableCapillaryPressure::postInputInitialization()
                  GEOS_FMT( "{}: the expected number of fluid phases is either two, or three",
                            getFullName() ),
                  InputError, getDataContext() );
+
+  // Populate the minimum phase volumes
+  m_phaseMinVolumeFraction.resize( numPhases );
 
   if( numPhases == 2 )
   {
@@ -152,6 +158,9 @@ void TableCapillaryPressure::createAllTableKernelWrappers()
   {
     TableFunction const & capPresTable = functionManager.getGroup< TableFunction >( m_wettingNonWettingCapPresTableName );
     m_capPresKernelWrappers.emplace_back( capPresTable.createKernelWrapper() );
+
+    // Populate the end-points from the tables
+    TableCapillaryPressureHelpers::populateMinPhaseVolumeFraction( m_phaseOrder.toSliceConst(), capPresTable, m_phaseMinVolumeFraction );
   }
   else if( numPhases == 3 )
   {
@@ -159,6 +168,9 @@ void TableCapillaryPressure::createAllTableKernelWrappers()
     m_capPresKernelWrappers.emplace_back( capPresTableWI.createKernelWrapper() );
     TableFunction const & capPresTableNWI = functionManager.getGroup< TableFunction >( m_nonWettingIntermediateCapPresTableName );
     m_capPresKernelWrappers.emplace_back( capPresTableNWI.createKernelWrapper() );
+
+    // Populate the end-points from the tables
+    TableCapillaryPressureHelpers::populateMinPhaseVolumeFraction( m_phaseOrder.toSliceConst(), capPresTableWI, capPresTableNWI, m_phaseMinVolumeFraction );
   }
 }
 
