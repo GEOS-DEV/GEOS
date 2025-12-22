@@ -93,12 +93,12 @@ for pattern in "${FILE_PATTERNS[@]}"; do
     fi
 done
 
-EXCLUDE_EXPRESSION=()
+EXCLUDED_NAME_PATTERNS=()
 for pattern in "${EXCLUDE_PATTERNS[@]}"; do
     if [[ ! "$pattern" == *".hpp"* ]]; then
-      EXCLUDE_EXPRESSION+=( -path "*/$pattern" -prune -o )
+      EXCLUDED_NAME_PATTERNS+=( -path "*/$pattern" -prune -o )
     else
-      EXCLUDE_EXPRESSION+=( -name "*${pattern}" -prune -o )
+      EXCLUDED_NAME_PATTERNS+=( -name "*${pattern}" -prune -o )
     fi
 done
 
@@ -107,7 +107,7 @@ echo -e "            TREE LIST OF FILES FOUND            "
 echo "======================================================"
 
 if [ ${#FILE_PATH_ARGS[@]} -gt 0 ]; then
-    find "${FILE_PATH_ARGS[@]}" "${EXCLUDE_EXPRESSION[@]}" -type d -print  | sort | while IFS= read -r dir; do
+    find "${FILE_PATH_ARGS[@]}" "${EXCLUDED_NAME_PATTERNS[@]}" -type d -print  | sort | while IFS= read -r dir; do
         echo -e "->" $(echo "$dir" | sed 's/[]^$*.[]/\\&/g' | sed 's/\// |---/g')
     done
 fi
@@ -115,7 +115,7 @@ fi
 ARRAY_FILES=()
 # mapfile used for reading inMAPput lines into an array; -d $'\0': Specifies that the delimiter is (\0).
 # -print0 : ask find to separate file paths by '\0'
-mapfile -d $'\0' ARRAY_FILES < <(find "${FILE_PATH_ARGS[@]}" "${EXCLUDE_EXPRESSION[@]}" \
+mapfile -d $'\0' ARRAY_FILES < <(find "${FILE_PATH_ARGS[@]}" "${EXCLUDED_NAME_PATTERNS[@]}" \
                                       -type f \( -name "*.hpp" -o -name "*.cpp" -o  -name "*.hpp.template" -o -name "*.cpp.template" \) \
                                       -print0 2>/dev/null)
 
