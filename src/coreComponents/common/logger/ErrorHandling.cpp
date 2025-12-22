@@ -236,11 +236,12 @@ std::string ErrorLogger::toString( ErrorLogger::MsgType type )
  */
 void ErrorLogger::writeToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostream & oss )
 {
-  /// HEADER
-  oss << "***** " << ErrorLogger::toString( errMsg.m_type ) << "\n";
+  static constexpr string_view PREFIX = "***** ";
+  // --- HEADER ---
+  oss << PREFIX << ErrorLogger::toString( errMsg.m_type ) << "\n";
   if( !errMsg.m_file.empty())
   {
-    oss << "***** LOCATION: " << errMsg.m_file;
+    oss << PREFIX<< "LOCATION: " << errMsg.m_file;
     if( errMsg.m_line > 0 )
     {
       oss << " l." << errMsg.m_line;
@@ -249,38 +250,31 @@ void ErrorLogger::writeToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostre
   }
   if( !errMsg.m_cause.empty())
   {
-    oss << "***** " << errMsg.m_cause << "\n";
+    oss << PREFIX << errMsg.m_cause << "\n";
   }
-  oss << "***** Rank " << stringutilities::join( errMsg.m_ranksInfo, ", " ) << "\n";
-
-  std::vector< ErrorLogger::ErrorContext > const contextsInfo = errMsg.m_contextsInfo;
-  /// ERROR CONTEXT
-  if( contextsInfo.empty())
+  oss << PREFIX << "Rank " << stringutilities::join( errMsg.m_ranksInfo, ", " ) << "\n";
+  // --- ERROR CONTEXT & MESSAGE ---
+  std::vector< ErrorLogger::ErrorContext > const & contexts = errMsg.m_contextsInfo;
+  if( contexts.empty())
   {
-    oss << "***** Message :\n";
-    oss << errMsg.m_msg << "\n";
+    oss << PREFIX << "Message :\n";
   }
   else
   {
-    if( contextsInfo.size() >= 1 )
-    {
-
-      oss << "***** Message from "   << contextsInfo.front().m_dataDisplayString<< ":\n";
-      oss << errMsg.m_msg << "\n";
-    }
-
-    if( contextsInfo.size() > 1 )
-    {
-      oss << "***** Additional contexts:\n";
-      for( size_t i = 1; i< contextsInfo.size(); i++ )
-      {
-        oss << "***** - "  << contextsInfo[i].m_dataDisplayString << "\n";
-      }
-    }
-
+    oss << PREFIX << "Message from " << contexts.front().m_dataDisplayString << ":\n";
   }
-  ///STACKTRACE
-  if( errMsg.m_sourceCallStack.size() > 0 )
+  oss << errMsg.m_msg << "\n";
+
+  if( contexts.size() > 1 )
+  {
+    oss << PREFIX << "Additional contexts:\n";
+    for( size_t i = 1; i < contexts.size(); ++i )
+    {
+      oss << PREFIX << "- " << contexts[i].m_dataDisplayString << "\n";
+    }
+  }
+  // --- STACKTRACE ---
+  if( !errMsg.m_sourceCallStack.empty() )
   {
     oss << "\n** StackTrace of "<< errMsg.m_sourceCallStack.size() << " frames **\n";
     for( size_t i = 0; i < errMsg.m_sourceCallStack.size(); i++ )
