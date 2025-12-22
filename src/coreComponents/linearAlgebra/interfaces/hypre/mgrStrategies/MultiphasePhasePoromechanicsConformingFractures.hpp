@@ -95,10 +95,15 @@ public:
     // Level 0 - lag mult
     m_levelFRelaxType[0]          = MGRFRelaxationType::l1jacobi;
     m_levelFRelaxIters[0]         = 1;
+    // m_levelFRelaxType[0]          = MGRFRelaxationType::none;
+    // m_levelFRelaxIters[0]         = 0;
+
     m_levelInterpType[0]          = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[0]        = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0]    = MGRCoarseGridMethod::galerkin;
-    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
+    // m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
+    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::ilu0;
+    m_levelGlobalSmootherIters[0] = 1;
     
     // Level 1 - displacement
     m_levelFRelaxType[1]          = MGRFRelaxationType::amgVCycle;
@@ -139,8 +144,7 @@ public:
     // Configure the BoomerAMG solver used as mgr coarse solver for the displacement reduced system
     // (note that no separate displacement component approach is used here)
     setDisplacementAMG( mgrData.mechSolver, mgrParams.separateComponents );
-    // HYPRE_MGRSetFSolver( precond.ptr, mgrData.mechSolver.solve, mgrData.mechSolver.setup, mgrData.mechSolver.ptr );
-    // TODO equiv setMechanicFSolver() 
+    // GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFSolverAtLevel( precond.ptr, mgrData.mechSolver.ptr, 1 ) );
     // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
     setPressureAMG( mgrData.coarseSolver );
   }
