@@ -72,16 +72,16 @@ void SinglePhaseStatistics::registerDataOnMesh( Group & meshBodies )
       {
         std::ofstream outputFile( m_outputDir + "/" + regionNames[i] + ".csv" );
         outputFile <<
-          GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ))<<
-          GEOS_FMT( "Average pressure [{}]", units::getSymbol( units::Unit::Pressure ))<<
-          GEOS_FMT( "Min pressure [{}]", units::getSymbol( units::Unit::Pressure ))<<
-          GEOS_FMT( "Max pressure [{}]", units::getSymbol( units::Unit::Pressure ))<<
-          GEOS_FMT( "Min delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))<<
-          GEOS_FMT( "Max delta pressure [{}]", units::getSymbol( units::Unit::Pressure )) <<
-          GEOS_FMT( "Min temperature [{}]", units::getSymbol( units::Unit::Temperature ))<<
-          GEOS_FMT( "Average temperature [{}]", units::getSymbol( units::Unit::Temperature ))<<
-          GEOS_FMT( "Max temperature [{}]", units::getSymbol( units::Unit::Temperature ))<<
-          GEOS_FMT( "Total dynamic pore volume [{}]", units::getSymbol( units::Unit::ReservoirVolume ) ) <<
+          GEOS_FMT( "Time [{}]", units::getSymbol( units::Unit::Time ))<< "," <<
+          GEOS_FMT( "Min pressure [{}]", units::getSymbol( units::Unit::Pressure ))<< "," <<
+          GEOS_FMT( "Average pressure [{}]", units::getSymbol( units::Unit::Pressure ))<< "," <<
+          GEOS_FMT( "Max pressure [{}]", units::getSymbol( units::Unit::Pressure ))<< "," <<
+          GEOS_FMT( "Min delta pressure [{}]", units::getSymbol( units::Unit::Pressure ))<< "," <<
+          GEOS_FMT( "Max delta pressure [{}]", units::getSymbol( units::Unit::Pressure )) << "," <<
+          GEOS_FMT( "Min temperature [{}]", units::getSymbol( units::Unit::Temperature ))<< "," <<
+          GEOS_FMT( "Average temperature [{}]", units::getSymbol( units::Unit::Temperature ))<< "," <<
+          GEOS_FMT( "Max temperature [{}]", units::getSymbol( units::Unit::Temperature ))<< "," <<
+          GEOS_FMT( "Total dynamic pore volume [{}]", units::getSymbol( units::Unit::ReservoirVolume ) ) << "," <<
           GEOS_FMT( "Total fluid mass [{}]", units::getSymbol( units::Unit::Mass ));
         outputFile << std::endl;
         outputFile.close();
