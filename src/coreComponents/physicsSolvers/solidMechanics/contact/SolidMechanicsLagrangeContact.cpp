@@ -926,7 +926,7 @@ SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) 
     }
     else
     {
-      GEOS_ERROR( "SolidMechanicsLagrangeContact::CreatePreconditioner leadingBlockApproximation option " << leadingBlockApproximation << " not supported" );
+      GEOS_ERROR( "SolidMechanicsLagrangeContact::CreatePreconditioner leadingBlockApproximation option " << leadingBlockApproximation << " not supported" ,getDataContext());
     }
 
     // Preconditioner for the leading block: tracPrecond

@@ -65,9 +65,10 @@ void SinglePhasePoromechanicsEmbeddedFractures::postInputInitialization()
   Base::postInputInitialization();
 
   GEOS_ERROR_IF( solidMechanicsSolver()->useStaticCondensation(),
-                 GEOS_FMT( "{}: {} = 1 in {} solver named {} is not supported for {}",
-                           this->getName(), SolidMechanicsEmbeddedFractures::viewKeyStruct::useStaticCondensationString(),
-                           solidMechanicsSolver()->getCatalogName(), solidMechanicsSolver()->getName(), getCatalogName() ));
+                 GEOS_FMT( "{} = 1 in {} solver named {} is not supported for {}",
+                           SolidMechanicsEmbeddedFractures::viewKeyStruct::useStaticCondensationString(),
+                           solidMechanicsSolver()->getCatalogName(), solidMechanicsSolver()->getName(), getCatalogName() ),
+                 getDataContext() );
 }
 
 void SinglePhasePoromechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )

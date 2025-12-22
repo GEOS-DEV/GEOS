@@ -282,7 +282,7 @@ void VTKMeshGenerator::importVolumicFieldOnArray( string const & cellBlockName,
     }
   }
 
-  GEOS_ERROR( "Could not import field \"" << meshFieldName << "\" from cell block \"" << cellBlockName << "\"." );
+  GEOS_ERROR( "Could not import field \"" << meshFieldName << "\" from cell block \"" << cellBlockName << "\".", getDataContext()  );
 }
 
 
@@ -308,7 +308,7 @@ void VTKMeshGenerator::importSurfacicFieldOnArray( string const & faceBlockName,
     return vtk::importRegularField( vtkArray, wrapper );
   }
 
-  GEOS_ERROR( "Could not import field \"" << meshFieldName << "\" from face block \"" << faceBlockName << "\"." );
+  GEOS_ERROR( "Could not import field \"" << meshFieldName << "\" from face block \"" << faceBlockName << "\".", getDataContext()  );
 }
 
 

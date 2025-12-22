@@ -209,7 +209,7 @@ MeshLevel::MeshLevel( string const & name,
     {
       if( sourceSubRegion.getElementType() != ElementType::Hexahedron )
       {
-        GEOS_ERROR( "Current order number "<<order<<" is higher than one are only available for hexahedral meshes." );
+        GEOS_ERROR( "Current order number "<<order<<" is higher than one are only available for hexahedral meshes.", sourceSubRegion.getDataContext(), getDataContext() );
       }
 
       // create element sub region with the same name as source element sub region "cb"

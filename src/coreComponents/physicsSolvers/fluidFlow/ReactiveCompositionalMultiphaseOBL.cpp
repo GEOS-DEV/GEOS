@@ -963,13 +963,13 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
       {
         bcConsistent = false;
         GEOS_WARNING( BCMessage::missingPressure( regionName, subRegionName, setName,
-                                                  flow::pressure::key() ) );
+                                                  flow::pressure::key() ), getDataContext() );
       }
       if( comp < 0 || comp >= numComp )
       {
         bcConsistent = false;
         GEOS_WARNING( BCMessage::invalidComponentIndex( comp, fs.getName(),
-                                                        flow::globalCompFraction::key() ) );
+                                                        flow::globalCompFraction::key() ), getDataContext() );
         return; // can't check next part with invalid component id
       }
 
@@ -982,7 +982,7 @@ bool ReactiveCompositionalMultiphaseOBL::validateDirichletBC( DomainPartition & 
           string_array const & componentNames = bc.getComponentNames();
           GEOS_WARNING( BCMessage::conflictingComposition( comp, componentNames[comp],
                                                            regionName, subRegionName, setName,
-                                                           flow::globalCompFraction::key() ) );
+                                                           flow::globalCompFraction::key() ), getDataContext() );
         } );
       }
       compMask.set( comp );

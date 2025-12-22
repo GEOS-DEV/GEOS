@@ -935,7 +935,7 @@ real64 PhysicsSolverBase::nonlinearImplicitStep( real64 const & time_n,
     }
     else
     {
-      GEOS_ERROR( "Nonconverged solutions not allowed. Terminating..." );
+      GEOS_ERROR( "Nonconverged solutions not allowed. Terminating...", getDataContext()  );
     }
   }
 

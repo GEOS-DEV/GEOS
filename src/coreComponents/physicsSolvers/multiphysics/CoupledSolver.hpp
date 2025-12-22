@@ -605,7 +605,7 @@ protected:
       }
       else
       {
-        GEOS_ERROR( "Nonconverged solutions not allowed. Terminating..." );
+        GEOS_ERROR( "Nonconverged solutions not allowed. Terminating...", getDataContext() );
       }
     }
 

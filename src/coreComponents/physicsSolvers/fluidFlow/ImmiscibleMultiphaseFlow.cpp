@@ -723,13 +723,15 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
       {
         bcConsistent = false;
         GEOS_WARNING( BCMessage::missingPressure( regionName, subRegionName, setName,
-                                                  fields::flow::pressure::key() ) );
+                                                  fields::flow::pressure::key() ),
+                      getDataContext() );
       }
       if( comp < 0 || comp >= m_numPhases )
       {
         bcConsistent = false;
         GEOS_WARNING( BCMessage::invalidComponentIndex( comp, fs.getName(),
-                                                        fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() ) );
+                                                        fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() ),
+                      getDataContext() );
         return; // can't check next part with invalid component id
       }
 
@@ -742,7 +744,8 @@ bool ImmiscibleMultiphaseFlow::validateDirichletBC( DomainPartition & domain,
           string_array const & componentNames = bc.getComponentNames();
           GEOS_WARNING( BCMessage::conflictingComposition( comp, componentNames[comp],
                                                            regionName, subRegionName, setName,
-                                                           fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() ) );
+                                                           fields::immiscibleMultiphaseFlow::phaseVolumeFraction::key() )
+                        , getDataContext() );
         } );
       }
       compMask.set( comp );

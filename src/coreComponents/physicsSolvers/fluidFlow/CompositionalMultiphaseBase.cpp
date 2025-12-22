@@ -1795,7 +1795,7 @@ bool CompositionalMultiphaseBase::validateDirichletBC( DomainPartition & domain,
       {
         bcConsistent = false;
         GEOS_WARNING( BCMessage::invalidComponentIndex( comp, fs.getName(),
-                                                        flow::globalCompFraction::key() ) );
+                                                        flow::globalCompFraction::key() ), fs.getDataContext()  );
         return;   // can't check next part with invalid component id
       }
 
