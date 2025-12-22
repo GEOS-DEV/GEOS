@@ -60,27 +60,32 @@ public:
    * @brief Constructor.
    */
   explicit MultiphasePhasePoromechanicsConformingFractures( arrayView1d< int const > const & numComponentsPerField)
-    : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] + 3 + numComponentsPerField[1] ) )
+    : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] + numComponentsPerField[1] + numComponentsPerField[2] ) )
   {
+    //totalDisplacement (3) comes first, then contact fields traction (3) and eventually compositional variables (3+)
 
     // we keep u, dens and p - elim lag mult
-    m_labels[0].resize( m_numBlocks - 3 );
-    
-    std::iota( m_labels[0].begin(), m_labels[0].end(), 7);
+    m_labels[0].resize( m_numBlocks - numComponentsPerField[1] );
+    HYPRE_Int const numResLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[2] );
 
-    m_labels[0].push_back( 0 );
-    m_labels[0].push_back( 1 );
-    m_labels[0].push_back( 2 );
-    m_labels[0].push_back( 6 );
+    m_labels[0][0]= 0;
+    m_labels[0][1]= 1;
+    m_labels[0][2]= 2;
+    m_labels[0][3]= 6;//pressure
+    for(int i=4, c=7; i<int(m_labels[0].size()); i++, c++)
+      m_labels[0][i] = c;
+  
     // we keep dens and p - elim u 
-    HYPRE_Int const numResLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[1] );
     m_labels[1].resize( numResLabels );
-    std::iota( m_labels[1].begin(), m_labels[1].end(), 7);
-    m_labels[1].push_back( 6 );
+    m_labels[1][0] = 6;
+    for(int i=1, c=7; i<int(m_labels[1].size()); i++, c++)
+      m_labels[1][i] = c;
     // we keep p - elim total density
     m_labels[2].resize( numResLabels - 1);
-    std::iota( m_labels[2].begin(), m_labels[2].end(), 7);
-    m_labels[2].push_back( 6 );
+    m_labels[2][0] = 6;
+    for(int i=1, c=7; i<int(m_labels[2].size()); i++, c++)
+      m_labels[2][i] = c;
+
     // we keep only p
     m_labels[3].push_back( 6 );
 
