@@ -8404,7 +8404,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phaseCapPressureExponentInv" type="real64_array" default="{0.5}" />
 		<!--phaseCapPressureMultiplier => Entry pressure value for each phase-->
 		<xsd:attribute name="phaseCapPressureMultiplier" type="real64_array" default="{1}" />
-		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase (between 0 and 1) used to compute the capillary pressure-->
+		<!--phaseMinVolumeFraction => Minimum volume fraction value for each phase-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />

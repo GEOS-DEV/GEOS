@@ -321,6 +321,39 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
   }
 }
 
+TEST( ErrorHandling, testStdException )
+{
+  ErrorLogger testErrorLogger;
+
+  try
+  {
+
+    throw std::invalid_argument( "received negative value" );
+  }
+  catch( std::exception & e )
+  {
+    ErrorLogger::ErrorMsg currErrorMsg = testErrorLogger.currentErrorMsg();
+    currErrorMsg.setType( ErrorLogger::MsgType::Exception )
+      .addToMsg( e.what() )
+      .addRank( ::geos::logger::internal::g_rank )
+      .addCallStackInfo( LvArray::system::stackTrace( true ) );
+
+    std::ostringstream oss;
+    ErrorLogger::writeToAscii( currErrorMsg, oss );
+    string const streamExpected = GEOS_FMT(
+      "***** Exception\n"
+      "***** Rank 0\n"
+      "***** Message :\n"
+      "{}\n",
+      currErrorMsg.m_msg);
+    GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
+                          "The error message was not containing the expected sequence.\n" <<
+                          "The error message was not containing the expected sequence.\n" <<
+                          "  Error message :\n" << oss.str() <<
+                          "  expected sequence :\n" << streamExpected );
+  }
+}
+
 TEST( ErrorHandling, testYamlFileAssertOutput )
 {
   ErrorLogger testErrorLogger;
