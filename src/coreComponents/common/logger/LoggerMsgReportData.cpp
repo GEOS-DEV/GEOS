@@ -3,6 +3,7 @@
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
+#include "common/format/table/TableTypes.hpp"
 #include "common/logger/MsgType.hpp"
 #include <sstream>
 
@@ -11,6 +12,7 @@ namespace geos
 
 void LoggerMsgReportData::increment( string const & logPartName, MsgType msgType )
 {
+  std::cout << "DEBUG-- "<< logPartName<< " " << EnumStringsCore< MsgType >::toRawString( msgType ) << std::endl;
   if( numMsgByPart.count( logPartName ) ==0 )
   {
     NumMsg numMsg{ { {msgType, 1}}, {{msgType, 1} }};
@@ -18,7 +20,8 @@ void LoggerMsgReportData::increment( string const & logPartName, MsgType msgType
   }
   else
   {
-    NumMsg numMsg = numMsgByPart[logPartName];
+    std::cout << "check "<< std::endl;
+    NumMsg & numMsg = numMsgByPart.at(logPartName);
     numMsg.numMsg[msgType]++;
     numMsg.numMsgLoc[msgType]++;
   }
@@ -27,34 +30,52 @@ void LoggerMsgReportData::increment( string const & logPartName, MsgType msgType
 template<>
 string TableTextFormatter::toString< LoggerMsgReportData >( LoggerMsgReportData const & report ) const
 {
-  stdMap< string, TableLayout > tableLayoutPerSection;
-  stdMap< string, TableData > dataPerSection;
+  TableLayout tableLayoutPerSection;
+  TableData dataPerSection;
+  /// {Numerical Methods : { Warning : 4 }, { Exception : 2 } }
+  stdMap< string, stdMap< string, int > > cells;
 
   std::ostringstream oss;
+  tableLayoutPerSection.addColumn( " Types " );
 
   for( auto const & [ logPartName, numMsg ] : report.numMsgByPart )
   {
-
-    TableLayout layout;
-    TableData tableData;
-    stdVector< TableData::CellData > cells;
-    layout.setTitle( logPartName );
+    tableLayoutPerSection.addColumn( logPartName );
     for( auto const & [ msgType, count ] : numMsg.numMsg )
     {
-      layout.addColumn( EnumStringsCore< MsgType >::toRawString( msgType ));
-      cells.push_back( {CellType::Value, std::to_string( count )} );
+      string const msgTypeStr = EnumStringsCore< MsgType >::toRawString( msgType );
+      cells.get_inserted( logPartName ).get_inserted( msgTypeStr ) = count;
     }
-    tableData.addRow( cells );
-    tableLayoutPerSection.get_inserted( logPartName ) = layout;
-    dataPerSection.get_inserted( logPartName ) = tableData;
+
+    for( size_t fooInt = (size_t) MsgType::Error; fooInt != (size_t)MsgType::Undefined; fooInt++ )
+    {
+      string type =  EnumStringsCore< MsgType >::toRawString( (MsgType) fooInt );
+      if( cells.get_inserted( logPartName ).count( type ) == 0 )
+        cells.get_inserted( logPartName ).get_inserted( type ) = 0;
+    }
   }
 
-  for( auto const & [ logPartName, layout ] : tableLayoutPerSection )
+  for( size_t fooInt = (size_t) MsgType::Error; fooInt != (size_t)MsgType::Undefined; fooInt++ )
   {
-    auto const & data = dataPerSection[logPartName];
-    TableTextFormatter textFormatter( layout );
-    oss << textFormatter.toString( data ) << "\n"; 
+    stdVector< TableData::CellData > countPerLogPart;
+    string const type=  EnumStringsCore< MsgType >::toRawString( (MsgType) fooInt );
+    countPerLogPart.push_back( {CellType::Value, type } );
+    for( auto const & [ logPartName, msgTypes ] : cells )
+    {
+      if( msgTypes.count( type ) != 0 )
+      {
+        countPerLogPart.push_back( {CellType::Value, std::to_string( msgTypes.at( type ) )} );
+      }
+      else
+      {
+        countPerLogPart.push_back( {CellType::Value, 0} );
+      }
+    }
+    dataPerSection.addRow( countPerLogPart );
   }
+
+  TableTextFormatter textFormatter( tableLayoutPerSection );
+  oss << textFormatter.toString( dataPerSection ) << "\n";
 
   return oss.str();
 }

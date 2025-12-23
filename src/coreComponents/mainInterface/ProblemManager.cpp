@@ -175,6 +175,8 @@ void ProblemManager::problemSetup()
   LogPart meshGenerationLog( "Mesh generation", MpiWrapper::commRank() == 0 );
   meshGenerationLog.begin();
     GEOS_WARNING("plouf");
+    GEOS_WARNING("plouf");
+    GEOS_WARNING("plouf");
   generateMesh();
   meshGenerationLog.end();
 
@@ -182,6 +184,11 @@ void ProblemManager::problemSetup()
   LogPart numericalMethodLog( "Numerical Methods", MpiWrapper::commRank() == 0 );
   numericalMethodLog.begin();
   applyNumericalMethods();
+    GEOS_WARNING("plouf");
+    GEOS_WARNING("plouf");
+    GEOS_WARNING("plouf");
+    GEOS_WARNING("plouf");
+    GEOS_WARNING("plouf");
   numericalMethodLog.end();
 
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
@@ -190,6 +197,11 @@ void ProblemManager::problemSetup()
 
   LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );
   importFieldsLog.begin();
+     GEOS_WARNING("plouf");
+    GEOS_WARNING("plouf");
+    GEOS_WARNING("plouf");
+    GEOS_WARNING("plouf");
+    GEOS_WARNING("plouf");
   importFields();
   importFieldsLog.end();
 }
