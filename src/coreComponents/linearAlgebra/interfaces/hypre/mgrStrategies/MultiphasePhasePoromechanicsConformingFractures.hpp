@@ -93,10 +93,10 @@ public:
     setupLabels();
 
     // Level 0 - lag mult
-    m_levelFRelaxType[0]          = MGRFRelaxationType::l1jacobi;
-    m_levelFRelaxIters[0]         = 1;
-    // m_levelFRelaxType[0]          = MGRFRelaxationType::none;
-    // m_levelFRelaxIters[0]         = 0;
+    // m_levelFRelaxType[0]          = MGRFRelaxationType::l1jacobi;
+    // m_levelFRelaxIters[0]         = 1;
+    m_levelFRelaxType[0]          = MGRFRelaxationType::none;
+    m_levelFRelaxIters[0]         = 0;
 
     m_levelInterpType[0]          = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[0]        = MGRRestrictionType::injection;
