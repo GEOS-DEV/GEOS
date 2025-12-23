@@ -174,6 +174,7 @@ void ProblemManager::problemSetup()
 
   LogPart meshGenerationLog( "Mesh generation", MpiWrapper::commRank() == 0 );
   meshGenerationLog.begin();
+    GEOS_WARNING("plouf");
   generateMesh();
   meshGenerationLog.end();
 

@@ -124,7 +124,7 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCodeLocation( std::string_view
   return *this;
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setType( ErrorLogger::MsgType msgType )
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setType( MsgType msgType )
 {
   m_type = msgType;
   return *this;
@@ -218,13 +218,13 @@ void ErrorLogger::createFile()
   }
 }
 
-std::string ErrorLogger::toString( ErrorLogger::MsgType type )
+std::string ErrorLogger::toString( MsgType type )
 {
   switch( type )
   {
-    case ErrorLogger::MsgType::Error: return "Error";
-    case ErrorLogger::MsgType::Warning: return "Warning";
-    case ErrorLogger::MsgType::Exception: return "Exception";
+    case MsgType::Error: return "Error";
+    case MsgType::Warning: return "Warning";
+    case MsgType::Exception: return "Exception";
     default: return "Unknown";
   }
 }

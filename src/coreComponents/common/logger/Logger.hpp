@@ -157,7 +157,7 @@
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
       std::ostringstream __causemsgsoss; \
       __causemsgsoss << CAUSE_MESSAGE; \
-      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Error, \
+      ErrorLogger::ErrorMsg msgStruct( MsgType::Error, \
                                        __msgoss.str(), \
                                        ::geos::logger::internal::g_rank, \
                                        __FILE__, \
@@ -166,6 +166,8 @@
       msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
       GEOS_GLOBAL_LOGGER.flushErrorMsg( msgStruct ); \
+      GEOS_GLOBAL_LOGGER.getLoggerReportData().increment( GEOS_GLOBAL_LOGGER.getCurrentLogPart(), \
+                                                          MsgType::Error ); \
       LvArray::system::callErrorHandler(); \
     } \
   }while( false )
@@ -224,10 +226,10 @@
       __msgoss << MSG; \
       std::ostringstream __causemsgsoss; \
       __causemsgsoss << CAUSE_MESSAGE; \
-      if( GEOS_GLOBAL_LOGGER.currentErrorMsg().m_type == ErrorLogger::MsgType::Undefined ) \
+      if( GEOS_GLOBAL_LOGGER.currentErrorMsg().m_type == MsgType::Undefined ) \
       {   /* first throw site, we initialize the error message completly */ \
         GEOS_GLOBAL_LOGGER.currentErrorMsg() \
-          .setType( ErrorLogger::MsgType::Exception ) \
+          .setType( MsgType::Exception ) \
           .setCodeLocation( __FILE__, __LINE__ ) \
           .setCause( __causemsgsoss.str() ) \
           .addRank( ::geos::logger::internal::g_rank ) \
@@ -240,6 +242,8 @@
       ex.prepareWhat( __msgoss.str(), __causemsgsoss.str(), \
                       __FILE__, __LINE__, \
                       ::geos::logger::internal::g_rank, LvArray::system::stackTrace( true )  ); \
+      GEOS_GLOBAL_LOGGER.getLoggerReportData().increment( GEOS_GLOBAL_LOGGER.getCurrentLogPart(), \
+                                                          MsgType::Exception ); \
       throw ex; \
     } \
   }while( false )
@@ -299,13 +303,15 @@
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
       std::ostringstream __causemsgsoss; \
       __causemsgsoss << CAUSE_MESSAGE; \
-      ErrorLogger::ErrorMsg msgStruct( ErrorLogger::MsgType::Warning, \
+      ErrorLogger::ErrorMsg msgStruct( MsgType::Warning, \
                                        __msgoss.str(), \
                                        ::geos::logger::internal::g_rank, \
                                        __FILE__, \
                                        __LINE__ ); \
       msgStruct.setCause( __causemsgsoss.str()  ); \
       msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
+      GEOS_GLOBAL_LOGGER.getLoggerReportData().increment( GEOS_GLOBAL_LOGGER.getCurrentLogPart(), \
+                                                          MsgType::Warning ); \
       GEOS_GLOBAL_LOGGER.flushErrorMsg( msgStruct ); \
     } \
   } while( false )

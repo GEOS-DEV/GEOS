@@ -21,8 +21,7 @@
 #define INITIALIZATION_ERROR_LOGGER_HPP
 
 #include "common/DataTypes.hpp"
-#include "common/format/Format.hpp"
-#include "common/format/StringUtilities.hpp"
+#include "common/logger/LoggerMsgReportData.hpp"
 
 namespace geos
 {
@@ -35,19 +34,6 @@ class ErrorLogger
 {
 
 public:
-
-  /**
-   * @enum MsgType
-   * Enum listing the different types of possible errors
-   */
-  enum class MsgType
-  {
-    Error,
-    ExternalError,
-    Warning,
-    Exception,
-    Undefined
-  };
 
   /**
    * @struct ErrorContext
@@ -130,7 +116,7 @@ public:
   struct ErrorMsg
   {
     /// the error type (Warning, Error or Exception)
-    MsgType m_type = ErrorLogger::MsgType::Undefined;
+    MsgType m_type = MsgType::Undefined;
     /// the error message that can be completed
     std::string m_msg;
     /// the cause of the error (erroneous condition, failed assertion...) if identified (optional)
@@ -340,15 +326,43 @@ private:
   std::ostream & getErrorStream()
   { return m_stream; }
 
+  /**
+   * @brief Gets the current log part.
+   * @return The current log part as a string.
+   */
+  string const & getCurrentLogPart() const
+  {return m_currentLogPart;}
+
+/**
+ * @brief Sets the current log part.
+ * @param logPart The new log part to set.
+ */
+  void setCurrentLogPart( string const & logPart )
+  { m_currentLogPart = logPart; }
+
+  /**
+   * @brief Gets the current logger report data.
+   * @return The current log part as a string.
+   */
+  LoggerMsgReportData & getLoggerReportData()
+  {return loggerMsgReportData;}
+
+
+
 private:
   /// The error constructed via exceptions
   ErrorMsg m_currentErrorMsg;
+
+  LoggerMsgReportData loggerMsgReportData = {};
+
   /// Indicate whether the write to YAML command line option is enabled
   bool m_writeYaml = false;
   /// YAML file name
   std::string_view m_filename = "errors.yaml";
   /// The stream used for the log output. By default used std::cout
   std::ostream & m_stream = std::cout;
+
+  string m_currentLogPart;
 
 
   /**

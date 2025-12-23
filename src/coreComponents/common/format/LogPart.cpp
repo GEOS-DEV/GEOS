@@ -18,6 +18,7 @@
 
 #include "LogPart.hpp"
 #include "common/format/StringUtilities.hpp"
+#include "common/logger/ErrorHandling.hpp"
 #include <algorithm>
 
 using namespace geos::stringutilities;
@@ -30,6 +31,8 @@ LogPart::LogPart( string_view logPartTitle, bool enableOutput )
   m_formattedEndDescription.m_title = GEOS_FMT( "{}{}", m_prefixEndTitle, logPartTitle );
 
   m_enableOutput = enableOutput;
+
+  ErrorLogger::global().setCurrentLogPart( string( logPartTitle ));
 }
 
 void LogPart::addDescription( string_view description )

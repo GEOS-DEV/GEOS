@@ -20,8 +20,11 @@
 #include "LvArray/src/system.hpp"
 #include "common/LifoStorageCommon.hpp"
 #include "common/MemoryInfos.hpp"
+#include "common/logger/Logger.hpp"
+#include "common/logger/LoggerMsgReportData.hpp"
 #include "logger/ErrorHandling.hpp"
 #include "logger/ExternalErrorHandler.hpp"
+#include <iostream>
 #include <umpire/TypedAllocator.hpp>
 // TPL includes
 #include <umpire/ResourceManager.hpp>
@@ -103,7 +106,7 @@ void setupLogger()
       std::string const stackHistory = LvArray::system::stackTrace( true );
 
       ErrorLogger::ErrorMsg error;
-      error.setType( ErrorLogger::MsgType::Error );
+      error.setType( MsgType::Error );
       error.addToMsg( errorMsg );
       error.addRank( ::geos::logger::internal::g_rank );
       error.addCallStackInfo( stackHistory );
@@ -132,7 +135,7 @@ void setupLogger()
 
       ErrorLogger::ErrorMsg error;
       error.addSignalToMsg( signal );
-      error.setType( ErrorLogger::MsgType::Error );
+      error.setType( MsgType::Error );
       error.addRank( ::geos::logger::internal::g_rank );
       error.addCallStackInfo( stackHistory );
       error.addContextInfo(
@@ -341,7 +344,10 @@ void setupEnvironment( int argc, char * argv[] )
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void cleanupEnvironment()
 {
+  std::cout << "ca clean "<< std::endl;
   MemoryLogging::getInstance().memoryStatsReport();
+  TableTextFormatter truc;
+  GEOS_LOG_RANK_0( truc.toString< LoggerMsgReportData >( GEOS_GLOBAL_LOGGER.getLoggerReportData()));
   LvArray::system::resetSignalHandling();
   finalizeLogger();
   finalizeCaliper();

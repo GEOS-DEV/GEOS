@@ -28,6 +28,7 @@ set( common_headers
      format/table/TableFormatter.hpp
      format/table/TableData.hpp
      format/EnumStrings.hpp
+     format/EnumStringsCore.hpp
      format/LogPart.hpp
      format/Format.hpp
      format/StringUtilities.hpp
@@ -42,6 +43,8 @@ set( common_headers
      logger/Logger.hpp
      logger/ErrorHandling.hpp
      logger/ExternalErrorHandler.hpp
+     logger/LoggerMsgReportData.hpp
+     logger/MsgType.hpp
      MpiWrapper.hpp
      Path.hpp
      Span.hpp
@@ -79,6 +82,7 @@ set( common_sources
      logger/Logger.cpp
      logger/ErrorHandling.cpp
      logger/ExternalErrorHandler.cpp
+     logger/LoggerMsgReportData.cpp
      BufferAllocator.cpp
      MemoryInfos.cpp
      MpiWrapper.cpp
