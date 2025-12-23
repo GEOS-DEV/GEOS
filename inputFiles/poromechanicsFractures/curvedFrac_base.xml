@@ -1,0 +1,238 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region"
+      cellBlocks="{  1_hexahedra,  2_hexahedra, 
+                     3_hexahedra,  4_hexahedra, 
+                                   6_hexahedra,
+                     7_hexahedra,  8_hexahedra,
+                     9_hexahedra, 10_hexahedra, 
+                                  12_hexahedra, 
+                    13_hexahedra, 14_hexahedra, 
+                    15_hexahedra               }"
+      materialList="{ water, porousRock }"/>
+
+    <CellElementRegion
+      name="Reservoir"
+      cellBlocks="{ 5_hexahedra, 11_hexahedra }"
+      materialList="{ water, porousRock }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"
+      faceBlock="fracture"
+      defaultAperture="1.0e-6"
+      materialList="{ water, faultFilling, frictionLaw, hApertureModel }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultYoungModulus="2.5e10"
+      defaultPoissonRatio="0.25"/>
+
+    <CompressibleSinglePhaseFluid 
+      name="water"
+      defaultDensity="1020"
+      defaultViscosity="0.001"
+      referencePressure="35e6"
+      referenceDensity="1020"
+      compressibility="1.e-20"
+      referenceViscosity="0.001"
+      viscosibility="0.0"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      defaultGrainBulkModulus="1.0e20"
+      defaultReferencePorosity="0.15"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{1.0e-18, 1.0e-18, 1.0e-18}"/>
+      
+    <CompressibleSolidParallelPlatesPermeability
+      name="faultFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0e6"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
+
+    <Coulomb
+      name="frictionLaw"
+      cohesion="0.0"
+      frictionCoefficient="0.577350269189626"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>   
+
+    <NullModel
+      name="nullSolid"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="fracPorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="fracturePorosity_porosity"
+      scale="1.00"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="0"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="1.0e7"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xmin, xmax }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ ymin, ymax }"/>
+
+    <FieldSpecification
+      name="zdisplacement"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zmin }"/>
+
+    <Traction
+      name="NormalTraction"
+      objectPath="faceManager"
+      tractionType="normal"
+      scale="-7.0e+07"      
+      setNames="{ zmax }"/>  	  
+
+    <FieldSpecification 
+      name="SigmaX"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region"
+      fieldName="rock_stress"
+      component="0"
+      scale="-6.0e+07"/>
+
+    <FieldSpecification 
+      name="SigmaY"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region"
+      fieldName="rock_stress"
+      component="1"
+      scale="-6.0e+07"/>
+
+    <FieldSpecification 
+      name="SigmaZ"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region"
+      fieldName="rock_stress"
+      component="2"
+      scale="-6.0e+07"/>
+
+    <FieldSpecification 
+      name="SigmaX_res"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="rock_stress"
+      component="0"
+      scale="-6.0e+07"/>
+
+    <FieldSpecification 
+      name="SigmaY_res"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="rock_stress"
+      component="1"
+      scale="-6.0e+07"/>
+
+    <FieldSpecification 
+      name="SigmaZ_res"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="rock_stress"
+      component="2"
+      scale="-6.0e+07"/>
+
+    <FieldSpecification
+      name="reservoirPressure"
+      initialCondition="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir"
+      fieldName="pressure"      
+      scale="1.0e7"
+      functionName="timeFunction"/> 
+
+  </FieldSpecifications>
+
+  <Functions>    
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-3, 1.0e-3 }"/>
+
+    <TableFunction
+      name="timeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 100.0 }"
+      values="{ 1.0, 3.0 }"/>
+
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="vtkOutput"/>
+
+    <Restart
+      name="restarts"/>  
+  </Outputs>
+</Problem>
