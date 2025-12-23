@@ -158,6 +158,8 @@ Table of Contents
 
    docs/sphinx/Acknowledgements
 
+   docs/check
+
 *********************
 Indices and tables
 *********************
