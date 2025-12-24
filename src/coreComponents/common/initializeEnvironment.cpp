@@ -344,7 +344,6 @@ void setupEnvironment( int argc, char * argv[] )
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void cleanupEnvironment()
 {
-  std::cout << "ca clean "<< std::endl;
   MemoryLogging::getInstance().memoryStatsReport();
   TableTextFormatter truc;
   GEOS_LOG_RANK_0( truc.toString< LoggerMsgReportData >( GEOS_GLOBAL_LOGGER.getLoggerReportData()));

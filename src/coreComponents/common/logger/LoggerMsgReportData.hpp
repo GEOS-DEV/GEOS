@@ -46,6 +46,4 @@ string TableTextFormatter::toString<LoggerMsgReportData>(LoggerMsgReportData con
 
 }
 
-
-
 #endif

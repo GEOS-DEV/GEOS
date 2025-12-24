@@ -166,8 +166,7 @@
       msgStruct.addCallStackInfo( LvArray::system::stackTrace( true ) ); \
       msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
       GEOS_GLOBAL_LOGGER.flushErrorMsg( msgStruct ); \
-      GEOS_GLOBAL_LOGGER.getLoggerReportData().increment( GEOS_GLOBAL_LOGGER.getCurrentLogPart(), \
-                                                          MsgType::Error ); \
+      GEOS_GLOBAL_LOGGER.incrementMsgCount( MsgType::Error ); \
       LvArray::system::callErrorHandler(); \
     } \
   }while( false )
@@ -242,8 +241,7 @@
       ex.prepareWhat( __msgoss.str(), __causemsgsoss.str(), \
                       __FILE__, __LINE__, \
                       ::geos::logger::internal::g_rank, LvArray::system::stackTrace( true )  ); \
-      GEOS_GLOBAL_LOGGER.getLoggerReportData().increment( GEOS_GLOBAL_LOGGER.getCurrentLogPart(), \
-                                                          MsgType::Exception ); \
+      GEOS_GLOBAL_LOGGER.incrementMsgCount( MsgType::Exception ); \
       throw ex; \
     } \
   }while( false )
@@ -310,8 +308,7 @@
                                        __LINE__ ); \
       msgStruct.setCause( __causemsgsoss.str()  ); \
       msgStruct.addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ); \
-      GEOS_GLOBAL_LOGGER.getLoggerReportData().increment( GEOS_GLOBAL_LOGGER.getCurrentLogPart(), \
-                                                          MsgType::Warning ); \
+      GEOS_GLOBAL_LOGGER.incrementMsgCount( MsgType::Warning ); \
       GEOS_GLOBAL_LOGGER.flushErrorMsg( msgStruct ); \
     } \
   } while( false )

@@ -22,6 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/logger/LoggerMsgReportData.hpp"
+#include "common/logger/MsgType.hpp"
 
 namespace geos
 {
@@ -340,12 +341,19 @@ private:
   void setCurrentLogPart( string const & logPart )
   { m_currentLogPart = logPart; }
 
+    /**
+   * @brief Gets the current logger report data.
+   * @return The current log part as a string.
+   */
+  LoggerMsgReportData const & getLoggerReportData() const
+  {return loggerMsgReportData;}
+
   /**
    * @brief Gets the current logger report data.
    * @return The current log part as a string.
    */
-  LoggerMsgReportData & getLoggerReportData()
-  {return loggerMsgReportData;}
+  void incrementMsgCount( MsgType msgtype )
+  {loggerMsgReportData.increment( getCurrentLogPart(), msgtype );}
 
 
 
