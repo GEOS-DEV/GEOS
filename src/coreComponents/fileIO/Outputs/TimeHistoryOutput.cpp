@@ -145,10 +145,11 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
     {
       string const errorMsg = GEOS_FMT( "Error while reading {}:\n",
                                         getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ) );
-      ErrorLogger::global().currentErrorMsg()
+      ErrorLogger::global().beginLogger()
         .addToMsg( errorMsg )
         .addContextInfo( getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ).getContextInfo()
-                           .setPriority( 1 ) );
+                           .setPriority( 1 ) )
+        .commit();
       throw InputError( e, errorMsg );
     }
   }

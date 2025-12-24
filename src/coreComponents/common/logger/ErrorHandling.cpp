@@ -174,6 +174,69 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string_vie
   return *this;
 }
 
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addToMsg( std::exception const & e, bool toEnd )
+{
+  m_errorContext.m_currentErrorMsg.addToMsg( e, toEnd );
+  return *this;
+}
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addToMsg( std::string_view msg, bool toEnd )
+{
+  m_errorContext.m_currentErrorMsg.addToMsg( msg, toEnd );
+  return *this;
+}
+
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addSignalToMsg( int sig, bool toEnd )
+{
+  m_errorContext.m_currentErrorMsg.addSignalToMsg( sig, toEnd );
+  return *this;
+}
+
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setCodeLocation( std::string_view msgFile, integer msgLine )
+{
+  if( !m_errorContext.m_currentErrorMsg.isCommited() )
+  {
+    m_errorContext.m_currentErrorMsg.setCodeLocation( msgFile, msgLine );
+  }
+  return *this;
+}
+
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setType( ErrorLogger::MsgType msgType )
+{
+  if( !m_errorContext.m_currentErrorMsg.isCommited() )
+  {
+    m_errorContext.m_currentErrorMsg.setType( msgType );
+  }
+  return *this;
+}
+
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setCause( std::string_view cause )
+{
+  if( !m_errorContext.m_currentErrorMsg.isCommited() )
+  {
+    m_errorContext.m_currentErrorMsg.setCause( cause );
+  }
+  return *this;
+}
+
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addRank( int rank )
+{
+  if( !m_errorContext.m_currentErrorMsg.isCommited() )
+  {
+    m_errorContext.m_currentErrorMsg.addRank( rank );
+  }
+  return *this;
+}
+
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addCallStackInfo( std::string_view ossStackTrace )
+{
+  if( !m_errorContext.m_currentErrorMsg.isCommited() )
+  {
+    m_errorContext.m_currentErrorMsg.addCallStackInfo( ossStackTrace );
+  }
+  return *this;
+}
+
+
 void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile,
                                                 std::string_view indent )
 {
@@ -285,31 +348,32 @@ void ErrorLogger::writeToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostre
   }
 }
 
-void ErrorLogger::writeToYaml( ErrorMsg & errorMsg )
+void ErrorLogger::writeToYaml()
 {
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
   if( yamlFile.is_open() )
   {
     // General errors info (type, rank on which the error occured)
-    yamlFile << g_level1Start << "type: " << ErrorLogger::toString( errorMsg.m_type ) << "\n";
-    yamlFile << g_level1Next << "rank: " << stringutilities::join( errorMsg.m_ranksInfo, "," );
+    yamlFile << g_level1Start << "type: " << ErrorLogger::toString( m_currentErrorMsg.m_type ) << "\n";
+    yamlFile << g_level1Next << "rank: " << stringutilities::join( m_currentErrorMsg.m_ranksInfo, "," );
     yamlFile << "\n";
 
     // Error message
     yamlFile << g_level1Next << "message: >-\n";
-    streamMultilineYamlAttribute( errorMsg.m_msg, yamlFile, g_level2Next );
+    streamMultilineYamlAttribute( m_currentErrorMsg.m_msg, yamlFile, g_level2Next );
 
     // context information
-    if( !errorMsg.m_contextsInfo.empty() )
+    if( !m_currentErrorMsg.m_contextsInfo.empty() )
     {
+      std::vector< ErrorContext > contextInfo = m_currentErrorMsg.m_contextsInfo;
       // Sort contextual information by decreasing priority
-      std::sort( errorMsg.m_contextsInfo.begin(), errorMsg.m_contextsInfo.end(),
+      std::sort( contextInfo.begin(), contextInfo.end(),
                  []( const ErrorLogger::ErrorContext & a, const ErrorLogger::ErrorContext & b ) {
         return a.m_priority > b.m_priority;
       } );
       // Additional informations about the context of the error and priority information of each context
       yamlFile << g_level1Next << "contexts:\n";
-      for( ErrorContext const & ctxInfo : errorMsg.m_contextsInfo )
+      for( ErrorContext const & ctxInfo : contextInfo )
       {
         yamlFile << g_level3Start << "priority: " << ctxInfo.m_priority << "\n";
         for( auto const & [key, value] : ctxInfo.m_attributes )
@@ -320,34 +384,34 @@ void ErrorLogger::writeToYaml( ErrorMsg & errorMsg )
     }
 
     // error cause
-    if( !errorMsg.m_cause.empty() )
+    if( !m_currentErrorMsg.m_cause.empty() )
     {
       yamlFile << g_level1Next << "cause: >-\n";
-      streamMultilineYamlAttribute( errorMsg.m_cause, yamlFile, g_level2Next );
+      streamMultilineYamlAttribute( m_currentErrorMsg.m_cause, yamlFile, g_level2Next );
     }
 
     // Location of the error in the code
-    if( !errorMsg.m_file.empty() )
+    if( !m_currentErrorMsg.m_file.empty() )
     {
       yamlFile << g_level1Next << "sourceLocation:\n";
-      yamlFile << g_level2Next << "file: " << errorMsg.m_file << "\n";
-      yamlFile << g_level2Next << "line: " << errorMsg.m_line << "\n";
+      yamlFile << g_level2Next << "file: " << m_currentErrorMsg.m_file << "\n";
+      yamlFile << g_level2Next << "line: " << m_currentErrorMsg.m_line << "\n";
     }
     // Information about the stack trace
-    if( !errorMsg.m_sourceCallStack.empty() )
+    if( !m_currentErrorMsg.m_sourceCallStack.empty() )
     {
       yamlFile << g_level1Next << "sourceCallStack:\n";
-      for( size_t i = 0; i < errorMsg.m_sourceCallStack.size(); i++ )
+      for( size_t i = 0; i < m_currentErrorMsg.m_sourceCallStack.size(); i++ )
       {
-        yamlFile << ( errorMsg.isValidStackTrace() ?
-                      GEOS_FMT( "{}frame{}: {}\n", g_level3Start, i, errorMsg.m_sourceCallStack[i] ) :
-                      GEOS_FMT( "{}{}\n", g_level3Start, errorMsg.m_sourceCallStack[i] ) );
+        yamlFile << ( m_currentErrorMsg.isValidStackTrace() ?
+                      GEOS_FMT( "{}frame{}: {}\n", g_level3Start, i, m_currentErrorMsg.m_sourceCallStack[i] ) :
+                      GEOS_FMT( "{}{}\n", g_level3Start, m_currentErrorMsg.m_sourceCallStack[i] ) );
       }
     }
 
     yamlFile << "\n";
     yamlFile.flush();
-    errorMsg = ErrorMsg();
+    m_currentErrorMsg = ErrorMsg();
     GEOS_LOG_RANK( GEOS_FMT( "The error file {} has been appended.", m_filename ) );
   }
   else
@@ -356,12 +420,12 @@ void ErrorLogger::writeToYaml( ErrorMsg & errorMsg )
   }
 }
 
-void ErrorLogger::flushErrorMsg( ErrorMsg & errorMsg )
+void ErrorLogger::flushErrorMsg()
 {
-  writeToAscii( errorMsg, getErrorStream() );
+  writeToAscii( m_currentErrorMsg, m_stream );
   if( isOutputFileEnabled() )
   {
-    writeToYaml( errorMsg );
+    writeToYaml();
   }
 }
 

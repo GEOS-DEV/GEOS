@@ -165,7 +165,7 @@ public:
               integer rank,
               std::string_view msgFile,
               integer msgLine )
-      : m_type( msgType ), m_msg( msgContent ), m_ranksInfo( {rank} ), m_file( msgFile ), m_line( msgLine ) {}
+      : m_type( msgType ), m_msg( msgContent ), m_ranksInfo( {rank} ), m_file( msgFile ), m_line( msgLine ), m_commit( false ) {}
 
     /**
      * @brief Add text to the current error msg
@@ -246,15 +246,102 @@ public:
     bool isValidStackTrace() const
     { return m_isValidStackTrace; }
 
+    /**
+     * @return whether the error message has been finalized and committed.
+     */
+    bool isCommited() const
+    { return m_commit; }
+    
+    /**
+     * @brief  Marks the error message as committed (finalized).
+     */
+    void commitErrorMsg()
+    { m_commit = true; }
+
 private:
     /**
      * @brief Add contextual information about the error/warning
      * @param ctxInfo rvalue of the ErrorContext class
      */
     void addContextInfoImpl( ErrorContext && ctxInfo );
-
+    /// Indicates whether the stored call stack trace is valid and usable.
     bool m_isValidStackTrace = false;
+    /// Indicates whether the error message has been fully constructed and finalized.
+    bool m_commit = false;
   };
+
+  /**
+   * @brief Builder class for constructing ErrorMsg objects
+   */
+  class ErrorMsgBuilder
+  {
+public:
+    ErrorMsgBuilder( ErrorLogger & errorContext ): m_errorContext( errorContext ){};
+    /**
+     * @copydoc ErrorLogger:ErrorMsg::addToMsg( std::exception const & e, bool toEnd  = false )
+     */
+    ErrorMsgBuilder & addToMsg( std::exception const & e, bool toEnd  = false );
+    /**
+     * @copydoc ErrorLogger:ErrorMsg::addToMsg( std::string_view msg, bool toEnd = false )
+     */
+    ErrorMsgBuilder & addToMsg( std::string_view msg, bool toEnd = false );
+    /**
+     * @copydoc ErrorLogger:ErrorMsg::addContextInfo( Args && ... args )
+     */
+    template< typename ... Args >
+    ErrorMsgBuilder & addContextInfo( Args && ... args )
+    {
+      ( m_errorContext.m_currentErrorMsg.addContextInfo( ErrorContext( args ) ), ... );
+      return *this;
+    }
+    /**
+     * @copydoc ErrorLogger:ErrorMsg::addSignalToMsg( int sig, bool toEnd = false );
+     */
+    ErrorMsgBuilder & addSignalToMsg( int sig, bool toEnd = false );
+    /**
+     * @copydoc ErrorLogger:ErrorMsg::setCodeLocation( std::string_view msgFile, integer msgLine )
+     */
+    ErrorMsgBuilder & setCodeLocation( std::string_view msgFile, integer msgLine );
+    /**
+     * @copydoc ErrorLogger:ErrorMsg::setType( ErrorLogger::MsgType msgType )
+     */
+    ErrorMsgBuilder & setType( ErrorLogger::MsgType msgType );
+    /**
+     * @copydoc ErrorLogger:ErrorMsg::setCause( std::string_view cause )
+     */
+    ErrorMsgBuilder & setCause( std::string_view cause );
+    /**
+     * @copydoc ErrorLogger:ErrorMsg::addRank( int rank );
+     */
+    ErrorMsgBuilder & addRank( int rank );
+    /**
+     * @copydoc ErrorLogger:ErrorMsg::addCallStackInfo( std::string_view ossStackTrace )
+     */
+    ErrorMsgBuilder & addCallStackInfo( std::string_view ossStackTrace );
+    /**
+     * @brief Finalizes the error message construction
+     * @note Calling commit() does not flush/output the error;
+     */
+    void commit()
+    { m_errorContext.m_currentErrorMsg.commitErrorMsg(); }
+    /**
+     * @copydoc ErrorLogger::flushErrorMsg()
+     */
+    void flush()
+    { m_errorContext.flushErrorMsg(); }
+
+private:
+    ///@copydoc ErrorLogger::m_errorContext
+    ErrorLogger & m_errorContext;
+  };
+  /**
+   * @brief Creates and returns a new ErrorMsgBuilder to begin constructing an error message.
+   * @return A new ErrorMsgBuilder instance
+   */
+  ErrorMsgBuilder beginLogger()
+  {
+    return ErrorMsgBuilder( *this );
+  }
 
   /**
    * @return Global instance of the ErrorLogger class used for error/warning reporting.
@@ -271,6 +358,12 @@ private:
    */
   void enableFileOutput( bool value )
   { m_writeYaml = value; }
+
+  /**
+   * @return true if the YAML file output is enabled
+   */
+  bool isOutputFileEnabled() const
+  { return m_writeYaml; }
 
   /**
    * @brief Set the name of the YAML file if specified by user
@@ -291,7 +384,7 @@ private:
    *        potencially at various application layers (Typically for exceptions)
    * @return Reference to the current error message instance;
    */
-  ErrorMsg & currentErrorMsg()
+  ErrorMsg const & currentErrorMsg() const
   { return m_currentErrorMsg; }
 
   /**
@@ -319,25 +412,19 @@ private:
    *        and reset the errorMsg instance to its initial state
    * @param errorMsg a constant reference to the error
    */
-  void writeToYaml( ErrorMsg & errorMsg );
+  void writeToYaml();
 
   /**
    * @brief Write all the information retrieved about the error/warning message into the output stream specified and
    * optionnaly into a yaml file
    * @param errorMsg a constant reference to the ErrorMsg
    */
-  void flushErrorMsg( ErrorMsg & errorMsg );
+  void flushErrorMsg();
 
   /**
    * @return Return the const general log stream
    */
   std::ostream const & getErrorStream() const
-  { return m_stream; }
-
-  /**
-   * @return Return the reference general log stream
-   */
-  std::ostream & getErrorStream()
   { return m_stream; }
 
 private:
@@ -349,13 +436,6 @@ private:
   std::string_view m_filename = "errors.yaml";
   /// The stream used for the log output. By default used std::cout
   std::ostream & m_stream = std::cout;
-
-
-  /**
-   * @return true if the YAML file output is enabled
-   */
-  bool isOutputFileEnabled() const
-  { return m_writeYaml; }
 
   /**
    * @brief Write the error message in the YAML file regarding indentation and line break

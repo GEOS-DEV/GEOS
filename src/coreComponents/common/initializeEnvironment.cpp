@@ -102,17 +102,16 @@ void setupLogger()
 
       std::string const stackHistory = LvArray::system::stackTrace( true );
 
-      ErrorLogger::ErrorMsg error;
-      error.setType( ErrorLogger::MsgType::Error );
-      error.addToMsg( errorMsg );
-      error.addRank( ::geos::logger::internal::g_rank );
-      error.addCallStackInfo( stackHistory );
-      error.addContextInfo(
+      ErrorLogger::global().beginLogger()
+        .setType( ErrorLogger::MsgType::Error )
+        .addToMsg( errorMsg )
+        .addRank( ::geos::logger::internal::g_rank )
+        .addCallStackInfo( stackHistory )
+        .addContextInfo(
         ErrorContext{  string( detectionLocation ),
                        { { ErrorContext::Attribute::DetectionLoc, string( detectionLocation ) } },
-        } );
-
-      ErrorLogger::global().flushErrorMsg( error );
+        } )
+        .flush();
 
       // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
     } );
@@ -130,17 +129,15 @@ void setupLogger()
       // error message output
       std::string const stackHistory = LvArray::system::stackTrace( true );
 
-      ErrorLogger::ErrorMsg error;
-      error.addSignalToMsg( signal );
-      error.setType( ErrorLogger::MsgType::Error );
-      error.addRank( ::geos::logger::internal::g_rank );
-      error.addCallStackInfo( stackHistory );
-      error.addContextInfo(
+      ErrorLogger::global().beginLogger()
+        .addSignalToMsg( signal )
+        .setType( ErrorLogger::MsgType::Error )
+        .addRank( ::geos::logger::internal::g_rank )
+        .addCallStackInfo( stackHistory )
+        .addContextInfo(
         ErrorContext{ { { ErrorContext::Attribute::Signal, std::to_string( signal ) } }, 1 },
-        ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( "signal handler" ) } }, 0 } );
-
-      ErrorLogger::global().flushErrorMsg( error );
-
+        ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( "signal handler" ) } }, 0 } )
+        .flush();
 
       // call program termination
       LvArray::system::callErrorHandler();

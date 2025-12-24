@@ -178,7 +178,7 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
   catch( geos::DomainError const & ex )
   {
     string const errorMsg = "Table input error.\n";
-    testErrorLogger.currentErrorMsg()
+    testErrorLogger.beginLogger()
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
       .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
@@ -194,7 +194,7 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
                           "  Error message :\n" << ex.what() <<
                           "  expected sequence :\n" << whatExpected );
   }
-  testErrorLogger.flushErrorMsg( testErrorLogger.currentErrorMsg() );
+  testErrorLogger.flushErrorMsg();
 
   endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
@@ -289,8 +289,7 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
   catch( geos::DomainError const & ex )
   {
     string const errorMsg = "Table input error.\n";
-    ErrorLogger::ErrorMsg currErrorMsg = testErrorLogger.currentErrorMsg();
-    currErrorMsg
+    testErrorLogger.beginLogger()
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
       .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
@@ -305,14 +304,14 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
       "***** Additional contexts:\n"
       "***** - {}\n"
       "***** - {}\n",
-      currErrorMsg.m_file, line1,
-      currErrorMsg.m_cause,
+      testErrorLogger.currentErrorMsg().m_file, line1,
+      testErrorLogger.currentErrorMsg().m_cause,
       context.toString(),
-      currErrorMsg.m_msg,
+      testErrorLogger.currentErrorMsg().m_msg,
       additionalContext.toString(),
-      importantAdditionalContext.toString(), currErrorMsg.m_sourceCallStack );
+      importantAdditionalContext.toString(), testErrorLogger.currentErrorMsg().m_sourceCallStack );
     std::ostringstream oss;
-    ErrorLogger::writeToAscii( currErrorMsg, oss );
+    ErrorLogger::writeToAscii( testErrorLogger.currentErrorMsg(), oss );
     GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
                           "The error message was not containing the expected sequence.\n" <<
                           "The error message was not containing the expected sequence.\n" <<
@@ -332,20 +331,20 @@ TEST( ErrorHandling, testStdException )
   }
   catch( std::exception & e )
   {
-    ErrorLogger::ErrorMsg currErrorMsg = testErrorLogger.currentErrorMsg();
-    currErrorMsg.setType( ErrorLogger::MsgType::Exception )
+    testErrorLogger.beginLogger()
+      .setType( ErrorLogger::MsgType::Exception )
       .addToMsg( e.what() )
       .addRank( ::geos::logger::internal::g_rank )
       .addCallStackInfo( LvArray::system::stackTrace( true ) );
 
     std::ostringstream oss;
-    ErrorLogger::writeToAscii( currErrorMsg, oss );
+    ErrorLogger::writeToAscii( testErrorLogger.currentErrorMsg(), oss );
     string const streamExpected = GEOS_FMT(
       "***** Exception\n"
       "***** Rank 0\n"
       "***** Message :\n"
       "{}\n",
-      currErrorMsg.m_msg);
+      testErrorLogger.currentErrorMsg().m_msg );
     GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
                           "The error message was not containing the expected sequence.\n" <<
                           "The error message was not containing the expected sequence.\n" <<

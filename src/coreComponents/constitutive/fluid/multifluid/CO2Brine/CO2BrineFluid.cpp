@@ -172,9 +172,10 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
   {
     string const errorMsg = GEOS_FMT( "Table input error for {} phase (in table from \"{}\").\n",
                                       m_phaseNames[m_p1Index], m_phasePVTParaFiles[m_p1Index] );
-    ErrorLogger::global().currentErrorMsg()
+    ErrorLogger::global().beginLogger()
       .addToMsg( errorMsg )
-      .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
+      .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) )
+      .commit();
     throw SimulationError( ex, errorMsg );
   }
 
@@ -187,9 +188,10 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
   {
     string const errorMsg = GEOS_FMT( "Table input error for {} phase (in table from \"{}\").\n",
                                       m_phaseNames[m_p2Index], m_phasePVTParaFiles[m_p2Index] );
-    ErrorLogger::global().currentErrorMsg()
+    ErrorLogger::global().beginLogger()
       .addToMsg( errorMsg )
-      .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
+      .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) )
+      .commit();
     throw SimulationError( ex, errorMsg );
   }
 
@@ -200,9 +202,10 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::checkTablesParameters( real64 const
   {
     string const errorMsg = GEOS_FMT( "Table input error for flash phase (in table from \"{}\").\n",
                                       m_flashModelParaFile );
-    ErrorLogger::global().currentErrorMsg()
+    ErrorLogger::global().beginLogger()
       .addToMsg( errorMsg )
-      .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
+      .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) )
+      .commit();
     throw SimulationError( ex, errorMsg );
   }
 }
