@@ -152,7 +152,13 @@ public:
               integer rank,
               std::string_view msgFile,
               integer msgLine )
-      : m_type( msgType ), m_msg( msgContent ), m_ranksInfo( {rank} ), m_file( msgFile ), m_line( msgLine ), m_commit( false ) {}
+      :
+      m_type( msgType ),
+      m_msg( msgContent ),
+      m_ranksInfo( {rank} ),
+      m_file( msgFile ),
+      m_line( msgLine ),
+      m_commit( false ) {}
 
     /**
      * @brief Add text to the current error msg
@@ -161,7 +167,7 @@ public:
      *              default is false
      * @return Reference to the current instance for method chaining.
      */
-    ErrorMsg & addToMsg( std::exception const & e, bool toEnd = false );
+    ErrorMsg & addToMsg( std::exception const & e, bool const toEnd = false );
 
     /**
      * @brief Add text to the current error msg
@@ -170,7 +176,7 @@ public:
      *              default is false
      * @return Reference to the current instance for method chaining.
      */
-    ErrorMsg & addToMsg( std::string_view msg, bool toEnd = false );
+    ErrorMsg & addToMsg( std::string_view msg, bool const toEnd = false );
 
     /**
      * @brief Add text to the error msg that occured according to the specified signal.
@@ -180,7 +186,7 @@ public:
      * @param toEnd adds the message to the end if true, at the start otherwise.
      * @return The instance, for builder pattern.
      */
-    ErrorMsg & addSignalToMsg( int signal, bool toEnd = false );
+    ErrorMsg & addSignalToMsg( integer const signal, bool const toEnd = false );
 
     /**
      * @brief Set the source code location values (file and line where the error is detected)
@@ -188,14 +194,14 @@ public:
      * @param msgLine Line of the source file location to add
      * @return Reference to the current instance for method chaining.
      */
-    ErrorMsg & setCodeLocation( std::string_view msgFile, integer msgLine );
+    ErrorMsg & setCodeLocation( std::string_view msgFile, integer const msgLine );
 
     /**
      * @brief Set the type of the error
      * @param msgType The type can be error, warning or exception
      * @return Reference to the current instance for method chaining.
      */
-    ErrorMsg & setType( MsgType msgType );
+    ErrorMsg & setType( MsgType const msgType );
 
     /**
      * @brief Set the cause of the error
@@ -209,7 +215,7 @@ public:
      * @param rank The value to add
      * @return Reference to the current instance for method chaining.
      */
-    ErrorMsg & addRank( int rank );
+    ErrorMsg & addRank( integer const rank );
 
     /**
      * @brief Add stack trace information about the error
@@ -252,6 +258,7 @@ private:
      */
     void addContextInfoImpl( ErrorContext && ctxInfo );
     /// Indicates whether the stored call stack trace is valid and usable.
+    /// Indicates whether the stored call stack trace is valid and usable.
     bool m_isValidStackTrace = false;
     /// Indicates whether the error message has been fully constructed and finalized.
     bool m_commit = false;
@@ -271,7 +278,7 @@ public:
     /**
      * @copydoc ErrorLogger:ErrorMsg::addToMsg( std::string_view msg, bool toEnd = false )
      */
-    ErrorMsgBuilder & addToMsg( std::string_view msg, bool toEnd = false );
+    ErrorMsgBuilder & addToMsg( std::string_view msg, bool const toEnd = false );
     /**
      * @copydoc ErrorLogger:ErrorMsg::addContextInfo( Args && ... args )
      */
@@ -284,15 +291,15 @@ public:
     /**
      * @copydoc ErrorLogger:ErrorMsg::addSignalToMsg( int sig, bool toEnd = false );
      */
-    ErrorMsgBuilder & addSignalToMsg( int sig, bool toEnd = false );
+    ErrorMsgBuilder & addSignalToMsg( integer const sig, bool toEnd = false );
     /**
      * @copydoc ErrorLogger:ErrorMsg::setCodeLocation( std::string_view msgFile, integer msgLine )
      */
-    ErrorMsgBuilder & setCodeLocation( std::string_view msgFile, integer msgLine );
+    ErrorMsgBuilder & setCodeLocation( std::string_view msgFile, integer const msgLine );
     /**
      * @copydoc ErrorLogger:ErrorMsg::setType( MsgType msgType )
      */
-    ErrorMsgBuilder & setType( MsgType msgType );
+    ErrorMsgBuilder & setType( MsgType const msgType );
     /**
      * @copydoc ErrorLogger:ErrorMsg::setCause( std::string_view cause )
      */
@@ -300,7 +307,7 @@ public:
     /**
      * @copydoc ErrorLogger:ErrorMsg::addRank( int rank );
      */
-    ErrorMsgBuilder & addRank( int rank );
+    ErrorMsgBuilder & addRank( integer const rank );
     /**
      * @copydoc ErrorLogger:ErrorMsg::addCallStackInfo( std::string_view ossStackTrace )
      */
@@ -310,20 +317,12 @@ public:
      * @note Calling commit() does not flush/output the error;
      */
     void commit()
-    {
-      m_errorContext.loggerMsgReportData.increment( m_errorContext.getCurrentLogPart(),
-                                                    m_errorContext.m_currentErrorMsg.m_type );
-      m_errorContext.m_currentErrorMsg.commitErrorMsg();
-    }
+    { m_errorContext.m_currentErrorMsg.commitErrorMsg(); }
     /**
      * @copydoc ErrorLogger::flushErrorMsg()
      */
     void flush()
-    {
-      m_errorContext.loggerMsgReportData.increment( m_errorContext.getCurrentLogPart(),
-                                                    m_errorContext.m_currentErrorMsg.m_type );
-      m_errorContext.flushErrorMsg();
-    }
+    { m_errorContext.flushErrorMsg(); }
 
 private:
     ///@copydoc ErrorLogger::m_errorContext

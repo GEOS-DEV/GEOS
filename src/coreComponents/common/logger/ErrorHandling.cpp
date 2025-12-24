@@ -117,14 +117,14 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addSignalToMsg( int sig, bool toE
   }
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCodeLocation( std::string_view msgFile, integer msgLine )
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCodeLocation( std::string_view msgFile, integer const msgLine )
 {
   m_file = msgFile;
   m_line = msgLine;
   return *this;
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setType( MsgType msgType )
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setType( MsgType const msgType )
 {
   m_type = msgType;
   return *this;
@@ -141,7 +141,7 @@ void ErrorLogger::ErrorMsg::addContextInfoImpl( ErrorLogger::ErrorContext && ctx
   m_contextsInfo.emplace_back( std::move( ctxInfo ) );
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addRank( int rank )
+ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addRank( integer const rank )
 {
   m_ranksInfo.emplace( rank );
   return *this;
@@ -174,7 +174,7 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string_vie
   return *this;
 }
 
-ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addToMsg( std::exception const & e, bool toEnd )
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addToMsg( std::exception const & e, bool const toEnd )
 {
   m_errorContext.m_currentErrorMsg.addToMsg( e, toEnd );
   return *this;
@@ -185,13 +185,14 @@ ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addToMsg( std::stri
   return *this;
 }
 
-ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addSignalToMsg( int sig, bool toEnd )
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addSignalToMsg( integer const sig, bool const toEnd )
 {
   m_errorContext.m_currentErrorMsg.addSignalToMsg( sig, toEnd );
   return *this;
 }
 
-ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setCodeLocation( std::string_view msgFile, integer msgLine )
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setCodeLocation( std::string_view msgFile,
+                                                                              integer const msgLine )
 {
   if( !m_errorContext.m_currentErrorMsg.isCommited() )
   {
@@ -200,7 +201,7 @@ ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setCodeLocation( st
   return *this;
 }
 
-ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setType( MsgType msgType )
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setType( MsgType const msgType )
 {
   if( !m_errorContext.m_currentErrorMsg.isCommited() )
   {
@@ -218,7 +219,7 @@ ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setCause( std::stri
   return *this;
 }
 
-ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addRank( int rank )
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addRank( integer const rank )
 {
   if( !m_errorContext.m_currentErrorMsg.isCommited() )
   {
@@ -235,7 +236,6 @@ ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addCallStackInfo( s
   }
   return *this;
 }
-
 
 void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile,
                                                 std::string_view indent )
@@ -281,7 +281,7 @@ void ErrorLogger::createFile()
   }
 }
 
-std::string ErrorLogger::toString( MsgType type )
+std::string ErrorLogger::toString( MsgType const type )
 {
   switch( type )
   {
@@ -412,7 +412,6 @@ void ErrorLogger::writeToYaml()
     yamlFile << "\n";
     yamlFile.flush();
     m_currentErrorMsg = ErrorMsg();
-    GEOS_LOG_RANK( GEOS_FMT( "The error file {} has been appended.", m_filename ) );
   }
   else
   {
