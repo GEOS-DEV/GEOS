@@ -317,12 +317,20 @@ public:
      * @note Calling commit() does not flush/output the error;
      */
     void commit()
-    { m_errorContext.m_currentErrorMsg.commitErrorMsg(); }
+    {
+      m_errorContext.loggerMsgReportData.increment( m_errorContext.getCurrentLogPart(),
+                                                    m_errorContext.m_currentErrorMsg.m_type );
+      m_errorContext.m_currentErrorMsg.commitErrorMsg();
+    }
     /**
      * @copydoc ErrorLogger::flushErrorMsg()
      */
     void flush()
-    { m_errorContext.flushErrorMsg(); }
+    {
+      m_errorContext.loggerMsgReportData.increment( m_errorContext.getCurrentLogPart(),
+                                                    m_errorContext.m_currentErrorMsg.m_type );
+      m_errorContext.flushErrorMsg();
+    }
 
 private:
     ///@copydoc ErrorLogger::m_errorContext
