@@ -251,7 +251,7 @@ public:
      */
     bool isCommited() const
     { return m_commit; }
-    
+
     /**
      * @brief  Marks the error message as committed (finalized).
      */
