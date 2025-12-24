@@ -412,7 +412,6 @@ void ErrorLogger::writeToYaml()
     yamlFile << "\n";
     yamlFile.flush();
     m_currentErrorMsg = ErrorMsg();
-    GEOS_LOG_RANK( GEOS_FMT( "The error file {} has been appended.", m_filename ) );
   }
   else
   {
