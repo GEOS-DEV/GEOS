@@ -332,7 +332,7 @@ TEST( ErrorHandling, testStdException )
   catch( std::exception & e )
   {
     testErrorLogger.beginLogger()
-      .setType( ErrorLogger::MsgType::Exception )
+      .setType( MsgType::Exception )
       .addToMsg( e.what() )
       .addRank( ::geos::logger::internal::g_rank )
       .addCallStackInfo( LvArray::system::stackTrace( true ) );

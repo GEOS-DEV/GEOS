@@ -290,9 +290,9 @@ public:
      */
     ErrorMsgBuilder & setCodeLocation( std::string_view msgFile, integer msgLine );
     /**
-     * @copydoc ErrorLogger:ErrorMsg::setType( ErrorLogger::MsgType msgType )
+     * @copydoc ErrorLogger:ErrorMsg::setType( MsgType msgType )
      */
-    ErrorMsgBuilder & setType( ErrorLogger::MsgType msgType );
+    ErrorMsgBuilder & setType( MsgType msgType );
     /**
      * @copydoc ErrorLogger:ErrorMsg::setCause( std::string_view cause )
      */
@@ -310,12 +310,20 @@ public:
      * @note Calling commit() does not flush/output the error;
      */
     void commit()
-    { m_errorContext.m_currentErrorMsg.commitErrorMsg(); }
+    {
+      m_errorContext.loggerMsgReportData.increment( m_errorContext.getCurrentLogPart(),
+                                                    m_errorContext.m_currentErrorMsg.m_type );
+      m_errorContext.m_currentErrorMsg.commitErrorMsg();
+    }
     /**
      * @copydoc ErrorLogger::flushErrorMsg()
      */
     void flush()
-    { m_errorContext.flushErrorMsg(); }
+    {
+      m_errorContext.loggerMsgReportData.increment( m_errorContext.getCurrentLogPart(),
+                                                    m_errorContext.m_currentErrorMsg.m_type );
+      m_errorContext.flushErrorMsg();
+    }
 
 private:
     ///@copydoc ErrorLogger::m_errorContext
@@ -428,21 +436,12 @@ private:
   void setCurrentLogPart( string const & logPart )
   { m_currentLogPart = logPart; }
 
-    /**
+  /**
    * @brief Gets the current logger report data.
    * @return The current log part as a string.
    */
   LoggerMsgReportData const & getLoggerReportData() const
   {return loggerMsgReportData;}
-
-  /**
-   * @brief Gets the current logger report data.
-   * @return The current log part as a string.
-   */
-  void incrementMsgCount( MsgType msgtype )
-  {loggerMsgReportData.increment( getCurrentLogPart(), msgtype );}
-
-
 
 private:
   /// The error constructed via exceptions

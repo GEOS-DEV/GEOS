@@ -166,7 +166,6 @@
         .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ) \
         .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
         .flush(); \
-      GEOS_GLOBAL_LOGGER.incrementMsgCount( MsgType::Error ); \
       LvArray::system::callErrorHandler(); \
     } \
   }while( false )
@@ -238,7 +237,6 @@
       ex.prepareWhat( __msgoss.str(), __causemsgsoss.str(), \
                       __FILE__, __LINE__, \
                       ::geos::logger::internal::g_rank, LvArray::system::stackTrace( true )  ); \
-      GEOS_GLOBAL_LOGGER.incrementMsgCount( MsgType::Exception ); \
       throw ex; \
     } \
   }while( false )
@@ -305,7 +303,6 @@
         .addRank( ::geos::logger::internal::g_rank ) \
         .addToMsg( __msgoss.str() ) \
         .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ) \
-      GEOS_GLOBAL_LOGGER.incrementMsgCount( MsgType::Warning ); \
         .flush(); \
     } \
   } while( false )

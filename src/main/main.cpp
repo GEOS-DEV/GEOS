@@ -83,7 +83,7 @@ int main( int argc, char *argv[] )
   catch( std::exception const & e )
   { // native exceptions management
     ErrorLogger::global().beginLogger()
-      .setType( ErrorLogger::MsgType::Exception )
+      .setType( MsgType::Exception )
       .addToMsg( e.what() )
       .addRank( ::geos::logger::internal::g_rank )
       .addCallStackInfo( LvArray::system::stackTrace( true ) )

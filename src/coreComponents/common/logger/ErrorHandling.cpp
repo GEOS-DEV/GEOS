@@ -200,7 +200,7 @@ ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setCodeLocation( st
   return *this;
 }
 
-ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setType( ErrorLogger::MsgType msgType )
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setType( MsgType msgType )
 {
   if( !m_errorContext.m_currentErrorMsg.isCommited() )
   {
