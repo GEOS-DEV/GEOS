@@ -75,15 +75,19 @@ int main( int argc, char *argv[] )
   }
   catch( geos::Exception & e )
   { // GEOS generated exceptions management
-    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().currentErrorMsg() );
+    ErrorLogger::global().flushErrorMsg();
     basicCleanup();
     // lvarray error handler is just program termination
     LvArray::system::callErrorHandler();
   }
   catch( std::exception const & e )
   { // native exceptions management
-    ErrorLogger::ErrorMsg & errMsg = ErrorLogger::global().currentErrorMsg();
-    ErrorLogger::global().flushErrorMsg( errMsg );
+    ErrorLogger::global().beginLogger()
+      .setType( ErrorLogger::MsgType::Exception )
+      .addToMsg( e.what() )
+      .addRank( ::geos::logger::internal::g_rank )
+      .addCallStackInfo( LvArray::system::stackTrace( true ) )
+      .flush();
     basicCleanup();
     // lvarray error handler is just program termination
     LvArray::system::callErrorHandler();
