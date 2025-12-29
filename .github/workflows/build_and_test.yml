@@ -369,10 +369,10 @@ jobs:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     - name: 'Cleanup build folder'
-      if: always()
       run: |
-        set -euxo pipefail
-        docker run --rm \
-          -v "${GITHUB_WORKSPACE}:/tmp/geos" \
-          alpine:3.20 \
-          sh -lc 'rm -rf /tmp/geos/* /tmp/geos/.[!.]* /tmp/geos/..?* || true'
+        pwd
+        echo "cleaning ${GITHUB_WORKSPACE}"
+        ls -la ./
+        rm -rf ./* ./.*|| true
+        echo "expecting ${GITHUB_WORKSPACE} to be empty"
+        ls -la ./
