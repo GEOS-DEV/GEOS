@@ -376,5 +376,3 @@ jobs:
           -v "${GITHUB_WORKSPACE}:/tmp/geos" \
           alpine:3.20 \
           sh -lc 'rm -rf /tmp/geos/* /tmp/geos/.[!.]* /tmp/geos/..?* || true'
-
-
