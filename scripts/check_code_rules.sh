@@ -57,8 +57,8 @@ for exp in "${FORBIDDEN_EXPRESSIONS[@]}"; do
     ERRORS_CONTAINER["$exp"]=""
 done
 
-FILE_PREFIX="src/coreComponents/"
-FILE_PATTERNS=(
+FILEPATH_PREFIX="src/coreComponents/"
+FILEPATH_SUBFOLDERS=(
           "codingUtilities"
           "common"
           "dataRepository"
@@ -77,7 +77,7 @@ FILE_PATTERNS=(
           "physicsSolvers"
 )
 
-EXCLUDE_PATTERNS=(
+FILEPATH_EXCLUDE_PATTERNS=(
           "Datatype.hpp"     
           "StdContainerWrappers.hpp"     
           "BufferOps_inline.hpp"
@@ -87,14 +87,14 @@ EXCLUDE_PATTERNS=(
 )
 
 FILE_PATH_ARGS=()
-for pattern in "${FILE_PATTERNS[@]}"; do
-    if [ -d "${FILE_PREFIX}${pattern}" ]; then
-      FILE_PATH_ARGS+=("${FILE_PREFIX}${pattern}")
+for pattern in "${FILEPATH_SUBFOLDERS[@]}"; do
+    if [ -d "${FILEPATH_PREFIX}${pattern}" ]; then
+      FILE_PATH_ARGS+=("${FILEPATH_PREFIX}${pattern}")
     fi
 done
 
 EXCLUDED_NAME_PATTERNS=()
-for pattern in "${EXCLUDE_PATTERNS[@]}"; do
+for pattern in "${FILEPATH_EXCLUDE_PATTERNS[@]}"; do
     if [[ ! "$pattern" == *".hpp"* ]]; then
       EXCLUDED_NAME_PATTERNS+=( -path "*/$pattern" -prune -o )
     else
