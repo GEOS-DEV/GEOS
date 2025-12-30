@@ -101,9 +101,9 @@ public:
     m_levelInterpType[0]          = MGRInterpolationType::blockJacobi;
     m_levelRestrictType[0]        = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0]    = MGRCoarseGridMethod::galerkin;
-    // m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
-    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::ilu0;
-    m_levelGlobalSmootherIters[0] = 1;
+    m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
+    // m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::ilu0;
+    // m_levelGlobalSmootherIters[0] = 1;
     
     // Level 1 - displacement
     m_levelFRelaxType[1]          = MGRFRelaxationType::amgVCycle;
@@ -144,8 +144,25 @@ public:
     // Configure the BoomerAMG solver used as mgr coarse solver for the displacement reduced system
     // (note that no separate displacement component approach is used here)
     setDisplacementAMG( mgrData.mechSolver, mgrParams.separateComponents );
+    // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.mechSolver.ptr ) );
+    // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.mechSolver.ptr, 0.0 ) );
+    // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.mechSolver.ptr, 1 ) );
+    // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( mgrData.mechSolver.ptr, 1.0 ) );
+    // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( mgrData.mechSolver.ptr, 0.6 ) );
+    // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.mechSolver.ptr, 0 ) );
+
+    // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxOrder( mgrData.mechSolver.ptr, 1 ) );
+
+    // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.mechSolver.ptr, 3 ) );
+    // // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetFilterFunctions( mgrData.mechSolver.ptr, mgrParams.separateComponents ) );
+
+    // mgrData.mechSolver.setup = HYPRE_BoomerAMGSetup;
+    // mgrData.mechSolver.solve = HYPRE_BoomerAMGSolve;
+    // mgrData.mechSolver.destroy = HYPRE_BoomerAMGDestroy;
+    // // HYPRE_MGRSetFSolver( precond.ptr, mgrData.mechSolver.solve, mgrData.mechSolver.setup, mgrData.mechSolver.ptr );
     // GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFSolverAtLevel( precond.ptr, mgrData.mechSolver.ptr, 1 ) );
-    // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
+    // // GEOS_LAI_CHECK_ERROR( HYPRE_MGRSetFSolverAtLevel( precond.ptr, mgrData.mechSolver.ptr, 1 ) );
+    // // Configure the BoomerAMG solver used as mgr coarse solver for the pressure reduced system
     setPressureAMG( mgrData.coarseSolver );
   }
 };
