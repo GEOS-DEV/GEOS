@@ -666,7 +666,7 @@ Similarly to Logging, **error and warning output inside RAJA kernels is only for
   - GPU kernel errors cause immediate kernel termination, adding potentially costly branches,
   - Error handling on device has significant performance and cache impact,  
   - GPU error handling may be unsupported depending on the platform / device,
-  - Can cause deadlocks in parallel execution.
+  - Can cause deadlocks in parallel execution (`as discussed here<https://forums.developer.nvidia.com/t/exit-1-in-device/26106/3>`_, a rank can die, then the other ranks will wait for it at next MPI call).
 
 .. dropdown:: Example: Kernel error handling (debug only)
    :icon: code
