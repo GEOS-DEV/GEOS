@@ -342,8 +342,8 @@ Damage documentation can be found here:   - :ref:`Damage <DamageModel>`
 Parameters, User Inputs
 ========================
 
-.. include:: /coreComponents/schema/docs/GeomechanicsParameterTable.rst
-
+.. include:: /coreComponents/schema/docs/Geomechanics.rst
+.. .. include:: /coreComponents/schema/docs/GeomechanicsParameterTable.rst
 
 
 

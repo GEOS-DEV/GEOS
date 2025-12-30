@@ -726,8 +726,8 @@ Otherwise, we set the old yield strength to the current yield strength and conti
 Parameters, User Inputs
 ========================
 
-.. include:: /coreComponents/schema/docs/StrainHardeningPolymerParameterTable.rst
-
+.. .. include:: /coreComponents/schema/docs/StrainHardeningPolymerParameterTable.rst
+.. include:: /coreComponents/schema/docs/StrainHardeningPolymer.rst
 
 
 References

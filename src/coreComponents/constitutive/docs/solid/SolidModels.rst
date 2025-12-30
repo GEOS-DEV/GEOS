@@ -9,19 +9,19 @@ known models.
 .. toctree::
    :maxdepth: 1
 
-   Theory
-   Voight
-   Plasticity
-   TriaxialDriver
-   ElasticIsotropic
-   ElasticIsotropicPressureDependent
-   ElasticTransverseIsotropic
-   ElasticOrthotropic
+   Damage
+   DelftEgg
    DruckerPrager
    DruckerPragerExtended
-   ModifiedCamClay
-   DelftEgg
-   Damage
+   ElasticIsotropic
+   ElasticIsotropicPressureDependent
+   ElasticOrthotropic
+   ElasticTransverseIsotropic
    Geomechanics
+   Graphite
+   ModifiedCamClay
+   Plasticity
    StrainHardeningPolymer
-   ViscoPlasticity 
+   TriaxialDriver
+   ViscoPlasticity
+   Voight
