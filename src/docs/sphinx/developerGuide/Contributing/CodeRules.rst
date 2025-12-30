@@ -1254,7 +1254,7 @@ The rule is generalizable to ``string_view`` for strings, but not applicable in 
 
   - **No memory allocation:** Views are lightweight references
   - **Mutability correctness:** Can provide ``const`` read-only access to inner data
-  - **GPU compatibility:** Views work seamlessly on device
+  - **GPU compatibility:** LvArray views work seamlessly on device
 
 .. dropdown:: Example: Views for arrays
    :icon: code
