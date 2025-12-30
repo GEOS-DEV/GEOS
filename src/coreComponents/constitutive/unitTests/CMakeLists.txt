@@ -17,6 +17,7 @@ set( gtest_geosx_tests
      testKValueInitialization.cpp
      testImmiscibleWaterFlashModel.cpp
      testImmiscibleWaterProperties.cpp
+     testInverseCapillaryPressure.cpp
      testLohrenzBrayClarkViscosity.cpp
      testModifiedCamClay.cpp
      testMultiFluidBlackOil.cpp
