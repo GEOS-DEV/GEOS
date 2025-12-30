@@ -54,17 +54,20 @@ jobs:
     steps:
     - name: Check that the PR is not a draft (cancel rest of jobs otherwise)
       id: extract_pr_info
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       run: |
-        if [[ ${{github.event_name}} == 'pull_request' ]]; then 
-          # We do not rely on the `github.event.pull_request.labels` information since it's cached at the job.
-          # Changing labels or assignee in the PR would not allow to simply re-run the job with a different outcome.
-          pr_json=$(curl -H "Accept: application/vnd.github+json" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }})
-          
-          # We stop the workflow if the pr is draft
-          draft_status=$(echo ${pr_json} | jq '.draft')
+        set -euo pipefail
+
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          draft_status=$( curl -fsSL -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${GITHUB_TOKEN}" "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.number }}" | jq -r '.draft')
+
           echo "Draft status of PR is ${draft_status}."
-          if [[ $draft_status == true ]]; then exit 1 ; fi
+          if [[ "${draft_status}" == "true" ]]; then
+            exit 1
+          fi
         fi
+
 
         
     # The TPL tag is contained in the codespaces configuration to avoid duplications.

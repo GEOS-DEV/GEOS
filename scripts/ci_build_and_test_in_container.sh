@@ -152,6 +152,19 @@ if [[ -z "${GEOS_SRC_DIR}" ]]; then
   exit 1
 fi
 
+
+cleanup() {
+  echo "Container cleanup..."
+  rm -rf "${GEOS_SRC_DIR}/src/docs/sphinx/datastructure" || true
+
+  if [[ -n "${HOST_UID:-}" && -n "${HOST_GID:-}" ]]; then
+    chown -R "${HOST_UID}:${HOST_GID}" "${GEOS_SRC_DIR}" || true
+  fi
+}
+trap cleanup EXIT
+
+
+
 if [[ -z "${GEOS_DIR}" ]]; then
   echo "Installation folder undefined. Set to default value '/dev/null'. You can define it using '--install-dir-basename'."
   GEOS_DIR=/dev/null
@@ -207,7 +220,7 @@ echo "Using ${NPROC} cores."
 if [[ "${RUN_INTEGRATED_TESTS}" = true ]]; then
   echo "Running the integrated tests has been requested."
   # We install the python environment required by ATS to run the integrated tests.
-  or_die apt-get update
+  #or_die apt-get update
   or_die apt-get install -y virtualenv python3-dev python-is-python3
   ATS_PYTHON_HOME=/tmp/run_integrated_tests_virtualenv
   or_die virtualenv ${ATS_PYTHON_HOME}
@@ -368,10 +381,6 @@ or_die cmake --build . --target clean
 # Clean the repository
 or_die cd ${GEOS_SRC_DIR}/inputFiles
 find . -name *.pyc | xargs rm -f
-
-# Clean the rst files
-echo "Cleaning the rst files..."
-or_die rm -rf ${GEOS_SRC_DIR}/src/docs/sphinx/datastructure
 
 # If we're here, either everything went OK or we have to deal with the integrated tests manually.
 if [[ ! -z "${INTEGRATED_TEST_EXIT_STATUS+x}" ]]; then
