@@ -45,7 +45,7 @@
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalSinglePhasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/ThermalMultiphasePoromechanics.hpp"
 #include "linearAlgebra/interfaces/hypre/mgrStrategies/SolidMechanicsEmbeddedFractures.hpp"
-#include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePhasePoromechanicsConformingFractures.hpp"
+#include "linearAlgebra/interfaces/hypre/mgrStrategies/MultiphasePoromechanicsConformingFractures.hpp"
 
 #include "LvArray/src/output.hpp"
 
@@ -80,10 +80,10 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
   {
     GEOS_LOG_RANK_0( GEOS_FMT( "        MGR preconditioner: numComponentsPerField = {}", numComponentsPerField ) );
   }
-  if( params.logLevel >= 1024 )
-  {
-    GEOS_LOG_RANK( GEOS_FMT( "        MGR preconditioner: pointMarkers = {}", mgrData.pointMarkers ) );
-  }
+  // if( params.logLevel >= 1024 )
+  // {
+    // GEOS_LOG_RANK( GEOS_FMT( "        MGR preconditioner: pointMarkers = {}", mgrData.pointMarkers ) );
+  // }
 
   switch( params.mgr.strategy )
   {
@@ -189,7 +189,7 @@ void hypre::mgr::createMGR( LinearSolverParameters const & params,
     }
     case LinearSolverParameters::MGR::StrategyType::multiphasePhasePoromechanicsConformingFractures:
     {
-      setStrategy< MultiphasePhasePoromechanicsConformingFractures >( params.mgr, numComponentsPerField, precond, mgrData );
+      setStrategy< MultiphasePoromechanicsConformingFractures >( params.mgr, numComponentsPerField, precond, mgrData );
       break;
     }
     case LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsReservoirFVM:

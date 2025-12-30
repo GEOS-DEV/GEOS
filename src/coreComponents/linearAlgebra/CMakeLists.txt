@@ -166,6 +166,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/mgrStrategies/AugmentedLagrangianContactMechanics.hpp
           interfaces/hypre/mgrStrategies/LagrangianContactMechanicsBubbleStabilization.hpp
           interfaces/hypre/mgrStrategies/MultiphasePoromechanics.hpp
+          interfaces/hypre/mgrStrategies/MultiphasePoromechanicsConformingFractures.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsEmbeddedFractures.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsConformingFractures.hpp
           interfaces/hypre/mgrStrategies/SinglePhasePoromechanicsReservoirFVM.hpp
