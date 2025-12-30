@@ -584,7 +584,7 @@ static inline std::vector< real64 > arrayView2dToVector( arrayView2d< real64 con
   arr.move( hostMemorySpace, false );
 
   std::vector< real64 > outputVector;
-  outputVector.resize( static_cast<localIndex>( n_k ) * static_cast<localIndex>( n_q ) );
+  outputVector.resize( static_cast< localIndex >( n_k ) * static_cast< localIndex >( n_q ) );
 
   localIndex k = 0;
   for( localIndex i = 0; i < n_k; ++i )
@@ -607,9 +607,9 @@ TEST_F( ReactivePorosityUpdateTest, ReactivePorosityUpdate )
   DomainPartition & domain = pm.getDomainPartition();
 
   auto & solver =
-      dynamic_cast< SinglePhaseReactiveTransport & >(
-        pm.getPhysicsSolverManager().getGroup< SinglePhaseReactiveTransport >( "SinglePhaseReactiveFlow" ));
-  
+    dynamic_cast< SinglePhaseReactiveTransport & >(
+      pm.getPhysicsSolverManager().getGroup< SinglePhaseReactiveTransport >( "SinglePhaseReactiveFlow" ));
+
   static real64 constexpr dt = 10;
 
   solver.setupSystem( domain, solver.getDofManager(),
@@ -618,16 +618,16 @@ TEST_F( ReactivePorosityUpdateTest, ReactivePorosityUpdate )
   solver.implicitStepSetup( 0.0, dt, domain );
   solver.solverStep( 0.0, dt, 0, domain );
   solver.implicitStepComplete( 0.0, dt, domain );
-  
+
   MeshLevel & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
   CellElementSubRegion & subRegion =
-      mesh.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
-  
+    mesh.getElemManager().getRegion( 0 ).getSubRegion< CellElementSubRegion >( 0 );
+
   solver.updatePorosityAndPermeability( subRegion );
   solver.updateSurfaceArea( subRegion );
-  
+
   CoupledSolidBase const & solid =
-        subRegion.getConstitutiveModel< CoupledSolidBase >( subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() ) );
+    subRegion.getConstitutiveModel< CoupledSolidBase >( subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() ) );
 
   arrayView2d< real64 const > phi_h = solid.getPorosity();
   localIndex const n_k = phi_h.size( 0 );
