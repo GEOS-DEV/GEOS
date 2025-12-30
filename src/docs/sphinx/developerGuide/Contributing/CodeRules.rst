@@ -1079,7 +1079,7 @@ When modifying performance-critical code (kernels, assembly loops, solvers):
 Caliper Integration
 ^^^^^^^^^^^^^^^^^^^^
 
-Use ``GEOS_MARK_FUNCTION`` and ``Timer`` for performance tracking for the main computation functions / scopes.
+Use ``GEOS_MARK_FUNCTION``, ``GEOS_CALIPER_MARK_SCOPE`` and ``Timer`` for performance tracking for the main computation functions / scopes.
 
 .. dropdown:: Example: Performance instrumentation
    :icon: code
