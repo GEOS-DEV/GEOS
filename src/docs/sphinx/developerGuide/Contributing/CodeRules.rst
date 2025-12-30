@@ -691,13 +691,14 @@ information on the source of the data, which can be:
 - the file & line of the simulation XML file,
 - if no source exists, ``Group`` / ``Wrapper`` path in the data repository.
 
-**Add ``DataContext`` when** Errors occur related to a **data repository component**:
+**Add ``DataContext`` when** an error occurs because of:
 
-- a ``Wrapper`` when validation fails for a given user input setting,
-- a ``Group`` when the error is implied by the instance state,
+- a ``Wrapper`` when validation fails for a given user input setting (``getWrapperDataContext()``),
+- a ``Group`` when the error is implied by the instance state (``getDataContext()``),
 - multiple data-contexts when the error is due to multiple objects / settings (first = more important).
 
-Use ``getDataContext()`` or ``getWrapperDataContext()`` as last parameters of the logging macros to give context.
+**Use ``getDataContext()`` or ``getWrapperDataContext()`` as last parameters of the logging macros to pass the data context metadata.**
+It will be provided properly in the error message depending on the format (log / YAML).
 
 .. dropdown:: Example: Using DataContext
    :icon: code
@@ -718,6 +719,7 @@ Use ``getDataContext()`` or ``getWrapperDataContext()`` as last parameters of th
                      getDataContext() );
 
       // Exemple 3, using multiple DataContext because the error is related with multiple objects
+      // The first ones are considered the highest priority.
       GEOS_THROW_IF( m_isThermal && !isFluidModelThermal,
                      GEOS_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model {} is incompatible with the thermal option",
                                getDataContext(), fluid.getDataContext() ),
