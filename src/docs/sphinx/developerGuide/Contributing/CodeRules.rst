@@ -191,13 +191,10 @@ Contribution
 Documentation
 -------------
 
-Always Provide Comprehensive Documentation
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-All new features must include appropriate documentation at multiple levels:
+**All new features must include appropriate documentation, for developpers and user, at the following levels:**
 
 Wrapper Documentation (User-Oriented)
-""""""""""""""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 All data repository wrappers must be documented with ``setDescription()``.
 As much as possible, valid values rules should be provided, and default values should be provided with ``setApplyDefaultValue()``.
@@ -215,7 +212,7 @@ As much as possible, valid values rules should be provided, and default values s
                         "Valid range: (0, 1e-3]. See User Guide Chapter 5." );
 
 RST Documentation (User Guide)
-"""""""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 User-facing features must be documented in the Sphinx RST documentation (``src/docs/sphinx/``):
 
@@ -226,7 +223,7 @@ User-facing features must be documented in the Sphinx RST documentation (``src/d
 - Add **references** to related features
 
 Doxygen & Naming (Developer-Oriented)
-""""""""""""""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Keep Doxygen comments and naming as clear as possible. Variable names and inline comments should provide help for developers even if they are not experts in the domain.  
 
