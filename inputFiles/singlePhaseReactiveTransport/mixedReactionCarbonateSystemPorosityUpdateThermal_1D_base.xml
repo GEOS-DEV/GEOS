@@ -15,7 +15,7 @@
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         maxTimeStepCuts="5"
-        newtonMaxIter="40"
+        newtonMaxIter="20"
         logLevel="2"
         maxAllowedResidualNorm="1e100"/>
       <LinearSolverParameters
@@ -43,7 +43,7 @@
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      compressibility="0.0"
+      compressibility="5e-10"
       thermalExpansionCoeff="0.0"
       viscosibility="0.0"
       specificHeatCapacity="1"
@@ -85,7 +85,7 @@
 
     <SinglePhaseThermalConductivity
       name="thermalCond"
-      defaultThermalConductivityComponents="{ 1.66, 1.66, 1.66 }"
+      defaultThermalConductivityComponents="{ 500, 500, 500 }"
       thermalConductivityGradientComponents="{ 0, 0, 0 }"
       referenceTemperature="0"/>
   </Constitutive>
@@ -107,11 +107,12 @@
       fieldName="pressure"
       scale="1e6"/>
 
-    <SourceFlux
-      name="sourceTerm"
+    <FieldSpecification
+      name="sourcePressure"
       setNames="{ source }"
       objectPath="ElementRegions/Region1/block1"
-      scale="-1e-4"/>
+      fieldName="pressure"
+      scale="4e6"/>
 
     <FieldSpecification
       name="sinkPressure"
