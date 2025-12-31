@@ -296,6 +296,38 @@ so damage reduces the “peak”/cohesive part of the response while hardening c
    & m_1 = \max\!\left(m_1,\; \frac{y_2 - y_1}{x_2 - x_1}\right)
    \end{gathered}
 
+
+
+The stress update accounts for anisotropic thermal stresses during a given temperature rate, :math:`\dot{T}`, by incorporating lateral and 
+transverse thermal expansion (:math:`\alpha_L` and :math:`\alpha_T`, respectively) through the following:
+
+.. math::
+
+   \alpha^{\text{Dense}}_{ij}
+   =
+   \left( \alpha_L - \alpha_T \right)
+   n_i \, n_j
+   + \delta_{ij} \, \alpha_T
+
+
+.. math::
+
+   \Delta \sigma^{\text{Dense}}_{ij}
+   \;+=\;
+   \left(
+      h_1 \, B^{(1)}_{ijpw}
+      + h_2 \, B^{(2)}_{ijpw}
+      + h_3 \, B^{(3)}_{ijpw}
+      + h_4 \, B^{(4)}_{ijpw}
+      + h_5 \, B^{(5)}_{ijpw}
+   \right)
+   \left(
+      D_{pw}
+      - \alpha^{\text{Dense}}_{pw} \, \dot{T}
+   \right)
+   \, \Delta t   
+
+
 Additional Notes
 ========================
 
