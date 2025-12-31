@@ -90,7 +90,7 @@ ImmiscibleMultiphaseFlow::ImmiscibleMultiphaseFlow( const string & name,
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0.2 ).
-    setDescription( "Target (absolute) change in phase volume fraction in a time step" );
+    setDescription( "Target (absolute) change in the phase volume fraction within a single time step." );
 }
 
 void ImmiscibleMultiphaseFlow::postInputInitialization()
