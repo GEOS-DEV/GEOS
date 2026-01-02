@@ -16,7 +16,7 @@ Memory Managment
 ================
 
 Allocations
-^^^^^^^^^^^^^^^^^^^^
+-----------
 
 **Minimize dynamic memory allocation** as much as possible, particularly in performance-critical code,
 
@@ -30,7 +30,7 @@ As they are intended to low-level allocator codes, **avoid ``new``/``delete`` an
 - **Prefer ``std::unique_ptr``** over ``std::shared_ptr``.
 
 Pointer / Reference Function Arguments
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------------
 
 **Pass object by reference rather than passing pointer types.**
 
@@ -51,7 +51,7 @@ This rule imply the following:
   underlying object can be null.
 
 Provide Views to Arrays
-^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 - When possible, prefer provide views to arrays (to const data if possible).
 - views must be **passed / captured by value** for function / lambdas.
@@ -129,7 +129,7 @@ The rule is applicable to ``arrayView*`` and ``string_view``.
     };
 
 Value / Const Function Arguments
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------
 
 **Pass large and non-trivially copyable objects by const reference**:
 
@@ -195,10 +195,10 @@ Value / Const Function Arguments
       // Any Group subclass is large: PASS BY REFERENCE
       void modify( DomainPartition & domain );
 
-Avoid undesired mutability
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+Avoid Undesired Mutability
+--------------------------
 
-**Use ``const`` and ``constexpr`` when possible**, enabling:
+**Enforce ``const`` and ``constexpr`` when possible**, enabling:
 
 - **Compiler optimization,** enables better code generation by giving constraints to the code,
 - **Code safety,** prevents accidental modification for constant contexts,
@@ -207,7 +207,7 @@ Avoid undesired mutability
 Also, **mark methods const if the method is not designed to modify** the object state.  
 
 Constexpr for Compile-Time Constants
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------
 
 **Use ``constexpr`` for values known at compile time**.
 

@@ -60,6 +60,7 @@ Keep Doxygen comments and naming as clear as possible. Variable names and inline
    :icon: code
 
    .. code-block:: c++
+
       // GOOD - The documentation gives useful information about what the function *does*, without
       //        going into theorical knowledge nor implementation details.
       /**
@@ -75,8 +76,8 @@ Keep Doxygen comments and naming as clear as possible. Variable names and inline
        * stored in the provided vector and its L2 norm is returned.
        */
       real64 computeResidual( DomainPartition & domain,
-                              real64 const time,
-                              real64 const dt,
+                              real64 time,
+                              real64 dt,
                               arrayView1d<real64> const & residual );
 
       // BAD - documentation does not provide useful information beyond the function name.
@@ -100,7 +101,7 @@ Unit Tests
 **Always provide unit tests** to ensure every function behaves according to expectations.
 Unit testing is not about testing every single line of code (an unrealistic goal), but about *verifying assumptions and preventing regressions*. Do not assume that your code will always work as intended — protect it with unit tests.
 
-- Focus on **critical logic** (core functionality and algorithms), **edge cases** (extreme, erroneous, empty values).
+- Focus on **critical logic** (core functionality and algorithms) and **edge cases** (extreme, erroneous, empty values).
 - **Use GoogleTest framework**.
 - In GEOS, the goal of unit test is never to take position on the validity of physical results (this is the point of integrated-tests).
 - Place tests in ``src/coreComponents/<component>/tests/``.
@@ -198,7 +199,7 @@ Basic Types
    * - ``std::size_t``
      - ``localIndex``
      - Local array indexing (MPI partition)
-   * - N/A
+   * - ``std::size_t``
      - ``globalIndex``
      - Global indexing (across MPI)
    * - ``float``
@@ -481,6 +482,7 @@ For tabular or statistical output, use structured logging facilities instead of 
    :icon: code
 
    .. code-block:: c++
+
       // log output preparation, layout precomputation can be kept for periodic outputs
       TableLayout statsLogLayout( "", { "Flux(es)", "Region", "Element Count", massColumn, rateColumn } );
       m_logLayout = statsLogLayout;
@@ -683,7 +685,7 @@ Similarly to Logging, **error and warning output inside RAJA kernels is only for
   - GPU kernel errors cause immediate kernel termination, adding potentially costly branches,
   - Error handling on device has significant performance and cache impact,  
   - GPU error handling may be unsupported depending on the platform / device,
-  - Can cause deadlocks in parallel execution (`as discussed here<https://forums.developer.nvidia.com/t/exit-1-in-device/26106/3>`_, a rank can die, then the other ranks will wait for it at next MPI call).
+  - Can cause deadlocks in parallel execution (`as discussed here <https://forums.developer.nvidia.com/t/exit-1-in-device/26106/3>`_, a rank can die, then the other ranks will wait for it at next MPI call).
 
 .. dropdown:: Example: Kernel error handling (debug only)
    :icon: code
