@@ -234,7 +234,7 @@ Array Types
 
 GEOS provides multi-dimensional CHAI array types for managed host-device data.
 
-Refer to the rule of :ref:`CHAIMemoryManagement`.
+Refer to the rules of :ref:`CHAI Memory Management <CHAIMemoryManagement>`.
 
 .. list-table:: GEOS Array Types
    :header-rows: 1
@@ -779,6 +779,7 @@ Do Not Launch Kernels from Within Kernels
       });
 
 .. _CHAIMemoryManagement:
+
 CHAI Memory Management
 ^^^^^^^^^^^^^^^^^^^^^^
 
