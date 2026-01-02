@@ -40,6 +40,7 @@ When passing nullable objects as parameter, pointers can be passed.
 If applying this rule produces repetitive code, consider using a const reference.
 
 This rule imply the following:
+
 - **A reference may never be null**,
 - In a given method, **``this`` may never be null**.
 
@@ -66,9 +67,9 @@ The rule is generalizable to ``string_view`` for strings, but not applicable in 
   - **GPU compatibility:** LvArray views work seamlessly on device
 
 .. dropdown:: Example: Views for arrays
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // BAD - Creates a copy
       array1d< real64 > copy = originalArray;
@@ -83,11 +84,15 @@ View Lifetime Management
 ------------------------
 
 **Never Outlive Parent Arrays**
-Dangling views cause segmentation faults and undefined behavior, that can be particularly hard to diagnose.
-The rule is applicable to ``arrayView*`` and ``string_view``.
+
+.. dropdown:: Why?
+  :icon: info
+
+  Dangling views cause segmentation faults and undefined behavior, that can be particularly hard to diagnose.
+  The rule is applicable to ``arrayView*`` and ``string_view``.
 
 .. dropdown:: Example: Lifetime Management
-   :icon: code
+  :icon: code
 
   .. code-block:: cpp
 
@@ -136,10 +141,10 @@ Value / Const Function Arguments
 - A "large" size can be defined as "more that 16 bytes, ", which is 2 pointers, 2 integer / index, or 2 double,
 - An object is non-trivially copyable objects when it needs to perform sub-allocation when being copied,
 
-.. dropdown:: Value / Const Reference function parameters practices
-   :icon: code
+.. dropdown:: Example: Value / Const Reference function parameters practices
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // 16 bytes (string_view are equivalent to 2 constant pointers): PASS BY VALUE
       static constexpr string_view str0 = "Hello";
@@ -198,11 +203,16 @@ Value / Const Function Arguments
 Avoid Undesired Mutability
 --------------------------
 
-**Enforce ``const`` and ``constexpr`` when possible**, enabling:
+**Enforce ``const`` and ``constexpr`` when possible**
 
-- **Compiler optimization,** enables better code generation by giving constraints to the code,
-- **Code safety,** prevents accidental modification for constant contexts,
-- **Show code intention,** make code more readable.
+.. dropdown:: Why?
+  :icon: info
+
+  ``const`` and ``constexpr`` declaration enables:
+
+  - **Compiler optimization,** enables better code generation by giving constraints to the code,
+  - **Code safety,** prevents accidental modification for constant contexts,
+  - **Show code intention,** make code more readable.
 
 Also, **mark methods const if the method is not designed to modify** the object state.  
 
@@ -214,9 +224,9 @@ Constexpr for Compile-Time Constants
 The rule is not absolute: when the impact is not significative, and the code needs is getting really unclear, the rule can be ignored.
 
 .. dropdown:: Example: Constexpr usage
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // Compile-time constants
       // A rule of thumb is that oftenly any time a value is constexpr, it can also be static.
@@ -236,9 +246,9 @@ Use Tolerance-Based Comparisons
 **Always consider proper tolerance** for floating-point numbers comparisons, taking into account rounding errors, even for extreme values.
 
 .. dropdown:: Example: Correct float comparison
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // BAD - Direct comparison
       if( value == 1.0 ) { ... }
@@ -260,7 +270,7 @@ Division Safety, NaN/Inf Values
 - In General, **we should not make any computation that could result in NaN/Inf values**.
 
 .. dropdown:: Example: Division Safety
-   :icon: code
+  :icon: code
 
   .. code-block:: cpp
 
@@ -322,9 +332,9 @@ Principles:
 - **Minimize header inclusions and dependancies**.
 
 .. dropdown:: Example: Reducing coupling
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // BAD - Tight coupling to concrete class / implementation
       class SolverA
@@ -369,9 +379,9 @@ Prefer passing context explicitly.
   - **Encapsulation:** Violates modularity principles
 
 .. dropdown:: Example: Avoiding global state
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // BAD - Global mutable state
       static real64 g_tolerance = 1.0e-6;

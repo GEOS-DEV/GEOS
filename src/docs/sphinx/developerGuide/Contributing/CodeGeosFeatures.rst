@@ -29,9 +29,9 @@ All data repository wrappers must be documented with ``setDescription()``.
 As much as possible, valid values rules should be provided, and default values should be provided with ``setApplyDefaultValue()``.
 
 .. dropdown:: Example: Wrapper documentation
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       registerWrapper( "timeStep", &m_timeStep ).
         setInputFlag( InputFlags::REQUIRED ).
@@ -43,23 +43,23 @@ As much as possible, valid values rules should be provided, and default values s
 RST Documentation (User Guide)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-User-facing features must be documented in the Sphinx RST documentation (``src/docs/sphinx/``):
+**User-facing features must be documented in the Sphinx RST documentation** (``src/docs/sphinx/``):
 
-- Explain **what** the feature does
-- Provide **usage examples**
-- Document **input parameters**
-- Include **expected output** or behaviour
-- Add **references** to related features
+- **Explain what** the feature does
+- **Provide usage examples**
+- **Document input parameters**
+- **Include expected output** or behaviour
+- **Add references** to related features
 
 Doxygen & Naming (Developer-Oriented)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Keep Doxygen comments and naming as clear as possible. Variable names and inline comments should provide help for developers even if they are not experts in the domain.  
+**Keep Doxygen comments and naming as clear as possible.** Variable names and inline comments should provide help for developers even if they are not experts in the domain.  
 
 .. dropdown:: Example: Doxygen documentation
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // GOOD - The documentation gives useful information about what the function *does*, without
       //        going into theorical knowledge nor implementation details.
@@ -108,9 +108,9 @@ Unit testing is not about testing every single line of code (an unrealistic goal
 - Test GPU code paths if applicable (use ``#ifdef GEOS_USE_DEVICE``).
 
 .. dropdown:: Example: Unit test structure
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       #include <gtest/gtest.h>
       
@@ -216,9 +216,9 @@ Basic Types
      - Non-owning string view
 
 .. dropdown:: Example: Using GEOS basic types
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // BAD - Do not use standard types
       int count = 0;
@@ -268,9 +268,9 @@ Refer to the rules of :ref:`CHAI Memory Management <CHAIMemoryManagement>`.
      - Stack-allocated array (max size N)
 
 .. dropdown:: Example: Using GEOS arrays
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // BAD - Do not use std::vector for data that can be packed or kernel addressable
       std::vector<real64> values;
@@ -328,9 +328,9 @@ This rule allow us to control bounds checking depending on ``GEOS_USE_BOUNDS_CHE
      - ``std`` unsorted dictionary (hash-map)
 
 .. dropdown:: Example: Container usage
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // BAD - Direct std containers
       std::vector<real64> data;
@@ -343,6 +343,7 @@ This rule allow us to control bounds checking depending on ``GEOS_USE_BOUNDS_CHE
       map<string, real64> orderedMap;
 
 The following standard library components are allowed:
+
 - ``std::pair``, ``std::tuple`` for temporary structures, `but sometimes struct are to prefer <https://godbolt.org/z/KE7TEMx7d>`_.
 - ``std::function`` for callbacks
 - ``std::optional`` for optional return values
@@ -356,9 +357,9 @@ LvArray Math Utilities
 The ``LvArray::math`` namespace provides safe numerical utilities, **use LvArray math utilities instead of platform specific math functions.**
 
 .. dropdown:: Example: LvArray math utilities
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       #include "LvArray/src/math.hpp"
 
@@ -379,9 +380,9 @@ GEOS Logging Macros (``GEOS_LOG*``)
 Always use GEOS logging macros defined in ``Logger.hpp``:
 
 .. dropdown:: Example: Correct logging usage
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // BAD - Do not use
       std::cout << "Starting simulation" << std::endl;
@@ -413,9 +414,9 @@ Using Log Levels
 See :ref:`LogLevelDocumentation` for using / adding log level (e.g., ``logInfo::Convergence``, ``logInfo::TimeStep``).
 
 .. dropdown:: Example: Using log levels
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // physics solver cpp - effective logging
       GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
@@ -430,9 +431,9 @@ See :ref:`LogLevelDocumentation` for using / adding log level (e.g., ``logInfo::
       };
 
 .. dropdown:: Example: Avoiding log spam
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // BAD - Will spam output for every element on every ranks
       forAll< parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
@@ -459,9 +460,9 @@ Logging in RAJA Kernels
   - Produce unpredictable behaviour (e.g. runtime crashes on AMD).
 
 .. dropdown:: Example: Debug-only kernel logging
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       forAll< parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
       {
@@ -479,9 +480,9 @@ For tabular or statistical output, use structured logging facilities instead of 
 - Use ``TableCSVFormatter`` with a ``writeCSV()`` XML setting for structured data output.
 
 .. dropdown:: Example: Log table output
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // log output preparation, layout precomputation can be kept for periodic outputs
       TableLayout statsLogLayout( "", { "Flux(es)", "Region", "Element Count", massColumn, rateColumn } );
@@ -506,9 +507,9 @@ For tabular or statistical output, use structured logging facilities instead of 
       }
 
 .. dropdown:: Example: CSV output
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // CSV output preparation, layout precomputation can be kept for periodic outputs
       TableLayout const statsCSVLayout( "", {"Time [s]", "Flux(es)", "Region", "Element Count", massColumn, rateColumn} );
@@ -551,9 +552,9 @@ Use ``GEOS_ERROR*`` macros when encountering a **blocking error** where:
 - Continuing execution would be unsafe or meaningless.
 
 .. dropdown:: Example: Error handling
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // Example: not implemented feature
       GEOS_ERROR( "Rounding interpolation with derivatives not implemented" );
@@ -595,9 +596,9 @@ Use ``GEOS_THROW*`` macros for the same reasons as ``GEOS_ERROR*`` (**unrecovera
     - Non critical, volontary stopping state
 
 .. dropdown:: Example: Throwing exceptions
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // Example 1: throw with context
       GEOS_THROW_IF( !file.is_open(),
@@ -628,9 +629,9 @@ Why not to use exceptions for anything else than passing information up to the c
 - **Safety:** The error state may have corrupted simulation data, broken the code path at an unexpected place, and/or left the system in an invalid state.  
 
 .. dropdown:: Example: Exception handling anti-pattern
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // BAD - Do not catch to continue
       // Here, the "solver" should have a "isFailed" flag or a returned resulting state
@@ -664,9 +665,9 @@ Use ``GEOS_WARNING*`` macros when:
 - The user should be notified of a **potential problem**  
 
 .. dropdown:: Example: Warning usage
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // Example: suboptimal but valid configuration
       GEOS_WARNING_IF( dt > recommendedDt,
@@ -688,9 +689,9 @@ Similarly to Logging, **error and warning output inside RAJA kernels is only for
   - Can cause deadlocks in parallel execution (`as discussed here <https://forums.developer.nvidia.com/t/exit-1-in-device/26106/3>`_, a rank can die, then the other ranks will wait for it at next MPI call).
 
 .. dropdown:: Example: Kernel error handling (debug only)
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // On GPU, errors will cause kernel abort
       forAll< parallelDevicePolicy<> >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
@@ -720,9 +721,9 @@ information on the source of the data, which can be:
 It will be provided properly in the error message depending on the format (log / YAML).
 
 .. dropdown:: Example: Using DataContext
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // Example 1, using the getWrapperDataContext() because the error is
       // related to a precise input setting.
@@ -756,9 +757,9 @@ Do Not Launch Kernels from Within Kernels
 **Never launch RAJA kernels from within other RAJA kernels.** This causes portability issues and is not supported on GPU.
 
 .. dropdown:: Example: Nested kernel anti-pattern
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // BAD - Do not nest kernels
       forAll<parallelDevicePolicy<>>( n, [=] GEOS_HOST_DEVICE ( localIndex i )
@@ -786,17 +787,19 @@ CHAI Memory Management
 GEOS uses CHAI for **automatic kernel memory migration**. Follow these rules:
 
 - **Use CHAI-managed arrays for memory shared with kernels:** ``arrayView1d``, ``arraySlice2d``, ``array1d``, ``stackArray2d``, etc.
+
   - ``array*`` types are designed for **host dynamic allocations**,
   - ``arrayView*`` / ``arraySlice*`` types are for **non-reallocating scenario** (lambda capture, function passing),
   - ``arrayView*`` types also serve for **automatic host-to-device memory move**,
   - ``stackArray*`` types are used **to directly pass / store full arrays values**, use with care,
+
 - **Call** ``.move(space)`` **to explicitly control memory location**
 - **Never use manual CUDA calls** - RAJA has wrappers for device operations (compatibility layer for all platforms).
 
 .. dropdown:: Example: CHAI memory management
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       array1d<real64> data( 1000 );
       
@@ -820,9 +823,9 @@ Use RAJA Reductions
 Use RAJA reductions for summation, min, max, and other parallel operations:
 
 .. dropdown:: Example: RAJA reductions
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       RAJA::ReduceSum<parallelDeviceReduce, real64> totalSum( 0.0 );
       RAJA::ReduceMin<parallelDeviceReduce, real64> minValue( std::numeric_limits<real64>::max() );
@@ -848,9 +851,9 @@ Ensure All Ranks Participate in Collective Operations
 **All MPI ranks must participate in collective operations.** Beware of branch deadlocks.
 
 .. dropdown:: Example: MPI collective operations
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // BAD - only rank 0 calls MPI_AllReduce() - DEADLOCK!
       if( MpiWrapper::commRank() == 0 )
@@ -883,9 +886,9 @@ Always Use MpiWrapper
 Refer to ``MpiWrapper.hpp`` for more.
 
 .. dropdown:: Example: Using MpiWrapper
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       // BAD - Raw MPI calls
       int rank;
@@ -912,7 +915,7 @@ Communication Batching
   As MPI has significant per-message overhead, combining multiple small messages into larger ones can reduce communication overhead.
 
 .. dropdown:: Example: Batching MPI communication
-   :icon: code
+  :icon: code
 
   .. code-block:: cpp
 
@@ -949,9 +952,9 @@ When modifying performance-critical code (kernels, assembly loops, solvers...):
 3. **Document performance impact** in pull request description
 
 .. dropdown:: Example: Performance profiling workflow
-   :icon: code
+  :icon: code
 
-   .. code-block:: bash
+  .. code-block:: bash
 
       # Profile before changes
       geos -i test_case.xml --caliper-output=baseline.cali
@@ -971,9 +974,9 @@ Caliper Integration
 Use ``GEOS_MARK_FUNCTION``, ``GEOS_CALIPER_MARK_SCOPE`` and ``Timer`` for performance tracking for the main computation functions / scopes.
 
 .. dropdown:: Example: Performance instrumentation
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       void PhysicsSolverBase::solverStep( ... )
       {
@@ -999,6 +1002,7 @@ Data Repository Paths
 ---------------------
 
 Note that ``Group`` / ``Wrapper`` names & paths in the data repository are considered as magic values:
+
 - **use getters rather than arbitrary names** (use view keys, ``getCatalogName()``, ``getName()`` or create custom ones).
 - To avoid coupling / architecture stiffening, **avoid using full raw ``Group`` path**, especially when the path has parts unrelated to the component consulting it, prefer getters,
 
@@ -1021,9 +1025,9 @@ This can be done in the ``postInputInitialization()`` method, or later if needed
   - User can receive clear error messages before simulation starts.
 
 .. dropdown:: Example: Post-input validation
-   :icon: code
+  :icon: code
 
-   .. code-block:: c++
+  .. code-block:: c++
 
       void MyClass::postInputInitialization()
       {
@@ -1076,7 +1080,7 @@ Unphysical values indicate errors and can cause solver failures.
 If a value is not strictly disallowed but does not seem possible for the model, **show a warning to the user that he can disable**.
 
 .. dropdown:: Example: Avoiding global state
-   :icon: code
+  :icon: code
 
   .. code-block:: cpp
 
