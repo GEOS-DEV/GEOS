@@ -23,11 +23,11 @@ Allocations
 - For frequently allocated/deallocated objects, **consider memory pools**,
 - For containers with known size, **reserve capacity upfront**.
 
-As they are intended to low-level allocator codes, **avoid ``new``/``delete`` and ``malloc``/``free`` as much as possible**:
+As they are intended to low-level allocator codes, **avoid** ``new`` **/** ``delete`` **and** ``malloc`` **/** ``free`` **as much as possible**:
 
 - When applicable, **Prefer composition** over pointers,
 - **Use RAII principles** as much as possible,
-- **Prefer ``std::unique_ptr``** over ``std::shared_ptr``.
+- **Prefer** ``std::unique_ptr`` **over** ``std::shared_ptr``.
 
 Pointer / Reference Function Arguments
 --------------------------------------
@@ -42,7 +42,7 @@ If applying this rule produces repetitive code, consider using a const reference
 This rule imply the following:
 
 - **A reference may never be null**,
-- In a given method, **``this`` may never be null**.
+- In a given method, ``this`` **may never be null**.
 
 .. dropdown:: Why?
   :icon: info
@@ -54,8 +54,8 @@ This rule imply the following:
 Provide Views to Arrays
 -----------------------
 
-- When possible, prefer provide views to arrays (to const data if possible).
-- views must be **passed / captured by value** for function / lambdas.
+- When possible, **prefer provide views to arrays** (to const data if possible).
+- **views must be passed / captured by value** for function / lambdas.
 
 The rule is generalizable to ``string_view`` for strings, but not applicable in GPU context.
 
@@ -89,7 +89,7 @@ View Lifetime Management
   :icon: info
 
   Dangling views cause segmentation faults and undefined behavior, that can be particularly hard to diagnose.
-  The rule is applicable to ``arrayView*`` and ``string_view``.
+  The rule is applicable to ``arrayView*`` types and ``string_view``.
 
 .. dropdown:: Example: Lifetime Management
   :icon: code
@@ -203,23 +203,23 @@ Value / Const Function Arguments
 Avoid Undesired Mutability
 --------------------------
 
-**Enforce ``const`` and ``constexpr`` when possible**
+**Enforce** ``const`` **and** ``constexpr`` **when possible**
 
 .. dropdown:: Why?
   :icon: info
 
   ``const`` and ``constexpr`` declaration enables:
 
-  - **Compiler optimization,** enables better code generation by giving constraints to the code,
-  - **Code safety,** prevents accidental modification for constant contexts,
-  - **Show code intention,** make code more readable.
+  - **Enables compiler optimization**, improving code generation with explicit code constraints,
+  - **Improves code safety,** preventing accidental modification for constant contexts,
+  - **Show code intention,** making code clearer.
 
 Also, **mark methods const if the method is not designed to modify** the object state.  
 
 Constexpr for Compile-Time Constants
 ------------------------------------
 
-**Use ``constexpr`` for values known at compile time**.
+**Use** ``constexpr`` **for values known at compile time**.
 
 The rule is not absolute: when the impact is not significative, and the code needs is getting really unclear, the rule can be ignored.
 
@@ -327,7 +327,7 @@ Principles:
 
 - **Loose coupling:** Components should depend on interfaces, not concrete implementations,
 - **No circular dependencies:** Consider the existing GEOS dependencies to not make components co-dependent (headers inclusion, packages referencing in ``CMakeLists.txt``, avoid tightly coupled objects),  
-- **Dependency injection:** Public components should receive their dependencies from external sources. Pass required dependencies using intermediate types instead of direct implementation types, using lambda, templates, and minimal interfaces, relying on **lambda**, **templates** and **minimal interfaces** (loose coupling, testability),
+- **Dependency injection:** Public components should receive their dependencies from external sources. Pass required dependencies using intermediate types instead of direct implementation types, relying on **lambda**, **templates** and **minimal interfaces** (loose coupling, testability),
 - **Performance exceptions:** Tight coupling is acceptable when required for performance,
 - **Minimize header inclusions and dependancies**.
 

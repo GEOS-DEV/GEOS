@@ -98,13 +98,13 @@ Testing
 Unit Tests
 ^^^^^^^^^^
 
-**Always provide unit tests** to ensure every function behaves according to expectations.
+**Always provide unit tests to ensure every function behaves according to expectations.**
 Unit testing is not about testing every single line of code (an unrealistic goal), but about *verifying assumptions and preventing regressions*. Do not assume that your code will always work as intended — protect it with unit tests.
 
 - Focus on **critical logic** (core functionality and algorithms) and **edge cases** (extreme, erroneous, empty values).
 - **Use GoogleTest framework**.
 - In GEOS, the goal of unit test is never to take position on the validity of physical results (this is the point of integrated-tests).
-- Place tests in ``src/coreComponents/<component>/tests/``.
+- Place unit-tests in ``src/coreComponents/<component>/unitTests/``, with the ``<component>`` being at the lowest possible level.
 - Test GPU code paths if applicable (use ``#ifdef GEOS_USE_DEVICE``).
 
 .. dropdown:: Example: Unit test structure
@@ -169,11 +169,11 @@ Integrated Tests & Examples
 
 **Always provide an example or an integrated test for every XML-usable & serializable component:**
 
-- Each usage pattern should have its own dedicated example,  
-- Examples must run as part of the integrated tests to protect features against regressions,  
+- **Each usage pattern should have its own dedicated example**,  
+- **Examples must run as part of the integrated tests** to protect features against regressions,  
 - Place examples in ``examples/`` directory, and integrated tests in ``inputFiles/``,
 
-For more info, please refer to :ref:`IntegratedTests`.
+For more information, please refer to :ref:`IntegratedTests`.
 
 Code Infrastructure
 ====================
@@ -201,7 +201,7 @@ Basic Types
      - Local array indexing (MPI partition)
    * - ``std::size_t``
      - ``globalIndex``
-     - Global indexing (across MPI)
+     - Global indexing (across MPI ranks)
    * - ``float``
      - ``real32``
      - 32-bit floating point
@@ -232,8 +232,7 @@ Basic Types
 Array Types
 ^^^^^^^^^^^
 
-GEOS provides multi-dimensional CHAI array types for managed host-device data.
-
+GEOS provides multi-dimensional CHAI array types for managed kernel data.
 Refer to the rules of :ref:`CHAI Memory Management <CHAIMemoryManagement>`.
 
 .. list-table:: GEOS Array Types
@@ -307,9 +306,13 @@ External Dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It is possible to use ``std`` library components for data on host memory, for doing so, the rule is 
-to **only use GEOS ``std`` container wrappers** instead of direct standard library containers.
+to **only use GEOS** ``std`` **container wrappers** instead of direct standard library containers.
 
 This rule allow us to control bounds checking depending on ``GEOS_USE_BOUNDS_CHECK`` macro / ``GEOS_ENABLE_BOUNDS_CHECK`` cmake option..
+
+.. list-table:: Standard C++ vs GEOS Types
+   :header-rows: 1
+   :widths: 25 25 50
 
    * - Standard C++ Type
      - GEOS Type
@@ -376,8 +379,8 @@ Rules
 GEOS Logging Macros (``GEOS_LOG*``)  
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Use of ``std::cout``, ``std::cerr``, or ``printf`` for logging must never appear** on the develop branch.
-Always use GEOS logging macros defined in ``Logger.hpp``:
+**Use of** ``std::cout`` **,** ``std::cerr`` **, or** ``printf`` **for logging must never appear on the develop branch.**
+Allowed GEOS logging features are defined in ``Logger.hpp``.
 
 .. dropdown:: Example: Correct logging usage
   :icon: code
@@ -407,7 +410,7 @@ Using Log Levels
 
 **Logging should be meaningful and controlled**:
 
-- When possible, **use ``GEOS_LOG_LEVEL_RANK*`` macros with appropriate ``logInfo``** to allow output filtering,
+- When possible, **use** ``GEOS_LOG_LEVEL_RANK*`` **macros with appropriate** ``logInfo`` **to allow output filtering**,
 - **Avoid unnecessary logging**, prefer rank 0 logging for global information to avoid redundant output,
 - **Consider logs performance impact** (output flush frequency, formatting).
 
@@ -474,7 +477,7 @@ Logging in RAJA Kernels
 Structured Data Output
 ----------------------
 
-For tabular or statistical output, use structured logging facilities instead of plain text logging:
+For tabular or statistical output, **use structured logging facilities instead of plain text logging**:
 
 - Use ``TableTextFormatter`` with a ``logLevel`` XML setting for formatted text table output,
 - Use ``TableCSVFormatter`` with a ``writeCSV()`` XML setting for structured data output.
@@ -545,7 +548,7 @@ Errors (GEOS_ERROR*)
 Why Use Errors?
 ^^^^^^^^^^^^^^^
 
-Use ``GEOS_ERROR*`` macros when encountering a **blocking error** where:
+**Use** ``GEOS_ERROR*`` **macros when encountering a blocking error**:
 
 - The simulation result would be certifiably invalid,
 - The application state is unrecoverable,
@@ -572,10 +575,10 @@ Exceptions (GEOS_THROW*)
 Why Use Exceptions?
 ^^^^^^^^^^^^^^^^^^^
 
-Use ``GEOS_THROW*`` macros for the same reasons as ``GEOS_ERROR*`` (**unrecoverable state**), and when:
+**Use** ``GEOS_THROW*`` **macros for the same reasons as** ``GEOS_ERROR*`` (unrecoverable state), and when:
 
-- You want to **add context** at higher call stack levels,
-- You need to **propagate detailed error information** upward
+- **You want to add context** at higher call stack levels,
+- **You need to propagate detailed error information** upward,
 - If you use custom exception class, you need to document them here.
 
 .. list-table:: Available exception types
@@ -658,7 +661,7 @@ Warnings (GEOS_WARNING*)
 Why Use Warnings?
 ^^^^^^^^^^^^^^^^^
 
-Use ``GEOS_WARNING*`` macros when:
+**Use** ``GEOS_WARNING*`` **macros when**:
 
 - An issue is detected but **simulation can continue**
 - Simulation may be **affected but not completly invalid**
@@ -711,13 +714,13 @@ information on the source of the data, which can be:
 - the file & line of the simulation XML file,
 - if no source exists, ``Group`` / ``Wrapper`` path in the data repository.
 
-**Add ``DataContext`` when** an error occurs because of:
+**Add** ``DataContext`` **when an error occurs because of**:
 
-- a ``Wrapper`` when validation fails for a given user input setting (``getWrapperDataContext()``),
-- a ``Group`` when the error is implied by the instance state (``getDataContext()``),
-- multiple data-contexts when the error is due to multiple objects / settings (first = more important).
+- a ``Wrapper`` when validation fails for **a given user input setting** (``getWrapperDataContext()``),
+- a ``Group`` when the **error is implied by the instance state** (``getDataContext()``),
+- multiple data-contexts when the error is due to **multiple objects / settings** (first = more important).
 
-**Use ``getDataContext()`` or ``getWrapperDataContext()`` as last parameters of the logging macros to pass the data context metadata.**
+**Use** ``getDataContext()`` **or** ``getWrapperDataContext()`` **as last parameters of the logging macros to pass the data context metadata.**
 It will be provided properly in the error message depending on the format (log / YAML).
 
 .. dropdown:: Example: Using DataContext
@@ -881,7 +884,7 @@ Ensure All Ranks Participate in Collective Operations
 Always Use MpiWrapper
 ^^^^^^^^^^^^^^^^^^^^^
 
-**Always use ``MpiWrapper`` instead of raw MPI calls.**
+**Always use** ``MpiWrapper`` **instead of raw MPI calls.**
 
 Refer to ``MpiWrapper.hpp`` for more.
 
@@ -971,7 +974,7 @@ When modifying performance-critical code (kernels, assembly loops, solvers...):
 Caliper Integration
 ^^^^^^^^^^^^^^^^^^^^
 
-Use ``GEOS_MARK_FUNCTION``, ``GEOS_CALIPER_MARK_SCOPE`` and ``Timer`` for performance tracking for the main computation functions / scopes.
+**Use** ``GEOS_MARK_FUNCTION`` **,** ``GEOS_CALIPER_MARK_SCOPE`` **and** ``Timer`` for performance tracking **for the main computation functions / scopes**.
 
 .. dropdown:: Example: Performance instrumentation
   :icon: code
@@ -1004,7 +1007,7 @@ Data Repository Paths
 Note that ``Group`` / ``Wrapper`` names & paths in the data repository are considered as magic values:
 
 - **use getters rather than arbitrary names** (use view keys, ``getCatalogName()``, ``getName()`` or create custom ones).
-- To avoid coupling / architecture stiffening, **avoid using full raw ``Group`` path**, especially when the path has parts unrelated to the component consulting it, prefer getters,
+- To avoid coupling / architecture stiffening, **avoid using full raw** ``Group`` **path**, especially when the path has parts unrelated to the component consulting it, prefer getters,
 
 Data validation
 --------------------------
@@ -1053,12 +1056,12 @@ This can be done in the ``postInputInitialization()`` method, or later if needed
 Wrapped Data Validation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-For data that is wrapped with a ``Wrapper`` (input / output of GEOS):
+**For data that is wrapped with a** ``Wrapper`` (input / output of GEOS):
 
-- Use ``setInputFlag()`` to mark parameters as ``REQUIRED`` or ``OPTIONAL``
-- Use ``setApplyDefaultValue()`` to provide sensible defaults
-- Use ``setRTTypeName()`` for runtime type validation (e.g., ``rtTypes::CustomTypes::positive``)
-- Document valid ranges in ``setDescription()``
+- **Use** ``setInputFlag()`` to mark parameters as ``REQUIRED`` or ``OPTIONAL``
+- **Use** ``setApplyDefaultValue()`` to provide sensible defaults
+- **Use** ``setRTTypeName()`` for runtime type validation (e.g., ``rtTypes::CustomTypes::positive``)
+- **Document valid ranges** in ``setDescription()``
 
 Physics-Specific Rules
 ----------------------
