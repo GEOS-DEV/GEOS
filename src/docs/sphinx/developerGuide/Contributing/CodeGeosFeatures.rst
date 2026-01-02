@@ -173,7 +173,7 @@ Integrated Tests & Examples
 - Examples must run as part of the integrated tests to protect features against regressions,  
 - Place examples in ``examples/`` directory, and integrated tests in ``inputFiles/``,
 
-For more info, please refer to :ref:`IntegratedTests.rst`.
+For more info, please refer to :ref:`IntegratedTests`.
 
 Code Infrastructure
 ====================
@@ -234,7 +234,7 @@ Array Types
 
 GEOS provides multi-dimensional CHAI array types for managed host-device data.
 
-Refer to the rule of :ref:`CHAI Memory Management`.
+Refer to the rule of :ref:`CHAIMemoryManagement`.
 
 .. list-table:: GEOS Array Types
    :header-rows: 1
@@ -410,7 +410,7 @@ Using Log Levels
 - **Avoid unnecessary logging**, prefer rank 0 logging for global information to avoid redundant output,
 - **Consider logs performance impact** (output flush frequency, formatting).
 
-See :doc:`LogLevels` for using / adding log level (e.g., ``logInfo::Convergence``, ``logInfo::TimeStep``).
+See :ref:`LogLevelDocumentation` for using / adding log level (e.g., ``logInfo::Convergence``, ``logInfo::TimeStep``).
 
 .. dropdown:: Example: Using log levels
    :icon: code
@@ -778,6 +778,7 @@ Do Not Launch Kernels from Within Kernels
         }
       });
 
+.. _CHAIMemoryManagement:
 CHAI Memory Management
 ^^^^^^^^^^^^^^^^^^^^^^
 
