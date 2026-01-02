@@ -187,33 +187,33 @@ Basic Types
 ^^^^^^^^^^^
 
 .. list-table:: Standard C++ vs GEOS Types
-   :header-rows: 1
-   :widths: 30 30 40
+  :header-rows: 1
+  :widths: 30 30 40
 
-   * - Standard C++ Type
-     - GEOS Type
-     - Description
-   * - ``int``
-     - ``integer``
-     - Signed integer
-   * - ``std::size_t``
-     - ``localIndex``
-     - Local array indexing (MPI partition)
-   * - ``std::size_t``
-     - ``globalIndex``
-     - Global indexing (across MPI ranks)
-   * - ``float``
-     - ``real32``
-     - 32-bit floating point
-   * - ``double``
-     - ``real64``
-     - 64-bit floating point
-   * - ``std::string``
-     - ``string``
-     - String type
-   * - ``std::string_view``
-     - ``string_view``
-     - Non-owning string view
+  * - Standard C++ Type
+    - GEOS Type
+    - Description
+  * - ``int``
+    - ``integer``
+    - Signed integer
+  * - ``std::size_t``
+    - ``localIndex``
+    - Local array indexing (MPI partition)
+  * - ``std::size_t``
+    - ``globalIndex``
+    - Global indexing (across MPI ranks)
+  * - ``float``
+    - ``real32``
+    - 32-bit floating point
+  * - ``double``
+    - ``real64``
+    - 64-bit floating point
+  * - ``std::string``
+    - ``string``
+    - String type
+  * - ``std::string_view``
+    - ``string_view``
+    - Non-owning string view
 
 .. dropdown:: Example: Using GEOS basic types
   :icon: code
@@ -236,35 +236,35 @@ GEOS provides multi-dimensional CHAI array types for managed kernel data.
 Refer to the rules of :ref:`CHAI Memory Management <CHAIMemoryManagement>`.
 
 .. list-table:: GEOS Array Types
-   :header-rows: 1
-   :widths: 35 65
+  :header-rows: 1
+  :widths: 35 65
 
-   * - GEOS Type
-     - Description
-   * - ``array1d<T>``
-     - 1D owning array
-   * - ``arrayView1d<T>``
-     - 1D non-owning view (modifiable)
-   * - ``arraySlice1d<T>``
-     - 1D slice (from multi-dim array)
-   * - ``array2d<T>``
-     - 2D owning array
-   * - ``arrayView2d<T>``
-     - 2D non-owning view
-   * - ``arraySlice2d<T>``
-     - 2D slice
-   * - ``array3d<T>``, ``array4d<T>``, ``array5d<T>``
-     - 3D/4D/5D owning arrays
-   * - ``arrayView3d<T>``, etc.
-     - 3D/4D/5D views
-   * - ``SortedArray<T>``
-     - Sorted array with search capabilities
-   * - ``ArrayOfArrays<T>``
-     - Jagged 2D array (variable row sizes)
-   * - ``ArrayOfSets<T>``
-     - Array of sets (unique elements per row)
-   * - ``stackArray1d<T, N>``
-     - Stack-allocated array (max size N)
+  * - GEOS Type
+    - Description
+  * - ``array1d<T>``
+    - 1D owning array
+  * - ``arrayView1d<T>``
+    - 1D non-owning view (modifiable)
+  * - ``arraySlice1d<T>``
+    - 1D slice (from multi-dim array)
+  * - ``array2d<T>``
+    - 2D owning array
+  * - ``arrayView2d<T>``
+    - 2D non-owning view
+  * - ``arraySlice2d<T>``
+    - 2D slice
+  * - ``array3d<T>``, ``array4d<T>``, ``array5d<T>``
+    - 3D/4D/5D owning arrays
+  * - ``arrayView3d<T>``, etc.
+    - 3D/4D/5D views
+  * - ``SortedArray<T>``
+    - Sorted array with search capabilities
+  * - ``ArrayOfArrays<T>``
+    - Jagged 2D array (variable row sizes)
+  * - ``ArrayOfSets<T>``
+    - Array of sets (unique elements per row)
+  * - ``stackArray1d<T, N>``
+    - Stack-allocated array (max size N)
 
 .. dropdown:: Example: Using GEOS arrays
   :icon: code
@@ -287,17 +287,17 @@ Tensor Types
 Use GEOS tensor types for geometric and mechanical calculations:
 
 .. list-table:: GEOS Tensor Types
-   :header-rows: 1
-   :widths: 30 70
+  :header-rows: 1
+  :widths: 30 70
 
-   * - Type
-     - Description
-   * - ``R1Tensor``
-     - 3D vector (real64, default choice over 32bit counterpart)
-   * - ``R1Tensor32``
-     - 3D vector (real32)
-   * - ``R2SymTensor``
-     - Symmetric 6-component tensor (`Voigt notation <https://fr.wikipedia.org/wiki/Notation_de_Voigt>`_)
+  * - Type
+    - Description
+  * - ``R1Tensor``
+    - 3D vector (real64, default choice over 32bit counterpart)
+  * - ``R1Tensor32``
+    - 3D vector (real32)
+  * - ``R2SymTensor``
+    - Symmetric 6-component tensor (`Voigt notation <https://fr.wikipedia.org/wiki/Notation_de_Voigt>`_)
 
 External Dependencies
 ----------------------
@@ -311,24 +311,24 @@ to **only use GEOS** ``std`` **container wrappers** instead of direct standard l
 This rule allow us to control bounds checking depending on ``GEOS_USE_BOUNDS_CHECK`` macro / ``GEOS_ENABLE_BOUNDS_CHECK`` cmake option..
 
 .. list-table:: Standard C++ vs GEOS Types
-   :header-rows: 1
-   :widths: 25 25 50
+  :header-rows: 1
+  :widths: 25 25 50
 
-   * - Standard C++ Type
-     - GEOS Type
-     - Description
-   * - ``std::vector``
-     - ``stdVector``
-     - ``std`` dynamically allocated array
-   * - ``std::array``
-     - ``stdArray``
-     - ``std`` fixed constexpr sized array
-   * - ``std::map``
-     - ``map``
-     - ``std`` sorted dictionary
-   * - ``std::unordered_map``
-     - ``unordered_map``
-     - ``std`` unsorted dictionary (hash-map)
+  * - Standard C++ Type
+    - GEOS Type
+    - Description
+  * - ``std::vector``
+    - ``stdVector``
+    - ``std`` dynamically allocated array
+  * - ``std::array``
+    - ``stdArray``
+    - ``std`` fixed constexpr sized array
+  * - ``std::map``
+    - ``map``
+    - ``std`` sorted dictionary
+  * - ``std::unordered_map``
+    - ``unordered_map``
+    - ``std`` unsorted dictionary (hash-map)
 
 .. dropdown:: Example: Container usage
   :icon: code
@@ -493,10 +493,10 @@ For tabular or statistical output, **use structured logging facilities instead o
 
       // filling table data (log format is for current timestep)
       m_logData.addRow( fluxName,
-                             elementSetName,
-                             GEOS_FMT( "{}", wrappedStats.stats().m_elementCount ),
-                             GEOS_FMT( "{}", wrappedStats.stats().m_producedMass ),
-                             GEOS_FMT( "{}", wrappedStats.stats().m_productionRate ) );
+                        elementSetName,
+                        GEOS_FMT( "{}", wrappedStats.stats().m_elementCount ),
+                        GEOS_FMT( "{}", wrappedStats.stats().m_producedMass ),
+                        GEOS_FMT( "{}", wrappedStats.stats().m_productionRate ) );
 
       // statistics CSV output (only if enabled and from rank 0)
       if( logLevelActive && MpiWrapper::commRank() == 0 )
@@ -520,11 +520,11 @@ For tabular or statistical output, **use structured logging facilities instead o
 
       // filling table data (CSV format is all timestep series)
       m_csvData.addRow( wrappedStats.getStatsPeriodStart(),
-                             fluxName,
-                             elementSetName,
-                             wrappedStats.stats().m_elementCount,
-                             wrappedStats.stats().m_producedMass,
-                             wrappedStats.stats().m_productionRate );
+                        fluxName,
+                        elementSetName,
+                        wrappedStats.stats().m_elementCount,
+                        wrappedStats.stats().m_producedMass,
+                        wrappedStats.stats().m_productionRate );
 
       // statistics CSV output (only if enabled and from rank 0)
       if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
@@ -550,9 +550,9 @@ Why Use Errors?
 
 **Use** ``GEOS_ERROR*`` **macros when encountering a blocking error**:
 
-- The simulation result would be certifiably invalid,
-- The application state is unrecoverable,
-- Continuing execution would be unsafe or meaningless.
+- The simulation result would be **certifiably invalid**,
+- The application state would be **unrecoverable**,
+- Continuing execution would be **unsafe or meaningless**.
 
 .. dropdown:: Example: Error handling
   :icon: code
@@ -582,8 +582,8 @@ Why Use Exceptions?
 - If you use custom exception class, you need to document them here.
 
 .. list-table:: Available exception types
-   :header-rows: 1
-   :widths: 35 65
+  :header-rows: 1
+  :widths: 35 65
 
   * - Error class
     - Used for
@@ -625,11 +625,12 @@ Never Catch and Continue
 **Do not catch exceptions and continue execution**. Exceptions in GEOS indicate serious problems, they
 do not serve as an alternative code path to consult a behaviour state.
 
-Why not to use exceptions for anything else than passing information up to the call stack:
+.. dropdown:: Why not to use exceptions for anything else than error?
+  :icon: info
 
-- **Performance:** Exception handling is expensive, especially with stack unwinding,
-- **Predictability:** Catching and continuing makes behaviour unpredictable and hard to debug,
-- **Safety:** The error state may have corrupted simulation data, broken the code path at an unexpected place, and/or left the system in an invalid state.  
+  - **Performance:** Exception handling is expensive, especially with stack unwinding,
+  - **Predictability:** Catching and continuing makes behaviour unpredictable and hard to debug,
+  - **Safety:** The error state may have corrupted simulation data, broken the code path at an unexpected place, and/or left the system in an invalid state.  
 
 .. dropdown:: Example: Exception handling anti-pattern
   :icon: code
@@ -642,7 +643,7 @@ Why not to use exceptions for anything else than passing information up to the c
       {
         solver.solve();
       }
-      catch( std::exception const & e ) // <- Note: this exception could have been throw for unexpected reason
+      catch( std::exception const & ) // <- Note: this exception could have been throw for unexpected reason
       {
         GEOS_LOG("Solver failed, trying alternative");
         alternativeSolver.solve();
@@ -674,8 +675,8 @@ Why Use Warnings?
 
       // Example: suboptimal but valid configuration
       GEOS_WARNING_IF( dt > recommendedDt,
-                       GEOS_FMT("Time step {} exceeds recommended value {}. This may affect solution accuracy.",
-                                dt, recommendedDt),
+                       GEOS_FMT( "Time step {} exceeds recommended value {}. This may affect solution accuracy.",
+                                 dt, recommendedDt),
                        getDataContext() );
 
 Errors & Warning in RAJA Kernels
@@ -714,7 +715,7 @@ information on the source of the data, which can be:
 - the file & line of the simulation XML file,
 - if no source exists, ``Group`` / ``Wrapper`` path in the data repository.
 
-**Add** ``DataContext`` **when an error occurs because of**:
+**Add** ``DataContext`` **instance(s) when an error occurs because of**:
 
 - a ``Wrapper`` when validation fails for **a given user input setting** (``getWrapperDataContext()``),
 - a ``Group`` when the **error is implied by the instance state** (``getDataContext()``),
@@ -1015,7 +1016,8 @@ Data validation
 When To Validate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Perform cross-parameter validation as soon as possible**, and when possible **only once**.
+**Perform parameters validation as soon as possible**, and when possible **only once**.
+
 This can be done in the ``postInputInitialization()`` method, or later if needed, (i.e. in the 
 ``registerDataOnMesh()`` when mesh data is needed, or during the simulation with lazy-init).
 
@@ -1082,7 +1084,7 @@ Unphysical values indicate errors and can cause solver failures.
 
 If a value is not strictly disallowed but does not seem possible for the model, **show a warning to the user that he can disable**.
 
-.. dropdown:: Example: Avoiding global state
+.. dropdown:: Example: Physical value validations
   :icon: code
 
   .. code-block:: cpp
