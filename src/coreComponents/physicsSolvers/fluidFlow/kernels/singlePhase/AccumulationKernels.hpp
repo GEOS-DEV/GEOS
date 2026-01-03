@@ -57,8 +57,8 @@ public:
 
 
   /// Note: Derivative lineup only supports dP & dT, not component terms
-  static constexpr integer isThermal = NUM_DOF-1;
-  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< isThermal >;
+  // static constexpr integer isThermal = NUM_DOF-1;
+  using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< 0 >; // Why not just input 0
 
   /**
    * @brief Constructor

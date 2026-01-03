@@ -16,13 +16,11 @@
 /**
  * @file ReactiveFluidSelector.hpp
  */
-#ifndef GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_REACTIVE_REACTIVEFLUIDSELECTOR_HPP_
-#define GEOS_CONSTITUTIVE_FLUID_MULTIFLUID_REACTIVE_REACTIVEFLUIDSELECTOR_HPP_
+#ifndef GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUID_REACTIVEFLUIDSELECTOR_HPP_
+#define GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUID_REACTIVEFLUIDSELECTOR_HPP_
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
-#include "constitutive/fluid/multifluid/reactive/ReactiveBrineFluid.hpp"
-
-#include "common/GeosxConfig.hpp"
+#include "constitutive/fluid/reactivefluid/ReactiveSinglePhaseFluid.hpp"
 
 namespace geos
 {
@@ -31,23 +29,23 @@ namespace constitutive
 {
 
 template< typename LAMBDA >
-void constitutiveUpdatePassThru( ReactiveMultiFluid const & fluid,
+void constitutiveUpdatePassThru( SingleFluidBase const & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ReactiveBrine,
-                               ReactiveBrineThermal >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< reactivefluid::ReactiveCompressibleSinglePhaseFluid,
+                               reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
-void constitutiveUpdatePassThru( ReactiveMultiFluid & fluid,
+void constitutiveUpdatePassThru( SingleFluidBase & fluid,
                                  LAMBDA && lambda )
 {
-  ConstitutivePassThruHandler< ReactiveBrine,
-                               ReactiveBrineThermal >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+  ConstitutivePassThruHandler< reactivefluid::ReactiveCompressibleSinglePhaseFluid,
+                               reactivefluid::ReactiveThermalCompressibleSinglePhaseFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive
 
 } // namespace geos
 
-#endif //GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUIDSELECTOR_HPP_
+#endif //GEOS_CONSTITUTIVE_FLUID_REACTIVEFLUID_REACTIVEFLUIDSELECTOR_HPP_
