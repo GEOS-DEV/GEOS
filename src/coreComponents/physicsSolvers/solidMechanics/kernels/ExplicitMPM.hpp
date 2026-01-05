@@ -278,9 +278,6 @@ struct CohesiveZoneStateUpdateKernel
           LvArray::tensorOps::subtract< 3 >( tangentialDisplacementBVec, normalDisplacementBVec );
         }
 
-        // Revert surface normal
-        LvArray::tensorOps::scale< 3 >( nAB, -1.0 );
-
         real64 totalNormalDisplacement = normalDisplacementA + normalDisplacementB;
 
         real64 tangentialInterfaceDisplacement[3]  = {};
@@ -298,7 +295,7 @@ struct CohesiveZoneStateUpdateKernel
                                                     normalStress,
                                                     shearStress );
 
-        if( preventCZInterpentration == 1 && normalStress < 0 )
+        if( preventCZInterpentration == 1 && normalStress > 0 ) // Change from < to > since consititutive law returns negative stress for positive displacement
         {
           normalStress = 0.0;
         }
@@ -312,21 +309,40 @@ struct CohesiveZoneStateUpdateKernel
           LvArray::tensorOps::copy< 3 >( tAB, tangentialInterfaceDisplacement );
           LvArray::tensorOps::scale< 3 >( tAB, 1 / totalTangentialDisplacement );
 
-          LvArray::tensorOps::scaledAdd< 3 >( tA, tAB, shearStress );
-          LvArray::tensorOps::scaledAdd< 3 >( tB, tAB, -shearStress );
+          LvArray::tensorOps::scaledAdd< 3 >( tA, tAB, -shearStress ); // Flipped the sign of shear stress on this line and next
+          LvArray::tensorOps::scaledAdd< 3 >( tB, tAB, shearStress );
         }
 
         // Convert traction to force using mass-weighted average of projected area
         // Do we want to add choice of weighting as we do in contact calculations for normals?
         real64 areaAB[3] = {};
-        LvArray::tensorOps::scaledAdd< 3 >( areaAB, sA, mA );
+        LvArray::tensorOps::scaledCopy< 3 >( areaAB, sA, mA );
         LvArray::tensorOps::scaledAdd< 3 >( areaAB, sB, -mB );
         LvArray::tensorOps::scale< 3 >( areaAB, 1 / mAB );
 
-        real64 surfaceArea = LvArray::tensorOps::AiBi< 3 >( nAB, areaAB );
+        real64 surfaceArea = LvArray::tensorOps::AiBi< 3 >( nAB, areaAB ); // Should we take the absolute value to ensure surface area can never be negative. However, if nAB is consistent with areaAB then it should also never be negative so negative surface area could indicate an error
         LvArray::tensorOps::scaledAdd< 3 >( gridCZTraction[k][fieldA], tA, surfaceArea );
         LvArray::tensorOps::scaledAdd< 3 >( gridCZTraction[k][fieldB], tB, surfaceArea );
+        
+        // GEOS_LOG_RANK( "k: " << k << ", " << 
+        //                "dA: " << "{" << dA[0] << ", " << dA[1] << ", " << dA[2] << "}, " << 
+        //                "dB: " << "{" << dB[0] << ", " << dB[1] << ", " << dB[2] << "}, " << 
+        //                "nA: " << "{" << nA[0] << ", " << nA[1] << ", " << nA[2] << "}, " << 
+        //                "nB: " << "{" << nB[0] << ", " << nB[1] << ", " << nB[2] << "}, " << 
+        //                "nAB: " << "{" << nAB[0] << ", " << nAB[1] << ", " << nAB[2] << "}, " << 
+        //                "aA: " << czReferenceArea[k][fieldA] << ", " << 
+        //                "aB: " << czReferenceArea[k][fieldB] << ", " << 
+        //                "sA: " << "{" << sA[0] << ", " << sA[1] << ", " << sA[2] << "}, " << 
+        //                "sB: " << "{" << sB[0] << ", " << sB[1] << ", " << sB[2] << "}, " << 
+        //                "normalDisp: " << totalNormalDisplacement << ", " << 
+        //                "shearDisp: " << totalTangentialDisplacement << ", " <<
+        //                "surfaceArea: " << surfaceArea << ", "
+        //                "normalStress: " << normalStress << ", "
+        //                "shearStress: " << shearStress << ", "
+        //                "tA: " << "{" << tA[0] << ", " << tA[1] << ", " << tA[2] << "}, " << 
+        //                "tB: " << "{" << tB[0] << ", " << tB[1] << ", " << tB[2] << "}"  );
       }
+
 
       // Save converged state
       // TODO: check state is being saved correctly

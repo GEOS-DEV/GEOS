@@ -1143,6 +1143,7 @@ protected:
   int m_useDamageAsSurfaceFlag;
 
   // Contact options
+  int m_enableContact;
   int m_hasContact;
   ContactNormalTypeOption m_contactNormalType;
   ContactGapCorrectionOption m_contactGapCorrection;
@@ -1164,7 +1165,7 @@ protected:
   // Cohesive zone options
   AreaIntegrationOption m_areaIntegrationMethod;
   real64 m_numSurfaceIntegrationPoints;
-  int m_preventCZInterpentration;
+  int m_preventCZInterpenetration;
   real64 m_totalBinderVolume;
   real64 m_polymerCZThickness;
 

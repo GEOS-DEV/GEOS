@@ -53,11 +53,13 @@ CoupledCohesiveZone::CoupledCohesiveZone( string const & name, Group * const par
     setDescription( "Maximum shear stress" );  
 
   registerWrapper( viewKeyStruct::maxNormalDisplacementString(), &m_maxNormalDisplacement ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_maxNormalDisplacement ).
     setDescription( "Maximum normal displacement" );
 
   registerWrapper( viewKeyStruct::maxTangentialDisplacementString(), &m_maxTangentialDisplacement ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( m_maxTangentialDisplacement ).
     setDescription( "Maximum tangential displacement" );
 
   // register fields

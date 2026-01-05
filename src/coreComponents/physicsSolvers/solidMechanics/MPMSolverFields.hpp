@@ -337,6 +337,14 @@ DECLARE_FIELD( particleReferenceShapeFunctionGradientValues,
                WRITE_AND_READ,
                "ParticleReferenceShapeFunctionGradientValues" );
 
+DECLARE_FIELD( particleCohesiveReferencePosition,
+               "particleCohesiveReferencePosition",
+               array2d< real64 >,
+               0.0,
+               LEVEL_1,
+               WRITE_AND_READ,
+               "particleCohesiveReferencePosition" );
+
 DECLARE_FIELD( particleCohesiveReferenceSurfaceNormal,
                "particleCohesiveReferenceSurfaceNormal",
                array2d< real64 >,
