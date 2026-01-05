@@ -15,6 +15,162 @@
 
 /**
  * @file CompositionalMultiphaseStatistics.cpp
+ * @details Region statistics data is stored as follow:
+ *
+ * Problem : geos::ProblemManager
+ * |-> domain : geos::DomainPartition
+ *     |-> MeshBodies : geos::dataRepository::Group
+ *         |-> cartesianMesh : geos::MeshBody
+ *             |-> meshLevels : geos::dataRepository::Group
+ *                 |-> Level0 : geos::MeshLevel
+ *                 |   |-> nodeManager : geos::NodeManager
+ *                 |   |   |-> sets : geos::dataRepository::Group
+ *                 |   |       | * all : geos::dataRepository::Wrapper< index array >
+ *                 |   |       | * xneg : geos::dataRepository::Wrapper< index array >
+ *                 |   |       [...] (other element sets)
+ *                 |   |
+ *                 |   |-> ElementRegions : geos::ElementRegionManager
+ *                 |   |   |-> Channel : geos::CellElementRegion
+ *                 |   |   |   |-> cb-0_0_0 : geos::CellElementSubRegion
+ *                 |   |   |   |   | * pressure : geos::dataRepository::Wrapper< real64 array >
+ *                 |   |   |   |   | * temperature : geos::dataRepository::Wrapper< real64 array >
+ *                 |   |   |   |   [...] (other fields)
+ *                 |   |   |   |
+ *                 |   |   |   |-> cb-0_0_1 : geos::CellElementSubRegion
+ *                 |   |   |   |   | * pressure : geos::dataRepository::Wrapper< real64 array >
+ *                 |   |   |   |   | * temperature : geos::dataRepository::Wrapper< real64 array >
+ *                 |   |   |   |   [...] (other fields)
+ *                 |   |   |   |
+ *                 |   |   |   [...] (other sub-regions)
+ *                 |   |   |
+ *                 |   |   |-> Barrier : geos::CellElementRegion
+ *                 |   |       |-> cb-1_0_0 : geos::CellElementSubRegion
+ *                 |   |       |-> cb-1_0_1 : geos::CellElementSubRegion
+ *                 |   |       [...] (other sub-regions)
+ *                 |   |
+ *                 |   [...] (other element managers)
+ *          ____   |   |
+ *          |      |   |-> statistics : geos::dataRepository::Group (storage for all stats)
+ *          |      |       |-> compFlowStats : geos::dataRepository::Group (storage for this instance stats)
+ *          |      |       |   |-> cflStatistics : geos::compositionalMultiphaseStatistics::CFLStatistics
+ *          |      |       |   |-> regionsStats : geos::compositionalMultiphaseStatistics::RegionStatistics (aggregate)
+ *          |      |       |       |-> Channel : geos::compositionalMultiphaseStatistics::RegionStatistics (aggregate, mpi reduced)
+ *          |      |       |       |   |-> cb-0_0_0 : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
+ *  stats   |      |       |       |   |-> cb-0_0_1 : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
+ *  data -> |      |       |       |   [...] (other sub-regions stats)
+ *          |      |       |       |
+ *          |      |       |       |-> Barrier : geos::compositionalMultiphaseStatistics::RegionStatistics (aggregate, mpi reduced)
+ *          |      |       |           |-> cb-1_0_0 : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
+ *          |      |       |           |-> cb-1_0_1 : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
+ *          |      |       |           [...] (other sub-regions stats)
+ *          |      |       |
+ *          |___   |       [...] (other stats storages)
+ *                 |
+ *                 [...] (other discretizations)
+ *
+ * not feasible because having a StatTask is not mandatory
+ * Problem : geos::ProblemManager
+ * |-> domain : geos::DomainPartition
+ * |   |-> MeshBodies : geos::dataRepository::Group
+ * |       |-> cartesianMesh : geos::MeshBody
+ * |           |-> meshLevels : geos::dataRepository::Group
+ * |               |-> Level0 : geos::MeshLevel
+ * |               |   |-> nodeManager : geos::NodeManager
+ * |               |   |   |-> sets : geos::dataRepository::Group
+ * |               |   |       |-> all : geos::dataRepository::Wrapper< index array >
+ * |               |   |       |-> xneg : geos::dataRepository::Wrapper< index array >
+ * |               |   |       [...] (other element sets)
+ * |               |   |
+ * |               |   |-> ElementRegions : geos::ElementRegionManager
+ * |               |   |   |-> Channel : geos::CellElementRegion
+ * |               |   |   |   |-> cb-0_0_0 : geos::CellElementSubRegion
+ * |               |   |   |   |   |-> pressure : geos::dataRepository::Wrapper< real64 array >
+ * |               |   |   |   |   |-> temperature : geos::dataRepository::Wrapper< real64 array >
+ * |               |   |   |   |   [...] (other fields)
+ * |               |   |   |   |
+ * |               |   |   |   |-> cb-0_0_1 : geos::CellElementSubRegion
+ * |               |   |   |   |   |-> pressure : geos::dataRepository::Wrapper< real64 array >
+ * |               |   |   |   |   |-> temperature : geos::dataRepository::Wrapper< real64 array >
+ * |               |   |   |   |   [...] (other fields)
+ * |               |   |   |   |
+ * |               |   |   |   [...] (other sub-regions)
+ * |               |   |   |
+ * |               |   |   |-> Barrier : geos::CellElementRegion
+ * |               |   |       |-> cb-1_0_0 : geos::CellElementSubRegion
+ * |               |   |       |-> cb-1_0_1 : geos::CellElementSubRegion
+ * |               |   |       [...] (other sub-regions)
+ * |               |   |
+ * |               |   [...] (other element managers)
+ * |               |
+ * |               [...] (other discretizations)
+ * |               
+ * |-> Tasks : geos::TaskManager
+ *     |-> compFlowStats : geos::dataRepository::compositionalMultiphaseStatistics::StatTask (storage for this instance stats)
+ *         |-> cartesianMesh : geos::dataRepository::Group
+ *             |-> Level0 : geos::dataRepository::Group
+ *          ____   |-> cartesianMesh_Level0 : geos::dataRepository::Group (storage for all stats)
+ *          |      |   |   |-> cflStatistics : geos::compositionalMultiphaseStatistics::CFLStatistics
+ *          |      |   |   |-> regionsStats : geos::compositionalMultiphaseStatistics::RegionStatistics (aggregate)
+ *          |      |   |       |-> Channel : geos::compositionalMultiphaseStatistics::RegionStatistics (aggregate, mpi reduced)
+ *          |      |   |       |   |-> cb-0_0_0 : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
+ *  stats   |      |   |       |   |-> cb-0_0_1 : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
+ *  data -> |      |   |       |   ... (other sub-regions stats)
+ *          |      |   |       |
+ *          |      |   |       |-> Barrier : geos::compositionalMultiphaseStatistics::RegionStatistics (aggregate, mpi reduced)
+ *          |      |   |           |-> cb-1_0_0 : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
+ *          |      |   |           |-> cb-1_0_1 : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
+ *          |      |   |           ... (other sub-regions stats)
+ *          |      |   |
+ *          |___   |   ... (other stats storages)
+ *                 |
+ *                 ... (other discretizations)
+ *
+ * Stats data structures are much more scattered + the "statistics" Group is still needed
+ * Problem : geos::ProblemManager
+ * |-> domain : geos::DomainPartition
+ *     |-> MeshBodies : geos::dataRepository::Group
+ *         |-> cartesianMesh : geos::MeshBody
+ *             |-> meshLevels : geos::dataRepository::Group
+ *                 |-> Level0 : geos::MeshLevel
+ *                 |   |-> nodeManager : geos::NodeManager
+ *                 |   |   |-> sets : geos::dataRepository::Group
+ *                 |   |       | * all : geos::dataRepository::Wrapper< index array >
+ *                 |   |       | * xneg : geos::dataRepository::Wrapper< index array >
+ *                 |   |       ... (other element sets)
+ *                 |   |
+ *                 |   |-> other element managers...
+ *                 |   |
+ *                 |   |-> ElementRegions : geos::ElementRegionManager
+ *                 |       |-> Channel : geos::CellElementRegion
+ *                 |       |   |-> cb-0_0_0 : geos::CellElementSubRegion
+ *                 |       |   |   | * pressure : geos::dataRepository::Wrapper< real64 array >
+ *                 |       |   |   | * temperature : geos::dataRepository::Wrapper< real64 array >
+ *                 |       |   |   | [...] (other fields)
+ *                 |       |   |   |-> compFlowStats : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
+ *                 |       |   |
+ *                 |       |   |-> cb-0_0_1 : geos::CellElementSubRegion
+ *                 |       |   |   | * pressure : geos::dataRepository::Wrapper< real64 array >
+ *                 |       |   |   | * temperature : geos::dataRepository::Wrapper< real64 array >
+ *                 |       |   |   | [...] (other fields)
+ *                 |       |   |   |-> compFlowStats : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
+ *                 |       |   |
+ *                 |       |   [...] (other sub-regions)
+ *                 |       |   |
+ *                 |       |   |-> compFlowStats : geos::compositionalMultiphaseStatistics::RegionStatistics (aggregate, mpi reduced)
+ *                 |       |
+ *                 |       |-> Barrier : geos::CellElementRegion
+ *                 |       |   |-> cb-1_0_0 : geos::CellElementSubRegion
+ *                 |       |   |-> cb-1_0_1 : geos::CellElementSubRegion
+ *                 |       |   [...] (other sub-regions)
+ *                 |       |
+ *                 |       [...] (other regions)
+ *                 |       |
+ *          |      |       |-> statistics : geos::dataRepository::Group (storage for all stats)
+ *                 |           |-> compFlowStats : geos::dataRepository::Group (storage for this instance stats)
+ *                 |               |-> regionsStats : geos::compositionalMultiphaseStatistics::RegionStatistics (aggregate)
+ *                 |               |-> cflStatistics : geos::compositionalMultiphaseStatistics::CFLStatistics
+ *                 |
+ *                 ... (other discretizations)
  */
 
 #include "CompositionalMultiphaseStatisticsAggregator.hpp"
