@@ -1,0 +1,52 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./ChainSerial_base.xml" />
+    <File name="./ChainSerial_1DAllKinetic_base.xml" />
+    <File name="./ChainSerial_initialAggregate.xml" />
+    <File name="./ChainSerial_logConc.xml" />
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1e-4, 0, 100.0 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1, 400 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb-0_0_0, cb-1_0_0 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="400">
+    <PeriodicEvent
+      name="outputs"
+      cycleFrequency="5"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="logPrimarySpeciesHistoryCollection"
+      cycleFrequency="5"
+      target="/Tasks/logPrimarySpeciesCollection"/>
+
+    <PeriodicEvent
+      name="logPrimarySpeciesTimeHistoryOutput"
+      cycleFrequency="1"
+      target="/Outputs/logPrimarySpeciesHistoryOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      maxEventDt="1.0"
+      target="/Solvers/SinglePhaseReactiveFlow"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="500"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+</Problem>

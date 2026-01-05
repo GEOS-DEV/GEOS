@@ -1,0 +1,151 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="PorositySource"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="rockPorosityA_referencePorosity"
+      scale="0.25"/>
+
+    <FieldSpecification
+      name="PorosityMediumA"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumA"
+      fieldName="rockPorosityA_referencePorosity"
+      scale="0.25"/>
+
+    <FieldSpecification
+      name="PorosityMediumB"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumB"
+      fieldName="rockPorosityB_referencePorosity"
+      scale="0.5"/>
+    
+    <FieldSpecification
+      name="initialPressureSource"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <FieldSpecification
+      name="initialPressureMediumA"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumA"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <FieldSpecification
+      name="initialPressureMediumB"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumB"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      scale="-5.5"/>
+
+    <FieldSpecification
+      name="sinkPressure"
+      setNames="{ xpos }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="1.0e6"/>
+
+    <FieldSpecification
+      name="surfaceAreaMediumA"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumA"
+      fieldName="initialSurfaceArea"
+      component="0"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="surfaceAreaMediumB"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumB"
+      fieldName="initialSurfaceArea"
+      component="0"
+      scale="1.0"/>
+  </FieldSpecifications>
+
+  <Tasks>
+    <PackCollection
+      name="logPrimarySpeciesMediumACollection1"
+      objectPath="ElementRegions/MediumA/cb-1_0_0"
+      fieldName="logPrimarySpeciesConcentration"/>
+
+    <PackCollection
+      name="logPrimarySpeciesMediumACollection2"
+      objectPath="ElementRegions/MediumA/cb-2_0_0"
+      fieldName="logPrimarySpeciesConcentration"/>
+    
+    <PackCollection
+      name="logPrimarySpeciesMediumACollection3"
+      objectPath="ElementRegions/MediumA/cb-4_0_0"
+      fieldName="logPrimarySpeciesConcentration"/>
+
+    <PackCollection
+      name="logPrimarySpeciesSinkCollection"
+      objectPath="ElementRegions/MediumA/cb-5_0_0"
+      fieldName="logPrimarySpeciesConcentration"/>
+
+    <PackCollection
+      name="logPrimarySpeciesMediumBCollection"
+      objectPath="ElementRegions/MediumB/cb-3_0_0"
+      fieldName="logPrimarySpeciesConcentration"/>
+  </Tasks>
+
+  <Outputs>
+    <TimeHistory
+      name="logPrimarySpeciesMediumAHistoryOutput1"
+      sources="{ /Tasks/logPrimarySpeciesMediumACollection1 }"
+      filename="logPrimarySpeciesMediumAHistory1"/>
+
+    <TimeHistory
+      name="logPrimarySpeciesMediumAHistoryOutput2"
+      sources="{ /Tasks/logPrimarySpeciesMediumACollection2 }"
+      filename="logPrimarySpeciesMediumAHistory2"/>
+
+    <TimeHistory
+      name="logPrimarySpeciesMediumAHistoryOutput3"
+      sources="{ /Tasks/logPrimarySpeciesMediumACollection3 }"
+      filename="logPrimarySpeciesMediumAHistory3"/>
+
+    <TimeHistory
+      name="logPrimarySpeciesSinkHistoryOutput"
+      sources="{ /Tasks/logPrimarySpeciesSinkCollection }"
+      filename="logPrimarySpeciesSinkHistory"/>
+
+    <TimeHistory
+      name="logPrimarySpeciesMediumBHistoryOutput"
+      sources="{ /Tasks/logPrimarySpeciesMediumBCollection }"
+      filename="logPrimarySpeciesMediumBHistory"/>
+
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>
