@@ -1,0 +1,143 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+  <!-- AGGREGATE CONCENTRATIONS AT MEDIUM A-->
+    <FieldSpecification
+      name="initialAggregate_T1_mediumA"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumA"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="0"
+      scale="1e-8"/>
+
+    <FieldSpecification
+      name="initialAggregate_T2_mediumA"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumA"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="1"
+      scale="-3.0"/>
+
+    <FieldSpecification
+      name="initialAggregate_T3_mediumA"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumA"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="2"
+      scale="1e-8"/>
+
+    <FieldSpecification
+      name="initialAggregate_T4_mediumA"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumA"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="3"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="initialAggregate_TS_mediumA"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumA"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="4"
+      scale="1.0"/>
+
+    <!-- AGGREGATE CONCENTRATIONS AT MEDIUM B-->
+    <FieldSpecification
+      name="initialAggregate_T1_mediumB"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumB"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="0"
+      scale="1e-8"/>
+
+    <FieldSpecification
+      name="initialAggregate_T2_mediumB"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumB"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="1"
+      scale="-9.0"/>
+
+    <FieldSpecification
+      name="initialAggregate_T3_mediumB"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumB"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="2"
+      scale="1e-8"/>
+
+    <FieldSpecification
+      name="initialAggregate_T4_mediumB"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumB"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="3"
+      scale="3.0"/>
+
+    <FieldSpecification
+      name="initialAggregate_TS_mediumB"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/MediumB"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="4"
+      scale="10.0"/>
+
+    <!-- AGGREGATE CONCENTRATIONS AT SOURCE-->
+    <FieldSpecification
+      name="initialAggregate_T1_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="0"
+      scale="0.3"/>
+
+    <FieldSpecification
+      name="initialAggregate_T2_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="1"
+      scale="0.3"/>
+
+    <FieldSpecification
+      name="initialAggregate_T3_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="2"
+      scale="0.3"/>
+
+    <FieldSpecification
+      name="initialAggregate_T4_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="3"
+      scale="1e-8"/>
+
+    <FieldSpecification
+      name="initialAggregate_TS_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_primarySpeciesAggregateConcentration"
+      component="4"
+      scale="1e-8"/>
+  </FieldSpecifications>
+</Problem>

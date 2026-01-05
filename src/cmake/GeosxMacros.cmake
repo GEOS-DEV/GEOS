@@ -47,6 +47,8 @@ macro( geosx_add_code_checks )
         endforeach()
     endif()
 
+    message( "PROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}" )  # debug
+
     if ( ENABLE_UNCRUSTIFY )
         blt_add_code_checks( PREFIX  ${arg_PREFIX}
                              SOURCES ${_sources}
