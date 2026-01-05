@@ -1,0 +1,143 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <FieldSpecifications>
+  <!-- INITIAL PRIMARY CONCENTRATIONS AT MEDIUM A -->
+    <FieldSpecification
+      name="initialPrimary_X1_mediuma"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/MediumA"
+      fieldName="water_initialPrimarySpeciesConcentration"
+      component="0"
+      scale="1e-8"/>
+
+    <FieldSpecification
+      name="initialPrimary_X2_mediuma"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/MediumA"
+      fieldName="water_initialPrimarySpeciesConcentration"
+      component="1"
+      scale="0.02"/>
+
+    <FieldSpecification
+      name="initialPrimary_X3_mediuma"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/MediumA"
+      fieldName="water_initialPrimarySpeciesConcentration"
+      component="2"
+      scale="1e-8"/>
+
+    <FieldSpecification
+      name="initialPrimary_X4_mediuma"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/MediumA"
+      fieldName="water_initialPrimarySpeciesConcentration"
+      component="3"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="initialPrimary_S_mediuma"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/MediumA"
+      fieldName="water_initialPrimarySpeciesConcentration"
+      component="4"
+      scale="1.0"/>
+
+  <!-- INITIAL PRIMARY CONCENTRATIONS AT MEDIUM B -->
+    <FieldSpecification
+      name="initialPrimary_X1_mediumb"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/MediumB"
+      fieldName="water_initialPrimarySpeciesConcentration"
+      component="0"
+      scale="1e-8"/>
+
+    <FieldSpecification
+      name="initialPrimary_X2_mediumb"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/MediumB"
+      fieldName="water_initialPrimarySpeciesConcentration"
+      component="1"
+      scale="0.02"/>
+
+    <FieldSpecification
+      name="initialPrimary_X3_mediumb"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/MediumB"
+      fieldName="water_initialPrimarySpeciesConcentration"
+      component="2"
+      scale="1e-8"/>
+
+    <FieldSpecification
+      name="initialPrimary_X4_mediumb"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/MediumB"
+      fieldName="water_initialPrimarySpeciesConcentration"
+      component="3"
+      scale="2.0"/>
+
+    <FieldSpecification
+      name="initialPrimary_S_mediumb"
+      setNames="{ all }"
+      initialCondition="1"
+      objectPath="ElementRegions/MediumB"
+      fieldName="water_initialPrimarySpeciesConcentration"
+      component="4"
+      scale="10.0"/>
+
+    <!-- INITIAL PRIMARY CONCENTRATIONS AT SOURCE-->
+    <FieldSpecification
+      name="initialPrimary_X1_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_initialPrimarySpeciesConcentration"
+      component="0"
+      scale="0.3"/>
+
+    <FieldSpecification
+      name="initialPrimary_X2_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_initialPrimarySpeciesConcentration"
+      component="1"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="initialPrimary_X3_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_initialPrimarySpeciesConcentration"
+      component="2"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="initialPrimary_X4_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_initialPrimarySpeciesConcentration"
+      component="3"
+      scale="1e-8"/>
+
+    <FieldSpecification
+      name="initialPrimary_S_source"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="water_initialPrimarySpeciesConcentration"
+      component="4"
+      scale="1e-8"/>
+  </FieldSpecifications>
+</Problem>
