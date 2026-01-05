@@ -178,7 +178,7 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
   catch( geos::DomainError const & ex )
   {
     string const errorMsg = "Table input error.\n";
-    testErrorLogger.beginLogger()
+    testErrorLogger.buildCurrentErrorMsg()
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
       .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
@@ -194,7 +194,7 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
                           "  Error message :\n" << ex.what() <<
                           "  expected sequence :\n" << whatExpected );
   }
-  testErrorLogger.flushErrorMsg();
+  testErrorLogger.flushCurrentExceptionMsg();
 
   endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
@@ -289,7 +289,7 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
   catch( geos::DomainError const & ex )
   {
     string const errorMsg = "Table input error.\n";
-    testErrorLogger.beginLogger()
+    testErrorLogger.buildCurrentErrorMsg()
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
       .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
@@ -331,7 +331,7 @@ TEST( ErrorHandling, testStdException )
   }
   catch( std::exception & e )
   {
-    testErrorLogger.beginLogger()
+    testErrorLogger.buildCurrentErrorMsg()
       .setType( ErrorLogger::MsgType::Exception )
       .addToMsg( e.what() )
       .addRank( ::geos::logger::internal::g_rank )

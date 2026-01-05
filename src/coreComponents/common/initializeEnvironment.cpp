@@ -102,7 +102,7 @@ void setupLogger()
 
       std::string const stackHistory = LvArray::system::stackTrace( true );
 
-      ErrorLogger::global().beginLogger()
+      ErrorLogger::global().buildCurrentErrorMsg()
         .setType( ErrorLogger::MsgType::Error )
         .addToMsg( errorMsg )
         .addRank( ::geos::logger::internal::g_rank )
@@ -110,8 +110,8 @@ void setupLogger()
         .addContextInfo(
         ErrorContext{  string( detectionLocation ),
                        { { ErrorContext::Attribute::DetectionLoc, string( detectionLocation ) } },
-        } )
-        .flush();
+        } );
+      ErrorLogger::global().flushCurrentExceptionMsg();
 
       // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
     } );
@@ -129,15 +129,15 @@ void setupLogger()
       // error message output
       std::string const stackHistory = LvArray::system::stackTrace( true );
 
-      ErrorLogger::global().beginLogger()
+      ErrorLogger::global().buildCurrentErrorMsg()
         .addSignalToMsg( signal )
         .setType( ErrorLogger::MsgType::Error )
         .addRank( ::geos::logger::internal::g_rank )
         .addCallStackInfo( stackHistory )
         .addContextInfo(
         ErrorContext{ { { ErrorContext::Attribute::Signal, std::to_string( signal ) } }, 1 },
-        ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( "signal handler" ) } }, 0 } )
-        .flush();
+        ErrorContext{ { { ErrorContext::Attribute::DetectionLoc, string( "signal handler" ) } }, 0 } );
+      ErrorLogger::global().flushCurrentExceptionMsg();
 
       // call program termination
       LvArray::system::callErrorHandler();

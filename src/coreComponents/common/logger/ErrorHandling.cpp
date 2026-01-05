@@ -58,33 +58,38 @@ std::string ErrorLogger::ErrorContext::attributeToString( ErrorLogger::ErrorCont
   }
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::exception const & e, bool toEnd )
+void ErrorLogger::ErrorMsgBuilder::addContextInfoImpl( ErrorLogger::ErrorContext && ctxInfo )
+{
+  m_errorMsg.m_contextsInfo.emplace_back( std::move( ctxInfo ) );
+}
+
+
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addToMsg( std::exception const & e, bool const toEnd )
 {
   if( toEnd )
   {
-    m_msg = m_msg + e.what();
+    m_errorMsg.m_msg = m_errorMsg.m_msg + e.what();
   }
   else
   {
-    m_msg = e.what() + m_msg;
+    m_errorMsg.m_msg = e.what() + m_errorMsg.m_msg;
+  }
+  return *this;
+}
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addToMsg( std::string_view errorMsg, bool toEnd )
+{
+  if( toEnd )
+  {
+    m_errorMsg.m_msg = m_errorMsg.m_msg + std::string( errorMsg );
+  }
+  else
+  {
+    m_errorMsg.m_msg = std::string( errorMsg ) + m_errorMsg.m_msg;
   }
   return *this;
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addToMsg( std::string_view errorMsg, bool toEnd )
-{
-  if( toEnd )
-  {
-    m_msg = m_msg + std::string( errorMsg );
-  }
-  else
-  {
-    m_msg = std::string( errorMsg ) + m_msg;
-  }
-  return *this;
-}
-
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addSignalToMsg( int sig, bool toEnd )
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addSignalToMsg( integer const sig, bool const toEnd )
 {
   if( sig == SIGFPE )
   {
@@ -115,39 +120,36 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addSignalToMsg( int sig, bool toE
                                sig, ::strsignal( sig ) ),
                      toEnd );
   }
-}
-
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCodeLocation( std::string_view msgFile, integer const msgLine )
-{
-  m_file = msgFile;
-  m_line = msgLine;
   return *this;
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setType( ErrorLogger::MsgType const msgType )
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setCodeLocation( std::string_view msgFile,
+                                                                              integer const msgLine )
 {
-  m_type = msgType;
+  m_errorMsg.m_file = msgFile;
+  m_errorMsg.m_line = msgLine;
   return *this;
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::setCause( std::string_view cause )
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setType( ErrorLogger::MsgType const msgType )
 {
-  m_cause = cause;
+  m_errorMsg.m_type = msgType;
   return *this;
 }
 
-void ErrorLogger::ErrorMsg::addContextInfoImpl( ErrorLogger::ErrorContext && ctxInfo )
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setCause( std::string_view cause )
 {
-  m_contextsInfo.emplace_back( std::move( ctxInfo ) );
-}
-
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addRank( integer const rank )
-{
-  m_ranksInfo.emplace( rank );
+  m_errorMsg.m_cause = cause;
   return *this;
 }
 
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string_view ossStackTrace )
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addRank( integer const rank )
+{
+  m_errorMsg.m_ranksInfo.emplace( rank );
+  return *this;
+}
+
+ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addCallStackInfo( std::string_view ossStackTrace )
 {
   std::string str = std::string( ossStackTrace );
   std::istringstream iss( str );
@@ -160,80 +162,17 @@ ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addCallStackInfo( std::string_vie
   {
     if( std::regex_search( stackLine, pattern ))
     {
-      m_isValidStackTrace = true;
+      m_errorMsg.m_isValidStackTrace = true;
       index = stackLine.find( ':' );
-      m_sourceCallStack.push_back( stackLine.substr( index + 1 ) );
+      m_errorMsg.m_sourceCallStack.push_back( stackLine.substr( index + 1 ) );
     }
   }
 
-  if( !m_isValidStackTrace )
+  if( !m_errorMsg.m_isValidStackTrace )
   {
-    m_sourceCallStack.push_back( str );
+    m_errorMsg.m_sourceCallStack.push_back( str );
   }
 
-  return *this;
-}
-
-ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addToMsg( std::exception const & e, bool const toEnd )
-{
-  m_errorContext.m_currentErrorMsg.addToMsg( e, toEnd );
-  return *this;
-}
-ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addToMsg( std::string_view msg, bool toEnd )
-{
-  m_errorContext.m_currentErrorMsg.addToMsg( msg, toEnd );
-  return *this;
-}
-
-ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addSignalToMsg( integer const sig, bool const toEnd )
-{
-  m_errorContext.m_currentErrorMsg.addSignalToMsg( sig, toEnd );
-  return *this;
-}
-
-ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setCodeLocation( std::string_view msgFile,
-                                                                              integer const msgLine )
-{
-  if( !m_errorContext.m_currentErrorMsg.isCommited() )
-  {
-    m_errorContext.m_currentErrorMsg.setCodeLocation( msgFile, msgLine );
-  }
-  return *this;
-}
-
-ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setType( ErrorLogger::MsgType const msgType )
-{
-  if( !m_errorContext.m_currentErrorMsg.isCommited() )
-  {
-    m_errorContext.m_currentErrorMsg.setType( msgType );
-  }
-  return *this;
-}
-
-ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::setCause( std::string_view cause )
-{
-  if( !m_errorContext.m_currentErrorMsg.isCommited() )
-  {
-    m_errorContext.m_currentErrorMsg.setCause( cause );
-  }
-  return *this;
-}
-
-ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addRank( integer const rank )
-{
-  if( !m_errorContext.m_currentErrorMsg.isCommited() )
-  {
-    m_errorContext.m_currentErrorMsg.addRank( rank );
-  }
-  return *this;
-}
-
-ErrorLogger::ErrorMsgBuilder & ErrorLogger::ErrorMsgBuilder::addCallStackInfo( std::string_view ossStackTrace )
-{
-  if( !m_errorContext.m_currentErrorMsg.isCommited() )
-  {
-    m_errorContext.m_currentErrorMsg.addCallStackInfo( ossStackTrace );
-  }
   return *this;
 }
 
@@ -403,7 +342,7 @@ void ErrorLogger::writeToYaml()
       yamlFile << g_level1Next << "sourceCallStack:\n";
       for( size_t i = 0; i < m_currentErrorMsg.m_sourceCallStack.size(); i++ )
       {
-        yamlFile << ( m_currentErrorMsg.isValidStackTrace() ?
+        yamlFile << ( m_currentErrorMsg.m_isValidStackTrace ?
                       GEOS_FMT( "{}frame{}: {}\n", g_level3Start, i, m_currentErrorMsg.m_sourceCallStack[i] ) :
                       GEOS_FMT( "{}{}\n", g_level3Start, m_currentErrorMsg.m_sourceCallStack[i] ) );
       }
@@ -419,7 +358,7 @@ void ErrorLogger::writeToYaml()
   }
 }
 
-void ErrorLogger::flushErrorMsg()
+void ErrorLogger::flushCurrentExceptionMsg()
 {
   writeToAscii( m_currentErrorMsg, m_stream );
   if( isOutputFileEnabled() )

@@ -185,10 +185,9 @@ void InternalMeshGenerator::postInputInitialization()
       WrapperBase const & wrapper = getWrapperBase( viewKeyStruct::elementTypesString() );
       std::string const msg = GEOS_FMT( "InternalMesh {}, element index = {}: ",
                                         wrapper.getDataContext().toString(), std::to_string( i ) );
-      ErrorLogger::global().beginLogger()
+      ErrorLogger::global().buildCurrentErrorMsg()
         .addToMsg( msg )
-        .addContextInfo( wrapper.getDataContext().getContextInfo().setPriority( 2 ) )
-        .commit();
+        .addContextInfo( wrapper.getDataContext().getContextInfo().setPriority( 2 ) );
       throw InputError( e, msg );
     }
   }

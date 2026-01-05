@@ -38,14 +38,14 @@ public:
   Exception( std::string const & what ):
     std::exception( )
   {
-    errorMsg.addToMsg( what );
+    m_errorMsg.m_msg = what;
   }
 
   /**
    * @return Reference to the ErrorMsg object
    */
   ErrorLogger::ErrorMsg & getErrorMsg()
-  { return errorMsg; }
+  { return m_errorMsg; }
 
   /**
    * @brief System fallback to get description content if error system does not achieve to output the ErrorMsg
@@ -94,7 +94,7 @@ private:
   /// Formatted exception message for what() method
   string m_cachedWhat;
   /// Error message logger for structured error reporting
-  ErrorLogger::ErrorMsg errorMsg;
+  ErrorLogger::ErrorMsg m_errorMsg;
 };
 
 /**

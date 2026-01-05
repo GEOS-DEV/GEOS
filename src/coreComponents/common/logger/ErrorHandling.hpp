@@ -144,6 +144,8 @@ public:
     std::vector< ErrorContext > m_contextsInfo;
     /// the stack trace
     std::vector< std::string > m_sourceCallStack;
+    /// Indicates whether the stored call stack trace is valid and usable.
+    bool m_isValidStackTrace = false;
 
     /**
      * @brief Construct a default Error Message
@@ -169,110 +171,8 @@ public:
       m_msg( msgContent ),
       m_ranksInfo( {rank} ),
       m_file( msgFile ),
-      m_line( msgLine ),
-      m_commit( false ) {}
-
-    /**
-     * @brief Add text to the current error msg
-     * @param e The exception containing text to add
-     * @param toEnd Indicates whether to add the message at the beginning (true) or at the end (false)
-     *              default is false
-     * @return Reference to the current instance for method chaining.
-     */
-    ErrorMsg & addToMsg( std::exception const & e, bool const toEnd = false );
-
-    /**
-     * @brief Add text to the current error msg
-     * @param msg The text to add
-     * @param toEnd Indicates whether to add the message at the beginning (true) or at the end (false)
-     *              default is false
-     * @return Reference to the current instance for method chaining.
-     */
-    ErrorMsg & addToMsg( std::string_view msg, bool const toEnd = false );
-
-    /**
-     * @brief Add text to the error msg that occured according to the specified signal.
-     *        - the signal can be one of the main error signals.
-     *        - if the signal is SIGFPE, the nature of floating point error will be interpreted.
-     * @param signal The signal, from ISO C99 or POSIX standard.
-     * @param toEnd adds the message to the end if true, at the start otherwise.
-     * @return The instance, for builder pattern.
-     */
-    ErrorMsg & addSignalToMsg( integer const signal, bool const toEnd = false );
-
-    /**
-     * @brief Set the source code location values (file and line where the error is detected)
-     * @param msgFile Name of the source file location to add
-     * @param msgLine Line of the source file location to add
-     * @return Reference to the current instance for method chaining.
-     */
-    ErrorMsg & setCodeLocation( std::string_view msgFile, integer const msgLine );
-
-    /**
-     * @brief Set the type of the error
-     * @param msgType The type can be error, warning or exception
-     * @return Reference to the current instance for method chaining.
-     */
-    ErrorMsg & setType( MsgType const msgType );
-
-    /**
-     * @brief Set the cause of the error
-     * @param cause See documentation of m_cause.
-     * @return Reference to the current instance for method chaining.
-     */
-    ErrorMsg & setCause( std::string_view cause );
-
-    /**
-     * @brief Add a rank on which the error has been raised
-     * @param rank The value to add
-     * @return Reference to the current instance for method chaining.
-     */
-    ErrorMsg & addRank( integer const rank );
-
-    /**
-     * @brief Add stack trace information about the error
-     * @param ossStackTrace stack trace information to add
-     * @return Reference to the current instance for method chaining.
-     */
-    ErrorMsg & addCallStackInfo( std::string_view ossStackTrace );
-
-    /**
-     * @brief Adds one or more context elements to the error
-     * @tparam Args Variadic pack of compatible types (ErrorContext / DataContext)
-     * @param args List of context data structures.
-     * @return Reference to the current instance for method chaining.
-     */
-    template< typename ... Args >
-    ErrorMsg & addContextInfo( Args && ... args );
-
-    /**
-     * @return true if the YAML file output is enabled
-     */
-    bool isValidStackTrace() const
-    { return m_isValidStackTrace; }
-
-    /**
-     * @return Whether the error message has been finalized and committed.
-     */
-    bool isCommited() const
-    { return m_commit; }
-
-    /**
-     * @brief Marks the error message as committed (finalized).
-     */
-    void commitErrorMsg()
-    { m_commit = true; }
-
-private:
-    /**
-     * @brief Add contextual information about the error/warning
-     * @param ctxInfo rvalue of the ErrorContext class
-     */
-    void addContextInfoImpl( ErrorContext && ctxInfo );
-    /// Indicates whether the stored call stack trace is valid and usable.
-    bool m_isValidStackTrace = false;
-    /// Indicates whether the error message has been fully constructed and finalized.
-    bool m_commit = false;
+      m_line( msgLine )
+    {}
   };
 
   /**
@@ -281,7 +181,7 @@ private:
   class ErrorMsgBuilder
   {
 public:
-    ErrorMsgBuilder( ErrorLogger & errorContext ): m_errorContext( errorContext ){};
+    ErrorMsgBuilder( ErrorMsg & errorMsg ): m_errorMsg( errorMsg ){};
     /**
      * @copydoc ErrorLogger:ErrorMsg::addToMsg( std::exception const & e, bool toEnd  = false )
      */
@@ -296,7 +196,7 @@ public:
     template< typename ... Args >
     ErrorMsgBuilder & addContextInfo( Args && ... args )
     {
-      ( m_errorContext.m_currentErrorMsg.addContextInfo( ErrorContext( args ) ), ... );
+      ( this->addContextInfoImpl( ErrorContext( args ) ), ... );;
       return *this;
     }
     /**
@@ -323,29 +223,23 @@ public:
      * @copydoc ErrorLogger:ErrorMsg::addCallStackInfo( std::string_view ossStackTrace )
      */
     ErrorMsgBuilder & addCallStackInfo( std::string_view ossStackTrace );
-    /**
-     * @brief Finalizes the error message construction
-     * @note Calling commit() does not flush/output the error;
-     */
-    void commit()
-    { m_errorContext.m_currentErrorMsg.commitErrorMsg(); }
-    /**
-     * @copydoc ErrorLogger::flushErrorMsg()
-     */
-    void flush()
-    { m_errorContext.flushErrorMsg(); }
 
 private:
+    /**
+     * @brief Add contextual information about the error/warning
+     * @param ctxInfo rvalue of the ErrorContext class
+     */
+    void addContextInfoImpl( ErrorContext && ctxInfo );
     ///@copydoc ErrorLogger::m_errorContext
-    ErrorLogger & m_errorContext;
+    ErrorMsg & m_errorMsg;
   };
   /**
    * @brief Creates and returns a new ErrorMsgBuilder to begin constructing an error message.
    * @return A new ErrorMsgBuilder instance
    */
-  ErrorMsgBuilder beginLogger()
+  ErrorMsgBuilder buildCurrentErrorMsg()
   {
-    return ErrorMsgBuilder( *this );
+    return ErrorMsgBuilder( m_currentErrorMsg );
   }
 
   /**
@@ -424,7 +318,7 @@ private:
    * optionnaly into a yaml file
    * @param errorMsg a constant reference to the ErrorMsg
    */
-  void flushErrorMsg();
+  void flushCurrentExceptionMsg();
 
   /**
    * @return Return the const general log stream
@@ -452,13 +346,6 @@ private:
 };
 
 /// @cond DO_NOT_DOCUMENT
-
-template< typename ... Args >
-ErrorLogger::ErrorMsg & ErrorLogger::ErrorMsg::addContextInfo( Args && ... args )
-{
-  ( this->addContextInfoImpl( ErrorContext( args ) ), ... );
-  return *this;
-}
 
 /// @endcond
 
