@@ -246,44 +246,16 @@ struct CohesiveZoneStateUpdateKernel
         }
 
         // Normalize and flip (positive displacement is away from interface)
-        LvArray::tensorOps::scale< 3 >( nAB, -1.0 / norm );
+        LvArray::tensorOps::scale< 3 >( nAB, 1.0 / norm );
 
-        // Compute tangent direction to normal
-        real64 dANorm = LvArray::tensorOps::l2Norm< 3 >( dA );
-        real64 normalDisplacementAVec[3] = {};
-        real64 tangentialDisplacementAVec[3] = {};
-        real64 normalDisplacementA = 0.0;
-        if( dANorm > 1e-20 )
-        {
-          normalDisplacementA = LvArray::tensorOps::AiBi< 3 >( nAB, dA );
-          LvArray::tensorOps::scaledCopy< 3 >( normalDisplacementAVec, nAB, normalDisplacementA );
-
-          LvArray::tensorOps::copy< 3 >( tangentialDisplacementAVec, dA );
-          LvArray::tensorOps::subtract< 3 >( tangentialDisplacementAVec, normalDisplacementAVec );
-        }
-
-        // Invert surface normal for field B
-        LvArray::tensorOps::scale< 3 >( nAB, -1.0 );
-
-        real64 dBNorm = LvArray::tensorOps::l2Norm< 3 >( dB );
-        real64 normalDisplacementBVec[3] = {};
-        real64 tangentialDisplacementBVec[3] = {};
-        real64 normalDisplacementB = 0.0;
-        if( dBNorm  > 1e-20 )
-        {
-          normalDisplacementB = LvArray::tensorOps::AiBi< 3 >( nAB, dB );
-          LvArray::tensorOps::scaledCopy< 3 >( normalDisplacementBVec, nAB, normalDisplacementB );
-
-          LvArray::tensorOps::copy< 3 >( tangentialDisplacementBVec, dB );
-          LvArray::tensorOps::subtract< 3 >( tangentialDisplacementBVec, normalDisplacementBVec );
-        }
-
-        real64 totalNormalDisplacement = normalDisplacementA + normalDisplacementB;
+        real64 displacementVector[3] = {};
+        LvArray::tensorOps::copy< 3 >( displacementVector, dA );
+        LvArray::tensorOps::subtract< 3 >( displacementVector, dB );
+        real64 totalNormalDisplacement = -LvArray::tensorOps::AiBi< 3 >( nAB, displacementVector ); 
 
         real64 tangentialInterfaceDisplacement[3]  = {};
-        LvArray::tensorOps::copy< 3 >( tangentialInterfaceDisplacement, tangentialDisplacementBVec );
-        LvArray::tensorOps::subtract< 3 >( tangentialInterfaceDisplacement, tangentialDisplacementAVec );
-
+        LvArray::tensorOps::copy< 3 >( tangentialInterfaceDisplacement, displacementVector );
+        LvArray::tensorOps::scaledAdd< 3 >( tangentialInterfaceDisplacement, nAB, totalNormalDisplacement );
         real64 totalTangentialDisplacement = LvArray::tensorOps::l2Norm< 3 >( tangentialInterfaceDisplacement );
 
         // Call cohesive zone constitutive model update
@@ -309,8 +281,8 @@ struct CohesiveZoneStateUpdateKernel
           LvArray::tensorOps::copy< 3 >( tAB, tangentialInterfaceDisplacement );
           LvArray::tensorOps::scale< 3 >( tAB, 1 / totalTangentialDisplacement );
 
-          LvArray::tensorOps::scaledAdd< 3 >( tA, tAB, -shearStress ); // Flipped the sign of shear stress on this line and next
-          LvArray::tensorOps::scaledAdd< 3 >( tB, tAB, shearStress );
+          LvArray::tensorOps::scaledAdd< 3 >( tA, tAB, shearStress ); // Flipped the sign of shear stress on this line and next
+          LvArray::tensorOps::scaledAdd< 3 >( tB, tAB, -shearStress );
         }
 
         // Convert traction to force using mass-weighted average of projected area
@@ -324,23 +296,24 @@ struct CohesiveZoneStateUpdateKernel
         LvArray::tensorOps::scaledAdd< 3 >( gridCZTraction[k][fieldA], tA, surfaceArea );
         LvArray::tensorOps::scaledAdd< 3 >( gridCZTraction[k][fieldB], tB, surfaceArea );
         
-        // GEOS_LOG_RANK( "k: " << k << ", " << 
-        //                "dA: " << "{" << dA[0] << ", " << dA[1] << ", " << dA[2] << "}, " << 
-        //                "dB: " << "{" << dB[0] << ", " << dB[1] << ", " << dB[2] << "}, " << 
-        //                "nA: " << "{" << nA[0] << ", " << nA[1] << ", " << nA[2] << "}, " << 
-        //                "nB: " << "{" << nB[0] << ", " << nB[1] << ", " << nB[2] << "}, " << 
-        //                "nAB: " << "{" << nAB[0] << ", " << nAB[1] << ", " << nAB[2] << "}, " << 
-        //                "aA: " << czReferenceArea[k][fieldA] << ", " << 
-        //                "aB: " << czReferenceArea[k][fieldB] << ", " << 
-        //                "sA: " << "{" << sA[0] << ", " << sA[1] << ", " << sA[2] << "}, " << 
-        //                "sB: " << "{" << sB[0] << ", " << sB[1] << ", " << sB[2] << "}, " << 
-        //                "normalDisp: " << totalNormalDisplacement << ", " << 
-        //                "shearDisp: " << totalTangentialDisplacement << ", " <<
-        //                "surfaceArea: " << surfaceArea << ", "
-        //                "normalStress: " << normalStress << ", "
-        //                "shearStress: " << shearStress << ", "
-        //                "tA: " << "{" << tA[0] << ", " << tA[1] << ", " << tA[2] << "}, " << 
-        //                "tB: " << "{" << tB[0] << ", " << tB[1] << ", " << tB[2] << "}"  );
+        GEOS_LOG_RANK( "k: " << k << ", " << 
+                      //  "dA: " << "{" << dA[0] << ", " << dA[1] << ", " << dA[2] << "}, " << 
+                      //  "dB: " << "{" << dB[0] << ", " << dB[1] << ", " << dB[2] << "}, " << 
+                       "dTotal: " << "{" << displacementVector[0] << ", " << displacementVector[1] << ", " << displacementVector[2] << "}, " <<
+                      //  "nA: " << "{" << nA[0] << ", " << nA[1] << ", " << nA[2] << "}, " << 
+                      //  "nB: " << "{" << nB[0] << ", " << nB[1] << ", " << nB[2] << "}, " << 
+                       "nAB: " << "{" << nAB[0] << ", " << nAB[1] << ", " << nAB[2] << "}, " << 
+                      //  "aA: " << czReferenceArea[k][fieldA] << ", " << 
+                      //  "aB: " << czReferenceArea[k][fieldB] << ", " << 
+                      //  "sA: " << "{" << sA[0] << ", " << sA[1] << ", " << sA[2] << "}, " << 
+                      //  "sB: " << "{" << sB[0] << ", " << sB[1] << ", " << sB[2] << "}, " << 
+                       "normalDisp: " << totalNormalDisplacement << ", " << 
+                       "shearDisp: " << totalTangentialDisplacement << ", " <<
+                      //  "surfaceArea: " << surfaceArea << ", "
+                       "normalStress: " << normalStress << ", "
+                       "shearStress: " << shearStress << ", "
+                       "tA: " << "{" << tA[0] << ", " << tA[1] << ", " << tA[2] << "}, " << 
+                       "tB: " << "{" << tB[0] << ", " << tB[1] << ", " << tB[2] << "}"  );
       }
 
 
