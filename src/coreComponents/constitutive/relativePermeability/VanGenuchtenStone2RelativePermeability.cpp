@@ -74,7 +74,7 @@ void VanGenuchtenStone2RelativePermeability::postInputInitialization()
 
   GEOS_THROW_IF( m_phaseOrder[PhaseType::OIL] < 0,
                  GEOS_FMT( "{}: reference oil phase has not been defined and must be included in model", getFullName() ),
-                 InputError );
+                 InputError, getDataContext() );
 
   auto const checkInputSize = [&]( auto const & array, localIndex const expected, auto const & attribute )
   {

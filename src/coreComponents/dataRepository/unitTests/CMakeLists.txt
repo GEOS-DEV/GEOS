@@ -1,13 +1,14 @@
 # Specify list of tests
 set( dataRepository_tests
+     testBufferOps.cpp
      testDefaultValue.cpp
      testDocumentationGeneration.cpp
-     testPacking.cpp
-     testWrapper.cpp
-     testXmlWrapper.cpp
-     testBufferOps.cpp
+     testErrorHandling.cpp
      testObjectCatalog.cpp
-     testWrapperHelpers.cpp )
+     testPacking.cpp
+     testWrapperHelpers.cpp
+     testWrapper.cpp
+     testXmlWrapper.cpp )
 
 set( dependencyList mainInterface gtest ${parallelDeps} )
 

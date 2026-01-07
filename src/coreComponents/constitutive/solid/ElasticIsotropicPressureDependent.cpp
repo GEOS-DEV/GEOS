@@ -97,12 +97,12 @@ void ElasticIsotropicPressureDependent::postInputInitialization()
                  InputError );
   GEOS_THROW_IF( m_defaultRecompressionIndex <= 0,
                  GEOS_FMT( "{}: Non-positive recompression index detected {}", getFullName(), m_defaultRecompressionIndex ),
-                 InputError );
+                 InputError, getDataContext() );
   real64 poisson =
     conversions::bulkModAndShearMod::toPoissonRatio( -1 * m_defaultRefPressure / m_defaultRecompressionIndex, m_defaultShearModulus );
   GEOS_THROW_IF( poisson < 0,
                  GEOS_FMT( "{}: Elastic parameters lead to negative Poisson ratio at reference pressure", getFullName() ),
-                 InputError );
+                 InputError, getDataContext() );
 
   // set results as array default values
 

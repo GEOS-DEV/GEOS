@@ -170,9 +170,8 @@ public:
   /**
    * @brief Recompute the volumetric rates that are used in the well constraints
    * @param subRegion the well subregion containing all the primary and dependent fields
-   * @param targetIndex the targetIndex of the subRegion
    */
-  void updateVolRatesForConstraint( WellElementSubRegion & subRegion );
+  void updateVolRatesForConstraint( WellElementSubRegion const & subRegion );
 
   /**
    * @brief Recompute the current BHP pressure
@@ -190,10 +189,10 @@ public:
 
   /**
    * @brief Update well separator using current values of pressure and composition at the reference element
-   * @param subRegion the well subregion containing all the primary and dependent fields
-   * @param targetIndex the targetIndex of the subRegion
+   * @param elemManager the element region manager
+
    */
-  void updateSeparator( WellElementSubRegion & subRegion );
+  void updateSeparator( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion );
 
   /**
    * @brief  Calculate well rates at reference element
@@ -237,10 +236,15 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual real64 updateWellState( WellElementSubRegion & subRegion ) override;
+  virtual real64 updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+  /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive
+   * models)
+   * @param domain the domain containing the mesh and fields
+   */
   virtual void updateState( DomainPartition & domain ) override;
 
-  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
@@ -463,8 +467,7 @@ protected:
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion,
-                                        ElementRegionManager const & elemManager ) override;
+                                        WellElementSubRegion const & subRegion ) override;
 
   /**
    * @brief Create well separator

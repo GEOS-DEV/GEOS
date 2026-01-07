@@ -80,7 +80,8 @@ void TractionBoundaryCondition::postInputInitialization()
     GEOS_ERROR_IF( LvArray::tensorOps::l2Norm< 3 >( getDirection() ) < 1e-20,
                    getDataContext() << ": " << viewKeyStruct::directionString() << " is required for " <<
                    viewKeyStruct::tractionTypeString() << " = " << TractionType::vector <<
-                   ", but appears to be unspecified" );
+                   ", but appears to be unspecified",
+                   getDataContext() );
   }
   else
   {
@@ -99,7 +100,8 @@ void TractionBoundaryCondition::postInputInitialization()
 
   GEOS_ERROR_IF( !inputStressRead && m_tractionType == TractionType::stress,
                  getDataContext() << ": " << viewKeyStruct::tractionTypeString() << " = " << TractionType::stress <<
-                 ", but " << viewKeyStruct::inputStressString() << " is not specified." );
+                 ", but " << viewKeyStruct::inputStressString() << " is not specified.",
+                 getDataContext() );
 
 
 //  localIndex const numStressFunctionsNames = m_stressFunctionNames.size();

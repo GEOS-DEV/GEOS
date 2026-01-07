@@ -225,8 +225,11 @@ public:
 
   real64 updateFluidState( ElementSubRegionBase & subRegion ) const
   { return reservoirSolver()->updateFluidState( subRegion ); }
-  void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const
+
+  template< typename ELEMENT_SUB_REGION >
+  void updatePorosityAndPermeability( ELEMENT_SUB_REGION & subRegion ) const
   { reservoirSolver()->updatePorosityAndPermeability( subRegion ); }
+
   void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
   { reservoirSolver()->updateSolidInternalEnergyModel( dataGroup ); }
 

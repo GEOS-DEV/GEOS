@@ -106,7 +106,7 @@ TEST( testGroupPath, testGlobalPaths )
   }
   catch( const std::domain_error & e )
   {
-    static constexpr auto expectedMsg = "***** Controlling expression (should be false): child == nullptr\n"
+    static constexpr auto expectedMsg = "***** Error cause: child == nullptr\n"
                                         "***** Rank 0: Group Mesh (CodeIncludedXML0, l.10) has no child named mesh2\n"
                                         "The children of Mesh are: { mesh1 }";
     // checks if the exception contains the expected message

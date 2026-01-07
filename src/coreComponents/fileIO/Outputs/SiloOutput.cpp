@@ -100,7 +100,7 @@ void SiloOutput::postInputInitialization()
                  GEOS_FMT( "{} `{}`: the flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
                            catalogName(), getDataContext(),
                            onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
-                 InputError );
+                 InputError, getDataContext() );
 
   GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames != 0 ),
                       GEOS_FMT(

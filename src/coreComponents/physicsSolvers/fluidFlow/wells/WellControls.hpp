@@ -452,6 +452,7 @@ public:
   WellControls::Status getWellStatus () const { return m_wellStatus; }
   ///@}
 
+
   /**
    * @brief Set thermal effects enable
    * @param[in] true/false
@@ -626,10 +627,8 @@ private:
   std::vector< WellConstraintBase * > m_productionRateConstraintList;
   std::vector< WellConstraintBase * > m_injectionRateConstraintList;
 
-
   /// Well status
   WellControls::Status m_wellStatus;
-
 
   /// Region average pressure used in volume rate constraint calculations
   real64 m_regionAveragePressure;
