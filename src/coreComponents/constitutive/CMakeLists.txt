@@ -204,6 +204,7 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsIsotropic.hpp
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
      solid/SolidModelDiscretizationOpsOrthotropic.hpp
+     solid/SolidModelDiscretizationOpsFullTensor.hpp
      solid/CeramicDamage.hpp
      solid/SolidFields.hpp
      solid/porosity/PorosityFields.hpp
