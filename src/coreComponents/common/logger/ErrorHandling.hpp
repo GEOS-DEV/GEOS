@@ -28,6 +28,220 @@ namespace geos
 {
 
 /**
+ * @struct ErrorContext
+ * Store contextual information about the error that occurred and assign it a priority
+ * default is 0
+ */
+struct ErrorContext
+{
+
+  /**
+   * @enum Attribute
+   * Enumeration used to secure potential map keys
+   */
+  enum class Attribute
+  {
+    InputFile,
+    InputLine,
+    DataPath,
+    DetectionLoc,
+    Signal,
+  };
+
+  /**
+   * @brief Construct to initialize ErrorContext given a string containing the context and his attribute
+   * @param dataDisplayString String containing the target object name followed by the the file and line declaring it.
+   * @param attributes Map containing contextual information about the error
+   */
+  ErrorContext( string dataDisplayString, map< Attribute, std::string >  attributes ):
+    m_dataDisplayString( dataDisplayString ),
+    m_attributes( attributes ) {};
+
+  /**
+   * @brief Construct to initialize ErrorContext given a string containing the context and his priority
+   * @param attributes Map containing contextual information about the error
+   * @param priority Priority level assigned to an error context.
+   */
+  ErrorContext( map< Attribute, std::string >  attributes, integer priority ):
+    m_dataDisplayString( "" ),
+    m_attributes( attributes ),
+    m_priority( priority ) {};
+
+  /**
+   * @brief Set the priority value of the current error context information
+   * @param priority the new value to asign
+   * @return the reference to the corresponding error
+   */
+  ErrorContext & setPriority( integer priority )
+  { m_priority = priority; return *this; }
+
+  /**
+   * @brief Convert a value from the Attribute enumeration to a string
+   * @param attribute the value of the enumeration to be converted
+   * @return a string representation of the enumeration value
+   */
+  static std::string attributeToString( Attribute attribute );
+
+  /// String containing the target object name followed by the the file and line declaring it.
+  string m_dataDisplayString;
+
+  /// The map contains contextual information about the error
+  /// It could be something like
+  /// "file" = "/path/to/file.xml"
+  /// "line" = "24"
+  /// or something like
+  /// "dataPath" = "/Functions/co2brine_philipsDensityTable
+  /// The key is a field of the Attribute enumeration and is converted to a string for writing in the YAML
+  map< Attribute, std::string > m_attributes;
+
+  /**
+   * @brief Priority level assigned to an error context.
+   * @details Used to prioritize contextes (higher values = more relevant). Default is 0.
+   *
+   */
+  integer m_priority = 0;
+};
+
+/**
+ * @enum MsgType
+ * Enum listing the different types of possible errors
+ */
+enum class MsgType
+{
+  Error,
+  ExternalError,
+  Warning,
+  Exception,
+  Undefined
+};
+
+/**
+ * @brief Struct to construct the error/warning object
+ */
+struct ErrorMsg
+{
+  /// the error type (Warning, Error or Exception)
+  MsgType m_type = MsgType::Undefined;
+  /// the error message that can be completed
+  std::string m_msg;
+  /// the cause of the error (erroneous condition, failed assertion...) if identified (optional)
+  std::string m_cause;
+  /// the rank(s) on which the error occured
+  std::set< int > m_ranksInfo;
+  /// the source location file corresponding to the error in the code
+  std::string m_file;
+  /// the source location line corresponding to the error in the code (default is 0)
+  integer m_line = 0;
+  /// Additional information about the error in the input file
+  std::vector< ErrorContext > m_contextsInfo;
+  /// the stack trace
+  std::vector< std::string > m_sourceCallStack;
+  /// Indicates whether the stored call stack trace is valid and usable.
+  bool m_isValidStackTrace = false;
+};
+
+/**
+ * @brief Builder class for constructing ErrorMsg objects
+ */
+class ErrorMsgBuilder
+{
+public:
+  static ErrorMsgBuilder init()
+  { return ErrorMsgBuilder();}
+
+  static ErrorMsgBuilder modify( ErrorMsg & errorMsg );
+
+  /**
+   * @brief Add text to the current error msg
+   * @param e The exception containing text to add
+   * @param toEnd Indicates whether to add the message at the beginning (true) or at the end (false)
+   *              default is false
+   * @return Reference to the current instance for method chaining.
+   */
+  ErrorMsgBuilder & addToMsg( std::exception const & e, bool toEnd  = false );
+
+  /**
+   * @brief Add text to the current error msg
+   * @param msg The text to add
+   * @param toEnd Indicates whether to add the message at the beginning (true) or at the end (false)
+   *              default is false
+   * @return Reference to the current instance for method chaining.
+   */
+  ErrorMsgBuilder & addToMsg( std::string_view msg, bool const toEnd = false );
+  /**
+   * @brief Adds one or more context elements to the error
+   * @tparam Args Variadic pack of compatible types (ErrorContext / DataContext)
+   * @param args List of context data structures.
+   * @return Reference to the current instance for method chaining.
+   */
+  template< typename ... Args >
+  ErrorMsgBuilder & addContextInfo( Args && ... args )
+  {
+    ( this->addContextInfoImpl( ErrorContext( args ) ), ... );
+    return *this;
+  }
+  /**
+   * @brief Add text to the error msg that occured according to the specified signal.
+   *        - the signal can be one of the main error signals.
+   *        - if the signal is SIGFPE, the nature of floating point error will be interpreted.
+   * @param signal The signal, from ISO C99 or POSIX standard.
+   * @param toEnd adds the message to the end if true, at the start otherwise.
+   * @return The instance, for builder pattern.
+   */
+  ErrorMsgBuilder & addSignalToMsg( integer const sig, bool toEnd = false );
+  /**
+   * @brief Set the source code location values (file and line where the error is detected)
+   * @param msgFile Name of the source file location to add
+   * @param msgLine Line of the source file location to add
+   * @return Reference to the current instance for method chaining.
+   */
+  ErrorMsgBuilder & setCodeLocation( std::string_view msgFile, integer const msgLine );
+  /**
+   * @brief Set the type of the error
+   * @param msgType The type can be error, warning or exception
+   * @return Reference to the current instance for method chaining.
+   */
+  ErrorMsgBuilder & setType( MsgType const msgType );
+  /**
+   * @brief Set the cause of the error
+   * @param cause See documentation of m_cause.
+   * @return Reference to the current instance for method chaining.
+   */
+  ErrorMsgBuilder & setCause( std::string_view cause );
+  /**
+   * @brief Add a rank on which the error has been raised
+   * @param rank The value to add
+   * @return Reference to the current instance for method chaining.
+   */
+  ErrorMsgBuilder & addRank( integer const rank );
+  /**
+   * @brief Add stack trace information about the error
+   * @param ossStackTrace stack trace information to add
+   * @return Reference to the current instance for method chaining.
+   */
+  ErrorMsgBuilder & addCallStackInfo( std::string_view ossStackTrace );
+
+  ErrorMsg & get()
+  {
+    if( m_targetErrorMsg != nullptr )
+    {
+      *m_targetErrorMsg = m_errorMsg;
+    }
+    return m_errorMsg;
+  }
+
+private:
+  /**
+   * @brief Add contextual information about the error/warning
+   * @param ctxInfo rvalue of the ErrorContext class
+   */
+  ErrorMsgBuilder & addContextInfoImpl( ErrorContext && ctxInfo );
+  ///@copydoc ErrorLogger::m_errorContext
+  ErrorMsg m_errorMsg;
+  ErrorMsg * m_targetErrorMsg = nullptr;
+};
+
+/**
  * @class ErrorLogger
  * @brief Class to format and write different error/warning information that occured during the initialization
  */
@@ -35,212 +249,6 @@ class ErrorLogger
 {
 
 public:
-  /**
-   * @enum MsgType
-   * Enum listing the different types of possible errors
-   */
-  enum class MsgType
-  {
-    Error,
-    ExternalError,
-    Warning,
-    Exception,
-    Undefined
-  };
-
-  /**
-   * @struct ErrorContext
-   * Store contextual information about the error that occurred and assign it a priority
-   * default is 0
-   */
-  struct ErrorContext
-  {
-
-    /**
-     * @enum Attribute
-     * Enumeration used to secure potential map keys
-     */
-    enum class Attribute
-    {
-      InputFile,
-      InputLine,
-      DataPath,
-      DetectionLoc,
-      Signal,
-    };
-
-    /**
-     * @brief Construct to initialize ErrorContext given a string containing the context and his attribute
-     * @param dataDisplayString String containing the target object name followed by the the file and line declaring it.
-     * @param attributes Map containing contextual information about the error
-     */
-    ErrorContext( string dataDisplayString, map< Attribute, std::string >  attributes ):
-      m_dataDisplayString( dataDisplayString ),
-      m_attributes( attributes ) {};
-
-    /**
-     * @brief Construct to initialize ErrorContext given a string containing the context and his priority
-     * @param attributes Map containing contextual information about the error
-     * @param priority Priority level assigned to an error context.
-     */
-    ErrorContext( map< Attribute, std::string >  attributes, integer priority ):
-      m_dataDisplayString( "" ),
-      m_attributes( attributes ),
-      m_priority( priority ) {};
-
-    /**
-     * @brief Set the priority value of the current error context information
-     * @param priority the new value to asign
-     * @return the reference to the corresponding error
-     */
-    ErrorContext & setPriority( integer priority )
-    { m_priority = priority; return *this; }
-
-    /**
-     * @brief Convert a value from the Attribute enumeration to a string
-     * @param attribute the value of the enumeration to be converted
-     * @return a string representation of the enumeration value
-     */
-    static std::string attributeToString( Attribute attribute );
-
-    /// String containing the target object name followed by the the file and line declaring it.
-    string m_dataDisplayString;
-
-    /// The map contains contextual information about the error
-    /// It could be something like
-    /// "file" = "/path/to/file.xml"
-    /// "line" = "24"
-    /// or something like
-    /// "dataPath" = "/Functions/co2brine_philipsDensityTable
-    /// The key is a field of the Attribute enumeration and is converted to a string for writing in the YAML
-    map< Attribute, std::string > m_attributes;
-
-    /**
-     * @brief Priority level assigned to an error context.
-     * @details Used to prioritize contextes (higher values = more relevant). Default is 0.
-     *
-     */
-    integer m_priority = 0;
-  };
-
-  /**
-   * @brief Struct to construct the error/warning object
-   */
-  struct ErrorMsg
-  {
-    /// the error type (Warning, Error or Exception)
-    MsgType m_type = ErrorLogger::MsgType::Undefined;
-    /// the error message that can be completed
-    std::string m_msg;
-    /// the cause of the error (erroneous condition, failed assertion...) if identified (optional)
-    std::string m_cause;
-    /// the rank(s) on which the error occured
-    std::set< int > m_ranksInfo;
-    /// the source location file corresponding to the error in the code
-    std::string m_file;
-    /// the source location line corresponding to the error in the code (default is 0)
-    integer m_line = 0;
-    /// Additional information about the error in the input file
-    std::vector< ErrorContext > m_contextsInfo;
-    /// the stack trace
-    std::vector< std::string > m_sourceCallStack;
-    /// Indicates whether the stored call stack trace is valid and usable.
-    bool m_isValidStackTrace = false;
-
-    /**
-     * @brief Construct a default Error Message
-     */
-    ErrorMsg()
-    {}
-
-    /**
-     * @brief Construct a new Error Message from parameters
-     * @param msgType the type of the message (error or warning)
-     * @param msgContent the error/warning message content
-     * @param rank the rank where the error occcured
-     * @param msgFile the source file name where the error occcured
-     * @param msgLine the line where the error occured
-     */
-    ErrorMsg( MsgType msgType,
-              std::string_view msgContent,
-              integer rank,
-              std::string_view msgFile,
-              integer msgLine )
-      :
-      m_type( msgType ),
-      m_msg( msgContent ),
-      m_ranksInfo( {rank} ),
-      m_file( msgFile ),
-      m_line( msgLine )
-    {}
-  };
-
-  /**
-   * @brief Builder class for constructing ErrorMsg objects
-   */
-  class ErrorMsgBuilder
-  {
-public:
-    ErrorMsgBuilder( ErrorMsg & errorMsg ): m_errorMsg( errorMsg ){};
-    /**
-     * @copydoc ErrorLogger:ErrorMsg::addToMsg( std::exception const & e, bool toEnd  = false )
-     */
-    ErrorMsgBuilder & addToMsg( std::exception const & e, bool toEnd  = false );
-    /**
-     * @copydoc ErrorLogger:ErrorMsg::addToMsg( std::string_view msg, bool toEnd = false )
-     */
-    ErrorMsgBuilder & addToMsg( std::string_view msg, bool const toEnd = false );
-    /**
-     * @copydoc ErrorLogger:ErrorMsg::addContextInfo( Args && ... args )
-     */
-    template< typename ... Args >
-    ErrorMsgBuilder & addContextInfo( Args && ... args )
-    {
-      ( this->addContextInfoImpl( ErrorContext( args ) ), ... );;
-      return *this;
-    }
-    /**
-     * @copydoc ErrorLogger:ErrorMsg::addSignalToMsg( int sig, bool toEnd = false );
-     */
-    ErrorMsgBuilder & addSignalToMsg( integer const sig, bool toEnd = false );
-    /**
-     * @copydoc ErrorLogger:ErrorMsg::setCodeLocation( std::string_view msgFile, integer msgLine )
-     */
-    ErrorMsgBuilder & setCodeLocation( std::string_view msgFile, integer const msgLine );
-    /**
-     * @copydoc ErrorLogger:ErrorMsg::setType( ErrorLogger::MsgType msgType )
-     */
-    ErrorMsgBuilder & setType( ErrorLogger::MsgType const msgType );
-    /**
-     * @copydoc ErrorLogger:ErrorMsg::setCause( std::string_view cause )
-     */
-    ErrorMsgBuilder & setCause( std::string_view cause );
-    /**
-     * @copydoc ErrorLogger:ErrorMsg::addRank( int rank );
-     */
-    ErrorMsgBuilder & addRank( integer const rank );
-    /**
-     * @copydoc ErrorLogger:ErrorMsg::addCallStackInfo( std::string_view ossStackTrace )
-     */
-    ErrorMsgBuilder & addCallStackInfo( std::string_view ossStackTrace );
-
-private:
-    /**
-     * @brief Add contextual information about the error/warning
-     * @param ctxInfo rvalue of the ErrorContext class
-     */
-    void addContextInfoImpl( ErrorContext && ctxInfo );
-    ///@copydoc ErrorLogger::m_errorContext
-    ErrorMsg & m_errorMsg;
-  };
-  /**
-   * @brief Creates and returns a new ErrorMsgBuilder to begin constructing an error message.
-   * @return A new ErrorMsgBuilder instance
-   */
-  ErrorMsgBuilder buildCurrentErrorMsg()
-  {
-    return ErrorMsgBuilder( m_currentErrorMsg );
-  }
 
   /**
    * @return Global instance of the ErrorLogger class used for error/warning reporting.
@@ -250,6 +258,16 @@ private:
    *       - currently not available on GPU, use GEOS_WARNING/ERROR/ASSERT macros for this usecase.
    */
   GEOS_HOST static ErrorLogger & global();
+
+  /**
+   * @brief Create the YAML file or overwrite the contents if a YAML file of the same name already exists
+   * And write its header when the command line option is enabled
+   */
+  void createFile();
+
+
+  void setErrorMsg( ErrorMsg const & errorMsg )
+  { m_getCurrentExceptionMsg = errorMsg; }
 
   /**
    * @brief Enable the YAML file output, which is false by default
@@ -279,20 +297,6 @@ private:
   { return m_filename; }
 
   /**
-   * @brief Gives acces to the error message that is currently being constructed,
-   *        potencially at various application layers (Typically for exceptions)
-   * @return Reference to the current error message instance;
-   */
-  ErrorMsg const & currentErrorMsg() const
-  { return m_currentErrorMsg; }
-
-  /**
-   * @brief Create the YAML file or overwrite the contents if a YAML file of the same name already exists
-   * And write its header when the command line option is enabled
-   */
-  void createFile();
-
-  /**
    * @brief Convert a MsgType into a string
    * @param type the message type label
    * @return the string representation of the message type
@@ -300,41 +304,65 @@ private:
   static std::string toString( MsgType type );
 
   /**
-   * @brief Format all information in ErrorMsg and write it to the specified output stream
-   * @param errMsg The struct containing the error/warning object
-   * @param oss The output stream
+   * @return Return the const general log stream
    */
-  static void writeToAscii( ErrorLogger::ErrorMsg const & errMsg, std::ostream & oss );
+  std::ostream const & getErrorStream() const
+  { return m_stream; }
+
+  ErrorMsg const & getCurrentExceptionMsg() const
+  { return m_getCurrentExceptionMsg;}
 
   /**
-   * @brief Write all the information retrieved about the error/warning message into the YAML file
-   *        and reset the errorMsg instance to its initial state
-   * @param errorMsg a constant reference to the error
+   * @brief Gives acces to the error message that is currently being constructed,
+   *        potencially at various application layers (Typically for exceptions)
+   * @return Reference to the current error message instance;
    */
-  void writeToYaml();
+  ErrorMsgBuilder initCurrentExceptionMessage()
+  {
+    m_getCurrentExceptionMsg = ErrorMsg();
+    return ErrorMsgBuilder::modify( m_getCurrentExceptionMsg );
+  }
+
+
+  ErrorMsgBuilder modifyCurrentExceptionMessage()
+  { return ErrorMsgBuilder::modify( m_getCurrentExceptionMsg ); }
 
   /**
    * @brief Write all the information retrieved about the error/warning message into the output stream specified and
    * optionnaly into a yaml file
    * @param errorMsg a constant reference to the ErrorMsg
    */
-  void flushCurrentExceptionMsg();
+  void flushCurrentExceptionMessage();
 
   /**
-   * @return Return the const general log stream
+   * @brief Write all the information retrieved about the error/warning message into the output stream specified and
+   * optionnaly into a yaml file
+   * @param errorMsg a constant reference to the ErrorMsg
    */
-  std::ostream const & getErrorStream() const
-  { return m_stream; }
+  void flushErrorMsg( ErrorMsg & errMsg );
+
+  /**
+   * @brief Format all information in ErrorMsg and write it to the specified output stream
+   * @param errMsg The struct containing the error/warning object
+   * @param oss The output stream
+   */
+  static void writeToAscii( ErrorMsg const & errMsg, std::ostream & oss );
 
 private:
   /// The error constructed via exceptions
-  ErrorMsg m_currentErrorMsg;
+  ErrorMsg m_getCurrentExceptionMsg;
   /// Indicate whether the write to YAML command line option is enabled
   bool m_writeYaml = false;
   /// YAML file name
   std::string_view m_filename = "errors.yaml";
   /// The stream used for the log output. By default used std::cout
   std::ostream & m_stream = std::cout;
+
+  /**
+   * @brief Write all the information retrieved about the error/warning message into the YAML file
+   * @param errorMsg a constant reference to the error
+   */
+  void writeToYaml( ErrorMsg & errMsg );
 
   /**
    * @brief Write the error message in the YAML file regarding indentation and line break
@@ -345,9 +373,7 @@ private:
                                      std::string_view indent );
 };
 
-/// @cond DO_NOT_DOCUMENT
 
-/// @endcond
 
 } /* namespace geos */
 

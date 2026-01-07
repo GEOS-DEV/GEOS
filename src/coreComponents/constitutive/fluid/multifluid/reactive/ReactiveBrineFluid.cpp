@@ -235,9 +235,10 @@ void ReactiveBrineFluid< PHASE >::checkTablesParameters( real64 const pressure,
   {
     string const errorMsg = GEOS_FMT( "Table input error (in table from {}).\n",
                                       stringutilities::join( m_phasePVTParaFiles ) );
-    ErrorLogger::global().buildCurrentErrorMsg()
-      .addToMsg( errorMsg )
-      .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
+    ErrorLogger::global().setErrorMsg( ErrorMsgBuilder::init()
+                                         .addToMsg( errorMsg )
+                                         .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) )
+                                         .get());
     throw SimulationError( ex, errorMsg );
   }
 }

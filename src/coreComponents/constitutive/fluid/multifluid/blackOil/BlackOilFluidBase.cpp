@@ -256,12 +256,13 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
       m_formationVolFactorTables[iph]->checkCoord( pressure, 0 );
     } catch( SimulationError const & ex )
     {
-      string const msg = GEOS_FMT( errorMsg, getCatalogName(), getDataContext(),
-                                   "formation volume factor", iph );
-      ErrorLogger::global().buildCurrentErrorMsg()
-        .addToMsg( msg )
-        .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
-      throw SimulationError( ex, msg );
+      string const exceptionMsg = GEOS_FMT( errorMsg, getCatalogName(), getDataContext(),
+                                            "formation volume factor", iph );
+
+      ErrorLogger::global().setErrorMsg( ErrorMsgBuilder::init()
+                                           .addToMsg( exceptionMsg )
+                                           .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) ).get());
+      throw SimulationError( ex, exceptionMsg );
     }
 
     try
@@ -269,12 +270,13 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
       m_viscosityTables[iph]->checkCoord( pressure, 0 );
     } catch( SimulationError const & ex )
     {
-      string const msg = GEOS_FMT( errorMsg, getCatalogName(), getDataContext(),
-                                   "viscosity", iph );
-      ErrorLogger::global().buildCurrentErrorMsg()
-        .addToMsg( msg )
-        .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
-      throw SimulationError( ex, msg );
+      string const exceptionMsg = GEOS_FMT( errorMsg, getCatalogName(), getDataContext(),
+                                            "viscosity", iph );
+
+      ErrorLogger::global().setErrorMsg( ErrorMsgBuilder::init()
+                                           .addToMsg( exceptionMsg )
+                                           .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) ).get());
+      throw SimulationError( ex, exceptionMsg );
     }
   }
 }

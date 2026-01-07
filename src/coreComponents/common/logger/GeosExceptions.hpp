@@ -44,7 +44,7 @@ public:
   /**
    * @return Reference to the ErrorMsg object
    */
-  ErrorLogger::ErrorMsg & getErrorMsg()
+  ErrorMsg & getErrorMsg()
   { return m_errorMsg; }
 
   /**
@@ -94,7 +94,7 @@ private:
   /// Formatted exception message for what() method
   string m_cachedWhat;
   /// Error message logger for structured error reporting
-  ErrorLogger::ErrorMsg m_errorMsg;
+  ErrorMsg m_errorMsg;
 };
 
 /**

@@ -500,9 +500,10 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
         {
           string const errorMsg = GEOS_FMT( "Error while parsing region {} ({}):\n",
                                             regionName, regionNodePos.toString() );
-          ErrorLogger::global().buildCurrentErrorMsg()
-            .addToMsg( errorMsg )
-            .addContextInfo( getDataContext().getContextInfo().setPriority( -1 ) );
+          ErrorLogger::global().setErrorMsg(ErrorMsgBuilder::init()
+                                              .addToMsg( errorMsg )
+                                              .addContextInfo( getDataContext().getContextInfo().setPriority( -1 ) )
+                                              .get());
           throw InputError( e, errorMsg );
         }
       }
