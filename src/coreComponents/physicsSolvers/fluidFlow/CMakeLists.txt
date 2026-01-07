@@ -65,6 +65,18 @@ set( fluidFlowSolvers_headers
      kernels/singlePhase/ThermalFluxComputeKernel.hpp
      kernels/singlePhase/proppant/ProppantBaseKernels.hpp
      kernels/singlePhase/proppant/ProppantFluxKernels.hpp
+     kernels/singlePhase/reactive/AccumulationKernels.hpp
+     kernels/singlePhase/reactive/DirichletFluxComputeKernel.hpp
+     kernels/singlePhase/reactive/FluidUpdateKernel.hpp
+     kernels/singlePhase/reactive/FluxComputeKernel.hpp
+     kernels/singlePhase/reactive/KernelLaunchSelectors.hpp
+     kernels/singlePhase/reactive/ReactionUpdateKernel.hpp
+     kernels/singlePhase/reactive/ResidualNormKernel.hpp
+     kernels/singlePhase/reactive/SourceFluxComputeKernel.hpp
+     kernels/singlePhase/reactive/ThermalAccumulationKernels.hpp
+     kernels/singlePhase/reactive/ThermalDirichletFluxComputeKernel.hpp
+     kernels/singlePhase/reactive/ThermalFluxComputeKernel.hpp
+     kernels/singlePhase/reactive/ThermalSourceFluxComputeKernel.hpp
      kernels/compositional/AccumulationKernel.hpp
      kernels/compositional/AquiferBCKernel.hpp
      kernels/compositional/PPUPhaseFlux.hpp
@@ -140,6 +152,7 @@ set( fluidFlowSolvers_sources
      SinglePhaseFVM.cpp
      SinglePhaseHybridFVM.cpp
      SinglePhaseProppantBase.cpp
+     SinglePhaseReactiveTransport.cpp
      SourceFluxStatistics.cpp
      StencilDataCollection.cpp
      kernels/singlePhase/proppant/ProppantFluxKernels.cpp
