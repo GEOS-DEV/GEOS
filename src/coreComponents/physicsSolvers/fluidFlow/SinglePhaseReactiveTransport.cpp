@@ -720,6 +720,7 @@ void SinglePhaseReactiveTransport::updatePorosityAndPermeability( CellElementSub
   }
 }
 
+// To modify for chemical coupling later
 void SinglePhaseReactiveTransport::updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const
 {
   GEOS_MARK_FUNCTION;

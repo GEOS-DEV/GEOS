@@ -10,11 +10,12 @@
       writeLinearSystem="0"
       isUpdateReactivePorosity="1"
       isUpdateSurfaceArea="1"
+      isThermal="1"
       logLevel="2">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         maxTimeStepCuts="5"
-        newtonMaxIter="40"
+        newtonMaxIter="20"
         logLevel="2"
         maxAllowedResidualNorm="1e100"/>
       <LinearSolverParameters
@@ -33,24 +34,28 @@
     <CellElementRegion
       name="Region1"
       cellBlocks="{ * }"
-      materialList="{ water, rock, diffusion }"/>
+      materialList="{ water, rock, diffusion, thermalCond }"/>
   </ElementRegions>
 
   <Constitutive>
-    <ReactiveCompressibleSinglePhaseFluid
+    <ReactiveThermalCompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
       defaultViscosity="0.001"
       referencePressure="0.0"
-      compressibility="0"
+      compressibility="5e-10"
+      thermalExpansionCoeff="0.0"
       viscosibility="0.0"
+      specificHeatCapacity="1"
+      referenceInternalEnergy="0.99"
       chemicalSystemType="carbonate"/>
 
     <ReactiveSolidConstantPermeability
       name="rock"
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
 
     <NullModel
       name="nullSolid"/>
@@ -62,6 +67,12 @@
       molarWeights="{ 0.100087 }"
       mineralDensities="{ 2710 }"/>
 
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="1.0e6"
+      referenceTemperature="0"
+      referenceInternalEnergy="0"/>
+
     <ConstantPermeability
       name="rockPerm"
       permeabilityComponents="{ 3.0e-16, 3.0e-16, 3.0e-16 }"/>
@@ -71,6 +82,12 @@
       phaseNames="{ water }"
       defaultPhaseDiffusivityMultipliers="{ 1 }"
       diffusivityComponents="{ 1e-2, 1e-2, 1e-2 }"/>
+
+    <SinglePhaseThermalConductivity
+      name="thermalCond"
+      defaultThermalConductivityComponents="{ 500, 500, 500 }"
+      thermalConductivityGradientComponents="{ 0, 0, 0 }"
+      referenceTemperature="0"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -103,6 +120,28 @@
       objectPath="faceManager"
       fieldName="pressure"
       scale="1.0e6"/>
+
+    <FieldSpecification
+      name="initialTemperature"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="temperature"
+      scale="100"/>
+
+    <FieldSpecification
+      name="sinkTemperature"
+      setNames="{ xpos }"       
+      objectPath="faceManager"
+      fieldName="temperature"
+      scale="100"/>
+
+    <FieldSpecification
+      name="sourceTemperature"
+      setNames="{ source }"     
+      objectPath="ElementRegions/Region1/block1"
+      fieldName="temperature"
+      scale="-20.0"/>
 
     <FieldSpecification
       name="surfaceArea"
