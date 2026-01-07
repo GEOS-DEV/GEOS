@@ -82,7 +82,7 @@ int main( int argc, char *argv[] )
   }
   catch( std::exception const & e )
   { // native exceptions management
-    ErrorLogger::global().flushErrorMsg( ErrorMsgBuilder::init()
+    ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init()
                                            .setType( MsgType::Exception )
                                            .addToMsg( e.what() )
                                            .addRank( ::geos::logger::internal::g_rank )

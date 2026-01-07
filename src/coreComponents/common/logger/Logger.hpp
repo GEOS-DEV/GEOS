@@ -295,7 +295,7 @@
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
       std::ostringstream __causemsgsoss; \
       __causemsgsoss << CAUSE_MESSAGE; \
-      GEOS_GLOBAL_LOGGER.flushErrorMsg( ErrorMsgBuilder::init() \
+      GEOS_GLOBAL_LOGGER.flushErrorMsg( DiagnosticMsgBuilder::init() \
                                           .setType( MsgType::Warning ) \
                                           .setCodeLocation( __FILE__, __LINE__ ) \
                                           .setCause( __causemsgsoss.str() ) \

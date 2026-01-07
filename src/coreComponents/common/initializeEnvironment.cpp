@@ -101,7 +101,7 @@ void setupLogger()
 
       std::string const stackHistory = LvArray::system::stackTrace( true );
 
-      ErrorLogger::global().flushErrorMsg( ErrorMsgBuilder::init()
+      ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init()
                                              .setType( MsgType::Error )
                                              .addToMsg( errorMsg )
                                              .addRank( ::geos::logger::internal::g_rank )
@@ -128,7 +128,7 @@ void setupLogger()
       // error message output
       std::string const stackHistory = LvArray::system::stackTrace( true );
 
-      ErrorLogger::global().flushErrorMsg( ErrorMsgBuilder::init()
+      ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init()
                                              .addSignalToMsg( signal )
                                              .setType( MsgType::Error )
                                              .addRank( ::geos::logger::internal::g_rank )

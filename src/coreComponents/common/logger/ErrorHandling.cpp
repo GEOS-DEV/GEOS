@@ -58,22 +58,22 @@ std::string ErrorContext::attributeToString( ErrorContext::Attribute attribute )
   }
 }
 
-ErrorMsgBuilder ErrorMsgBuilder::modify( ErrorMsg & errorMsg )
+DiagnosticMsgBuilder DiagnosticMsgBuilder::modify( DiagnosticMsg & errorMsg )
 {
-  ErrorMsgBuilder builder;
+  DiagnosticMsgBuilder builder;
   builder.m_errorMsg = errorMsg;
-  builder.m_targetErrorMsg = &errorMsg;  
+  builder.m_targetErrorMsg = &errorMsg;
   return builder;
 }
 
-ErrorMsgBuilder & ErrorMsgBuilder::addContextInfoImpl( ErrorContext && ctxInfo )
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::addContextInfoImpl( ErrorContext && ctxInfo )
 {
   m_errorMsg.m_contextsInfo.emplace_back( std::move( ctxInfo ) );
   return *this;
 }
 
 
-ErrorMsgBuilder & ErrorMsgBuilder::addToMsg( std::exception const & e, bool const toEnd )
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::addToMsg( std::exception const & e, bool const toEnd )
 {
   if( toEnd )
   {
@@ -85,7 +85,7 @@ ErrorMsgBuilder & ErrorMsgBuilder::addToMsg( std::exception const & e, bool cons
   }
   return *this;
 }
-ErrorMsgBuilder & ErrorMsgBuilder::addToMsg( std::string_view errorMsg, bool toEnd )
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::addToMsg( std::string_view errorMsg, bool toEnd )
 {
   if( toEnd )
   {
@@ -98,7 +98,7 @@ ErrorMsgBuilder & ErrorMsgBuilder::addToMsg( std::string_view errorMsg, bool toE
   return *this;
 }
 
-ErrorMsgBuilder & ErrorMsgBuilder::addSignalToMsg( integer const sig, bool const toEnd )
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::addSignalToMsg( integer const sig, bool const toEnd )
 {
   if( sig == SIGFPE )
   {
@@ -132,8 +132,8 @@ ErrorMsgBuilder & ErrorMsgBuilder::addSignalToMsg( integer const sig, bool const
   return *this;
 }
 
-ErrorMsgBuilder & ErrorMsgBuilder::setCodeLocation( std::string_view msgFile,
-                                                    integer const msgLine )
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::setCodeLocation( std::string_view msgFile,
+                                                              integer const msgLine )
 {
   m_errorMsg.m_file = msgFile;
   m_errorMsg.m_line = msgLine;
@@ -141,25 +141,25 @@ ErrorMsgBuilder & ErrorMsgBuilder::setCodeLocation( std::string_view msgFile,
   return *this;
 }
 
-ErrorMsgBuilder & ErrorMsgBuilder::setType( MsgType const msgType )
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::setType( MsgType const msgType )
 {
   m_errorMsg.m_type = msgType;
   return *this;
 }
 
-ErrorMsgBuilder & ErrorMsgBuilder::setCause( std::string_view cause )
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::setCause( std::string_view cause )
 {
   m_errorMsg.m_cause = cause;
   return *this;
 }
 
-ErrorMsgBuilder & ErrorMsgBuilder::addRank( integer const rank )
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::addRank( integer const rank )
 {
   m_errorMsg.m_ranksInfo.emplace( rank );
   return *this;
 }
 
-ErrorMsgBuilder & ErrorMsgBuilder::addCallStackInfo( std::string_view ossStackTrace )
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::addCallStackInfo( std::string_view ossStackTrace )
 {
   std::string str = std::string( ossStackTrace );
   std::istringstream iss( str );
@@ -184,6 +184,15 @@ ErrorMsgBuilder & ErrorMsgBuilder::addCallStackInfo( std::string_view ossStackTr
   }
 
   return *this;
+}
+
+DiagnosticMsg & DiagnosticMsgBuilder::get()
+{
+  if( m_targetErrorMsg != nullptr )
+  {
+    *m_targetErrorMsg = m_errorMsg;
+  }
+  return m_errorMsg;
 }
 
 void ErrorLogger::streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile,
@@ -246,7 +255,7 @@ std::string ErrorLogger::toString( MsgType const type )
  * @param errMsg Class containing all the error/warning information
  * @param oss The output stream to write the content to.
  */
-void ErrorLogger::writeToAscii( ErrorMsg const & errMsg, std::ostream & oss )
+void ErrorLogger::writeToAscii( DiagnosticMsg const & errMsg, std::ostream & oss )
 {
   static constexpr string_view PREFIX = "***** ";
   // --- HEADER ---
@@ -297,12 +306,12 @@ void ErrorLogger::writeToAscii( ErrorMsg const & errMsg, std::ostream & oss )
   }
 }
 
-void ErrorLogger::writeToYaml( ErrorMsg & errMsg )
+void ErrorLogger::writeToYaml( DiagnosticMsg & errMsg )
 {
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
   if( yamlFile.is_open() )
   {
-      std::cout << " errMsg.m_msg : "<< errMsg.m_msg <<  std::endl;
+    std::cout << " errMsg.m_msg : "<< errMsg.m_msg <<  std::endl;
     // General errors info (type, rank on which the error occured)
     yamlFile << g_level1Start << "type: " << ErrorLogger::toString( errMsg.m_type ) << "\n";
     yamlFile << g_level1Next << "rank: " << stringutilities::join( errMsg.m_ranksInfo, "," );
@@ -361,7 +370,7 @@ void ErrorLogger::writeToYaml( ErrorMsg & errMsg )
 
     yamlFile << "\n";
     yamlFile.flush();
-    errMsg = ErrorMsg();
+    errMsg = DiagnosticMsg();
   }
   else
   {
@@ -369,7 +378,7 @@ void ErrorLogger::writeToYaml( ErrorMsg & errMsg )
   }
 }
 
-void ErrorLogger::flushErrorMsg( ErrorMsg & errMsg )
+void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg )
 {
   writeToAscii( errMsg, m_stream );
   if( isOutputFileEnabled() )

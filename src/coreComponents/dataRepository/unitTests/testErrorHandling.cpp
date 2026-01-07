@@ -109,11 +109,11 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
 
   GET_LINE( line1 ); GEOS_WARNING( "Conflicting pressure boundary conditions" );
 
-  // GET_LINE( line2 ); GEOS_WARNING_IF_GT_MSG( testValue, testMaxPrecision, "Pressure value is too high." );
+  GET_LINE( line2 ); GEOS_WARNING_IF_GT_MSG( testValue, testMaxPrecision, "Pressure value is too high." );
 
-  // string const warningMsg = GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
-  //                                     context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision );
-  // GET_LINE( line3 ); GEOS_WARNING_IF( testValue == 5, warningMsg, context, additionalContext );
+  string const warningMsg = GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
+                                      context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision );
+  GET_LINE( line3 ); GEOS_WARNING_IF( testValue == 5, warningMsg, context, additionalContext );
   endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
 
@@ -127,38 +127,38 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
       line: {})",
       __FILE__, line1 ),
 
-    // GEOS_FMT(
-    //   R"(- type: Warning
-    // rank: 0
-    // message: >-
-    //   Pressure value is too high.
-    // cause: >-
-    //   Expected: testValue <= testMaxPrecision
-    //   * testValue = 5
-    //   * testMaxPrecision = 0.001
-    // sourceLocation:
-    //   file: {}
-    //   line: {})",
-    //   __FILE__, line2 ),
+    GEOS_FMT(
+      R"(- type: Warning
+    rank: 0
+    message: >-
+      Pressure value is too high.
+    cause: >-
+      Expected: testValue <= testMaxPrecision
+      * testValue = 5
+      * testMaxPrecision = 0.001
+    sourceLocation:
+      file: {}
+      line: {})",
+      __FILE__, line2 ),
 
-    // GEOS_FMT(
-    //   R"(- type: Warning
-    // rank: 0
-    // message: >-
-    //   Base Test Class (file.xml, l.23): option should be between 1e-06 and 0.001. A value of 1e-06 will be used.
-    // contexts:
-    //   - priority: 0
-    //     inputFile: /path/to/file.xml
-    //     inputLine: 23
-    //   - priority: 0
-    //     inputFile: /path/to/file.xml
-    //     inputLine: 32
-    // cause: >-
-    //   Warning cause: testValue == 5
-    // sourceLocation:
-    //   file: {}
-    //   line: {})",
-    //   __FILE__, line3 ),
+    GEOS_FMT(
+      R"(- type: Warning
+    rank: 0
+    message: >-
+      Base Test Class (file.xml, l.23): option should be between 1e-06 and 0.001. A value of 1e-06 will be used.
+    contexts:
+      - priority: 0
+        inputFile: /path/to/file.xml
+        inputLine: 23
+      - priority: 0
+        inputFile: /path/to/file.xml
+        inputLine: 32
+    cause: >-
+      Warning cause: testValue == 5
+    sourceLocation:
+      file: {}
+      line: {})",
+      __FILE__, line3 ),
   } );
 }
 
@@ -332,12 +332,12 @@ TEST( ErrorHandling, testStdException )
   catch( std::exception & e )
   {
 
-    testErrorLogger.setErrorMsg( ErrorMsgBuilder::init()
-                                   .setType( MsgType::Exception )
-                                   .addToMsg( e.what() )
-                                   .addRank( ::geos::logger::internal::g_rank )
-                                   .addCallStackInfo( LvArray::system::stackTrace( true ) )
-                                   .get());
+    testErrorLogger.initCurrentExceptionMessage()
+      .setType( MsgType::Exception )
+      .addToMsg( e.what() )
+      .addRank( ::geos::logger::internal::g_rank )
+      .addCallStackInfo( LvArray::system::stackTrace( true ) )
+      .get();
 
     std::ostringstream oss;
     ErrorLogger::writeToAscii( testErrorLogger.getCurrentExceptionMsg(), oss );

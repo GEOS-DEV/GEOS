@@ -107,18 +107,18 @@ TEST( testGroupPath, testGlobalPaths )
   }
   catch( geos::Exception & e )
   {
-    // static constexpr auto expectedMsg = "***** Error cause: child == nullptr\n"
-    //                                     "***** Rank 0\n"
-    //                                     "***** Message from Mesh (CodeIncludedXML0, l.10):\n"
-    //                                     "Group Mesh (CodeIncludedXML0, l.10) has no child named mesh2\n"
-    //                                     "The children of Mesh are: { mesh1 }";
-    // // checks if the exception contains the expected message
-    // std::ostringstream stream;
-    // geos::ErrorLogger::writeToAscii( ErrorLogger::global().getCurrentExceptionMsg(), stream );
-    // GEOS_ERROR_IF_EQ_MSG( string( stream.str() ).find( expectedMsg ), string::npos,
-    //                       "The error message was not containing the expected sequence.\n" <<
-    //                       "  Error message :\n" << e.what() <<
-    //                       "  expected sequence :\n" << expectedMsg );
+    static constexpr auto expectedMsg = "***** Error cause: child == nullptr\n"
+                                        "***** Rank 0\n"
+                                        "***** Message from Mesh (CodeIncludedXML0, l.10):\n"
+                                        "Group Mesh (CodeIncludedXML0, l.10) has no child named mesh2\n"
+                                        "The children of Mesh are: { mesh1 }";
+    // checks if the exception contains the expected message
+    std::ostringstream stream;
+    geos::ErrorLogger::writeToAscii( ErrorLogger::global().getCurrentExceptionMsg(), stream );
+    GEOS_ERROR_IF_EQ_MSG( string( stream.str() ).find( expectedMsg ), string::npos,
+                          "The error message was not containing the expected sequence.\n" <<
+                          "  Error message :\n" << e.what() <<
+                          "  expected sequence :\n" << expectedMsg );
     trowHappened = true;
   }
   // checks if the exception has been thrown as expected

@@ -116,23 +116,23 @@ enum class MsgType
 };
 
 /**
- * @brief Struct to construct the error/warning object
+ * @brief Struct to construct the diagnostic message object
  */
-struct ErrorMsg
+struct DiagnosticMsg
 {
-  /// the error type (Warning, Error or Exception)
+  /// Type of diagnostic (Warning, Error or Exception)
   MsgType m_type = MsgType::Undefined;
-  /// the error message that can be completed
+  /// the message that can be completed
   std::string m_msg;
   /// the cause of the error (erroneous condition, failed assertion...) if identified (optional)
   std::string m_cause;
-  /// the rank(s) on which the error occured
+  /// the rank(s) on which the diagnostic occured
   std::set< int > m_ranksInfo;
-  /// the source location file corresponding to the error in the code
+  /// the source location file
   std::string m_file;
-  /// the source location line corresponding to the error in the code (default is 0)
+  /// the source location line (default is 0)
   integer m_line = 0;
-  /// Additional information about the error in the input file
+  /// Additional information about the diagnostic in the input file
   std::vector< ErrorContext > m_contextsInfo;
   /// the stack trace
   std::vector< std::string > m_sourceCallStack;
@@ -141,33 +141,31 @@ struct ErrorMsg
 };
 
 /**
- * @brief Builder class for constructing ErrorMsg objects
+ * @brief Builder class for constructing DiagnosticMsg  objects
  */
-class ErrorMsgBuilder
+class DiagnosticMsgBuilder
 {
 public:
-  static ErrorMsgBuilder init()
-  { return ErrorMsgBuilder();}
+  static DiagnosticMsgBuilder init()
+  { return DiagnosticMsgBuilder();}
 
-  static ErrorMsgBuilder modify( ErrorMsg & errorMsg );
+  static DiagnosticMsgBuilder modify( DiagnosticMsg & errorMsg );
 
   /**
-   * @brief Add text to the current error msg
+   * @brief Append exception text to the message
    * @param e The exception containing text to add
-   * @param toEnd Indicates whether to add the message at the beginning (true) or at the end (false)
-   *              default is false
+   * @param toEnd If true, append at end; otherwise prepend
    * @return Reference to the current instance for method chaining.
    */
-  ErrorMsgBuilder & addToMsg( std::exception const & e, bool toEnd  = false );
+  DiagnosticMsgBuilder & addToMsg( std::exception const & e, bool toEnd  = false );
 
   /**
-   * @brief Add text to the current error msg
+   * @brief Append text to the message
    * @param msg The text to add
-   * @param toEnd Indicates whether to add the message at the beginning (true) or at the end (false)
-   *              default is false
+   * @param toEnd If true, append at end; otherwise prepend
    * @return Reference to the current instance for method chaining.
    */
-  ErrorMsgBuilder & addToMsg( std::string_view msg, bool const toEnd = false );
+  DiagnosticMsgBuilder & addToMsg( std::string_view msg, bool const toEnd = false );
   /**
    * @brief Adds one or more context elements to the error
    * @tparam Args Variadic pack of compatible types (ErrorContext / DataContext)
@@ -175,7 +173,7 @@ public:
    * @return Reference to the current instance for method chaining.
    */
   template< typename ... Args >
-  ErrorMsgBuilder & addContextInfo( Args && ... args )
+  DiagnosticMsgBuilder & addContextInfo( Args && ... args )
   {
     ( this->addContextInfoImpl( ErrorContext( args ) ), ... );
     return *this;
@@ -188,62 +186,58 @@ public:
    * @param toEnd adds the message to the end if true, at the start otherwise.
    * @return The instance, for builder pattern.
    */
-  ErrorMsgBuilder & addSignalToMsg( integer const sig, bool toEnd = false );
+  DiagnosticMsgBuilder & addSignalToMsg( integer const sig, bool toEnd = false );
   /**
    * @brief Set the source code location values (file and line where the error is detected)
    * @param msgFile Name of the source file location to add
    * @param msgLine Line of the source file location to add
    * @return Reference to the current instance for method chaining.
    */
-  ErrorMsgBuilder & setCodeLocation( std::string_view msgFile, integer const msgLine );
+  DiagnosticMsgBuilder & setCodeLocation( std::string_view msgFile, integer const msgLine );
   /**
    * @brief Set the type of the error
    * @param msgType The type can be error, warning or exception
    * @return Reference to the current instance for method chaining.
    */
-  ErrorMsgBuilder & setType( MsgType const msgType );
+  DiagnosticMsgBuilder & setType( MsgType const msgType );
   /**
    * @brief Set the cause of the error
    * @param cause See documentation of m_cause.
    * @return Reference to the current instance for method chaining.
    */
-  ErrorMsgBuilder & setCause( std::string_view cause );
+  DiagnosticMsgBuilder & setCause( std::string_view cause );
   /**
    * @brief Add a rank on which the error has been raised
    * @param rank The value to add
    * @return Reference to the current instance for method chaining.
    */
-  ErrorMsgBuilder & addRank( integer const rank );
+  DiagnosticMsgBuilder & addRank( integer const rank );
   /**
    * @brief Add stack trace information about the error
    * @param ossStackTrace stack trace information to add
    * @return Reference to the current instance for method chaining.
    */
-  ErrorMsgBuilder & addCallStackInfo( std::string_view ossStackTrace );
+  DiagnosticMsgBuilder & addCallStackInfo( std::string_view ossStackTrace );
 
-  ErrorMsg & get()
-  {
-    if( m_targetErrorMsg != nullptr )
-    {
-      *m_targetErrorMsg = m_errorMsg;
-    }
-    return m_errorMsg;
-  }
+  /**
+   * @return The constructed diagnostic message
+   */
+  DiagnosticMsg & get();
 
 private:
   /**
    * @brief Add contextual information about the error/warning
    * @param ctxInfo rvalue of the ErrorContext class
    */
-  ErrorMsgBuilder & addContextInfoImpl( ErrorContext && ctxInfo );
-  ///@copydoc ErrorLogger::m_errorContext
-  ErrorMsg m_errorMsg;
-  ErrorMsg * m_targetErrorMsg = nullptr;
+  DiagnosticMsgBuilder & addContextInfoImpl( ErrorContext && ctxInfo );
+  /// The diagnosticMsg being constructed
+  DiagnosticMsg m_errorMsg;
+  /// The target diagnosticMsg
+  DiagnosticMsg * m_targetErrorMsg = nullptr;
 };
 
 /**
- * @class ErrorLogger
- * @brief Class to format and write different error/warning information that occured during the initialization
+ * @brief Logger for formatting and outputting diagnostics
  */
 class ErrorLogger
 {
@@ -264,10 +258,6 @@ public:
    * And write its header when the command line option is enabled
    */
   void createFile();
-
-
-  void setErrorMsg( ErrorMsg const & errorMsg )
-  { m_getCurrentExceptionMsg = errorMsg; }
 
   /**
    * @brief Enable the YAML file output, which is false by default
@@ -309,48 +299,51 @@ public:
   std::ostream const & getErrorStream() const
   { return m_stream; }
 
-  ErrorMsg const & getCurrentExceptionMsg() const
+  DiagnosticMsg const & getCurrentExceptionMsg() const
   { return m_getCurrentExceptionMsg;}
 
   /**
-   * @brief Gives acces to the error message that is currently being constructed,
-   *        potencially at various application layers (Typically for exceptions)
-   * @return Reference to the current error message instance;
+   * @brief Start building a new exception message
+   * @return Builder for the exception
+   * @note One exception can exist at a time
    */
-  ErrorMsgBuilder initCurrentExceptionMessage()
+  DiagnosticMsgBuilder initCurrentExceptionMessage()
   {
-    m_getCurrentExceptionMsg = ErrorMsg();
-    return ErrorMsgBuilder::modify( m_getCurrentExceptionMsg );
+    m_getCurrentExceptionMsg = DiagnosticMsg();
+    return DiagnosticMsgBuilder::modify( m_getCurrentExceptionMsg );
   }
 
-
-  ErrorMsgBuilder modifyCurrentExceptionMessage()
-  { return ErrorMsgBuilder::modify( m_getCurrentExceptionMsg ); }
+  /**
+   * @brief Modify/Continue building the current exception message
+   * @return Builder for the exception
+   */
+  DiagnosticMsgBuilder modifyCurrentExceptionMessage()
+  { return DiagnosticMsgBuilder::modify( m_getCurrentExceptionMsg ); }
 
   /**
-   * @brief Write all the information retrieved about the error/warning message into the output stream specified and
+   * @brief Write all the information retrieved about the current exception message into the output stream specified and
    * optionnaly into a yaml file
-   * @param errorMsg a constant reference to the ErrorMsg
    */
   void flushCurrentExceptionMessage();
 
   /**
-   * @brief Write all the information retrieved about the error/warning message into the output stream specified and
+   * @brief Write all the information retrieved about the error message into the output stream specified and
    * optionnaly into a yaml file
-   * @param errorMsg a constant reference to the ErrorMsg
+   * @param errorMsg Message to format
+   * @note Used for warnings and non-exception errors
    */
-  void flushErrorMsg( ErrorMsg & errMsg );
+  void flushErrorMsg( DiagnosticMsg & errMsg );
 
   /**
    * @brief Format all information in ErrorMsg and write it to the specified output stream
    * @param errMsg The struct containing the error/warning object
    * @param oss The output stream
    */
-  static void writeToAscii( ErrorMsg const & errMsg, std::ostream & oss );
+  static void writeToAscii( DiagnosticMsg const & errMsg, std::ostream & oss );
 
 private:
   /// The error constructed via exceptions
-  ErrorMsg m_getCurrentExceptionMsg;
+  DiagnosticMsg m_getCurrentExceptionMsg;
   /// Indicate whether the write to YAML command line option is enabled
   bool m_writeYaml = false;
   /// YAML file name
@@ -362,7 +355,7 @@ private:
    * @brief Write all the information retrieved about the error/warning message into the YAML file
    * @param errorMsg a constant reference to the error
    */
-  void writeToYaml( ErrorMsg & errMsg );
+  void writeToYaml( DiagnosticMsg & errMsg );
 
   /**
    * @brief Write the error message in the YAML file regarding indentation and line break
