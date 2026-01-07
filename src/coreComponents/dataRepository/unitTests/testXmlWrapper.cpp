@@ -385,8 +385,9 @@ TEST( testXmlWrapper, testGroupNamesFormats )
     };
     for( GroupNameTest const & input : workingInputs )
     {
-      EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( groupName, input.m_valueToTest, input.m_regex ) );
-      EXPECT_STREQ( groupName.c_str(), groupName.c_str() );
+      EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( groupName, input.m_valueToTest, input.m_regex ) )
+        << "Parsing input '"<< input.m_valueToTest
+        << "' with regex '" << input.m_regex.m_regexStr << "' didn't throw an InputError as expected.";;
     }
   }
   {
@@ -444,7 +445,6 @@ TEST( testXmlWrapper, testGroupNamesArrayFormats )
     for( GroupNameTest const & input : workingInputs )
     {
       EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( groupName, input.m_valueToTest, input.m_regex ) );
-      EXPECT_STREQ( groupName.c_str(), groupName.c_str() );
     }
   }
   {
