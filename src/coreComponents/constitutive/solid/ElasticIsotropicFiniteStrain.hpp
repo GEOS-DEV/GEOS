@@ -22,7 +22,7 @@
 
 #include "ElasticIsotropic.hpp"
 #include "PropertyConversions.hpp"
-#include "SolidModelDiscretizationOpsFullyAnisotropic.hpp"
+#include "SolidModelDiscretizationOpsFullTensor.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 namespace geos{
@@ -64,10 +64,7 @@ public:
   ElasticIsotropicFiniteStrainUpdates & operator=( ElasticIsotropicFiniteStrainUpdates && ) =  delete;
 
   /// Use the uncompressed version of the stiffness bilinear form
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic;
-
-  // // Bring in base implementations to prevent hiding warnings
-  // using ElasticIsotropicUpdates::smallStrainNoStateUpdate;
+  using DiscretizationOps = SolidModelDiscretizationOpsFullTensor;
 
   // returns first Piola-Kirchhoff stress which is asymmetric
   GEOS_HOST_DEVICE
@@ -97,6 +94,12 @@ public:
                           real64 const (&elasticDeformGrad)[3][3],
                           real64 (&firstPiolaStress)[3][3],
                           real64 (&stiffness)[9][9]) const;
+
+  GEOS_HOST_DEVICE
+  void finiteStrainUpdate(localIndex const k, localIndex const q,
+                          real64 const (&elasticDeformGrad)[3][3],
+                          real64 (&firstPiolaStress)[3][3],
+                          DiscretizationOps & stiffness) const;
 
   GEOS_HOST_DEVICE
   void computeLogElasticStrain(real64 const (&elasticDeformGrad)[3][3],
@@ -324,6 +327,16 @@ void ElasticIsotropicFiniteStrainUpdates::finiteStrainUpdate(localIndex const k,
   // Can only save the symmetric kirchhoff stress right now
   LvArray::tensorOps::copy<6>(m_oldStress[k][q], m_newStress[k][q]);
   LvArray::tensorOps::copy<6>(m_newStress[k][q], kirchhoffStress);
+}
+
+GEOS_HOST_DEVICE
+inline
+void ElasticIsotropicFiniteStrainUpdates::finiteStrainUpdate(localIndex const k, localIndex const q,
+                                                             real64 const (&elasticDeformGrad)[3][3],
+                                                             real64 (&firstPiolaStress)[3][3],
+                                                             DiscretizationOps & stiffness) const
+{
+  finiteStrainUpdate(k, q, elasticDeformGrad, firstPiolaStress, stiffness.m_c);
 }
 
 /**

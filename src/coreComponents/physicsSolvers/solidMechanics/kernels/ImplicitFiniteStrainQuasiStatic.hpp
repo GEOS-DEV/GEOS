@@ -85,7 +85,7 @@ public:
   ImplicitFiniteStrainQuasiStatic(NodeManager const & nodeManager, EdgeManager const & edgeManager,
       FaceManager const & faceManager, localIndex const targetRegionIndex,
       SUBREGION_TYPE const & elementSubRegion, FE_TYPE const & finiteElementSpace,
-      CONSTITUTIVE_TYPE const & inputConstitutiveType, arrayView1d<globalIndex const> const inputDofNumber,
+      CONSTITUTIVE_TYPE & inputConstitutiveType, arrayView1d<globalIndex const> const inputDofNumber,
       globalIndex const rankOffset, CRSMatrixView<real64, globalIndex const> const inputMatrix,
       arrayView1d<real64> const inputRhs, real64 const inputDt, real64 const (&inputGravityVector)[3]);
 
@@ -138,7 +138,6 @@ public:
   GEOS_HOST_DEVICE
   void setup(localIndex const k, StackVariables & stack) const;
 
-  /// Hanyu: this may need to be implemented change Mandel stress to first PK
   /**
    * @brief Internal struct to provide no-op defaults used in the inclusion
    *   of lambda functions into kernel component functions.
@@ -221,14 +220,15 @@ protected:
 
 };
 
-/// The factory used to construct a QuasiStatic kernel.
-using QuasiStaticFactory = finiteElement::KernelFactory< ImplicitFiniteStrainQuasiStatic,
-                                                         arrayView1d< globalIndex const > const,
-                                                         globalIndex,
-                                                         CRSMatrixView< real64, globalIndex const > const,
-                                                         arrayView1d< real64 > const,
-                                                         real64 const,
-                                                         real64 const (&)[3] >;
+/// The factory used to construct a ImplicitFiniteStrainQuasiStatic kernel.
+using ImplicitFiniteStrainQuasiStaticFactory =
+    finiteElement::KernelFactory< ImplicitFiniteStrainQuasiStatic,
+                                  arrayView1d< globalIndex const > const,
+                                  globalIndex,
+                                  CRSMatrixView< real64, globalIndex const > const,
+                                  arrayView1d< real64 > const,
+                                  real64 const,
+                                  real64 const (&)[3] >;
 
 } // namespace solidMechanicsLagrangianFEMKernels
 

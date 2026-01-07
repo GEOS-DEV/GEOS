@@ -22,6 +22,7 @@
 #include "SolidMechanicsLagrangianFEM.hpp"
 #include "kernels/ImplicitSmallStrainNewmark.hpp"
 #include "kernels/ImplicitSmallStrainQuasiStatic.hpp"
+#include "kernels/ImplicitFiniteStrainQuasiStatic.hpp"
 #include "kernels/ExplicitSmallStrain.hpp"
 #include "kernels/ExplicitFiniteStrain.hpp"
 #include "kernels/FixedStressThermoPoromechanics.hpp"
@@ -47,6 +48,7 @@
 
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsKernelsDispatchTypeList.hpp"
+#include "physicsSolvers/solidMechanics/kernels/SolidMechanicsImplicitFiniteStrainKernelsDispatchTypeList.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsFixedStressThermoPoromechanicsKernelsDispatchTypeList.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 

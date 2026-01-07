@@ -84,6 +84,7 @@ set( kernelTemplateFileList "" )
 
   list( APPEND kernelTemplateFileList 
         kernels/SolidMechanicsKernels.cpp.template
+        kernels/SolidMechanicsImplicitFiniteStrainKernels.cpp.template
         kernels/SolidMechanicsFixedStressThermoPoromechanicsKernels.cpp.template )
 
 
