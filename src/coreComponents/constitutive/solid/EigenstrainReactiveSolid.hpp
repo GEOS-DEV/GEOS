@@ -15,14 +15,14 @@
 
 
 /**
- * @file PorousReactiveSolid.hpp
+ * @file EigenstrainReactiveSolid.hpp
  */
 
-#ifndef GEOS_CONSTITUTIVE_SOLID_POROUSREACTIVESOLID_HPP_
-#define GEOS_CONSTITUTIVE_SOLID_POROUSREACTIVESOLID_HPP_
+#ifndef GEOS_CONSTITUTIVE_SOLID_EIGENSTRAINREACTIVESOLID_HPP_
+#define GEOS_CONSTITUTIVE_SOLID_EIGENSTRAINREACTIVESOLID_HPP_
 
 #include "constitutive/solid/CoupledSolid.hpp"
-#include "constitutive/solid/porosity/BiotReactivePorosity.hpp"
+#include "constitutive/solid/porosity/ReactivePorosityBase.hpp"
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 
@@ -41,7 +41,7 @@ namespace constitutive
  */
 template< typename SOLID_TYPE,
           typename PERM_TYPE >
-class PorousReactiveSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >
+class EigenstrainReactiveSolidUpdates : public CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >
 {
 public:
 
@@ -50,10 +50,10 @@ public:
   /**
    * @brief Constructor
    */
-  PorousReactiveSolidUpdates( SOLID_TYPE const & solidModel,
-                              BiotReactivePorosity const & porosityModel,
-                              PERM_TYPE const & permModel ):
-    CoupledSolidUpdates< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >( solidModel, porosityModel, permModel )
+  EigenstrainReactiveSolidUpdates( SOLID_TYPE const & solidModel,
+                                   ReactivePorosityBase const & porosityModel,
+                                   PERM_TYPE const & permModel ):
+    CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >( solidModel, porosityModel, permModel )
   {}
 
   GEOS_HOST_DEVICE
@@ -67,7 +67,7 @@ public:
                                                 real64 const & temperature_n,
                                                 arraySlice1d< real64 const, compflow::USD_COMP - 1 > mineralReactionMolarIncrements ) const override final
   {
-    updateBiotCoefficientAndAssignModuli( k );
+    updateSolidBulkModulus( k );
 
     m_porosityUpdate.updateFixedStress( k, q,
                                         pressure, pressure_k, pressure_n,
@@ -121,7 +121,7 @@ public:
                                                    real64 ( & totalStress )[6],
                                                    DiscretizationOps & stiffness ) const
   {
-    GEOS_UNUSED_VAR( referenceTemperature );
+    GEOS_UNUSED_VAR( pressure_n, referenceTemperature );
 
     real64 anelasticStrainIncrement = 0.0;
 
@@ -134,13 +134,11 @@ public:
     }
 
     // Compute total stress increment and its derivative
-    real64 const deltaPressureFromLastStep = pressure - pressure_n;
     real64 const deltaTemperatureFromLastStep = temperature - temperature_n;
     computeTotalStress( k,
                         q,
                         timeIncrement,
                         pressure,
-                        deltaPressureFromLastStep,
                         deltaTemperatureFromLastStep,
                         anelasticStrainIncrement,
                         strainIncrement,
@@ -181,18 +179,17 @@ public:
 
 private:
 
-  using CoupledSolidUpdates< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::m_solidUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::m_porosityUpdate;
-  using CoupledSolidUpdates< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::m_permUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::m_solidUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::m_porosityUpdate;
+  using CoupledSolidUpdates< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::m_permUpdate;
 
   GEOS_HOST_DEVICE
   inline
-  void updateBiotCoefficientAndAssignModuli( localIndex const k ) const
+  void updateSolidBulkModulus( localIndex const k ) const
   {
-    // This call is not general like this.
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
 
-    m_porosityUpdate.updateBiotCoefficientAndAssignModuli( k, bulkModulus );
+    m_porosityUpdate.updateSolidBulkModulus( k, bulkModulus );
   }
 
   GEOS_HOST_DEVICE
@@ -201,7 +198,6 @@ private:
                            localIndex const q,
                            real64 const & timeIncrement,
                            real64 const & pressure,
-                           real64 const & deltaPressureFromLastStep,
                            real64 const & deltaTemperatureFromLastStep,
                            real64 const & anelasticStrainIncrement,
                            real64 const ( &strainIncrement )[6],
@@ -213,15 +209,12 @@ private:
     real64 const thermalExpansionCoefficient = m_solidUpdate.getThermalExpansionCoefficient( k );
 
     real64 mechanicsStrainIncrement[6]{};
-    mechanicsStrainIncrement[0] = strainIncrement[0] - thermalExpansionCoefficient * deltaTemperatureFromLastStep;
-    mechanicsStrainIncrement[1] = strainIncrement[1] - thermalExpansionCoefficient * deltaTemperatureFromLastStep;
-    mechanicsStrainIncrement[2] = strainIncrement[2] - thermalExpansionCoefficient * deltaTemperatureFromLastStep;
+    mechanicsStrainIncrement[0] = strainIncrement[0] - thermalExpansionCoefficient * deltaTemperatureFromLastStep - anelasticStrainIncrement;
+    mechanicsStrainIncrement[1] = strainIncrement[1] - thermalExpansionCoefficient * deltaTemperatureFromLastStep - anelasticStrainIncrement;
+    mechanicsStrainIncrement[2] = strainIncrement[2] - thermalExpansionCoefficient * deltaTemperatureFromLastStep - anelasticStrainIncrement;
     mechanicsStrainIncrement[3] = strainIncrement[3];
     mechanicsStrainIncrement[4] = strainIncrement[4];
     mechanicsStrainIncrement[5] = strainIncrement[5];
-
-    // Add the contributions of pore material stress/pressure
-    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
 
     // Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,
@@ -231,36 +224,22 @@ private:
                                      totalStress, // first effective stress increment accumulated
                                      stiffness );
 
+    // Add the contributions of pressure to the total stress
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -pressure );
+
     // Compute effective stress increment for the porosity update
     real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
     real64 const meanEffectiveStressIncrement = bulkModulus * ( mechanicsStrainIncrement[0] + mechanicsStrainIncrement[1] + mechanicsStrainIncrement[2] );
 
     m_porosityUpdate.updateMeanEffectiveStressIncrement( k, q, meanEffectiveStressIncrement );
-
-    // Update mineral pressure
-    real64 dMineralPres_dMeanEffStressIncre = 0.0;
-    m_porosityUpdate.updatePoreMineralPressure( k, q,
-                                                deltaPressureFromLastStep,
-                                                meanEffectiveStressIncrement,
-                                                anelasticStrainIncrement,
-                                                dMineralPres_dMeanEffStressIncre );
-
-    real64 const mineralPressure = m_porosityUpdate.getPoreMineralPressure( k );
-    real64 const totalPorePressure = pressure + mineralPressure;
-
-    // Add the contributions of pressure to the total stress
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * totalPorePressure );
-
-    // Add the contributions of mineral pressure to the stiffness
-    stiffness.m_bulkModulus = bulkModulus - biotCoefficient * dMineralPres_dMeanEffStressIncre * bulkModulus;
   }
 
 };
 
 /**
- * @brief PorousReactiveSolidBase class used for dispatch of all Porous solids.
+ * @brief EigenstrainReactiveSolidBase class used for dispatch of all Porous solids.
  */
-class PorousReactiveSolidBase
+class EigenstrainReactiveSolidBase
 {};
 
 /**
@@ -271,19 +250,19 @@ class PorousReactiveSolidBase
  */
 template< typename SOLID_TYPE,
           typename PERM_TYPE >
-class PorousReactiveSolid : public CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >
+class EigenstrainReactiveSolid : public CoupledSolid< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >
 {
 public:
 
   /// Alias for ElasticIsotropicUpdates
-  using KernelWrapper = PorousReactiveSolidUpdates< SOLID_TYPE, PERM_TYPE >;
+  using KernelWrapper = EigenstrainReactiveSolidUpdates< SOLID_TYPE, PERM_TYPE >;
 
   /**
    * @brief Constructor
    * @param name Object name
    * @param parent Object's parent group
    */
-  PorousReactiveSolid( string const & name, dataRepository::Group * const parent );
+  EigenstrainReactiveSolid( string const & name, dataRepository::Group * const parent );
 
   /**
    * @brief Catalog name
@@ -293,11 +272,11 @@ public:
   {
     if constexpr ( std::is_same_v< PERM_TYPE, ConstantPermeability > )   // default case
     {
-      return string( "PorousReactive" ) + SOLID_TYPE::catalogName();
+      return string( "EigenStrainReactive" ) + SOLID_TYPE::catalogName();
     }
     else   // special cases
     {
-      return string( "PorousReactive" ) + SOLID_TYPE::catalogName() + PERM_TYPE::catalogName();
+      return string( "EigenStrainReactive" ) + SOLID_TYPE::catalogName() + PERM_TYPE::catalogName();
     }
   }
 
@@ -308,9 +287,9 @@ public:
   virtual string getCatalogName() const override { return catalogName(); }
 
   /**
-   * @brief Create a instantiation of the PorousReactiveSolidUpdates class
+   * @brief Create a instantiation of the EigenstrainReactiveSolidUpdates class
    *        that refers to the data in this.
-   * @return An instantiation of PorousReactiveSolidUpdates.
+   * @return An instantiation of EigenstrainReactiveSolidUpdates.
    */
   KernelWrapper createKernelUpdates() const
   {
@@ -334,9 +313,9 @@ public:
   }
 
 private:
-  using CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::getSolidModel;
-  using CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::getPorosityModel;
-  using CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::getPermModel;
+  using CoupledSolid< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::getSolidModel;
+  using CoupledSolid< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::getPorosityModel;
+  using CoupledSolid< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::getPermModel;
 };
 
 
@@ -344,4 +323,4 @@ private:
 }
 } /* namespace geos */
 
-#endif /* GEOS_CONSTITUTIVE_SOLID_POROUSREACTIVESOLID_HPP_ */
+#endif /* GEOS_CONSTITUTIVE_SOLID_EIGENSTRAINREACTIVESOLID_HPP_ */

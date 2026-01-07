@@ -53,7 +53,7 @@ void PhaseFieldFractureSolver::postInputInitialization()
 void PhaseFieldFractureSolver::mapSolutionBetweenSolvers( real64 const & dt, DomainPartition & domain, integer const solverType )
 {
   GEOS_UNUSED_VAR( dt );
-  
+
   GEOS_MARK_FUNCTION;
   if( solverType ==  static_cast< integer >( SolverType::Damage ) )
   {

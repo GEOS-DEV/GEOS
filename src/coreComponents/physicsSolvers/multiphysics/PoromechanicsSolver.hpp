@@ -196,6 +196,8 @@ public:
       {
         // to let the solid mechanics solver to account for anelastic strain due to chemistry
         solidMechanicsSolver()->enableExplicitChemomechanicsUpdate();
+        // to let the flow solver that saving pressure_k and temperature_k is necessary (for the fixed-stress porosity terms)
+        flowSolver()->enableFixedStressPoromechanicsUpdate();
       }
       else
       {
@@ -666,7 +668,7 @@ protected:
   virtual void mapSolutionBetweenSolvers( real64 const & dt, DomainPartition & domain, integer const solverType ) override
   {
     GEOS_UNUSED_VAR( dt );
-    
+
     GEOS_MARK_FUNCTION;
 
     /// After the flow solver
@@ -679,7 +681,8 @@ protected:
     if( solverType == static_cast< integer >( SolverType::SolidMechanics )
         && !m_performStressInitialization ) // do not update during poromechanics initialization
     {
-      if( flowSolver()->getCatalogName() != "SinglePhaseReactiveTransport" ) // For now, Biot Poromechanics is not considered for ChemoMechanics
+      if( flowSolver()->getCatalogName() != "SinglePhaseReactiveTransport" ) // For now, Biot Poromechanics is not considered for
+                                                                             // ChemoMechanics
       {
         // compute the average of the mean total stress increment over quadrature points
         averageMeanTotalStressIncrement( domain );
@@ -712,7 +715,8 @@ protected:
     if( solverType == static_cast< integer >( SolverType::SolidMechanics ) &&
         this->getNonlinearSolverParameters().m_nonlinearAccelerationType== NonlinearSolverParameters::NonlinearAccelerationType::Aitken )
     {
-      if( flowSolver()->getCatalogName() != "SinglePhaseReactiveTransport" ) // For now, Biot Poromechanics is not considered for ChemoMechanics
+      if( flowSolver()->getCatalogName() != "SinglePhaseReactiveTransport" ) // For now, Biot Poromechanics is not considered for
+                                                                             // ChemoMechanics
       {
         recordAverageMeanTotalStressIncrement( domain, m_s2_tilde );
       }

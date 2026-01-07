@@ -171,6 +171,8 @@
         "CellElementSubRegion"
       ],
       "CONSTITUTIVE_TYPE": [
+        "EigenstrainReactiveSolid<ElasticIsotropic, ConstantPermeability>",
+        "EigenstrainReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability>",
         "PorousReactiveSolid<ElasticIsotropic, ConstantPermeability>",
         "PorousReactiveSolid<ElasticIsotropic, CarmanKozenyPermeability>"
       ],

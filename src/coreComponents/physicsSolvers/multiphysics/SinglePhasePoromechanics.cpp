@@ -181,8 +181,8 @@ void SinglePhasePoromechanics< SinglePhaseReservoirAndWells<>, SolidMechanicsLag
 }
 
 template<>
-void SinglePhasePoromechanics< SinglePhaseReactiveTransport, SolidMechanicsLagrangianFEM >::mapSolutionBetweenSolvers( real64 const & dt, 
-                                                                                                                       DomainPartition & domain, 
+void SinglePhasePoromechanics< SinglePhaseReactiveTransport, SolidMechanicsLagrangianFEM >::mapSolutionBetweenSolvers( real64 const & dt,
+                                                                                                                       DomainPartition & domain,
                                                                                                                        integer const solverType )
 {
   GEOS_MARK_FUNCTION;

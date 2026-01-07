@@ -36,16 +36,17 @@
 #include "solid/ElasticIsotropicPressureDependent.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/ElasticOrthotropic.hpp"
-#include "solid/PorousReactiveSolid.hpp"
+#include "solid/EigenstrainReactiveSolid.hpp"
 #include "solid/PorousSolid.hpp"
 #include "solid/PorousDamageSolid.hpp"
+#include "solid/PorousReactiveSolid.hpp"
 #include "solid/CompressibleSolid.hpp"
 #include "solid/ProppantSolid.hpp"
 #include "solid/CeramicDamage.hpp"
 #include "solid/ReactiveSolid.hpp"
 #include "solid/porosity/PressurePorosity.hpp"
 #include "solid/porosity/ProppantPorosity.hpp"
-#include "solid/porosity/ReactivePorosity.hpp"
+#include "solid/porosity/ReactivePorosityBase.hpp"
 #include "permeability/ConstantPermeability.hpp"
 #include "permeability/CarmanKozenyPermeability.hpp"
 #include "permeability/ExponentialDecayPermeability.hpp"
@@ -363,6 +364,21 @@ struct ConstitutivePassThru< PorousDamageSolidBase >
 };
 
 /**
+ * Specialization for the EigenstrainReactiveSolid models.
+ */
+template<>
+struct ConstitutivePassThru< EigenstrainReactiveSolidBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< EigenstrainReactiveSolid< ElasticIsotropic, ConstantPermeability >,
+                                 EigenstrainReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability > >::execute( constitutiveRelation,
+                                                                                                                    std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+/**
  * Specialization for the PorousReactiveSolid models.
  */
 template<>
@@ -421,9 +437,9 @@ struct ConstitutivePassThru< ReactiveSolidBase >
   template< typename LAMBDA >
   static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
-    ConstitutivePassThruHandler< ReactiveSolid< ReactivePorosity, ConstantPermeability >,
-                                 ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability >,
-                                 ReactiveSolid< ReactivePorosity, PressurePermeability >
+    ConstitutivePassThruHandler< ReactiveSolid< ReactivePorosityBase, ConstantPermeability >,
+                                 ReactiveSolid< ReactivePorosityBase, CarmanKozenyPermeability >,
+                                 ReactiveSolid< ReactivePorosityBase, PressurePermeability >
                                  >::execute( constitutiveRelation,
                                              std::forward< LAMBDA >( lambda ) );
   }
@@ -431,9 +447,9 @@ struct ConstitutivePassThru< ReactiveSolidBase >
   template< typename LAMBDA >
   static void execute( ConstitutiveBase const & constitutiveRelation, LAMBDA && lambda )
   {
-    ConstitutivePassThruHandler< ReactiveSolid< ReactivePorosity, ConstantPermeability >,
-                                 ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability >,
-                                 ReactiveSolid< ReactivePorosity, PressurePermeability >
+    ConstitutivePassThruHandler< ReactiveSolid< ReactivePorosityBase, ConstantPermeability >,
+                                 ReactiveSolid< ReactivePorosityBase, CarmanKozenyPermeability >,
+                                 ReactiveSolid< ReactivePorosityBase, PressurePermeability >
                                  >::execute( constitutiveRelation,
                                              std::forward< LAMBDA >( lambda ) );
   }
@@ -480,8 +496,8 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  CompressibleSolid< PressurePorosity, PressurePermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
-                                 PorousReactiveSolid< ElasticIsotropic, ConstantPermeability >,
-                                 PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability >,
+                                 EigenstrainReactiveSolid< ElasticIsotropic, ConstantPermeability >,
+                                 EigenstrainReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability >,
                                  PorousSolid< DruckerPragerExtended, ConstantPermeability >,
                                  PorousSolid< ModifiedCamClay, ConstantPermeability >,
                                  PorousSolid< DelftEgg, ConstantPermeability >,
@@ -507,10 +523,12 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousDamageSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousDamageSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousDamageSolid< Damage< ElasticIsotropic > >,
-                                 ReactiveSolid< ReactivePorosity, ConstantPermeability >,
-                                 ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability >,
-                                 ReactiveSolid< ReactivePorosity, PressurePermeability > >::execute( constitutiveRelation,
-                                                                                                     std::forward< LAMBDA >( lambda ) );
+                                 PorousReactiveSolid< ElasticIsotropic, ConstantPermeability >,
+                                 PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability >,
+                                 ReactiveSolid< ReactivePorosityBase, ConstantPermeability >,
+                                 ReactiveSolid< ReactivePorosityBase, CarmanKozenyPermeability >,
+                                 ReactiveSolid< ReactivePorosityBase, PressurePermeability > >::execute( constitutiveRelation,
+                                                                                                         std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename LAMBDA >
@@ -523,8 +541,8 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  CompressibleSolid< PressurePorosity, PressurePermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  CompressibleSolid< PressurePorosity, WillisRichardsPermeability >,
-                                 PorousReactiveSolid< ElasticIsotropic, ConstantPermeability >,
-                                 PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability >,
+                                 EigenstrainReactiveSolid< ElasticIsotropic, ConstantPermeability >,
+                                 EigenstrainReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability >,
                                  PorousSolid< DruckerPragerExtended, ConstantPermeability >,
                                  PorousSolid< ModifiedCamClay, ConstantPermeability >,
                                  PorousSolid< DelftEgg, ConstantPermeability >,
@@ -550,10 +568,12 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousDamageSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousDamageSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousDamageSolid< Damage< ElasticIsotropic > >,
-                                 ReactiveSolid< ReactivePorosity, ConstantPermeability >,
-                                 ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability >,
-                                 ReactiveSolid< ReactivePorosity, PressurePermeability > >::execute( constitutiveRelation,
-                                                                                                     std::forward< LAMBDA >( lambda ) );
+                                 PorousReactiveSolid< ElasticIsotropic, ConstantPermeability >,
+                                 PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability >,
+                                 ReactiveSolid< ReactivePorosityBase, ConstantPermeability >,
+                                 ReactiveSolid< ReactivePorosityBase, CarmanKozenyPermeability >,
+                                 ReactiveSolid< ReactivePorosityBase, PressurePermeability > >::execute( constitutiveRelation,
+                                                                                                         std::forward< LAMBDA >( lambda ) );
   }
 };
 

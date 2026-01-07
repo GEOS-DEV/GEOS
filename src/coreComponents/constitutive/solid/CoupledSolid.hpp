@@ -107,6 +107,23 @@ public:
   }
 
   GEOS_HOST_DEVICE
+  virtual void updateStateReactionsFixedStress( localIndex const k,
+                                                localIndex const q,
+                                                real64 const & pressure,
+                                                real64 const & pressure_k,
+                                                real64 const & pressure_n,
+                                                real64 const & temperature,
+                                                real64 const & temperature_k,
+                                                real64 const & temperature_n,
+                                                arraySlice1d< real64 const, compflow::USD_COMP - 1 > mineralReactionMolarIncrements ) const
+  {
+    GEOS_UNUSED_VAR( k, q,
+                     pressure, pressure_k, pressure_n,
+                     temperature, temperature_k, temperature_n,
+                     mineralReactionMolarIncrements );
+  }
+
+  GEOS_HOST_DEVICE
   virtual void updateStateFromPressureTemperatureAndReactions( localIndex const k,
                                                                localIndex const q,
                                                                real64 const & pressure,

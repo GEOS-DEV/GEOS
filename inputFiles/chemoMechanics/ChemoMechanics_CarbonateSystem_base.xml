@@ -1,6 +1,68 @@
 <?xml version="1.0" ?>
 
 <Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhaseReactiveTransportPoromechanics
+      name="chemomechSolve"
+      solidSolverName="lagsolve"
+      flowSolverName="SinglePhaseReactiveFlow"
+      logLevel="1"
+      targetRegions="{ Reaction, Barrier  }">
+      <NonlinearSolverParameters
+        newtonMaxIter="4"
+        newtonTol="1.0e-4"
+        couplingType="Sequential"  
+        lineSearchAction="None"
+        subcycling="1"
+        maxTimeStepCuts="4"
+        lineSearchMaxCuts="0"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseReactiveTransportPoromechanics>
+
+    <SolidMechanicsLagrangianFEM
+      name="lagsolve"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Reaction, Barrier }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        lineSearchAction="None"
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanicsLagrangianFEM>      
+
+    <SinglePhaseReactiveTransport
+      name="SinglePhaseReactiveFlow"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Reaction, Barrier }"
+      isUpdateReactivePorosity="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        maxTimeStepCuts="5"
+        newtonMaxIter="40"
+        logLevel="2"
+        maxAllowedResidualNorm="1e100"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseReactiveTransport>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0.0, 1.0 }"
+      yCoords="{ 0.0, 4.0, 6.0, 10.0 }"
+      zCoords="{ 0.0, 1.0 }"
+      nx="{ 1 }"
+      ny="{ 4, 2, 4 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb-0_0_0, cb-0_1_0, cb-0_2_0 }"/>
+  </Mesh>
 
   <NumericalMethods>
     <FiniteElements>
@@ -26,40 +88,6 @@
       cellBlocks="{ cb-0_1_0 }"
       materialList="{ reactiveRock, water }"/>
   </ElementRegions>
-
-  <Constitutive>
-    <PorousReactiveElasticIsotropic
-      name="reactiveRock"
-      solidModelName="rockSolid"
-      porosityModelName="rockPorosity"
-      permeabilityModelName="rockPerm"/>
-
-    <ElasticIsotropic
-      name="rockSolid"
-      defaultDensity="0"
-      defaultBulkModulus="6.6667e7"
-      defaultShearModulus="4.0e7"/>
-
-    <ReactivePorosity
-      name="rockPorosity"
-      defaultReferencePorosity="0.1"
-      defaultInitialVolumeFractions="{ 0.1 }"
-      molarWeights="{ 0.100087 }"
-      mineralDensities="{ 2710 }"/>
-
-    <ConstantPermeability
-      name="rockPerm"
-      permeabilityComponents="{ 1e-20, 1e-20, 1e-20 }"/>
-
-    <ReactiveCompressibleSinglePhaseFluid
-      name="water"
-      defaultDensity="1000"
-      defaultViscosity="0.001"
-      referencePressure="0.0"
-      compressibility="5e-10"
-      viscosibility="0.0"
-      chemicalSystemType="carbonate"/>
-  </Constitutive>
 
   <FieldSpecifications>
     <FieldSpecification

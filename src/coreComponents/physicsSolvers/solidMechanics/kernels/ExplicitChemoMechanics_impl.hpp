@@ -139,17 +139,17 @@ quadraturePointKernel( localIndex const k,
   // Evaluate total stress and its derivatives
   // TODO: allow for a customization of the kernel to pass the average pressure to the small strain update (to account for cap pressure
   // later)
-  m_constitutiveUpdate.smallStrainUpdateExplicitChemoMechanics( k, q,
-                                                                m_dt,
-                                                                m_pressure[k],
-                                                                m_pressure_n[k],
-                                                                m_temperature[k],
-                                                                m_temperature_n[k],
-                                                                m_initialTemperature[k],
-                                                                m_mineralReactionMolarIncrements[k],
-                                                                strainInc,
-                                                                totalStress,
-                                                                stiffness );
+  m_constitutiveUpdate.smallStrainUpdateChemoMechanicsFixedStress( k, q,
+                                                                   m_dt,
+                                                                   m_pressure[k],
+                                                                   m_pressure_n[k],
+                                                                   m_temperature[k],
+                                                                   m_temperature_n[k],
+                                                                   m_initialTemperature[k],
+                                                                   m_mineralReactionMolarIncrements[k],
+                                                                   strainInc,
+                                                                   totalStress,
+                                                                   stiffness );
 
   for( localIndex i=0; i<6; ++i )
   {

@@ -15,10 +15,10 @@
 
 
 /**
- * @file PorousReactiveSolid.cpp
+ * @file EigenstrainReactiveSolid.cpp
  */
 
-#include "PorousReactiveSolid.hpp"
+#include "EigenstrainReactiveSolid.hpp"
 #include "ElasticIsotropic.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
@@ -33,24 +33,24 @@ namespace constitutive
 
 template< typename SOLID_TYPE,
           typename PERM_TYPE >
-PorousReactiveSolid< SOLID_TYPE, PERM_TYPE >::PorousReactiveSolid( string const & name, Group * const parent ):
-  CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >( name, parent )
+EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE >::EigenstrainReactiveSolid( string const & name, Group * const parent ):
+  CoupledSolid< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >( name, parent )
 {}
 
 template< typename SOLID_TYPE,
           typename PERM_TYPE >
-void PorousReactiveSolid< SOLID_TYPE, PERM_TYPE >::initializeState() const
+void EigenstrainReactiveSolid< SOLID_TYPE, PERM_TYPE >::initializeState() const
 {
-  CoupledSolid< SOLID_TYPE, BiotReactivePorosity, PERM_TYPE >::initializeState();
+  CoupledSolid< SOLID_TYPE, ReactivePorosityBase, PERM_TYPE >::initializeState();
 }
 
-// Register all PorousReactiveSolid model types.
-typedef PorousReactiveSolid< ElasticIsotropic, ConstantPermeability > PorousReactiveElasticIsotropicConstant;
-typedef PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability > PorousReactiveElasticIsotropicCK;
+// Register all EigenstrainReactiveSolid model types.
+typedef EigenstrainReactiveSolid< ElasticIsotropic, ConstantPermeability > EigenStrainReactiveElasticIsotropicConstant;
+typedef EigenstrainReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability > EigenStrainReactiveElasticIsotropicCK;
 
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicConstant, string const &, Group * const )
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicCK, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicConstant, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, EigenStrainReactiveElasticIsotropicCK, string const &, Group * const )
 
 
 }
