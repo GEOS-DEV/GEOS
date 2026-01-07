@@ -152,6 +152,7 @@ public:
  * @brief Reponsible of computing physical statistics over the grid, registering the result in the
  *        data repository, but not storing / outputing it by itself. It does not have mutable state
  *        except the encountered issues.
+ * @todo repair 1D HDF5 outputs to enable stats HDF5 outputs
  */
 class StatsAggregator
 {
@@ -198,13 +199,6 @@ public:
                                   CompositionalMultiphaseBase & solver );
 
   /**
-   * @brief Enable the computation of any statistics, initialize data structure to collect them.
-   *        Register the resulting data wrappers so they will be targeted by TimeHistory output
-   * @note Must be called in or after the "registerDataOnMesh" initialization phase
-   */
-  void initStatisticsAggregation();
-
-  /**
    * @brief Enable the computation of region statistics, initialize data structure to collect them.
    *        Register the resulting data wrappers so they will be targeted by TimeHistory output
    * @note Must be called in or after the "registerDataOnMesh" initialization phase
@@ -223,7 +217,7 @@ public:
                             RegionStatisticsFunctor< MeshLevel > const & functor ) const;
 
   void forRegionStatistics( MeshLevel & mesh,
-                            RegionStatistics & allRegionsStatistics,
+                            RegionStatistics & meshRegionsStatistics,
                             RegionStatisticsFunctor< CellElementRegion > const & functor ) const;
 
   void forRegionStatistics( CellElementRegion & region,
@@ -234,13 +228,10 @@ public:
    * @brief Compute some statistics on a given mesh discretization (average field pressure, etc)
    *        Results are reduced on rank 0, and broadcasted over all ranks.
    * @param[in] time current time
-   * @param[in] mesh the mesh level object
-   * @param[in] regionNames the array of target region names
+   * @param[in] meshBodies the Group containg all MeshBody objects
    * @return false if there was a problem that prevented the statistics to be computed correctly.
    */
-  bool computeRegionsStatistics( real64 const time,
-                                 MeshLevel & mesh,
-                                 string_array const & regionNames );
+  bool computeRegionsStatistics( real64 const time, dataRepository::Group & meshBodies );
 
   /**
    * @brief Compute CFL numbers

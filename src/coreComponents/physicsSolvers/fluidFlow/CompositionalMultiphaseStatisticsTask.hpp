@@ -25,6 +25,7 @@
 #include "common/format/table/TableLayout.hpp"
 #include "physicsSolvers/FieldStatisticsBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsAggregator.hpp"
+#include <memory>
 
 namespace geos
 {
@@ -86,7 +87,6 @@ private:
     constexpr static char const * relpermThresholdString() { return "relpermThreshold"; }
   };
 
-
   void postInputInitialization() override;
 
   void registerDataOnMesh( Group & meshBodies ) override;
@@ -101,11 +101,11 @@ private:
 
   void outputLogStats( real64 statsTime,
                        MeshLevel & mesh,
-                       string_array const & regionNames );
+                       RegionStatistics & meshRegionsStatistics );
 
   void outputCsvStats( real64 statsTime,
                        MeshLevel & mesh,
-                       string_array const & regionNames );
+                       RegionStatistics & meshRegionsStatistics );
 
   /// For each discretization (MeshLevel name), table formatter for log output.
   stdMap< string, std::unique_ptr< TableTextFormatter > > m_logFormatters;
@@ -113,7 +113,8 @@ private:
   /// For each discretization (MeshLevel name), table formatter for csv output.
   stdMap< string, std::unique_ptr< TableCSVFormatter > > m_csvFormatters;
 
-  StatsAggregator m_aggregator;
+  // mesh statistics aggregator
+  std::unique_ptr< StatsAggregator > m_aggregator;
 
   /// Flag to decide whether CFL numbers are computed or not
   integer m_computeCFLNumbers;

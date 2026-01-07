@@ -134,7 +134,6 @@ void StatsAggregator::enableRegionStatisticsAggregation( dataRepository::Group &
   if( m_solver == nullptr )
     return;
 
-
   auto const registerStats = [=] ( Group & parent,
                                    string const & name,
                                    string const & targetName ) -> RegionStatistics &
@@ -228,11 +227,11 @@ void StatsAggregator::forRegionStatistics( dataRepository::Group & meshBodies,
 }
 
 void StatsAggregator::forRegionStatistics( MeshLevel & mesh,
-                                           RegionStatistics & allRegionsStatistics,
+                                           RegionStatistics & meshRegionsStatistics,
                                            RegionStatisticsFunctor< CellElementRegion > const & func ) const
 {
   ElementRegionManager & elemManager = mesh.getElemManager();
-  allRegionsStatistics.forSubGroups< RegionStatistics >( [&] ( RegionStatistics & regionStatistics )
+  meshRegionsStatistics.forSubGroups< RegionStatistics >( [&] ( RegionStatistics & regionStatistics )
   {
     string_view targetName = regionStatistics.getTargetName();
     CellElementRegion & region = elemManager.getRegion< CellElementRegion >( targetName );
@@ -253,16 +252,15 @@ void StatsAggregator::forRegionStatistics( CellElementRegion & region,
   } );
 }
 
-bool StatsAggregator::computeRegionsStatistics( real64 const time,
-                                                MeshLevel & mesh,
-                                                string_array const & regionNames )
+bool StatsAggregator::computeRegionsStatistics( real64 const time, Group & meshBodies )
 {
   GEOS_MARK_FUNCTION;
 
-  ElementRegionManager & elemManager = mesh.getElemManager();
-  RegionStatistics & allRegionsStats = getRegionsStatisticsGroup( mesh );
-
-  { // computation of sub region stats
+  // computation of sub region stats
+  forRegionStatistics( meshBodies,
+                       [&, time] ( MeshLevel & mesh, RegionStatistics & regionStats )
+  {
+    RegionStatistics & allRegionsStats = getRegionsStatisticsGroup( mesh );
     forRegionStatistics( mesh,
                          allRegionsStats,
                          [&, time] ( CellElementRegion & region, RegionStatistics & regionStats )
@@ -275,9 +273,13 @@ bool StatsAggregator::computeRegionsStatistics( real64 const time,
         computeSubRegionRankStats( subRegion, subRegionStats );
       } );
     } );
-  }
+  } );
 
-  { // aggregation of computations from the sub regions
+  // aggregation of computations from the sub regions
+  forRegionStatistics( meshBodies,
+                       [&, time] ( MeshLevel & mesh, RegionStatistics & regionStats )
+  {
+    RegionStatistics & allRegionsStats = getRegionsStatisticsGroup( mesh );
     initStats( allRegionsStats, time );
 
     forRegionStatistics( mesh,
@@ -304,7 +306,7 @@ bool StatsAggregator::computeRegionsStatistics( real64 const time,
 
     mpiAggregateStats( allRegionsStats );
     postAggregateStats( allRegionsStats );
-  }
+  } );
 
   //   stdVector< string > phaseCompName;
   //   phaseCompName.reserve( numPhases*numComps );
@@ -491,7 +493,7 @@ void StatsAggregator::postAggregateStats( RegionStatistics & stats )
     stats.m_averagePressure = 0.0;
     stats.m_averageTemperature = 0.0;
     m_warnings.emplace_back( GEOS_FMT( "Cannot compute average pressure for '{}' because pore volume is zero in '{}'.",
-                                     m_ownerName, stats.getTargetName() ) );
+                                       m_ownerName, stats.getTargetName() ) );
   }
 
   for( integer ip = 0; ip < m_numPhases; ++ip )
@@ -540,7 +542,7 @@ RegionStatistics::RegionStatistics( string const & name, dataRepository::Group *
   m_mobilePhaseMass( numPhases ),
   m_componentMass( numPhases, numComponents )
 {
-  // TODO : registerWrappers (need repairing of 1D HDF5 output PR #3145)
+  // TODO : registerWrappers (need repairing of 1D HDF5 output)
 }
 
 } /* namespace compositionalMultiphaseStatistics */

@@ -23,12 +23,16 @@
 #include "common/MpiWrapper.hpp"
 #include "common/StdContainerWrappers.hpp"
 #include "common/format/Format.hpp"
+#include "common/logger/Logger.hpp"
+#include "dataRepository/Group.hpp"
+#include "mesh/CellElementRegion.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsAggregator.hpp"
 #include "physicsSolvers/fluidFlow/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseFields.hpp"
@@ -51,7 +55,7 @@ using namespace dataRepository;
 namespace compositionalMultiphaseStatistics
 {
 
-StatsTask::StatsTask( const string & name, Group * const parent ):
+StatsTask::StatsTask( string const & name, Group * const parent ):
   Base( name, parent ),
   m_aggregator(),
   m_computeCFLNumbers( 0 ),
@@ -80,38 +84,59 @@ void StatsTask::postInputInitialization()
 {
   Base::postInputInitialization();
 
-  m_aggregator.setFlowSolver( *m_solver );
+  GEOS_THROW_IF_EQ_MSG( m_solver, nullptr,
+                        "To identify simulated regions, a solver must be provided." /*, getWrapperDataContext( getSolverWrapperName() )*/ );
 
-  if( dynamicCast< CompositionalMultiphaseHybridFVM * >( m_solver ) && m_computeCFLNumbers != 0 )
+  if( dynamicCast< CompositionalMultiphaseBase * >( m_solver ))
+  {
+    GEOS_THROW( GEOS_FMT( "{} {}: incompatible solver selected, a compositional multiphase solver is expected",
+                          catalogName(), getDataContext() ),
+                InputError );
+
+  }
+  else if( dynamicCast< CompositionalMultiphaseHybridFVM * >( m_solver ) && m_computeCFLNumbers != 0 )
   {
     GEOS_THROW( GEOS_FMT( "{} {}: the option to compute CFL numbers is incompatible with CompositionalMultiphaseHybridFVM",
                           catalogName(), getDataContext() ),
                 InputError );
   }
+
+  m_aggregator = std::make_unique< StatsAggregator >( getName() );
 }
 
 void StatsTask::registerDataOnMesh( Group & meshBodies )
 {
   // for now, this guard is needed to avoid breaking the xml schema generation
   if( m_solver == nullptr )
-  {
     return;
-  }
 
   getGroupByPath( "/" ).printDataHierarchy();
 
   prepareFluidMetaData();
 
+  if( m_computeRegionStatistics || m_computeCFLNumbers )
+  {
+    // expected to work as check is done in postInputInitialization()
+    CompositionalMultiphaseBase * castedSolver = dynamicCast< CompositionalMultiphaseBase * >( m_solver );
+    GEOS_ERROR_IF_EQ_MSG( castedSolver, nullptr,
+                          GEOS_FMT( "{} {}: Unexpected error (solver pointer changed?)", catalogName(), getDataContext() ) );
+    m_aggregator->initStatisticsAggregation( meshBodies, *castedSolver );
+  }
+  else
+  {
+    GEOS_WARNING( GEOS_FMT( "{} {}: No computing option enabled, no output is scheduled.",
+                            catalogName(), getDataContext() ) );
+  }
+
   if( m_computeRegionStatistics )
-    m_aggregator.enableRegionStatistics( meshBodies );
+    m_aggregator->enableRegionStatisticsAggregation( meshBodies );
 
   // if we have to compute CFL numbers later, we need to register additional variables
   if( m_computeCFLNumbers )
-    m_solver->registerDataForCFL( meshBodies );
+    m_aggregator->enableCFLStatistics( meshBodies );
 
-  m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                              MeshLevel & mesh,
-                                                              string_array const & )
+  m_aggregator->forRegionStatistics( meshBodies,
+                                     [&] ( MeshLevel & mesh, RegionStatistics & )
   {
     prepareLogTableLayouts( mesh.getName() );
     prepareCsvTableLayouts( mesh.getName() );
@@ -220,27 +245,27 @@ bool StatsTask::execute( real64 const time_n,
   // current time is time_n + dt. TODO: verify implication of events ordering in 'time_n+dt' validity
   real64 statsTime = time_n + dt;
 
-  m_solver->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                          MeshLevel & mesh,
-                                                                          string_array const & regionNames )
+  m_aggregator->computeRegionsStatistics( statsTime, domain.getMeshBodies() );
+
+  m_aggregator->forRegionStatistics( domain.getMeshBodies(),
+                                     [&] ( MeshLevel & mesh, RegionStatistics & meshRegionsStatistics )
   {
     if( m_computeRegionStatistics )
     {
-      m_aggregator.computeRegionsStatistics( statsTime, mesh, regionNames );
-      outputLogStats( statsTime, mesh, regionNames );
-      outputCsvStats( statsTime, mesh, regionNames );
+      outputLogStats( statsTime, mesh, meshRegionsStatistics );
+      outputCsvStats( statsTime, mesh, meshRegionsStatistics );
     }
   } );
 
   if( m_computeCFLNumbers )
-    m_aggregator.computeCFLNumbers( statsTime, dt, domain );
+    m_aggregator->computeCFLNumbers( statsTime, dt, domain );
 
   return false;
 }
 
 void StatsTask::outputLogStats( real64 const statsTime,
                                 MeshLevel & mesh,
-                                string_array const & )
+                                RegionStatistics & meshRegionsStatistics )
 {
   if( MpiWrapper::commRank() > 0 || !isLogLevelActive< logInfo::Statistics >( this->getLogLevel() ) )
     return;
@@ -253,20 +278,20 @@ void StatsTask::outputLogStats( real64 const statsTime,
   TableData tableData;
   static constexpr auto merge = CellType::MergeNext;
 
-  string_view massUnit = units::getSymbol( m_aggregator.getSolver()->getMassUnit() );
+  string_view massUnit = units::getSymbol( m_aggregator->getSolver()->getMassUnit() );
   string_view pressureUnit = units::getSymbol( units::Pressure );
   string_view tempUnit = units::getSymbol( units::Temperature );
   string_view resVolUnit = units::getSymbol( units::ReservoirVolume );
 
   tableData.addRow( "Statistics time", merge, merge, statsTime );
-  m_aggregator.forRegionStatistics( mesh,
-                                    [&]( string_view regionName, RegionStatistics const & stats )
-  {
 
+  // lamda to apply for each region statistics
+  auto const outputRegionStats = [&] ( string_view targetName, RegionStatistics & stats )
+  {
     tableData.addRow( merge, merge, merge, "" );
 
     tableData.addSeparator();
-    tableData.addRow( merge, merge, merge, GEOS_FMT( "Region '{}'", regionName ) );
+    tableData.addRow( merge, merge, merge, GEOS_FMT( "Region '{}'", targetName ) );
     tableData.addRow( "statistics", "min", "average", "max" );
     tableData.addSeparator();
 
@@ -283,7 +308,7 @@ void StatsTask::outputLogStats( real64 const statsTime,
     tableData.addRow( GEOS_FMT( "Phase dynamic pore volume [{}]", resVolUnit ),
                       stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto data ) { return data[0]; } ),
                       CellType::MergeNext,
-                      stringutilities::joinLambda( stats.m_phasePoreVolume, "\n", []( auto data ) { return data[0]; } ) );
+                      stringutilities::joinLambda( stats.m_phaseDynamicPoreVolume, "\n", []( auto data ) { return data[0]; } ) );
 
     tableData.addSeparator();
 
@@ -322,24 +347,39 @@ void StatsTask::outputLogStats( real64 const statsTime,
                       stringutilities::join( stats.m_componentMass, '\n' ) );
 
     tableData.addSeparator();
-  } );
+  };
 
+  // apply the lambda for each region and, finally, the mesh summary
+  m_aggregator->forRegionStatistics( mesh, meshRegionsStatistics,
+                                     [&] ( CellElementRegion & region, RegionStatistics & stats )
+  {
+    outputRegionStats( region.getName(), meshRegionsStatistics );
+  } );
+  outputRegionStats( mesh.getName(), meshRegionsStatistics );
+
+  // output to log
   GEOS_LOG_RANK_0( formatter.toString( tableData ) );
 }
 
 void StatsTask::outputCsvStats( real64 statsTime,
                                 MeshLevel & mesh,
-                                string_array const & )
+                                RegionStatistics & meshRegionsStatistics )
 {
   if( MpiWrapper::commRank() > 0 || m_writeCSV == 0 )
     return;
 
-  m_aggregator.forRegionStatistics( mesh,
-                                    [&]( string_view meshName, RegionStatistics const & stats )
+  auto const formatterIter = m_csvFormatters.find( mesh.getName() );
+  if( formatterIter==m_csvFormatters.end())
+    return;
+
+  TableCSVFormatter const & formatter = *formatterIter->second;
+  TableData tableData;
+
+  // lamda to apply for each region statistics
+  auto const outputRegionStats = [&] ( string_view targetName, RegionStatistics & stats )
   {
-    TableData tableData;
     stdVector< string > row;
-    row.reserve( m_csvFormatters.at( string( meshName ))->getLayout().getTotalLowermostColumnCount() );
+    row.reserve( formatter.getLayout().getTotalLowermostColumnCount() );
 
     auto addPhaseValues = []( auto & list, auto const & values )
     {
@@ -349,6 +389,7 @@ void StatsTask::outputCsvStats( real64 statsTime,
 
     row.insert( row.begin(),
                 { std::to_string( statsTime ),
+                  targetName,
                   std::to_string( stats.m_minPressure ),
                   std::to_string( stats.m_averagePressure ),
                   std::to_string( stats.m_maxPressure ),
@@ -359,7 +400,7 @@ void StatsTask::outputCsvStats( real64 statsTime,
                   std::to_string( stats.m_maxTemperature ),
                   std::to_string( stats.m_totalPoreVolume ),
                 } );
-    addPhaseValues( row, stats.m_phasePoreVolume );
+    addPhaseValues( row, stats.m_phaseDynamicPoreVolume );
     addPhaseValues( row, stats.m_phaseMass );
     addPhaseValues( row, stats.m_trappedPhaseMass );
     addPhaseValues( row, stats.m_nonTrappedPhaseMass );
@@ -367,11 +408,21 @@ void StatsTask::outputCsvStats( real64 statsTime,
     addPhaseValues( row, stats.m_mobilePhaseMass );
     addPhaseValues( row, stats.m_componentMass ); // TODO verify phase / comp ordering
 
-    std::ofstream outputFile( getCsvFileName( mesh.getName() ), std::ios_base::app );
-    TableCSVFormatter const csvOutput;
-    outputFile << csvOutput.dataToString( tableData );
-    outputFile.close();
+    tableData.addRow( row );
+  };
+
+  // apply the lambda for each region and, finally, the mesh summary
+  m_aggregator->forRegionStatistics( mesh, meshRegionsStatistics,
+                                     [&] ( CellElementRegion & region, RegionStatistics & stats )
+  {
+    outputRegionStats( region.getName(), meshRegionsStatistics );
   } );
+  outputRegionStats( mesh.getName(), meshRegionsStatistics );
+
+  // append to csv file
+  std::ofstream outputFile( getCsvFileName( mesh.getName() ), std::ios_base::app );
+  outputFile << formatter.dataToString( tableData );
+  outputFile.close();
 }
 
 REGISTER_CATALOG_ENTRY( TaskBase,
