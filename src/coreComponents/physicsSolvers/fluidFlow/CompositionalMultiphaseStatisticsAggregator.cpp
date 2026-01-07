@@ -53,7 +53,7 @@
  *          |      |   |-> statistics : geos::dataRepository::Group (storage for all stats)
  *          |      |       |-> compFlowStats : geos::dataRepository::Group (storage for this instance stats)
  *          |      |       |   |-> cflStatistics : geos::compositionalMultiphaseStatistics::CFLStatistics
- *          |      |       |   |-> regionsStats : geos::compositionalMultiphaseStatistics::RegionStatistics (aggregate)
+ *          |      |       |   |-> regionsStatistics : geos::compositionalMultiphaseStatistics::RegionStatistics (aggregate)
  *          |      |       |       |-> Channel : geos::compositionalMultiphaseStatistics::RegionStatistics (aggregate, mpi reduced)
  *          |      |       |       |   |-> cb-0_0_0 : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
  *  stats   |      |       |       |   |-> cb-0_0_1 : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
@@ -72,13 +72,20 @@
 
 #include "CompositionalMultiphaseStatisticsAggregator.hpp"
 
+#include "LvArray/src/math.hpp"
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
 #include "common/logger/Logger.hpp"
+#include "dataRepository/Group.hpp"
+#include "mesh/CellElementRegion.hpp"
+#include "mesh/CellElementSubRegion.hpp"
+#include "mesh/ElementRegionManager.hpp"
+#include "mesh/MeshLevel.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/StatisticsKernel.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include <memory>
 #include <ostream>
 
 
@@ -92,59 +99,158 @@ using namespace constitutive;
 // using namespace fields;
 using namespace dataRepository;
 
-StatsAggregator::StatsAggregator():
+StatsAggregator::StatsAggregator( string_view ownerName ):
   m_params(),
-  m_isRegionStatsEnabled( false ),
-  m_isCFLNumberEnabled( false )
+  m_ownerName( ownerName )
 {}
 
-void StatsAggregator::enableRegionStatistics( dataRepository::Group & /*meshBodies*/ )
+void StatsAggregator::initStatisticsAggregation( dataRepository::Group & meshBodies,
+                                                 CompositionalMultiphaseBase & solver )
 {
-  GEOS_ERROR_IF_EQ_MSG( m_solver, nullptr, "Flow solver must be set." );
+  m_solver = &solver;
 
-  // integer const numPhases = m_solver->numFluidPhases();
-  // integer const numComps = m_solver->numFluidComponents();
+  m_numPhases = m_solver->numFluidPhases();
+  m_numComponents = m_solver->numFluidComponents();
 
-  // m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-  //                                                             MeshLevel & mesh,
-  //                                                             string_array const & regionNames )
-  // {
-  //   ElementRegionManager & elemManager = mesh.getElemManager();
+  m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                              MeshLevel & mesh,
+                                                              string_array const & )
+  {
+    // getting the container of all requesters statistics groups (can be already initialized)
+    Group * allStatisticsGroup = mesh.getGroupPointer( ViewKeys::statisticsString() );
+    if( allStatisticsGroup == nullptr )
+      allStatisticsGroup = &mesh.registerGroup( ViewKeys::statisticsString() );
 
-  //   for( size_t i = 0; i < regionNames.size(); ++i )
-  //   {
-  //     // ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
-
-  //     // RELOCALISER LES DONNEES region.registerWrapper< RegionStatistics >( VKStruct::regionStatisticsString() ).
-  //     //   setRestartFlags( RestartFlags::NO_WRITE );
-  //     // region.excludeWrappersFromPacking( { VKStruct::regionStatisticsString() } );
-  //     // RegionStatistics & stats = region.getReference< RegionStatistics >( VKStruct::regionStatisticsString() );
-
-  //     // stats.m_phasePoreVolume.resizeDimension< 0 >( numPhases );
-  //     // stats.m_phaseMass.resizeDimension< 0 >( numPhases );
-  //     // stats.m_trappedPhaseMass.resizeDimension< 0 >( numPhases );
-  //     // stats.m_nonTrappedPhaseMass.resizeDimension< 0 >( numPhases );
-  //     // stats.m_immobilePhaseMass.resizeDimension< 0 >( numPhases );
-  //     // stats.m_mobilePhaseMass.resizeDimension< 0 >( numPhases );
-  //     // stats.m_componentMass.resizeDimension< 0, 1 >( numPhases, numComps );
-  //   }
-  // } );
-  // m_isRegionStatsEnabled = true;
+    // registering the container of instance statistics groups (must be unique for this instance)
+    GEOS_ERROR_IF_NE_MSG( allStatisticsGroup->hasGroup( m_ownerName ), false,
+                          GEOS_FMT( "A statistics aggregator have already been requested for '{}'.",
+                                    m_ownerName ) );
+    allStatisticsGroup->registerGroup( m_ownerName );
+  } );
 }
 
-void StatsAggregator::forRegionStatistics( MeshLevel const & mesh,
-                                           StatsAggregator::RegionFunctor functor ) const
+void StatsAggregator::enableRegionStatisticsAggregation( dataRepository::Group & meshBodies )
 {
-  GEOS_UNUSED_VAR( mesh );
-  GEOS_UNUSED_VAR( functor );
+  if( m_solver == nullptr )
+    return;
+
+
+  auto const registerStats = [=] ( Group & parent,
+                                   string const & name,
+                                   string const & targetName ) -> RegionStatistics &
+  {
+    return parent.registerGroup( name, std::make_unique< RegionStatistics >( name, &parent,
+                                                                             targetName,
+                                                                             m_numPhases,
+                                                                             m_numComponents ) );
+  };
+
+  m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                              MeshLevel & mesh,
+                                                              string_array const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    Group & statisticsGroup = getInstanceStatisticsGroup( mesh );
+    RegionStatistics & allRegionsStats = registerStats( statisticsGroup,
+                                                        ViewKeys::regionsStatisticsString(),
+                                                        mesh.getName() );
+
+    for( size_t i = 0; i < regionNames.size(); ++i )
+    {
+      CellElementRegion & region = elemManager.getRegion< CellElementRegion >( regionNames[i] );
+      RegionStatistics & regionStats = registerStats( allRegionsStats,
+                                                      GEOS_FMT( "{}_region_stats", region.getName() ),
+                                                      region.getName() );
+
+      region.forElementSubRegions( [&] ( CellElementSubRegion & subRegion )
+      {
+        registerStats( regionStats,
+                       GEOS_FMT( "{}_subRegion_stats", subRegion.getName() ),
+                       subRegion.getName() );
+      } );
+    }
+  } );
+
+  m_isRegionStatsEnabled = true;
 }
 
 void StatsAggregator::enableCFLStatistics( dataRepository::Group & meshBodies )
 {
-  GEOS_ERROR_IF_EQ_MSG( m_solver, nullptr, "Flow solver must be set." );
+  if( m_solver == nullptr )
+    return;
 
   m_solver->registerDataForCFL( meshBodies );
+  m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                              MeshLevel & mesh,
+                                                              string_array const & regionNames )
+  {
+    Group & statisticsGroup = getInstanceStatisticsGroup( mesh );
+    statisticsGroup.registerGroup< CFLStatistics >( ViewKeys::cflStatisticsString() );
+  } );
+
   m_isCFLNumberEnabled = true;
+}
+
+Group & StatsAggregator::getInstanceStatisticsGroup( MeshLevel & mesh ) const
+{
+  // considering everything is initialized, or else, crash gracefully
+  Group & allStatisticsGroup = mesh.getGroup( ViewKeys::statisticsString() );
+  Group & instanceStatisticsGroup = allStatisticsGroup.getGroup( m_ownerName );
+  return instanceStatisticsGroup;
+}
+
+RegionStatistics & StatsAggregator::getRegionsStatisticsGroup( MeshLevel & mesh ) const
+{
+  // considering everything is initialized, or else, crash gracefully
+  Group & instanceStatisticsGroup = getInstanceStatisticsGroup( mesh );
+  return instanceStatisticsGroup.getGroup< RegionStatistics >( ViewKeys::regionsStatisticsString() );
+}
+
+CFLStatistics & StatsAggregator::getCflStatisticsGroup( MeshLevel & mesh ) const
+{
+  // considering everything is initialized, or else, crash gracefully
+  Group & instanceStatisticsGroup = getInstanceStatisticsGroup( mesh );
+  return instanceStatisticsGroup.getGroup< CFLStatistics >( ViewKeys::cflStatisticsString() );
+}
+
+void StatsAggregator::forRegionStatistics( dataRepository::Group & meshBodies,
+                                           RegionStatisticsFunctor< MeshLevel > const & func ) const
+{
+  m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+                                                              MeshLevel & mesh,
+                                                              string_array const & )
+  {
+    Group & instanceStats = getInstanceStatisticsGroup( mesh );
+    RegionStatistics & allRegionsStats = getRegionsStatisticsGroup( mesh );
+
+    func( mesh, allRegionsStats );
+  } );
+}
+
+void StatsAggregator::forRegionStatistics( MeshLevel & mesh,
+                                           RegionStatistics & allRegionsStatistics,
+                                           RegionStatisticsFunctor< CellElementRegion > const & func ) const
+{
+  ElementRegionManager & elemManager = mesh.getElemManager();
+  allRegionsStatistics.forSubGroups< RegionStatistics >( [&] ( RegionStatistics & regionStatistics )
+  {
+    string_view targetName = regionStatistics.getTargetName();
+    CellElementRegion & region = elemManager.getRegion< CellElementRegion >( targetName );
+
+    func( region, regionStatistics );
+  } );
+}
+
+void StatsAggregator::forRegionStatistics( CellElementRegion & region,
+                                           RegionStatistics & regionStatistics,
+                                           RegionStatisticsFunctor< CellElementSubRegion > const & func ) const
+{
+  regionStatistics.forSubGroups< RegionStatistics >( [&] ( RegionStatistics & subRegionStatistics )
+  {
+    string_view targetName = subRegionStatistics.getTargetName();
+    CellElementSubRegion & subRegion = region.getSubRegion< CellElementSubRegion >( targetName );
+    func( subRegion, subRegionStatistics );
+  } );
 }
 
 bool StatsAggregator::computeRegionsStatistics( real64 const time,
@@ -153,240 +259,247 @@ bool StatsAggregator::computeRegionsStatistics( real64 const time,
 {
   GEOS_MARK_FUNCTION;
 
-  integer const numPhases = m_solver->numFluidPhases();
-  integer const numComps = m_solver->numFluidComponents();
-
-  // Step 1: initialize the average/min/max quantities
   ElementRegionManager & elemManager = mesh.getElemManager();
-  for( size_t i = 0; i < regionNames.size(); ++i )
-  {
-    ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
-    RegionStatistics & stats = region.getReference< RegionStatistics >( VKStruct::regionStatisticsString() );
+  RegionStatistics & allRegionsStats = getRegionsStatisticsGroup( mesh );
 
-    stats.m_time = time;
-
-    stats.m_averagePressure = 0.0;
-    stats.m_maxPressure = 0.0;
-    stats.m_minPressure = LvArray::NumericLimits< real64 >::max;
-
-    stats.m_maxDeltaPressure = -LvArray::NumericLimits< real64 >::max;
-    stats.m_minDeltaPressure = LvArray::NumericLimits< real64 >::max;
-
-    stats.m_averageTemperature = 0.0;
-    stats.m_maxTemperature = 0.0;
-    stats.m_minTemperature = LvArray::NumericLimits< real64 >::max;
-
-    stats.m_totalPoreVolume = 0.0;
-    stats.m_totalUncompactedPoreVolume = 0.0;
-    stats.m_phasePoreVolume.setValues< serialPolicy >( 0.0 );
-
-    stats.m_phaseMass.setValues< serialPolicy >( 0.0 );
-    stats.m_trappedPhaseMass.setValues< serialPolicy >( 0.0 );
-    stats.m_nonTrappedPhaseMass.setValues< serialPolicy >( 0.0 );
-    stats.m_immobilePhaseMass.setValues< serialPolicy >( 0.0 );
-    stats.m_mobilePhaseMass.setValues< serialPolicy >( 0.0 );
-    stats.m_componentMass.setValues< serialPolicy >( 0.0 );
+  { // computation of sub region stats
+    forRegionStatistics( mesh,
+                         allRegionsStats,
+                         [&, time] ( CellElementRegion & region, RegionStatistics & regionStats )
+    {
+      forRegionStatistics( region,
+                           regionStats,
+                           [&, time] ( CellElementSubRegion & subRegion, RegionStatistics & subRegionStats )
+      {
+        initStats( subRegionStats, time );
+        computeSubRegionRankStats( subRegion, subRegionStats );
+      } );
+    } );
   }
 
-  // Step 2: increment the average/min/max quantities for all the subRegions
-  elemManager.forElementSubRegions( regionNames, [&]( localIndex const,
-                                                      ElementSubRegionBase & subRegion )
-  {
+  { // aggregation of computations from the sub regions
+    initStats( allRegionsStats, time );
 
-    arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
-    arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-    arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
-    arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
-    arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-      subRegion.getField< fields::flow::phaseVolumeFraction >();
-    arrayView1d< real64 const > const deltaPres = subRegion.getField< fields::flow::deltaPressure >();
-
-    Group const & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
-
-    string const & solidName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::solidNamesString() );
-    CoupledSolidBase const & solid = constitutiveModels.getGroup< CoupledSolidBase >( solidName );
-    arrayView1d< real64 const > const refPorosity = solid.getReferencePorosity();
-    arrayView2d< real64 const > const porosity = solid.getPorosity();
-
-    string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::fluidNamesString() );
-    MultiFluidBase const & fluid = constitutiveModels.getGroup< MultiFluidBase >( fluidName );
-    arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDensity = fluid.phaseDensity();
-    arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const phaseCompFraction = fluid.phaseCompFraction();
-
-
-    //get min vol fraction for each phase to dispactche immobile/mobile mass
-    string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
-    RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
-    arrayView3d< real64 const, relperm::USD_RELPERM > const phaseTrappedVolFrac = relperm.phaseTrappedVolFraction();
-    arrayView3d< real64 const, relperm::USD_RELPERM > const phaseRelperm = relperm.phaseRelPerm();
-
-    real64 subRegionAvgPresNumerator = 0.0;
-    real64 subRegionMinPres = 0.0;
-    real64 subRegionMaxPres = 0.0;
-    real64 subRegionMinDeltaPres = 0.0;
-    real64 subRegionMaxDeltaPres = 0.0;
-    real64 subRegionAvgTempNumerator = 0.0;
-    real64 subRegionMinTemp = 0.0;
-    real64 subRegionMaxTemp = 0.0;
-    real64 subRegionTotalUncompactedPoreVol = 0.0;
-    array1d< real64 > subRegionPhaseDynamicPoreVol( numPhases );
-    array1d< real64 > subRegionPhaseMass( numPhases );
-    array1d< real64 > subRegionTrappedPhaseMass( numPhases );
-    array1d< real64 > subRegionImmobilePhaseMass( numPhases );
-    array1d< real64 > subRegionRelpermPhaseMass( numPhases );
-    array2d< real64 > subRegionComponentMass( numPhases, numComps );
-
-    isothermalCompositionalMultiphaseBaseKernels::
-      StatisticsKernel::
-      launch< parallelDevicePolicy<> >( subRegion.size(),
-                                        numComps,
-                                        numPhases,
-                                        m_params.m_relpermThreshold,
-                                        elemGhostRank,
-                                        volume,
-                                        pres,
-                                        deltaPres,
-                                        temp,
-                                        refPorosity,
-                                        porosity,
-                                        phaseDensity,
-                                        phaseCompFraction,
-                                        phaseVolFrac,
-                                        phaseTrappedVolFrac,
-                                        phaseRelperm,
-                                        subRegionMinPres,
-                                        subRegionAvgPresNumerator,
-                                        subRegionMaxPres,
-                                        subRegionMinDeltaPres,
-                                        subRegionMaxDeltaPres,
-                                        subRegionMinTemp,
-                                        subRegionAvgTempNumerator,
-                                        subRegionMaxTemp,
-                                        subRegionTotalUncompactedPoreVol,
-                                        subRegionPhaseDynamicPoreVol.toView(),
-                                        subRegionPhaseMass.toView(),
-                                        subRegionTrappedPhaseMass.toView(),
-                                        subRegionImmobilePhaseMass.toView(),
-                                        subRegionComponentMass.toView() );
-
-    ElementRegionBase & region = elemManager.getRegion( ElementRegionBase::getParentRegion( subRegion ).getName() );
-    RegionStatistics & stats = region.getReference< RegionStatistics >( VKStruct::regionStatisticsString() );
-
-    stats.m_averagePressure += subRegionAvgPresNumerator;
-    if( subRegionMinPres < stats.m_minPressure )
+    forRegionStatistics( mesh,
+                         allRegionsStats,
+                         [&, time] ( CellElementRegion & region, RegionStatistics & regionStats )
     {
-      stats.m_minPressure = subRegionMinPres;
-    }
-    if( subRegionMaxPres > stats.m_maxPressure )
-    {
-      stats.m_maxPressure = subRegionMaxPres;
-    }
+      initStats( regionStats, time );
 
-    if( subRegionMinDeltaPres < stats.m_minDeltaPressure )
-    {
-      stats.m_minDeltaPressure = subRegionMinDeltaPres;
-    }
-    if( subRegionMaxDeltaPres > stats.m_maxDeltaPressure )
-    {
-      stats.m_maxDeltaPressure = subRegionMaxDeltaPres;
-    }
-
-    stats.m_averageTemperature += subRegionAvgTempNumerator;
-    if( subRegionMinTemp < stats.m_minTemperature )
-    {
-      stats.m_minTemperature = subRegionMinTemp;
-    }
-    if( subRegionMaxTemp > stats.m_maxTemperature )
-    {
-      stats.m_maxTemperature = subRegionMaxTemp;
-    }
-
-    stats.m_totalUncompactedPoreVolume += subRegionTotalUncompactedPoreVol;
-    for( integer ip = 0; ip < numPhases; ++ip )
-    {
-      stats.m_phasePoreVolume[ip] += subRegionPhaseDynamicPoreVol[ip];
-      stats.m_phaseMass[ip] += subRegionPhaseMass[ip];
-      stats.m_trappedPhaseMass[ip] += subRegionTrappedPhaseMass[ip];
-      stats.m_immobilePhaseMass[ip] += subRegionImmobilePhaseMass[ip];
-
-      for( integer ic = 0; ic < numComps; ++ic )
+      forRegionStatistics( region,
+                           regionStats,
+                           [&, time] ( CellElementSubRegion & subRegion, RegionStatistics & subRegionStats )
       {
-        stats.m_componentMass[ip][ic] += subRegionComponentMass[ip][ic];
-      }
-    }
+        aggregateStats( regionStats, subRegionStats );
 
-  } );
+        mpiAggregateStats( subRegionStats );
+        postAggregateStats( subRegionStats );
+      } );
 
-  // Step 3: synchronize the results over the MPI ranks
-  for( size_t i = 0; i < regionNames.size(); ++i )
-  {
-    ElementRegionBase & region = elemManager.getRegion( regionNames[i] );
-    RegionStatistics & stats = region.getReference< RegionStatistics >( VKStruct::regionStatisticsString() );
+      aggregateStats( allRegionsStats, regionStats );
 
-    stats.m_minPressure = MpiWrapper::min( stats.m_minPressure );
-    stats.m_maxPressure = MpiWrapper::max( stats.m_maxPressure );
-    stats.m_minDeltaPressure = MpiWrapper::min( stats.m_minDeltaPressure );
-    stats.m_maxDeltaPressure = MpiWrapper::max( stats.m_maxDeltaPressure );
-    stats.m_minTemperature = MpiWrapper::min( stats.m_minTemperature );
-    stats.m_maxTemperature = MpiWrapper::max( stats.m_maxTemperature );
-    stats.m_totalUncompactedPoreVolume = MpiWrapper::sum( stats.m_totalUncompactedPoreVolume );
-    stats.m_totalPoreVolume = 0.0;
-    for( integer ip = 0; ip < numPhases; ++ip )
-    {
-      stats.m_phasePoreVolume[ip] = MpiWrapper::sum( stats.m_phasePoreVolume[ip] );
-      stats.m_phaseMass[ip] = MpiWrapper::sum( stats.m_phaseMass[ip] );
-      stats.m_trappedPhaseMass[ip] = MpiWrapper::sum( stats.m_trappedPhaseMass[ip] );
-      stats.m_immobilePhaseMass[ip] = MpiWrapper::sum( stats.m_immobilePhaseMass[ip] );
-      stats.m_totalPoreVolume += stats.m_phasePoreVolume[ip];
-      for( integer ic = 0; ic < numComps; ++ic )
-      {
-        stats.m_componentMass[ip][ic] = MpiWrapper::sum( stats.m_componentMass[ip][ic] );
-      }
-    }
-    stats.m_averagePressure = MpiWrapper::sum( stats.m_averagePressure );
-    stats.m_averageTemperature = MpiWrapper::sum( stats.m_averageTemperature );
-    if( stats.m_totalUncompactedPoreVolume > 0 )
-    {
-      float invTotalUncompactedPoreVolume = 1.0 / stats.m_totalUncompactedPoreVolume;
-      stats.m_averagePressure *= invTotalUncompactedPoreVolume;
-      stats.m_averageTemperature *= invTotalUncompactedPoreVolume;
-    }
-    else
-    {
-      stats.m_averagePressure = 0.0;
-      stats.m_averageTemperature = 0.0;
-      m_issues.emplace_back( GEOS_FMT( "Cannot compute average pressure because region pore volume is zero in region '{}'.",
-                                       regionNames[i] ) );
-    }
+      mpiAggregateStats( regionStats );
+      postAggregateStats( regionStats );
+    } );
 
-    for( integer ip = 0; ip < numPhases; ++ip )
-    {
-      stats.m_nonTrappedPhaseMass[ip] = stats.m_phaseMass[ip] - stats.m_trappedPhaseMass[ip];
-      stats.m_mobilePhaseMass[ip] = stats.m_phaseMass[ip] - stats.m_immobilePhaseMass[ip];
-    }
-
-    stdVector< string > phaseCompName;
-    phaseCompName.reserve( numPhases*numComps );
-    stdVector< string > massValues;
-    phaseCompName.reserve( numPhases*numComps );
-
-    ConstitutiveManager const & constitutiveManager = mesh.getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
-    MultiFluidBase const & fluid = constitutiveManager.getGroup< MultiFluidBase >( m_solver->referenceFluidModelName() );
-    auto const phaseNames = fluid.phaseNames();
-    auto const componentNames = fluid.componentNames();
-    for( integer ip = 0; ip < numPhases; ++ip )
-    {
-      for( integer ic = 0; ic < numComps; ++ic )
-      {
-        std::stringstream ss;
-        ss << phaseNames[ip] << "/" << componentNames[ic];
-        phaseCompName.push_back( ss.str() );
-        massValues.push_back( GEOS_FMT( "{}", stats.m_componentMass[ip][ic] ) );
-      }
-    }
+    mpiAggregateStats( allRegionsStats );
+    postAggregateStats( allRegionsStats );
   }
+
+  //   stdVector< string > phaseCompName;
+  //   phaseCompName.reserve( numPhases*numComps );
+  //   stdVector< string > massValues;
+  //   phaseCompName.reserve( numPhases*numComps );
+
+  //   ConstitutiveManager const & constitutiveManager = mesh.getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
+  //   MultiFluidBase const & fluid = constitutiveManager.getGroup< MultiFluidBase >( m_solver->referenceFluidModelName() );
+  //   auto const phaseNames = fluid.phaseNames();
+  //   auto const componentNames = fluid.componentNames();
+  //   for( integer ip = 0; ip < numPhases; ++ip )
+  //   {
+  //     for( integer ic = 0; ic < numComps; ++ic )
+  //     {
+  //       std::stringstream ss;
+  //       ss << phaseNames[ip] << "/" << componentNames[ic];
+  //       phaseCompName.push_back( ss.str() );
+  //       massValues.push_back( GEOS_FMT( "{}", stats.m_componentMass[ip][ic] ) );
+  //     }
+  //   }
+  // }
 
   return true;
+}
+
+void StatsAggregator::initStats( RegionStatistics & stats, real64 const time ) const
+{
+  stats.m_time = time;
+
+  stats.m_averagePressure = 0.0;
+  stats.m_maxPressure = 0.0;
+  stats.m_minPressure = LvArray::NumericLimits< real64 >::max;
+
+  stats.m_maxDeltaPressure = -LvArray::NumericLimits< real64 >::max;
+  stats.m_minDeltaPressure = LvArray::NumericLimits< real64 >::max;
+
+  stats.m_averageTemperature = 0.0;
+  stats.m_maxTemperature = 0.0;
+  stats.m_minTemperature = LvArray::NumericLimits< real64 >::max;
+
+  stats.m_totalPoreVolume = 0.0;
+  stats.m_totalUncompactedPoreVolume = 0.0;
+  stats.m_phaseDynamicPoreVolume.setValues< serialPolicy >( 0.0 );
+
+  stats.m_phaseMass.setValues< serialPolicy >( 0.0 );
+  stats.m_trappedPhaseMass.setValues< serialPolicy >( 0.0 );
+  stats.m_nonTrappedPhaseMass.setValues< serialPolicy >( 0.0 );
+  stats.m_immobilePhaseMass.setValues< serialPolicy >( 0.0 );
+  stats.m_mobilePhaseMass.setValues< serialPolicy >( 0.0 );
+  stats.m_componentMass.setValues< serialPolicy >( 0.0 );
+}
+
+void StatsAggregator::computeSubRegionRankStats( CellElementSubRegion & subRegion, RegionStatistics & subRegionStats ) const
+{
+  arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+  arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+  arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+  arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
+  arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+    subRegion.getField< fields::flow::phaseVolumeFraction >();
+  arrayView1d< real64 const > const deltaPres = subRegion.getField< fields::flow::deltaPressure >();
+
+  Group const & constitutiveModels = subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
+
+  string const & solidName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::solidNamesString() );
+  CoupledSolidBase const & solid = constitutiveModels.getGroup< CoupledSolidBase >( solidName );
+  arrayView1d< real64 const > const refPorosity = solid.getReferencePorosity();
+  arrayView2d< real64 const > const porosity = solid.getPorosity();
+
+  string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::fluidNamesString() );
+  MultiFluidBase const & fluid = constitutiveModels.getGroup< MultiFluidBase >( fluidName );
+  arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDensity = fluid.phaseDensity();
+  arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const phaseCompFraction = fluid.phaseCompFraction();
+
+  //get min vol fraction for each phase to dispactche immobile/mobile mass
+  string const & relpermName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString() );
+  RelativePermeabilityBase const & relperm = constitutiveModels.getGroup< RelativePermeabilityBase >( relpermName );
+  arrayView3d< real64 const, relperm::USD_RELPERM > const phaseTrappedVolFrac = relperm.phaseTrappedVolFraction();
+  arrayView3d< real64 const, relperm::USD_RELPERM > const phaseRelperm = relperm.phaseRelPerm();
+
+  isothermalCompositionalMultiphaseBaseKernels::
+    StatisticsKernel::
+    launch< parallelDevicePolicy<> >( subRegion.size(),
+                                      m_numComponents,
+                                      m_numPhases,
+                                      m_params.m_relpermThreshold,
+                                      elemGhostRank,
+                                      volume,
+                                      pres,
+                                      deltaPres,
+                                      temp,
+                                      refPorosity,
+                                      porosity,
+                                      phaseDensity,
+                                      phaseCompFraction,
+                                      phaseVolFrac,
+                                      phaseTrappedVolFrac,
+                                      phaseRelperm,
+                                      subRegionStats.m_minPressure,
+                                      subRegionStats.m_averagePressure,
+                                      subRegionStats.m_maxPressure,
+                                      subRegionStats.m_minDeltaPressure,
+                                      subRegionStats.m_maxDeltaPressure,
+                                      subRegionStats.m_minTemperature,
+                                      subRegionStats.m_averageTemperature,
+                                      subRegionStats.m_maxTemperature,
+                                      subRegionStats.m_totalUncompactedPoreVolume,
+                                      subRegionStats.m_phaseDynamicPoreVolume.toView(),
+                                      subRegionStats.m_phaseMass.toView(),
+                                      subRegionStats.m_trappedPhaseMass.toView(),
+                                      subRegionStats.m_immobilePhaseMass.toView(),
+                                      subRegionStats.m_componentMass.toView() );
+}
+
+
+void StatsAggregator::aggregateStats( RegionStatistics & stats, RegionStatistics const & other ) const
+{
+  stats.m_averagePressure += other.m_averagePressure;
+  stats.m_minPressure = LvArray::math::min( stats.m_minPressure, other.m_minPressure );
+  stats.m_maxPressure = LvArray::math::max( stats.m_maxPressure, other.m_maxPressure );
+
+  stats.m_minDeltaPressure = LvArray::math::min( stats.m_minDeltaPressure, other.m_minDeltaPressure );
+  stats.m_maxDeltaPressure = LvArray::math::max( stats.m_maxDeltaPressure, other.m_maxDeltaPressure );
+
+  stats.m_averageTemperature += other.m_averageTemperature;
+  stats.m_minTemperature = LvArray::math::min( stats.m_minTemperature, other.m_minTemperature );
+  stats.m_maxTemperature = LvArray::math::max( stats.m_maxTemperature, other.m_maxTemperature );
+
+  stats.m_totalUncompactedPoreVolume += other.m_totalUncompactedPoreVolume;
+
+  for( integer ip = 0; ip < m_numPhases; ++ip )
+  {
+    stats.m_phaseDynamicPoreVolume[ip] += other.m_phaseDynamicPoreVolume[ip];
+    stats.m_phaseMass[ip] += other.m_phaseMass[ip];
+    stats.m_trappedPhaseMass[ip] += other.m_trappedPhaseMass[ip];
+    stats.m_immobilePhaseMass[ip] += other.m_immobilePhaseMass[ip];
+
+    for( integer ic = 0; ic < m_numComponents; ++ic )
+    {
+      stats.m_componentMass[ip][ic] += other.m_componentMass[ip][ic];
+    }
+  }
+}
+
+void StatsAggregator::mpiAggregateStats( RegionStatistics & stats ) const
+{
+  stats.m_averagePressure = MpiWrapper::sum( stats.m_averagePressure );
+  stats.m_minPressure = MpiWrapper::min( stats.m_minPressure );
+  stats.m_maxPressure = MpiWrapper::max( stats.m_maxPressure );
+
+  stats.m_minDeltaPressure = MpiWrapper::min( stats.m_minDeltaPressure );
+  stats.m_maxDeltaPressure = MpiWrapper::max( stats.m_maxDeltaPressure );
+
+  stats.m_averageTemperature = MpiWrapper::sum( stats.m_averageTemperature );
+  stats.m_minTemperature = MpiWrapper::min( stats.m_minTemperature );
+  stats.m_maxTemperature = MpiWrapper::max( stats.m_maxTemperature );
+
+  stats.m_totalUncompactedPoreVolume = MpiWrapper::sum( stats.m_totalUncompactedPoreVolume );
+
+  for( integer ip = 0; ip < m_numPhases; ++ip )
+  {
+    stats.m_phaseDynamicPoreVolume[ip] = MpiWrapper::sum( stats.m_phaseDynamicPoreVolume[ip] );
+    stats.m_phaseMass[ip] = MpiWrapper::sum( stats.m_phaseMass[ip] );
+    stats.m_trappedPhaseMass[ip] = MpiWrapper::sum( stats.m_trappedPhaseMass[ip] );
+    stats.m_immobilePhaseMass[ip] = MpiWrapper::sum( stats.m_immobilePhaseMass[ip] );
+
+    for( integer ic = 0; ic < m_numComponents; ++ic )
+    {
+      stats.m_componentMass[ip][ic] = MpiWrapper::sum( stats.m_componentMass[ip][ic] );
+    }
+  }
+}
+
+void StatsAggregator::postAggregateStats( RegionStatistics & stats )
+{
+  if( stats.m_totalUncompactedPoreVolume > 0 )
+  {
+    float invTotalUncompactedPoreVolume = 1.0 / stats.m_totalUncompactedPoreVolume;
+    stats.m_averagePressure *= invTotalUncompactedPoreVolume;
+    stats.m_averageTemperature *= invTotalUncompactedPoreVolume;
+  }
+  else
+  {
+    stats.m_averagePressure = 0.0;
+    stats.m_averageTemperature = 0.0;
+    m_warnings.emplace_back( GEOS_FMT( "Cannot compute average pressure for '{}' because pore volume is zero in '{}'.",
+                                     m_ownerName, stats.getTargetName() ) );
+  }
+
+  for( integer ip = 0; ip < m_numPhases; ++ip )
+  {
+    stats.m_totalPoreVolume += stats.m_phaseDynamicPoreVolume[ip];
+    stats.m_nonTrappedPhaseMass[ip] = stats.m_phaseMass[ip] - stats.m_trappedPhaseMass[ip];
+    stats.m_mobilePhaseMass[ip] = stats.m_phaseMass[ip] - stats.m_immobilePhaseMass[ip];
+  }
 }
 
 bool StatsAggregator::computeCFLNumbers( real64 const time,
@@ -397,11 +510,11 @@ bool StatsAggregator::computeCFLNumbers( real64 const time,
   real64 maxPhaseCFL, maxCompCFL;
   CFLStatistics * stats = getCFLStatistics( domain );
 
-  m_issues.clear();
+  m_warnings.clear();
 
   if( stats!=nullptr )
   {
-    m_issues.emplace_back( GEOS_FMT( "No statistics structure to compute CFL numbers for domain '{}'.", domain.getName() ));
+    m_warnings.emplace_back( GEOS_FMT( "No statistics structure to compute CFL numbers for domain '{}'.", domain.getName() ));
     return false;
   }
 
@@ -414,6 +527,21 @@ bool StatsAggregator::computeCFLNumbers( real64 const time,
   return true;
 }
 
+RegionStatistics::RegionStatistics( string const & name, dataRepository::Group * const parent,
+                                    string_view targetName,
+                                    integer const numPhases, integer const numComponents ):
+  dataRepository::Group( name, parent ),
+  m_targetName( targetName ),
+  m_phaseDynamicPoreVolume( numPhases ),
+  m_phaseMass( numPhases ),
+  m_trappedPhaseMass( numPhases ),
+  m_nonTrappedPhaseMass( numPhases ),
+  m_immobilePhaseMass( numPhases ),
+  m_mobilePhaseMass( numPhases ),
+  m_componentMass( numPhases, numComponents )
+{
+  // TODO : registerWrappers (need repairing of 1D HDF5 output PR #3145)
+}
 
 } /* namespace compositionalMultiphaseStatistics */
 

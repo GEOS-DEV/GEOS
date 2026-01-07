@@ -20,8 +20,10 @@
 #ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICSAGGREGATOR_HPP_
 #define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASESTATISTICSAGGREGATOR_HPP_
 
+#include "common/DataTypes.hpp"
 #include "common/StdContainerWrappers.hpp"
 #include "dataRepository/Group.hpp"
+#include "mesh/CellElementRegion.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshLevel.hpp"
 
@@ -52,7 +54,7 @@ public:
   /// Time of statistics computation
   real64 m_time;
 
-  /// average region pressure
+  /// average region pressure (numerator value before postAggregateCompute())
   real64 m_averagePressure;
   /// minimum region pressure
   real64 m_minPressure;
@@ -64,7 +66,7 @@ public:
   /// maximum region delta pressure
   real64 m_maxDeltaPressure;
 
-  /// average region temperature
+  /// average region temperature (numerator value before postAggregateCompute())
   real64 m_averageTemperature;
   /// minimum region temperature
   real64 m_minTemperature;
@@ -75,32 +77,51 @@ public:
   real64 m_totalPoreVolume;
   /// total region uncompacted pore volume
   real64 m_totalUncompactedPoreVolume;
-  /// phase region phase pore volume
-  array1d< real64 > m_phasePoreVolume;
+  /// phase region dynamic pore volume
+  array1d< real64 > const m_phaseDynamicPoreVolume;
 
   /// region phase mass (trapped and non-trapped, immobile and mobile)
-  array1d< real64 > m_phaseMass;
+  array1d< real64 > const m_phaseMass;
   /// trapped region phase mass
-  array1d< real64 > m_trappedPhaseMass;
-  /// non-trapped region phase mass
-  array1d< real64 > m_nonTrappedPhaseMass;
+  array1d< real64 > const m_trappedPhaseMass;
+  /// non-trapped region phase mass (available after postAggregateCompute())
+  array1d< real64 > const m_nonTrappedPhaseMass;
   /// immobile region phase mass
-  array1d< real64 > m_immobilePhaseMass;
-  /// mobile region phase mass
-  array1d< real64 > m_mobilePhaseMass;
+  array1d< real64 > const m_immobilePhaseMass;
+  /// mobile region phase mass (available after postAggregateCompute())
+  array1d< real64 > const m_mobilePhaseMass;
   /// region component mass
-  array2d< real64 > m_componentMass;
+  array2d< real64 > const m_componentMass;
 
-  // TODO: -> split to struct PressureStats...MassStats:
+  // TODO? -> split to struct PressureStats...MassStats:
   // - VKS for struct name ("pressureStats"..."massStats")
   // - current RegionStatistics struct bits
 
   /**
    * @brief Construct a new Region Statistics object
-   * @param name instance name in data-repository
+   * @param name instance name in data-repository.
+   * @param targetName name of the data-repository object that is targeted by the statistics
+   *                   (mesh level / region / sub-region).
    * @param parent the instance parent in data-repository
+   * @param numPhases Fluid phase count
+   * @param numComponents Fluid component count
    */
-  RegionStatistics( const string & name, dataRepository::Group * const parent );
+  RegionStatistics( string const & name, dataRepository::Group * const parent,
+                    string_view targetName,
+                    integer numPhases, integer numComponents );
+
+  RegionStatistics( RegionStatistics && ) = default;
+
+  /**
+   * @return the name of the data-repository object that is targeted by the statistics
+   *         (mesh level / region / sub-region).
+   */
+  string_view getTargetName() const
+  { return m_targetName; }
+
+private:
+  /// see getTargetName();
+  string const m_targetName;
 };
 
 /**
@@ -139,48 +160,75 @@ public:
   /**
    * @brief the associated view keys
    */
-  struct VKStruct
+  struct ViewKeys
   {
+    /// String for the discretization statistics group
+    constexpr static char const * statisticsString() { return "statistics"; }
     /// String for the region statistics group
-    constexpr static char const * regionStatisticsString() { return "regionStatistics"; }
+    constexpr static char const * regionsStatisticsString() { return "regionsStatistics"; }
     /// String for the cfl statistics group
     constexpr static char const * cflStatisticsString() { return "cflStatistics"; }
   };
 
-  using RegionFunctor = std::function< void (string_view, RegionStatistics const &) >;
-
-  StatsAggregator();
+  /**
+   * @brief Standard function signature for any functor that applies on RegionStatistics instances
+   *        param 0: TODO document
+   *        param 1: TODO document
+   * @tparam OWNER_T
+   */
+  template< typename OWNER_T >
+  using RegionStatisticsFunctor = std::function< void ( OWNER_T &, RegionStatistics & ) >;
 
   /**
-   * @brief Set the reference flow solver object to retrieve:
-            - the simulated regions,
-            - fields for statistics computation.
-   * @param solver The reference flow solver
+   * @brief Construct a new Stats Aggregator object
+   * @param ownerName the unique name of the entity requesting the statistics.
+   *                  An error is thrown if not unique in this context.
    */
-  void setFlowSolver( CompositionalMultiphaseBase & solver )
-  { m_solver = &solver; }
+  StatsAggregator( string_view ownerName );
 
-  // void forDiscretizations( DomainPartition const &,
-  //                          std::function< void(MeshLevel const &,
-  //                                              string_array const & regionNames) > functor ) const;
+  /**
+   * @brief Enable the computation of any statistics, initialize data structure to collect them.
+   *        Register the resulting data wrappers so they will be targeted by TimeHistory output
+   * @param solver flow solver object to retrieve:
+                   - the simulated regions,
+                   - fields for statistics computation.
+   * @param meshBodies The Group containing the MeshBody objects
+   */
+  void initStatisticsAggregation( dataRepository::Group & meshBodies,
+                                  CompositionalMultiphaseBase & solver );
 
-  void forRegionStatistics( MeshLevel const & mesh,
-                            RegionFunctor functor ) const;
+  /**
+   * @brief Enable the computation of any statistics, initialize data structure to collect them.
+   *        Register the resulting data wrappers so they will be targeted by TimeHistory output
+   * @note Must be called in or after the "registerDataOnMesh" initialization phase
+   */
+  void initStatisticsAggregation();
 
   /**
    * @brief Enable the computation of region statistics, initialize data structure to collect them.
    *        Register the resulting data wrappers so they will be targeted by TimeHistory output
-   * @note Must be called in "registerDataOnMesh" initialization phase
+   * @note Must be called in or after the "registerDataOnMesh" initialization phase
    * @param meshBodies The Group containing the MeshBody objects
    */
-  void enableRegionStatistics( dataRepository::Group & meshBodies );
+  void enableRegionStatisticsAggregation( dataRepository::Group & meshBodies );
 
   /**
    * @brief Register the results structs & wrappers so they will be targeted by TimeHistory output
-   * @note Must be called in "registerDataOnMesh" initialization phase
+   * @note Must be called in or after the "registerDataOnMesh" initialization phase
    * @param meshBodies The Group containing the MeshBody objects
    */
   void enableCFLStatistics( dataRepository::Group & meshBodies );
+
+  void forRegionStatistics( dataRepository::Group & meshBodies,
+                            RegionStatisticsFunctor< MeshLevel > const & functor ) const;
+
+  void forRegionStatistics( MeshLevel & mesh,
+                            RegionStatistics & allRegionsStatistics,
+                            RegionStatisticsFunctor< CellElementRegion > const & functor ) const;
+
+  void forRegionStatistics( CellElementRegion & region,
+                            RegionStatistics & regionStatistics,
+                            RegionStatisticsFunctor< CellElementSubRegion > const & functor ) const;
 
   /**
    * @brief Compute some statistics on a given mesh discretization (average field pressure, etc)
@@ -206,7 +254,7 @@ public:
                           DomainPartition & domain );
 
   CFLStatistics * getCFLStatistics( DomainPartition & domain ) const
-  {return domain.getGroupPointer< CFLStatistics >( VKStruct::cflStatisticsString() ); }
+  {return domain.getGroupPointer< CFLStatistics >( ViewKeys::cflStatisticsString() ); }
 
   CompositionalMultiphaseBase const * getSolver() const
   { return m_solver; }
@@ -214,8 +262,20 @@ public:
   /**
    * @return The encountered issues during the last computing method call.
    */
-  stdVector< string > const & getIssues() const
-  { return m_issues; }
+  stdVector< string > const & getWarnings() const
+  { return m_warnings; }
+
+  /**
+   * @return the name of the entity requesting the statistics.
+   */
+  string_view getOwnerName() const
+  { return m_ownerName; }
+
+  integer getNumPhases() const
+  { return m_numPhases; }
+
+  integer getNumComponents() const
+  { return m_numComponents; }
 
 private:
 
@@ -223,11 +283,51 @@ private:
 
   AggregatorParameters m_params;
 
-  stdVector< string > m_issues;
+  stdVector< string > m_warnings;
 
-  bool m_isRegionStatsEnabled;
+  /// @see getOwnerName()
+  string m_ownerName;
 
-  bool m_isCFLNumberEnabled;
+  bool m_isRegionStatsEnabled = false;
+
+  bool m_isCFLNumberEnabled = false;
+
+  integer m_numPhases;
+
+  integer m_numComponents;
+
+  dataRepository::Group & getInstanceStatisticsGroup( MeshLevel & mesh ) const;
+  RegionStatistics & getRegionsStatisticsGroup( MeshLevel & mesh ) const;
+  CFLStatistics & getCflStatisticsGroup( MeshLevel & mesh ) const;
+
+  /**
+   * @brief Initialize all statistics values to aggregable default values,
+   *        before any computation / reduction for the current timestep.
+   * @param stats the statistics instance
+   * @param time start time of the current timestep (s)
+   */
+  void initStats( RegionStatistics & stats, real64 time ) const;
+
+  void computeSubRegionRankStats( CellElementSubRegion & subRegion, RegionStatistics & subRegionStats ) const;
+
+  /**
+   * @brief Aggregate all instance statistics with those of another instance on the current rank.
+   * @param stats the statistics instance
+   * @param other the other instance to aggregate with.
+   */
+  void aggregateStats( RegionStatistics & stats, RegionStatistics const & other ) const;
+
+  /**
+   * @brief Aggregate all instance statistics with those of other ranks.
+   * @param stats the statistics instance
+   */
+  void mpiAggregateStats( RegionStatistics & stats ) const;
+
+  /**
+   * @brief Do the final computations for the statistics. Must be called after computations & aggregations.
+   * @param stats the statistics instance
+   */
+  void postAggregateStats( RegionStatistics & stats );
 
 };
 
