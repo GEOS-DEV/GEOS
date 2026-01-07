@@ -10745,8 +10745,6 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
     SortedArrayView< globalIndex const > const czGlobalID = czRegion.getGlobalID();
     arrayView3d< real64 > czReferenceSurfaceNormal = czRegion.getReferenceSurfaceNormal();
     arrayView2d< real64 > czReferenceArea = czRegion.getReferenceArea();
-    // arrayView1d< real64 > czMaxNormalDisplacement = czRegion.getMaxNormalDisplacement();
-    // arrayView1d< real64 > czMaxTangentialDisplacement = czRegion.getMaxTangentialDisplacement();
     arrayView1d< real64 > czDamage = czRegion.getDamage();
 
     // Allocate temporary grid fields for cohesive zone calculations
