@@ -532,23 +532,15 @@ public:
                     Group * const parent );
 
   /**
-   * Default Destructor
-   */
-  virtual ~ElasticIsotropic() override;
-
-  /**
    * @name Static Factory Catalog members and functions
    */
   ///@{
-
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "ElasticIsotropic";
 
   /**
    * @brief Static catalog string
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string catalogName() { return m_catalogNameString; }
+  static std::string catalogName() { return "ElasticIsotropic"; }
 
   /**
    * @brief Get catalog name
@@ -572,13 +564,6 @@ public:
 
     /// string/key for default Young's modulus
     static constexpr char const * defaultYoungModulusString() { return "defaultYoungModulus"; }
-
-    /// string/key for bulk modulus
-    static constexpr char const * bulkModulusString() { return "bulkModulus"; }
-
-    /// string/key for shear modulus
-    static constexpr char const * shearModulusString() { return "shearModulus"; }
-
   };
 
   /**

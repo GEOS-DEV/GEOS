@@ -49,7 +49,8 @@ WellElementRegion::~WellElementRegion()
 void WellElementRegion::generateWell( MeshLevel & mesh,
                                       LineBlockABC const & lineBlock,
                                       globalIndex nodeOffsetGlobal,
-                                      globalIndex elemOffsetGlobal )
+                                      globalIndex elemOffsetGlobal,
+                                      real64 const globalLength )
 {
   // get the (unique) subregion
   WellElementSubRegion &
@@ -64,8 +65,11 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
   globalIndex const numElemsGlobal        = lineBlock.numElements();
   globalIndex const numPerforationsGlobal = lineBlock.numPerforations();
 
+  // tolerance for geometrical calculations
+  real64 const geomTol = globalLength * 1e-10;
+
   // 1) select the local perforations based on connectivity to the local reservoir elements
-  subRegion.connectPerforationsToMeshElements( mesh, lineBlock );
+  subRegion.connectPerforationsToMeshElements( mesh, lineBlock, geomTol );
 
   globalIndex const matchedPerforations = MpiWrapper::sum( perforationData->size() );
   GEOS_THROW_IF( matchedPerforations != numPerforationsGlobal,
@@ -81,7 +85,7 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
   // 2) classify well elements based on connectivity to local mesh partition
   array1d< integer > elemStatusGlobal;
-  elemStatusGlobal.resizeDefault( numElemsGlobal, WellElementSubRegion::WellElemStatus::UNOWNED );
+  elemStatusGlobal.resizeDefault( numElemsGlobal, WellElementSubRegion::WellElemParallelStatus::UNOWNED );
 
   arrayView1d< globalIndex const > const & perfElemIdGlobal = lineBlock.getPerfElemIndex();
 
@@ -91,11 +95,11 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
 
     if( perforationData->globalToLocalMap().count( iperfGlobal ) > 0 )
     {
-      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemStatus::LOCAL;
+      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemParallelStatus::LOCAL;
     }
     else
     {
-      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemStatus::REMOTE;
+      elemStatusGlobal[iwelemGlobal] |= WellElementSubRegion::WellElemParallelStatus::REMOTE;
     }
   }
 
@@ -105,7 +109,8 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
                       lineBlock,
                       elemStatusGlobal,
                       nodeOffsetGlobal,
-                      elemOffsetGlobal );
+                      elemOffsetGlobal,
+                      geomTol );
 
 
   // 4) find out which rank is the owner of the top segment
@@ -131,6 +136,9 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
                                           subRegion.globalToLocalMap(),
                                           elemOffsetGlobal );
 
+  // Setup MPI gatherv support arrays for use to establish if segment is active
+  // A segment is active if it has an open perforation or an upstream segment is open
+  subRegion.setupCommArrays();
 }
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, WellElementRegion, string const &, Group * const )

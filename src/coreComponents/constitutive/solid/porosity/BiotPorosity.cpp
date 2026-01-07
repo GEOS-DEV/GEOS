@@ -48,20 +48,6 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag enabling uniaxial approximation in fixed stress update" );
 
-  registerField( fields::porosity::biotCoefficient{}, &m_biotCoefficient ).
-    setApplyDefaultValue( 1.0 ).
-    setDescription( "Biot coefficient" );
-
-  registerField( fields::porosity::grainBulkModulus{}, &m_grainBulkModulus ).
-    setApplyDefaultValue( -1.0 ).
-    setDescription( "Grain Bulk modulus." );
-
-  registerField( fields::porosity::thermalExpansionCoefficient{}, &m_thermalExpansionCoefficient );
-
-  registerField( fields::porosity::meanTotalStressIncrement_k{}, &m_meanTotalStressIncrement_k );
-
-  registerField( fields::porosity::averageMeanTotalStressIncrement_k{}, &m_averageMeanTotalStressIncrement_k );
-
   registerWrapper( viewKeyStruct::solidBulkModulusString(), &m_bulkModulus ).
     setApplyDefaultValue( 1e-6 ).
     setDescription( "Solid bulk modulus" );
@@ -69,14 +55,23 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::solidShearModulusString(), &m_shearModulus ).
     setApplyDefaultValue( 1e-6 ).
     setDescription( "Solid shear modulus" );
+
+  registerField< fields::porosity::biotCoefficient >( &m_biotCoefficient );
+
+  registerField< fields::porosity::grainBulkModulus >( &m_grainBulkModulus );
+
+  registerField< fields::porosity::thermalExpansionCoefficient >( &m_thermalExpansionCoefficient );
+
+  registerField< fields::porosity::meanTotalStressIncrement_k >( &m_meanTotalStressIncrement_k );
+
+  registerField< fields::porosity::averageMeanTotalStressIncrement_k >( &m_averageMeanTotalStressIncrement_k );
 }
 
-void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
-                                             localIndex const numConstitutivePointsPerParentIndex )
+void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts )
 {
-  PorosityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  m_meanTotalStressIncrement_k.resize( 0, numPts );
 
-  m_meanTotalStressIncrement_k.resize( 0, numConstitutivePointsPerParentIndex );
+  PorosityBase::allocateConstitutiveData( parent, numPts );
 }
 
 void BiotPorosity::postInputInitialization()

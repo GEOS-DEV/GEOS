@@ -117,18 +117,21 @@ void InternalWellboreGenerator::postInputInitialization()
 
   GEOS_ERROR_IF( m_nElems[1].size() > 1,
                  getWrapperDataContext( viewKeyStruct::yElemsString() ) <<
-                 ": Only one block in the theta direction is currently supported. " );
+                 ": Only one block in the theta direction is currently supported. ",
+                 getWrapperDataContext( viewKeyStruct::yElemsString() ) );
 
   GEOS_ERROR_IF( m_nElems[2].size() > 1,
                  getWrapperDataContext( viewKeyStruct::yElemsString() ) <<
-                 ": Only one block in the z direction is currently supported. " );
+                 ": Only one block in the z direction is currently supported. ",
+                 getWrapperDataContext( viewKeyStruct::yElemsString() ) );
 
 
 
   GEOS_ERROR_IF( m_trajectory.size( 0 ) != 2 || m_trajectory.size( 1 ) != 3,
                  getWrapperDataContext( viewKeyStruct::trajectoryString() ) <<
                  ": Input for trajectory should be specified in the form of "
-                 "{ { xbottom, ybottom, zbottom }, { xtop, ytop, ztop } }." );
+                 "{ { xbottom, ybottom, zbottom }, { xtop, ytop, ztop } }.",
+                 getWrapperDataContext( viewKeyStruct::trajectoryString() ) );
 
   // Project trajectory to bottom and top of the wellbore
   real64 trajectoryVector[3] = {0};
@@ -346,7 +349,7 @@ void InternalWellboreGenerator::setConnectivityForPeriodicBoundaries( int ( & gl
   }
 }
 
-void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, std::map< string, SortedArray< localIndex > > & nodeSets )
+void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, stdMap< string, SortedArray< localIndex > > & nodeSets )
 {
   localIndex const numNodes = X.size( 0 );
 
@@ -356,10 +359,10 @@ void InternalWellboreGenerator::coordinateTransformation( arrayView2d< real64, n
   SortedArray< localIndex > & ynegNodes = nodeSets.at( "yneg" );
   SortedArray< localIndex > & yposNodes = nodeSets.at( "ypos" );
   // Created on the fly
-  SortedArray< localIndex > & rnegNodes = nodeSets["rneg"];
-  SortedArray< localIndex > & rposNodes = nodeSets["rpos"];
-  SortedArray< localIndex > & tnegNodes = nodeSets["tneg"];
-  SortedArray< localIndex > & tposNodes = nodeSets["tpos"];
+  SortedArray< localIndex > & rnegNodes = nodeSets.get_inserted( "rneg" );
+  SortedArray< localIndex > & rposNodes = nodeSets.get_inserted( "rpos" );
+  SortedArray< localIndex > & tnegNodes = nodeSets.get_inserted( "tneg" );
+  SortedArray< localIndex > & tposNodes = nodeSets.get_inserted( "tpos" );
 
   // Map to radial mesh
   for( localIndex a = 0; a < numNodes; ++a )

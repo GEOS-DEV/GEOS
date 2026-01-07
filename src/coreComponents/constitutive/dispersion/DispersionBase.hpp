@@ -93,7 +93,7 @@ public:
   DispersionBase( string const & name, dataRepository::Group * const parent );
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override final;
 
   /**
    * @brief Getter for the dispersivities in the subRegion
@@ -119,18 +119,7 @@ public:
   virtual void saveConvergedVelocityState( arrayView2d< real64 const > const & convergedVelocity ) const
   { GEOS_UNUSED_VAR( convergedVelocity ); }
 
-private:
-
-  /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  void resizeFields( localIndex const size, localIndex const numPts );
-
 protected:
-
-  virtual void postInputInitialization() override;
 
   /// cell-wise dispersivity in the subregion
   /// TODO: support full tensor if linear isotropic diffusion is no longer enough

@@ -48,6 +48,10 @@ struct CommandLineOptions
   /// True iff restarting from the middle of an existing run.
   bool beginFromRestart = false;
 
+  /// If true, GEOS will only do the loading phase, and not actual simulation.
+  /// Useful to validate GEOS inputs.
+  bool onlyValidateInput = false;
+
   /// The path to the restart file, if specified.
   string restartFileName;
 

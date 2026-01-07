@@ -37,6 +37,8 @@ MeshManager::MeshManager( string const & name,
   Group( name, parent )
 {
   setInputFlags( InputFlags::REQUIRED );
+
+  addLogLevel< logInfo::ImportFields >();
 }
 
 MeshManager::~MeshManager()
@@ -202,7 +204,7 @@ void MeshManager::importFields( MeshGeneratorBase const & generator,
                                 string const & regionName,
                                 ElementSubRegionBase & subRegion,
                                 MeshGeneratorBase::Block const block,
-                                std::map< string, string > const & fieldsMapping,
+                                stdMap< string, string > const & fieldsMapping,
                                 FieldIdentifiers & fieldsToBeSync )
 {
   std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );

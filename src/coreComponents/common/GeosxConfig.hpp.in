@@ -102,10 +102,10 @@
 #cmakedefine GEOS_USE_PETSC
 
 ///  Enables use of METIS library (CMake option ENABLE_METIS)
-#cmakedefine GEOSX_USE_METIS
+#cmakedefine GEOS_USE_METIS
 
 ///  Enables use of ParMETIS library (CMake option ENABLE_PARMETIS)
-#cmakedefine GEOSX_USE_PARMETIS
+#cmakedefine GEOS_USE_PARMETIS
 
 /// Enables use of Scotch library (CMake option ENABLE_SCOTCH)
 #cmakedefine GEOS_USE_SCOTCH

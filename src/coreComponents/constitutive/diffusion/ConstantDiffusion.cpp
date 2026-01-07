@@ -36,19 +36,11 @@ ConstantDiffusion::ConstantDiffusion( string const & name, Group * const parent 
     setDescription( "xx, yy, and zz components of a diffusivity tensor [m^2/s]" );
 }
 
-std::unique_ptr< ConstitutiveBase >
-ConstantDiffusion::deliverClone( string const & name,
-                                 Group * const parent ) const
+void ConstantDiffusion::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  return DiffusionBase::deliverClone( name, parent );
-}
+  DiffusionBase::allocateConstitutiveData( parent, numPts );
 
-void ConstantDiffusion::allocateConstitutiveData( dataRepository::Group & parent,
-                                                  localIndex const numConstitutivePointsPerParentIndex )
-{
-  DiffusionBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
-  for( localIndex ei = 0; ei < parent.size(); ++ei )
+  for( localIndex ei = 0; ei < parent.size(); ++ei ) // TODO move into initializeState?
   {
     // NOTE: enforcing 1 quadrature point
     for( localIndex q = 0; q < 1; ++q )
@@ -65,14 +57,14 @@ void ConstantDiffusion::postInputInitialization()
   GEOS_THROW_IF( m_diffusivityComponents.size() != 3,
                  GEOS_FMT( "{}: the size of the diffusivity must be equal to 3",
                            getFullName() ),
-                 InputError );
+                 InputError, getDataContext() );
 
   GEOS_THROW_IF( m_diffusivityComponents[0] < 0 ||
                  m_diffusivityComponents[1] < 0 ||
                  m_diffusivityComponents[2] < 0,
                  GEOS_FMT( "{}: the components of the diffusivity tensor must be non-negative",
                            getFullName() ),
-                 InputError );
+                 InputError, getDataContext() );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ConstantDiffusion, string const &, Group * const )

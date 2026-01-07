@@ -50,7 +50,7 @@ decks = [
         check_step=683,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
-        name="ThermoPoroElastic_SinglePhase_ThermalDradient_smoke_fim",
+        name="ThermoPoroElastic_SinglePhase_ThermalGradient_smoke_fim",
         description=
         '1D thermo poro elastic case initialized with thermal gradient (FIM)',
         partitions=((1, 1, 1), (1, 2, 1)),
@@ -58,7 +58,7 @@ decks = [
         check_step=1,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
-        name="ThermoPoroElastic_SinglePhase_ThermalDradient_smoke_sequential",
+        name="ThermoPoroElastic_SinglePhase_ThermalGradient_smoke_sequential",
         description=
         '1D thermo poro elastic case initialized with thermal gradient (sequential)',
         partitions=((1, 1, 1), (1, 2, 1)),

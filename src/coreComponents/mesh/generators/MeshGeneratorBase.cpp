@@ -78,6 +78,8 @@ void MeshGeneratorBase::attachWellInfo( CellBlockManager & cellBlockManager )
     lb.setPerfSkinFactor( wellGen.getPerfSkinFactor() );
     lb.setPerfTargetRegion( wellGen.getPerfTargetRegion() );
     lb.setPerfElemIndex( wellGen.getPerfElemIndex() );
+    lb.setPerfStatusTableName( wellGen.getPerfStatusTableName());
+    lb.setPerfName( wellGen.getPerfName());
     lb.setWellControlsName( wellGen.getWellControlsName() );
     lb.setWellGeneratorName( wellGen.getName() );
   } );

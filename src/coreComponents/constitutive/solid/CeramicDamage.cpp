@@ -18,6 +18,7 @@
  */
 
 #include "CeramicDamage.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -174,23 +175,17 @@ CeramicDamage::CeramicDamage( string const & name, Group * const parent ):
     setDescription( "Particle surface flag" );
 }
 
-
-CeramicDamage::~CeramicDamage()
-{}
-
-
-void CeramicDamage::allocateConstitutiveData( dataRepository::Group & parent,
-                                              localIndex const numConstitutivePointsPerParentIndex )
+void CeramicDamage::allocateConstitutiveData( Group & parent, localIndex const numPts )
 {
-  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  ElasticIsotropic::allocateConstitutiveData( parent, numPts );
 
   m_strengthScale.resize( 0 );
   m_porosity.resize( 0 );
   m_referencePorosity.resize( 0 );
-  m_damage.resize( 0, numConstitutivePointsPerParentIndex );
-  m_jacobian.resize( 0, numConstitutivePointsPerParentIndex );
+  m_damage.resize( 0, numPts );
+  m_jacobian.resize( 0, numPts );
   m_velocityGradient.resize( 0, 3, 3 );
-  m_plasticStrain.resize( 0, numConstitutivePointsPerParentIndex, 6 );
+  m_plasticStrain.resize( 0, numPts, 6 );
   m_crackTipStressConcentration.resize( 0 );
   m_accumulatedModeIWork.resize( 0 );
   m_accumulatedModeIIWork.resize( 0 );
@@ -210,13 +205,6 @@ void CeramicDamage::postInputInitialization()
   GEOS_THROW_IF( m_fractureEnergyReleaseRate < 0.0, "Fracture energy release rate must be positive.", InputError );
 
 }
-
-
-void CeramicDamage::saveConvergedState() const
-{
-  ElasticIsotropic::saveConvergedState();
-}
-
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CeramicDamage, std::string const &, Group * const )
 }

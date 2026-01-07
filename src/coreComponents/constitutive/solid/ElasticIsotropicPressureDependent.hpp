@@ -506,23 +506,15 @@ public:
   ElasticIsotropicPressureDependent( string const & name, Group * const parent );
 
   /**
-   * Default Destructor
-   */
-  virtual ~ElasticIsotropicPressureDependent() override;
-
-  /**
    * @name Static Factory Catalog members and functions
    */
   ///@{
-
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "ElasticIsotropicPressureDependent";
 
   /**
    * @brief Static catalog string
    * @return A string that is used to register/lookup this class in the registry
    */
-  static std::string catalogName() { return m_catalogNameString; }
+  static std::string catalogName() { return "ElasticIsotropicPressureDependent"; }
 
   /**
    * @brief Get catalog name
@@ -553,12 +545,6 @@ public:
 
     /// string/key for reference volumetric strain
     static constexpr char const * refStrainVolString() { return "refStrainVol"; }
-
-    /// string/key for recompression index
-    static constexpr char const * recompressionIndexString() { return "recompressionIndex"; }
-
-    /// string/key for shear modulus
-    static constexpr char const * shearModulusString() { return "shearModulus"; }
   };
 
   /**

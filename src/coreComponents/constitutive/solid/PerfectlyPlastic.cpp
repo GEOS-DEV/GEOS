@@ -18,6 +18,7 @@
  */
 
 #include "PerfectlyPlastic.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -26,9 +27,7 @@ namespace constitutive
 {
 
 PerfectlyPlastic::PerfectlyPlastic( string const & name, Group * const parent ):
-  ElasticIsotropic( name, parent ),
-  m_defaultYieldStress(),
-  m_yieldStress()
+  ElasticIsotropic( name, parent )
 {
   // register default values
   registerWrapper( viewKeyStruct::defaultYieldStressString(), &m_defaultYieldStress ).
@@ -37,20 +36,7 @@ PerfectlyPlastic::PerfectlyPlastic( string const & name, Group * const parent ):
     setDescription( "Default yield stress" );
 
   // register fields
-  registerWrapper( viewKeyStruct::yieldStressString(), &m_yieldStress ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Array of element yield stresses" );
-}
-
-
-PerfectlyPlastic::~PerfectlyPlastic()
-{}
-
-
-void PerfectlyPlastic::allocateConstitutiveData( dataRepository::Group & parent,
-                                                 localIndex const numConstitutivePointsPerParentIndex )
-{
-  ElasticIsotropic::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  registerField< fields::solid::yieldStress >( &m_yieldStress );
 }
 
 
@@ -60,13 +46,7 @@ void PerfectlyPlastic::postInputInitialization()
 
   GEOS_THROW_IF( m_defaultYieldStress < 0.0, "Negative yield stress detected", InputError );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::yieldStressString() ).setApplyDefaultValue( m_defaultYieldStress );
-}
-
-
-void PerfectlyPlastic::saveConvergedState() const
-{
-  SolidBase::saveConvergedState();
+  getField< fields::solid::yieldStress >().setApplyDefaultValue( m_defaultYieldStress );
 }
 
 

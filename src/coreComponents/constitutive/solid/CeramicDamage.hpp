@@ -153,7 +153,7 @@ public:
   CeramicDamageUpdates & operator=( CeramicDamageUpdates && ) =  delete;
 
   /// Use the uncompressed version of the stiffness bilinear form
-  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic; // TODO: typo in anistropic (fix in DiscOps PR)
+  using DiscretizationOps = SolidModelDiscretizationOpsFullyAnisotropic;
 
   // Bring in base implementations to prevent hiding warnings
   using ElasticIsotropicUpdates::smallStrainUpdate;
@@ -1080,35 +1080,23 @@ public:
    * @param[in] name name of the instance in the catalog
    * @param[in] parent the group which contains this instance
    */
-  CeramicDamage( string const & name, Group * const parent );
-
-  /**
-   * Default Destructor
-   */
-  virtual ~CeramicDamage() override;
-
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
-
-  virtual void saveConvergedState() const override;
+  CeramicDamage( string const & name, dataRepository::Group * const parent );
 
   /**
    * @name Static Factory Catalog members and functions
    */
   ///@{
 
-  /// string name to use for this class in the catalog
-  static constexpr auto m_catalogNameString = "CeramicDamage";
-
   /**
    * @return A string that is used to register/lookup this class in the registry
    */
-  static string catalogName() { return m_catalogNameString; }
+  static string catalogName() { return "CeramicDamage"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
   ///@}
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   /**
    * Keys for data specified in this class.
@@ -1270,6 +1258,7 @@ public:
 
 
 protected:
+
   virtual void postInputInitialization() override;
 
   /// State variable: The damage values for each quadrature point

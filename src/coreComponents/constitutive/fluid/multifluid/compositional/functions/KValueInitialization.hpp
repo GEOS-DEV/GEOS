@@ -107,9 +107,13 @@ public:
     else
     {
       real64 const waterKValue = computeWaterGasKvalue( pressure, temperature );
+      // For very low pressures, the water k-value can be too large leading to a swap in the
+      // component partitioning. This limit ensures that we don't get numerical instability
+      // while still keeping light components in the gas phase.
+      real64 const otherKValue = LvArray::math::max( 1.0 / waterKValue, 100.0 );
       for( integer ic = 0; ic < numComps; ++ic )
       {
-        kValues[ic] = 1.0 / waterKValue;
+        kValues[ic] = otherKValue;
       }
       kValues[waterIndex] = waterKValue;
     }

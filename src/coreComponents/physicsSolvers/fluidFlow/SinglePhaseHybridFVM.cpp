@@ -22,7 +22,6 @@
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
@@ -56,15 +55,12 @@ SinglePhaseHybridFVM::SinglePhaseHybridFVM( const string & name,
   // one cell-centered dof per cell
   m_numDofPerCell = 1;
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM;
-
-  addLogLevel< logInfo::ResidualNorm >();
 }
 
 
 void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
 {
   SinglePhaseBase::registerDataOnMesh( meshBodies );
-
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     string_array const & regionNames )
@@ -86,6 +82,10 @@ void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
       // primary variables: face pressures at the previous converged time step
       faceManager.registerField< flow::facePressure_n >( getName() );
     }
+    // Register the bc face data
+    {
+      faceManager.registerField< flow::bcPressure >( getName() );
+    }
   } );
 }
 
@@ -96,7 +96,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
   GEOS_THROW_IF( m_isThermal,
                  GEOS_FMT( "{} {}: The thermal option is not supported by SinglePhaseHybridFVM",
                            getCatalogName(), getDataContext().toString() ),
-                 InputError );
+                 InputError, getDataContext() );
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -105,7 +105,7 @@ void SinglePhaseHybridFVM::initializePreSubGroups()
   GEOS_THROW_IF( !fvManager.hasGroup< HybridMimeticDiscretization >( m_discretizationName ),
                  getCatalogName() << " " << getDataContext() <<
                  ": the HybridMimeticDiscretization must be selected with SinglePhaseHybridFVM",
-                 InputError );
+                 InputError, getDataContext() );
 }
 
 void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
@@ -113,9 +113,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
   GEOS_MARK_FUNCTION;
 
   SinglePhaseBase::initializePostInitialConditionsPreSubGroups();
-
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & regionNames )
@@ -361,17 +359,19 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
 
     arrayView1d< real64 const > const presFace =
       faceManager.getField< flow::facePressure >();
+    arrayView1d< real64 const > const presFaceBC =
+      faceManager.getField< flow::bcPressure >();
     arrayView1d< globalIndex const > const faceDofNumber =
       faceManager.getReference< array1d< globalIndex > >( faceDofKey );
     arrayView1d< integer const > const faceGhostRank = faceManager.ghostRank();
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
-    // take BCs defined for "pressure" field and apply values to "facePressure"
+    // take BCs defined for "pressure" field and apply values to "bcPressure"
     // this is done this way for consistency with the standard TPFA scheme, which works in the same fashion
     fsManager.apply< FaceManager >( time_n + dt,
                                     mesh,
-                                    flow::pressure::key(),
+                                    flow::bcPressure::key(),
                                     [&] ( FieldSpecificationBase const & fs,
                                           string const & setName,
                                           SortedArrayView< localIndex const > const & targetSet,
@@ -383,7 +383,7 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( targetSet.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::FaceBoundaryCondition,
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( faceBcLogMessage,
                                                   this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
                                                   setName, targetGroup.getName(), numTargetFaces ),
@@ -392,14 +392,14 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
 
       // next, we use the field specification functions to apply the boundary conditions to the system
 
-      // 1. first, populate the face pressure vector at the boundaries of the domain
+      // Populate the face pressure vector at the boundaries of the domain
       fs.applyFieldValue< FieldSpecificationEqual,
                           parallelDevicePolicy<> >( targetSet,
                                                     time_n + dt,
                                                     targetGroup,
-                                                    flow::facePressure::key() );
+                                                    flow::bcPressure::key() );
 
-      // 2. second, modify the residual/jacobian matrix as needed to impose the boundary conditions
+      // Second, modify the residual/jacobian matrix as needed to impose the boundary conditions
       forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const a )
       {
 
@@ -409,17 +409,17 @@ void SinglePhaseHybridFVM::applyFaceDirichletBC( real64 const time_n,
           return;
         }
 
-        // 2.1 get the dof number of this face
+        // get the dof number of this face
         globalIndex const dofIndex = faceDofNumber[kf];
         localIndex const localRow = dofIndex - rankOffset;
         real64 rhsValue;
 
-        // 2.2 apply field value to the matrix/rhs
+        // apply field value to the matrix/rhs
         FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
                                                     rankOffset,
                                                     localMatrix,
                                                     rhsValue,
-                                                    presFace[kf],
+                                                    presFaceBC[kf],
                                                     presFace[kf] );
         localRhs[localRow] = rhsValue;
       } );
@@ -438,7 +438,6 @@ void SinglePhaseHybridFVM::applyAquiferBC( real64 const time,
                                            arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
-
   GEOS_UNUSED_VAR( time, dt, dofManager, domain, localMatrix, localRhs );
 }
 
@@ -447,7 +446,6 @@ void SinglePhaseHybridFVM::saveAquiferConvergedState( real64 const & time,
                                                       DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
-
   GEOS_UNUSED_VAR( time, dt, domain );
 }
 
@@ -575,7 +573,9 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( real64 const & GEOS_UNUSED_P
     physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm, localResidualNormalizer, residualNorm );
   }
 
-  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
+                             GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
+  getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), residualNorm );
 
   return residualNorm;
 }
@@ -621,10 +621,10 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
 
 void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  // 1. Reset the cell-centered fields
+  // Reset the cell-centered fields
   SinglePhaseBase::resetStateToBeginningOfStep( domain );
 
-  // 2. Reset the face-based fields
+  // Reset the face-based fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )

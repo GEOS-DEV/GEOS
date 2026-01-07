@@ -36,16 +36,10 @@ namespace logInfo
 
 /// @cond DO_NOT_DOCUMENT
 
-struct Initialisation
+struct LogOutput
 {
   static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Informations on initialisation"; }
-};
-
-struct Results
-{
-  static constexpr int getMinLogLevel() { return 1; }
-  static constexpr std::string_view getDescription() { return "Output results"; }
+  static constexpr std::string_view getDescription() { return "Enable log output"; }
 };
 
 /// @endcond

@@ -51,13 +51,13 @@ namespace
 {
 
 /**
- * @brief Converts from GEOSX to SuperLU_Dist columns permutation option
- * @param[in] value the GEOSX option
+ * @brief Converts from GEOS to SuperLU_Dist columns permutation option
+ * @param[in] value the GEOS option
  * @return the SuperLU_Dist option
  */
 colperm_t const & getColPermType( LinearSolverParameters::Direct::ColPerm const & value )
 {
-  static std::map< LinearSolverParameters::Direct::ColPerm, colperm_t > const optionMap =
+  static stdMap< LinearSolverParameters::Direct::ColPerm, colperm_t > const optionMap =
   {
     { LinearSolverParameters::Direct::ColPerm::none, NATURAL },
     { LinearSolverParameters::Direct::ColPerm::MMD_AtplusA, MMD_AT_PLUS_A },
@@ -72,13 +72,13 @@ colperm_t const & getColPermType( LinearSolverParameters::Direct::ColPerm const 
 }
 
 /**
- * @brief Converts from GEOSX to SuperLU_Dist rows permutation option
- * @param[in] value the GEOSX option
+ * @brief Converts from GEOS to SuperLU_Dist rows permutation option
+ * @param[in] value the GEOS option
  * @return the SuperLU_Dist option
  */
 rowperm_t const & getRowPermType( LinearSolverParameters::Direct::RowPerm const & value )
 {
-  static std::map< LinearSolverParameters::Direct::RowPerm, rowperm_t > const optionMap =
+  static stdMap< LinearSolverParameters::Direct::RowPerm, rowperm_t > const optionMap =
   {
     { LinearSolverParameters::Direct::RowPerm::none, NOROWPERM },
     { LinearSolverParameters::Direct::RowPerm::mc64, LargeDiag_MC64 },

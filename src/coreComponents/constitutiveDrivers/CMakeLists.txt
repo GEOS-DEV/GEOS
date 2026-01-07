@@ -25,7 +25,6 @@ set( constitutiveDrivers_headers
      fluid/multiFluid/LogLevelsInfo.hpp
      fluid/multiFluid/PVTDriver.hpp
      fluid/multiFluid/PVTDriverRunTest.hpp
-     fluid/multiFluid/reactive/ReactiveFluidDriver.hpp
      relativePermeability/RelpermDriver.hpp
      relativePermeability/RelpermDriverRunTest.hpp
      solid/TriaxialDriver.hpp
@@ -41,11 +40,12 @@ set( constitutiveDrivers_sources
      fluid/multiFluid/CO2Brine/PVTDriverRunTestCO2BrinePhillipsThermalFluid.cpp
      fluid/multiFluid/CO2Brine/PVTDriverRunTestCO2BrineEzrokhiFluid.cpp
      fluid/multiFluid/CO2Brine/PVTDriverRunTestCO2BrineEzrokhiThermalFluid.cpp
+     fluid/multiFluid/compositional/PVTDriverRunTestCompositionalKValueLohrenzBrayClarkViscosity.cpp
+     fluid/multiFluid/compositional/PVTDriverRunTestCompositionalKValuePhillipsBrine.cpp
      fluid/multiFluid/compositional/PVTDriverRunTestCompositionalThreePhaseLohrenzBrayClarkViscosity.cpp
      fluid/multiFluid/compositional/PVTDriverRunTestCompositionalTwoPhaseConstantViscosity.cpp
      fluid/multiFluid/compositional/PVTDriverRunTestCompositionalTwoPhasePhillipsBrine.cpp
      fluid/multiFluid/compositional/PVTDriverRunTestCompositionalTwoPhaseLohrenzBrayClarkViscosity.cpp
-     fluid/multiFluid/reactive/ReactiveFluidDriver.cpp
      relativePermeability/RelpermDriver.cpp
      relativePermeability/RelpermDriverBrooksCoreyBakerRunTest.cpp
      relativePermeability/RelpermDriverBrooksCoreyStone2RunTest.cpp

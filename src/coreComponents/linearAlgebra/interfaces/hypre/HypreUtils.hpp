@@ -30,15 +30,11 @@
 #include <HYPRE_parcsr_ls.h>
 
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
-/// Host-device marker for custom hypre kernels
+/// Device marker for custom hypre kernels
 #define GEOS_HYPRE_DEVICE GEOS_DEVICE
-/// Host-device marker for custom hypre kernels
-#define GEOS_HYPRE_HOST_DEVICE GEOS_HOST_DEVICE
 #else
-/// Host-device marker for custom hypre kernels
+/// Device marker for custom hypre kernels
 #define GEOS_HYPRE_DEVICE
-/// Host-device marker for custom hypre kernels
-#define GEOS_HYPRE_HOST_DEVICE
 #endif
 
 namespace geos
@@ -131,7 +127,7 @@ constexpr HYPRE_MemoryLocation memoryLocation = HYPRE_MEMORY_HOST;
 
 #endif
 
-// Check matching requirements on index/value types between GEOSX and Hypre
+// Check matching requirements on index/value types between GEOS and Hypre
 
 // WARNING. We don't have consistent types between HYPRE_Int and localIndex.
 //          Decision needs to be made either to use bigint option, or change
@@ -182,7 +178,7 @@ static_assert( std::is_same< HYPRE_Real, geos::real64 >::value,
                "HYPRE_Real and geos::real64 must be the same type" );
 
 /**
- * @brief Converts a non-const array from GEOSX globalIndex type to HYPRE_BigInt.
+ * @brief Converts a non-const array from GEOS globalIndex type to HYPRE_BigInt.
  * @param[in] index the input array
  * @return the converted array
  */
@@ -192,7 +188,7 @@ inline HYPRE_BigInt * toHypreBigInt( geos::globalIndex * const index )
 }
 
 /**
- * @brief Converts a const array from GEOSX globalIndex type to HYPRE_BigInt.
+ * @brief Converts a const array from GEOS globalIndex type to HYPRE_BigInt.
  * @param[in] index the input array
  * @return the converted array
  */

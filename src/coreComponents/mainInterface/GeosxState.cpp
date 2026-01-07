@@ -177,7 +177,12 @@ void GeosxState::run()
 
   GEOS_THROW_IF_NE( m_state, State::READY_TO_RUN, std::logic_error );
 
-  if( !getProblemManager().runSimulation() )
+  if( getCommandLineOptions().onlyValidateInput )
+  {
+    m_state = State::COMPLETED;
+    GEOS_LOG( "Input validation completed, terminating GEOS..." );
+  }
+  else if( !getProblemManager().runSimulation() )
   {
     m_state = State::COMPLETED;
   }

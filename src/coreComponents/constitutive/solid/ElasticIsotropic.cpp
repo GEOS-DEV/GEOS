@@ -18,6 +18,7 @@
  */
 
 #include "ElasticIsotropic.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -26,11 +27,7 @@ namespace constitutive
 {
 
 ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
-  SolidBase( name, parent ),
-  m_defaultBulkModulus(),
-  m_defaultShearModulus(),
-  m_bulkModulus(),
-  m_shearModulus()
+  SolidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultBulkModulusString(), &m_defaultBulkModulus ).
     setApplyDefaultValue( -1 ).
@@ -52,17 +49,12 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default Poisson's Ratio" );
 
-  registerWrapper( viewKeyStruct::bulkModulusString(), &m_bulkModulus ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Bulk Modulus Field" );
+  // register fields
 
-  registerWrapper( viewKeyStruct::shearModulusString(), &m_shearModulus ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Shear Modulus Field" );
+  registerField< fields::solid::bulkModulus >( &m_bulkModulus );
+
+  registerField< fields::solid::shearModulus >( &m_shearModulus );
 }
-
-ElasticIsotropic::~ElasticIsotropic()
-{}
 
 void ElasticIsotropic::postInputInitialization()
 {
@@ -144,10 +136,11 @@ void ElasticIsotropic::postInputInitialization()
   }
 
   // set results as array default values
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::bulkModulusString() ).
+
+  getField< fields::solid::bulkModulus >().
     setApplyDefaultValue( m_defaultBulkModulus );
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::shearModulusString() ).
+  getField< fields::solid::shearModulus >().
     setApplyDefaultValue( m_defaultShearModulus );
 
   this->getWrapper< array2d< real64 > >( viewKeyStruct::wavespeedString() ).

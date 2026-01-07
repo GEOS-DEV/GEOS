@@ -638,10 +638,7 @@ public:
   SolidBase( string const & name,
              Group * const parent );
 
-  /**
-   * Destructor
-   */
-  virtual ~SolidBase() override;
+  virtual void allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts ) override;
 
   /**
    * @name Static Factory Catalog members and functions
@@ -666,24 +663,11 @@ public:
   /// Keys for data in this class
   struct viewKeyStruct : public ContinuumBase::viewKeyStruct
   {
-    static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; } // Thermal expansion
-                                                                                                                // coefficient key
-    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultDrainedLinearTEC"; } // Default
-                                                                                                                   // drained
-                                                                                                                   // linear
-                                                                                                                   // thermal
-                                                                                                                   // expansion
-                                                                                                                   // coefficient
-                                                                                                                   // key
+    /// Thermal expansion coefficients
+    static constexpr char const * thermalExpansionCoefficientString() { return "thermalExpansionCoefficient"; }
+    // Default drained linear thermal expansion coefficient key
+    static constexpr char const * defaultThermalExpansionCoefficientString() { return "defaultDrainedLinearTEC"; }
   };
-
-  /**
-   * @brief Allocate constitutive arrays
-   * @param parent Object's parent group (element subregion)
-   * @param numConstitutivePointsPerParentIndex Number of quadrature points per element
-   */
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const override;

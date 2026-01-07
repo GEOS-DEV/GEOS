@@ -1324,7 +1324,7 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( string const & path,
                                         globalValues.end(),
                                         []( int x ) { return x == -1; } ),
                         globalValues.end());
-    m_targetProcessesId[region.getName()] = globalValues;
+    m_targetProcessesId.insert( {region.getName(), globalValues} );
   }
 }
 

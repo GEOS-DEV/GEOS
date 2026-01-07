@@ -105,7 +105,7 @@ public:
 
   void enableJumpStabilization() { m_isJumpStabilized = true; }
 
-  void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
+  virtual void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
 
@@ -183,7 +183,7 @@ public:
    * @param[out] minElevation the min elevation for each initial condition
    */
   void findMinMaxElevationInEquilibriumTarget( DomainPartition & domain, // cannot be const...
-                                               std::map< string, localIndex > const & equilNameToEquilId,
+                                               stdMap< string, localIndex > const & equilNameToEquilId,
                                                arrayView1d< real64 > const & maxElevation,
                                                arrayView1d< real64 > const & minElevation ) const;
 
@@ -198,7 +198,7 @@ public:
   void computeSourceFluxSizeScalingFactor( real64 const & time,
                                            real64 const & dt,
                                            DomainPartition & domain, // cannot be const...
-                                           std::map< string, localIndex > const & bcNameToBcId,
+                                           stdMap< string, localIndex > const & bcNameToBcId,
                                            arrayView1d< globalIndex > const & bcAllSetsSize ) const;
 
   integer numberOfDofsPerCell() const { return m_numDofPerCell; }

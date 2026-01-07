@@ -474,6 +474,7 @@ std::enable_if_t< !internal::canParseVariable< T >, bool >
 readAttributeAsType( T &, string const & name, Regex const &, xmlNode const &, U const & )
 {
   GEOS_THROW( "Cannot parse key with name ("<<name<<") with the given type " << LvArray::system::demangleType< T >(), InputError );
+  return false;
 }
 
 /**
