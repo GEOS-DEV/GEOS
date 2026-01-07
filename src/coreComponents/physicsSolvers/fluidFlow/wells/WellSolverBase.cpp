@@ -43,7 +43,7 @@ WellSolverBase::WellSolverBase( string const & name,
   m_numDofPerResElement( 0 ),
   m_isThermal( 0 ),
   m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) ),
-  m_keepVariablesConstantDuringInitStep( false )
+  m_keepVariablesConstantDuringInitStep( false ),
   m_writeSegDebug( 0 ),
   m_globalNumTimeSteps( -1 ),
   m_currentDt( -1.0 ),
@@ -350,45 +350,7 @@ void WellSolverBase::setupWellDofs( DomainPartition & domain )
     } );
   }
 }
-void WellSolverBase::setupWellDofs( DomainPartition & domain )
-{
-  if( m_estimatorDoFManager.empty() )
-  {
 
-    map< std::pair< string, string >, string_array > meshTargets;
-    string_array regions;
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
-                                                                 MeshLevel & meshLevel,
-                                                                 string_array const & regionNames )
-    {
-      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
-      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
-                                                                   [&]( localIndex const,
-                                                                        WellElementRegion & region )
-      {
-        meshTargets.clear();
-        regions.clear();
-        regions.emplace_back( region.getName() );
-        auto const key = std::make_pair( meshBodyName, meshLevel.getName());
-        meshTargets[key] = std::move( regions );
-
-        DofManager regionDoFManager( region.getName());
-        regionDoFManager.setDomain( domain );
-        regionDoFManager.addField( wellElementDofName(),
-                                   FieldLocation::Elem,
-                                   numDofPerWellElement(),
-                                   meshTargets );
-
-        regionDoFManager.addCoupling( wellElementDofName(),
-                                      wellElementDofName(),
-                                      DofManager::Connector::Node );
-
-        regionDoFManager.reorderByRank();
-        m_estimatorDoFManager.emplace( region.getName(), std::move( regionDoFManager ));
-      } );
-    } );
-  }
-}
 
 void WellSolverBase::selectWellConstraint( real64 const & time_n,
                                            real64 const & dt,
@@ -545,30 +507,6 @@ void WellSolverBase::assembleWellSystem( real64 const time_n,
 
 }
 
-void WellSolverBase::assembleWellSystem( real64 const time_n,
-                                         real64 const dt,
-                                         ElementRegionManager const & elementRegionManager,
-                                         WellElementSubRegion & subRegion,
-                                         DofManager const & dofManager,
-                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                         arrayView1d< real64 > const & localRhs )
-{
-  assembleWellAccumulationTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-
-  assembleWellConstraintTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-
-  assembleWellPressureRelations( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-  computeWellPerforationRates( time_n, dt, elementRegionManager, subRegion );
-  assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-  my_ctime=my_ctime+1;
-
-  //  auto iterInfo = currentIter( time_n, dt );
-  //  outputWellDebug( time_n, dt, std::get< 0 >( iterInfo ), std::get< 1 >( iterInfo ), std::get< 2 >( iterInfo ),
-  //                 domain, dofManager, localMatrix, localRhs );
-
-
-}
-
 void WellSolverBase::assembleSystem( real64 const time,
                                      real64 const dt,
                                      DomainPartition & domain,
@@ -605,8 +543,6 @@ void WellSolverBase::assembleSystem( real64 const time,
     {
       WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
                                            .getGroup< WellElementSubRegion >( region.getSubRegionName() );
-      WellControls & wellControls = getWellControls( subRegion );
-      if( !wellControls.getConstraintSwitch() )
         assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
     } );
   } );
@@ -1047,7 +983,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
       Timer timer( m_timers.get_inserted( "update state" ) );
 
       // update derived variables (constitutive models)
-      updateWellState( subRegion );
+      updateWellState( elemManager, subRegion );
     }
 
     lastResidual = residualNorm;
@@ -1104,7 +1040,7 @@ bool WellSolverBase::lineSearch1( real64 const & time_n,
     applyWellSystemSolution( dofManager, solution.values(), localScaleFactor, dt, domain, mesh, subRegion );
     // update non-primary variables (constitutive models)
 
-    updateWellState( subRegion );
+    updateWellState( elemManager, subRegion );
     // re-assemble system
     localMatrix.zero();
     rhs.zero();
