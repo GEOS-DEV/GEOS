@@ -698,9 +698,9 @@ public:
                            ParticleManager & particleManager,
                            NodeManager & nodeManager );
 
-  void computeDistanceToParticleSurface( real64 ( &normal )[3],
-                                         arraySlice2d< real64 const > const rVectors,
-                                         real64 distanceToSurface );
+  GEOS_HOST_DEVICE
+  real64 computeDistanceToParticleSurface( real64 ( &normal )[3],
+                                           arraySlice2d< real64 const > const rVectors );
 
   void updateGridBoreholeStress( NodeManager & nodeManager );
 

@@ -3101,6 +3101,53 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   //#######################################################################################
 
 
+  //Temporarily harcoded second event check for transform particles which needs to be done right before repartitioning master particles
+  MPMEventManager & eventManager = getGroup< MPMEventManager >( groupKeyStruct::mpmEventManagerString() );
+  eventManager.forSubGroups< MPMEventBase >( [&]( MPMEventBase & event )
+  {
+    real64 const startTime = event.getStartTime();
+    real64 const endTime = event.getEndTime();
+
+    if( ( startTime - dt / 2 <= time_n && time_n <= endTime + dt/2 ) && !event.isComplete() )
+    {
+      if( event.getCatalogName() == "TransformParticles" )
+      {
+        real64 angle = 3.14159265359;
+        real64 R[3][3] = {};
+        R[0][0] =  LvArray::math::cos(angle);
+        R[0][1] = -LvArray::math::sin(angle);
+        R[0][2] = 0.0;
+        R[1][0] = LvArray::math::sin(angle);
+        R[1][1] = LvArray::math::cos(angle);
+        R[1][2] = 0.0;
+        R[2][0] = 0.0;
+        R[2][1] = 0.0;
+        R[2][2] = 1.0;
+
+        // Hardcoded rotate particles by 180 degrees around origin
+        particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+        {
+          arrayView2d< real64 > const particlePosition = subRegion.getParticleCenter();
+          arrayView3d< real64 > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+
+          SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
+          forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const p )
+          {
+            real64 pos[3] = {};
+            LvArray::tensorOps::copy< 3 >( pos, particlePosition[p] );
+            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particlePosition[p], R, pos);
+
+            real64 F[3][3] = {};
+            LvArray::tensorOps::copy< 3, 3 >( F, particleDeformationGradient[p] );
+            LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( particleDeformationGradient[p], R, F );
+          } );
+        } );
+        event.setIsComplete( 1 );
+      }
+    }
+  } );
+
+
   //#######################################################################################
   // Scale Jacobian to prevent overdensification if overlap correction type 2 is used.
   if( m_overlapCorrection == OverlapCorrectionOption::SPH )
@@ -4358,90 +4405,143 @@ void SolidMechanicsMPM::projectToPlane( real64 const (&vector)[3],
   LvArray::tensorOps::subtract< 3 >( projection, normalVector );
 }
 
-
-// Used for mapping displacement to cohesive grid nodes
-void SolidMechanicsMPM::computeDistanceToParticleSurface( real64 (& normal)[3],
-                                                          arraySlice2d< real64 const > const rVectors,
-                                                          real64 distanceToSurface )
+// Computes distance from center of a parallelepiped to its surface
+// along direction dir.
+// a, b, c are the three edge half-extents from the center defining the parallelepiped.
+// Returns DBL_MAX if the ray does not intersect (degenerate case or dir inside null space).
+// double distanceToParallelepipedSurface( const double dir[3],
+//                                         const double a[3],
+//                                         const double b[3],
+//                                         const double c[3] )
+real64 SolidMechanicsMPM::computeDistanceToParticleSurface( real64 (& normal)[3],
+                                                            arraySlice2d< real64 const > const rVectors )
 {
-  LvArray::tensorOps::normalize< 3 >( normal );
+  // In matrix form: x = s1*a + s2*b + s3*c
+  // We want x(t) = t*dir. Solve for s(t) = [s1, s2, s3] such that
+  // s(t) = Minv * (t * dir).
+  //
+  // The parallelepiped boundary occurs when |s1| = 1 or |s2| = 1 or |s3| = 1.
+  // So for each i:
+  //   s_i(t) = alpha_i * t
+  //   Hit at t = 1 / |alpha_i|, if alpha_i != 0.
+  // We take the smallest positive t among all components.
 
-  real64 r1[3] = {};
-  LvArray::tensorOps::copy< 3 >( r1, rVectors[0] );
-  real64 r2[3] = {};
-  LvArray::tensorOps::copy< 3 >( r2, rVectors[1] );
-  real64 r3[3] = {};
-  LvArray::tensorOps::copy< 3 >( r3, rVectors[2] );
+  // Need to transpose Rvectors
 
-  // Compute particle face surface normals from RVectors
-  real64 s1[3] = {};
-  real64 s2[3] = {};
-  real64 s3[3] = {};
-  real64 s4[3] = {};
-  real64 s5[3] = {};
-  real64 s6[3] = {};
-
-  LvArray::tensorOps::crossProduct( s3, r1, r2 );
-  LvArray::tensorOps::crossProduct( s1, r2, r3 );
-  LvArray::tensorOps::crossProduct( s2, r3, r1 );
-  LvArray::tensorOps::crossProduct( s6, r2, r1 );
-  LvArray::tensorOps::crossProduct( s4, r3, r2 );
-  LvArray::tensorOps::crossProduct( s5, r1, r3 );
-
-  LvArray::tensorOps::normalize< 3 >( s1 );
-  LvArray::tensorOps::normalize< 3 >( s2 );
-  LvArray::tensorOps::normalize< 3 >( s3 );
-  LvArray::tensorOps::normalize< 3 >( s4 );
-  LvArray::tensorOps::normalize< 3 >( s5 );
-  LvArray::tensorOps::normalize< 3 >( s6 );
-
-  real64 dS1 = LvArray::tensorOps::AiBi< 3 >( s1, r1 );
-  real64 dS2 = LvArray::tensorOps::AiBi< 3 >( s2, r2 );
-  real64 dS3 = LvArray::tensorOps::AiBi< 3 >( s3, r3 );
-  real64 dS4 = LvArray::tensorOps::AiBi< 3 >( s4, r1 );
-  real64 dS5 = LvArray::tensorOps::AiBi< 3 >( s5, r2 );
-  real64 dS6 = LvArray::tensorOps::AiBi< 3 >( s6, r3 );
-
-  real64 dN1 = LvArray::tensorOps::AiBi< 3 >( normal, s1 );
-  real64 dN2 = LvArray::tensorOps::AiBi< 3 >( normal, s2 );
-  real64 dN3 = LvArray::tensorOps::AiBi< 3 >( normal, s3 );
-  real64 dN4 = LvArray::tensorOps::AiBi< 3 >( normal, s4 );
-  real64 dN5 = LvArray::tensorOps::AiBi< 3 >( normal, s5 );
-  real64 dN6 = LvArray::tensorOps::AiBi< 3 >( normal, s6 );
-
-  real64 tolerance = 1e-16;
-
-  distanceToSurface = DBL_MAX;
-  if( abs( dN1 ) > tolerance && dS1 / dN1 > 0 )
+  real64 Minv[3][3] = {};
+  LvArray::tensorOps::transpose< 3, 3 >( Minv, rVectors );
+  real64 det = LvArray::tensorOps::invert< 3 >( Minv );
+  if( isZero( det ) )
   {
-    distanceToSurface = fmin( distanceToSurface, dS1 / dN1 );
+    // Degenerate parallelepiped definition
+    return DBL_MAX;
   }
 
-  if( abs( dN2 ) > tolerance && dS2 / dN2 > 0 )
+  // alpha = Minv * dir
+  real64 alpha[3] = {
+    Minv[0][0]*normal[0] + Minv[0][1]*normal[1] + Minv[0][2]*normal[2],
+    Minv[1][0]*normal[0] + Minv[1][1]*normal[1] + Minv[1][2]*normal[2],
+    Minv[2][0]*normal[0] + Minv[2][1]*normal[1] + Minv[2][2]*normal[2]
+  };
+
+  real64 minT = DBL_MAX;
+  for( int i = 0; i < 3; ++i )
   {
-    distanceToSurface = fmin( distanceToSurface, dS2 / dN2 );
+    if( !isZero( alpha[i] ) )
+    {
+      real64 t = 1.0 / LvArray::math::abs( alpha[i] );
+      if( t > 0.0 && t < minT )
+      {
+        minT = t;
+      }
+    }
   }
 
-  if( abs( dN3 ) > tolerance && dS3 / dN3 > 0 )
-  {
-    distanceToSurface = fmin( distanceToSurface, dS3 / dN3 );
-  }
-
-  if( abs( dN4 ) > tolerance && dS4 / dN4 > 0 )
-  {
-    distanceToSurface = fmin( distanceToSurface, dS4 / dN4 );
-  }
-
-  if( abs( dN5 ) > tolerance && dS5 / dN5 > 0 )
-  {
-    distanceToSurface = fmin( distanceToSurface, dS5 / dN5 );
-  }
-
-  if( abs( dN6 ) > tolerance && dS6 / dN6 > 0 )
-  {
-    distanceToSurface = fmin( distanceToSurface, dS6 / dN6 );
-  }
+  return minT;
 }
+
+// // Used for mapping displacement to cohesive grid nodes
+// real64 SolidMechanicsMPM::computeDistanceToParticleSurface( real64 (& normal)[3],
+//                                                             arraySlice2d< real64 const > const rVectors )
+// {
+//   LvArray::tensorOps::normalize< 3 >( normal );
+
+//   real64 r1[3] = {};
+//   LvArray::tensorOps::copy< 3 >( r1, rVectors[0] );
+//   real64 r2[3] = {};
+//   LvArray::tensorOps::copy< 3 >( r2, rVectors[1] );
+//   real64 r3[3] = {};
+//   LvArray::tensorOps::copy< 3 >( r3, rVectors[2] );
+
+//   // Compute particle face surface normals from RVectors
+//   real64 s1[3] = {};
+//   real64 s2[3] = {};
+//   real64 s3[3] = {};
+//   real64 s4[3] = {};
+//   real64 s5[3] = {};
+//   real64 s6[3] = {};
+
+//   LvArray::tensorOps::crossProduct( s3, r1, r2 );
+//   LvArray::tensorOps::crossProduct( s1, r2, r3 );
+//   LvArray::tensorOps::crossProduct( s2, r3, r1 );
+//   LvArray::tensorOps::crossProduct( s6, r2, r1 );
+//   LvArray::tensorOps::crossProduct( s4, r3, r2 );
+//   LvArray::tensorOps::crossProduct( s5, r1, r3 );
+
+//   LvArray::tensorOps::normalize< 3 >( s1 );
+//   LvArray::tensorOps::normalize< 3 >( s2 );
+//   LvArray::tensorOps::normalize< 3 >( s3 );
+//   LvArray::tensorOps::normalize< 3 >( s4 );
+//   LvArray::tensorOps::normalize< 3 >( s5 );
+//   LvArray::tensorOps::normalize< 3 >( s6 );
+
+//   real64 dS1 = LvArray::tensorOps::AiBi< 3 >( s1, r1 );
+//   real64 dS2 = LvArray::tensorOps::AiBi< 3 >( s2, r2 );
+//   real64 dS3 = LvArray::tensorOps::AiBi< 3 >( s3, r3 );
+//   real64 dS4 = LvArray::tensorOps::AiBi< 3 >( s4, r1 );
+//   real64 dS5 = LvArray::tensorOps::AiBi< 3 >( s5, r2 );
+//   real64 dS6 = LvArray::tensorOps::AiBi< 3 >( s6, r3 );
+
+//   real64 dN1 = LvArray::tensorOps::AiBi< 3 >( normal, s1 );
+//   real64 dN2 = LvArray::tensorOps::AiBi< 3 >( normal, s2 );
+//   real64 dN3 = LvArray::tensorOps::AiBi< 3 >( normal, s3 );
+//   real64 dN4 = LvArray::tensorOps::AiBi< 3 >( normal, s4 );
+//   real64 dN5 = LvArray::tensorOps::AiBi< 3 >( normal, s5 );
+//   real64 dN6 = LvArray::tensorOps::AiBi< 3 >( normal, s6 );
+
+//   real64 distanceToSurface = DBL_MAX;
+//   if( !isZero( dN1 ) && dS1 / dN1 > 0.0 )
+//   {
+//     return LvArray::math::min( distanceToSurface, dS1 / dN1 );
+//   }
+
+//   if( !isZero( dN2 ) && dS2 / dN2 > 0.0 )
+//   {
+//     return LvArray::math::min( distanceToSurface, dS2 / dN2 );
+//   }
+
+//   if( !isZero( dN3 ) && dS3 / dN3 > 0.0 )
+//   {
+//     distanceToSurface = LvArray::math::min( distanceToSurface, dS3 / dN3 );
+//   }
+
+//   if( !isZero( dN4 ) && dS4 / dN4 > 0.0 )
+//   {
+//     distanceToSurface = LvArray::math::min( distanceToSurface, dS4 / dN4 );
+//   }
+
+//   if( !isZero( dN5 ) && dS5 / dN5 > 0.0 )
+//   {
+//     distanceToSurface = LvArray::math::min( distanceToSurface, dS5 / dN5 );
+//   }
+
+//   if( !isZero( dN6 ) && dS6 / dN6 > 0.0 )
+//   {
+//     distanceToSurface = LvArray::math::min( distanceToSurface, dS6 / dN6 );
+//   }
+
+//   return distanceToSurface;
+// }
 
 
 void SolidMechanicsMPM::computePairwiseLogisticRegressionSurfaceNormalsAndPositions( ParticleManager & particleManager,
@@ -10695,6 +10795,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
 
       arrayView3d< real64 const > const particleReferenceRVectors = subRegion.getField< fields::mpm::particleReferenceRVectors >();
       arrayView3d< real64 const > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
+      arrayView3d< real64 const > const particleCohesiveReferenceDeformationGradient = subRegion.getField< fields::mpm::particleCohesiveReferenceDeformationGradient >();
 
       arrayView2d< globalIndex const > const particleReferenceMappedNodes = subRegion.getField< fields::mpm::particleReferenceMappedNodes >();
       arrayView2d< real64 const > const particleReferenceShapeFunctionValues = subRegion.getField< fields::mpm::particleReferenceShapeFunctionValues >();
@@ -10717,6 +10818,32 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
             particleCohesiveZoneFlag[p] = 0;
             if( particleDamage[p] < 1.0 )
             {
+              // Precompute particle deformation gradient cofactor and surface displacement
+              real64 deformationGradientCofactor[3][3] = {};
+              LvArray::tensorOps::cofactor< 3 >( deformationGradientCofactor, particleDeformationGradient[p] );
+
+              real64 referenceSurfaceNormal[3] = {};
+              LvArray::tensorOps::copy< 3 >( referenceSurfaceNormal, particleReferenceSurfaceNormal[p] );
+              real64 initialDistanceToSurface = computeDistanceToParticleSurface( referenceSurfaceNormal,
+                                                                                  particleReferenceRVectors[p] );
+
+              real64 initialSurfacePoint[3] = {};
+              LvArray::tensorOps::copy< 3 >( initialSurfacePoint, particleReferenceSurfaceNormal[p] );
+              LvArray::tensorOps::scale< 3 >( initialSurfacePoint, initialDistanceToSurface );
+
+              real64 referenceSurfacePoint[3] = {};
+              LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( referenceSurfacePoint, particleCohesiveReferenceDeformationGradient[p], initialSurfacePoint );
+
+              real64 deformedSurfacePoint[3] = {};
+              LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( deformedSurfacePoint, particleDeformationGradient[p], initialSurfacePoint );
+
+              // ( particlePosition[p][i] - particleCohesiveReferencePosition[p][i] + deformedSurfacePoint[i] - referenceSurfacePoint[i] );
+              real64 surfaceDisplacement[3] = {};
+              LvArray::tensorOps::copy< 3 >( surfaceDisplacement, particlePosition[p] );
+              LvArray::tensorOps::subtract< 3 >( surfaceDisplacement, particleCohesiveReferencePosition[p] );
+              LvArray::tensorOps::add< 3 >( surfaceDisplacement, deformedSurfacePoint );
+              LvArray::tensorOps::subtract< 3 >( surfaceDisplacement, referenceSurfacePoint );
+
               // Map particle displacement to grid
               for( localIndex g = 0; g < 8 * numberOfVerticesPerParticle; ++g )
               {
@@ -10744,38 +10871,25 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
 
                   real64 shapeFunctionValue = particleReferenceShapeFunctionValues[p][g];
 
-                  real64 deformationGradient[3][3] = {};
-                  LvArray::tensorOps::copy< 3, 3 >( deformationGradient, particleDeformationGradient[p] );
-
-                  real64 initialDistanceToSurface = 0.0;
-                  real64 referenceSurfaceNormal[3] = {};
-                  LvArray::tensorOps::copy< 3 >( referenceSurfaceNormal, particleReferenceSurfaceNormal[p] );
-                  computeDistanceToParticleSurface( referenceSurfaceNormal,
-                                                    particleReferenceRVectors[p],
-                                                    initialDistanceToSurface );
-
-                  real64 initialSurfacePoint[3] = {};
-                  LvArray::tensorOps::copy< 3 >( initialSurfacePoint, particleReferenceSurfaceNormal[p] );
-                  LvArray::tensorOps::scale< 3 >( initialSurfacePoint, initialDistanceToSurface );
-
-                  real64 deformedSurfacePoint[3] = {};
-                  LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( deformedSurfacePoint, particleDeformationGradient[p], initialSurfacePoint );
-
-                  real64 deformationGradientCofactor[3][3] = {};
-                  LvArray::tensorOps::cofactor< 3 >( deformationGradientCofactor, deformationGradient );
-
                   tempGridMassLocal[nodeIndex][fieldIndex] += particleMass[p] * shapeFunctionValue;
                   // tempGridVolumeLocal[nodeIndex][fieldIndex] += particleVolume[p] * shapeFunctionValue;
 
                   for( int i  = 0; i < numDims; ++i )
                   {
-                    tempGridDisplacementLocal[nodeIndex][fieldIndex][i] += particleMass[p] *
-                                                                          ( particlePosition[p][i] - particleCohesiveReferencePosition[p][i] + deformedSurfacePoint[i] - initialSurfacePoint[i] ) *
-                                                                          shapeFunctionValue;
+                    tempGridDisplacementLocal[nodeIndex][fieldIndex][i] += particleMass[p] * surfaceDisplacement[i] * shapeFunctionValue;
                     // tempGridCenterOfVolumeLocal[nodeIndex][fieldIndex][i] += particleVolume[p] * (particlePosition[p][i] -
                     // m_referenceCohesiveGridNodePositions[nodeIndex][i])* shapeFunctionValue;
                     tempGridParticleSurfaceNormalLocal[nodeIndex][fieldIndex][i] += particleMass[p] * particleSurfaceNormal[p][i] * shapeFunctionValue;
                   }
+
+                  // GEOS_LOG_RANK( "refPos:" << "{" << particleCohesiveReferencePosition[p][0] << ", " << particleCohesiveReferencePosition[p][1] << ", " << particleCohesiveReferencePosition[p][2] << "}, " <<
+                  //                "pos:" << "{" << particlePosition[p][0] << ", " << particlePosition[p][1] << ", " << particlePosition[p][2] << "}, " <<
+                  //                "refNorm: " << "{" << particleReferenceSurfaceNormal[p][0] << ", " << particleReferenceSurfaceNormal[p][1] << ", " << particleReferenceSurfaceNormal[p][2] << "}, " << 
+                  //                "initDist: " << initialDistanceToSurface << ", " << 
+                  //                "initPt: " << "{" << initialSurfacePoint[0] << ", " << initialSurfacePoint[1] << ", " << initialSurfacePoint[2] << "}, " <<
+                  //                "refPt: " << "{" << referenceSurfacePoint[0] << ", " << referenceSurfacePoint[1] << ", " << referenceSurfacePoint[2] << "}, " <<
+                  //                "defPt: " << "{" << deformedSurfacePoint[0] << ", " << deformedSurfacePoint[1] << ", " << deformedSurfacePoint[2] << "}, " <<
+                  //                "dispContrib: " << "{" << dispContribution[0] << ", " << dispContribution[1] << ", " << dispContribution[2] << "}");
 
                   for( int i = 0; i < 3; ++i )
                   {

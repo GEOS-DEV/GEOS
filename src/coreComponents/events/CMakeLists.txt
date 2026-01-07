@@ -48,6 +48,7 @@ set( events_headers
      mpmEvents/CohesiveZoneMPMEvent.hpp
      mpmEvents/ResetDeformationGradientMPMEvent.hpp
      mpmEvents/TemperatureProfileMPMEvent.hpp
+     mpmEvents/TransformParticlesMPMEvent.hpp
    )
 
 #
@@ -80,6 +81,7 @@ set( events_sources
      mpmEvents/BoreholePressureMPMEvent.cpp
      mpmEvents/ResetDeformationGradientMPMEvent.cpp
      mpmEvents/TemperatureProfileMPMEvent.cpp
+     mpmEvents/TransformParticlesMPMEvent.cpp
    )
 
 set( dependencyList ${parallelDeps} functions )

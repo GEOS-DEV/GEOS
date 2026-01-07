@@ -296,24 +296,24 @@ struct CohesiveZoneStateUpdateKernel
         LvArray::tensorOps::scaledAdd< 3 >( gridCZTraction[k][fieldA], tA, surfaceArea );
         LvArray::tensorOps::scaledAdd< 3 >( gridCZTraction[k][fieldB], tB, surfaceArea );
         
-        GEOS_LOG_RANK( "k: " << k << ", " << 
-                      //  "dA: " << "{" << dA[0] << ", " << dA[1] << ", " << dA[2] << "}, " << 
-                      //  "dB: " << "{" << dB[0] << ", " << dB[1] << ", " << dB[2] << "}, " << 
-                       "dTotal: " << "{" << displacementVector[0] << ", " << displacementVector[1] << ", " << displacementVector[2] << "}, " <<
-                      //  "nA: " << "{" << nA[0] << ", " << nA[1] << ", " << nA[2] << "}, " << 
-                      //  "nB: " << "{" << nB[0] << ", " << nB[1] << ", " << nB[2] << "}, " << 
-                       "nAB: " << "{" << nAB[0] << ", " << nAB[1] << ", " << nAB[2] << "}, " << 
-                      //  "aA: " << czReferenceArea[k][fieldA] << ", " << 
-                      //  "aB: " << czReferenceArea[k][fieldB] << ", " << 
-                      //  "sA: " << "{" << sA[0] << ", " << sA[1] << ", " << sA[2] << "}, " << 
-                      //  "sB: " << "{" << sB[0] << ", " << sB[1] << ", " << sB[2] << "}, " << 
-                       "normalDisp: " << totalNormalDisplacement << ", " << 
-                       "shearDisp: " << totalTangentialDisplacement << ", " <<
-                      //  "surfaceArea: " << surfaceArea << ", "
-                       "normalStress: " << normalStress << ", "
-                       "shearStress: " << shearStress << ", "
-                       "tA: " << "{" << tA[0] << ", " << tA[1] << ", " << tA[2] << "}, " << 
-                       "tB: " << "{" << tB[0] << ", " << tB[1] << ", " << tB[2] << "}"  );
+        // GEOS_LOG_RANK( "k: " << k << ", " << 
+        //               //  "dA: " << "{" << dA[0] << ", " << dA[1] << ", " << dA[2] << "}, " << 
+        //               //  "dB: " << "{" << dB[0] << ", " << dB[1] << ", " << dB[2] << "}, " << 
+        //                "dTotal: " << "{" << displacementVector[0] << ", " << displacementVector[1] << ", " << displacementVector[2] << "}, " <<
+        //               //  "nA: " << "{" << nA[0] << ", " << nA[1] << ", " << nA[2] << "}, " << 
+        //               //  "nB: " << "{" << nB[0] << ", " << nB[1] << ", " << nB[2] << "}, " << 
+        //                "nAB: " << "{" << nAB[0] << ", " << nAB[1] << ", " << nAB[2] << "}, " << 
+        //               //  "aA: " << czReferenceArea[k][fieldA] << ", " << 
+        //               //  "aB: " << czReferenceArea[k][fieldB] << ", " << 
+        //               //  "sA: " << "{" << sA[0] << ", " << sA[1] << ", " << sA[2] << "}, " << 
+        //               //  "sB: " << "{" << sB[0] << ", " << sB[1] << ", " << sB[2] << "}, " << 
+        //                "normalDisp: " << totalNormalDisplacement << ", " << 
+        //                "shearDisp: " << totalTangentialDisplacement << ", " <<
+        //               //  "surfaceArea: " << surfaceArea << ", "
+        //                "normalStress: " << normalStress << ", "
+        //                "shearStress: " << shearStress << ", "
+        //                "tA: " << "{" << tA[0] << ", " << tA[1] << ", " << tA[2] << "}, " << 
+        //                "tB: " << "{" << tB[0] << ", " << tB[1] << ", " << tB[2] << "}"  );
       }
 
 
