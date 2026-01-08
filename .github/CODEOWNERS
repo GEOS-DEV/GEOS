@@ -50,7 +50,7 @@
 /src/coreComponents/constitutive/contact              @rrsettgast @jhuang2601
 /src/coreComponents/constitutive/diffusion            @dkachuma
 /src/coreComponents/constitutive/dispersion           @dkachuma 
-/src/coreComponents/constitutive/docs                 @castelletto1 @jhuang2601 @dkachuma
+/src/coreComponents/constitutive/docs                 @jhuang2601 @dkachuma
 /src/coreComponents/constitutive/fluid                @dkachuma 
 /src/coreComponents/constitutive/permeability         @dkachuma @jhuang2601 
 /src/coreComponents/constitutive/pvtPackage           @dkachuma
