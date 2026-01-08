@@ -47,7 +47,7 @@
 /src/coreComponents/common                            @rrsettgast @MelReyCG @corbett5 @wrtobin
 /src/coreComponents/constitutive                      @rrsettgast @dkachuma
 /src/coreComponents/constitutive/capillaryPressure    @dkachuma
-/src/coreComponents/constitutive/contact              @rrsettgast @jhuang2601
+/src/coreComponents/constitutive/contact              @rrsettgast @jhuang2601 @jafranc 
 /src/coreComponents/constitutive/diffusion            @dkachuma
 /src/coreComponents/constitutive/dispersion           @dkachuma 
 /src/coreComponents/constitutive/docs                 @jhuang2601 @dkachuma
