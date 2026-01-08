@@ -23,7 +23,7 @@
 /inputFiles/meshGeneration                            @rrsettgast @cssherman
 /inputFiles/multiphaseFlowFractures                   @jhuang2601 @tjb-ltk
 /inputFiles/multipleMeshBodies                        @rrsettgast @wrtobin
-/inputFiles/phaseField                                @rrsettgast @frankfeifan @castelletto1
+/inputFiles/phaseField                                @rrsettgast @frankfeifan
 /inputFiles/poromechanics                             @castelletto1 @jhuang2601
 /inputFiles/poromechanicsFractures                    @castelletto1 @jhuang2601
 /inputFiles/proppant                                  @rrsettgast @jhuang2601
