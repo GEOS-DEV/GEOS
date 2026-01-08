@@ -604,9 +604,9 @@ static ParticleData
 getVtkCells( ParticleRegion const & region )
 {
   vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
-  cellsArray->SetNumberOfCells( region.getNumberOfParticles< ParticleRegion >() );
+  cellsArray->SetNumberOfCells( region.getNumberOfParticles() );
   stdVector< int > cellType;
-  cellType.reserve( region.getNumberOfParticles< ParticleRegion >() );
+  cellType.reserve( region.getNumberOfParticles() );
 
   vtkIdType nodeIndex = 0;
 
@@ -1263,7 +1263,7 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( string const & path,
   vtkSmartPointer< vtkAlgorithm > filter;
 
   // If we want to get rid of the ghost ranks, we use the appropriate `vtkThreshold` filter.
-  // If we don't, to keep the symetry in the code, we use a `vtkPassThrough`
+  // If we don't, to keep the symmetry in the code, we use a `vtkPassThrough`
   // that will allow a more generic code down the line.
   if( !m_writeGhostCells && ug->GetCellData()->HasArray( ObjectManagerBase::viewKeyStruct::ghostRankString() ) )
   {
@@ -1324,6 +1324,9 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( string const & path,
                                         globalValues.end(),
                                         []( int x ) { return x == -1; } ),
                         globalValues.end());
+    
+    // Have to clear the key first for the region otherwise it will not be overriden by insert breaking plotting
+    m_targetProcessesId.erase( region.getName() );
     m_targetProcessesId.insert( {region.getName(), globalValues} );
   }
 }

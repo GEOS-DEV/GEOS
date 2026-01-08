@@ -23,7 +23,6 @@
 #include "mesh/generators/VTKUtilities.hpp"
 #include "mesh/MeshFields.hpp"
 
-#include "common/TypeDispatch.hpp"
 #include "LvArray/src/tensorOps.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 

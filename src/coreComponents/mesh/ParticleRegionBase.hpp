@@ -160,12 +160,12 @@ public:
   template< typename SUBREGIONTYPE = ParticleSubRegionBase, typename ... SUBREGIONTYPES >
   localIndex getNumberOfParticles() const
   {
-    localIndex numParticle = 0;
+    localIndex numParticles = 0;
     this->forParticleSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( [&]( Group const & group ) -> void
     {
-      numParticle += group.size();
+      numParticles += group.size();
     } );
-    return numParticle;
+    return numParticles;
   }
 
   /**

@@ -377,7 +377,7 @@ protected:
   integer m_numberOfTargetProcesses;
 
   /// Map a region name to the array of ranks outputed for it
-  stdMap< string, stdVector< integer > > m_targetProcessesId;
+  stdMap< string, stdVector< integer > > m_targetProcessesId; // when inserting into stdMap that already contains the key, the new values do not override the existing which breaks plotting for MPM
 };
 
 } // namespace vtk
