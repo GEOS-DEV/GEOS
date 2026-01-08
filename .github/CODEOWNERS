@@ -16,7 +16,7 @@
 /inputFiles/compositionalMultiphaseWell               @tjb-ltk @dkachuma
 /inputFiles/efemFractureMechanics                     
 /inputFiles/hydraulicFracturing                       @rrsettgast @frankfeifan @cssherman @jhuang2601 @kimtaeho07
-/inputFiles/inducedSeismicity                         @castelletto1 @jhuang2601
+/inputFiles/inducedSeismicity                         @jhuang2601
 /inputFiles/initialization                            @rrsettgast @jhuang2601
 /inputFiles/lagrangianContactMechanics                @jhuang2601
 /inputFiles/materialPointMethod                       @homel1 @cmcrook5
