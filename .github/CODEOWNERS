@@ -33,7 +33,7 @@
 /inputFiles/singlePhaseFlowFractures                  @castelletto1 @jhuang2601 @dkachuma
 /inputFiles/singlePhaseWell                           @tjb-ltk @dkachuma
 /inputFiles/solidMechanics                            @castelletto1 @jhuang2601
-/inputFiles/surfaceGeneration                         @rrsettgast @castelletto1  
+/inputFiles/surfaceGeneration                         @rrsettgast
 /inputFiles/thermalMultiphaseFlow                     @dkachuma @tjb-ltk
 /inputFiles/thermalSinglePhaseFlowFractures           @castelletto1 @jhuang2601 @frankfeifan @dkachuma
 /inputFiles/thermoPoromechanics                       @jhuang2601 @castelletto1 @frankfeifan
