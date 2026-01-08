@@ -18,6 +18,7 @@
  */
 
 #include "TableCapillaryPressureHelpers.hpp"
+#include "CapillaryPressureBase.hpp"
 
 #include "common/DataTypes.hpp"
 
@@ -72,6 +73,61 @@ TableCapillaryPressureHelpers::validateCapillaryPressureTable( TableFunction con
   }
 }
 
+void TableCapillaryPressureHelpers::populateMinPhaseVolumeFraction(
+  arraySlice1d< integer const > const phaseOrder,
+  TableFunction const & capPresTable,
+  arraySlice1d< real64 > minPhaseVolumeFraction )
+{
+  using PT = CapillaryPressureBase::PhaseType;
+  integer const ipWater = phaseOrder[PT::WATER];
+  integer const ipOil   = phaseOrder[PT::OIL];
+  integer const ipGas   = phaseOrder[PT::GAS];
+
+  ArrayOfArraysView< real64 const > coords = capPresTable.getCoordinates();
+  arraySlice1d< real64 const > phaseVolFrac = coords[0];
+  real64 const minSaturation = phaseVolFrac[0];
+  real64 const maxSaturation = phaseVolFrac[phaseVolFrac.size()-1];
+  if( ipWater < 0 )
+  {
+    minPhaseVolumeFraction[ipGas] = minSaturation;
+    minPhaseVolumeFraction[ipOil] = 1.0 - maxSaturation;
+  }
+  else
+  {
+    minPhaseVolumeFraction[ipWater] = minSaturation;
+    if( 0 <= ipGas )
+    {
+      minPhaseVolumeFraction[ipGas] = 1.0 - maxSaturation;
+    }
+    else
+    {
+      minPhaseVolumeFraction[ipOil] = 1.0 - maxSaturation;
+    }
+  }
+}
+
+void TableCapillaryPressureHelpers::populateMinPhaseVolumeFraction(
+  arraySlice1d< integer const > const phaseOrder,
+  TableFunction const & capPresTableWettingIntermediate,
+  TableFunction const & capPresTableNonWettingIntermediate,
+  arraySlice1d< real64 > minPhaseVolumeFraction )
+{
+  using PT = CapillaryPressureBase::PhaseType;
+  integer const ipWater = phaseOrder[PT::WATER];
+  integer const ipOil   = phaseOrder[PT::OIL];
+  integer const ipGas   = phaseOrder[PT::GAS];
+
+  ArrayOfArraysView< real64 const > coords = capPresTableWettingIntermediate.getCoordinates();
+  arraySlice1d< real64 const > wettingSaturation = coords[0];
+  real64 const minWettingSaturation = wettingSaturation[0];
+  coords = capPresTableNonWettingIntermediate.getCoordinates();
+  arraySlice1d< real64 const > nonWettingSaturation = coords[0];
+  real64 const minNonWettingSaturation = nonWettingSaturation[0];
+
+  minPhaseVolumeFraction[ipWater] = minWettingSaturation;
+  minPhaseVolumeFraction[ipGas] = minNonWettingSaturation;
+  minPhaseVolumeFraction[ipOil] = 0.0;
+}
 
 void
 TableCapillaryPressureHelpers::validateCapillaryPressureTable( geos::TableFunction const & capPresTable,
