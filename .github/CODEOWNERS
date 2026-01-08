@@ -41,7 +41,7 @@
 /inputFiles/triaxialDriver                            @rrsettgast @jhuang2601
 /inputFiles/wavePropagation                           @acitrain @sframba
 /inputFiles/wellbore                                  @rrsettgast @jhuang2601
-/inputFiles/wellboreECP                               @rrsettgast
+/inputFiles/wellboreECP                               @rrsettgast @jhuang2601
 /src/coreComponents/LvArray                           @rrsettgast @wrtobin @corbett5
 /src/coreComponents/codingUtilities                   @rrsettgast @corbett5 @wrtobin @MelReyCG
 /src/coreComponents/common                            @rrsettgast @MelReyCG @corbett5 @wrtobin
