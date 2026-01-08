@@ -18,7 +18,7 @@
 /inputFiles/hydraulicFracturing                       @rrsettgast @frankfeifan @cssherman @jhuang2601 @kimtaeho07
 /inputFiles/inducedSeismicity                         @jhuang2601
 /inputFiles/initialization                            @rrsettgast @jhuang2601
-/inputFiles/lagrangianContactMechanics                @jhuang2601
+/inputFiles/lagrangianContactMechanics                @jhuang2601 @jafranc 
 /inputFiles/materialPointMethod                       @homel1 @cmcrook5
 /inputFiles/meshGeneration                            @rrsettgast @cssherman
 /inputFiles/multiphaseFlowFractures                   @jhuang2601 @tjb-ltk
