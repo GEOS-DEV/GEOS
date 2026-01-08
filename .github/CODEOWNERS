@@ -38,7 +38,7 @@
 /inputFiles/thermalSinglePhaseFlowFractures           @jhuang2601 @frankfeifan @dkachuma
 /inputFiles/thermoPoromechanics                       @jhuang2601 @castelletto1 @frankfeifan
 /inputFiles/thermoPoromechanicsFractures              @jhuang2601
-/inputFiles/triaxialDriver                            @rrsettgast@jhuang2601
+/inputFiles/triaxialDriver                            @rrsettgast @jhuang2601
 /inputFiles/wavePropagation                           @acitrain @sframba
 /inputFiles/wellbore                                  @rrsettgast @jhuang2601
 /inputFiles/wellboreECP                               @rrsettgast
