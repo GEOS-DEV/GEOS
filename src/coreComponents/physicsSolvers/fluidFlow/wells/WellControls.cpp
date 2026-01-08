@@ -75,8 +75,9 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDefaultValue( "" ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of reservoir region used for obtaining average region pressure used in volume rate constraint calculations.\n"
-                    "Frequency of pressure update is set in Single/CompositionalMultiPhaseStatistics definition.\n"
-                    "Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint properties" );
+                    "Frequency of pressure update is set in SinglePhase/CompositionalMultiphaseStatistics definition.\n"
+                    "Setting cycleFrequency='1' will update the pressure every timestep, note that is a lagged property in constraint properties"
+                    "Note the event associated with the statists task must be entered before the solver event.\n" );
 
   registerWrapper( viewKeyStruct::surfacePressureString(), &m_surfacePres ).
     setDefaultValue( 0 ).
@@ -269,7 +270,7 @@ void WellControls::postInputInitialization()
   GEOS_THROW_IF( m_inputControl == Control::UNINITIALIZED,
                  getWrapperDataContext( viewKeyStruct::inputControlString() ) <<
                  ": Input well control cannot be uninitialized",
-                 InputError );
+                 InputError, getWrapperDataContext( viewKeyStruct::inputControlString() ) );
 
   if( m_currentControl == Control::UNINITIALIZED )
   {
@@ -280,7 +281,7 @@ void WellControls::postInputInitialization()
   // 3) check the flag for surface / reservoir conditions
   GEOS_THROW_IF( m_useSurfaceConditions != 0 && m_useSurfaceConditions != 1,
                  getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) << ": The flag to select surface/reservoir conditions must be equal to 0 or 1",
-                 InputError );
+                 InputError, getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) );
 
   // tjb add more constraint validation
   // 1) liquid rate - phase names consistent with fluild model
@@ -304,13 +305,13 @@ void WellControls::postInputInitialization()
   GEOS_THROW_IF( (isInjector() && (m_inputControl == Control::PHASEVOLRATE)),
                  "WellControls " << getDataContext() << ": You have to control an injector with "
                                  << EnumStrings< Control >::toString( Control::TOTALVOLRATE ),
-                 InputError );
+                 InputError, getDataContext() );
 
   // An injector must be controlled by TotalVolRate
   GEOS_THROW_IF( (isProducer() && (m_inputControl == Control::MASSRATE)),
                  "WellControls " << getDataContext() << ": You have to control an injector with "
                                  << EnumStrings< Control >::toString( Control::MASSRATE ),
-                 InputError );
+                 InputError, getDataContext() );
 
   // 12) Create the time-dependent well status table
   if( m_statusTableName.empty())
@@ -332,7 +333,7 @@ void WellControls::postInputInitialization()
     GEOS_THROW_IF( m_statusTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
                    "WellControls " << getDataContext() << ": The interpolation method for the time-dependent status table "
                                    << m_statusTable->getName() << " should be TableFunction::InterpolationType::Lower",
-                   InputError );
+                   InputError, getDataContext() );
   }
 
 }

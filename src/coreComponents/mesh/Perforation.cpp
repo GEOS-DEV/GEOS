@@ -75,7 +75,8 @@ void Perforation::postInputInitialization()
 {
   GEOS_ERROR_IF( m_distanceFromHead <= 0,
                  getWrapperDataContext( viewKeyStruct::distanceFromHeadString() ) <<
-                 ": distance from well head to perforation cannot be negative." );
+                 ": distance from well head to perforation cannot be negative.",
+                 getWrapperDataContext( viewKeyStruct::distanceFromHeadString() ) );
 
   // Setup perforation status function
   FunctionManager & functionManager = FunctionManager::getInstance();

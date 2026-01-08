@@ -714,13 +714,13 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
         "The problem may be ill-posed.\n";
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[0] == 0, // target set is empty
                        GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'x' ) );
+                                 getCatalogName(), getDataContext(), 'x' ), getDataContext() );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[1] == 0, // target set is empty
                        GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'y' ) );
+                                 getCatalogName(), getDataContext(), 'y' ), getDataContext() );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[2] == 0, // target set is empty
                        GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'z' ) );
+                                 getCatalogName(), getDataContext(), 'z' ), getDataContext() );
     }
   }
 

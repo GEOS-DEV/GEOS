@@ -100,7 +100,7 @@ void WellConstraintBase::postInputInitialization()
 {
 
   GEOS_THROW_IF( ((m_constraintValue > 0.0 && !m_constraintScheduleTableName.empty())|| (!(m_constraintValue > 0.0) &&  m_constraintScheduleTableName.empty())),
-                 this->getName() << " " << this->getDataContext() << ": You have provided redundant information for well constraint value ." <<
+                 this->getDataContext() << ": You have provided redundant information for well constraint value ." <<
                  " A constraint value and table of constraint values cannot be specified together",
                  InputError );
 

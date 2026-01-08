@@ -142,9 +142,13 @@ mimeticInnerProductReducedDispatch( MimeticInnerProductBase const & input,
   {
     lambda( *ptr1 );
   }
-  else if( auto const * const ptr2 = dynamic_cast< BdVLMInnerProduct const * >(&input) )
+  else if( auto const * const ptr2 = dynamic_cast< QuasiTPFAInnerProduct const * >(&input) )
   {
     lambda( *ptr2 );
+  }
+  else if( auto const * const ptr3 = dynamic_cast< BdVLMInnerProduct const * >(&input) )
+  {
+    lambda( *ptr3 );
   }
   else
   {
@@ -169,9 +173,13 @@ mimeticInnerProductReducedDispatch( MimeticInnerProductBase & input,
   {
     lambda( *ptr1 );
   }
-  else if( auto * const ptr2 = dynamic_cast< BdVLMInnerProduct * >(&input) )
+  else if( auto * const ptr2 = dynamic_cast< QuasiTPFAInnerProduct * >(&input) )
   {
     lambda( *ptr2 );
+  }
+  else if( auto * const ptr3 = dynamic_cast< BdVLMInnerProduct * >(&input) )
+  {
+    lambda( *ptr3 );
   }
   else
   {

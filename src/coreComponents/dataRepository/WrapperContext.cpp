@@ -38,6 +38,13 @@ string WrapperContext::toString() const
          GEOS_FMT( "{}/{}", m_group.getDataContext().toString(), m_typeName );
 }
 
+ErrorLogger::ErrorContext WrapperContext::getContextInfo() const
+{
+  ErrorLogger::ErrorContext ctxInfo{
+    { { ErrorLogger::ErrorContext::Attribute::DataPath, toString() } } // m_attributes
+  };
+  return ctxInfo;
+}
 
 } /* namespace dataRepository */
 } /* namespace geos */

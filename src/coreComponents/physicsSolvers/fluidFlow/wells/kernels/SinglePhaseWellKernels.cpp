@@ -528,12 +528,12 @@ PresTempInitializationKernel::
 
   GEOS_THROW_IF( foundNegativePressure.get() == 1,
                  wellControls.getDataContext() << ": Invalid well initialization, negative pressure was found.",
-                 InputError );
+                 InputError, wellControls.getDataContext() );
   if( isThermal )   // tjb change  temp in isothermal cases shouldnt be an issue (also what if temp in fluid prop calcs like compo)
   {
     GEOS_THROW_IF( foundNegativeTemp.get() == 1,
                    wellControls.getDataContext() << "Invalid well initialization, negative temperature was found.",
-                   InputError );
+                   InputError, wellControls.getDataContext() );
   }
 }
 

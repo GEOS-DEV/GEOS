@@ -327,10 +327,16 @@ public:
                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                 arrayView1d< real64 > const & localRhs ) = 0;
   /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive
+   * models)
+   * @param elemManager the element region manager
+   * @param subRegion the well subRegion containing the well elements and their associated fields
+   */
+  virtual real64 updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
+  /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
-  virtual real64 updateWellState( WellElementSubRegion & subRegion ) = 0;
   virtual void updateState( DomainPartition & domain ) override;
   virtual void saveState( WellElementSubRegion & subRegion )   = 0;
   /**
@@ -343,10 +349,10 @@ public:
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive
    * models)
-   * @param subRegion the well subRegion containing the well elements and their associated
+   * @param elemManager the element region manager
    * fields
    */
-  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
+  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
 
 
   virtual void computeWellPerforationRates( real64 const & GEOS_UNUSED_PARAM( time_n ),
@@ -460,7 +466,7 @@ public:
     static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
     static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
     static constexpr char const * writeSegDebugFlagString() { return "writeSegDebug"; }
-    static constexpr char const * useNewCodeString() { return "useNewCode"; }
+
 
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
   };
@@ -492,8 +498,7 @@ protected:
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion,
-                                        ElementRegionManager const & elemManager ) = 0;
+                                        WellElementSubRegion const & subRegion ) = 0;
 
   virtual void printRates( real64 const & time_n,
                            real64 const & dt,
@@ -568,9 +573,6 @@ protected:
   integer my_ctime; //tjb
 
   real64 m_nextDt;
-
-  integer m_useNewCode;
-
 };
 
 }

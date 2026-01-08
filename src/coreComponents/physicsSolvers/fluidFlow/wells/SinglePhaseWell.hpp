@@ -163,6 +163,7 @@ public:
 
   /**
    * @brief Recompute the volumetric rate that are used in the well constraints
+   * @param elemManager the well region manager
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
   virtual void calculateReferenceElementRates( WellElementSubRegion & subRegion );
@@ -180,9 +181,10 @@ public:
   virtual void updateFluidModel( WellElementSubRegion & subRegion ) const;
   /**
    * @brief Update separator model state
+   * @param elemManager the element region manager
    * @param subRegion the well subRegion containing the separator
    */
-  void updateSeparator( WellElementSubRegion & subRegion );
+  void updateSeparator( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion );
 
   /**
    * @brief Recompute the perforation rates for all the wells
@@ -194,16 +196,19 @@ public:
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive
    * models)
-   * @param domain the domain containing the mesh and fields
+
+   * @param
+   * @param subRegion the well subRegion containing the well elements and their associated
    */
-  virtual real64 updateWellState( WellElementSubRegion & subRegion ) override;
+  virtual real64 updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
   virtual void updateState( DomainPartition & domain ) override;
 
   /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
+   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @param elemManager the element region manager
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
-  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
 
   /**
    * @brief function to assemble the linear system matrix and rhs
@@ -392,12 +397,11 @@ private:
    * @param time_n the time at the beginning of the time step
    * @param dt the time step dt
    * @param subRegion the well subRegion
-   * @param elemManager the element manager
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        WellElementSubRegion const & subRegion,
-                                        ElementRegionManager const & elemManager ) override;
+                                        WellElementSubRegion const & subRegion
+                                        ) override;
 
   virtual bool evaluateConstraints( real64 const &   time_n,
                                     real64 const & GEOS_UNUSED_PARAM( stepDt ),
@@ -408,6 +412,7 @@ private:
                                     ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
                                     WellElementSubRegion &   subRegion,
                                     DofManager const & GEOS_UNUSED_PARAM( dofManager ) ) override;
+
 
 
   /**

@@ -15,6 +15,7 @@
 
 #include "BlackOilFluidBase.hpp"
 
+#include "common/logger/ErrorHandling.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/multifluid/CO2Brine/functions/PVTFunctionHelpers.hpp"
 #include "functions/FunctionManager.hpp"
@@ -105,7 +106,7 @@ void BlackOilFluidBase::fillWaterData( array1d< array1d< real64 > > const & tabl
   GEOS_THROW_IF( m_waterParams.referencePressure > 0.0 || m_waterParams.formationVolFactor > 0.0 ||
                  m_waterParams.compressibility > 0.0 || m_waterParams.viscosity > 0.0,
                  getFullName() << ": input is redundant (user provided both water data and a water pvt file)",
-                 InputError );
+                 InputError, getDataContext() );
 
   m_waterParams.referencePressure = tableValues[0][0];
   m_waterParams.formationVolFactor = tableValues[0][1];
@@ -261,8 +262,12 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
       m_formationVolFactorTables[iph]->checkCoord( pressure, 0 );
     } catch( SimulationError const & ex )
     {
-      throw SimulationError( ex, GEOS_FMT( errorMsg, getCatalogName(), getDataContext(),
-                                           "formation volume factor", iph ) );
+      string const msg = GEOS_FMT( errorMsg, getCatalogName(), getDataContext(),
+                                   "formation volume factor", iph );
+      ErrorLogger::global().currentErrorMsg()
+        .addToMsg( msg )
+        .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
+      throw SimulationError( ex, msg );
     }
 
     try
@@ -270,8 +275,12 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
       m_viscosityTables[iph]->checkCoord( pressure, 0 );
     } catch( SimulationError const & ex )
     {
-      throw SimulationError( ex, GEOS_FMT( errorMsg, getCatalogName(), getDataContext(),
-                                           "viscosity", iph ) );
+      string const msg = GEOS_FMT( errorMsg, getCatalogName(), getDataContext(),
+                                   "viscosity", iph );
+      ErrorLogger::global().currentErrorMsg()
+        .addToMsg( msg )
+        .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
+      throw SimulationError( ex, msg );
     }
   }
 }
@@ -280,7 +289,7 @@ void BlackOilFluidBase::createAllKernelWrappers()
 {
   GEOS_THROW_IF( m_hydrocarbonPhaseOrder.size() != 1 && m_hydrocarbonPhaseOrder.size() != 2,
                  GEOS_FMT( "{}: the number of hydrocarbon phases must be 1 (oil) or 2 (oil+gas)", getFullName() ),
-                 InputError );
+                 InputError, getDataContext() );
 
   if( m_formationVolFactorTableKernels.empty() && m_viscosityTableKernels.empty() )
   {
@@ -311,7 +320,7 @@ void BlackOilFluidBase::validateTable( TableFunction const & table,
   {
     GEOS_THROW_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
                    GEOS_FMT( "{}: in table '{}', viscosity values must be monotone", getFullName(), table.getName() ),
-                   InputError );
+                   InputError, getDataContext() );
   }
 
   // we don't check the first value, as it may be used to specify surface conditions

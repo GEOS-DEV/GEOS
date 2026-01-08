@@ -48,8 +48,7 @@ WellSolverBase::WellSolverBase( string const & name,
   m_globalNumTimeSteps( -1 ),
   m_currentDt( -1.0 ),
   my_ctime( 0 ),
-  m_nextDt( -1 ),
-  m_useNewCode( true )
+  m_nextDt( -1 )
 {
   registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -62,17 +61,12 @@ WellSolverBase::WellSolverBase( string const & name,
   this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "When set to 1, write the rates into a CSV file" );
+    setDescription( "When set to 1, write the rates into a CSV file." );
 
   this->registerWrapper( viewKeyStruct::timeStepFromTablesFlagString(), &m_timeStepFromTables ).
     setApplyDefaultValue( 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Choose time step to honor rates/bhp tables time intervals" );
-
-  this->registerWrapper( viewKeyStruct::useNewCodeString(), &m_useNewCode ).
-    setApplyDefaultValue( 1 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Use new code" );
 
   this->registerWrapper( viewKeyStruct::writeSegDebugFlagString(), &m_writeSegDebug ).
     setApplyDefaultValue( 0 ).
@@ -90,7 +84,8 @@ Group * WellSolverBase::createChild( string const & childKey, string const & chi
     PhysicsSolverBase::groupKeyStruct::nonlinearSolverParametersString(),
   };
   GEOS_ERROR_IF( childTypes.count( childKey ) == 0,
-                 CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
+                 CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ),
+                 getDataContext() );
   if( childKey == keys::wellControls )
   {
     return &registerGroup< WellControls >( childName );
@@ -182,7 +177,7 @@ void WellSolverBase::initializePostSubGroups()
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
-      validateWellConstraints( 0, 0, subRegion, elemManager );
+      validateWellConstraints( 0, 0, subRegion );
 
       // validate perforation status table
       PerforationData & perforationData = *subRegion.getPerforationData();
@@ -314,12 +309,7 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
 
   // Open close perfs
   setPerforationStatus( time_n, domain );
-
-  // Initialize the primary and secondary variables for the first time step
-  if( !m_useNewCode )
-  {
-    initializeWells( domain, time_n );
-  }
+  initializeWells( domain, time_n );
 
 }
 void WellSolverBase::setupWellDofs( DomainPartition & domain )
@@ -361,6 +351,7 @@ void WellSolverBase::setupWellDofs( DomainPartition & domain )
     } );
   }
 }
+
 
 void WellSolverBase::selectWellConstraint( real64 const & time_n,
                                            real64 const & dt,
@@ -486,9 +477,10 @@ void WellSolverBase::updateState( DomainPartition & domain )
                                                                MeshLevel & mesh,
                                                                string_array const & regionNames )
   {
-    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          WellElementSubRegion & subRegion )
-    { updateSubRegionState( subRegion ); } );
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                WellElementSubRegion & subRegion )
+    { updateSubRegionState( elemManager, subRegion ); } );
   } );
 }
 
@@ -524,16 +516,15 @@ void WellSolverBase::assembleSystem( real64 const time,
                                      arrayView1d< real64 > const & localRhs )
 {
 
-  if( m_useNewCode )
-  {
-    // selects constraints one of 2 ways
-    //  wellEstimator flag set to 0 => orginal logic rates are computed during update state and constraints are selected every newton
-    // iteration
-    //  wellEstimator flag > 0 =>   well esitmator solved for each constraint and then selects the constraint
-    //                         =>   estimator solve only performed first "wellEstimator" iterations
-    NonlinearSolverParameters const & nonlinearParams =  getNonlinearSolverParameters();
-    selectWellConstraint( time, dt, nonlinearParams.m_numNewtonIterations, domain );
-  }
+
+  // selects constraints one of 2 ways
+  //  wellEstimator flag set to 0 => orginal logic rates are computed during update state and constraints are selected every newton
+  // iteration
+  //  wellEstimator flag > 0 =>   well esitmator solved for each constraint and then selects the constraint
+  //                         =>   estimator solve only performed first "wellEstimator" iterations
+  NonlinearSolverParameters const & nonlinearParams =  getNonlinearSolverParameters();
+  selectWellConstraint( time, dt, nonlinearParams.m_numNewtonIterations, domain );
+
 
 
   // assemble the accumulation term in the mass balance equations
@@ -541,23 +532,22 @@ void WellSolverBase::assembleSystem( real64 const time,
 
   // then assemble the pressure relations between well elements
   assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
-  //if(  false && m_useNewCode )
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
   {
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                                                 MeshLevel & mesh,
-                                                                 string_array const & regionNames )
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                 [&]( localIndex const,
+                                                                      WellElementRegion & region )
     {
-      ElementRegionManager & elementRegionManager = mesh.getElemManager();
-      elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
-                                                                   [&]( localIndex const,
-                                                                        WellElementRegion & region )
-      {
-        WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
-                                             .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+      WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                           .getGroup< WellElementSubRegion >( region.getSubRegionName() );
         assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-      } );
     } );
-  }
+  } );
+
   // then compute the perforation rates (later assembled by the coupled solver)
   computePerforationRates( time, dt, domain );
 
@@ -1006,7 +996,7 @@ bool WellSolverBase::solveNonlinearSystem( real64 const & time_n,
       Timer timer( m_timers.get_inserted( "update state" ) );
 
       // update derived variables (constitutive models)
-      updateWellState( subRegion );
+      updateWellState( elemManager, subRegion );
       outputSingleWellDebug( time_n, stepDt, 0, newtonIter+1, 0,
                              mesh, subRegion, dofManager, m_localMatrix.toViewConstSizes(), m_rhs.values()  );
     }
@@ -1066,7 +1056,7 @@ bool WellSolverBase::lineSearch1( real64 const & time_n,
     applyWellSystemSolution( dofManager, solution.values(), localScaleFactor, dt, domain, mesh, subRegion );
     // update non-primary variables (constitutive models)
 
-    updateWellState( subRegion );
+    updateWellState( elemManager, subRegion );
     // re-assemble system
     localMatrix.zero();
     rhs.zero();

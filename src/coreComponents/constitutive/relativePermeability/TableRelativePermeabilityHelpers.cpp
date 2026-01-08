@@ -61,14 +61,14 @@ TableRelativePermeabilityHelpers::validateRelativePermeabilityTable( TableFuncti
   GEOS_THROW_IF( !isZero( relPerm[0] ),
                  GEOS_FMT( "{}: TableFunction '{}' first value must be equal to 0",
                            fullConstitutiveName, relPermTable.getDataContext() ),
-                 InputError );
+                 InputError, relPermTable.getDataContext() );
   for( localIndex i = 1; i < coords.sizeOfArray( 0 ); ++i )
   {
     // check phase volume fraction
     GEOS_THROW_IF( phaseVolFrac[i] < 0 || phaseVolFrac[i] > 1,
                    GEOS_FMT( "{}: TableFunction '{}' values must be between 0 and 1",
                              fullConstitutiveName, relPermTable.getDataContext() ),
-                   InputError );
+                   InputError, relPermTable.getDataContext() );
 
     // note that the TableFunction class has already checked that the coordinates are monotone
 
@@ -76,7 +76,7 @@ TableRelativePermeabilityHelpers::validateRelativePermeabilityTable( TableFuncti
     GEOS_THROW_IF( !isZero( relPerm[i] ) && (relPerm[i] - relPerm[i-1]) < 1e-15,
                    GEOS_FMT( "{}: TableFunction '{}' values must be strictly increasing (|Delta kr| > 1e-15 between two non-zero values)",
                              fullConstitutiveName, relPermTable.getDataContext() ),
-                   InputError );
+                   InputError, relPermTable.getDataContext() );
 
     if( isZero( relPerm[i-1] ) && !isZero( relPerm[i] ) )
     {
