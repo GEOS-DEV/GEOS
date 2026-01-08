@@ -45,7 +45,7 @@
 /src/coreComponents/LvArray                           @rrsettgast @wrtobin @corbett5
 /src/coreComponents/codingUtilities                   @rrsettgast @corbett5 @wrtobin @MelReyCG
 /src/coreComponents/common                            @rrsettgast @MelReyCG @corbett5 @wrtobin
-/src/coreComponents/constitutive                      @rrsettgast @dkachuma @castelletto1
+/src/coreComponents/constitutive                      @rrsettgast @dkachuma
 /src/coreComponents/constitutive/capillaryPressure    @dkachuma
 /src/coreComponents/constitutive/contact              @rrsettgast @jhuang2601
 /src/coreComponents/constitutive/diffusion            @dkachuma
