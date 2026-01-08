@@ -55,7 +55,7 @@
 /src/coreComponents/constitutive/permeability         @dkachuma @jhuang2601 
 /src/coreComponents/constitutive/pvtPackage           @dkachuma
 /src/coreComponents/constitutive/relativePermeability @dkachuma 
-/src/coreComponents/constitutive/solid                @rrsettgast @castelletto1 @jhuang2601
+/src/coreComponents/constitutive/solid                @rrsettgast @jhuang2601
 /src/coreComponents/constitutive/thermalConductivity  @dkachuma @jhuang2601 
 /src/coreComponents/constitutive/unitTests            @rrsettgast @dkachuma
 /src/coreComponents/constitutiveDrivers               @rrsettgast @dkachuma @jhuang2601
