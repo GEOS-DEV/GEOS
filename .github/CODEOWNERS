@@ -30,7 +30,7 @@
 /inputFiles/relpermDriver                             @dkachuma @jafranc
 /inputFiles/simplePDE                                 @rrsettgast @castelletto1
 /inputFiles/singlePhaseFlow                           @castelletto1 @jhuang2601 @dkachuma
-/inputFiles/singlePhaseFlowFractures                  @castelletto1 @jhuang2601 @dkachuma
+/inputFiles/singlePhaseFlowFractures                  @jhuang2601 @dkachuma
 /inputFiles/singlePhaseWell                           @tjb-ltk @dkachuma
 /inputFiles/solidMechanics                            @castelletto1 @jhuang2601
 /inputFiles/surfaceGeneration                         @rrsettgast
