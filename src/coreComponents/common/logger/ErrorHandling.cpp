@@ -107,9 +107,6 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addSignalToMsg( integer const sig, 
     if( std::fetestexcept( FE_DIVBYZERO ) )
       errorMsg += "- Division by zero operation.\n";
 
-    if( std::fetestexcept( FE_INEXACT ) )
-      errorMsg += "- Inexact result.\n";
-
     if( std::fetestexcept( FE_INVALID ) )
       errorMsg += "- Domain error occurred in an earlier floating-point operation.\n";
 
@@ -118,6 +115,9 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addSignalToMsg( integer const sig, 
 
     if( std::fetestexcept( FE_UNDERFLOW ) )
       errorMsg += "- The result of the earlier floating-point operation was subnormal with a loss of precision.\n";
+
+    if( std::fetestexcept( FE_INEXACT ) )
+      errorMsg += "- Inexact result.\n";
 
     return addToMsg( errorMsg,
                      toEnd );
@@ -137,7 +137,6 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::setCodeLocation( std::string_view m
 {
   m_errorMsg.m_file = msgFile;
   m_errorMsg.m_line = msgLine;
-  std::cout << "m_errorMsg.m_file "<<  m_errorMsg.m_file << std::endl;
   return *this;
 }
 
@@ -311,7 +310,6 @@ void ErrorLogger::writeToYaml( DiagnosticMsg & errMsg )
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
   if( yamlFile.is_open() )
   {
-    std::cout << " errMsg.m_msg : "<< errMsg.m_msg <<  std::endl;
     // General errors info (type, rank on which the error occured)
     yamlFile << g_level1Start << "type: " << ErrorLogger::toString( errMsg.m_type ) << "\n";
     yamlFile << g_level1Next << "rank: " << stringutilities::join( errMsg.m_ranksInfo, "," );

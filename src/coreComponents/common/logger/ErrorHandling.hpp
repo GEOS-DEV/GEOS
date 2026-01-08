@@ -50,11 +50,11 @@ struct ErrorContext
 
   /**
    * @brief Construct to initialize ErrorContext given a string containing the context and his attribute
-   * @param dataDisplayString String containing the target object name followed by the the file and line declaring it.
+   * @param formattedContext String containing the target object name followed by the the file and line declaring it.
    * @param attributes Map containing contextual information about the error
    */
-  ErrorContext( string dataDisplayString, map< Attribute, std::string >  attributes ):
-    m_formattedContext( dataDisplayString ),
+  ErrorContext( string formattedContext, map< Attribute, std::string >  attributes ):
+    m_formattedContext( formattedContext ),
     m_attributes( attributes ) {};
 
   /**
