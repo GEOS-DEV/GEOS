@@ -73,7 +73,7 @@
 /src/coreComponents/math                              @rrsettgast @corbett5 @wrtobin @OmarDuran
 /src/coreComponents/mesh                              @rrsettgast @wrtobin @OmarDuran
 /src/coreComponents/physicsSolvers                    @rrsettgast @OmarDuran
-/src/coreComponents/physicsSolvers/contact            @rrsettgast
+/src/coreComponents/physicsSolvers/contact            @rrsettgast @jhuang2601 @jafranc 
 /src/coreComponents/physicsSolvers/fluidFlow          @rrsettgast @tjb-ltk @dkachuma @OmarDuran
 /src/coreComponents/physicsSolvers/inducedSeismicity  @rrsettgast @jhuang2601 @kimtaeho07 @frankfeifan
 /src/coreComponents/physicsSolvers/multiphysics       @rrsettgast @castelletto1 @frankfeifan @jhuang2601
