@@ -78,7 +78,7 @@ public:
     {
       std::ostringstream oss;
       oss << "***** GEOS Exception\n";
-      oss << "***** LOCATION: " << file << " l." << line << "\n";
+      oss << "***** LOCATION: " << file << ":" << line << "\n";
       oss << "***** " << cause << "\n";
       oss << "***** Rank  " << rank << ": "<< msg <<"\n\n";
       oss << stackTrace;

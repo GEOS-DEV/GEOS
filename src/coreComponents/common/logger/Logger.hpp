@@ -231,7 +231,7 @@
         .addRank( ::geos::logger::internal::g_rank ) \
         .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
         .addToMsg( __msgoss.str() ) \
-        .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ ) ).get(); \
+        .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )).get(); \
       auto ex = GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )(); \
       ex.prepareWhat( __msgoss.str(), __causemsgsoss.str(), \
                       __FILE__, __LINE__, \

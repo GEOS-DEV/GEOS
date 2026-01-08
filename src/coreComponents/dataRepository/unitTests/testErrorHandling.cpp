@@ -148,9 +148,11 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
       Base Test Class (file.xml, l.23): option should be between 1e-06 and 0.001. A value of 1e-06 will be used.
     contexts:
       - priority: 0
+        description: Base Test Class (file.xml, l.23)
         inputFile: /path/to/file.xml
         inputLine: 23
       - priority: 0
+        description: Additional Test Class (file.xml, l.32)
         inputFile: /path/to/file.xml
         inputLine: 32
     cause: >-
@@ -172,7 +174,7 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
   // Stacked exception test (contexts must appear sorted by priority)
   try
   {
-    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError, context );
+    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError, context.getContextInfo() );
   }
   catch( geos::DomainError const & ex )
   {
@@ -182,24 +184,20 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
       .addContextInfo( additionalContext.getContextInfo() )
       .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) ).get();
     string const whatExpected = GEOS_FMT( "***** GEOS Exception\n"
-                                          "***** LOCATION: {} l.{}\n"
+                                          "***** LOCATION: {}:{}\n"
                                           "***** Error cause: testValue == 5\n"
                                           "***** Rank  0: Empty Group",
                                           testErrorLogger.getCurrentExceptionMsg().m_file, line1 );
 
-    std::cout << "crash ? 0 "<< line1 << std::endl;
-    std::cout << "ex.what() "<< ex.what() << std::endl;
-    std::cout << "whatExpected "<< whatExpected << std::endl;
-    GEOS_ERROR_IF_EQ_MSG( string( ex.what() ).find( whatExpected ), string::npos,
+    GEOS_ERROR_IF_EQ_MSG( string( ex.what()).find( whatExpected ), string::npos,
                           "The error message was not containing the expected sequence.\n" <<
                           "  Error message :\n" << ex.what() <<
                           "  expected sequence :\n" << whatExpected );
   }
+
   testErrorLogger.flushCurrentExceptionMessage();
-  std::cout << "line "<< line1 << std::endl;
   endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
-
     GEOS_FMT(
       R"(- type: Exception
     rank: 0
@@ -208,12 +206,15 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
       Empty Group
     contexts:
       - priority: 2
+        description: Important Additional Test Class (file.xml, l.64)
         inputFile: /path/to/file.xml
         inputLine: 64
       - priority: 0
+        description: Base Test Class (file.xml, l.23)
         inputFile: /path/to/file.xml
         inputLine: 23
       - priority: 0
+        description: Additional Test Class (file.xml, l.32)
         inputFile: /path/to/file.xml
         inputLine: 32
     cause: >-
@@ -254,12 +255,15 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
       Base Test Class (file.xml, l.23): option should be lower than 0.001.
     contexts:
       - priority: 2
+        description: Important Additional Test Class (file.xml, l.64)
         inputFile: /path/to/file.xml
         inputLine: 64
       - priority: 0
+        description: Base Test Class (file.xml, l.23)
         inputFile: /path/to/file.xml
         inputLine: 23
       - priority: 0
+        description: Additional Test Class (file.xml, l.32)
         inputFile: /path/to/file.xml
         inputLine: 32
     cause: >-
@@ -296,7 +300,7 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
       .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 )).get();
     string const streamExpected = GEOS_FMT(
       "***** Exception\n"
-      "***** LOCATION: {} l.{}\n"
+      "***** LOCATION: {}:{}\n"
       "***** {}\n"
       "***** Rank 0\n"
       "***** Message from {}:\n"
@@ -379,9 +383,11 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
       Base Test Class (file.xml, l.23): value should be between 1e-06 and 0.001, but is 5.
     contexts:
       - priority: 0
+        description: Base Test Class (file.xml, l.23)
         inputFile: /path/to/file.xml
         inputLine: 23
       - priority: 0
+        description: Additional Test Class (file.xml, l.32)
         inputFile: /path/to/file.xml
         inputLine: 32
     cause: >-

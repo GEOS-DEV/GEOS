@@ -54,7 +54,7 @@ struct ErrorContext
    * @param attributes Map containing contextual information about the error
    */
   ErrorContext( string dataDisplayString, map< Attribute, std::string >  attributes ):
-    m_dataDisplayString( dataDisplayString ),
+    m_formattedContext( dataDisplayString ),
     m_attributes( attributes ) {};
 
   /**
@@ -63,7 +63,7 @@ struct ErrorContext
    * @param priority Priority level assigned to an error context.
    */
   ErrorContext( map< Attribute, std::string >  attributes, integer priority ):
-    m_dataDisplayString( "" ),
+    m_formattedContext( "" ),
     m_attributes( attributes ),
     m_priority( priority ) {};
 
@@ -83,7 +83,7 @@ struct ErrorContext
   static std::string attributeToString( Attribute attribute );
 
   /// String containing the target object name followed by the the file and line declaring it.
-  string m_dataDisplayString;
+  string m_formattedContext;
 
   /// The map contains contextual information about the error
   /// It could be something like
@@ -165,7 +165,7 @@ public:
    * @param toEnd If true, append at end; otherwise prepend
    * @return Reference to the current instance for method chaining.
    */
-  DiagnosticMsgBuilder & addToMsg( std::string_view msg, bool const toEnd = false );
+  DiagnosticMsgBuilder & addToMsg( std::string_view msg, bool toEnd = false );
   /**
    * @brief Adds one or more context elements to the error
    * @tparam Args Variadic pack of compatible types (ErrorContext / DataContext)
@@ -186,20 +186,20 @@ public:
    * @param toEnd adds the message to the end if true, at the start otherwise.
    * @return The instance, for builder pattern.
    */
-  DiagnosticMsgBuilder & addSignalToMsg( integer const sig, bool toEnd = false );
+  DiagnosticMsgBuilder & addSignalToMsg( integer sig, bool toEnd = false );
   /**
    * @brief Set the source code location values (file and line where the error is detected)
    * @param msgFile Name of the source file location to add
    * @param msgLine Line of the source file location to add
    * @return Reference to the current instance for method chaining.
    */
-  DiagnosticMsgBuilder & setCodeLocation( std::string_view msgFile, integer const msgLine );
+  DiagnosticMsgBuilder & setCodeLocation( std::string_view msgFile, integer msgLine );
   /**
    * @brief Set the type of the error
    * @param msgType The type can be error, warning or exception
    * @return Reference to the current instance for method chaining.
    */
-  DiagnosticMsgBuilder & setType( MsgType const msgType );
+  DiagnosticMsgBuilder & setType( MsgType msgType );
   /**
    * @brief Set the cause of the error
    * @param cause See documentation of m_cause.
@@ -211,7 +211,7 @@ public:
    * @param rank The value to add
    * @return Reference to the current instance for method chaining.
    */
-  DiagnosticMsgBuilder & addRank( integer const rank );
+  DiagnosticMsgBuilder & addRank( integer rank );
   /**
    * @brief Add stack trace information about the error
    * @param ossStackTrace stack trace information to add
@@ -321,15 +321,15 @@ public:
   { return DiagnosticMsgBuilder::modify( m_getCurrentExceptionMsg ); }
 
   /**
-   * @brief Write all the information retrieved about the current exception message into the output stream specified and
-   * optionnaly into a yaml file
+   * @brief Write all the information retrieved about the current exception message into the instance
+   * outputs (stream specified + optional yaml file)
    */
   void flushCurrentExceptionMessage();
 
   /**
-   * @brief Write all the information retrieved about the error message into the output stream specified and
-   * optionnaly into a yaml file
-   * @param errorMsg Message to format
+   * @brief Write all the information retrieved about the diagnostic message into the instance
+   * outputs (stream specified + optional yaml file)
+   * @param errorMsg a reference to the ErrorMsg to output, and will be re-initialized
    * @note Used for warnings and non-exception errors
    */
   void flushErrorMsg( DiagnosticMsg & errMsg );

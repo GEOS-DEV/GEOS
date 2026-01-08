@@ -265,7 +265,7 @@ void ErrorLogger::writeToAscii( DiagnosticMsg const & errMsg, std::ostream & oss
     oss << PREFIX<< "LOCATION: " << errMsg.m_file;
     if( errMsg.m_line > 0 )
     {
-      oss << " l." << errMsg.m_line;
+      oss << ":" << errMsg.m_line;
     }
     oss << "\n";
   }
@@ -282,7 +282,7 @@ void ErrorLogger::writeToAscii( DiagnosticMsg const & errMsg, std::ostream & oss
   }
   else
   {
-    oss << PREFIX << "Message from " << contexts.front().m_dataDisplayString << ":\n";
+    oss << PREFIX << "Message from " << contexts.front().m_formattedContext << ":\n";
   }
   oss << errMsg.m_msg << "\n";
 
@@ -291,7 +291,7 @@ void ErrorLogger::writeToAscii( DiagnosticMsg const & errMsg, std::ostream & oss
     oss << PREFIX << "Additional contexts:\n";
     for( size_t i = 1; i < contexts.size(); ++i )
     {
-      oss << PREFIX << "- " << contexts[i].m_dataDisplayString << "\n";
+      oss << PREFIX << "- " << contexts[i].m_formattedContext << "\n";
     }
   }
   // --- STACKTRACE ---
@@ -320,7 +320,6 @@ void ErrorLogger::writeToYaml( DiagnosticMsg & errMsg )
     // Error message
     yamlFile << g_level1Next << "message: >-\n";
     streamMultilineYamlAttribute( errMsg.m_msg, yamlFile, g_level2Next );
-
     // context information
     if( !errMsg.m_contextsInfo.empty() )
     {
@@ -335,6 +334,10 @@ void ErrorLogger::writeToYaml( DiagnosticMsg & errMsg )
       for( ErrorContext const & ctxInfo : contextInfo )
       {
         yamlFile << g_level3Start << "priority: " << ctxInfo.m_priority << "\n";
+        if( !ctxInfo.m_formattedContext.empty())
+        {
+          yamlFile << g_level3Next << "description: " << ctxInfo.m_formattedContext << "\n";
+        }
         for( auto const & [key, value] : ctxInfo.m_attributes )
         {
           yamlFile << g_level3Next << ErrorContext::attributeToString( key ) << ": " << value << "\n";
@@ -354,7 +357,10 @@ void ErrorLogger::writeToYaml( DiagnosticMsg & errMsg )
     {
       yamlFile << g_level1Next << "sourceLocation:\n";
       yamlFile << g_level2Next << "file: " << errMsg.m_file << "\n";
-      yamlFile << g_level2Next << "line: " << errMsg.m_line << "\n";
+      if( errMsg.m_line > 0 )
+      {
+        yamlFile << g_level2Next << "line: " << errMsg.m_line << "\n";
+      }
     }
     // Information about the stack trace
     if( !errMsg.m_sourceCallStack.empty() )
