@@ -82,7 +82,7 @@
 /src/coreComponents/physicsSolvers/solidMechanics     @rrsettgast @castelletto1 @jhuang2601
 /src/coreComponents/physicsSolvers/surfaceGeneration  @rrsettgast @jhuang2601 @OmarDuran
 /src/coreComponents/physicsSolvers/wavePropagation    @sframba @acitrain
-/src/coreComponents/schema                            @rrsettgast @herve-gross @castelletto1 @jhuang2601 @dkachuma @OmarDuran
+/src/coreComponents/schema                            @rrsettgast @herve-gross @jhuang2601 @dkachuma @OmarDuran
 /src/coreComponents/integrationTests                  @rrsettgast @corbett5 @wrtobin @MelReyCG @dkachuma @OmarDuran
 /src/docs                                             @rrsettgast @herve-gross @castelletto1 @jhuang2601 @dkachuma @OmarDuran
 /src/main                                             @rrsettgast @MelReyCG
