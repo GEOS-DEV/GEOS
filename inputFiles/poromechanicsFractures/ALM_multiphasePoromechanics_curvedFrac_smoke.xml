@@ -71,10 +71,11 @@
         newtonMaxIter="8"
         allowNonConverged="1"/>
       <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"
-        krylovMaxIter="200"
-        krylovTol="1.0e-8"
+        solverType="fgmres"
+        preconditionerType="mgr"
+        krylovTol="0.0001"
+        krylovAdaptiveTol="1"
+        krylovWeakestTol="0.001"
         logLevel="1"/>
      </CompositionalMultiphaseFVM> 
   </Solvers>
