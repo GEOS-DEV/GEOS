@@ -38,14 +38,8 @@ public:
   Exception( std::string const & what ):
     std::exception( )
   {
-    m_errorMsg.m_msg = what;
+    m_cachedWhat = what;
   }
-
-  /**
-   * @return Reference to the ErrorMsg object
-   */
-  DiagnosticMsg & getErrorMsg()
-  { return m_errorMsg; }
 
   /**
    * @brief System fallback to get description content if error system does not achieve to output the ErrorMsg
@@ -60,41 +54,21 @@ public:
 
   /**
    * @brief Prepare and cache the formatted exception message
-   * @param msg The main error message
-   * @param cause The cause of the exception
-   * @param file The source file where the exception occurred
-   * @param line The line number where the exception occurred
-   * @param rank The MPI rank
-   * @param stackTrace The stack trace at the point of exception
+   * @param msg Error message logger for structured error reporting
    */
-  void prepareWhat( std::string const & msg,
-                    std::string const & cause,
-                    char const * file,
-                    int line,
-                    int rank,
-                    string_view stackTrace ) noexcept
+  void prepareWhat( DiagnosticMsg & msg ) noexcept
   {
-    try
-    {
-      std::ostringstream oss;
-      oss << "***** GEOS Exception\n";
-      oss << "***** LOCATION: " << file << ":" << line << "\n";
-      oss << "***** " << cause << "\n";
-      oss << "***** Rank  " << rank << ": "<< msg <<"\n\n";
-      oss << stackTrace;
-      m_cachedWhat = oss.str();
-    } catch( ... )
-    {
-      m_cachedWhat = "GEOS Exception (formatting failed)";
-    }
+    m_formattingOSS.str("");  
+    m_formattingOSS.clear();  
 
+    ErrorLogger::writeToAscii( msg, m_formattingOSS );  
+    m_cachedWhat = m_formattingOSS.bad() ? "Exception formatting error!" : m_formattingOSS.str();  
   }
 
 private:
   /// Formatted exception message for what() method
   string m_cachedWhat;
-  /// Error message logger for structured error reporting
-  DiagnosticMsg m_errorMsg;
+  inline static thread_local std::ostringstream m_formattingOSS; 
 };
 
 /**
