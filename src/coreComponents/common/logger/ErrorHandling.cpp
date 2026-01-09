@@ -138,7 +138,7 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addSignalToMsg( integer const sig, 
   else
   {
     // standard messages
-    return addToMsg( GEOS_FMT( "Signal no. {} encountered: {}\n",
+    return addToMsg( GEOS_FMT( "Signal no. {} encountered: {}",
                                sig, ::strsignal( sig ) ),
                      toEnd );
   }
@@ -254,6 +254,7 @@ std::string ErrorLogger::toString( MsgType const type )
     case MsgType::Error: return "Error";
     case MsgType::Warning: return "Warning";
     case MsgType::Exception: return "Exception";
+    case MsgType::ExternalError: return "ExternalError";
     default: return "Unknown";
   }
 }
@@ -284,7 +285,7 @@ void ErrorLogger::writeToAscii( DiagnosticMsg const & errMsg, std::ostream & os 
   os << PREFIX << "Rank " << stringutilities::join( errMsg.m_ranksInfo, ", " ) << "\n";
   // --- ERROR CONTEXT & MESSAGE ---
   std::vector< ErrorContext > const & contexts = errMsg.m_contextsInfo;
-  if( contexts.empty())
+  if( contexts.empty() || contexts.front().m_formattedContext.empty())
   {
     os << PREFIX << "Message :\n";
   }
@@ -292,7 +293,10 @@ void ErrorLogger::writeToAscii( DiagnosticMsg const & errMsg, std::ostream & os 
   {
     os << PREFIX << "Message from " << contexts.front().m_formattedContext << ":\n";
   }
-  os << errMsg.m_msg << "\n";
+  if( !errMsg.m_msg.empty())
+  {
+    os << errMsg.m_msg << "\n";
+  }
 
   if( contexts.size() > 1 )
   {
