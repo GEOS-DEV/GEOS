@@ -79,14 +79,9 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addContextInfoImpl( ErrorContext &&
 {
   auto lowerBoundPos = std::lower_bound( m_errorMsg.m_contextsInfo.begin(), m_errorMsg.m_contextsInfo.end(),
                                          ctxInfo.m_priority,
-                                         [](  ErrorContext const & ctx, integer priority ) { return ctx.m_priority >= priority; } );
+                                         []( ErrorContext const & ctx, integer priority )
+  { return ctx.m_priority >= priority; } );
   m_errorMsg.m_contextsInfo.insert( lowerBoundPos, std::move( ctxInfo ) );
-
-  for(auto const & ctx : m_errorMsg.m_contextsInfo)
-  {
-    std::cout << ctx.m_priority<< " "<< ctx.m_formattedContext ;
-  }
-   std::cout <<std::endl;
   return *this;
 }
 
