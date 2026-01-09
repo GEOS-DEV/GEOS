@@ -14,7 +14,7 @@
 /inputFiles                                           @rrsettgast @cssherman @jhuang2601 @OmarDuran
 /inputFiles/compositionalMultiphaseFlow               @dkachuma @tjb-ltk
 /inputFiles/compositionalMultiphaseWell               @tjb-ltk @dkachuma
-/inputFiles/efemFractureMechanics                     
+/inputFiles/efemFractureMechanics                     @jhuang2601 
 /inputFiles/hydraulicFracturing                       @rrsettgast @frankfeifan @cssherman @jhuang2601 @kimtaeho07
 /inputFiles/inducedSeismicity                         @jhuang2601 @frankfeifan
 /inputFiles/initialization                            @rrsettgast @jhuang2601
