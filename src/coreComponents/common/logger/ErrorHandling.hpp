@@ -53,7 +53,7 @@ struct ErrorContext
    * @param formattedContext String containing the target object name followed by the the file and line declaring it.
    * @param attributes Map containing contextual information about the error
    */
-  ErrorContext( string formattedContext, map< Attribute, std::string >  attributes ):
+  ErrorContext( string formattedContext, map< Attribute, std::string > attributes ):
     m_formattedContext( formattedContext ),
     m_attributes( attributes ) {};
 
@@ -62,8 +62,8 @@ struct ErrorContext
    * @param attributes Map containing contextual information about the error
    * @param priority Priority level assigned to an error context.
    */
-  ErrorContext( map< Attribute, std::string >  attributes, integer priority ):
-    m_formattedContext( "" ),
+  ErrorContext( string formattedContext, map< Attribute, std::string > attributes, integer priority ):
+    m_formattedContext( formattedContext ),
     m_attributes( attributes ),
     m_priority( priority ) {};
 
@@ -146,9 +146,25 @@ struct DiagnosticMsg
 class DiagnosticMsgBuilder
 {
 public:
-  static DiagnosticMsgBuilder init()
-  { return DiagnosticMsgBuilder();}
 
+/**
+ * @brief Initialize a new DiagnosticMsg
+ * @param msg The DiagnosticMsg being built
+ * @param msgType Type of the diagnostic
+ * @param msgContent The message of the diagnostic. It can be completed afterward
+ * @param rank The rank on which the diagnostic occured
+ * @return DiagnosticMsgBuilder
+ */
+  static DiagnosticMsgBuilder init( DiagnosticMsg & msg,
+                                    MsgType msgType,
+                                    std::string_view msgContent,
+                                    integer rank );
+
+  /**
+   * @brief Modify an existing DiagnosticMsg
+   * @param errorMsg The existing DiagnosticMsg
+   * @return DiagnosticMsgBuilder
+   */
   static DiagnosticMsgBuilder modify( DiagnosticMsg & errorMsg );
 
   /**
@@ -220,20 +236,27 @@ public:
   DiagnosticMsgBuilder & addCallStackInfo( std::string_view ossStackTrace );
 
   /**
-   * @return The constructed diagnostic message
+   * @return Get the DiagnosticMsg
    */
   DiagnosticMsg & get();
 
 private:
+
+  /**
+   * @brief Private constructor - use init() or modify() instead
+   * @param msg Reference to the DiagnosticMsg to build/modify
+   */
+  DiagnosticMsgBuilder( DiagnosticMsg & msg ):
+    m_errorMsg( msg ){}
+
   /**
    * @brief Add contextual information about the error/warning
    * @param ctxInfo rvalue of the ErrorContext class
    */
   DiagnosticMsgBuilder & addContextInfoImpl( ErrorContext && ctxInfo );
+
   /// The diagnosticMsg being constructed
-  DiagnosticMsg m_errorMsg;
-  /// The target diagnosticMsg
-  DiagnosticMsg * m_targetErrorMsg = nullptr;
+  DiagnosticMsg & m_errorMsg;
 };
 
 /**
@@ -330,16 +353,17 @@ public:
    * @brief Write all the information retrieved about the diagnostic message into the instance
    * outputs (stream specified + optional yaml file)
    * @param errorMsg a reference to the ErrorMsg to output, and will be re-initialized
+   * @param oss The output stream
    * @note Used for warnings and non-exception errors
    */
-  void flushErrorMsg( DiagnosticMsg & errMsg );
+  void flushErrorMsg( DiagnosticMsg & errMsg, std::ostream & os = std::cout );
 
   /**
    * @brief Format all information in ErrorMsg and write it to the specified output stream
    * @param errMsg The struct containing the error/warning object
    * @param oss The output stream
    */
-  static void writeToAscii( DiagnosticMsg const & errMsg, std::ostream & oss );
+  static void writeToAscii( DiagnosticMsg const & errMsg, std::ostream & os );
 
 private:
   /// The error constructed via exceptions
@@ -353,7 +377,7 @@ private:
 
   /**
    * @brief Write all the information retrieved about the error/warning message into the YAML file
-   * @param errorMsg a constant reference to the error
+   * @param errorMsg a reference to the diagnostic message
    */
   void writeToYaml( DiagnosticMsg & errMsg );
 

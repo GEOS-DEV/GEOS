@@ -14,6 +14,7 @@
  */
 
 // Source includes
+#include "common/logger/ErrorHandling.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Units.hpp"
@@ -82,10 +83,10 @@ int main( int argc, char *argv[] )
   }
   catch( std::exception const & e )
   { // native exceptions management
-    ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init()
-                                           .setType( MsgType::Exception )
-                                           .addToMsg( e.what() )
-                                           .addRank( ::geos::logger::internal::g_rank )
+    DiagnosticMsg diagnosticMsg;
+    ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
+                                                                     MsgType::Exception, e.what(),
+                                                                     ::geos::logger::internal::g_rank )
                                            .addCallStackInfo( LvArray::system::stackTrace( true ) )
                                            .get());
     basicCleanup();

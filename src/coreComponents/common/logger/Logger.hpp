@@ -224,18 +224,16 @@
       __msgoss << MSG; \
       std::ostringstream __causemsgsoss; \
       __causemsgsoss << CAUSE_MESSAGE; \
-      GEOS_GLOBAL_LOGGER.initCurrentExceptionMessage() \
-        .setType( MsgType::Exception ) \
-        .setCodeLocation( __FILE__, __LINE__ ) \
-        .setCause( __causemsgsoss.str() ) \
-        .addRank( ::geos::logger::internal::g_rank ) \
-        .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
-        .addToMsg( __msgoss.str() ) \
-        .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )).get(); \
+      DiagnosticMsg exceptionMsg =  GEOS_GLOBAL_LOGGER.initCurrentExceptionMessage() \
+                                     .setType( MsgType::Exception ) \
+                                     .setCodeLocation( __FILE__, __LINE__ ) \
+                                     .setCause( __causemsgsoss.str() ) \
+                                     .addRank( ::geos::logger::internal::g_rank ) \
+                                     .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
+                                     .addToMsg( __msgoss.str() ) \
+                                     .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )).get(); \
       auto ex = GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )(); \
-      ex.prepareWhat( __msgoss.str(), __causemsgsoss.str(), \
-                      __FILE__, __LINE__, \
-                      ::geos::logger::internal::g_rank, LvArray::system::stackTrace( true )  ); \
+      ex.prepareWhat( exceptionMsg ); \
       throw ex; \
     } \
   }while( false )
@@ -295,13 +293,13 @@
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
       std::ostringstream __causemsgsoss; \
       __causemsgsoss << CAUSE_MESSAGE; \
-      GEOS_GLOBAL_LOGGER.flushErrorMsg( DiagnosticMsgBuilder::init() \
-                                          .setType( MsgType::Warning ) \
+      DiagnosticMsg __warningMsg; \
+      GEOS_GLOBAL_LOGGER.flushErrorMsg( DiagnosticMsgBuilder::init( __warningMsg, \
+                                                                    MsgType::Warning, __msgoss.str(), \
+                                                                    ::geos::logger::internal::g_rank ) \
                                           .setCodeLocation( __FILE__, __LINE__ ) \
                                           .setCause( __causemsgsoss.str() ) \
-                                          .addRank( ::geos::logger::internal::g_rank ) \
                                           .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
-                                          .addToMsg( __msgoss.str() ) \
                                           .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )).get() ); \
     } \
   }while( false )

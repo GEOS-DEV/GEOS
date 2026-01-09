@@ -108,7 +108,6 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
   beginLocalLoggerTest( testErrorLogger, "warningTestOutput.yaml" );
 
   GET_LINE( line1 ); GEOS_WARNING( "Conflicting pressure boundary conditions" );
-
   GET_LINE( line2 ); GEOS_WARNING_IF_GT_MSG( testValue, testMaxPrecision, "Pressure value is too high." );
 
   string const warningMsg = GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
@@ -183,12 +182,14 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
       .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) ).get();
-    string const whatExpected = GEOS_FMT( "***** GEOS Exception\n"
+    string const whatExpected = GEOS_FMT( "***** Exception\n"
                                           "***** LOCATION: {}:{}\n"
                                           "***** Error cause: testValue == 5\n"
-                                          "***** Rank  0: Empty Group",
-                                          testErrorLogger.getCurrentExceptionMsg().m_file, line1 );
-
+                                          "***** Rank 0\n"
+                                          "***** Message from {}:\n"
+                                          "Empty Group",
+                                          testErrorLogger.getCurrentExceptionMsg().m_file, line1,
+                                          testErrorLogger.getCurrentExceptionMsg().m_contextsInfo.front().m_formattedContext );
     GEOS_ERROR_IF_EQ_MSG( string( ex.what()).find( whatExpected ), string::npos,
                           "The error message was not containing the expected sequence.\n" <<
                           "  Error message :\n" << ex.what() <<
@@ -312,8 +313,9 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
       testErrorLogger.getCurrentExceptionMsg().m_cause,
       context.toString(),
       testErrorLogger.getCurrentExceptionMsg().m_msg,
+      importantAdditionalContext.toString(),
       additionalContext.toString(),
-      importantAdditionalContext.toString(), testErrorLogger.getCurrentExceptionMsg().m_sourceCallStack );
+      testErrorLogger.getCurrentExceptionMsg().m_sourceCallStack );
     std::ostringstream oss;
     ErrorLogger::writeToAscii( testErrorLogger.getCurrentExceptionMsg(), oss );
     GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,

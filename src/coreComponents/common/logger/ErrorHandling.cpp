@@ -58,12 +58,20 @@ std::string ErrorContext::attributeToString( ErrorContext::Attribute attribute )
   }
 }
 
+DiagnosticMsgBuilder DiagnosticMsgBuilder::init( DiagnosticMsg & msg,
+                                                 MsgType msgType,
+                                                 std::string_view msgContent,
+                                                 integer rank )
+{
+  return DiagnosticMsgBuilder( msg )
+           .setType( msgType )
+           .addToMsg( msgContent )
+           .addRank( rank );
+}
+
 DiagnosticMsgBuilder DiagnosticMsgBuilder::modify( DiagnosticMsg & errorMsg )
 {
-  DiagnosticMsgBuilder builder;
-  builder.m_errorMsg = errorMsg;
-  builder.m_targetErrorMsg = &errorMsg;
-  return builder;
+  return DiagnosticMsgBuilder( errorMsg );
 }
 
 DiagnosticMsgBuilder & DiagnosticMsgBuilder::addContextInfoImpl( ErrorContext && ctxInfo )
@@ -187,10 +195,6 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addCallStackInfo( std::string_view 
 
 DiagnosticMsg & DiagnosticMsgBuilder::get()
 {
-  if( m_targetErrorMsg != nullptr )
-  {
-    *m_targetErrorMsg = m_errorMsg;
-  }
   return m_errorMsg;
 }
 
@@ -252,56 +256,56 @@ std::string ErrorLogger::toString( MsgType const type )
 /**
  * @brief Retrieve all informations from the ErrorMsg and format and write into a stream.
  * @param errMsg Class containing all the error/warning information
- * @param oss The output stream to write the content to.
+ * @param os The output stream to write the content to.
  */
-void ErrorLogger::writeToAscii( DiagnosticMsg const & errMsg, std::ostream & oss )
+void ErrorLogger::writeToAscii( DiagnosticMsg const & errMsg, std::ostream & os )
 {
   static constexpr string_view PREFIX = "***** ";
   // --- HEADER ---
-  oss << PREFIX << ErrorLogger::toString( errMsg.m_type ) << "\n";
+  os << PREFIX << ErrorLogger::toString( errMsg.m_type ) << "\n";
   if( !errMsg.m_file.empty())
   {
-    oss << PREFIX<< "LOCATION: " << errMsg.m_file;
+    os << PREFIX<< "LOCATION: " << errMsg.m_file;
     if( errMsg.m_line > 0 )
     {
-      oss << ":" << errMsg.m_line;
+      os << ":" << errMsg.m_line;
     }
-    oss << "\n";
+    os << "\n";
   }
   if( !errMsg.m_cause.empty())
   {
-    oss << PREFIX << errMsg.m_cause << "\n";
+    os << PREFIX << errMsg.m_cause << "\n";
   }
-  oss << PREFIX << "Rank " << stringutilities::join( errMsg.m_ranksInfo, ", " ) << "\n";
+  os << PREFIX << "Rank " << stringutilities::join( errMsg.m_ranksInfo, ", " ) << "\n";
   // --- ERROR CONTEXT & MESSAGE ---
   std::vector< ErrorContext > const & contexts = errMsg.m_contextsInfo;
   if( contexts.empty())
   {
-    oss << PREFIX << "Message :\n";
+    os << PREFIX << "Message :\n";
   }
   else
   {
-    oss << PREFIX << "Message from " << contexts.front().m_formattedContext << ":\n";
+    os << PREFIX << "Message from " << contexts.front().m_formattedContext << ":\n";
   }
-  oss << errMsg.m_msg << "\n";
+  os << errMsg.m_msg << "\n";
 
   if( contexts.size() > 1 )
   {
-    oss << PREFIX << "Additional contexts:\n";
+    os << PREFIX << "Additional contexts:\n";
     for( size_t i = 1; i < contexts.size(); ++i )
     {
-      oss << PREFIX << "- " << contexts[i].m_formattedContext << "\n";
+      os << PREFIX << "- " << contexts[i].m_formattedContext << "\n";
     }
   }
   // --- STACKTRACE ---
   if( !errMsg.m_sourceCallStack.empty() )
   {
-    oss << "\n** StackTrace of "<< errMsg.m_sourceCallStack.size() << " frames **\n";
+    os << "\n** StackTrace of "<< errMsg.m_sourceCallStack.size() << " frames **\n";
     for( size_t i = 0; i < errMsg.m_sourceCallStack.size(); i++ )
     {
-      oss << GEOS_FMT( "Frame {}: {}\n", i, errMsg.m_sourceCallStack[i] );
+      os << GEOS_FMT( "Frame {}: {}\n", i, errMsg.m_sourceCallStack[i] );
     }
-    oss << "=====\n";
+    os << "=====\n";
   }
 }
 
@@ -382,9 +386,9 @@ void ErrorLogger::writeToYaml( DiagnosticMsg & errMsg )
   }
 }
 
-void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg )
+void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg,std::ostream & os)
 {
-  writeToAscii( errMsg, m_stream );
+  writeToAscii( errMsg, os );
   if( isOutputFileEnabled() )
   {
     writeToYaml( errMsg );

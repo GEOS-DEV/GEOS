@@ -100,17 +100,17 @@ void setupLogger()
       }
 
       std::string const stackHistory = LvArray::system::stackTrace( true );
-
-      ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init()
-                                             .setType( MsgType::Error )
-                                             .addToMsg( errorMsg )
-                                             .addRank( ::geos::logger::internal::g_rank )
+      DiagnosticMsg diagnosticMsg;
+      ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
+                                                                       MsgType::Error, errorMsg,
+                                                                       ::geos::logger::internal::g_rank )
                                              .addCallStackInfo( stackHistory )
                                              .addContextInfo(
                                              ErrorContext{  string( detectionLocation ),
                                                             { { ErrorContext::Attribute::DetectionLoc,
                                                               string( detectionLocation ) } },
-                                             } ).get() );
+                                             } )
+                                             .get() );
 
       // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
     } );
@@ -127,17 +127,22 @@ void setupLogger()
 
       // error message output
       std::string const stackHistory = LvArray::system::stackTrace( true );
-
-      ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init()
+      DiagnosticMsg diagnosticMsg;
+      ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
+                                                                       MsgType::Error, "Signal: ",
+                                                                       ::geos::logger::internal::g_rank )
                                              .addSignalToMsg( signal )
-                                             .setType( MsgType::Error )
-                                             .addRank( ::geos::logger::internal::g_rank )
                                              .addCallStackInfo( stackHistory )
                                              .addContextInfo(
-                                             ErrorContext{ { { ErrorContext::Attribute::Signal,
-                                               std::to_string( signal ) } }, 1 },
-                                             ErrorContext{ { { ErrorContext::Attribute::DetectionLoc,
-                                               string( "signal handler" ) } }, 0 } ).get() );
+                                             ErrorContext{"",
+                                                          { { ErrorContext::Attribute::Signal,
+                                                            std::to_string( signal ) } },
+                                                          1 },
+                                             ErrorContext{"",
+                                                          { { ErrorContext::Attribute::DetectionLoc,
+                                                            string( "signal handler" ) } },
+                                                          0 } )
+                                             .get() );
 
       // call program termination
       LvArray::system::callErrorHandler();
