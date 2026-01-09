@@ -158,7 +158,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
                  ": Target not found !\n" )
       .addContextInfo( getWrapperDataContext( viewKeysStruct::fieldNameString() ).getContextInfo()
                          .setPriority( 1 ) )
-      .get();
+      .getDiagnosticMsg();
     throw InputError( e, getWrapperDataContext( viewKeysStruct::fieldNameString() ).toString() +
                       ": Target not found !\n" );
   }

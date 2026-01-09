@@ -18,6 +18,7 @@
  */
 
 #include "ErrorHandling.hpp"
+#include "common/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/format/StringUtilities.hpp"
 
@@ -76,7 +77,16 @@ DiagnosticMsgBuilder DiagnosticMsgBuilder::modify( DiagnosticMsg & errorMsg )
 
 DiagnosticMsgBuilder & DiagnosticMsgBuilder::addContextInfoImpl( ErrorContext && ctxInfo )
 {
-  m_errorMsg.m_contextsInfo.emplace_back( std::move( ctxInfo ) );
+  auto lowerBoundPos = std::lower_bound( m_errorMsg.m_contextsInfo.begin(), m_errorMsg.m_contextsInfo.end(),
+                                         ctxInfo.m_priority,
+                                         [](  ErrorContext const & ctx, integer priority ) { return ctx.m_priority >= priority; } );
+  m_errorMsg.m_contextsInfo.insert( lowerBoundPos, std::move( ctxInfo ) );
+
+  for(auto const & ctx : m_errorMsg.m_contextsInfo)
+  {
+    std::cout << ctx.m_priority<< " "<< ctx.m_formattedContext ;
+  }
+   std::cout <<std::endl;
   return *this;
 }
 
@@ -193,7 +203,7 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addCallStackInfo( std::string_view 
   return *this;
 }
 
-DiagnosticMsg & DiagnosticMsgBuilder::get()
+DiagnosticMsg & DiagnosticMsgBuilder::getDiagnosticMsg()
 {
   return m_errorMsg;
 }
@@ -386,7 +396,7 @@ void ErrorLogger::writeToYaml( DiagnosticMsg & errMsg )
   }
 }
 
-void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg,std::ostream & os)
+void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg, std::ostream & os )
 {
   writeToAscii( errMsg, os );
   if( isOutputFileEnabled() )

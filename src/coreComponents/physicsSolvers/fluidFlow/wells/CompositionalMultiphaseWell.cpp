@@ -356,7 +356,7 @@ void CompositionalMultiphaseWell::validateWellControlsForFluid( WellControls con
       ErrorLogger::global().modifyCurrentExceptionMessage()
         .addToMsg( errorMsg )
         .addContextInfo( getDataContext().getContextInfo().setPriority( 1 ) )
-        .get();
+        .getDiagnosticMsg();
       throw SimulationError( ex, errorMsg );
     }
   }

@@ -503,7 +503,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
           ErrorLogger::global().modifyCurrentExceptionMessage()
             .addToMsg( errorMsg )
             .addContextInfo( getDataContext().getContextInfo().setPriority( -1 ) )
-            .get();
+            .getDiagnosticMsg();
           throw InputError( e, errorMsg );
         }
       }

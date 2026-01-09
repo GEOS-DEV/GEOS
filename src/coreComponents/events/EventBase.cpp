@@ -158,7 +158,7 @@ void EventBase::getTargetReferences()
         .addToMsg( errorMsg )
         .addContextInfo( getWrapperDataContext( viewKeyStruct::eventTargetString() ).getContextInfo()
                            .setPriority( 1 ))
-        .get();
+        .getDiagnosticMsg();
       throw InputError( e, errorMsg );
     }
   }

@@ -164,7 +164,8 @@
         .addRank( ::geos::logger::internal::g_rank ) \
         .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
         .addToMsg( __msgoss.str() ) \
-        .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )).get(); \
+        .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
+        .getDiagnosticMsg(); \
       GEOS_GLOBAL_LOGGER.flushCurrentExceptionMessage(); \
       LvArray::system::callErrorHandler(); \
     } \
@@ -231,7 +232,8 @@
                                      .addRank( ::geos::logger::internal::g_rank ) \
                                      .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
                                      .addToMsg( __msgoss.str() ) \
-                                     .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )).get(); \
+                                     .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
+                                     .getDiagnosticMsg(); \
       auto ex = GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )(); \
       ex.prepareWhat( exceptionMsg ); \
       throw ex; \
@@ -300,7 +302,8 @@
                                           .setCodeLocation( __FILE__, __LINE__ ) \
                                           .setCause( __causemsgsoss.str() ) \
                                           .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
-                                          .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )).get() ); \
+                                          .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
+                                          .getDiagnosticMsg() ); \
     } \
   }while( false )
 #elif __CUDA_ARCH__

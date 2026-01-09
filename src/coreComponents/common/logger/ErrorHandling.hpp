@@ -238,7 +238,7 @@ public:
   /**
    * @return Get the DiagnosticMsg
    */
-  DiagnosticMsg & get();
+  DiagnosticMsg & getDiagnosticMsg();
 
 private:
 

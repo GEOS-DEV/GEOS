@@ -110,7 +110,7 @@ void setupLogger()
                                                             { { ErrorContext::Attribute::DetectionLoc,
                                                               string( detectionLocation ) } },
                                              } )
-                                             .get() );
+                                             .getDiagnosticMsg() );
 
       // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
     } );
@@ -142,7 +142,7 @@ void setupLogger()
                                                           { { ErrorContext::Attribute::DetectionLoc,
                                                             string( "signal handler" ) } },
                                                           0 } )
-                                             .get() );
+                                             .getDiagnosticMsg() );
 
       // call program termination
       LvArray::system::callErrorHandler();

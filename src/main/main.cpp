@@ -88,7 +88,7 @@ int main( int argc, char *argv[] )
                                                                      MsgType::Exception, e.what(),
                                                                      ::geos::logger::internal::g_rank )
                                            .addCallStackInfo( LvArray::system::stackTrace( true ) )
-                                           .get());
+                                           .getDiagnosticMsg());
     basicCleanup();
     // lvarray error handler is just program termination
     LvArray::system::callErrorHandler();

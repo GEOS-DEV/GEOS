@@ -301,7 +301,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
       ErrorLogger::global().modifyCurrentExceptionMessage()
         .addToMsg( getDataContext().toString() + ": " + e.what() )
         .addContextInfo( getDataContext().getContextInfo().setPriority( 1 ) )
-        .get();
+        .getDiagnosticMsg();
       throw std::runtime_error( getDataContext().toString() + ": " + e.what() );
     }
   } );

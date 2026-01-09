@@ -149,7 +149,7 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
         .addToMsg( errorMsg )
         .addContextInfo( getWrapperDataContext( viewKeys::timeHistoryOutputTargetString() ).getContextInfo()
                            .setPriority( 1 ) )
-        .get();
+        .getDiagnosticMsg();
       throw InputError( e, errorMsg );
     }
   }

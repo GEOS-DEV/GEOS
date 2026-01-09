@@ -188,7 +188,7 @@ void InternalMeshGenerator::postInputInitialization()
       ErrorLogger::global().modifyCurrentExceptionMessage()
         .addToMsg( exceptionMsg )
         .addContextInfo( wrapper.getDataContext().getContextInfo().setPriority( 2 ) )
-        .get();
+        .getDiagnosticMsg();
       throw InputError( e, exceptionMsg );
     }
   }

@@ -173,7 +173,8 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
   // Stacked exception test (contexts must appear sorted by priority)
   try
   {
-    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError, context.getContextInfo() );
+    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError,
+                                     context.getContextInfo().setPriority( 3 ) );
   }
   catch( geos::DomainError const & ex )
   {
@@ -181,7 +182,7 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
     testErrorLogger.modifyCurrentExceptionMessage()
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
-      .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) ).get();
+      .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) ).getDiagnosticMsg();
     string const whatExpected = GEOS_FMT( "***** Exception\n"
                                           "***** LOCATION: {}:{}\n"
                                           "***** Error cause: testValue == 5\n"
@@ -206,14 +207,14 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
       Table input error.
       Empty Group
     contexts:
+      - priority: 3
+        description: Base Test Class (file.xml, l.23)
+        inputFile: /path/to/file.xml
+        inputLine: 23
       - priority: 2
         description: Important Additional Test Class (file.xml, l.64)
         inputFile: /path/to/file.xml
         inputLine: 64
-      - priority: 0
-        description: Base Test Class (file.xml, l.23)
-        inputFile: /path/to/file.xml
-        inputLine: 23
       - priority: 0
         description: Additional Test Class (file.xml, l.32)
         inputFile: /path/to/file.xml
@@ -290,7 +291,8 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
 
   try
   {
-    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError, context );
+    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError,
+                                     context.getContextInfo().setPriority( 3 ) );
   }
   catch( geos::DomainError const & ex )
   {
@@ -298,7 +300,7 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
     testErrorLogger.modifyCurrentExceptionMessage()
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
-      .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 )).get();
+      .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 )).getDiagnosticMsg();
     string const streamExpected = GEOS_FMT(
       "***** Exception\n"
       "***** LOCATION: {}:{}\n"
@@ -343,7 +345,7 @@ TEST( ErrorHandling, testStdException )
       .addToMsg( e.what() )
       .addRank( ::geos::logger::internal::g_rank )
       .addCallStackInfo( LvArray::system::stackTrace( true ) )
-      .get();
+      .getDiagnosticMsg();
 
     std::ostringstream oss;
     ErrorLogger::writeToAscii( testErrorLogger.getCurrentExceptionMsg(), oss );
