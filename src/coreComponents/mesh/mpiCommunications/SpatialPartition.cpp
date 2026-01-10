@@ -91,52 +91,45 @@ void SpatialPartition::setPartitions( unsigned int xPartitions,
 
 int SpatialPartition::getColor()
 {
-  if( m_metisNeighborList.empty() )
+  return getColor( {} );
+}
+
+int SpatialPartition::getColor( std::set< int > const & fullNeighbors )
+{
+  // Determine neighbor source
+  std::vector< size_t > adjncy;
+  bool const useGraphColoring = !fullNeighbors.empty() || !m_metisNeighborList.empty();
+
+  if( useGraphColoring )
   {
-    // Internal cartesian partitioner (for internal mesh)
-    int color=0;
-    if( isOdd( m_coords[0] ) )
-    {
-      color += 1;
-    }
+    // Use provided neighbors or fall back to metis neighbors
+    auto const & neighbors = !fullNeighbors.empty() ? fullNeighbors : m_metisNeighborList;
+    adjncy.assign( neighbors.begin(), neighbors.end() );
 
-    if( isOdd( m_coords[1] ) )
-    {
-      color += 2;
-    }
-
-    if( isOdd( m_coords[2] ) )
-    {
-      color += 4;
-    }
-
-    // With this algorithm, numbering may have gaps.
-    // In that case m_numColors is an upper bound, not the exact number of distinct colors used.
-    m_numColors = MpiWrapper::max( color )+1;
-    return color;
-  }
-  else
-  {
-    // External partitioner such as ParMetis or PTScotch (for VTK external mesh)
-    std::vector< size_t > adjncy;
-    adjncy.reserve( m_metisNeighborList.size());
-    for( const auto & idx : m_metisNeighborList )
-    {
-      adjncy.push_back( static_cast< size_t >(idx));
-    }
+    // Apply graph coloring
 #ifdef GEOS_USE_TRILINOS
     geos::graph::ZoltanGraphColoring coloring;
 #else
     geos::graph::RLFGraphColoringMPI coloring;
 #endif
-    int color = coloring.colorGraph( adjncy );
+    int const color = coloring.colorGraph( adjncy );
 
-    if( !coloring.isColoringValid( adjncy, color ))
-    {
-      GEOS_ERROR( "Invalid partition coloring: two neighboring partitions share the same color" );
-    }
+    GEOS_ERROR_IF( !coloring.isColoringValid( adjncy, color ),
+                   "Invalid partition coloring: two neighboring partitions share the same color" );
+
     m_numColors = coloring.getNumberOfColors( color );
+    return color;
+  }
+  else
+  {
+    // Cartesian partitioner coloring
+    int const color = (isOdd( m_coords[0] ) ? 1 : 0) |
+                      (isOdd( m_coords[1] ) ? 2 : 0) |
+                      (isOdd( m_coords[2] ) ? 4 : 0);
 
+    // With this algorithm, numbering may have gaps.
+    // In that case m_numColors is an upper bound, not the exact number of distinct colors used.
+    m_numColors = MpiWrapper::max( color ) + 1;
     return color;
   }
 }

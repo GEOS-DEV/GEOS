@@ -71,7 +71,25 @@ public:
                       unsigned int yPartitions,
                       unsigned int zPartitions ) override;
 
+  /**
+  * @brief Get the color for graph coloring-based synchronization.
+  * @return The color assigned to this rank.
+  *
+  * @note Uses the default neighbor list (m_metisNeighborList for external meshes,
+  *       or Cartesian coordinates for internal meshes).
+  */
   int getColor() override;
+
+  /**
+  * @brief Get the color for graph coloring-based synchronization with custom neighbors.
+  * @param fullNeighbors Set of neighbor ranks to use for coloring. If provided,
+  *                      overrides the default neighbor list. May include second-order
+  *                      neighbors for more conservative coloring.
+  * @return The color assigned to this rank.
+  *
+  * @note When fullNeighbors is empty, falls back to the default getColor() behavior.
+  */
+  int getColor( std::set< int > const & fullNeighbors );
 
   void repartitionMasterParticles( ParticleSubRegion & subRegion,
                                    MPI_iCommData & commData );

@@ -466,16 +466,24 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                      const int GEOS_UNUSED_PARAM( cycleNumber ),
                                      DomainPartition & domain )
 {
+
+  SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
+
+  // Build full neighbor set (includes neighbors of neighbors) from DomainPartition
+  std::set< int > fullNeighbors;
+  for( NeighborCommunicator const & neighbor : domain.getNeighbors() )
+  {
+    fullNeighbors.insert( neighbor.neighborRank() );
+  }
+  int const tileColor = partition.getColor( fullNeighbors );
+  int const numTileColors = partition.numColor();
+
   int rval = 0;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & meshLevel,
                                                                 string_array const & )
   {
-    SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
-    int const tileColor=partition.getColor();
-    int const numTileColors=partition.numColor();
-
     rval = separationDriver( domain,
                              meshLevel,
                              domain.getNeighbors(),
