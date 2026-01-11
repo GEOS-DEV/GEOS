@@ -16383,6 +16383,8 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
     bool isFiber = constitutiveModel.hasWrapper( "isFiber" ); // dumby variable whose value doesn't matter only that it is defined (
                                                               // possibly a better way to do this )
 
+    bool zeroMagnitudeMaterialDirection = false; // Flag to output warning if material direction is numerically incorrect
+
     // Update volume and r-vectors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
     forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
@@ -16447,6 +16449,16 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
           {
             LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( materialDirection, deformationGradientCofactor, particleReferenceMaterialDirection[p] );
           }
+
+          real64 norm = LvArray::tensorOps::l2Norm< 3 >( materialDirection );
+          if( !isZero(norm) )
+          {
+            LvArray::tensorOps::scale< 3 >( materialDirection, 1.0/norm ); // Should we add a warning if the material direction magnitude is zero
+          }
+          else
+          {
+            zeroMagnitudeMaterialDirection = true;
+          }
           LvArray::tensorOps::copy< 3 >( particleMaterialDirection[p], materialDirection );
         }
         else
@@ -16507,6 +16519,16 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
           {
             LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( materialDirection, dcofF, particleMaterialDirection[p] );
           }
+
+          real64 norm = LvArray::tensorOps::l2Norm< 3 >( materialDirection );
+          if( !isZero(norm) )
+          {
+            LvArray::tensorOps::scale< 3 >( materialDirection, 1.0/norm ); // Should we add a warning if the material direction magnitude is zero
+          }
+          else
+          {
+            zeroMagnitudeMaterialDirection = true;
+          }
           LvArray::tensorOps::copy< 3 >( particleMaterialDirection[p], materialDirection );
         }
 
@@ -16533,6 +16555,8 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
   int numParticlesIllConditionedJacobianGlobal = MpiWrapper::sum( numParticlesIllConditionedJacobian.get() );
   int numParticlesVelocityOverflowedGlobal = MpiWrapper::sum( numParticlesVelocityOverflowed.get() );
   int numParticlesOverMaxVelocityGlobal = MpiWrapper::sum( numParticlesOverMaxVelocity.get() );
+
+  GEOS_LOG_RANK_IF( zeroMagnitudeMaterialDirection, "At least one particle material direction had zero magnitude during kinematic update!" );
 
   GEOS_LOG_RANK_0_IF( numParticlesIllConditionedJacobianGlobal > 0,
                       "Flagged " << numParticlesIllConditionedJacobianGlobal  << " particles with unreasonable Jacobian (J<" << m_minParticleJacobian << " or J>" << m_maxParticleJacobian <<
