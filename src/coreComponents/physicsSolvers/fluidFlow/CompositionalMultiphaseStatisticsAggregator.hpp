@@ -273,8 +273,15 @@ public:
   dataRepository::Group & getInstanceStatisticsGroup( MeshLevel & mesh ) const;
 
   RegionStatistics & getMeshRegionsStatistics( MeshLevel & mesh ) const;
-
-  RegionStatistics & getRegionStatistics( MeshLevel & mesh, string_view regionNname ) const;
+  
+  /**
+   * @brief TODO
+   * @throw InputError if no statistics data is found for the given region name.
+   * @param mesh TODO
+   * @param regionNname TODO
+   * @return TODO
+   */
+  RegionStatistics & getRegionStatistics( MeshLevel & mesh, string_view regionName ) const;
 
   CFLStatistics & getCflStatisticsGroup( MeshLevel & mesh ) const;
 
