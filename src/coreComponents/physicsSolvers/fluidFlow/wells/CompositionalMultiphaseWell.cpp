@@ -662,7 +662,8 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
 
 }
 
-void CompositionalMultiphaseWell::updateVolRatesForConstraint( ElementRegionManager const & elemManager, WellElementSubRegion const & subRegion )
+void CompositionalMultiphaseWell::updateVolRatesForConstraint( MeshLevel & meshLevel,
+                                                               WellElementSubRegion const & subRegion )
 {
   GEOS_MARK_FUNCTION;
 
@@ -717,7 +718,6 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( ElementRegionMana
   }
   else
   {
-    GEOS_UNUSED_VAR( elemManager );
     bool const useSegmentValues = wellControls.referenceReservoirRegion().empty();
 
     if( useSegmentValues )
@@ -728,10 +728,9 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( ElementRegionMana
     else
     {
 
+
       // TODO use m_reservoirStatsAggregator
 
-      // if( !wellControls.referenceReservoirRegion().empty() )
-      // {
       //   ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion());
       //   GEOS_ERROR_IF ( !region.hasWrapper( CompositionalMultiphaseStatistics::regionStatisticsName() ),
       //                   GEOS_FMT( "{}: WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be
@@ -750,7 +749,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( ElementRegionMana
       //                  GEOS_FMT( "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires
       // CompositionalMultiphaseStatistics to be configured for region {} ",
       //                            getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ));
-      // }
+      //
 
       // If flashPressure is not set by region the value is defaulted to -1 and indicates to use top segment conditions
       flashPressure = wellControls.getRegionAveragePressure();
@@ -1027,7 +1026,7 @@ void CompositionalMultiphaseWell::updateState( DomainPartition & domain )
       WellControls & wellControls = getWellControls( subRegion );
       if( wellControls.getWellStatus() == WellControls::Status::OPEN )
       {
-        real64 const maxRegionPhaseVolFrac = updateSubRegionState( elemManager, subRegion );
+        real64 const maxRegionPhaseVolFrac = updateSubRegionState( mesh, subRegion );
         maxPhaseVolFrac = LvArray::math::max( maxRegionPhaseVolFrac, maxPhaseVolFrac );
       }
     } );
@@ -1040,14 +1039,15 @@ void CompositionalMultiphaseWell::updateState( DomainPartition & domain )
 
 }
 
-real64 CompositionalMultiphaseWell::updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
+real64 CompositionalMultiphaseWell::updateSubRegionState( MeshLevel & mesh,
+                                                          WellElementSubRegion & subRegion )
 {
   // update properties
   updateGlobalComponentFraction( subRegion );
 
   // update volumetric rates for the well constraints
   // note: this must be called before updateFluidModel
-  updateVolRatesForConstraint( elemManager, subRegion );
+  updateVolRatesForConstraint( mesh, subRegion );
 
   // update densities, phase fractions, phase volume fractions
 
@@ -1165,7 +1165,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
                                                 wellElemCompDens );
 
         // 5) Recompute the pressure-dependent properties
-        updateSubRegionState( elemManager, subRegion );
+        updateSubRegionState( mesh, subRegion );
 
         // 6) Estimate the well rates
         // TODO: initialize rates using perforation rates
@@ -1971,7 +1971,7 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition &
 
       if( wellControls.isWellOpen( )  )
       {
-        updateSubRegionState( elemManager, subRegion );
+        updateSubRegionState( mesh, subRegion );
       }
     } );
   } );
@@ -2165,7 +2165,7 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
 
         validateWellConstraints( time_n, dt, subRegion );
 
-        updateSubRegionState( elemManager, subRegion );
+        updateSubRegionState( mesh, subRegion );
       }
     } )
     ;

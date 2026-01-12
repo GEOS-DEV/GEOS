@@ -27,6 +27,7 @@
 #include "constitutive/fluid/singlefluid/SingleFluidSelector.hpp"
 #include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/ElementRegionManager.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -251,7 +252,7 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
 
 }
 
-void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
+void SinglePhaseWell::updateVolRateForConstraint( MeshLevel & mesh, WellElementSubRegion & subRegion )
 {
   GEOS_MARK_FUNCTION;
 
@@ -294,6 +295,7 @@ void SinglePhaseWell::updateVolRateForConstraint( ElementRegionManager const & e
   {
     if( !wellControls.referenceReservoirRegion().empty() )
     {
+      ElementRegionManager const & elemManager = mesh.getElemManager();
       ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion() );
       GEOS_ERROR_IF ( !region.hasWrapper( SinglePhaseStatistics::regionStatisticsName()),
                       GEOS_FMT( "{}: WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
@@ -405,11 +407,12 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   } );
 }
 
-real64 SinglePhaseWell::updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion )
+real64 SinglePhaseWell::updateSubRegionState( MeshLevel & mesh,
+                                              WellElementSubRegion & subRegion )
 {
   // update volumetric rates for the well constraints
   // Warning! This must be called before updating the fluid model
-  updateVolRateForConstraint( elemManager, subRegion );
+  updateVolRateForConstraint( mesh, subRegion );
 
   // update density in the well elements
   updateFluidModel( subRegion );
@@ -495,7 +498,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & 
         // 4) Recompute the pressure-dependent properties
         // Note: I am leaving that here because I would like to use the perforationRates (computed in UpdateState)
         //       to better initialize the rates
-        updateSubRegionState( elemManager, subRegion );
+        updateSubRegionState( meshLevel, subRegion );
 
         string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
         SingleFluidBase & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
@@ -1156,7 +1159,7 @@ void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
         subRegion.getField< well::connectionRate_n >();
       connRate.setValues< parallelDevicePolicy<> >( connRate_n );
 
-      updateSubRegionState( elemManager, subRegion );
+      updateSubRegionState( mesh, subRegion );
     } );
   } );
 }
@@ -1198,7 +1201,7 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
 
       validateWellConstraints( time, dt, subRegion );
 
-      updateSubRegionState( elemManager, subRegion );
+      updateSubRegionState( mesh, subRegion );
     } );
   } );
 }

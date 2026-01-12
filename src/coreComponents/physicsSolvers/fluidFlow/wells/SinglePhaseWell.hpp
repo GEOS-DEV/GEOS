@@ -143,7 +143,7 @@ public:
    * @param elemManager the well region manager
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  virtual void updateVolRateForConstraint( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion );
+  virtual void updateVolRateForConstraint( MeshLevel & meshLevel, WellElementSubRegion & subRegion );
 
   /**
    * @brief Recompute the BHP pressure that is used in the well constraints
@@ -169,7 +169,7 @@ public:
    * @param elemManager the elemManager containing the well
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
-  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( MeshLevel & meshLevel, WellElementSubRegion & subRegion ) override;
 
   /**
    * @brief function to assemble the linear system matrix and rhs

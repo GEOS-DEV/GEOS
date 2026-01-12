@@ -22,6 +22,7 @@
 
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/relativePermeability/Layouts.hpp"
+#include "mesh/MeshLevel.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
@@ -148,7 +149,7 @@ public:
    * @param elemManager the well region manager containing the well
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void updateVolRatesForConstraint( ElementRegionManager const & elemManager, WellElementSubRegion const & subRegion );
+  void updateVolRatesForConstraint( MeshLevel & mesh, WellElementSubRegion const & subRegion );
 
   /**
    * @brief Recompute the current BHP pressure
@@ -190,7 +191,7 @@ public:
    */
   virtual void updateState( DomainPartition & domain ) override;
 
-  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( MeshLevel & meshLevel, WellElementSubRegion & subRegion ) override;
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
