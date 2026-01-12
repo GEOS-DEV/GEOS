@@ -128,6 +128,12 @@ public:
    */
   virtual localIndex numFluidPhases() const = 0;
 
+    /**
+   * @brief getter for the well associated to this subRegion
+   * @param subRegion the well subRegion whose controls are requested
+   * @return a reference to the well
+   */
+  WellSolverBase & getWell( WellElementSubRegion const & subRegion );
   /**
    * @brief getter for the well controls associated to this well subRegion
    * @param subRegion the well subRegion whose controls are requested
