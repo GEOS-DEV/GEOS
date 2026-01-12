@@ -105,7 +105,7 @@ void updatePorosityAndPermeabilityFromPressureAndAperture( POROUSWRAPPER_TYPE po
 }
 
 DLFlowSolverBase::DLFlowSolverBase( string const & name,
-                                Group * const parent ):
+                                    Group * const parent ):
   DLPhysicsSolverBase( name, parent ),
   m_numDofPerCell( 0 ),
   m_isThermal( 0 ),
@@ -470,7 +470,7 @@ void DLFlowSolverBase::initializePostInitialConditionsPreSubGroups()
 }
 
 void DLFlowSolverBase::precomputeData( MeshLevel & mesh,
-                                     string_array const & regionNames )
+                                       string_array const & regionNames )
 {
   FaceManager & faceManager = mesh.getFaceManager();
   real64 const gravVector[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
@@ -644,9 +644,9 @@ void DLFlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & 
 
 
 void DLFlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & domain, // cannot be const...
-                                                             stdMap< string, localIndex > const & equilNameToEquilId,
-                                                             arrayView1d< real64 > const & maxElevation,
-                                                             arrayView1d< real64 > const & minElevation ) const
+                                                               stdMap< string, localIndex > const & equilNameToEquilId,
+                                                               arrayView1d< real64 > const & maxElevation,
+                                                               arrayView1d< real64 > const & minElevation ) const
 {
   array1d< real64 > localMaxElevation( equilNameToEquilId.size() );
   array1d< real64 > localMinElevation( equilNameToEquilId.size() );
@@ -695,10 +695,10 @@ void DLFlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition &
 }
 
 void DLFlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
-                                                         real64 const & dt,
-                                                         DomainPartition & domain, // cannot be const...
-                                                         stdMap< string, localIndex > const & bcNameToBcId,
-                                                         arrayView1d< globalIndex > const & bcAllSetsSize ) const
+                                                           real64 const & dt,
+                                                           DomainPartition & domain, // cannot be const...
+                                                           stdMap< string, localIndex > const & bcNameToBcId,
+                                                           arrayView1d< globalIndex > const & bcAllSetsSize ) const
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
@@ -746,34 +746,34 @@ void DLFlowSolverBase::computeSourceFluxSizeScalingFactor( real64 const & time,
 void DLFlowSolverBase::initializeSharedMemories()
 {
   GEOS_MARK_FUNCTION;
-  GEOS_LOG_LEVEL_RANK_0(logInfo::NonlinearSolver,
-                          GEOS_FMT("Initializing DLFlowSolverBase Shared Memory: name='{}'", m_mem_name_meta_data));
+  GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
+                         GEOS_FMT( "Initializing DLFlowSolverBase Shared Memory: name='{}'", m_mem_name_meta_data ));
 
-  m_shared_metadata = m_sharedMemoryManager.initializeASharedMemory<SharedMetadataStruct>(m_mem_name_meta_data, sizeof(SharedMetadataStruct));
+  m_shared_metadata = m_sharedMemoryManager.initializeASharedMemory< SharedMetadataStruct >( m_mem_name_meta_data, sizeof(SharedMetadataStruct));
 
-  m_sem_python_output_ready = m_sharedMemoryManager.openASemaphore(m_st_semaphore_python_ready);
-  m_sem_cpp_input_ready = m_sharedMemoryManager.openASemaphore(m_st_semaphore_cpp_ready);
+  m_sem_python_output_ready = m_sharedMemoryManager.openASemaphore( m_st_semaphore_python_ready );
+  m_sem_cpp_input_ready = m_sharedMemoryManager.openASemaphore( m_st_semaphore_cpp_ready );
 }
 
-void DLFlowSolverBase::shareDLModelInputs(real64 const &time_n,
-                                          real64 const &dt,
-                                          integer const cycleNumber,
-                                          DomainPartition &domain)
+void DLFlowSolverBase::shareDLModelInputs( real64 const & time_n,
+                                           real64 const & dt,
+                                           integer const cycleNumber,
+                                           DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( time_n, dt, cycleNumber, domain );
 
   // Updating shared memory with (distributed) solution values (for all ranks)
-  arrayView1d<real64 const>  m_solution_values = m_solution.values();
-  arrayView1d<real64 const>  m_dofXCoords_values = m_dofXCoords.values();
-  arrayView1d<real64 const>  m_dofYCoords_values = m_dofYCoords.values();
-  arrayView1d<real64 const>  m_dofZCoords_values = m_dofZCoords.values();
-  arrayView1d<real64 const>  m_strainTrace_values = m_strainTrace.values();
-  arrayView1d<real64 const>  m_prevSolution_values = m_prevSolution.values();
-  
-  globalIndex 	lowerbound = m_solution.ilower();
-  globalIndex 	upperbound = m_solution.iupper();
-  
-  for (int i = lowerbound; i < upperbound; i++)
+  arrayView1d< real64 const >  m_solution_values = m_solution.values();
+  arrayView1d< real64 const >  m_dofXCoords_values = m_dofXCoords.values();
+  arrayView1d< real64 const >  m_dofYCoords_values = m_dofYCoords.values();
+  arrayView1d< real64 const >  m_dofZCoords_values = m_dofZCoords.values();
+  arrayView1d< real64 const >  m_strainTrace_values = m_strainTrace.values();
+  arrayView1d< real64 const >  m_prevSolution_values = m_prevSolution.values();
+
+  globalIndex lowerbound = m_solution.ilower();
+  globalIndex upperbound = m_solution.iupper();
+
+  for( int i = lowerbound; i < upperbound; i++ )
   {
     m_shared_metadata->m_shared_solution[i] = m_solution_values[i-lowerbound];
     m_shared_metadata->m_shared_dofXCoords[i] = m_dofXCoords_values[i-lowerbound];
@@ -782,7 +782,7 @@ void DLFlowSolverBase::shareDLModelInputs(real64 const &time_n,
     m_shared_metadata->m_shared_strainTrace[i] = m_strainTrace_values[i-lowerbound];
     m_shared_metadata->m_shared_prevSolution[i] = m_prevSolution_values[i-lowerbound];
   }
-  
+
 
   // Updating shared memory with (common) solution values (for rank 0)
   if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
@@ -797,19 +797,19 @@ void DLFlowSolverBase::shareDLModelInputs(real64 const &time_n,
 
   // sync with all other ranks
   MPI_Barrier( MPI_COMM_GEOS );
-  
+
   if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     // Signal Python to read the input array (only rank 0 will signal)
-    sem_post(m_sem_cpp_input_ready);
+    sem_post( m_sem_cpp_input_ready );
     std::cout << "Python Notified to start" << std::endl;
   }
 }
 
-void DLFlowSolverBase::readDLModelOutputs(real64 const &time_n,
-                                          real64 const &dt,
-                                          integer const cycleNumber,
-                                          DomainPartition &domain)
+void DLFlowSolverBase::readDLModelOutputs( real64 const & time_n,
+                                           real64 const & dt,
+                                           integer const cycleNumber,
+                                           DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( time_n, dt, cycleNumber, domain );
 
@@ -817,7 +817,7 @@ void DLFlowSolverBase::readDLModelOutputs(real64 const &time_n,
   if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
     std::cout << "DLFlowSolverBase::readDLModelOutputs " << cycleNumber << " started" << std::endl;
-    sem_wait(m_sem_python_output_ready);
+    sem_wait( m_sem_python_output_ready );
     std::cout << "Python Finished updating response" << std::endl;
   }
 
@@ -825,18 +825,18 @@ void DLFlowSolverBase::readDLModelOutputs(real64 const &time_n,
   MPI_Barrier( MPI_COMM_GEOS );
 
   // Reading shared memory with (distributed) solution values (for all ranks)
-  arrayView1d<real64>  m_solution_values = m_solution.open();
+  arrayView1d< real64 >  m_solution_values = m_solution.open();
 
-  globalIndex 	lowerbound = m_solution.ilower();
-  globalIndex 	upperbound = m_solution.iupper();
-  
-  for (int i = lowerbound; i < upperbound; i++)
+  globalIndex lowerbound = m_solution.ilower();
+  globalIndex upperbound = m_solution.iupper();
+
+  for( int i = lowerbound; i < upperbound; i++ )
   {
-    m_solution_values[i-lowerbound] = m_shared_metadata->m_shared_solution[i]; 
+    m_solution_values[i-lowerbound] = m_shared_metadata->m_shared_solution[i];
   }
 
   m_solution.close();
-  
+
   // reading shared memory with (common) solution values (for rank 0)
   if( MpiWrapper::commRank( MPI_COMM_GEOS ) == 0 )
   {
@@ -846,12 +846,12 @@ void DLFlowSolverBase::readDLModelOutputs(real64 const &time_n,
     std::cout << "m_t_step_no: " << m_shared_metadata->m_t_step_no << std::endl;
   }
 
-  
+
 }
 
 void DLFlowSolverBase::saveAquiferConvergedState( real64 const & time,
-                                                real64 const & dt,
-                                                DomainPartition & domain )
+                                                  real64 const & dt,
+                                                  DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -951,12 +951,12 @@ void DLFlowSolverBase::saveAquiferConvergedState( real64 const & time,
  */
 real64
 DLFlowSolverBase::sumAquiferFluxes( BoundaryStencil const & stencil,
-                                  AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
-                                  ElementViewConst< arrayView1d< real64 const > > const & pres,
-                                  ElementViewConst< arrayView1d< real64 const > > const & presOld,
-                                  ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-                                  real64 const & timeAtBeginningOfStep,
-                                  real64 const & dt )
+                                    AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
+                                    ElementViewConst< arrayView1d< real64 const > > const & pres,
+                                    ElementViewConst< arrayView1d< real64 const > > const & presOld,
+                                    ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                                    real64 const & timeAtBeginningOfStep,
+                                    real64 const & dt )
 {
   using Order = BoundaryStencil::Order;
 
@@ -1054,7 +1054,7 @@ bool DLFlowSolverBase::checkSequentialSolutionIncrements( DomainPartition & GEOS
 }
 
 string DLFlowSolverBase::BCMessage::generateMessage( string_view baseMessage,
-                                                   string_view fieldName, string_view setName )
+                                                     string_view fieldName, string_view setName )
 {
   return GEOS_FMT( "{}\nCheck if you have added or applied the appropriate fields to "
                    "the FieldSpecification component with fieldName=\"{}\" "
@@ -1062,36 +1062,36 @@ string DLFlowSolverBase::BCMessage::generateMessage( string_view baseMessage,
 }
 
 string DLFlowSolverBase::BCMessage::pressureConflict( string_view regionName, string_view subRegionName,
-                                                    string_view setName, string_view fieldName )
+                                                      string_view setName, string_view fieldName )
 {
   return generateMessage( GEOS_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}",
                                     regionName, subRegionName, setName ), fieldName, setName );
 }
 
 string DLFlowSolverBase::BCMessage::temperatureConflict( string_view regionName, string_view subRegionName,
-                                                       string_view setName, string_view fieldName )
+                                                         string_view setName, string_view fieldName )
 {
   return generateMessage( GEOS_FMT( "Conflicting temperature boundary conditions on set {}/{}/{}",
                                     regionName, subRegionName, setName ), fieldName, setName );
 }
 
 string DLFlowSolverBase::BCMessage::missingPressure( string_view regionName, string_view subRegionName,
-                                                   string_view setName, string_view fieldName )
+                                                     string_view setName, string_view fieldName )
 {
   return generateMessage( GEOS_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}",
                                     regionName, subRegionName, setName ), fieldName, setName );
 }
 
 string DLFlowSolverBase::BCMessage::missingTemperature( string_view regionName, string_view subRegionName,
-                                                      string_view setName, string_view fieldName )
+                                                        string_view setName, string_view fieldName )
 {
   return generateMessage( GEOS_FMT( "Temperature boundary condition not prescribed on set {}/{}/{}",
                                     regionName, subRegionName, setName ), fieldName, setName );
 }
 
 string DLFlowSolverBase::BCMessage::conflictingComposition( int comp, string_view componentName,
-                                                          string_view regionName, string_view subRegionName,
-                                                          string_view setName, string_view fieldName )
+                                                            string_view regionName, string_view subRegionName,
+                                                            string_view setName, string_view fieldName )
 {
   return generateMessage( GEOS_FMT( "Conflicting {} composition (no.{}) for boundary conditions on set {}/{}/{}",
                                     componentName, comp, regionName, subRegionName, setName ),
@@ -1099,16 +1099,16 @@ string DLFlowSolverBase::BCMessage::conflictingComposition( int comp, string_vie
 }
 
 string DLFlowSolverBase::BCMessage::invalidComponentIndex( int comp,
-                                                         string_view fsName,
-                                                         string_view fieldName )
+                                                           string_view fsName,
+                                                           string_view fieldName )
 {
   return generateMessage( GEOS_FMT( "Invalid component index no.{} in boundary condition {}",
                                     comp, fsName ), fieldName, fsName );
 }
 
 string DLFlowSolverBase::BCMessage::notAppliedOnRegion( int componentIndex, string_view componentName,
-                                                      string_view regionName, string_view subRegionName,
-                                                      string_view setName, string_view fieldName )
+                                                        string_view regionName, string_view subRegionName,
+                                                        string_view setName, string_view fieldName )
 {
   return generateMessage( GEOS_FMT( "Boundary condition not applied to {} component (no.{})"
                                     "on region {}/{}/{}\n",

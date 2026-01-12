@@ -59,7 +59,7 @@ public:
    * @param parent the parent group of this instantiation of Group
    */
   DLSinglePhaseFVM( const string & name,
-                  dataRepository::Group * const parent );
+                    dataRepository::Group * const parent );
 
 
   /// deleted default constructor

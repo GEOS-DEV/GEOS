@@ -54,7 +54,7 @@ public:
    * @param parent the parent group of this instantiation of Group
    */
   DLSinglePhaseBase( const string & name,
-                   Group * const parent );
+                     Group * const parent );
 
 
   /// deleted default constructor
@@ -391,9 +391,9 @@ private:
 
 template< typename SUBREGION_TYPE >
 void DLSinglePhaseBase::accumulationAssemblyLaunch( DofManager const & dofManager,
-                                                  SUBREGION_TYPE const & subRegion,
-                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                  arrayView1d< real64 > const & localRhs )
+                                                    SUBREGION_TYPE const & subRegion,
+                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    arrayView1d< real64 > const & localRhs )
 {
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 

@@ -58,7 +58,7 @@ using namespace fields;
 using namespace singlePhaseBaseKernels;
 
 DLSinglePhaseBase::DLSinglePhaseBase( const string & name,
-                                  Group * const parent ):
+                                      Group * const parent ):
   DLFlowSolverBase( name, parent )
 {
   this->registerWrapper( viewKeyStruct::inputTemperatureString(), &m_inputTemperature ).
@@ -564,17 +564,17 @@ void DLSinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain 
                                                                           elevationValues.toNestedView(),
                                                                           pressureValues.toView() ) :
                                      singlePhaseBaseKernels::
-        HydrostaticPressureKernel::launch( numPointsInTable,
-                                           maxNumEquilIterations,
-                                           equilTolerance,
-                                           gravVector,
-                                           minElevation,
-                                           elevationIncrement,
-                                           datumElevation,
-                                           datumPressure,
-                                           fluidWrapper,
-                                           elevationValues.toNestedView(),
-                                           pressureValues.toView() );
+                                       HydrostaticPressureKernel::launch( numPointsInTable,
+                                                                          maxNumEquilIterations,
+                                                                          equilTolerance,
+                                                                          gravVector,
+                                                                          minElevation,
+                                                                          elevationIncrement,
+                                                                          datumElevation,
+                                                                          datumPressure,
+                                                                          fluidWrapper,
+                                                                          elevationValues.toNestedView(),
+                                                                          pressureValues.toView() );
 
       GEOS_THROW_IF( !equilHasConverged,
                      getCatalogName() << " " << getDataContext() <<
@@ -660,8 +660,8 @@ void DLSinglePhaseBase::initializeThermalState( MeshLevel & mesh, string_array c
 }
 
 void DLSinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                         real64 const & GEOS_UNUSED_PARAM( dt ),
-                                         DomainPartition & domain )
+                                           real64 const & GEOS_UNUSED_PARAM( dt ),
+                                           DomainPartition & domain )
 {
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -714,8 +714,8 @@ void DLSinglePhaseBase::implicitStepSetup( real64 const & GEOS_UNUSED_PARAM( tim
 }
 
 void DLSinglePhaseBase::implicitStepComplete( real64 const & time,
-                                            real64 const & dt,
-                                            DomainPartition & domain )
+                                              real64 const & dt,
+                                              DomainPartition & domain )
 {
   GEOS_MARK_FUNCTION;
 
@@ -797,25 +797,25 @@ void DLSinglePhaseBase::implicitStepComplete( real64 const & time,
 
 
 void DLSinglePhaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
-                                      real64 const dt,
-                                      DomainPartition & domain,
-                                      DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                      arrayView1d< real64 > const & localRhs )
+                                        real64 const dt,
+                                        DomainPartition & domain,
+                                        DofManager const & dofManager,
+                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
-  GEOS_LOG_LEVEL_RANK_0(logInfo::NonlinearSolver,
-                          GEOS_FMT("--CustomLog--DLSinglePhaseBase::assembleSystem  dt:{} ", dt));
-  
+  GEOS_LOG_LEVEL_RANK_0( logInfo::NonlinearSolver,
+                         GEOS_FMT( "--CustomLog--DLSinglePhaseBase::assembleSystem  dt:{} ", dt ));
+
   // populate the target DOF coordinates
   string const presDofKey = m_dofManager.getKey( DLSinglePhaseBase::viewKeyStruct::elemDofFieldString() );
   populateDofCoords( m_dofManager, domain, presDofKey );
   //TODO: Consider Moving populateDofStrainTrace to a more suitable method like IFENNPoromechanics::mapSolutionBetweenSolvers
-  populateDofStrainTrace( m_dofManager, domain, presDofKey ); 
-  //TODO: Consider Moving populateDofPrevSolution to a more suitable method 
+  populateDofStrainTrace( m_dofManager, domain, presDofKey );
+  //TODO: Consider Moving populateDofPrevSolution to a more suitable method
   populateDofPrevSolution( m_dofManager, domain, presDofKey );
-  
+
   //TODO: Consider cancelling unused assembly features
   assembleAccumulationTerms( domain,
                              dofManager,
@@ -841,9 +841,9 @@ void DLSinglePhaseBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n )
 }
 
 void DLSinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
-                                                 DofManager const & dofManager,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                 arrayView1d< real64 > const & localRhs )
+                                                   DofManager const & dofManager,
+                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -862,11 +862,11 @@ void DLSinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
 }
 
 void DLSinglePhaseBase::applyBoundaryConditions( real64 time_n,
-                                               real64 dt,
-                                               DomainPartition & domain,
-                                               DofManager const & dofManager,
-                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                               arrayView1d< real64 > const & localRhs )
+                                                 real64 dt,
+                                                 DomainPartition & domain,
+                                                 DofManager const & dofManager,
+                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -954,11 +954,11 @@ void applyAndSpecifyFieldValue( real64 const & time_n,
 }
 
 void DLSinglePhaseBase::applyDirichletBC( real64 const time_n,
-                                        real64 const dt,
-                                        DomainPartition & domain,
-                                        DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                        arrayView1d< real64 > const & localRhs ) const
+                                          real64 const dt,
+                                          DomainPartition & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -983,11 +983,11 @@ void DLSinglePhaseBase::applyDirichletBC( real64 const time_n,
 }
 
 void DLSinglePhaseBase::applySourceFluxBC( real64 const time_n,
-                                         real64 const dt,
-                                         DomainPartition & domain,
-                                         DofManager const & dofManager,
-                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                         arrayView1d< real64 > const & localRhs ) const
+                                           real64 const dt,
+                                           DomainPartition & domain,
+                                           DofManager const & dofManager,
+                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                           arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -1176,11 +1176,11 @@ void DLSinglePhaseBase::applySourceFluxBC( real64 const time_n,
 }
 
 void DLSinglePhaseBase::keepVariablesConstantDuringInitStep( real64 const time,
-                                                           real64 const dt,
-                                                           DofManager const & dofManager,
-                                                           DomainPartition & domain,
-                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                           arrayView1d< real64 > const & localRhs ) const
+                                                             real64 const dt,
+                                                             DofManager const & dofManager,
+                                                             DomainPartition & domain,
+                                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                             arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
 
@@ -1297,8 +1297,8 @@ void DLSinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
 }
 
 real64 DLSinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
-                                                  DofManager const & dofManager,
-                                                  arrayView1d< real64 const > const & localSolution )
+                                                    DofManager const & dofManager,
+                                                    arrayView1d< real64 const > const & localSolution )
 {
   GEOS_MARK_FUNCTION;
 
@@ -1337,9 +1337,9 @@ real64 DLSinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
 }
 
 bool DLSinglePhaseBase::checkSystemSolution( DomainPartition & domain,
-                                           DofManager const & dofManager,
-                                           arrayView1d< real64 const > const & localSolution,
-                                           real64 const scalingFactor )
+                                             DofManager const & dofManager,
+                                             arrayView1d< real64 const > const & localSolution,
+                                             real64 const scalingFactor )
 {
   GEOS_MARK_FUNCTION;
 

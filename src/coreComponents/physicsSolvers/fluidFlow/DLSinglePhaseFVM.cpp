@@ -59,7 +59,7 @@ using namespace singlePhaseFVMKernels;
 
 template< typename BASE >
 DLSinglePhaseFVM< BASE >::DLSinglePhaseFVM( const string & name,
-                                        Group * const parent ):
+                                            Group * const parent ):
   BASE( name, parent )
 {
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
@@ -84,7 +84,7 @@ void DLSinglePhaseFVM< BASE >::initializePreSubGroups()
 
 template< typename BASE >
 void DLSinglePhaseFVM< BASE >::setupDofs( DomainPartition const & domain,
-                                        DofManager & dofManager ) const
+                                          DofManager & dofManager ) const
 {
   dofManager.addField( BASE::viewKeyStruct::elemDofFieldString(),
                        FieldLocation::Elem,
@@ -100,11 +100,11 @@ void DLSinglePhaseFVM< BASE >::setupDofs( DomainPartition const & domain,
 
 template< typename BASE >
 void DLSinglePhaseFVM< BASE >::setupSystem( DomainPartition & domain,
-                                          DofManager & dofManager,
-                                          CRSMatrix< real64, globalIndex > & localMatrix,
-                                          ParallelVector & rhs,
-                                          ParallelVector & solution,
-                                          bool const setSparsity )
+                                            DofManager & dofManager,
+                                            CRSMatrix< real64, globalIndex > & localMatrix,
+                                            ParallelVector & rhs,
+                                            ParallelVector & solution,
+                                            bool const setSparsity )
 {
   GEOS_MARK_FUNCTION;
   BASE::setupSystem( domain,
@@ -140,10 +140,10 @@ DLSinglePhaseFVM< BASE >::createPreconditioner( DomainPartition & domain ) const
 
 template< typename BASE >
 real64 DLSinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                                                      real64 const & GEOS_UNUSED_PARAM( dt ),
-                                                      DomainPartition const & domain,
-                                                      DofManager const & dofManager,
-                                                      arrayView1d< real64 const > const & localRhs )
+                                                        real64 const & GEOS_UNUSED_PARAM( dt ),
+                                                        DomainPartition const & domain,
+                                                        DofManager const & dofManager,
+                                                        arrayView1d< real64 const > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -263,10 +263,10 @@ real64 DLSinglePhaseFVM< BASE >::calculateResidualNorm( real64 const & GEOS_UNUS
 
 template< typename BASE >
 void DLSinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
-                                                  arrayView1d< real64 const > const & localSolution,
-                                                  real64 const scalingFactor,
-                                                  real64 const dt,
-                                                  DomainPartition & domain )
+                                                    arrayView1d< real64 const > const & localSolution,
+                                                    real64 const scalingFactor,
+                                                    real64 const dt,
+                                                    DomainPartition & domain )
 {
   GEOS_UNUSED_VAR( dt );
   if( m_isThermal )
@@ -315,10 +315,10 @@ void DLSinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManage
 
 template<>
 void DLSinglePhaseFVM<>::assembleFluxTerms( real64 const dt,
-                                          DomainPartition const & domain,
-                                          DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                          arrayView1d< real64 > const & localRhs )
+                                            DomainPartition const & domain,
+                                            DofManager const & dofManager,
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -371,10 +371,10 @@ void DLSinglePhaseFVM<>::assembleFluxTerms( real64 const dt,
 
 template< >
 void DLSinglePhaseFVM< DLSinglePhaseBase >::assembleStabilizedFluxTerms( real64 const dt,
-                                                                     DomainPartition const & domain,
-                                                                     DofManager const & dofManager,
-                                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                                     arrayView1d< real64 > const & localRhs )
+                                                                         DomainPartition const & domain,
+                                                                         DofManager const & dofManager,
+                                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                         arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -467,7 +467,8 @@ void DLSinglePhaseFVM< DLSinglePhaseBase >::assembleStabilizedFluxTerms( real64 
 // void DLSinglePhaseFVM< SinglePhaseProppantBase >::assembleStabilizedFluxTerms( real64 const dt,
 //                                                                              DomainPartition const & domain,
 //                                                                              DofManager const & dofManager,
-//                                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+//                                                                              CRSMatrixView< real64, globalIndex const > const &
+// localMatrix,
 //                                                                              arrayView1d< real64 > const & localRhs )
 // {
 //   GEOS_UNUSED_VAR( dt, domain, dofManager, localMatrix, localRhs );
@@ -476,12 +477,12 @@ void DLSinglePhaseFVM< DLSinglePhaseBase >::assembleStabilizedFluxTerms( real64 
 
 template< typename BASE >
 void DLSinglePhaseFVM< BASE >::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
-                                                    real64 const dt,
-                                                    DomainPartition const & domain,
-                                                    DofManager const & dofManager,
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                    arrayView1d< real64 > const & localRhs,
-                                                    string const & jumpDofKey )
+                                                      real64 const dt,
+                                                      DomainPartition const & domain,
+                                                      DofManager const & dofManager,
+                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                      arrayView1d< real64 > const & localRhs,
+                                                      string const & jumpDofKey )
 {
   GEOS_MARK_FUNCTION;
 
@@ -564,12 +565,12 @@ void DLSinglePhaseFVM< BASE >::assembleEDFMFluxTerms( real64 const GEOS_UNUSED_P
 
 template< typename BASE >
 void DLSinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNUSED_PARAM ( time_n ),
-                                                         real64 const dt,
-                                                         DomainPartition const & domain,
-                                                         DofManager const & dofManager,
-                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                         arrayView1d< real64 > const & localRhs,
-                                                         CRSMatrixView< real64, localIndex const > const & dR_dAper )
+                                                           real64 const dt,
+                                                           DomainPartition const & domain,
+                                                           DofManager const & dofManager,
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           arrayView1d< real64 > const & localRhs,
+                                                           CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
   GEOS_MARK_FUNCTION;
 
@@ -653,11 +654,11 @@ void DLSinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOS_UNU
 template< typename BASE >
 void
 DLSinglePhaseFVM< BASE >::applyBoundaryConditions( real64 const time_n,
-                                                 real64 const dt,
-                                                 DomainPartition & domain,
-                                                 DofManager const & dofManager,
-                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                 arrayView1d< real64 > const & localRhs )
+                                                   real64 const dt,
+                                                   DomainPartition & domain,
+                                                   DofManager const & dofManager,
+                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                   arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -684,11 +685,11 @@ GEOS_MAYBE_UNUSED char const incompleteBCLogmessage[] = "DLSinglePhaseFVM {}: at
 
 template< typename BASE >
 void DLSinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
-                                                   real64 const dt,
-                                                   DofManager const & dofManager,
-                                                   DomainPartition & domain,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs )
+                                                     real64 const dt,
+                                                     DofManager const & dofManager,
+                                                     DomainPartition & domain,
+                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                     arrayView1d< real64 > const & localRhs )
 {
   GEOS_MARK_FUNCTION;
 
@@ -763,8 +764,8 @@ void DLSinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         {
           globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
           GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions, GEOS_FMT( faceBcLogMessage,
-                                                                                    this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
-                                                                                    setName, targetGroup.getName(), numTargetFaces ),
+                                                                                 this->getName(), time_n+dt, fs.getCatalogName(), fs.getName(),
+                                                                                 setName, targetGroup.getName(), numTargetFaces ),
                                           fs );
         }
 
@@ -887,7 +888,8 @@ void DLSinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 //                                                                 real64 const GEOS_UNUSED_PARAM( dt ),
 //                                                                 DomainPartition & GEOS_UNUSED_PARAM( domain ),
 //                                                                 DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-//                                                                 CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+//                                                                 CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM(
+// localMatrix ),
 //                                                                 arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) const
 // {
 //   // Aquifer does not make sense for proppant flow in fractures
@@ -895,11 +897,11 @@ void DLSinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 
 template<>
 void DLSinglePhaseFVM<>::applyAquiferBC( real64 const time,
-                                       real64 const dt,
-                                       DomainPartition & domain,
-                                       DofManager const & dofManager,
-                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                       arrayView1d< real64 > const & localRhs ) const
+                                         real64 const dt,
+                                         DomainPartition & domain,
+                                         DofManager const & dofManager,
+                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                         arrayView1d< real64 > const & localRhs ) const
 {
   GEOS_MARK_FUNCTION;
 

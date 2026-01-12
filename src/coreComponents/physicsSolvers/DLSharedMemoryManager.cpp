@@ -33,31 +33,30 @@
 namespace geos
 {
 
-  using namespace dataRepository;
+using namespace dataRepository;
 
-  DLSharedMemoryManager::DLSharedMemoryManager(string const &name,
-                                               Group *const parent)
-      : dataRepository::Group(name, parent)
-  {
-  }
+DLSharedMemoryManager::DLSharedMemoryManager( string const & name,
+                                              Group * const parent )
+  : dataRepository::Group( name, parent )
+{}
 
-  DLSharedMemoryManager::~DLSharedMemoryManager() = default;
+DLSharedMemoryManager::~DLSharedMemoryManager() = default;
 
-   
-  sem_t* DLSharedMemoryManager::openASemaphore(const std::string &mem_name)
-  {
-    // TODO: check access permissions and handle errors
-    sem_t* ptr = sem_open(mem_name.c_str(), O_CREAT | O_RDWR, 0666, 0);
 
-    return ptr;
-  }
+sem_t * DLSharedMemoryManager::openASemaphore( const std::string & mem_name )
+{
+  // TODO: check access permissions and handle errors
+  sem_t * ptr = sem_open( mem_name.c_str(), O_CREAT | O_RDWR, 0666, 0 );
 
-  
+  return ptr;
+}
+
+
 #if defined(GEOS_USE_PYGEOSX)
-  PyTypeObject *DLSharedMemoryManager::getPythonType() const
-  {
-    return python::getPySolverType();
-  }
+PyTypeObject *DLSharedMemoryManager::getPythonType() const
+{
+  return python::getPySolverType();
+}
 #endif
 
 } // namespace geos
