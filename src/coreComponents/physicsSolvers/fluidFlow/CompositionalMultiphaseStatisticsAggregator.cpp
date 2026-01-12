@@ -16,58 +16,57 @@
 /**
  * @file CompositionalMultiphaseStatistics.cpp
  * @details Region statistics data is stored as follow:
- *
- * Problem : geos::ProblemManager
- * |-> domain : geos::DomainPartition
- *     |-> MeshBodies : geos::dataRepository::Group
- *         |-> cartesianMesh : geos::MeshBody
- *             |-> meshLevels : geos::dataRepository::Group
- *                 |-> Level0 : geos::MeshLevel
- *                 |   |-> nodeManager : geos::NodeManager
- *                 |   |   |-> sets : geos::dataRepository::Group
- *                 |   |       | * all : geos::dataRepository::Wrapper< index array >
- *                 |   |       | * xneg : geos::dataRepository::Wrapper< index array >
+
+ * Problem : ProblemManager
+ * |-> domain : DomainPartition
+ *     |-> MeshBodies : Group
+ *         |-> cartesianMesh : MeshBody
+ *             |-> meshLevels : Group
+ *                 |-> Level0 : MeshLevel
+ *                 |   |-> nodeManager : NodeManager
+ *                 |   |   |-> sets : Group
+ *                 |   |       | * all : Wrapper< index array >
+ *                 |   |       | * xneg : Wrapper< index array >
  *                 |   |       [...] (other element sets)
  *                 |   |
- *                 |   |-> ElementRegions : geos::ElementRegionManager
- *                 |   |   |-> Channel : geos::CellElementRegion
- *                 |   |   |   |-> cb-0_0_0 : geos::CellElementSubRegion
- *                 |   |   |   |   | * pressure : geos::dataRepository::Wrapper< real64 array >
- *                 |   |   |   |   | * temperature : geos::dataRepository::Wrapper< real64 array >
+ *                 |   |-> ElementRegions : ElementRegionManager
+ *                 |   |   |-> Channel : CellElementRegion
+ *                 |   |   |   |-> cb-0_0_0 : CellElementSubRegion
+ *                 |   |   |   |   | * pressure : Wrapper< real64 array >
+ *                 |   |   |   |   | * temperature : Wrapper< real64 array >
  *                 |   |   |   |   [...] (other fields)
  *                 |   |   |   |
- *                 |   |   |   |-> cb-0_0_1 : geos::CellElementSubRegion
- *                 |   |   |   |   | * pressure : geos::dataRepository::Wrapper< real64 array >
- *                 |   |   |   |   | * temperature : geos::dataRepository::Wrapper< real64 array >
+ *                 |   |   |   |-> cb-0_0_1 : CellElementSubRegion
+ *                 |   |   |   |   | * pressure : Wrapper< real64 array >
+ *                 |   |   |   |   | * temperature : Wrapper< real64 array >
  *                 |   |   |   |   [...] (other fields)
  *                 |   |   |   |
  *                 |   |   |   [...] (other sub-regions)
  *                 |   |   |
- *                 |   |   |-> Barrier : geos::CellElementRegion
- *                 |   |       |-> cb-1_0_0 : geos::CellElementSubRegion
- *                 |   |       |-> cb-1_0_1 : geos::CellElementSubRegion
+ *                 |   |   |-> Barrier : CellElementRegion
+ *                 |   |       |-> cb-1_0_0 : CellElementSubRegion
+ *                 |   |       |-> cb-1_0_1 : CellElementSubRegion
  *                 |   |       [...] (other sub-regions)
  *                 |   |
  *                 |   [...] (other element managers)
  *          ____   |   |
- *          |      |   |-> statistics : geos::dataRepository::Group (storage for all stats)
- *          |      |       |-> compFlowStats : geos::dataRepository::Group (storage for this instance stats)
- *          |      |       |   |-> cflStatistics : geos::compositionalMultiphaseStatistics::CFLStatistics
- *          |      |       |   |-> regionsStatistics : geos::compositionalMultiphaseStatistics::RegionStatistics (aggregate)
- *          |      |       |       |-> Channel : geos::compositionalMultiphaseStatistics::RegionStatistics (aggregate, mpi reduced)
- *          |      |       |       |   |-> cb-0_0_0 : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
- *  stats   |      |       |       |   |-> cb-0_0_1 : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
+ *          |      |   |-> statistics : Group (storage for all stats)
+ *          |      |       |-> compFlowStats : Group (storage for this instance stats)
+ *          |      |       |   |-> cflStatistics : CFLStatistics
+ *          |      |       |   |-> regionsStatistics : RegionStatistics (aggregate)
+ *          |      |       |       |-> Channel : RegionStatistics (aggregate, mpi reduced)
+ *          |      |       |       |   |-> cb-0_0_0 : RegionStatistics (compute read-back)
+ *  stats   |      |       |       |   |-> cb-0_0_1 : RegionStatistics (compute read-back)
  *  data -> |      |       |       |   [...] (other sub-regions stats)
  *          |      |       |       |
- *          |      |       |       |-> Barrier : geos::compositionalMultiphaseStatistics::RegionStatistics (aggregate, mpi reduced)
- *          |      |       |           |-> cb-1_0_0 : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
- *          |      |       |           |-> cb-1_0_1 : geos::compositionalMultiphaseStatistics::RegionStatistics (compute read-back)
+ *          |      |       |       |-> Barrier : RegionStatistics (aggregate, mpi reduced)
+ *          |      |       |           |-> cb-1_0_0 : RegionStatistics (compute read-back)
+ *          |      |       |           |-> cb-1_0_1 : RegionStatistics (compute read-back)
  *          |      |       |           [...] (other sub-regions stats)
  *          |      |       |
  *          |___   |       [...] (other stats storages)
  *                 |
  *                 [...] (other discretizations)
- *
  */
 
 #include "CompositionalMultiphaseStatisticsAggregator.hpp"
@@ -76,6 +75,7 @@
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
 #include "common/logger/Logger.hpp"
+#include "dataRepository/DataContext.hpp"
 #include "dataRepository/Group.hpp"
 #include "mesh/CellElementRegion.hpp"
 #include "mesh/CellElementSubRegion.hpp"
@@ -83,10 +83,8 @@
 #include "mesh/MeshLevel.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/StatisticsKernel.hpp"
-#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include <memory>
-#include <ostream>
 
 
 namespace geos
@@ -99,9 +97,9 @@ using namespace constitutive;
 // using namespace fields;
 using namespace dataRepository;
 
-StatsAggregator::StatsAggregator( string_view ownerName ):
+StatsAggregator::StatsAggregator( DataContext const & ownerDataContext ):
   m_params(),
-  m_ownerName( ownerName )
+  m_ownerDataContext( ownerDataContext )
 {}
 
 void StatsAggregator::initStatisticsAggregation( dataRepository::Group & meshBodies,
@@ -117,15 +115,16 @@ void StatsAggregator::initStatisticsAggregation( dataRepository::Group & meshBod
                                                               string_array const & )
   {
     // getting the container of all requesters statistics groups (can be already initialized)
-    Group * allStatisticsGroup = mesh.getGroupPointer( ViewKeys::statisticsString() );
-    if( allStatisticsGroup == nullptr )
-      allStatisticsGroup = &mesh.registerGroup( ViewKeys::statisticsString() );
+    Group * meshStatsGroup = mesh.getGroupPointer( ViewKeys::statisticsString() );
+    if( meshStatsGroup == nullptr )
+      meshStatsGroup = &mesh.registerGroup( ViewKeys::statisticsString() );
 
     // registering the container of instance statistics groups (must be unique for this instance)
-    GEOS_ERROR_IF_NE_MSG( allStatisticsGroup->hasGroup( m_ownerName ), false,
-                          GEOS_FMT( "A statistics aggregator have already been requested for '{}'.",
-                                    m_ownerName ) );
-    allStatisticsGroup->registerGroup( m_ownerName );
+    string const & ownerName = getOwnerName();
+    GEOS_ERROR_IF_NE_MSG( meshStatsGroup->hasGroup( ownerName ), false,
+                          "A statistics aggregator have already been requested.",
+                          m_ownerDataContext );
+    meshStatsGroup->registerGroup( ownerName );
   } );
 }
 
@@ -133,6 +132,9 @@ void StatsAggregator::enableRegionStatisticsAggregation( dataRepository::Group &
 {
   if( m_solver == nullptr )
     return;
+
+  integer regionCount = 0;
+  integer subRegionCount = 0;
 
   auto const registerStats = [=] ( Group & parent,
                                    string const & name,
@@ -150,14 +152,15 @@ void StatsAggregator::enableRegionStatisticsAggregation( dataRepository::Group &
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     Group & statisticsGroup = getInstanceStatisticsGroup( mesh );
-    RegionStatistics & allRegionsStats = registerStats( statisticsGroup,
+    RegionStatistics & meshRegionsStats = registerStats( statisticsGroup,
                                                         ViewKeys::regionsStatisticsString(),
                                                         mesh.getName() );
 
     for( size_t i = 0; i < regionNames.size(); ++i )
+    
     {
       CellElementRegion & region = elemManager.getRegion< CellElementRegion >( regionNames[i] );
-      RegionStatistics & regionStats = registerStats( allRegionsStats,
+      RegionStatistics & regionStats = registerStats( meshRegionsStats,
                                                       GEOS_FMT( "{}_region_stats", region.getName() ),
                                                       region.getName() );
 
@@ -166,9 +169,16 @@ void StatsAggregator::enableRegionStatisticsAggregation( dataRepository::Group &
         registerStats( regionStats,
                        GEOS_FMT( "{}_subRegion_stats", subRegion.getName() ),
                        subRegion.getName() );
+        ++subRegionCount;
       } );
+      ++regionCount;
     }
   } );
+
+  GEOS_ERROR_IF( regionCount == 0 || subRegionCount == 0,
+                 GEOS_FMT( "Missing region for computing statistics:\n- {} regions,\n- {} sub-regions.",
+                           getOwnerName(), regionCount, subRegionCount ),
+                 m_ownerDataContext );
 
   m_isRegionStatsEnabled = true;
 }
@@ -193,8 +203,8 @@ void StatsAggregator::enableCFLStatistics( dataRepository::Group & meshBodies )
 Group & StatsAggregator::getInstanceStatisticsGroup( MeshLevel & mesh ) const
 {
   // considering everything is initialized, or else, crash gracefully
-  Group & allStatisticsGroup = mesh.getGroup( ViewKeys::statisticsString() );
-  Group & instanceStatisticsGroup = allStatisticsGroup.getGroup( m_ownerName );
+  Group & meshStatsGroup = mesh.getGroup( ViewKeys::statisticsString() );
+  Group & instanceStatisticsGroup = meshStatsGroup.getGroup( getOwnerName() );
   return instanceStatisticsGroup;
 }
 
@@ -220,9 +230,9 @@ void StatsAggregator::forRegionStatistics( dataRepository::Group & meshBodies,
                                                               string_array const & )
   {
     Group & instanceStats = getInstanceStatisticsGroup( mesh );
-    RegionStatistics & allRegionsStats = getRegionsStatisticsGroup( mesh );
+    RegionStatistics & meshRegionsStats = getRegionsStatisticsGroup( mesh );
 
-    func( mesh, allRegionsStats );
+    func( mesh, meshRegionsStats );
   } );
 }
 
@@ -260,9 +270,9 @@ bool StatsAggregator::computeRegionsStatistics( real64 const time, Group & meshB
   forRegionStatistics( meshBodies,
                        [&, time] ( MeshLevel & mesh, RegionStatistics & regionStats )
   {
-    RegionStatistics & allRegionsStats = getRegionsStatisticsGroup( mesh );
+    RegionStatistics & meshRegionsStats = getRegionsStatisticsGroup( mesh );
     forRegionStatistics( mesh,
-                         allRegionsStats,
+                         meshRegionsStats,
                          [&, time] ( CellElementRegion & region, RegionStatistics & regionStats )
     {
       forRegionStatistics( region,
@@ -279,11 +289,11 @@ bool StatsAggregator::computeRegionsStatistics( real64 const time, Group & meshB
   forRegionStatistics( meshBodies,
                        [&, time] ( MeshLevel & mesh, RegionStatistics & regionStats )
   {
-    RegionStatistics & allRegionsStats = getRegionsStatisticsGroup( mesh );
-    initStats( allRegionsStats, time );
+    RegionStatistics & meshRegionsStats = getRegionsStatisticsGroup( mesh );
+    initStats( meshRegionsStats, time );
 
     forRegionStatistics( mesh,
-                         allRegionsStats,
+                         meshRegionsStats,
                          [&, time] ( CellElementRegion & region, RegionStatistics & regionStats )
     {
       initStats( regionStats, time );
@@ -298,36 +308,15 @@ bool StatsAggregator::computeRegionsStatistics( real64 const time, Group & meshB
         postAggregateStats( subRegionStats );
       } );
 
-      aggregateStats( allRegionsStats, regionStats );
+      aggregateStats( meshRegionsStats, regionStats );
 
       mpiAggregateStats( regionStats );
       postAggregateStats( regionStats );
     } );
 
-    mpiAggregateStats( allRegionsStats );
-    postAggregateStats( allRegionsStats );
+    mpiAggregateStats( meshRegionsStats );
+    postAggregateStats( meshRegionsStats );
   } );
-
-  //   stdVector< string > phaseCompName;
-  //   phaseCompName.reserve( numPhases*numComps );
-  //   stdVector< string > massValues;
-  //   phaseCompName.reserve( numPhases*numComps );
-
-  //   ConstitutiveManager const & constitutiveManager = mesh.getGroupByPath< ConstitutiveManager >( "/Problem/domain/Constitutive" );
-  //   MultiFluidBase const & fluid = constitutiveManager.getGroup< MultiFluidBase >( m_solver->referenceFluidModelName() );
-  //   auto const phaseNames = fluid.phaseNames();
-  //   auto const componentNames = fluid.componentNames();
-  //   for( integer ip = 0; ip < numPhases; ++ip )
-  //   {
-  //     for( integer ic = 0; ic < numComps; ++ic )
-  //     {
-  //       std::stringstream ss;
-  //       ss << phaseNames[ip] << "/" << componentNames[ic];
-  //       phaseCompName.push_back( ss.str() );
-  //       massValues.push_back( GEOS_FMT( "{}", stats.m_componentMass[ip][ic] ) );
-  //     }
-  //   }
-  // }
 
   return true;
 }
@@ -493,7 +482,7 @@ void StatsAggregator::postAggregateStats( RegionStatistics & stats )
     stats.m_averagePressure = 0.0;
     stats.m_averageTemperature = 0.0;
     m_warnings.emplace_back( GEOS_FMT( "Cannot compute average pressure for '{}' because pore volume is zero in '{}'.",
-                                       m_ownerName, stats.getTargetName() ) );
+                                       getOwnerName(), stats.getTargetName() ) );
   }
 
   for( integer ip = 0; ip < m_numPhases; ++ip )

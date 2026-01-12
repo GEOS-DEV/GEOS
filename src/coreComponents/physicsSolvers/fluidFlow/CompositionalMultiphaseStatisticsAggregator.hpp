@@ -22,10 +22,12 @@
 
 #include "common/DataTypes.hpp"
 #include "common/StdContainerWrappers.hpp"
+#include "dataRepository/DataContext.hpp"
 #include "dataRepository/Group.hpp"
 #include "mesh/CellElementRegion.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshLevel.hpp"
+#include <memory>
 
 namespace geos
 {
@@ -185,7 +187,7 @@ public:
    * @param ownerName the unique name of the entity requesting the statistics.
    *                  An error is thrown if not unique in this context.
    */
-  StatsAggregator( string_view ownerName );
+  StatsAggregator( dataRepository::DataContext const & ownerDataContext );
 
   /**
    * @brief Enable the computation of any statistics, initialize data structure to collect them.
@@ -259,8 +261,8 @@ public:
   /**
    * @return the name of the entity requesting the statistics.
    */
-  string_view getOwnerName() const
-  { return m_ownerName; }
+  string const & getOwnerName() const
+  { return m_ownerDataContext.getTargetName(); }
 
   integer getNumPhases() const
   { return m_numPhases; }
@@ -277,7 +279,7 @@ private:
   stdVector< string > m_warnings;
 
   /// @see getOwnerName()
-  string m_ownerName;
+  dataRepository::DataContext const & m_ownerDataContext;
 
   bool m_isRegionStatsEnabled = false;
 

@@ -101,7 +101,7 @@ void StatsTask::postInputInitialization()
                 InputError );
   }
 
-  m_aggregator = std::make_unique< StatsAggregator >( getName() );
+  m_aggregator = std::make_unique< StatsAggregator >( getDataContext() );
 }
 
 void StatsTask::registerDataOnMesh( Group & meshBodies )
@@ -389,7 +389,7 @@ void StatsTask::outputCsvStats( real64 statsTime,
 
     row.insert( row.begin(),
                 { std::to_string( statsTime ),
-                  targetName,
+                  string( targetName ),
                   std::to_string( stats.m_minPressure ),
                   std::to_string( stats.m_averagePressure ),
                   std::to_string( stats.m_maxPressure ),
