@@ -34,6 +34,11 @@ class ConstitutiveManager;
 class MultiFluidBase;
 }
 
+namespace compositionalMultiphaseStatistics
+{
+class StatsAggregator;
+}
+
 /**
  * @class CompositionalMultiphaseWell
  *
@@ -398,6 +403,8 @@ private:
   /// index of the target phase, used to impose the phase rate constraint
   localIndex m_targetPhaseIndex;
 
+  /// optional statistics aggregator to get the average pressure of simulated region
+  std::unique_ptr< compositionalMultiphaseStatistics::StatsAggregator > m_reservoirStatsAggregator;
 
 
 };

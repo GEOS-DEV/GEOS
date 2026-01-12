@@ -22,6 +22,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
+#include "common/logger/Logger.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidFields.hpp"
@@ -60,6 +61,7 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 using namespace fields;
+using namespace compositionalMultiphaseStatistics;
 
 CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
                                                           Group * const parent )
@@ -433,31 +435,17 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
                                                            WellElementSubRegion const & subRegion )
 {
   WellControls & wellControls = getWellControls( subRegion );
+
   if( !wellControls.useSurfaceConditions() )
   {
-    bool const useSeg =wellControls.referenceReservoirRegion().empty();
-    GEOS_WARNING_IF( useSeg,
+    bool const useSegmentValues = wellControls.referenceReservoirRegion().empty();
+    GEOS_WARNING_IF( useSegmentValues,
                      "WellControls " <<WellControls::viewKeyStruct::referenceReservoirRegionString() <<
                      " not set and well constraint fluid property calculations will use top segement pressure and temp " );
-    if( useSeg )
-    {
-      wellControls.setRegionAveragePressure( -1 );
-      wellControls.setRegionAverageTemperature( -1 );
-    }
-    else
-    {
-      // Check if region name exists in list of Reservoir's target regions
-      string const regionName = wellControls.referenceReservoirRegion();
-      CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
-      string_array const & targetRegionsNames = flowSolver.getTargetRegionNames();
-      auto const pos = std::find( targetRegionsNames.begin(), targetRegionsNames.end(), regionName );
-      GEOS_ERROR_IF( pos == targetRegionsNames.end(),
-                     GEOS_FMT( "{}: Region {} is not a target of the reservoir solver and cannot be used for referenceReservoirRegion in WellControl {}.",
-                               getDataContext(), regionName, wellControls.getName() ) );
-
-
-    }
+    GEOS_ERROR_IF( !useSegmentValues && !m_reservoirStatsAggregator,
+                   "A stats aggregator should have been initialized in this scenario", getDataContext());
   }
+
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
   MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
@@ -729,34 +717,54 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( ElementRegionMana
   }
   else
   {
-    GEOS_UNUSED_VAR(elemManager);
-    // if( !wellControls.referenceReservoirRegion().empty() )
-    // {
-    //   ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion());
-    //   GEOS_ERROR_IF ( !region.hasWrapper( CompositionalMultiphaseStatistics::regionStatisticsName() ),
-    //                   GEOS_FMT( "{}: WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be configured for region {} ",
-    //                             getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ) );
+    GEOS_UNUSED_VAR( elemManager );
+    bool const useSegmentValues = wellControls.referenceReservoirRegion().empty();
 
-    //   CompositionalMultiphaseStatistics::RegionStatistics const & stats = region.getReference< CompositionalMultiphaseStatistics::RegionStatistics >(
-    //     CompositionalMultiphaseStatistics::regionStatisticsName() );
-    //   wellControls.setRegionAveragePressure( stats.averagePressure );
-    //   wellControls.setRegionAverageTemperature( stats.averageTemperature );
-    //   GEOS_ERROR_IF( stats.averagePressure <= 0.0,
-    //                  GEOS_FMT( "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be configured for region {} ",
-    //                            getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ));
-    // }
-    // If flashPressure is not set by region the value is defaulted to -1 and indicates to use top segment conditions
-    flashPressure = wellControls.getRegionAveragePressure();
-    if( flashPressure < 0.0 )
+    if( useSegmentValues )
     {
-      // region name not set, use segment conditions
-      flashPressure   = pres[iwelemRef];
-      flashTemperature = temp[iwelemRef];
+      wellControls.setRegionAveragePressure( -1 );
+      wellControls.setRegionAverageTemperature( -1 );
     }
     else
     {
-      // use reservoir region averages
-      flashTemperature = wellControls.getRegionAverageTemperature();
+
+      // TODO use m_reservoirStatsAggregator
+
+      // if( !wellControls.referenceReservoirRegion().empty() )
+      // {
+      //   ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion());
+      //   GEOS_ERROR_IF ( !region.hasWrapper( CompositionalMultiphaseStatistics::regionStatisticsName() ),
+      //                   GEOS_FMT( "{}: WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be
+      // configured for region {} ",
+      //                             getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ) );
+
+      // will throw an exception if non-existing
+      // m_reservoirStatsAggregator->getRegionStatistics( subRegion., wellControls.referenceReservoirRegion() )
+
+      //   CompositionalMultiphaseStatistics::RegionStatistics const & stats = region.getReference<
+      // CompositionalMultiphaseStatistics::RegionStatistics >(
+      //     CompositionalMultiphaseStatistics::regionStatisticsName() );
+      //   wellControls.setRegionAveragePressure( stats.averagePressure );
+      //   wellControls.setRegionAverageTemperature( stats.averageTemperature );
+      //   GEOS_ERROR_IF( stats.averagePressure <= 0.0,
+      //                  GEOS_FMT( "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires
+      // CompositionalMultiphaseStatistics to be configured for region {} ",
+      //                            getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ));
+      // }
+
+      // If flashPressure is not set by region the value is defaulted to -1 and indicates to use top segment conditions
+      flashPressure = wellControls.getRegionAveragePressure();
+      if( flashPressure < 0.0 )
+      {
+        // region name not set, use segment conditions
+        flashPressure   = pres[iwelemRef];
+        flashTemperature = temp[iwelemRef];
+      }
+      else
+      {
+        // use reservoir region averages
+        flashTemperature = wellControls.getRegionAverageTemperature();
+      }
     }
   }
   arrayView1d< real64 > const & currentPhaseVolRate =
@@ -1113,7 +1121,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
                   numComp,
                   numPhase,
                   wellControls,
-                  0.0, // initialization done at t = 0
+                  0.0,   // initialization done at t = 0
                   resCompFlowAccessors.get( flow::pressure{} ),
                   resCompFlowAccessors.get( flow::temperature{} ),
                   resCompFlowAccessors.get( flow::globalCompDensity{} ),
@@ -1363,8 +1371,8 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
           }
         } );
       }
-    } ); // forElementSubRegions
-  } ); // forDiscretizationOnMeshTargets
+    } );   // forElementSubRegions
+  } );   // forDiscretizationOnMeshTargets
 }
 
 

@@ -1,0 +1,23 @@
+CompileFlags:
+  Add:
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/GEOS/src/coreComponents
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/GEOS/src/coreComponents/linearAlgebra
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/GEOS/src/cmake/blt/thirdparty_builtin/googletest/googletest/include
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/GEOS/build-develop/include
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/build_stage/l1092082/spack-stage-raja-git.1d70abf171474d331f1409908bdf1b1c3fe19222_develop-dfj5hwwhvr4v32yxbduwrv2x4izvriez/spack-src/include
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/gcc-12.2.1/raja-git.1d70abf171474d331f1409908bdf1b1c3fe19222_develop-dfj5hwwhvr4v32yxbduwrv2x4izvriez/.spack/spack-build-dfj5hww/include
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/build_stage/l1092082/spack-stage-camp-git.ee0a3069a7ae72da8bcea63c06260fad34901d43_main-7wyhilu22frfttymb3dgrvaubocr3igk/spack-src/include
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/build_stage/l1092082/spack-stage-camp-git.ee0a3069a7ae72da8bcea63c06260fad34901d43_main-7wyhilu22frfttymb3dgrvaubocr3igk/spack-build-7wyhilu/include
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/build_stage/l1092082/spack-stage-fmt-10.0.0-2ckd7w7qbgdr2ysc2uybihnao6ngqtox/spack-src/include
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/build_stage/l1092082/spack-stage-umpire-git.1ed0669c57f041baa1f1070693991c3a7a43e7ee_develop-orylmsm4ynx3tffjsyablcrrb7xeqr75/spack-src/src
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/build_stage/l1092082/spack-stage-umpire-git.1ed0669c57f041baa1f1070693991c3a7a43e7ee_develop-orylmsm4ynx3tffjsyablcrrb7xeqr75/spack-build-orylmsm/include
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/gcc-12.2.1/umpire-git.1ed0669c57f041baa1f1070693991c3a7a43e7ee_develop-orylmsm4ynx3tffjsyablcrrb7xeqr75/include
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/gcc-12.2.1/chai-git.4b9060b18b9bec1167026cfb3132bd540c4bd56b_develop-kebrblc66x6zw5hvdcbh46kgnpua77n3/include
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/gcc-12.2.1/vtk-9.4.2-cyy6bpea5gfinatsqlbral2d6f5voaob/include/vtk-9.4
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/build_stage/l1092082/spack-stage-vtk-9.4.2-cyy6bpea5gfinatsqlbral2d6f5voaob/spack-src/ThirdParty/pugixml/vtkpugixml/src
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/build_stage/l1092082/spack-stage-vtk-9.4.2-cyy6bpea5gfinatsqlbral2d6f5voaob/spack-build-cyy6bpe/ThirdParty/pugixml/vtkpugixml/src
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/build_stage/l1092082/spack-stage-caliper-git.287b7f3ad2d12f520aad04268d44f353cd05403c_2.12.0-f3wivxbfbxrtiz2siwdgvm2l27cqec4j/spack-src/include
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/build_stage/l1092082/spack-stage-conduit-git.ad86e316ad56a75c099d30ca5ce75cff275b5924_develop-zu4a2kq24d4vq6sx2iv2wxzjvw6gu6sv/spack-src/src/libs/conduit
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/build_stage/l1092082/spack-stage-conduit-git.ad86e316ad56a75c099d30ca5ce75cff275b5924_develop-zu4a2kq24d4vq6sx2iv2wxzjvw6gu6sv/spack-build-zu4a2kq/libs/conduit
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/build_stage/l1092082/spack-stage-parmetis-4.0.3-7mo5p53bnnfmnfiuivjt4guunnu35teh/spack-src/include
+    - -I/data/pau901/SIM_CS/04_WORKSPACE/USERS/MelvinRey/WorkEnv/GEOSX_repos/thirdPartyLibs/install-master/build_stage/l1092082/spack-stage-scotch-*/spack-build-*/src/include
