@@ -259,7 +259,7 @@ public:
   { return m_warnings; }
 
   /**
-   * @return the name of the entity requesting the statistics.
+   * @return the name of the entity that needs the statistics.
    */
   string const & getOwnerName() const
   { return m_ownerDataContext.getTargetName(); }
@@ -269,6 +269,14 @@ public:
 
   integer getNumComponents() const
   { return m_numComponents; }
+
+  dataRepository::Group & getInstanceStatisticsGroup( MeshLevel & mesh ) const;
+
+  RegionStatistics & getMeshRegionsStatistics( MeshLevel & mesh ) const;
+
+  RegionStatistics & getRegionStatistics( MeshLevel & mesh, string_view regionNname ) const;
+
+  CFLStatistics & getCflStatisticsGroup( MeshLevel & mesh ) const;
 
 private:
 
@@ -288,10 +296,6 @@ private:
   integer m_numPhases;
 
   integer m_numComponents;
-
-  dataRepository::Group & getInstanceStatisticsGroup( MeshLevel & mesh ) const;
-  RegionStatistics & getRegionsStatisticsGroup( MeshLevel & mesh ) const;
-  CFLStatistics & getCflStatisticsGroup( MeshLevel & mesh ) const;
 
   /**
    * @brief Initialize all statistics values to aggregable default values,

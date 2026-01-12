@@ -153,11 +153,10 @@ void StatsAggregator::enableRegionStatisticsAggregation( dataRepository::Group &
     ElementRegionManager & elemManager = mesh.getElemManager();
     Group & statisticsGroup = getInstanceStatisticsGroup( mesh );
     RegionStatistics & meshRegionsStats = registerStats( statisticsGroup,
-                                                        ViewKeys::regionsStatisticsString(),
-                                                        mesh.getName() );
+                                                         ViewKeys::regionsStatisticsString(),
+                                                         mesh.getName() );
 
     for( size_t i = 0; i < regionNames.size(); ++i )
-    
     {
       CellElementRegion & region = elemManager.getRegion< CellElementRegion >( regionNames[i] );
       RegionStatistics & regionStats = registerStats( meshRegionsStats,
@@ -208,18 +207,29 @@ Group & StatsAggregator::getInstanceStatisticsGroup( MeshLevel & mesh ) const
   return instanceStatisticsGroup;
 }
 
-RegionStatistics & StatsAggregator::getRegionsStatisticsGroup( MeshLevel & mesh ) const
+RegionStatistics & StatsAggregator::getMeshRegionsStatistics( MeshLevel & mesh ) const
 {
   // considering everything is initialized, or else, crash gracefully
   Group & instanceStatisticsGroup = getInstanceStatisticsGroup( mesh );
   return instanceStatisticsGroup.getGroup< RegionStatistics >( ViewKeys::regionsStatisticsString() );
 }
 
+RegionStatistics & StatsAggregator::getRegionStatistics( MeshLevel & mesh, string_view regionName ) const
+{
+  RegionStatistics & meshRegionsStats = getMeshRegionsStatistics( mesh );
+  RegionStatistics * regionStats = meshRegionsStats.getGroupPointer< RegionStatistics >( regionName );
+  GEOS_THROW_IF( regionStats == nullptr,
+                 GEOS_FMT( "Region '{}' not found to get region statistics, is it a target of the reservoir solver?",
+                           regionName ),
+                 InputError, m_ownerDataContext );
+  return *regionStats;
+}
+
 CFLStatistics & StatsAggregator::getCflStatisticsGroup( MeshLevel & mesh ) const
 {
   // considering everything is initialized, or else, crash gracefully
-  Group & instanceStatisticsGroup = getInstanceStatisticsGroup( mesh );
-  return instanceStatisticsGroup.getGroup< CFLStatistics >( ViewKeys::cflStatisticsString() );
+  Group & statisticsGroup = getInstanceStatisticsGroup( mesh );
+  return statisticsGroup.getGroup< CFLStatistics >( ViewKeys::cflStatisticsString() );
 }
 
 void StatsAggregator::forRegionStatistics( dataRepository::Group & meshBodies,
@@ -230,7 +240,7 @@ void StatsAggregator::forRegionStatistics( dataRepository::Group & meshBodies,
                                                               string_array const & )
   {
     Group & instanceStats = getInstanceStatisticsGroup( mesh );
-    RegionStatistics & meshRegionsStats = getRegionsStatisticsGroup( mesh );
+    RegionStatistics & meshRegionsStats = getMeshRegionsStatistics( mesh );
 
     func( mesh, meshRegionsStats );
   } );
@@ -270,7 +280,7 @@ bool StatsAggregator::computeRegionsStatistics( real64 const time, Group & meshB
   forRegionStatistics( meshBodies,
                        [&, time] ( MeshLevel & mesh, RegionStatistics & regionStats )
   {
-    RegionStatistics & meshRegionsStats = getRegionsStatisticsGroup( mesh );
+    RegionStatistics & meshRegionsStats = getMeshRegionsStatistics( mesh );
     forRegionStatistics( mesh,
                          meshRegionsStats,
                          [&, time] ( CellElementRegion & region, RegionStatistics & regionStats )
@@ -289,7 +299,7 @@ bool StatsAggregator::computeRegionsStatistics( real64 const time, Group & meshB
   forRegionStatistics( meshBodies,
                        [&, time] ( MeshLevel & mesh, RegionStatistics & regionStats )
   {
-    RegionStatistics & meshRegionsStats = getRegionsStatisticsGroup( mesh );
+    RegionStatistics & meshRegionsStats = getMeshRegionsStatistics( mesh );
     initStats( meshRegionsStats, time );
 
     forRegionStatistics( mesh,
