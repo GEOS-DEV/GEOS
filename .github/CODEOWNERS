@@ -48,7 +48,7 @@
 /src/coreComponents/constitutive                      @rrsettgast @dkachuma
 /src/coreComponents/constitutive/capillaryPressure    @dkachuma
 /src/coreComponents/constitutive/contact              @rrsettgast @jhuang2601 @jafranc 
-/src/coreComponents/constitutive/diffusion            @dkachuma
+/src/coreComponents/constitutive/diffusion            @dkachuma @jafranc
 /src/coreComponents/constitutive/dispersion           @dkachuma @jafranc
 /src/coreComponents/constitutive/docs                 @jhuang2601 @dkachuma
 /src/coreComponents/constitutive/fluid                @dkachuma 
