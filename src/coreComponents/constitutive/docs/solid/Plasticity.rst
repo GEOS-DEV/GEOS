@@ -70,6 +70,8 @@ The following two-invariant models are currently implemented in GEOS:
 
   - :ref:`DelftEgg <DelftEgg>`
 
+  - :ref:`VonMisesJ <DelftEgg>`
+
 Three-Invariant Models
 ----------------------------------
 

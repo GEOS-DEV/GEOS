@@ -25,3 +25,4 @@ known models.
    TriaxialDriver
    ViscoPlasticity
    Voight
+   VonMisesJ

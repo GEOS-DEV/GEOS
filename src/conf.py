@@ -114,7 +114,8 @@ extensions = [
 
 bibtex_bibfiles = ["/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/Geomechanics.bib",
                    "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/StrainHardeningPolymer.bib",
-                   "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/Graphite.bib"]
+                   "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/Graphite.bib",
+                   "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/VonMisesJ.bib"]
 
 #bibtex_bibfiles = [
 #  "coreComponents/constitutive/docs/solid/Geomechanics.bib",
