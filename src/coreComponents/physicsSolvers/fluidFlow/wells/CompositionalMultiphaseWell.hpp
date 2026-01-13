@@ -351,6 +351,8 @@ protected:
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
+                                        Group & meshBodies,
+                                        MeshLevel & meshLevel,
                                         WellElementSubRegion const & subRegion ) override;
 
   /**

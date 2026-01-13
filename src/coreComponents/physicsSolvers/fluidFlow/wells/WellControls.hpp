@@ -252,7 +252,7 @@ public:
    * @brief Getter for the reservoir region associated with reservoir volume constraint
    * @return name of reservoir region
    */
-  string referenceReservoirRegion() const { return m_referenceReservoirRegion; }
+  string const & referenceReservoirRegion() const { return m_referenceReservoirRegion; }
 
   /**
    * @brief Getter for the surface pressure when m_useSurfaceConditions == 1

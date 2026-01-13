@@ -227,13 +227,14 @@ public:
                             RegionStatisticsFunctor< CellElementSubRegion > const & functor ) const;
 
   /**
-   * @brief Compute some statistics on a given mesh discretization (average field pressure, etc)
+   * @brief Compute statistics on the mesh discretizations (average field pressure, etc)
    *        Results are reduced on rank 0, and broadcasted over all ranks.
    * @param[in] time current time
    * @param[in] meshBodies the Group containg all MeshBody objects
    * @return false if there was a problem that prevented the statistics to be computed correctly.
    */
-  bool computeRegionsStatistics( real64 const time, dataRepository::Group & meshBodies );
+  bool computeRegionsStatistics( real64 const time,
+                                 dataRepository::Group & meshBodies );
 
   /**
    * @brief Compute CFL numbers
@@ -273,7 +274,7 @@ public:
   dataRepository::Group & getInstanceStatisticsGroup( MeshLevel & mesh ) const;
 
   RegionStatistics & getMeshRegionsStatistics( MeshLevel & mesh ) const;
-  
+
   /**
    * @brief TODO
    * @throw InputError if no statistics data is found for the given region name.

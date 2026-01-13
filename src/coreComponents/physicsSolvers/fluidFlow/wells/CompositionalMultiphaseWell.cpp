@@ -50,6 +50,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalPhaseVolumeFractionKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsAggregator.hpp"
+#include <memory>
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -432,18 +433,42 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
 
 void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n,
                                                            real64 const & GEOS_UNUSED_PARAM( dt ),
+                                                           Group & meshBodies,
+                                                           MeshLevel & meshLevel,
                                                            WellElementSubRegion const & subRegion )
 {
   WellControls & wellControls = getWellControls( subRegion );
 
-  if( !wellControls.useSurfaceConditions() )
+  string_view refRegionName = wellControls.referenceReservoirRegion();
+  bool const useSegmentValues = refRegionName.empty();
+  if( useSegmentValues )
   {
-    bool const useSegmentValues = wellControls.referenceReservoirRegion().empty();
-    GEOS_WARNING_IF( useSegmentValues,
-                     "WellControls " <<WellControls::viewKeyStruct::referenceReservoirRegionString() <<
-                     " not set and well constraint fluid property calculations will use top segement pressure and temp " );
-    GEOS_ERROR_IF( !useSegmentValues && !m_reservoirStatsAggregator,
-                   "A stats aggregator should have been initialized in this scenario", getDataContext());
+    GEOS_WARNING( "WellControls " <<WellControls::viewKeyStruct::referenceReservoirRegionString() <<
+                  " not set and well constraint fluid property calculations will use top segement pressure and temp " );
+    wellControls.setRegionAveragePressure( -1 );
+    wellControls.setRegionAverageTemperature( -1 );
+  }
+  else
+  {
+    if( !m_reservoirStatsAggregator )
+    { // lazily initialize the region statistics aggregator
+      auto & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+      m_reservoirStatsAggregator = std::make_unique< StatsAggregator >( wellControls.getDataContext() );
+      m_reservoirStatsAggregator->initStatisticsAggregation( meshBodies, flowSolver );
+      m_reservoirStatsAggregator->enableRegionStatisticsAggregation( meshBodies );
+    }
+
+    m_reservoirStatsAggregator->computeRegionsStatistics( time_n, meshBodies );
+    RegionStatistics & stats = m_reservoirStatsAggregator->getRegionStatistics( meshLevel, refRegionName );
+
+    GEOS_WARNING_IF( stats.m_averagePressure <= 0.0,
+                     GEOS_FMT( "No region average quantities computed in reference region '{}'.",
+                               wellControls.referenceReservoirRegion() ),
+                     wellControls.getWrapperDataContext( WellControls::viewKeyStruct::referenceReservoirRegionString() ),
+                     getDataContext() );
+
+    wellControls.setRegionAveragePressure( stats.m_averagePressure );
+    wellControls.setRegionAverageTemperature( stats.m_averageTemperature );
   }
 
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString());
@@ -720,37 +745,8 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( MeshLevel & meshL
   {
     bool const useSegmentValues = wellControls.referenceReservoirRegion().empty();
 
-    if( useSegmentValues )
+    if( !useSegmentValues )
     {
-      wellControls.setRegionAveragePressure( -1 );
-      wellControls.setRegionAverageTemperature( -1 );
-    }
-    else
-    {
-
-
-      // TODO use m_reservoirStatsAggregator
-
-      //   ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion());
-      //   GEOS_ERROR_IF ( !region.hasWrapper( CompositionalMultiphaseStatistics::regionStatisticsName() ),
-      //                   GEOS_FMT( "{}: WellControl {} referenceReservoirRegion field requires CompositionalMultiphaseStatistics to be
-      // configured for region {} ",
-      //                             getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ) );
-
-      // will throw an exception if non-existing
-      // m_reservoirStatsAggregator->getRegionStatistics( subRegion., wellControls.referenceReservoirRegion() )
-
-      //   CompositionalMultiphaseStatistics::RegionStatistics const & stats = region.getReference<
-      // CompositionalMultiphaseStatistics::RegionStatistics >(
-      //     CompositionalMultiphaseStatistics::regionStatisticsName() );
-      //   wellControls.setRegionAveragePressure( stats.averagePressure );
-      //   wellControls.setRegionAverageTemperature( stats.averageTemperature );
-      //   GEOS_ERROR_IF( stats.averagePressure <= 0.0,
-      //                  GEOS_FMT( "{}: No region average quantities computed.  WellControl {} referenceReservoirRegion field requires
-      // CompositionalMultiphaseStatistics to be configured for region {} ",
-      //                            getDataContext(), wellControls.getName(), wellControls.referenceReservoirRegion() ));
-      //
-
       // If flashPressure is not set by region the value is defaulted to -1 and indicates to use top segment conditions
       flashPressure = wellControls.getRegionAveragePressure();
       if( flashPressure < 0.0 )
@@ -2109,9 +2105,10 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
 {
   WellSolverBase::implicitStepSetup( time_n, dt, domain );
 
-  forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
-                                                                 MeshLevel & mesh,
-                                                                 string_array const & regionNames )
+  Group & meshBodies = domain.getMeshBodies();
+  forDiscretizationOnMeshTargets ( meshBodies, [&] ( string const &,
+                                                     MeshLevel & mesh,
+                                                     string_array const & regionNames )
   {
 
     ElementRegionManager & elemManager = mesh.getElemManager();
@@ -2163,7 +2160,7 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
         MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
         fluid.saveConvergedState();
 
-        validateWellConstraints( time_n, dt, subRegion );
+        validateWellConstraints( time_n, dt, meshBodies, mesh, subRegion );
 
         updateSubRegionState( mesh, subRegion );
       }

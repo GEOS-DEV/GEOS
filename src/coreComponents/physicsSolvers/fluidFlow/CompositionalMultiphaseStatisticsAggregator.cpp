@@ -278,9 +278,8 @@ bool StatsAggregator::computeRegionsStatistics( real64 const time, Group & meshB
 
   // computation of sub region stats
   forRegionStatistics( meshBodies,
-                       [&, time] ( MeshLevel & mesh, RegionStatistics & regionStats )
+                       [&, time] ( MeshLevel & mesh, RegionStatistics & meshRegionsStats )
   {
-    RegionStatistics & meshRegionsStats = getMeshRegionsStatistics( mesh );
     forRegionStatistics( mesh,
                          meshRegionsStats,
                          [&, time] ( CellElementRegion & region, RegionStatistics & regionStats )
@@ -297,9 +296,8 @@ bool StatsAggregator::computeRegionsStatistics( real64 const time, Group & meshB
 
   // aggregation of computations from the sub regions
   forRegionStatistics( meshBodies,
-                       [&, time] ( MeshLevel & mesh, RegionStatistics & regionStats )
+                       [&, time] ( MeshLevel & mesh, RegionStatistics & meshRegionsStats )
   {
-    RegionStatistics & meshRegionsStats = getMeshRegionsStatistics( mesh );
     initStats( meshRegionsStats, time );
 
     forRegionStatistics( mesh,
