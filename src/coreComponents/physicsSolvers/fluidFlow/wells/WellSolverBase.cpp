@@ -36,7 +36,7 @@ using namespace fields;
 
 WellSolverBase::WellSolverBase( string const & name,
                                 Group * const parent )
-  : PhysicsSolverBase( name, parent ),
+  : WellControls( name, parent ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_numDofPerWellElement( 0 ),
@@ -70,35 +70,35 @@ WellSolverBase::WellSolverBase( string const & name,
 
 Group * WellSolverBase::createChild( string const & childKey, string const & childName )
 {
+  Group * baseChild = WellControls::createChild( childKey, childName );
+  if( baseChild != nullptr )
+  {
+    return baseChild;
+  }
   static std::set< string > const childTypes = {
-    keys::wellControls,
+    //keys::wellControls,
     PhysicsSolverBase::groupKeyStruct::linearSolverParametersString(),
     PhysicsSolverBase::groupKeyStruct::nonlinearSolverParametersString(),
   };
   GEOS_ERROR_IF( childTypes.count( childKey ) == 0,
                  CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ),
                  getDataContext() );
-  if( childKey == keys::wellControls )
-  {
-    return &registerGroup< WellControls >( childName );
-  }
-  else
-  {
-    PhysicsSolverBase::createChild( childKey, childName );
-    return nullptr;
-  }
+
+  PhysicsSolverBase::createChild( childKey, childName );
+  return nullptr;
+
 }
 
 void WellSolverBase::expandObjectCatalogs()
 {
-  createChild( keys::wellControls, keys::wellControls );
+  //createChild( keys::wellControls, keys::wellControls );
 }
 
 WellSolverBase::~WellSolverBase() = default;
 
 void WellSolverBase::postInputInitialization()
 {
-  PhysicsSolverBase::postInputInitialization();
+  WellControls::postInputInitialization();
 
   // 1. Set key dimensions of the problem
   m_numDofPerWellElement = m_isThermal ?    m_numComponents + 2 : m_numComponents + 1; // 1 pressure  connectionRate + temp if thermal

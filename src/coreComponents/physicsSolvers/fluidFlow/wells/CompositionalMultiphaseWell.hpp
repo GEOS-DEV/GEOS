@@ -22,11 +22,11 @@
 
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/relativePermeability/Layouts.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
+
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 
 #include "physicsSolvers/fluidFlow/wells/WellConstraintsBase.hpp"
-
+#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 namespace geos
 {
 
@@ -59,8 +59,8 @@ public:
   /// deleted copy constructor
   CompositionalMultiphaseWell( CompositionalMultiphaseWell const & ) = delete;
 
-  /// default move constructor
-  CompositionalMultiphaseWell( CompositionalMultiphaseWell && ) = default;
+  /// deleted move constructor
+  CompositionalMultiphaseWell( CompositionalMultiphaseWell && ) = delete;
 
   /// deleted assignment operator
   CompositionalMultiphaseWell & operator=( CompositionalMultiphaseWell const & ) = delete;
@@ -83,7 +83,7 @@ public:
    */
   string getCatalogName() const override { return catalogName(); }
 
-  virtual void registerDataOnMesh( Group & meshBodies ) override;
+  void registerWellDataOnMesh( WellElementSubRegion & subRegion );
 
 
   /**
@@ -393,24 +393,17 @@ protected:
 
   void saveState( WellElementSubRegion & subRegion );
   virtual void postRestartInitialization() override final;
-  /*
-   * @brief Utility function that checks the consistency of the constitutive models
-   * @param[in] domain the domain partition
+
+  /**
+   * @brief Checks fluild model compatibility and validity
+   * @param[in] fluid the fluid to check
+   * @param[in] referenceFluid the reference fluid model
    * @detail
    * This function will produce an error if one of the well constitutive models
    * is incompatible with the corresponding models in reservoir
    * regions connected to that particular well.
    */
-  void validateConstitutiveModels( DomainPartition const & domain ) const;
-
-  /**
-   * @brief Checks if the WellControls parameters are within the fluid tables ranges
-   * @param fluid the fluid to check
-   */
-  void validateWellControlsForFluid( WellControls const & wellControls,
-                                     constitutive::MultiFluidBase const & fluid ) const;
-
-
+  void validateFluidModel( constitutive::MultiFluidBase const & fluid, constitutive::MultiFluidBase const & referenceFluid )const;
   /**
    * @brief Make sure that the well constraints are compatible
    * @param time_n the time at the beginning of the time step

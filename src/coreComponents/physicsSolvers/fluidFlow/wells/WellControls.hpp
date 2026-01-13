@@ -20,7 +20,7 @@
 
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
-
+#include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "common/format/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
 #include "functions/TableFunction.hpp"
@@ -35,6 +35,8 @@
 #include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
+
+
 namespace geos
 {
 namespace dataRepository
@@ -50,7 +52,7 @@ static constexpr auto wellControls = "WellControls";
  * @class WellControls
  * @brief This class describes the controls used to operate a well.
  */
-class WellControls : public dataRepository::Group
+class WellControls :  public PhysicsSolverBase
 {
 public:
 

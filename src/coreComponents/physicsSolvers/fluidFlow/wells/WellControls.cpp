@@ -30,7 +30,7 @@ namespace geos
 using namespace dataRepository;
 
 WellControls::WellControls( string const & name, Group * const parent )
-  : Group( name, parent ),
+  : PhysicsSolverBase( name, parent ),
   m_type( Type::PRODUCER ),
   m_inputControl( Control::UNINITIALIZED ),
   m_currentControl( Control::UNINITIALIZED ), // tjb remove
@@ -112,6 +112,11 @@ WellControls::~WellControls()
 
 Group * WellControls::createChild( string const & childKey, string const & childName )
 {
+  Group * baseChild = PhysicsSolverBase::createChild( childKey, childName );
+  if( baseChild != nullptr )
+  {
+    return baseChild;
+  }
   GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   ////const auto childTypes = { viewKeyStruct::perforationString() };
   //GEOS_ERROR_IF( childKey != viewKeyStruct::perforationString(),
@@ -211,7 +216,7 @@ TableFunction * createWellTable( string const & tableName,
 
 void WellControls::postInputInitialization()
 {
-
+  PhysicsSolverBase::postInputInitialization();
   // 0) Assign the value of the current well control
   // When the simulation starts from a restart file, we don't want to use the inputControl,
   // because the control may have switched in the simulation that generated the restart

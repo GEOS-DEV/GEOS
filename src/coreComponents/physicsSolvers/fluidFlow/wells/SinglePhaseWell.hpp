@@ -20,7 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELL_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELL_HPP_
 
-#include "WellSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 
 #include "constitutive/fluid/singlefluid/SingleFluidLayouts.hpp"
 
@@ -63,7 +63,7 @@ public:
   SinglePhaseWell( SinglePhaseWell const & ) = delete;
 
   /// default move constructor
-  SinglePhaseWell( SinglePhaseWell && ) = default;
+  SinglePhaseWell( SinglePhaseWell && ) = delete;
 
   /// deleted assignment operator
   SinglePhaseWell & operator=( SinglePhaseWell const & ) = delete;

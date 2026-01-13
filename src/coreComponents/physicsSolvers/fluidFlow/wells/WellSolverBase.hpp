@@ -20,13 +20,13 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
 
-#include "physicsSolvers/PhysicsSolverBase.hpp"
-
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "dataRepository/Group.hpp"
 namespace geos
 {
 
 class DomainPartition;
-class WellControls;
+
 class WellElementSubRegion;
 
 /**
@@ -35,7 +35,7 @@ class WellElementSubRegion;
  * Base class for well solvers.
  * Provides some common features
  */
-class WellSolverBase : public PhysicsSolverBase
+class WellSolverBase : public WellControls
 {
 public:
 
@@ -60,7 +60,7 @@ public:
   WellSolverBase( WellSolverBase const & ) = delete;
 
   /// default move constructor
-  WellSolverBase( WellSolverBase && ) = default;
+  WellSolverBase( WellSolverBase && ) = delete;
 
   /// deleted assignment operator
   WellSolverBase & operator=( WellSolverBase const & ) = delete;
@@ -128,7 +128,7 @@ public:
    */
   virtual localIndex numFluidPhases() const = 0;
 
-    /**
+  /**
    * @brief getter for the well associated to this subRegion
    * @param subRegion the well subRegion whose controls are requested
    * @return a reference to the well

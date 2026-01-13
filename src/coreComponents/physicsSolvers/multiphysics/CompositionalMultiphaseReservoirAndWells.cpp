@@ -147,7 +147,6 @@ initializePreSubGroups()
 
   CompositionalMultiphaseBase const * const flowSolver = this->flowSolver();
   Base::wellSolver()->setFlowSolverName( flowSolver->getName() );
-
   bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
   bool const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
   GEOS_THROW_IF( useMassFlow != useMassWell,

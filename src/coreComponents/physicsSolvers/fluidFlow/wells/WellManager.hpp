@@ -22,7 +22,7 @@
 
 #include "physicsSolvers/PhysicsSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
-
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 namespace geos
 {
 
@@ -57,7 +57,7 @@ public:
    * @param parent the parent group of this instantiation of Group
    */
   WellManager( const string & name,
-                  Group * const parent );
+               Group * const parent );
 
   /// default destructor
   virtual ~WellManager() override = default;
@@ -83,6 +83,42 @@ public:
   virtual void expandObjectCatalogs() override;
 
   /**
+   * @brief setter for the name of the flow solver (needed to use the flow kernels like UpdateFluid)
+   * @param name the name of the flow solver
+   */
+  void setFlowSolverName( string const & name ) { m_flowSolverName = name; }
+
+  /**
+   * @brief setter for compositional flag
+   * @param compositional the compositional flag
+   */
+  void setCompositional( bool const & isCompositional ) { m_isCompositional = isCompositional; }
+
+  /**
+   * @brief getter for compositional flag
+   * @return the compositional flag
+   */
+  bool isCompositional() const { return m_isCompositional; }
+
+  /**
+   * @brief Utility function to keep the well variables during a time step (used in
+   * poromechanics simulations)
+   * @param[in] keepVariablesConstantDuringInitStep flag to tell the solver to freeze its
+   * primary variables during a time step
+   * @detail This function is meant to be called by a specific task before/after the
+   * initialization step
+   */
+  void setKeepVariablesConstantDuringInitStep( bool const keepVariablesConstantDuringInitStep )
+  { m_keepVariablesConstantDuringInitStep = keepVariablesConstantDuringInitStep; }
+
+  /**
+   * @brief getter for the name of the flow solver (used in UpdateState)
+   * @return a string containing the name of the flow solver
+   */
+  string const & getFlowSolverName() const { return m_flowSolverName; }
+
+
+  /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new NodeManager object through the object catalog.
    */
@@ -92,12 +128,101 @@ public:
    */
   string getCatalogName() const override { return catalogName(); }
 
+  virtual void registerDataOnMesh( Group & meshBodies ) override;
   /**
    * @brief Get a well solver for a given well element sub-region
    * @param subRegion the well subRegion whose well solver is requested
    * @return a reference to the well solver
    */
   WellSolverBase & getWell( WellElementSubRegion const & subRegion );
+
+  /**
+   * @brief get the name of DOF defined on well elements
+   * @return name of the DOF field used by derived solver type
+   */
+  string wellElementDofName() const;
+
+  struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct
+  {
+    static constexpr char const * dofFieldString() { return "wellVars"; }
+    static constexpr char const * isThermalString() { return "isThermal"; }
+    static constexpr char const * useMassFlagString() {return "useMass"; }
+
+    static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
+
+  };
+
+  /**
+   * @brief getter for the number of degrees of freedom per well element
+   * @return the number of dofs
+   */
+  localIndex numDofPerWellElement() const;
+
+  /**
+   * @brief getter for the number of degrees of freedom per mesh element
+   * @return the number of dofs
+   */
+  localIndex numDofPerResElement() const;
+
+  /**
+   * @brief getter for iso/thermal switch
+   * @return True if thermal
+   */
+  integer isThermal() const;
+
+
+  /**
+   * @brief get the name of DOF defined on well elements
+   * @return name of the DOF field used by derived solver type
+   */
+  virtual string resElementDofName() const;
+
+  /**
+   * @brief const getter for the number of fluid components
+   * @return the number of fluid components
+   */
+  virtual localIndex numFluidComponents() const;
+
+  /**
+   * @brief const getter for the number of fluid phases
+   * @return the number of fluid phases
+   */
+  virtual localIndex numFluidPhases() const;
+
+  /**
+   * @brief const getter for well total mass equation usage
+   * @return true if total mass equation is used
+   */
+  integer useTotalMassEquation() const { return m_useTotalMassEquation; }
+
+  /**
+   * @brief getter for the well controls associated to this well subRegion
+   * @param subRegion the well subRegion whose controls are requested
+   * @return a reference to the controls
+   */
+  WellControls & getWellControls( WellElementSubRegion const & subRegion );
+
+  /**
+   * @brief const getter for the well controls associated to this well subRegion
+   * @param subRegion the well subRegion whose controls are requested
+   * @return a reference to the const controls
+   */
+  WellControls const & getWellControls( WellElementSubRegion const & subRegion ) const;
+
+  /**
+   * @brief getter for the compositional multiphase well associated to this well subRegion
+   * @param subRegion the well subRegion whose controls are requested
+   * @return a reference to the well
+   */
+  CompositionalMultiphaseWell & getCompositionalMultiphaseWell( WellElementSubRegion const & subRegion );
+
+  /**
+   * @brief const getter for the compositional multiphase well associated to this well subRegion
+   * @param subRegion the well subRegion whose controls are requested
+   * @return a reference to the const well
+   */
+  CompositionalMultiphaseWell const & getCompositionalMultiphaseWell( WellElementSubRegion const & subRegion ) const;
+
 
   /* PhysicsSolverBase interfaces */
   /**
@@ -118,7 +243,7 @@ public:
                      DomainPartition & domain ) override;
 
 #if 0
-   /**
+  /**
    * @brief function to assemble the linear system matrix and rhs
    * @param time the time at the beginning of the step
    * @param dt the desired timestep
@@ -245,7 +370,47 @@ public:
                         real64 const & dt,
                         DomainPartition & domain ) override;
 
-#endif                        
+#endif
+protected:
+  //virtual void postInputInitialization() override;
+
+  virtual void initializePostSubGroups() override;
+
+  //virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  // virtual void postRestartInitialization() override final;
+
+private:
+
+  /// name of the flow solver
+  string m_flowSolverName;
+
+  /// flag indicating whether mass or molar formulation should be used
+  integer m_useMass;
+
+  /// flag indicating whether total mass equation should be used
+  integer m_useTotalMassEquation;
+
+  /// flag indicating whether thermal formulation is used
+  integer m_isThermal;
+
+  /// flag indicating whether compositional formulation is used
+  bool m_isCompositional;
+
+  /// flag to freeze the initial state during initialization in coupled problems
+  bool m_keepVariablesConstantDuringInitStep;
+
+  /// number of phases
+  integer m_numFluidPhases;
+
+  /// number of components
+  integer m_numFluidComponents;
+
+  /// number of degrees of freedom per well element
+  integer m_numDofPerWellElement;
+
+  /// number of degrees of freedom per reservoir element
+  integer m_numDofPerResElement;
 };
 
 }
