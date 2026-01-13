@@ -241,6 +241,21 @@ protected:
     using namespace hpcReact::ChainGeneric;
     switch( m_chemicalSystemType )
     {
+      case ChemicalSystemType::ultramafic:
+        return ReactionKernelWrapper< ultramaficSystemType >( m_primarySpeciesAggregateConcentration,
+                                                              m_primarySpeciesMobileAggregateConcentration,
+                                                              m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                              m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
+                                                              m_initialPrimarySpeciesConcentration,
+                                                              m_secondarySpeciesConcentration,
+                                                              m_kineticReactionRates,
+                                                              m_aggregateSpeciesRates,
+                                                              m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
+                                                              m_numPrimarySpecies,
+                                                              m_numSecondarySpecies,
+                                                              m_numKineticReactions,
+                                                              ultramaficSystem );
+
       case ChemicalSystemType::carbonate:
         return ReactionKernelWrapper< carbonateSystemType >( m_primarySpeciesAggregateConcentration,
                                                              m_primarySpeciesMobileAggregateConcentration,
@@ -269,20 +284,6 @@ protected:
                                                                            m_numSecondarySpecies,
                                                                            m_numKineticReactions,
                                                                            carbonateSystemAllEquilibrium );
-      case ChemicalSystemType::ultramafic:
-        return ReactionKernelWrapper< ultramaficSystemType >( m_primarySpeciesAggregateConcentration,
-                                                              m_primarySpeciesMobileAggregateConcentration,
-                                                              m_dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                              m_dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations,
-                                                              m_initialPrimarySpeciesConcentration,
-                                                              m_secondarySpeciesConcentration,
-                                                              m_kineticReactionRates,
-                                                              m_aggregateSpeciesRates,
-                                                              m_dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
-                                                              m_numPrimarySpecies,
-                                                              m_numSecondarySpecies,
-                                                              m_numKineticReactions,
-                                                              ultramaficSystem );
       case ChemicalSystemType::forge:
         return ReactionKernelWrapper< forgeSystemType >( m_primarySpeciesAggregateConcentration,
                                                                            m_primarySpeciesMobileAggregateConcentration,

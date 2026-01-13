@@ -61,7 +61,9 @@ public:
     {
       InputFile,
       InputLine,
-      DataPath
+      DataPath,
+      DetectionLoc,
+      Signal,
     };
 
     /// The map contains contextual information about the error
@@ -156,6 +158,16 @@ public:
      * @return Reference to the current instance for method chaining.
      */
     ErrorMsg & addToMsg( std::string_view msg, bool toEnd = false );
+
+    /**
+     * @brief Add text to the error msg that occured according to the specified signal.
+     *        - the signal can be one of the main error signals.
+     *        - if the signal is SIGFPE, the nature of floating point error will be interpreted.
+     * @param signal The signal, from ISO C99 or POSIX standard.
+     * @param toEnd adds the message to the end if true, at the start otherwise.
+     * @return The instance, for builder pattern.
+     */
+    ErrorMsg & addSignalToMsg( int signal, bool toEnd = false );
 
     /**
      * @brief Set the source code location values (file and line where the error is detected)

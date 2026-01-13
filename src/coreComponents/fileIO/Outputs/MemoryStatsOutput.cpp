@@ -42,7 +42,7 @@ MemoryStatsOutput::MemoryStatsOutput( string const & name,
   this->registerWrapper( viewKeysStruct::writeCSV, &m_writeCSV ).
     setApplyDefaultValue( csvOutputDefault ? 1 : 0 ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
-    setDescription( "When set to 1, write the same statistics as the 'logLevel' allows to output in a CSV file" );
+    setDescription( "When set to 1, write the statistics into a CSV file.\nWhen set to 0, no output" );
 }
 
 void MemoryStatsOutput::postInputInitialization()

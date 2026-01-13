@@ -89,6 +89,14 @@ DECLARE_FIELD( globalCompFraction_n,
 //               NO_WRITE,
 //               "Global component fraction updates at the previous sequential iteration" );
 
+DECLARE_FIELD( bcGlobalCompFraction,
+               "bcGlobalCompFraction",
+               array2dLayoutComp,
+               0,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Boundary condition global component fraction" );
+
 DECLARE_FIELD( faceGlobalCompFraction,
                "faceGlobalCompFraction",
                array2dLayoutComp,
@@ -136,6 +144,32 @@ DECLARE_FIELD( dPhaseMobility,
                NOPLOT,
                NO_WRITE,
                "Derivative of phase volume fraction with respect to pressure, temperature, global component density" );
+
+// Face-based properties for boundary conditions
+// These store constitutive properties evaluated at BC face conditions
+DECLARE_FIELD( facePhaseMobility,
+               "facePhaseMobility",
+               array2dLayoutPhase,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Phase mobility at boundary faces evaluated at BC conditions" );
+
+DECLARE_FIELD( facePhaseMassDensity,
+               "facePhaseMassDensity",
+               array2dLayoutPhase,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Phase mass density at boundary faces evaluated at BC conditions" );
+
+DECLARE_FIELD( facePhaseCompFraction,
+               "facePhaseCompFraction",
+               array3dLayoutPhaseComp,
+               0,
+               NOPLOT,
+               NO_WRITE,
+               "Phase component fraction at boundary faces evaluated at BC conditions" );
 
 // this is needed for time step selector
 DECLARE_FIELD( phaseVolumeFraction_n,
