@@ -115,7 +115,8 @@ extensions = [
 bibtex_bibfiles = ["/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/Geomechanics.bib",
                    "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/StrainHardeningPolymer.bib",
                    "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/Graphite.bib",
-                   "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/VonMisesJ.bib"]
+                   "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/VonMisesJ.bib",
+                   "/g/g11/malenda1/GEOS/src/coreComponents/constitutive/docs/solid/CeramicDamage.bib"]
 
 #bibtex_bibfiles = [
 #  "coreComponents/constitutive/docs/solid/Geomechanics.bib",
@@ -207,6 +208,14 @@ html_css_files = [
     'theme_overrides.css',
 ]
 
+mathjax3_config = {
+    "tex": {
+        "tags": "ams",        # enables automatic numbering for \label / AMS environments
+        "tagSide": "left",    # put (1) on the left
+        "tagIndent": "0em",   # adjust spacing from left margin
+    }
+}
+
 # -- Options for HTMLHelp output ---------------------------------------------
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'GEOSXdoc'
@@ -230,6 +239,7 @@ latex_elements = {
     #
     # 'figure_align': 'htbp',
 }
+
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,

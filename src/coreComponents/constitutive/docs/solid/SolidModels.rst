@@ -9,6 +9,7 @@ known models.
 .. toctree::
    :maxdepth: 1
 
+   CeramicDamage
    Damage
    DelftEgg
    DruckerPrager
