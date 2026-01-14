@@ -97,6 +97,28 @@ using namespace constitutive;
 // using namespace fields;
 using namespace dataRepository;
 
+RegionStatistics::RegionStatistics( string const & name, dataRepository::Group * const parent,
+                                    string_view targetName,
+                                    integer const numPhases, integer const numComponents ):
+  dataRepository::Group( name, parent ),
+  m_phaseDynamicPoreVolume( numPhases ),
+  m_phaseMass( numPhases ),
+  m_trappedPhaseMass( numPhases ),
+  m_nonTrappedPhaseMass( numPhases ),
+  m_immobilePhaseMass( numPhases ),
+  m_mobilePhaseMass( numPhases ),
+  m_componentMass( numPhases, numComponents ),
+  m_targetName( targetName )
+{
+  // TODO : registerWrappers to store results in HDF5 (but need repairing of 1D HDF5 outputs)
+}
+
+CFLStatistics::CFLStatistics( string const & name, dataRepository::Group * const parent ):
+  dataRepository::Group( name, parent )
+{
+  // TODO : registerWrappers to store results in HDF5 (but need repairing of 1D HDF5 outputs)
+}
+
 StatsAggregator::StatsAggregator( DataContext const & ownerDataContext ):
   m_params(),
   m_ownerDataContext( ownerDataContext )
@@ -163,7 +185,7 @@ void StatsAggregator::enableRegionStatisticsAggregation( dataRepository::Group &
                                                       GEOS_FMT( "{}_region_stats", region.getName() ),
                                                       region.getName() );
 
-      region.forElementSubRegions( [&] ( CellElementSubRegion & subRegion )
+      region.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion & subRegion )
       {
         registerStats( regionStats,
                        GEOS_FMT( "{}_subRegion_stats", subRegion.getName() ),
@@ -190,7 +212,7 @@ void StatsAggregator::enableCFLStatistics( dataRepository::Group & meshBodies )
   m_solver->registerDataForCFL( meshBodies );
   m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                               MeshLevel & mesh,
-                                                              string_array const & regionNames )
+                                                              string_array const & )
   {
     Group & statisticsGroup = getInstanceStatisticsGroup( mesh );
     statisticsGroup.registerGroup< CFLStatistics >( ViewKeys::cflStatisticsString() );
@@ -217,12 +239,12 @@ RegionStatistics & StatsAggregator::getMeshRegionsStatistics( MeshLevel & mesh )
 RegionStatistics & StatsAggregator::getRegionStatistics( MeshLevel & mesh, string_view regionName ) const
 {
   RegionStatistics & meshRegionsStats = getMeshRegionsStatistics( mesh );
-  RegionStatistics * regionStats = meshRegionsStats.getGroupPointer< RegionStatistics >( regionName );
-  GEOS_THROW_IF( regionStats == nullptr,
+  RegionStatistics * const stats = meshRegionsStats.getGroupPointer< RegionStatistics >( string( regionName ) );
+  GEOS_THROW_IF( stats == nullptr,
                  GEOS_FMT( "Region '{}' not found to get region statistics, is it a target of the reservoir solver?",
                            regionName ),
                  InputError, m_ownerDataContext );
-  return *regionStats;
+  return *stats;
 }
 
 CFLStatistics & StatsAggregator::getCflStatisticsGroup( MeshLevel & mesh ) const
@@ -239,7 +261,6 @@ void StatsAggregator::forRegionStatistics( dataRepository::Group & meshBodies,
                                                               MeshLevel & mesh,
                                                               string_array const & )
   {
-    Group & instanceStats = getInstanceStatisticsGroup( mesh );
     RegionStatistics & meshRegionsStats = getMeshRegionsStatistics( mesh );
 
     func( mesh, meshRegionsStats );
@@ -254,7 +275,7 @@ void StatsAggregator::forRegionStatistics( MeshLevel & mesh,
   meshRegionsStatistics.forSubGroups< RegionStatistics >( [&] ( RegionStatistics & regionStatistics )
   {
     string_view targetName = regionStatistics.getTargetName();
-    CellElementRegion & region = elemManager.getRegion< CellElementRegion >( targetName );
+    CellElementRegion & region = elemManager.getRegion< CellElementRegion >( string( targetName ) );
 
     func( region, regionStatistics );
   } );
@@ -267,7 +288,7 @@ void StatsAggregator::forRegionStatistics( CellElementRegion & region,
   regionStatistics.forSubGroups< RegionStatistics >( [&] ( RegionStatistics & subRegionStatistics )
   {
     string_view targetName = subRegionStatistics.getTargetName();
-    CellElementSubRegion & subRegion = region.getSubRegion< CellElementSubRegion >( targetName );
+    CellElementSubRegion & subRegion = region.getSubRegion< CellElementSubRegion >( string( targetName ) );
     func( subRegion, subRegionStatistics );
   } );
 }
@@ -308,7 +329,7 @@ bool StatsAggregator::computeRegionsStatistics( real64 const time, Group & meshB
 
       forRegionStatistics( region,
                            regionStats,
-                           [&, time] ( CellElementSubRegion & subRegion, RegionStatistics & subRegionStats )
+                           [&, time] ( CellElementSubRegion &, RegionStatistics & subRegionStats )
       {
         aggregateStats( regionStats, subRegionStats );
 
@@ -524,22 +545,6 @@ bool StatsAggregator::computeCFLNumbers( real64 const time,
   stats->m_maxCompCFL = maxCompCFL;
 
   return true;
-}
-
-RegionStatistics::RegionStatistics( string const & name, dataRepository::Group * const parent,
-                                    string_view targetName,
-                                    integer const numPhases, integer const numComponents ):
-  dataRepository::Group( name, parent ),
-  m_targetName( targetName ),
-  m_phaseDynamicPoreVolume( numPhases ),
-  m_phaseMass( numPhases ),
-  m_trappedPhaseMass( numPhases ),
-  m_nonTrappedPhaseMass( numPhases ),
-  m_immobilePhaseMass( numPhases ),
-  m_mobilePhaseMass( numPhases ),
-  m_componentMass( numPhases, numComponents )
-{
-  // TODO : registerWrappers (need repairing of 1D HDF5 output)
 }
 
 } /* namespace compositionalMultiphaseStatistics */

@@ -687,7 +687,7 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
 
 }
 
-void CompositionalMultiphaseWell::updateVolRatesForConstraint( MeshLevel & meshLevel,
+void CompositionalMultiphaseWell::updateVolRatesForConstraint( MeshLevel & GEOS_UNUSED_PARAM( meshLevel ),
                                                                WellElementSubRegion const & subRegion )
 {
   GEOS_MARK_FUNCTION;

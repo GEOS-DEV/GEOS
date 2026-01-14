@@ -85,7 +85,8 @@ void StatsTask::postInputInitialization()
   Base::postInputInitialization();
 
   GEOS_THROW_IF_EQ_MSG( m_solver, nullptr,
-                        "To identify simulated regions, a solver must be provided." /*, getWrapperDataContext( getSolverWrapperName() )*/ );
+                        "To identify simulated regions, a solver must be provided.",
+                        InputError /*, getWrapperDataContext( getSolverWrapperName() )*/ );
 
   if( dynamicCast< CompositionalMultiphaseBase * >( m_solver ))
   {
@@ -353,7 +354,7 @@ void StatsTask::outputLogStats( real64 const statsTime,
   m_aggregator->forRegionStatistics( mesh, meshRegionsStatistics,
                                      [&] ( CellElementRegion & region, RegionStatistics & stats )
   {
-    outputRegionStats( region.getName(), meshRegionsStatistics );
+    outputRegionStats( region.getName(), stats );
   } );
   outputRegionStats( mesh.getName(), meshRegionsStatistics );
 
@@ -415,7 +416,7 @@ void StatsTask::outputCsvStats( real64 statsTime,
   m_aggregator->forRegionStatistics( mesh, meshRegionsStatistics,
                                      [&] ( CellElementRegion & region, RegionStatistics & stats )
   {
-    outputRegionStats( region.getName(), meshRegionsStatistics );
+    outputRegionStats( region.getName(), stats );
   } );
   outputRegionStats( mesh.getName(), meshRegionsStatistics );
 
