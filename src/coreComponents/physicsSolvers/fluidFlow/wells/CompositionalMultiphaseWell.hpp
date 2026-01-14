@@ -83,6 +83,9 @@ public:
    */
   string getCatalogName() const override { return catalogName(); }
 
+  /**
+   * @copydoc PhysicsSolverBase::registerDataOnMesh()
+   */
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
 
@@ -90,17 +93,13 @@ public:
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
+   * The "Well" versions apply to individual well subRegions, whereas the others apply to all wells
    */
   /**@{*/
 
-
-  virtual real64
-  calculateWellResidualNorm( real64 const & time_n,
-                             real64 const & dt,
-                             WellElementSubRegion const & subRegion,
-                             DofManager const & dofManager,
-                             arrayView1d< real64 const > const & localRhs ) override;
-
+  /**
+   * @copydoc PhysicsSolverBase::calculateResidualNorm()
+   */
   virtual real64
   calculateResidualNorm( real64 const & time_n,
                          real64 const & dt,
@@ -109,26 +108,48 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual real64
-  scalingForWellSystemSolution( ElementSubRegionBase & subRegion,
-                                DofManager const & dofManager,
-                                arrayView1d< real64 const > const & localSolution ) override;
+  calculateWellResidualNorm( real64 const & time_n,
+                             real64 const & dt,
+                             WellElementSubRegion const & subRegion,
+                             DofManager const & dofManager,
+                             arrayView1d< real64 const > const & localRhs ) override;
 
+  /**
+   * @copydoc PhysicsSolverBase::scalingForSystemSolution()
+   */
   virtual real64
   scalingForSystemSolution( DomainPartition & domain,
                             DofManager const & dofManager,
                             arrayView1d< real64 const > const & localSolution ) override;
 
+  virtual real64
+  scalingForWellSystemSolution( ElementSubRegionBase & subRegion,
+                                DofManager const & dofManager,
+                                arrayView1d< real64 const > const & localSolution ) override;
+
+  /**
+   * @copydoc PhysicsSolverBase::checkSystemSolution()
+   */
+  virtual bool
+  checkSystemSolution( DomainPartition & domain,
+                       DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       real64 const scalingFactor ) override;
   virtual bool
   checkWellSystemSolution( ElementSubRegionBase & subRegion,
                            DofManager const & dofManager,
                            arrayView1d< real64 const > const & localSolution,
                            real64 const scalingFactor ) override;
 
-  virtual bool
-  checkSystemSolution( DomainPartition & domain,
-                       DofManager const & dofManager,
+  /**
+   * @copydoc PhysicsSolverBase::applySystemSolution()
+   */
+  virtual void
+  applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor ) override;
+                       real64 const scalingFactor,
+                       real64 const dt,
+                       DomainPartition & domain ) override;
 
   virtual void
   applyWellSystemSolution( DofManager const & dofManager,
@@ -138,13 +159,6 @@ public:
                            DomainPartition & domain,
                            MeshLevel & mesh,
                            WellElementSubRegion & subRegion ) override;
-
-  virtual void
-  applySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor,
-                       real64 const dt,
-                       DomainPartition & domain ) override;
 
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
@@ -224,7 +238,6 @@ public:
                                             ElementRegionManager const & elemManager,
                                             WellElementSubRegion & subRegion )override;
 
-
   /**
    * @brief Recompute the perforation rates for all the wells
    * @param domain the domain containing the mesh and fields
@@ -237,9 +250,9 @@ public:
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
   virtual real64 updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+
   /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive
-   * models)
+   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param domain the domain containing the mesh and fields
    */
   virtual void updateState( DomainPartition & domain ) override;
@@ -256,21 +269,9 @@ public:
 
   integer useTotalMassEquation() const { return m_useTotalMassEquation; }
 
-  virtual void assembleWellFluxTerms( real64 const & time,
-                                      real64 const & dt,
-                                      WellElementSubRegion const & subRegion,
-                                      DofManager const & dofManager,
-                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                      arrayView1d< real64 > const & localRhs ) override;
 
   /**
-   * @brief assembles the flux terms for all connections between well elements
-   * @param time_n previous time value
-   * @param dt time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
+   * @copydoc WellSolverBase::assembleFluxTerms()
    */
 
   virtual void assembleFluxTerms( real64 const & time_n,
@@ -280,6 +281,28 @@ public:
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                   arrayView1d< real64 > const & localRhs )override;
 
+  /**
+   * @copydoc WellSolverBase::assembleFluxTerms()
+   */
+  virtual void assembleWellFluxTerms( real64 const & time,
+                                      real64 const & dt,
+                                      WellElementSubRegion const & subRegion,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< real64 > const & localRhs ) override;
+
+  /**
+   * @copydoc WellSolverBase::assembleAccumulationTerms()
+   */
+  virtual void assembleAccumulationTerms( real64 const & time_n,
+                                          real64 const & dt,
+                                          DomainPartition & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs ) override;
+  /**
+   * @copydoc WellSolverBase::assembleWellAccumulationTerms()
+   */
   virtual void assembleWellAccumulationTerms( real64 const & time,
                                               real64 const & dt,
                                               WellElementSubRegion & subRegion,
@@ -288,19 +311,8 @@ public:
                                               arrayView1d< real64 > const & localRhs ) override;
 
   /**
-   * @brief assembles the accumulation term for all the well elements
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
+   * @copydoc WellSolverBase::assembleWellConstraintTerms()
    */
-  virtual void assembleAccumulationTerms( real64 const & time_n,
-                                          real64 const & dt,
-                                          DomainPartition & domain,
-                                          DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                          arrayView1d< real64 > const & localRhs ) override;
-
   virtual void assembleWellConstraintTerms( real64 const & time_n,
                                             real64 const & dt,
                                             WellElementSubRegion const & subRegion,
@@ -308,22 +320,8 @@ public:
                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                             arrayView1d< real64 > const & localRhs ) override;
 
-
-  virtual void assembleWellPressureRelations( real64 const & time_n,
-                                              real64 const & dt,
-                                              WellElementSubRegion const & subRegion,
-                                              DofManager const & dofManager,
-                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                              arrayView1d< real64 > const & localRhs ) override;
-
   /**
-   * @brief assembles the pressure relations at all connections between well elements except at the well head
-   * @param time_n time at the beginning of the time step
-   * @param dt the time step size
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
+   * @copydoc WellSolverBase::assemblePressureRelations()
    */
   virtual void assemblePressureRelations( real64 const & time_n,
                                           real64 const & dt,
@@ -331,6 +329,15 @@ public:
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
+  /**
+   * @copydoc WellSolverBase::assembleWellPressureRelations()
+   */
+  virtual void assembleWellPressureRelations( real64 const & time_n,
+                                              real64 const & dt,
+                                              WellElementSubRegion const & subRegion,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs ) override;
 
   /**
    * @brief Sets all the negative component densities (if any) to zero.
@@ -431,26 +438,18 @@ protected:
                    real64 const & dt,
                    DomainPartition & domain ) override;
 
+  /**
+   * @brief Function to evaluate well constraints after applying the solution update
+   * @param time_n the time at the beginning of the time step
+   * @param subRegion the well subRegion
+   * @return true if all constraints are satisfied, false otherwise
+   */
   virtual bool evaluateConstraints( real64 const & time_n,
                                     WellElementSubRegion & subRegion ) override;
 
 private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
-
-  template< typename ... GROUPTYPES >
-  void selectLimitingConstraint( real64 const & time_n, integer const coupledIterationNumber, WellElementSubRegion & subRegion );
-
-  void solveConstraint( std::shared_ptr< WellConstraintBase > constraint,
-                        real64 const & time_n,
-                        real64 const & dt,
-                        integer const cycleNumber,
-                        integer const coupledIterationNumber,
-                        DomainPartition & domain,
-                        MeshLevel & mesh,
-                        ElementRegionManager & elemManager,
-                        WellElementSubRegion & subRegion,
-                        DofManager const & dofManager );
 
 
   /// flag indicating whether mass or molar formulation should be used
@@ -479,11 +478,6 @@ private:
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
-
-  /// index of the target phase, used to impose the phase rate constraint
-  localIndex m_targetPhaseIndex;
-
-
 
 };
 

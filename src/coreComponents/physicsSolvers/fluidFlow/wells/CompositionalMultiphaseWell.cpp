@@ -81,8 +81,7 @@ CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
   m_maxRelativePresChange( 0.2 ),
   m_maxAbsolutePresChange( -1 ), // disabled by default
   m_minScalingFactor( 0.01 ),
-  m_allowCompDensChopping( 1 ),
-  m_targetPhaseIndex( -1 )
+  m_allowCompDensChopping( 1 )
 {
   this->registerWrapper( viewKeyStruct::useMassFlagString(), &m_useMass ).
     setApplyDefaultValue( 0 ).
@@ -1839,7 +1838,6 @@ CompositionalMultiphaseWell::scalingForWellSystemSolution( ElementSubRegionBase 
   minCompDensScalingFactor = std::min( minCompDensScalingFactor, subRegionData.localMinCompDensScalingFactor );
   minTempScalingFactor = std::min( minTempScalingFactor, subRegionData.localMinTempScalingFactor );
 
-
   scalingFactor = MpiWrapper::min( scalingFactor );
   maxDeltaPres  = MpiWrapper::max( maxDeltaPres );
   maxDeltaCompDens = MpiWrapper::max( maxDeltaCompDens );
@@ -1863,7 +1861,6 @@ CompositionalMultiphaseWell::scalingForWellSystemSolution( ElementSubRegionBase 
                                      getName(), GEOS_FMT( "{:.{}f}", maxDeltaTemp, 3 ) ) );
   }
 
-
   GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
                          GEOS_FMT( "        {}: Min well pressure scaling factor: {}",
                                    getName(), minPresScalingFactor ) );
@@ -1876,7 +1873,6 @@ CompositionalMultiphaseWell::scalingForWellSystemSolution( ElementSubRegionBase 
                            GEOS_FMT( "        {}: Min well temperature scaling factor: {}",
                                      getName(), minTempScalingFactor ) );
   }
-
 
   return LvArray::math::max( scalingFactor, m_minScalingFactor );
 
@@ -2181,7 +2177,7 @@ void CompositionalMultiphaseWell::computeWellPerforationRates( real64 const & ti
   }
   else
   {
-// Zero completion flow rate
+    // Zero completion flow rate
     arrayView2d< real64 > const compPerfRate = perforationData->getField< fields::well::compPerforationRate >();
     for( integer iperf=0; iperf<perforationData->size(); iperf++ )
     {
@@ -2377,7 +2373,6 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
                                                          true );
   } );
 
-
 }
 
 void CompositionalMultiphaseWell::chopNegativeDensities( WellElementSubRegion & subRegion )
@@ -2522,11 +2517,10 @@ void CompositionalMultiphaseWell::assembleWellConstraintTerms( real64 const & ti
                                ProductionConstraint< LiquidRateConstraint >
                                >( [&]( auto & constraint )
     {
+      // Need to use name since there could be multiple constraints of the same type
       if( constraint.getName() == wellControls.getCurrentConstraint()->getName())
       {
         // found limiting constraint
-
-        // fluid data
         constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
         integer isThermal = fluidSeparator.isThermal();
         integer const numComp = fluidSeparator.numFluidComponents();
@@ -2557,8 +2551,6 @@ void CompositionalMultiphaseWell::assembleWellConstraintTerms( real64 const & ti
       if( constraint.getName() == wellControls.getCurrentConstraint()->getName())
       {
         // found limiting constraint
-
-        // fluid data
         constitutive::MultiFluidBase & fluidSeparator =  wellControls.getMultiFluidSeparator();
         integer isThermal = fluidSeparator.isThermal();
         integer const numComp = fluidSeparator.numFluidComponents();
