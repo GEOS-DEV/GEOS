@@ -160,17 +160,49 @@ public:
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
+   * The "Well" versions apply to individual well subRegions, whereas the others apply to all wells
+
    */
   /**@{*/
 
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 
-  void selectWellConstraint( real64 const & time_n,
-                             real64 const & dt,
-                             integer const coupledIterationNumber,
-                             DomainPartition & domain );
+  virtual real64
+  calculateWellResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
+                             real64 const & GEOS_UNUSED_PARAM( dt ),
+                             WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ),
+                             DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localRhs ) ) = 0;
 
+  virtual real64
+    scalingForWellSystemSolution( ElementSubRegionBase & GEOS_UNUSED_PARAM( subRegion ),
+                                  DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                  arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ) ) = 0;
 
+  virtual bool
+    checkWellSystemSolution( ElementSubRegionBase & GEOS_UNUSED_PARAM( subRegion ),
+                             DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
+                             real64 const GEOS_UNUSED_PARAM( scalingFactor ) ) = 0;
+  virtual void
+    applyWellSystemSolution( DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
+                             real64 const GEOS_UNUSED_PARAM( scalingFactor ),
+                             real64 const GEOS_UNUSED_PARAM( dt ),
+                             DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                             MeshLevel & GEOS_UNUSED_PARAM( mesh ),
+                             WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ) ) = 0;
+
+  /**
+   * @brief function to set the next time step size
+   * @param[in] currentTime the current time
+   * @param[in] currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  virtual real64 setNextDt( real64 const & currentTime,
+                            real64 const & currentDt,
+                            DomainPartition & domain ) override;
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
@@ -189,9 +221,24 @@ public:
                                         CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
                                         arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) override {}
 
+  /**
+   * @brief Selects the active well constraint  based on current conditions
+   * @param[in] currentTime the current time
+   * @param[in] currentDt the current time step size
+   * @param[in] coupledIterationNumber the current coupled iteration number
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  void selectWellConstraint( real64 const & time_n,
+                             real64 const & dt,
+                             integer const coupledIterationNumber,
+                             DomainPartition & domain );
 
   /**@}*/
 
+  /**
+   * @copydoc PhysicsSolverBase::assembleSystem()
+   */
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
@@ -199,6 +246,22 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
+  /**
+   * @brief assembles the flux terms for individual well for all connections between well elements
+   * @param time_n previous time value
+   * @param dt time step
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+
+  virtual void assembleFluxTerms( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs ) = 0;
   virtual void assembleWellFluxTerms( real64 const & GEOS_UNUSED_PARAM( time ),
                                       real64 const & GEOS_UNUSED_PARAM( dt ),
                                       WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ),
@@ -206,31 +269,6 @@ public:
                                       CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
                                       arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) = 0;
 
-
-  /**
-   * @brief assembles the flux terms for all connections between well elements
-   * @param time_n previous time value
-   * @param dt time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
-   */
-  virtual void assembleFluxTerms( real64 const & time_n,
-                                  real64 const & dt,
-                                  DomainPartition & domain,
-                                  DofManager const & dofManager,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs ) = 0;
-
-
-
-  virtual void assembleWellAccumulationTerms( real64 const & time,
-                                              real64 const & dt,
-                                              WellElementSubRegion & subRegion,
-                                              DofManager const & dofManager,
-                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                              arrayView1d< real64 > const & localRhs ) = 0;
 
 
   /**
@@ -246,7 +284,30 @@ public:
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) = 0;
-
+  /**
+   * @brief assembles the accumulation term for an individual well
+   * @param time_n time at the beginning of the time step
+   * @param dt the time step size
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void assembleWellAccumulationTerms( real64 const & time,
+                                              real64 const & dt,
+                                              WellElementSubRegion & subRegion,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs ) = 0;
+  /**
+   * @brief assembles the constraint terms for an individual well
+   * @param time_n time at the beginning of the time step
+   * @param dt the time step size
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
   virtual void assembleWellConstraintTerms( real64 const & GEOS_UNUSED_PARAM( time ),
                                             real64 const & GEOS_UNUSED_PARAM( dt ),
                                             WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ),
@@ -254,12 +315,6 @@ public:
                                             CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
                                             arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) = 0;
 
-  virtual void assembleWellPressureRelations ( real64 const & GEOS_UNUSED_PARAM( time ),
-                                               real64 const & GEOS_UNUSED_PARAM( dt ),
-                                               WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ),
-                                               DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                               CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
-                                               arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) = 0;
   /**
    * @brief assembles the pressure relations at all connections between well elements except at
    * the well head
@@ -276,6 +331,21 @@ public:
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) = 0;
+  /**
+   * @brief assembles the pressure relations for individual well at all connections between well elements except at the well head
+   * @param time_n time at the beginning of the time step
+   * @param dt the time step size
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void assembleWellPressureRelations ( real64 const & GEOS_UNUSED_PARAM( time ),
+                                               real64 const & GEOS_UNUSED_PARAM( dt ),
+                                               WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ),
+                                               DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                               CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                               arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) = 0;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive
@@ -320,77 +390,6 @@ public:
                                         real64 const & dt,
                                         DomainPartition & domain ) = 0;
 
-  virtual real64
-  calculateWellResidualNorm( real64 const & GEOS_UNUSED_PARAM( time_n ),
-                             real64 const & GEOS_UNUSED_PARAM( dt ),
-                             WellElementSubRegion const & GEOS_UNUSED_PARAM( subRegion ),
-                             DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localRhs ) ) = 0;
-
-  virtual real64
-    scalingForWellSystemSolution( ElementSubRegionBase & GEOS_UNUSED_PARAM( subRegion ),
-                                  DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                                  arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ) ) = 0;
-
-  virtual bool
-    checkWellSystemSolution( ElementSubRegionBase & GEOS_UNUSED_PARAM( subRegion ),
-                             DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
-                             real64 const GEOS_UNUSED_PARAM( scalingFactor ) ) = 0;
-  virtual void
-    applyWellSystemSolution( DofManager const & GEOS_UNUSED_PARAM( dofManager ),
-                             arrayView1d< real64 const > const & GEOS_UNUSED_PARAM( localSolution ),
-                             real64 const GEOS_UNUSED_PARAM( scalingFactor ),
-                             real64 const GEOS_UNUSED_PARAM( dt ),
-                             DomainPartition & GEOS_UNUSED_PARAM( domain ),
-                             MeshLevel & GEOS_UNUSED_PARAM( mesh ),
-                             WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ) ) = 0;
-
-  /**
-   * @brief Function to perform line search
-   * @param time_n time at the beginning of the step
-   * @param dt the perscribed timestep
-   * @param cycleNumber the current cycle number
-   * @param domain the domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param localMatrix the system matrix
-   * @param rhs the system right-hand side vector
-   * @param solution the solution vector
-   * @param scaleFactor the scaling factor to apply to the solution
-   * @param lastResidual (in) target value below which to reduce residual norm, (out) achieved
-   * residual norm
-   * @return return true if line search succeeded, false otherwise
-   *
-   * This function implements a nonlinear newton method for implicit problems. It requires that
-   * the
-   * other functions in the solver interface are implemented in the derived physics solver. The
-   * nonlinear loop includes a simple line search algorithm, and will cut the timestep if
-   * convergence is not achieved according to the parameters in linearSolverParameters member.
-   */
-  bool
-  lineSearch1( real64 const & time_n,
-               real64 const & dt,
-               integer const cycleNumber,
-               DomainPartition & domain,
-               ElementRegionManager & elemManager,
-               WellElementSubRegion & subRegion,
-               MeshLevel & mesh,
-               DofManager const & dofManager,
-               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-               ParallelVector & rhs,
-               ParallelVector & solution,
-               real64 const scaleFactor,
-               real64 & lastResidual );
-  /**
-   * @brief function to set the next time step size
-   * @param[in] currentTime the current time
-   * @param[in] currentDt the current time step size
-   * @param[in] domain the domain object
-   * @return the prescribed time step size
-   */
-  virtual real64 setNextDt( real64 const & currentTime,
-                            real64 const & currentDt,
-                            DomainPartition & domain ) override;
 
   /**
    * @brief Utility function to keep the well variables during a time step (used in

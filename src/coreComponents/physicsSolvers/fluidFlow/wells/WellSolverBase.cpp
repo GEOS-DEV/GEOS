@@ -319,6 +319,8 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
       WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
                                            .getGroup< WellElementSubRegion >( region.getSubRegionName() );
       WellControls & wellControls = getWellControls( subRegion );
+      // Intiialize well if it is open
+      // Well state estimated from reservoir conditions
       if( wellControls.isWellOpen() )
       {
         if( !wellControls.getWellState() )
@@ -333,11 +335,8 @@ void WellSolverBase::selectWellConstraint( real64 const & time_n,
         wellControls.setWellState( 0 );
       }
 
-
       if( wellControls.getWellState())
       {
-        wellControls.setConstraintSwitch( false );
-
         evaluateConstraints( time_n,
                              subRegion );
 
@@ -410,9 +409,7 @@ void WellSolverBase::assembleSystem( real64 const time,
     {
       WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
                                            .getGroup< WellElementSubRegion >( region.getSubRegionName() );
-      WellControls & wellControls = getWellControls( subRegion );
-      if( !wellControls.getConstraintSwitch() )
-        assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+      assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
     } );
   } );
 

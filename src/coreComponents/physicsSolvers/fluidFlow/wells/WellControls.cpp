@@ -33,18 +33,16 @@ WellControls::WellControls( string const & name, Group * const parent )
   : PhysicsSolverBase( name, parent ),
   m_type( Type::PRODUCER ),
   m_inputControl( Control::UNINITIALIZED ),
-  m_currentControl( Control::UNINITIALIZED ), // tjb remove
+  m_currentControl( Control::UNINITIALIZED ),
   m_useSurfaceConditions( 0 ),
   m_surfacePres( -1.0 ),
   m_surfaceTemp( -1.0 ),
   m_isCrossflowEnabled( 1 ),
   m_initialPressureCoefficient( 0.1 ),
-  m_rateSign( -1.0 ),
-  m_statusTable( nullptr ),
-  m_wellOpen( false ),
-  m_constraintSwitch( true ),
   m_currentConstraint( nullptr ),
   m_wellStatus( WellControls::Status::OPEN ),
+  m_wellOpen( false ),
+  m_statusTable( nullptr ),
   m_regionAveragePressure( -1 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
@@ -342,17 +340,6 @@ bool WellControls::getWellState() const
 {
   return m_wellOpen;
 }
-
-void WellControls::setConstraintSwitch( bool constraintSwitch )
-{
-  m_constraintSwitch = constraintSwitch;
-}
-
-bool WellControls::getConstraintSwitch() const
-{
-  return m_constraintSwitch;
-}
-
 
 void WellControls::setNextDtFromTables( real64 const & currentTime, real64 & nextDt )
 {

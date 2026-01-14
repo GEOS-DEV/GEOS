@@ -256,7 +256,6 @@ public:
    */
   ///@{
 
-
   /**
    * @brief Get the control type for the well.
    * @return the Control enum enforced at the well
@@ -275,7 +274,6 @@ public:
    */
   Control getInputControl() const { return m_inputControl; }
 
-
   /**
    * @brief Getter for the reference gravity coefficient
    * @return the reference gravity coefficient
@@ -286,7 +284,6 @@ public:
    * @brief Setter for the reference gravity
    */
   void setReferenceGravityCoef( real64 const & refGravCoef ) { m_refGravCoef = refGravCoef; }
-
 
   /**
    * @brief Returns the target bottom hole pressure value.
@@ -307,7 +304,6 @@ public:
    * @return the injection stream
    */
   arrayView1d< real64 const > getInjectionStream() const;
-
 
   /**
    * @brief Const accessor for the phase constraint index
@@ -364,14 +360,26 @@ public:
    */
   bool isWellOpen() const;
 
+  /**
+   * @brief Set the well state
+   * @param[in] open boolean
+   */
   void setWellState( bool open );
+  /**
+   * @brief Get the well state
+   * @return a boolean
+   */
   bool getWellState() const;
 
-
-  void setConstraintSwitch( bool constraintSwitch );
-  bool getConstraintSwitch() const;
-
+  /**
+   * @brief Set the current consrtaint
+   * @param[in] currentConstraint pointer to constraint
+   */
   void setCurrentConstraint( WellConstraintBase * currentConstraint ) { m_currentConstraint = currentConstraint;}
+  /**
+   * @brief Get the current consrtaint
+   * @return pointer to constraint
+   */
   WellConstraintBase *  getCurrentConstraint() { return m_currentConstraint; }
   WellConstraintBase const *  getCurrentConstraint() const { return m_currentConstraint; }
 
@@ -412,7 +420,6 @@ public:
    * @return reference to separator
    */
   constitutive::SingleFluidBase & getSingleFluidSeparator()  { return dynamicCast< constitutive::SingleFluidBase & >( *m_fluidSeparatorPtr ); }
-
 
   /**
    * @brief Getter for the reservoir average pressure when m_useSurfaceConditions == 0
@@ -526,7 +533,10 @@ public:
   MinimumBHPConstraint * getMinBHPConstraint() const { return m_minBHPConstraint; };
   MaximumBHPConstraint * getMaxBHPConstraint() { return m_maxBHPConstraint; };
   MaximumBHPConstraint * getMaxBHPConstraint() const { return m_maxBHPConstraint; };
-  // Lists of rate constraints
+
+  /**
+   * @brief Getters for constraint lists
+   */
   std::vector< WellConstraintBase * >  getProdRateConstraints() { return m_productionRateConstraintList; };
   std::vector< WellConstraintBase * >  getProdRateConstraints() const { return m_productionRateConstraintList; };
   std::vector< WellConstraintBase * >  getInjRateConstraints() { return m_injectionRateConstraintList; }
@@ -534,8 +544,6 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
-
-
 
 private:
 
@@ -569,10 +577,6 @@ private:
   /// Surface temperature
   real64 m_surfaceTemp;
 
-
-  /// Well status table name
-  string m_statusTableName;
-
   /// Perforation status table name
   string m_perfStatusTableName;
 
@@ -582,28 +586,12 @@ private:
   /// Tuning coefficient for the initial well pressure
   real64 m_initialPressureCoefficient;
 
-  /// Rate sign. +1 for injector, -1 for producer
-  real64 m_rateSign;
-
-
-  /// Status table
-  TableFunction const * m_statusTable;
-
-  bool m_wellOpen;
-
-
-
-  /// List of constraints
-  //constraint_array m_ConstraintList;
-  // Bool to trigger old/new constraint switch logic
-  bool m_constraintSwitch;
-
-  // Current constraint
+  // Current constrint
   WellConstraintBase * m_currentConstraint;
+
   // Minimum and maximum BHP and WHP constraints
   MinimumBHPConstraint *  m_minBHPConstraint;
   MaximumBHPConstraint * m_maxBHPConstraint;
-
 
   // Lists of rate constraints
   std::vector< WellConstraintBase * > m_productionRateConstraintList;
@@ -611,6 +599,15 @@ private:
 
   /// Well status
   WellControls::Status m_wellStatus;
+
+  /// Well open flag
+  bool m_wellOpen;
+
+  /// Well status table name
+  string m_statusTableName;
+
+  /// Status table
+  TableFunction const * m_statusTable;
 
   /// Region average pressure used in volume rate constraint calculations
   real64 m_regionAveragePressure;

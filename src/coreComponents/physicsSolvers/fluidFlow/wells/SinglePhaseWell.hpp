@@ -92,18 +92,10 @@ public:
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
+   * The "Well" versions apply to individual well subRegions, whereas the others apply to all wells
    */
   /**@{*/
 
-  virtual real64 scalingForWellSystemSolution( ElementSubRegionBase & subRegion,
-                                               DofManager const & dofManager,
-                                               arrayView1d< real64 const > const & localSolution ) override;
-  virtual real64
-  calculateWellResidualNorm( real64 const & time_n,
-                             real64 const & dt,
-                             WellElementSubRegion const & subRegion,
-                             DofManager const & dofManager,
-                             arrayView1d< real64 const > const & localRhs ) override;
   virtual real64
   calculateResidualNorm( real64 const & time_n,
                          real64 const & dt,
@@ -111,17 +103,40 @@ public:
                          DofManager const & dofManager,
                          arrayView1d< real64 const > const & localRhs ) override;
 
-  virtual bool
-  checkWellSystemSolution( ElementSubRegionBase & subRegion,
-                           DofManager const & dofManager,
-                           arrayView1d< real64 const > const & localSolution,
-                           real64 const scalingFactor ) override;
+  virtual real64
+  calculateWellResidualNorm( real64 const & time_n,
+                             real64 const & dt,
+                             WellElementSubRegion const & subRegion,
+                             DofManager const & dofManager,
+                             arrayView1d< real64 const > const & localRhs ) override;
 
+
+  virtual real64 scalingForWellSystemSolution( ElementSubRegionBase & subRegion,
+                                               DofManager const & dofManager,
+                                               arrayView1d< real64 const > const & localSolution ) override;
+  /**
+   * @copydoc PhysicsSolverBase::checkSystemSolution()
+   */
   virtual bool
   checkSystemSolution( DomainPartition & domain,
                        DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor ) override;
+
+  virtual bool
+  checkWellSystemSolution( ElementSubRegionBase & subRegion,
+                           DofManager const & dofManager,
+                           arrayView1d< real64 const > const & localSolution,
+                           real64 const scalingFactor ) override;
+  /**
+   * @copydoc PhysicsSolverBase::applySystemSolution()
+   */
+  virtual void
+  applySystemSolution( DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       real64 const scalingFactor,
+                       real64 const dt,
+                       DomainPartition & domain ) override;
 
   virtual void
   applyWellSystemSolution( DofManager const & dofManager,
@@ -131,12 +146,6 @@ public:
                            DomainPartition & domain,
                            MeshLevel & mesh,
                            WellElementSubRegion & subRegion ) override;
-  virtual void
-  applySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor,
-                       real64 const dt,
-                       DomainPartition & domain ) override;
 
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
@@ -279,17 +288,8 @@ public:
                                           arrayView1d< real64 > const & localRhs ) override;
 
   /**
-   * @brief assembles the volume balance terms for all well elements
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param matrix the system matrix
-   * @param rhs the system right-hand side vector
+   * @copydoc WellSolverBase::assembleWellConstraintTerms()
    */
-  void assembleVolumeBalanceTerms( DomainPartition const & domain,
-                                   DofManager const & dofManager,
-                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                   arrayView1d< real64 > const & localRhs );
-
   virtual void assembleWellConstraintTerms( real64 const & time_n,
                                             real64 const & dt,
                                             WellElementSubRegion const & subRegion,
@@ -321,6 +321,18 @@ public:
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
+
+  /**
+   * @brief assembles the volume balance terms for all well elements
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  void assembleVolumeBalanceTerms( DomainPartition const & domain,
+                                   DofManager const & dofManager,
+                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                   arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief Initialize all the primary and secondary variables in all the wells

@@ -788,9 +788,8 @@ void SinglePhaseWell::assembleSystem( real64 const time,
       {
         WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
                                              .getGroup< WellElementSubRegion >( region.getSubRegionName() );
-        WellControls & wellControls = getWellControls( subRegion );
-        if( !wellControls.getConstraintSwitch() )
-          assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+
+        assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
       } );
     } );
   }
