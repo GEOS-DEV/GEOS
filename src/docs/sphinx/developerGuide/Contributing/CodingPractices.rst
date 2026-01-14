@@ -329,7 +329,7 @@ Principles:
 - **No circular dependencies:** Consider the existing GEOS dependencies to not make components co-dependent (headers inclusion, packages referencing in ``CMakeLists.txt``, avoid tightly coupled objects),  
 - **Dependency injection:** Public components should receive their dependencies from external sources. Pass required dependencies using intermediate types instead of direct implementation types, relying on **lambda**, **templates** and **minimal interfaces** (loose coupling, testability),
 - **Performance exceptions:** Tight coupling is acceptable when required for performance,
-- **Minimize header inclusions and dependancies**.
+- **Minimize header inclusions and dependencies**.
 
 .. dropdown:: Example: Reducing coupling
   :icon: code
