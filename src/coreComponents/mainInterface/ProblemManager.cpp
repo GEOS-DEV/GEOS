@@ -502,8 +502,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument & xmlDocument )
                                             regionName, regionNodePos.toString() );
           ErrorLogger::global().modifyCurrentExceptionMessage()
             .addToMsg( errorMsg )
-            .addContextInfo( getDataContext().getContextInfo().setPriority( -1 ) )
-            .getDiagnosticMsg();
+            .addContextInfo( getDataContext().getContextInfo().setPriority( -1 ) );
           throw InputError( e, errorMsg );
         }
       }

@@ -14,7 +14,7 @@
  */
 
 /**
- * @file Logger.hpp
+ * @file GeosExceptions.hpp
  */
 
 
@@ -56,19 +56,12 @@ public:
    * @brief Prepare and cache the formatted exception message
    * @param msg Error message logger for structured error reporting
    */
-  void prepareWhat( DiagnosticMsg & msg ) noexcept
-  {
-    m_formattingOSS.str("");  
-    m_formattingOSS.clear();  
-
-    ErrorLogger::writeToAscii( msg, m_formattingOSS );  
-    m_cachedWhat = m_formattingOSS.bad() ? "Exception formatting error!" : m_formattingOSS.str();  
-  }
+  void prepareWhat( DiagnosticMsg & msg ) noexcept;
 
 private:
   /// Formatted exception message for what() method
   string m_cachedWhat;
-  inline static thread_local std::ostringstream m_formattingOSS; 
+  static thread_local std::ostringstream m_formattingOSS;
 };
 
 /**

@@ -123,8 +123,7 @@ void FieldSpecificationBase::setMeshObjectPath( Group const & meshBodies )
       .addToMsg( getWrapperDataContext( viewKeyStruct::objectPathString() ).toString() +
                  " is a wrong objectPath: " + m_objectPath + "\n" )
       .addContextInfo( getWrapperDataContext( viewKeyStruct::objectPathString() ).getContextInfo()
-                         .setPriority( 2 ) )
-      .getDiagnosticMsg();
+                         .setPriority( 2 ) );
     throw InputError( e, getWrapperDataContext( viewKeyStruct::objectPathString() ).toString() +
                       " is a wrong objectPath: " + m_objectPath + "\n" );
   }

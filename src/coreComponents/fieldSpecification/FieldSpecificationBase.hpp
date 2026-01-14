@@ -641,8 +641,7 @@ void FieldSpecificationBase::applyFieldValueKernel( ArrayView< T, N, USD > const
         ErrorLogger::global().modifyCurrentExceptionMessage()
           .addToMsg( errorMsg )
           .addContextInfo( getWrapperDataContext( viewKeyStruct::functionNameString() ).getContextInfo()
-                             .setPriority( 1 ) )
-          .getDiagnosticMsg();
+                             .setPriority( 1 ) );
         throw InputError( e, errorMsg );
       }
     }();

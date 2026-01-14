@@ -76,6 +76,7 @@ set( common_sources
      format/table/TableData.cpp
      format/LogPart.cpp
      format/StringUtilities.cpp
+     logger/GeosExceptions.cpp
      logger/Logger.cpp
      logger/ErrorHandling.cpp
      logger/ExternalErrorHandler.cpp

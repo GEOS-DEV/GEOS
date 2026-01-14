@@ -211,8 +211,7 @@ dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPart
   {
     ErrorLogger::global().modifyCurrentExceptionMessage()
       .addToMsg( getDataContext().toString() + " has a wrong objectPath: " + objectPath + "\n" )
-      .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) )
-      .getDiagnosticMsg();
+      .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
     throw InputError( e, getDataContext().toString() + " has a wrong objectPath: " + objectPath + "\n" );
   }
 }

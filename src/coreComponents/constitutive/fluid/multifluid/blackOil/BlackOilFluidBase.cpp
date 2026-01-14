@@ -260,7 +260,7 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
                                             "formation volume factor", iph );
       ErrorLogger::global().modifyCurrentExceptionMessage()
         .addToMsg( exceptionMsg )
-        .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) ).getDiagnosticMsg();
+        .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
       throw SimulationError( ex, exceptionMsg );
     }
 
@@ -274,7 +274,7 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
 
       ErrorLogger::global().modifyCurrentExceptionMessage()
         .addToMsg( exceptionMsg )
-        .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) ).getDiagnosticMsg();
+        .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
       throw SimulationError( ex, exceptionMsg );
     }
   }

@@ -187,8 +187,7 @@ void InternalMeshGenerator::postInputInitialization()
                                                  wrapper.getDataContext().toString(), std::to_string( i ) );
       ErrorLogger::global().modifyCurrentExceptionMessage()
         .addToMsg( exceptionMsg )
-        .addContextInfo( wrapper.getDataContext().getContextInfo().setPriority( 2 ) )
-        .getDiagnosticMsg();
+        .addContextInfo( wrapper.getDataContext().getContextInfo().setPriority( 2 ) );
       throw InputError( e, exceptionMsg );
     }
   }

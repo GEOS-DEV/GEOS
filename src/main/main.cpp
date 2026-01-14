@@ -83,10 +83,9 @@ int main( int argc, char *argv[] )
   }
   catch( std::exception const & e )
   { // native exceptions management
-    DiagnosticMsg diagnosticMsg;
-    ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
-                                                                     MsgType::Exception, e.what(),
-                                                                     ::geos::logger::internal::g_rank )
+    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().initCurrentExceptionMessage(
+                                           MsgType::Exception, e.what(),
+                                           ::geos::logger::internal::g_rank )
                                            .addCallStackInfo( LvArray::system::stackTrace( true ) )
                                            .getDiagnosticMsg());
     basicCleanup();

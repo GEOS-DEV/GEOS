@@ -185,7 +185,7 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
     testErrorLogger.modifyCurrentExceptionMessage()
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
-      .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) ).getDiagnosticMsg();
+      .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
     string const whatExpected = GEOS_FMT( "***** Exception\n"
                                           "***** LOCATION: {}:{}\n"
                                           "***** Error cause: testValue == 5\n"
@@ -291,11 +291,10 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
   ErrorLogger testErrorLogger;
 
   size_t line1;
-
+  // test that the first context with default priority comes after the most important one, but before
   try
   {
-    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError,
-                                     context.getContextInfo().setPriority( 3 ) );
+    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError, context );
   }
   catch( geos::DomainError const & ex )
   {
@@ -316,9 +315,9 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
       "***** - {}\n",
       testErrorLogger.getCurrentExceptionMsg().m_file, line1,
       testErrorLogger.getCurrentExceptionMsg().m_cause,
-      context.toString(),
-      testErrorLogger.getCurrentExceptionMsg().m_msg,
       importantAdditionalContext.toString(),
+      testErrorLogger.getCurrentExceptionMsg().m_msg,
+      context.toString(),
       additionalContext.toString(),
       testErrorLogger.getCurrentExceptionMsg().m_sourceCallStack );
     std::ostringstream oss;
@@ -343,10 +342,7 @@ TEST( ErrorHandling, testStdException )
   catch( std::exception & e )
   {
 
-    testErrorLogger.initCurrentExceptionMessage()
-      .setType( MsgType::Exception )
-      .addToMsg( e.what() )
-      .addRank( ::geos::logger::internal::g_rank )
+    testErrorLogger.initCurrentExceptionMessage( MsgType::Exception, e.what(), ::geos::logger::internal::g_rank )
       .addCallStackInfo( LvArray::system::stackTrace( true ) )
       .getDiagnosticMsg();
 

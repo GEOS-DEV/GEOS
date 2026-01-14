@@ -157,13 +157,11 @@
       __msgoss << GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ ); \
       std::ostringstream __causemsgsoss; \
       __causemsgsoss << CAUSE_MESSAGE; \
-      GEOS_GLOBAL_LOGGER.initCurrentExceptionMessage() \
-        .setType( MsgType::Error ) \
+      GEOS_GLOBAL_LOGGER.initCurrentExceptionMessage( MsgType::Error, __msgoss.str(), \
+                                                      ::geos::logger::internal::g_rank ) \
         .setCodeLocation( __FILE__, __LINE__ ) \
         .setCause( __causemsgsoss.str() ) \
-        .addRank( ::geos::logger::internal::g_rank ) \
         .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
-        .addToMsg( __msgoss.str() ) \
         .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
         .getDiagnosticMsg(); \
       GEOS_GLOBAL_LOGGER.flushCurrentExceptionMessage(); \
@@ -225,13 +223,11 @@
       __msgoss << MSG; \
       std::ostringstream __causemsgsoss; \
       __causemsgsoss << CAUSE_MESSAGE; \
-      DiagnosticMsg exceptionMsg =  GEOS_GLOBAL_LOGGER.initCurrentExceptionMessage() \
-                                     .setType( MsgType::Exception ) \
+      DiagnosticMsg exceptionMsg =  GEOS_GLOBAL_LOGGER.initCurrentExceptionMessage( MsgType::Exception, __msgoss.str(), \
+                                                                                    ::geos::logger::internal::g_rank ) \
                                      .setCodeLocation( __FILE__, __LINE__ ) \
                                      .setCause( __causemsgsoss.str() ) \
-                                     .addRank( ::geos::logger::internal::g_rank ) \
                                      .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
-                                     .addToMsg( __msgoss.str() ) \
                                      .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
                                      .getDiagnosticMsg(); \
       auto ex = GEOS_DETAIL_FIRST_ARG( __VA_ARGS__ )(); \

@@ -237,8 +237,7 @@ void ReactiveBrineFluid< PHASE >::checkTablesParameters( real64 const pressure,
                                       stringutilities::join( m_phasePVTParaFiles ) );
     ErrorLogger::global().modifyCurrentExceptionMessage()
       .addToMsg( errorMsg )
-      .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) )
-      .getDiagnosticMsg();
+      .addContextInfo( getDataContext().getContextInfo().setPriority( 2 ) );
     throw SimulationError( ex, errorMsg );
   }
 }

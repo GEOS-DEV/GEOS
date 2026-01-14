@@ -330,9 +330,16 @@ public:
    * @return Builder for the exception
    * @note One exception can exist at a time
    */
-  DiagnosticMsgBuilder initCurrentExceptionMessage()
+  DiagnosticMsgBuilder initCurrentExceptionMessage( MsgType msgType,
+                                                    std::string_view msgContent,
+                                                    integer rank )
   {
-    m_getCurrentExceptionMsg = DiagnosticMsg();
+    DiagnosticMsg diagnosticMsg;
+    m_getCurrentExceptionMsg = DiagnosticMsgBuilder::init( diagnosticMsg,
+                                                           msgType, msgContent,
+                                                           rank )
+                                 .addCallStackInfo( LvArray::system::stackTrace( true ) )
+                                 .getDiagnosticMsg();
     return DiagnosticMsgBuilder::modify( m_getCurrentExceptionMsg );
   }
 
