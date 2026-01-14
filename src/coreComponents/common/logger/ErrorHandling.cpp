@@ -315,6 +315,7 @@ void ErrorLogger::writeToAscii( DiagnosticMsg const & errMsg, std::ostream & os 
       os << GEOS_FMT( "Frame {}: {}\n", i, errMsg.m_sourceCallStack[i] );
     }
     os << "=====\n";
+    os.flush();
   }
 }
 

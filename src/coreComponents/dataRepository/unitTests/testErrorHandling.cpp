@@ -14,6 +14,9 @@
  */
 
 // forcefully enable asserts macros for this unit test
+#include "LvArray/src/system.hpp"
+#include "common/logger/ExternalErrorHandler.hpp"
+#include "gtest/gtest.h"
 #define GEOS_ASSERT_ENABLED
 #include "common/logger/ErrorHandling.hpp"
 
@@ -403,6 +406,48 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
     "- frame0: ",
     "- frame1: ",
     "- frame2: "
+  } );
+}
+
+
+TEST( ErrorHandling, VerifySignalHandlerLogs )
+{
+  ErrorLogger testErrorLogger;
+
+  beginLocalLoggerTest( testErrorLogger, "errors.yaml" );
+
+  setupLogger();
+
+  bool signalHappened = false;
+  LvArray::system::setErrorHandler( [&]()
+  {
+    endLocalLoggerTest( testErrorLogger, {
+      R"(- type: ExternalError
+    rank: 0
+    message: >-
+      Signal no. 2 encountered: Interrupt)"
+    } );
+
+    signalHappened = true;
+  } );
+
+  ErrorLogger::global().enableFileOutput( true );
+
+  raise( SIGINT );
+
+  EXPECT_TRUE( signalHappened );
+
+  LvArray::system::setErrorHandler( []()
+  {
+  #if defined( GEOS_USE_MPI )
+    int mpi = 0;
+    MPI_Initialized( &mpi );
+    if( mpi )
+    {
+      MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
+    }
+  #endif
+    std::abort();
   } );
 }
 
