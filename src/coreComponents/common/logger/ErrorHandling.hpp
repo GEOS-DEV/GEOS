@@ -48,8 +48,28 @@ struct ErrorContext
     Signal,
   };
 
+  /// String containing the target object name followed by the the file and line declaring it.
+  string m_formattedContext;
+
   /**
-   * @brief Construct to initialize ErrorContext given a string containing the context and his attribute
+   * @brief The map contains contextual information about the error
+   * It could be something like
+   * "file" = "/path/to/file.xml"
+   * "line" = "24"
+   * or something like
+   * "dataPath" = "/Functions/co2brine_philipsDensityTable
+   * The key is a field of the Attribute enumeration and is converted to a string for writing in the YAML
+   */
+  map< Attribute, std::string > m_attributes;
+
+  /**
+   * @brief Priority level assigned to an error context.
+   * @details Used to prioritize contexts (higher values = more relevant). Default is 0.
+   */
+  integer m_priority = 0;
+
+  /**
+   * @brief Construct to initialize ErrorContext
    * @param formattedContext String containing the target object name followed by the the file and line declaring it.
    * @param attributes Map containing contextual information about the error
    */
@@ -82,30 +102,11 @@ struct ErrorContext
    * @return a string representation of the enumeration value
    */
   static std::string attributeToString( Attribute attribute );
-
-  /// String containing the target object name followed by the the file and line declaring it.
-  string m_formattedContext;
-
-  /// The map contains contextual information about the error
-  /// It could be something like
-  /// "file" = "/path/to/file.xml"
-  /// "line" = "24"
-  /// or something like
-  /// "dataPath" = "/Functions/co2brine_philipsDensityTable
-  /// The key is a field of the Attribute enumeration and is converted to a string for writing in the YAML
-  map< Attribute, std::string > m_attributes;
-
-  /**
-   * @brief Priority level assigned to an error context.
-   * @details Used to prioritize contextes (higher values = more relevant). Default is 0.
-   *
-   */
-  integer m_priority = 0;
 };
 
 /**
  * @enum MsgType
- * Enum listing the different types of possible errors
+ * Enum listing the different types of possible diagnostics
  */
 enum class MsgType
 {
@@ -344,16 +345,7 @@ public:
    */
   DiagnosticMsgBuilder initCurrentExceptionMessage( MsgType msgType,
                                                     std::string_view msgContent,
-                                                    integer rank )
-  {
-    DiagnosticMsg diagnosticMsg;
-    m_getCurrentExceptionMsg = DiagnosticMsgBuilder::init( diagnosticMsg,
-                                                           msgType, msgContent,
-                                                           rank )
-                                 .addCallStackInfo( LvArray::system::stackTrace( true ) )
-                                 .getDiagnosticMsg();
-    return DiagnosticMsgBuilder::modify( m_getCurrentExceptionMsg );
-  }
+                                                    integer rank );
 
   /**
    * @brief Modify/Continue building the current exception message

@@ -59,6 +59,19 @@ std::string ErrorContext::attributeToString( ErrorContext::Attribute attribute )
   }
 }
 
+DiagnosticMsgBuilder ErrorLogger::initCurrentExceptionMessage( MsgType msgType,
+                                                               std::string_view msgContent,
+                                                               integer rank )
+{
+  DiagnosticMsg diagnosticMsg;
+  m_getCurrentExceptionMsg = DiagnosticMsgBuilder::init( diagnosticMsg,
+                                                         msgType, msgContent,
+                                                         rank )
+                               .addCallStackInfo( LvArray::system::stackTrace( true ) )
+                               .getDiagnosticMsg();
+  return DiagnosticMsgBuilder::modify( m_getCurrentExceptionMsg );
+}
+
 DiagnosticMsgBuilder DiagnosticMsgBuilder::init( DiagnosticMsg & msg,
                                                  MsgType msgType,
                                                  std::string_view msgContent,
