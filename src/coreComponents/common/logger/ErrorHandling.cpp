@@ -50,12 +50,12 @@ std::string ErrorContext::attributeToString( ErrorContext::Attribute attribute )
 {
   switch( attribute )
   {
-    case ErrorContext::Attribute::InputFile: return "inputFile";
-    case ErrorContext::Attribute::InputLine: return "inputLine";
-    case ErrorContext::Attribute::DataPath: return "dataPath";
+    case ErrorContext::Attribute::InputFile:    return "inputFile";
+    case ErrorContext::Attribute::InputLine:    return "inputLine";
+    case ErrorContext::Attribute::DataPath:     return "dataPath";
     case ErrorContext::Attribute::DetectionLoc: return "detectionLocation";
-    case ErrorContext::Attribute::Signal: return "signal";
-    default: return "unknown";
+    case ErrorContext::Attribute::Signal:       return "signal";
+    default:                                    return "unknown";
   }
 }
 
