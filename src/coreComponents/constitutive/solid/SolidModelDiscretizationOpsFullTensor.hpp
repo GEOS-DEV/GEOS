@@ -52,9 +52,9 @@ GEOS_HOST_DEVICE
 inline
 void SolidModelDiscretizationOpsFullTensor::BTDB( BASIS_GRADIENT const & gradN,
                                                   real64 const & detJxW,
-                                                  real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
+                                                  real64 (& elementStiffness)[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3] )
 {
-  real64 B[9][NUM_SUPPORT_POINTS * 3];
+  real64 B[9][NUM_SUPPORT_POINTS * 3] = { {0} };
   
   for (int a = 0; a < NUM_SUPPORT_POINTS; ++a) {
     for (int i = 0; i < 3; ++i) {
@@ -67,9 +67,12 @@ void SolidModelDiscretizationOpsFullTensor::BTDB( BASIS_GRADIENT const & gradN,
   }
 
   real64 DB[9][NUM_SUPPORT_POINTS * 3];
+  real64 elmat[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3];
+
   LvArray::tensorOps::Rij_eq_AikBkj<9, NUM_SUPPORT_POINTS * 3, 9>(DB, m_c, B);
-  LvArray::tensorOps::Rij_eq_AkiBkj<NUM_SUPPORT_POINTS * 3, NUM_SUPPORT_POINTS * 3, 9>(elementStiffness, B, DB);
-  LvArray::tensorOps::scale<NUM_SUPPORT_POINTS * 3, NUM_SUPPORT_POINTS * 3>(elementStiffness, detJxW);
+  LvArray::tensorOps::Rij_eq_AkiBkj<NUM_SUPPORT_POINTS * 3, NUM_SUPPORT_POINTS * 3, 9>(elmat, B, DB);
+  LvArray::tensorOps::scale<NUM_SUPPORT_POINTS * 3, NUM_SUPPORT_POINTS * 3>(elmat, detJxW);
+  LvArray::tensorOps::add<NUM_SUPPORT_POINTS * 3, NUM_SUPPORT_POINTS * 3>(elementStiffness, elmat);
 }
 
 } // namespace constitutive

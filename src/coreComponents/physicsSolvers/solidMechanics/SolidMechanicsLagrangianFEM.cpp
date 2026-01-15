@@ -1085,14 +1085,25 @@ void SolidMechanicsLagrangianFEM::setSparsityPattern( DomainPartition & domain,
     arrayView1d< globalIndex const > const
     dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( solidMechanics::totalDisplacement::key() ) );
 
-    finiteElement::
-      fillSparsity< CellElementSubRegion,
-                    solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
-                                                                                          regionNames,
-                                                                                          getDiscretizationName(),
-                                                                                          dofNumber,
-                                                                                          dofManager.rankOffset(),
-                                                                                          pattern );
+    if (m_strainTheory == 0) {
+      finiteElement::
+        fillSparsity< CellElementSubRegion,
+                      solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
+                                                                                            regionNames,
+                                                                                            getDiscretizationName(),
+                                                                                            dofNumber,
+                                                                                            dofManager.rankOffset(),
+                                                                                            pattern );
+    } else if (m_strainTheory == 1) {
+      finiteElement::
+        fillSparsity< CellElementSubRegion,
+                      solidMechanicsLagrangianFEMKernels::ImplicitFiniteStrainQuasiStatic >( mesh,
+                                                                                             regionNames,
+                                                                                             getDiscretizationName(),
+                                                                                             dofNumber,
+                                                                                             dofManager.rankOffset(),
+                                                                                             pattern );
+    }
 
 
   } );
@@ -1213,14 +1224,26 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
     {
       if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
       {
-        m_maxForce = assemblyLaunch< SolidMechanicsKernelsDispatchTypeList,
-                                     solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
-                                                                                               dofManager,
-                                                                                               regionNames,
-                                                                                               viewKeyStruct::solidMaterialNamesString(),
-                                                                                               localMatrix,
-                                                                                               localRhs,
-                                                                                               dt );
+        if (m_strainTheory == 0) {
+          m_maxForce = assemblyLaunch< SolidMechanicsKernelsDispatchTypeList,
+                                       solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
+                                                                                                 dofManager,
+                                                                                                 regionNames,
+                                                                                                 viewKeyStruct::solidMaterialNamesString(),
+                                                                                                 localMatrix,
+                                                                                                 localRhs,
+                                                                                                 dt );
+        } else if (m_strainTheory == 1) {
+          m_maxForce =
+              assemblyLaunch< SolidMechanicsImplicitFiniteStrainKernelsDispatchTypeList,
+                              solidMechanicsLagrangianFEMKernels::ImplicitFiniteStrainQuasiStaticFactory >( mesh,
+                                                                                                            dofManager,
+                                                                                                            regionNames,
+                                                                                                            viewKeyStruct::solidMaterialNamesString(),
+                                                                                                            localMatrix,
+                                                                                                            localRhs,
+                                                                                                            dt );
+        }
       }
       else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
       {
