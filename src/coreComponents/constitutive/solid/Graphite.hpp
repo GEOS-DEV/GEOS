@@ -81,7 +81,7 @@ public:
                    real64 const & defaultShearModulusAxialTransverse,
                    arrayView1d< real64 > const & effectiveBulkModulus,
                    arrayView1d< real64 > const & effectiveShearModulus,
-                   arrayView2d< real64 > const & materialDirection,
+                   arrayView3d< real64 > const & materialDirection,
                    real64 const defaultYoungModulusTransversePressureDerivative,
                    real64 const defaultYoungModulusAxialPressureDerivative,
                    real64 const defaultShearModulusAxialTransversePressureDerivative,
@@ -336,7 +336,7 @@ private:
 
   arrayView1d< real64 > const m_effectiveShearModulus;
 
-  arrayView2d< real64 > const m_materialDirection;
+  arrayView3d< real64 > const m_materialDirection;
 
   real64 const m_defaultYoungModulusTransversePressureDerivative;
 
@@ -543,44 +543,47 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   // CC: debug
   // GEOS_LOG_RANK( "Particle " << k << ", Stress in: {" << stress[0] << ", " << stress[1] << ", " << stress[2] << ", " << stress[3] << ", "
   // << stress[4] << ", " << stress[5] << "}" );
-  real64 oldStress[6] = { 0 };
+  real64 oldStress[6] = {};
   LvArray::tensorOps::copy< 6 >( oldStress, m_oldStress[k][q] );  //stress );
   // CC: debug
   // GEOS_LOG_RANK( "Particle " << k << ", Old stress copy: {" << oldStress[0] << ", " << oldStress[1] << ", " << oldStress[2] << ", " <<
   // oldStress[3] << ", " << oldStress[4] << ", " << oldStress[5] << "}" );
 
-  real64 rotationTranspose[3][3] = { { 0 } };
+  real64 rotationTranspose[3][3] = {};
   LvArray::tensorOps::transpose< 3, 3 >( rotationTranspose, beginningRotation );
 
-  real64 tempMat[ 3 ][ 3 ]= { { 0 } };
+  real64 tempMat[ 3 ][ 3 ]= {};
 
-  real64 unrotatedVelocityGradient[3][3] = { { 0 } };
+  real64 unrotatedVelocityGradient[3][3] = {};
   LvArray::tensorOps::Rij_eq_AkiBkj< 3, 3, 3 >( tempMat, beginningRotation, m_velocityGradient[k] );
   LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( unrotatedVelocityGradient, tempMat, beginningRotation );
 
-  real64 unrotatedVelocityGradientTranspose[3][3] = { { 0 } };
+  real64 unrotatedVelocityGradientTranspose[3][3] = {};
   LvArray::tensorOps::transpose< 3, 3 >( unrotatedVelocityGradientTranspose, unrotatedVelocityGradient );
 
   // CC: Is there an LvArray operation to get the symmetric part of a matrix?
-  real64 denseD[3][3] = { { 0 } };
+  real64 denseD[3][3] = {};
   LvArray::tensorOps::copy< 3, 3 >( denseD, unrotatedVelocityGradient );
   LvArray::tensorOps::add< 3, 3 >( denseD, unrotatedVelocityGradientTranspose );
   LvArray::tensorOps::scale< 3, 3 >( denseD, 0.5 );
 
-  real64 D[6] = { 0 };
+  real64 D[6] = {};
   LvArray::tensorOps::denseToSymmetric< 3 >( D, denseD );
 
   // make sure material direction is normalized.
-  real64 materialDirection[3] = { 0 };
-  LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k] );
+  // Check updates to material direction are correct, this model only utilizes the x basis to denote the anisotropic c-axis of the crystal
+  real64 materialDirection[3] = {m_materialDirection[k][0][0],
+                                 m_materialDirection[k][1][0],
+                                 m_materialDirection[k][2][0]};
+  // LvArray::tensorOps::copy< 3 >( materialDirection, m_materialDirection[k][0] );
   LvArray::tensorOps::normalize< 3 >( materialDirection );
 
   // Unrotate material direction
-  real64 unrotatedMaterialDirection[3] = { 0 };
+  real64 unrotatedMaterialDirection[3] = {};
   LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( unrotatedMaterialDirection, rotationTranspose, materialDirection );
 
   // Use beginning of step normal stress to compute stress dependence of Ez
-  real64 temp[3] = { 0 };
+  real64 temp[3] = {};
   int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
   LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, oldStress, unrotatedMaterialDirection );
   real64 oldPlaneNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );    // CC: Unused?
@@ -646,10 +649,10 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   }
 
   // Decompose stress tensor into pieces.
-  real64 sigma1Dense[3][3] = { { 0 } };
-  real64 sigma2Dense[3][3] = { { 0 } };
-  real64 sigma4Dense[3][3] = { { 0 } };
-  real64 sigma5Dense[3][3] = { { 0 } };
+  real64 sigma1Dense[3][3] = {};
+  real64 sigma2Dense[3][3] = {};
+  real64 sigma4Dense[3][3] = {};
+  real64 sigma5Dense[3][3] = {};
   for( int i=0; i<3; i++ )
   {
     for( int j=0; j<3; j++ )
@@ -689,7 +692,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
 
 
   // Check for tensile failure in preferred direction
-  // real64 temp[3] = { 0 };
+  // real64 temp[3] = {};
   LvArray::tensorOps::Ri_eq_symAijBj< 3 >( temp, stress, unrotatedMaterialDirection );
   real64 planeNormalStress = LvArray::tensorOps::AiBi< 3 >( unrotatedMaterialDirection, temp );
   real64 failureStrength = m_failureStrength * m_strengthScale[k];
@@ -735,7 +738,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   LvArray::tensorOps::subtract< 6 >( inPlaneDev, inPlaneIso );
 
   // find distortion stress from in-plane isotropic and plane-normal stress
-  real64 distortion[6] = { 0 };
+  real64 distortion[6] = {};
   LvArray::tensorOps::copy< 6 >( distortion, inPlaneIso );
   LvArray::tensorOps::add< 6 >( distortion, sigma1 );
 
@@ -746,7 +749,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
   distortion_iso[1] = distortionMeanStress;
   distortion_iso[2] = distortionMeanStress;
 
-  real64 distortion_dev[6] = { 0 };
+  real64 distortion_dev[6] = {};
   LvArray::tensorOps::copy< 6 >( distortion_dev, distortion );
   LvArray::tensorOps::subtract< 6 >( distortion_dev, distortion_iso );
 
@@ -947,13 +950,13 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
                                                         plasticStrainIncrement );
 
     // Unrotate old plastic strain
-    real64 oldPlasticStrain[6] = { 0 };
+    real64 oldPlasticStrain[6] = {};
     LvArray::tensorOps::copy< 6 >( oldPlasticStrain, m_plasticStrain[k][q] );
     oldPlasticStrain[3] *= 0.5;
     oldPlasticStrain[4] *= 0.5;
     oldPlasticStrain[5] *= 0.5;
 
-    real64 unrotatedOldPlasticStrain[6] = { 0 };
+    real64 unrotatedOldPlasticStrain[6] = {};
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( unrotatedOldPlasticStrain, rotationTranspose, oldPlasticStrain );
     unrotatedOldPlasticStrain[3] *= 2.0;
     unrotatedOldPlasticStrain[4] *= 2.0;
@@ -974,7 +977,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     // plasticStrainIncrement[5] << "}" );
 
     // Add plastic strain increment
-    real64 unrotatedNewPlasticStrain[6] = { 0 };
+    real64 unrotatedNewPlasticStrain[6] = {};
     LvArray::tensorOps::copy< 6 >( unrotatedNewPlasticStrain, unrotatedOldPlasticStrain );
     LvArray::tensorOps::add< 6 >( unrotatedNewPlasticStrain, plasticStrainIncrement );
 
@@ -983,7 +986,7 @@ void GraphiteUpdates::smallStrainUpdateHelper( localIndex const k,
     unrotatedNewPlasticStrain[4] *= 0.5;
     unrotatedNewPlasticStrain[5] *= 0.5;
 
-    real64 newPlasticStrain[ 6 ] = { 0 };
+    real64 newPlasticStrain[ 6 ] = {};
     LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( newPlasticStrain, endRotation, unrotatedNewPlasticStrain );
     newPlasticStrain[3] *= 2.0;
     newPlasticStrain[4] *= 2.0;
@@ -1060,7 +1063,7 @@ void GraphiteUpdates::computeTransverselyIsotropicTrialStress( const real64 time
     }
   }
 
-  real64 stressIncrement[6] = { 0 };
+  real64 stressIncrement[6] = {};
   LvArray::tensorOps::denseToSymmetric< 3 >( stressIncrement, stressIncrementDense );
 
   LvArray::tensorOps::copy< 6 >( newStress, oldStress );
@@ -1102,7 +1105,7 @@ void GraphiteUpdates::computeTransverselyIsotropicPlasticStrainIncrement( real64
    // for some increment in total strain and stress and elastic properties.
 
   // New stress minus old stress
-  real64 stressIncrement[6] = { 0 };
+  real64 stressIncrement[6] = {};
   LvArray::tensorOps::copy< 6 >( stressIncrement, newStress );
   LvArray::tensorOps::subtract< 6 >( stressIncrement, oldStress );
 
@@ -1114,8 +1117,8 @@ void GraphiteUpdates::computeTransverselyIsotropicPlasticStrainIncrement( real64
   real64 s5 = 1.0/(2.0*Gzp);
 
 //Could be issue with using symmetric voigt vector for strain here, try using dense tensor
-  // real64 elasticStrainIncrement[6] = { 0 };
-  real64 elasticStrainIncrementDense[3][3] = { { 0 } };
+  // real64 elasticStrainIncrement[6] = {};
+  real64 elasticStrainIncrementDense[3][3] = {};
   int voigtMap[3][3] = { {0, 5, 4}, {5, 1, 3}, {4, 3, 2} };
   for( int i=0; i<3; i++ )
   {
@@ -1141,7 +1144,7 @@ void GraphiteUpdates::computeTransverselyIsotropicPlasticStrainIncrement( real64
   // elasticStrainIncrement[5] << "}" );
 
   // plastic strain increment = Total strain increment - elastic strain increment
-  real64 plasticStrainIncrementDense[3][3] = { { 0 } };
+  real64 plasticStrainIncrementDense[3][3] = {};
   for( int i = 0; i < 3; ++i )
   {
     for( int j = 0; j < 3; ++j )
@@ -1718,7 +1721,7 @@ protected:
   array1d< real64 > m_effectiveShearModulus;
 
   /// State variable: The material direction for each element/particle
-  array2d< real64 > m_materialDirection;
+  array3d< real64 > m_materialDirection;
 
   /// The default value of the transverse Young's modulus pressure derivative for new allocations.
   real64 m_defaultYoungModulusTransversePressureDerivative;

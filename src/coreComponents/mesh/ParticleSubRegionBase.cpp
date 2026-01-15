@@ -91,7 +91,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
 
   registerWrapper( viewKeyStruct::particleMaterialDirectionString(), &m_particleMaterialDirection ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
-    reference().resizeDimension< 1 >( 3 );
+    reference().resizeDimension< 1, 2 >( 3, 3 );
 
   registerWrapper( viewKeyStruct::particleVolumeString(), &m_particleVolume ).
     setPlotLevel( PlotLevel::LEVEL_1 );

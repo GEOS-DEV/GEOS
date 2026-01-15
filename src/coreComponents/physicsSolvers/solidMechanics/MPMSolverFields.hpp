@@ -267,7 +267,7 @@ DECLARE_FIELD( particleReferencePosition,
 
 DECLARE_FIELD( particleReferenceMaterialDirection,
                "particleReferenceMaterialDirection",
-               array2d< real64 >,
+               array3d< real64 >,
                0.0,
                LEVEL_1,
                WRITE_AND_READ,

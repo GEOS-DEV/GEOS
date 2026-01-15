@@ -28,17 +28,10 @@ using namespace dataRepository;
 
 CohesiveZoneRegion::CohesiveZoneRegion( string const & name, Group * const parent ):
   CohesiveZoneRegionBase( name, parent ),
-  m_misorientation(),
   m_maxNormalDisplacement(),
   m_maxTangentialDisplacement(),
   m_damage()
-{  
-  registerWrapper( viewKeyStruct::misorientationString(), &m_misorientation ).
-    setInputFlag( InputFlags::FALSE ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setRestartFlags( RestartFlags::WRITE_AND_READ ).
-    setDescription( "Misorientation of material direction between cohesive zone surfaces" );
-
+{
   registerWrapper( viewKeyStruct::maxNormalDisplacementString(), &m_maxNormalDisplacement ).
     setInputFlag( InputFlags::FALSE ).
     setPlotLevel( PlotLevel::NOPLOT ).

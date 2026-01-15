@@ -43,6 +43,7 @@ set( constitutive_headers
      cohesiveZone/UncoupledCohesiveZone.hpp
      cohesiveZone/CoupledCohesiveZone.hpp
      cohesiveZone/PolymerCohesiveZone.hpp
+     cohesiveZone/BicrystalCohesiveZone.hpp
      contact/BartonBandis.hpp
      contact/CoulombFriction.hpp
      contact/FrictionSelector.hpp
@@ -248,10 +249,11 @@ set( constitutive_sources
      capillaryPressure/TableCapillaryPressure.cpp
      capillaryPressure/TableCapillaryPressureHelpers.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
-    cohesiveZone/CohesiveZoneBase.cpp
+     cohesiveZone/CohesiveZoneBase.cpp
      cohesiveZone/UncoupledCohesiveZone.cpp
      cohesiveZone/CoupledCohesiveZone.cpp
      cohesiveZone/PolymerCohesiveZone.cpp
+     cohesiveZone/BicrystalCohesiveZone.cpp
      contact/BartonBandis.cpp
      contact/CoulombFriction.cpp
      contact/FrictionBase.cpp

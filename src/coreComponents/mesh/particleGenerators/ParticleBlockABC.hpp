@@ -126,7 +126,7 @@ public:
    * @brief Get the list of particle material directions in this subregion.
    * @return the list of particle material directions in this subregion.
    */
-  virtual array2d< real64 > getParticleMaterialDirection() const = 0;
+  virtual array3d< real64 > getParticleMaterialDirection() const = 0;
 
   /**
    * @brief Get the list of particle volumes in this subregion.

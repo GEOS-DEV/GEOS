@@ -40,10 +40,12 @@ public:
     */
     CoupledCohesiveZoneUpdates( real64 const & characteristicNormalDisplacement,
                                 real64 const & characteristicTangentialDisplacement,
-                                real64 const & maxNormalStress,
-                                real64 const & maxShearStress,
+                                real64 const & defaultMaxNormalStress,
+                                real64 const & defaultMaxShearStress,
                                 real64 const & maxNormalDisplacement,
                                 real64 const & maxTangentialDisplacement,
+                                arrayView1d< real64 > const & maxNormalStress,
+                                arrayView1d< real64 > const & maxShearStress,
                                 arrayView1d< real64 > const & damage,
                                 arrayView2d< real64 > const & newNormalStress,
                                 arrayView2d< real64 > const & newShearStress,
@@ -55,10 +57,12 @@ public:
                                  oldShearStress ),
         m_characteristicNormalDisplacement( characteristicNormalDisplacement  ),
         m_characteristicTangentialDisplacement( characteristicTangentialDisplacement ),
-        m_maxNormalStress( maxNormalStress ),
-        m_maxShearStress( maxShearStress ),
+        m_defaultMaxNormalStress( defaultMaxNormalStress ),
+        m_defaultMaxShearStress( defaultMaxShearStress ),
         m_maxNormalDisplacement( maxNormalDisplacement ),
         m_maxTangentialDisplacement( maxTangentialDisplacement ),
+        m_maxNormalStress( maxNormalStress ),
+        m_maxShearStress( maxShearStress ),
         m_damage( damage )
     {}
 
@@ -100,8 +104,8 @@ public:
         real64 r = 0.0;
         real64 q = 1.0;
    
-        real64 normalWorkOfSeparation = e * m_maxNormalStress * m_characteristicNormalDisplacement;
-        real64 shearWorkOfSeparation = LvArray::math::sqrt( e / 2 ) * m_maxShearStress * m_characteristicTangentialDisplacement;
+        real64 normalWorkOfSeparation = e * m_maxNormalStress[k] * m_characteristicNormalDisplacement;
+        real64 shearWorkOfSeparation = LvArray::math::sqrt( e / 2 ) * m_maxShearStress[k] * m_characteristicTangentialDisplacement;
 
         real64 normalizedNormalDisplacement = normalDisplacement / m_characteristicNormalDisplacement;
         real64 normalizedTangentialDisplacement = tangentialDisplacement/ m_characteristicTangentialDisplacement;
@@ -115,15 +119,18 @@ public:
                         LvArray::math::exp( -normalizedNormalDisplacement ) * LvArray::math::exp( -LvArray::math::pow( normalizedTangentialDisplacement, 2 ) );
     }
 
-private:
+protected:
 
   // Constants
   real64 const m_characteristicNormalDisplacement;
   real64 const m_characteristicTangentialDisplacement;
-  real64 const m_maxNormalStress;
-  real64 const m_maxShearStress;
+  real64 const m_defaultMaxNormalStress;
+  real64 const m_defaultMaxShearStress;
   real64 const m_maxNormalDisplacement;
   real64 const m_maxTangentialDisplacement;
+
+  arrayView1d< real64 > const m_maxNormalStress;
+  arrayView1d< real64 > const m_maxShearStress;
 
   /// A reference the current damage at each cohesive zone node.
   arrayView1d< real64 > const m_damage;
@@ -181,10 +188,12 @@ public:
   {
     static constexpr char const * characteristicNormalDisplacementString() { return "characteristicNormalDisplacement"; }
     static constexpr char const * characteristicTangentialDisplacementString() { return "characteristicTangentialDisplacement"; }
-    static constexpr char const * maxNormalStressString() { return "maxNormalStress"; }
-    static constexpr char const * maxShearStressString() { return "maxShearStress"; }
+    static constexpr char const * defaultMaxNormalStressString() { return "defaultMaxNormalStress"; }
+    static constexpr char const * defaultMaxShearStressString() { return "defaultMaxShearStress"; }
     static constexpr char const * maxNormalDisplacementString() { return "maxNormalDisplacement"; }
     static constexpr char const * maxTangentialDisplacementString() { return "maxTangentialDisplacement"; }
+    static constexpr char const * maxNormalStressString() { return "maxNormalStress"; }
+    static constexpr char const * maxShearStressString() { return "maxShearStress"; }
     static constexpr char const * damageString() { return "damage"; }
   };
 
@@ -235,10 +244,12 @@ public:
     GEOS_UNUSED_VAR( includeState );
     return CoupledCohesiveZoneUpdates( m_characteristicNormalDisplacement,
                                        m_characteristicTangentialDisplacement,
-                                       m_maxNormalStress,
-                                       m_maxShearStress,
+                                       m_defaultMaxNormalStress,
+                                       m_defaultMaxShearStress,
                                        m_maxNormalDisplacement,
                                        m_maxTangentialDisplacement,
+                                       m_maxNormalStress,
+                                       m_maxShearStress,
                                        m_damage,
                                        m_newNormalStress,
                                        m_newShearStress,
@@ -260,10 +271,12 @@ public:
     return UPDATE_KERNEL( std::forward< PARAMS >( constructorParams )...,
                           m_characteristicNormalDisplacement,
                           m_characteristicTangentialDisplacement,
-                          m_maxNormalStress,
-                          m_maxShearStress,
+                          m_defaultMaxNormalStress,
+                          m_defaultMaxShearStress,
                           m_maxNormalDisplacement,
                           m_maxTangentialDisplacement,
+                          m_maxNormalStress,
+                          m_maxShearStress,
                           m_damage,
                           m_newNormalStress,
                           m_newShearStress,
@@ -279,12 +292,14 @@ protected:
   // Constants
   real64 m_characteristicNormalDisplacement;
   real64 m_characteristicTangentialDisplacement;
-  real64 m_maxNormalStress;
-  real64 m_maxShearStress;
+  real64 m_defaultMaxNormalStress;
+  real64 m_defaultMaxShearStress;
   real64 m_maxNormalDisplacement;
   real64 m_maxTangentialDisplacement;
 
   // Stores the damage for each node in cohesive zone
+  array1d< real64 > m_maxNormalStress;
+  array1d< real64 > m_maxShearStress;
   array1d< real64 > m_damage;
 
 };

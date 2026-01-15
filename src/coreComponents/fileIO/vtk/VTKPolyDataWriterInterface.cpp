@@ -1411,14 +1411,10 @@ void VTKPolyDataWriterInterface::write( real64 const time,
     writeVtmFile( cycle, domain, vtmWriter );
 
     // CC: for restarts need the vtk pvd file to be appended to which requires reading it in from file
-    // Should have a flag for this and only check on first pass
-    if( m_previousCycle == -1 && cycle != 0 )
+    if(std::filesystem::exists(m_pvd.getFileName()) and cycle != 0)
+    // if( m_previousCycle == -1 && cycle != 0)
     {
-      if( m_pvd.exists() )
-      {
-        GEOS_LOG_RANK_0( "Restart and existing vtkOutput.pvd detected. Appending to existing pvd file!" );
-        m_pvd.read();
-      }
+      m_pvd.read();
     }
 
     if( cycle != m_previousCycle )

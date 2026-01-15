@@ -208,7 +208,9 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       switch( static_cast< ParticleColumnHeaders >( c ) )
       {
         case ParticleColumnHeaders::StrengthScale:
-        case ParticleColumnHeaders::MaterialDirectionX:
+        case ParticleColumnHeaders::MaterialDirectionXX:
+        case ParticleColumnHeaders::MaterialDirectionYY:
+        case ParticleColumnHeaders::MaterialDirectionZZ:
           defaultValue = 1.0;
           break;
         case ParticleColumnHeaders::Temperature:
@@ -224,8 +226,12 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         case ParticleColumnHeaders::VelocityX:
         case ParticleColumnHeaders::VelocityY:
         case ParticleColumnHeaders::VelocityZ:
-        case ParticleColumnHeaders::MaterialDirectionY:
-        case ParticleColumnHeaders::MaterialDirectionZ:
+        case ParticleColumnHeaders::MaterialDirectionXY:
+        case ParticleColumnHeaders::MaterialDirectionXZ:
+        case ParticleColumnHeaders::MaterialDirectionYX:
+        case ParticleColumnHeaders::MaterialDirectionYZ:
+        case ParticleColumnHeaders::MaterialDirectionZX:
+        case ParticleColumnHeaders::MaterialDirectionZY:
         case ParticleColumnHeaders::SurfaceNormalX:
         case ParticleColumnHeaders::SurfaceNormalY:
         case ParticleColumnHeaders::SurfaceNormalZ:
@@ -278,7 +284,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     array1d< globalIndex > particleID( npInBlock );
     array2d< real64 > particleCenter( npInBlock, 3 );
     array2d< real64 > particleVelocity( npInBlock, 3 );
-    array2d< real64 > particleMaterialDirection( npInBlock, 3 );
+    array3d< real64 > particleMaterialDirection( npInBlock, 3, 3 );
     array1d< int > particleGroup( npInBlock );
     array1d< int > particleSurfaceFlag( npInBlock );
     array1d< real64 > particleDamage( npInBlock );
@@ -376,7 +382,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
           particleRVectors[i][2][0] = x3;
           particleRVectors[i][2][1] = y3;
           particleRVectors[i][2][2] = z3;
-          particleVolume[i] = 8.0*std::fabs( -(x3*y2*z1) + x2*y3*z1 + x3*y1*z2 - x1*y3*z2 - x2*y1*z3 + x1*y2*z3 );
+          particleVolume[i] = 8.0*LvArray::math::abs( -(x3*y2*z1) + x2*y3*z1 + x3*y1*z2 - x1*y3*z2 - x2*y1*z3 + x1*y2*z3 );
           break;
         }
         case ParticleType::CPTI:
@@ -397,9 +403,16 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       }
 
       // Material Direction
-      particleMaterialDirection[i][0] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionX )];
-      particleMaterialDirection[i][1] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionY )];
-      particleMaterialDirection[i][2] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionZ )];
+      // For convenient indexing we store the transpose of the particle material directions so the X axis is easy accessed from [0]
+      particleMaterialDirection[i][0][0] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionXX )];
+      particleMaterialDirection[i][0][1] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionXY )];
+      particleMaterialDirection[i][0][2] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionXZ )];
+      particleMaterialDirection[i][1][0] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionYX )];
+      particleMaterialDirection[i][1][1] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionYY )];
+      particleMaterialDirection[i][1][2] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionYZ )];
+      particleMaterialDirection[i][2][0] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionZX )];
+      particleMaterialDirection[i][2][1] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionZY )];
+      particleMaterialDirection[i][2][2] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::MaterialDirectionZZ )];
 
       particleSurfaceNormal[i][0] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::SurfaceNormalX )];
       particleSurfaceNormal[i][1] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::SurfaceNormalY )];

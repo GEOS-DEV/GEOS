@@ -28,6 +28,7 @@
 #include "cohesiveZone/UncoupledCohesiveZone.hpp"
 #include "cohesiveZone/CoupledCohesiveZone.hpp"
 #include "cohesiveZone/PolymerCohesiveZone.hpp"
+#include "cohesiveZone/BicrystalCohesiveZone.hpp"
 #include "gas/Gas.hpp"
 #include "solid/Damage.hpp"
 #include "solid/DamageVolDev.hpp"
@@ -278,7 +279,8 @@ struct ConstitutivePassThruCohesiveZone< CohesiveZoneBase >
   static
   void execute( CohesiveZoneBase & constitutiveRelation, LAMBDA && lambda )
   {
-    ConstitutivePassThruHandler< PolymerCohesiveZone,
+    ConstitutivePassThruHandler< BicrystalCohesiveZone,
+                                 PolymerCohesiveZone,
                                  CoupledCohesiveZone,
                                  UncoupledCohesiveZone >::execute( constitutiveRelation,
                                                                    std::forward< LAMBDA >( lambda ) );

@@ -1617,6 +1617,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         // Vector/tensor fields need to have their other dimensions specified.
 
         string const voightLabels[6] = { "XX", "YY", "ZZ", "YZ", "XZ", "XY" };
+        string const axesLabels[3] = { "X", "Y", "Z" };
 
         // Single-indexed fields (scalars)
         subRegion.registerField< particleMaterialType >( getName() );
@@ -1637,7 +1638,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
         subRegion.registerField< particlePlasticStrain >( getName() ).setDimLabels( 1, voightLabels ).reference().resizeDimension< 1 >( 6 );
         subRegion.registerField< particleDamageGradient >( getName() ).reference().resizeDimension< 1 >( 3 );
         subRegion.registerField< particleReferencePosition >( getName() ).reference().resizeDimension< 1 >( 3 );
-        subRegion.registerField< particleReferenceMaterialDirection >( getName() ).reference().resizeDimension< 1 >( 3 );
+        subRegion.registerField< particleReferenceMaterialDirection >( getName() ).setDimLabels( 1, axesLabels ).setDimLabels( 2, axesLabels ).reference().resizeDimension< 1, 2 >( 3, 3 );
         subRegion.registerField< particleReferenceSurfaceNormal >( getName() ).reference().resizeDimension< 1 >( 3 );
 
         subRegion.registerField< particleReferenceSurfacePosition >( getName() ).reference().resizeDimension< 1 >( 3 );
@@ -5378,7 +5379,7 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
     arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
     arrayView1d< real64 const > const particlePorosity = subRegion.getParticlePorosity();
     arrayView3d< real64 const > const particleRVectors = subRegion.getParticleRVectors();
-    arrayView2d< real64 const > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
+    arrayView3d< real64 const > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
     arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
     arrayView2d< real64 const > const particleSurfacePosition = subRegion.getParticleSurfacePosition();
     arrayView2d< real64 const > const particleSurfaceTraction = subRegion.getParticleSurfaceTraction();
@@ -5406,7 +5407,7 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
 
     arrayView2d< real64 > const particleReferencePosition = subRegion.getField< fields::mpm::particleReferencePosition >();
     arrayView2d< int > const particleCohesiveFieldMapping = subRegion.getField< fields::mpm::particleCohesiveFieldMapping >();
-    arrayView2d< real64 > const particleReferenceMaterialDirection = subRegion.getField< fields::mpm::particleReferenceMaterialDirection >();
+    arrayView3d< real64 > const particleReferenceMaterialDirection = subRegion.getField< fields::mpm::particleReferenceMaterialDirection >();
     arrayView3d< real64 > const particleCohesiveReferenceDeformationGradient = subRegion.getField< fields::mpm::particleCohesiveReferenceDeformationGradient >();
     arrayView2d< real64 > const particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
     arrayView2d< real64 > const particleReferenceSurfacePosition = subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
@@ -5546,7 +5547,7 @@ void SolidMechanicsMPM::initializeParticleFields( ParticleManager & particleMana
       LvArray::tensorOps::fill< 3 >( particleEstimatedSurfacePosition[p], 0.0 );
 
       LvArray::tensorOps::copy< 3 >( particleReferencePosition[p], particlePosition[p] );
-      LvArray::tensorOps::copy< 3 >( particleReferenceMaterialDirection[p], particleMaterialDirection[p] );
+      LvArray::tensorOps::copy< 3, 3 >( particleReferenceMaterialDirection[p], particleMaterialDirection[p] );
       LvArray::tensorOps::copy< 3, 3 >( particleReferenceRVectors[p], particleRVectors[p] );
 
       LvArray::tensorOps::copy< 3 >( particleReferenceSurfaceNormal[p], particleSurfaceNormal[p] );
@@ -7529,6 +7530,9 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
         arraySlice1d< real64 > const r2 = particleRVectors[p][1];
         arraySlice1d< real64 > const r3 = particleRVectors[p][2];
 
+        real64 maxAxis = DBL_MIN;
+        real64 minAxis = DBL_MAX;
+
         bool scale = false;
         if( planeStrain == 1 ) // 2D cpdi domain scaling
         {
@@ -7551,6 +7555,10 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
               l[i][2] *= lCrit / lLength;
               scale = true;
             }
+
+            // Store min and max axis to compute aspect ratio which is used to determine whether explicit normals and positions should be disabled
+            maxAxis = LvArray::math::max( maxAxis, lLength );
+            minAxis = LvArray::math::min( minAxis, lLength );
           }
 
           // reconstruct r-vectors.  eq. 11 in the CPDI domain scaling paper.
@@ -7586,6 +7594,10 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
               l[i][2] *= lCrit / lLength;
               scale = true;
             }
+
+            // Store min and max axis to compute aspect ratio which is used to determine whether explicit normals and positions should be disabled
+            maxAxis = LvArray::math::max( maxAxis, lLength );
+            minAxis = LvArray::math::min( minAxis, lLength );
           }
 
           // reconstruct r vectors.  eq. 11 in the CPDI domain scaling paper.
@@ -7605,8 +7617,11 @@ void SolidMechanicsMPM::cpdiDomainScaling( ParticleManager & particleManager )
           particleDomainScaledFlag[p] = 1;
         }
 
+        real64 aspectRatio = maxAxis / minAxis;
+
         // Turn off particle explicit surface normals and posititons
-        if( disableSurfaceNormalsAndPositionsOnCPDIScaling == 1 && particleDomainScaledFlag[p] == 1 )
+        // if( disableSurfaceNormalsAndPositionsOnCPDIScaling == 1 && particleDomainScaledFlag[p] == 1 )
+        if( disableSurfaceNormalsAndPositionsOnCPDIScaling == 1 && aspectRatio > 5 ) // Make the aspect Ratio user settable
         {
           LvArray::tensorOps::fill< 3 >( particleSurfaceNormal[p], 0.0 );
           LvArray::tensorOps::fill< 3 >( particleSurfacePosition[p], 0.0 );
@@ -9682,7 +9697,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
     array1d< real64 > tempGridVolumeLocal( numCohesiveNodes );
     array3d< real64 > tempGridParticleSurfaceNormalLocal( numCohesiveNodes, m_numVelocityFields, 3 );
     array3d< real64 > tempGridSurfacePositionLocal( numCohesiveNodes, m_numVelocityFields, 3 );
-    array3d< real64 > tempGridMaterialDirectionLocal( numCohesiveNodes, m_numVelocityFields, 3 );
+    array4d< real64 > tempGridMaterialDirectionLocal( numCohesiveNodes, m_numVelocityFields, 3, 3 );
 
     // Initialize temporary grid fields to zero
     forAll< parallelDevicePolicy<> >( numCohesiveNodes, [=] GEOS_HOST_DEVICE ( int const g )
@@ -9694,9 +9709,10 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
         for( int i = 0; i < numDims; ++i )
         {
           tempGridParticleSurfaceNormalLocal[g][fieldIndex][i] = 0.0;
-          tempGridSurfacePositionLocal[g][fieldIndex][i] = 0.0;
-          tempGridMaterialDirectionLocal[g][fieldIndex][i] = 0.0;
+          tempGridSurfacePositionLocal[g][fieldIndex][i] = 0.0;        
         }
+        
+        LvArray::tensorOps::fill< 3, 3 >( tempGridMaterialDirectionLocal[g][fieldIndex], 0.0 );
       }
     } );
 
@@ -9708,7 +9724,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
       arrayView1d< real64 const > const particleVolume = subRegion.getParticleVolume();
       arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
       arrayView2d< real64 const > const particleSurfacePosition = subRegion.getParticleSurfacePosition();
-      arrayView2d< real64 const > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
+      arrayView3d< real64 const > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
 
       arrayView1d< int const > const particleCohesiveZoneFlag = subRegion.getField< fields::mpm::particleCohesiveZoneFlag >();
       arrayView2d< globalIndex const > const particleReferenceMappedNodes = subRegion.getField< fields::mpm::particleReferenceMappedNodes >();
@@ -9724,7 +9740,8 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
                               &tempGridMassLocal,
                               &tempGridVolumeLocal,
                               &tempGridParticleSurfaceNormalLocal,
-                              &tempGridSurfacePositionLocal] GEOS_HOST ( localIndex const pp )
+                              &tempGridSurfacePositionLocal,
+                              &tempGridMaterialDirectionLocal] GEOS_HOST ( localIndex const pp )
         {
           localIndex const p = activeParticleIndices[pp];
 
@@ -9760,9 +9777,15 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
                   tempGridSurfacePositionLocal[nodeIndex][fieldIndex][i] += particleMass[p] *
                                                                             ( particlePosition[p][i] - czReferencePosition[nodeIndex][i] + particleSurfacePosition[p][i] ) *
                                                                             shapeFunctionValue;
-                  tempGridMaterialDirectionLocal[nodeIndex][fieldIndex][i] += particleMass[p] * particleMaterialDirection[p][i] * shapeFunctionValue;
                 }
 
+                for( int i = 0; i < 3; ++i )
+                {
+                  for( int j = 0; j < 3; ++j )
+                  {
+                    tempGridMaterialDirectionLocal[nodeIndex][fieldIndex][i][j] += particleMass[p] * particleMaterialDirection[p][i][j] * shapeFunctionValue;
+                  }
+                }
               }
               tempGridVolumeLocal[nodeIndex] += particleVolume[p] * shapeFunctionValue;
             }
@@ -9775,7 +9798,7 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
     array1d< real64 > tempGridVolumeGlobal( numCohesiveNodes );
     array3d< real64 > tempGridParticleSurfaceNormalGlobal( numCohesiveNodes, m_numVelocityFields, 3 );
     array3d< real64 > tempGridSurfacePositionGlobal( numCohesiveNodes, m_numVelocityFields, 3 );
-    array3d< real64 > tempGridMaterialDirectionGlobal( numCohesiveNodes, m_numVelocityFields, 3 );
+    array4d< real64 > tempGridMaterialDirectionGlobal( numCohesiveNodes, m_numVelocityFields, 3, 3 );
 
     MpiWrapper::allReduce( tempGridMassLocal,
                            tempGridMassGlobal,
@@ -9804,7 +9827,8 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
 
     forAll< serialPolicy >( numCohesiveNodes, [=,
                                               &tempGridParticleSurfaceNormalGlobal,
-                                              &tempGridSurfacePositionGlobal] GEOS_HOST ( localIndex const g )
+                                              &tempGridSurfacePositionGlobal,
+                                              &tempGridMaterialDirectionGlobal] GEOS_HOST ( localIndex const g )
     {
       for( localIndex fieldIndex = 0; fieldIndex < numVelocityFields; ++fieldIndex )
       {
@@ -9814,22 +9838,51 @@ void SolidMechanicsMPM::initializeCohesiveReferenceConfiguration( DomainPartitio
           {
             tempGridParticleSurfaceNormalGlobal[g][fieldIndex][i] /= tempGridMassGlobal[g][fieldIndex];
             tempGridSurfacePositionGlobal[g][fieldIndex][i] /= tempGridMassGlobal[g][fieldIndex];
-            tempGridMaterialDirectionGlobal[g][fieldIndex][i] /= tempGridMassGlobal[g][fieldIndex];
+          }
+
+          for( int i = 0; i < 3; ++i )
+          {
+            for( int j = 0; j < 3; ++j )
+            {
+              tempGridMaterialDirectionGlobal[g][fieldIndex][i][j] /= tempGridMassGlobal[g][fieldIndex];
+            }
           }
         }
+        // If nodal mass is not large, zero just to avoid small number issues
       }
     } );
 
-    // Compute misorientation of material directions on either side of the cohesive zone
-    // Currently simple check of angle between material directions
     localIndex const numCZNodes = czRegion.size();
-    localIndex fieldA = czRegion.getFieldA();
-    localIndex fieldB = czRegion.getFieldB();
-    arrayView1d< real64 > czMisorientation = czRegion.getMisorientation();
-    forAll< serialPolicy >( numCZNodes, [=] GEOS_HOST ( localIndex const g )
+
+    // Compute misorientation of material directions on either side of the cohesive zone
+    // Currently compute the transformation between material directions 
+    // Then perform polar decomposition to retrieve rotational misorientation and store that
+    CohesiveZoneBase & cohesiveZoneConstitutiveModel = czRegion.getConstitutiveModel();
+    if( cohesiveZoneConstitutiveModel.hasWrapper( "misorientation" ) )
     {
-      czMisorientation[g] = LvArray::math::acos( LvArray::tensorOps::AiBi< 3 >( tempGridMaterialDirectionGlobal[g][fieldA], tempGridMaterialDirectionGlobal[g][fieldB] ) );
-    } );
+      localIndex fieldA = czRegion.getFieldA();
+      localIndex fieldB = czRegion.getFieldB();
+      arrayView3d< real64 > const czMisorientation = cohesiveZoneConstitutiveModel.getReference< array3d< real64 > >( "misorientation" );
+      forAll< serialPolicy >( numCZNodes, [=] GEOS_HOST_DEVICE ( localIndex const g )
+      {
+        real64 invMatDirA[3][3] = {};
+        real64 det = LvArray::tensorOps::invert< 3 >( invMatDirA, tempGridMaterialDirectionGlobal[g][fieldA] );
+
+        GEOS_ERROR_IF( isZero( det ), "Particle material directions are singular, cannot invert" );
+
+        real64 T[3][3] = {};
+        LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( T, tempGridMaterialDirectionGlobal[g][fieldB], invMatDirA);
+
+        real64 R[3][3] = {};
+        LvArray::tensorOps::polarDecomposition< 3 >( R, T );
+
+        // Rotational matrix might need a transpose because of how we store material directions with basis along rows;
+        LvArray::tensorOps::transpose< 3, 3 >( czMisorientation[g], R ); 
+
+        // GEOS_LOG_RANK( "g: " << g << ", " << 
+        //                "czMisorientation: " << czMisorientation[g] );
+      } );
+    }
 
     // Compute nodal area
     real64 L = LvArray::tensorOps::l2Norm< 3 >( hEl );
@@ -10786,6 +10839,7 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
       arrayView1d< real64 const > const particleMass = subRegion.getField< fields::mpm::particleMass >();
       arrayView1d< real64 const > const particleDamage = subRegion.getParticleDamage();
       arrayView2d< real64 const > const particlePosition = subRegion.getParticleCenter();
+      arrayView1d< int > const particleSurfaceFlag = subRegion.getParticleSurfaceFlag();
       arrayView2d< real64 const > const particleCohesiveReferencePosition = subRegion.getField< fields::mpm::particleCohesiveReferencePosition >();
       arrayView2d< real64 const > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
       arrayView2d< real64 const > const particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
@@ -10865,6 +10919,11 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
                   if( czDamage[nodeIndex] < 1.0 ) // We previously stored czDamage on each velocity field globally but with czRegions now, a region is a pair of velocity fields and should have the same value for both
                   {
                     particleCohesiveZoneFlag[p] = 1; // Reenable particle cohesive flag if any of the cohesive nodes are undamaged
+                  }
+                  else
+                  {
+                    // If particle does not have it's cohesive flag reenabled by end of check then flag it has a damaged cohesive surface particle
+                    particleSurfaceFlag[p] = 4;
                   }
 
                   real64 shapeFunctionValue = particleReferenceShapeFunctionValues[p][g];
@@ -11066,25 +11125,11 @@ void SolidMechanicsMPM::enforceCohesiveLaw( real64 dt,
                 }
 
                 localIndex const fieldIndex = particleCohesiveFieldMapping[p][g];
-
-                // TODO: if a particle cohesive zone flags are turned off because they become fully damaged and no undamaged particles are
-                // This can be made more concise
-                // still mapping to a cohesive grid node,
-                // Should that node be marke as fully damaged?
-                if( tempGridMassGlobal[nodeIndex][fieldIndex] > smallMass ) // 1e-20 )
+                if( tempGridMassGlobal[nodeIndex][fieldIndex] > smallMass && czDamage[nodeIndex] < 1.0 )
                 {
-                  if( czDamage[nodeIndex] < 1.0 )
+                  for( localIndex i = 0; i < numDims; ++i )
                   {
-                    for( localIndex i = 0; i < numDims; ++i )
-                    {
-                      particleCohesiveForce[p][i] += tempGridCohesiveTraction[nodeIndex][fieldIndex][i] * particleMass[p] * shapeFunctionValue / tempGridMassGlobal[nodeIndex][fieldIndex];
-                    }
-                  }
-                  else
-                  {
-                    // If cohesive node is fully damaged then any particles mapping to it should have their cohesive zone flags turned off.
-                    particleCohesiveZoneFlag[p] = 0;
-                    particleSurfaceFlag[p] = 4;
+                    particleCohesiveForce[p][i] += tempGridCohesiveTraction[nodeIndex][fieldIndex][i] * particleMass[p] * shapeFunctionValue / tempGridMassGlobal[nodeIndex][fieldIndex];
                   }
                 }
                 else
@@ -16353,6 +16398,8 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
   RAJA::ReduceSum< parallelDeviceReduce, int > numParticlesVelocityOverflowed( 0 );
   RAJA::ReduceSum< parallelDeviceReduce, int > numParticlesOverMaxVelocity( 0 );
 
+  bool zeroMagnitudeMaterialDirection = false; // Flag to output warning if material direction is numerically incorrect
+
   // Update particle volume and density
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
@@ -16360,7 +16407,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
     arrayView2d< real64 const > const particleVelocity = subRegion.getParticleVelocity();
     arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
-    arrayView2d< real64 > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
+    arrayView3d< real64 > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
     arrayView2d< real64 > const particleSurfaceNormal = subRegion.getParticleSurfaceNormal();
     arrayView2d< real64 > const particleSurfacePosition = subRegion.getParticleSurfacePosition();
     arrayView2d< real64 > const particleSurfaceTraction = subRegion.getParticleSurfaceTraction();
@@ -16372,7 +16419,7 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
     arrayView3d< real64 const > const particleReferenceRVectors = subRegion.getField< fields::mpm::particleReferenceRVectors >();
     arrayView3d< real64 const > const particleDeformationGradient = subRegion.getField< fields::mpm::particleDeformationGradient >();
     arrayView3d< real64 const > const particleFDot = subRegion.getField< fields::mpm::particleFDot >();
-    arrayView2d< real64 const > const particleReferenceMaterialDirection = subRegion.getField< fields::mpm::particleReferenceMaterialDirection >();
+    arrayView3d< real64 const > const particleReferenceMaterialDirection = subRegion.getField< fields::mpm::particleReferenceMaterialDirection >();
     arrayView2d< real64 const > const particleReferenceSurfaceNormal = subRegion.getField< fields::mpm::particleReferenceSurfaceNormal >();
     arrayView2d< real64 const > const particleReferenceSurfacePosition = subRegion.getField< fields::mpm::particleReferenceSurfacePosition >();
     arrayView2d< real64 const > const particleReferenceSurfaceTraction = subRegion.getField< fields::mpm::particleReferenceSurfaceTraction >();
@@ -16383,11 +16430,9 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
     bool isFiber = constitutiveModel.hasWrapper( "isFiber" ); // dumby variable whose value doesn't matter only that it is defined (
                                                               // possibly a better way to do this )
 
-    bool zeroMagnitudeMaterialDirection = false; // Flag to output warning if material direction is numerically incorrect
-
     // Update volume and r-vectors
     SortedArrayView< localIndex const > const activeParticleIndices = subRegion.activeParticleIndices();
-    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
+    forAll< parallelDevicePolicy<> >( activeParticleIndices.size(), [=, &zeroMagnitudeMaterialDirection] GEOS_HOST_DEVICE ( localIndex const pp )
     {
       localIndex const p = activeParticleIndices[pp];
       real64 detF = LvArray::tensorOps::determinant< 3 >( particleDeformationGradient[p] );
@@ -16440,26 +16485,29 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
           LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( particleSurfacePosition[p], deformationGradient, particleReferenceSurfacePosition[p] );
 
           // Update the material direction
-          real64 materialDirection[3] = {};
-          if( isFiber )
+          for( int i  = 0; i < numDims; ++i )
           {
-            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( materialDirection, deformationGradient, particleReferenceMaterialDirection[p] );
-          }
-          else
-          {
-            LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( materialDirection, deformationGradientCofactor, particleReferenceMaterialDirection[p] );
-          }
+            real64 materialDirection[3] = {};
+            if( isFiber )
+            {
+              LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( materialDirection, deformationGradient, particleReferenceMaterialDirection[p][i] );
+            }
+            else
+            {
+              LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( materialDirection, deformationGradientCofactor, particleReferenceMaterialDirection[p][i] );
+            }
 
-          real64 norm = LvArray::tensorOps::l2Norm< 3 >( materialDirection );
-          if( !isZero(norm) )
-          {
-            LvArray::tensorOps::scale< 3 >( materialDirection, 1.0/norm ); // Should we add a warning if the material direction magnitude is zero
+            real64 norm = LvArray::tensorOps::l2Norm< 3 >( materialDirection );
+            if( !isZero(norm) )
+            {
+              LvArray::tensorOps::scale< 3 >( materialDirection, 1.0/norm ); // Should we add a warning if the material direction magnitude is zero
+            }
+            else
+            {
+              zeroMagnitudeMaterialDirection = true;
+            }
+            LvArray::tensorOps::copy< 3 >( particleMaterialDirection[p][i], materialDirection );
           }
-          else
-          {
-            zeroMagnitudeMaterialDirection = true;
-          }
-          LvArray::tensorOps::copy< 3 >( particleMaterialDirection[p], materialDirection );
         }
         else
         {
@@ -16510,26 +16558,29 @@ void SolidMechanicsMPM::particleKinematicUpdate( const real64 dt,
           LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( particleSurfacePosition[p], dF, temp );
 
           // Particle material direction
-          real64 materialDirection[3] = {};
-          if( isFiber )
+          for( int i  = 0; i < numDims; ++i )
           {
-            LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( materialDirection, dF, particleMaterialDirection[p] );
-          }
-          else
-          {
-            LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( materialDirection, dcofF, particleMaterialDirection[p] );
-          }
+            real64 materialDirection[3] = {};
+            if( isFiber )
+            {
+              LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( materialDirection, dF, particleMaterialDirection[p][i] );
+            }
+            else
+            {
+              LvArray::tensorOps::Ri_add_AijBj< 3, 3 >( materialDirection, dcofF, particleMaterialDirection[p][i] );
+            }
 
-          real64 norm = LvArray::tensorOps::l2Norm< 3 >( materialDirection );
-          if( !isZero(norm) )
-          {
-            LvArray::tensorOps::scale< 3 >( materialDirection, 1.0/norm ); // Should we add a warning if the material direction magnitude is zero
+            real64 norm = LvArray::tensorOps::l2Norm< 3 >( materialDirection );
+            if( !isZero(norm) )
+            {
+              LvArray::tensorOps::scale< 3 >( materialDirection, 1.0/norm ); // Should we add a warning if the material direction magnitude is zero
+            }
+            else
+            {
+              zeroMagnitudeMaterialDirection = true;
+            }
+            LvArray::tensorOps::copy< 3 >( particleMaterialDirection[p][i], materialDirection );
           }
-          else
-          {
-            zeroMagnitudeMaterialDirection = true;
-          }
-          LvArray::tensorOps::copy< 3 >( particleMaterialDirection[p], materialDirection );
         }
 
         // Renormalize particle surface normals
@@ -16651,12 +16702,12 @@ void SolidMechanicsMPM::updateConstitutiveModelDependencies( ParticleManager & p
     if( constitutiveModel.hasWrapper( "materialDirection" ) )
     {
       // CC: Todo add check for fiber vs plane update to material direction
-      arrayView2d< real64 const > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
-      arrayView2d< real64 > const constitutiveMaterialDirection = constitutiveModel.getReference< array2d< real64 > >( "materialDirection" );
+      arrayView3d< real64 const > const particleMaterialDirection = subRegion.getParticleMaterialDirection();
+      arrayView3d< real64 > const constitutiveMaterialDirection = constitutiveModel.getReference< array3d< real64 > >( "materialDirection" );
       forAll< serialPolicy >( activeParticleIndices.size(), [=] GEOS_HOST_DEVICE ( localIndex const pp )
       {
         localIndex const p = activeParticleIndices[pp];
-        LvArray::tensorOps::copy< 3 >( constitutiveMaterialDirection[p], particleMaterialDirection[p] );
+        LvArray::tensorOps::copy< 3, 3 >( constitutiveMaterialDirection[p], particleMaterialDirection[p] );
       } );
     }
 

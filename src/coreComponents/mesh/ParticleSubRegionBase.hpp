@@ -237,15 +237,15 @@ public:
 
   /**
    * @brief Get the material direction of each particle in this subregion.
-   * @return an arrayView1d of const particle material direction
+   * @return an arrayView3d of const particle material direction
    */
-  arrayView2d< real64 const > getParticleMaterialDirection() const
+  arrayView3d< real64 const > getParticleMaterialDirection() const
   { return m_particleMaterialDirection; }
 
   /**
    * @copydoc getParticleMaterialDirection() const
    */
-  arrayView2d< real64 > getParticleMaterialDirection()
+  arrayView3d< real64 > getParticleMaterialDirection()
   { return m_particleMaterialDirection; }
 
   /**
@@ -577,7 +577,7 @@ protected:
   array2d< real64 > m_particleVelocity;
 
   /// Member level field for the particle material direction.
-  array2d< real64 > m_particleMaterialDirection;
+  array3d< real64 > m_particleMaterialDirection;
 
   /// Member level field for the current particle volume.
   array1d< real64 > m_particleVolume;

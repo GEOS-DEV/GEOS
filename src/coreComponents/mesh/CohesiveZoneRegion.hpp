@@ -86,19 +86,6 @@ public:
   ///@{
 
   /**
-   * @brief Get the misorientation of each cohesive zone node.
-   * @return an arrayView1d of const node misorientation
-   */
-  arrayView1d< real64 const > getMisorientation() const
-  { return m_misorientation; }
-
-  /**
-   * @copydoc getMisorientation() const
-   */
-  arrayView1d< real64 > getMisorientation()
-  { return m_misorientation; }
-
-  /**
    * @brief Get the max normal displacement of each cohesive zone node.
    * @return an arrayView1d of const node max normal displacement
    */
@@ -146,9 +133,6 @@ public:
    */
   struct viewKeyStruct : public CohesiveZoneRegionBase::viewKeyStruct
   {
-    /// @return String key for the member level field for the cohesive zone node misorientation.
-    static constexpr char const * misorientationString() { return "misorientation"; }
-
     /// @return String key for the member level field for the cohesive zone node max normal displacement.
     static constexpr char const * maxNormalDisplacementString() { return "maxNormalDisplacement"; }
 
@@ -162,7 +146,6 @@ public:
 private:
 
   // Cohesive zone parameters
-  array1d< real64 > m_misorientation; // In radians
   array1d< real64 > m_maxNormalDisplacement;
   array1d< real64 > m_maxTangentialDisplacement;
   array1d< real64 > m_damage;
