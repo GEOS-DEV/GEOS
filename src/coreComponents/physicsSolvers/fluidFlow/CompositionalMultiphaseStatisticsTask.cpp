@@ -88,12 +88,11 @@ void StatsTask::postInputInitialization()
                         "To identify simulated regions, a solver must be provided.",
                         InputError /*, getWrapperDataContext( getSolverWrapperName() )*/ );
 
-  if( dynamicCast< CompositionalMultiphaseBase * >( m_solver ))
+  if( !dynamicCast< CompositionalMultiphaseBase * >( m_solver ) )
   {
     GEOS_THROW( GEOS_FMT( "{} {}: incompatible solver selected, a compositional multiphase solver is expected",
                           catalogName(), getDataContext() ),
                 InputError );
-
   }
   else if( dynamicCast< CompositionalMultiphaseHybridFVM * >( m_solver ) && m_computeCFLNumbers != 0 )
   {
