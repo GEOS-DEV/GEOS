@@ -292,7 +292,7 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
 
   size_t line1;
   // test that the first context with default priority comes after the most important one, but before
-  // a second context with default priotity  
+  // a second context with default priotity
   try
   {
     line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError, context );
@@ -443,18 +443,7 @@ TEST( ErrorHandling, VerifySignalHandlerLogs )
 
   EXPECT_TRUE( signalHappened );
 
-  LvArray::system::setErrorHandler( []()
-  {
-  #if defined( GEOS_USE_MPI )
-    int mpi = 0;
-    MPI_Initialized( &mpi );
-    if( mpi )
-    {
-      MPI_Abort( MPI_COMM_WORLD, EXIT_FAILURE );
-    }
-  #endif
-    std::abort();
-  } );
+  setupLogger();
 }
 
 int main( int ac, char * av[] )
