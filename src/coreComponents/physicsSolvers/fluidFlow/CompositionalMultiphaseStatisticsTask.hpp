@@ -22,7 +22,6 @@
 
 #include "common/DataTypes.hpp"
 #include "common/format/table/TableFormatter.hpp"
-#include "common/format/table/TableLayout.hpp"
 #include "physicsSolvers/FieldStatisticsBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsAggregator.hpp"
 #include <memory>

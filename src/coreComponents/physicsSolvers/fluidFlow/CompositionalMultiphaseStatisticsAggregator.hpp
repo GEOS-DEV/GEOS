@@ -27,7 +27,6 @@
 #include "mesh/CellElementRegion.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshLevel.hpp"
-#include <memory>
 
 namespace geos
 {
