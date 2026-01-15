@@ -106,6 +106,7 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addToMsg( std::exception const & e,
   }
   return *this;
 }
+
 DiagnosticMsgBuilder & DiagnosticMsgBuilder::addToMsg( std::string_view errorMsg, bool toEnd )
 {
   if( toEnd )

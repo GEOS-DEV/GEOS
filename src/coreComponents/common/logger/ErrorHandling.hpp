@@ -59,6 +59,7 @@ struct ErrorContext
 
   /**
    * @brief Construct to initialize ErrorContext given a string containing the context and his priority
+   * @param formattedContext String containing the target object name followed by the the file and line declaring it.
    * @param attributes Map containing contextual information about the error
    * @param priority Priority level assigned to an error context.
    */
@@ -206,7 +207,7 @@ public:
    * @brief Add the signal to the DiagnosticMsg.
    *        - the signal can be one of the main error signals.
    *        - if the signal is SIGFPE, the nature of floating point error will be interpreted.
-   * @param signal The signal, from ISO C99 or POSIX standard.
+   * @param sig The signal, from ISO C99 or POSIX standard.
    * @param toEnd adds the message to the end if true, at the start otherwise.
    * @return The instance, for builder pattern.
    */
@@ -330,6 +331,9 @@ public:
   std::ostream const & getErrorStream() const
   { return m_stream; }
 
+  /**
+   * @return Return the const DiagnosticMsg
+   */
   DiagnosticMsg const & getCurrentExceptionMsg() const
   { return m_getCurrentExceptionMsg;}
 
@@ -367,8 +371,7 @@ public:
   /**
    * @brief Write all the information retrieved about the diagnostic message into the instance
    * outputs (stream specified + optional yaml file)
-   * @param errorMsg a reference to the ErrorMsg to output, and will be re-initialized
-   * @param oss The output stream
+   * @param errMsg a reference to the ErrorMsg to output, and will be re-initialized
    * @note Used for warnings and non-exception errors
    */
   void flushErrorMsg( DiagnosticMsg & errMsg );
@@ -376,7 +379,7 @@ public:
   /**
    * @brief Format all information in ErrorMsg and write it to the specified output stream
    * @param errMsg The struct containing the error/warning object
-   * @param oss The output stream
+   * @param os The output stream
    */
   static void writeToAscii( DiagnosticMsg const & errMsg, std::ostream & os );
 
