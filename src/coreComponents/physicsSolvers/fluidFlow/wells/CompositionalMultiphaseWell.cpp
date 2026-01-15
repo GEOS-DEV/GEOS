@@ -50,7 +50,6 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/ThermalPhaseVolumeFractionKernel.hpp"
 #include "physicsSolvers/fluidFlow/kernels/compositional/FluidUpdateKernel.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseStatisticsAggregator.hpp"
-#include <memory>
 
 #if defined( __INTEL_COMPILER )
 #pragma GCC optimize "O0"
@@ -743,25 +742,21 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( MeshLevel & GEOS_
   }
   else
   {
-    bool const useSegmentValues = wellControls.referenceReservoirRegion().empty();
-
-    if( !useSegmentValues )
+    // If flashPressure is not set by region the value is defaulted to -1 and indicates to use top segment conditions
+    flashPressure = wellControls.getRegionAveragePressure();
+    if( flashPressure < 0.0 )
     {
-      // If flashPressure is not set by region the value is defaulted to -1 and indicates to use top segment conditions
-      flashPressure = wellControls.getRegionAveragePressure();
-      if( flashPressure < 0.0 )
-      {
-        // region name not set, use segment conditions
-        flashPressure   = pres[iwelemRef];
-        flashTemperature = temp[iwelemRef];
-      }
-      else
-      {
-        // use reservoir region averages
-        flashTemperature = wellControls.getRegionAverageTemperature();
-      }
+      // region name not set, use segment conditions
+      flashPressure   = pres[iwelemRef];
+      flashTemperature = temp[iwelemRef];
+    }
+    else
+    {
+      // use reservoir region averages
+      flashTemperature = wellControls.getRegionAverageTemperature();
     }
   }
+
   arrayView1d< real64 > const & currentPhaseVolRate =
     wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
   arrayView2d< real64 > const & dCurrentPhaseVolRate =
@@ -1117,7 +1112,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
                   numComp,
                   numPhase,
                   wellControls,
-                  0.0,   // initialization done at t = 0
+                  0.0, // initialization done at t = 0
                   resCompFlowAccessors.get( flow::pressure{} ),
                   resCompFlowAccessors.get( flow::temperature{} ),
                   resCompFlowAccessors.get( flow::globalCompDensity{} ),
@@ -1367,8 +1362,8 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( real64 const & time
           }
         } );
       }
-    } );   // forElementSubRegions
-  } );   // forDiscretizationOnMeshTargets
+    } ); // forElementSubRegions
+  } ); // forDiscretizationOnMeshTargets
 }
 
 
