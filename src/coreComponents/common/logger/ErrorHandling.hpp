@@ -194,15 +194,23 @@ public:
     ( this->addContextInfoImpl( ErrorContext( args ) ), ... );
     return *this;
   }
+
   /**
-   * @brief Add text to the error msg that occured according to the specified signal.
+   * @brief Add the dectection location the DiagnosticMsg
+   * @param detectionLocation The context where the diagnostic happoned
+   * @return The instance, for builder pattern.
+   */
+  DiagnosticMsgBuilder & addDetectionLocation( string_view detectionLocation );
+
+  /**
+   * @brief Add the signal to the DiagnosticMsg.
    *        - the signal can be one of the main error signals.
    *        - if the signal is SIGFPE, the nature of floating point error will be interpreted.
    * @param signal The signal, from ISO C99 or POSIX standard.
    * @param toEnd adds the message to the end if true, at the start otherwise.
    * @return The instance, for builder pattern.
    */
-  DiagnosticMsgBuilder & addSignalToMsg( integer sig, bool toEnd = false );
+  DiagnosticMsgBuilder & addSignal( integer sig, bool toEnd = false );
   /**
    * @brief Set the source code location values (file and line where the error is detected)
    * @param msgFile Name of the source file location to add
@@ -363,7 +371,7 @@ public:
    * @param oss The output stream
    * @note Used for warnings and non-exception errors
    */
-  void flushErrorMsg( DiagnosticMsg & errMsg, std::ostream & os = std::cout );
+  void flushErrorMsg( DiagnosticMsg & errMsg );
 
   /**
    * @brief Format all information in ErrorMsg and write it to the specified output stream

@@ -85,6 +85,14 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addContextInfoImpl( ErrorContext &&
   return *this;
 }
 
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::addDetectionLocation( string_view detectionLocation )
+{
+  addContextInfo( ErrorContext{  string( detectionLocation ),
+                                 { { ErrorContext::Attribute::DetectionLoc,
+                                   string( detectionLocation ) } } } );
+  return *this;
+}
+
 
 DiagnosticMsgBuilder & DiagnosticMsgBuilder::addToMsg( std::exception const & e, bool const toEnd )
 {
@@ -111,11 +119,12 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addToMsg( std::string_view errorMsg
   return *this;
 }
 
-DiagnosticMsgBuilder & DiagnosticMsgBuilder::addSignalToMsg( integer const sig, bool const toEnd )
+DiagnosticMsgBuilder & DiagnosticMsgBuilder::addSignal( integer const sig, bool const toEnd )
 {
+  std::string errorMsg;
   if( sig == SIGFPE )
   {
-    std::string errorMsg = "Floating point error encountered: \n";
+    errorMsg = "Floating point error encountered: \n";
 
     if( std::fetestexcept( FE_DIVBYZERO ) )
       errorMsg += "- Division by zero operation.\n";
@@ -131,17 +140,22 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addSignalToMsg( integer const sig, 
 
     if( std::fetestexcept( FE_INEXACT ) )
       errorMsg += "- Inexact result.\n";
-
-    return addToMsg( errorMsg,
-                     toEnd );
   }
   else
   {
-    // standard messages
-    return addToMsg( GEOS_FMT( "Signal no. {} encountered: {}",
-                               sig, ::strsignal( sig ) ),
-                     toEnd );
+    errorMsg =  GEOS_FMT( "Signal encountered (no. {}): {}",
+                          sig, ::strsignal( sig ));
   }
+
+  // standard messages
+  addToMsg( errorMsg, toEnd );
+
+  this->addContextInfo( ErrorContext{  "Signal (detected from Signal Handler)",
+                                       { { ErrorContext::Attribute::Signal,
+                                         std::to_string( sig )  },
+                                         { ErrorContext::Attribute::DetectionLoc,
+                                           string( "Signal handler" )  }
+                                       } } );
   return *this;
 }
 
@@ -396,9 +410,9 @@ void ErrorLogger::writeToYaml( DiagnosticMsg & errMsg )
   }
 }
 
-void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg, std::ostream & os )
+void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg )
 {
-  writeToAscii( errMsg, os );
+  writeToAscii( errMsg, m_stream );
   if( isOutputFileEnabled() )
   {
     writeToYaml( errMsg );

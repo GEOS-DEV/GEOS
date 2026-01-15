@@ -342,9 +342,9 @@ TEST( ErrorHandling, testStdException )
   catch( std::exception & e )
   {
 
-    testErrorLogger.initCurrentExceptionMessage( MsgType::Exception, e.what(), ::geos::logger::internal::g_rank )
-      .addCallStackInfo( LvArray::system::stackTrace( true ) )
-      .getDiagnosticMsg();
+    testErrorLogger.initCurrentExceptionMessage( MsgType::Exception, e.what(),
+                                                 ::geos::logger::internal::g_rank )
+      .addCallStackInfo( LvArray::system::stackTrace( true ) );
 
     std::ostringstream oss;
     ErrorLogger::writeToAscii( testErrorLogger.getCurrentExceptionMsg(), oss );
@@ -421,7 +421,16 @@ TEST( ErrorHandling, VerifySignalHandlerLogs )
       R"(- type: ExternalError
     rank: 0
     message: >-
-      Signal no. 2 encountered: Interrupt)"
+      Signal encountered (no. 2): Interrupt
+    contexts:
+      - priority: 0
+        description: Signal (detected from Signal Handler)
+        detectionLocation: Signal handler
+        signal: 2
+    sourceCallStack:)",
+      "- frame0: ",
+      "- frame1: ",
+      "- frame2: "
     } );
 
     signalHappened = true;

@@ -93,11 +93,7 @@ void setupLogger()
                                                                          MsgType::Error, errorMsg,
                                                                          ::geos::logger::internal::g_rank )
                                                .addCallStackInfo( stackHistory )
-                                               .addContextInfo(
-                                               ErrorContext{  string( detectionLocation ),
-                                                              { { ErrorContext::Attribute::DetectionLoc,
-                                                                string( detectionLocation ) } },
-                                               } )
+                                               .addDetectionLocation( detectionLocation )
                                                .getDiagnosticMsg() );
 
         // we do not terminate the program as 1. the error could be non-fatal, 2. there may be more messages to output.
@@ -117,9 +113,9 @@ void setupLogger()
       std::string const stackHistory = LvArray::system::stackTrace( true );
       DiagnosticMsg diagnosticMsg;
       ErrorLogger::global().flushErrorMsg( DiagnosticMsgBuilder::init( diagnosticMsg,
-                                                                       MsgType::ExternalError, "(external error, captured by signal handler)",
+                                                                       MsgType::ExternalError, "",
                                                                        ::geos::logger::internal::g_rank )
-                                             .addSignalToMsg( signal )
+                                             .addSignal( signal )
                                              .addCallStackInfo( stackHistory )
                                              .getDiagnosticMsg() );
 
