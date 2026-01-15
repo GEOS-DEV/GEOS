@@ -19,10 +19,7 @@
         couplingType="Sequential"  
         lineSearchAction="None"
         subcycling="1"
-        maxTimeStepCuts="1"
-        newtonTol="1e0"
-        newtonMaxIter="10"
-        maxAllowedResidualNorm="1e+15"/>
+        newtonTol="1e0"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="amg"
