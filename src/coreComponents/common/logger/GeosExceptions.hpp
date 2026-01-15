@@ -37,9 +37,7 @@ public:
    */
   Exception( std::string const & what ):
     std::exception( )
-  {
-    m_cachedWhat = what;
-  }
+  { m_cachedWhat = what; }
 
   /**
    * @brief System fallback to get description content if error system does not achieve to output the ErrorMsg
@@ -48,9 +46,7 @@ public:
    * @note We does not allow to override what(), it's the GEOS_THROW responsability to write-in the exception message
    */
   virtual char const * what() const noexcept override final
-  {
-    return m_cachedWhat.c_str();
-  }
+  { return m_cachedWhat.c_str(); }
 
   /**
    * @brief Prepare and cache the formatted exception message

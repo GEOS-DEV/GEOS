@@ -162,7 +162,7 @@
         .setCodeLocation( __FILE__, __LINE__ ) \
         .setCause( __causemsgsoss.str() ) \
         .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
-        .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
+        .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )); \
       GEOS_GLOBAL_LOGGER.flushCurrentExceptionMessage(); \
       LvArray::system::callErrorHandler(); \
     } \
