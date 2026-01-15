@@ -54,6 +54,14 @@ string GroupContext::toString() const
   return path.str();
 }
 
+ErrorLogger::ErrorContext GroupContext::getContextInfo() const
+{
+  ErrorLogger::ErrorContext ctxInfo{
+    { { ErrorLogger::ErrorContext::Attribute::DataPath, toString() } } // m_attributes
+  };
+  return ctxInfo;
+}
+
 DataContext::ToStringInfo GroupContext::getToStringInfo() const
 { return ToStringInfo( m_targetName ); }
 

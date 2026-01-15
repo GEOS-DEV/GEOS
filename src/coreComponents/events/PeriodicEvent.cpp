@@ -267,22 +267,22 @@ void PeriodicEvent::validate() const
     return;
   }
 
-  GEOS_THROW_IF( m_timeFrequency > 0 &&
-                 target->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
+  constexpr auto determinesTimeStepSize = ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize;
+
+  GEOS_THROW_IF( m_timeFrequency > 0 && target->getTimesteppingBehavior() == determinesTimeStepSize,
                  GEOS_FMT( "`{}`: This event targets an object that automatically selects the time "
                            "step size. Therefore, `{}` cannot be used here. However, forcing a "
                            "constant time step size can still be achived with `{}`.",
                            getDataContext(), viewKeyStruct::timeFrequencyString(),
                            EventBase::viewKeyStruct::forceDtString() ),
-                 InputError );
-  GEOS_THROW_IF( m_cycleFrequency != 1 &&
-                 target->getTimesteppingBehavior() == ExecutableGroup::TimesteppingBehavior::DeterminesTimeStepSize,
+                 InputError, getDataContext() );
+  GEOS_THROW_IF( m_cycleFrequency != 1 && target->getTimesteppingBehavior() == determinesTimeStepSize,
                  GEOS_FMT( "`{}`: This event targets an object that automatically selects the time "
                            "step size. Therefore, `{}` cannot be used here. However, forcing a "
                            "constant time step size can still be achived with `{}`.",
                            getDataContext(), viewKeyStruct::cycleFrequencyString(),
                            EventBase::viewKeyStruct::forceDtString() ),
-                 InputError );
+                 InputError, getDataContext() );
 }
 
 REGISTER_CATALOG_ENTRY( EventBase, PeriodicEvent, string const &, Group * const )

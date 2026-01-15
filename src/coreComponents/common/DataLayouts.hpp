@@ -155,16 +155,16 @@ namespace cells
 /// Cell node map permutation when using cuda.
 using NODE_MAP_PERMUTATION = RAJA::PERM_JI;
 
-/// Cell strain permutation when using cuda
-using STRAIN_PERM = RAJA::PERM_JI;
+/// Cell tensor (i.e. average stress and strain) permutation when using cuda
+using RANK2_TENSOR_PERM = RAJA::PERM_JI;
 
 #else
 
 /// Cell node map permutation when not using cuda.
 using NODE_MAP_PERMUTATION = RAJA::PERM_IJ;
 
-/// Cell strain permutation when not using cuda
-using STRAIN_PERM = RAJA::PERM_IJ;
+/// Cell tensor (i.e. average stress and strain) permutation when not using cuda
+using RANK2_TENSOR_PERM = RAJA::PERM_IJ;
 
 #endif
 
@@ -172,7 +172,7 @@ using STRAIN_PERM = RAJA::PERM_IJ;
 static constexpr int NODE_MAP_USD = LvArray::typeManipulation::getStrideOneDimension( NODE_MAP_PERMUTATION {} );
 
 /// Cell strain unit stride dimension
-static constexpr int STRAIN_USD = LvArray::typeManipulation::getStrideOneDimension( STRAIN_PERM {} );
+static constexpr int RANK2_TENSOR_USD = LvArray::typeManipulation::getStrideOneDimension( RANK2_TENSOR_PERM {} );
 
 } // namespace cells
 

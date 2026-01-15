@@ -77,15 +77,18 @@ void PVTDriver::postInputInitialization()
   // Validate some inputs
   GEOS_ERROR_IF( m_outputMassDensity != 0 && m_outputMassDensity != 1,
                  getWrapperDataContext( viewKeyStruct::outputMassDensityString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::outputMassDensityString() ) );
 
   GEOS_ERROR_IF( m_outputCompressibility != 0 && m_outputCompressibility != 1,
                  getWrapperDataContext( viewKeyStruct::outputCompressibilityString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::outputCompressibilityString() ) );
 
   GEOS_ERROR_IF( m_outputPhaseComposition != 0 && m_outputPhaseComposition != 1,
                  getWrapperDataContext( viewKeyStruct::outputPhaseCompositionString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::outputPhaseCompositionString() ) );
 
   // Check that the functions exist
   FunctionManager & functionManager = FunctionManager::getInstance();

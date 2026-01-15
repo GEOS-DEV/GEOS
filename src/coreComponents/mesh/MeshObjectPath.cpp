@@ -213,7 +213,7 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
 
   GEOS_THROW_IF( namesInRepository.empty(),
                  GEOS_FMT( "{0} has no children.", parentGroup.getDataContext().toString()),
-                 InputError );
+                 InputError, parentGroup.getDataContext() );
 
   for( string const & inputEntry : stringutilities::tokenize( pathToken, " " ) )
   {
@@ -238,7 +238,7 @@ void processTokenRecursive( dataRepository::Group const & parentGroup,
                              parentGroup.getDataContext().toString(),
                              inputEntry,
                              stringutilities::join( namesInRepository, ", " ) ),
-                   InputError );
+                   InputError, parentGroup.getDataContext() );
   }
 }
 

@@ -74,9 +74,16 @@ public:
    */
   string getCatalogName() const override { return catalogName(); }
 
+  void assembleSystem( real64 const time_n,
+                       real64 const dt,
+                       DomainPartition & domain,
+                       DofManager const & dofManager,
+                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                       arrayView1d< real64 > const & localRhs ) override;
+
 protected:
 
-  virtual void postInputInitialization() override;
+  virtual void initializePreSubGroups() override;
 
   virtual void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
                                                                    string_array const & regionNames,

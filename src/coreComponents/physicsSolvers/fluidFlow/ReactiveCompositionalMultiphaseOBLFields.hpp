@@ -39,14 +39,6 @@ using array2dLayoutComp = array2d< real64, compflow::LAYOUT_COMP >;
 using array2dLayoutOBLOpVals = array2d< real64, compflow::LAYOUT_OBL_OPERATOR_VALUES >;
 using array3dLayoutOBLOpDers = array3d< real64, compflow::LAYOUT_OBL_OPERATOR_DERIVATIVES >;
 
-DECLARE_FIELD( bcGlobalCompFraction,
-               "bcGlobalCompFraction",
-               array2dLayoutComp,
-               0,
-               NOPLOT,
-               WRITE_AND_READ,
-               "Boundary condition global component fraction" );
-
 DECLARE_FIELD( referencePorosity,
                "referencePorosity",
                array1d< real64 >,

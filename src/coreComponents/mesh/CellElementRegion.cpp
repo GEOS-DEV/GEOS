@@ -52,7 +52,7 @@ void CellElementRegion::generateMesh( Group const & cellBlocks )
   GEOS_THROW_IF( m_cellBlockNames.empty(),
                  GEOS_FMT( "{}: No cellBlock selected in this region.",
                            getDataContext() ),
-                 InputError );
+                 InputError, getDataContext() );
   Group & subRegions = this->getGroup( viewKeyStruct::elementSubRegions() );
   for( string const & cbName : m_cellBlockNames )
   {
@@ -60,7 +60,7 @@ void CellElementRegion::generateMesh( Group const & cellBlocks )
     GEOS_THROW_IF( cellBlock == nullptr,
                    GEOS_FMT( "{}: No cellBlock named '{}' found.\nAvailable cellBlock list: {{ {} }}\nNo CellElementRegionSelector has been used to verify the cellBlock selection.",
                              getDataContext(), cbName, stringutilities::join( m_cellBlockNames, ", " ) ),
-                   InputError );
+                   InputError, getDataContext() );
 
     // subRegion name must be the same as the cell-block (so we can match them and reference them in errors).
     CellElementSubRegion & subRegion = subRegions.registerGroup< CellElementSubRegion >( cbName );

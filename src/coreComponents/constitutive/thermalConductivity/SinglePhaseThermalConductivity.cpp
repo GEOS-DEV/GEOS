@@ -110,7 +110,7 @@ void SinglePhaseThermalConductivity::postInputInitialization()
                  m_defaultThermalConductivityComponents[2] <= 0,
                  GEOS_FMT( "{}: the components of the default thermal conductivity tensor must be strictly positive",
                            getFullName() ),
-                 InputError );
+                 InputError, getDataContext() );
 
 }
 

@@ -69,7 +69,7 @@
 /src/coreComponents/finiteVolume                      @rrsettgast @paveltomin          @castelletto1 @CusiniM @OmarDuran
 /src/coreComponents/functions                         @rrsettgast @paveltomin          @cssherman @wrtobin @MelReyCG
 /src/coreComponents/linearAlgebra                     @rrsettgast @paveltomin @CusiniM @castelletto1 @victorapm   
-/src/coreComponents/mainInterface                     @rrsettgast @paveltomin          @corbett5 @wrtobin 
+/src/coreComponents/mainInterface                     @rrsettgast @paveltomin          @corbett5 @wrtobin @MelReyCG
 /src/coreComponents/math                              @rrsettgast @paveltomin          @corbett5 @wrtobin @OmarDuran
 /src/coreComponents/mesh                              @rrsettgast @paveltomin @CusiniM  @wrtobin @OmarDuran
 /src/coreComponents/physicsSolvers                    @rrsettgast @paveltomin @CusiniM @OmarDuran
@@ -85,6 +85,7 @@
 /src/coreComponents/schema                            @rrsettgast @paveltomin @CusiniM @herve-gross @castelletto1 @jhuang2601 @dkachuma @OmarDuran
 /src/coreComponents/integrationTests                  @rrsettgast @paveltomin @CusiniM @corbett5 @wrtobin @MelReyCG @dkachuma @OmarDuran
 /src/docs                                             @rrsettgast @paveltomin @CusiniM @herve-gross @castelletto1 @jhuang2601 @dkachuma @OmarDuran
+/src/main                                             @rrsettgast @paveltomin @MelReyCG
 
 # Here is a list of GEOS-DEV members as of 2024-07-02
 # username           name
