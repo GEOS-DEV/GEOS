@@ -292,6 +292,7 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
 
   size_t line1;
   // test that the first context with default priority comes after the most important one, but before
+  // a second context with default priotity  
   try
   {
     line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError, context );
@@ -302,7 +303,7 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
     testErrorLogger.modifyCurrentExceptionMessage()
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
-      .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 )).getDiagnosticMsg();
+      .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ));
     string const streamExpected = GEOS_FMT(
       "***** Exception\n"
       "***** LOCATION: {}:{}\n"

@@ -163,7 +163,6 @@
         .setCause( __causemsgsoss.str() ) \
         .addCallStackInfo( LvArray::system::stackTrace( true ) ) \
         .addContextInfo( GEOS_DETAIL_REST_ARGS( __VA_ARGS__ )) \
-        .getDiagnosticMsg(); \
       GEOS_GLOBAL_LOGGER.flushCurrentExceptionMessage(); \
       LvArray::system::callErrorHandler(); \
     } \
