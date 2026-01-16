@@ -8,7 +8,7 @@
       name="mesh1"
       useGlobalIds="0"
       nodesetNames="{ ruptureState }"
-      file="../meshes/fractured_mesh_hex_DFN_12345.vtu"/>
+      file="../meshes/fractured_mesh_hex_DFN_123.vtu"/>
   </Mesh>
 
   <Geometry>
@@ -260,7 +260,7 @@
     <FieldSpecification
       name="yconstraint"
       component="1"
-      setNames="{ ynegFace }"
+      setNames="{ ynegFace , yposFace}"
       objectPath="nodeManager"
       fieldName="totalDisplacement"
       scale="0.0"/>
@@ -271,7 +271,7 @@
       fieldName="totalDisplacement"
       component="2"
       scale="0.0"
-      setNames="{ znegFace }"/>
+      setNames="{ znegFace}"/>
 
    <FieldSpecification
       name="initialPressure"
