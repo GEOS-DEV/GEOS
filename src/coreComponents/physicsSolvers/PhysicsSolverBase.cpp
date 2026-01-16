@@ -376,7 +376,8 @@ void PhysicsSolverBase::logEndOfCycleInformation( integer const cycleNumber,
                                                   integer const numOfSubSteps,
                                                   stdVector< real64 > const & subStepDts ) const
 {
-  LogPart logpart( "TIMESTEP", MpiWrapper::commRank() == 0 );
+  LogPart logpart( EnumStrings< LogPart::Type >::toString( LogPart::Type::Timestep ),
+                   MpiWrapper::commRank() == 0 );
   logpart.addEndDescription( "- Cycle ", cycleNumber );
   logpart.addEndDescription( "- N substeps ", numOfSubSteps );
 

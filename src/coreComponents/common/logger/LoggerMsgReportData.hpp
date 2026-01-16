@@ -20,6 +20,7 @@
 #ifndef GEOS_COMMON_LOGGER_MSG_REPORT_DATA_HPP
 #define GEOS_COMMON_LOGGER_MSG_REPORT_DATA_HPP
 
+#include "common/format/LogPart.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "MsgType.hpp"
 
@@ -30,9 +31,9 @@ struct NumMsg;
 
 struct LoggerMsgReportData
 {
-  stdMap< std::string, NumMsg > numMsgByPart;
+  stdMap< LogPart::Type, NumMsg > numMsgByPart;
 
-  void increment( string const & logPartName, MsgType );
+  void increment( LogPart::Type logPartName, MsgType );
 };
 
 struct NumMsg
@@ -42,7 +43,7 @@ struct NumMsg
 };
 
 template<>
-string TableTextFormatter::toString<LoggerMsgReportData>(LoggerMsgReportData const &) const;
+string TableTextFormatter::toString< LoggerMsgReportData >( LoggerMsgReportData const & ) const;
 
 }
 

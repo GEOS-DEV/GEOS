@@ -22,6 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
 #include "common/format/StringUtilities.hpp"
+#include "common/format/EnumStrings.hpp"
 
 namespace geos
 {
@@ -36,15 +37,14 @@ public:
 
   /**
    * @enum Type
-   * Enum listing the different types of possible errors
+   * Enum listing the different types of possibleLogPart
    */
   enum class Type
   {
-    Error,
-    ExternalError,
-    Warning,
-    Exception,
-    Undefined
+    MeshGeneration,
+    NumericalMethods,
+    ImportFields,
+    Timestep,
   };
 
 
@@ -246,6 +246,13 @@ void LogPart::addEndDescription( string_view name, Args const &... args )
 {
   addDescriptionBySection( m_endDescription, m_formattedEndDescription, name, args ... );
 }
+
+ENUM_STRINGS( LogPart::Type,
+              "MeshGeneration",
+              "NumericalMethods",
+              "ImportFields",
+              "Timestep",
+              );
 
 }
 

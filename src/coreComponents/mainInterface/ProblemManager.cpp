@@ -13,6 +13,7 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+#include "common/format/EnumStrings.hpp"
 #define GEOS_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
 
 // Source includes
@@ -172,36 +173,38 @@ void ProblemManager::problemSetup()
 
   postInputInitializationRecursive();
 
-  LogPart meshGenerationLog( "Mesh generation", MpiWrapper::commRank() == 0 );
+  LogPart meshGenerationLog( EnumStrings< LogPart::Type >::toString( LogPart::Type::MeshGeneration ),
+                             MpiWrapper::commRank() == 0 );
   meshGenerationLog.begin();
-    GEOS_WARNING("plouf");
-    GEOS_WARNING("plouf");
-    GEOS_WARNING("plouf");
+  GEOS_WARNING( "plouf" );
+  GEOS_WARNING( "plouf" );
+  GEOS_WARNING( "plouf" );
   generateMesh();
   meshGenerationLog.end();
 
 //  initialize_postMeshGeneration();
-  LogPart numericalMethodLog( "Numerical Methods", MpiWrapper::commRank() == 0 );
+  LogPart numericalMethodLog( EnumStrings< LogPart::Type >::toString( LogPart::Type::NumericalMethods ), MpiWrapper::commRank() == 0 );
   numericalMethodLog.begin();
   applyNumericalMethods();
-    GEOS_WARNING("plouf");
-    GEOS_WARNING("plouf");
-    GEOS_WARNING("plouf");
-    GEOS_WARNING("plouf");
-    GEOS_WARNING("plouf");
+  GEOS_WARNING( "plouf" );
+  GEOS_WARNING( "plouf" );
+  GEOS_WARNING( "plouf" );
+  GEOS_WARNING( "plouf" );
+  GEOS_WARNING( "plouf" );
   numericalMethodLog.end();
 
   registerDataOnMeshRecursive( getDomainPartition().getMeshBodies() );
 
   initialize();
 
-  LogPart importFieldsLog( "Import fields", MpiWrapper::commRank() == 0 );
+  LogPart importFieldsLog( EnumStrings< LogPart::Type >::toString( LogPart::Type::ImportFields ),
+                           MpiWrapper::commRank() == 0 );
   importFieldsLog.begin();
-     GEOS_WARNING("plouf");
-    GEOS_WARNING("plouf");
-    GEOS_WARNING("plouf");
-    GEOS_WARNING("plouf");
-    GEOS_WARNING("plouf");
+  GEOS_WARNING( "plouf" );
+  GEOS_WARNING( "plouf" );
+  GEOS_WARNING( "plouf" );
+  GEOS_WARNING( "plouf" );
+  GEOS_WARNING( "plouf" );
   importFields();
   importFieldsLog.end();
 }

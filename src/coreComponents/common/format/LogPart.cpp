@@ -32,7 +32,8 @@ LogPart::LogPart( string_view logPartTitle, bool enableOutput )
 
   m_enableOutput = enableOutput;
 
-  ErrorLogger::global().setCurrentLogPart( string( logPartTitle ));
+  ErrorLogger::global().setCurrentLogPart( EnumStrings< LogPart::Type >::fromString( string( logPartTitle ) ));
+
 }
 
 void LogPart::addDescription( string_view description )

@@ -176,7 +176,8 @@ bool EventManager::run( DomainPartition & domain )
       m_dt = dt_global;
 #endif
     }
-    LogPart logPart( "TIMESTEP", MpiWrapper::commRank() == 0 );
+    LogPart logPart( EnumStrings< LogPart::Type >::toString( LogPart::Type::Timestep ),
+                     MpiWrapper::commRank() == 0 );
 
     outputTime( logPart );
     logPart.begin();

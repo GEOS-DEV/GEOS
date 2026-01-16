@@ -21,6 +21,7 @@
 #define INITIALIZATION_ERROR_LOGGER_HPP
 
 #include "common/DataTypes.hpp"
+#include "common/format/LogPart.hpp"
 #include "common/logger/LoggerMsgReportData.hpp"
 #include "common/logger/MsgType.hpp"
 #include <mutex>
@@ -374,14 +375,14 @@ public:
    * @brief Gets the current log part.
    * @return The current log part as a string.
    */
-  string const & getCurrentLogPart() const
+  LogPart::Type getCurrentLogPart() const
   {return m_currentLogPart;}
 
 /**
  * @brief Sets the current log part.
  * @param logPart The new log part to set.
  */
-  void setCurrentLogPart( string const & logPart )
+  void setCurrentLogPart( LogPart::Type logPart )
   { m_currentLogPart = logPart; }
 
 private:
@@ -397,7 +398,7 @@ private:
   /// The stream used for the log output. By default used std::cout
   std::ostream & m_stream = std::cout;
 
-  string m_currentLogPart;
+  LogPart::Type m_currentLogPart;
   /// Avoid concurrent access between threads for outputs
   static std::mutex m_errorHandlerMutex;
   /**

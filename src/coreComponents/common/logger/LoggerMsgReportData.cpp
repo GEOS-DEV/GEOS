@@ -29,9 +29,9 @@
 namespace geos
 {
 
-void LoggerMsgReportData::increment( string const & logPartName, MsgType msgType )
+void LoggerMsgReportData::increment( LogPart::Type logPartName, MsgType msgType )
 {
-  if( numMsgByPart.count( logPartName ) ==0 )
+  if( numMsgByPart.count( logPartName ) == 0 )
   {
     NumMsg numMsg{ { {msgType, 1}}, {{msgType, 1} }};
     numMsgByPart[logPartName] = numMsg;
@@ -55,7 +55,7 @@ string TableTextFormatter::toString< LoggerMsgReportData >( LoggerMsgReportData 
 
   for( auto const & [ logPartName, numMsg ] : report.numMsgByPart )
   {
-    tableLayoutPerSection.addColumn( logPartName );
+    tableLayoutPerSection.addColumn( EnumStrings< LogPart::Type >::toString( logPartName ) );
   }
 
 
@@ -63,8 +63,8 @@ string TableTextFormatter::toString< LoggerMsgReportData >( LoggerMsgReportData 
   {
     MsgType const currentType = (MsgType) i;
     stdVector< TableData::CellData > row;
-    
-    row.push_back( {CellType::Value,  EnumStrings< MsgType >::toString( (MsgType) i ) } );
+
+    row.push_back( {CellType::Value, EnumStrings< MsgType >::toString( (MsgType) i ) } );
     for( auto const & [ _, msgTypes ] : report.numMsgByPart )
     {
       auto it =  msgTypes.numMsg.find( currentType );

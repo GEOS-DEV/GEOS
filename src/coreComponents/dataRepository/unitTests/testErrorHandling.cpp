@@ -595,6 +595,16 @@ TEST( testSolverStats, testErrorReport )
   problem.problemSetup();
   problem.applyInitialConditions();
   problem.runSimulation();
+
+  EXPECT_EQ( testErrorLogger.getLoggerReportData().numMsgByPart
+               .at( LogPart::Type::MeshGeneration ).numMsg
+               .at( MsgType::Warning ), 3 );
+  EXPECT_EQ( testErrorLogger.getLoggerReportData().numMsgByPart
+               .at( LogPart::Type::NumericalMethods ).numMsg
+               .at( MsgType::Warning ), 5 );
+  EXPECT_EQ( testErrorLogger.getLoggerReportData().numMsgByPart
+               .at( LogPart::Type::ImportFields ).numMsg
+               .at( MsgType::Warning ), 5 );
 }
 
 int main( int ac, char * av[] )
