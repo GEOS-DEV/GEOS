@@ -45,6 +45,7 @@ ErrorLogger g_errorLogger{};
 ErrorLogger & ErrorLogger::global()
 { return g_errorLogger; }
 
+std::mutex ErrorLogger::m_errorHandlerMutex;
 
 std::string ErrorContext::attributeToString( ErrorContext::Attribute attribute )
 {
@@ -295,6 +296,7 @@ std::string ErrorLogger::toString( MsgType const type )
 void ErrorLogger::writeToAscii( DiagnosticMsg const & errMsg, std::ostream & os )
 {
   static constexpr string_view PREFIX = "***** ";
+  std::lock_guard< std::mutex > guard( m_errorHandlerMutex );
   // --- HEADER ---
   os << PREFIX << ErrorLogger::toString( errMsg.m_type ) << "\n";
   if( !errMsg.m_file.empty())
@@ -350,6 +352,7 @@ void ErrorLogger::writeToAscii( DiagnosticMsg const & errMsg, std::ostream & os 
 void ErrorLogger::writeToYaml( DiagnosticMsg & errMsg )
 {
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
+  std::lock_guard< std::mutex > guard( m_errorHandlerMutex );
   if( yamlFile.is_open() )
   {
     // General errors info (type, rank on which the error occured)

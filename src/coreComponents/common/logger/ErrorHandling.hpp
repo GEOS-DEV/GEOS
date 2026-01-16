@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
 #include "common/format/StringUtilities.hpp"
+#include <mutex>
 
 namespace geos
 {
@@ -384,7 +385,8 @@ private:
   std::string_view m_filename = "errors.yaml";
   /// The stream used for the log output. By default used std::cout
   std::ostream & m_stream = std::cout;
-
+  /// Avoid concurrent access between threads for outputs
+  static std::mutex m_errorHandlerMutex;
   /**
    * @brief Write all the information retrieved about the error/warning message into the YAML file
    * @param errorMsg a reference to the diagnostic message
