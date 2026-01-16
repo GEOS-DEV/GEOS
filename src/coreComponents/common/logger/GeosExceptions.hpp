@@ -14,7 +14,7 @@
  */
 
 /**
- * @file Logger.hpp
+ * @file GeosExceptions.hpp
  */
 
 
@@ -37,15 +37,7 @@ public:
    */
   Exception( std::string const & what ):
     std::exception( )
-  {
-    errorMsg.addToMsg( what );
-  }
-
-  /**
-   * @return Reference to the ErrorMsg object
-   */
-  ErrorLogger::ErrorMsg & getErrorMsg()
-  { return errorMsg; }
+  { m_cachedWhat = what; }
 
   /**
    * @brief System fallback to get description content if error system does not achieve to output the ErrorMsg
@@ -54,47 +46,18 @@ public:
    * @note We does not allow to override what(), it's the GEOS_THROW responsability to write-in the exception message
    */
   virtual char const * what() const noexcept override final
-  {
-    return m_cachedWhat.c_str();
-  }
+  { return m_cachedWhat.c_str(); }
 
   /**
    * @brief Prepare and cache the formatted exception message
-   * @param msg The main error message
-   * @param cause The cause of the exception
-   * @param file The source file where the exception occurred
-   * @param line The line number where the exception occurred
-   * @param rank The MPI rank
-   * @param stackTrace The stack trace at the point of exception
+   * @param msg Error message logger for structured error reporting
    */
-  void prepareWhat( std::string const & msg,
-                    std::string const & cause,
-                    char const * file,
-                    int line,
-                    int rank,
-                    string_view stackTrace ) noexcept
-  {
-    try
-    {
-      std::ostringstream oss;
-      oss << "***** GEOS Exception\n";
-      oss << "***** LOCATION: " << file << " l." << line << "\n";
-      oss << "***** " << cause << "\n";
-      oss << "***** Rank  " << rank << ": "<< msg <<"\n\n";
-      oss << stackTrace;
-      m_cachedWhat = oss.str();
-    } catch( ... )
-    {
-      m_cachedWhat = "GEOS Exception (formatting failed)";
-    }
-
-  }
+  void prepareWhat( DiagnosticMsg & msg ) noexcept;
 
 private:
   /// Formatted exception message for what() method
   string m_cachedWhat;
-  /// Error message logger for structured error reporting
-  ErrorLogger::ErrorMsg errorMsg;
+  static thread_local std::ostringstream m_formattingOSS;
 };
 
 /**

@@ -14,6 +14,9 @@
  */
 
 // forcefully enable asserts macros for this unit test
+#include "LvArray/src/system.hpp"
+#include "common/logger/ExternalErrorHandler.hpp"
+#include "gtest/gtest.h"
 #define GEOS_ASSERT_ENABLED
 #include "common/logger/ErrorHandling.hpp"
 
@@ -108,13 +111,11 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
   beginLocalLoggerTest( testErrorLogger, "warningTestOutput.yaml" );
 
   GET_LINE( line1 ); GEOS_WARNING( "Conflicting pressure boundary conditions" );
-
   GET_LINE( line2 ); GEOS_WARNING_IF_GT_MSG( testValue, testMaxPrecision, "Pressure value is too high." );
 
   string const warningMsg = GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
                                       context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision );
   GET_LINE( line3 ); GEOS_WARNING_IF( testValue == 5, warningMsg, context, additionalContext );
-
   endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
 
@@ -149,9 +150,11 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
       Base Test Class (file.xml, l.23): option should be between 1e-06 and 0.001. A value of 1e-06 will be used.
     contexts:
       - priority: 0
+        description: Base Test Class (file.xml, l.23)
         inputFile: /path/to/file.xml
         inputLine: 23
       - priority: 0
+        description: Additional Test Class (file.xml, l.32)
         inputFile: /path/to/file.xml
         inputLine: 32
     cause: >-
@@ -166,39 +169,40 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
 TEST( ErrorHandling, testYamlFileExceptionOutput )
 {
   ErrorLogger testErrorLogger;
-
-  beginLocalLoggerTest( testErrorLogger, "exceptionTestOutput.yaml" );
+  string const file = "exceptionTestOutput.yaml";
+  beginLocalLoggerTest( testErrorLogger, file );
   size_t line1;
 
   // Stacked exception test (contexts must appear sorted by priority)
   try
   {
-    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError, context );
+    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError,
+                                     context.getContextInfo().setPriority( 3 ) );
   }
   catch( geos::DomainError const & ex )
   {
     string const errorMsg = "Table input error.\n";
-    testErrorLogger.beginLogger()
+    testErrorLogger.modifyCurrentExceptionMessage()
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
       .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
-
-    string const whatExpected = GEOS_FMT( "***** GEOS Exception\n"
-                                          "***** LOCATION: {} l.{}\n"
+    string const whatExpected = GEOS_FMT( "***** Exception\n"
+                                          "***** LOCATION: {}:{}\n"
                                           "***** Error cause: testValue == 5\n"
-                                          "***** Rank  0: Empty Group",
-                                          testErrorLogger.currentErrorMsg().m_file, line1 );
-
-    GEOS_ERROR_IF_EQ_MSG( string( ex.what() ).find( whatExpected ), string::npos,
+                                          "***** Rank 0\n"
+                                          "***** Message from {}:\n"
+                                          "Empty Group",
+                                          testErrorLogger.getCurrentExceptionMsg().m_file, line1,
+                                          testErrorLogger.getCurrentExceptionMsg().m_contextsInfo.front().m_formattedContext );
+    GEOS_ERROR_IF_EQ_MSG( string( ex.what()).find( whatExpected ), string::npos,
                           "The error message was not containing the expected sequence.\n" <<
                           "  Error message :\n" << ex.what() <<
                           "  expected sequence :\n" << whatExpected );
   }
-  testErrorLogger.flushErrorMsg();
 
+  testErrorLogger.flushCurrentExceptionMessage();
   endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
-
     GEOS_FMT(
       R"(- type: Exception
     rank: 0
@@ -206,13 +210,16 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
       Table input error.
       Empty Group
     contexts:
+      - priority: 3
+        description: Base Test Class (file.xml, l.23)
+        inputFile: /path/to/file.xml
+        inputLine: 23
       - priority: 2
+        description: Important Additional Test Class (file.xml, l.64)
         inputFile: /path/to/file.xml
         inputLine: 64
       - priority: 0
-        inputFile: /path/to/file.xml
-        inputLine: 23
-      - priority: 0
+        description: Additional Test Class (file.xml, l.32)
         inputFile: /path/to/file.xml
         inputLine: 32
     cause: >-
@@ -253,12 +260,15 @@ TEST( ErrorHandling, testYamlFileErrorOutput )
       Base Test Class (file.xml, l.23): option should be lower than 0.001.
     contexts:
       - priority: 2
+        description: Important Additional Test Class (file.xml, l.64)
         inputFile: /path/to/file.xml
         inputLine: 64
       - priority: 0
+        description: Base Test Class (file.xml, l.23)
         inputFile: /path/to/file.xml
         inputLine: 23
       - priority: 0
+        description: Additional Test Class (file.xml, l.32)
         inputFile: /path/to/file.xml
         inputLine: 32
     cause: >-
@@ -281,7 +291,8 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
   ErrorLogger testErrorLogger;
 
   size_t line1;
-
+  // test that the first context with default priority comes after the most important one, but before
+  // a second context with default priotity
   try
   {
     line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError, context );
@@ -289,14 +300,13 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
   catch( geos::DomainError const & ex )
   {
     string const errorMsg = "Table input error.\n";
-    testErrorLogger.beginLogger()
+    testErrorLogger.modifyCurrentExceptionMessage()
       .addToMsg( errorMsg )
       .addContextInfo( additionalContext.getContextInfo() )
-      .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ) );
-
+      .addContextInfo( importantAdditionalContext.getContextInfo().setPriority( 2 ));
     string const streamExpected = GEOS_FMT(
       "***** Exception\n"
-      "***** LOCATION: {} l.{}\n"
+      "***** LOCATION: {}:{}\n"
       "***** {}\n"
       "***** Rank 0\n"
       "***** Message from {}:\n"
@@ -304,14 +314,15 @@ TEST( ErrorHandling, testLogFileExceptionOutput )
       "***** Additional contexts:\n"
       "***** - {}\n"
       "***** - {}\n",
-      testErrorLogger.currentErrorMsg().m_file, line1,
-      testErrorLogger.currentErrorMsg().m_cause,
+      testErrorLogger.getCurrentExceptionMsg().m_file, line1,
+      testErrorLogger.getCurrentExceptionMsg().m_cause,
+      importantAdditionalContext.toString(),
+      testErrorLogger.getCurrentExceptionMsg().m_msg,
       context.toString(),
-      testErrorLogger.currentErrorMsg().m_msg,
       additionalContext.toString(),
-      importantAdditionalContext.toString(), testErrorLogger.currentErrorMsg().m_sourceCallStack );
+      testErrorLogger.getCurrentExceptionMsg().m_sourceCallStack );
     std::ostringstream oss;
-    ErrorLogger::writeToAscii( testErrorLogger.currentErrorMsg(), oss );
+    ErrorLogger::writeToAscii( testErrorLogger.getCurrentExceptionMsg(), oss );
     GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
                           "The error message was not containing the expected sequence.\n" <<
                           "The error message was not containing the expected sequence.\n" <<
@@ -331,20 +342,19 @@ TEST( ErrorHandling, testStdException )
   }
   catch( std::exception & e )
   {
-    testErrorLogger.beginLogger()
-      .setType( MsgType::Exception )
-      .addToMsg( e.what() )
-      .addRank( ::geos::logger::internal::g_rank )
+
+    testErrorLogger.initCurrentExceptionMessage( MsgType::Exception, e.what(),
+                                                 ::geos::logger::internal::g_rank )
       .addCallStackInfo( LvArray::system::stackTrace( true ) );
 
     std::ostringstream oss;
-    ErrorLogger::writeToAscii( testErrorLogger.currentErrorMsg(), oss );
+    ErrorLogger::writeToAscii( testErrorLogger.getCurrentExceptionMsg(), oss );
     string const streamExpected = GEOS_FMT(
       "***** Exception\n"
       "***** Rank 0\n"
       "***** Message :\n"
       "{}\n",
-      testErrorLogger.currentErrorMsg().m_msg );
+      testErrorLogger.getCurrentExceptionMsg().m_msg );
     GEOS_ERROR_IF_EQ_MSG( oss.str().find( streamExpected ), string::npos,
                           "The error message was not containing the expected sequence.\n" <<
                           "The error message was not containing the expected sequence.\n" <<
@@ -377,9 +387,11 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
       Base Test Class (file.xml, l.23): value should be between 1e-06 and 0.001, but is 5.
     contexts:
       - priority: 0
+        description: Base Test Class (file.xml, l.23)
         inputFile: /path/to/file.xml
         inputLine: 23
       - priority: 0
+        description: Additional Test Class (file.xml, l.32)
         inputFile: /path/to/file.xml
         inputLine: 32
     cause: >-
@@ -392,6 +404,46 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
     "- frame1: ",
     "- frame2: "
   } );
+}
+
+
+TEST( ErrorHandling, VerifySignalHandlerLogs )
+{
+  ErrorLogger testErrorLogger;
+
+  beginLocalLoggerTest( testErrorLogger, "errors.yaml" );
+
+  setupLogger();
+
+  bool signalHappened = false;
+  LvArray::system::setErrorHandler( [&]()
+  {
+    endLocalLoggerTest( testErrorLogger, {
+      R"(- type: ExternalError
+    rank: 0
+    message: >-
+      Signal encountered (no. 2): Interrupt
+    contexts:
+      - priority: 0
+        description: Signal (detected from Signal Handler)
+        detectionLocation: Signal handler
+        signal: 2
+    sourceCallStack:)",
+      "- frame0: ",
+      "- frame1: ",
+      "- frame2: "
+    } );
+
+    signalHappened = true;
+  } );
+
+  ErrorLogger::global().enableFileOutput( true );
+
+  raise( SIGINT );
+
+  EXPECT_TRUE( signalHappened );
+
+  setupLogger();
 }
 
 int main( int ac, char * av[] )

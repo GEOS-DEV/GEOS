@@ -353,10 +353,9 @@ void CompositionalMultiphaseWell::validateWellControlsForFluid( WellControls con
     } catch( SimulationError const & ex )
     {
       string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
-      ErrorLogger::global().beginLogger()
+      ErrorLogger::global().modifyCurrentExceptionMessage()
         .addToMsg( errorMsg )
-        .addContextInfo( getDataContext().getContextInfo().setPriority( 1 ) )
-        .commit();
+        .addContextInfo( getDataContext().getContextInfo().setPriority( 1 ) );
       throw SimulationError( ex, errorMsg );
     }
   }

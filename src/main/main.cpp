@@ -14,6 +14,7 @@
  */
 
 // Source includes
+#include "common/logger/ErrorHandling.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/TimingMacros.hpp"
 #include "common/Units.hpp"
@@ -75,19 +76,18 @@ int main( int argc, char *argv[] )
   }
   catch( geos::Exception & e )
   { // GEOS generated exceptions management
-    ErrorLogger::global().flushErrorMsg();
+    ErrorLogger::global().flushCurrentExceptionMessage();
     basicCleanup();
     // lvarray error handler is just program termination
     LvArray::system::callErrorHandler();
   }
   catch( std::exception const & e )
   { // native exceptions management
-    ErrorLogger::global().beginLogger()
-      .setType( MsgType::Exception )
-      .addToMsg( e.what() )
-      .addRank( ::geos::logger::internal::g_rank )
-      .addCallStackInfo( LvArray::system::stackTrace( true ) )
-      .flush();
+    ErrorLogger::global().flushErrorMsg( ErrorLogger::global().initCurrentExceptionMessage(
+                                           MsgType::Exception, e.what(),
+                                           ::geos::logger::internal::g_rank )
+                                           .addCallStackInfo( LvArray::system::stackTrace( true ) )
+                                           .getDiagnosticMsg());
     basicCleanup();
     // lvarray error handler is just program termination
     LvArray::system::callErrorHandler();
