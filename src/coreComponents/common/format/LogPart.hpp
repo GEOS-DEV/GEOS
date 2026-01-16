@@ -35,6 +35,20 @@ class LogPart
 public:
 
   /**
+   * @enum Type
+   * Enum listing the different types of possible errors
+   */
+  enum class Type
+  {
+    Error,
+    ExternalError,
+    Warning,
+    Exception,
+    Undefined
+  };
+
+
+  /**
    * @brief Initialize a LogPart given a title
    * @param logPartTitle The title who will be used for top and bottom LogPart
    * @param enableOutput Boolean to activate or not csv output

@@ -333,10 +333,10 @@ void setupEnvironment( int argc, char * argv[] )
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void cleanupEnvironment()
-{
-  MemoryLogging::getInstance().memoryStatsReport();
-  TableTextFormatter truc;
-  GEOS_LOG_RANK_0( truc.toString< LoggerMsgReportData >( GEOS_GLOBAL_LOGGER.getLoggerReportData()));
+{  MemoryLogging::getInstance().memoryStatsReport();
+  TableTextFormatter tableReportFormatter;
+  GEOS_LOG_RANK_0( tableReportFormatter.toString< LoggerMsgReportData >( GEOS_GLOBAL_LOGGER.getLoggerReportData()));
+
   LvArray::system::resetSignalHandling();
   finalizeLogger();
   finalizeCaliper();

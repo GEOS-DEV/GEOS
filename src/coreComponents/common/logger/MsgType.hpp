@@ -20,7 +20,7 @@
 #ifndef INITIALIZATION_MSG_TYPE_HPP
 #define INITIALIZATION_MSG_TYPE_HPP
 
-#include "common/format/EnumStringsCore.hpp"
+#include "common/format/EnumStrings.hpp"
 
 namespace geos
 {
@@ -38,12 +38,12 @@ enum class MsgType
   Undefined
 };
 
-ENUM_STRINGS_CORE( MsgType,
-                   "Error",
-                   "ExternalError",
-                   "Warning",
-                   "Exception",
-                   "Undefined" );
+ENUM_STRINGS( MsgType,
+              "Error",
+              "ExternalError",
+              "Warning",
+              "Exception",
+              "Undefined" );
 
 };
 

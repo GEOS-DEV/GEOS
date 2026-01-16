@@ -1,5 +1,24 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file LoggerMsgReportData.cpp
+ */
+
 #include "LoggerMsgReportData.hpp"
-#include "common/format/EnumStringsCore.hpp"
+#include "common/format/EnumStrings.hpp"
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
@@ -45,7 +64,7 @@ string TableTextFormatter::toString< LoggerMsgReportData >( LoggerMsgReportData 
     MsgType const currentType = (MsgType) i;
     stdVector< TableData::CellData > row;
     
-    row.push_back( {CellType::Value,  EnumStringsCore< MsgType >::toRawString( (MsgType) i ) } );
+    row.push_back( {CellType::Value,  EnumStrings< MsgType >::toString( (MsgType) i ) } );
     for( auto const & [ _, msgTypes ] : report.numMsgByPart )
     {
       auto it =  msgTypes.numMsg.find( currentType );

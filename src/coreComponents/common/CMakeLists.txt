@@ -28,7 +28,6 @@ set( common_headers
      format/table/TableFormatter.hpp
      format/table/TableData.hpp
      format/EnumStrings.hpp
-     format/EnumStringsCore.hpp
      format/LogPart.hpp
      format/Format.hpp
      format/StringUtilities.hpp
@@ -74,6 +73,7 @@ endif( )
 # Specify all sources
 #
 set( common_sources
+     format/EnumStrings.cpp
      format/table/TableLayout.cpp
      format/table/TableFormatter.cpp
      format/table/TableData.cpp

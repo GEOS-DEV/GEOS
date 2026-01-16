@@ -25,11 +25,9 @@
 #ifndef GEOS_COMMON_FORMAT_ENUMSTRINGS_HPP
 #define GEOS_COMMON_FORMAT_ENUMSTRINGS_HPP
 
-#include "EnumStringsCore.hpp"
 #include "common/format/StringUtilities.hpp"
 // #include "codingUtilities/RTTypes.hpp"
 #include "common/DataTypes.hpp"
-#include "common/logger/Logger.hpp"
 #include "common/format/Format.hpp"
 
 #include <iostream>
@@ -39,11 +37,51 @@
 namespace geos
 {
 
+
+namespace internal
+{
+
+void EnumErrorMessageToString( size_t index, string const & typeName, std::size_t size );
+
+void EnumErrorMessageFromString( string const & s,
+                                 string const & typeName,
+                                 string const & concat );
+
+/**
+ * @brief Simple compile-time variadic function that counts its arguments.
+ * @tparam ARGS variadic pack of argument types
+ * @return the number of arguments passed
+ */
+template< typename ... ARGS >
+constexpr int countArgs( ARGS ... )
+{
+  return sizeof...( ARGS );
+}
+}
+
 /**
  * @brief Associate a list of string names with enumeration values.
  * @param ENUM the enumeration type
  * @param ... list of names (C-string literals)
  *
+ * Conditions (not enforced but won't work correctly if violated):
+ *  - the macro must be called in the same namespace the enumeration type is defined in
+ *  - the number and order of string arguments passed must match the enum values
+ *  - enumeration constants must not have custom values assigned
+ *
+ * After the macro has been called, template instantiation EnumStrings<ENUM>
+ * may be used to get access to strings at runtime. While not strictly necessary,
+ * it is recommended that macro call immediately follows the enum definition
+ * (or the class definition, if enum is defined inside a class).
+ *
+ * enum struct VTKOutputMode
+ * {
+ *   BINARY,
+ *   ASCII
+ * };
+ * ENUM_STRINGS( VTKOutputMode,
+ *               "binary",
+ *               "ascii" );
  */
 #define ENUM_STRINGS( ENUM, ... )                                     \
   inline auto const & getEnumStrings( ENUM const )                    \
@@ -82,10 +120,22 @@ namespace geos
  * @tparam ENUM the enumeration type
  */
 template< typename ENUM >
-struct EnumStrings : public EnumStringsCore< ENUM >
+struct EnumStrings
 {
+  /// Alias for the enumeration type
+  using enum_type = ENUM;
 
-  using Base = EnumStringsCore<ENUM>;
+  /// Alias for enum's underlying fundamental type
+  using base_type = std::underlying_type_t< ENUM >;
+
+  /**
+   * @brief @return An array of strings associated with enumeration.
+   */
+  static auto const & get()
+  {
+    return getEnumStrings( enum_type{} ); // invoke ADL
+  }
+
   /**
    * @brief Get a list of valid options as a delimited string.
    * @param delim delimiter (defaults to single space)
@@ -93,7 +143,7 @@ struct EnumStrings : public EnumStringsCore< ENUM >
    */
   static string concat( string const & delim = " " )
   {
-    auto const & strings = Base::get();
+    auto const & strings = get();
     return stringutilities::join( std::begin( strings ), std::end( strings ), delim );
   }
 
@@ -104,14 +154,15 @@ struct EnumStrings : public EnumStringsCore< ENUM >
    *
    * An error is raised if enum's numerical value is greater of equal than the number of strings.
    */
-  static string toString( typename Base::enum_type const & e )
+  static string toString( enum_type const & e )
   {
-    auto const & strings = Base::get();
+    auto const & strings = get();
     std::size_t size = std::distance( std::begin( strings ), std::end( strings ) );
-    typename Base::base_type const index = static_cast< typename Base::base_type >( e );
-    GEOS_THROW_IF( index >= LvArray::integerConversion< typename Base::base_type >( size ),
-                   "Invalid value " << index << " of type " << getEnumTypeNameString( typename Base::enum_type{} ) << ". Valid range is 0.." << size - 1,
-                   InputError );
+    base_type const index = static_cast< base_type >( e );
+    if( index >= LvArray::integerConversion< base_type >( size ))
+    {
+      internal::EnumErrorMessageToString( index, getEnumTypeNameString( enum_type{} ), size - 1 );
+    }
     return strings[ index ];
   }
 
@@ -120,14 +171,15 @@ struct EnumStrings : public EnumStringsCore< ENUM >
    * @param s the string to convert
    * @return the corresponding enum value
    */
-  static typename Base::enum_type fromString( string const & s )
+  static enum_type fromString( string const & s )
   {
-    auto const & strings = Base::get();
+    auto const & strings = get();
     auto const it = std::find( std::begin( strings ), std::end( strings ), s );
-    GEOS_THROW_IF( it == std::end( strings ),
-                   "Invalid value '" << s << "' of type " << getEnumTypeNameString( typename Base::enum_type{} ) << ". Valid options are: " << concat( ", " ),
-                   InputError );
-    typename Base::enum_type const e = static_cast< typename Base::enum_type >( LvArray::integerConversion< typename  Base::base_type >( std::distance( std::begin( strings ), it ) ) );
+    if( it == std::end( strings ))
+    {
+      internal::EnumErrorMessageFromString( s, getEnumTypeNameString( enum_type{} ), EnumStrings::concat( ", " ));
+    }
+    enum_type const e = static_cast< enum_type >( LvArray::integerConversion< base_type >( std::distance( std::begin( strings ), it ) ) );
     return e;
   }
 };
