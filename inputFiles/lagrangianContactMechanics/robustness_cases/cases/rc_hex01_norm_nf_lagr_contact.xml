@@ -8,7 +8,7 @@
       name="mesh1"
       useGlobalIds="0"
       nodesetNames="{ ruptureState }"
-      file="../meshes/fractured_mesh_hex.vtu"/>
+      file="../meshes/fractured_mesh_hex_DFN_12345.vtu"/>
   </Mesh>
 
   <Geometry>
@@ -70,8 +70,8 @@
         lineSearchAction="None"
         subcycling="1"
         maxTimeStepCuts="1"
-        newtonTol="1e0"
-        newtonMaxIter="10"
+        newtonTol="1.0e-5"
+        newtonMaxIter="20"
         maxAllowedResidualNorm="1e+15"/>
       <LinearSolverParameters
         solverType="gmres"
@@ -83,7 +83,7 @@
 
     <SolidMechanicsAugmentedLagrangianContact
       name="fractureMechSolver"
-      logLevel="1"
+      logLevel="2"
       simultaneous="1"
       symmetric="1"
       iterPenaltyN="1.0e2"
@@ -95,7 +95,7 @@
       discretization="FE1"
       targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters
-        newtonTol="1.0e-8"
+        newtonTol="1.0e-5"
         newtonMaxIter="20"
         lineSearchAction="None"/>
       <LinearSolverParameters
@@ -112,8 +112,8 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Region, Fracture}" > 
       <NonlinearSolverParameters
-        newtonTol="1.0e-2"
-        newtonMaxIter="8"
+        newtonTol="1.0e-5"
+        newtonMaxIter="20"
         allowNonConverged="1"/>
       <LinearSolverParameters
         solverType="gmres"

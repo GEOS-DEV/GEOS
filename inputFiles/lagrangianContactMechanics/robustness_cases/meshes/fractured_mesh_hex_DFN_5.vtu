@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" header_type="UInt32" compressor="vtkZLibDataCompressor">
+  <UnstructuredGrid>
+    <Piece NumberOfPoints="216" NumberOfCells="129">
+      <PointData Scalars="ruptureState">
+        <DataArray type="Int64" Name="ruptureState" format="binary" RangeMin="0" RangeMax="1">
+          AQAAAACAAADABgAAGgAAAA==eJxjZIAARgrpUTAKRsEoGAWjgJ4AAEJgAAo=
+        </DataArray>
+      </PointData>
+      <CellData Scalars="material_id">
+        <DataArray type="Int32" Name="material_id" format="binary" RangeMin="1" RangeMax="6">
+          AQAAAACAAAAEAgAAEwAAAA==eJxjY2BgYEPCjKN4xGEArOAAlg==
+        </DataArray>
+      </CellData>
+      <Points>
+        <DataArray type="Float32" Name="Points" NumberOfComponents="3" format="binary" RangeMin="0" RangeMax="1.7320508075688772">
+          AQAAAACAAAAgCgAAywEAAA==eJxtlYtxAyEMBdNGmjENuCjaSGqSU1OGXMTu8+EZ5mQbJPQ+ulc9x6uej9f1/Iu/vz53/FPV3//2dLyeHa89a/Wejtf/Ha/nhz7rN2L+W2e0Z3BiKub8f81H5+m479Z5qDfHqfaVp5SnlKeUp5Tnfu/uu/N03Hh1Hvqc49RzY6m+dh7tGWA0xwmvq9e583R81dx7BvjOccI68QYz9+27Z31y5NqascZai4/Oc+I4z9eOmy/ylPLc9ZG10br1bd03X+/aynvXju0le6z5etdl9lw7br7Aee48J00nXuja2rS+UiPwbKzzXuRODlhwUeKixEV6LPnjPFyUuChxkf5M7qkNFyUuSlykt1M33BsuSlyUuMi5kJqjZ88G+zs9is+s19QF3KaOwdFYGo/siXulB8jh1Vx0ntOMS//An883F+rrNh/Te3Dv2s0FGN5na/oW3fjenq85I5lz9nz6Em/lLECLxsJ6TE2hi5wjcGgcjWXiQU85g6jvHF6aUfGOyfmFf8yfz2tGxfspZx/eM/eune8o3jM5N/GtdeN75+xk/uWcw/PWnHtO3+Pd9Cg+s16NV2oW3aW+0Ih5NtaJN5hl39zd9Z3D6xcbGOIk
+          <InformationKey name="L2_NORM_RANGE" location="vtkDataArray" length="2">
+            <Value index="0">
+              0
+            </Value>
+            <Value index="1">
+              1.7320508076
+            </Value>
+          </InformationKey>
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray type="Int64" Name="connectivity" format="binary" RangeMin="0" RangeMax="215">
+          AQAAAACAAADAHwAANgQAAA==eJyF2MMT5HcYhPGNbXtj27ZtJxvb9sa2vbFtb2zr38kh/Vyeqq7v79I1U/M5vH2YrpkJE/5/pklOn5xO70+bnKF8jtczJWfU+7iZ9blZkrMm50rOnVw9uUZy3eR6crPJzSO3ptz6crPLzSu3ltwGcnPIzSe3ttyGcnPKzS+3jtxGSfe1QHLBpPvaOLmJHHfjFpLjbtymctyNW1iOu3GbyXE3bhE57sZtLkdfuEXl6Au3RdJ9LZZcPOm+tkxuJcfduCXkuBu3tRx345aU427cNnLcjVtKjrtx28rRF26iHH3htku6r6WTyyTd1/bJHeS4G7esHHfjdpTjbtxyctyN20mOu3HLy3E3bme5iXIryNEXbpek+1oxuVLSfe2a3E2Ou3Ery3E3bnc57satIsfduD3kuBu3qhx34/aUoy/canL0hdsrOdqHvZP7JA9MHiTX9gG3rxw7NtoH3H5y7OFoH3D7y7HHo33AHSB3cHK0D+7rkOShcm0f3BfuMLm2D+4Ld7hc2wf3hTtCru2D+8IdmRztg/ualDxKru2D+8IdLdf2wX3hjpFr++C+cMfKtX1wX7jjkqN9mJTk7uOTJ8i1fXBfuBPl2j64L9xJcm0f3BfuZLm2D+4Ld0pytA/u69TkaXJtH9wX7nS5tg/uC3eGXNsH94U7U67tg/vCnZUc7cPZyXOSFyYvkmv7gDtXjt8/o33AnSfH76rRPuDOl+N33WgfcBfIXZwc7YP7uiR5qVzbB/eFu0yu7YP7wl0u1/bBfeGukGv74L5wk5OjfXBfVyavkmv74L5wV8u1fXBfuGvk2j64L9y1cm0f3BfuuuSkZNsH93V98ga5tg/uC3ejXNsH94W7Sa7tg/vC3SzX9sF94W5JjvbBfd2avE2u7YP7wt0u1/bBfeHukGv74L5wd8q1fXBfuLuSo324O3lP8sHkQ3JtH3D3yvH/2mgfcPfJ8b/daB9w98vxjPYB94Dcw8nRPrivR5KPyrV9cF+4x+TaPrgv3ONybR/cF26KXNsHHvrCPZEc7YP7ejL5lFzbB/eFe1qu7YP7wj0j1/bBfeGelZssx/cdjr5wzyVH++C+nk++INf2wX3hXpRr++C+cC/JtX1wX7iX5do+uC/cK8nRPrivV5OvybV9cF+41+XaPrgv3BtybR/cF+5NubYP7gv3VnK0D28n30l+mPxIru0D7l25j+XaPuDek/tEru0D7n25T+XaPuA+kPssOdoH9zU1+blc2wf3hftCru2D+8J9Kcfj7zv3hftKru2D+8J9nRztw9Qkd3+T/Fau7YP7wn0n1/bBfeG+l5six/eW+8L9INf2wX3hfkyO9sF9/ZT8Wa7tg/vC/SLX9sF94X6Va/vgvnC/ybV9cF+435OjfXBffyT/lGv74L5wf8m1fXBfuL/l2j64L9w/cm0f3Bfu3+R/i2+WUA==
+        </DataArray>
+        <DataArray type="Int64" Name="offsets" format="binary" RangeMin="4" RangeMax="1016">
+          AQAAAACAAAAIBAAAyQAAAA==eJwtxRuAgwAAANDuA8FBGIbDMAzDMAyHwzAMwzAMwzAMwzAMh8OD3pP3G9xC/zly7MQPp86cu3DpyrWffrlx6869B4+ePHvx6s27D5++/PbHwddd6MixEz+cOnPuwqUr13765catO/cePHry7MWrN+8+fPry2x8H33ehI8dO/HDqzLkLl65c++mXG7fu3Hvw6MmzF6/evPvw6ctvfxz83IWOHDvxw6kz5y5cunLtp19u3Lpz78GjJ89evHrz7sOnL7/98T99BT7R
+        </DataArray>
+        <DataArray type="UInt8" Name="types" format="binary" RangeMin="9" RangeMax="11">
+          AQAAAACAAACBAAAADwAAAA==eJzj5OTk5B5IAABk3wWE
+        </DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>
