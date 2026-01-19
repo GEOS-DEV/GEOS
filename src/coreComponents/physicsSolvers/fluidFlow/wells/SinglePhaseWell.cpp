@@ -54,6 +54,18 @@ using namespace constitutive;
 using namespace fields;
 using namespace singlePhaseWellKernels;
 
+SinglePhaseBase & getFlowSolver( SinglePhaseWell & wellSolver )
+{
+  // TODO: change the way we access the flowSolver here
+  return wellSolver.getParent().getGroup< SinglePhaseBase >( wellSolver.getFlowSolverName() );
+}
+
+SinglePhaseBase const & getFlowSolver( SinglePhaseWell const & wellSolver )
+{
+  // TODO: change the way we access the flowSolver here
+  return wellSolver.getParent().getGroup< SinglePhaseBase >( wellSolver.getFlowSolverName() );
+}
+
 SinglePhaseWell::SinglePhaseWell( const string & name,
                                   Group * const parent ):
   WellSolverBase( name, parent )
@@ -159,7 +171,7 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
     {
       // Check if region name exists in list of Reservoir's target regions
       string const regionName = wellControls.referenceReservoirRegion();
-      SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
+      SinglePhaseBase const & flowSolver = getFlowSolver( *this );
       string_array const & targetRegionsNames = flowSolver.getTargetRegionNames();
       auto const pos = std::find( targetRegionsNames.begin(), targetRegionsNames.end(), regionName );
       GEOS_ERROR_IF( pos == targetRegionsNames.end(),
@@ -472,7 +484,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain, real64 const & 
       if( wellControls.isWellOpen() && !hasNonZeroRate )
       {
         // TODO: change the way we access the flowSolver here
-        SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
+        SinglePhaseBase const & flowSolver = getFlowSolver( *this );
         PresTempInitializationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( meshLevel.getElemManager(), flowSolver.getName() );
         PresTempInitializationKernel::SingleFluidAccessors resSingleFluidAccessors( meshLevel.getElemManager(), flowSolver.getName() );
 
@@ -844,7 +856,7 @@ void SinglePhaseWell::computePerforationRates( real64 const & time_n,
   {
 
     // TODO: change the way we access the flowSolver here
-    SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
+    SinglePhaseBase const & flowSolver = getFlowSolver( *this );
     PerforationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( mesh.getElemManager(), flowSolver.getName() );
     PerforationKernel::SingleFluidAccessors resSingleFluidAccessors( mesh.getElemManager(), flowSolver.getName() );
     ElementRegionManager & elemManager = mesh.getElemManager();

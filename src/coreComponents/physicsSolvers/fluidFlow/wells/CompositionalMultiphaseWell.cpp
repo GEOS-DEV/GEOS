@@ -63,6 +63,18 @@ using namespace constitutive;
 using namespace fields;
 using namespace compositionalMultiphaseStatistics;
 
+CompositionalMultiphaseBase & getFlowSolver( CompositionalMultiphaseWell & wellSolver )
+{
+  // TODO: change the way we access the flowSolver here
+  return wellSolver.getParent().getGroup< CompositionalMultiphaseBase >( wellSolver.getFlowSolverName() );
+}
+
+CompositionalMultiphaseBase const & getFlowSolver( CompositionalMultiphaseWell const & wellSolver )
+{
+  // TODO: change the way we access the flowSolver here
+  return wellSolver.getParent().getGroup< CompositionalMultiphaseBase >( wellSolver.getFlowSolverName() );
+}
+
 CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
                                                           Group * const parent )
   :
@@ -368,7 +380,7 @@ void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition co
   GEOS_MARK_FUNCTION;
 
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
-  CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+  CompositionalMultiphaseBase const & flowSolver = getFlowSolver( *this );
   string const referenceFluidName = flowSolver.referenceFluidModelName();
   MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
 
@@ -1057,8 +1069,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
   integer const numComp = m_numComponents;
   integer const numPhase = m_numPhases;
 
-  // TODO: change the way we access the flowSolver here
-  CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+  CompositionalMultiphaseBase const & flowSolver = getFlowSolver( *this );
 
   // loop over the wells
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1736,7 +1747,7 @@ void CompositionalMultiphaseWell::computePerforationRates( real64 const & time_n
   {
 
     // TODO: change the way we access the flowSolver here
-    CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+    CompositionalMultiphaseBase const & flowSolver = getFlowSolver( *this );
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
