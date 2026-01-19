@@ -333,7 +333,8 @@ void setupEnvironment( int argc, char * argv[] )
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void cleanupEnvironment()
-{  MemoryLogging::getInstance().memoryStatsReport();
+{
+  MemoryLogging::getInstance().memoryStatsReport();
   TableTextFormatter tableReportFormatter;
   GEOS_LOG_RANK_0( tableReportFormatter.toString< LoggerMsgReportData >( GEOS_GLOBAL_LOGGER.getLoggerReportData()));
 

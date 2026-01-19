@@ -24,6 +24,7 @@
 #include "common/format/table/TableLayout.hpp"
 #include "common/format/table/TableTypes.hpp"
 #include "common/logger/MsgType.hpp"
+#include <iterator>
 #include <sstream>
 
 namespace geos
@@ -48,37 +49,34 @@ template<>
 string TableTextFormatter::toString< LoggerMsgReportData >( LoggerMsgReportData const & report ) const
 {
   TableLayout tableLayoutPerSection;
-  TableData dataPerSection;
-
-  std::ostringstream oss;
   tableLayoutPerSection.addColumn( " Types " );
 
-  for( auto const & [ logPartName, numMsg ] : report.numMsgByPart )
+  for( size_t msgTypeIdx = (size_t) MsgType::Error; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
   {
-    tableLayoutPerSection.addColumn( EnumStrings< LogPart::Type >::toString( logPartName ) );
+    tableLayoutPerSection.addColumn( EnumStrings< MsgType >::toString( (MsgType) msgTypeIdx ) );
   }
 
-
-  for( size_t i  = (size_t) MsgType::Error; i  != (size_t)MsgType::Undefined; i++ )
+  TableData dataPerSection;
+  for( auto const & [ logPartName, msgTypes ] : report.numMsgByPart )
   {
-    MsgType const currentType = (MsgType) i;
     stdVector< TableData::CellData > row;
-
-    row.push_back( {CellType::Value, EnumStrings< MsgType >::toString( (MsgType) i ) } );
-    for( auto const & [ _, msgTypes ] : report.numMsgByPart )
+    row.push_back( {CellType::Value, EnumStrings< LogPart::Type >::toString( logPartName )} );
+    for( size_t msgTypeIdx = (size_t) MsgType::Error; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
     {
+      MsgType const currentType = (MsgType) msgTypeIdx;
       auto it =  msgTypes.numMsg.find( currentType );
       int const count = ( it != msgTypes.numMsg.end() ) ? it->second : 0;
       row.push_back( {CellType::Value, std::to_string( count )} );
-
     }
     dataPerSection.addRow( row );
   }
 
   TableTextFormatter textFormatter( tableLayoutPerSection );
+  std::ostringstream oss;
   oss << textFormatter.toString( dataPerSection ) << "\n";
 
   return oss.str();
 }
+
 
 };
