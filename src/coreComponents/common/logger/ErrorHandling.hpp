@@ -103,6 +103,7 @@ struct ErrorContext
    * @return a string representation of the enumeration value
    */
   static std::string attributeToString( Attribute attribute );
+
 };
 
 /**
@@ -185,6 +186,7 @@ public:
    * @return Reference to the current instance for method chaining.
    */
   DiagnosticMsgBuilder & addToMsg( std::string_view msg, bool toEnd = false );
+
   /**
    * @brief Adds one or more context elements to the error
    * @tparam Args Variadic pack of compatible types (ErrorContext / DataContext)
@@ -214,6 +216,7 @@ public:
    * @return The instance, for builder pattern.
    */
   DiagnosticMsgBuilder & addSignal( integer sig, bool toEnd = false );
+
   /**
    * @brief Set the source code location values (file and line where the error is detected)
    * @param msgFile Name of the source file location to add
@@ -221,24 +224,28 @@ public:
    * @return Reference to the current instance for method chaining.
    */
   DiagnosticMsgBuilder & setCodeLocation( std::string_view msgFile, integer msgLine );
+
   /**
    * @brief Set the type of the error
    * @param msgType The type can be error, warning or exception
    * @return Reference to the current instance for method chaining.
    */
   DiagnosticMsgBuilder & setType( MsgType msgType );
+
   /**
    * @brief Set the cause of the error
    * @param cause See documentation of m_cause.
    * @return Reference to the current instance for method chaining.
    */
   DiagnosticMsgBuilder & setCause( std::string_view cause );
+
   /**
    * @brief Add a rank on which the error has been raised
    * @param rank The value to add
    * @return Reference to the current instance for method chaining.
    */
   DiagnosticMsgBuilder & addRank( integer rank );
+
   /**
    * @brief Add stack trace information about the error
    * @param ossStackTrace stack trace information to add
@@ -380,6 +387,7 @@ public:
   static void writeToAscii( DiagnosticMsg const & errMsg, std::ostream & os );
 
 private:
+
   /// The error constructed via exceptions
   DiagnosticMsg m_getCurrentExceptionMsg;
   /// Indicate whether the write to YAML command line option is enabled
@@ -390,6 +398,7 @@ private:
   std::ostream & m_stream = std::cout;
   /// Avoid concurrent access between threads for outputs
   static std::mutex m_errorHandlerMutex;
+
   /**
    * @brief Write all the information retrieved about the error/warning message into the YAML file
    * @param errorMsg a reference to the diagnostic message
