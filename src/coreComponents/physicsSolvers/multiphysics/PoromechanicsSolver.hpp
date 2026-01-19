@@ -481,7 +481,7 @@ protected:
                      == flowTargetRegionNames.end(),
                      GEOS_FMT( "Region `{}` must be a target region of `{}`",
                                poromechanicsTargetRegionNames[i], this->flowSolver()->getCatalogName() ),
-                     InputError, this->getDataContext(), this->solidMechanicsSolver()->getDataContext() );
+                     InputError, this->getDataContext(), this->flowSolver()->getDataContext() );
     }
   }
 

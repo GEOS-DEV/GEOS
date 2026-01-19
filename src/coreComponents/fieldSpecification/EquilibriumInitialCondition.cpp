@@ -108,7 +108,7 @@ void EquilibriumInitialCondition::postInputInitialization()
                    "Mismatch between the size of " <<
                    viewKeyStruct::componentNamesString() <<
                    " and " << viewKeyStruct::componentFractionVsElevationTableNamesString(),
-                   InputError );
+                   InputError, getDataContext() );
 
     integer const numberOfComponents = static_cast< integer >(m_componentNames.size());
 
