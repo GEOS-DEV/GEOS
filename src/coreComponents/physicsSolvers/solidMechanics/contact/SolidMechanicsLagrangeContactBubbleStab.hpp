@@ -50,6 +50,8 @@ public:
    */
   string getCatalogName() const override { return catalogName(); }
 
+  virtual void postInputInitialization() override;
+
   virtual void registerDataOnMesh( Group & MeshBodies ) override final;
 
   real64 solverStep( real64 const & time_n,
