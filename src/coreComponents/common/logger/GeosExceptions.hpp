@@ -57,7 +57,7 @@ public:
 private:
   /// Formatted exception message for what() method
   string m_cachedWhat;
-  static std::ostringstream m_formattingOSS;
+  thread_local static std::ostringstream m_formattingOSS;
 };
 
 /**

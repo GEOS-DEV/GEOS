@@ -286,7 +286,7 @@ std::string ErrorLogger::toString( MsgType const type )
   }
 }
 
-void ErrorLogger::formatAsciiMsg( DiagnosticMsg const & errMsg, std::ostream & os )
+void ErrorLogger::formatLogStream( DiagnosticMsg const & errMsg, std::ostream & os )
 {
   static constexpr string_view PREFIX = "***** ";
   // --- HEADER ---
@@ -348,7 +348,7 @@ void ErrorLogger::formatAsciiMsg( DiagnosticMsg const & errMsg, std::ostream & o
 void ErrorLogger::writeToLogStream( DiagnosticMsg & errMsg )
 {
   std::lock_guard< std::mutex > guard( m_errorHandlerAsciiMutex );
-  formatAsciiMsg( errMsg, m_stream );
+  formatLogStream( errMsg, m_stream );
   m_stream.flush();
 }
 

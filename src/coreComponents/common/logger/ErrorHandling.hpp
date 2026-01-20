@@ -384,7 +384,7 @@ public:
    * @param errMsg The struct containing the error/warning object
    * @param os The output stream
    */
-  static void formatAsciiMsg( DiagnosticMsg const & errMsg, std::ostream & os );
+  static void formatLogStream( DiagnosticMsg const & errMsg, std::ostream & os );
 
   /**
    * @brief Write the ErrorMsg into the log stream output stream
