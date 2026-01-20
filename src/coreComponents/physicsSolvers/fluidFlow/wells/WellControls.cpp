@@ -272,9 +272,7 @@ void WellControls::postInputInitialization()
                  "Both "
                  << viewKeyStruct::injectionStreamString() << " and " << viewKeyStruct::injectionTemperatureString()
                  << " must be specified for multiphase simulations",
-                 InputError,
-                 getWrapperDataContext( viewKeyStruct::injectionStreamString() ),
-                 getWrapperDataContext( viewKeyStruct::injectionTemperatureString() ) );
+                 InputError, getDataContext() );
 
   // 1.c) Set the multiplier for the rates
   if( isProducer() )
@@ -315,9 +313,9 @@ void WellControls::postInputInitialization()
                  "The phase rate constraint can be specified using " <<
                  "either " << viewKeyStruct::targetPhaseRateString() <<
                  " or " << viewKeyStruct::targetPhaseRateTableNameString() << ".\n" <<
-                 "The total rate constraint can be specified using " <<
+                 "The total rate constraint can be specified using " << ".\n" <<
                  "either " << viewKeyStruct::targetTotalRateString() <<
-                 " or " << viewKeyStruct::targetTotalRateTableNameString()<<
+                 " or " << viewKeyStruct::targetTotalRateTableNameString() << ".\n" <<
                  "The mass rate constraint can be specified using " <<
                  "either " << viewKeyStruct::targetMassRateString() <<
                  " or " << viewKeyStruct::targetMassRateTableNameString(),

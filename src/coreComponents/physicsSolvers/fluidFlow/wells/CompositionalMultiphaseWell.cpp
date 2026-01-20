@@ -401,11 +401,10 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
 
     integer const streamSize = injectionStream.size();
     GEOS_THROW_IF( ( streamSize == 0 ),
-                   "Injection stream not specified for well " << subRegion.getName(),
+                   "Injection stream not specified for well ",
                    InputError, wellControls.getDataContext() );
     GEOS_THROW_IF( ( streamSize != m_numComponents ),
-                   "Injection stream for well " << subRegion.getName() << " should have " <<
-                   m_numComponents << " components.",
+                   "Injection stream for well should have " << m_numComponents << " components.",
                    InputError, wellControls.getDataContext() );
 
     real64 compFracSum = 0;
@@ -413,13 +412,13 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
     {
       real64 const compFrac = injectionStream[ic];
       GEOS_THROW_IF( ( compFrac < 0.0 ) || ( compFrac > 1.0 ),
-                     "Invalid injection stream for well " << subRegion.getName(),
+                     "Invalid injection stream for well ",
                      InputError, wellControls.getDataContext() );
       compFracSum += compFrac;
     }
     GEOS_THROW_IF( ( compFracSum < 1.0 - std::numeric_limits< real64 >::epsilon() ) ||
                    ( compFracSum > 1.0 + std::numeric_limits< real64 >::epsilon() ),
-                   "Invalid injection stream for well " << subRegion.getName(),
+                   "Invalid injection stream for well ",
                    InputError, wellControls.getDataContext() );
   }
 }

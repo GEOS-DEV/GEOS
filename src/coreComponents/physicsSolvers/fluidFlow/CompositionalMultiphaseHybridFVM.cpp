@@ -19,6 +19,7 @@
 
 #include "CompositionalMultiphaseHybridFVM.hpp"
 
+#include "common/logger/Logger.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
@@ -226,9 +227,9 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOS_LOG_RANK_0( getCatalogName() << " " << getDataContext() << ": An aquifer boundary condition named " <<
-                       bc.getName() << " was requested in the XML file. \n" <<
-                       "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored" );
+      GEOS_WARNING( "An aquifer boundary condition named " << bc.getName() << " was requested in the XML file. \n" <<
+                    "This type of boundary condition is not yet supported by CompositionalMultiphaseHybridFVM and will be ignored",
+                    getDataContext() );
     } );
   } );
 

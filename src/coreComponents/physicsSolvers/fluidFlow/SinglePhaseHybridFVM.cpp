@@ -19,6 +19,7 @@
 
 #include "SinglePhaseHybridFVM.hpp"
 
+#include "common/logger/Logger.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
@@ -143,9 +144,9 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
     {
-      GEOS_LOG_RANK_0( getCatalogName() << " " << getDataContext() <<
-                       "The aquifer boundary condition " << bc.getDataContext() << " was requested in the XML file. \n" <<
-                       "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored" );
+      GEOS_WARNING( "The aquifer boundary condition was requested in the XML file. \n" <<
+                    "This type of boundary condition is not yet supported by SinglePhaseHybridFVM and will be ignored",
+                    getDataContext(), bc.getDataContext() );
     } );
   } );
 }
