@@ -30,7 +30,7 @@ void Exception::prepareWhat( DiagnosticMsg & msg ) noexcept
   m_formattingOSS.str( "" );
   m_formattingOSS.clear();
 
-  ErrorLogger::formatLogStream( msg, m_formattingOSS );
+  ErrorLogger::formatMsgForLog( msg, m_formattingOSS );
   m_cachedWhat = m_formattingOSS.bad() ? "Exception formatting error!" : m_formattingOSS.str();
 }
 
