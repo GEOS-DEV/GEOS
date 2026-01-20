@@ -36,7 +36,6 @@
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/solid/SolidFields.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
-//#include "mesh/ElementType.hpp"
 #include "mesh/DomainPartition.hpp"
 
 namespace geos
