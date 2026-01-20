@@ -347,7 +347,7 @@ public:
   { return m_getCurrentExceptionMsg;}
 
   /**
-   * @briefStart building a new exception message
+   * @brief Start building a new exception message
    * @param msgType Type of diagnostic (Warning, Error or Exception)
    * @param msgContent the message that can be completed
    * @param rank the rank(s) on which the diagnostic occured
@@ -373,7 +373,7 @@ public:
 
   /**
    * @brief Write all the information retrieved about the diagnostic message into the instance
-   * outputs (stream specified + optional yaml file)
+   * outputs (stream specified, std::cout by default + optional yaml file)
    * @param errMsg a reference to the ErrorMsg to output, and will be re-initialized
    * @note Used for warnings and non-exception errors
    */
@@ -390,7 +390,7 @@ public:
    * @brief Write the ErrorMsg into the log stream output stream
    * @param errMsg The struct containing the error/warning object
    */
-  void writeToLogStream( DiagnosticMsg & errMsg);
+  void writeToLogStream( DiagnosticMsg & errMsg );
 
 private:
 
@@ -416,7 +416,8 @@ private:
   /**
    * @brief Write the error message in the YAML file regarding indentation and line break
    * @param msg the message to write in the YAML
-   *            For the exception type, this message can be added as needed
+   * @param yamlFile The yaml file steam
+   * @param indent The desired indentation
    */
   void streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile,
                                      std::string_view indent );
