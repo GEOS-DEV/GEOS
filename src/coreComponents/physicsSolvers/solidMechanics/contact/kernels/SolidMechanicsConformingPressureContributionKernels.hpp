@@ -37,6 +37,7 @@ namespace solidMechanicsConformingContactKernels
 template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class AssemblePressureContribution :
+
   public ConformingContactKernelsBase< CONSTITUTIVE_TYPE,
                                        FE_TYPE >
 {

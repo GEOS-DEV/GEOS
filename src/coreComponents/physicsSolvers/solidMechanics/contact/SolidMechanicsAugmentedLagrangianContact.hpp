@@ -211,6 +211,27 @@ public:
    */
   void createBubbleCellList( DomainPartition & domain ) const;
 
+
+protected:
+
+virtual void postInputInitialization() override
+{
+
+  ContactSolverBase::postInputInitialization();
+
+  if( m_useHighOrderQuadratureRule == 1 )
+  {
+  m_faceTypeToFiniteElements.insert( {"Triangle", std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss4 >()} );
+  GEOS_LOG_RANK_0("Using high order quadrature rule on Triangle");
+  }
+  else {
+  m_faceTypeToFiniteElements.insert( {"Triangle", std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >()} );
+  GEOS_LOG_RANK_0("Using low order quadrature rule on Triangle");
+  }
+   m_faceTypeToFiniteElements.insert( {"Quadrilateral", std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >()} );
+
+}
+
 private:
 
   /**
@@ -274,6 +295,8 @@ private:
     constexpr static char const * tolNormalTracFacString() { return "tolNormalTrac"; }
 
     constexpr static char const * tolTauLimitString() { return "tolTauLimit"; }
+    
+    static constexpr char const * useHighOrderQuadratureRuleString() { return "useHighOrderQuadratureRule"; }
 
   };
 
@@ -302,6 +325,9 @@ private:
 
   /// Factor to adjust the tolerance for normal traction
   real64 m_tolNormalTracFac = 0.5;
+
+  /// Optional parameter indicating if the class should use a high order quadrature rule.
+  int m_useHighOrderQuadratureRule;
 
 };
 
