@@ -45,8 +45,6 @@ ErrorLogger g_errorLogger{};
 ErrorLogger & ErrorLogger::global()
 { return g_errorLogger; }
 
-std::mutex ErrorLogger::m_errorHandlerMutex;
-
 std::string ErrorContext::attributeToString( ErrorContext::Attribute attribute )
 {
   switch( attribute )
@@ -288,15 +286,9 @@ std::string ErrorLogger::toString( MsgType const type )
   }
 }
 
-/**
- * @brief Retrieve all informations from the ErrorMsg and format and write into a stream.
- * @param errMsg Class containing all the error/warning information
- * @param os The output stream to write the content to.
- */
-void ErrorLogger::writeToAscii( DiagnosticMsg const & errMsg, std::ostream & os )
+void ErrorLogger::formatAsciiMsg( DiagnosticMsg const & errMsg, std::ostream & os )
 {
   static constexpr string_view PREFIX = "***** ";
-  std::lock_guard< std::mutex > guard( m_errorHandlerMutex );
   // --- HEADER ---
   os << PREFIX << ErrorLogger::toString( errMsg.m_type ) << "\n";
   if( !errMsg.m_file.empty())
@@ -345,14 +337,25 @@ void ErrorLogger::writeToAscii( DiagnosticMsg const & errMsg, std::ostream & os 
       os << GEOS_FMT( "Frame {}: {}\n", i, errMsg.m_sourceCallStack[i] );
     }
     os << "=====\n";
-    os.flush();
   }
 }
 
-void ErrorLogger::writeToYaml( DiagnosticMsg & errMsg )
+/**
+ * @brief Retrieve all informations from the ErrorMsg and format and write into a stream.
+ * @param errMsg Class containing all the error/warning information
+ * @param os The output stream to write the content to.
+ */
+void ErrorLogger::writeToLogStream( DiagnosticMsg & errMsg )
 {
+  std::lock_guard< std::mutex > guard( m_errorHandlerAsciiMutex );
+  formatAsciiMsg( errMsg, m_stream );
+  m_stream.flush();
+}
+
+void ErrorLogger::writeToYamlStream( DiagnosticMsg & errMsg )
+{
+  std::lock_guard< std::mutex > guard( m_errorHandlerYamlMutex );
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
-  std::lock_guard< std::mutex > guard( m_errorHandlerMutex );
   if( yamlFile.is_open() )
   {
     // General errors info (type, rank on which the error occured)
@@ -429,19 +432,19 @@ void ErrorLogger::writeToYaml( DiagnosticMsg & errMsg )
 
 void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg )
 {
-  writeToAscii( errMsg, m_stream );
+  writeToLogStream( errMsg );
   if( isOutputFileEnabled() )
   {
-    writeToYaml( errMsg );
+    writeToYamlStream( errMsg );
   }
 }
 
 void ErrorLogger::flushCurrentExceptionMessage()
 {
-  writeToAscii( m_getCurrentExceptionMsg, m_stream );
+  writeToLogStream( m_getCurrentExceptionMsg );
   if( isOutputFileEnabled() )
   {
-    writeToYaml( m_getCurrentExceptionMsg );
+    writeToYamlStream( m_getCurrentExceptionMsg );
   }
 }
 
