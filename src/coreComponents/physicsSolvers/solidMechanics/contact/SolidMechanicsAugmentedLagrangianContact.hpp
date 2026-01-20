@@ -47,6 +47,8 @@ public:
    */
   string getCatalogName() const override { return catalogName(); }
 
+  virtual void postInputInitialization() override;
+
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
   virtual void setupDofs( DomainPartition const & domain,

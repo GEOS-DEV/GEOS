@@ -35,6 +35,8 @@
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "constitutive/solid/PorousSolid.hpp"
 #include "constitutive/solid/SolidFields.hpp"
+#include "finiteElement/FiniteElementDiscretization.hpp"
+//#include "mesh/ElementType.hpp"
 #include "mesh/DomainPartition.hpp"
 
 namespace geos
@@ -48,10 +50,6 @@ SolidMechanicsAugmentedLagrangianContact::SolidMechanicsAugmentedLagrangianConta
                                                                                     Group * const parent ):
   ContactSolverBase( name, parent )
 {
-
-  m_faceTypeToFiniteElements.insert( {"Quadrilateral", std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >()} );
-  m_faceTypeToFiniteElements.insert( {"Triangle", std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >()} );
-
   registerWrapper( viewKeyStruct::simultaneousString(), &m_simultaneous ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
@@ -217,6 +215,24 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
   createBubbleCellList( domain );
 
   PhysicsSolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+}
+
+void SolidMechanicsAugmentedLagrangianContact::postInputInitialization()
+{
+  ContactSolverBase::postInputInitialization();
+
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteElementDiscretizationManager const & feDiscretizationManager =
+    numericalMethodManager.getFiniteElementDiscretizationManager();
+  FiniteElementDiscretization const & feDiscretization =
+    feDiscretizationManager.getGroup< FiniteElementDiscretization >( getDiscretizationName() );
+
+  m_faceTypeToFiniteElements["Quadrilateral"] =
+    feDiscretization.factory( ElementType::Quadrilateral );
+
+  m_faceTypeToFiniteElements["Triangle"] =
+    feDiscretization.factory( ElementType::Triangle );
 }
 
 void SolidMechanicsAugmentedLagrangianContact::setSparsityPattern( DomainPartition & domain,
