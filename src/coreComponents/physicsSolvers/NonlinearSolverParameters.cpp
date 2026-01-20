@@ -216,9 +216,8 @@ void NonlinearSolverParameters::postInputInitialization()
 {
   GEOS_ERROR_IF_LE_MSG( m_timeStepDecreaseIterLimit, m_timeStepIncreaseIterLimit,
                         viewKeysStruct::timeStepIncreaseIterLimString() <<
-                        "Value should be smaller than " << viewKeysStruct::timeStepDecreaseIterLimString(),
-                        getWrapperDataContext( viewKeysStruct::timeStepIncreaseIterLimString() ),
-                        getWrapperDataContext( viewKeysStruct::timeStepDecreaseIterLimString() ) );
+                        " Value should be smaller than " << viewKeysStruct::timeStepDecreaseIterLimString(),
+                        getDataContext() );
 
   GEOS_ERROR_IF_LE_MSG( m_lineSearchResidualFactor, 0.0,
                         "Value should be positive",
