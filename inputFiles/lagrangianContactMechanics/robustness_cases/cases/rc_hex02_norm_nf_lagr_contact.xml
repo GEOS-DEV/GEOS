@@ -1,0 +1,242 @@
+<?xml version="1.0"?>
+<Problem>
+
+  <Mesh>
+    <VTKMesh
+      name="mesh1"
+      useGlobalIds="0"
+      nodesetNames="{ ruptureState }"
+      file="../meshes/fractured_mesh_tet_DFN_1.vtu"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="xnegFace"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{  0.01,  1.01,  1.01 }"/>
+    <Box
+      name="xposFace"
+      xMin="{  0.99, -0.01, -0.01 }"
+      xMax="{  1.01,  1.01,  1.01 }"/>
+    <Box
+      name="ynegFace"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{  1.01,  0.01,  1.01 }"/>
+    <Box
+      name="yposFace"
+      xMin="{ -0.01,  0.99, -0.01 }"
+      xMax="{  1.01,  1.01,  1.01 }"/>
+    <Box
+      name="znegFace"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{  1.01,  1.01,  0.01 }"/>
+    <Box
+      name="zposFace"
+      xMin="{ -0.01, -0.01,  0.99 }"
+      xMax="{  1.01,  1.01,  1.01 }"/>
+    <Box
+      name="fracture"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{  1.01,  1.01,  1.01 }"/>
+    <Box
+      name="core"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{  1.01,  1.01,  1.01 }"/>
+  </Geometry>
+
+  <Solvers gravityVector="{0.0, 0.0, 0.0}">
+    <SinglePhaseFVM
+      name="singlePhaseFlowSolver"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Region, Fracture}" >
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="20"
+        allowNonConverged="1"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovMaxIter="200"
+        krylovTol="1.0e-8"
+        logLevel="1"/>
+    </SinglePhaseFVM>
+
+    <SurfaceGenerator
+      name="SurfaceGen"
+      logLevel="1"
+      targetRegions="{ Region, Fracture }"
+      fractureRegion="Fracture"
+      initialRockToughness="1.0e60"/>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <!-- Restored the use of wrapper materials 'porousRock' and 'faultFilling' -->
+    <CellElementRegion
+      name="Region"
+      cellBlocks="{ * }"
+      materialList="{ water, porousRock }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"
+      defaultAperture="1.0e-6"
+      faceBlock="faceElementSubRegion"
+      materialList="{ water, faultFilling, hApertureModel }"/>
+  </ElementRegions>
+
+ <Constitutive>
+    <!-- Restored Wrappers and Solid Models required for definition -->
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2650.0"
+      defaultYoungModulus="14.95e9"
+      defaultPoissonRatio="0.15"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="faultFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <!-- Fluid and Component Models -->
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1020"
+      defaultViscosity="0.001"
+      referencePressure="35e6"
+      referenceDensity="1020"
+      compressibility="1.e-20"
+      referenceViscosity="0.001"
+      viscosibility="0.0"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      defaultGrainBulkModulus="7.1190476190476195e10"
+      defaultReferencePorosity="0.15"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{1.0e-18, 1.0e-18, 1.0e-18}"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.0"
+      referencePressure="0e6"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="separableFace"
+      fieldName="isFaceSeparable"
+      initialCondition="1"
+      setNames="{ ruptureState }"
+      objectPath="faceManager"
+      scale="1" />
+
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ ruptureState }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1" />
+
+    <FieldSpecification
+      name="fracPorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="fracturePorosity_porosity"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="prescribedFaultPressure"
+      setNames="{ all }"
+      objectPath="ElementRegions/Fracture"
+      fieldName="pressure"
+      scale="40.0e6"/>
+
+   <FieldSpecification
+      name="initialPressure"
+      initialCondition="0"
+      setNames="{ all }"
+      objectPath="ElementRegions/Region"
+      fieldName="pressure"
+      scale="30.0e6"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 1.0e-3, 1.0e-3 }"/>
+  </Functions>
+
+  <Tasks>
+    <PackCollection
+      name="faultPressureCollection"
+      objectPath="ElementRegions/Fracture/faceElementSubRegion"
+      fieldName="pressure"/>
+
+    <PackCollection
+      name="faultPorosityCollection"
+      objectPath="ElementRegions/Fracture/faceElementSubRegion"
+      fieldName="fracturePorosity_porosity"/>
+  </Tasks>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="rc_hex01_flow"/>
+
+    <TimeHistory
+      name="faultPressureOutput"
+      sources="{/Tasks/faultPressureCollection}"
+      filename="fault_pressure_history" />
+
+    <TimeHistory
+      name="faultPorosityOutput"
+      sources="{/Tasks/faultPorosityCollection}"
+      filename="fault_porosity_history" />
+  </Outputs>
+
+  <Events maxTime="1.0">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      target="/Solvers/singlePhaseFlowSolver"
+      forceDt="1.0"/>
+  </Events>
+</Problem>
