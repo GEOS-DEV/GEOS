@@ -7,7 +7,7 @@
 # review when someone opens a pull request.
 *       @rrsettgast
 
-/.github/ @rrsettgast
+/.github/ @rrsettgast @wrtobin @MelReyCG @arng40 
 
 /BASELINE_NOTES.md
 /.integrated_tests.yaml
