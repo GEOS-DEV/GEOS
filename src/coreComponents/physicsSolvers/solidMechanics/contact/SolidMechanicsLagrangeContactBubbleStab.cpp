@@ -202,6 +202,14 @@ void SolidMechanicsLagrangeContactBubbleStab::postInputInitialization()
 
   m_faceTypeToFiniteElements.insert( {"Quadrilateral", feDiscretization.factory( ElementType::Quadrilateral )} );
   m_faceTypeToFiniteElements.insert( {"Triangle", feDiscretization.factory( ElementType::Triangle )} );
+
+  GEOS_LOG_RANK_0( GEOS_FMT( "{} using finite element discretization {}:",
+                             getName(), getDiscretizationName() ) );
+  for( auto const & [name, fePtr] : m_faceTypeToFiniteElements )
+  {
+    GEOS_LOG_RANK_0( GEOS_FMT( "  {} face elements: {} quadrature points",
+                               name, fePtr->getNumQuadraturePoints() ) );
+  }
 }
 
 void SolidMechanicsLagrangeContactBubbleStab::setupSystem( DomainPartition & domain,
