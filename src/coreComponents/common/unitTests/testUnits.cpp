@@ -155,3 +155,10 @@ TEST( Units, SystemDurationFormatTest )
     }
   }
 }
+
+int main( int ac, char * av[] )
+{
+  ::testing::InitGoogleTest( &ac, av );
+  int const result = RUN_ALL_TESTS();
+  return result;
+}
