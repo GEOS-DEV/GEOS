@@ -14,12 +14,13 @@
  */
 
 // forcefully enable asserts macros for this unit test
+#define GEOS_ASSERT_ENABLED
 #include "LvArray/src/system.hpp"
 #include "common/logger/ExternalErrorHandler.hpp"
+#include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "gtest/gtest.h"
-#define GEOS_ASSERT_ENABLED
 #include "common/logger/ErrorHandling.hpp"
 
 #include "common/logger/Logger.hpp"
@@ -408,7 +409,6 @@ TEST( ErrorHandling, testYamlFileAssertOutput )
   } );
 }
 
-
 TEST( ErrorHandling, VerifySignalHandlerLogs )
 {
   ErrorLogger testErrorLogger;
@@ -469,27 +469,6 @@ static const string solverLogOutput =
             directParallel="0"/>
         </SinglePhaseFVM>
     </Solvers>
-    )xml";
-
-static const string solverCSVOutput =
-  R"xml(
-    <?xml version="1.0" ?>
-    <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="../../src/coreComponents/schema/schema.xsd">
-        <Solvers
-            gravityVector="{ 0.0, 0.0, -9.81 }">
-            <SinglePhaseFVM
-            name="SinglePhaseFlow"
-            discretization="singlePhaseTPFA"
-            targetRegions="{ Channel }"
-            writeStatistics="convergence" >
-            <NonlinearSolverParameters
-                newtonTol="1.0e-6"
-                newtonMaxIter="8"/>
-            <LinearSolverParameters
-                directParallel="0"/>
-            </SinglePhaseFVM>
-        </Solvers>
     )xml";
 
 static const string pattern =
@@ -583,26 +562,25 @@ static const string pattern =
 )xml";
 
 
-TEST( testSolverStats, testErrorReport )
+TEST( ErrorHandling, testErrorReport )
 {
-  ErrorLogger testErrorLogger;
-
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
   std::ostringstream xmlInput;
   xmlInput << solverLogOutput << pattern;
   problem.parseInputString( xmlInput.str() );
   problem.problemSetup();
+  std::cout << "after setup " << std::endl;
+  std::cout <<  ErrorLogger::global().getLoggerReportData().get().size() << std::endl;
   problem.applyInitialConditions();
   problem.runSimulation();
-
-  EXPECT_EQ( testErrorLogger.getLoggerReportData().get()
+  EXPECT_EQ( ErrorLogger::global().getLoggerReportData().get()
                .at( LogPart::Type::MeshGeneration )
                .at( MsgType::Warning ).size(), 3 );
-  EXPECT_EQ( testErrorLogger.getLoggerReportData().get()
+  EXPECT_EQ( ErrorLogger::global().getLoggerReportData().get()
                .at( LogPart::Type::NumericalMethods )
                .at( MsgType::Warning ).size(), 5 );
-  EXPECT_EQ( testErrorLogger.getLoggerReportData().get()
+  EXPECT_EQ( ErrorLogger::global().getLoggerReportData().get()
                .at( LogPart::Type::ImportFields )
                .at( MsgType::Warning ).size(), 5 );
 }
@@ -611,6 +589,7 @@ int main( int ac, char * av[] )
 {
   ::testing::GTEST_FLAG( death_test_style ) = "threadsafe";
   ::testing::InitGoogleTest( &ac, av );
+  g_commandLineOptions = *geos::basicSetup( ac, av );
   geos::setupEnvironment( ac, av );
   int const result = RUN_ALL_TESTS();
   geos::cleanupEnvironment( );
