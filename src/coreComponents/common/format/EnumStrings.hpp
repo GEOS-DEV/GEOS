@@ -37,7 +37,6 @@
 namespace geos
 {
 
-
 namespace internal
 {
 

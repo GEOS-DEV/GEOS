@@ -14,7 +14,7 @@
  */
 
 /**
- * @file ErrorHandling.hpp
+ * @file MsgType.hpp
  */
 
 #ifndef INITIALIZATION_MSG_TYPE_HPP
