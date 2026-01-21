@@ -1,0 +1,54 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Mesh>
+    <VTKMesh name="mesh1" file="../meshes/fractured_mesh_tet_DFN_1.vtu" nodesetNames="{ ruptureState }"/>
+  </Mesh>
+  <Geometry>
+    <Box name="xnegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  0.01,  1.01,  1.01 }"/>
+    <Box name="xposFace" xMin="{  0.99, -0.01, -0.01 }" xMax="{  1.01,  1.01,  1.01 }"/>
+    <Box name="ynegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  0.01,  1.01 }"/>
+    <Box name="yposFace" xMin="{ -0.01,  0.99, -0.01 }" xMax="{  1.01,  1.01,  1.01 }"/>
+    <Box name="znegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  1.01,  0.01 }"/>
+    <Box name="zposFace" xMin="{ -0.01, -0.01,  0.99 }" xMax="{  1.01,  1.01,  1.01 }"/>
+    <Box name="fracture" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  1.01,  1.01 }"/>
+  </Geometry>
+  <Solvers gravityVector="{0.0, 0.0, 0.0}">
+    <SolidMechanicsAugmentedLagrangianContact name="mechSolver" discretization="FE1" targetRegions="{ Region, Fracture }">
+      <NonlinearSolverParameters newtonTol="1.0e-5" newtonMaxIter="20"/>
+      <LinearSolverParameters solverType="gmres" preconditionerType="amg" krylovTol="1.0e-10"/>
+    </SolidMechanicsAugmentedLagrangianContact>
+    <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="1.0e60"/>
+  </Solvers>
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace name="FE1" order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+  <ElementRegions>
+    <CellElementRegion name="Region" cellBlocks="{ * }" materialList="{ rock }"/>
+    <SurfaceElementRegion name="Fracture" defaultAperture="1.0e-4" faceBlock="faceElementSubRegion" materialList="{ fractureContact }"/>
+  </ElementRegions>
+  <Constitutive>
+    <ElasticIsotropic name="rock" defaultDensity="2500" defaultYoungModulus="10e9" defaultPoissonRatio="0.2"/>
+    <Coulomb name="fractureContact" cohesion="0.0" frictionCoefficient="0.0"/>
+  </Constitutive>
+  <FieldSpecifications>
+    <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames="{ ruptureState }" objectPath="faceManager" scale="1" />
+    <FieldSpecification name="frac" initialCondition="1" setNames="{ ruptureState }" objectPath="faceManager" fieldName="ruptureState" scale="1" />
+    <!-- Tensile BCs: Pulling outwards on all faces -->
+    <FieldSpecification name="xneg_disp" component="0" setNames="{ xnegFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="-1.0e-4"/>
+    <FieldSpecification name="xpos_disp" component="0" setNames="{ xposFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="1.0e-4"/>
+    <FieldSpecification name="yneg_disp" component="1" setNames="{ ynegFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="-1.0e-4"/>
+    <FieldSpecification name="ypos_disp" component="1" setNames="{ yposFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="1.0e-4"/>
+    <FieldSpecification name="zneg_disp" component="2" setNames="{ znegFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="-1.0e-4"/>
+    <FieldSpecification name="zpos_disp" component="2" setNames="{ zposFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="1.0e-4"/>
+  </FieldSpecifications>
+  <Outputs>
+    <VTK name="vtkOutput" />
+  </Outputs>
+  <Events maxTime="1.0">
+    <SoloEvent name="preFracture" target="/Solvers/SurfaceGen"/>
+    <PeriodicEvent name="outputs" timeFrequency="1.0" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent name="solverApplications" target="/Solvers/mechSolver" forceDt="1.0"/>
+  </Events>
+</Problem>

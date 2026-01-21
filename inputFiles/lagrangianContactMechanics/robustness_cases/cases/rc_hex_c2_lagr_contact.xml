@@ -1,0 +1,61 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Mesh>
+    <VTKMesh name="mesh1" file="../meshes/fractured_mesh_hex_DFN_1.vtu" nodesetNames="{ ruptureState }"/>
+  </Mesh>
+  <Geometry>
+    <Box name="xnegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  0.01,  1.01,  1.01 }"/>
+    <Box name="xposFace" xMin="{  0.99, -0.01, -0.01 }" xMax="{  1.01,  1.01,  1.01 }"/>
+    <Box name="ynegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  0.01,  1.01 }"/>
+    <Box name="yposFace" xMin="{ -0.01,  0.99, -0.01 }" xMax="{  1.01,  1.01,  1.01 }"/>
+    <Box name="znegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  1.01,  0.01 }"/>
+    <Box name="zposFace" xMin="{ -0.01, -0.01,  0.99 }" xMax="{  1.01,  1.01,  1.01 }"/>
+    <Box name="fracture" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  1.01,  1.01 }"/>
+  </Geometry>
+  <Solvers>
+    <SinglePhaseFVM name="flowSolver" discretization="singlePhaseTPFA" targetRegions="{ Region, Fracture }">
+       <NonlinearSolverParameters newtonTol="1.0e-5" newtonMaxIter="20"/>
+       <LinearSolverParameters solverType="gmres" preconditionerType="amg" krylovTol="1.0e-8"/>
+    </SinglePhaseFVM>
+    <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="1.0e60"/>
+  </Solvers>
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+  <ElementRegions>
+    <CellElementRegion name="Region" cellBlocks="{ * }" materialList="{ water, porousRock }"/>
+    <SurfaceElementRegion name="Fracture" defaultAperture="1.0e-4" faceBlock="faceElementSubRegion" materialList="{ water, faultFilling, hApertureModel }"/>
+  </ElementRegions>
+  <Constitutive>
+    <PorousElasticIsotropic name="porousRock" solidModelName="rock" porosityModelName="rockPorosity" permeabilityModelName="rockPerm"/>
+    <ElasticIsotropic name="rock" defaultDensity="2500" defaultYoungModulus="10e9" defaultPoissonRatio="0.2"/>
+    <CompressibleSolidParallelPlatesPermeability name="faultFilling" solidModelName="nullSolid" porosityModelName="fracturePorosity" permeabilityModelName="fracturePerm"/>
+    <NullModel name="nullSolid"/>
+    <CompressibleSinglePhaseFluid name="water" defaultDensity="1000" defaultViscosity="0.001" referencePressure="1.0e5" referenceDensity="1000" compressibility="1e-10"/>    
+    <BiotPorosity name="rockPorosity" defaultReferencePorosity="0.1"/>
+    <ConstantPermeability name="rockPerm" permeabilityComponents="{1e-13, 1e-13, 1e-13}"/>
+    <PressurePorosity name="fracturePorosity" defaultReferencePorosity="1.0"/>
+    <ParallelPlatesPermeability name="fracturePerm"/>
+    <HydraulicApertureTable name="hApertureModel" apertureTableName="apertureTable"/>
+  </Constitutive>
+  <FieldSpecifications>
+    <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames="{ ruptureState }" objectPath="faceManager" scale="1" />
+    <FieldSpecification name="frac" initialCondition="1" setNames="{ ruptureState }" objectPath="faceManager" fieldName="ruptureState" scale="1" />
+    <FieldSpecification name="p_in" setNames="{ xnegFace }" objectPath="ElementRegions/Region" fieldName="pressure" scale="2.0e6"/>
+    <FieldSpecification name="p_out" setNames="{ xposFace }" objectPath="ElementRegions/Region" fieldName="pressure" scale="1.0e6"/>
+    <FieldSpecification name="initP" initialCondition="1" setNames="{ all }" objectPath="ElementRegions/Region" fieldName="pressure" scale="1.0e6"/>
+  </FieldSpecifications>
+  <Functions>
+    <TableFunction name="apertureTable" coordinates="{ -1.0e-3, 0.0 }" values="{ 1.0e-3, 1.0e-3 }"/>
+  </Functions>
+  <Outputs>
+    <VTK name="vtkOutput"/>
+  </Outputs>
+  <Events maxTime="1.0">
+    <SoloEvent name="preFracture" target="/Solvers/SurfaceGen"/>
+    <PeriodicEvent name="outputs" timeFrequency="1.0" target="/Outputs/vtkOutput"/>
+    <PeriodicEvent name="solverApplications" target="/Solvers/flowSolver" forceDt="1.0"/>
+  </Events>
+</Problem>
