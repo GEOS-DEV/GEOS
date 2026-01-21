@@ -71,11 +71,11 @@ private:
 
 /**
  * @brief Template specialisation to convert a LogHistory to a table string.
- * @param tableData The LogHistory object to convert.
+ * @param logHistory The LogHistory object to convert.
  * @return The CSV string representation of the logHistory.
  */
 template<>
-string TableTextFormatter::toString< LogHistory >( LogHistory const & loghistory) const;
+string TableTextFormatter::toString< LogHistory >( LogHistory const & logHistory ) const;
 
 }
 

@@ -567,14 +567,13 @@ static const string pattern =
 
 TEST( ErrorHandling, testErrorReport )
 {
+  //TODO reset logger
   GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
   ProblemManager & problem = state.getProblemManager();
   std::ostringstream xmlInput;
   xmlInput << solverLogOutput << pattern;
   problem.parseInputString( xmlInput.str() );
   problem.problemSetup();
-  std::cout << "after setup " << std::endl;
-  std::cout <<  ErrorLogger::global().getLoggerReportData().get().size() << std::endl;
   problem.applyInitialConditions();
   problem.runSimulation();
   EXPECT_EQ( ErrorLogger::global().getLoggerReportData().get()

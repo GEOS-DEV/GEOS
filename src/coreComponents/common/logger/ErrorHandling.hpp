@@ -99,6 +99,9 @@ public:
 
   /**
    * @brief Start building a new exception message
+   * @param msgType Type of diagnostic (Warning, Error or Exception)
+   * @param msgContent the message that can be completed
+   * @param rank the rank(s) on which the diagnostic occured
    * @return Builder for the exception
    * @note One exception can exist at a time
    */

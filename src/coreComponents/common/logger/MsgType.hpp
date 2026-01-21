@@ -38,6 +38,7 @@ enum class MsgType
   Undefined
 };
 
+/// Declare strings associated with output MsgType values.
 ENUM_STRINGS( MsgType,
               "Error",
               "ExternalError",

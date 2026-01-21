@@ -244,6 +244,7 @@ void LogPart::addEndDescription( string_view name, Args const &... args )
   addDescriptionBySection( m_endDescription, m_formattedEndDescription, name, args ... );
 }
 
+/// Declare strings associated with LogPart values.
 ENUM_STRINGS( LogPart::Type,
               "MeshGeneration",
               "NumericalMethods",
