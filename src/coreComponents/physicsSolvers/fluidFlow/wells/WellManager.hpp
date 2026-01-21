@@ -21,8 +21,10 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELL_MANAGER_HPP_
 
 #include "physicsSolvers/PhysicsSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
 namespace geos
 {
 
@@ -49,7 +51,7 @@ class WellManager : public PhysicsSolverBase
 public:
 
   /// String used to form the solverName used to register single-physics solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "well"; }
+  static string coupledSolverAttributePrefix() { return "wellManager"; }
 
   /**
    * @brief main constructor for Group Objects
@@ -100,16 +102,6 @@ public:
    */
   bool isCompositional() const { return m_isCompositional; }
 
-  /**
-   * @brief Utility function to keep the well variables during a time step (used in
-   * poromechanics simulations)
-   * @param[in] keepVariablesConstantDuringInitStep flag to tell the solver to freeze its
-   * primary variables during a time step
-   * @detail This function is meant to be called by a specific task before/after the
-   * initialization step
-   */
-  void setKeepVariablesConstantDuringInitStep( bool const keepVariablesConstantDuringInitStep )
-  { m_keepVariablesConstantDuringInitStep = keepVariablesConstantDuringInitStep; }
 
   /**
    * @brief getter for the name of the flow solver (used in UpdateState)
@@ -134,7 +126,7 @@ public:
    * @param subRegion the well subRegion whose well solver is requested
    * @return a reference to the well solver
    */
-  WellSolverBase & getWell( WellElementSubRegion const & subRegion );
+  WellControls & getWell( WellElementSubRegion const & subRegion );
 
   /**
    * @brief get the name of DOF defined on well elements
@@ -147,8 +139,12 @@ public:
     static constexpr char const * dofFieldString() { return "wellVars"; }
     static constexpr char const * isThermalString() { return "isThermal"; }
     static constexpr char const * useMassFlagString() {return "useMass"; }
+    /// @return string for the nextDt targetRegions wrapper
+    static constexpr char const * targetRegionsString() { return "targetRegions"; }
 
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
+    static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseBase::viewKeyStruct::allowLocalCompDensChoppingString(); }
+
 
   };
 
@@ -223,8 +219,23 @@ public:
    */
   CompositionalMultiphaseWell const & getCompositionalMultiphaseWell( WellElementSubRegion const & subRegion ) const;
 
-
+  /**
+   * @brief Selects the active well constraint  based on current conditions
+   * @param[in] currentTime the current time
+   * @param[in] currentDt the current time step size
+   * @param[in] coupledIterationNumber the current coupled iteration number
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  void selectWellConstraint( real64 const & time_n,
+                             real64 const & dt,
+                             integer const coupledIterationNumber,
+                             DomainPartition & domain );
   /* PhysicsSolverBase interfaces */
+
+  virtual void setupDofs( DomainPartition const & domain,
+                          DofManager & dofManager ) const override;
+
   /**
    * @brief function to perform setup for implicit timestep
    * @param time_n the time at the beginning of the step
@@ -242,7 +253,7 @@ public:
                      real64 const & dt,
                      DomainPartition & domain ) override;
 
-#if 0
+
   /**
    * @brief function to assemble the linear system matrix and rhs
    * @param time the time at the beginning of the step
@@ -267,8 +278,105 @@ public:
                   DomainPartition & domain,
                   DofManager const & dofManager,
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                  arrayView1d< real64 > const & localRhs );
+                  arrayView1d< real64 > const & localRhs ) override;
 
+
+  virtual void
+  resetStateToBeginningOfStep( DomainPartition & domain ) override;
+
+  virtual void
+  implicitStepComplete( real64 const & time,
+                        real64 const & dt,
+                        DomainPartition & domain ) override;
+
+  /**
+   * @brief calculate the norm of the global system residual
+   * @param time the time at the beginning of the step
+   * @param dt the desired timestep
+   * @param domain the domain partition
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localRhs the system right-hand side vector
+   * @return norm of the residual
+   *
+   * This function returns the norm of global residual vector, which is suitable for comparison with
+   * a tolerance.
+   */
+  virtual real64
+  calculateResidualNorm( real64 const & time,
+                         real64 const & dt,
+                         DomainPartition const & domain,
+                         DofManager const & dofManager,
+                         arrayView1d< real64 const > const & localRhs ) override;
+  /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @param domain the domain containing the mesh and fields
+   */
+  virtual void updateState( DomainPartition & domain ) override;
+
+  /**
+   * @brief Function to determine if the solution vector should be scaled back in order to maintain a known constraint.
+   * @param[in] domain The domain partition.
+   * @param[in] dofManager degree-of-freedom manager associated with the linear system
+   * @param[in] localSolution the solution vector
+   * @return The factor that should be used to scale the solution vector values when they are being applied.
+   */
+  virtual real64
+  scalingForSystemSolution( DomainPartition & domain,
+                            DofManager const & dofManager,
+                            arrayView1d< real64 const > const & localSolution )override;
+
+  /**
+   * @brief Function to check system solution for physical consistency and constraint violation
+   * @param domain the domain partition
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localSolution the solution vector
+   * @param scalingFactor factor to scale the solution prior to application
+   * @return true if solution can be safely applied without violating physical constraints, false otherwise
+   *
+   * @note This function must be overridden in the derived physics solver in order to use an implict
+   * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
+   *
+   */
+  virtual bool
+  checkSystemSolution( DomainPartition & domain,
+                       DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       real64 const scalingFactor ) override;
+
+  /**
+   * @brief Function to apply the solution vector to the state
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localSolution the solution vector
+   * @param scalingFactor factor to scale the solution prior to application
+   * @param dt the timestep
+   * @param domain the domain partition
+   *
+   * This function performs 2 operations:
+   * 1) extract the solution vector for the "blockSystem" parameter, and applies the
+   *    contents of the solution vector to the primary variable field data,
+   * 2) perform a synchronization of the primary field variable such that all ghosts are updated,
+   *
+   * The "scalingFactor" parameter allows for the scaled application of the solution vector. For
+   * instance, a line search may apply a negative scaling factor to remove part of the previously
+   * applied solution.
+   *
+   * @note This function must be overridden in the derived physics solver in order to use an implict
+   * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
+   *
+   */
+  virtual void
+  applySystemSolution( DofManager const & dofManager,
+                       arrayView1d< real64 const > const & localSolution,
+                       real64 const scalingFactor,
+                       real64 const dt,
+                       DomainPartition & domain ) override;
+
+  /**
+   * @brief Sets all the negative component densities (if any) to zero.
+   * @param domain the physical domain object
+   */
+  void chopNegativeDensities( DomainPartition & domain );
+#if 0
   /**
    * @brief calculate the norm of the global system residual
    * @param time the time at the beginning of the step
@@ -371,14 +479,27 @@ public:
                         DomainPartition & domain ) override;
 
 #endif
+
+  /**
+   * @brief Utility function to keep the well variables during a time step (used in
+   * poromechanics simulations)
+   * @param[in] keepVariablesConstantDuringInitStep flag to tell the solver to freeze its
+   * primary variables during a time step
+   * @detail This function is meant to be called by a specific task before/after the
+   * initialization step
+   */
+  void setKeepVariablesConstantDuringInitStep( bool const keepVariablesConstantDuringInitStep );
+
+
 protected:
   //virtual void postInputInitialization() override;
 
   virtual void initializePostSubGroups() override;
 
-  //virtual void initializePostInitialConditionsPreSubGroups() override;
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  // virtual void postRestartInitialization() override final;
+  virtual void postRestartInitialization() override final;
+
 
 private:
 
@@ -397,8 +518,6 @@ private:
   /// flag indicating whether compositional formulation is used
   bool m_isCompositional;
 
-  /// flag to freeze the initial state during initialization in coupled problems
-  bool m_keepVariablesConstantDuringInitStep;
 
   /// number of phases
   integer m_numFluidPhases;
@@ -411,6 +530,12 @@ private:
 
   /// number of degrees of freedom per reservoir element
   integer m_numDofPerResElement;
+
+  /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
+  real64 m_minScalingFactor;
+
+  /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
+  integer m_allowCompDensChopping;
 };
 
 }

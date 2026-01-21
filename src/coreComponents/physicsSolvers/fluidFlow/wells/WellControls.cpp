@@ -22,6 +22,7 @@
 #include "WellConstants.hpp"
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
+#include "mesh/PerforationFields.hpp"
 
 
 namespace geos
@@ -30,8 +31,14 @@ namespace geos
 using namespace dataRepository;
 
 WellControls::WellControls( string const & name, Group * const parent )
-  : PhysicsSolverBase( name, parent ),
+  : Group( name, parent ),
   m_type( Type::PRODUCER ),
+  m_numPhases( 0 ),
+  m_numComponents( 0 ),
+  m_numDofPerWellElement( 0 ),
+  m_numDofPerResElement( 0 ),
+  m_isThermal( 0 ),
+  m_keepVariablesConstantDuringInitStep( false ),
   m_inputControl( Control::UNINITIALIZED ),
   m_currentControl( Control::UNINITIALIZED ),
   m_useSurfaceConditions( 0 ),
@@ -50,6 +57,18 @@ WellControls::WellControls( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::typeString(), &m_type ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Well type. Valid options:\n* " + EnumStrings< Type >::concat( "\n* " ) );
+
+
+
+  this->registerWrapper( viewKeyStruct::writeCSVFlagString(), &m_writeCSV ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "When set to 1, write the rates into a CSV file." );
+
+  this->registerWrapper( viewKeyStruct::timeStepFromTablesFlagString(), &m_timeStepFromTables ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Choose time step to honor rates/bhp tables time intervals" );
 
   registerWrapper( viewKeyStruct::currentControlString(), &m_currentControl ).
     setDefaultValue( Control::UNINITIALIZED ).
@@ -100,6 +119,13 @@ WellControls::WellControls( string const & name, Group * const parent )
                     " - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) \n"
                     " - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) " );
 
+  registerWrapper( viewKeyStruct::targetRegionsString(), &m_targetRegionNames ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Allowable regions that the solver may be applied to. Note that this does not indicate that "
+                    "the solver will be applied to these regions, only that allocation will occur such that the "
+                    "solver may be applied to these regions. The decision about what regions this solver will be"
+                    "applied to rests in the EventManager." );
 
   addLogLevel< logInfo::WellControl >();
 }
@@ -110,7 +136,7 @@ WellControls::~WellControls()
 
 Group * WellControls::createChild( string const & childKey, string const & childName )
 {
-  Group * baseChild = PhysicsSolverBase::createChild( childKey, childName );
+  Group * baseChild = Group::createChild( childKey, childName );
   if( baseChild != nullptr )
   {
     return baseChild;
@@ -214,7 +240,7 @@ TableFunction * createWellTable( string const & tableName,
 
 void WellControls::postInputInitialization()
 {
-  PhysicsSolverBase::postInputInitialization();
+  Group::postInputInitialization();
   // 0) Assign the value of the current well control
   // When the simulation starts from a restart file, we don't want to use the inputControl,
   // because the control may have switched in the simulation that generated the restart
@@ -288,7 +314,10 @@ void WellControls::postInputInitialization()
   }
 
 }
+void WellControls::postRestartInitialization( )
+{
 
+}
 void WellControls::setWellStatus( real64 const & currentTime, WellControls::Status status )
 {
   m_wellStatus = status;
@@ -453,4 +482,76 @@ real64 WellControls::getReferenceElevation() const
   }
   return getMaxBHPConstraint()->getReferenceElevation();
 }
+void WellControls::implicitStepSetup( real64 const & time_n,
+                                      real64 const & GEOS_UNUSED_PARAM( dt ),
+                                      ElementRegionManager & elemManager,
+                                      WellElementSubRegion & subRegion )
+{
+  // Set perforation status
+  setPerforationStatus( time_n, subRegion );
+}
+void WellControls::setPerforationStatus( real64 const & time_n, WellElementSubRegion & subRegion )
+{
+  FunctionManager & functionManager = FunctionManager::getInstance();
+
+  // Set perforation status
+
+  PerforationData & perforationData = *subRegion.getPerforationData();
+  string_array const & perfStatusTableName = perforationData.getPerfStatusTableName();
+  arrayView1d< integer > perfStatus = perforationData.getLocalPerfStatus();
+  // for now set to open
+  for( integer i=0; i<perforationData.size(); i++ )
+  {
+    TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfStatusTableName[i] );
+    perfStatus[i]=PerforationData::PerforationStatus::OPEN;
+    if( tableFunction->evaluate( &time_n ) < LvArray::NumericLimits< real64 >::epsilon )
+    {
+      perfStatus[i]=PerforationData::PerforationStatus::CLOSED;
+    }
+  }
+
+  array1d< localIndex > const perfWellElemIndex = perforationData.getField< fields::perforation::wellElementIndex >();
+  // global index local elements (size == subregion.size)
+  arrayView1d< globalIndex const > globalWellElementIndex = subRegion.getGlobalWellElementIndex();
+
+  arrayView1d< integer const > const elemGhostRank  = subRegion.ghostRank();
+  array1d< integer > & currentStatus = subRegion.getWellElementStatus();
+  // Local elements
+  array1d< integer > & localElemStatus = subRegion.getWellLocalElementStatus();
+
+  integer numLocalElements = subRegion.getNumLocalElements();
+  array1d< integer > segStatus( numLocalElements );
+
+  // Local perforations
+  for( integer j = 0; j < perforationData.size(); j++ )
+  {
+    localIndex const iwelem = perfWellElemIndex[j];
+    if( elemGhostRank[iwelem] < 0 )
+    {
+      if( perfStatus[j] )
+      {
+        segStatus[iwelem] +=1;
+      }
+    }
+  }
+  // Broadcast segment status so all cores have same well status
+  subRegion.setElementStatus( segStatus );
+  integer numOpenElements = 0;
+  array1d< integer > const & updatedStatus = subRegion.getWellElementStatus();
+  for( integer i=0; i<currentStatus.size(); i++ )
+  {
+    numOpenElements += updatedStatus[i];
+  }
+  numOpenElements>0 ?  setWellStatus( time_n, WellControls::Status::OPEN ) :  setWellStatus( time_n, WellControls::Status::CLOSED );
+
+
+  // Set local well element status array
+  for( integer i=0; i<subRegion.size(); i++ )
+  {
+    integer gi = globalWellElementIndex[i];
+    localElemStatus[i] = currentStatus[gi];
+  }
+
+}
+
 } //namespace geos

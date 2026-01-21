@@ -209,93 +209,7 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
                           DofManager::Connector::Node );
 }
 
-void WellSolverBase::setPerforationStatus( real64 const & time_n, DomainPartition & domain )
-{
-  FunctionManager & functionManager = FunctionManager::getInstance();
 
-  // Set well element/perf status
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
-  {
-
-    ElementRegionManager & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   WellElementSubRegion & subRegion )
-    {
-      WellControls & wellControls = getWellControls( subRegion );
-
-      // Set perforation status
-
-      PerforationData & perforationData = *subRegion.getPerforationData();
-      string_array const & perfStatusTableName = perforationData.getPerfStatusTableName();
-      arrayView1d< integer > perfStatus = perforationData.getLocalPerfStatus();
-      // for now set to open
-      for( integer i=0; i<perforationData.size(); i++ )
-      {
-        TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfStatusTableName[i] );
-        perfStatus[i]=PerforationData::PerforationStatus::OPEN;
-        if( tableFunction->evaluate( &time_n ) < LvArray::NumericLimits< real64 >::epsilon )
-        {
-          perfStatus[i]=PerforationData::PerforationStatus::CLOSED;
-        }
-      }
-
-      array1d< localIndex > const perfWellElemIndex = perforationData.getField< fields::perforation::wellElementIndex >();
-      // global index local elements (size == subregion.size)
-      arrayView1d< globalIndex const > globalWellElementIndex = subRegion.getGlobalWellElementIndex();
-
-      arrayView1d< integer const > const elemGhostRank  = subRegion.ghostRank();
-      array1d< integer > & currentStatus = subRegion.getWellElementStatus();
-      // Local elements
-      array1d< integer > & localElemStatus = subRegion.getWellLocalElementStatus();
-
-      integer numLocalElements = subRegion.getNumLocalElements();
-      array1d< integer > segStatus( numLocalElements );
-
-      // Local perforations
-      for( integer j = 0; j < perforationData.size(); j++ )
-      {
-        localIndex const iwelem = perfWellElemIndex[j];
-        if( elemGhostRank[iwelem] < 0 )
-        {
-          if( perfStatus[j] )
-          {
-            segStatus[iwelem] +=1;
-          }
-        }
-      }
-      // Broadcast segment status so all cores have same well status
-      subRegion.setElementStatus( segStatus );
-      integer numOpenElements = 0;
-      array1d< integer > const & updatedStatus = subRegion.getWellElementStatus();
-      for( integer i=0; i<currentStatus.size(); i++ )
-      {
-        numOpenElements += updatedStatus[i];
-      }
-      numOpenElements>0 ?  wellControls.setWellStatus( time_n, WellControls::Status::OPEN ) :  wellControls.setWellStatus( time_n, WellControls::Status::CLOSED );
-
-
-      // Set local well element status array
-      for( integer i=0; i<subRegion.size(); i++ )
-      {
-        integer gi = globalWellElementIndex[i];
-        localElemStatus[i] = currentStatus[gi];
-      }
-    } );
-
-  } );
-}
-void WellSolverBase::implicitStepSetup( real64 const & time_n,
-                                        real64 const & GEOS_UNUSED_PARAM( dt ),
-                                        DomainPartition & domain )
-{
-
-  // Open close perfs
-  setPerforationStatus( time_n, domain );
-
-}
 
 void WellSolverBase::selectWellConstraint( real64 const & time_n,
                                            real64 const & dt,
@@ -396,7 +310,7 @@ void WellSolverBase::assembleSystem( real64 const time,
   assembleAccumulationTerms( time, dt, domain, dofManager, localMatrix, localRhs );
 
   // then assemble the pressure relations between well elements
-  assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
+  //assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,

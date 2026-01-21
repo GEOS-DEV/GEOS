@@ -148,7 +148,7 @@ initializePreSubGroups()
   CompositionalMultiphaseBase const * const flowSolver = this->flowSolver();
   Base::wellSolver()->setFlowSolverName( flowSolver->getName() );
   bool const useMassFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
-  bool const useMassWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
+  bool const useMassWell = Base::wellSolver()->template getReference< integer >( WellManager::viewKeyStruct::useMassFlagString() );
   GEOS_THROW_IF( useMassFlow != useMassWell,
                  GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
                            this->getDataContext(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
@@ -156,12 +156,27 @@ initializePreSubGroups()
                  InputError, this->getDataContext(), Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() );
 
   bool const isThermalFlow = flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::isThermalString() );
-  bool const isThermalWell = Base::wellSolver()->template getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::isThermalString() );
+  bool const isThermalWell = Base::wellSolver()->template getReference< integer >( WellManager::viewKeyStruct::isThermalString() );
   GEOS_THROW_IF( isThermalFlow != isThermalWell,
                  GEOS_FMT( "{}: the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
                            this->getDataContext(), CompositionalMultiphaseBase::viewKeyStruct::isThermalString(),
                            Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() ),
                  InputError, this->getDataContext(), Base::reservoirSolver()->getDataContext(), Base::wellSolver()->getDataContext() );
+  DomainPartition & domain = this->template getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&] ( string const &,
+                                                                                 MeshLevel & mesh,
+                                                                                 string_array const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                WellElementSubRegion const & subRegion )
+    {
+      WellControls & wellControls = Base::wellSolver()->getWellControls( subRegion );
+      wellControls.setFlowSolverName( flowSolver->getName() );
+
+    } );
+  } );
 }
 
 template< typename RESERVOIR_SOLVER >

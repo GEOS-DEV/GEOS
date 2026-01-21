@@ -23,10 +23,13 @@
 #include "mesh/PerforationFields.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
+#include "physicsSolvers/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "functions/FunctionManager.hpp"
@@ -42,7 +45,9 @@ WellManager::WellManager( string const & name,
   m_useMass( false ),
   m_useTotalMassEquation( 1 ),
   m_isThermal( 0 ),
-  m_isCompositional( true )
+  m_isCompositional( true ),
+  m_minScalingFactor( 0.01 ),
+  m_allowCompDensChopping( 1 )
 {
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
@@ -62,6 +67,13 @@ WellManager::WellManager( string const & name,
     setApplyDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use total mass equation" );
+
+  this->registerWrapper( viewKeyStruct::allowLocalCompDensChoppingString(), &m_allowCompDensChopping ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
+
 
 }
 Group * WellManager::createChild( string const & childKey, string const & childName )
@@ -102,6 +114,8 @@ void WellManager::registerDataOnMesh( Group & meshBodies )
 {
   if( isCompositional() )
   {
+    //std::string const & flowSolverName = getParent().getName();//getGroup< CompositionalMultiphaseBase >().getName();
+    // CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
 
     forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                       MeshLevel & mesh,
@@ -115,7 +129,9 @@ void WellManager::registerDataOnMesh( Group & meshBodies )
                                                                      WellElementSubRegion & subRegion )
       {
         CompositionalMultiphaseWell & well =  getCompositionalMultiphaseWell( subRegion );
+        //well.setFlowSolverName( flowSolver.getName() );
         well.registerWellDataOnMesh( subRegion );
+        well.setThermal( isThermal() );
         m_numFluidPhases = well.numFluidPhases();
         m_numFluidComponents = well.numFluidComponents();
       } );
@@ -285,9 +301,9 @@ void WellManager::registerDataOnMesh( Group & meshBodies )
 #endif
 }
 
-WellSolverBase & WellManager::getWell( WellElementSubRegion const & subRegion )
+WellControls & WellManager::getWell( WellElementSubRegion const & subRegion )
 {
-  return this->getGroup< WellSolverBase >( subRegion.getWellControlsName());
+  return this->getGroup< WellControls >( subRegion.getWellControlsName());
 }
 
 void WellManager::implicitStepSetup( real64 const & time_n,
@@ -307,8 +323,9 @@ void WellManager::implicitStepSetup( real64 const & time_n,
                                                                    WellElementSubRegion & subRegion )
     {
 
-      WellSolverBase & well = getWell( subRegion );
-      well.implicitStepSetup( time_n, dt, domain );
+      WellControls & well = getWell( subRegion );
+      //well.implicitStepSetup( time_n, dt, domain );
+      well.implicitStepSetup( time_n, dt, elemManager, subRegion );
     } )
     ;
   } );
@@ -335,7 +352,10 @@ string WellManager::wellElementDofName() const
 
 string WellManager::resElementDofName() const
 {
-  return "reservoirCouplingVars";
+  if( isCompositional() )
+    return CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString();
+  else
+    return SinglePhaseBase::viewKeyStruct::elemDofFieldString();
 }
 
 localIndex WellManager::numFluidComponents() const
@@ -402,5 +422,630 @@ void WellManager::initializePostSubGroups()
 #endif
 }
 
+void WellManager::setupDofs( DomainPartition const & domain,
+                             DofManager & dofManager ) const
+{
+  map< std::pair< string, string >, string_array > meshTargets;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                               MeshLevel const & meshLevel,
+                                                               string_array const & regionNames )
+  {
+    string_array regions;
+    ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                 [&]( localIndex const,
+                                                                      WellElementRegion const & region )
+    {
+      regions.emplace_back( region.getName() );
+    } );
+    auto const key = std::make_pair( meshBodyName, meshLevel.getName());
+    meshTargets[key] = std::move( regions );
+  } );
+
+  dofManager.addField( wellElementDofName(),
+                       FieldLocation::Elem,
+                       numDofPerWellElement(),
+                       meshTargets );
+
+  dofManager.addCoupling( wellElementDofName(),
+                          wellElementDofName(),
+                          DofManager::Connector::Node );
+}
+
+void WellManager::assembleSystem( real64 const time,
+                                  real64 const dt,
+                                  DomainPartition & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs )
+{
+
+
+  // selects constraints one of 2 ways
+  //  wellEstimator flag set to 0 => orginal logic rates are computed during update state and constraints are selected every newton
+  // iteration
+  //  wellEstimator flag > 0 =>   well esitmator solved for each constraint and then selects the constraint
+  //                         =>   estimator solve only performed first "wellEstimator" iterations
+  NonlinearSolverParameters const & nonlinearParams =  getNonlinearSolverParameters();
+  selectWellConstraint( time, dt, nonlinearParams.m_numNewtonIterations, domain );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                               MeshLevel & meshLevel,
+                                                               string_array const & regionNames )
+  {
+    GEOS_UNUSED_VAR( meshBodyName );
+    ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                 [&]( localIndex const,
+                                                                      WellElementRegion & region )
+    {
+      WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                           .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+      WellControls & wellControls = getWellControls( subRegion );
+      // assemble the accumulation term in the mass balance equations
+      wellControls.assembleWellAccumulationTerms( time, dt, subRegion, dofManager, localMatrix, localRhs );
+      // assemble the pressure relations between well elements
+      wellControls.assembleWellPressureRelations( time, dt, subRegion, dofManager, localMatrix, localRhs );
+      // assemble well constraint terms
+      wellControls.assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+      // compute the perforation rates (later assembled by the coupled solver)
+      wellControls.computeWellPerforationRates( time, dt, elementRegionManager, subRegion );
+      // assemble the flux terms in the mass balance equations
+      wellControls.assembleWellFluxTerms( time, dt, subRegion, dofManager, localMatrix, localRhs );
+
+    } );
+  } );
+
+  #if 0
+  // assemble the accumulation term in the mass balance equations
+  assembleAccumulationTerms( time, dt, domain, dofManager, localMatrix, localRhs );
+
+
+
+  // then assemble the pressure relations between well elements
+  assemblePressureRelations( time, dt, domain, dofManager, localMatrix, localRhs );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                 [&]( localIndex const,
+                                                                      WellElementRegion & region )
+    {
+      WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                           .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+      assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+    } );
+  } );
+
+  // then compute the perforation rates (later assembled by the coupled solver)
+  computePerforationRates( time, dt, domain );
+
+  // then assemble the flux terms in the mass balance equations
+  // get a reference to the degree-of-freedom numbers
+  // then assemble the flux terms in the mass balance equations
+  assembleFluxTerms( time, dt, domain, dofManager, localMatrix, localRhs );
+#endif
+}
+
+void WellManager::selectWellConstraint( real64 const & time_n,
+                                        real64 const & dt,
+                                        const integer coupledIterationNumber,
+                                        DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+  GEOS_UNUSED_VAR( dt );
+  GEOS_UNUSED_VAR( coupledIterationNumber );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
+                                                               MeshLevel & meshLevel,
+                                                               string_array const & regionNames )
+  {
+    GEOS_UNUSED_VAR( meshBodyName );
+    ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
+                                                                 [&]( localIndex const,
+                                                                      WellElementRegion & region )
+    {
+      WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                                           .getGroup< WellElementSubRegion >( region.getSubRegionName() );
+      WellControls & wellControls = getWellControls( subRegion );
+      // Intiialize well if it is open
+      // Well state estimated from reservoir conditions
+      if( wellControls.isWellOpen() )
+      {
+        if( !wellControls.getWellState() )
+        {
+          wellControls.setWellState( 1 );
+
+          wellControls.initializeWell( domain, meshLevel, subRegion, time_n );
+        }
+      }
+      else
+      {
+        wellControls.setWellState( 0 );
+      }
+
+      if( wellControls.getWellState())
+      {
+        wellControls.evaluateConstraints( time_n,
+                                          subRegion );
+
+        // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
+        // the well initialization code requires control type to by synced
+        integer owner = -1;
+        // Only subregion owner evaluates well control and control changes need to be broadcast to all ranks
+        if( subRegion.isLocallyOwned() )
+        {
+          owner = MpiWrapper::commRank( MPI_COMM_GEOS );
+        }
+        owner = MpiWrapper::max( owner );
+        WellControls::Control wellControl = wellControls.getControl();
+        MpiWrapper::broadcast( wellControl, owner );
+        wellControls.setControl( wellControl );
+      }
+    } );
+  } );
+
+}
+
+void WellManager::resetStateToBeginningOfStep( DomainPartition & domain )
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   WellElementSubRegion & subRegion )
+    {
+      WellControls & wellControls = getWellControls( subRegion );
+      wellControls.resetStateToBeginningOfStep( elemManager, subRegion );
+
+
+    } );
+  } );
+}
+
+void WellManager::implicitStepComplete( real64 const & time,
+                                        real64 const & dt,
+                                        DomainPartition & domain )
+{
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   WellElementSubRegion & subRegion )
+    {
+      WellControls & wellControls = getWellControls( subRegion );
+      wellControls.implicitStepComplete( time, dt, subRegion );
+    } );
+  } );
+}
+
+void WellManager::postRestartInitialization()
+{
+#if 0
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    // loop over the wells
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          WellElementSubRegion & subRegion )
+
+    {
+      WellControls & wellControls = getWell( subRegion );
+      wellControls.postRestartInitialization(   );
+
+    } );
+  } );
+#endif
+}
+void WellManager::initializePostInitialConditionsPreSubGroups()
+{
+  PhysicsSolverBase::initializePostInitialConditionsPreSubGroups();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & regionNames )
+  {
+
+    // loop over the wells
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          WellElementSubRegion & subRegion )
+    {
+
+      WellControls & wellControls = getWellControls( subRegion );
+      wellControls.initializeWellPostInitialConditionsPreSubGroups( subRegion );
+
+
+    } );
+  } );
+}
+void WellManager::setKeepVariablesConstantDuringInitStep( bool const keepVariablesConstantDuringInitStep )
+{
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+    // loop over the wells
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          WellElementSubRegion & subRegion )
+
+    {
+      WellControls & wellControls = getWellControls( subRegion );
+      wellControls.setKeepVariablesConstantDuringInitStep( keepVariablesConstantDuringInitStep );
+
+    } );
+  } );
+}
+void WellManager::updateState( DomainPartition & domain )
+{
+  GEOS_MARK_FUNCTION;
+  //tjb
+  real64 maxPhaseVolFrac = 0.0;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                WellElementSubRegion & subRegion )
+    {
+      WellControls & wellControls = getWellControls( subRegion );
+      if( wellControls.getWellState())
+      {
+
+        real64 const maxRegionPhaseVolFrac = wellControls.updateWellState( elemManager, subRegion );
+
+        maxPhaseVolFrac = LvArray::math::max( maxRegionPhaseVolFrac, maxPhaseVolFrac );
+      }
+    } );
+  } );
+  maxPhaseVolFrac = MpiWrapper::max( maxPhaseVolFrac );
+
+  GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                         GEOS_FMT( "        {}: Max well phase volume fraction change = {}",
+                                   getName(), fmt::format( "{:.{}f}", maxPhaseVolFrac, 4 ) ) );
+
+}
+
+real64
+WellManager::calculateResidualNorm( real64 const & time_n,
+                                    real64 const & dt,
+                                    DomainPartition const & domain,
+                                    DofManager const & dofManager,
+                                    arrayView1d< real64 const > const & localRhs )
+{
+  GEOS_MARK_FUNCTION;
+
+  integer numNorm = 1;       // mass balance
+  array1d< real64 > localResidualNorm;
+  array1d< real64 > localResidualNormalizer;
+
+  if( isThermal() )
+  {
+    numNorm = 2;       // mass balance and energy balance
+  }
+  localResidualNorm.resize( numNorm );
+  localResidualNormalizer.resize( numNorm );
+
+
+  globalIndex const rankOffset = dofManager.rankOffset();
+  string const wellDofKey = dofManager.getKey( wellElementDofName() );
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel const & mesh,
+                                                                string_array const & regionNames )
+  {
+
+
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   WellElementSubRegion const & subRegion )
+    {
+
+      WellControls & wellControls = getWellControls( subRegion );
+
+      // step 1: compute the norm in the subRegion
+      if( true )     // tjb wellControls.isWellOpen( ) )
+      {
+        localResidualNorm = wellControls.calculateLocalWellResidualNorm( time_n,
+                                                                         dt,
+                                                                         m_nonlinearSolverParameters,
+                                                                         subRegion,
+                                                                         dofManager,
+                                                                         localRhs );
+      }
+      else
+      {
+        for( integer i=0; i<numNorm; i++ )
+        {
+          localResidualNorm[i] = 0.0;
+        }
+
+      }
+    } );
+  } );
+
+  // step 3: second reduction across MPI ranks
+  real64 resNorm=localResidualNorm[0];
+  if( isThermal() )
+  {
+    real64 globalResidualNorm[2]{};
+    globalResidualNorm[0] = MpiWrapper::max( localResidualNorm[0] );
+    globalResidualNorm[1] = MpiWrapper::max( localResidualNorm[1] );
+    resNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
+
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
+                                                                coupledSolverAttributePrefix(), globalResidualNorm[0], globalResidualNorm[1] ));
+
+    getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), globalResidualNorm[0] );
+    getConvergenceStats().setResidualValue( "Renergy", globalResidualNorm[1] );
+  }
+  else
+  {
+    resNorm = MpiWrapper::max( resNorm );
+
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
+                                                                coupledSolverAttributePrefix(), resNorm ));
+    getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), resNorm );
+  }
+  return resNorm;
+}
+real64
+WellManager::scalingForSystemSolution( DomainPartition & domain,
+                                       DofManager const & dofManager,
+                                       arrayView1d< real64 const > const & localSolution )
+{
+  GEOS_MARK_FUNCTION;
+
+  string const wellDofKey = dofManager.getKey( wellElementDofName() );
+
+  real64 scalingFactor = 1.0;
+  if( isCompositional() )
+  {
+
+
+    real64 maxDeltaPres = 0.0, maxDeltaCompDens = 0.0, maxDeltaTemp = 0.0;
+    real64 minPresScalingFactor = 1.0, minCompDensScalingFactor = 1.0, minTempScalingFactor = 1.0;
+
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & regionNames )
+    {
+
+      ElementRegionManager & elemManager = mesh.getElemManager();
+      elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                                [&]( localIndex const,
+                                                                     WellElementSubRegion & subRegion )
+
+      {
+        CompositionalMultiphaseWell * wellControls = dynamic_cast< CompositionalMultiphaseWell * >(&getWellControls ( subRegion ));
+        wellControls->scalingForLocalSystemSolution( subRegion,
+                                                     dofManager,
+                                                     maxDeltaPres,
+                                                     maxDeltaCompDens,
+                                                     maxDeltaTemp,
+                                                     minPresScalingFactor,
+                                                     minCompDensScalingFactor,
+                                                     minTempScalingFactor,
+                                                     localSolution );
+
+
+      } );
+    } );
+
+    scalingFactor = MpiWrapper::min( scalingFactor );
+    maxDeltaPres  = MpiWrapper::max( maxDeltaPres );
+    maxDeltaCompDens = MpiWrapper::max( maxDeltaCompDens );
+    minPresScalingFactor = MpiWrapper::min( minPresScalingFactor );
+    minCompDensScalingFactor = MpiWrapper::min( minCompDensScalingFactor );
+
+    string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Max well pressure change: {} Pa (before scaling)",
+                                     getName(), GEOS_FMT( "{:.{}f}", maxDeltaPres, 3 ) ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Max well component density change: {} {} (before scaling)",
+                                     getName(), GEOS_FMT( "{:.{}f}", maxDeltaCompDens, 3 ), massUnit ) );
+
+    if( m_isThermal )
+    {
+      maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
+      minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                             GEOS_FMT( "        {}: Max well temperature change: {} K (before scaling)",
+                                       getName(), GEOS_FMT( "{:.{}f}", maxDeltaTemp, 3 ) ) );
+    }
+
+
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Min well pressure scaling factor: {}",
+                                     getName(), minPresScalingFactor ) );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                           GEOS_FMT( "        {}: Min well component density scaling factor: {}",
+                                     getName(), minCompDensScalingFactor ) );
+    if( m_isThermal )
+    {
+      GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
+                             GEOS_FMT( "        {}: Min well temperature scaling factor: {}",
+                                       getName(), minTempScalingFactor ) );
+    }
+
+  }
+  return LvArray::math::max( scalingFactor, m_minScalingFactor );
+
+}
+
+bool
+WellManager::checkSystemSolution( DomainPartition & domain,
+                                  DofManager const & dofManager,
+                                  arrayView1d< real64 const > const & localSolution,
+                                  real64 const scalingFactor )
+{
+  GEOS_MARK_FUNCTION;
+
+  string const wellDofKey = dofManager.getKey( wellElementDofName() );
+  integer globalCheck = 1;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   WellElementSubRegion & subRegion )
+
+    {
+
+      WellControls & wellControls = getWellControls( subRegion );
+      integer localCheck = wellControls.checkWellSystemSolution( subRegion, dofManager, localSolution, scalingFactor );
+      globalCheck =  MpiWrapper::min( localCheck );
+    } );
+  } );
+  return globalCheck;
+}
+
+void
+WellManager::applySystemSolution( DofManager const & dofManager,
+                                  arrayView1d< real64 const > const & localSolution,
+                                  real64 const scalingFactor,
+                                  real64 const dt,
+                                  DomainPartition & domain )
+{
+
+
+  DofManager::CompMask pressureMask( m_numDofPerWellElement, 0, 1 );
+
+  DofManager::CompMask connRateMask( m_numDofPerWellElement, numFluidComponents()+1, numFluidComponents()+2 );
+  GEOS_UNUSED_VAR( dt );
+  // update all the fields using the global damping coefficients
+  dofManager.addVectorToField( localSolution,
+                               wellElementDofName(),
+                               well::pressure::key(),
+                               scalingFactor,
+                               pressureMask );
+
+  dofManager.addVectorToField( localSolution,
+                               wellElementDofName(),
+                               well::mixtureConnectionRate::key(),
+                               scalingFactor,
+                               connRateMask );
+  if( isCompositional())
+  {
+    DofManager::CompMask componentMask( m_numDofPerWellElement, 1, numFluidComponents()+1 );
+    dofManager.addVectorToField( localSolution,
+                                 wellElementDofName(),
+                                 well::globalCompDensity::key(),
+                                 scalingFactor,
+                                 componentMask );
+  }
+  if( isThermal() )
+  {
+    DofManager::CompMask temperatureMask( m_numDofPerWellElement, numFluidComponents()+2, numFluidComponents()+3 );
+
+    dofManager.addVectorToField( localSolution,
+                                 wellElementDofName(),
+                                 well::temperature::key(),
+                                 scalingFactor,
+                                 temperatureMask );
+
+  }
+  // if component density chopping is allowed, some component densities may be negative after the update
+  // these negative component densities are set to zero in this function
+  if( m_allowCompDensChopping )
+  {
+    chopNegativeDensities( domain );
+  }
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                               MeshLevel & mesh,
+                                                               string_array const & regionNames )
+  {
+    stdVector< string > propNames;
+    propNames.emplace_back( well::pressure::key() );
+
+    propNames.emplace_back( well::mixtureConnectionRate::key() );
+    if( isCompositional())
+    {
+      propNames.emplace_back( well::globalCompDensity::key() );
+    }
+    if( isThermal() )
+    {
+      propNames.emplace_back( well::temperature::key() );
+    }
+    // synchronize
+    FieldIdentifiers fieldsToBeSync;
+
+    fieldsToBeSync.addElementFields( propNames,
+                                     regionNames );
+
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
+  } );
+
+}
+
+void WellManager::chopNegativeDensities( DomainPartition & domain )
+{
+  integer const numComp = m_numFluidComponents;
+
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & regionNames )
+  {
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   WellElementSubRegion & subRegion )
+    {
+      arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
+
+      arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens =
+        subRegion.getField< well::globalCompDensity >();
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const iwelem )
+      {
+        if( wellElemGhostRank[iwelem] < 0 )
+        {
+          for( integer ic = 0; ic < numComp; ++ic )
+          {
+            // we allowed for some densities to be slightly negative in CheckSystemSolution
+            // if the new density is negative, chop back to zero
+            if( wellElemCompDens[iwelem][ic] < 0 )
+            {
+              wellElemCompDens[iwelem][ic] = 0;
+            }
+          }
+        }
+      } );
+    } );
+
+  } );
+}
+
 REGISTER_CATALOG_ENTRY( PhysicsSolverBase, WellManager, string const &, Group * const )
-} // namespace geos
+}     // namespace geos

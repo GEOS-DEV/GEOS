@@ -52,12 +52,12 @@ static constexpr auto wellControls = "WellControls";
  * @class WellControls
  * @brief This class describes the controls used to operate a well.
  */
-class WellControls :  public PhysicsSolverBase
+class WellControls :  public dataRepository::Group //public PhysicsSolverBase
 {
 public:
 
   /** Type of wells
-   * Either producer or injector.
+   * Either producer or injector
    */
   enum class Type : integer
   {
@@ -134,6 +134,9 @@ public:
 
   ///@}
 
+
+  /// String used to form the solverName used to register single-physics solvers in CoupledSolver
+  static string coupledSolverAttributePrefix() { return "well"; }
   /**
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
    * @param childKey the catalog key of the new geometric object to create
@@ -145,6 +148,184 @@ public:
 
   virtual void expandObjectCatalogs() override;
 
+  virtual void registerWellDataOnMesh( WellElementSubRegion & subRegion ) = 0;
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const = 0;
+  /**
+   * @brief Create well separator
+   */
+  virtual void  createSeparator( WellElementSubRegion & subRegion ) = 0;
+
+  /**
+   * @defgroup WellManager Interface Functions
+   *
+   * These functions provide the primary interface that is required for derived classes
+   * The "Well" versions apply to individual well subRegions, whereas the others apply to all wells
+   */
+  /**@{*/
+
+  virtual void validateWellConstraints( real64 const & time_n,
+                                        real64 const & dt,
+                                        WellElementSubRegion const & subRegion ) = 0;
+  /**
+   *   * @brief Initialize well for the beginning of a simulation or restart
+   *   @param domain the domain
+   *   @param mesh the mesh level
+   *   @param subRegion the well subRegion
+   *  @param time_n the current time
+   */
+  virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) = 0;
+
+  // Bring the base class implicitStepSetup into scope to avoid hiding the overloaded virtual function
+
+
+  virtual void implicitStepSetup( real64 const & time_n,
+                                  real64 const & GEOS_UNUSED_PARAM( dt ),
+                                  ElementRegionManager & elemManager,
+                                  WellElementSubRegion & subRegion ) = 0;
+
+  virtual void
+  implicitStepComplete( real64 const & time,
+                        real64 const & dt,
+                        WellElementSubRegion const & subRegion ) = 0;
+  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
+
+  /**
+   * @brief Function to evaluate well constraints after applying the solution update
+   * @param time_n the time at the beginning of the time step
+   * @param subRegion the well subRegion
+   * @return true if all constraints are satisfied, false otherwise
+   */
+  virtual bool evaluateConstraints( real64 const & time_n,
+                                    WellElementSubRegion & subRegion ) = 0;
+
+  /**
+   * @brief assembles the accumulation term for an individual well
+   * @param time_n time at the beginning of the time step
+   * @param dt the time step size
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void assembleWellAccumulationTerms( real64 const & time,
+                                              real64 const & dt,
+                                              WellElementSubRegion & subRegion,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs ) = 0;
+  /**
+   * @brief assembles the well momentum terms for an individual well
+   * @param time_n time at the beginning of the time step
+   * @param dt the time step size
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void assembleWellPressureRelations( real64 const & time_n,
+                                              real64 const & dt,
+                                              WellElementSubRegion const & subRegion,
+                                              DofManager const & dofManager,
+                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                              arrayView1d< real64 > const & localRhs ) = 0;
+  /**
+   * @brief assembles the well constraint terms for an individual well
+   * @param time_n time at the beginning of the time step
+   * @param dt the time step size
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void assembleWellConstraintTerms( real64 const & time_n,
+                                            real64 const & dt,
+                                            WellElementSubRegion const & subRegion,
+                                            DofManager const & dofManager,
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                            arrayView1d< real64 > const & localRhs ) = 0;
+
+  /**
+   * @brief Recompute the perforation rates for all the wells
+   * @param time_n the time at the beginning of the time step
+   * @param dt the time step size
+   * @param elemManager the element region manager
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   */
+  virtual void computeWellPerforationRates( real64 const & time_n,
+                                            real64 const & GEOS_UNUSED_PARAM( dt ),
+                                            ElementRegionManager const & elemManager,
+                                            WellElementSubRegion & subRegion ) = 0;
+
+  /**
+   * @brief assembles the flux terms for individual well for all connections between well elements
+   * @param time_n previous time value
+   * @param dt time step
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void assembleWellFluxTerms( real64 const & time,
+                                      real64 const & dt,
+                                      WellElementSubRegion const & subRegion,
+                                      DofManager const & dofManager,
+                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                      arrayView1d< real64 > const & localRhs ) = 0;
+  virtual real64
+  calculateWellResidualNorm( real64 const & time_n,
+                             real64 const & dt,
+                             NonlinearSolverParameters const & nonlinearSolverParameters,
+                             WellElementSubRegion const & subRegion,
+                             DofManager const & dofManager,
+                             arrayView1d< real64 const > const & localRhs ) = 0;
+
+  virtual array1d< real64 >
+  calculateLocalWellResidualNorm( real64 const & time_n,
+                                  real64 const & dt,
+                                  NonlinearSolverParameters const & nonlinearSolverParameters,
+                                  WellElementSubRegion const & subRegion,
+                                  DofManager const & dofManager,
+                                  arrayView1d< real64 const > const & localRhs ) = 0;
+
+  virtual real64
+  scalingForWellSystemSolution( WellElementSubRegion & subRegion,
+                                DofManager const & dofManager,
+                                arrayView1d< real64 const > const & localSolution ) = 0;
+
+  virtual bool
+  checkWellSystemSolution( WellElementSubRegion & subRegion,
+                           DofManager const & dofManager,
+                           arrayView1d< real64 const > const & localSolution,
+                           real64 const scalingFactor ) = 0;
+
+  virtual void
+  applyWellSystemSolution( DofManager const & dofManager,
+                           arrayView1d< real64 const > const & localSolution,
+                           real64 const scalingFactor,
+                           real64 const dt,
+                           DomainPartition & domain,
+                           MeshLevel & mesh,
+                           WellElementSubRegion & subRegion ) = 0;
+
+  /**
+   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   */
+  virtual real64 updateWellState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
+
+  /**
+   * @brief Reset the well state to the beginning of the time step
+   * @param subRegion the well subregion containing all the primary and dependent fields
+   */
+  virtual void resetStateToBeginningOfStep( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) = 0;
+
+  virtual void postInputInitialization() override;
+
+  virtual void initializeWellPostInitialConditionsPreSubGroups( WellElementSubRegion & subRegion ) = 0;
+  virtual void printRates( real64 const & time_n,
+                           real64 const & dt,
+                           WellElementSubRegion const & subRegion ) = 0;
+  /**@}*/
   /**
    * @brief Apply a given functor to a container if the container can be
    *        cast to one of the specified types.
@@ -257,6 +438,44 @@ public:
   ///@{
 
   /**
+   * @brief Get the Constitutive Name object
+   *
+   * @tparam CONSTITUTIVE_BASE_TYPE the base type of the constitutive model.
+   * @param subRegion the element subregion on which the constitutive model is registered
+   * @return the name name of the constitutive model of type CONSTITUTIVE_BASE_TYPE registered on the subregion.
+   */
+  template< typename CONSTITUTIVE_BASE_TYPE >
+  static string getConstitutiveName( ElementSubRegionBase const & subRegion );
+
+  /**
+   * @brief Register wrapper with given name and store constitutive model name on the subregion
+   *
+   * @tparam CONSTITUTIVE the base type of the constitutive model.
+   * @param subRegion the subregion on which the constitutive model is registered.
+   * @param wrapperName the wrapper name to register.
+   * @param constitutiveType the type description of the constitutive model.
+   */
+  template< typename CONSTITUTIVE >
+  void setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const;
+
+  /**
+   * @brief return the list of target regions
+   * @return the array of region names
+   */
+  string_array const & getTargetRegionNames() const {return m_targetRegionNames;}
+  /**
+   * @brief Get the control type for the well.
+   * @return the Control enum enforced at the well
+   */
+  std::string getFlowSolverName() const { return m_flowSolverName; }
+
+  /**
+   * @brief Set the control type for the well.
+   * @param[in] flowSolverName  the name of the flow solver
+   */
+  void setFlowSolverName( const std::string & flowSolverName )   { m_flowSolverName = flowSolverName;    }
+
+  /**
    * @brief Get the control type for the well.
    * @return the Control enum enforced at the well
    */
@@ -328,7 +547,7 @@ public:
    * @brief Getter for the reservoir region associated with reservoir volume constraint
    * @return name of reservoir region
    */
-  string referenceReservoirRegion() const { return m_referenceReservoirRegion; }
+  string getReferenceReservoirRegion() const { return m_referenceReservoirRegion; }
 
   /**
    * @brief Getter for the surface pressure when m_useSurfaceConditions == 1
@@ -354,6 +573,18 @@ public:
    */
   bool isProducer() const { return ( m_type == Type::PRODUCER ); }
 
+  /**
+   * @brief getter for iso/thermal switch
+   * @return True if thermal
+   */
+  integer isThermal() const { return m_isThermal; }
+
+  /**
+   * @brief setter for iso/thermal switch
+   * @param[in] isThermal
+   */
+
+  void setThermal( bool isThermal )   {  m_isThermal=isThermal; }
   /**
    * @brief Is the well open (or shut) at currentTime, status initalized in WellSolverBase::implicitStepSetup
    * @return a boolean
@@ -402,6 +633,16 @@ public:
    * @param[inout] nextDt the time step
    */
   void setNextDtFromTables( real64 const & currentTime, real64 & nextDt );
+  /**
+   * @brief Utility function to keep the well variables during a time step (used in
+   * poromechanics simulations)
+   * @param[in] keepVariablesConstantDuringInitStep flag to tell the solver to freeze its
+   * primary variables during a time step
+   * @detail This function is meant to be called by a specific task before/after the
+   * initialization step
+   */
+  void setKeepVariablesConstantDuringInitStep( bool const keepVariablesConstantDuringInitStep )
+  { m_keepVariablesConstantDuringInitStep = keepVariablesConstantDuringInitStep; }
 
 
   /**
@@ -460,12 +701,27 @@ public:
   ///@}
 
 
+  virtual string wellElementDofName() const = 0;
+
+  virtual string resElementDofName() const = 0;
+
+  virtual localIndex numFluidComponents() const = 0;
+
+  virtual localIndex numFluidPhases() const = 0;
   /**
    * @brief Struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
    */
   struct viewKeyStruct
   {
+    /// String key for the fluid model names
+    static constexpr char const * fluidNamesString() { return "fluidNames"; }
+    ///   String key for the write CSV flag
+    static constexpr char const * writeCSVFlagString() { return "writeCSV"; }
+    static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
+/// @return string for the   targetRegions wrapper
+    static constexpr char const * targetRegionsString() { return "targetRegions"; }
+
     /// String key for the well reference elevation (for BHP control)
     static constexpr char const * refElevString() { return "referenceElevation"; }
     /// String key for the well type
@@ -515,6 +771,13 @@ public:
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
+  void setPerforationStatus( real64 const & time_n, WellElementSubRegion & subRegion );
+  /**
+   * @brief Set next time step based on a table function
+   * @param[in] table the table function
+   * @param[in] currentTime the current time
+   * @param[inout] nextDt the time step
+   */
 
   static void setNextDtFromTable( TableFunction const * table, real64 const currentTime, real64 & nextDt );
 
@@ -541,15 +804,44 @@ public:
   std::vector< WellConstraintBase * >  getProdRateConstraints() const { return m_productionRateConstraintList; };
   std::vector< WellConstraintBase * >  getInjRateConstraints() { return m_injectionRateConstraintList; }
   std::vector< WellConstraintBase * >  getInjRateConstraints() const { return m_injectionRateConstraintList; }
+
 protected:
 
-  virtual void postInputInitialization() override;
-
+  virtual void postRestartInitialization( )override;
 private:
+  /// List of names of regions the solver will be applied to
+  string_array m_targetRegionNames;
+
+protected:
 
   /// Well type (as Type enum)
   Type m_type;
 
+  /// Name of the flow solver managing this well
+  std::string m_flowSolverName;
+
+  /// the max number of fluid phases
+  integer m_numPhases;
+
+  /// the number of fluid components
+  integer m_numComponents;
+
+  /// the number of Degrees of Freedom per well element
+  integer m_numDofPerWellElement;
+
+  /// the number of Degrees of Freedom per reservoir element
+  integer m_numDofPerResElement;
+
+  /// flag indicating whether thermal formulation is used
+  integer m_isThermal;
+  /// flag to freeze the initial state during initialization in coupled problems
+  bool m_keepVariablesConstantDuringInitStep;
+  /// rates output
+  integer m_writeCSV;
+  string const m_ratesOutputDir;
+
+  // flag to enable time step selection base on rates/bhp tables coordinates
+  integer m_timeStepFromTables;
   /// Reference elevation
   real64 m_refElevation;
 
@@ -567,6 +859,9 @@ private:
 
   // Fuild model to compute properties for constraint equation user specified conditions
   std::unique_ptr< constitutive::ConstitutiveBase >  m_fluidSeparatorPtr;
+
+  /// name of the fluid constitutive model used as a reference for component/phase description on subregion
+  string m_referenceFluidModelName;
 
   /// Reservoir region associated with reservoir volume constraint
   string m_referenceReservoirRegion;
@@ -633,6 +928,62 @@ ENUM_STRINGS( WellControls_Control,
               "uninitialized" );
 
 
+template< typename CONSTITUTIVE >
+void WellControls::setConstitutiveName( ElementSubRegionBase & subRegion, string const & wrapperName, string const & constitutiveType ) const
+{
+  subRegion.registerWrapper< string >( wrapperName ).
+    setPlotLevel( dataRepository::PlotLevel::NOPLOT ).
+    setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & constitutiveName = subRegion.getReference< string >( wrapperName );
+  constitutiveName = getConstitutiveName< CONSTITUTIVE >( subRegion );
+  GEOS_ERROR_IF( constitutiveName.empty(), GEOS_FMT( "{}: {} constitutive model not found on subregion {}",
+                                                     getDataContext(), constitutiveType, subRegion.getName() ) );
+}
+template< typename CONSTITUTIVE_BASE_TYPE >
+string WellControls::getConstitutiveName( ElementSubRegionBase const & subRegion )
+{
+  string validName;
+  dataRepository::Group const & constitutiveModels = subRegion.getConstitutiveModels();
+
+  constitutiveModels.forSubGroups< CONSTITUTIVE_BASE_TYPE >( [&]( dataRepository::Group const & model )
+  {
+    GEOS_ERROR_IF( !validName.empty(), "A valid constitutive model was already found." );
+    validName = model.getName();
+  } );
+
+  return validName;
+}
+
+/**
+ * @brief Get the Constitutive Model object
+ * @tparam BASETYPE the base type of the constitutive model.
+ * @tparam LOOKUP_TYPE the type of the key used to look up the constitutive model.
+ * @param dataGroup the data group containing the constitutive models.
+ * @param key the key used to look up the constitutive model.
+ * @return the constitutive model of type @p BASETYPE registered on the @p dataGroup with the key @p key.
+ */
+template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
+static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key )
+{
+  dataRepository::Group const & constitutiveModels = dataGroup.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
+  return constitutiveModels.getGroup< BASETYPE >( key );
+}
+/**
+ * @brief Get the Constitutive Model object
+ * @tparam BASETYPE the base type of the constitutive model.
+ * @tparam LOOKUP_TYPE the type of the key used to look up the constitutive model.
+ * @param dataGroup the data group containing the constitutive models.
+ * @param key the key used to look up the constitutive model.
+ * @return the constitutive model of type @p BASETYPE registered on the @p dataGroup with the key @p key.
+ */
+template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
+static BASETYPE & getConstitutiveModel( dataRepository::Group & dataGroup, LOOKUP_TYPE const & key )
+{
+  dataRepository::Group & constitutiveModels = dataGroup.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
+  return constitutiveModels.getGroup< BASETYPE >( key );
+}
 } //namespace geos
 
 #endif //GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLCONTROLS_HPP
