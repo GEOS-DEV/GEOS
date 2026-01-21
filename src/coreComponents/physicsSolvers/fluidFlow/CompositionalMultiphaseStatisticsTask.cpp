@@ -138,6 +138,8 @@ void StatsTask::registerDataOnMesh( Group & meshBodies )
     prepareLogTableLayouts( mesh.getName() );
     prepareCsvTableLayouts( mesh.getName() );
   } );
+  if( MpiWrapper::commRank() == 0 )
+    getGroupByPath( "/" ).printDataHierarchy();
 }
 
 void StatsTask::prepareFluidMetaData()
@@ -289,10 +291,12 @@ void StatsTask::outputLogStats( real64 const statsTime,
   // lamda to apply for each region statistics
   auto const outputRegionStats = [&] ( string_view targetName, RegionStatistics & stats )
   {
+    tableData.addSeparator();
     tableData.addRow( merge, merge, merge, "" );
 
     tableData.addSeparator();
     tableData.addRow( merge, merge, merge, GEOS_FMT( "Region '{}'", targetName ) );
+    tableData.addSeparator();
     tableData.addRow( "statistics", "min", "average", "max" );
     tableData.addSeparator();
 
@@ -305,7 +309,10 @@ void StatsTask::outputLogStats( real64 const statsTime,
 
     tableData.addSeparator();
 
-    tableData.addRow( GEOS_FMT( "Total dynamic pore volume [{}]", resVolUnit ), CellType::MergeNext, CellType::MergeNext, stats.m_totalPoreVolume );
+    tableData.addRow( GEOS_FMT( "Total dynamic pore volume [{}]", resVolUnit ),
+                      "all",
+                      CellType::MergeNext,
+                      stats.m_totalPoreVolume );
     tableData.addRow( GEOS_FMT( "Phase dynamic pore volume [{}]", resVolUnit ),
                       stringutilities::joinLambda( m_fluid.m_phaseNames, "\n", []( auto data ) { return data[0]; } ),
                       CellType::MergeNext,
@@ -346,8 +353,6 @@ void StatsTask::outputLogStats( real64 const statsTime,
                       "TODO" /*stringutilities::join( m_fluid.m_phaseCompNames, '\n' )*/,
                       CellType::MergeNext,
                       stringutilities::join( stats.m_componentMass, '\n' ) );
-
-    tableData.addSeparator();
   };
 
   // apply the lambda for each region and, finally, the mesh summary
