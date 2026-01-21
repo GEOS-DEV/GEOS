@@ -18,6 +18,7 @@
  */
 
 #include "ErrorHandling.hpp"
+#include "common/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
 
 // signal management
@@ -38,8 +39,6 @@ ErrorLogger g_errorLogger{};
 
 ErrorLogger & ErrorLogger::global()
 { return g_errorLogger; }
-
-std::mutex ErrorLogger::m_errorHandlerMutex;
 
 std::string ErrorContext::attributeToString( ErrorContext::Attribute attribute )
 {
@@ -282,15 +281,9 @@ std::string ErrorLogger::toString( MsgType const type )
   }
 }
 
-/**
- * @brief Retrieve all informations from the ErrorMsg and format and write into a stream.
- * @param errMsg Class containing all the error/warning information
- * @param os The output stream to write the content to.
- */
-void ErrorLogger::writeToAscii( DiagnosticMsg const & errMsg, std::ostream & os )
+void ErrorLogger::formatMsgForLog( DiagnosticMsg const & errMsg, std::ostream & os )
 {
   static constexpr string_view PREFIX = "***** ";
-  std::lock_guard< std::mutex > guard( m_errorHandlerMutex );
   // --- HEADER ---
   os << PREFIX << ErrorLogger::toString( errMsg.m_type ) << "\n";
   if( !errMsg.m_file.empty())
@@ -339,14 +332,25 @@ void ErrorLogger::writeToAscii( DiagnosticMsg const & errMsg, std::ostream & os 
       os << GEOS_FMT( "Frame {}: {}\n", i, errMsg.m_sourceCallStack[i] );
     }
     os << "=====\n";
-    os.flush();
   }
 }
 
-void ErrorLogger::writeToYaml( DiagnosticMsg & errMsg )
+/**
+ * @brief Retrieve all informations from the ErrorMsg and format and write into a stream.
+ * @param errMsg Class containing all the error/warning information
+ * @param os The output stream to write the content to.
+ */
+void ErrorLogger::writeToLogStream( DiagnosticMsg & errMsg )
 {
+  std::lock_guard< std::mutex > guard( m_errorHandlerAsciiMutex );
+  formatMsgForLog( errMsg, m_stream );
+  m_stream.flush();
+}
+
+void ErrorLogger::writeToYamlStream( DiagnosticMsg & errMsg )
+{
+  std::lock_guard< std::mutex > guard( m_errorHandlerYamlMutex );
   std::ofstream yamlFile( std::string( m_filename ), std::ios::app );
-  std::lock_guard< std::mutex > guard( m_errorHandlerMutex );
   if( yamlFile.is_open() )
   {
     // General errors info (type, rank on which the error occured)
@@ -426,10 +430,10 @@ void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg )
   loggerMsgReportData.notifyMsg( getCurrentLogPart(),
                                  errMsg,
                                  1 );
-  writeToAscii( errMsg, m_stream );
+  writeToLogStream( errMsg );
   if( isOutputFileEnabled() )
   {
-    writeToYaml( errMsg );
+    writeToYamlStream( errMsg );
   }
 }
 
@@ -438,10 +442,10 @@ void ErrorLogger::flushCurrentExceptionMessage()
   loggerMsgReportData.notifyMsg( getCurrentLogPart(),
                                  m_getCurrentExceptionMsg,
                                  1 );
-  writeToAscii( m_getCurrentExceptionMsg, m_stream );
+  writeToLogStream( m_getCurrentExceptionMsg );
   if( isOutputFileEnabled() )
   {
-    writeToYaml( m_getCurrentExceptionMsg );
+    writeToYamlStream( m_getCurrentExceptionMsg );
   }
 }
 

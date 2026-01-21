@@ -132,7 +132,13 @@ public:
    * @param errMsg The struct containing the error/warning object
    * @param os The output stream
    */
-  static void writeToAscii( DiagnosticMsg const & errMsg, std::ostream & os );
+  static void formatMsgForLog( DiagnosticMsg const & errMsg, std::ostream & os );
+
+  /**
+   * @brief Write the ErrorMsg into the log stream output stream
+   * @param errMsg The struct containing the error/warning object
+   */
+  void writeToLogStream( DiagnosticMsg & errMsg );
 
   /**
    * @brief Gets the current logger report data.
@@ -156,6 +162,7 @@ public:
   { m_currentLogPart = logPart; }
 
 private:
+
   /// The error constructed via exceptions
   DiagnosticMsg m_getCurrentExceptionMsg;
 
@@ -167,20 +174,23 @@ private:
   std::string_view m_filename = "errors.yaml";
   /// The stream used for the log output. By default used std::cout
   std::ostream & m_stream = std::cout;
-
   LogPart::Type m_currentLogPart;
-  /// Avoid concurrent access between threads for outputs
-  static std::mutex m_errorHandlerMutex;
+  /// Avoid concurrent access between threads for log outputs
+  std::mutex m_errorHandlerAsciiMutex;
+  /// Avoid concurrent access between threads for yaml outputs
+  std::mutex m_errorHandlerYamlMutex;
+
   /**
-   * @brief Write all the information retrieved about the error/warning message into the YAML file
+   * @brief Write all the information retrieved about the error/warning message into the YAML stream
    * @param errorMsg a reference to the diagnostic message
    */
-  void writeToYaml( DiagnosticMsg & errMsg );
+  void writeToYamlStream( DiagnosticMsg & errMsg );
 
   /**
    * @brief Write the error message in the YAML file regarding indentation and line break
    * @param msg the message to write in the YAML
-   *            For the exception type, this message can be added as needed
+   * @param yamlFile The yaml file steam
+   * @param indent The desired indentation
    */
   void streamMultilineYamlAttribute( std::string_view msg, std::ofstream & yamlFile,
                                      std::string_view indent );
