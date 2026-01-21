@@ -756,16 +756,11 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( MeshLevel & GEOS_
   {
     // If flashPressure is not set by region the value is defaulted to -1 and indicates to use top segment conditions
     flashPressure = wellControls.getRegionAveragePressure();
-    if( flashPressure < 0.0 )
-    {
-      // region name not set, use segment conditions
+    flashTemperature = wellControls.getRegionAverageTemperature();
+    if( flashPressure <= 0.0 || flashTemperature <= 0.0 )
+    { // region average stats not initialized, fallback to top segment values
       flashPressure   = pres[iwelemRef];
       flashTemperature = temp[iwelemRef];
-    }
-    else
-    {
-      // use reservoir region averages
-      flashTemperature = wellControls.getRegionAverageTemperature();
     }
   }
 
