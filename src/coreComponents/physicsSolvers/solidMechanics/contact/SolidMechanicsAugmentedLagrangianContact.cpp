@@ -227,11 +227,8 @@ void SolidMechanicsAugmentedLagrangianContact::postInputInitialization()
   FiniteElementDiscretization const & feDiscretization =
     feDiscretizationManager.getGroup< FiniteElementDiscretization >( getDiscretizationName() );
 
-  m_faceTypeToFiniteElements["Quadrilateral"] =
-    feDiscretization.factory( ElementType::Quadrilateral );
-
-  m_faceTypeToFiniteElements["Triangle"] =
-    feDiscretization.factory( ElementType::Triangle );
+  m_faceTypeToFiniteElements.insert( {"Quadrilateral", feDiscretization.factory( ElementType::Quadrilateral )} );
+  m_faceTypeToFiniteElements.insert( {"Triangle", feDiscretization.factory( ElementType::Triangle )} );
 }
 
 void SolidMechanicsAugmentedLagrangianContact::setSparsityPattern( DomainPartition & domain,
