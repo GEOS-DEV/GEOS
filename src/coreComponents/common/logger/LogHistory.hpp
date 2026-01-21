@@ -29,28 +29,53 @@
 namespace geos
 {
 
+/**
+ * @brief Structure containing the statistics of a diagnostic message
+ */
 struct NumMsg
 {
+  /// the source location file
   string fileLocation;
+  /// the source location line (default is 0)
   integer codeLocation;
+  /// TODO
   integer count;
 };
 
+/**
+ * @brief Keep track of all diagnostic message occured during the simulation
+ */
 class LogHistory
 {
 public:
 
+  /**
+   * @brief Report a diagnostic message
+   * @param logPartName The logPart the message occured
+   * @param diagMsg The diagnostic message to record
+   * @param threadCount
+   */
   void notifyMsg( LogPart::Type logPartName, DiagnosticMsg const & diagMsg, integer threadCount );
 
+  /**
+   * @return The const messageCounts
+   */
   auto const & get() const
   { return m_messageCounts; }
 
 private:
+  /// Keep track of all classified diagnostic
   stdMap< LogPart::Type, stdMap< MsgType, stdVector< NumMsg > > > m_messageCounts;
 
 };
+
+/**
+ * @brief Template specialisation to convert a LogHistory to a table string.
+ * @param tableData The LogHistory object to convert.
+ * @return The CSV string representation of the logHistory.
+ */
 template<>
-string TableTextFormatter::toString< LogHistory >( LogHistory const & ) const;
+string TableTextFormatter::toString< LogHistory >( LogHistory const & loghistory) const;
 
 }
 
