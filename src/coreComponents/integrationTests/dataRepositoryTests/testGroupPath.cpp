@@ -114,7 +114,7 @@ TEST( testGroupPath, testGlobalPaths )
                                         "The children of Mesh are: { mesh1 }";
     // checks if the exception contains the expected message
     std::ostringstream stream;
-    geos::ErrorLogger::formatLogStream( ErrorLogger::global().getCurrentExceptionMsg(), stream );
+    geos::ErrorLogger::formatMsgForLog( ErrorLogger::global().getCurrentExceptionMsg(), stream );
     GEOS_ERROR_IF_EQ_MSG( string( stream.str() ).find( expectedMsg ), string::npos,
                           "The error message was not containing the expected sequence.\n" <<
                           "  Error message :\n" << e.what() <<
