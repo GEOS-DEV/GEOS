@@ -14,36 +14,43 @@
  */
 
 /**
- * @file LoggerMsgReportData.hpp
+ * @file LogHistory.hpp
  */
 
 #ifndef GEOS_COMMON_LOGGER_MSG_REPORT_DATA_HPP
 #define GEOS_COMMON_LOGGER_MSG_REPORT_DATA_HPP
 
+#include "common/StdContainerWrappers.hpp"
 #include "common/format/LogPart.hpp"
 #include "common/format/table/TableFormatter.hpp"
-#include "MsgType.hpp"
+#include "DiagnosticMessage.hpp"
+
 
 namespace geos
 {
 
-struct NumMsg;
-
-struct LoggerMsgReportData
-{
-  stdMap< LogPart::Type, NumMsg > numMsgByPart;
-
-  void increment( LogPart::Type logPartName, MsgType );
-};
-
 struct NumMsg
 {
-  stdMap< MsgType, int > numMsg;
-  stdMap< MsgType, int > numMsgLoc;
+  string fileLocation;
+  integer codeLocation;
+  integer count;
 };
 
+class LogHistory
+{
+public:
+
+  void notifyMsg( LogPart::Type logPartName, DiagnosticMsg const & diagMsg, integer threadCount );
+
+  auto const & get() const
+  { return m_messageCounts; }
+
+private:
+  stdMap< LogPart::Type, stdMap< MsgType, stdVector< NumMsg > > > m_messageCounts;
+
+};
 template<>
-string TableTextFormatter::toString< LoggerMsgReportData >( LoggerMsgReportData const & ) const;
+string TableTextFormatter::toString< LogHistory >( LogHistory const & ) const;
 
 }
 

@@ -38,11 +38,12 @@ set( common_headers
      GEOS_RAJA_Interface.hpp
      GeosxMacros.hpp
      MemoryInfos.hpp
+     logger/DiagnosticMessage.hpp
      logger/GeosExceptions.hpp
      logger/Logger.hpp
      logger/ErrorHandling.hpp
      logger/ExternalErrorHandler.hpp
-     logger/LoggerMsgReportData.hpp
+     logger/LogHistory.hpp
      logger/MsgType.hpp
      MpiWrapper.hpp
      Path.hpp
@@ -83,7 +84,7 @@ set( common_sources
      logger/Logger.cpp
      logger/ErrorHandling.cpp
      logger/ExternalErrorHandler.cpp
-     logger/LoggerMsgReportData.cpp
+     logger/LogHistory.cpp
      BufferAllocator.cpp
      MemoryInfos.cpp
      MpiWrapper.cpp

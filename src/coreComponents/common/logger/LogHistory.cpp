@@ -14,68 +14,65 @@
  */
 
 /**
- * @file LoggerMsgReportData.cpp
+ * @file LogHistory.cpp
  */
 
-#include "LoggerMsgReportData.hpp"
+#include "LogHistory.hpp"
 #include "common/format/EnumStrings.hpp"
 #include "common/format/table/TableData.hpp"
-#include "common/format/table/TableFormatter.hpp"
 #include "common/format/table/TableLayout.hpp"
 #include "common/format/table/TableTypes.hpp"
-#include "common/logger/MsgType.hpp"
-#include <iterator>
-#include <sstream>
+#include <utility>
 
 namespace geos
 {
 
-void LoggerMsgReportData::increment( LogPart::Type logPartName, MsgType msgType )
+void LogHistory::notifyMsg( LogPart::Type logPartName, DiagnosticMsg const & msgType, integer threadCount )
 {
-  if( numMsgByPart.count( logPartName ) == 0 )
-  {
-    NumMsg numMsg{ { {msgType, 1}}, {{msgType, 1} }};
-    numMsgByPart[logPartName] = numMsg;
-  }
-  else
-  {
-    NumMsg & numMsg = numMsgByPart.at( logPartName );
-    numMsg.numMsg[msgType]++;
-    numMsg.numMsgLoc[msgType]++;
-  }
+  // TODO reduction before notify and set count as parameter
+  NumMsg numMsg = {msgType.m_file, msgType.m_line, threadCount};
+  m_messageCounts
+    .get_inserted( logPartName )
+    .get_inserted( msgType.m_type )
+    .emplace_back( numMsg );
 }
 
 template<>
-string TableTextFormatter::toString< LoggerMsgReportData >( LoggerMsgReportData const & report ) const
+string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCounts ) const
 {
   TableLayout tableLayoutPerSection;
-  tableLayoutPerSection.addColumn( " Types " );
+  tableLayoutPerSection.addColumn( "Types" );
 
   for( size_t msgTypeIdx = (size_t) MsgType::Error; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
   {
     tableLayoutPerSection.addColumn( EnumStrings< MsgType >::toString( (MsgType) msgTypeIdx ) );
   }
 
-  TableData dataPerSection;
-  for( auto const & [ logPartName, msgTypes ] : report.numMsgByPart )
+  TableData data;
+  for( auto const & [ logPartName, msgTypesStatistics ] : messageCounts.get() )
   {
     stdVector< TableData::CellData > row;
-    row.push_back( {CellType::Value, EnumStrings< LogPart::Type >::toString( logPartName )} );
+    row.emplace_back( TableData::CellData{CellType::Value,
+                                          EnumStrings< LogPart::Type >::toString( logPartName )} );
     for( size_t msgTypeIdx = (size_t) MsgType::Error; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
     {
       MsgType const currentType = (MsgType) msgTypeIdx;
-      auto it =  msgTypes.numMsg.find( currentType );
-      int const count = ( it != msgTypes.numMsg.end() ) ? it->second : 0;
-      row.push_back( {CellType::Value, std::to_string( count )} );
+      int count = 0;
+      auto itStatistics =  msgTypesStatistics.find( currentType );
+      if( itStatistics != msgTypesStatistics.end())
+      {
+        for( auto const & stats : itStatistics->second )
+        {
+          count += stats.count;
+        }
+      }
+      row.emplace_back( TableData::CellData{CellType::Value, std::to_string( count )} );
     }
-    dataPerSection.addRow( row );
+    data.addRow( row );
   }
 
   TableTextFormatter textFormatter( tableLayoutPerSection );
-  std::ostringstream oss;
-  oss << textFormatter.toString( dataPerSection ) << "\n";
-
-  return oss.str();
+  return textFormatter.toString( data ) + "\n";;
 }
 
 

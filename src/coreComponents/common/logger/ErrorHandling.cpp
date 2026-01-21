@@ -18,13 +18,7 @@
  */
 
 #include "ErrorHandling.hpp"
-#include "common/DataTypes.hpp"
 #include "common/logger/Logger.hpp"
-#include "common/format/StringUtilities.hpp"
-
-#include <fstream>
-#include <regex>
-#include <string_view>
 
 // signal management
 #include <csignal>
@@ -429,8 +423,9 @@ void ErrorLogger::writeToYaml( DiagnosticMsg & errMsg )
 
 void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg )
 {
-  loggerMsgReportData.increment( getCurrentLogPart(),
-                                 errMsg.m_type );
+  loggerMsgReportData.notifyMsg( getCurrentLogPart(),
+                                 errMsg,
+                                 1 );
   writeToAscii( errMsg, m_stream );
   if( isOutputFileEnabled() )
   {
@@ -440,8 +435,9 @@ void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg )
 
 void ErrorLogger::flushCurrentExceptionMessage()
 {
-  loggerMsgReportData.increment( getCurrentLogPart(),
-                                 m_getCurrentExceptionMsg.m_type );
+  loggerMsgReportData.notifyMsg( getCurrentLogPart(),
+                                 m_getCurrentExceptionMsg,
+                                 1 );
   writeToAscii( m_getCurrentExceptionMsg, m_stream );
   if( isOutputFileEnabled() )
   {

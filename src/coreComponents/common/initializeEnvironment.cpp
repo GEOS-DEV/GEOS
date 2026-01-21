@@ -21,7 +21,7 @@
 #include "common/LifoStorageCommon.hpp"
 #include "common/MemoryInfos.hpp"
 #include "common/logger/Logger.hpp"
-#include "common/logger/LoggerMsgReportData.hpp"
+#include "common/logger/LogHistory.hpp"
 #include "logger/ErrorHandling.hpp"
 #include "logger/ExternalErrorHandler.hpp"
 #include <iostream>
@@ -336,7 +336,7 @@ void cleanupEnvironment()
 {
   MemoryLogging::getInstance().memoryStatsReport();
   TableTextFormatter tableReportFormatter;
-  GEOS_LOG_RANK_0( tableReportFormatter.toString< LoggerMsgReportData >( GEOS_GLOBAL_LOGGER.getLoggerReportData()));
+  GEOS_LOG_RANK_0( tableReportFormatter.toString< LogHistory >( GEOS_GLOBAL_LOGGER.getLoggerReportData()));
 
   LvArray::system::resetSignalHandling();
   finalizeLogger();

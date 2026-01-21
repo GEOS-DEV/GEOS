@@ -596,15 +596,15 @@ TEST( testSolverStats, testErrorReport )
   problem.applyInitialConditions();
   problem.runSimulation();
 
-  EXPECT_EQ( testErrorLogger.getLoggerReportData().numMsgByPart
-               .at( LogPart::Type::MeshGeneration ).numMsg
-               .at( MsgType::Warning ), 3 );
-  EXPECT_EQ( testErrorLogger.getLoggerReportData().numMsgByPart
-               .at( LogPart::Type::NumericalMethods ).numMsg
-               .at( MsgType::Warning ), 5 );
-  EXPECT_EQ( testErrorLogger.getLoggerReportData().numMsgByPart
-               .at( LogPart::Type::ImportFields ).numMsg
-               .at( MsgType::Warning ), 5 );
+  EXPECT_EQ( testErrorLogger.getLoggerReportData().get()
+               .at( LogPart::Type::MeshGeneration )
+               .at( MsgType::Warning ).size(), 3 );
+  EXPECT_EQ( testErrorLogger.getLoggerReportData().get()
+               .at( LogPart::Type::NumericalMethods )
+               .at( MsgType::Warning ).size(), 5 );
+  EXPECT_EQ( testErrorLogger.getLoggerReportData().get()
+               .at( LogPart::Type::ImportFields )
+               .at( MsgType::Warning ).size(), 5 );
 }
 
 int main( int ac, char * av[] )
