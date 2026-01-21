@@ -107,10 +107,8 @@ void StatsTask::postInputInitialization()
 void StatsTask::registerDataOnMesh( Group & meshBodies )
 {
   // for now, this guard is needed to avoid breaking the xml schema generation
-  if( m_solver == nullptr )
+  if( m_solver == nullptr || m_aggregator == nullptr )
     return;
-
-  getGroupByPath( "/" ).printDataHierarchy();
 
   prepareFluidMetaData();
 
@@ -129,14 +127,13 @@ void StatsTask::registerDataOnMesh( Group & meshBodies )
   }
 
   if( m_computeRegionStatistics )
-    m_aggregator->enableRegionStatisticsAggregation( meshBodies );
+    m_aggregator->enableRegionStatisticsAggregation();
 
   // if we have to compute CFL numbers later, we need to register additional variables
   if( m_computeCFLNumbers )
-    m_aggregator->enableCFLStatistics( meshBodies );
+    m_aggregator->enableCFLStatistics();
 
-  m_aggregator->forRegionStatistics( meshBodies,
-                                     [&] ( MeshLevel & mesh, RegionStatistics & )
+  m_aggregator->forRegionStatistics( [&] ( MeshLevel & mesh, RegionStatistics & )
   {
     prepareLogTableLayouts( mesh.getName() );
     prepareCsvTableLayouts( mesh.getName() );
@@ -245,10 +242,12 @@ bool StatsTask::execute( real64 const time_n,
   // current time is time_n + dt. TODO: verify implication of events ordering in 'time_n+dt' validity
   real64 statsTime = time_n + dt;
 
-  m_aggregator->computeRegionsStatistics( statsTime, domain.getMeshBodies() );
+  GEOS_ERROR_IF( !m_aggregator,
+                 "No statistics aggregator initialized!", getDataContext() );
 
-  m_aggregator->forRegionStatistics( domain.getMeshBodies(),
-                                     [&] ( MeshLevel & mesh, RegionStatistics & meshRegionsStatistics )
+  m_aggregator->computeRegionsStatistics( statsTime );
+
+  m_aggregator->forRegionStatistics( [&] ( MeshLevel & mesh, RegionStatistics & meshRegionsStatistics )
   {
     if( m_computeRegionStatistics )
     {
@@ -282,6 +281,8 @@ void StatsTask::outputLogStats( real64 const statsTime,
   string_view pressureUnit = units::getSymbol( units::Pressure );
   string_view tempUnit = units::getSymbol( units::Temperature );
   string_view resVolUnit = units::getSymbol( units::ReservoirVolume );
+
+  tableData.getErrorsList().appendErrors( m_aggregator->getWarnings() );
 
   tableData.addRow( "Statistics time", merge, merge, statsTime );
 

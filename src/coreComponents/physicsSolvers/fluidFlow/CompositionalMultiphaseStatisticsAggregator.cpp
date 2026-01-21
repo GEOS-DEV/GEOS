@@ -74,6 +74,7 @@
 #include "LvArray/src/math.hpp"
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
+#include "common/format/StringUtilities.hpp"
 #include "common/logger/Logger.hpp"
 #include "dataRepository/DataContext.hpp"
 #include "dataRepository/Group.hpp"
@@ -98,7 +99,6 @@ using namespace constitutive;
 using namespace dataRepository;
 
 RegionStatistics::RegionStatistics( string const & name, dataRepository::Group * const parent,
-                                    string_view targetName,
                                     integer const numPhases, integer const numComponents ):
   dataRepository::Group( name, parent ),
   m_phaseDynamicPoreVolume( numPhases ),
@@ -107,8 +107,7 @@ RegionStatistics::RegionStatistics( string const & name, dataRepository::Group *
   m_nonTrappedPhaseMass( numPhases ),
   m_immobilePhaseMass( numPhases ),
   m_mobilePhaseMass( numPhases ),
-  m_componentMass( numPhases, numComponents ),
-  m_targetName( targetName )
+  m_componentMass( numPhases, numComponents )
 {
   // TODO : registerWrappers to store results in HDF5 (but need repairing of 1D HDF5 outputs)
 }
@@ -120,14 +119,15 @@ CFLStatistics::CFLStatistics( string const & name, dataRepository::Group * const
 }
 
 StatsAggregator::StatsAggregator( DataContext const & ownerDataContext ):
-  m_params(),
-  m_ownerDataContext( ownerDataContext )
+  m_ownerDataContext( ownerDataContext ),
+  m_params()
 {}
 
 void StatsAggregator::initStatisticsAggregation( dataRepository::Group & meshBodies,
                                                  CompositionalMultiphaseBase & solver )
 {
   m_solver = &solver;
+  m_meshBodies = &meshBodies;
 
   m_numPhases = m_solver->numFluidPhases();
   m_numComponents = m_solver->numFluidComponents();
@@ -144,51 +144,48 @@ void StatsAggregator::initStatisticsAggregation( dataRepository::Group & meshBod
     // registering the container of instance statistics groups (must be unique for this instance)
     string const & ownerName = getOwnerName();
     GEOS_ERROR_IF_NE_MSG( meshStatsGroup->hasGroup( ownerName ), false,
-                          "A statistics aggregator have already been requested.",
+                          GEOS_FMT( "A statistics aggregator have already been requested for '{}'.",
+                                    ownerName ),
                           m_ownerDataContext );
     meshStatsGroup->registerGroup( ownerName );
   } );
 }
 
-void StatsAggregator::enableRegionStatisticsAggregation( dataRepository::Group & meshBodies )
+void StatsAggregator::enableRegionStatisticsAggregation()
 {
-  if( m_solver == nullptr )
+  if( m_solver == nullptr || m_meshBodies == nullptr )
     return;
 
   integer regionCount = 0;
   integer subRegionCount = 0;
 
   auto const registerStats = [=] ( Group & parent,
-                                   string const & name,
                                    string const & targetName ) -> RegionStatistics &
   {
-    return parent.registerGroup( name, std::make_unique< RegionStatistics >( name, &parent,
-                                                                             targetName,
-                                                                             m_numPhases,
-                                                                             m_numComponents ) );
+    return parent.registerGroup( targetName,
+                                 std::make_unique< RegionStatistics >( targetName, &parent,
+                                                                       m_numPhases,
+                                                                       m_numComponents ) );
   };
 
-  m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                              MeshLevel & mesh,
-                                                              string_array const & regionNames )
+  m_solver->forDiscretizationOnMeshTargets( *m_meshBodies, [&] ( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     Group & statisticsGroup = getInstanceStatisticsGroup( mesh );
     RegionStatistics & meshRegionsStats = registerStats( statisticsGroup,
-                                                         ViewKeys::regionsStatisticsString(),
-                                                         mesh.getName() );
+                                                         ViewKeys::regionsStatisticsString() );
 
     for( size_t i = 0; i < regionNames.size(); ++i )
     {
       CellElementRegion & region = elemManager.getRegion< CellElementRegion >( regionNames[i] );
       RegionStatistics & regionStats = registerStats( meshRegionsStats,
-                                                      GEOS_FMT( "{}_region_stats", region.getName() ),
                                                       region.getName() );
 
       region.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion & subRegion )
       {
         registerStats( regionStats,
-                       GEOS_FMT( "{}_subRegion_stats", subRegion.getName() ),
                        subRegion.getName() );
         ++subRegionCount;
       } );
@@ -204,15 +201,15 @@ void StatsAggregator::enableRegionStatisticsAggregation( dataRepository::Group &
   m_isRegionStatsEnabled = true;
 }
 
-void StatsAggregator::enableCFLStatistics( dataRepository::Group & meshBodies )
+void StatsAggregator::enableCFLStatistics()
 {
   if( m_solver == nullptr )
     return;
 
-  m_solver->registerDataForCFL( meshBodies );
-  m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                              MeshLevel & mesh,
-                                                              string_array const & )
+  m_solver->registerDataForCFL( *m_meshBodies );
+  m_solver->forDiscretizationOnMeshTargets( *m_meshBodies, [&] ( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & )
   {
     Group & statisticsGroup = getInstanceStatisticsGroup( mesh );
     statisticsGroup.registerGroup< CFLStatistics >( ViewKeys::cflStatisticsString() );
@@ -236,13 +233,15 @@ RegionStatistics & StatsAggregator::getMeshRegionsStatistics( MeshLevel & mesh )
   return instanceStatisticsGroup.getGroup< RegionStatistics >( ViewKeys::regionsStatisticsString() );
 }
 
-RegionStatistics & StatsAggregator::getRegionStatistics( MeshLevel & mesh, string_view regionName ) const
+RegionStatistics & StatsAggregator::getRegionStatistics( MeshLevel & mesh,
+                                                         string_view regionName ) const
 {
   RegionStatistics & meshRegionsStats = getMeshRegionsStatistics( mesh );
   RegionStatistics * const stats = meshRegionsStats.getGroupPointer< RegionStatistics >( string( regionName ) );
   GEOS_THROW_IF( stats == nullptr,
-                 GEOS_FMT( "Region '{}' not found to get region statistics, is it a target of the reservoir solver?",
-                           regionName ),
+                 GEOS_FMT( "Region '{}' not found to get region statistics, is it a target of the reservoir solver?\n"
+                           "Available target regions:\n- {}",
+                           regionName, stringutilities::join( meshRegionsStats.getSubGroupsNames(), "\n- " ) ),
                  InputError, m_ownerDataContext );
   return *stats;
 }
@@ -254,12 +253,11 @@ CFLStatistics & StatsAggregator::getCflStatisticsGroup( MeshLevel & mesh ) const
   return statisticsGroup.getGroup< CFLStatistics >( ViewKeys::cflStatisticsString() );
 }
 
-void StatsAggregator::forRegionStatistics( dataRepository::Group & meshBodies,
-                                           RegionStatisticsFunctor< MeshLevel > const & func ) const
+void StatsAggregator::forRegionStatistics( RegionStatisticsFunctor< MeshLevel > const & func ) const
 {
-  m_solver->forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
-                                                              MeshLevel & mesh,
-                                                              string_array const & )
+  m_solver->forDiscretizationOnMeshTargets( *m_meshBodies, [&] ( string const &,
+                                                                 MeshLevel & mesh,
+                                                                 string_array const & )
   {
     RegionStatistics & meshRegionsStats = getMeshRegionsStatistics( mesh );
 
@@ -293,13 +291,12 @@ void StatsAggregator::forRegionStatistics( CellElementRegion & region,
   } );
 }
 
-bool StatsAggregator::computeRegionsStatistics( real64 const time, Group & meshBodies )
+bool StatsAggregator::computeRegionsStatistics( real64 const time )
 {
   GEOS_MARK_FUNCTION;
 
   // computation of sub region stats
-  forRegionStatistics( meshBodies,
-                       [&, time] ( MeshLevel & mesh, RegionStatistics & meshRegionsStats )
+  forRegionStatistics( [&, time] ( MeshLevel & mesh, RegionStatistics & meshRegionsStats )
   {
     forRegionStatistics( mesh,
                          meshRegionsStats,
@@ -316,8 +313,7 @@ bool StatsAggregator::computeRegionsStatistics( real64 const time, Group & meshB
   } );
 
   // aggregation of computations from the sub regions
-  forRegionStatistics( meshBodies,
-                       [&, time] ( MeshLevel & mesh, RegionStatistics & meshRegionsStats )
+  forRegionStatistics( [&, time] ( MeshLevel & mesh, RegionStatistics & meshRegionsStats )
   {
     initStats( meshRegionsStats, time );
 
@@ -532,7 +528,12 @@ bool StatsAggregator::computeCFLNumbers( real64 const time,
 
   m_warnings.clear();
 
-  if( stats!=nullptr )
+  if( !m_isCFLNumberEnabled )
+  {
+    m_warnings.emplace_back( "CFL numbers computation is not enabled." );
+    return false;
+  }
+  if( stats == nullptr )
   {
     m_warnings.emplace_back( GEOS_FMT( "No statistics structure to compute CFL numbers for domain '{}'.", domain.getName() ));
     return false;

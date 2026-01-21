@@ -296,7 +296,7 @@ private:
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
                                         Group & meshBodies,
-                                        MeshLevel & meshLevel,
+                                        MeshBody & meshBody,
                                         WellElementSubRegion const & subRegion ) override;
 
 };

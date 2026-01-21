@@ -26,6 +26,7 @@
 #include "dataRepository/Group.hpp"
 #include "mesh/CellElementRegion.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/MeshBody.hpp"
 #include "mesh/MeshLevel.hpp"
 
 namespace geos
@@ -100,15 +101,13 @@ public:
 
   /**
    * @brief Construct a new Region Statistics object
-   * @param name instance name in data-repository.
    * @param targetName name of the data-repository object that is targeted by the statistics
    *                   (mesh level / region / sub-region).
    * @param parent the instance parent in data-repository
    * @param numPhases Fluid phase count
    * @param numComponents Fluid component count
    */
-  RegionStatistics( string const & name, dataRepository::Group * const parent,
-                    string_view targetName,
+  RegionStatistics( string const & targetName, dataRepository::Group * const parent,
                     integer numPhases, integer numComponents );
 
   RegionStatistics( RegionStatistics && ) = default;
@@ -118,11 +117,8 @@ public:
    *         (mesh level / region / sub-region).
    */
   string_view getTargetName() const
-  { return m_targetName; }
+  { return getName(); }
 
-private:
-  /// see getTargetName();
-  string const m_targetName;
 };
 
 /**
@@ -205,17 +201,16 @@ public:
    * @note Must be called in or after the "registerDataOnMesh" initialization phase
    * @param meshBodies The Group containing the MeshBody objects
    */
-  void enableRegionStatisticsAggregation( dataRepository::Group & meshBodies );
+  void enableRegionStatisticsAggregation();
 
   /**
    * @brief Register the results structs & wrappers so they will be targeted by TimeHistory output
    * @note Must be called in or after the "registerDataOnMesh" initialization phase
    * @param meshBodies The Group containing the MeshBody objects
    */
-  void enableCFLStatistics( dataRepository::Group & meshBodies );
+  void enableCFLStatistics();
 
-  void forRegionStatistics( dataRepository::Group & meshBodies,
-                            RegionStatisticsFunctor< MeshLevel > const & functor ) const;
+  void forRegionStatistics( RegionStatisticsFunctor< MeshLevel > const & functor ) const;
 
   void forRegionStatistics( MeshLevel & mesh,
                             RegionStatistics & meshRegionsStatistics,
@@ -229,11 +224,9 @@ public:
    * @brief Compute statistics on the mesh discretizations (average field pressure, etc)
    *        Results are reduced on rank 0, and broadcasted over all ranks.
    * @param[in] time current time
-   * @param[in] meshBodies the Group containg all MeshBody objects
    * @return false if there was a problem that prevented the statistics to be computed correctly.
    */
-  bool computeRegionsStatistics( real64 const time,
-                                 dataRepository::Group & meshBodies );
+  bool computeRegionsStatistics( real64 const time );
 
   /**
    * @brief Compute CFL numbers
@@ -287,14 +280,16 @@ public:
 
 private:
 
-  CompositionalMultiphaseBase * m_solver;
+  /// @see getOwnerName()
+  dataRepository::DataContext const & m_ownerDataContext;
+
+  CompositionalMultiphaseBase * m_solver = nullptr;
+
+  dataRepository::Group * m_meshBodies = nullptr;
 
   AggregatorParameters m_params;
 
   stdVector< string > m_warnings;
-
-  /// @see getOwnerName()
-  dataRepository::DataContext const & m_ownerDataContext;
 
   bool m_isRegionStatsEnabled = false;
 

@@ -154,7 +154,7 @@ string SinglePhaseWell::resElementDofName() const
 void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
                                                real64 const & GEOS_UNUSED_PARAM( dt ),
                                                Group & GEOS_UNUSED_PARAM( meshBodies ),
-                                               MeshLevel & GEOS_UNUSED_PARAM( meshLevel ),
+                                               MeshBody & GEOS_UNUSED_PARAM( meshBody ),
                                                WellElementSubRegion const & subRegion )
 {
   WellControls & wellControls = getWellControls( subRegion );
@@ -1186,11 +1186,11 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
   WellSolverBase::implicitStepSetup( time, dt, domain );
 
   Group & meshBodies = domain.getMeshBodies();
-  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
                                                     MeshLevel & mesh,
                                                     string_array const & regionNames )
   {
-
+    MeshBody & meshBody = domain.getMeshBody( meshBodyName );
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
                                                               [&]( localIndex const,
@@ -1214,7 +1214,7 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
         getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
       fluid.saveConvergedState();
 
-      validateWellConstraints( time, dt, meshBodies, mesh, subRegion );
+      validateWellConstraints( time, dt, meshBodies, meshBody, subRegion );
 
       updateSubRegionState( mesh, subRegion );
     } );

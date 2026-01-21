@@ -21,6 +21,7 @@
 
 #include "dataRepository/Group.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/MeshBody.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
@@ -153,16 +154,17 @@ void WellSolverBase::initializePostSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   FunctionManager & functionManager = FunctionManager::getInstance();
   Group & meshBodies = domain.getMeshBodies();
-  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
                                                     MeshLevel & mesh,
                                                     string_array const & regionNames )
   {
+    MeshBody & meshBody = domain.getMeshBody( meshBodyName );
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion & subRegion )
     {
-      validateWellConstraints( 0, 0, meshBodies, mesh, subRegion );
+      validateWellConstraints( 0, 0, meshBodies, meshBody, subRegion );
 
       // validate perforation status table
       PerforationData & perforationData = *subRegion.getPerforationData();

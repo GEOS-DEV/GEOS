@@ -33,6 +33,7 @@
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/LogLevelsInfo.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
@@ -445,7 +446,7 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
 void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n,
                                                            real64 const & GEOS_UNUSED_PARAM( dt ),
                                                            Group & meshBodies,
-                                                           MeshLevel & meshLevel,
+                                                           MeshBody & meshBody,
                                                            WellElementSubRegion const & subRegion )
 {
   WellControls & wellControls = getWellControls( subRegion );
@@ -454,23 +455,25 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
   bool const useSegmentValues = refRegionName.empty();
   if( useSegmentValues )
   {
-    GEOS_WARNING( "WellControls " <<WellControls::viewKeyStruct::referenceReservoirRegionString() <<
+    GEOS_WARNING( "WellControls " << WellControls::viewKeyStruct::referenceReservoirRegionString() <<
                   " not set and well constraint fluid property calculations will use top segement pressure and temp " );
     wellControls.setRegionAveragePressure( -1 );
     wellControls.setRegionAverageTemperature( -1 );
   }
   else
   {
+    auto & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+    MeshLevel & flowMeshLevel = meshBody.getMeshLevel( flowSolver.getDiscretizationName() );
+
     if( !m_reservoirStatsAggregator )
     { // lazily initialize the region statistics aggregator
-      auto & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
       m_reservoirStatsAggregator = std::make_unique< StatsAggregator >( wellControls.getDataContext() );
       m_reservoirStatsAggregator->initStatisticsAggregation( meshBodies, flowSolver );
-      m_reservoirStatsAggregator->enableRegionStatisticsAggregation( meshBodies );
+      m_reservoirStatsAggregator->enableRegionStatisticsAggregation();
     }
 
-    m_reservoirStatsAggregator->computeRegionsStatistics( time_n, meshBodies );
-    RegionStatistics & stats = m_reservoirStatsAggregator->getRegionStatistics( meshLevel, refRegionName );
+    m_reservoirStatsAggregator->computeRegionsStatistics( time_n );
+    RegionStatistics & stats = m_reservoirStatsAggregator->getRegionStatistics( flowMeshLevel, refRegionName );
 
     GEOS_WARNING_IF( stats.m_averagePressure <= 0.0,
                      GEOS_FMT( "No region average quantities computed in reference region '{}'.",
