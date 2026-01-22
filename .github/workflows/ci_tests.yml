@@ -415,6 +415,21 @@ jobs:
             DOCKER_CERTS_UPDATE_COMMAND: "update-ca-trust"
             HOST_CONFIG: /spack-generated-wave-solver-only.cmake
 
+          - name: Rockylinux CUDA on T4 (8, clang 17.0.6, cuda 12.9.1)
+            # GitHub-hosted runner with 1x T4 GPU (16GB VRAM)
+            BUILD_AND_TEST_CLI_ARGS: "--no-install-schema"
+            CMAKE_BUILD_TYPE: Release
+            BUILD_GENERATOR: "--ninja"
+            ENABLE_HYPRE_DEVICE: CUDA
+            ENABLE_HYPRE: ON
+            ENABLE_TRILINOS: OFF
+            GEOS_ENABLE_BOUNDS_CHECK: OFF
+            DOCKER_REPOSITORY: geosx/rockylinux8-clang17-cuda12.9.1
+            RUNS_ON: GPU
+            NPROC: 8
+            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia --gpus all"
+            HOST_CONFIG: /spack-generated.cmake            
+
           #- name: Sherlock GPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10, cuda 12.4.0,)
           #  BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
           #  BUILD_GENERATOR: "--ninja"
