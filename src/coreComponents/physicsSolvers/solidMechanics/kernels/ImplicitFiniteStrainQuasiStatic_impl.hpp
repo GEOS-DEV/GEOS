@@ -87,7 +87,6 @@ void ImplicitFiniteStrainQuasiStatic<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE>
   real64 const detJxW = m_finiteElementSpace.template getGradN<FE_TYPE>(k, q, stack.xLocal, stack.feStack, dNdX);
 
   real64 stress[3][3] = { {0} };
-  // real64 stiffness[9][9] = { {0} };
   typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
 
   real64 dUhatdX[3][3] = { {0} };

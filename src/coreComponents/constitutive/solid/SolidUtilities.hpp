@@ -209,7 +209,7 @@ struct SolidUtilities
     {
       for( localIndex i = 0; i < 9; ++i )
       {
-        for( localIndex j = 0; j < 6; ++j )
+        for( localIndex j = 0; j < 9; ++j )
         {
           // printf( "[%12.5e vs %12.5e] ", stiffnessFD[i][j], stiffness[i][j] );
           printf( "%12.5e ", fabs(stiffnessFD[i][j] - stiffness[i][j]) );

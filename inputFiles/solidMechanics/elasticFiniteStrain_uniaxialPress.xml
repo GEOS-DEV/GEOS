@@ -1,0 +1,148 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{cb}"
+      materialList="{ incomp }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ElasticIsotropicFiniteStrain
+      name="incomp"
+      defaultDensity="1000.0"
+      defaultBulkModulus="8.66666666667e-1"
+      defaultShearModulus="4.0e-1"/>
+  </Constitutive>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{C3D8}"
+      xCoords="{0, 5}"
+      yCoords="{0, 5}"
+      zCoords="{0, 5}"
+      nx="{5}"
+      ny="{5}"
+      nz="{5}"
+      cellBlockNames="{cb}"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="bottom"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 5.01, 5.01, 0.01 }"/>
+
+    <Box
+      name="top"
+      xMin="{ -0.01, -0.01, 4.99 }"
+      xMax="{ 5.01, 5.01, 5.01 }"/>
+
+    <Box
+      name="left"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 0.01, 5.01, 5.01 }"/>
+
+    <Box
+      name="front"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 5.01, 0.01, 5.01 }"/>
+  </Geometry>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SolidMechanicsLagrangianFEM
+      name="lagsolve"
+      strainTheory="1"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      targetRegions="{ Domain }"
+      logLevel="2">
+      <!-- SPHINX_SolidMechanicsSolverEnd -->
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="20"
+        lineSearchAction="Require"
+        lineSearchStartingIteration="2"
+        lineSearchResidualFactor="0.95"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-6"
+        preconditionerType="amg"
+        logLevel="0"/>
+    </SolidMechanicsLagrangianFEM>
+  </Solvers>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+  </Outputs>
+
+  <Events
+    maxTime="10.0">
+
+    <PeriodicEvent
+      name="solverApplication"
+      forceDt="1.0"
+      target="/Solvers/lagsolve"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/vtkOutput"/>
+  </Events>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="xconstraint"
+      fieldName="totalDisplacement"
+      objectPath="nodeManager"
+      component="0"
+      scale="0.0"
+      setNames="{left}"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      fieldName="totalDisplacement"
+      objectPath="nodeManager"
+      component="1"
+      scale="0.0"
+      setNames="{front}"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      fieldName="totalDisplacement"
+      objectPath="nodeManager"
+      component="2"
+      scale="0.0"
+      setNames="{bottom}"/>
+
+    <FieldSpecification
+      name="inputDisplacement"
+      fieldName="totalDisplacement"
+      objectPath="nodeManager"
+      component="2"
+      scale="-1e0"
+      functionName="DirichletTimeFunction"
+      setNames="{top}"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="DirichletTimeFunction"
+      inputVarNames="{time}"
+      coordinates="{ 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0}"
+      values="{ 0.0, 1e-1, 2e-1, 3e-1, 4e-1, 5e-1, 6e-1, 7e-1, 8e-1, 9e-1, 1e0}"/>
+  </Functions>
+
+</Problem>
