@@ -176,15 +176,15 @@ public:
   /**
    * @copydoc WellControls::scalingForSystemSolution()
    */
-  void scalingForLocalSystemSolution ( WellElementSubRegion & subRegion,
-                                       DofManager const & dofManager,
-                                       real64 & maxDeltaPres,
-                                       real64 & maxDeltaCompDens,
-                                       real64 & maxDeltaTemp,
-                                       real64 & minPresScalingFactor,
-                                       real64 & minCompDensScalingFactor,
-                                       real64 & minTempScalingFactor,
-                                       arrayView1d< real64 const > const & localSolution );
+  real64 scalingForLocalSystemSolution ( WellElementSubRegion & subRegion,
+                                         DofManager const & dofManager,
+                                         real64 & maxDeltaPres,
+                                         real64 & maxDeltaCompDens,
+                                         real64 & maxDeltaTemp,
+                                         real64 & minPresScalingFactor,
+                                         real64 & minCompDensScalingFactor,
+                                         real64 & minTempScalingFactor,
+                                         arrayView1d< real64 const > const & localSolution );
 
   virtual real64 scalingForWellSystemSolution( WellElementSubRegion & subRegion,
                                                DofManager const & dofManager,
@@ -316,7 +316,7 @@ public:
 
   struct viewKeyStruct : WellControls::viewKeyStruct
   {
-    static constexpr char const * dofFieldString() { return "compositionalWellVars"; }
+    static constexpr char const * dofFieldString() { return "wellVars"; }
 
     // inputs
 

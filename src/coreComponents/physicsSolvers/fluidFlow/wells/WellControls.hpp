@@ -772,6 +772,7 @@ public:
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
   void setPerforationStatus( real64 const & time_n, WellElementSubRegion & subRegion );
+  void setGravCoef( WellElementSubRegion & subRegion, R1Tensor const & gravVector );
   /**
    * @brief Set next time step based on a table function
    * @param[in] table the table function

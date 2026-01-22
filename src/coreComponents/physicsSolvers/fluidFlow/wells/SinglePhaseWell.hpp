@@ -93,7 +93,7 @@ public:
    *  @param time_n the current time
    */
   virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n )override;
- 
+
   virtual void initializeWellPostInitialConditionsPreSubGroups( WellElementSubRegion & subRegion )override;
   /**
    * @brief Function to evaluate well constraints after applying the solution update

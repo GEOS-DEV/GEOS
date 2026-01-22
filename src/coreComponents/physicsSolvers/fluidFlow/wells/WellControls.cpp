@@ -23,8 +23,8 @@
 #include "dataRepository/InputFlags.hpp"
 #include "functions/FunctionManager.hpp"
 #include "mesh/PerforationFields.hpp"
-
-
+#include "fileIO/Outputs/OutputBase.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
 namespace geos
 {
 
@@ -39,6 +39,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_numDofPerResElement( 0 ),
   m_isThermal( 0 ),
   m_keepVariablesConstantDuringInitStep( false ),
+  m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) ),
+
   m_inputControl( Control::UNINITIALIZED ),
   m_currentControl( Control::UNINITIALIZED ),
   m_useSurfaceConditions( 0 ),
@@ -136,12 +138,12 @@ WellControls::~WellControls()
 
 Group * WellControls::createChild( string const & childKey, string const & childName )
 {
-  Group * baseChild = Group::createChild( childKey, childName );
-  if( baseChild != nullptr )
-  {
-    return baseChild;
-  }
-  GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
+  //Group * baseChild = Group::createChild( childKey, childName );
+  //if( baseChild != nullptr )
+  //{
+  //  return baseChild;
+  //}
+  //GEOS_LOG_RANK_0( GEOS_FMT( "{}: adding {} {}", getName(), childKey, childName ) );
   ////const auto childTypes = { viewKeyStruct::perforationString() };
   //GEOS_ERROR_IF( childKey != viewKeyStruct::perforationString(),
   //               CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
@@ -315,9 +317,7 @@ void WellControls::postInputInitialization()
 
 }
 void WellControls::postRestartInitialization( )
-{
-
-}
+{}
 void WellControls::setWellStatus( real64 const & currentTime, WellControls::Status status )
 {
   m_wellStatus = status;
@@ -482,6 +482,7 @@ real64 WellControls::getReferenceElevation() const
   }
   return getMaxBHPConstraint()->getReferenceElevation();
 }
+
 void WellControls::implicitStepSetup( real64 const & time_n,
                                       real64 const & GEOS_UNUSED_PARAM( dt ),
                                       ElementRegionManager & elemManager,
@@ -554,4 +555,38 @@ void WellControls::setPerforationStatus( real64 const & time_n, WellElementSubRe
 
 }
 
+void WellControls::setGravCoef( WellElementSubRegion & subRegion, R1Tensor const & gravVector )
+{
+  PerforationData & perforationData = *subRegion.getPerforationData();
+
+  real64 const refElev =  getReferenceElevation();
+
+  arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter();
+  arrayView1d< real64 > const wellElemGravCoef = subRegion.getField< fields::well::gravityCoefficient >();
+
+  arrayView2d< real64 const > const perfLocation = perforationData.getField< fields::perforation::location >();
+  arrayView1d< real64 > const perfGravCoef = perforationData.getField< fields::well::gravityCoefficient >();
+
+  forAll< serialPolicy >( perforationData.size(), [=]( localIndex const iperf )
+  {
+    // precompute the depth of the perforations
+    perfGravCoef[iperf] = LvArray::tensorOps::AiBi< 3 >( perfLocation[iperf], gravVector );
+  } );
+
+  forAll< serialPolicy >( subRegion.size(), [=]( localIndex const iwelem )
+  {
+    // precompute the depth of the well elements
+    wellElemGravCoef[iwelem] = LvArray::tensorOps::AiBi< 3 >( wellElemLocation[iwelem], gravVector );
+  } );
+
+  forSubGroups< BHPConstraint >( [&]( auto & constraint )
+  {
+    // set the reference well element where the BHP control is applied
+    real64 const refElev1 = constraint.getReferenceElevation();
+    constraint.setReferenceGravityCoef( refElev1 * gravVector[2] );
+  } );
+
+  // set the reference well element where the BHP control is applied
+  setReferenceGravityCoef( refElev * gravVector[2] );       // tjb remove
+}
 } //namespace geos

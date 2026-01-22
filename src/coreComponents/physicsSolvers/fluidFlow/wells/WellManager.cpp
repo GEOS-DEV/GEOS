@@ -733,7 +733,7 @@ WellManager::calculateResidualNorm( real64 const & time_n,
   GEOS_MARK_FUNCTION;
 
   integer numNorm = 1;       // mass balance
-  array1d< real64 > localResidualNorm;
+  array1d< real64 > localResidualNorm, wellResidalNorm;
   array1d< real64 > localResidualNormalizer;
 
   if( isThermal() )
@@ -741,6 +741,7 @@ WellManager::calculateResidualNorm( real64 const & time_n,
     numNorm = 2;       // mass balance and energy balance
   }
   localResidualNorm.resize( numNorm );
+
   localResidualNormalizer.resize( numNorm );
 
 
@@ -765,12 +766,19 @@ WellManager::calculateResidualNorm( real64 const & time_n,
       // step 1: compute the norm in the subRegion
       if( true )     // tjb wellControls.isWellOpen( ) )
       {
-        localResidualNorm = wellControls.calculateLocalWellResidualNorm( time_n,
-                                                                         dt,
-                                                                         m_nonlinearSolverParameters,
-                                                                         subRegion,
-                                                                         dofManager,
-                                                                         localRhs );
+        wellResidalNorm = wellControls.calculateLocalWellResidualNorm( time_n,
+                                                                       dt,
+                                                                       m_nonlinearSolverParameters,
+                                                                       subRegion,
+                                                                       dofManager,
+                                                                       localRhs );
+        for( integer i=0; i<numNorm; i++ )
+        {
+          if( wellResidalNorm[i] > localResidualNorm[i] )
+          {
+            localResidualNorm[i] = wellResidalNorm[i];
+          }
+        }
       }
       else
       {
@@ -818,12 +826,15 @@ WellManager::scalingForSystemSolution( DomainPartition & domain,
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
   real64 scalingFactor = 1.0;
+  real64 localScalingFactor = 1.0;
   if( isCompositional() )
   {
 
 
     real64 maxDeltaPres = 0.0, maxDeltaCompDens = 0.0, maxDeltaTemp = 0.0;
     real64 minPresScalingFactor = 1.0, minCompDensScalingFactor = 1.0, minTempScalingFactor = 1.0;
+    real64 localMaxDeltaPres = 0.0, localMaxDeltaCompDens = 0.0, localMaxDeltaTemp = 0.0;
+    real64 localMinPresScalingFactor = 1.0, localMinCompDensScalingFactor = 1.0, localMinTempScalingFactor = 1.0;
 
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                  MeshLevel & mesh,
@@ -837,16 +848,22 @@ WellManager::scalingForSystemSolution( DomainPartition & domain,
 
       {
         CompositionalMultiphaseWell * wellControls = dynamic_cast< CompositionalMultiphaseWell * >(&getWellControls ( subRegion ));
-        wellControls->scalingForLocalSystemSolution( subRegion,
-                                                     dofManager,
-                                                     maxDeltaPres,
-                                                     maxDeltaCompDens,
-                                                     maxDeltaTemp,
-                                                     minPresScalingFactor,
-                                                     minCompDensScalingFactor,
-                                                     minTempScalingFactor,
-                                                     localSolution );
-
+        localScalingFactor = wellControls->scalingForLocalSystemSolution( subRegion,
+                                                                          dofManager,
+                                                                          localMaxDeltaPres,
+                                                                          localMaxDeltaCompDens,
+                                                                          localMaxDeltaTemp,
+                                                                          localMinPresScalingFactor,
+                                                                          localMinCompDensScalingFactor,
+                                                                          localMinTempScalingFactor,
+                                                                          localSolution );
+        maxDeltaPres = LvArray::math::max( localMaxDeltaPres, maxDeltaPres );
+        maxDeltaCompDens = LvArray::math::max( localMaxDeltaCompDens, maxDeltaCompDens );
+        maxDeltaTemp = LvArray::math::max( localMaxDeltaTemp, maxDeltaTemp );
+        minPresScalingFactor = LvArray::math::min( localMinPresScalingFactor, minPresScalingFactor );
+        minCompDensScalingFactor = LvArray::math::min( localMinCompDensScalingFactor, minCompDensScalingFactor );
+        minTempScalingFactor = LvArray::math::min( localMinTempScalingFactor, minTempScalingFactor );
+        scalingFactor = LvArray::math::min( localScalingFactor, scalingFactor );
 
       } );
     } );

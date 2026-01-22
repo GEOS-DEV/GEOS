@@ -372,7 +372,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n
     {
       // Check if region name exists in list of Reservoir's target regions
       string const regionName =  getReferenceReservoirRegion();
-      CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+      CompositionalMultiphaseBase const & flowSolver = getParent().getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
       string_array const & targetRegionsNames = flowSolver.getTargetRegionNames();
       auto const pos = std::find( targetRegionsNames.begin(), targetRegionsNames.end(), regionName );
       GEOS_ERROR_IF( pos == targetRegionsNames.end(),
@@ -413,8 +413,11 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
 
 void CompositionalMultiphaseWell::initializeWellPostInitialConditionsPreSubGroups( WellElementSubRegion & subRegion )
 {
-  string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+  // set gravity coefficient
+  setGravCoef( subRegion, getParent().getParent().getReference< R1Tensor >( PhysicsSolverManager::viewKeyStruct::gravityVectorString() ));
 
+  // setup fluid model
+  string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   constitutive::MultiFluidBase & fluid = subRegion.getConstitutiveModel< constitutive::MultiFluidBase >( fluidName );
   fluid.setMassFlag( m_useMass );
   createSeparator( subRegion );
@@ -557,6 +560,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
     currentMassRate = currentTotalRate;
     // Step 1.1: compute the inverse of the total density and derivatives
     massDensity = totalDens[iwelemRef][0];
+    std::cout << "massDensity: " << massDensity << std::endl;
     real64 const totalDensInv = 1.0 / totalDens[iwelemRef][0];
 
     // Step 1.2: divide the total mass/molar rate by the total density to get the total volumetric rate
@@ -831,6 +835,7 @@ void CompositionalMultiphaseWell::updateSeparator( ElementRegionManager const & 
       }
       else
       {
+        std::cout << "flashPressure: " << flashPressure << ", flashTemperature: " << flashTemperature << " " << compFrac[iwelemRef] << std::endl;
         fluidSeparatorWrapper.update( iwelemRef, 0, flashPressure, flashTemperature, compFrac[iwelemRef] );
       }
     } );
@@ -906,9 +911,9 @@ real64 CompositionalMultiphaseWell::updateSubRegionState( ElementRegionManager c
     updateGlobalComponentFraction( subRegion );
 
     // update densities, phase fractions, phase volume fractions
-
+    std::cout << "Updating fluid model..." << std::endl;
     updateFluidModel( subRegion );   //  Calculate fluid properties
-
+    std::cout << "Updating separator..." << std::endl;
     updateSeparator( elemManager, subRegion );   //  Calculate fluid properties at control conditions
 
     updateVolRatesForConstraint( subRegion );    // remove tjb ??
@@ -1501,7 +1506,7 @@ CompositionalMultiphaseWell::calculateWellResidualNorm( real64 const & time_n,
 }
 
 
-void
+real64
 CompositionalMultiphaseWell::scalingForLocalSystemSolution( WellElementSubRegion & subRegion,
                                                             DofManager const & dofManager,
                                                             real64 & maxDeltaPres,
@@ -1614,7 +1619,7 @@ CompositionalMultiphaseWell::scalingForLocalSystemSolution( WellElementSubRegion
                                      getName(), minTempScalingFactor ) );
   }
 
-
+  return LvArray::math::max( scalingFactor, m_minScalingFactor );
 
 }
 real64
@@ -1788,7 +1793,7 @@ void CompositionalMultiphaseWell::computeWellPerforationRates( real64 const & ti
   GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( time_n );
 
-  CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+  CompositionalMultiphaseBase const & flowSolver = getParent().getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
 
   PerforationData * const perforationData = subRegion.getPerforationData();
 

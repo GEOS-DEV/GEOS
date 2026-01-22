@@ -4,7 +4,7 @@
   <Solvers>
     <CompositionalMultiphaseReservoir
       name="reservoirSystem"
-      wellSolverName="allWells"
+      wellManagerSolverName="allWells"
       flowSolverName="compositionalMultiphaseFlow"
       logLevel="1"
       initialDt="86400"
@@ -34,6 +34,9 @@
       useMass="1">
       <CompositionalMultiphaseWell
         targetRegions="{ wellRegion1  }"
+        logLevel="5"
+         maxRelativePressureChange="0.1"
+         maxCompFractionChange="0.1"
         name="wellControls1"
         type="producer"
         control="BHP" 
@@ -50,8 +53,12 @@
       <CompositionalMultiphaseWell
         name="wellControls2"
         targetRegions="{ wellRegion2  }"
+        logLevel="5"
+         maxRelativePressureChange="0.1"
+         maxCompFractionChange="0.1"
         type="injector"
-        control="BHP">
+        control="BHP" 
+         useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="2e+7"
@@ -191,8 +198,7 @@
       name="relperm"
       phaseNames="{ oil, gas, water }"
       wettingIntermediateRelPermTableNames="{ waterRelPermTable, oilRelPermTableForOW }"
-      nonWettingIntermediateRelPermTableNames="{ gasRelPermTable, oilRelPermTableForOG }"
-      threePhaseInterpolator="STONEII"/>
+      nonWettingIntermediateRelPermTableNames="{ gasRelPermTable, oilRelPermTableForOG }"/>
 
     <TableCapillaryPressure
       name="cappres"

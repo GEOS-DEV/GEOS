@@ -173,7 +173,7 @@ void SinglePhaseWell::initializeWellPostInitialConditionsPreSubGroups( WellEleme
 void SinglePhaseWell::initializePostInitialConditionsPreSubGroups()
 {
   //WellControl::initializePostInitialConditionsPreSubGroups();
- 
+
 }
 void SinglePhaseWell::postRestartInitialization( )
 {

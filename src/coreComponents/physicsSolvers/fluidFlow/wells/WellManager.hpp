@@ -289,6 +289,13 @@ public:
                         real64 const & dt,
                         DomainPartition & domain ) override;
 
+  virtual void applyBoundaryConditions( real64 const GEOS_UNUSED_PARAM( time_n ),
+                                        real64 const GEOS_UNUSED_PARAM( dt ),
+                                        DomainPartition & GEOS_UNUSED_PARAM( domain ),
+                                        DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                        CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ),
+                                        arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ) ) override {}
+
   /**
    * @brief calculate the norm of the global system residual
    * @param time the time at the beginning of the step
