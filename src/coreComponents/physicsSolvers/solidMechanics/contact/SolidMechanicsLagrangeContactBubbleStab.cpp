@@ -99,6 +99,42 @@ void SolidMechanicsLagrangeContactBubbleStab::registerDataOnMesh( Group & meshBo
 {
   ContactSolverBase::registerDataOnMesh( meshBodies );
 
+  // Check for tetrahedral elements and validate high-order quadrature requirement
+  NumericalMethodsManager const & numericalMethodManager =
+    this->getGroupByPath< DomainPartition >( "/Problem/domain" ).getNumericalMethodManager();
+  FiniteElementDiscretizationManager const & feDiscretizationManager =
+    numericalMethodManager.getFiniteElementDiscretizationManager();
+  FiniteElementDiscretization const & feDiscretization =
+    feDiscretizationManager.getGroup< FiniteElementDiscretization >( getDiscretizationName() );
+
+  integer const useHighOrderQuadrature =
+    feDiscretization.getReference< integer >( "useHighOrderQuadratureRule" );
+
+  bool hasTetrahedra = false;
+  forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
+                                                   MeshLevel const & mesh,
+                                                   string_array const & regionNames )
+  {
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    elemManager.forElementRegions< CellElementRegion >( regionNames, [&]( localIndex const,
+                                                                          CellElementRegion const & region )
+    {
+      region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
+      {
+        if( subRegion.getElementType() == ElementType::Tetrahedron )
+        {
+          hasTetrahedra = true;
+        }
+      } );
+    } );
+  } );
+
+  GEOS_ERROR_IF( hasTetrahedra && useHighOrderQuadrature != 1,
+                 GEOS_FMT( "{}: Tetrahedral meshes require useHighOrderQuadratureRule=\"1\" for correct integration of bubble contributions. "
+                           "Please add this attribute to your FiniteElements/{} XML block.",
+                           getName(), getDiscretizationName() ) );
+
+
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & meshLevel,
                                                     string_array const & )
