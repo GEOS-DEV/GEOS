@@ -110,10 +110,10 @@ public:
 
 private:
   GEOS_HOST_DEVICE
-  void computeMaterialTangentColumn(real64 const (&deltaFe)[3][3], real64 const (&deltaCe)[6],
-                                    real64 const (&M_hat)[6], real64 const (&Q)[3][3],
-                                    real64 const (&Q_T)[3][3], real64 const (&dtau_dEe)[6][6],
-                                    real64 const (&fInvT)[3][3], real64 (&deltaP_mat)[3][3]) const;
+  void computeMaterialTangentColumn(real64 const (&deltaCe)[6], real64 const (&M_hat)[6],
+                                    real64 const (&Q)[3][3], real64 const (&Q_T)[3][3],
+                                    real64 const (&dtau_dEe)[6][6], real64 const (&fInvT)[3][3],
+                                    real64 (&deltaP_mat)[3][3]) const;
 };
 
 GEOS_HOST_DEVICE
@@ -152,9 +152,9 @@ void ElasticIsotropicFiniteStrainUpdates::computeLogElasticStrain(
 GEOS_HOST_DEVICE
 inline
 void ElasticIsotropicFiniteStrainUpdates::computeMaterialTangentColumn(
-    real64 const (&deltaFe)[3][3], real64 const (&deltaCe)[6], real64 const (&M_hat)[6],
-    real64 const (&Q)[3][3], real64 const (&Q_T)[3][3], real64 const (&dtau_dEe)[6][6],
-    real64 const (&fInvT)[3][3], real64 (&deltaP_mat)[3][3]) const
+    real64 const (&deltaCe)[6], real64 const (&M_hat)[6], real64 const (&Q)[3][3],
+    real64 const (&Q_T)[3][3], real64 const (&dtau_dEe)[6][6], real64 const (&fInvT)[3][3],
+    real64 (&deltaP_mat)[3][3]) const
 {
   // Q^T * deltaCe * Q
   real64 deltaCe_hat[6] = {};
@@ -285,7 +285,7 @@ void ElasticIsotropicFiniteStrainUpdates::finiteStrainNoStateUpdate(localIndex c
 
       // material tangent
       real64 deltaP_mat[3][3] = {};
-      computeMaterialTangentColumn(deltaFe, deltaCe, M_hat, eigenVectors, eigenVectorsT, smallStrainStiffness, fInvT, deltaP_mat);
+      computeMaterialTangentColumn(deltaCe, M_hat, eigenVectors, eigenVectorsT, smallStrainStiffness, fInvT, deltaP_mat);
 
       // geometric tangent
       real64 deltaP_geo[3][3] = {};
