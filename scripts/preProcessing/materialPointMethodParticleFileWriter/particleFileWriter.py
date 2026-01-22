@@ -544,7 +544,9 @@ if generateParticleFile:
             object = sliceObjects[ob]
             ob = ob+1
             pt = np.array([x,y,z])
-            voxelFlag = object.isInterior( pt, surfaceDepth ) # Voxel flags greater than or equal to 0 denote interior regions of object
+            # Voxel flags greater than or equal to 0 denote interior regions of object
+            voxelFlag = object.isInterior( pt, surfaceDepth ) 
+
             if( voxelFlag >= 0 ):
               match = True
 
@@ -1080,12 +1082,13 @@ echo "srun command has completed, good bye."
     slurmScript = """#!/bin/bash
 #SBATCH -t """+mWallTime+"""
 #SBATCH -N """+str(mNodes)+"""
+#SBATCH -n """+str(mCores)+"""
 #SBATCH -A """+mBank+"""
 #SBATCH --export=NONE
 #SBATCH -p """+ mPartition + """
 
 echo "Launching srun command..."
-srun -n """+str(mCores)+""" """+geosPath+""" -i """+geosxInputFileName+""" -x """ + str(xpar) + """ -y """ + str(ypar) + """ -z """ + str(zpar) + """
+srun -N """+str(mNodes)+""" -n """+str(mCores)+""" """+geosPath+""" -i """+geosxInputFileName+""" -x """ + str(xpar) + """ -y """ + str(ypar) + """ -z """ + str(zpar) + """
 echo "srun command has completed, good bye."
 """
     fileName = timeStamp+"_runGEOSX.sh"

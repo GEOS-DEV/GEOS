@@ -3673,6 +3673,219 @@ class CT(Geometry):
     mat = self.map.get(index)
     return mat # will error if map doesn't contain index as key
 
+#############################################
+class ctArray(Geometry):
+  """
+  Geometry object for creating a 3D object from a CT voxelized dataset
+  
+  data is presented as a 3D numpy array for which indexing is volume[z, y, x]
+  this corresponds to physical space with volume[0,0,0] indexing the bottom 
+  front left of the array's bounding box, i.e. [ z+, y+, x+ ] -> [ up, back, right ]
+
+  Note that surfaces will be flagged at materials that neighbor void space
+
+  name        a name for the object 
+  data        numpy array with integer flags specifying material via material map
+                in which integer 0 -> void, 1 -> mat0, 2 -> mat1, etc.
+  x0, x1      coordinates of the -,+ corners of the object in the domain where
+                x0 and x1 specificy physical space with [x, y, z]
+  vel         an array of floats specifying initial velocity in x, y, and z
+  group       contact group
+    
+  """
+  def __init__(self,
+               name,
+               data,
+               x0,
+               x1,
+               delta = None, 
+               vel=_defaultVelocity,
+               mat=None, 
+               group=_defaultGroup,
+               particleType=_defaultParticleType):
+    Geometry.__init__(self,
+                      name,
+                      v = vel,
+                      mat = _defaultMat,
+                      group = group,
+                      particleType = particleType)
+    
+    # -----------------------------
+    # Validate CT data
+    # -----------------------------
+    if not isinstance(data, np.ndarray):
+        raise TypeError("CT data must be a numpy array")
+
+    if data.ndim != 3:
+        raise ValueError("CT data must be a 3D array with shape (z, y, x)")
+
+    # if data.dtype.kind not in "iu":
+    #     raise TypeError(
+    #         "CT data must be integer-valued "
+    #         "(0=void, 1..N=materials)"
+    #     )
+
+    self.data = data
+    self.nk, self.nj, self.ni = data.shape
+    # -----------------------------
+    # Build material map: i → (i-1)
+    # -----------------------------
+    unique_vals = np.unique(data)
+
+    x0 = np.array(x0)
+    x1 = np.array(x1)
+    self.x0 = np.minimum(x0,x1)
+    self.x1 = np.maximum(x0,x1)
+    self.mat=mat
+    self.delta = delta 
+    if self.delta is None:
+        # indexing is by voxel center
+        self.delta = (self.x1 - self.x0) / np.array([self.ni-2, self.nj-2, self.nk-2])
+
+  def isSurfaceCheck(self, x):    
+
+    dx, dy, dz = self.delta
+    voxel = (self.x1 - self.x0) / np.array([self.ni, self.nj, self.nk])
+
+    alpha = 1.25
+    step = np.array([dx, dy, dz]) * alpha  
+
+    for ii in [-1, 0, 1]:
+        for jj in [-1, 0, 1]:
+            for kk in [-1, 0, 1]:
+                if ii == jj == kk == 0:
+                    continue
+
+                # neighbor_pt = x + np.array([ii*dx, jj*dy, kk*dz])
+                neighbor_pt = x + np.array([ii, jj, kk]) * step
+
+                idx = np.floor((neighbor_pt - self.x0) / voxel).astype(int)
+
+                i, j, k = idx
+
+                # out of domain → surface
+                if not (0 <= i < self.ni and 0 <= j < self.nj and 0 <= k < self.nk):
+                    return _defaultSurfaceFlag
+
+                # not interior → surface
+                if not (1 <= i <= self.ni-2 and
+                        1 <= j <= self.nj-2 and
+                        1 <= k <= self.nk-2):
+                    return _defaultSurfaceFlag
+
+                if self.data[i, j, k] == 0:
+                    return _defaultSurfaceFlag
+
+    return 0
+
+  # def isSurfaceCheck( self, x):
+  #   # return default surface flag if neighboring point is not interior
+  #   #  else return 0
+  #   # x is your point (physical coordinates)
+  #   dx, dy, dz = self.delta
+
+  #   # generate all combinations of -1, 0, +1 along each axis
+  #   offsets = np.array([
+  #       [i*dx, j*dy, k*dz]
+  #       for i in [-1, 0, 1]
+  #       for j in [-1, 0, 1]
+  #       for k in [-1, 0, 1]
+  #       if not (i == 0 and j == 0 and k == 0)  # exclude the center point
+  #   ])
+
+  #   for d in offsets:
+  #       neighbor_pt = x + d  # physical coordinates of neighbor
+        
+  #       # Convert to voxel indices
+  #       i = int(np.floor((neighbor_pt[0] - self.x0[0]) / ( (self.x1[0] - self.x0[0])/self.ni )))
+  #       j = int(np.floor((neighbor_pt[1] - self.x0[1]) / ( (self.x1[1] - self.x0[1])/self.nj )))
+  #       k = int(np.floor((neighbor_pt[2] - self.x0[2]) / ( (self.x1[2] - self.x0[2])/self.nk )))
+
+  #       # Clamp to array bounds
+  #       i = np.clip(i, 0, self.ni - 1)
+  #       j = np.clip(j, 0, self.nj - 1)
+  #       k = np.clip(k, 0, self.nk - 1)
+
+  #       if 0 < i < (self.ni-2) and 0 < j < (self.nj-2) and 0 < k < (self.nk-2):
+  #           if self.data[ i, j, k ] == 0:
+  #               return _defaultSurfaceFlag
+  #       else:
+  #           return _defaultSurfaceFlag
+
+  #   return 0
+
+  def isInterior(self, pt, skinDepth):
+    # there are a few options.
+    # Basic ?surface? flags:
+    #   -1 = void
+    #   0 = internal, 
+    #   1=fully damaged, 
+    #   2=normal surface flag, 
+    #   3=cohesive
+
+    x = np.array(pt)
+
+    # does pt lie within the bounding box?
+    if np.all( np.logical_and( x > self.x0, x < self.x1 ) ):
+
+      i = int(np.floor(self.ni * (x[0] - self.x0[0]) / (self.x1[0] - self.x0[0])))  # x → i
+      j = int(np.floor(self.nj * (x[1] - self.x0[1]) / (self.x1[1] - self.x0[1])))  # y → j
+      k = int(np.floor(self.nk * (x[2] - self.x0[2]) / (self.x1[2] - self.x0[2])))  # z → k
+      
+      i = max(min(self.ni - 1, i), 0)
+      j = max(min(self.nj - 1, j), 0)
+      k = max(min(self.nk - 1, k), 0)
+
+      if self.data[ i, j, k ] > 0:
+        # the point is within an object
+        # return 0 if truly interior, _default_surfaceflag if surface
+        return self.isSurfaceCheck( x ) 
+      else:
+        return -1
+
+    return -1
+
+  def getName( self ):
+    return self.name
+
+  def getMat(self, pt):
+    # assumes the point within the object
+    
+    if self.mat is not None:
+      return self.mat
+    else:
+      x = np.array(pt)
+
+      i = int(np.floor(self.ni * (x[0] - self.x0[0]) / (self.x1[0] - self.x0[0])))  # x → i
+      j = int(np.floor(self.nj * (x[1] - self.x0[1]) / (self.x1[1] - self.x0[1])))  # y → j
+      k = int(np.floor(self.nk * (x[2] - self.x0[2]) / (self.x1[2] - self.x0[2])))  # z → k
+      
+      i = max(min(self.ni - 1, i), 0)
+      j = max(min(self.nj - 1, j), 0)
+      k = max(min(self.nk - 1, k), 0)
+      return (self.data[ i, j, k ] - 1)
+
+
+
+    # xmin = min(self.x0[0],self.x1[0])
+    # xmax = max(self.x0[0],self.x1[0])
+    # ymin = min(self.x0[1],self.x1[1])
+    # ymax = max(self.x0[1],self.x1[1])
+    # zmin = min(self.x0[2],self.x1[2])
+    # zmax = max(self.x0[2],self.x1[2])
+
+    # i = int( np.floor( self.ni*(x[2]-self.x0[2])/(self.x1[2]-self.x0[2]) ) )
+    # j = int( np.floor( self.nj*(x[1]-self.x0[1])/(self.x1[1]-self.x0[1]) ) )
+    # k = int( np.floor( self.nk*(x[0]-self.x0[0])/(self.x1[0]-self.x0[0]) ) )
+    # i=max(min(self.ni-1,i),0)
+    # j=max(min(self.nj-1,j),0)
+    # k=max(min(self.nk-1,k),0)
+    # n = i*self.nj*self.nk + j*self.nk + k
+
+    # index = int(self.data[n])
+    # mat = self.map.get(index)
+    # return mat # will error if map doesn't contain index as key
+
 
 #############################################
 class bitmap(Geometry):
