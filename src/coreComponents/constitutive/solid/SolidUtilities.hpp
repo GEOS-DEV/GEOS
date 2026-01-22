@@ -187,7 +187,7 @@ struct SolidUtilities
     solid.finiteStrainUpdate(0, 0, elasticDeformGrad, firstPiolaStress, stiffness);
 
     real64 stiffnessFD[9][9] = {};
-    SolidUtilities::computeFiniteStrainFiniteDifferenceStiffness(solid, 0, 0, elasticDeformGrad, stiffnessFD);
+    SolidUtilities::computeFiniteStrainFiniteDifferenceStiffness(solid, k, q, elasticDeformGrad, stiffnessFD);
 
     real64 error = 0;
     real64 norm = 0;
