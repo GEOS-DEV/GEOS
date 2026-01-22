@@ -36,6 +36,8 @@ endif()
 
 option( ENABLE_PVTPackage "" ON )
 
+option( ENABLE_HPCREACT "" ON )
+
 option( ENABLE_UNCRUSTIFY "" ON )
 
 option( ENABLE_XML_UPDATES "" ON )

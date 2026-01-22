@@ -1081,7 +1081,30 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
                                    globalCondConv[0], globalCondConv[1], globalCondConv[2],
                                    globalCondConv[3], globalCondConv[4] ));
 
-  if( !hasConfigurationConvergedGlobally )
+  if( hasConfigurationConvergedGlobally )
+  {
+
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                  MeshLevel & mesh,
+                                                                  string_array const & regionNames )
+    {
+      ElementRegionManager & elemManager = mesh.getElemManager();
+
+      elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                  FaceElementSubRegion & subRegion )
+      {
+
+        arrayView2d< real64 > const traction_new_v = traction_new.toView();
+        arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
+
+        forAll< parallelDevicePolicy<> >( subRegion.size(), [ = ] GEOS_HOST_DEVICE ( localIndex const kfe )
+        {
+          LvArray::tensorOps::copy< 3 >( traction[kfe], traction_new_v[kfe] );
+        } );
+      } );
+    } );
+  }
+  else
   {
     forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                   MeshLevel & mesh,

@@ -4,7 +4,8 @@ set( gtest_geosx_tests
      testThermalSinglePhaseFlow.cpp
      testTransmissibility.cpp
      testImmiscibleMultiphaseFlow.cpp
-     testSinglePhaseMFDPolyhedral.cpp )
+     testSinglePhaseMFDPolyhedral.cpp
+     testSinglePhaseReactiveTransport.cpp )
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests

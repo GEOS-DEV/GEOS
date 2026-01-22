@@ -116,6 +116,34 @@ decks = [
         partitions=((1, 1, 1), (2, 1, 3)),
         restart_step=23,
         check_step=46,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="initialization_2phase",
+        description="Two phase initialisation",
+        partitions=((1, 1, 1), (1, 1, 2)),
+        restart_step=124,
+        check_step=124,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="initialization_2phase_no_cappres",
+        description="Two phase initialisation (No capillary pressure curves)",
+        partitions=((1, 1, 1), (1, 1, 2)),
+        restart_step=124,
+        check_step=124,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="initialization_2phase_4comp",
+        description="Two phase initialisation (4 component fluid)",
+        partitions=((1, 1, 1), (1, 1, 2)),
+        restart_step=124,
+        check_step=124,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="initialization_3phase",
+        description="Three phase initialisation",
+        partitions=((1, 1, 1), (1, 1, 2)),
+        restart_step=124,
+        check_step=124,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
 ]
 
