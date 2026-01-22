@@ -19,7 +19,6 @@
 
 #include "MultiphasePoromechanicsConformingFracturesALM.hpp"
 
-#include "finiteVolume/FluxApproximationBase.hpp"
 
 namespace geos
 {
