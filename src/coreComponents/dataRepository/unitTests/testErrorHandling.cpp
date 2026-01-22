@@ -14,15 +14,9 @@
  */
 
 // forcefully enable asserts macros for this unit test
-#include "LvArray/src/system.hpp"
-#include "common/logger/ExternalErrorHandler.hpp"
-#include "gtest/gtest.h"
 #define GEOS_ASSERT_ENABLED
 #include "LvArray/src/system.hpp"
 #include "common/logger/ExternalErrorHandler.hpp"
-#include "mainInterface/initialization.hpp"
-#include "mainInterface/GeosxState.hpp"
-#include "mainInterface/ProblemManager.hpp"
 #include "gtest/gtest.h"
 #include "common/logger/ErrorHandling.hpp"
 
@@ -117,11 +111,13 @@ TEST( ErrorHandling, testYamlFileWarningOutput )
   beginLocalLoggerTest( testErrorLogger, "warningTestOutput.yaml" );
 
   GET_LINE( line1 ); GEOS_WARNING( "Conflicting pressure boundary conditions" );
+
   GET_LINE( line2 ); GEOS_WARNING_IF_GT_MSG( testValue, testMaxPrecision, "Pressure value is too high." );
 
   string const warningMsg = GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
                                       context.toString(), testMinPrecision, testMaxPrecision, testMinPrecision );
   GET_LINE( line3 ); GEOS_WARNING_IF( testValue == 5, warningMsg, context, additionalContext );
+
   endLocalLoggerTest( testErrorLogger, {
     R"(errors:)",
 
@@ -451,147 +447,38 @@ TEST( ErrorHandling, VerifySignalHandlerLogs )
   setupLogger();
 }
 
-CommandLineOptions g_commandLineOptions;
-
-static const string solverLogOutput =
-  R"xml(
-    <?xml version="1.0" ?>
-    <Problem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="../../src/coreComponents/schema/schema.xsd">
-    <Solvers
-        gravityVector="{ 0.0, 0.0, -9.81 }">
-        <SinglePhaseFVM
-        name="SinglePhaseFlow"
-        discretization="singlePhaseTPFA"
-        targetRegions="{ Channel }"
-        writeStatistics="iteration" >
-        <NonlinearSolverParameters
-            newtonTol="1.0e-6"
-            newtonMaxIter="8"/>
-        <LinearSolverParameters
-            directParallel="0"/>
-        </SinglePhaseFVM>
-    </Solvers>
-    )xml";
-
-static const string pattern =
-  R"xml(
-    <Mesh>
-        <InternalMesh
-        name="mesh1"
-        elementTypes="{ C3D8 }"
-        xCoords="{ 0, 5, 10 }"
-        yCoords="{ 0, 5, 10 }"
-        zCoords="{ 0, 2.5, 5, 7.5, 10 }"
-        nx="{ 5, 5 }"
-        ny="{ 5, 5 }"
-        nz="{ 3, 3, 3, 3 }"
-        cellBlockNames="{ cb-0_0_0, cb-1_0_0, cb-0_1_0, cb-1_1_0,
-                            cb-0_0_1, cb-1_0_1, cb-0_1_1, cb-1_1_1,
-                            cb-0_0_2, cb-1_0_2, cb-0_1_2, cb-1_1_2,
-                            cb-0_0_3, cb-1_0_3, cb-0_1_3, cb-1_1_3 }"/>
-    </Mesh>
-
-    <Geometry>
-        <Box
-        name="source"
-        xMin="{ 7.99, -0.01, 9.99 }"
-        xMax="{ 10.01, 2.01, 10.01 }"/>
-
-        
-    </Geometry>
-
-    <Events
-        maxTime="1e5">
-
-        <PeriodicEvent
-        name="solverApplications"
-        forceDt="5e3"
-        target="/Solvers/SinglePhaseFlow"/>
-        
-    </Events>
-
-    <ElementRegions>
-        <CellElementRegion
-        name="Channel"
-        cellBlocks="{ cb-1_0_0, cb-0_0_0, cb-0_0_1, cb-0_1_1, cb-0_1_2, cb-1_1_2, cb-1_1_3, cb-1_0_3 }"
-        materialList="{ water, rock }"/>
-
-        <CellElementRegion
-        name="Barrier"
-        cellBlocks="{ cb-0_1_0, cb-1_1_0, cb-1_1_1, cb-1_0_1, cb-1_0_2, cb-0_0_2, cb-0_0_3, cb-0_1_3 }"
-        materialList="{ }"/>
-    </ElementRegions>
-
-    <NumericalMethods>
-        <FiniteVolume>
-        <TwoPointFluxApproximation
-            name="singlePhaseTPFA"/>
-        </FiniteVolume>
-    </NumericalMethods>
-
-    <Constitutive>
-        <CompressibleSinglePhaseFluid
-        name="water"
-        defaultDensity="1000"
-        defaultViscosity="0.001"
-        referencePressure="0.0"
-        compressibility="5e-10"
-        viscosibility="0.0"/>
-
-        <CompressibleSolidCarmanKozenyPermeability
-        name="rock"
-        solidModelName="nullSolid"
-        porosityModelName="rockPorosity"
-        permeabilityModelName="channelPerm"/>
-
-        <NullModel
-        name="nullSolid"/>
-
-        <PressurePorosity
-        name="rockPorosity"
-        defaultReferencePorosity="0.1"
-        referencePressure="0.0"
-        compressibility="1.0e-9"/>
-
-        <CarmanKozenyPermeability
-        name="channelPerm"
-        particleDiameter="5e-6"
-        sphericity="0.9"/>
-
-    </Constitutive>
-
-    </Problem>
-)xml";
-
-
 TEST( ErrorHandling, testErrorReport )
 {
-  //TODO reset logger
-  GeosxState state( std::make_unique< CommandLineOptions >( g_commandLineOptions ) );
-  ProblemManager & problem = state.getProblemManager();
+  ErrorLogger testErrorLogger;
   std::ostringstream xmlInput;
-  xmlInput << solverLogOutput << pattern;
-  problem.parseInputString( xmlInput.str() );
-  problem.problemSetup();
-  problem.applyInitialConditions();
-  problem.runSimulation();
-  EXPECT_EQ( ErrorLogger::global().getLoggerReportData().get()
+
+  testErrorLogger.setCurrentLogPart( LogPart::Type::MeshGeneration );
+  GEOS_WARNING( "warning" );
+  GEOS_WARNING( "warning" );
+  testErrorLogger.setCurrentLogPart( LogPart::Type::NumericalMethods );
+  GEOS_WARNING( "warning" );
+  GEOS_WARNING( "warning" );
+  testErrorLogger.setCurrentLogPart( LogPart::Type::ImportFields );
+  GEOS_WARNING( "warning" );
+  GEOS_WARNING( "warning" );
+  GEOS_WARNING( "warning" );
+  GEOS_WARNING( "warning" );
+
+  EXPECT_EQ( testErrorLogger.getLoggerReportData().get()
                .at( LogPart::Type::MeshGeneration )
-               .at( MsgType::Warning ).size(), 3 );
-  EXPECT_EQ( ErrorLogger::global().getLoggerReportData().get()
+               .at( MsgType::Warning ).size(), 2 );
+  EXPECT_EQ( testErrorLogger.getLoggerReportData().get()
                .at( LogPart::Type::NumericalMethods )
-               .at( MsgType::Warning ).size(), 5 );
-  EXPECT_EQ( ErrorLogger::global().getLoggerReportData().get()
+               .at( MsgType::Warning ).size(), 2 );
+  EXPECT_EQ( testErrorLogger.getLoggerReportData().get()
                .at( LogPart::Type::ImportFields )
-               .at( MsgType::Warning ).size(), 5 );
+               .at( MsgType::Warning ).size(), 4 );
 }
 
 int main( int ac, char * av[] )
 {
   ::testing::GTEST_FLAG( death_test_style ) = "threadsafe";
   ::testing::InitGoogleTest( &ac, av );
-  g_commandLineOptions = *geos::basicSetup( ac, av );
   geos::setupEnvironment( ac, av );
   int const result = RUN_ALL_TESTS();
   geos::cleanupEnvironment( );
