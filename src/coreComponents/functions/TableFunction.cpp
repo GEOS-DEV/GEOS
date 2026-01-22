@@ -25,6 +25,7 @@
 #include "codingUtilities/Parsing.hpp"
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
+#include "fileIO/Outputs/OutputBase.hpp"
 
 #include <algorithm>
 
@@ -67,9 +68,10 @@ TableFunction::TableFunction( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "When set to 1, write the table into a CSV file" );
+    setDescription( "When set to 1, write PVT tables into a CSV file.\n "
+                    "if the table is requested to be output in the log, and it is too large, a CSV file will be generated even if `writeCSV` is set to 0." );
 
-  addLogLevel< logInfo::TableDataOutput >();
+  addLogLevel< logInfo::TableLogOutput >();
 }
 
 void TableFunction::readFile( string const & filename, array1d< real64 > & target )
@@ -103,7 +105,7 @@ void TableFunction::setTableCoordinates( array1d< real64_array > const & coordin
       GEOS_THROW_IF( coordinates[i][j] - coordinates[i][j-1] <= 0,
                      GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
                                catalogName(), getDataContext(), i ),
-                     InputError );
+                     InputError, getDataContext() );
     }
     m_coordinates.appendArray( coordinates[i].begin(), coordinates[i].end() );
   }
@@ -165,7 +167,7 @@ void TableFunction::reInitializeFunction()
       GEOS_THROW_IF( m_coordinates[ii][j] - m_coordinates[ii][j-1] <= 0,
                      GEOS_FMT( "{} {}: coordinates must be strictly increasing, but axis {} is not",
                                catalogName(), getDataContext(), ii ),
-                     InputError );
+                     InputError, getDataContext() );
     }
   }
   if( m_coordinates.size() > 0 && !m_values.empty() ) // coordinates and values have been set
@@ -185,7 +187,7 @@ void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
   GEOS_THROW_IF( dim >= m_coordinates.size() || dim < 0,
                  GEOS_FMT( "{}: The {} dimension ( no. {} ) doesn't exist in the table.",
                            getDataContext(), units::getDescription( getDimUnit( dim ) ), dim ),
-                 SimulationError );
+                 SimulationError, getDataContext() );
   real64 const lowerBound = m_coordinates[dim][0];
   real64 const upperBound = m_coordinates[dim][m_coordinates.sizeOfArray( dim ) - 1];
   GEOS_THROW_IF( coord > upperBound || coord < lowerBound,
@@ -194,7 +196,7 @@ void TableFunction::checkCoord( real64 const coord, localIndex const dim ) const
                            units::formatValue( coord, getDimUnit( dim ) ),
                            units::formatValue( lowerBound, getDimUnit( dim ) ),
                            units::formatValue( upperBound, getDimUnit( dim ) ) ),
-                 SimulationError );
+                 SimulationError, getDataContext() );
 }
 
 TableFunction::KernelWrapper TableFunction::createKernelWrapper() const
@@ -401,9 +403,10 @@ void TableFunction::outputTableData( OutputOptions const outputOpts ) const
 void TableFunction::initializePostSubGroups()
 {
   // Output user defined tables (not generated PVT tables)
+  bool const writeLog = isLogLevelActive< logInfo::TableLogOutput >( getLogLevel() );
   outputTableData( OutputOptions{
-      m_writeCSV != 0,   // writeCSV
-      isLogLevelActive< logInfo::TableDataOutput >( getLogLevel() )   // writeInLog
+      m_writeCSV != 0, // writeCSV
+      writeLog         // writeLog
     } );
 }
 

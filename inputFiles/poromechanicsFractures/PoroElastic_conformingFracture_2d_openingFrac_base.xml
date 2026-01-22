@@ -1,12 +1,11 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"/>
-      <TwoPointFluxApproximation
-        name="singlePhaseTPFA_stab"/>  
     </FiniteVolume>
     <FiniteElements>
       <FiniteElementSpace

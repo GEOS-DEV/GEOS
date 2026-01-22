@@ -56,74 +56,46 @@ public:
     Base::setupCoupling( domain, dofManager );
 
     // 2. Traction - pressure coupling in the fracture
-    dofManager.addCoupling( getFlowDofKey(),
+    dofManager.addCoupling( this->getFlowDofKey(),
                             fields::contact::traction::key(),
                             DofManager::Connector::Elem );
   }
 
-  virtual void setupSystem( DomainPartition & domain,
-                            DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution,
-                            bool const setSparsity = true ) override
+  virtual void setSparsityPattern( DomainPartition & domain,
+                                   DofManager & dofManager,
+                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                   SparsityPattern< globalIndex > & pattern ) override
   {
-    GEOS_MARK_FUNCTION;
-
-    GEOS_UNUSED_VAR( setSparsity );
-
-    /// 1. Add all coupling terms handled directly by the DofManager
-    dofManager.setDomain( domain );
-    this->setupDofs( domain, dofManager );
-    dofManager.reorderByRank();
-
-    /// 2. Add coupling terms not added by the DofManager.
-    localIndex const numLocalRows = dofManager.numLocalDofs();
-
+    // start with the flow solver sparsity pattern (it could be reservoir + wells)
     SparsityPattern< globalIndex > patternOriginal;
-    dofManager.setSparsityPattern( patternOriginal );
+    this->flowSolver()->setSparsityPattern( domain, dofManager, localMatrix, patternOriginal );
 
     // Get the original row lengths (diagonal blocks only)
-    array1d< localIndex > rowLengths( patternOriginal.numRows() );
+    array1d< localIndex > rowLengths( patternOriginal.numRows());
     for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
     {
       rowLengths[localRow] = patternOriginal.numNonZeros( localRow );
     }
 
     // Add the number of nonzeros induced by coupling
-    addTransmissibilityCouplingNNZ( domain, dofManager, rowLengths.toView() );
+    addTransmissibilityCouplingNNZ( domain, dofManager, rowLengths.toView());
 
     // Create a new pattern with enough capacity for coupled matrix
-    SparsityPattern< globalIndex > pattern;
     pattern.resizeFromRowCapacities< parallelHostPolicy >( patternOriginal.numRows(),
                                                            patternOriginal.numColumns(),
-                                                           rowLengths.data() );
+                                                           rowLengths.data());
 
     // Copy the original nonzeros
     for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
     {
       globalIndex const * cols = patternOriginal.getColumns( localRow ).dataIfContiguous();
-      pattern.insertNonZeros( localRow, cols, cols + patternOriginal.numNonZeros( localRow ) );
+      pattern.insertNonZeros( localRow, cols, cols + patternOriginal.numNonZeros( localRow ));
     }
 
     // Add the nonzeros from coupling
-    addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView() );
-
-    localMatrix.setName( this->getName() + "/matrix" );
-    localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-
-    rhs.setName( this->getName() + "/rhs" );
-    rhs.create( numLocalRows, MPI_COMM_GEOS );
-
-    solution.setName( this->getName() + "/solution" );
-    solution.create( numLocalRows, MPI_COMM_GEOS );
+    addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView());
 
     setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
-
-    // if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
-    // {
-    //   m_precond = createPreconditioner( domain );
-    // }
   }
 
   virtual void assembleSystem( real64 const time_n,
@@ -195,13 +167,15 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
+    integer const numComp = numFluidComponents();
+
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &, //  meshBodyName,
                                                                         MeshLevel const & mesh,
                                                                         string_array const & ) // regionNames
     {
       ElementRegionManager const & elemManager = mesh.getElemManager();
 
-      string const flowDofKey = dofManager.getKey( getFlowDofKey() );
+      string const flowDofKey = dofManager.getKey( this->getFlowDofKey() );
 
       globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -240,7 +214,10 @@ protected:
                 if( k1 != k0 )
                 {
                   localIndex const numNodesPerElement = elemsToNodes[sei[iconn][k1]].size();
-                  rowLengths[rowNumber] += 3*numNodesPerElement;
+                  for( integer ic = 0; ic < numComp; ic++ )
+                  {
+                    rowLengths[rowNumber + ic] += 3*numNodesPerElement;
+                  }
                 }
               }
             }
@@ -263,6 +240,8 @@ protected:
   {
     GEOS_MARK_FUNCTION;
 
+    integer const numComp = numFluidComponents();
+
     this->forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                         MeshLevel const & mesh,
                                                                         string_array const & )
@@ -272,7 +251,7 @@ protected:
       ElementRegionManager const & elemManager = mesh.getElemManager();
 
       string const dispDofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
-      string const flowDofKey = dofManager.getKey( getFlowDofKey() );
+      string const flowDofKey = dofManager.getKey( this->getFlowDofKey() );
 
       arrayView1d< globalIndex const > const &
       dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -337,7 +316,10 @@ protected:
                     for( localIndex i = 0; i < 3; ++i )
                     {
                       globalIndex const colIndex = dispDofNumber[faceToNodeMap( faceIndex, a )] + LvArray::integerConversion< globalIndex >( i );
-                      pattern.insertNonZero( rowIndex, colIndex );
+                      for( integer ic = 0; ic < numComp; ic++ )
+                      {
+                        pattern.insertNonZero( rowIndex + ic, colIndex );
+                      }
                     }
                   }
                 }
@@ -492,7 +474,7 @@ protected:
     arrayView1d< real64 const > faceAreas = faceManager.faceArea();
 
     string const & dispDofKey = dofManager.getKey( fields::solidMechanics::totalDisplacement::key() );
-    string const & flowDofKey = dofManager.getKey( getFlowDofKey() );
+    string const & flowDofKey = dofManager.getKey( this->getFlowDofKey() );
 
     arrayView1d< globalIndex const > const &
     dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
@@ -678,8 +660,6 @@ protected:
   {
     return m_derivativeFluxResidual_dAperture->toViewConst();
   }
-
-  virtual string getFlowDofKey() const = 0;
 
   virtual integer numFluidComponents() const = 0;
 

@@ -44,7 +44,7 @@
 
     <PeriodicEvent
       name="outputs"
-      timeFrequency="5e3"
+      timeFrequency="1e4"
       target="/Outputs/vtkOutput"/>
     <PeriodicEvent
       name="linearElasticityStatistics"

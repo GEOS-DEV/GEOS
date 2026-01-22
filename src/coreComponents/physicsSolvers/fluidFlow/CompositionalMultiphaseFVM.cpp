@@ -28,7 +28,6 @@
 #include "dataRepository/Group.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/LogLevelsInfo.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
@@ -123,23 +122,11 @@ CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Target CFL condition `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_"
                     " when computing the next timestep." );
-
-  addLogLevel< logInfo::Convergence >();
-  addLogLevel< logInfo::Solution >();
-  addLogLevel< logInfo::TimeStep >();
 }
 
 void CompositionalMultiphaseFVM::postInputInitialization()
 {
   CompositionalMultiphaseBase::postInputInitialization();
-
-  if( m_scalingType == ScalingType::Local &&
-      m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None )
-  {
-    GEOS_ERROR( GEOS_FMT( "{}: line search is not supported for {} = {}",
-                          getName(), viewKeyStruct::scalingTypeString(),
-                          EnumStrings< ScalingType >::toString( ScalingType::Local )) );
-  }
 
   if( m_formulationType == CompositionalMultiphaseFormulationType::OverallComposition )
   {
@@ -199,6 +186,14 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
 {
   CompositionalMultiphaseBase::initializePreSubGroups();
 
+  if( m_scalingType == ScalingType::Local &&
+      m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None )
+  {
+    GEOS_ERROR( GEOS_FMT( "{}: line search is not supported for {} = {}",
+                          getName(), viewKeyStruct::scalingTypeString(),
+                          EnumStrings< ScalingType >::toString( ScalingType::Local )) );
+  }
+
   m_linearSolverParameters.get().mgr.strategy = m_isThermal
                                                 ? LinearSolverParameters::MGR::StrategyType::thermalCompositionalMultiphaseFVM
                                                 : LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
@@ -211,7 +206,9 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
   GEOS_ERROR_IF( fluxApprox.upwindingParams().upwindingScheme == UpwindingScheme::HU2PH && m_numPhases != 2,
                  GEOS_FMT( "{}: upwinding scheme {} only supports 2-phase flow",
-                           getName(), EnumStrings< UpwindingScheme >::toString( UpwindingScheme::HU2PH )));
+                           getDataContext(),
+                           EnumStrings< UpwindingScheme >::toString( UpwindingScheme::HU2PH )),
+                 getDataContext() );
 }
 
 void CompositionalMultiphaseFVM::setupDofs( DomainPartition const & domain,
@@ -577,9 +574,13 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1]  + globalResidualNorm[2] * globalResidualNorm[2] );
 
-    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence,
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
                                GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )        ( Renergy ) = ( {:4.2e} )",
                                          globalResidualNorm[0], globalResidualNorm[1], globalResidualNorm[2] ));
+
+    getConvergenceStats().setResidualValue( "Rmass", globalResidualNorm[0] );
+    getConvergenceStats().setResidualValue( "Rvol", globalResidualNorm[1] );
+    getConvergenceStats().setResidualValue( "Renergy", globalResidualNorm[2] );
   }
   else
   {
@@ -595,8 +596,10 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( real64 const & GEOS_UN
     }
     residualNorm = sqrt( globalResidualNorm[0] * globalResidualNorm[0] + globalResidualNorm[1] * globalResidualNorm[1] );
 
-    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::Convergence, GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )",
-                                                               globalResidualNorm[0], globalResidualNorm[1] ) );
+    GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( Rmass Rvol ) = ( {:4.2e} {:4.2e} )",
+                                                                globalResidualNorm[0], globalResidualNorm[1] ) );
+    getConvergenceStats().setResidualValue( "Rmass", globalResidualNorm[0] );
+    getConvergenceStats().setResidualValue( "Rvol", globalResidualNorm[1] );
   }
 
   return residualNorm;
@@ -615,7 +618,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
   else
   {
     string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-    real64 scalingFactor = 1.0;
+    real64 scalingFactor = CompositionalMultiphaseBase::scalingForSystemSolution( domain, dofManager, localSolution );
     real64 minPresScalingFactor = 1.0, minCompDensScalingFactor = 1.0, minTempScalingFactor = 1.0;
 
     stdVector< MpiWrapper::PairType< real64, globalIndex > > regionDeltaPresMaxLoc;
@@ -1263,7 +1266,9 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateFaceDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent, GEOS_FMT( "{}: inconsistent boundary conditions", getDataContext() ) );
+    GEOS_ERROR_IF( !bcConsistent,
+                   GEOS_FMT( "{}: inconsistent boundary conditions", getDataContext() ),
+                   getDataContext() );
   }
 
   using namespace isothermalCompositionalMultiphaseFVMKernels;
@@ -1434,7 +1439,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
       {
         globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryCondition,
+        GEOS_LOG_LEVEL_RANK_0_ON_GROUP( logInfo::BoundaryConditions,
                                         GEOS_FMT( faceBcLogMessage,
                                                   getName(), time+dt, bc.getCatalogName(), bc.getName(),
                                                   setName, faceManager.getName(), bc.getScale(), numTargetFaces ),

@@ -27,7 +27,7 @@ using ViewKeys = CellElementRegion::viewKeyStruct;
 
 CellElementRegionSelector::CellElementRegionSelector(
   Group const & cellBlocks,
-  std::map< integer, std::set< string > > const & regionsCellBlocks )
+  stdMap< integer, std::set< string > > const & regionsCellBlocks )
 {
   // The owners lists need to be initialized so we will be able to verify later that it is not empty.
 
@@ -71,7 +71,7 @@ CellElementRegionSelector::getMatchingCellblocks( CellElementRegion const & regi
                                                         []( auto pair ) { return pair->first; } ),
                            stringutilities::joinLambda( m_cellBlocksOwners, ", ",
                                                         []( auto pair ) { return pair->first; } ) ),
-                 InputError );
+                 InputError, region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ) );
   return matchedCellBlocks;
 }
 
@@ -88,7 +88,7 @@ CellElementRegionSelector::verifyRequestedCellBlocks( CellElementRegion const & 
                              requestedCellBlockName,
                              stringutilities::joinLambda( m_cellBlocksOwners, ", ",
                                                           []( auto pair ) { return pair->first; } ) ),
-                   InputError );
+                   InputError, region.getWrapperDataContext( ViewKeys::sourceCellBlockNamesString() ) );
   }
 }
 

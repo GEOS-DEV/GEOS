@@ -101,7 +101,7 @@ Flow solver
 Although the fluid behavior is significantly different from that of the previous benchmark, we still use the GEOS
 general-purpose multiphase flow solver defined in the XML block **CompositionalMultiphaseFVM**:
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base_iterative.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_benchmark.xml
     :language: xml
     :start-after: <!-- SPHINX_SOLVER -->
     :end-before: <!-- SPHINX_SOLVER_END -->
@@ -119,7 +119,7 @@ saturation range between 0.2 and 0.95, an entry pressure of 10000 Pa, and a Broo
 We refer the reader to the files used in the **TableFunction** listed below for the exact values
 that we have used:
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base_iterative.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base.xml
     :language: xml
     :start-after: <!-- SPHINX_SCAL -->
     :end-before: <!-- SPHINX_SCAL_END -->
@@ -127,7 +127,7 @@ that we have used:
 The two-phase, two-component CO2-brine model implemented in GEOS is parameterized in
 the **CO2BrinePhillips** XML block:
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base_iterative.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base.xml
     :language: xml
     :start-after: <!-- SPHINX_FLUID -->
     :end-before: <!-- SPHINX_FLUID_END -->
@@ -150,10 +150,7 @@ and between 302 K and 312 K, with a temperature increment of 5 K.
 These values have been chosen using the initial condition and an upper bound on the expected pressure increase
 during the simulation.
 
-.. code:: 
-
-        DensityFun SpanWagnerCO2Density 6.6e6 4e7 1e6 302.0 312.0 5
-        ViscosityFun FenghourCO2Viscosity 6.6e6 4e7 1e6 302.0 312.0 5
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/pvtgas.txt
 
 .. note::
    If pressure or temperature go outside the values specified in this parameter file, constant extrapolation is used to obtain the density and viscosity values. Note that for now, no warning is issued by GEOS when this happens. We plan to add a warning message to document this behavior in the near future.  
@@ -167,10 +164,7 @@ the method proposed by Garcia (2001).
 The values of (pure) brine density are also tabulated at a function of pressure and temperature, and we
 use the same range as for the CO2 properties to construct this table:
 
-.. code::
-
-        DensityFun PhillipsBrineDensity 6.6e6 4e7 1e6 302.0 312.0 5 1.901285269
-        ViscosityFun PhillipsBrineViscosity 1.901285269
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/pvtliquid.txt
 
 Importantly, the last value on each line in the file `pvtliquid.txt` defines the salinity in the domain.
 In our model, salinity is constant in space and in time (i.e., unlike water and CO2, it is not tracked as
@@ -187,9 +181,7 @@ to compute the CO2 solubility as a function of pressure, temperature, compositio
 In `co2flash.txt`, we use the same parameters as above to construct the pressure-temperature tables
 of precomputed CO2 solubility in brine.
 
-.. code::
-
-        FlashModel CO2Solubility 6.6e6 4e7 1e6 302.0 312.0 5 1.901285269
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/co2flash.txt
 	
 ------------------------------------------------------------------
 Initial and boundary conditions
@@ -199,7 +191,7 @@ The domain is initially saturated with brine with a hydrostatic pressure field a
 gradient of 0.03 K/m.
 This is specified using the **HydrostaticEquilibrium** XML tag in the **FieldSpecifications** block:
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base_iterative.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base.xml
     :language: xml
     :start-after: <!-- SPHINX_HYDROSTATIC -->
     :end-before: <!-- SPHINX_HYDROSTATIC_END -->
@@ -211,7 +203,7 @@ for the nonlinear temperature dependence of brine density to equilibrate the pre
 We use the simple table-based approach shown below to impose the Dirichlet boundary conditions on the four
 sides of the domain.  
 
-.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base_iterative.xml
+.. literalinclude:: ../../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/thermalLeakyWell/thermalLeakyWell_base.xml
     :language: xml
     :start-after: <!-- SPHINX_DIRICHLET_BC -->
     :end-before: <!-- SPHINX_DIRICHLET_BC_END -->

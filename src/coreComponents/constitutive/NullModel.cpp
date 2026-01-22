@@ -25,9 +25,6 @@ NullModel::NullModel( string const & name,
   ConstitutiveBase( name, parent )
 {}
 
-NullModel::~NullModel()
-{}
-
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, NullModel, string const &, dataRepository::Group * const )
 
 } // constitutive

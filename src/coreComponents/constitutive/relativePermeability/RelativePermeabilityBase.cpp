@@ -42,12 +42,12 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerField( fields::relperm::phaseRelPerm{}, &m_phaseRelPerm );
-  registerField( fields::relperm::dPhaseRelPerm_dPhaseVolFraction{}, &m_dPhaseRelPerm_dPhaseVolFrac );
+  registerField< fields::relperm::phaseRelPerm >( &m_phaseRelPerm );
+  registerField< fields::relperm::dPhaseRelPerm_dPhaseVolFraction >( &m_dPhaseRelPerm_dPhaseVolFrac );
 
-  registerField( fields::relperm::phaseTrappedVolFraction{}, &m_phaseTrappedVolFrac );
+  registerField< fields::relperm::phaseTrappedVolFraction >( &m_phaseTrappedVolFrac );
 
-  registerField( fields::relperm::phaseRelPerm_n{}, &m_phaseRelPerm_n );
+  registerField< fields::relperm::phaseRelPerm_n >( &m_phaseRelPerm_n );
 
 }
 
@@ -83,22 +83,23 @@ void RelativePermeabilityBase::postInputInitialization()
     m_phaseOrder[m_phaseTypes[ip]] = ip;
   }
 
-  // call to correctly set member array tertiary sizes on the 'main' material object
-  resizeFields( 0, 0 );
-
   // set labels on array wrappers for plottable fields
   setLabels();
 }
 
-void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex const numPts )
+void RelativePermeabilityBase::allocateConstitutiveData( Group & parent,
+                                                         localIndex const numPts )
 {
   integer const numPhases = numFluidPhases();
 
-  m_phaseRelPerm.resize( size, numPts, numPhases );
-  m_phaseRelPerm_n.resize( size, numPts, numPhases );
-  m_dPhaseRelPerm_dPhaseVolFrac.resize( size, numPts, numPhases, numPhases );
+  m_phaseRelPerm.resize( 0, numPts, numPhases );
+  m_phaseRelPerm_n.resize( 0, numPts, numPhases );
+  m_dPhaseRelPerm_dPhaseVolFrac.resize( 0, numPts, numPhases, numPhases );
   //phase trapped for stats
-  m_phaseTrappedVolFrac.resize( size, numPts, numPhases );
+  m_phaseTrappedVolFrac.resize( 0, numPts, numPhases );
+
+  ConstitutiveBase::allocateConstitutiveData( parent, numPts );
+
   m_phaseTrappedVolFrac.zero();
 }
 
@@ -115,13 +116,6 @@ void RelativePermeabilityBase::setLabels()
 void RelativePermeabilityBase::saveConvergedState( ) const
 {
   m_phaseRelPerm_n.setValues< parallelDevicePolicy<> >( m_phaseRelPerm.toViewConst() );
-}
-
-void RelativePermeabilityBase::allocateConstitutiveData( dataRepository::Group & parent,
-                                                         localIndex const numConstitutivePointsPerParentIndex )
-{
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  resizeFields( parent.size(), numConstitutivePointsPerParentIndex );
 }
 
 /// for use in RelpermDriver to browse the drainage curves
@@ -156,7 +150,6 @@ std::tuple< integer, integer > RelativePermeabilityBase::wettingAndNonWettingPha
     ipNonWetting = ipOil;
   }
 
-  //maybe a bit too pythonic
   return std::make_tuple( ipWetting, ipNonWetting );
 }
 

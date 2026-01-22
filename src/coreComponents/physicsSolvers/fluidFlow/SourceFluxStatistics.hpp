@@ -318,10 +318,7 @@ private:
   TableLayout m_logLayout;
   TableLayout m_csvLayout;
 
-  string_array m_subRegionsfilename;
-  string_array m_regionsfilename;
-  string_array m_allRegionFluxsfilename;
-  string_array m_allRegionWrapperFluxFilename;
+  string m_csvFilename;
 
 
   /**
@@ -335,18 +332,18 @@ private:
   void postInputInitialization() override;
 
   dataRepository::Wrapper< WrappedStats > & registerWrappedStats( Group & group,
-                                                                  string_view fluxName,
-                                                                  string_view elementSetName,
-                                                                  string_array & filenames );
+                                                                  string_view fluxName );
 
   /**
    * @brief  If requested, collect statistics in a tableData.
    * @param logLevel  the min log level to collect any statistics.
-   * @param regionName The region name where we collect statistics
+   * @param fluxName The name of the flux(es) for which we collect statistics
+   * @param elementSetName The name of collection of element (region) where we collect statistics
    * @param tableData The table data where we collect statistics
    * @param wrappedStats the statistics that must be retrieved.
    */
   void gatherStatsForLog( bool logLevelActive,
+                          string_view fluxName,
                           string_view elementSetName,
                           TableData & tableData,
                           WrappedStats const & wrappedStats );
@@ -355,22 +352,24 @@ private:
    * @param tableData The TableData where we collect the statistics
    * @param stats the statistics that must be retrieved.
    */
-  void gatherStatsForCSV( TableData & tableData, WrappedStats const & stats );
+  void gatherStatsForCSV( string_view fluxName,
+                          string_view elementSetName,
+                          TableData & tableData,
+                          WrappedStats const & stats );
 
   /**
    * @brief If requested, output statistics in the log.
    * @param logLevel the min log level to output any statistics.
-   * @param statsName The stat name where we collect
+   * @param fluxesStr A string designating the collection of the subject fluxes in the table title
    * @param tableMeshData The TableData where we have all collected statistics
    */
-  void outputStatsToLog( bool logLevelActive, string_view elementSetName, TableData const & tableMeshData );
+  void outputStatsToLog( bool logLevelActive, string_view fluxesStr, TableData const & tableMeshData );
 
   /**
    * @brief If requested, output statistics in csv.
-   * @param filenames String array containing all filenames to be generated
    * @param csvData The TableData where we have all collected statistics
    */
-  void outputStatsToCSV( string_array const & filenames, TableData & csvData );
+  void outputStatsToCSV( TableData & csvData );
 
 };
 

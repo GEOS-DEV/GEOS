@@ -14,10 +14,8 @@
  */
 
 // Source includes
-#include "common/format/table/TableData.hpp"
-#include "common/format/table/TableFormatter.hpp"
-#include "common/format/table/TableLayout.hpp"
-#include "dataRepository/Group.hpp"
+
+#include "common/DataTypes.hpp"
 // TPL includes
 #include <gtest/gtest.h>
 #include <gtest/gtest-spi.h>
@@ -44,8 +42,7 @@ TEST( testDataTypes, testBoundChecking )
     }
   }, std::out_of_range );
 
-  internal::StdMapWrapper< map< integer, integer >,
-                           true > mapBoundsChecking{{0, 1}};
+  internal::StdMapWrapper< map< integer, integer >, true > mapBoundsChecking{{0, 1}};
   EXPECT_THROW( {
     try
     {
@@ -61,8 +58,10 @@ TEST( testDataTypes, testBoundChecking )
     }
   }, std::out_of_range );
 
-  internal::StdMapWrapper< std::unordered_map< integer, integer >,
-                           true > unorderedMapBoundsChecking{{0, 1}};
+  // std::cout <<" sdsfs "<<  mapBoundsChecking.get_inserted(0)<< std::endl;
+  // std::cout << mapBoundsChecking.get_inserted(1);
+
+  internal::StdMapWrapper< std::unordered_map< integer, integer >, true > unorderedMapBoundsChecking{{0, 1}};
   EXPECT_THROW( {
     try
     {
@@ -77,6 +76,8 @@ TEST( testDataTypes, testBoundChecking )
       throw;
     }
   }, std::out_of_range );
+
+
 
 }
 

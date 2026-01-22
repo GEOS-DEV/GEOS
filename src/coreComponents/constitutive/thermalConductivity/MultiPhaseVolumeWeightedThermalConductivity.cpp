@@ -43,24 +43,14 @@ MultiPhaseVolumeWeightedThermalConductivity::MultiPhaseVolumeWeightedThermalCond
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Phase thermal conductivity [W/(m.K)]" );
 
-  registerField( fields::thermalconductivity::rockThermalConductivity{}, &m_rockThermalConductivity );
+  registerField< fields::thermalconductivity::rockThermalConductivity >( &m_rockThermalConductivity );
 }
 
-std::unique_ptr< ConstitutiveBase >
-MultiPhaseVolumeWeightedThermalConductivity::deliverClone( string const & name,
-                                                           Group * const parent ) const
+void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts )
 {
-  return MultiPhaseThermalConductivityBase::deliverClone( name, parent );
-}
+  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numPts );
 
-void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                            localIndex const numConstitutivePointsPerParentIndex )
-{
-  // NOTE: enforcing 1 quadrature point
-  m_rockThermalConductivity.resize( 0, 1, 3 );
-
-  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
+  // TODO move into initializeState?
   for( localIndex ei = 0; ei < parent.size(); ++ei )
   {
     for( localIndex q = 0; q < 1; ++q )
@@ -79,14 +69,14 @@ void MultiPhaseVolumeWeightedThermalConductivity::postInputInitialization()
                  m_rockThermalConductivityComponents[2] <= 0,
                  GEOS_FMT( "{}: the components of the rock thermal conductivity tensor must be strictly positive",
                            getFullName() ),
-                 InputError );
+                 InputError, getDataContext() );
 
   for( integer ip = 0; ip < numFluidPhases(); ++ip )
   {
     GEOS_THROW_IF( m_phaseThermalConductivity[ip] <= 0,
                    GEOS_FMT( "{}: the phase thermal conductivity for phase {} must be strictly positive",
                              getFullName(), ip ),
-                   InputError );
+                   InputError, getDataContext() );
   }
 }
 

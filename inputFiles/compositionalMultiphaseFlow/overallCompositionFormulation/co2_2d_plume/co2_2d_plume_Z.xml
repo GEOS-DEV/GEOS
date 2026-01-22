@@ -135,7 +135,6 @@
       objectPath="ElementRegions/region"
       fieldName="pressure"
       initialCondition="1"
-      logLevel="2"
       scale="1.1e6" />
     <FieldSpecification
       name="initial_temperature"

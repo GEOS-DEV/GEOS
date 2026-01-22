@@ -2,10 +2,84 @@
 Publications
 ###############################################################################
 
-Last updated 16-December-2024
+Last updated 10-October-2025
+
+Referencing GEOS  
+=========================
+
+.. list-table::
+   :widths: 100
+   :header-rows: 0
+
+   * - | **GEOS: A performance portable multi-physics simulation framework for subsurface applications**
+       | RR Settgast, et al. 
+       | Journal of Open Source Software
+       | `doi:10.21105/joss.06973 <https://doi.org/10.21105/joss.06973>`_
+
 
 Preprints and Early-Views
 =========================
+
+.. list-table::
+   :widths: 100
+   :header-rows: 0
+
+   * - | **A robust framework for frictional fault contact in geological formations using a stabilized augmented Lagrangian approach**
+       | M Frigo, N Castelletto, M Cusini, RR Settgast, HA Tchelepi
+       | arXiv preprint
+       | `arXiv:2509.20528 <https://doi.org/10.48550/arXiv.2509.20528>`_
+
+   * - | **Recurrent Transformer U-Net surrogate for flow modeling and data assimilation in subsurface formations with faults**
+       | Y Han, LJ Durlofsky
+       | arXiv preprint
+       | `arXiv:2508.16631 <https://doi.org/10.48550/arXiv.2508.16631>`_
+
+   * - | **Semi-Analytical Approaches for Addressing Thermal Debonding Issues in Cased Wellbores**
+       | T Nguyen-Sy, J Huang, H Gross, FP Hamon
+       | SSRN preprint
+       | `doi:10.2139/ssrn.5208966 <https://doi.org/10.2139/ssrn.5208966>`_
+
+
+2026
+====
+
+.. list-table::
+   :widths: 100
+   :header-rows: 0
+
+   * - | **A cohesive zone treatment for the material point method involving problems of large deformation and damage**
+       | CM Crook, MA Homel
+       | Computer Methods in Applied Mechanics and Engineering
+       | `doi:10.1016/j.cma.2025.118399 <https://doi.org/10.1016/j.cma.2025.118399>`_
+
+
+2025
+====
+
+.. list-table::
+   :widths: 100
+   :header-rows: 0
+
+   * - | **Pressure stability in explicitly coupled simulations of poromechanics with application to CO2 sequestration**
+       | RM Aronson, P Tomin, N Castelletto, FP Hamon, JA White, HA Tchelepi
+       | Computer Methods in Applied Mechanics and Engineering
+       | `doi:10.1016/j.cma.2024.117633 <https://doi.org/10.1016/j.cma.2024.117633>`_
+
+   * - | **Accelerated training of deep learning surrogate models for surface displacement and flow, with application to MCMC-based history matching of CO2 storage operations**
+       | Y Han, FP Hamon, LJ Durlofsky
+       | Geoenergy Science and Engineering
+       | `doi:10.1016/j.geoen.2024.213589 <https://doi.org/10.1016/j.geoen.2024.213589>`_
+
+   * - | **Nonlinear Acceleration of the Iterative-Sequentially Coupled Flow and Geomechanics Fixed Stress Scheme**
+       | S Waziri, G Ren, P Tomin, B Guyaguler 
+       | Rock Mechanics and Rock Engineering
+       | `doi:10.1007/s00603-025-04633-2 <https://doi.org/10.1007/s00603-025-04633-2>`_
+
+   * - | **Fracture network characterization and thermal performance prediction in enhanced geothermal reservoirs using covariance matrix adaptation and embedded discrete fracture model**
+       | K Zhang, H Wu 
+       | Water Resources Research
+       | `doi:10.1029/2024WR039452 <https://doi.org/10.1029/2024WR039452>`_
+
 
 2024
 ====
@@ -23,11 +97,6 @@ Preprints and Early-Views
        | RM Aronson, N Castelletto, FP Hamon, JA White, HA Tchelepi
        | Computer Methods in Applied Mechanics and Engineering
        | `doi:10.1016/j.cma.2024.117008 <https://doi.org/10.1016/j.cma.2024.117008>`_
-
-   * - | **Pressure stability in explicitly coupled simulations of poromechanics with application to CO2 sequestration**
-       | RM Aronson, P Tomin, N Castelletto, FP Hamon, JA White, HA Tchelepi
-       | Computer Methods in Applied Mechanics and Engineering
-       | `doi:10.1016/j.cma.2024.117633 <https://doi.org/10.1016/j.cma.2024.117633>`_
 
    * - | **Managing reservoir dynamics when converting natural gas fields to underground hydrogen storage**
        | JT Camargo, JA White, FP Hamon, V Fakeye, TA Buscheck, N Huerta
@@ -49,6 +118,11 @@ Preprints and Early-Views
        | Rock Mechanics and Rock Engineering
        | `doi:10.1007/s00603-024-04051-w <https://doi.org/10.1007/s00603-024-04051-w>`_ 
 
+   * - | **Learning CO2 plume migration in faulted reservoirs with Graph Neural Networks**
+       | X Ju, FP Hamon, G Wen, R Kanfar, M Araya-Polo, HA Tchelepi
+       | Computers & Geosciences
+       | `doi:10.1016/j.cageo.2024.105711 <https://doi.org/10.1016/j.cageo.2024.105711>`_
+
    * - | **Multilevel well modeling in aggregation-based nonlinear multigrid for multiphase flow in porous media**
        | CS Lee, FP Hamon, N Castelletto, PS Vassilevski, JA White
        | Journal of Computational Physics
@@ -58,6 +132,7 @@ Preprints and Early-Views
        | T Nguyen-Sy, J Huang, H Gross
        | International Journal of Rock Mechanics and Mining Sciences
        | `doi:10.1016/j.ijrmms.2024.105878 <https://doi.org/10.1016/j.ijrmms.2024.105878>`_
+
 
 2023
 ====

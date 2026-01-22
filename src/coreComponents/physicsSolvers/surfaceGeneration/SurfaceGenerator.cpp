@@ -22,6 +22,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -193,15 +194,18 @@ void SurfaceGenerator::postInputInitialization()
 
   GEOS_ERROR_IF( binaryOptions.count( m_isPoroelastic ) == 0,
                  getWrapperDataContext( viewKeyStruct::isPoroelasticString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::isPoroelasticString() ) );
 
   GEOS_ERROR_IF( binaryOptions.count( m_nodeBasedSIF ) == 0,
                  getWrapperDataContext( viewKeyStruct::nodeBasedSIFString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::nodeBasedSIFString() ) );
 
   GEOS_ERROR_IF( binaryOptions.count( m_mpiCommOrder ) == 0,
                  getWrapperDataContext( viewKeyStruct::mpiCommOrderString() ) <<
-                 ": option can be either 0 (false) or 1 (true)" );
+                 ": option can be either 0 (false) or 1 (true)",
+                 getWrapperDataContext( viewKeyStruct::mpiCommOrderString() ) );
 }
 
 SurfaceGenerator::~SurfaceGenerator()
@@ -275,6 +279,10 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
 
     // TODO: handle this automatically in registerField()
     faceManager.getField< surfaceGeneration::K_IC >().resizeDimension< 1 >( 3 );
+
+    Group & problemManager = this->getGroupByPath( "/Problem" );
+    FieldSpecificationManager & fsm =  problemManager.getGroup< FieldSpecificationManager >( "FieldSpecifications" );
+    fsm.setIsSurfaceGenerationCase( true );
   } );
 
 
@@ -465,12 +473,14 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                                                 string_array const & )
   {
     SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
+    int const tileColor=partition.getColor();
+    int const numTileColors=partition.numColor();
 
     rval = separationDriver( domain,
                              meshLevel,
                              domain.getNeighbors(),
-                             partition.getColor(),
-                             partition.numColor(),
+                             tileColor,
+                             numTileColors,
                              0,
                              time_n + dt );
 
@@ -624,6 +634,36 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   for( int color=0; color<numTileColors; ++color )
   {
+    // printf( "color = %d\n", color );
+    // for( int rank=0; rank<MpiWrapper::commSize(); ++rank )
+    // {
+    //   if( rank==MpiWrapper::commRank() )
+    //   {
+    //     printf( "Rank %d:\n", rank );
+    //     array2d< localIndex > const & faceToRegionMap = faceManager.elementRegionList();
+    //     array2d< localIndex > const & faceToSubRegionMap = faceManager.elementSubRegionList();
+    //     array2d< localIndex > const & faceToElementMap = faceManager.elementList();
+    //     arrayView1d< globalIndex const> const faceToGlobalMap = faceManager.localToGlobalMap();
+    //     for( localIndex kf=0; kf<faceManager.size(); ++kf )
+    //     {
+    //       for( localIndex side=0; side<faceToRegionMap.size( 1 ); ++side )
+    //       {
+    //         localIndex const er = faceToRegionMap[kf][side];
+    //         localIndex const esr = faceToSubRegionMap[kf][side];
+    //         localIndex const ei = faceToElementMap[kf][side];
+
+    //         printf( "faceToElementMap[%d(%lld)][%d] = (%d, %d, %d)\n",
+    //                 kf, faceToGlobalMap[kf], side, er, esr, ei );
+
+    //       }
+    //     }
+
+    //   }
+    //   MpiWrapper::barrier();
+    // }
+
+
+
     ModifiedObjectLists modifiedObjects;
     if( color==tileColor )
     {
@@ -666,11 +706,152 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
     /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly
     /// communicated
+
+    // if( MpiWrapper::commRank()==6 || MpiWrapper::commRank()==0 )
+    // {
+    //   FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
+    //   arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion;
+    //   arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion;
+    //   arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
+
+    //   arrayView1d< globalIndex const > const & faceLocalToGlobalMap = faceManager.localToGlobalMap();
+    //   arrayView1d< globalIndex const > const & elementLocalToGlobalMap = elementManager.getRegion(0).getSubRegion(0).localToGlobalMap();
+
+    //   printf( "pre sync \n");
+    //   if( MpiWrapper::commRank()==6 )
+    //   {
+    //     printf( "rank = %d\n", MpiWrapper::commRank() );
+    //     if( faceToElemRegion.size(0) > 8889 )
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)/%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) / ( %d, %d, %d(%lld) ), ( %d,
+    // %d, %d(%lld) )\n",
+    //               3082, faceLocalToGlobalMap[3082], 8889, faceLocalToGlobalMap[8889],
+    //               faceToElemRegion[3082][0], faceToElemSubRegion[3082][0], faceToElemIndex[3082][0], faceToElemIndex[3082][0] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[3082][0]],
+    //               faceToElemRegion[3082][1], faceToElemSubRegion[3082][1], faceToElemIndex[3082][1], faceToElemIndex[3082][1] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[3082][1]],
+    //               faceToElemRegion[8889][0], faceToElemSubRegion[8889][0], faceToElemIndex[8889][0], faceToElemIndex[8889][0] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[8889][0]],
+    //               faceToElemRegion[8889][1], faceToElemSubRegion[8889][1], faceToElemIndex[8889][1], faceToElemIndex[8889][1] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[8889][1]] );
+    //     }
+    //     else
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) \n",
+    //               3082, faceLocalToGlobalMap[3082],
+    //               faceToElemRegion[3082][0], faceToElemSubRegion[3082][0], faceToElemIndex[3082][0], faceToElemIndex[3082][0] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[3082][0]],
+    //               faceToElemRegion[3082][1], faceToElemSubRegion[3082][1], faceToElemIndex[3082][1], faceToElemIndex[3082][1] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[3082][1]] );
+    //     }
+    //   }
+    //   if( MpiWrapper::commRank()==0 )
+    //   {
+    //     printf( "rank = %d\n", MpiWrapper::commRank() );
+    //     if( faceToElemRegion.size(0) > 9653 )
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)/%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) / ( %d, %d, %d(%lld) ), ( %d,
+    // %d, %d(%lld) )\n",
+    //               9268, faceLocalToGlobalMap[9268], 9653, faceLocalToGlobalMap[9653],
+    //               faceToElemRegion[9268][0], faceToElemSubRegion[9268][0], faceToElemIndex[9268][0], faceToElemIndex[9268][0] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[9268][0]],
+    //               faceToElemRegion[9268][1], faceToElemSubRegion[9268][1], faceToElemIndex[9268][1], faceToElemIndex[9268][1] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[9268][1]],
+    //               faceToElemRegion[9653][0], faceToElemSubRegion[9653][0], faceToElemIndex[9653][0], faceToElemIndex[9653][0] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[9653][0]],
+    //               faceToElemRegion[9653][1], faceToElemSubRegion[9653][1], faceToElemIndex[9653][1], faceToElemIndex[9653][1] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[9653][1]] );
+
+    //     }
+    //     else
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) \n",
+    //               9268, faceLocalToGlobalMap[9268],
+    //               faceToElemRegion[9268][0], faceToElemSubRegion[9268][0], faceToElemIndex[9268][0], faceToElemIndex[9268][0] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[9268][0]],
+    //               faceToElemRegion[9268][1], faceToElemSubRegion[9268][1], faceToElemIndex[9268][1], faceToElemIndex[9268][1] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[9268][1]] );
+    //     }
+    //   }
+
+    // }
+
+
     parallelTopologyChange::synchronizeTopologyChange( &mesh,
                                                        neighbors,
                                                        modifiedObjects,
                                                        receivedObjects,
                                                        m_mpiCommOrder );
+
+
+    // if( MpiWrapper::commRank()==6 || MpiWrapper::commRank()==0 )
+    // {
+    //   FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
+    //   arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion;
+    //   arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion;
+    //   arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
+
+    //   arrayView1d< globalIndex const > const & faceLocalToGlobalMap = faceManager.localToGlobalMap();
+    //   arrayView1d< globalIndex const > const & elementLocalToGlobalMap = elementManager.getRegion(0).getSubRegion(0).localToGlobalMap();
+
+    //   printf( "post sync \n");
+    //   if( MpiWrapper::commRank()==6 )
+    //   {
+    //     printf( "rank = %d\n", MpiWrapper::commRank() );
+    //     if( faceToElemRegion.size(0) > 8889 )
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)/%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) / ( %d, %d, %d(%lld) ), ( %d,
+    // %d, %d(%lld) )\n",
+    //               3082, faceLocalToGlobalMap[3082], 8889, faceLocalToGlobalMap[8889],
+    //               faceToElemRegion[3082][0], faceToElemSubRegion[3082][0], faceToElemIndex[3082][0], faceToElemIndex[3082][0] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[3082][0]],
+    //               faceToElemRegion[3082][1], faceToElemSubRegion[3082][1], faceToElemIndex[3082][1], faceToElemIndex[3082][1] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[3082][1]],
+    //               faceToElemRegion[8889][0], faceToElemSubRegion[8889][0], faceToElemIndex[8889][0], faceToElemIndex[8889][0] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[8889][0]],
+    //               faceToElemRegion[8889][1], faceToElemSubRegion[8889][1], faceToElemIndex[8889][1], faceToElemIndex[8889][1] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[8889][1]] );
+    //     }
+    //     else
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) \n",
+    //               3082, faceLocalToGlobalMap[3082],
+    //               faceToElemRegion[3082][0], faceToElemSubRegion[3082][0], faceToElemIndex[3082][0], faceToElemIndex[3082][0] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[3082][0]],
+    //               faceToElemRegion[3082][1], faceToElemSubRegion[3082][1], faceToElemIndex[3082][1], faceToElemIndex[3082][1] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[3082][1]] );
+    //     }
+    //   }
+    //   if( MpiWrapper::commRank()==0 )
+    //   {
+    //     printf( "rank = %d\n", MpiWrapper::commRank() );
+    //     if( faceToElemRegion.size(0) > 9653 )
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)/%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) / ( %d, %d, %d(%lld) ), ( %d,
+    // %d, %d(%lld) )\n",
+    //               9268, faceLocalToGlobalMap[9268], 9653, faceLocalToGlobalMap[9653],
+    //               faceToElemRegion[9268][0], faceToElemSubRegion[9268][0], faceToElemIndex[9268][0], faceToElemIndex[9268][0] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[9268][0]],
+    //               faceToElemRegion[9268][1], faceToElemSubRegion[9268][1], faceToElemIndex[9268][1], faceToElemIndex[9268][1] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[9268][1]],
+    //               faceToElemRegion[9653][0], faceToElemSubRegion[9653][0], faceToElemIndex[9653][0], faceToElemIndex[9653][0] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[9653][0]],
+    //               faceToElemRegion[9653][1], faceToElemSubRegion[9653][1], faceToElemIndex[9653][1], faceToElemIndex[9653][1] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[9653][1]] );
+
+    //     }
+    //     else
+    //     {
+    //       printf( "    faceToElementMap[%d(%lld)]  = ( %d, %d, %d(%lld) ), ( %d, %d, %d(%lld) ) \n",
+    //               9268, faceLocalToGlobalMap[9268],
+    //               faceToElemRegion[9268][0], faceToElemSubRegion[9268][0], faceToElemIndex[9268][0], faceToElemIndex[9268][0] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[9268][0]],
+    //               faceToElemRegion[9268][1], faceToElemSubRegion[9268][1], faceToElemIndex[9268][1], faceToElemIndex[9268][1] == -1? -1 :
+    // elementLocalToGlobalMap[faceToElemIndex[9268][1]] );
+    //     }
+    //   }
+
+    // }
 
     synchronizeTipSets( faceManager,
                         edgeManager,
@@ -721,6 +902,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
       }
     } );
+    MpiWrapper::barrier();
   }
 
 
@@ -771,7 +953,9 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
   {
     localIndex const parentNodeIndex = parentNodeIndices[nodeIndex];
 
-    GEOS_ERROR_IF( parentNodeIndex == -1, getDataContext() << ": parentNodeIndex should not be -1" );
+    GEOS_ERROR_IF( parentNodeIndex == -1,
+                   getDataContext() << ": parentNodeIndex should not be -1",
+                   getDataContext() );
 
     m_tipNodes.remove( parentNodeIndex );
   }
@@ -796,7 +980,9 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
   {
     localIndex const parentEdgeIndex = parentEdgeIndices[edgeIndex];
 
-    GEOS_ERROR_IF( parentEdgeIndex == -1, getDataContext() << ": parentEdgeIndex should not be -1" );
+    GEOS_ERROR_IF( parentEdgeIndex == -1,
+                   getDataContext() << ": parentEdgeIndex should not be -1",
+                   getDataContext() );
 
     m_tipEdges.remove( parentEdgeIndex );
     for( localIndex const faceIndex : edgeToFaceMap[ parentEdgeIndex ] )
@@ -829,7 +1015,9 @@ void SurfaceGenerator::synchronizeTipSets ( FaceManager & faceManager,
   for( localIndex const faceIndex : receivedObjects.newFaces )
   {
     localIndex const parentFaceIndex = parentFaceIndices[faceIndex];
-    GEOS_ERROR_IF( parentFaceIndex == -1, getDataContext() << ": parentFaceIndex should not be -1" );
+    GEOS_ERROR_IF( parentFaceIndex == -1,
+                   getDataContext() << ": parentFaceIndex should not be -1",
+                   getDataContext() );
 
     m_trailingFaces.insert( parentFaceIndex );
     m_tipFaces.remove( parentFaceIndex );
@@ -2068,6 +2256,17 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
           // faceID is the parent face, and newFaceID is the child face.
           elemsToFaces[elemIndex][kf] = childFaceIndex[faceIndex];
 
+          // printf( "pre map change \n");
+          // printf( "    faceToElementMap[%d]  = ( %d, %d, %d ), ( %d, %d, %d )\n", faceIndex,
+          //                                                                         faceToRegionMap[faceIndex][0],
+          // faceToSubRegionMap[faceIndex][0], faceToElementMap[faceIndex][0],
+          //                                                                         faceToRegionMap[faceIndex][1],
+          // faceToSubRegionMap[faceIndex][1], faceToElementMap[faceIndex][1] );
+          // printf( "    faceToElementMap[%d]  = ( %d, %d, %d ), ( %d, %d, %d )\n", newFaceIndex,
+          //                                                                         faceToRegionMap[newFaceIndex][0],
+          // faceToSubRegionMap[newFaceIndex][0], faceToElementMap[newFaceIndex][0],
+          //                                                                         faceToRegionMap[newFaceIndex][1],
+          // faceToSubRegionMap[newFaceIndex][1], faceToElementMap[newFaceIndex][1] );
 
 
           // add the element to the child faceToElem
@@ -2101,19 +2300,38 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
             faceToElementMap[faceIndex][1] = -1;
           }
 
-          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<newFaceIndex<<"][0]    = "<<faceToRegionMap[newFaceIndex][0] );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<newFaceIndex<<"][0] = "<<faceToSubRegionMap[newFaceIndex][0] );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToElementMap["<<newFaceIndex<<"][0]      = "<<faceToElementMap[newFaceIndex][0] );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<newFaceIndex<<"][1]    = "<<faceToRegionMap[newFaceIndex][1] );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<newFaceIndex<<"][1] = "<<faceToSubRegionMap[newFaceIndex][1] );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToElementMap["<<newFaceIndex<<"][1]      = "<<faceToElementMap[newFaceIndex][1] );
+          // GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<newFaceIndex<<"][0]    = "<<faceToRegionMap[newFaceIndex][0]
+          // );
+          // GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<newFaceIndex<<"][0] =
+          // "<<faceToSubRegionMap[newFaceIndex][0] );
+          // GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToElementMap["<<newFaceIndex<<"][0]      =
+          // "<<faceToElementMap[newFaceIndex][0] );
+          // GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<newFaceIndex<<"][1]    = "<<faceToRegionMap[newFaceIndex][1]
+          // );
+          // GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<newFaceIndex<<"][1] =
+          // "<<faceToSubRegionMap[newFaceIndex][1] );
+          // GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToElementMap["<<newFaceIndex<<"][1]      =
+          // "<<faceToElementMap[newFaceIndex][1] );
 
-          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<faceIndex<<"][0]    = "<<faceToRegionMap[faceIndex][0] );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<faceIndex<<"][0] = "<<faceToSubRegionMap[faceIndex][0] );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToElementMap["<<faceIndex<<"][0]      = "<<faceToElementMap[faceIndex][0] );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<faceIndex<<"][1]    = "<<faceToRegionMap[faceIndex][1] );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<faceIndex<<"][1] = "<<faceToSubRegionMap[faceIndex][1] );
-          GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToElementMap["<<faceIndex<<"][1]      = "<<faceToElementMap[faceIndex][1] );
+          // GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<faceIndex<<"][0]    = "<<faceToRegionMap[faceIndex][0] );
+          // GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<faceIndex<<"][0] = "<<faceToSubRegionMap[faceIndex][0] );
+          // GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToElementMap["<<faceIndex<<"][0]      = "<<faceToElementMap[faceIndex][0] );
+          // GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToRegionMap["<<faceIndex<<"][1]    = "<<faceToRegionMap[faceIndex][1] );
+          // GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToSubRegionMap["<<faceIndex<<"][1] = "<<faceToSubRegionMap[faceIndex][1] );
+          // GEOS_LOG_LEVEL_RANK_0( logInfo::Mapping, "    faceToElementMap["<<faceIndex<<"][1]      = "<<faceToElementMap[faceIndex][1] );
+
+          // printf( "post map change \n");
+          // printf( "    faceToElementMap[%d]  = ( %d, %d, %d ), ( %d, %d, %d )\n", faceIndex,
+          //                                                                         faceToRegionMap[faceIndex][0],
+          // faceToSubRegionMap[faceIndex][0], faceToElementMap[faceIndex][0],
+          //                                                                         faceToRegionMap[faceIndex][1],
+          // faceToSubRegionMap[faceIndex][1], faceToElementMap[faceIndex][1] );
+          // printf( "    faceToElementMap[%d]  = ( %d, %d, %d ), ( %d, %d, %d )\n", newFaceIndex,
+          //                                                                         faceToRegionMap[newFaceIndex][0],
+          // faceToSubRegionMap[newFaceIndex][0], faceToElementMap[newFaceIndex][0],
+          //                                                                         faceToRegionMap[newFaceIndex][1],
+          // faceToSubRegionMap[newFaceIndex][1], faceToElementMap[newFaceIndex][1] );
+
 
           for( int i = 0; i < 2; i++ )
           {
@@ -2853,10 +3071,10 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const bulkModulus =
     elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "bulkModulus", constitutiveManager );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, solid::STRESS_USD > > const stress =
-    elementManager.constructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
-                                                      arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString(),
-                                                                                                        constitutiveManager );
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, geos::solid::STRESS_USD > > const stress =
+    elementManager.constructFullMaterialViewAccessor< array3d< real64, geos::solid::STRESS_PERMUTATION >,
+                                                      arrayView3d< real64 const, geos::solid::STRESS_USD > >( fields::solid::stress::key(),
+                                                                                                              constitutiveManager );
   nodeManager.getField< fields::solidMechanics::totalDisplacement >().move( hostMemorySpace, false );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -2870,8 +3088,8 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
       string const & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNameString() );
       subRegion.
         getConstitutiveModel( solidMaterialName ).
-        getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString() ).move( hostMemorySpace,
-                                                                                                                       false );
+        getReference< array3d< real64, geos::solid::STRESS_PERMUTATION > >( fields::solid::stress::key() ).move( hostMemorySpace,
+                                                                                                                 false );
     } );
     displacement.move( hostMemorySpace, false );
   } );
@@ -3696,10 +3914,10 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const bulkModulus =
     elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "bulkModulus", constitutiveManager );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, solid::STRESS_USD > > const
-  stress = elementManager.constructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
-                                                             arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString(),
-                                                                                                               constitutiveManager );
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, geos::solid::STRESS_USD > > const
+  stress = elementManager.constructFullMaterialViewAccessor< array3d< real64, geos::solid::STRESS_PERMUTATION >,
+                                                             arrayView3d< real64 const, geos::solid::STRESS_USD > >( fields::solid::stress::key(),
+                                                                                                                     constitutiveManager );
 
   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > const
   dNdX = elementManager.constructViewAccessor< array4d< real64 >, arrayView4d< real64 const > >( keys::dNdX );

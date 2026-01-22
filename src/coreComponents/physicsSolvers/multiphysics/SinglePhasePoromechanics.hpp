@@ -79,11 +79,6 @@ public:
    */
   /**@{*/
 
-  virtual void postInputInitialization() override;
-
-  virtual void setupCoupling( DomainPartition const & domain,
-                              DofManager & dofManager ) const override;
-
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
@@ -99,14 +94,15 @@ public:
                                DomainPartition & domain,
                                DofManager const & dofManager,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs ) override;
+                               arrayView1d< real64 > const & localRhs ) override
+  { Base::assembleSystem( time, dt, domain, dofManager, localMatrix, localRhs ); }
 
-  void assembleElementBasedTerms( real64 const time_n,
-                                  real64 const dt,
-                                  DomainPartition & domain,
-                                  DofManager const & dofManager,
-                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                  arrayView1d< real64 > const & localRhs );
+  virtual void assembleElementBasedTerms( real64 const time_n,
+                                          real64 const dt,
+                                          DomainPartition & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs ) override;
 
   /**@}*/
 
@@ -120,12 +116,35 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  integer m_damageFlag;
-
-  virtual void setMGRStrategy()
+  virtual void setMGRStrategy() override
   {
     if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::mgr )
       GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
+  }
+
+  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override
+  {
+    GEOS_MARK_FUNCTION;
+
+    Base::mapSolutionBetweenSolvers( domain, solverType );
+
+    /// After the solid mechanics solver
+    if( solverType == static_cast< integer >( Base::SolverType::SolidMechanics )
+        && !this->m_performStressInitialization ) // do not update during poromechanics initialization
+    {
+      this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&]( string const &,
+                                                                                    MeshLevel & mesh,
+                                                                                    string_array const & regionNames )
+      {
+
+        mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                              auto & subRegion )
+        {
+          // update mass after porosity change due to mechanics solve
+          this->flowSolver()->updateMass( subRegion );
+        } );
+      } );
+    }
   }
 
   /**
@@ -133,6 +152,10 @@ protected:
    * @param[in] subRegion the element subRegion
    */
   virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) override;
+
+  virtual string getFlowDofKey() const override { return SinglePhaseBase::viewKeyStruct::elemDofFieldString(); }
+
+  integer m_damageFlag;
 };
 
 } /* namespace geos */

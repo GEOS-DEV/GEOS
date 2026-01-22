@@ -127,7 +127,7 @@ public:
   /**
    * @brief the regex map type to store and find the regexes by the associated rtTypeName.
    */
-  using RegexMapType = std::map< string, Regex >;
+  using RegexMapType = stdMap< string, Regex >;
 
   /**
    * @brief Custom types are useful to customize the regexes of an existing type. The type name

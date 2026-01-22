@@ -145,9 +145,6 @@ public:
    */
   CoupledSolid( string const & name, dataRepository::Group * const parent );
 
-  /// Destructor
-  virtual ~CoupledSolid() override;
-
   virtual void initializePreSubGroups() override;
 
   /**
@@ -184,12 +181,6 @@ template< typename SOLID_TYPE,
 CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::CoupledSolid( string const & name, Group * const parent ):
   CoupledSolidBase( name, parent )
 {}
-
-template< typename SOLID_TYPE,
-          typename PORO_TYPE,
-          typename PERM_TYPE >
-CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::~CoupledSolid() = default;
-
 
 template< typename SOLID_TYPE,
           typename PORO_TYPE,

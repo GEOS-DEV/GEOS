@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0}">
+    <SinglePhasePoromechanicsConformingFractures
+      name="poroSolver"
+      targetRegions="{ Domain, Fracture }"
+      initialDt="1e3"
+      flowSolverName="flowSolver"
+      solidSolverName="fractureMechSolver"
+      logLevel="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        logLevel="2"
+        maxTimeStepCuts="10"
+        newtonMaxIter="20"
+        maxNumConfigurationAttempts="100"
+        lineSearchAction="None"
+        maxAllowedResidualNorm="1.0e15"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"/>
+    </SinglePhasePoromechanicsConformingFractures>
+
+    <SolidMechanicsLagrangeContact
+      name="fractureMechSolver"
+      stabilizationName="singlePhaseTPFA_stab"
+      logLevel="1"
+      useLocalYieldAcceleration="1"
+      targetRegions="{ Domain, Fracture }"
+      discretization="FE1"/>  
+
+    <SinglePhaseFVM
+      name="flowSolver"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Domain, Fracture }"/>
+
+  </Solvers>
+</Problem>

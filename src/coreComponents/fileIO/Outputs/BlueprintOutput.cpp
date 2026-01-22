@@ -176,7 +176,7 @@ bool BlueprintOutput::execute( real64 const time_n,
     GEOS_ASSERT_MSG( conduit::blueprint::mesh::index::verify( index, info ), info.to_json() );
 
     /// Write out the root index file, then write out the mesh.
-    string const completePath = GEOS_FMT( "{}/blueprintFiles/cycle_{:07}", OutputBase::getOutputDirectory(), cycleNumber );
+    string const completePath = GEOS_FMT( "{}/blueprintFiles/cycle_{:07}", getOutputDirectory(), cycleNumber );
     string const filePathForRank = dataRepository::writeRootFile( fileRoot, completePath );
     conduit::relay::io::save( meshRoot, filePathForRank, "hdf5" );
   }
@@ -309,20 +309,6 @@ void BlueprintOutput::writeOutConstitutiveData( dataRepository::Group const & co
         addBlueprintField( fields, fieldName, topology );
     }
   } );
-}
-
-namespace logInfo
-{
-struct BlueprintOutputTimer : public OutputTimerBase
-{
-  std::string_view getDescription() const override { return "Blueprint output timing"; }
-};
-}
-
-logInfo::OutputTimerBase const & BlueprintOutput::getTimerCategory() const
-{
-  static logInfo::BlueprintOutputTimer timer;
-  return timer;
 }
 
 REGISTER_CATALOG_ENTRY( OutputBase, BlueprintOutput, string const &, dataRepository::Group * const )

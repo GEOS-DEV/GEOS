@@ -645,7 +645,7 @@ private:
   stdVector< FieldDescription > m_fields;
 
   /// Table of connector types within and between fields
-  std::map< std::pair< integer, integer >, CouplingDescription > m_coupling;
+  stdMap< std::pair< integer, integer >, CouplingDescription > m_coupling;
 
   /// Flag indicating that DOFs have been reordered rank-wise.
   bool m_reordered = false;

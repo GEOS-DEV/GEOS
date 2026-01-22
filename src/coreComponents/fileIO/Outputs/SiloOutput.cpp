@@ -28,20 +28,6 @@ namespace geos
 
 using namespace dataRepository;
 
-namespace logInfo
-{
-struct SiloOutputTimer : public OutputTimerBase
-{
-  std::string_view getDescription() const override { return "Silo output timing"; }
-};
-}
-
-logInfo::OutputTimerBase const & SiloOutput::getTimerCategory() const
-{
-  static logInfo::SiloOutputTimer timer;
-  return timer;
-}
-
 SiloOutput::SiloOutput( string const & name,
                         Group * const parent ):
   OutputBase( name, parent ),
@@ -114,7 +100,7 @@ void SiloOutput::postInputInitialization()
                  GEOS_FMT( "{} `{}`: the flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
                            catalogName(), getDataContext(),
                            onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
-                 InputError );
+                 InputError, getDataContext() );
 
   GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames != 0 ),
                       GEOS_FMT(

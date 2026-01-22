@@ -355,6 +355,7 @@ This should print out a brief summary of the available command line arguments:
 .. code-block:: sh
 
     USAGE: geosx -i input.xml [options]
+           geosx -s schema-output.xml
 
     Options:
     -?, --help
@@ -364,13 +365,17 @@ This should print out a brief summary of the available command line arguments:
     -y, --y-partitions,      Number of partitions in the y-direction
     -z, --z-partitions,      Number of partitions in the z-direction
     -s, --schema,            Name of the output schema
+    -v, --validate-input,    only do the loading phase, and not actual simulation. Useful to validate 'input'.
     -b, --use-nonblocking,   Use non-blocking MPI communication
     -n, --name,              Name of the problem, used for output
     -s, --suppress-pinned,   Suppress usage of pinned memory for MPI communication buffers
     -o, --output,            Directory to put the output files
     -t, --timers,            String specifying the type of timer output
     --trace-data-migration,  Trace host-device data migration
+    -m, --memory-usage,      Minimum threshold for printing out memory allocations in a member of the data repository.
     --pause-for,             Pause geosx for a given number of seconds before starting execution
+
+    Rank 0: No XML input file nor schema specified. Exiting...
 
 Obviously this doesn't do much interesting, but it will at least confirm that the executable runs.
 In typical usage, an input XML must be provided describing the problem to be run, e.g.
@@ -378,6 +383,10 @@ In typical usage, an input XML must be provided describing the problem to be run
 .. code-block:: sh
 
     ./bin/geosx -i your-problem.xml
+
+.. note::
+    To validate inputs without executing a full simulation, use the ``-v`` or ``--validate-only`` option
+    (useful before running a heavy simulation).
 
 In a parallel setting, the command might look something like
 

@@ -17,6 +17,11 @@
 #include "codingUtilities/Utilities.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
 #include "mesh/mpiCommunications/MPI_iCommData.hpp"
+#ifdef GEOS_USE_TRILINOS
+#include "mesh/graphs/ZoltanGraphColoring.hpp"
+#else
+#include "mesh/graphs/RLFGraphColoringMPI.hpp"
+#endif
 
 #include <cmath>
 
@@ -86,26 +91,51 @@ void SpatialPartition::setPartitions( unsigned int xPartitions,
 
 int SpatialPartition::getColor()
 {
-  int color = 0;
-
-  if( isOdd( m_coords[0] ) )
+  if( m_metisNeighborList.empty() )
   {
-    color += 1;
-  }
+    // Internal cartesian partitioner (for internal mesh)
+    int color=0;
+    if( isOdd( m_coords[0] ) )
+    {
+      color += 1;
+    }
 
-  if( isOdd( m_coords[1] ) )
+    if( isOdd( m_coords[1] ) )
+    {
+      color += 2;
+    }
+
+    if( isOdd( m_coords[2] ) )
+    {
+      color += 4;
+    }
+
+    // With this algorithm, numbering may have gaps.
+    // In that case m_numColors is an upper bound, not the exact number of distinct colors used.
+    m_numColors = MpiWrapper::max( color )+1;
+    return color;
+  }
+  else
   {
-    color += 2;
+    // External partitioner such as ParMetis or PTScotch (for VTK external mesh)
+    std::vector< camp::idx_t > adjncy;
+    adjncy.reserve( m_metisNeighborList.size());
+    std::copy( m_metisNeighborList.begin(), m_metisNeighborList.end(), std::back_inserter( adjncy ));
+#ifdef GEOS_USE_TRILINOS
+    geos::graph::ZoltanGraphColoring coloring;
+#else
+    geos::graph::RLFGraphColoringMPI coloring;
+#endif
+    int color = coloring.colorGraph( adjncy );
+
+    if( !coloring.isColoringValid( adjncy, color ))
+    {
+      GEOS_ERROR( "Invalid partition coloring: two neighboring partitions share the same color" );
+    }
+    m_numColors = coloring.getNumberOfColors( color );
+
+    return color;
   }
-
-  if( isOdd( m_coords[2] ) )
-  {
-    color += 4;
-  }
-
-  m_numColors = 8;
-
-  return color;
 }
 
 void SpatialPartition::addNeighbors( const unsigned int idim,

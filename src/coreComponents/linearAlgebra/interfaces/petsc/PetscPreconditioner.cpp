@@ -59,7 +59,7 @@ void convertRigidBodyModes( LinearSolverParameters const & params,
 
 PCType getPetscSmootherType( LinearSolverParameters::PreconditionerType const & type )
 {
-  static std::map< LinearSolverParameters::PreconditionerType, PCType > const typeMap =
+  static stdMap< LinearSolverParameters::PreconditionerType, PCType > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::iluk, PCILU },
     { LinearSolverParameters::PreconditionerType::ick, PCICC },

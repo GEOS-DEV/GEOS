@@ -298,6 +298,9 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
       sortFaceNodes( X, elemCenter[er][esr][ei], facesToNodes[faceIndex] );
     } catch( std::runtime_error const & e )
     {
+      ErrorLogger::global().currentErrorMsg()
+        .addToMsg( getDataContext().toString() + ": " + e.what() )
+        .addContextInfo( getDataContext().getContextInfo().setPriority( 1 ) );
       throw std::runtime_error( getDataContext().toString() + ": " + e.what() );
     }
   } );
@@ -308,7 +311,10 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
                                  Span< localIndex > const faceNodes )
 {
   localIndex const numFaceNodes = LvArray::integerConversion< localIndex >( faceNodes.size() );
-  GEOS_THROW_IF_GT_MSG( numFaceNodes, MAX_FACE_NODES, "The number of maximum nodes allocated per cell face has been reached.", std::runtime_error );
+  GEOS_THROW_IF_GT_MSG( numFaceNodes, MAX_FACE_NODES,
+                        GEOS_FMT( "The number of maximum nodes allocated per cell face has been reached "
+                                  "at position {}.", elementCenter ),
+                        std::runtime_error );
 
   localIndex const firstNodeIndex = faceNodes[0];
 
@@ -590,6 +596,23 @@ void FaceManager::depopulateUpMaps( std::set< localIndex > const & receivedFaces
         }
       }
     }
+    if( ( m_toElements.m_toElementRegion[receivedFaceIdx][0] == -1 ||
+          m_toElements.m_toElementSubRegion[receivedFaceIdx][0] == -1 ||
+          m_toElements.m_toElementIndex[receivedFaceIdx][0] == -1 ) &&
+        ( m_toElements.m_toElementRegion[receivedFaceIdx][1] != -1 &&
+          m_toElements.m_toElementSubRegion[receivedFaceIdx][1] != -1 &&
+          m_toElements.m_toElementIndex[receivedFaceIdx][1] != -1 ) )
+    {
+      // Shift the second element to the first position if the first position is empty
+      m_toElements.m_toElementRegion[receivedFaceIdx][0] = m_toElements.m_toElementRegion[receivedFaceIdx][1];
+      m_toElements.m_toElementSubRegion[receivedFaceIdx][0] = m_toElements.m_toElementSubRegion[receivedFaceIdx][1];
+      m_toElements.m_toElementIndex[receivedFaceIdx][0] = m_toElements.m_toElementIndex[receivedFaceIdx][1];
+
+      m_toElements.m_toElementRegion[receivedFaceIdx][1] = -1;
+      m_toElements.m_toElementSubRegion[receivedFaceIdx][1] = -1;
+      m_toElements.m_toElementIndex[receivedFaceIdx][1] = -1;
+    }
+
   }
 }
 

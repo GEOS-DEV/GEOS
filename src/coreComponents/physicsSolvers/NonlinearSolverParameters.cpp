@@ -180,6 +180,32 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Nonlinear acceleration type for sequential solver." );
 
+  registerWrapper( viewKeysStruct::oscillationScalingString(), &m_oscillationScaling ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Flag to enable oscillation detection and scaling. "
+                    "If set to 1, oscillation detection is enabled and the solution will be scaled if oscillations are detected." );
+
+  registerWrapper( viewKeysStruct::oscillationScalingFactorString(), &m_oscillationScalingFactor ).
+    setApplyDefaultValue( 0.5 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Scaling factor to dump solution oscillations." );
+
+  registerWrapper( viewKeysStruct::oscillationCheckDepthString(), &m_oscillationCheckDepth ).
+    setApplyDefaultValue( 3 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Depth in solution history to check for oscillations." );
+
+  registerWrapper( viewKeysStruct::oscillationToleranceString(), &m_oscillationTolerance ).
+    setApplyDefaultValue( 0.01 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Tolerance for oscillation detection." );
+
+  registerWrapper( viewKeysStruct::oscillationFractionString(), &m_oscillationFraction ).
+    setApplyDefaultValue( 0.05 ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Fraction of dofs oscillating to declare oscillation." );
+
   addLogLevel< logInfo::Convergence >();
   addLogLevel< logInfo::NonlinearSolver >();
   addLogLevel< logInfo::LineSearch >();
@@ -194,6 +220,25 @@ void NonlinearSolverParameters::postInputInitialization()
 
   GEOS_ERROR_IF_LE_MSG( m_lineSearchResidualFactor, 0.0,
                         getWrapperDataContext( viewKeysStruct::lineSearchResidualFactorString() ) << ": should be positive" );
+
+  if( m_oscillationScaling > 0 )
+  {
+    // check oscillation parameters
+    GEOS_ERROR_IF_LE_MSG( m_oscillationScalingFactor, 0.0,
+                          getWrapperDataContext( viewKeysStruct::oscillationScalingFactorString() ) << ": should be positive" );
+    GEOS_ERROR_IF_GT_MSG( m_oscillationScalingFactor, 1.0,
+                          getWrapperDataContext( viewKeysStruct::oscillationScalingFactorString() ) << ": can not be more than 1.0" );
+    GEOS_ERROR_IF_LT_MSG( m_oscillationCheckDepth, 2,
+                          getWrapperDataContext( viewKeysStruct::oscillationCheckDepthString() ) << ": can not be less than 2" );
+    GEOS_ERROR_IF_LE_MSG( m_oscillationTolerance, 0.0,
+                          getWrapperDataContext( viewKeysStruct::oscillationToleranceString() ) << ": should be positive" );
+    GEOS_ERROR_IF_GE_MSG( m_oscillationTolerance, 1.0,
+                          getWrapperDataContext( viewKeysStruct::oscillationToleranceString() ) << ": can not be more than 1.0" );
+    GEOS_ERROR_IF_LT_MSG( m_oscillationFraction, 0.0,
+                          getWrapperDataContext( viewKeysStruct::oscillationFractionString() ) << ": can not be negative" );
+    GEOS_ERROR_IF_GT_MSG( m_oscillationFraction, 1.0,
+                          getWrapperDataContext( viewKeysStruct::oscillationFractionString() ) << ": can not be more than 1.0" );
+  }
 
   if( getLogLevel() > 0 )
   {
@@ -237,8 +282,18 @@ void NonlinearSolverParameters::print() const
     tableData.addRow( "Sequential convergence criterion", m_sequentialConvergenceCriterion );
     tableData.addRow( "Subcycling", m_subcyclingOption );
   }
+  tableData.addRow( "Oscillation detection and scaling", m_oscillationScaling );
+  if( m_oscillationScaling > 0 )
+  {
+    tableData.addRow( "  Scaling factor", m_oscillationScalingFactor );
+    tableData.addRow( "  Check depth", m_oscillationCheckDepth );
+    tableData.addRow( "  Tolerance", m_oscillationTolerance );
+    tableData.addRow( "  Fraction of dofs oscillating", m_oscillationFraction );
+  }
+
   TableLayout const tableLayout = TableLayout( GEOS_FMT( "{}: nonlinear solver", getParent().getName() ),
-                                               { "Parameter", "Value" } );
+                                               { TableLayout::Column().setName( "Parameter" ).setValuesAlignment( TableLayout::Alignment::left ),
+                                                 "Value" } );
   TableTextFormatter const tableFormatter( tableLayout );
   GEOS_LOG_RANK_0( tableFormatter.toString( tableData ));
 }

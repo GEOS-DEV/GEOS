@@ -154,6 +154,28 @@ void AcousticFirstOrderWaveEquationSEM::postInputInitialization()
   m_receiverRegion.resize( numReceiversGlobal );
 }
 
+real32 AcousticFirstOrderWaveEquationSEM::getGlobalMinWavespeed( MeshLevel & mesh, string_array const & regionNames )
+{
+
+  real32 localMinWavespeed = 1e8;
+
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                        CellElementSubRegion & elementSubRegion )
+  {
+    arrayView1d< real32 const > const velocity = elementSubRegion.getField< acousticfields::AcousticVelocity >();
+    real32 subRegionMinWavespeed = *std::min_element( velocity.begin(), velocity.end());
+    if( localMinWavespeed > subRegionMinWavespeed )
+    {
+      localMinWavespeed = subRegionMinWavespeed;
+    }
+  } );
+
+  real32 const globalMinWavespeed = MpiWrapper::min( localMinWavespeed );
+
+  return globalMinWavespeed;
+
+}
+
 void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseMesh, MeshLevel & mesh, string_array const & regionNames )
 {
   GEOS_MARK_FUNCTION;
@@ -191,7 +213,7 @@ void AcousticFirstOrderWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLev
   {
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
                    getDataContext() << ": Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
-                   InputError );
+                   InputError, getDataContext() );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
     arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
@@ -394,7 +416,7 @@ void AcousticFirstOrderWaveEquationSEM::applyFreeSurfaceBC( real64 const time, D
 // Here for retrocompatibily
 real64 AcousticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & time_n,
                                                                real64 const & dt,
-                                                               integer cycleNumber,
+                                                               integer const cycleNumber,
                                                                DomainPartition & domain,
                                                                integer GEOS_UNUSED_PARAM( computeGradient ) )
 {
@@ -406,7 +428,7 @@ real64 AcousticFirstOrderWaveEquationSEM::explicitStepForward( real64 const & ti
 
 real64 AcousticFirstOrderWaveEquationSEM::explicitStepBackward( real64 const & time_n,
                                                                 real64 const & dt,
-                                                                integer cycleNumber,
+                                                                integer const cycleNumber,
                                                                 DomainPartition & domain,
                                                                 integer GEOS_UNUSED_PARAM( computeGradient ) )
 {

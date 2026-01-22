@@ -18,6 +18,7 @@
  */
 
 #include "ElasticOrthotropic.hpp"
+#include "SolidFields.hpp"
 
 namespace geos
 {
@@ -26,25 +27,7 @@ namespace constitutive
 {
 
 ElasticOrthotropic::ElasticOrthotropic( string const & name, Group * const parent ):
-  SolidBase( name, parent ),
-  m_defaultE1(),
-  m_defaultE2(),
-  m_defaultE3(),
-  m_defaultNu12(),
-  m_defaultNu13(),
-  m_defaultNu23(),
-  m_defaultG12(),
-  m_defaultG13(),
-  m_defaultG23(),
-  m_c11(),
-  m_c12(),
-  m_c13(),
-  m_c22(),
-  m_c23(),
-  m_c33(),
-  m_c44(),
-  m_c55(),
-  m_c66()
+  SolidBase( name, parent )
 {
   registerWrapper( viewKeyStruct::defaultE1String(), &m_defaultE1 ).
     setApplyDefaultValue( -1 ).
@@ -136,45 +119,18 @@ ElasticOrthotropic::ElasticOrthotropic( string const & name, Group * const paren
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default C66 Component of Voigt Stiffness Tensor" );
 
-  registerWrapper( viewKeyStruct::c11String(), &m_c11 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C11" );
+  // register fields - TODO merge in one
 
-  registerWrapper( viewKeyStruct::c12String(), &m_c12 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C12" );
-
-  registerWrapper( viewKeyStruct::c13String(), &m_c13 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C13" );
-
-  registerWrapper( viewKeyStruct::c22String(), &m_c22 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C22" );
-
-  registerWrapper( viewKeyStruct::c23String(), &m_c23 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C23" );
-
-  registerWrapper( viewKeyStruct::c33String(), &m_c33 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C33" );
-
-  registerWrapper( viewKeyStruct::c44String(), &m_c44 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C44" );
-
-  registerWrapper( viewKeyStruct::c55String(), &m_c55 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C55" );
-
-  registerWrapper( viewKeyStruct::c66String(), &m_c66 ).
-    setApplyDefaultValue( -1 ).
-    setDescription( "Elastic Stiffness Field C66" );
+  registerField< fields::solid::c11 >( &m_c11 );
+  registerField< fields::solid::c12 >( &m_c12 );
+  registerField< fields::solid::c13 >( &m_c13 );
+  registerField< fields::solid::c22 >( &m_c22 );
+  registerField< fields::solid::c23 >( &m_c23 );
+  registerField< fields::solid::c33 >( &m_c33 );
+  registerField< fields::solid::c44 >( &m_c44 );
+  registerField< fields::solid::c55 >( &m_c55 );
+  registerField< fields::solid::c66 >( &m_c66 );
 }
-
-ElasticOrthotropic::~ElasticOrthotropic()
-{}
 
 void ElasticOrthotropic::postInputInitialization()
 {
@@ -233,31 +189,24 @@ void ElasticOrthotropic::postInputInitialization()
     GEOS_ERROR( getFullName() << ": Invalid specification for default elastic stiffnesses." );
   }
 
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c11String() ).
+  // TODO merge in one
+  getField< fields::solid::c11 >().
     setApplyDefaultValue( c11 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c12String() ).
+  getField< fields::solid::c12 >().
     setApplyDefaultValue( c12 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c13String() ).
+  getField< fields::solid::c13 >().
     setApplyDefaultValue( c13 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c22String() ).
+  getField< fields::solid::c22 >().
     setApplyDefaultValue( c22 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c23String() ).
+  getField< fields::solid::c23 >().
     setApplyDefaultValue( c23 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c33String() ).
+  getField< fields::solid::c33 >().
     setApplyDefaultValue( c33 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c44String() ).
+  getField< fields::solid::c44 >().
     setApplyDefaultValue( c44 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c55String() ).
+  getField< fields::solid::c55 >().
     setApplyDefaultValue( c55 );
-
-  this->getWrapper< array1d< real64 > >( viewKeyStruct::c66String() ).
+  getField< fields::solid::c66 >().
     setApplyDefaultValue( c66 );
 }
 

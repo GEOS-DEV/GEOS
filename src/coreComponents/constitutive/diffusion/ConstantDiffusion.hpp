@@ -64,17 +64,14 @@ public:
    * @param[in] name the name of the class
    * @param[in] parent pointer to the parent Group
    */
-  ConstantDiffusion( string const & name, Group * const parent );
-
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
-  virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+  ConstantDiffusion( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "ConstantDiffusion"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
+
+  virtual void allocateConstitutiveData( dataRepository::Group & parent,
+                                         localIndex const numPts ) override final;
 
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = ConstantDiffusionUpdate;
@@ -92,7 +89,7 @@ public:
   struct viewKeyStruct : public DiffusionBase::viewKeyStruct
   {
     static constexpr char const * diffusivityComponentsString() { return "diffusivityComponents"; }
-  } viewKeys;
+  };
 
 protected:
 

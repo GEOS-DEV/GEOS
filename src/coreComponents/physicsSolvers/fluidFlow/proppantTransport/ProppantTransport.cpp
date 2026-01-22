@@ -81,8 +81,6 @@ ProppantTransport::ProppantTransport( const string & name,
   registerWrapper( viewKeyStruct::updateProppantPackingString(), &m_updateProppantPacking ).setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag that enables/disables proppant-packing update" );
-
-  addLogLevel< logInfo::ResidualNorm >();
 }
 
 void ProppantTransport::postInputInitialization()
@@ -703,7 +701,8 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
 
         string const & subRegionName = subRegion.getName();
         GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0,
-                       getDataContext() << ": Conflicting proppant boundary conditions on set " << setName );
+                       getDataContext() << ": Conflicting proppant boundary conditions on set " << setName,
+                       getDataContext() );
         bcStatusMap[subRegionName][setName].resize( m_numComponents );
         bcStatusMap[subRegionName][setName].setValues< serialPolicy >( false );
 
@@ -723,9 +722,11 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
         localIndex const comp = fs.getComponent();
 
         GEOS_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0,
-                       getDataContext() << ": Proppant boundary condition not prescribed on set '" << setName << "'" );
+                       getDataContext() << ": Proppant boundary condition not prescribed on set '" << setName << "'",
+                       getDataContext() );
         GEOS_ERROR_IF( bcStatusMap[subRegionName][setName][comp],
-                       getDataContext() << ": Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
+                       getDataContext() << ": Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'",
+                       getDataContext() );
         bcStatusMap[subRegionName][setName][comp] = true;
 
         fs.applyFieldValue< FieldSpecificationEqual >( targetSet,
@@ -746,7 +747,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
             GEOS_WARNING_IF( !bcConsistent,
                              getDataContext() << ": Composition boundary condition not applied to component " <<
                              ic << " on region '" << bcStatusEntryOuter.first << "'," <<
-                             " set '" << bcStatusEntryInner.first << "'" );
+                             " set '" << bcStatusEntryInner.first << "'", getDataContext() );
           }
         }
       }
@@ -870,6 +871,8 @@ ProppantTransport::calculateResidualNorm( real64 const & GEOS_UNUSED_PARAM( time
 
   GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm,
                              GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm ));
+
+  getConvergenceStats().setResidualValue( GEOS_FMT( "R{}", coupledSolverAttributePrefix()), residualNorm );
 
   return residualNorm;
 }

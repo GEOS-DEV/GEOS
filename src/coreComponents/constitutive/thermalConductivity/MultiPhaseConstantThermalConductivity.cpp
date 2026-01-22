@@ -36,21 +36,13 @@ MultiPhaseConstantThermalConductivity::MultiPhaseConstantThermalConductivity( st
     setDescription( "xx, yy, and zz components of a diagonal thermal conductivity tensor [J/(s.m.K)]" );
 }
 
-std::unique_ptr< ConstitutiveBase >
-MultiPhaseConstantThermalConductivity::deliverClone( string const & name,
-                                                     Group * const parent ) const
+void MultiPhaseConstantThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts )
 {
-  return MultiPhaseThermalConductivityBase::deliverClone( name, parent );
-}
+  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numPts );
 
-void MultiPhaseConstantThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent,
-                                                                      localIndex const numConstitutivePointsPerParentIndex )
-{
-  MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-
+  // TODO move into initializeState?
   for( localIndex ei = 0; ei < parent.size(); ++ei )
   {
-    // NOTE: enforcing 1 quadrature point
     for( localIndex q = 0; q < 1; ++q )
     {
       m_effectiveConductivity[ei][q][0] = m_thermalConductivityComponents[0];
@@ -67,7 +59,7 @@ void MultiPhaseConstantThermalConductivity::postInputInitialization()
                  m_thermalConductivityComponents[2] < 0,
                  GEOS_FMT( "{}: the components of the thermal conductivity tensor must be non-negative",
                            getFullName() ),
-                 InputError );
+                 InputError, getDataContext() );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, MultiPhaseConstantThermalConductivity, string const &, Group * const )

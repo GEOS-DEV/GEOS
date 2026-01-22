@@ -96,7 +96,7 @@
     <PackCollection
       name="stressCollection"
       objectPath="ElementRegions/Omega/cb1"
-      fieldName="rock_stress"/>
+      fieldName="averageStress"/>
       
     <PackCollection
       name="displacementCollection"
@@ -110,11 +110,6 @@
     <VTK 
       name="vtkOutput"
       plotFileRoot="plot"
-    />
-
-    <Silo
-      name="siloOutput"
-      plotLevel="3"
     />
 
     <TimeHistory

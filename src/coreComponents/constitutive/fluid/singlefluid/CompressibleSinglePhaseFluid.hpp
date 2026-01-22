@@ -130,6 +130,21 @@ public:
              m_dViscosity[k][q][DerivOffset::dP] );
   }
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  virtual void update( localIndex const k,
+                       localIndex const q,
+                       real64 const pressure,
+                       real64 const GEOS_UNUSED_PARAM( temperature ),
+                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & GEOS_UNUSED_PARAM( logPrimaryConcentration ) ) const override
+  {
+    compute( pressure,
+             m_density[k][q],
+             m_dDensity[k][q][DerivOffset::dP],
+             m_viscosity[k][q],
+             m_dViscosity[k][q][DerivOffset::dP] );
+  }
+
 private:
 
   /// Relationship between the fluid density and pressure
@@ -144,19 +159,17 @@ class CompressibleSinglePhaseFluid : public SingleFluidBase
 {
 public:
   using DerivOffset = singlefluid::DerivativeOffset;
-  CompressibleSinglePhaseFluid( string const & name, Group * const parent );
-
-  virtual ~CompressibleSinglePhaseFluid() override;
+  CompressibleSinglePhaseFluid( string const & name, dataRepository::Group * const parent );
 
   static string catalogName() { return "CompressibleSinglePhaseFluid"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
-                                         localIndex const numConstitutivePointsPerParentIndex ) override;
+                                         localIndex const numPts ) override;
 
-  /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT, not just linear)
-  using KernelWrapper = CompressibleSinglePhaseUpdate< ExponentApproximationType::Linear, ExponentApproximationType::Linear >;
+  /// Type of kernel wrapper for in-kernel update (TODO: support multiple EAT combinations, not just this combination)
+  using KernelWrapper = CompressibleSinglePhaseUpdate< ExponentApproximationType::Full, ExponentApproximationType::Linear >;
 
   /**
    * @brief Create an update kernel wrapper.

@@ -173,6 +173,11 @@ TableLayout::Column & TableLayout::Column::setName( string_view name )
   return *this;
 }
 
+string_view TableLayout::Column::getName() const
+{
+  return m_header.getText();
+}
+
 TableLayout::Column & TableLayout::Column::setVisibility( bool visible )
 {
   m_header.m_layout.m_cellType = visible ? CellType::Header : CellType::Hidden;

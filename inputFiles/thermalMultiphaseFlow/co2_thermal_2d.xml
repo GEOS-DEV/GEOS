@@ -204,7 +204,6 @@
 
     <FieldSpecification
       name="sourcePressure"
-      logLevel="1"
       setNames="{ source1, source2 }"     
       objectPath="faceManager"
       fieldName="pressure"

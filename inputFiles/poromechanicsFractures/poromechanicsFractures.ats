@@ -32,6 +32,13 @@ decks = [
         check_step=10,
         restartcheck_params=RestartcheckParameters(**restartcheck_params)),
     TestDeck(
+        name="PoroElastic_ALM_conformingFracture_2d_openingFrac_horizontal_sequential_smoke",
+        description='PoroElastic ALM conformingFracture 2d case (sequential)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=10,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
         name="PoroElastic_conformingFracture_2d_openingFrac_vertical_smoke",
         description='PoroElastic conformingFracture 2d case',
         partitions=((1, 1, 1), (2, 2, 1)),
@@ -41,6 +48,13 @@ decks = [
     TestDeck(
         name="PoroElastic_conformingFracture_2d_openingFrac_vertical_sequential_smoke",
         description='PoroElastic conformingFracture 2d case (sequential)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=10,
+        restartcheck_params=RestartcheckParameters(**restartcheck_params)),
+    TestDeck(
+        name="PoroElastic_ALM_conformingFracture_2d_openingFrac_vertical_sequential_smoke",
+        description='PoroElastic ALM conformingFracture 2d case (sequential)',
         partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=0,
         check_step=10,
@@ -102,11 +116,32 @@ decks = [
         check_step=1,
         restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04)),
     TestDeck(
+        name="multiphasePoromechanics_FaultModel_well_fim_smoke",
+        description='PoroElastic conformingFracture fully implicit (multiphase with wells)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=1,
+        restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04)),
+    TestDeck(
+        name="multiphasePoromechanics_FaultModel_well_seq_smoke",
+        description='PoroElastic conformingFracture sequential (multiphase with wells)',
+        partitions=((1, 1, 1), (2, 2, 1)),
+        restart_step=0,
+        check_step=1,
+        restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04)),
+    TestDeck(
         name="PoroElastic_conformingFracture_2d_faultSlip_BartonBandis_smoke",
         description='PoroElastic conformingFracture with BartonBandis model',
         partitions=((1, 1, 1), (2, 2, 1)),
         restart_step=0,
         check_step=1,
+        restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04)),
+    TestDeck(
+        name="PoroElastic_ALM_curvedFrac_smoke",
+        description='PoroElastic ALM conformingFracture with two curved fractures',
+        partitions=((1, 1, 1), (2, 1, 1)),
+        restart_step=1,
+        check_step=2,
         restartcheck_params=RestartcheckParameters(atol=1e-05, rtol=1e-04))
 ]
 
