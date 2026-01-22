@@ -51,6 +51,8 @@ public:
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override final;
 
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
@@ -214,6 +216,12 @@ public:
   void createBubbleCellList( DomainPartition & domain ) const;
 
 private:
+
+  /**
+   * @brief Validate that tetrahedral meshes use high-order quadrature rules
+   * @param meshBodies the group containing the mesh bodies
+   */
+  void validateTetrahedralQuadrature( Group & meshBodies );
 
   /**
    * @brief add the number of non-zero elements induced by the coupling between

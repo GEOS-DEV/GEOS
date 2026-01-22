@@ -52,6 +52,8 @@ public:
 
   virtual void postInputInitialization() override;
 
+  virtual void initializePostInitialConditionsPreSubGroups() override;
+
   virtual void registerDataOnMesh( Group & MeshBodies ) override final;
 
   real64 solverStep( real64 const & time_n,
@@ -202,6 +204,12 @@ public:
 
 
 private:
+  /**
+   * @brief Validate that tetrahedral meshes use high-order quadrature rules
+   * @param meshBodies the group containing the mesh bodies
+   */
+  void validateTetrahedralQuadrature( Group & meshBodies );
+
   /**
    * @brief add the number of non-zero elements induced by the coupling between
    *   nodal and bubble displacement.
