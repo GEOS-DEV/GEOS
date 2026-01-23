@@ -228,6 +228,11 @@ public:
   bool isComputed( real64 const timeRequest, RegionStatistics const & stats );
 
   /**
+   * @brief set the statistics as dirty, ensuring isComputed() will be false until the next computation.
+   */
+  void setDirty();
+
+  /**
    * @brief Compute statistics on the mesh discretizations (average field pressure, etc)
    *        Results are reduced on rank 0, and broadcasted over all ranks.
    * @param[in] timeRequest The time for which we want to compute the statistics.

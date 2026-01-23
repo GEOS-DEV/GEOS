@@ -1120,10 +1120,10 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
 
   // loop over the wells
   forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
-                                                                MeshLevel & mesh,
-                                                                string_array const & regionNames )
+                                                    MeshLevel & mesh,
+                                                    string_array const & regionNames )
   {
-    MeshBody & meshBody = domain.getMeshBody(meshBodyName);
+    MeshBody & meshBody = domain.getMeshBody( meshBodyName );
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     compositionalMultiphaseWellKernels::PresTempCompFracInitializationKernel::CompFlowAccessors
@@ -1215,7 +1215,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, rea
                                                 wellElemCompDens );
 
         // 5) Recompute the pressure-dependent properties
-        precomputeFlashConditions(time_n, meshBodies, meshBody, subRegion);
+        precomputeFlashConditions( time_n, meshBodies, meshBody, subRegion );
         updateSubRegionState( subRegion );
 
         // 6) Estimate the well rates
@@ -2160,6 +2160,9 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
 {
   GEOS_LOG_RANK_0( " --------> CompositionalMultiphaseWell::implicitStepSetup" );
   WellSolverBase::implicitStepSetup( time_n, dt, domain );
+
+  if( m_reservoirStatsAggregator )
+    m_reservoirStatsAggregator->setDirty(); // TODO: is it useful? are timestep cut properly managed for this call?
 
   Group & meshBodies = domain.getMeshBodies();
   forDiscretizationOnMeshTargets ( meshBodies, [&] ( string const & meshBodyName,

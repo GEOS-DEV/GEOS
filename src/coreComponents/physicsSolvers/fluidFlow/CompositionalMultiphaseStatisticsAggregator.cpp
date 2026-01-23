@@ -300,9 +300,15 @@ bool StatsAggregator::isComputed( real64 const timeRequest, RegionStatistics con
                                                         LvArray::math::abs( stats.m_time ) );
   static constexpr real64 timeRelTol = 1.0e-12;
 
-    return
-      !m_regionStatsState.m_isDirty &&
-      LvArray::math::abs( timeRequest - stats.m_time ) < timeRelTol * timePrecisionScale;
+  return
+    !m_regionStatsState.m_isDirty &&
+    LvArray::math::abs( timeRequest - stats.m_time ) < timeRelTol * timePrecisionScale;
+}
+
+void StatsAggregator::setDirty()
+{
+  m_regionStatsState.m_isDirty = true;
+  m_cflStatsState.m_isDirty = true;
 }
 
 bool StatsAggregator::computeRegionsStatistics( real64 const timeRequest )
