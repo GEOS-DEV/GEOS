@@ -232,7 +232,7 @@ private:
                                      stiffness );
 
     // Compute effective stress increment for the porosity update
-    real64 const bulkModulus = m_solidUpdate.getBulkModulus( k );
+    real64 const bulkModulus = stiffness.m_bulkModulus;
     real64 const meanEffectiveStressIncrement = bulkModulus * ( mechanicsStrainIncrement[0] + mechanicsStrainIncrement[1] + mechanicsStrainIncrement[2] );
 
     m_porosityUpdate.updateMeanEffectiveStressIncrement( k, q, meanEffectiveStressIncrement );

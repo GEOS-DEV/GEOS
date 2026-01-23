@@ -20,6 +20,9 @@
 
 #include "PorousReactiveSolid.hpp"
 #include "ElasticIsotropic.hpp"
+#include "Damage.hpp"
+#include "DamageSpectral.hpp"
+#include "DamageVolDev.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
 
@@ -46,10 +49,17 @@ void PorousReactiveSolid< SOLID_TYPE, PERM_TYPE >::initializeState() const
 
 // Register all PorousReactiveSolid model types.
 typedef PorousReactiveSolid< ElasticIsotropic, ConstantPermeability > PorousReactiveElasticIsotropicConstant;
+typedef PorousReactiveSolid< Damage< ElasticIsotropic >, ConstantPermeability > PorousReactiveDamageConstant;
+// typedef PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, ConstantPermeability > PorousReactiveDamageSpectralConstant;
+typedef PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, ConstantPermeability > PorousReactiveDamageVolDevConstant;
+
 typedef PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability > PorousReactiveElasticIsotropicCK;
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicConstant, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageConstant, string const &, Group * const )
+// REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageSpectralConstant, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveDamageVolDevConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousReactiveElasticIsotropicCK, string const &, Group * const )
 
 

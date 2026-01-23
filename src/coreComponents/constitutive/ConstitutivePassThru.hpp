@@ -388,6 +388,9 @@ struct ConstitutivePassThru< PorousReactiveSolidBase >
   static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< PorousReactiveSolid< ElasticIsotropic, ConstantPermeability >,
+                                 PorousReactiveSolid< Damage< ElasticIsotropic >, ConstantPermeability >,
+                                 //  PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, ConstantPermeability >,
+                                 PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, ConstantPermeability >,
                                  PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability > >::execute( constitutiveRelation,
                                                                                                                std::forward< LAMBDA >( lambda ) );
   }
@@ -524,6 +527,9 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousDamageSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousDamageSolid< Damage< ElasticIsotropic > >,
                                  PorousReactiveSolid< ElasticIsotropic, ConstantPermeability >,
+                                 PorousReactiveSolid< Damage< ElasticIsotropic >, ConstantPermeability >,
+                                 //  PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, ConstantPermeability >,
+                                 PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, ConstantPermeability >,
                                  PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability >,
                                  ReactiveSolid< ReactivePorosityBase, ConstantPermeability >,
                                  ReactiveSolid< ReactivePorosityBase, CarmanKozenyPermeability >,
@@ -569,6 +575,9 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousDamageSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousDamageSolid< Damage< ElasticIsotropic > >,
                                  PorousReactiveSolid< ElasticIsotropic, ConstantPermeability >,
+                                 PorousReactiveSolid< Damage< ElasticIsotropic >, ConstantPermeability >,
+                                 //  PorousReactiveSolid< DamageSpectral< ElasticIsotropic >, ConstantPermeability >,
+                                 PorousReactiveSolid< DamageVolDev< ElasticIsotropic >, ConstantPermeability >,
                                  PorousReactiveSolid< ElasticIsotropic, CarmanKozenyPermeability >,
                                  ReactiveSolid< ReactivePorosityBase, ConstantPermeability >,
                                  ReactiveSolid< ReactivePorosityBase, CarmanKozenyPermeability >,
