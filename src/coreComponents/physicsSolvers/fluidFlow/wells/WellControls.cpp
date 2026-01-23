@@ -24,7 +24,7 @@
 #include "functions/FunctionManager.hpp"
 #include "mesh/PerforationFields.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 #include "functions/FunctionManager.hpp"
 namespace geos
 {

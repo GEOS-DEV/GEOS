@@ -515,7 +515,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< Compositio
       wellElemCompDens.move( hostMemorySpace, false );
 
       arrayView1d< real64 > const & connRate =
-        subRegion.getField< fields::well::mixtureConnectionRate >();
+        subRegion.getField< fields::well::connectionRate >();
       connRate.move( hostMemorySpace, false );
 
       // a) compute all the derivatives wrt to the pressure in WELL elem iwelem

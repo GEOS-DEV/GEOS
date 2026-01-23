@@ -197,8 +197,8 @@ void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion &
   subRegion.registerField< well::globalCompDensity_n >( getName() ).
     reference().resizeDimension< 1 >( m_numComponents );
 
-  subRegion.registerField< well::mixtureConnectionRate >( getName() );
-  subRegion.registerField< well::mixtureConnectionRate_n >( getName() );
+  subRegion.registerField< well::connectionRate >( getName() );
+  subRegion.registerField< well::connectionRate_n >( getName() );
 
   subRegion.registerField< well::globalCompFraction >( getName() ).
     setDimLabels( 1, fluid.componentNames() ).
@@ -516,7 +516,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
   // subRegion data
 
-  arrayView1d< real64 const > const & connRate = subRegion.getField< well::mixtureConnectionRate >();
+  arrayView1d< real64 const > const & connRate = subRegion.getField< well::connectionRate >();
 
   // fluid data
   constitutive::MultiFluidBase & fluidSeparator =  getMultiFluidSeparator();
@@ -603,7 +603,7 @@ void CompositionalMultiphaseWell::calculateReferenceElementRates( WellElementSub
 
 
   // subRegion data
-  arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::mixtureConnectionRate >();
+  arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::connectionRate >();
 
   // fluid data
   constitutive::MultiFluidBase & fluidSeparator =      getMultiFluidSeparator();
@@ -1011,7 +1011,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
     arrayView1d< real64 > const & wellElemPressure = subRegion.getField< well::pressure >();
     arrayView1d< real64 > const & wellElemTemp = subRegion.getField< well::temperature >();
     arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens = subRegion.getField< well::globalCompDensity >();
-    arrayView1d< real64 > const & connRate = subRegion.getField< well::mixtureConnectionRate >();
+    arrayView1d< real64 > const & connRate = subRegion.getField< well::connectionRate >();
 
     // get the info stored on well elements
     arrayView2d< real64, compflow::USD_COMP > const & wellElemCompFrac = subRegion.getField< well::globalCompFraction >();
@@ -1268,7 +1268,7 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< integer const > const wellElemGhostRank = subRegion.ghostRank();
     arrayView1d< integer const > const elemStatus = subRegion.getLocalWellElementStatus();
-    arrayView1d< real64 > const mixConnRate = subRegion.getField< fields::well::mixtureConnectionRate >();
+    arrayView1d< real64 > const mixConnRate = subRegion.getField< fields::well::connectionRate >();
     localIndex rank_offset = dofManager.rankOffset();
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
@@ -1302,7 +1302,7 @@ void CompositionalMultiphaseWell::assembleWellAccumulationTerms( real64 const & 
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
     arrayView1d< integer const > const wellElemGhostRank = subRegion.ghostRank();
 
-    arrayView1d< real64 >  mixConnRate = subRegion.getField< fields::well::mixtureConnectionRate >();
+    arrayView1d< real64 >  mixConnRate = subRegion.getField< fields::well::connectionRate >();
     localIndex rank_offset = dofManager.rankOffset();
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
@@ -1878,7 +1878,7 @@ CompositionalMultiphaseWell::applyWellSystemSolution( DofManager const & dofMana
 
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),
-                               fields::well::mixtureConnectionRate::key(),
+                               fields::well::connectionRate::key(),
                                scalingFactor,
                                connRateMask );
 
@@ -1908,7 +1908,7 @@ CompositionalMultiphaseWell::applyWellSystemSolution( DofManager const & dofMana
   {
     fieldsToBeSync.addElementFields( { fields::well::pressure::key(),
                                        fields::well::globalCompDensity::key(),
-                                       fields::well::mixtureConnectionRate::key(),
+                                       fields::well::connectionRate::key(),
                                        fields::well::temperature::key() },
                                      getTargetRegionNames() );
   }
@@ -1916,7 +1916,7 @@ CompositionalMultiphaseWell::applyWellSystemSolution( DofManager const & dofMana
   {
     fieldsToBeSync.addElementFields( { fields::well::pressure::key(),
                                        fields::well::globalCompDensity::key(),
-                                       fields::well::mixtureConnectionRate::key() },
+                                       fields::well::connectionRate::key() },
                                      getTargetRegionNames() );
   }
   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
@@ -1983,9 +1983,9 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( ElementRegionMana
   wellElemGlobalCompDensity.setValues< parallelDevicePolicy<> >( wellElemGlobalCompDensity_n );
 
   arrayView1d< real64 > const & connRate =
-    subRegion.getField< well::mixtureConnectionRate >();
+    subRegion.getField< well::connectionRate >();
   arrayView1d< real64 const > const & connRate_n =
-    subRegion.getField< well::mixtureConnectionRate_n >();
+    subRegion.getField< well::connectionRate_n >();
   connRate.setValues< parallelDevicePolicy<> >( connRate_n );
 
 
@@ -2164,9 +2164,9 @@ void CompositionalMultiphaseWell::saveState( WellElementSubRegion & subRegion )
   wellElemGlobalCompDensity_n.setValues< parallelDevicePolicy<> >( wellElemGlobalCompDensity );
 
   arrayView1d< real64 const > const & connRate =
-    subRegion.getField< fields::well::mixtureConnectionRate >();
+    subRegion.getField< fields::well::connectionRate >();
   arrayView1d< real64 > const & connRate_n =
-    subRegion.getField< fields::well::mixtureConnectionRate_n >();
+    subRegion.getField< fields::well::connectionRate_n >();
   connRate_n.setValues< parallelDevicePolicy<> >( connRate );
 
   arrayView2d< real64 const, compflow::USD_PHASE > const wellElemPhaseVolFrac =
@@ -2215,9 +2215,9 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
     wellElemGlobalCompDensity_n.setValues< parallelDevicePolicy<> >( wellElemGlobalCompDensity );
 
     arrayView1d< real64 const > const & connRate =
-      subRegion.getField< fields::well::mixtureConnectionRate >();
+      subRegion.getField< fields::well::connectionRate >();
     arrayView1d< real64 > const & connRate_n =
-      subRegion.getField< fields::well::mixtureConnectionRate_n >();
+      subRegion.getField< fields::well::connectionRate_n >();
     connRate_n.setValues< parallelDevicePolicy<> >( connRate );
 
     arrayView2d< real64 const, compflow::USD_PHASE > const wellElemPhaseVolFrac =
@@ -2328,7 +2328,7 @@ void CompositionalMultiphaseWell::printRates( real64 const & time_n,
   // subRegion data
 
   arrayView1d< real64 const > const & connRate =
-    subRegion.getField< well::mixtureConnectionRate >();
+    subRegion.getField< well::connectionRate >();
 
   integer const useSurfaceCond =  useSurfaceConditions();
 

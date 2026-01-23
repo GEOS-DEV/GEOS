@@ -131,7 +131,7 @@ struct ConstraintHelper
 
     localIndex const iwelemRef = subRegion.getTopWellElementIndex();
     arrayView1d< globalIndex const > const & wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::mixtureConnectionRate >();
+    arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::connectionRate >();
     arrayView2d< real64 const, compflow::USD_COMP > const & compFrac = subRegion.getField< fields::well::globalCompFraction >();
     arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens = subRegion.getField< fields::well::dGlobalCompFraction_dGlobalCompDensity >();
 
@@ -238,7 +238,7 @@ struct ConstraintHelper
 
     localIndex const iwelemRef = subRegion.getTopWellElementIndex();
     arrayView1d< globalIndex const > const & wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::mixtureConnectionRate >();
+    arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::connectionRate >();
     arrayView2d< real64 const, compflow::USD_COMP > const & compFrac = subRegion.getField< fields::well::globalCompFraction >();
     arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens = subRegion.getField< fields::well::dGlobalCompFraction_dGlobalCompDensity >();
 
@@ -355,7 +355,7 @@ struct ConstraintHelper
 
     localIndex const iwelemRef = subRegion.getTopWellElementIndex();
     arrayView1d< globalIndex const > const & wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::mixtureConnectionRate >();
+    arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::connectionRate >();
     arrayView2d< real64 const, compflow::USD_COMP > const & compFrac = subRegion.getField< fields::well::globalCompFraction >();
     arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens = subRegion.getField< fields::well::dGlobalCompFraction_dGlobalCompDensity >();
 
@@ -455,7 +455,7 @@ struct ConstraintHelper
 
     localIndex const iwelemRef = subRegion.getTopWellElementIndex();
     arrayView1d< globalIndex const > const & wellElemDofNumber = subRegion.getReference< array1d< globalIndex > >( wellDofKey );
-    arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::mixtureConnectionRate >();
+    arrayView1d< real64 const > const & connRate = subRegion.getField< fields::well::connectionRate >();
     arrayView2d< real64 const, compflow::USD_COMP > const & compFrac = subRegion.getField< fields::well::globalCompFraction >();
     arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens = subRegion.getField< fields::well::dGlobalCompFraction_dGlobalCompDensity >();
 

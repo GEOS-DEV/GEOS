@@ -4,7 +4,7 @@
   <Solvers>
     <CompositionalMultiphaseReservoir
       name="reservoirSystem"
-      wellManagerSolverName="allWells"
+      wellSolverName="allWells"
       flowSolverName="compositionalMultiphaseFlow"
       logLevel="1"
       initialDt="86400"
@@ -33,7 +33,6 @@
       targetRegions="{ wellRegion1, wellRegion2 }"
       useMass="1">
       <CompositionalMultiphaseWell
-        targetRegions="{ wellRegion1  }"
         logLevel="5"
          maxRelativePressureChange="0.1"
          maxCompFractionChange="0.1"
@@ -52,7 +51,6 @@
       </CompositionalMultiphaseWell>
       <CompositionalMultiphaseWell
         name="wellControls2"
-        targetRegions="{ wellRegion2  }"
         logLevel="5"
          maxRelativePressureChange="0.1"
          maxCompFractionChange="0.1"
@@ -291,7 +289,7 @@
     <PackCollection
       name="wellRateCollection"
       objectPath="ElementRegions/wellRegion1/wellRegion1UniqueSubRegion"
-      fieldName="wellElementMixtureConnectionRate"/>
+      fieldName="wellElementConnectionRate"/>
   </Tasks>
 
   <Outputs>

@@ -39,7 +39,7 @@
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionCheckKernel.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellPhaseVolumeRateConstraint.hpp"
 
 namespace geos
@@ -1372,7 +1372,7 @@ public:
     m_wellElemDofNumber ( subRegion.getReference< array1d< globalIndex > >( wellDofKey ) ),
     m_nextWellElemIndex ( subRegion.getReference< array1d< localIndex > >( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString()) ),
     m_elemStatus( subRegion.getLocalWellElementStatus() ),
-    m_connRate ( subRegion.getField< fields::well::mixtureConnectionRate >() ),
+    m_connRate ( subRegion.getField< fields::well::connectionRate >() ),
     m_wellElemCompFrac ( subRegion.getField< fields::well::globalCompFraction >() ),
     m_dWellElemCompFrac_dCompDens ( subRegion.getField< fields::well::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_localMatrix( localMatrix ),

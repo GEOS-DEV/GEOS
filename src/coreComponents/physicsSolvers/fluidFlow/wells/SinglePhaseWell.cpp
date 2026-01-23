@@ -92,7 +92,7 @@ void SinglePhaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
   subRegion.registerField< well::gravityCoefficient >( getName() );
   PerforationData & perforationData = *subRegion.getPerforationData();
   perforationData.registerField< well::gravityCoefficient >( getName() );
-  
+
   perforationData.registerField< well::perforationRate >( getName() );
   perforationData.registerField< well::dPerforationRate >( getName() ).
     reference().resizeDimension< 1, 2 >( 2, 2 );
@@ -523,9 +523,9 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
         } );
       }
     }
- 
+
     PresTempInitializationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( elemManager, getFlowSolverName());
-    PresTempInitializationKernel::SingleFluidAccessors resSingleFluidAccessors( elemManager,getFlowSolverName() );
+    PresTempInitializationKernel::SingleFluidAccessors resSingleFluidAccessors( elemManager, getFlowSolverName() );
 
     // 1) Loop over all perforations to compute an average density
     // 2) Initialize the reference pressure

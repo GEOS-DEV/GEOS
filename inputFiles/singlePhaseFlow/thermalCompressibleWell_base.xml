@@ -32,12 +32,12 @@
       isThermal="1"
       targetRegions="{ region }"/>
 
-    <SinglePhaseWell
+    <WellManager
       name="singlePhaseWell"
       logLevel="1"
       isThermal="1"
       targetRegions="{ wellRegion2 }">
-      <WellControls
+      <SinglePhaseWell
         name="wellControls2"
         type="injector"
         enableCrossflow="0"
@@ -54,8 +54,8 @@
           volumeRate="15"
           injectionStream="{ 1.0, 0.0 }"
           injectionTemperature="323"/>
-      </WellControls>
-    </SinglePhaseWell>
+      </SinglePhaseWell>
+    </WellManager>
   </Solvers>
 
   <Geometry>

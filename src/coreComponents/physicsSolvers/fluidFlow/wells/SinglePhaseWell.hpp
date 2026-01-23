@@ -224,7 +224,7 @@ public:
 
   virtual string resElementDofName() const override;
 
-  virtual localIndex numFluidComponents() const override { return 1; }
+  virtual localIndex numFluidComponents() const override { return 0; }
 
   virtual localIndex numFluidPhases() const override { return 1; }
 
@@ -283,7 +283,7 @@ public:
                      arrayView1d< real64 > const & localRhs );
   struct viewKeyStruct : WellControls::viewKeyStruct
   {
-    static constexpr char const * dofFieldString() { return "singlePhaseWellVars"; }
+    static constexpr char const * dofFieldString() { return "wellVars"; }
 
     // control data (not registered on the mesh)
     static constexpr char const * currentBHPString() { return "currentBHP"; }

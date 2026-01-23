@@ -30,7 +30,7 @@
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
-#include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "functions/FunctionManager.hpp"
 namespace geos
@@ -144,24 +144,12 @@ void WellManager::registerDataOnMesh( Group & meshBodies )
   } );
   // 1. Set key dimensions of the problem
   // Empty check needed to avoid errors when running in schema generation mode.
-  if( isCompositional() )
-  {
 
-
-    // 1 pressure + NC compositions + 1 connectionRate + temp if thermal
-    m_numDofPerWellElement = isThermal() ? m_numFluidComponents + 3 : m_numFluidComponents + 2;
-    // 1 pressure + NC compositions + temp if thermal
-    m_numDofPerResElement = isThermal() ? m_numFluidComponents + 2 : m_numFluidComponents + 1;
-
-  }
-  else
-  {
-    // 1 pressure + NC compositions + 1 connectionRate + temp if thermal
-    m_numDofPerWellElement = isThermal() ?   3 :  2;
-    // 1 pressure + NC compositions + temp if thermal
-    m_numDofPerResElement = isThermal() ?  2 :   1;
-  }
-#if 0
+  // 1 pressure + NC compositions + 1 connectionRate + temp if thermal
+  m_numDofPerWellElement = isThermal() ? m_numFluidComponents + 3 : m_numFluidComponents + 2;
+  // 1 pressure + NC compositions + temp if thermal
+  m_numDofPerResElement = isThermal() ? m_numFluidComponents + 2 : m_numFluidComponents + 1;
+ #if 0
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
@@ -216,8 +204,8 @@ void WellManager::registerDataOnMesh( Group & meshBodies )
       subRegion.registerField< well::globalCompDensity_n >( getName() ).
         reference().resizeDimension< 1 >( m_numComponents );
 
-      subRegion.registerField< well::mixtureConnectionRate >( getName() );
-      subRegion.registerField< well::mixtureConnectionRate_n >( getName() );
+      subRegion.registerField< well::connectionRate >( getName() );
+      subRegion.registerField< well::connectionRate_n >( getName() );
 
       subRegion.registerField< well::globalCompFraction >( getName() ).
         setDimLabels( 1, fluid.componentNames() ).
@@ -974,7 +962,7 @@ WellManager::applySystemSolution( DofManager const & dofManager,
 
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),
-                               well::mixtureConnectionRate::key(),
+                               well::connectionRate::key(),
                                scalingFactor,
                                connRateMask );
   if( isCompositional())
@@ -985,6 +973,7 @@ WellManager::applySystemSolution( DofManager const & dofManager,
                                  well::globalCompDensity::key(),
                                  scalingFactor,
                                  componentMask );
+
   }
   if( isThermal() )
   {
@@ -999,7 +988,7 @@ WellManager::applySystemSolution( DofManager const & dofManager,
   }
   // if component density chopping is allowed, some component densities may be negative after the update
   // these negative component densities are set to zero in this function
-  if( m_allowCompDensChopping )
+  if( isCompositional() && m_allowCompDensChopping )
   {
     chopNegativeDensities( domain );
   }
@@ -1011,7 +1000,7 @@ WellManager::applySystemSolution( DofManager const & dofManager,
     stdVector< string > propNames;
     propNames.emplace_back( well::pressure::key() );
 
-    propNames.emplace_back( well::mixtureConnectionRate::key() );
+    propNames.emplace_back( well::connectionRate::key() );
     if( isCompositional())
     {
       propNames.emplace_back( well::globalCompDensity::key() );
