@@ -42,15 +42,12 @@
       solutionChangeScalingFactor="1"
       useMass="0"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="WELL.SOLVER"
       useMass="0"
-      maxRelativePressureChange="0.5"
-      maxCompFractionChange="0.5"
       targetRegions="{ WATER.INJECTOR, GAS.INJECTOR, PRODUCER }"
-      writeCSV="1"
       logLevel="1">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="WATER.INJECTOR.CONTROL"
         control="totalVolRate"
         type="injector"
@@ -58,7 +55,11 @@
         surfacePressure="1.013250e+05"
         surfaceTemperature="288.71"
         enableCrossflow="0"
-        logLevel="2">
+        logLevel="2"
+        maxRelativePressureChange="0.5"
+        maxCompFractionChange="0.5"
+        useMass="0"
+        writeCSV="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="5.0e+07"
@@ -68,8 +69,8 @@
           constraintScheduleTableName="WATER.INJECTOR.RATE"
           injectionStream="{ 0.00, 0.00, 0.00, 1.00 }"
           injectionTemperature="344.15"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="GAS.INJECTOR.CONTROL"
         control="totalVolRate"
         type="injector"
@@ -77,7 +78,11 @@
         surfacePressure="1.013250e+05"
         surfaceTemperature="288.71"
         enableCrossflow="0"
-        logLevel="2">
+        logLevel="2"
+        maxRelativePressureChange="0.5"
+        maxCompFractionChange="0.5"
+        useMass="0"
+        writeCSV="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="5.0e+07"
@@ -87,8 +92,8 @@
           constraintScheduleTableName="GAS.INJECTOR.RATE"
           injectionStream="{ 0.15, 0.85, 0.00, 0.00 }"
           injectionTemperature="344.15"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="PRODUCER.CONTROL"
         control="phaseVolRate"
         type="producer"
@@ -96,7 +101,11 @@
         surfacePressure="1.013250e+05"
         surfaceTemperature="288.71"
         enableCrossflow="1"
-        logLevel="2">
+        logLevel="2"
+        maxRelativePressureChange="0.5"
+        maxCompFractionChange="0.5"
+        useMass="0"
+        writeCSV="1">
         <ProductionPhaseVolumeRateConstraint
           name="maxgasprod"
           phaseName="gas"
@@ -105,8 +114,8 @@
           name="minbhp"
           targetBHP="1.0e+06"
           referenceElevation="-4235.0"/>
-      </WellControls>
-    </CompositionalMultiphaseWell>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
 
   <NumericalMethods>

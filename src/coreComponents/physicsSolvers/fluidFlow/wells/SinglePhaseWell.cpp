@@ -69,21 +69,30 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
 
 void SinglePhaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
 {
-/// WellControls::registerDataOnMesh( meshBodies ); replaced by following 2 lines
+  WellControls::registerDataOnMesh( subRegion );
 
   setConstitutiveNames ( subRegion );
 
-  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  ConstitutiveManager const & cm = domain.getConstitutiveManager();
+  //DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  //ConstitutiveManager const & cm = domain.getConstitutiveManager();
   if( m_referenceFluidModelName.empty() )
   {
-    m_referenceFluidModelName = getConstitutiveName< MultiFluidBase >( subRegion );
+    m_referenceFluidModelName = getConstitutiveName< SingleFluidBase >( subRegion );
   }
+  subRegion.registerField< well::pressure >( getName() );
+  subRegion.registerField< well::pressure_n >( getName() );
 
+  subRegion.registerField< well::temperature >( getName() );
+  if( isThermal() )
+  {
+    subRegion.registerField< well::temperature_n >( getName() );
+  }
   subRegion.registerField< well::connectionRate_n >( getName() );
   subRegion.registerField< well::connectionRate >( getName() );
-
+  subRegion.registerField< well::gravityCoefficient >( getName() );
   PerforationData & perforationData = *subRegion.getPerforationData();
+  perforationData.registerField< well::gravityCoefficient >( getName() );
+  
   perforationData.registerField< well::perforationRate >( getName() );
   perforationData.registerField< well::dPerforationRate >( getName() ).
     reference().resizeDimension< 1, 2 >( 2, 2 );
@@ -92,6 +101,7 @@ void SinglePhaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
     perforationData.registerField< well::energyPerforationFlux >( getName() );
     perforationData.registerField< well::dEnergyPerforationFlux >( getName() ).
       reference().resizeDimension< 1, 2 >( 2, 2 );
+    perforationData.registerField< well::gravityCoefficient >( getName() );
   }
 
 
@@ -137,7 +147,7 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
                                                WellElementSubRegion const & subRegion )
 {
   GEOS_UNUSED_VAR( time_n ); // tjb this will be needed with validation against tables
-
+  GEOS_UNUSED_VAR( subRegion );
   if( useSurfaceConditions() )
   {
     bool useSeg =  getReferenceReservoirRegion().empty();
@@ -164,20 +174,21 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
 
 void SinglePhaseWell::initializeWellPostInitialConditionsPreSubGroups( WellElementSubRegion & subRegion )
 {
+
+  // set gravity coefficient
+  setGravCoef( subRegion, getParent().getParent().getReference< R1Tensor >( PhysicsSolverManager::viewKeyStruct::gravityVectorString() ));
+
+  // setup fluid model
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-
   constitutive::SingleFluidBase & fluid = subRegion.getConstitutiveModel< constitutive::SingleFluidBase >( fluidName );
-
   createSeparator( subRegion );
 }
 void SinglePhaseWell::initializePostInitialConditionsPreSubGroups()
 {
-  //WellControl::initializePostInitialConditionsPreSubGroups();
-
+  WellControls::initializePostInitialConditionsPreSubGroups();
 }
 void SinglePhaseWell::postRestartInitialization( )
 {
-
   // setup fluid separator
   constitutive::SingleFluidBase & fluidSeparator =   getSingleFluidSeparator();
   fluidSeparator.allocateConstitutiveData( *this, 1 );
@@ -512,12 +523,9 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
         } );
       }
     }
-
-    // TODO: change the way we access the flowSolver here
-    SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
-
-    PresTempInitializationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( elemManager, flowSolver.getName() );
-    PresTempInitializationKernel::SingleFluidAccessors resSingleFluidAccessors( elemManager, flowSolver.getName() );
+ 
+    PresTempInitializationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( elemManager, getFlowSolverName());
+    PresTempInitializationKernel::SingleFluidAccessors resSingleFluidAccessors( elemManager,getFlowSolverName() );
 
     // 1) Loop over all perforations to compute an average density
     // 2) Initialize the reference pressure
@@ -1078,7 +1086,7 @@ SinglePhaseWell::calculateWellResidualNorm( real64 const & time_n,
   localResidualNormalizer.resize( numNorm );
 
 
-  globalIndex const rankOffset = dofManager.rankOffset();
+  //globalIndex const rankOffset = dofManager.rankOffset();
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
   if( isWellOpen() )
@@ -1318,7 +1326,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
                                   WellElementSubRegion const & subRegion )
 {
 
-
+  GEOS_UNUSED_VAR( dt );// FIX THIS tjb
   // the rank that owns the reference well element is responsible for the calculations below.
   if( !subRegion.isLocallyOwned() )
   {

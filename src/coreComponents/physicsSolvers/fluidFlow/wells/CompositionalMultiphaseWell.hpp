@@ -74,7 +74,7 @@ public:
   virtual ~CompositionalMultiphaseWell() override = default;
 
 
-  void registerWellDataOnMesh( WellElementSubRegion & subRegion ) override;
+  virtual void registerWellDataOnMesh( WellElementSubRegion & subRegion ) override;
   /**
    * @defgroup WellManager Interface Functions
    *

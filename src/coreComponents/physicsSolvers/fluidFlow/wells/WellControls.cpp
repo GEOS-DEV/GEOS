@@ -25,6 +25,7 @@
 #include "mesh/PerforationFields.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBaseFields.hpp"
+#include "functions/FunctionManager.hpp"
 namespace geos
 {
 
@@ -39,8 +40,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_numDofPerResElement( 0 ),
   m_isThermal( 0 ),
   m_keepVariablesConstantDuringInitStep( false ),
-  m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), name + "_rates" ) ),
-
+  //m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), "_rates" ) ),
+  m_ratesOutputDir( joinPath( OutputBase::getOutputDirectory(), parent->getName() + "_rates" ) ),
   m_inputControl( Control::UNINITIALIZED ),
   m_currentControl( Control::UNINITIALIZED ),
   m_useSurfaceConditions( 0 ),
@@ -121,6 +122,7 @@ WellControls::WellControls( string const & name, Group * const parent )
                     " - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) \n"
                     " - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) " );
 
+#if 0
   registerWrapper( viewKeyStruct::targetRegionsString(), &m_targetRegionNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -128,7 +130,7 @@ WellControls::WellControls( string const & name, Group * const parent )
                     "the solver will be applied to these regions, only that allocation will occur such that the "
                     "solver may be applied to these regions. The decision about what regions this solver will be"
                     "applied to rests in the EventManager." );
-
+#endif
   addLogLevel< logInfo::WellControl >();
 }
 
@@ -239,7 +241,14 @@ TableFunction * createWellTable( string const & tableName,
 }
 
 }
-
+void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
+{
+  std::string const & regionName = subRegion.getName();
+  std::string addrWithMask( regionName );
+  std::size_t pos = addrWithMask.find( "UniqueSubRegion" );
+  std::string addr = addrWithMask.substr( 0, pos );
+  m_targetRegionNames.push_back( addr );
+}
 void WellControls::postInputInitialization()
 {
   Group::postInputInitialization();
@@ -354,7 +363,32 @@ void WellControls::setWellStatus( real64 const & currentTime, WellControls::Stat
     }
   }
 }
+real64 WellControls::setNextDt( real64 const & currentTime,
+                                real64 const & currentDt,
+                                WellElementSubRegion & subRegion )
+{
+  real64 nextDt = currentDt;
+  real64 nextDt_perf=nextDt;
 
+  // Find min dt from perf status tables
+  PerforationData & perforationData = *subRegion.getPerforationData();
+  string_array const & perfStatusTableName = perforationData.getPerfStatusTableName();
+  FunctionManager & functionManager = FunctionManager::getInstance();
+  // Get dt for local perforations
+  for( integer i=0; i<perforationData.size(); i++ )
+  {
+    TableFunction * tableFunction =  functionManager.getGroupPointer< TableFunction >( perfStatusTableName[i] );
+    setNextDtFromTable( tableFunction, currentTime, nextDt_perf );
+  }
+  nextDt = MpiWrapper::min< real64 >( nextDt_perf );
+  // Find min dt including rate and status tables
+  real64 const nextDt_orig = nextDt;
+  setNextDtFromTables( currentTime, nextDt );
+  //if( m_nonlinearSolverParameters.getLogLevel() > 0 && nextDt < nextDt_orig )
+  if( getLogLevel() > 0 && nextDt < nextDt_orig )
+    GEOS_LOG_RANK_0( GEOS_FMT( "{}: next time step based on tables coordinates = {}", getName(), nextDt ));
+  return nextDt;
+}
 bool WellControls::isWellOpen() const
 {
   return getWellStatus() == WellControls::Status::OPEN;
@@ -488,6 +522,8 @@ void WellControls::implicitStepSetup( real64 const & time_n,
                                       ElementRegionManager & elemManager,
                                       WellElementSubRegion & subRegion )
 {
+
+  GEOS_UNUSED_VAR( elemManager );
   // Set perforation status
   setPerforationStatus( time_n, subRegion );
 }

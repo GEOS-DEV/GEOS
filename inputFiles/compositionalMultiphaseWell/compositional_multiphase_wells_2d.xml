@@ -23,11 +23,11 @@
       targetRegions="{ Region1 }"
       temperature="297.15"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="wellControls1"
         type="producer"
         control="BHP">
@@ -39,8 +39,8 @@
           name="minbhp"
           targetBHP="4e6"
           referenceElevation="0.5"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls2"
         type="producer"
         control="phaseVolRate">
@@ -52,8 +52,8 @@
           name="minbhp"
           targetBHP="2e6"
           referenceElevation="0.5"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls3"
         type="injector"
         control="totalVolRate">
@@ -66,8 +66,8 @@
           volumeRate="5e-7"
           injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"
           injectionTemperature="297.15"/>
-      </WellControls>
-    </CompositionalMultiphaseWell>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
 
   <Mesh>

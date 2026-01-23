@@ -28,12 +28,12 @@
       logLevel="1"
       useMass="1"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       targetRegions="{ wellRegion }"
       logLevel="1"
       useMass="1">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="wellControls"
         logLevel="1"
         type="injector"
@@ -41,7 +41,8 @@
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="288.71"
-        control="totalVolRate">
+        control="totalVolRate"
+        useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="1e8"
@@ -51,8 +52,8 @@
           constraintScheduleTableName="totalRateTable"
           injectionStream="{ 1.0, 0.0 }"
           injectionTemperature="353.15"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="MAX_MASS_INJ"
         logLevel="1"
         type="injector"
@@ -60,7 +61,8 @@
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="288.71"
-        control="massRate">
+        control="massRate"
+        useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="1e8"
@@ -70,8 +72,8 @@
           massRate="15"
           injectionStream="{ 1.0, 0.0 }"
           injectionTemperature="353.15"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="MAX_MASS_INJ_TABLE"
         logLevel="1"
         type="injector"
@@ -79,7 +81,8 @@
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="288.71"
-        control="massRate">
+        control="massRate"
+        useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="1e8"
@@ -89,8 +92,8 @@
           constraintScheduleTableName="totalMassTable"
           injectionStream="{ 1.0, 0.0 }"
           injectionTemperature="353.15"/>
-      </WellControls>
-    </CompositionalMultiphaseWell>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
 
   <ElementRegions>

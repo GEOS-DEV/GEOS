@@ -174,7 +174,16 @@ public:
    *  @param time_n the current time
    */
   virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) = 0;
-
+  /**
+   * @brief function to set the next time step size
+   * @param[in] currentTime the current time
+   * @param[in] currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  real64 setNextDt( real64 const & currentTime,
+                    real64 const & currentDt,
+                    WellElementSubRegion & subRegion );
   // Bring the base class implicitStepSetup into scope to avoid hiding the overloaded virtual function
 
 

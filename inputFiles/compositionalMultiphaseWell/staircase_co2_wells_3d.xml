@@ -25,17 +25,18 @@
       maxCompFractionChange="0.2"
       useMass="1"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }"
-      maxCompFractionChange="0.2"
       useMass="1">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="wellControls1"
         logLevel="1"
         type="producer"
-        control="phaseVolRate">
+        control="phaseVolRate"
+        maxCompFractionChange="0.2"
+        useMass="1">
         <ProductionPhaseVolumeRateConstraint
           name="maxwaterprod"
           phaseName="water"
@@ -44,12 +45,14 @@
           name="minbhp"
           targetBHP="1e6"
           referenceElevation="12"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls2"
         logLevel="1"
         type="injector"
-        control="totalVolRate">
+        control="totalVolRate"
+        maxCompFractionChange="0.2"
+        useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="2e7"
@@ -59,8 +62,8 @@
           constraintScheduleTableName="totalRateTable"
           injectionStream="{ 0.995, 0.005 }"
           injectionTemperature="368.15"/>
-      </WellControls>
-    </CompositionalMultiphaseWell>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
 
   <Mesh>

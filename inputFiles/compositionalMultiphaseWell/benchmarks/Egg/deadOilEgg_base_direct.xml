@@ -33,16 +33,17 @@
       logLevel="1"
       useMass="1"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       targetRegions="{ wellRegion1, wellRegion2, wellRegion3, wellRegion4, wellRegion5, wellRegion6, wellRegion7, wellRegion8, wellRegion9, wellRegion10, wellRegion11, wellRegion12 }"
-      maxCompFractionChange="0.5"
       logLevel="1"
       useMass="1">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="wellControls1"
         type="producer"
-        control="BHP">
+        control="BHP"
+        maxCompFractionChange="0.5"
+        useMass="1">
         <ProductionPhaseVolumeRateConstraint
           name="maxoilprod"
           phaseName="oil"
@@ -51,11 +52,13 @@
           name="minbhp"
           targetBHP="3.9e7"
           referenceElevation="28"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls2"
         type="producer"
-        control="BHP">
+        control="BHP"
+        maxCompFractionChange="0.5"
+        useMass="1">
         <ProductionPhaseVolumeRateConstraint
           name="maxoilprod"
           phaseName="oil"
@@ -64,11 +67,13 @@
           name="minbhp"
           targetBHP="3.9e7"
           referenceElevation="28"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls3"
         type="producer"
-        control="BHP">
+        control="BHP"
+        maxCompFractionChange="0.5"
+        useMass="1">
         <ProductionPhaseVolumeRateConstraint
           name="maxoilprod"
           phaseName="oil"
@@ -77,11 +82,13 @@
           name="minbhp"
           targetBHP="3.9e7"
           referenceElevation="28"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls4"
         type="producer"
-        control="BHP">
+        control="BHP"
+        maxCompFractionChange="0.5"
+        useMass="1">
         <ProductionPhaseVolumeRateConstraint
           name="maxoilprod"
           phaseName="oil"
@@ -90,11 +97,13 @@
           name="minbhp"
           targetBHP="3.9e7"
           referenceElevation="28"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls5"
         type="injector"
-        control="totalVolRate">
+        control="totalVolRate"
+        maxCompFractionChange="0.5"
+        useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"
@@ -104,11 +113,13 @@
           volumeRate="8e-3"
           injectionStream="{ 0.0, 1.0 }"
           injectionTemperature="297.15"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls6"
         type="injector"
-        control="totalVolRate">
+        control="totalVolRate"
+        maxCompFractionChange="0.5"
+        useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"
@@ -118,11 +129,13 @@
           volumeRate="8e-3"
           injectionStream="{ 0.0, 1.0 }"
           injectionTemperature="297.15"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls7"
         type="injector"
-        control="totalVolRate">
+        control="totalVolRate"
+        maxCompFractionChange="0.5"
+        useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"
@@ -132,11 +145,13 @@
           volumeRate="8e-3"
           injectionStream="{ 0.0, 1.0 }"
           injectionTemperature="297.15"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls8"
         type="injector"
-        control="totalVolRate">
+        control="totalVolRate"
+        maxCompFractionChange="0.5"
+        useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"
@@ -146,11 +161,13 @@
           volumeRate="8e-3"
           injectionStream="{ 0.0, 1.0 }"
           injectionTemperature="297.15"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls9"
         type="injector"
-        control="totalVolRate">
+        control="totalVolRate"
+        maxCompFractionChange="0.5"
+        useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"
@@ -160,11 +177,13 @@
           volumeRate="8e-3"
           injectionStream="{ 0.0, 1.0 }"
           injectionTemperature="297.15"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls10"
         type="injector"
-        control="totalVolRate">
+        control="totalVolRate"
+        maxCompFractionChange="0.5"
+        useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"
@@ -174,11 +193,13 @@
           volumeRate="8e-3"
           injectionStream="{ 0.0, 1.0 }"
           injectionTemperature="297.15"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls11"
         type="injector"
-        control="totalVolRate">
+        control="totalVolRate"
+        maxCompFractionChange="0.5"
+        useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"
@@ -188,11 +209,13 @@
           volumeRate="8e-3"
           injectionStream="{ 0.0, 1.0 }"
           injectionTemperature="297.15"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls12"
         type="injector"
-        control="totalVolRate">
+        control="totalVolRate"
+        maxCompFractionChange="0.5"
+        useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="9e7"
@@ -202,8 +225,8 @@
           volumeRate="8e-3"
           injectionStream="{ 0.0, 1.0 }"
           injectionTemperature="297.15"/>
-      </WellControls>
-    </CompositionalMultiphaseWell>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
 
   <Events

@@ -51,11 +51,11 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Region, Fault }"/>
 
-    <SinglePhaseWell
+    <WellManager
       name="singlePhaseWellSolver"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }">
-      <WellControls
+      <SinglePhaseWell
         name="wellControls1"
         logLevel="2"
         type="producer"
@@ -67,8 +67,8 @@
         <ProductionVolumeRateConstraint
           name="maxvolrateprod"
           volumeRate="1e10"/>
-      </WellControls>
-      <WellControls
+      </SinglePhaseWell>
+      <SinglePhaseWell
         name="wellControls2"
         logLevel="2"
         type="injector"
@@ -80,8 +80,8 @@
         <InjectionVolumeRateConstraint
           name="maxvolrateinj"
           volumeRate="1e10"/>
-      </WellControls>
-    </SinglePhaseWell>
+      </SinglePhaseWell>
+    </WellManager>
   </Solvers>
 
   <Tasks>

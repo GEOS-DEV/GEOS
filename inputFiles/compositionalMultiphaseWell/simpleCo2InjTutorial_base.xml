@@ -29,20 +29,21 @@
       logLevel="1"
       useMass="1"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       targetRegions="{ wellRegion }"
-      maxCompFractionChange="0.2"
       logLevel="1"
       useMass="1">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="wellControls"
         type="injector"
         enableCrossflow="0"
         useSurfaceConditions="1"
         surfacePressure="101325"
         surfaceTemperature="288.71"
-        control="totalVolRate">
+        control="totalVolRate"
+        maxCompFractionChange="0.2"
+        useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="5e7"
@@ -52,8 +53,8 @@
           volumeRate="1.5"
           injectionStream="{ 1, 0 }"
           injectionTemperature="368.15"/>
-      </WellControls>
-    </CompositionalMultiphaseWell>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
 
   <ElementRegions>

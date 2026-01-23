@@ -20,11 +20,11 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Channel }"/>
 
-    <SinglePhaseWell
+    <WellManager
       name="SinglePhaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }">
-      <WellControls
+      <SinglePhaseWell
         name="wellControls1"
         type="producer"
         control="totalVolRate">
@@ -35,8 +35,8 @@
         <ProductionVolumeRateConstraint
           name="maxvolrateprod"
           volumeRate="1e-7"/>
-      </WellControls>
-      <WellControls
+      </SinglePhaseWell>
+      <SinglePhaseWell
         name="wellControls2"
         type="injector"
         control="totalVolRate">
@@ -47,8 +47,8 @@
         <InjectionVolumeRateConstraint
           name="maxvolrateinj"
           constraintScheduleTableName="rateTable"/>
-      </WellControls>
-    </SinglePhaseWell>
+      </SinglePhaseWell>
+    </WellManager>
   </Solvers>
 
   <Mesh>

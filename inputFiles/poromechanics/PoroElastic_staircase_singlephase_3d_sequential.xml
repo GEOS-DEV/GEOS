@@ -50,11 +50,11 @@
       targetRegions="{ channel, barrier }"
       temperature="300"/>
 
-    <SinglePhaseWell
+    <WellManager
       name="singlePhaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }">
-      <WellControls
+      <SinglePhaseWell
         name="wellControls1"
         logLevel="1"
         type="producer"
@@ -66,8 +66,8 @@
         <ProductionVolumeRateConstraint
           name="maxvolrateprod"
           constraintScheduleTableName="producerTotalRateTable"/>
-      </WellControls>
-      <WellControls
+      </SinglePhaseWell>
+      <SinglePhaseWell
         name="wellControls2"
         logLevel="1"
         type="injector"
@@ -81,8 +81,8 @@
         <InjectionVolumeRateConstraint
           name="maxvolrateinj"
           constraintScheduleTableName="injectorTotalRateTable"/>
-      </WellControls>
-    </SinglePhaseWell>
+      </SinglePhaseWell>
+    </WellManager>
   </Solvers>
 
   <Events

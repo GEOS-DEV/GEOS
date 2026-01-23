@@ -51,7 +51,7 @@ class WellManager : public PhysicsSolverBase
 public:
 
   /// String used to form the solverName used to register single-physics solvers in CoupledSolver
-  static string coupledSolverAttributePrefix() { return "wellManager"; }
+  static string coupledSolverAttributePrefix() { return "well"; }
 
   /**
    * @brief main constructor for Group Objects
@@ -141,7 +141,7 @@ public:
     static constexpr char const * useMassFlagString() {return "useMass"; }
     /// @return string for the nextDt targetRegions wrapper
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
-
+    static constexpr char const * timeStepFromTablesFlagString() { return "timeStepFromTables"; }
     static constexpr char const * useTotalMassEquationString() { return "useTotalMassEquation"; }
     static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseBase::viewKeyStruct::allowLocalCompDensChoppingString(); }
 
@@ -232,6 +232,17 @@ public:
                              integer const coupledIterationNumber,
                              DomainPartition & domain );
   /* PhysicsSolverBase interfaces */
+
+  /**
+   * @brief function to set the next time step size
+   * @param[in] currentTime the current time
+   * @param[in] currentDt the current time step size
+   * @param[in] domain the domain object
+   * @return the prescribed time step size
+   */
+  virtual real64 setNextDt( real64 const & currentTime,
+                            real64 const & currentDt,
+                            DomainPartition & domain ) override;
 
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
@@ -543,6 +554,9 @@ private:
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
+
+  // flag to enable time step selection base on rates/bhp tables coordinates
+  integer m_timeStepFromTables;
 };
 
 }

@@ -151,7 +151,7 @@ void CompositionalMultiphaseWell::setConstitutiveNames( ElementSubRegionBase & s
 }
 void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
 {
-  // WellControls::registerDataOnMesh( meshBodies ); replaced by following 2 lines
+  WellControls::registerWellDataOnMesh( subRegion );
   setConstitutiveNames ( subRegion );
 
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -560,7 +560,6 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
     currentMassRate = currentTotalRate;
     // Step 1.1: compute the inverse of the total density and derivatives
     massDensity = totalDens[iwelemRef][0];
-    std::cout << "massDensity: " << massDensity << std::endl;
     real64 const totalDensInv = 1.0 / totalDens[iwelemRef][0];
 
     // Step 1.2: divide the total mass/molar rate by the total density to get the total volumetric rate
@@ -835,7 +834,6 @@ void CompositionalMultiphaseWell::updateSeparator( ElementRegionManager const & 
       }
       else
       {
-        std::cout << "flashPressure: " << flashPressure << ", flashTemperature: " << flashTemperature << " " << compFrac[iwelemRef] << std::endl;
         fluidSeparatorWrapper.update( iwelemRef, 0, flashPressure, flashTemperature, compFrac[iwelemRef] );
       }
     } );
@@ -911,9 +909,9 @@ real64 CompositionalMultiphaseWell::updateSubRegionState( ElementRegionManager c
     updateGlobalComponentFraction( subRegion );
 
     // update densities, phase fractions, phase volume fractions
-    std::cout << "Updating fluid model..." << std::endl;
+
     updateFluidModel( subRegion );   //  Calculate fluid properties
-    std::cout << "Updating separator..." << std::endl;
+
     updateSeparator( elemManager, subRegion );   //  Calculate fluid properties at control conditions
 
     updateVolRatesForConstraint( subRegion );    // remove tjb ??
@@ -1456,13 +1454,13 @@ CompositionalMultiphaseWell::calculateWellResidualNorm( real64 const & time_n,
   localResidualNormalizer.resize( numNorm );
 
 
-  globalIndex const rankOffset = dofManager.rankOffset();
+  //globalIndex const rankOffset = dofManager.rankOffset();
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
 
 
-  string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
+  //string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+  //MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
   if( isWellOpen( ) )
   {
@@ -1793,7 +1791,7 @@ void CompositionalMultiphaseWell::computeWellPerforationRates( real64 const & ti
   GEOS_MARK_FUNCTION;
   GEOS_UNUSED_VAR( time_n );
 
-  CompositionalMultiphaseBase const & flowSolver = getParent().getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+  //CompositionalMultiphaseBase const & flowSolver = getParent().getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
 
   PerforationData * const perforationData = subRegion.getPerforationData();
 
@@ -1903,7 +1901,7 @@ CompositionalMultiphaseWell::applyWellSystemSolution( DofManager const & dofMana
     chopNegativeDensities( subRegion );
   }
 #endif
-
+  std::cout << getTargetRegionNames()[0] << " Well after applyWellSystemSolution: " << std::endl;
   // synchronize
   FieldIdentifiers fieldsToBeSync;
   if( isThermal() )

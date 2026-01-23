@@ -49,13 +49,12 @@
       targetRegions="{ Region, Fault }"
       temperature="368.15"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="wellSolver"
       targetRegions="{ wellInjector }"
-      writeCSV="1"
       useMass="1"
       logLevel="2">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="injectorControls"
         type="injector"
         useSurfaceConditions="1"
@@ -63,7 +62,9 @@
         surfaceTemperature="367.15"
         control="totalVolRate"
         enableCrossflow="0"
-        logLevel="2">
+        logLevel="2"
+        useMass="1"
+        writeCSV="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="10e9"
@@ -73,8 +74,8 @@
           volumeRate="6673.48812509"
           injectionStream="{ 1.00, 0.00 }"
           injectionTemperature="368.15"/>
-      </WellControls>
-    </CompositionalMultiphaseWell>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
 
   <Mesh>

@@ -31,12 +31,12 @@
       maxCompFractionChange="0.5"
       targetRegions="{ region }"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       targetRegions="{ injwell }"
       logLevel="1"
       useMass="1">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="WC_CO2_INJ"
         logLevel="2"
         type="injector"
@@ -44,7 +44,8 @@
         useSurfaceConditions="1"
         surfacePressure="1.45e7"
         surfaceTemperature="300.15"
-        control="massRate">
+        control="massRate"
+        useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           constraintScheduleTableName="totalBHPTable"
@@ -54,8 +55,8 @@
           constraintScheduleTableName="totalMassRateTable"
           injectionStream="{ 1.0, 0.000 }"
           injectionTemperature="300.15"/>
-      </WellControls>
-    </CompositionalMultiphaseWell>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
 
   <Mesh>

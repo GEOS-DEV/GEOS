@@ -24,11 +24,11 @@
       targetRegions="{ reservoir }"
       temperature="297.15"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       logLevel="4"
       targetRegions="{ wellRegion1 }">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="wellControls1"
         type="producer"
         control="BHP">
@@ -40,8 +40,8 @@
           name="minbhp"
           targetBHP="4e6"
           referenceElevation="0.5"/>
-      </WellControls>
-    </CompositionalMultiphaseWell>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
 
   <Tasks>

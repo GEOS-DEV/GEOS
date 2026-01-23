@@ -21,11 +21,11 @@
       discretization="singlePhaseHybridMimetic"
       targetRegions="{ Channel }"/>
 
-    <SinglePhaseWell
+    <WellManager
       name="SinglePhaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }">
-      <WellControls
+      <SinglePhaseWell
         name="wellControls1"
         type="producer"
         control="BHP">
@@ -36,8 +36,8 @@
         <ProductionVolumeRateConstraint
           name="maxvolrateprod"
           volumeRate="1e-4"/>
-      </WellControls>
-      <WellControls
+      </SinglePhaseWell>
+      <SinglePhaseWell
         name="wellControls2"
         type="injector"
         useSurfaceConditions="1"
@@ -50,8 +50,8 @@
         <InjectionVolumeRateConstraint
           name="maxvolrateinj"
           volumeRate="1e-6"/>
-      </WellControls>
-    </SinglePhaseWell>
+      </SinglePhaseWell>
+    </WellManager>
   </Solvers>
 
   <Mesh>

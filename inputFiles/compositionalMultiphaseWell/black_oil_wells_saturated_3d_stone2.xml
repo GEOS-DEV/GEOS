@@ -27,17 +27,18 @@
       temperature="297.15"
       useMass="1"/>
 
-    <CompositionalMultiphaseWell
+    <WellManager
       name="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }"
-      maxRelativePressureChange="0.1"
-      maxCompFractionChange="0.1"
       useMass="1">
-      <WellControls
+      <CompositionalMultiphaseWell
         name="wellControls1"
         type="producer"
-        control="BHP">
+        control="BHP"
+        maxRelativePressureChange="0.1"
+        maxCompFractionChange="0.1"
+        useMass="1">
         <ProductionPhaseVolumeRateConstraint
           name="maxoilprod"
           phaseName="oil"
@@ -46,11 +47,14 @@
           name="minbhp"
           targetBHP="1.2e+7"
           referenceElevation="9"/>
-      </WellControls>
-      <WellControls
+      </CompositionalMultiphaseWell>
+      <CompositionalMultiphaseWell
         name="wellControls2"
         type="injector"
-        control="BHP">
+        control="BHP"
+        maxRelativePressureChange="0.1"
+        maxCompFractionChange="0.1"
+        useMass="1">
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="2e+7"
@@ -60,8 +64,8 @@
           volumeRate="5e-2"
           injectionStream="{ 0.000, 0.000, 1. }"
           injectionTemperature="297.15"/>
-      </WellControls>
-    </CompositionalMultiphaseWell>
+      </CompositionalMultiphaseWell>
+    </WellManager>
   </Solvers>
 
   <Mesh>

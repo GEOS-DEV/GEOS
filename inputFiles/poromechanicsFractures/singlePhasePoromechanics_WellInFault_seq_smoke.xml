@@ -2,7 +2,8 @@
 
 <Problem>
   <Included>
-    <File name="./singlePhasePoromechanics_WellInFault_base.xml"/>
+    <File
+      name="./singlePhasePoromechanics_WellInFault_base.xml"/>
   </Included>
 
   <Solvers
@@ -22,7 +23,7 @@
         newtonMaxIter="20"/>
       <LinearSolverParameters
         solverType="direct"
-        directParallel="1"/> 
+        directParallel="1"/>
     </SinglePhaseReservoirPoromechanicsConformingFractures>
 
     <SolidMechanicsLagrangeContact
@@ -52,12 +53,12 @@
       discretization="singlePhaseTPFA"
       targetRegions="{ Region, Fault }"/>
 
-    <SinglePhaseWell
+    <WellManager
       name="singlePhaseWellSolver"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }"
       writeCSV="1">
-      <WellControls
+      <SinglePhaseWell
         name="wellControls1"
         control="BHP"
         logLevel="2"
@@ -69,8 +70,8 @@
         <ProductionVolumeRateConstraint
           name="maxvolrateprod"
           volumeRate="1e10"/>
-      </WellControls>
-      <WellControls
+      </SinglePhaseWell>
+      <SinglePhaseWell
         name="wellControls2"
         control="BHP"
         logLevel="2"
@@ -82,8 +83,8 @@
         <InjectionVolumeRateConstraint
           name="maxvolrateinj"
           volumeRate="1e10"/>
-      </WellControls>
-    </SinglePhaseWell>
+      </SinglePhaseWell>
+    </WellManager>
   </Solvers>
 
   <Tasks>
