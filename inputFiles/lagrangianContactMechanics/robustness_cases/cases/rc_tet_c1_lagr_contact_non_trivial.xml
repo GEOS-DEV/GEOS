@@ -4,12 +4,10 @@
     <VTKMesh name="mesh1" file="../meshes/fractured_mesh_tet_non_trivial.vtu" nodesetNames="{ ruptureState }"/>
   </Mesh>
   <Geometry>
-
     <!-- X faces -->
     <Box name="xnegFace"
          xMin="{ -0.09827148, -0.10466309, -8000.7 }"
          xMax="{  0.10172852,  5738.97,    -1472.18 }"/>
-
     <Box name="xposFace"
          xMin="{  4388.0,     -0.10466309, -8000.7 }"
          xMax="{  4388.2,      5738.97,    -1472.18 }"/>
@@ -18,7 +16,6 @@
     <Box name="ynegFace"
          xMin="{ -0.09827148, -0.10466309, -8000.7 }"
          xMax="{  4388.2,      0.09533691, -1472.18 }"/>
-
     <Box name="yposFace"
          xMin="{ -0.09827148,  5738.77,    -8000.7 }"
          xMax="{  4388.2,      5738.97,    -1472.18 }"/>
@@ -26,8 +23,7 @@
     <!-- Z faces -->
     <Box name="znegFace"
          xMin="{ -0.09827148, -0.10466309, -8000.7 }"
-         xMax="{  4388.2,      5738.97,    -8000.5 }"/>
-
+         xMax="{  4388.2,      5738.97,    -8000.5 }"/> 
     <Box name="zposFace"
          xMin="{ -0.09827148, -0.10466309, -1472.38 }"
          xMax="{  4388.2,      5738.97,    -1472.18 }"/>
@@ -42,7 +38,7 @@
       <NonlinearSolverParameters newtonTol="1.0e-2" newtonMaxIter="20" logLevel="1"/>
       <LinearSolverParameters solverType="gmres" preconditionerType="amg" krylovTol="1.0e-7" logLevel="1"/>
     </SolidMechanicsAugmentedLagrangianContact>
-    <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="1.0e60"/>
+    <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="10e9"/>
   </Solvers>
   <NumericalMethods>
     <FiniteElements>
@@ -68,6 +64,9 @@
     <FieldSpecification name="zneg_disp" component="2" setNames="{ znegFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="-1.0e-4"/>
     <FieldSpecification name="zpos_disp" component="2" setNames="{ zposFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="1.0e-4"/>
   </FieldSpecifications>
+  <Tasks>
+    <SolidMechanicsAugmentedLagrangianContactInitialization name="ELASTICITY.PRE.INIT.STEP" poromechanicsSolverName="fractureSolver" logLevel="1"/>
+  </Tasks>  
   <Outputs>
     <VTK name="vtkOutput" />
   </Outputs>
