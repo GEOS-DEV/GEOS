@@ -85,6 +85,19 @@ void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::setupSystem( Dom
   }
 }
 
+template<>
+void SinglePhasePoromechanics< SinglePhaseReactiveTransport, SolidMechanicsLagrangianFEM >::setupSystem( DomainPartition & domain,
+                                                                                                         DofManager & dofManager,
+                                                                                                         CRSMatrix< real64, globalIndex > & localMatrix,
+                                                                                                         ParallelVector & rhs,
+                                                                                                         ParallelVector & solution,
+                                                                                                         bool const setSparsity )
+{
+  GEOS_UNUSED_VAR( dofManager, localMatrix, rhs, solution, setSparsity );
+
+  Base::sequentiallySetupSystem( domain );
+}
+
 template< typename FLOW_SOLVER, typename MECHANICS_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER, MECHANICS_SOLVER >::initializePostInitialConditionsPreSubGroups()
 {

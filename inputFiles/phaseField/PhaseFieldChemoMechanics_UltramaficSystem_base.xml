@@ -1,0 +1,201 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Mesh>
+    <InternalWellbore
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      radius="{ 0.1, 0.101, 5.0 }"
+      theta="{ 0, 90 }"
+      zCoords="{ 0, 0.1 }"
+      nr="{ 1, 100 }"
+      nt="{ 50 }"
+      nz="{ 1 }"
+      trajectory="{ { 0.0, 0.0, 0.0 },
+                    { 0.0, 0.0, 0.1 } }"
+      autoSpaceRadialElems="{ 0, 1 }"
+      cellBlockNames="{ cb1, cb2 }"
+      />
+  </Mesh>
+
+  <Geometry>
+    <Cylinder
+      name="source"
+      firstFaceCenter="{ 0.0, 0.0, -0.2 }"
+      secondFaceCenter="{ 0.0, 0.0, 0.2 }"
+      outerRadius="0.102"/>
+    
+    <Cylinder
+      name="sample"
+      firstFaceCenter="{ 0.0, 0.0, -0.2 }"
+      secondFaceCenter="{ 0.0, 0.0, 0.2 }"
+      innerRadius="0.102"
+      outerRadius="5.1"/>
+  </Geometry>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <SinglePhaseReactiveTransportPhaseFieldPoromech
+      name="pfchemoporomechSolve"
+      poromechanicsSolverName="chemomechSolve"
+      damageSolverName="damageSolve"
+      logLevel="1"
+      initialDt="1e-8"
+      targetRegions="{ Rock }">
+      <NonlinearSolverParameters
+        couplingType="Sequential"
+        lineSearchAction="None"/>
+    </SinglePhaseReactiveTransportPhaseFieldPoromech>
+
+    <SinglePhaseReactiveTransportPoromechanics
+      name="chemomechSolve"
+      solidSolverName="lagsolve"
+      flowSolverName="SinglePhaseReactiveFlow"
+      logLevel="1"
+      targetRegions="{ Rock  }">
+      <NonlinearSolverParameters
+        newtonMaxIter="10"
+        newtonTol="1.0e-4"
+        couplingType="Sequential"  
+        lineSearchAction="None"
+        subcycling="1"
+        maxTimeStepCuts="8"
+        maxSubSteps="200"
+        lineSearchMaxCuts="0"/>
+    </SinglePhaseReactiveTransportPoromechanics>
+
+    <SolidMechanicsLagrangianFEM
+      name="lagsolve"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Rock }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        directParallel="1"/>
+    </SolidMechanicsLagrangianFEM> 
+
+    <SinglePhaseReactiveTransport
+      name="SinglePhaseReactiveFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Rock }"
+      isUpdateReactivePorosity="1"
+      logLevel="2">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        maxTimeStepCuts="8"
+        maxSubSteps="200"
+        newtonMaxIter="20"
+        lineSearchAction="None"
+        maxAllowedResidualNorm="1e100"/>
+      <LinearSolverParameters
+        directParallel="1"/>
+    </SinglePhaseReactiveTransport>
+
+    <PhaseFieldDamageFEM
+      name="damageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      fieldName="Damage"
+      localDissipation="Quadratic"
+      irreversibilityFlag="1"
+      damageUpperBound="1.0"
+      logLevel="1"
+      targetRegions="{ Rock }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        newtonTol="1.0e-6"/>
+      <LinearSolverParameters
+        directParallel="1"/>
+    </PhaseFieldDamageFEM>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Rock"
+      cellBlocks="{ cb1, cb2 }"
+      materialList="{ water, reactiveRock, diffusion }"/>
+  </ElementRegions>
+
+  <FieldSpecifications>    
+    <FieldSpecification
+       name="GcRock"
+       initialCondition="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/Rock"
+       fieldName="rockSolid_criticalFractureEnergy"
+       scale="20"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      setNames="{ rpos, tpos  }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      setNames="{ rpos, tneg }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      setNames="{ zneg, zpos  }"/>
+
+    <FieldSpecification
+      name="PorosityRock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="rockPorosity_referencePorosity"
+      scale="0.1"/>
+
+    <FieldSpecification
+      name="initialPressureRock"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Rock"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <SourceFlux
+      name="sourceTerm"
+      setNames="{ source }"
+      objectPath="ElementRegions/Rock"
+      scale="-5.5"/>
+
+    <FieldSpecification
+      name="sinkPressure"
+      setNames="{ rpos }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="1.0e6"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

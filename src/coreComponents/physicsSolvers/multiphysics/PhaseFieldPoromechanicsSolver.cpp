@@ -32,49 +32,48 @@ namespace geos
 using namespace dataRepository;
 using namespace constitutive;
 
-PhaseFieldPoromechanicsSolver::PhaseFieldPoromechanicsSolver( const string & name,
-                                                              Group * const parent ):
+template< typename FLOW_SOLVER >
+PhaseFieldPoromechanicsSolver< FLOW_SOLVER >::PhaseFieldPoromechanicsSolver( const string & name,
+                                                                             Group * const parent ):
   Base( name, parent )
 {}
 
-void PhaseFieldPoromechanicsSolver::resetStateToBeginningOfStep( DomainPartition & domain )
+template< typename FLOW_SOLVER >
+void PhaseFieldPoromechanicsSolver< FLOW_SOLVER >::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   Base::resetStateToBeginningOfStep( domain );
 
   applyDamageOnTractionBC( domain );
 }
 
-void PhaseFieldPoromechanicsSolver::postInputInitialization()
+template< typename FLOW_SOLVER >
+void PhaseFieldPoromechanicsSolver< FLOW_SOLVER >::postInputInitialization()
 {
   Base::postInputInitialization();
   GEOS_WARNING_IF( this->getNonlinearSolverParameters().couplingType() == NonlinearSolverParameters::CouplingType::FullyImplicit,
                    "FullyImplicit coupling not implemented for this solver. A sequential coupling approach will be used." );
-  getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
+  this->getNonlinearSolverParameters().m_couplingType = NonlinearSolverParameters::CouplingType::Sequential;
 }
 
-PhaseFieldPoromechanicsSolver::~PhaseFieldPoromechanicsSolver()
-{
-  // TODO Auto-generated destructor stub
-}
-
-void PhaseFieldPoromechanicsSolver::mapSolutionBetweenSolvers( real64 const & dt, DomainPartition & domain, integer const solverType )
+template< typename FLOW_SOLVER >
+void PhaseFieldPoromechanicsSolver< FLOW_SOLVER >::mapSolutionBetweenSolvers( real64 const & dt, DomainPartition & domain, integer const solverType )
 {
   GEOS_UNUSED_VAR( dt );
 
   if( solverType ==  static_cast< integer >( SolverType::Damage ) )
   {
     GEOS_MARK_FUNCTION;
-    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                  MeshLevel & mesh,
-                                                                  string_array const & regionNames )
+    this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                                 MeshLevel & mesh,
+                                                                                 string_array const & regionNames )
     {
       NodeManager & nodeManager = mesh.getNodeManager();
 
       arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const xNodes = nodeManager.referencePosition();
 
-      string const & damageFieldName = damageSolver()->getFieldName();
+      string const & damageFieldName = this->damageSolver()->getFieldName();
 
-      string const & discretizationName = damageSolver()->getDiscretizationName();
+      string const & discretizationName = this->damageSolver()->getDiscretizationName();
 
       //should get reference to damage field here.
       arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
@@ -114,25 +113,26 @@ void PhaseFieldPoromechanicsSolver::mapSolutionBetweenSolvers( real64 const & dt
       } );
     } );
   }
-  else if( solverType ==  static_cast< integer >( SolverType::Poromechanics ) )
+  else if( solverType == static_cast< integer >( SolverType::Poromechanics ) )
   {
-    poromechancisSolver()->flowSolver()->updatePressureGradient( domain );
+    this->poromechancisSolver()->flowSolver()->updatePressureGradient( domain );
   }
 }
 
-void PhaseFieldPoromechanicsSolver::applyDamageOnTractionBC( DomainPartition & domain )
+template< typename FLOW_SOLVER >
+void PhaseFieldPoromechanicsSolver< FLOW_SOLVER >::applyDamageOnTractionBC( DomainPartition & domain )
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   GEOS_MARK_FUNCTION;
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & )
+  this->template forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                               MeshLevel & mesh,
+                                                                               string_array const & )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     FaceManager const & faceManager = mesh.getFaceManager();
 
-    string const & damageFieldName = damageSolver()->getFieldName();
+    string const & damageFieldName = this->damageSolver()->getFieldName();
 
     // Get an array of nodal damage values
     arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
@@ -178,6 +178,15 @@ void PhaseFieldPoromechanicsSolver::applyDamageOnTractionBC( DomainPartition & d
 
 }
 
-REGISTER_CATALOG_ENTRY( PhysicsSolverBase, PhaseFieldPoromechanicsSolver, string const &, Group * const )
+template class PhaseFieldPoromechanicsSolver<>;
+template class PhaseFieldPoromechanicsSolver< SinglePhaseReactiveTransport >;
+
+namespace
+{
+typedef PhaseFieldPoromechanicsSolver< SinglePhaseReactiveTransport > PhaseFieldReactivePoromechanics;
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase, PhaseFieldReactivePoromechanics, string const &, Group * const )
+typedef PhaseFieldPoromechanicsSolver<> PhaseFieldPoromechanics;
+REGISTER_CATALOG_ENTRY( PhysicsSolverBase, PhaseFieldPoromechanics, string const &, Group * const )
+}
 
 } /* namespace geos */

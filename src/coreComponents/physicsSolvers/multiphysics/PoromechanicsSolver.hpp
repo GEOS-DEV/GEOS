@@ -372,6 +372,11 @@ public:
     solidMechanicsSolver()->setStressInitialization( performStressInitialization );
   }
 
+  virtual void saveSequentialIterationState( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) override
+  {
+    // nothing to save yet
+  }
+
   struct viewKeyStruct : Base::viewKeyStruct
   {
     /// Names of the porous materials
