@@ -138,8 +138,8 @@ void StatsTask::registerDataOnMesh( Group & meshBodies )
     prepareLogTableLayouts( mesh.getName() );
     prepareCsvTableLayouts( mesh.getName() );
   } );
-  if( MpiWrapper::commRank() == 0 )
-    getGroupByPath( "/" ).printDataHierarchy();
+  // if( MpiWrapper::commRank() == 0 )
+  //   getGroupByPath( "/" ).printDataHierarchy();
 }
 
 void StatsTask::prepareFluidMetaData()

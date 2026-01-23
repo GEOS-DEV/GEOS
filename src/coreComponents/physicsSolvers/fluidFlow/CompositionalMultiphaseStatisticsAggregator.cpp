@@ -72,6 +72,7 @@
 #include "CompositionalMultiphaseStatisticsAggregator.hpp"
 
 #include "LvArray/src/math.hpp"
+#include "LvArray/src/system.hpp"
 #include "common/DataTypes.hpp"
 #include "common/format/Format.hpp"
 #include "common/format/StringUtilities.hpp"
@@ -198,7 +199,8 @@ void StatsAggregator::enableRegionStatisticsAggregation()
                            getOwnerName(), regionCount, subRegionCount ),
                  m_ownerDataContext );
 
-  m_isRegionStatsEnabled = true;
+  m_regionStatsState.m_isEnabled = true;
+  m_regionStatsState.m_isDirty = true;
 }
 
 void StatsAggregator::enableCFLStatistics()
@@ -215,7 +217,8 @@ void StatsAggregator::enableCFLStatistics()
     statisticsGroup.registerGroup< CFLStatistics >( ViewKeys::cflStatisticsString() );
   } );
 
-  m_isCFLNumberEnabled = true;
+  m_cflStatsState.m_isEnabled = true;
+  m_cflStatsState.m_isDirty = true;
 }
 
 Group & StatsAggregator::getInstanceStatisticsGroup( MeshLevel & mesh ) const
@@ -291,57 +294,76 @@ void StatsAggregator::forRegionStatistics( CellElementRegion & region,
   } );
 }
 
-bool StatsAggregator::computeRegionsStatistics( real64 const time )
+bool StatsAggregator::isComputed( real64 const timeRequest, RegionStatistics const & stats )
+{
+  real64 const timePrecisionScale = LvArray::math::max( LvArray::math::abs( timeRequest ),
+                                                        LvArray::math::abs( stats.m_time ) );
+  static constexpr real64 timeRelTol = 1.0e-12;
+
+    return
+      !m_regionStatsState.m_isDirty &&
+      LvArray::math::abs( timeRequest - stats.m_time ) < timeRelTol * timePrecisionScale;
+}
+
+bool StatsAggregator::computeRegionsStatistics( real64 const timeRequest )
 {
   GEOS_MARK_FUNCTION;
 
+  GEOS_LOG_RANK_0( GEOS_FMT( "Computing for {} at stack:{}", m_ownerDataContext.toString(), LvArray::system::stackTrace( true ) ));
   // computation of sub region stats
-  forRegionStatistics( [&, time] ( MeshLevel & mesh, RegionStatistics & meshRegionsStats )
+  forRegionStatistics( [&, timeRequest] ( MeshLevel & mesh, RegionStatistics & meshRegionsStats )
   {
     forRegionStatistics( mesh,
                          meshRegionsStats,
-                         [&, time] ( CellElementRegion & region, RegionStatistics & regionStats )
+                         [&, timeRequest] ( CellElementRegion & region, RegionStatistics & regionStats )
     {
       forRegionStatistics( region,
                            regionStats,
-                           [&, time] ( CellElementSubRegion & subRegion, RegionStatistics & subRegionStats )
+                           [&, timeRequest] ( CellElementSubRegion & subRegion, RegionStatistics & subRegionStats )
       {
-        initStats( subRegionStats, time );
+        initStats( subRegionStats, timeRequest );
         computeSubRegionRankStats( subRegion, subRegionStats );
+        GEOS_LOG_RANK_0( GEOS_FMT( "Computed {}: {} Pa / {} Pa / {} Pa", subRegionStats.getPath(), subRegionStats.m_minPressure, subRegionStats.m_averagePressure, subRegionStats.m_maxPressure ));
       } );
     } );
   } );
 
   // aggregation of computations from the sub regions
-  forRegionStatistics( [&, time] ( MeshLevel & mesh, RegionStatistics & meshRegionsStats )
+  forRegionStatistics( [&, timeRequest] ( MeshLevel & mesh, RegionStatistics & meshRegionsStats )
   {
-    initStats( meshRegionsStats, time );
+    initStats( meshRegionsStats, timeRequest );
 
     forRegionStatistics( mesh,
                          meshRegionsStats,
-                         [&, time] ( CellElementRegion & region, RegionStatistics & regionStats )
+                         [&, timeRequest] ( CellElementRegion & region, RegionStatistics & regionStats )
     {
-      initStats( regionStats, time );
+      initStats( regionStats, timeRequest );
 
       forRegionStatistics( region,
                            regionStats,
-                           [&, time] ( CellElementSubRegion &, RegionStatistics & subRegionStats )
+                           [&, timeRequest] ( CellElementSubRegion &, RegionStatistics & subRegionStats )
       {
         aggregateStats( regionStats, subRegionStats );
 
         mpiAggregateStats( subRegionStats );
         postAggregateStats( subRegionStats );
+        GEOS_LOG_RANK_0( GEOS_FMT( "Aggregated {}: {} Pa / {} Pa / {} Pa", subRegionStats.getPath(), subRegionStats.m_minPressure, subRegionStats.m_averagePressure, subRegionStats.m_maxPressure ));
       } );
 
       aggregateStats( meshRegionsStats, regionStats );
 
       mpiAggregateStats( regionStats );
       postAggregateStats( regionStats );
+      GEOS_LOG_RANK_0( GEOS_FMT( "Aggregated {}: {} Pa / {} Pa / {} Pa", regionStats.getPath(), regionStats.m_minPressure, regionStats.m_averagePressure, regionStats.m_maxPressure ));
     } );
 
     mpiAggregateStats( meshRegionsStats );
     postAggregateStats( meshRegionsStats );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Aggregated {}: {} Pa / {} Pa / {} Pa",
+                               meshRegionsStats.getPath(), meshRegionsStats.m_minPressure, meshRegionsStats.m_averagePressure, meshRegionsStats.m_maxPressure ));
   } );
+
+  m_regionStatsState.m_isDirty = false;
 
   return true;
 }
@@ -528,7 +550,7 @@ bool StatsAggregator::computeCFLNumbers( real64 const time,
 
   m_warnings.clear();
 
-  if( !m_isCFLNumberEnabled )
+  if( !m_cflStatsState.m_isEnabled )
   {
     m_warnings.emplace_back( "CFL numbers computation is not enabled." );
     return false;
@@ -544,6 +566,8 @@ bool StatsAggregator::computeCFLNumbers( real64 const time,
   stats->m_time = time;
   stats->m_maxPhaseCFL = maxPhaseCFL;
   stats->m_maxCompCFL = maxCompCFL;
+
+  m_cflStatsState.m_isDirty = false;
 
   return true;
 }

@@ -221,12 +221,19 @@ public:
                             RegionStatisticsFunctor< CellElementSubRegion > const & functor ) const;
 
   /**
+   * @param[in] timeRequest The time for which we want to know if the statistics are computed.
+   * @param[in] stats the statistics data structure we want to know if it has been computed
+   * @return true if the statistics have been computed.
+   */
+  bool isComputed( real64 const timeRequest, RegionStatistics const & stats );
+
+  /**
    * @brief Compute statistics on the mesh discretizations (average field pressure, etc)
    *        Results are reduced on rank 0, and broadcasted over all ranks.
-   * @param[in] time current time
+   * @param[in] timeRequest The time for which we want to compute the statistics.
    * @return false if there was a problem that prevented the statistics to be computed correctly.
    */
-  bool computeRegionsStatistics( real64 const time );
+  bool computeRegionsStatistics( real64 const timeRequest );
 
   /**
    * @brief Compute CFL numbers
@@ -280,6 +287,11 @@ public:
 
 private:
 
+  struct StatsState {
+    bool m_isEnabled = false;
+    bool m_isDirty = false;
+  };
+
   /// @see getOwnerName()
   dataRepository::DataContext const & m_ownerDataContext;
 
@@ -291,9 +303,9 @@ private:
 
   stdVector< string > m_warnings;
 
-  bool m_isRegionStatsEnabled = false;
+  StatsState m_regionStatsState;
 
-  bool m_isCFLNumberEnabled = false;
+  StatsState m_cflStatsState;
 
   integer m_numPhases;
 

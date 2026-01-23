@@ -20,6 +20,7 @@
 #ifndef GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_WELLS_COMPOSITIONALMULTIPHASEWELL_HPP_
 
+#include "common/DataTypes.hpp"
 #include "constitutive/fluid/multifluid/Layouts.hpp"
 #include "constitutive/relativePermeability/Layouts.hpp"
 #include "mesh/MeshLevel.hpp"
@@ -149,7 +150,7 @@ public:
    * @param elemManager the well region manager containing the well
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void updateVolRatesForConstraint( MeshLevel & mesh, WellElementSubRegion const & subRegion );
+  void updateVolRatesForConstraint( WellElementSubRegion const & subRegion );
 
   /**
    * @brief Recompute the current BHP pressure
@@ -191,7 +192,7 @@ public:
    */
   virtual void updateState( DomainPartition & domain ) override;
 
-  virtual real64 updateSubRegionState( MeshLevel & meshLevel, WellElementSubRegion & subRegion ) override;
+  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) override;
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
@@ -366,6 +367,12 @@ protected:
 
 private:
 
+  struct FlashConditions
+  {
+    real64 pressure;
+    real64 temperature;
+  };
+
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
@@ -374,7 +381,12 @@ private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
+  void precomputeFlashConditions( real64 time_n,
+                                  Group & meshBodies,
+                                  MeshBody & meshBody,
+                                  WellElementSubRegion const & subRegion );
 
+  FlashConditions getFlashConditions( WellElementSubRegion const & subRegion );
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;

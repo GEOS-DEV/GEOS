@@ -253,7 +253,7 @@ public:
    * @param elemManager the elemManager containing the well
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
-  virtual real64 updateSubRegionState( MeshLevel & meshLevel, WellElementSubRegion & subRegion ) = 0;
+  virtual real64 updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
 
   /**
    * @brief Recompute the perforation rates for all the wells

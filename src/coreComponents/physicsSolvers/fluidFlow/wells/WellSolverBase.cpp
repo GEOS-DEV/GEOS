@@ -313,7 +313,7 @@ void WellSolverBase::updateState( DomainPartition & domain )
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 WellElementSubRegion & subRegion )
-    { updateSubRegionState( mesh, subRegion ); } );
+    { updateSubRegionState( subRegion ); } );
   } );
 }
 
