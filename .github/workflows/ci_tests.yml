@@ -384,21 +384,6 @@ jobs:
             DOCKER_RUN_ARGS: "--cpus=8 --memory=128g --runtime=nvidia -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
             HOST_CONFIG: /spack-generated.cmake
 
-          - name: Pangea 3 CUDA (AlmaLinux 8.8, gcc 9.4.0, open-mpi 4.1.2, cuda 11.5.0, openblas 0.3.10)
-            BUILD_AND_TEST_CLI_ARGS: "--build-exe-only --no-install-schema"
-            CMAKE_BUILD_TYPE: Release
-            BUILD_GENERATOR: "--makefile"
-            DOCKER_REPOSITORY: geosx/pangea3-almalinux8-gcc9.4-openmpi4.1.2-cuda11.5.0-openblas0.3.18
-            ENABLE_HYPRE_DEVICE: CUDA
-            ENABLE_HYPRE: ON
-            ENABLE_TRILINOS: OFF
-            GEOS_ENABLE_BOUNDS_CHECK: OFF
-            HOST_ARCH: ppc64le
-            RUNS_ON: streak2
-            NPROC: 8
-            DOCKER_RUN_ARGS: "--cpus=8 --memory=128g -v /etc/pki/tls/certs/ca-bundle.crt:/etc/pki/tls/certs/ca-bundle.crt:ro -v /etc/pki/tls/certs/ca-bundle.crt:/certs/ca-bundle.crt:ro"
-            HOST_CONFIG: /spack-generated-wave-solver-only.cmake
-
           #- name: Sherlock GPU (centos 7.9.2009, gcc 10.1.0, open-mpi 4.1.2, openblas 0.3.10, cuda 12.4.0,)
           #  BUILD_AND_TEST_CLI_ARGS: "--no-run-unit-tests --no-install-schema"
           #  BUILD_GENERATOR: "--ninja"
@@ -431,7 +416,6 @@ jobs:
       ENABLE_TRILINOS: ${{ matrix.ENABLE_TRILINOS }}
       GEOS_ENABLE_BOUNDS_CHECK: ${{ matrix.GEOS_ENABLE_BOUNDS_CHECK }}
       GCP_BUCKET: ${{ matrix.GCP_BUCKET }}
-      HOST_ARCH: ${{ matrix.HOST_ARCH }}
       HOST_CONFIG: ${{ matrix.HOST_CONFIG }}
       NPROC: ${{ matrix.NPROC }}
       RUNS_ON: ${{ matrix.RUNS_ON }}
