@@ -13,9 +13,6 @@ on:
         required: false
         type: string
         default: build
-      DOCKER_CERTS_UPDATE_COMMAND:
-        required: false
-        type: string
       CMAKE_BUILD_TYPE:
         required: true
         type: string
@@ -23,10 +20,6 @@ on:
         required: false
         type: boolean
         default: false
-      DOCKER_CERTS_DIR:
-        required: false
-        type: string
-        default: ''
       DOCKER_IMAGE_TAG:
         required: true
         type: string
@@ -140,16 +133,6 @@ jobs:
         # and expended as CLI arguments for the docker and scripts calls.
         docker_args=()
         script_args=()
-
-        if [[ -n "${{ inputs.DOCKER_CERTS_DIR }}" ]]; then
-          DOCKER_CERTS_DIR=${{ inputs.DOCKER_CERTS_DIR }}
-          docker_args+=(-e DOCKER_CERTS_DIR=${DOCKER_CERTS_DIR})
-        fi
-
-        if [[ -n "${{ inputs.DOCKER_CERTS_UPDATE_COMMAND }}" ]]; then
-          DOCKER_CERTS_UPDATE_COMMAND=${{ inputs.DOCKER_CERTS_UPDATE_COMMAND }}
-          docker_args+=(-e DOCKER_CERTS_UPDATE_COMMAND=${DOCKER_CERTS_UPDATE_COMMAND})
-        fi
 
         if [[ -n "${{ inputs.NPROC }}" ]]; then
           NPROC=${{ inputs.NPROC }}
