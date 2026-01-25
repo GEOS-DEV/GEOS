@@ -41,8 +41,10 @@
 #include "solid/CompressibleSolid.hpp"
 #include "solid/ProppantSolid.hpp"
 #include "solid/CeramicDamage.hpp"
+#include "solid/ReactiveSolid.hpp"
 #include "solid/porosity/PressurePorosity.hpp"
 #include "solid/porosity/ProppantPorosity.hpp"
+#include "solid/porosity/ReactivePorosity.hpp"
 #include "permeability/ConstantPermeability.hpp"
 #include "permeability/CarmanKozenyPermeability.hpp"
 #include "permeability/ExponentialDecayPermeability.hpp"
@@ -396,6 +398,34 @@ struct ConstitutivePassThru< CompressibleSolidBase >
 };
 
 /**
+ * Specialization for the ReactiveSolid models.
+ */
+template<>
+struct ConstitutivePassThru< ReactiveSolidBase >
+{
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< ReactiveSolid< ReactivePorosity, ConstantPermeability >,
+                                 ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability >,
+                                 ReactiveSolid< ReactivePorosity, PressurePermeability >
+                                 >::execute( constitutiveRelation,
+                                             std::forward< LAMBDA >( lambda ) );
+  }
+
+  template< typename LAMBDA >
+  static void execute( ConstitutiveBase const & constitutiveRelation, LAMBDA && lambda )
+  {
+    ConstitutivePassThruHandler< ReactiveSolid< ReactivePorosity, ConstantPermeability >,
+                                 ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability >,
+                                 ReactiveSolid< ReactivePorosity, PressurePermeability >
+                                 >::execute( constitutiveRelation,
+                                             std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+
+/**
  * Specialization for the ProppantModel.
  */
 template<>
@@ -460,8 +490,11 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ElasticIsotropic, PressurePermeability >,
                                  PorousDamageSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousDamageSolid< DamageVolDev< ElasticIsotropic > >,
-                                 PorousDamageSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
-                                                                                             std::forward< LAMBDA >( lambda ) );
+                                 PorousDamageSolid< Damage< ElasticIsotropic > >,
+                                 ReactiveSolid< ReactivePorosity, ConstantPermeability >,
+                                 ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability >,
+                                 ReactiveSolid< ReactivePorosity, PressurePermeability > >::execute( constitutiveRelation,
+                                                                                                     std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename LAMBDA >
@@ -499,8 +532,11 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ElasticIsotropic, PressurePermeability >,
                                  PorousDamageSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousDamageSolid< DamageVolDev< ElasticIsotropic > >,
-                                 PorousDamageSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
-                                                                                             std::forward< LAMBDA >( lambda ) );
+                                 PorousDamageSolid< Damage< ElasticIsotropic > >,
+                                 ReactiveSolid< ReactivePorosity, ConstantPermeability >,
+                                 ReactiveSolid< ReactivePorosity, CarmanKozenyPermeability >,
+                                 ReactiveSolid< ReactivePorosity, PressurePermeability > >::execute( constitutiveRelation,
+                                                                                                     std::forward< LAMBDA >( lambda ) );
   }
 };
 
