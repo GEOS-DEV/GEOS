@@ -54,7 +54,7 @@ on:
       USE_SCCACHE:
         required: false
         type: boolean
-        default: true
+        default: false
       REQUIRED_LABEL:
         required: false
         type: string
