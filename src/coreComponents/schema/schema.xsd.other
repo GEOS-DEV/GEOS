@@ -563,7 +563,10 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="AcousticElasticSEM" type="AcousticElasticSEMType" />
 			<xsd:element name="AcousticFirstOrderSEM" type="AcousticFirstOrderSEMType" />
 			<xsd:element name="AcousticSEM" type="AcousticSEMType" />
-			<xsd:element name="AcousticVTISEM" type="AcousticVTISEMType" />
+			<xsd:element name="AcousticTTIFletcherSEM" type="AcousticTTIFletcherSEMType" />
+			<xsd:element name="AcousticTTIZhangSEM" type="AcousticTTIZhangSEMType" />
+			<xsd:element name="AcousticVTIFletcherSEM" type="AcousticVTIFletcherSEMType" />
+			<xsd:element name="AcousticVTIZhangSEM" type="AcousticVTIZhangSEMType" />
 			<xsd:element name="CompositionalMultiphaseFVM" type="CompositionalMultiphaseFVMType" />
 			<xsd:element name="CompositionalMultiphaseHybridFVM" type="CompositionalMultiphaseHybridFVMType" />
 			<xsd:element name="CompositionalMultiphaseReservoir" type="CompositionalMultiphaseReservoirType" />
@@ -764,7 +767,130 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--usePML => Flag to apply PML-->
 		<xsd:attribute name="usePML" type="integer" />
 	</xsd:complexType>
-	<xsd:complexType name="AcousticVTISEMType">
+	<xsd:complexType name="AcousticTTIFletcherSEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--indexSeismoTrace => Count for output pressure at receivers-->
+		<xsd:attribute name="indexSeismoTrace" type="integer" />
+		<!--linearDASVectorX => X component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorX" type="real32_array" />
+		<!--linearDASVectorY => Y component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorY" type="real32_array" />
+		<!--linearDASVectorZ => Z component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorZ" type="real32_array" />
+		<!--numTimestepsSinceLastDtCut => (no description available)-->
+		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
+		<!--pressureNp1AtReceivers => Pressure value at each receiver for each timestep-->
+		<xsd:attribute name="pressureNp1AtReceivers" type="real32_array2d" />
+		<!--receiverConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<xsd:attribute name="receiverConstants" type="real64_array2d" />
+		<!--receiverElem => Element containing the receivers-->
+		<xsd:attribute name="receiverElem" type="integer_array" />
+		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
+		<xsd:attribute name="receiverIsLocal" type="integer_array" />
+		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
+		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
+		<!--receiverRegion => Region containing the receivers-->
+		<xsd:attribute name="receiverRegion" type="integer_array" />
+		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds-->
+		<xsd:attribute name="sourceConstants" type="real64_array2d" />
+		<!--sourceIsAccessible => Flag that indicates whether the source is local to this MPI rank-->
+		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
+		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
+		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
+		<!--sourceValue => Array which contains the value of the Ricker wavelets at each time-steps-->
+		<xsd:attribute name="sourceValue" type="real32_array2d" />
+		<!--timeStep => TimeStep computed with the power iteration method (if we don't want to compute it, it is initialized with the XML value-->
+		<xsd:attribute name="timeStep" type="real64" />
+		<!--usePML => Flag to apply PML-->
+		<xsd:attribute name="usePML" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="AcousticTTIZhangSEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--indexSeismoTrace => Count for output pressure at receivers-->
+		<xsd:attribute name="indexSeismoTrace" type="integer" />
+		<!--linearDASVectorX => X component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorX" type="real32_array" />
+		<!--linearDASVectorY => Y component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorY" type="real32_array" />
+		<!--linearDASVectorZ => Z component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorZ" type="real32_array" />
+		<!--numTimestepsSinceLastDtCut => (no description available)-->
+		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
+		<!--pressureNp1AtReceivers => Pressure value at each receiver for each timestep-->
+		<xsd:attribute name="pressureNp1AtReceivers" type="real32_array2d" />
+		<!--receiverConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<xsd:attribute name="receiverConstants" type="real64_array2d" />
+		<!--receiverElem => Element containing the receivers-->
+		<xsd:attribute name="receiverElem" type="integer_array" />
+		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
+		<xsd:attribute name="receiverIsLocal" type="integer_array" />
+		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
+		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
+		<!--receiverRegion => Region containing the receivers-->
+		<xsd:attribute name="receiverRegion" type="integer_array" />
+		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds-->
+		<xsd:attribute name="sourceConstants" type="real64_array2d" />
+		<!--sourceIsAccessible => Flag that indicates whether the source is local to this MPI rank-->
+		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
+		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
+		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
+		<!--sourceValue => Array which contains the value of the Ricker wavelets at each time-steps-->
+		<xsd:attribute name="sourceValue" type="real32_array2d" />
+		<!--timeStep => TimeStep computed with the power iteration method (if we don't want to compute it, it is initialized with the XML value-->
+		<xsd:attribute name="timeStep" type="real64" />
+		<!--usePML => Flag to apply PML-->
+		<xsd:attribute name="usePML" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="AcousticVTIFletcherSEMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--indexSeismoTrace => Count for output pressure at receivers-->
+		<xsd:attribute name="indexSeismoTrace" type="integer" />
+		<!--linearDASVectorX => X component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorX" type="real32_array" />
+		<!--linearDASVectorY => Y component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorY" type="real32_array" />
+		<!--linearDASVectorZ => Z component of the linear DAS direction vector-->
+		<xsd:attribute name="linearDASVectorZ" type="real32_array" />
+		<!--numTimestepsSinceLastDtCut => (no description available)-->
+		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
+		<!--pressureNp1AtReceivers => Pressure value at each receiver for each timestep-->
+		<xsd:attribute name="pressureNp1AtReceivers" type="real32_array2d" />
+		<!--receiverConstants => Constant part of the receiver for the nodes listed in m_receiverNodeIds-->
+		<xsd:attribute name="receiverConstants" type="real64_array2d" />
+		<!--receiverElem => Element containing the receivers-->
+		<xsd:attribute name="receiverElem" type="integer_array" />
+		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
+		<xsd:attribute name="receiverIsLocal" type="integer_array" />
+		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
+		<xsd:attribute name="receiverNodeIds" type="integer_array2d" />
+		<!--receiverRegion => Region containing the receivers-->
+		<xsd:attribute name="receiverRegion" type="integer_array" />
+		<!--sourceConstants => Constant part of the source for the nodes listed in m_sourceNodeIds-->
+		<xsd:attribute name="sourceConstants" type="real64_array2d" />
+		<!--sourceIsAccessible => Flag that indicates whether the source is local to this MPI rank-->
+		<xsd:attribute name="sourceIsAccessible" type="integer_array" />
+		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
+		<xsd:attribute name="sourceNodeIds" type="integer_array2d" />
+		<!--sourceValue => Array which contains the value of the Ricker wavelets at each time-steps-->
+		<xsd:attribute name="sourceValue" type="real32_array2d" />
+		<!--timeStep => TimeStep computed with the power iteration method (if we don't want to compute it, it is initialized with the XML value-->
+		<xsd:attribute name="timeStep" type="real64" />
+		<!--usePML => Flag to apply PML-->
+		<xsd:attribute name="usePML" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="AcousticVTIZhangSEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />

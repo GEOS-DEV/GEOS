@@ -24,8 +24,28 @@ set( wavePropagationSolvers_headers
      shared/PrecomputeSourcesAndReceiversKernel.hpp
      shared/TaperKernel.hpp
      sem/acoustic/shared/AcousticFields.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderAnisotropicWaveEquationSEM.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderAnisotropicVTISEM.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderAnisotropicTTISEM.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderVTIFletcher.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderTTIFletcher.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderVTIZhang.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderTTIZhang.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/DampingMatrixComputers.hpp
      sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.hpp
      sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEMKernel.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIFields.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIFletcherWaveEquationSEM.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIFletcherWaveEquationSEMKernel.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIZhangWaveEquationSEM.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIZhangWaveEquationSEMKernel.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIFields.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIFletcherAdjointWaveEquationSEMKernel.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIFletcherWaveEquationSEM.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIFletcherWaveEquationSEMKernel.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIZhangAdjointWaveEquationSEMKernel.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIZhangWaveEquationSEM.hpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIZhangWaveEquationSEMKernel.hpp     
      sem/acoustic/shared/AcousticTimeSchemeSEMKernel.hpp
      sem/acoustic/shared/AcousticMatricesSEMKernel.hpp
      sem/acoustic/secondOrderEqn/isotropic/AcousticPMLSEMKernel.hpp
@@ -43,8 +63,6 @@ set( wavePropagationSolvers_headers
      sem/elastic/secondOrderEqn/anisotropic/ElasticTTIFields.hpp
      sem/elastic/secondOrderEqn/anisotropic/ElasticTTIWaveEquationSEMKernel.hpp
      sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIFields.hpp
-     sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEM.hpp
-     sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEMKernel.hpp
      sem/acoustoelastic/secondOrderEqn/isotropic/AcoustoElasticFields.hpp
      sem/acoustoelastic/secondOrderEqn/isotropic/AcoustoElasticTimeSchemeSEMKernel.hpp
      sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEM.hpp
@@ -57,10 +75,19 @@ set( wavePropagationSolvers_headers
 set( wavePropagationSolvers_sources
      shared/WaveSolverBase.cpp
      sem/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationSEM.cpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderAnisotropicWaveEquationSEM.cpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderVTIFletcher.cpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderTTIFletcher.cpp     
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderVTIZhang.cpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderTTIZhang.cpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticSecondOrderAnisotropicTTISEM.cpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIFletcherWaveEquationSEM.cpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticTTIZhangWaveEquationSEM.cpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIFletcherWaveEquationSEM.cpp
+     sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIZhangWaveEquationSEM.cpp     
      sem/elastic/secondOrderEqn/isotropic/ElasticWaveEquationSEM.cpp
      sem/elastic/firstOrderEqn/isotropic/ElasticFirstOrderWaveEquationSEM.cpp
      sem/acoustic/firstOrderEqn/isotropic/AcousticFirstOrderWaveEquationSEM.cpp
-     sem/acoustic/secondOrderEqn/anisotropic/AcousticVTIWaveEquationSEM.cpp
      sem/acoustoelastic/secondOrderEqn/isotropic/AcousticElasticWaveEquationSEM.cpp
      dg/acoustic/secondOrderEqn/isotropic/AcousticWaveEquationDG.cpp )
 
