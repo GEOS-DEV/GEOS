@@ -40,8 +40,12 @@ PressurePermeability::PressurePermeability( string const & name, Group * const p
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Pressure dependence coefficients for each permeability component." );
 
-  registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
+  registerWrapper( viewKeyStruct::defaultReferencePressureString(), &m_defaultReferencePressure ).
     setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default reference pressure for the pressure permeability model" );
+  
+  registerWrapper( viewKeyStruct::referencePressureString(), &m_referencePressure ).
+    setApplyDefaultValue( -1.0 ).
     setDescription( "Reference pressure for the pressure permeability model [Pa]" );
 
   registerWrapper( viewKeyStruct::referencePermeabilityString(), &m_referencePermeability ).
@@ -56,8 +60,13 @@ PressurePermeability::PressurePermeability( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::pressureModelTypeString(), &m_presModelType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( PressureModelType::Hyperbolic ).
+    setApplyDefaultValue( PressureModelType::Exponential ).
     setDescription( "Type of the pressure dependence model. " );
+
+  registerWrapper( viewKeyStruct::explicitUpdateFlagString(), &m_explicitFlag ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "The flag for explicit update. " );
 }
 
 void PressurePermeability::postInputInitialization()
@@ -68,6 +77,9 @@ void PressurePermeability::postInputInitialization()
                    getDataContext() << ": the pressure dependent constant at component " << i << " is too close to zero, which is not allowed for the hyperbolic model.",
                    getDataContext() );
   }
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::referencePressureString() ).
+    setApplyDefaultValue( m_defaultReferencePressure );
 }
 
 void PressurePermeability::allocateConstitutiveData( Group & parent,

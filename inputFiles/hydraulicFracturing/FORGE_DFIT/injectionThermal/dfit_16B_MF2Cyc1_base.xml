@@ -1,0 +1,128 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ cb1 }"
+      materialList="{ porousRock, rock, water, thermalCond }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"      
+      defaultAperture="2e-5"
+      materialList="{ water, rock, fractureFilling, fractureContact, hApertureModel, thermalCondFrac }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <ThermalCompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="1e-3"
+      referencePressure="0.0"
+      referenceTemperature="273.0"
+      referenceDensity="1000"
+      compressibility="5e-10"
+      thermalExpansionCoeff="0.0"
+      referenceViscosity="1e-3"
+      viscosibility="0.0"
+      specificHeatCapacity="4.2e6"
+      referenceInternalEnergy="1.1e6"/>
+
+    <SinglePhaseThermalConductivity
+       name="thermalCond"
+       defaultThermalConductivityComponents="{ 1.0, 1.0, 1.0 }"/>  
+
+    <SinglePhaseThermalConductivity
+       name="thermalCondFrac"
+       defaultThermalConductivityComponents="{ 0.2, 0.2, 1.0 }"/>   
+
+    <CompressibleSolidConstantPermeability
+      name="porousRock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1e-16, 1e-16, 1e-16 }"/>
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.01"
+      referencePressure="0.0"
+      compressibility="1e-10"/>
+
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="2700"
+      defaultBulkModulus="51.7e9"
+      defaultShearModulus="20.0e9"
+      defaultDrainedLinearTEC="5e-6"/>
+
+    <CompressibleSolidParallelPlatesPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"
+      solidInternalEnergyModelName="rockInternalEnergy"/>
+
+    <SolidInternalEnergy
+      name="rockInternalEnergy"
+      referenceVolumetricHeatCapacity="3e6"
+      referenceTemperature="273.0"
+      referenceInternalEnergy="8.19e8"/> 
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      referencePressure="0.0"
+      compressibility="0.0"/>
+
+    <ParallelPlatesPermeability
+      name="fracturePerm"
+      transversalPermeability="1e-16"/>
+
+    <FrictionlessContact
+      name="fractureContact"/>
+
+    <HydraulicApertureTable
+      name="hApertureModel"
+      apertureTableName="apertureTable"/>  
+  </Constitutive>
+
+  <Geometry>
+    <Box
+      name="MF2Frac"
+      xMin="{ -0.01, -0.21, -0.21 }"
+      xMax="{ 0.01, 0.21, 0.21 }" />
+
+    <Box
+      name="source"
+      xMin="{ -0.01, -0.11, -0.11 }"
+      xMax="{ 0.01, 0.11, 0.11 }" />
+
+    <Box
+      name="core"
+      xMin="{ -0.01, -2000.1, -0.51 }"
+      xMax="{ 0.01, 2000.1, 0.51 }"/>
+  </Geometry>
+
+  
+</Problem>
+

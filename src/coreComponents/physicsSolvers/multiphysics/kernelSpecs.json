@@ -61,6 +61,7 @@
         "PorousSolid<DuvautLionsSolid<DruckerPrager>, CarmanKozenyPermeability>",
         "PorousSolid<DuvautLionsSolid<DruckerPragerExtended>, CarmanKozenyPermeability>",
         "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, CarmanKozenyPermeability>",
+        "PorousSolid<ElasticIsotropic, PressurePermeability>",
         "PorousDamageSolid<Damage<ElasticIsotropic>>",
         "PorousDamageSolid<DamageSpectral<ElasticIsotropic>>",
         "PorousDamageSolid<DamageVolDev<ElasticIsotropic>>"
@@ -136,7 +137,8 @@
         "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>",
         "PorousSolid<DruckerPrager, CarmanKozenyPermeability>",
         "PorousSolid<DruckerPragerExtended, CarmanKozenyPermeability>",
-        "PorousSolid<ModifiedCamClay, CarmanKozenyPermeability>"
+        "PorousSolid<ModifiedCamClay, CarmanKozenyPermeability>",
+        "PorousSolid<ElasticIsotropic, PressurePermeability>"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",

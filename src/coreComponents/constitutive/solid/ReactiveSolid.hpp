@@ -58,11 +58,12 @@ public:
   void updateStateFromPressureAndReactions( localIndex const k,
                                             localIndex const q,
                                             real64 const & pressure,
+                                            real64 const & pressure_n,
                                             arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & kineticReactionMolarIncrements ) const
   {
     m_porosityUpdate.updateFromReactions( k, q, kineticReactionMolarIncrements );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
-    m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, porosity );
+    m_permUpdate.updateFromPressureAndPorosity( k, q, pressure, pressure_n, porosity );
   }
 
   GEOS_HOST_DEVICE

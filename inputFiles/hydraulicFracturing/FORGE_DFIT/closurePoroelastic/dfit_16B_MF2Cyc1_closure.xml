@@ -1,0 +1,265 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="dfit_16B_MF2Cyc1_base.xml"/>
+  </Included>  
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <Hydrofracture
+      name="hydrofracture"
+      solidSolverName="lagsolve"
+      flowSolverName="SinglePhaseFlow"
+      surfaceGeneratorName="SurfaceGen"
+      logLevel="1"
+      targetRegions="{ Domain, Fracture }"
+      isLaggingFractureStencilWeightsUpdate="1"
+      isMatrixPoroelastic="1"
+      maxNumResolves="10"
+      useQuasiNewton="1">
+      <NonlinearSolverParameters
+        newtonTol="1e-3"
+        lineSearchAction="None"
+        newtonMaxIter="20"
+        maxTimeStepCuts="10"
+        maxSubSteps="50"
+	      maxAllowedResidualNorm="1e40"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovAdaptiveTol="1"
+        logLevel="1"/>
+    </Hydrofracture>
+
+    <SolidMechanicsLagrangianFEM
+      name="lagsolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain, Fracture }"
+      contactRelationName="fractureContact"
+      contactPenaltyStiffness="1.0e12">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-3"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        logLevel="1"/>
+    </SolidMechanicsLagrangianFEM>
+
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      targetRegions="{ Domain, Fracture }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-3"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        logLevel="1"/>
+    </SinglePhaseFVM>
+
+    <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ Domain }"
+      nodeBasedSIF="1"      
+      initialRockToughness="1e30"
+      mpiCommOrder="1"/>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -100, -5, 5, 100 }"
+      yCoords="{ -100, -10, 10, 100 }"
+      zCoords="{ -100, -5, -1, 1, 5, 100 }"
+      nx="{ 19, 50, 19 }"
+      ny="{ 30, 200, 30 }"
+      nz="{ 19, 20, 20, 20, 19 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    minTime="0.0"
+    maxTime="2900.0">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <PeriodicEvent
+      name="outputs0"
+      cycleFrequency="5"
+      beginTime="0.0"
+      endTime="499.9"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="outputs1"
+      cycleFrequency="1"
+      beginTime="499.9"
+      endTime="510.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="outputs2"
+      cycleFrequency="10"
+      beginTime="510.0"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplicationsEquilibration"
+      beginTime="0"
+      endTime="499.9"
+      forceDt="10"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="solverApplications0"
+      beginTime="499.9"
+      endTime="501.0"
+      maxEventDt="0.1"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="501.0"
+      endTime="540.0"
+      maxEventDt="0.5"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="540.0"
+      endTime="600.0"
+      maxEventDt="1.0"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="solverApplications3"
+      beginTime="600.0"
+      endTime="700.0"
+      maxEventDt="2.0"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="solverApplications4"
+      beginTime="700.0"
+      maxEventDt="4.0"
+      target="/Solvers/hydrofracture"/>
+
+    <PeriodicEvent
+      name="restarts"
+      cycleFrequency="100"
+      target="/Outputs/restartOutput"/>
+    
+  </Events>
+
+  <FieldSpecifications>
+    <FieldSpecification 
+      name="Sh"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="rock_stress"
+      component="0"
+      scale="-0.158e7"/>
+
+    <FieldSpecification 
+      name="SH"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="rock_stress"
+      component="1"
+      scale="-1.197e7"/>
+
+    <FieldSpecification 
+      name="Sv"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="rock_stress"
+      component="2"
+      scale="-2.097e7"/>
+    
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="pressure"
+      scale="1.903e7"/>
+
+    <FieldSpecification
+       name="fracturePressure"
+       objectPath="ElementRegions/Fracture"
+       fieldName="pressure"
+       setNames="{all}"
+       scale="2.30675e7"
+       beginTime="-1e10"
+       endTime="500.0"/> 
+
+    <FieldSpecification
+      name="separableFace"
+      initialCondition="1"
+      setNames="{ core }"
+      objectPath="faceManager"
+      fieldName="isFaceSeparable"
+      scale="1"/>
+
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ core }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      functionName="ruptureFunction"
+      scale="1"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="totalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="ruptureFunction"
+      inputVarNames="{ faceCenter }"
+      coordinateFiles="{ ../ruptureTable/xlin.geos, ../ruptureTable/ylin.geos, ../ruptureTable/zlin.geos }"
+      voxelFile="../ruptureTable/rupture.geos"
+      interpolation="nearest"/> 
+  </Functions>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"
+      plotFileRoot="vtkOutput_16BMF2Cyc1_pkn_closure"/>
+
+    <Restart
+      name="restartOutput"/>
+
+  </Outputs>
+
+</Problem>

@@ -85,9 +85,10 @@ public:
   virtual void updateStateFromPressureAndTemperature( localIndex const k,
                                                       localIndex const q,
                                                       real64 const & pressure,
+                                                      real64 const & pressure_n,
                                                       real64 const & temperature ) const
   {
-    GEOS_UNUSED_VAR( k, q, pressure, temperature );
+    GEOS_UNUSED_VAR( k, q, pressure, pressure_n, temperature );
   }
 
   GEOS_HOST_DEVICE

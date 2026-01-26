@@ -35,6 +35,7 @@
 #include "physicsSolvers/surfaceGeneration/LogLevelsInfo.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGeneratorFields.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "kernels/surfaceGenerationKernels.hpp"
 
 #include <algorithm>
@@ -349,9 +350,28 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
     {
       if( m_initialRockToughness >= 0 )
       {
-        KIC[kf][0] = m_initialRockToughness;
-        KIC[kf][1] = m_initialRockToughness;
-        KIC[kf][2] = m_initialRockToughness;
+        if( m_toughnessScalingFactor > 0.0 )
+        {
+          real64 faceCenter[3];
+          faceCenter[0] = faceCenters[kf][0];
+          faceCenter[1] = faceCenters[kf][1];
+          faceCenter[2] = faceCenters[kf][2];
+
+          real64 scaledToughness = scalingToughness( m_fractureOrigin,
+                                                     faceCenter,
+                                                     m_initialRockToughness,
+                                                     m_toughnessScalingFactor );
+
+          KIC[kf][0] = scaledToughness;
+          KIC[kf][1] = scaledToughness;
+          KIC[kf][2] = scaledToughness;
+        }
+        else
+        {
+          KIC[kf][0] = m_initialRockToughness;
+          KIC[kf][1] = m_initialRockToughness;
+          KIC[kf][2] = m_initialRockToughness;
+        }
       }
       else
       {
@@ -393,6 +413,26 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
             KIC[kf][0] = std::min( std::fabs( k0[0] ), std::fabs( KIC[kf][0] ) );
             KIC[kf][1] = std::min( std::fabs( k0[1] ), std::fabs( KIC[kf][1] ) );
             KIC[kf][2] = std::min( std::fabs( k0[2] ), std::fabs( KIC[kf][2] ) );
+          }
+        }
+
+        if( m_toughnessScalingFactor > 0.0 )
+        {
+          real64 faceCenter[3];
+          faceCenter[0] = faceCenters[kf][0];
+          faceCenter[1] = faceCenters[kf][1];
+          faceCenter[2] = faceCenters[kf][2];
+
+          for( localIndex dim=0; dim<3; ++dim)
+          {
+            real64 const initialRockToughness = KIC[kf][dim];
+
+            real64 scaledToughness = scalingToughness( m_fractureOrigin,
+                                                      faceCenter,
+                                                      initialRockToughness,
+                                                      m_toughnessScalingFactor );
+
+            KIC[kf][dim] = scaledToughness;
           }
         }
       }
@@ -463,7 +503,7 @@ void SurfaceGenerator::postRestartInitialization()
 
 real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                      real64 const & dt,
-                                     const int GEOS_UNUSED_PARAM( cycleNumber ),
+                                     const int cycleNumber,
                                      DomainPartition & domain )
 {
   int rval = 0;
@@ -552,7 +592,15 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       PermeabilityBase & permModel = getConstitutiveModel< PermeabilityBase >( fractureSubRegion, permModelName );
       permModel.initializeState();
     }
+    if( cycleNumber == 0 && time_n + dt <= 0 )
+    {
+      /// THIS is a hack to force variables in the fractures to be initialized since they are created after initialization occurs.
+      FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();;
+      fsManager.applyInitialConditions( meshLevel );
+    }
   } );
+
+
 
   return rval;
 }

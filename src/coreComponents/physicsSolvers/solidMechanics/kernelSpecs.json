@@ -101,7 +101,8 @@
         "PorousSolid<DuvautLionsSolid<DruckerPragerExtended>, ConstantPermeability>",
         "PorousSolid<DuvautLionsSolid<DruckerPragerExtended>, CarmanKozenyPermeability>",
         "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, ConstantPermeability>",
-        "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, CarmanKozenyPermeability>"
+        "PorousSolid<DuvautLionsSolid<ModifiedCamClay>, CarmanKozenyPermeability>",
+        "PorousSolid<ElasticIsotropic, PressurePermeability>"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",
@@ -139,7 +140,8 @@
       ],
       "CONSTITUTIVE_TYPE": [
         "PorousSolid<ElasticIsotropic, ConstantPermeability>",
-        "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>"
+        "PorousSolid<ElasticIsotropic, CarmanKozenyPermeability>",
+        "PorousSolid<ElasticIsotropic, PressurePermeability>"
       ],
       "FE_TYPE": [
         "H1_Hexahedron_Lagrange1_GaussLegendre2",

@@ -105,6 +105,8 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       {
         subRegion.registerField< flow::dEnergy >( getName() ).reference().resizeDimension< 1 >( m_numDofPerCell );
       }
+
+      subRegion.registerField< flow::wellBoreVolume >( getName() );
     } );
 
     elemManager.forElementSubRegions< SurfaceElementSubRegion >( regionNames,
@@ -236,9 +238,10 @@ void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
 {
   using DerivOffset = constitutive::singlefluid::DerivativeOffsetC< IS_THERMAL >;
 
-  arrayView1d< real64 > const mass = subRegion.getField< flow::mass >();
-  arrayView1d< real64 > const mass_n = subRegion.getField< flow::mass_n >();
-  arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const dMass = subRegion.getField< flow::dMass >();
+  arrayView1d< real64 > const mass = subRegion.getField< fields::flow::mass >();
+  arrayView1d< real64 > const mass_n = subRegion.getField< fields::flow::mass_n >();
+  arrayView1d< real64 const > const wellBoreVolume = subRegion.getField< fields::flow::wellBoreVolume >();
+  arrayView2d< real64, constitutive::singlefluid::USD_FLUID > const dMass = subRegion.getField< fields::flow::dMass >();
 
   //START_SPHINX_INCLUDE_COUPLEDSOLID
   CoupledSolidBase const & porousSolid =
@@ -260,11 +263,11 @@ void SinglePhaseBase::updateMass( ElementSubRegionBase & subRegion ) const
   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
     real64 const vol = volume[ei] + deltaVolume[ei];
-    mass[ei] = porosity[ei][0] * density[ei][0] * vol;
+    mass[ei] = porosity[ei][0] * density[ei][0] * vol + wellBoreVolume[ei] * density[ei][0];
     dMass[ei][DerivOffset::dP] = ( dPorosity_dP[ei][0] * density[ei][0] + porosity[ei][0] * dDensity[ei][0][DerivOffset::dP] ) * vol;
     if( isZero( mass_n[ei] ) )   // this is a hack for hydrofrac cases
     {
-      mass_n[ei] = porosity_n[ei][0] * volume[ei] * density_n[ei][0];   // initialize newly created element mass
+      mass_n[ei] = porosity_n[ei][0] * volume[ei] * density_n[ei][0] + wellBoreVolume[ei] * density_n[ei][0];   // initialize newly created element mass
     }
   } );
 
@@ -1246,6 +1249,7 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
       if( m_isThermal )
       {
         updateSolidInternalEnergyModel( subRegion );
+        updateThermalConductivity( subRegion );
         updateEnergy( subRegion );
       }
     } );

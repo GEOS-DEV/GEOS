@@ -45,7 +45,9 @@ struct DeformationUpdateKernel
           arrayView1d< real64 > const & deltaVolume,
           arrayView1d< real64 > const & aperture,
           arrayView1d< integer > const & fractureState,
-          arrayView1d< real64 > const & hydraulicAperture
+          arrayView1d< real64 > const & hydraulicAperture,
+          real64 const & penaltyStiffness,
+          arrayView1d< real64 const > const & oldHydraulicAperture
 #ifdef GEOS_USE_SEPARATION_COEFFICIENT
           ,
           arrayView1d< real64 const > const & apertureAtFailure,
@@ -86,7 +88,7 @@ struct DeformationUpdateKernel
 
       fractureState[kfe] = normalJump <= 0.0 ? fields::contact::FractureState::Stick : fields::contact::FractureState::Open;
 
-      real64 normalTraction = 0.0; /// TODO: must be changed to use actual traction
+      real64 normalTraction = normalJump <= 0.0 ? penaltyStiffness*normalJump : 0.0;
       real64 dHydraulicAperture_dNormalTraction = 0.0;
       real64 dHydraulicAperture_dNormalJump = 0.0;
       real64 const newHydraulicAperture = hydraulicApertureWrapper.computeHydraulicAperture( aperture[kfe],
@@ -96,7 +98,7 @@ struct DeformationUpdateKernel
                                                                                              dHydraulicAperture_dNormalTraction );
 
       maxHydraulicApertureChange.max( std::fabs( newHydraulicAperture - hydraulicAperture[kfe] ));
-      real64 const oldHydraulicAperture = hydraulicAperture[kfe];
+      // real64 const oldHydraulicAperture = hydraulicAperture[kfe];
       hydraulicAperture[kfe] = newHydraulicAperture;
       minHydraulicAperture.min( hydraulicAperture[kfe] );
       maxHydraulicAperture.max( hydraulicAperture[kfe] );
@@ -105,7 +107,7 @@ struct DeformationUpdateKernel
       real64 const traction[3] = {0.0, 0.0, 0.0};
 
       porousMaterialWrapper.updateStateFromPressureApertureJumpAndTraction( kfe, 0, 0.0,
-                                                                            oldHydraulicAperture, newHydraulicAperture,
+                                                                            oldHydraulicAperture[kfe], oldHydraulicAperture[kfe],
                                                                             dHydraulicAperture_dNormalJump,
                                                                             jump, traction );
 
@@ -148,17 +150,20 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                  real64 const & aperture,
                                  real64 const & dens,
                                  integer const & fractureState,
+                                 real64 const & penaltyStiffness,
                                  globalIndex (& nodeDOF)[8 * 3],
                                  arraySlice1d< real64 > const dRdU )
   {
     real64 dHydraulicAperture_dNormalJump = 0.0;
     real64 dHydraulicAperture_dTraction = 0.0;
-    real64 fractureTraction = 0.0;
+    real64 fractureTraction = (aperture <= 0.0)? penaltyStiffness*aperture : 0.0;
     real64 const hydraulicAperture = hydraulicApertureWrapper.computeHydraulicAperture( aperture,
                                                                                         fractureTraction,
                                                                                         fractureState,
                                                                                         dHydraulicAperture_dNormalJump,
                                                                                         dHydraulicAperture_dTraction );
+    
+    dHydraulicAperture_dNormalJump = (aperture <= 0.0)? dHydraulicAperture_dTraction*penaltyStiffness : 1.0;                                                                                    
     GEOS_UNUSED_VAR( hydraulicAperture );
 
     constexpr integer kfSign[2] = { -1, 1 };
@@ -227,6 +232,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
           arrayView1d< real64 const > const area,
           arrayView1d< real64 const > const aperture,
           arrayView1d< integer const > const fractureState,
+          real64 const & penaltyStiffness,
           arrayView1d< globalIndex const > const presDofNumber,
           arrayView1d< globalIndex const > const dispDofNumber,
           arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const dens,
@@ -255,6 +261,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
                                      aperture[ei],
                                      dens[ei][0],
                                      fractureState[ei],
+                                     penaltyStiffness,
                                      nodeDOF,
                                      dRdU );
 

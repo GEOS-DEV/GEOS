@@ -1,0 +1,215 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="tpfaFlow"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+
+  <Constitutive>
+    <PorousElasticIsotropicPressurePermeability
+      name="rock"
+      solidModelName="rockSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <ElasticIsotropic
+      name="rockSolid"
+      defaultDensity="2700"
+      defaultBulkModulus="38.1944444444e9"
+      defaultShearModulus="21.8253968254e9"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      defaultGrainBulkModulus="1e27"
+      defaultReferencePorosity="0.01"/>     
+    
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="1e-3"
+      referencePressure="0.0"
+      compressibility="5e-10"
+      referenceViscosity="1e-3"
+      viscosibility="0.0"/>          
+
+    <PressurePermeability
+      name="rockPerm"
+      referencePermeabilityComponents="{ 50e-18, 50e-18, 50e-18 }"
+      pressureDependenceConstants="{ 0.0, 4e-7, 4e-7 }"
+      maxPermeability="8e-14"
+      defaultReferencePressure="24e6"
+      pressureModelType="Exponential"
+      explicitUpdateFlag="1"/>
+    
+    <SinglePhaseThermalConductivity
+      name="thermalCond"
+      defaultThermalConductivityComponents="{ 4.0, 4.0, 4.0 }"/>
+    
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+       name="permx"
+       initialCondition="1"
+       component="0"
+       setNames="{ all }"
+       objectPath="ElementRegions/Domain"
+       fieldName="rockPerm_referencePermeability"
+       scale="1e-12"
+       functionName="permxFunc"/>
+
+     <FieldSpecification
+       name="permy"
+       initialCondition="1"
+       component="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/Domain"
+       fieldName="rockPerm_referencePermeability"
+       scale="1e-12"
+       functionName="permyFunc"/>
+
+     <FieldSpecification
+       name="permz"
+       initialCondition="1"
+       component="2"
+       setNames="{ all }"
+       objectPath="ElementRegions/Domain"
+       fieldName="rockPerm_referencePermeability"
+       scale="1e-12"
+       functionName="permzFunc"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain"
+      fieldName="pressure"
+      functionName="PresFunction"
+      scale="1.0e6"/>
+
+    <FieldSpecification
+      name="refPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain"
+      fieldName="rockPerm_referencePressure"
+      functionName="PresFunction"
+      scale="1.0e6"/> 
+
+    <FieldSpecification
+      name="effectiveSh"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain"
+      fieldName="rockSolid_stress"
+      component="0"
+      scale="-1.8e7"/>
+    <FieldSpecification
+      name="effectiveSH"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain"
+      fieldName="rockSolid_stress"
+      component="1"
+      scale="-2.4e7"/>
+    <FieldSpecification
+      name="effectiveSv"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain"
+      fieldName="rockSolid_stress"
+      component="2"
+      scale="-3.8e7"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      fieldName="totalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      fieldName="totalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      fieldName="totalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      setNames="{ zneg, zpos }"/>
+    
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="injectorTotalRateTable"
+      inputVarNames="{ time }"
+      coordinateFiles="{ ../rates/16ATime.geos }"
+      voxelFile="../rates/16ARate.geos"
+      interpolation="lower"/>
+
+    <TableFunction
+      name="producerTotalRateTable"
+      inputVarNames="{ time }"
+      coordinates="{ -1e9, 0, 1.0, 1e9 }"
+      values="{ 0, 0, 1e-7, 1e-7 }" 
+      interpolation="lower"/>
+
+    <!-- <TableFunction
+      name="producerTotalRateTable"
+      inputVarNames="{ time }"
+      coordinateFiles="{ ../rates/16BTime.geos }"
+      voxelFile="../rates/16BRate.geos"
+      interpolation="lower"/> -->
+
+    <TableFunction
+      name="PresFunction"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ ../pressureTable/xlin.geos, ../pressureTable/ylin.geos, ../pressureTable/zlin.geos }"
+      voxelFile="../pressureTable/pres.geos"/>
+
+    <TableFunction
+      name="permxFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ ../DFNTables/xlin.geos, ../DFNTables/ylin.geos, ../DFNTables/zlin.geos }"
+      voxelFile="../DFNTables/perm_x.geos"
+      interpolation="nearest"/>
+
+    <TableFunction
+      name="permyFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ ../DFNTables/xlin.geos, ../DFNTables/ylin.geos, ../DFNTables/zlin.geos }"
+      voxelFile="../DFNTables/perm_y.geos"
+      interpolation="nearest"/>
+
+    <TableFunction
+      name="permzFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ ../DFNTables/xlin.geos, ../DFNTables/ylin.geos, ../DFNTables/zlin.geos }"
+      voxelFile="../DFNTables/perm_z.geos"
+      interpolation="nearest"/>
+  </Functions>
+  
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+    
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+</Problem>

@@ -29,6 +29,7 @@
 #include "DuvautLionsSolid.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
+#include "constitutive/permeability/PressurePermeability.hpp"
 
 namespace geos
 {
@@ -72,6 +73,16 @@ typedef PorousSolid< DuvautLionsSolid< DruckerPrager >, CarmanKozenyPermeability
 typedef PorousSolid< DuvautLionsSolid< DruckerPragerExtended >, CarmanKozenyPermeability > PorousViscoDruckerPragerExtendedCK;
 typedef PorousSolid< DuvautLionsSolid< ModifiedCamClay >, CarmanKozenyPermeability > PorousViscoModifiedCamClayCK;
 typedef PorousSolid< ModifiedCamClay, CarmanKozenyPermeability > PorousModifiedCamClayCK;
+typedef PorousSolid< ElasticIsotropic, PressurePermeability > PorousElasticIsotropicPressure;
+typedef PorousSolid< ElasticTransverseIsotropic, PressurePermeability > PorousElasticTransverseIsotropicPressure;
+typedef PorousSolid< ElasticOrthotropic, PressurePermeability > PorousElasticOrthotropicPressure;
+typedef PorousSolid< DelftEgg, PressurePermeability > PorousDelftEggPressure;
+typedef PorousSolid< DruckerPrager, PressurePermeability > PorousDruckerPragerPressure;
+typedef PorousSolid< DruckerPragerExtended, PressurePermeability > PorousDruckerPragerExtendedPressure;
+typedef PorousSolid< DuvautLionsSolid< DruckerPrager >, PressurePermeability > PorousViscoDruckerPragerPressure;
+typedef PorousSolid< DuvautLionsSolid< DruckerPragerExtended >, PressurePermeability > PorousViscoDruckerPragerExtendedPressure;
+typedef PorousSolid< DuvautLionsSolid< ModifiedCamClay >, PressurePermeability > PorousViscoModifiedCamClayPressure;
+typedef PorousSolid< ModifiedCamClay, PressurePermeability > PorousModifiedCamClayPressure;
 
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticIsotropicConstant, string const &, Group * const )
@@ -94,6 +105,16 @@ REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousModifiedCamClayCK, string const 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoDruckerPragerCK, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoDruckerPragerExtendedCK, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoModifiedCamClayCK, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticIsotropicPressure, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticTransverseIsotropicPressure, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticOrthotropicPressure, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDelftEggPressure, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDruckerPragerPressure, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDruckerPragerExtendedPressure, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousModifiedCamClayPressure, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoDruckerPragerPressure, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoDruckerPragerExtendedPressure, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousViscoModifiedCamClayPressure, string const &, Group * const )
 
 
 }

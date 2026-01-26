@@ -45,9 +45,13 @@ public:
     m_detJ( elemManager.constructViewAccessor< array2d< real64 >, arrayView2d< real64 const > >( dataRepository::keys::detJ ) ),
     m_bulkModulus( elemManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "bulkModulus", constitutiveManager ) ),
     m_shearModulus( elemManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "shearModulus", constitutiveManager ) ),
+    // m_thermalExpansionCoefficient( elemManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "thermalExpansionCoefficient", constitutiveManager ) ),
     m_stress( elemManager.constructFullMaterialViewAccessor< array3d< real64, geos::solid::STRESS_PERMUTATION >,
                                                              arrayView3d< real64 const, geos::solid::STRESS_USD > >( fields::solid::stress::key(),
                                                                                                                      constitutiveManager ) )
+    //                                                                                                                  ,
+    // m_temp_n( elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::temperature_n::key() ) ),
+    // m_initTemp( elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( fields::flow::initialTemperature::key() ) )                                                                                               
   {
     m_solidMaterialFullIndex.resize( elemManager.numRegions() );
     elemManager.forElementRegionsComplete< CellElementRegion >( [&]( localIndex regionIndex,
@@ -73,7 +77,13 @@ public:
     // Loop over quadrature points
     for( localIndex q = 0; q < numQuadraturePoints; ++q )
     {
-      real64 const quadratureStress[6] = LVARRAY_TENSOROPS_INIT_LOCAL_6 ( m_stress[er][esr][m_solidMaterialFullIndex[er]][ei][q] );
+      real64 quadratureStress[6] = LVARRAY_TENSOROPS_INIT_LOCAL_6 ( m_stress[er][esr][m_solidMaterialFullIndex[er]][ei][q] );
+      // real64 const thermalStress = ( m_temp_n[er][esr][ei]- m_initTemp[er][esr][ei] ) * m_thermalExpansionCoefficient[er][esr][m_solidMaterialFullIndex[er]][ei] * m_bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
+      
+      // quadratureStress[0] -= thermalStress;
+      // quadratureStress[1] -= thermalStress;
+      // quadratureStress[2] -= thermalStress;
+
       real64 const dNdX[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( m_dNdX[er][esr][ei][q][targetNode] );
       surfaceGenerationKernelsHelpers::computeNodalForce( quadratureStress, dNdX, m_detJ[er][esr][ei][q], force );
     }
@@ -92,7 +102,13 @@ protected:
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const m_shearModulus;
 
+  ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const m_thermalExpansionCoefficient;
+
   ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, solid::STRESS_USD > > const m_stress;
+
+  // ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const m_temp_n;
+
+  // ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const m_initTemp;
 
   array1d< integer > m_solidMaterialFullIndex;
 };

@@ -284,6 +284,7 @@ public:
     m_performStressInitialization = performStressInitialization;
   }
 
+  real64 m_contactPenaltyStiffness;
   TimeIntegrationOption timeIntegrationOption() const { return m_timeIntegrationOption; }
 
 protected:
@@ -309,8 +310,6 @@ protected:
 
   /// Rigid body modes; TODO remove mutable hack
   mutable array1d< ParallelVector > m_rigidBodyModes;
-
-  real64 m_contactPenaltyStiffness;
 
 private:
 
