@@ -119,7 +119,7 @@ static constexpr char const * initializeDocString =
   "--\n\n"
   "Initialize GEOSX, this must be the first module call.\n\n"
   "Should only be called once. All calls after the first will\n"
-  "raise a `RuntimeError`. To reinitialize GEOSX for a new problem,\n"
+  "raise a `geos::RuntimeError`. To reinitialize GEOSX for a new problem,\n"
   "use the `reinit` function.\n"
   "\n"
   "Parameters\n"
