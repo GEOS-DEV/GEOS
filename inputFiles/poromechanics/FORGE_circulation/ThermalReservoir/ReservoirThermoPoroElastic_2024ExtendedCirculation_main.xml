@@ -18,12 +18,10 @@
       <NonlinearSolverParameters
         couplingType="Sequential"
         subcycling="1"
-        newtonTol="3.0e-2"
+        newtonTol="1e-4"
         lineSearchAction="None"
         newtonMaxIter="20"
         maxAllowedResidualNorm="1e40"/>
-      <LinearSolverParameters
-        directParallel="0"/>
     </SinglePhaseReservoirPoromechanics>
 
     <SolidMechanicsLagrangianFEM

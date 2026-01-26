@@ -14,9 +14,8 @@
     </FiniteVolume>
   </NumericalMethods>
 
-
   <Constitutive>
-    <PorousElasticIsotropicPressurePermeability
+    <PorousElasticIsotropic
       name="rock"
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"
@@ -54,14 +53,18 @@
       specificHeatCapacity="4.2e3"
       referenceInternalEnergy="0.001"/>          
 
-    <PressurePermeability
+    <!-- <PressurePermeability
       name="rockPerm"
       referencePermeabilityComponents="{ 50e-18, 50e-18, 50e-18 }"
-      pressureDependenceConstants="{ 0.0, 0.0, 0.0 }"
-      maxPermeability="1e-12"
+      pressureDependenceConstants="{ 0.0, 4e-7, 4e-7 }"
+      maxPermeability="8e-14"
       defaultReferencePressure="24e6"
       pressureModelType="Exponential"
-      explicitUpdateFlag="1"/>
+      explicitUpdateFlag="1"/> -->
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 50e-18, 50e-18, 50e-18 }"/>
     
     <SinglePhaseThermalConductivity
       name="thermalCond"
@@ -70,7 +73,7 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
+    <!-- <FieldSpecification
        name="permx"
        initialCondition="1"
        component="0"
@@ -98,6 +101,36 @@
        objectPath="ElementRegions/Domain"
        fieldName="rockPerm_referencePermeability"
        scale="1e-12"
+       functionName="permzFunc"/> -->
+
+    <FieldSpecification
+       name="permx"
+       initialCondition="1"
+       component="0"
+       setNames="{ all }"
+       objectPath="ElementRegions/Domain"
+       fieldName="rockPerm_permeability"
+       scale="1e-12"
+       functionName="permxFunc"/>
+
+     <FieldSpecification
+       name="permy"
+       initialCondition="1"
+       component="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/Domain"
+       fieldName="rockPerm_permeability"
+       scale="1e-12"
+       functionName="permyFunc"/>
+
+     <FieldSpecification
+       name="permz"
+       initialCondition="1"
+       component="2"
+       setNames="{ all }"
+       objectPath="ElementRegions/Domain"
+       fieldName="rockPerm_permeability"
+       scale="1e-12"
        functionName="permzFunc"/>
 
     <FieldSpecification
@@ -109,14 +142,14 @@
       functionName="PresFunction"
       scale="1.0e6"/>
 
-    <FieldSpecification
+    <!-- <FieldSpecification
       name="refPressure"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Domain"
       fieldName="rockPerm_referencePressure"
       functionName="PresFunction"
-      scale="1.0e6"/> 
+      scale="1.0e6"/>  -->
 
     <FieldSpecification
       name="initialTemperature"
@@ -172,22 +205,6 @@
       component="2"
       objectPath="nodeManager"
       setNames="{ zneg, zpos }"/>
-
-    <!-- <FieldSpecification
-      name="wellBoreVolume"
-      initialCondition="1"
-      objectPath="ElementRegions/InjectionZone"
-      fieldName="wellBoreVolume"
-      setNames="{ all }"
-      scale="100.0"/>   -->
-
-    <!-- <FieldSpecification
-      name="initPorosity"
-      initialCondition="1"
-      objectPath="ElementRegions/InjectionZone"
-      fieldName="rockPorosity_referencePorosity"
-      setNames="{ all }"
-      scale="0.9"/>   -->
     
   </FieldSpecifications>
 
@@ -202,9 +219,16 @@
     <TableFunction
       name="producerTotalRateTable"
       inputVarNames="{ time }"
+      coordinates="{ -1e9, 0, 1.0, 1e9 }"
+      values="{ 0, 0, 1e-7, 1e-7 }" 
+      interpolation="lower"/>
+
+    <!-- <TableFunction
+      name="producerTotalRateTable"
+      inputVarNames="{ time }"
       coordinateFiles="{ ../rates/16BTime.geos }"
       voxelFile="../rates/16BRate.geos"
-      interpolation="lower"/>
+      interpolation="lower"/> -->
 
     <TableFunction
       name="TempFunction"

@@ -106,15 +106,6 @@
       functionName="PresFunction"
       scale="1.0e6"/> 
 
-    <!-- <FieldSpecification
-      name="initialTemperature"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions"
-      fieldName="temperature"
-      functionName="TempFunction"
-      scale="1.0"/> -->
-
     <FieldSpecification
       name="effectiveSh"
       initialCondition="1"
@@ -160,22 +151,6 @@
       component="2"
       objectPath="nodeManager"
       setNames="{ zneg, zpos }"/>
-
-    <!-- <FieldSpecification
-      name="wellBoreVolume"
-      initialCondition="1"
-      objectPath="ElementRegions/InjectionZone"
-      fieldName="wellBoreVolume"
-      setNames="{ all }"
-      scale="100.0"/>   -->
-
-    <!-- <FieldSpecification
-      name="initPorosity"
-      initialCondition="1"
-      objectPath="ElementRegions/InjectionZone"
-      fieldName="rockPorosity_referencePorosity"
-      setNames="{ all }"
-      scale="0.9"/>   -->
     
   </FieldSpecifications>
 
@@ -200,12 +175,6 @@
       coordinateFiles="{ ../rates/16BTime.geos }"
       voxelFile="../rates/16BRate.geos"
       interpolation="lower"/> -->
-
-    <!-- <TableFunction
-      name="TempFunction"
-      inputVarNames="{ elementCenter }"
-      coordinateFiles="{ ../tempTable/xlin.geos, ../tempTable/ylin.geos, ../tempTable/zlin.geos }"
-      voxelFile="../tempTable/temp.geos"/> -->
 
     <TableFunction
       name="PresFunction"

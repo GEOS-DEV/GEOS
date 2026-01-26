@@ -21,8 +21,6 @@
         lineSearchAction="None"
         newtonMaxIter="100"
         maxAllowedResidualNorm="1e40"/>
-      <LinearSolverParameters
-        directParallel="0"/>
     </SinglePhaseReservoirPoromechanics>
 
     <SolidMechanicsLagrangianFEM
