@@ -172,6 +172,7 @@ private:
                                            DofManager const & dofManager,
                                            SparsityPatternView< globalIndex > const & pattern ) const;
 
+
   string const m_pressureKey = CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString();
 
 };
