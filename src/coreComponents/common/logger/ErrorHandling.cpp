@@ -92,7 +92,7 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addContextInfoImpl( ErrorContext &&
   auto lowerBoundPos = std::lower_bound( m_errorMsg.m_contextsInfo.begin(), m_errorMsg.m_contextsInfo.end(),
                                          ctxInfo.m_priority,
                                          []( ErrorContext const & ctx, integer priority )
-  { return ctx.m_priority >= priority; } );
+    { return ctx.m_priority >= priority; } );
   m_errorMsg.m_contextsInfo.insert( lowerBoundPos, std::move( ctxInfo ) );
   return *this;
 }
@@ -338,6 +338,8 @@ void ErrorLogger::formatMsgForLog( DiagnosticMsg const & errMsg, std::ostream & 
     }
     os << "=====\n";
   }
+  // --- ENDING SPACE ---
+  os << "\n";
 }
 
 /**
@@ -373,8 +375,8 @@ void ErrorLogger::writeToYamlStream( DiagnosticMsg & errMsg )
       // Sort contextual information by decreasing priority
       std::sort( contextInfo.begin(), contextInfo.end(),
                  []( const ErrorContext & a, const ErrorContext & b ) {
-        return a.m_priority > b.m_priority;
-      } );
+          return a.m_priority > b.m_priority;
+        } );
       // Additional informations about the context of the error and priority information of each context
       yamlFile << g_level1Next << "contexts:\n";
       for( ErrorContext const & ctxInfo : contextInfo )
