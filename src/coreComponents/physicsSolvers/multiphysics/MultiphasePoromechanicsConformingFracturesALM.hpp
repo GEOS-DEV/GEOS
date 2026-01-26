@@ -172,34 +172,6 @@ private:
                                            DofManager const & dofManager,
                                            SparsityPatternView< globalIndex > const & pattern ) const;
 
-  /**
-   * @brief Set up the Dflux_dApertureMatrix object
-   *
-   * @param domain
-   * @param dofManager
-   * @param localMatrix
-   */
-  void setUpDflux_dApertureMatrix( DomainPartition & domain,
-                                   DofManager const & dofManager,
-                                   CRSMatrix< real64, globalIndex > & localMatrix );
-
-  std::unique_ptr< CRSMatrix< real64, localIndex > > & getRefDerivativeFluxResidual_dAperture()
-  {
-    return m_derivativeFluxResidual_dAperture;
-  }
-
-  CRSMatrixView< real64, localIndex const > getDerivativeFluxResidual_dNormalJump()
-  {
-    return m_derivativeFluxResidual_dAperture->toViewConstSizes();
-  }
-
-  CRSMatrixView< real64 const, localIndex const > getDerivativeFluxResidual_dNormalJump() const
-  {
-    return m_derivativeFluxResidual_dAperture->toViewConst();
-  }
-
-  std::unique_ptr< CRSMatrix< real64, localIndex > > m_derivativeFluxResidual_dAperture;
-
   string const m_pressureKey = CompositionalMultiphaseBase::viewKeyStruct::elemDofFieldString();
 
 };
