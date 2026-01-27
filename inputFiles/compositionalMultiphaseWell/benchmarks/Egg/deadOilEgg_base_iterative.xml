@@ -447,21 +447,21 @@
     <PackCollection
       name="wellRateCollection1"
       objectPath="ElementRegions/wellRegion1/wellRegion1UniqueSubRegion"
-      fieldName="wellElementMixtureConnectionRate"/>
+      fieldName="wellElementConnectionRate"/>
 
     <PackCollection
       name="wellRateCollection2"
       objectPath="ElementRegions/wellRegion2/wellRegion2UniqueSubRegion"
-      fieldName="wellElementMixtureConnectionRate"/>
+      fieldName="wellElementonnectionRate"/>
 
     <PackCollection
       name="wellRateCollection3"
       objectPath="ElementRegions/wellRegion3/wellRegion3UniqueSubRegion"
-      fieldName="wellElementMixtureConnectionRate"/>
+      fieldName="wellElementConnectionRate"/>
 
     <PackCollection
       name="wellRateCollection4"
       objectPath="ElementRegions/wellRegion4/wellRegion4UniqueSubRegion"
-      fieldName="wellElementMixtureConnectionRate"/>
+      fieldName="wellElementConnectionRate"/>
   </Tasks>
 </Problem>

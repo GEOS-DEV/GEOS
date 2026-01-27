@@ -115,7 +115,7 @@ void SinglePhaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
   registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentVolRateString() ).
     setSizedFromParent( 0 ).
     reference().resizeDimension< 0 >( 2 + isThermal() );       // dP, dT, dQ
-
+  m_writeCSV=1;
   // write rates output header
   if( m_writeCSV > 0 && subRegion.isLocallyOwned())
   {
@@ -179,8 +179,6 @@ void SinglePhaseWell::initializeWellPostInitialConditionsPreSubGroups( WellEleme
   setGravCoef( subRegion, getParent().getParent().getReference< R1Tensor >( PhysicsSolverManager::viewKeyStruct::gravityVectorString() ));
 
   // setup fluid model
-  string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  constitutive::SingleFluidBase & fluid = subRegion.getConstitutiveModel< constitutive::SingleFluidBase >( fluidName );
   createSeparator( subRegion );
 }
 void SinglePhaseWell::initializePostInitialConditionsPreSubGroups()
@@ -890,29 +888,98 @@ void SinglePhaseWell::assembleWellAccumulationTerms( real64 const & time,
 
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
-
-  if( isThermal() )
+  if( getWellStatus() == WellControls::Status::OPEN && !m_keepVariablesConstantDuringInitStep )
   {
-    thermalSinglePhaseWellKernels::
-      ElementBasedAssemblyKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( isProducer(),
-                                                 dofManager.rankOffset(),
-                                                 wellElemDofKey,
-                                                 subRegion,
-                                                 fluid,
-                                                 localMatrix,
-                                                 localRhs );
+    if( isThermal() )
+    {
+      thermalSinglePhaseWellKernels::
+        ElementBasedAssemblyKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( isProducer(),
+                                                   dofManager.rankOffset(),
+                                                   wellElemDofKey,
+                                                   subRegion,
+                                                   fluid,
+                                                   localMatrix,
+                                                   localRhs );
+    }
+    else
+    {
+      singlePhaseWellKernels::
+        ElementBasedAssemblyKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
+                                                   wellElemDofKey,
+                                                   subRegion,
+                                                   fluid,
+                                                   localMatrix,
+                                                   localRhs );
+    }
+    // get the degrees of freedom and ghosting info
+    arrayView1d< globalIndex const > const & wellElemDofNumber =
+      subRegion.getReference< array1d< globalIndex > >( wellElemDofKey );
+    arrayView1d< integer const > const wellElemGhostRank = subRegion.ghostRank();
+    arrayView1d< integer const > const elemStatus = subRegion.getLocalWellElementStatus();
+
+    arrayView1d< real64 >  connRate = subRegion.getField< fields::well::connectionRate >();
+    localIndex rank_offset = dofManager.rankOffset();
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    {
+      if( wellElemGhostRank[ei] < 0 )
+      {
+        if( elemStatus[ei]==WellElementSubRegion::WellElemStatus::CLOSED )
+        {
+          connRate[ei] = 0.0;
+          globalIndex const dofIndex = wellElemDofNumber[ei];
+          localIndex const localRow = dofIndex - rank_offset;
+
+          real64 const unity = 1.0;
+          for( integer i=0; i < m_numDofPerWellElement; i++ )
+          {
+            globalIndex const rindex = localRow+i;
+            globalIndex const cindex =dofIndex + i;
+            localMatrix.template addToRow< serialAtomic >( rindex,
+                                                           &cindex,
+                                                           &unity,
+                                                           1 );
+            localRhs[rindex] = 0.0;
+          }
+        }
+      }
+    } );
   }
   else
   {
-    singlePhaseWellKernels::
-      ElementBasedAssemblyKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( dofManager.rankOffset(),
-                                                 wellElemDofKey,
-                                                 subRegion,
-                                                 fluid,
-                                                 localMatrix,
-                                                 localRhs );
+    // Zero accumulation contribution
+    arrayView1d< globalIndex const > const & wellElemDofNumber =
+      subRegion.getReference< array1d< globalIndex > >( wellElemDofKey );
+    arrayView1d< integer const > const wellElemGhostRank = subRegion.ghostRank();
+
+    arrayView1d< real64 >  connRate = subRegion.getField< fields::well::connectionRate >();
+    localIndex rank_offset = dofManager.rankOffset();
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+    {
+      if( wellElemGhostRank[ei] < 0 )
+      {
+        connRate[ei] = 0.0;
+        globalIndex const dofIndex = wellElemDofNumber[ei];
+        localIndex const localRow = dofIndex - rank_offset;
+
+        real64 const unity = 1.0;
+        for( integer i=0; i < m_numDofPerWellElement; i++ )
+        {
+          globalIndex const rindex = localRow+i;
+          globalIndex const cindex =dofIndex + i;
+          localMatrix.template addToRow< serialAtomic >( rindex,
+                                                         &cindex,
+                                                         &unity,
+                                                         1 );
+          localRhs[rindex] = 0.0;
+        }
+      }
+    } );
+    // zero out current state constraint quantities
+    getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() ) = 0.0;
+    getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() )=0.0;
+    getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() )=0.0;
   }
 }
 
@@ -1313,12 +1380,7 @@ void SinglePhaseWell::implicitStepComplete( real64 const & time_n,
                                             real64 const & dt,
                                             WellElementSubRegion const & subRegion )
 {
-//  WellSolverBase::implicitStepComplete( time_n, dt, domain );
-
-  if( getLogLevel() > 0 )
-  {
-    printRates( time_n, dt, subRegion );
-  }
+  printRates( time_n, dt, subRegion );
 }
 
 void SinglePhaseWell::printRates( real64 const & time_n,
@@ -1326,7 +1388,7 @@ void SinglePhaseWell::printRates( real64 const & time_n,
                                   WellElementSubRegion const & subRegion )
 {
 
-  GEOS_UNUSED_VAR( dt );// FIX THIS tjb
+  GEOS_UNUSED_VAR( dt );  // FIX THIS tjb
   // the rank that owns the reference well element is responsible for the calculations below.
   if( !subRegion.isLocallyOwned() )
   {

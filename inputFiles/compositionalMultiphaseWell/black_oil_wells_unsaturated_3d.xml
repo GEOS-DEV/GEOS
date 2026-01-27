@@ -251,7 +251,7 @@
     <PackCollection
       name="wellRateCollection"
       objectPath="ElementRegions/wellRegion1/wellRegion1UniqueSubRegion"
-      fieldName="wellElementMixtureConnectionRate"/>
+      fieldName="wellElementConnectionRate"/>
   </Tasks>
 
   <Outputs>

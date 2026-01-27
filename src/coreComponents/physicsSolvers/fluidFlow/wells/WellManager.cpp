@@ -517,15 +517,17 @@ void WellManager::assembleSystem( real64 const time,
       WellControls & wellControls = getWellControls( subRegion );
       // assemble the accumulation term in the mass balance equations
       wellControls.assembleWellAccumulationTerms( time, dt, subRegion, dofManager, localMatrix, localRhs );
-      // assemble the pressure relations between well elements
-      wellControls.assembleWellPressureRelations( time, dt, subRegion, dofManager, localMatrix, localRhs );
-      // assemble well constraint terms
-      wellControls.assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
-      // compute the perforation rates (later assembled by the coupled solver)
-      wellControls.computeWellPerforationRates( time, dt, elementRegionManager, subRegion );
-      // assemble the flux terms in the mass balance equations
-      wellControls.assembleWellFluxTerms( time, dt, subRegion, dofManager, localMatrix, localRhs );
-
+      if( wellControls.isWellOpen() )
+      {
+        // assemble the pressure relations between well elements
+        wellControls.assembleWellPressureRelations( time, dt, subRegion, dofManager, localMatrix, localRhs );
+        // assemble well constraint terms
+        wellControls.assembleWellConstraintTerms( time, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+        // compute the perforation rates (later assembled by the coupled solver)
+        wellControls.computeWellPerforationRates( time, dt, elementRegionManager, subRegion );
+        // assemble the flux terms in the mass balance equations
+        wellControls.assembleWellFluxTerms( time, dt, subRegion, dofManager, localMatrix, localRhs );
+      }
     } );
   } );
 
@@ -667,7 +669,8 @@ void WellManager::initializePostInitialConditionsPreSubGroups()
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
     {
-
+      // reconstruct local connectivity needed for flux calculations
+      subRegion.reconstructLocalConnectivity();
       WellControls & wellControls = getWellControls( subRegion );
       wellControls.initializeWellPostInitialConditionsPreSubGroups( subRegion );
 
@@ -904,6 +907,11 @@ WellManager::scalingForSystemSolution( DomainPartition & domain,
                                        getName(), minTempScalingFactor ) );
     }
 
+  }
+  else
+  {
+    // Single phase well scaling- not implemented yet
+    scalingFactor=1.0;
   }
   return LvArray::math::max( scalingFactor, m_minScalingFactor );
 
