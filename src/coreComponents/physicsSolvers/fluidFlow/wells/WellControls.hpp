@@ -262,7 +262,7 @@ public:
    */
   virtual void computeWellPerforationRates( real64 const & time_n,
                                             real64 const & GEOS_UNUSED_PARAM( dt ),
-                                            ElementRegionManager const & elemManager,
+                                            ElementRegionManager & elemManager,
                                             WellElementSubRegion & subRegion ) = 0;
 
   /**
@@ -316,6 +316,13 @@ public:
                            MeshLevel & mesh,
                            WellElementSubRegion & subRegion ) = 0;
 
+  virtual void applyWellBoundaryConditions( real64 const time_n,
+                                            real64 const dt,
+                                            ElementRegionManager & elemManager,
+                                            WellElementSubRegion & subRegion,
+                                            DofManager const & dofManager,
+                                            arrayView1d< real64 > const & localRhs,
+                                            CRSMatrixView< real64, globalIndex const > const & localMatrix ) = 0;
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param subRegion the well subregion containing all the primary and dependent fields
@@ -503,6 +510,12 @@ public:
   Control getInputControl() const { return m_inputControl; }
 
   /**
+   * @brief getter for esitmator switch
+   * @return True if estimate well solution
+   */
+  integer estimateSolution() const { return m_estimateSolution; }
+
+  /**
    * @brief Getter for the reference gravity coefficient
    * @return the reference gravity coefficient
    */
@@ -611,6 +624,7 @@ public:
    */
   bool getWellState() const;
 
+
   /**
    * @brief Set the current consrtaint
    * @param[in] currentConstraint pointer to constraint
@@ -707,6 +721,26 @@ public:
    * @return a Status
    */
   WellControls::Status getWellStatus () const { return m_wellStatus; }
+
+
+  /**
+   * @brief Set thermal effects enable
+   * @param[in] true/false
+   */
+  void enableThermalEffects ( bool enable ) { m_thermalEffectsEnabled = enable; };
+
+  /**
+   * @brief Are thermal effects enabled
+   * @return true if thermal effects are enabled, false otherwise
+   */
+  bool thermalEffectsEnabled() const { return m_thermalEffectsEnabled; }
+
+  /**
+   * @brief Is isoThermalEstimator  enabled
+   * @return true if isoThermalEstimator is enabled, false otherwise
+   */
+  bool isoThermalEstimatorEnabled() const { return m_enableIsoThermalEstimator; }
+
   ///@}
 
 
@@ -758,7 +792,8 @@ public:
     static constexpr char const * initialPressureCoefficientString() { return "initialPressureCoefficient"; }
     /// string key for the esitmate well solution flag
     static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
-
+    /// string key for the enable iso thermal estimator flag
+    static constexpr char const * enableIsoThermalEstimatorString() { return "enableIsoThermalEstimator"; }
     /// string key for the minimum BHP presssure for a producer
     static constexpr char const * minimumBHPConstraintString() { return "MinimumBHPConstraint"; }
     /// string key for the maximum BHP presssure for a injection
@@ -908,6 +943,9 @@ protected:
   /// Well open flag
   bool m_wellOpen;
 
+  /// flag to use the estimator
+  integer m_estimateSolution;
+
   /// Well status table name
   string m_statusTableName;
 
@@ -919,7 +957,9 @@ protected:
 
   /// Region average temperature used in volume rate constraint calculations
   real64 m_regionAverageTemperature;
-
+  /// Flag to enable thermal effects in wellbore calculations
+  bool m_thermalEffectsEnabled;
+  integer m_enableIsoThermalEstimator;
 };
 
 

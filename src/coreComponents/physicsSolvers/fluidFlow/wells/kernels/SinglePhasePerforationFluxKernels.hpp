@@ -318,7 +318,7 @@ public:
                    PerforationData * const perforationData,
                    ElementSubRegionBase const & subRegion,
                    constitutive::SingleFluidBase const & fluid,
-                   ElementRegionManager const & elemManager )
+                   ElementRegionManager & elemManager )
   {
     integer constexpr IS_THERMAL = 0;
     using kernelType = PerforationFluxKernel< IS_THERMAL >;
@@ -514,7 +514,7 @@ public:
                    PerforationData * const perforationData,
                    ElementSubRegionBase const & subRegion,
                    SingleFluidBase const & fluid,
-                   ElementRegionManager const & elemManager )
+                   ElementRegionManager & elemManager )
   {
     integer constexpr IS_THERMAL = 1;
     using kernelType = PerforationFluxKernel< IS_THERMAL >;

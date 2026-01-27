@@ -137,7 +137,7 @@ public:
    */
   virtual void computeWellPerforationRates( real64 const & time_n,
                                             real64 const & GEOS_UNUSED_PARAM( dt ),
-                                            ElementRegionManager const & elemManager,
+                                            ElementRegionManager & elemManager,
                                             WellElementSubRegion & subRegion ) override;
 
   /**
@@ -201,6 +201,13 @@ public:
                            MeshLevel & mesh,
                            WellElementSubRegion & subRegion ) override;
 
+  virtual void applyWellBoundaryConditions ( real64 const GEOS_UNUSED_PARAM( time_n ),
+                                             real64 const GEOS_UNUSED_PARAM( dt ),
+                                             ElementRegionManager & GEOS_UNUSED_PARAM( elemManager ),
+                                             WellElementSubRegion & GEOS_UNUSED_PARAM( subRegion ),
+                                             DofManager const & GEOS_UNUSED_PARAM( dofManager ),
+                                             arrayView1d< real64 > const & GEOS_UNUSED_PARAM( localRhs ),
+                                             CRSMatrixView< real64, globalIndex const > const & GEOS_UNUSED_PARAM( localMatrix ) )override {};
 
   virtual void resetStateToBeginningOfStep( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
 
@@ -264,7 +271,8 @@ public:
 
 
   /**
-   * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @brief Recompute all dependent quantities from primary variables (including constitutive
+   * models)
    * @param elemManager the element region manager
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */

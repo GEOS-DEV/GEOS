@@ -987,7 +987,7 @@ void SinglePhaseWell::assembleWellAccumulationTerms( real64 const & time,
 
 void SinglePhaseWell::computeWellPerforationRates( real64 const & time_n,
                                                    real64 const & GEOS_UNUSED_PARAM( dt ),
-                                                   ElementRegionManager const & elemManager,
+                                                   ElementRegionManager & elemManager,
                                                    WellElementSubRegion & subRegion )
 {
   GEOS_MARK_FUNCTION;

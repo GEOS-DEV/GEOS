@@ -182,6 +182,8 @@ public:
     /// String key for the well constraint value
     static constexpr char const * constraintValueString() { return "constraintValue"; }
 
+    /// String key for the well constraint active flag
+    static constexpr char const * constraintActiveString() { return "constraintActive"; }
 
   }
   /// ViewKey struct for the WellControls class
@@ -246,7 +248,7 @@ protected:
 protected:
 
   /// Constraint status
-  bool m_isConstraintActive;
+  integer m_isConstraintActive;
 
   /// Flag to indicate whether a schedule table should be generated for constraint value;
   bool m_useScheduleTable;

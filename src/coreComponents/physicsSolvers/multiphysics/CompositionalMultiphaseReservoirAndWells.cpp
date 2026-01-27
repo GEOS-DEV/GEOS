@@ -358,6 +358,7 @@ assembleCouplingTerms( real64 const time_n,
         coupledReservoirAndWellKernels::
           ThermalCompositionalMultiPhaseFluxKernelFactory::
           createAndLaunch< parallelDevicePolicy<> >( numComps,
+                                                     wellControls.thermalEffectsEnabled( ),
                                                      wellControls.isProducer(),
                                                      dt,
                                                      rankOffset,

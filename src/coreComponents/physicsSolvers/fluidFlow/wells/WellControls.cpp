@@ -53,7 +53,8 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_wellStatus( WellControls::Status::OPEN ),
   m_wellOpen( false ),
   m_statusTable( nullptr ),
-  m_regionAveragePressure( -1 )
+  m_regionAveragePressure( -1 ),
+  m_enableIsoThermalEstimator( 0 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -122,15 +123,19 @@ WellControls::WellControls( string const & name, Group * const parent )
                     " - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) \n"
                     " - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) " );
 
-#if 0
-  registerWrapper( viewKeyStruct::targetRegionsString(), &m_targetRegionNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Allowable regions that the solver may be applied to. Note that this does not indicate that "
-                    "the solver will be applied to these regions, only that allocation will occur such that the "
-                    "solver may be applied to these regions. The decision about what regions this solver will be"
-                    "applied to rests in the EventManager." );
-#endif
+  this->registerWrapper( viewKeyStruct::estimateWellSolutionString(), &m_estimateSolution ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag to esitmate well solution prior to coupled reservoir and well solve." );
+
+  registerWrapper( viewKeyStruct::enableIsoThermalEstimatorString(), &m_enableIsoThermalEstimator ).
+    setDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Estimator configuration option to disable thermal effects on initial well constraint solve and then converge solution with thermal effects enabled: \n"
+                    " - If the flag is set to 1, thermal effects are enabled during the initial constraint solve. \n"
+                    " - If the flag is set to 0, thermal effects are disabled during the initial constraint solve." );
+
+
   addLogLevel< logInfo::WellControl >();
 }
 
@@ -408,7 +413,10 @@ void WellControls::setNextDtFromTables( real64 const & currentTime, real64 & nex
 {
   if( isProducer() )
   {
-    getMinBHPConstraint()->setNextDtFromTables( currentTime, nextDt );
+    if( getMinBHPConstraint() != nullptr )
+    {
+      getMinBHPConstraint()->setNextDtFromTables( currentTime, nextDt );
+    }
     for( auto const & constraint : m_productionRateConstraintList )
     {
       constraint->setNextDtFromTables( currentTime, nextDt );

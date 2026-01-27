@@ -332,7 +332,6 @@ public:
         // increment component fluxes
         for( integer ic = 0; ic < NC; ++ic )
         {
-          // Note this needs to be uncommented out
           m_compPerfRate[iperf][ic] += flux *  m_resPhaseCompFrac[er][esr][ei][0][ip][ic];
           dCompFrac[CP_Deriv::dP] = m_dResPhaseCompFrac[er][esr][ei][0][ip][ic][Deriv::dP];
           if constexpr (IS_THERMAL)
@@ -352,10 +351,6 @@ public:
             m_dCompPerfRate[iperf][TAG::RES][ic][jc]  += flux * dCompFrac[jc];
             m_dCompPerfRate[iperf][TAG::WELL][ic][jc] += dFlux[TAG::WELL][jc] *  m_resPhaseCompFrac[er][esr][ei][0][ip][ic];
           }
-        }
-        if constexpr ( IS_THERMAL )
-        {
-          fluxKernelOp( iwelem, er, esr, ei, ip, potDiff, flux, dFlux );
         }
 
       }  // end resevoir is upstream phase loop
@@ -480,11 +475,12 @@ public:
           m_dCompPerfRate[iperf][TAG::WELL][ic][CP_Deriv::dC+jc] += m_dWellElemCompFrac_dCompDens[iwelem][ic][jc] * flux;
         }
       }
-      if constexpr ( IS_THERMAL )
-      {
-        fluxKernelOp( iwelem, er, esr, ei, -1, potDiff, flux, dFlux );
-      }
+
     } // end upstream
+    if constexpr ( IS_THERMAL )
+    {
+      fluxKernelOp( iwelem, er, esr, ei, potDiff, dPotDiff, flux, dFlux );
+    }
   }
   /**
    * @brief Performs the kernel launch
@@ -607,9 +603,21 @@ class PerforationFluxKernel : public isothermalPerforationFluxKernels::Perforati
 public:
 
   using Base = isothermalPerforationFluxKernels::PerforationFluxKernel< NC, NP, IS_THERMAL >;
-  using Base::m_resPhaseCompFrac;
-  using Base::m_dResCompFrac_dCompDens;
   using Base::m_dWellElemCompFrac_dCompDens;
+  using Base::m_resPres;
+  using Base::m_resPhaseVolFrac;
+  using Base::m_dResPhaseVolFrac;
+  using Base::m_dResCompFrac_dCompDens;
+  using Base::m_resPhaseDens;
+  using Base::m_dResPhaseDens;
+  using Base::m_resPhaseVisc;
+  using Base::m_dResPhaseVisc;
+  using Base::m_resPhaseCompFrac;
+  using Base::m_dResPhaseCompFrac;
+  using Base::m_resPhaseRelPerm;
+  using Base::m_dResPhaseRelPerm_dPhaseVolFrac;
+  using Base::m_isInjector;
+  using Base::m_isCrossflowEnabled;
 
   /// Compile time value for the number of components
   static constexpr integer numComp = NC;
@@ -631,6 +639,8 @@ public:
 
   using ThermalMultiFluidAccessors =
     StencilMaterialAccessors< MultiFluidBase,
+                              fields::multifluid::phaseFraction,
+                              fields::multifluid::dPhaseFraction,
                               fields::multifluid::phaseEnthalpy,
                               fields::multifluid::dPhaseEnthalpy >;
 
@@ -645,7 +655,7 @@ public:
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   PerforationFluxKernel ( PerforationData * const perforationData,
-                          ElementSubRegionBase const & subRegion,
+                          ElementSubRegionBase & subRegion,
                           MultiFluidBase const & wellFluid,
                           CompFlowAccessors const & compFlowAccessors,
                           MultiFluidAccessors const & multiFluidAccessors,
@@ -668,6 +678,8 @@ public:
     m_energyPerfFlux( perforationData->getField< fields::well::energyPerforationFlux >() ),
     m_dEnergyPerfFlux( perforationData->getField< fields::well::dEnergyPerforationFlux >() ),
     m_temp( thermalCompFlowAccessors.get( fields::flow::temperature {} ) ),
+    m_resPhaseFraction( thermalMultiFluidAccessors.get( fields::multifluid::phaseFraction {} ) ),
+    m_dResPhaseFraction( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseFraction {} )),
     m_resPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::phaseEnthalpy {} ) ),
     m_dResPhaseEnthalpy( thermalMultiFluidAccessors.get( fields::multifluid::dPhaseEnthalpy {} ) )
   {}
@@ -690,38 +702,121 @@ public:
       }
     }
 
-    Base::computeFlux ( iperf, [&]( localIndex const iwelem, localIndex const er, localIndex const esr, localIndex const ei, localIndex const ip,
-                                    real64 const potDiff, real64 const flux, real64 const (&dFlux)[2][CP_Deriv::nDer] )
+    Base::computeFlux ( iperf, [&]( localIndex const iwelem, localIndex const er, localIndex const esr, localIndex const ei
+                                    , real64 const potDiff, real64 const dPotDiff[2][CP_Deriv::nDer],
+                                    real64 const flux, real64 const (&dFlux)[2][CP_Deriv::nDer] )
     {
+      real64 dMob[CP_Deriv::nDer]{};
+      GEOS_UNUSED_VAR( iwelem );
       if( potDiff >= 0 )    // ** reservoir cell is upstream **
       {
-
-        real64 const res_enthalpy =  m_resPhaseEnthalpy[er][esr][ei][0][ip];
-
-        m_energyPerfFlux[iperf] += flux * res_enthalpy;
-
-        // energy equation derivatives WRT res P & T
-        m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] += dFlux[TAG::RES][CP_Deriv::dP] * res_enthalpy +
-                                                            flux *  m_dResPhaseEnthalpy[er][esr][ei][0][ip][Deriv::dP];
-        m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dT] += dFlux[TAG::RES][CP_Deriv::dT] * res_enthalpy +
-                                                            flux *  m_dResPhaseEnthalpy[er][esr][ei][0][ip][Deriv::dT];
-        // energy equation derivatives WRT well P
-        m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP] += dFlux[TAG::WELL][CP_Deriv::dP] * res_enthalpy;
-        m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT] += dFlux[TAG::WELL][CP_Deriv::dT] * res_enthalpy;
-
-
-        // energy equation derivatives WRT reservoir dens
-        real64 dProp_dC[numComp]{};
-        applyChainRule( NC,
-                        m_dResCompFrac_dCompDens[er][esr][ei],
-                        m_dResPhaseEnthalpy[er][esr][ei][0][ip],
-                        dProp_dC,
-                        Deriv::dC );
-
-        for( integer jc = 0; jc < NC; ++jc )
+        real64 eflux = 0.0;
+        // loop over phases, compute and upwind phase flux
+        // and sum contributions to each component's perforation rate
+        for( integer ip = 0; ip < NP; ++ip )
         {
-          m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dC+jc] += flux * dProp_dC[jc];
-        }
+          // skip the rest of the calculation if the phase is absent
+          // or if crossflow is disabled for injectors
+          real64 const resPhaseVolFrac = m_resPhaseVolFrac[er][esr][ei][ip];
+          bool const phaseExists = (resPhaseVolFrac > 0 );
+          if( !phaseExists || (m_isInjector && !m_isCrossflowEnabled) )
+          {
+            continue;
+          }
+
+          // here, we have to recompute the reservoir phase mobility (not including density)
+
+          // density
+          real64 const resDens = m_resPhaseDens[er][esr][ei][0][ip];
+          real64 dDens[CP_Deriv::nDer]{};
+          dDens[CP_Deriv::dP]  = m_dResPhaseDens[er][esr][ei][0][ip][Deriv::dP];
+          dDens[CP_Deriv::dT]  = m_dResPhaseDens[er][esr][ei][0][ip][Deriv::dT];
+          applyChainRule( NC, m_dResCompFrac_dCompDens[er][esr][ei],
+                          m_dResPhaseDens[er][esr][ei][0][ip],
+                          &dDens[CP_Deriv::dC],
+                          Deriv::dC );
+          // viscosity
+          real64 const resVisc = m_resPhaseVisc[er][esr][ei][0][ip];
+          real64 dVisc[CP_Deriv::nDer]{};
+          dVisc[CP_Deriv::dP]  = m_dResPhaseVisc[er][esr][ei][0][ip][Deriv::dP];
+          dVisc[CP_Deriv::dT]  = m_dResPhaseVisc[er][esr][ei][0][ip][Deriv::dT];
+          applyChainRule( NC, m_dResCompFrac_dCompDens[er][esr][ei],
+                          m_dResPhaseVisc[er][esr][ei][0][ip],
+                          &dVisc[CP_Deriv::dC],
+                          Deriv::dC );
+          // enthalpy
+          real64 const resEnthalpy =  m_resPhaseEnthalpy[er][esr][ei][0][ip];
+          real64 dResEnthalpy[CP_Deriv::nDer]{};
+          dResEnthalpy[CP_Deriv::dP]  = m_dResPhaseEnthalpy[er][esr][ei][0][ip][Deriv::dP];
+          dResEnthalpy[CP_Deriv::dT]  = m_dResPhaseEnthalpy[er][esr][ei][0][ip][Deriv::dT];
+
+          applyChainRule( NC, m_dResCompFrac_dCompDens[er][esr][ei],
+                          m_dResPhaseEnthalpy[er][esr][ei][0][ip],
+                          &dResEnthalpy[CP_Deriv::dC],
+                          Deriv::dC );
+
+          // relative permeability
+          real64 const resRelPerm = m_resPhaseRelPerm[er][esr][ei][0][ip];
+          real64 dRelPerm[CP_Deriv::nDer]{};
+          for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+          {
+            dRelPerm[jc]=0;
+          }
+          for( integer jp = 0; jp < NP; ++jp )
+          {
+            real64 const dResRelPerm_dS = m_dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
+            dRelPerm[CP_Deriv::dP] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dP];
+            dRelPerm[CP_Deriv::dT] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dT];
+            for( integer jc = 0; jc < NC; ++jc )
+            {
+              dRelPerm[CP_Deriv::dC+jc] += dResRelPerm_dS * m_dResPhaseVolFrac[er][esr][ei][jp][Deriv::dC+jc];
+            }
+          }
+
+          // compute the reservoir phase mobility, including phase density and enthalpy
+          real64 const resPhaseMob = resDens * resRelPerm / resVisc;
+          real64 const resPhaseMobE = resEnthalpy * resPhaseMob;
+
+          // Handles all dependencies
+          for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+          {
+            dMob[jc] = resPhaseMob*dResEnthalpy[jc]  +
+                       resPhaseMobE*(dRelPerm[jc]/(resRelPerm+0.000000001) + dDens[jc] / (resDens +0.000000001)  - dVisc[jc]/(resVisc+0.000000001));
+          }
+          // compute the phase flux and derivatives using upstream cell mobility
+          eflux = resPhaseMobE * potDiff;
+          real64 dEFlux[2][CP_Deriv::nDer]{};
+          // Handles all dependencies
+          for( integer jc = 0; jc < CP_Deriv::nDer; ++jc )
+          {
+            dEFlux[TAG::RES][jc]  = dMob[jc] * potDiff + resPhaseMobE * dPotDiff[TAG::RES][jc];
+            m_dEnergyPerfFlux[iperf][TAG::WELL][jc] = resPhaseMobE * dPotDiff[TAG::WELL][jc];
+          }
+          m_energyPerfFlux[iperf] += resPhaseVolFrac * eflux;
+          // energy equation derivatives WRT res P & T
+          m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dP] += dEFlux[TAG::RES][CP_Deriv::dP] * resPhaseVolFrac +
+                                                              eflux *   m_dResPhaseFraction[er][esr][ei][0][ip][Deriv::dP];
+          m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dT] += dEFlux[TAG::RES][CP_Deriv::dT] * resPhaseVolFrac +
+                                                              eflux *m_dResPhaseFraction[er][esr][ei][0][ip][Deriv::dT];
+          // energy equation derivatives WRT well P - //tjb
+          m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dP] += dEFlux[TAG::WELL][CP_Deriv::dP];
+          m_dEnergyPerfFlux[iperf][TAG::WELL][CP_Deriv::dT] += dEFlux[TAG::WELL][CP_Deriv::dT];
+
+          real64 dProp_dC[numComp]{};
+          applyChainRule( NC,
+                          m_dResCompFrac_dCompDens[er][esr][ei],
+                          m_dResPhaseFraction[er][esr][ei][0][ip],
+                          dProp_dC,
+                          Deriv::dC );
+          for( integer jc = 0; jc < NC; ++jc )
+          {
+            real64 const resPhaseCompFrac = m_resPhaseCompFrac[er][esr][ei][0][ip][jc];
+            m_dEnergyPerfFlux[iperf][TAG::RES][CP_Deriv::dC+jc] +=  eflux * dProp_dC[jc] +
+                                                                   resPhaseCompFrac * dFlux[TAG::RES][CP_Deriv::dC+jc];
+          }
+
+        } // end resevoir is upstream phase loop
+
       }
       else   // ** reservoir cell is downstream
       {
@@ -814,6 +909,8 @@ protected:
   ElementViewConst< arrayView1d< real64 const > > const m_temp;
 
   /// Views on phase enthalpies
+  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_resPhaseFraction;
+  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const m_dResPhaseFraction;
   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_resPhaseEnthalpy;
   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const m_dResPhaseEnthalpy;
 
@@ -846,7 +943,7 @@ public:
                    integer const numPhases,
                    string const flowSolverName,
                    PerforationData * const perforationData,
-                   ElementSubRegionBase const & subRegion,
+                   ElementSubRegionBase & subRegion,
                    MultiFluidBase const & fluid,
                    ElementRegionManager const & elemManager,
                    bool const isInjector,

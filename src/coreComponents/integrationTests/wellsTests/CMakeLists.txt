@@ -9,6 +9,8 @@ set( dependencyList mainInterface )
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
           testOpenClosePerf.cpp
+          testThermalEstimatorProdWell.cpp
+          testThermalEstimatorInjWell.cpp
           testReservoirCompositionalMultiphaseMSWells.cpp
           testReservoirThermalSinglePhaseMSWells.cpp
           testReservoirThermalSinglePhaseMSWells_RateInj.cpp
