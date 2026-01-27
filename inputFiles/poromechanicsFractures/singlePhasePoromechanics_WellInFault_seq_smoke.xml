@@ -56,12 +56,12 @@
     <WellManager
       name="singlePhaseWellSolver"
       logLevel="1"
-      targetRegions="{ wellRegion1, wellRegion2 }"
-      writeCSV="1">
+      targetRegions="{ wellRegion1, wellRegion2 }">
       <SinglePhaseWell
         name="wellControls1"
         control="BHP"
         logLevel="2"
+        writeCSV="1"
         type="producer">
         <MinimumBHPConstraint
           name="minbhp"
@@ -75,6 +75,7 @@
         name="wellControls2"
         control="BHP"
         logLevel="2"
+        writeCSV="1"
         type="injector">
         <MaximumBHPConstraint
           name="maxbhp"
