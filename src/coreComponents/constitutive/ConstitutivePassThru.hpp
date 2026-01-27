@@ -268,6 +268,28 @@ struct ConstitutivePassThru< NullModel >
   }
 };
 
+/**
+ * Specialization for the PorousSolid< ElasticIsotropic, ConstantPermeability > model.
+ */
+template<>
+struct ConstitutivePassThru< PorousSolid< ElasticIsotropic, ConstantPermeability > >
+{
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    if( auto * const ptr = dynamic_cast< PorousSolid< ElasticIsotropic, ConstantPermeability > * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr );
+    }
+    else
+    {
+      GEOS_ERROR( "ConstitutivePassThru< PorousSolid< ElasticIsotropic, ConstantPermeability > >::execute failed on constitutive relation "
+                  << constitutiveRelation.getDataContext() << " with type "
+                  << LvArray::system::demangleType( constitutiveRelation ) );
+    }
+  }
+};
 
 /**
  * Specialization for the Damage models.

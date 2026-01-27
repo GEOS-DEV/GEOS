@@ -11,7 +11,8 @@ if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
           testCompMultiphaseFlow.cpp
           testCompMultiphaseFlowHybrid.cpp
-          testReactiveCompositionalMultiphaseOBL.cpp )
+          testReactiveCompositionalMultiphaseOBL.cpp
+          testCompositionalMultiPhaseMFDPolyhedral.cpp )
 endif()
 
 set( tplDependencyList ${parallelDeps} gtest )
@@ -55,6 +56,12 @@ foreach(test ${gtest_geosx_tests})
         TARGET ${test_name} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 ${CMAKE_CURRENT_SOURCE_DIR}/polyhedral_voronoi_complex.vtu
+                $<TARGET_FILE_DIR:${test_name}>
+    )
+    add_custom_command(
+        TARGET ${test_name} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_CURRENT_SOURCE_DIR}/hex_pyr_tet_nested_mixed.vtu
                 $<TARGET_FILE_DIR:${test_name}>
     )
                      

@@ -73,13 +73,13 @@ public:
 
     for( integer r=0; r < numKineticReactions; ++r )
     {
-      real64 const volumeFractionIncrement = kineticReactionMolarIncrements[r] * molarWeights[r]/mineralDensities[r];
+      real64 const volumeFractionIncrement = -kineticReactionMolarIncrements[r] * molarWeights[r]/mineralDensities[r];
       volumeFractions[r] = volumeFractions_n[r] + volumeFractionIncrement;
 
-      porosityIncrement += volumeFractionIncrement;
+      porosityIncrement -= volumeFractionIncrement;
     }
 
-    porosity = porosity_n + porosityIncrement; // To check if it should be plus or minus
+    porosity = porosity_n + porosityIncrement;
 
     if( porosity < 0 )
     {

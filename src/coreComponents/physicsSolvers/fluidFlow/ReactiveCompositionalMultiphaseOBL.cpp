@@ -94,7 +94,7 @@ ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const st
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
+    setDescription( "Maximum (absolute) change in the composition fraction of any component within a single time step, in a Newton iteration" );
 
   this->registerWrapper( viewKeyStruct::transMultExpString(), &m_transMultExp ).
     setApplyDefaultValue( 1.0 ).
