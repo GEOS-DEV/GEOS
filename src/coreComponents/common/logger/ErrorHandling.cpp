@@ -446,22 +446,10 @@ void ErrorLogger::flushCurrentExceptionMessage()
   loggerMsgReportData.notifyMsg( getCurrentLogPart(),
                                  m_getCurrentExceptionMsg );
 
-  auto & stat = loggerMsgReportData.getMessageCounts()
-                  .at( getCurrentLogPart())
-                  .at( m_getCurrentExceptionMsg.m_type )
-                  .at( {m_getCurrentExceptionMsg.m_file, m_getCurrentExceptionMsg.m_line} );
-
-
-  loggerMsgReportData.setTotalCount( getCurrentLogPart(), m_getCurrentExceptionMsg.m_type,
-                                     { m_getCurrentExceptionMsg.m_file, m_getCurrentExceptionMsg.m_line},
-                                     MpiWrapper::sum( stat.count ));
-  if( MpiWrapper::commRank() == 0 )
+  writeToLogStream( m_getCurrentExceptionMsg );
+  if( isOutputFileEnabled() )
   {
-    writeToLogStream( m_getCurrentExceptionMsg );
-    if( isOutputFileEnabled() )
-    {
-      writeToYamlStream( m_getCurrentExceptionMsg );
-    }
+    writeToYamlStream( m_getCurrentExceptionMsg );
   }
 }
 

@@ -68,19 +68,6 @@ public:
   auto const & getMessageCounts() const
   { return m_messageCounts; }
 
-  /**
-   * @brief Sets the total count across all ranks for a specific message location
-   * @param logPartType The log part type
-   * @param msgType The message type (error, warning, etc.)
-   * @param location The source code location (file, line)
-   * @param totalCount The aggregated count across all MPI ranks
-   */
-  void setTotalCount( LogPart::Type logPartType, MsgType msgType,
-                      MsgStatistics::LocationKey locationKey, integer totalCount )
-  {
-    m_messageCounts.at( logPartType ).at( msgType ).at( locationKey ).totalCount = totalCount;
-  }
-
 private:
   /**
    * @brief Hierarchical storage of message statistics
