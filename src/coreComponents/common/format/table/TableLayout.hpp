@@ -697,13 +697,13 @@ private:
    * @brief Create and add a column to the columns vector given a string
    * @param columnName The column name
    */
-  void addColumn( string_view columnName );
+  TableLayout::Column & addColumn( string_view columnName );
 
   /**
    * @brief Create and add a column to the columns vector given a Column
    * @param column Vector containing addition information on the column
    */
-  void addColumn( TableLayout::Column const & column );
+  TableLayout::Column & addColumn( TableLayout::Column const & column );
 
 protected:
 

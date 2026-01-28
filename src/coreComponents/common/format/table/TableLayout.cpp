@@ -40,15 +40,17 @@ void TableLayout::addColumns( stdVector< TableLayout::Column > const & columns )
   }
 }
 
-void TableLayout::addColumn( string_view columnName )
+TableLayout::Column & TableLayout::addColumn( string_view columnName )
 {
   TableLayout::Column column = TableLayout::Column().setName( columnName );
   m_tableColumns.emplace_back( column );
+  return m_tableColumns.back();
 }
 
-void TableLayout::addColumn( TableLayout::Column const & column )
+TableLayout::Column & TableLayout::addColumn( TableLayout::Column const & column )
 {
   m_tableColumns.emplace_back( column );
+  return m_tableColumns.back();
 }
 
 TableLayout & TableLayout::setTitle( string_view title )
