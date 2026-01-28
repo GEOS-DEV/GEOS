@@ -48,6 +48,8 @@ MultiPhaseVolumeWeightedThermalConductivity::MultiPhaseVolumeWeightedThermalCond
 
 void MultiPhaseVolumeWeightedThermalConductivity::allocateConstitutiveData( dataRepository::Group & parent, localIndex const numPts )
 {
+  m_rockThermalConductivity.resize( 0, 1, 3 );
+
   MultiPhaseThermalConductivityBase::allocateConstitutiveData( parent, numPts );
 
   // TODO move into initializeState?
