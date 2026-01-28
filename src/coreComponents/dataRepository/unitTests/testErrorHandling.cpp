@@ -464,13 +464,13 @@ TEST( ErrorHandling, testErrorReport )
   GEOS_WARNING( "warning" );
   GEOS_WARNING( "warning" );
 
-  EXPECT_EQ( testErrorLogger.getLoggerReportData().get()
+  EXPECT_EQ( testErrorLogger.getLoggerReportData().getMessageCounts()
                .at( LogPart::Type::MeshGeneration )
                .at( MsgType::Warning ).size(), 2 );
-  EXPECT_EQ( testErrorLogger.getLoggerReportData().get()
+  EXPECT_EQ( testErrorLogger.getLoggerReportData().getMessageCounts()
                .at( LogPart::Type::NumericalMethods )
                .at( MsgType::Warning ).size(), 2 );
-  EXPECT_EQ( testErrorLogger.getLoggerReportData().get()
+  EXPECT_EQ( testErrorLogger.getLoggerReportData().getMessageCounts()
                .at( LogPart::Type::ImportFields )
                .at( MsgType::Warning ).size(), 4 );
 }

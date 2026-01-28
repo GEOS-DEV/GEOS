@@ -19,12 +19,15 @@
 
 #include "ErrorHandling.hpp"
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/logger/Logger.hpp"
 
 // signal management
 #include <csignal>
 #include <cfenv>
 #include <cstring>
+#include <string>
+#include <unordered_set>
 
 namespace geos
 {
@@ -425,11 +428,12 @@ void ErrorLogger::writeToYamlStream( DiagnosticMsg & errMsg )
   }
 }
 
+
+
 void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg )
 {
   loggerMsgReportData.notifyMsg( getCurrentLogPart(),
-                                 errMsg,
-                                 1 );
+                                 errMsg );
   writeToLogStream( errMsg );
   if( isOutputFileEnabled() )
   {
@@ -440,12 +444,24 @@ void ErrorLogger::flushErrorMsg( DiagnosticMsg & errMsg )
 void ErrorLogger::flushCurrentExceptionMessage()
 {
   loggerMsgReportData.notifyMsg( getCurrentLogPart(),
-                                 m_getCurrentExceptionMsg,
-                                 1 );
-  writeToLogStream( m_getCurrentExceptionMsg );
-  if( isOutputFileEnabled() )
+                                 m_getCurrentExceptionMsg );
+
+  auto & stat = loggerMsgReportData.getMessageCounts()
+                  .at( getCurrentLogPart())
+                  .at( m_getCurrentExceptionMsg.m_type )
+                  .at( {m_getCurrentExceptionMsg.m_file, m_getCurrentExceptionMsg.m_line} );
+
+
+  loggerMsgReportData.setTotalCount( getCurrentLogPart(), m_getCurrentExceptionMsg.m_type,
+                                     { m_getCurrentExceptionMsg.m_file, m_getCurrentExceptionMsg.m_line},
+                                     MpiWrapper::sum( stat.count ));
+  if( MpiWrapper::commRank() == 0 )
   {
-    writeToYamlStream( m_getCurrentExceptionMsg );
+    writeToLogStream( m_getCurrentExceptionMsg );
+    if( isOutputFileEnabled() )
+    {
+      writeToYamlStream( m_getCurrentExceptionMsg );
+    }
   }
 }
 

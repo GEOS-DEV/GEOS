@@ -22,19 +22,23 @@
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableLayout.hpp"
 #include "common/format/table/TableTypes.hpp"
+#include <functional>
 #include <utility>
 
 namespace geos
 {
 
-void LogHistory::notifyMsg( LogPart::Type logPartName, DiagnosticMsg const & msgType, integer threadCount )
+void LogHistory::notifyMsg( LogPart::Type logPartName, DiagnosticMsg const & msgType )
 {
-  // TODO reduction before notify and set count as parameter
-  NumMsg numMsg = {msgType.m_file, msgType.m_line, threadCount};
-  m_messageCounts
-    .get_inserted( logPartName )
-    .get_inserted( msgType.m_type )
-    .emplace_back( numMsg );
+  MsgStatistics::LocationKey locationKey = {msgType.m_file , msgType.m_line};
+  auto & stats = m_messageCounts
+                   .get_inserted( logPartName )
+                   .get_inserted( msgType.m_type )
+                   .get_inserted( locationKey );
+
+  stats.count++;
+  // retirer
+  stats.totalCount++;
 }
 
 template<>
@@ -49,7 +53,7 @@ string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCou
   }
 
   TableData data;
-  for( auto const & [ logPartName, msgTypesStatistics ] : messageCounts.get() )
+  for( auto const & [ logPartName, msgTypesStatistics ] : messageCounts.getMessageCounts() )
   {
     stdVector< TableData::CellData > row;
     row.emplace_back( TableData::CellData{CellType::Value,
@@ -57,16 +61,16 @@ string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCou
     for( size_t msgTypeIdx = (size_t) MsgType::Error; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
     {
       MsgType const currentType = (MsgType) msgTypeIdx;
-      int count = 0;
+      int totalCount = 0;
       auto itStatistics =  msgTypesStatistics.find( currentType );
       if( itStatistics != msgTypesStatistics.end())
       {
         for( auto const & stats : itStatistics->second )
         {
-          count += stats.count;
+          totalCount += stats.second.totalCount;
         }
       }
-      row.emplace_back( TableData::CellData{CellType::Value, std::to_string( count )} );
+      row.emplace_back( TableData::CellData{CellType::Value, std::to_string( totalCount )} );
     }
     data.addRow( row );
   }

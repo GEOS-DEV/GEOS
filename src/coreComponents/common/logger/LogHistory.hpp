@@ -24,23 +24,27 @@
 #include "common/format/LogPart.hpp"
 #include "common/format/table/TableFormatter.hpp"
 #include "DiagnosticMessage.hpp"
+#include "common/logger/MsgType.hpp"
 
 
 namespace geos
 {
 
 /**
- * @brief Structure containing the statistics of a diagnostic message
+ * @brief Statistics for a diagnostic message at a specific location
  */
-struct NumMsg
+struct MsgStatistics
 {
-  /// the source location file
-  string fileLocation;
-  /// the source location line (default is 0)
-  integer codeLocation;
-  /// TODO
+  /// Key identifying the source location
+  using LocationKey = std::pair< string, integer >;
+  /// Source code location
+  LocationKey locationKey;
+  /// Number of occurrences on the current rank
   integer count;
+  /// Total number of occurrences across all ranks
+  integer totalCount;
 };
+
 
 /**
  * @brief Keep track of all diagnostic message occured during the simulation
@@ -49,23 +53,40 @@ class LogHistory
 {
 public:
 
+
   /**
    * @brief Report a diagnostic message
    * @param logPartName The logPart the message occured
    * @param diagMsg The diagnostic message to record
    * @param threadCount
    */
-  void notifyMsg( LogPart::Type logPartName, DiagnosticMsg const & diagMsg, integer threadCount );
+  void notifyMsg( LogPart::Type logPartName, DiagnosticMsg const & diagMsg );
 
   /**
    * @return The const messageCounts
    */
-  auto const & get() const
+  auto const & getMessageCounts() const
   { return m_messageCounts; }
 
+  /**
+   * @brief Sets the total count across all ranks for a specific message location
+   * @param logPartType The log part type
+   * @param msgType The message type (error, warning, etc.)
+   * @param location The source code location (file, line)
+   * @param totalCount The aggregated count across all MPI ranks
+   */
+  void setTotalCount( LogPart::Type logPartType, MsgType msgType,
+                      MsgStatistics::LocationKey locationKey, integer totalCount )
+  {
+    m_messageCounts.at( logPartType ).at( msgType ).at( locationKey ).totalCount = totalCount;
+  }
+
 private:
-  /// Keep track of all classified diagnostic
-  stdMap< LogPart::Type, stdMap< MsgType, stdVector< NumMsg > > > m_messageCounts;
+  /**
+   * @brief Hierarchical storage of message statistics
+   * Structure: LogPart -> MsgType -> SourceLocation -> Statistics
+   */
+  stdMap< LogPart::Type, stdMap< MsgType, stdMap< MsgStatistics::LocationKey, MsgStatistics > > > m_messageCounts;
 
 };
 
