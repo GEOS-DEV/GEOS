@@ -7,8 +7,9 @@ def create_pvt_test(name, description=None):
     return TestDeck(
         name=name,
         description=description,
-        partitions=((1, 1, 1)),
+        partitions=[(1, 1, 1)],
         restart_step=0,
+        check_step=0,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
 
 decks = [
