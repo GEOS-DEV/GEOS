@@ -176,8 +176,7 @@ TEST( ErrorHandling, testYamlFileExceptionOutput )
   // Stacked exception test (contexts must appear sorted by priority)
   try
   {
-    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError,
-                                     context.getContextInfo().setPriority( 3 ) );
+    line1 = __LINE__; GEOS_THROW_IF( testValue == 5, "Empty Group", geos::DomainError,context.getContextInfo().setPriority( 3 ) );
   }
   catch( geos::DomainError const & ex )
   {
