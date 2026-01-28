@@ -20,6 +20,7 @@
 #include "LvArray/src/system.hpp"
 #include "common/LifoStorageCommon.hpp"
 #include "common/MemoryInfos.hpp"
+#include "common/MpiWrapper.hpp"
 #include "common/logger/Logger.hpp"
 #include "common/logger/LogHistory.hpp"
 #include "logger/ErrorHandling.hpp"
@@ -30,6 +31,7 @@
 #include <umpire/ResourceManager.hpp>
 #include <umpire/Allocator.hpp>
 #include <umpire/strategy/AllocationStrategy.hpp>
+#include <unordered_set>
 #include "umpire/util/MemoryResourceTraits.hpp"
 #include "umpire/util/Platform.hpp"
 
@@ -332,11 +334,79 @@ void setupEnvironment( int argc, char * argv[] )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+std::string extractAfterLastOccurrence( string const & str, char delimiter )
+{
+  size_t pos = str.find_last_of( delimiter );
+
+  if( pos == std::string::npos )
+  {
+    return "";
+  }
+
+  return str.substr( pos + 1 );
+}
+
 void cleanupEnvironment()
 {
   MemoryLogging::getInstance().memoryStatsReport();
-  TableTextFormatter tableReportFormatter;
-  GEOS_LOG_RANK_0( tableReportFormatter.toString< LogHistory >( GEOS_GLOBAL_LOGGER.getLoggerReportData()));
+  /// ------------------------------------------------------------------------------------------------------ ///
+  LogHistory const & logHistory =  ErrorLogger::global().getLoggerReportData();
+  stdVector< size_t > localAllocations;
+  std::hash< std::string > hash;
+  for( auto const & [logPartType, msgs] :  logHistory.getMessageCounts())
+  {
+    for( auto const & [msgType, stats] : msgs )
+    {
+      for( auto const & [location, stat] : stats )
+      {
+        string hashString = extractAfterLastOccurrence( location.first, '/' ) + std::to_string( location.second );
+        localAllocations.push_back( hash( hashString ));
+      }
+    }
+  }
+
+  integer const numRanks = MpiWrapper::commSize( MPI_COMM_GEOS );
+  integer const numValues = localAllocations.size();
+  stdVector< integer > recvCounts;
+  stdVector< integer > displs;
+  stdVector< size_t > globalAllocations;
+
+  if( MpiWrapper::commRank() == 0 )
+  {
+    recvCounts.resize( numRanks );
+    displs.resize( numRanks );
+  }
+
+  // Allows to know how much data each rank will send
+  MpiWrapper::gather( &numValues, 1, recvCounts.data(), 1, 0, MPI_COMM_GEOS );
+
+
+  if( MpiWrapper::commRank() == 0 )
+  {
+    integer totalSize = 0;
+    for( integer i = 0; i < numRanks; ++i )
+    {
+      displs[i] = totalSize;
+      totalSize += recvCounts[i];
+    }
+    globalAllocations.resize( totalSize );
+  }
+
+  // Gather all locationKey into globalAllocations
+  MpiWrapper::gatherv( localAllocations.data(),
+                       numValues,
+                       globalAllocations.data(),
+                       recvCounts.data(),
+                       displs.data(),
+                       0,
+                       MPI_COMM_GEOS );
+
+  if( MpiWrapper::commRank() == 0 )
+  { // Keep unique locationKey
+    std::unordered_set< size_t > setGlobalAllocations ( globalAllocations.begin(), globalAllocations.end());
+    TableTextFormatter tableReportFormatter;
+    GEOS_LOG( tableReportFormatter.toString< LogHistory >( GEOS_GLOBAL_LOGGER.getLoggerReportData()));
+  }
 
   LvArray::system::resetSignalHandling();
   finalizeLogger();
