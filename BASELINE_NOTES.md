@@ -6,6 +6,10 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3883 (2026-01-28) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3883-15334-4448822.tar.gz>
+=====================
+Add PVT driver tests
+
 PR #3940 (2026-01-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3940-15307-53de7ba.tar.gz>
 =====================
 Fix the transimissibility calculated between a cell and a surface element
