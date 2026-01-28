@@ -4,7 +4,7 @@ restartcheck_params = {'atol': 1e-08, 'rtol': 4e-07}
 
 def create_pvt_test(name, description=None):
     if description is None: description = name
-    TestDeck(
+    return TestDeck(
         name=name,
         description=description,
         partitions=((1, 1, 1)),
