@@ -329,13 +329,15 @@ void ErrorLogger::formatMsgForLog( DiagnosticMsg const & errMsg, std::ostream & 
   // --- STACKTRACE ---
   if( !errMsg.m_sourceCallStack.empty() )
   {
-    os << "\n** StackTrace of "<< errMsg.m_sourceCallStack.size() << " frames **\n";
+    os << "\n***** StackTrace of "<< errMsg.m_sourceCallStack.size() << " frames\n";
     for( size_t i = 0; i < errMsg.m_sourceCallStack.size(); i++ )
     {
-      os << GEOS_FMT( "Frame {}: {}\n", i, errMsg.m_sourceCallStack[i] );
+      os << GEOS_FMT( "  - Frame {:2}: {}\n", i, errMsg.m_sourceCallStack[i] );
     }
-    os << "=====\n";
+    os << "*****\n";
   }
+  // --- ENDING SPACE ---
+  os << "\n";
 }
 
 /**
