@@ -25,6 +25,7 @@
 #include <vtkExtractEdges.h>
 #include <vtkGeometryFilter.h>
 #include <vtkPointData.h>
+#include <vtkLogger.h>
 
 #include <algorithm>
 
@@ -624,11 +625,15 @@ void importFractureNetwork( string const & faceBlockName,
   CollocatedNodes const collocatedNodes( faceBlockName, faceMesh );
   // Add the appropriate validations (only 2d cells...)
 
+  // Only log warnings and more critical messages from the edge extractor
+  vtkLogger::SetStderrVerbosity( vtkLogger::VERBOSITY_WARNING );
   auto edgesExtractor = vtkSmartPointer< vtkExtractEdges >::New();
   edgesExtractor->SetInputData( faceMesh );
   edgesExtractor->UseAllPointsOn();  // Important: we want to prevent any node renumbering.
   edgesExtractor->Update();
   vtkPolyData * edges = edgesExtractor->GetOutput();
+  // Reset logging to default
+  vtkLogger::SetStderrVerbosity( vtkLogger::VERBOSITY_INFO );
 
   vtkIdType const num2dFaces = edges->GetNumberOfCells();
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
