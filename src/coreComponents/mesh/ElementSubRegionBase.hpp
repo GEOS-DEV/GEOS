@@ -198,6 +198,13 @@ public:
   { return m_elementType; }
 
   /**
+   * @brief Get the region attribute array.
+   * @return A const view to the region attribute array.
+   */
+  arrayView1d< integer const > getRegionAttribute() const
+  { return m_regionAttribute; }
+
+  /**
    * @brief Setter for m_elementType
    * @param elemType They type of element for this ElementSubRegion.
    */
@@ -229,6 +236,8 @@ public:
     static constexpr char const * elementCenterString() { return "elementCenter"; }
     /// @return String key for the member level field for the element volume.
     static constexpr char const * elementVolumeString() { return "elementVolume"; }
+    /// @return String key for the attribute field.
+    static constexpr char const * attributeString() { return "attribute"; }
   };
 
   /**
@@ -263,6 +272,9 @@ protected:
 
   /// Type of element in this subregion.
   ElementType m_elementType;
+
+  /// Region attribute value for elements in this subregion.
+  array1d< integer > m_regionAttribute;
 
   /**
    * @brief Compute the center of each element in the subregion.

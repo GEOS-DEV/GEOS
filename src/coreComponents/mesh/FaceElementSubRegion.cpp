@@ -105,6 +105,13 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
   localIndex const num2dElements = faceBlock.num2dElements();
   resize( num2dElements );
 
+  // Copy regionAttribute from FaceBlock
+  array1d< integer > const regionAttr = faceBlock.getRegionAttribute();
+  if( regionAttr.size() > 0 )
+  {
+    m_regionAttribute = regionAttr;
+  }
+
   m_toNodesRelation.base() = faceBlock.get2dElemToNodes();
   m_toEdgesRelation.base() = faceBlock.get2dElemToEdges();
 

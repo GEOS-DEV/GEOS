@@ -61,6 +61,13 @@ public:
   array1d< globalIndex > localToGlobalMap() const override;
 
   /**
+   * @brief Get the region attribute for each 2d element.
+   * @return The region attribute values.
+   */
+  array1d< integer > getRegionAttribute() const override
+  { return m_regionAttribute; }
+
+  /**
    * @brief Defines the number of 2d elements.
    * @param num2DElements The input value.
    */
@@ -120,6 +127,13 @@ public:
    */
   void set2dElemsToCollocatedNodesBuckets( ArrayOfArrays< array1d< globalIndex > > && collocatedNodesBuckets );
 
+  /**
+   * @brief Defines the region attribute for each 2d element.
+   * @param regionAttribute The input array.
+   */
+  void setRegionAttribute( array1d< integer > && regionAttribute )
+  { m_regionAttribute = std::move( regionAttribute ); }
+
 private:
 
   localIndex m_num2dElements;
@@ -135,6 +149,9 @@ private:
   array1d< localIndex > m_2dFaceToEdge;
 
   array1d< globalIndex > m_localToGlobalMap;
+
+  /// Region attribute for each 2d element
+  array1d< integer > m_regionAttribute;
 };
 
 

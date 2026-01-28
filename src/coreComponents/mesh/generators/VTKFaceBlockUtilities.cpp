@@ -616,7 +616,8 @@ array1d< globalIndex > buildLocalToGlobal( vtkIdTypeArray const * faceMeshCellGl
 void importFractureNetwork( string const & faceBlockName,
                             vtkSmartPointer< vtkDataSet > faceMesh,
                             vtkSmartPointer< vtkDataSet > mesh,
-                            CellBlockManager & cellBlockManager )
+                            CellBlockManager & cellBlockManager,
+                            string const & regionAttributeName )
 {
   ArrayOfArrays< localIndex > const faceToNodes = cellBlockManager.getFaceToNodes();
   vtk::internal::ElementToFace const elemToFaces( cellBlockManager.getCellBlocks() );
@@ -645,10 +646,28 @@ void importFractureNetwork( string const & faceBlockName,
   ArrayOfArrays< localIndex > const elem2dToFace2d = buildElem2dToFace2d( num2dElements, face2dToElems2d.toViewConst() );
   ArrayOfArrays< localIndex > elem2dToEdges = buildElem2dToEdges( num2dElements, face2dToEdge.toViewConst(), elem2dToFace2d.toViewConst() );
 
+  // Read regionAttribute from the face mesh if available
+  array1d< integer > regionAttribute;
+  regionAttribute.resize( num2dElements );
+  vtkDataArray * regionAttrArray = faceMesh->GetCellData()->GetArray( regionAttributeName.c_str() );
+  if( regionAttrArray != nullptr )
+  {
+    for( vtkIdType i = 0; i < num2dElements; ++i )
+    {
+      regionAttribute[i] = static_cast< integer >( regionAttrArray->GetTuple1( i ) );
+    }
+  }
+  else
+  {
+    // Default to -1 if no attribute found
+    regionAttribute.setValues< serialPolicy >( -1 );
+  }
+
   // Mappings are now computed. Just create the face block by value.
   FaceBlock & faceBlock = cellBlockManager.registerFaceBlock( faceBlockName );
 
   faceBlock.setNum2dElements( num2dElements );
+  faceBlock.setRegionAttribute( std::move( regionAttribute ) );
   faceBlock.setNum2dFaces( num2dFaces );
   faceBlock.set2dElemToNodes( std::move( elem2dTo3d.elem2dToNodes ) );
   faceBlock.set2dElemToEdges( std::move( elem2dToEdges ) );

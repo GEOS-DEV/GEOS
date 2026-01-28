@@ -243,7 +243,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
 
   for( auto const & [name, mesh]: m_faceBlockMeshes )
   {
-    vtk::importFractureNetwork( name, mesh, m_vtkMesh, cellBlockManager );
+    vtk::importFractureNetwork( name, mesh, m_vtkMesh, cellBlockManager, m_regionAttributeName );
   }
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::VTKSteps, GEOS_FMT( "{} '{}': done!", catalogName(), getName() ) );

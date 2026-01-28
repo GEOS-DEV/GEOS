@@ -47,6 +47,11 @@ ElementSubRegionBase::ElementSubRegionBase( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::elementVolumeString(), &m_elementVolume ).
     setPlotLevel( PlotLevel::LEVEL_1 );
+
+  registerWrapper( viewKeyStruct::attributeString(), &m_regionAttribute ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setApplyDefaultValue( -1 ).
+    setDescription( "Region attribute value from mesh input." );
 }
 
 ElementSubRegionBase::~ElementSubRegionBase()

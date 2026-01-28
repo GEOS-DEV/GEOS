@@ -32,11 +32,13 @@ namespace geos::vtk
  * @param faceMesh[in] The vtk mesh for the face block.
  * @param mesh[in] The vtk volumic mesh.
  * @param cellBlockManager[inout] The cell block manager that will receive the face block information.
+ * @param regionAttributeName[in] The name of the region attribute in the VTK data (default: "attribute").
  */
 void importFractureNetwork( string const & faceBlockName,
                             vtkSmartPointer< vtkDataSet > faceMesh,
                             vtkSmartPointer< vtkDataSet > mesh,
-                            CellBlockManager & cellBlockManager );
+                            CellBlockManager & cellBlockManager,
+                            string const & regionAttributeName = "attribute" );
 }
 
 #endif // include guard

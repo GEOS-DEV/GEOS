@@ -67,6 +67,20 @@ public:
   ElementType getElementType() const override
   { return m_elementType; }
 
+  /**
+   * @brief Get the region attribute for this cell block.
+   * @return The region attribute value.
+   */
+  integer getRegionAttribute() const override
+  { return m_regionAttribute; }
+
+  /**
+   * @brief Set the region attribute for this cell block.
+   * @param regionAttribute The region attribute value to set.
+   */
+  void setRegionAttribute( integer regionAttribute )
+  { m_regionAttribute = regionAttribute; }
+
   localIndex numNodesPerElement() const override
   { return m_numNodesPerElement; }
 
@@ -260,6 +274,9 @@ private:
 
   /// Type of element in this block.
   ElementType m_elementType;
+
+  /// Region attribute value for this cell block.
+  integer m_regionAttribute = -1;
 
   std::list< dataRepository::WrapperBase const * > getExternalProperties() const override
   {

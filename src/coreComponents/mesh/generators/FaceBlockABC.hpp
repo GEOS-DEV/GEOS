@@ -170,6 +170,12 @@ public:
    * @return The mapping relationship as an array.
    */
   virtual array1d< globalIndex > localToGlobalMap() const = 0;
+
+  /**
+   * @brief Get the region attribute for each 2d element.
+   * @return The region attribute values, or empty array if not set.
+   */
+  virtual array1d< integer > getRegionAttribute() const { return {}; }
 };
 
 }

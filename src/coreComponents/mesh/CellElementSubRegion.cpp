@@ -82,6 +82,11 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC const & cellBlock )
   m_toFacesRelation.resize( this->size(), m_numFacesPerElement );
   this->resize( cellBlock.numElements() );
 
+  // Fill regionAttribute array with constant value from CellBlock
+  integer const regionAttr = cellBlock.getRegionAttribute();
+  m_regionAttribute.resize( cellBlock.numElements() );
+  m_regionAttribute.setValues< serialPolicy >( regionAttr );
+
   this->nodeList() = cellBlock.getElemToNodes();
   this->edgeList() = cellBlock.getElemToEdges();
   this->faceList() = cellBlock.getElemToFaces();

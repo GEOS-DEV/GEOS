@@ -187,6 +187,14 @@ DECLARE_FIELD( tangentVector2,
                WRITE_AND_READ,
                "Unit vector in the second tangent direction to the surface." );
 
+DECLARE_FIELD( attribute,
+               "attribute",
+               array1d< integer >,
+               -1,
+               NOPLOT,
+               WRITE_AND_READ,
+               "Region attribute value from mesh input (constant per cell block)." );
+
 
 } // namespace fields
 } // namespace geos
