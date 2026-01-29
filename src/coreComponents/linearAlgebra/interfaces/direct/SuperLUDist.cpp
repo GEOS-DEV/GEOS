@@ -386,7 +386,7 @@ real64 SuperLUDist< LAI >::estimateConditionNumberBasic() const
   {
     real64 const * const R = m_data->scalePerm.R;
     real64 const * const C = m_data->scalePerm.C;
-    int_t const * const perm_c = m_data->scalePerm.perm_c;
+    int const * const perm_c = m_data->scalePerm.perm_c;
 
     real64 minU = std::numeric_limits< real64 >::lowest();
     real64 maxU = std::numeric_limits< real64 >::max();

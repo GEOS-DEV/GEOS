@@ -161,7 +161,7 @@ void HypreVector::reciprocal()
 {
   GEOS_LAI_ASSERT( ready() );
 
-  GEOS_LAI_CHECK_ERROR( HYPRE_ParVectorPointwiseInverse( m_vec, &m_vec ) );
+  GEOS_LAI_CHECK_ERROR( hypre_ParVectorPointwiseInverse( m_vec, &m_vec ) );
   touch();
 }
 
@@ -228,7 +228,7 @@ void HypreVector::pointwiseProduct( HypreVector const & x )
   GEOS_LAI_ASSERT( x.ready() );
   GEOS_LAI_ASSERT_EQ( localSize(), x.localSize() );
 
-  GEOS_LAI_CHECK_ERROR( HYPRE_ParVectorPointwiseProduct( x.m_vec, m_vec, &m_vec ) );
+  GEOS_LAI_CHECK_ERROR( hypre_ParVectorPointwiseProduct( x.m_vec, m_vec, &m_vec ) );
   touch();
 }
 
@@ -238,7 +238,7 @@ void HypreVector::pointwiseDivide( HypreVector const & x )
   GEOS_LAI_ASSERT( x.ready() );
   GEOS_LAI_ASSERT_EQ( localSize(), x.localSize() );
 
-  GEOS_LAI_CHECK_ERROR( HYPRE_ParVectorPointwiseDivision( x.m_vec, m_vec, &m_vec ) );
+  GEOS_LAI_CHECK_ERROR( hypre_ParVectorPointwiseDivision( x.m_vec, m_vec, &m_vec ) );
   touch();
 }
 
