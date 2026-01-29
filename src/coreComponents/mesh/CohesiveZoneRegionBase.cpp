@@ -29,6 +29,7 @@ CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * con
   m_czVolumeNormalization( 1 ),
   m_computeParticleSurfaceNormalsAndPositions( 0 ),
   m_normalsAndPositionsMethod( 0 ),
+  m_tag( 0 ),
   m_fieldA( 0 ),
   m_fieldB( 1 ),
   m_globalID(),
@@ -50,6 +51,24 @@ CohesiveZoneRegionBase::CohesiveZoneRegionBase( string const & name, Group * con
     setApplyDefaultValue( m_initialized ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Flag marking whether cohesive zone has already be initialized.");
+
+  registerWrapper( "tag", &m_tag ).
+   setInputFlag( InputFlags::FALSE ).
+   setApplyDefaultValue( m_tag ).
+   setRestartFlags( RestartFlags::WRITE_AND_READ ).
+   setDescription( "Tag ID");
+
+  registerWrapper( "fieldA", &m_fieldA ).
+   setInputFlag( InputFlags::FALSE ).
+   setApplyDefaultValue( m_fieldA ).
+   setRestartFlags( RestartFlags::WRITE_AND_READ ).
+   setDescription( "Index of field A");
+
+  registerWrapper( "fieldB", &m_fieldB ).
+   setInputFlag( InputFlags::FALSE ).
+   setApplyDefaultValue( m_fieldB ).
+   setRestartFlags( RestartFlags::WRITE_AND_READ ).
+   setDescription( "Index of field B");
 
  registerWrapper( viewKeyStruct::globalIDString(), &m_globalID ).
     setInputFlag( InputFlags::FALSE ).

@@ -111,6 +111,9 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   registerWrapper( viewKeyStruct::particleSurfaceTractionString(), &m_particleSurfaceTraction ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
+
+  registerWrapper( viewKeyStruct::particleCZTagString(), &m_particleCZTag ).
+    setPlotLevel( PlotLevel::LEVEL_1 );
 }
 
 ParticleSubRegionBase::~ParticleSubRegionBase()

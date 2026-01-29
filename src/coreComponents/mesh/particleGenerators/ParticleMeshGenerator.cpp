@@ -219,6 +219,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
         case ParticleColumnHeaders::ParticleType:
           defaultValue = 2.0;
           break;
+        case ParticleColumnHeaders::CZTag:
         case ParticleColumnHeaders::MaterialType:
         case ParticleColumnHeaders::ContactGroup:
         case ParticleColumnHeaders::Damage:
@@ -297,6 +298,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     array2d< real64 > particleSurfaceNormal( npInBlock, 3 );
     array2d< real64 > particleSurfacePosition( npInBlock, 3 );
     array2d< real64 > particleSurfaceTraction( npInBlock, 3 );
+    array1d< int > particleCZTag( npInBlock );
 
     // Populate particle fields with data
     for( int i = 0; i < npInBlock; i++ )
@@ -334,8 +336,11 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
       // Temperature Rate
       particleTemperatureRate[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::TemperatureRate )];
 
-      // strengthScale
+      // Strength Scale
       particleStrengthScale[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::StrengthScale )];
+
+      // Cohesive Zone ID
+      particleCZTag[i] = particleData[b][i][static_cast< int >( ParticleColumnHeaders::CZTag )];
 
       // Volume and R-Vectors
       switch( particleBlock.getParticleType() )
@@ -443,6 +448,7 @@ void ParticleMeshGenerator::fillParticleBlockManager( ParticleBlockManager & par
     particleBlock.setParticleSurfaceNormal( particleSurfaceNormal );
     particleBlock.setParticleSurfacePosition( particleSurfacePosition );
     particleBlock.setParticleSurfaceTraction( particleSurfaceTraction );
+    particleBlock.setParticleCZTag( particleCZTag );
   } // loop over particle blocks
 
   // Resize particle regions

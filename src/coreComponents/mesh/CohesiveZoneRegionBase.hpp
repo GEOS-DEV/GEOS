@@ -91,6 +91,10 @@ public:
    */
   ///@{
 
+  void setTag( localIndex tag ) { m_tag = tag; }
+
+  localIndex getTag() const { return m_tag; }
+
   localIndex getFieldA() const { return m_fieldA; }
 
   localIndex getFieldB() const { return m_fieldB; }
@@ -198,6 +202,9 @@ public:
    */
   struct viewKeyStruct : public ObjectManagerBase::viewKeyStruct
   {
+    /// @return String key for the member level field for the cohesive zone tag.
+    static constexpr char const * tagString() { return "tag"; }
+
     /// @return String key for the member level field for the cohesive zone node global ID.
     static constexpr char const * globalIDString() { return "globalID"; }
 
@@ -224,6 +231,8 @@ private:
   int m_normalsAndPositionsMethod; // Should be the enum from SolidMechanicsMPM, but currently circular dependences that needs to be resolved
 
   string m_constitutiveModelName;
+
+  localIndex m_tag;
 
   // Indices of fields for either side of the cohesive zone
   localIndex m_fieldA;

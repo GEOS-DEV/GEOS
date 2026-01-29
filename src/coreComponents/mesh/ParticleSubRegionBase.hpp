@@ -314,6 +314,19 @@ public:
   { return m_particleSurfaceTraction; }
 
   /**
+   * @brief Get the cohesive zone tag of each particle in this subregion.
+   * @return an arrayView1d of const particle cohesive zone tag
+   */
+  arrayView1d< int const > getParticleCZTag() const
+  { return m_particleCZTag; }
+
+  /**
+   * @copydoc getParticleCZTag() const
+   */
+  arrayView1d< int > getParticleCZTag()
+  { return m_particleCZTag; }
+
+  /**
    * @brief Get the group in which the constitutive models of this subregion are registered.
    * @return a pointer to the const group in which the constitutive models are registered
    */
@@ -462,6 +475,9 @@ public:
 
     /// @return String key for the member level field for the particle surface traction.
     static constexpr char const * particleSurfaceTractionString() { return "particleSurfaceTraction"; }
+
+    /// @return String key for the member level field for the particle cohesive zone tag.
+    static constexpr char const * particleCZTagString() { return "particleCZTag"; }
   };
 
   /**
@@ -593,6 +609,9 @@ protected:
 
   /// Member level field for the particle surface traction.
   array2d< real64 > m_particleSurfaceTraction;
+
+  /// Member level field for the particle cohesive zone tag.
+  array1d< localIndex > m_particleCZTag;
 
   /// Indices of particles that are not ghosts
   SortedArray< localIndex > m_activeParticleIndices;
