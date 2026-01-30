@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <Problem>
   <Mesh>
-    <VTKMesh name="mesh1" file="../meshes/fractured_mesh_hex_DFN_1.vtu" nodesetNames="{ ruptureState }"/>
+    <VTKMesh name="mesh1" file="../meshes/fractured_mesh_hex_DFN_123.vtu" nodesetNames="{ ruptureState }"/>
   </Mesh>
   <Geometry>
     <Box name="xnegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  0.01,  1.01,  1.01 }"/>
@@ -13,11 +13,22 @@
     <Box name="fracture" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  1.01,  1.01 }"/>
   </Geometry>
   <Solvers gravityVector="{0.0, 0.0, 0.0}">
-    <SolidMechanicsAugmentedLagrangianContact name="mechSolver" discretization="FE1" targetRegions="{ Region, Fracture }">
-      <NonlinearSolverParameters newtonTol="1.0e-5" newtonMaxIter="20"/>
-      <LinearSolverParameters solverType="gmres" preconditionerType="amg" krylovTol="1.0e-10"/>
+    <SolidMechanicsAugmentedLagrangianContact 
+      name="mechSolver"
+      simultaneous="1"
+      symmetric="1"
+      iterPenaltyN="0.0"
+      iterPenaltyT="0.0"
+      tolTauLimit="1.e-02"
+      tolJumpN="1.e-3"
+      tolJumpT="1.e-3" 
+      discretization="FE1" 
+      targetRegions="{ Region, Fracture }" 
+      logLevel="1">
+      <NonlinearSolverParameters newtonTol="1.0e-5" newtonMaxIter="20" logLevel="1"/>
+      <LinearSolverParameters solverType="gmres" preconditionerType="amg" krylovTol="1.0e-10" logLevel="1"/>
     </SolidMechanicsAugmentedLagrangianContact>
-    <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="1.0e60"/>
+    <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="10.0e9"/>
   </Solvers>
   <NumericalMethods>
     <FiniteElements>
@@ -43,11 +54,15 @@
     <FieldSpecification name="zneg_disp" component="2" setNames="{ znegFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="-1.0e-4"/>
     <FieldSpecification name="zpos_disp" component="2" setNames="{ zposFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="1.0e-4"/>
   </FieldSpecifications>
+  <Tasks>
+    <SolidMechanicsAugmentedLagrangianContactInitialization name="ELASTICITY.PRE.INIT.STEP" solidSolverName="mechSolver" logLevel="1"/>
+  </Tasks>  
   <Outputs>
     <VTK name="vtkOutput" />
   </Outputs>
-  <Events maxTime="1.0">
-    <SoloEvent name="preFracture" target="/Solvers/SurfaceGen"/>
+  <Events minTime="-1.0e11" maxTime="1.0">
+    <SoloEvent name="preFracture" target="/Solvers/SurfaceGen"/>    
+    <!-- <SoloEvent name="ELASTICITY.PRE.INIT.STEP" targetTime="-1.0e11" beginTime="-1.0e11" target="/Tasks/ELASTICITY.PRE.INIT.STEP"/> -->
     <PeriodicEvent name="outputs" timeFrequency="1.0" target="/Outputs/vtkOutput"/>
     <PeriodicEvent name="solverApplications" target="/Solvers/mechSolver" forceDt="1.0"/>
   </Events>
