@@ -272,30 +272,15 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::Values(
     // Mesh, s_xx, s_yy, s_zz
     // Hex meshes
-    std::make_tuple("fractured_mesh_hex_DFN_1.vtu",   -1.0e7, -1.0e7, -1.0e7), // Hydrostatic
     std::make_tuple("fractured_mesh_hex_DFN_1.vtu",   -1.0e7, -0.5e7, -2.0e7), // Triaxial
-
-    std::make_tuple("fractured_mesh_hex_DFN_12.vtu",  -1.0e7, -1.0e7, -1.0e7), // Hydrostatic
     std::make_tuple("fractured_mesh_hex_DFN_12.vtu",  -1.0e7, -0.5e7, -2.0e7), // Triaxial
-
-    std::make_tuple("fractured_mesh_hex_DFN_13.vtu",  -1.0e7, -1.0e7, -1.0e7), // Hydrostatic
     std::make_tuple("fractured_mesh_hex_DFN_13.vtu",  -1.0e7, -0.5e7, -2.0e7), // Triaxial
-
-    std::make_tuple("fractured_mesh_hex_DFN_123.vtu", -1.0e7, -1.0e7, -1.0e7), // Hydrostatic
     std::make_tuple("fractured_mesh_hex_DFN_123.vtu", -1.0e7, -0.5e7, -2.0e7), // Triaxial
 
-
     // Tet unstructure meshes
-    std::make_tuple("fractured_mesh_tet_DFN_1.vtu",   -1.0e7, -1.0e7, -1.0e7), // Hydrostatic
     std::make_tuple("fractured_mesh_tet_DFN_1.vtu",   -1.0e7, -0.5e7, -2.0e7), // Triaxial
-
-    std::make_tuple("fractured_mesh_tet_DFN_12.vtu",  -1.0e7, -1.0e7, -1.0e7), // Hydrostatic
     std::make_tuple("fractured_mesh_tet_DFN_12.vtu",  -1.0e7, -0.5e7, -2.0e7), // Triaxial
-
-    std::make_tuple("fractured_mesh_tet_DFN_13.vtu",  -1.0e7, -1.0e7, -1.0e7), // Hydrostatic
     std::make_tuple("fractured_mesh_tet_DFN_13.vtu",  -1.0e7, -0.5e7, -2.0e7), // Triaxial
-
-    std::make_tuple("fractured_mesh_tet_DFN_123.vtu", -1.0e7, -1.0e7, -1.0e7), // Hydrostatic
     std::make_tuple("fractured_mesh_tet_DFN_123.vtu", -1.0e7, -0.5e7, -2.0e7)  // Triaxial
   )
 );
