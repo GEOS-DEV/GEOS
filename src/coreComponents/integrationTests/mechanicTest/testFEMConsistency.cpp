@@ -272,6 +272,28 @@ TEST_P( ConsistencyTest, Run )
                 EXPECT_LT( err, tolerance ) << "Element " << k << " failed. t_sim=(" << ts_x << ", " << ts_y << ", " << ts_z << ") t_exact=(" << te_x << ", " << te_y << ", " << te_z << ")";
             }
         });
+
+        volumeRegion.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
+        {
+            auto const & avgStress = subRegion.getField< fields::solidMechanics::averageStress >();
+
+            for( localIndex k=0; k<subRegion.size(); ++k )
+            {
+                real64 sig_xx = avgStress(k, 0);
+                real64 sig_yy = avgStress(k, 1);
+                real64 sig_zz = avgStress(k, 2);
+                real64 sig_yz = avgStress(k, 3);
+                real64 sig_xz = avgStress(k, 4);
+                real64 sig_xy = avgStress(k, 5);
+
+                EXPECT_NEAR( sig_xx, s_xx, tolerance ) << "Volume Element " << k << " failed xx stress.";
+                EXPECT_NEAR( sig_yy, s_yy, tolerance ) << "Volume Element " << k << " failed yy stress.";
+                EXPECT_NEAR( sig_zz, s_zz, tolerance ) << "Volume Element " << k << " failed zz stress.";
+                EXPECT_NEAR( sig_yz, 0.0, tolerance ) << "Volume Element " << k << " failed yz stress.";
+                EXPECT_NEAR( sig_xz, 0.0, tolerance ) << "Volume Element " << k << " failed xz stress.";
+                EXPECT_NEAR( sig_xy, 0.0, tolerance ) << "Volume Element " << k << " failed xy stress.";
+            }
+        });
     }
 }
 
