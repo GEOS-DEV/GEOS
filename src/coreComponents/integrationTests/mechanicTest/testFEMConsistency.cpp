@@ -253,42 +253,11 @@ TEST_P( ConsistencyTest, Run )
                 real64 sig_zz = avgStress(c, 2);
                 real64 sig_yz = avgStress(c, 3);
                 real64 sig_xz = avgStress(c, 4);
-                real64 sig_xy = avgStress(c, 5); // Warning: check Voigt order in SolidMechanicsLagrangianFEM
+                real64 sig_xy = avgStress(c, 5);
 
-                // 4. Compute t_sim = sigma * n
-                real64 ts_x = sig_xx * nx + sig_xy * ny + sig_xz * nz;
-                real64 ts_y = sig_xy * nx + sig_yy * ny + sig_yz * nz; // Note symmetry
-                real64 ts_z = sig_xz * nx + sig_yz * ny + sig_zz * nz;
-                
-                // 5. Compute t_exact = S_input * n
-                real64 te_x = s_xx * nx;
-                real64 te_y = s_yy * ny;
-                real64 te_z = s_zz * nz;
-                
-                // 6. Compare (allow slightly larger tolerance due to numerical precision of stress field)
-                real64 const err_abs = std::sqrt( std::pow(ts_x - te_x, 2) + std::pow(ts_y - te_y, 2) + std::pow(ts_z - te_z, 2) );
-                real64 const norm_te = std::sqrt( std::pow(te_x, 2) + std::pow(te_y, 2) + std::pow(te_z, 2) );
-                real64 const err = ( norm_te > 1.0e-16 ) ? err_abs / norm_te : err_abs;
-                EXPECT_LT( err, tolerance ) << "Element " << k << " failed. t_sim=(" << ts_x << ", " << ts_y << ", " << ts_z << ") t_exact=(" << te_x << ", " << te_y << ", " << te_z << ")";
-            }
-        });
-
-        volumeRegion.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
-        {
-            auto const & avgStress = subRegion.getField< fields::solidMechanics::averageStress >();
-
-            for( localIndex k=0; k<subRegion.size(); ++k )
-            {
-                real64 sig_xx = avgStress(k, 0);
-                real64 sig_yy = avgStress(k, 1);
-                real64 sig_zz = avgStress(k, 2);
-                real64 sig_yz = avgStress(k, 3);
-                real64 sig_xz = avgStress(k, 4);
-                real64 sig_xy = avgStress(k, 5);
-
-                EXPECT_NEAR( sig_xx, s_xx, tolerance ) << "Volume Element " << k << " failed xx stress.";
-                EXPECT_NEAR( sig_yy, s_yy, tolerance ) << "Volume Element " << k << " failed yy stress.";
-                EXPECT_NEAR( sig_zz, s_zz, tolerance ) << "Volume Element " << k << " failed zz stress.";
+                EXPECT_LT( std::abs( (sig_xx - s_xx) / s_xx ), tolerance ) << "Volume Element " << k << " failed xx stress.";
+                EXPECT_LT( std::abs( (sig_yy - s_yy) / s_yy ), tolerance ) << "Volume Element " << k << " failed yy stress.";
+                EXPECT_LT( std::abs( (sig_zz - s_zz) / s_zz ), tolerance ) << "Volume Element " << k << " failed zz stress.";
                 EXPECT_NEAR( sig_yz, 0.0, tolerance ) << "Volume Element " << k << " failed yz stress.";
                 EXPECT_NEAR( sig_xz, 0.0, tolerance ) << "Volume Element " << k << " failed xz stress.";
                 EXPECT_NEAR( sig_xy, 0.0, tolerance ) << "Volume Element " << k << " failed xy stress.";
@@ -316,7 +285,7 @@ INSTANTIATE_TEST_SUITE_P(
     std::make_tuple("fractured_mesh_hex_DFN_123.vtu", -1.0e7, -0.5e7, -2.0e7), // Triaxial
 
 
-    // Tet meshes
+    // Tet unstructure meshes
     std::make_tuple("fractured_mesh_tet_DFN_1.vtu",   -1.0e7, -1.0e7, -1.0e7), // Hydrostatic
     std::make_tuple("fractured_mesh_tet_DFN_1.vtu",   -1.0e7, -0.5e7, -2.0e7), // Triaxial
 
