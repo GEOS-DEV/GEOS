@@ -34,7 +34,7 @@
 
 using namespace geos;
 
-constexpr real64 relative_tolerance = 1.0e-7;
+constexpr real64 relative_tolerance = 1.0e-6; // Because MPa range is used
 
 CommandLineOptions g_commandLineOptions;
 
@@ -119,7 +119,7 @@ protected:
   <Outputs>
   </Outputs>
   <Events minTime="-1.0e11" maxTime="1.0">
-     
+     <SoloEvent name="preFracture" target="/Solvers/SurfaceGen"/> 
     <SoloEvent name="ELASTICITY.PRE.INIT.STEP" targetTime="-1.0e11" beginTime="-1.0e11" target="/Tasks/ELASTICITY.PRE.INIT.STEP"/>
     <PeriodicEvent name="solverApplications" target="/Solvers/mechSolver" forceDt="1.0"/>
   </Events>
