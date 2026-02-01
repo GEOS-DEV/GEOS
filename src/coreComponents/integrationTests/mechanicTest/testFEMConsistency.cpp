@@ -34,7 +34,7 @@
 
 using namespace geos;
 
-constexpr real64 tolerance = 1.0e-7;
+constexpr real64 relative_tolerance = 1.0e-7;
 
 CommandLineOptions g_commandLineOptions;
 
@@ -113,8 +113,6 @@ protected:
   <Outputs>
   </Outputs>
   <Events minTime="-1.0e11" maxTime="1.0">
-    <SoloEvent name="preFracture" target="/Solvers/SurfaceGen"/>    
-    <SoloEvent name="ELASTICITY.PRE.INIT.STEP" targetTime="-1.0e11" beginTime="-1.0e11" target="/Tasks/ELASTICITY.PRE.INIT.STEP"/>
     <PeriodicEvent name="solverApplications" target="/Solvers/mechSolver" forceDt="1.0"/>
   </Events>
 </Problem>
@@ -273,11 +271,11 @@ TEST_P( ConsistencyTest, Run )
                 real64 te_y = s_yy * ny;
                 real64 te_z = s_zz * nz;
                 
-                // 6. Compare (allow slightly larger tolerance due to numerical precision of stress field)
+                // 6. Compare (allow slightly larger relative_tolerance due to numerical precision of stress field)
                 real64 const err_abs = std::sqrt( std::pow(ts_x - te_x, 2) + std::pow(ts_y - te_y, 2) + std::pow(ts_z - te_z, 2) );
                 real64 const norm_te = std::sqrt( std::pow(te_x, 2) + std::pow(te_y, 2) + std::pow(te_z, 2) );
                 real64 const err = ( norm_te > 1.0e-16 ) ? err_abs / norm_te : err_abs;
-                EXPECT_LT( err, tolerance ) << "Element " << k << " failed. t_sim=(" << ts_x << ", " << ts_y << ", " << ts_z << ") t_exact=(" << te_x << ", " << te_y << ", " << te_z << ")";
+                EXPECT_LT( err, relative_tolerance ) << "Element " << k << " failed. t_sim=(" << ts_x << ", " << ts_y << ", " << ts_z << ") t_exact=(" << te_x << ", " << te_y << ", " << te_z << ")";
             }
         });
 
@@ -294,12 +292,12 @@ TEST_P( ConsistencyTest, Run )
                 real64 sig_xz = avgStress(k, 4);
                 real64 sig_xy = avgStress(k, 5);
 
-                EXPECT_NEAR( std::fabs(sig_xx - s_xx) / s_xx, 0.0, tolerance ) << "Volume Element " << k << " failed xx stress.";
-                EXPECT_NEAR( std::fabs(sig_yy - s_yy) / s_yy, 0.0, tolerance ) << "Volume Element " << k << " failed yy stress.";
-                EXPECT_NEAR( std::fabs(sig_zz - s_zz) / s_zz, 0.0, tolerance ) << "Volume Element " << k << " failed zz stress.";
-                EXPECT_NEAR( std::fabs(sig_yz), 0.0, tolerance ) << "Volume Element " << k << " failed yz stress.";
-                EXPECT_NEAR( std::fabs(sig_xz), 0.0, tolerance ) << "Volume Element " << k << " failed xz stress.";
-                EXPECT_NEAR( std::fabs(sig_xy), 0.0, tolerance ) << "Volume Element " << k << " failed xy stress.";
+                EXPECT_NEAR( std::fabs(sig_xx - s_xx) / s_xx, 0.0, relative_tolerance ) << "Volume Element " << k << " failed xx stress.";
+                EXPECT_NEAR( std::fabs(sig_yy - s_yy) / s_yy, 0.0, relative_tolerance ) << "Volume Element " << k << " failed yy stress.";
+                EXPECT_NEAR( std::fabs(sig_zz - s_zz) / s_zz, 0.0, relative_tolerance ) << "Volume Element " << k << " failed zz stress.";
+                EXPECT_NEAR( std::fabs(sig_yz), 0.0, relative_tolerance ) << "Volume Element " << k << " failed yz stress.";
+                EXPECT_NEAR( std::fabs(sig_xz), 0.0, relative_tolerance ) << "Volume Element " << k << " failed xz stress.";
+                EXPECT_NEAR( std::fabs(sig_xy), 0.0, relative_tolerance ) << "Volume Element " << k << " failed xy stress.";
             }
         });
     }
