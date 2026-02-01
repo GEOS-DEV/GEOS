@@ -85,7 +85,7 @@ protected:
   </Solvers>
   <NumericalMethods>
     <FiniteElements>
-      <FiniteElementSpace name="FE1" order="1" />
+      <FiniteElementSpace name="FE1" order="1" useHighOrderQuadratureRule="1" />
     </FiniteElements>
   </NumericalMethods>
   <ElementRegions>
@@ -119,6 +119,8 @@ protected:
   <Outputs>
   </Outputs>
   <Events minTime="-1.0e11" maxTime="1.0">
+    <SoloEvent name="preFracture" target="/Solvers/SurfaceGen"/>    
+    <SoloEvent name="ELASTICITY.PRE.INIT.STEP" targetTime="-1.0e11" beginTime="-1.0e11" target="/Tasks/ELASTICITY.PRE.INIT.STEP"/>
     <PeriodicEvent name="solverApplications" target="/Solvers/mechSolver" forceDt="1.0"/>
   </Events>
 </Problem>
