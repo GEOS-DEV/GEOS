@@ -184,8 +184,8 @@ TEST_P( ConsistencyTest, Run )
         fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
         {
             auto const & faces = subRegion.faceList();
-            
-            for( localIndex k=0; k<faces.size(); ++k )
+            localIndex n_facets = faces.size();
+            for( localIndex k=0; k < n_facets; ++k )
             {
                 // Each fracture element corresponds to a set of faces (usually 2 for split)
                 localIndex f = faces[0][k];
@@ -276,8 +276,8 @@ TEST_P( ConsistencyTest, Run )
         volumeRegion.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
         {
             auto const & avgStress = subRegion.getField< fields::solidMechanics::averageStress >();
-
-            for( localIndex k=0; k<subRegion.size(); ++k )
+            localIndex n_cells = subRegion.size();
+            for( localIndex k=0; k < n_cells; ++k )
             {
                 real64 sig_xx = avgStress(k, 0);
                 real64 sig_yy = avgStress(k, 1);
