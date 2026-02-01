@@ -53,7 +53,7 @@ protected:
 <Problem>
   <Mesh>
     <VTKMesh name="mesh1" file=")xml" << meshFile << R"xml(" nodesetNames=")xml" << nodeSetNames <<
-      R"xml("/>
+    R"xml("/>
   </Mesh>
   <Geometry>
     <Box name="xnegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  0.01,  1.01,  1.01 }"/>
@@ -98,20 +98,20 @@ protected:
   </Constitutive>
   <FieldSpecifications>
     <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames=")xml" << nodeSetNames <<
-      R"xml(" objectPath="faceManager" scale="1" />
+    R"xml(" objectPath="faceManager" scale="1" />
     <FieldSpecification name="frac" initialCondition="1" setNames=")xml" << nodeSetNames <<
-      R"xml(" objectPath="faceManager" fieldName="ruptureState" scale="1" />
+    R"xml(" objectPath="faceManager" fieldName="ruptureState" scale="1" />
     
     <FieldSpecification name="xneg_disp" component="0" setNames="{ xnegFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="0.0"/>
     <FieldSpecification name="yneg_disp" component="1" setNames="{ ynegFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="0.0"/>
     <FieldSpecification name="zneg_disp" component="2" setNames="{ znegFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="0.0"/>
     
     <Traction name="xpos_traction" setNames="{ xposFace }" objectPath="faceManager" tractionType="normal" scale=")xml" << s_xx <<
-      R"xml("/>
+    R"xml("/>
     <Traction name="ypos_traction" setNames="{ yposFace }" objectPath="faceManager" tractionType="normal" scale=")xml" << s_yy <<
-      R"xml("/>
+    R"xml("/>
     <Traction name="zpos_traction" setNames="{ zposFace }" objectPath="faceManager" tractionType="normal" scale=")xml" << s_zz <<
-      R"xml("/>
+    R"xml("/>
   </FieldSpecifications>
   <Tasks>
     <SolidMechanicsAugmentedLagrangianContactInitialization name="ELASTICITY.PRE.INIT.STEP" solidSolverName="mechSolver" logLevel="1"/>
@@ -119,7 +119,7 @@ protected:
   <Outputs>
   </Outputs>
   <Events minTime="-1.0e11" maxTime="1.0">
-    <SoloEvent name="preFracture" target="/Solvers/SurfaceGen"/>    
+     
     <SoloEvent name="ELASTICITY.PRE.INIT.STEP" targetTime="-1.0e11" beginTime="-1.0e11" target="/Tasks/ELASTICITY.PRE.INIT.STEP"/>
     <PeriodicEvent name="solverApplications" target="/Solvers/mechSolver" forceDt="1.0"/>
   </Events>
@@ -160,6 +160,10 @@ TEST_P( ConsistencyTest, Run )
   else if( meshFileName.find( "_DFN_13.vtu" ) != std::string::npos )
   {
     nodeSetNames = "{ f1_node_set, f3_node_set }";
+  }
+  else if( meshFileName.find( "_DFN_23.vtu" ) != std::string::npos )
+  {
+    nodeSetNames = "{ f2_node_set, f3_node_set }";
   }
 
   std::string xmlContent = generateXmlInput( meshFileName, nodeSetNames, s_xx, s_yy, s_zz );
@@ -332,7 +336,25 @@ INSTANTIATE_TEST_SUITE_P(
     std::make_tuple( "fractured_mesh_tet_DFN_3.vtu", -1.0e7, -0.5e7, -2.0e7 ), // Triaxial
     std::make_tuple( "fractured_mesh_tet_DFN_12.vtu", -1.0e7, -0.5e7, -2.0e7 ), // Triaxial
     std::make_tuple( "fractured_mesh_tet_DFN_13.vtu", -1.0e7, -0.5e7, -2.0e7 ), // Triaxial
-    std::make_tuple( "fractured_mesh_tet_DFN_123.vtu", -1.0e7, -0.5e7, -2.0e7 )  // Triaxial
+    std::make_tuple( "fractured_mesh_tet_DFN_123.vtu", -1.0e7, -0.5e7, -2.0e7 ),  // Triaxial
+
+    // Wavy Hex meshes
+    std::make_tuple( "fractured_wavy_mesh_hex_DFN_1.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+    std::make_tuple( "fractured_wavy_mesh_hex_DFN_2.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+    std::make_tuple( "fractured_wavy_mesh_hex_DFN_3.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+    std::make_tuple( "fractured_wavy_mesh_hex_DFN_12.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+    std::make_tuple( "fractured_wavy_mesh_hex_DFN_13.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+    std::make_tuple( "fractured_wavy_mesh_hex_DFN_23.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+    std::make_tuple( "fractured_wavy_mesh_hex_DFN_123.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+
+    // Wavy Tet meshes
+    std::make_tuple( "fractured_wavy_mesh_tet_DFN_1.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+    std::make_tuple( "fractured_wavy_mesh_tet_DFN_2.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+    std::make_tuple( "fractured_wavy_mesh_tet_DFN_3.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+    std::make_tuple( "fractured_wavy_mesh_tet_DFN_12.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+    std::make_tuple( "fractured_wavy_mesh_tet_DFN_13.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+    std::make_tuple( "fractured_wavy_mesh_tet_DFN_23.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+    std::make_tuple( "fractured_wavy_mesh_tet_DFN_123.vtu", -1.0e7, -0.5e7, -2.0e7 )
     )
   );
 

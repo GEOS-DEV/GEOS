@@ -2,22 +2,6 @@
 set( gtest_geosx_tests
      testFEMConsistency.cpp )
 
-set( mesh_files
-     fractured_mesh_hex_DFN_1.vtu
-     fractured_mesh_hex_DFN_12.vtu
-     fractured_mesh_hex_DFN_123.vtu
-     fractured_mesh_hex_DFN_13.vtu
-     fractured_mesh_hex_DFN_2.vtu
-     fractured_mesh_hex_DFN_23.vtu
-     fractured_mesh_hex_DFN_3.vtu
-     fractured_mesh_tet_DFN_1.vtu
-     fractured_mesh_tet_DFN_12.vtu
-     fractured_mesh_tet_DFN_123.vtu
-     fractured_mesh_tet_DFN_13.vtu
-     fractured_mesh_tet_DFN_2.vtu
-     fractured_mesh_tet_DFN_23.vtu
-     fractured_mesh_tet_DFN_3.vtu )
-
 set( tplDependencyList ${parallelDeps} gtest )
 
 set( dependencyList mainInterface testingUtilities )
@@ -43,6 +27,37 @@ foreach(test ${gtest_geosx_tests})
   target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
 
   # --- Copy mesh files to test binary dir ---
+  set( mesh_files
+       fractured_mesh_hex_DFN_1.vtu
+       fractured_mesh_hex_DFN_12.vtu
+       fractured_mesh_hex_DFN_123.vtu
+       fractured_mesh_hex_DFN_13.vtu
+       fractured_mesh_hex_DFN_2.vtu
+       fractured_mesh_hex_DFN_23.vtu
+       fractured_mesh_hex_DFN_3.vtu
+       fractured_mesh_tet_DFN_1.vtu
+       fractured_mesh_tet_DFN_12.vtu
+       fractured_mesh_tet_DFN_123.vtu
+       fractured_mesh_tet_DFN_13.vtu
+       fractured_mesh_tet_DFN_2.vtu
+       fractured_mesh_tet_DFN_23.vtu
+       fractured_mesh_tet_DFN_3.vtu
+       fractured_wavy_mesh_hex_DFN_1.vtu
+       fractured_wavy_mesh_hex_DFN_12.vtu
+       fractured_wavy_mesh_hex_DFN_123.vtu
+       fractured_wavy_mesh_hex_DFN_13.vtu
+       fractured_wavy_mesh_hex_DFN_2.vtu
+       fractured_wavy_mesh_hex_DFN_23.vtu
+       fractured_wavy_mesh_hex_DFN_3.vtu
+       fractured_wavy_mesh_tet_DFN_1.vtu
+       fractured_wavy_mesh_tet_DFN_12.vtu
+       fractured_wavy_mesh_tet_DFN_123.vtu
+       fractured_wavy_mesh_tet_DFN_13.vtu
+       fractured_wavy_mesh_tet_DFN_2.vtu
+       fractured_wavy_mesh_tet_DFN_23.vtu
+       fractured_wavy_mesh_tet_DFN_3.vtu
+  )
+
   foreach( mesh_file ${mesh_files} )
     add_custom_command(
         TARGET ${test_name} POST_BUILD
