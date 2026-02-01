@@ -135,7 +135,15 @@ TEST_P( ConsistencyTest, Run )
     std::string xmlPath = testBinaryDir + "/test_fem_consistency.xml";
 
     std::string nodeSetNames = "{ f1_node_set }";
-    if ( meshFileName.find( "_DFN_123.vtu" ) != std::string::npos )
+    if ( meshFileName.find( "_DFN_2.vtu" ) != std::string::npos )
+    {
+        nodeSetNames = "{ f2_node_set }";
+    }
+    else if ( meshFileName.find( "_DFN_3.vtu" ) != std::string::npos )
+    {
+        nodeSetNames = "{ f3_node_set }";
+    }
+    else if ( meshFileName.find( "_DFN_123.vtu" ) != std::string::npos )
     {
         nodeSetNames = "{ f1_node_set, f2_node_set, f3_node_set }";
     }
@@ -304,12 +312,16 @@ INSTANTIATE_TEST_SUITE_P(
     // Mesh, s_xx, s_yy, s_zz
     // Hex meshes
     std::make_tuple("fractured_mesh_hex_DFN_1.vtu",   -1.0e7, -0.5e7, -2.0e7), // Triaxial
+    std::make_tuple("fractured_mesh_hex_DFN_2.vtu",   -1.0e7, -0.5e7, -2.0e7), // Triaxial
+    std::make_tuple("fractured_mesh_hex_DFN_3.vtu",   -1.0e7, -0.5e7, -2.0e7), // Triaxial
     std::make_tuple("fractured_mesh_hex_DFN_12.vtu",  -1.0e7, -0.5e7, -2.0e7), // Triaxial
     std::make_tuple("fractured_mesh_hex_DFN_13.vtu",  -1.0e7, -0.5e7, -2.0e7), // Triaxial
     std::make_tuple("fractured_mesh_hex_DFN_123.vtu", -1.0e7, -0.5e7, -2.0e7), // Triaxial
 
     // Tet meshes
     std::make_tuple("fractured_mesh_tet_DFN_1.vtu",   -1.0e7, -0.5e7, -2.0e7), // Triaxial
+    std::make_tuple("fractured_mesh_tet_DFN_2.vtu",   -1.0e7, -0.5e7, -2.0e7), // Triaxial
+    std::make_tuple("fractured_mesh_tet_DFN_3.vtu",   -1.0e7, -0.5e7, -2.0e7), // Triaxial
     std::make_tuple("fractured_mesh_tet_DFN_12.vtu",  -1.0e7, -0.5e7, -2.0e7), // Triaxial
     std::make_tuple("fractured_mesh_tet_DFN_13.vtu",  -1.0e7, -0.5e7, -2.0e7), // Triaxial
     std::make_tuple("fractured_mesh_tet_DFN_123.vtu", -1.0e7, -0.5e7, -2.0e7)  // Triaxial
