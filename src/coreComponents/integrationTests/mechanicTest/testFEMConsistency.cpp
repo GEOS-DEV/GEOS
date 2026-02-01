@@ -53,7 +53,7 @@ protected:
 <Problem>
   <Mesh>
     <VTKMesh name="mesh1" file=")xml" << meshFile << R"xml(" nodesetNames=")xml" << nodeSetNames <<
-    R"xml("/>
+      R"xml("/>
   </Mesh>
   <Geometry>
     <Box name="xnegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  0.01,  1.01,  1.01 }"/>
@@ -98,20 +98,20 @@ protected:
   </Constitutive>
   <FieldSpecifications>
     <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames=")xml" << nodeSetNames <<
-    R"xml(" objectPath="faceManager" scale="1" />
+      R"xml(" objectPath="faceManager" scale="1" />
     <FieldSpecification name="frac" initialCondition="1" setNames=")xml" << nodeSetNames <<
-    R"xml(" objectPath="faceManager" fieldName="ruptureState" scale="1" />
+      R"xml(" objectPath="faceManager" fieldName="ruptureState" scale="1" />
     
     <FieldSpecification name="xneg_disp" component="0" setNames="{ xnegFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="0.0"/>
     <FieldSpecification name="yneg_disp" component="1" setNames="{ ynegFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="0.0"/>
     <FieldSpecification name="zneg_disp" component="2" setNames="{ znegFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="0.0"/>
     
     <Traction name="xpos_traction" setNames="{ xposFace }" objectPath="faceManager" tractionType="normal" scale=")xml" << s_xx <<
-    R"xml("/>
+      R"xml("/>
     <Traction name="ypos_traction" setNames="{ yposFace }" objectPath="faceManager" tractionType="normal" scale=")xml" << s_yy <<
-    R"xml("/>
+      R"xml("/>
     <Traction name="zpos_traction" setNames="{ zposFace }" objectPath="faceManager" tractionType="normal" scale=")xml" << s_zz <<
-    R"xml("/>
+      R"xml("/>
   </FieldSpecifications>
   <Tasks>
     <SolidMechanicsAugmentedLagrangianContactInitialization name="ELASTICITY.PRE.INIT.STEP" solidSolverName="mechSolver" logLevel="1"/>
