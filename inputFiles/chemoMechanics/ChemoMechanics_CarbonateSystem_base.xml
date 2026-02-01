@@ -8,7 +8,7 @@
       solidSolverName="lagsolve"
       flowSolverName="SinglePhaseReactiveFlow"
       logLevel="1"
-      targetRegions="{ Reaction, Barrier  }">
+      targetRegions="{ Reaction, Barrier }">
       <NonlinearSolverParameters
         newtonMaxIter="4"
         newtonTol="1.0e-4"
@@ -56,10 +56,10 @@
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ 0.0, 1.0 }"
-      yCoords="{ 0.0, 4.0, 6.0, 10.0 }"
+      yCoords="{ 0.0, 1.0, 3.0, 4.0 }"
       zCoords="{ 0.0, 1.0 }"
       nx="{ 1 }"
-      ny="{ 4, 2, 4 }"
+      ny="{ 10, 100, 10 }"
       nz="{ 1 }"
       cellBlockNames="{ cb-0_0_0, cb-0_1_0, cb-0_2_0 }"/>
   </Mesh>
@@ -81,7 +81,7 @@
     <CellElementRegion
       name="Barrier"
       cellBlocks="{ cb-0_0_0, cb-0_2_0 }"
-      materialList="{ reactiveRock, water }"/>
+      materialList="{ rock, water }"/>
 
     <CellElementRegion
       name="Reaction"
@@ -148,7 +148,7 @@
       objectPath="ElementRegions/Reaction"
       fieldName="initialSurfaceArea"
       component="0"
-      scale="2.4573e+06"/>
+      scale="2.4573e+04"/>
 
     <FieldSpecification
       name="surfaceAreaBarrier"

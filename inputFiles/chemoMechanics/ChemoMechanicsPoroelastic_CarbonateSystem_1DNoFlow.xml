@@ -8,7 +8,7 @@
   </Included>  
 
   <Events
-    maxTime="10.0">
+    maxTime="1.0">
   
     <PeriodicEvent
       name="outputs"
@@ -22,10 +22,16 @@
   </Events>
 
   <Constitutive>
-    <EigenStrainReactiveElasticIsotropic
-      name="reactiveRock"
+    <PorousReactiveElasticIsotropic
+      name="rock"
       solidModelName="rockSolid"
       porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <PorousReactiveElasticIsotropic
+      name="reactiveRock"
+      solidModelName="rockSolid"
+      porosityModelName="rockReactivePorosity"
       permeabilityModelName="rockPerm"/>
 
     <ElasticIsotropic
@@ -34,12 +40,23 @@
       defaultBulkModulus="6.6667e7"
       defaultShearModulus="4.0e7"/>
 
-    <ReactivePorosity
+    <BiotReactivePorosity
       name="rockPorosity"
       defaultReferencePorosity="0.1"
       defaultInitialVolumeFractions="{ 0.1 }"
       molarWeights="{ 0.100087 }"
-      mineralDensities="{ 2710 }"/>
+      mineralDensities="{ 2710 }"
+      defaultGrainBulkModulus="1e20"
+      defaultMineralBulkModulus="0.0"/>
+
+    <BiotReactivePorosity
+      name="rockReactivePorosity"
+      defaultReferencePorosity="0.1"
+      defaultInitialVolumeFractions="{ 0.1 }"
+      molarWeights="{ 0.100087 }"
+      mineralDensities="{ 2710 }"
+      defaultGrainBulkModulus="1e20"
+      defaultMineralBulkModulus="50e9"/>
 
     <ConstantPermeability
       name="rockPerm"

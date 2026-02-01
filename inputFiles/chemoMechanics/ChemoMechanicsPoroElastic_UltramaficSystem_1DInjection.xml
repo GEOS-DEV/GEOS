@@ -3,26 +3,24 @@
 <Problem>
   <Included>
     <File name="./ChemoMechanicsPoroelastic_UltramaficSystem_base.xml" />
-    <File name="./ChemoMechanics_UltramaficSystem_surfaceArea.xml" />
+    <File name="./ChemoMechanics_UltramaficSystem_varyingSurfaceArea.xml" />
     <File name="./ChemoMechanics_UltramaficSystem_initialAggregate.xml" />
     <File name="./ChemoMechanics_UltramaficSystem_initialPrimaryConc.xml" />
     <File name="./ChemoMechanics_UltramaficSystem_logConc.xml" />
   </Included>
 
   <Mesh>
-    <InternalWellbore
+    <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
-      radius="{ 0.009, 0.10, 5.0 }"
-      theta="{ 0, 90 }"
-      zCoords="{ 0, 0.001 }"
-      nr="{ 1, 350 }"
-      nt="{ 50 }"
+      xCoords="{ -0.002, 0.0, 0.2, 1.0 }"
+      yCoords="{ 0.0, 0.5}"
+      zCoords="{ 0.0, 0.005 }"
+      nx="{ 1, 48, 160}"
+      ny="{ 100 }"
       nz="{ 1 }"
-      trajectory="{ { 0.0, 0.0, 0.0 },
-                    { 0.0, 0.0, 0.1 } }"
-      cellBlockNames="{ cb1, cb2 }"
-      />
+      xBias="{ 0, -0.2, 0 }"
+      cellBlockNames="{ cb1, cb2, cb3 }"/>
   </Mesh>
 
   <ElementRegions>
@@ -33,20 +31,28 @@
 
     <CellElementRegion
       name="Rock"
-      cellBlocks="{ cb2 }"
+      cellBlocks="{ cb2, cb3 }"
       materialList="{ water, reactiveRock, diffusion }"/>
   </ElementRegions>
 
   <Events
-    maxTime="500">
+    maxTime="100">
     <PeriodicEvent
-      name="outputs"
+      name="outputs1"
+      beginTime="0.0"
+      endTime="10.0"
+      timeFrequency="0.5"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="outputs2"
+      beginTime="10.0"
       timeFrequency="10.0"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="0.4"
+      maxEventDt="0.5"
       target="/Solvers/chemomechSolve"/>
 
     <PeriodicEvent
@@ -55,20 +61,20 @@
       target="/Outputs/restartOutput"/>
   </Events>
 
-  <FieldSpecifications>
+  <FieldSpecifications>    
     <FieldSpecification
       name="xconstraint"
       fieldName="totalDisplacement"
       component="0"
       objectPath="nodeManager"
-      setNames="{ rpos, tpos  }"/>
-
+      setNames="{ xneg, xpos }"/>
+    
     <FieldSpecification
       name="yconstraint"
       fieldName="totalDisplacement"
       component="1"
       objectPath="nodeManager"
-      setNames="{ rpos, tneg }"/>
+      setNames="{ yneg, ypos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -76,14 +82,6 @@
       component="2"
       objectPath="nodeManager"
       setNames="{ zneg, zpos  }"/>
-
-    <FieldSpecification
-      name="PorositySource"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Source"
-      fieldName="rockPorosity_referencePorosity"
-      scale="0.1"/>
 
     <FieldSpecification
       name="PorosityRock"
@@ -94,12 +92,12 @@
       scale="0.1"/>
 
     <FieldSpecification
-      name="initialPressureSource"
+      name="PorositySource"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      fieldName="pressure"
-      scale="1e6"/>
+      fieldName="rockPorosity_referencePorosity"
+      scale="0.1"/>
 
     <FieldSpecification
       name="initialPressureRock"
@@ -107,20 +105,28 @@
       setNames="{ all }"
       objectPath="ElementRegions/Rock"
       fieldName="pressure"
-      scale="1e6"/>
+      scale="10e6"/>
+
+    <FieldSpecification
+      name="initialPressureSource"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Source"
+      fieldName="pressure"
+      scale="10e6"/>
+
+    <FieldSpecification
+      name="bcPressure"
+      setNames="{ xpos }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="10e6"/>
 
     <SourceFlux
       name="sourceTerm"
       setNames="{ all }"
       objectPath="ElementRegions/Source"
-      scale="-5.5"/>
-
-    <FieldSpecification
-      name="sinkPressure"
-      setNames="{ rpos }"
-      objectPath="faceManager"
-      fieldName="pressure"
-      scale="1.0e6"/>
+      scale="-1.0"/>
   </FieldSpecifications>
 
 </Problem>
