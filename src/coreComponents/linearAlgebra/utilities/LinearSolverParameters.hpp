@@ -303,6 +303,7 @@ struct LinearSolverParameters
       hybridSinglePhasePoromechanics,            ///< single phase poromechanics with hybrid finite volume single phase flow
       singlePhasePoromechanicsEmbeddedFractures, ///< single phase poromechanics with FV embedded fractures
       singlePhasePoromechanicsConformingFractures, ///< single phase poromechanics with conforming fractures
+      singlePhasePoromechanicsConformingFracturesALM, ///< single phase poromechanics with conforming fractures for ALM
       singlePhasePoromechanicsReservoirFVM,      ///< single phase poromechanics with finite volume single phase flow with wells
       compositionalMultiphaseFVM,                ///< finite volume compositional multiphase flow
       compositionalMultiphaseHybridFVM,          ///< hybrid finite volume compositional multiphase flow
