@@ -35,7 +35,7 @@
 #include "physicsSolvers/fluidFlow/wells/WellLiquidRateConstraint.hpp"
 #include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/singlefluid/SingleFluidBase.hpp"
-
+#include "physicsSolvers/fluidFlow/wells/WellNewtonSolver.hpp"
 
 namespace geos
 {
@@ -166,6 +166,8 @@ public:
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
                                         WellElementSubRegion const & subRegion ) = 0;
+
+  virtual bool isCompositional() const = 0;
   /**
    *   * @brief Initialize well for the beginning of a simulation or restart
    *   @param domain the domain
@@ -204,9 +206,35 @@ public:
    * @param subRegion the well subRegion
    * @return true if all constraints are satisfied, false otherwise
    */
-  virtual bool evaluateConstraints( real64 const & time_n,
-                                    WellElementSubRegion & subRegion ) = 0;
+  bool evaluateConstraints( real64 const & time_n,
+                            WellElementSubRegion & subRegion );
 
+  /**
+   * @brief Function to evaluate well constraints after applying the solution update
+   * @param time_n the time at the beginning of the time step
+   * @param subRegion the well subRegion
+   * @return true if all constraints are satisfied, false otherwise
+   */
+  bool evaluateConstraints( real64 const & time_n,
+                            real64 const & dt,
+                            integer const cycleNumber,
+                            integer const coupledIterationNumber,
+                            DomainPartition & domain,
+                            MeshLevel & mesh,
+                            ElementRegionManager & elemManager,
+                            WellElementSubRegion & subRegion,
+                            DofManager const & dofManager );
+
+  void solveConstraint( WellConstraintBase *constraint,
+                        real64 const & time_n,
+                        real64 const & dt,
+                        integer const cycleNumber,
+                        integer const coupledIterationNumber,
+                        DomainPartition & domain,
+                        MeshLevel & mesh,
+                        ElementRegionManager & elemManager,
+                        WellElementSubRegion & subRegion,
+                        DofManager const & dofManager );
   /**
    * @brief assembles the accumulation term for an individual well
    * @param time_n time at the beginning of the time step
@@ -723,23 +751,6 @@ public:
   WellControls::Status getWellStatus () const { return m_wellStatus; }
 
 
-  /**
-   * @brief Set thermal effects enable
-   * @param[in] true/false
-   */
-  void enableThermalEffects ( bool enable ) { m_thermalEffectsEnabled = enable; };
-
-  /**
-   * @brief Are thermal effects enabled
-   * @return true if thermal effects are enabled, false otherwise
-   */
-  bool thermalEffectsEnabled() const { return m_thermalEffectsEnabled; }
-
-  /**
-   * @brief Is isoThermalEstimator  enabled
-   * @return true if isoThermalEstimator is enabled, false otherwise
-   */
-  bool isoThermalEstimatorEnabled() const { return m_enableIsoThermalEstimator; }
 
   ///@}
 
@@ -790,10 +801,7 @@ public:
     static constexpr char const * enableCrossflowString() { return "enableCrossflow"; }
     /// string key for the initial pressure coefficient
     static constexpr char const * initialPressureCoefficientString() { return "initialPressureCoefficient"; }
-    /// string key for the esitmate well solution flag
-    static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
-    /// string key for the enable iso thermal estimator flag
-    static constexpr char const * enableIsoThermalEstimatorString() { return "enableIsoThermalEstimator"; }
+
     /// string key for the minimum BHP presssure for a producer
     static constexpr char const * minimumBHPConstraintString() { return "MinimumBHPConstraint"; }
     /// string key for the maximum BHP presssure for a injection
@@ -812,6 +820,27 @@ public:
     static constexpr char const * injectionMassRateConstraint() { return "InjectionMassRateConstraint"; }
     /// string key for the liquid rate for a producer
     static constexpr char const * productionLiquidRateConstraint() { return "ProductionLiquidRateConstraint"; }
+    /// string key for the minimum BHP presssure for a producer
+    static constexpr char const * wellNewtonSolverString() { return "WellNewtonSolver"; }
+
+    /// string key for the esitmate well solution flag
+    static constexpr char const * estimateWellSolutionString() { return "estimateWellSolution"; }
+    /// string key for the enable iso thermal estimator flag
+    static constexpr char const * enableIsoThermalEstimatorString() { return "enableIsoThermalEstimator"; }
+
+    // control data (not registered on the mesh)
+
+    static constexpr char const * massDensityString() { return "massDensity";}
+
+    static constexpr char const * currentBHPString() { return "currentBHP"; }
+
+    static constexpr char const * currentPhaseVolRateString() { return "currentPhaseVolumetricRate"; }
+    static constexpr char const * currentVolRateString() { return "currentVolRate"; }
+
+    static constexpr char const * currentTotalVolRateString() { return "currentTotalVolumetricRate"; }
+
+    static constexpr char const * currentMassRateString() { return "currentMassRate"; }
+
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -849,6 +878,37 @@ public:
   std::vector< WellConstraintBase * >  getProdRateConstraints() const { return m_productionRateConstraintList; };
   std::vector< WellConstraintBase * >  getInjRateConstraints() { return m_injectionRateConstraintList; }
   std::vector< WellConstraintBase * >  getInjRateConstraints() const { return m_injectionRateConstraintList; }
+
+  /**
+   * @brief Set thermal effects enable
+   * @param[in] true/false
+   */
+  void enableThermalEffects ( bool enable ) { m_thermalEffectsEnabled = enable; };
+
+  /**
+   * @brief Are thermal effects enabled
+   * @return true if thermal effects are enabled, false otherwise
+   */
+  bool thermalEffectsEnabled() const { return m_thermalEffectsEnabled; }
+
+  /**
+   * @brief Is isoThermalEstimator  enabled
+   * @return true if isoThermalEstimator is enabled, false otherwise
+   */
+  bool isoThermalEstimatorEnabled() const { return m_enableIsoThermalEstimator; }
+
+  WellNewtonSolver & getWellNewtonSolver() { return m_wellNewtonSolver; }
+
+  void selectWellConstraint( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             integer const coupledIterationNumber,
+                             DomainPartition & domain,
+                             MeshLevel & mesh,
+                             ElementRegionManager & elemManager,
+                             WellElementSubRegion & subRegion,
+                             DofManager const & dofManager );
+
 
 protected:
 
@@ -943,9 +1003,6 @@ protected:
   /// Well open flag
   bool m_wellOpen;
 
-  /// flag to use the estimator
-  integer m_estimateSolution;
-
   /// Well status table name
   string m_statusTableName;
 
@@ -957,9 +1014,12 @@ protected:
 
   /// Region average temperature used in volume rate constraint calculations
   real64 m_regionAverageTemperature;
-  /// Flag to enable thermal effects in wellbore calculations
-  bool m_thermalEffectsEnabled;
+
+  integer m_estimateSolution;
   integer m_enableIsoThermalEstimator;
+  bool m_thermalEffectsEnabled;
+
+  WellNewtonSolver m_wellNewtonSolver;
 };
 
 

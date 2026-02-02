@@ -500,7 +500,8 @@ void WellManager::assembleSystem( real64 const time,
   //  wellEstimator flag > 0 =>   well esitmator solved for each constraint and then selects the constraint
   //                         =>   estimator solve only performed first "wellEstimator" iterations
   NonlinearSolverParameters const & nonlinearParams =  getNonlinearSolverParameters();
-  selectWellConstraint( time, dt, nonlinearParams.m_numNewtonIterations, domain );
+  IterationsStatistics const & iterationsStatistics =  getIterationStats();
+  //selectWellConstraint( time, dt, solverStatistics.m_numNewtonIterations, domain );
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
                                                                MeshLevel & meshLevel,
@@ -515,6 +516,16 @@ void WellManager::assembleSystem( real64 const time,
       WellElementSubRegion & subRegion = region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
                                            .getGroup< WellElementSubRegion >( region.getSubRegionName() );
       WellControls & wellControls = getWellControls( subRegion );
+      wellControls.selectWellConstraint( time,
+                                         dt,
+                                         iterationsStatistics.getNumTimeSteps(),
+                                         nonlinearParams.m_numNewtonIterations,
+                                         domain,
+                                         meshLevel,
+                                         elementRegionManager,
+                                         subRegion,
+                                         dofManager );
+
       // assemble the accumulation term in the mass balance equations
       wellControls.assembleWellAccumulationTerms( time, dt, subRegion, dofManager, localMatrix, localRhs );
       if( wellControls.isWellOpen() )

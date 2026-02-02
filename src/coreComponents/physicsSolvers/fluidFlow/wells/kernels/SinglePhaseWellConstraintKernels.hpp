@@ -149,7 +149,7 @@ struct ConstraintHelper
 
     // current constraint value
     real64 & currentVolRate =
-      wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
+      wellControls.getReference< real64 >( WellControls::viewKeyStruct::currentVolRateString() );
 
     integer const useSurfaceConditions = wellControls.useSurfaceConditions();
 

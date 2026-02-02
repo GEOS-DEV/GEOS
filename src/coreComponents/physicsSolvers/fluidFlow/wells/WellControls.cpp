@@ -25,6 +25,7 @@
 #include "mesh/PerforationFields.hpp"
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellFields.hpp"
+
 #include "functions/FunctionManager.hpp"
 namespace geos
 {
@@ -54,7 +55,10 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_wellOpen( false ),
   m_statusTable( nullptr ),
   m_regionAveragePressure( -1 ),
-  m_enableIsoThermalEstimator( 0 )
+  m_estimateSolution( 0 ),
+  m_enableIsoThermalEstimator( 0 ),
+  /// Nonlinear solver parameters
+  m_wellNewtonSolver( viewKeyStruct::wellNewtonSolverString(), this )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -128,13 +132,8 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to esitmate well solution prior to coupled reservoir and well solve." );
 
-  registerWrapper( viewKeyStruct::enableIsoThermalEstimatorString(), &m_enableIsoThermalEstimator ).
-    setDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Estimator configuration option to disable thermal effects on initial well constraint solve and then converge solution with thermal effects enabled: \n"
-                    " - If the flag is set to 1, thermal effects are enabled during the initial constraint solve. \n"
-                    " - If the flag is set to 0, thermal effects are disabled during the initial constraint solve." );
 
+  registerGroup( viewKeyStruct::wellNewtonSolverString(), &m_wellNewtonSolver );
 
   addLogLevel< logInfo::WellControl >();
 }
@@ -155,64 +154,63 @@ Group * WellControls::createChild( string const & childKey, string const & child
   //GEOS_ERROR_IF( childKey != viewKeyStruct::perforationString(),
   //               CatalogInterface::unknownTypeError( childKey, getDataContext(), childTypes ) );
 
-  Group * constraint = nullptr;
+  Group * child = nullptr;
   if( childKey == viewKeyStruct::minimumBHPConstraintString() )
   {
     MinimumBHPConstraint & bhpConstraint = registerGroup< MinimumBHPConstraint >( childName );
     m_minBHPConstraint =   &bhpConstraint;
-    constraint = &bhpConstraint;
+    child = &bhpConstraint;
   }
   else if( childKey == viewKeyStruct::maximumBHPConstraintString() )
   {
     MaximumBHPConstraint & bhpConstraint = registerGroup< MaximumBHPConstraint >( childName );
     m_maxBHPConstraint =  &bhpConstraint;
-    constraint = &bhpConstraint;
+    child = &bhpConstraint;
   }
   else if( childKey == viewKeyStruct::productionPhaseVolumeRateConstraintString() )
   {
     ProductionConstraint< PhaseVolumeRateConstraint > & phaseConstraint = registerGroup< ProductionConstraint< PhaseVolumeRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &phaseConstraint );
-    constraint = &phaseConstraint;
+    child = &phaseConstraint;
   }
   else if( childKey == viewKeyStruct::injectionPhaseVolumeRateConstraint() )
   {
-
     InjectionConstraint< PhaseVolumeRateConstraint > & phaseConstraint = registerGroup< InjectionConstraint< PhaseVolumeRateConstraint > >( childName );
     m_injectionRateConstraintList.emplace_back( &phaseConstraint );
-    constraint = &phaseConstraint;
+    child = &phaseConstraint;
   }
   else if( childKey == viewKeyStruct::productionVolumeRateConstraint() )
   {
     ProductionConstraint< VolumeRateConstraint > & volConstraint = registerGroup< ProductionConstraint< VolumeRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &volConstraint );
-    constraint = &volConstraint;
+    child = &volConstraint;
   }
   else if( childKey == viewKeyStruct::injectionVolumeRateConstraint() )
   {
     InjectionConstraint< VolumeRateConstraint > & volConstraint = registerGroup< InjectionConstraint< VolumeRateConstraint > >( childName );
     m_injectionRateConstraintList.emplace_back( &volConstraint );
-    constraint = &volConstraint;
+    child = &volConstraint;
   }
   else if( childKey == viewKeyStruct::productionMassRateConstraint() )
   {
     ProductionConstraint< MassRateConstraint > & massConstraint = registerGroup< ProductionConstraint< MassRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &massConstraint );
-    constraint = &massConstraint;
+    child = &massConstraint;
 
   }
   else if( childKey == viewKeyStruct::injectionMassRateConstraint() )
   {
     InjectionConstraint< MassRateConstraint > & massConstraint = registerGroup< InjectionConstraint< MassRateConstraint > >( childName );
     m_injectionRateConstraintList.emplace_back( &massConstraint );
-    constraint = &massConstraint;
+    child = &massConstraint;
   }
   else if( childKey == viewKeyStruct::productionLiquidRateConstraint() )
   {
     ProductionConstraint< LiquidRateConstraint > & liquidConstraint = registerGroup< ProductionConstraint< LiquidRateConstraint > >( childName );
     m_productionRateConstraintList.emplace_back( &liquidConstraint );
-    constraint = &liquidConstraint;
+    child = &liquidConstraint;
   }
-  return constraint;
+  return child;
 }
 
 void WellControls::expandObjectCatalogs()
@@ -222,6 +220,7 @@ void WellControls::expandObjectCatalogs()
   {
     createChild( catalogIter.first, catalogIter.first );
   }
+  // tjbcreateChild( WellNewtonSolver::catalogName(), WellNewtonSolver::catalogName() );
 }
 
 namespace
@@ -253,6 +252,17 @@ void WellControls::registerWellDataOnMesh( WellElementSubRegion & subRegion )
   std::size_t pos = addrWithMask.find( "UniqueSubRegion" );
   std::string addr = addrWithMask.substr( 0, pos );
   m_targetRegionNames.push_back( addr );
+
+  registerWrapper< real64 >( viewKeyStruct::currentBHPString() );
+  registerWrapper< real64 >( viewKeyStruct::currentVolRateString() );
+
+  registerWrapper< array1d< real64 > >( viewKeyStruct::currentPhaseVolRateString() ).
+    setSizedFromParent( 0 ).
+    reference().resizeDimension< 0 >( m_numPhases );
+  registerWrapper< real64 >( viewKeyStruct::massDensityString() );
+
+  registerWrapper< real64 >( viewKeyStruct::currentTotalVolRateString() );
+  registerWrapper< real64 >( viewKeyStruct::currentMassRateString() );
 }
 void WellControls::postInputInitialization()
 {
@@ -633,4 +643,401 @@ void WellControls::setGravCoef( WellElementSubRegion & subRegion, R1Tensor const
   // set the reference well element where the BHP control is applied
   setReferenceGravityCoef( refElev * gravVector[2] );       // tjb remove
 }
+
+void WellControls::selectWellConstraint( real64 const & time_n,
+                                         real64 const & dt,
+                                         integer const cycleNumber,
+                                         integer const coupledIterationNumber,
+                                         DomainPartition & domain,
+                                         MeshLevel & meshLevel,
+                                         ElementRegionManager & elemManager,
+                                         WellElementSubRegion & subRegion,
+                                         DofManager const & dofManager )
+
+{
+
+  // Well state estimated from reservoir conditions
+  if( isWellOpen() )
+  {
+    if( !getWellState() )
+    {
+      setWellState( 1 );
+
+      initializeWell( domain, meshLevel, subRegion, time_n );
+    }
+  }
+  else
+  {
+    setWellState( 0 );
+  }
+
+
+  bool useEstimator = m_estimateSolution && (coupledIterationNumber < m_wellNewtonSolver.getNumActiveCoupledIterations() );
+
+
+
+  if( getWellState())
+  {
+    if( useEstimator )
+    {
+      // Estimate well solution prior to coupled solve
+      evaluateConstraints( time_n,
+                           dt,
+                           cycleNumber,
+                           coupledIterationNumber,
+                           domain,
+                           meshLevel,
+                           elemManager,
+                           subRegion,
+                           dofManager );
+    }
+    else
+    {
+      // Evaluate well constraints based on current solution
+      evaluateConstraints( time_n,
+                           subRegion );
+    }
+
+    // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
+    // the well initialization code requires control type to by synced
+    integer owner = -1;
+    // Only subregion owner evaluates well control and control changes need to be broadcast to all ranks
+    if( subRegion.isLocallyOwned() )
+    {
+      owner = MpiWrapper::commRank( MPI_COMM_GEOS );
+    }
+    owner = MpiWrapper::max( owner );
+    WellControls::Control wellControl = getControl();
+    MpiWrapper::broadcast( wellControl, owner );
+    setControl( wellControl );
+  }
+
+
+}
+
+bool WellControls::evaluateConstraints( real64 const & time_n,
+                                        WellElementSubRegion & subRegion )
+{
+
+  // create list of all constraints to process
+  std::vector< WellConstraintBase * > constraintList;
+  if( isProducer() )
+  {
+    constraintList = getProdRateConstraints();
+    // Solve minimum bhp constraint first
+    constraintList.insert( constraintList.begin(), getMinBHPConstraint() );
+  }
+  else
+  {
+    constraintList = getInjRateConstraints();
+    // Solve maximum bhp constraint first;
+    constraintList.insert( constraintList.begin(), getMaxBHPConstraint() );
+  }
+  // Get current constraint
+  WellConstraintBase *  limitingConstraint = nullptr;
+  for( auto & constraint : constraintList )
+  {
+    if( constraint->getName() == getCurrentConstraint()->getName())
+    {
+      limitingConstraint =  constraint;
+      // tjb. this is likely not needed. set in update state
+      constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
+      if( isCompositional())
+      {
+        constraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
+                                            viewKeyStruct::currentPhaseVolRateString() ) );
+        constraint->setTotalVolumeRate ( getReference< real64 >(
+                                           viewKeyStruct::currentTotalVolRateString() ));
+        constraint->setMassRate( getReference< real64 >( viewKeyStruct::currentMassRateString() ));
+      }
+      else
+      {
+        constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
+        constraint->setTotalVolumeRate ( getReference< real64 >(
+                                           viewKeyStruct::currentVolRateString() ));
+      }
+      GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
+                         " Well " << subRegion.getName() << " Limiting Constraint " << limitingConstraint->getName() << " "  << limitingConstraint->bottomHolePressure() << " " <<
+                         limitingConstraint->phaseVolumeRates() << " " <<
+                         limitingConstraint->totalVolumeRate() << " " << limitingConstraint->massRate());
+    }
+  }
+  constraintList.erase( std::find( constraintList.begin(), constraintList.end(), limitingConstraint ) );
+
+  // Check current against other constraints
+  for( auto & constraint : constraintList )
+  {
+
+    if( limitingConstraint->getName() != constraint->getName())
+    {
+      if( constraint->checkViolation( *limitingConstraint, time_n ) )
+      {
+        limitingConstraint = constraint;
+        setControl( static_cast< WellControls::Control >(constraint->getControl()) );      // tjb old
+        setCurrentConstraint( constraint );
+        constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
+        if( isCompositional())
+        {
+          constraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
+                                              viewKeyStruct::currentPhaseVolRateString() ) );
+          constraint->setTotalVolumeRate ( getReference< real64 >(
+                                             viewKeyStruct::currentTotalVolRateString() ));
+          constraint->setMassRate( getReference< real64 >( viewKeyStruct::currentMassRateString() ));
+        }
+        else
+        {
+          constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
+          constraint->setTotalVolumeRate ( getReference< real64 >(
+                                             viewKeyStruct::currentVolRateString() ));
+        }
+        GEOS_LOG_RANK_IF ( subRegion.isLocallyOwned(),
+                           " Well " << subRegion.getName() << " Control switch " << constraint->getName() << " "  << constraint->getConstraintValue( time_n )  );
+      }
+    }
+  }
+  GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
+                     " Well " << subRegion.getName() << " Limiting Constraint " << limitingConstraint->getName() << " "  << limitingConstraint->bottomHolePressure() << " " <<
+                     limitingConstraint->phaseVolumeRates() << " " <<
+                     limitingConstraint->totalVolumeRate() << " " << limitingConstraint->massRate());
+
+  return true;
+}
+
+bool WellControls::evaluateConstraints( real64 const & time_n,
+                                        real64 const & dt,
+                                        integer const cycleNumber,
+                                        integer const coupledIterationNumber,
+                                        DomainPartition & domain,
+                                        MeshLevel & mesh,
+                                        ElementRegionManager & elemManager,
+                                        WellElementSubRegion & subRegion,
+                                        DofManager const & dofManager )
+{
+
+
+  // create list of all constraints to solve
+  // note that initializeWells sets the initial constraint
+  // tjb reactive control schema to allow use to set if needed
+  std::vector< WellConstraintBase * >  constraintList;
+  WellConstraintBase *  limitingConstraint = getCurrentConstraint();
+  if( isProducer() )
+  {
+    constraintList = getProdRateConstraints();
+    if( limitingConstraint->getControl() != ConstraintTypeId::BHP )
+    {
+      {   // remove from list and add BHP constraint
+        auto it = std::find( constraintList.begin(), constraintList.end(), limitingConstraint );
+        if( it != constraintList.end() )
+        {
+          constraintList.erase( it );
+        }
+        if( getMinBHPConstraint()->isConstraintActive() )
+        {
+          constraintList.push_back( getMinBHPConstraint() );
+        }
+        constraintList.insert( constraintList.begin(), limitingConstraint );
+      }
+    }
+    // Solve minimum bhp constraint first
+    if( false && getMinBHPConstraint()->isConstraintActive() )
+    {
+      // this is related to WHP option which introduces a new BHP constraint
+      limitingConstraint = getMinBHPConstraint();
+    }
+    else if( !constraintList.empty() )
+    {
+      limitingConstraint = constraintList[0];
+    }
+  }
+  else
+  {
+    constraintList = getInjRateConstraints();
+    // remove the limiting constraint from the list if present
+    {
+      if( limitingConstraint->getControl() != ConstraintTypeId::BHP )
+      {   // remove from list and add BHP constraint
+          //auto it = std::find( constraintList.begin(), constraintList.end(), limitingConstraint );
+          //if( it != constraintList.end() )
+          //{
+          //  constraintList.erase( it );
+          //}
+        constraintList.push_back( getMaxBHPConstraint() );
+      }
+    }
+  }
+  if( isoThermalEstimatorEnabled() )
+  {
+    enableThermalEffects( false );
+    solveConstraint ( limitingConstraint, time_n,
+                      dt,
+                      cycleNumber,
+                      coupledIterationNumber,
+                      domain,
+                      mesh,
+                      elemManager,
+                      subRegion,
+                      dofManager );
+    enableThermalEffects( true );
+  }
+  solveConstraint ( limitingConstraint, time_n,
+                    dt,
+                    cycleNumber,
+                    coupledIterationNumber,
+                    domain,
+                    mesh,
+                    elemManager,
+                    subRegion,
+                    dofManager );
+
+  for( auto const & constraint : constraintList )
+  {
+    GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
+                       " Well " << subRegion.getName() << " Constraint " << constraint->getName() << " active " << constraint->isConstraintActive() <<
+                       " value " << constraint->getConstraintValue( time_n ) );
+    if( constraint->isConstraintActive()  &&  constraint->checkViolation( *limitingConstraint, time_n ))
+    {
+      limitingConstraint=constraint;
+      setControl( static_cast< WellControls::Control >(constraint->getControl()) );                       // tjb old
+      setCurrentConstraint( limitingConstraint );
+      GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
+                         " Well " << subRegion.getName() << " New Limiting Constraint " << constraint->getName() << " active " << constraint->isConstraintActive() <<
+                         " value " << constraint->getConstraintValue( time_n ) );
+      solveConstraint ( constraint, time_n,
+                        dt,
+                        cycleNumber,
+                        coupledIterationNumber,
+                        domain,
+                        mesh,
+                        elemManager,
+                        subRegion,
+                        dofManager );
+      // tjb. this is likely not needed. set in update state
+      constraint->setBHP ( getReference< real64 >(  viewKeyStruct::currentBHPString() ));
+      if( isCompositional())
+      {
+        constraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
+                                            viewKeyStruct::currentPhaseVolRateString() ) );
+        constraint->setTotalVolumeRate ( getReference< real64 >(
+                                           viewKeyStruct::currentTotalVolRateString() ));
+        constraint->setMassRate( getReference< real64 >( viewKeyStruct::currentMassRateString() ));
+      }
+      else
+      {
+        constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
+        constraint->setTotalVolumeRate ( getReference< real64 >(
+                                           viewKeyStruct::currentVolRateString() ));
+      }
+
+    }
+  }
+  solveConstraint ( limitingConstraint, time_n,
+                    dt,
+                    cycleNumber,
+                    coupledIterationNumber,
+                    domain,
+                    mesh,
+                    elemManager,
+                    subRegion,
+                    dofManager );
+  if( isCompositional())
+  {
+    limitingConstraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
+                                                viewKeyStruct::currentPhaseVolRateString() ) );
+    limitingConstraint->setTotalVolumeRate ( getReference< real64 >(
+                                               viewKeyStruct::currentTotalVolRateString() ));
+    limitingConstraint->setMassRate( getReference< real64 >( viewKeyStruct::currentMassRateString() ));
+  }
+  else
+  {
+    limitingConstraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
+    limitingConstraint->setTotalVolumeRate( getReference< real64 >( viewKeyStruct::currentVolRateString() ));
+  }
+  GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
+                     " Well " << subRegion.getName() << " Limiting Constraint " << limitingConstraint->getName() << " "  << limitingConstraint->bottomHolePressure() << " " << limitingConstraint->phaseVolumeRates() << " " <<
+                     limitingConstraint->totalVolumeRate() << " " << limitingConstraint->massRate());
+
+  return true;
+}
+void WellControls::solveConstraint( WellConstraintBase *constraint,
+                                    real64 const & time_n,
+                                    real64 const & dt,
+                                    integer const cycleNumber,
+                                    integer const coupledIterationNumber,
+                                    DomainPartition & domain,
+                                    MeshLevel & mesh,
+                                    ElementRegionManager & elemManager,
+                                    WellElementSubRegion & subRegion,
+                                    DofManager const & dofManager )
+{
+  GEOS_UNUSED_VAR( dt );
+  GEOS_UNUSED_VAR( cycleNumber );
+  GEOS_UNUSED_VAR( domain );
+  GEOS_UNUSED_VAR( mesh );
+  GEOS_UNUSED_VAR( elemManager );
+  GEOS_UNUSED_VAR( dofManager );
+
+  bool useEstimator =   coupledIterationNumber < estimateSolution();
+  if( useEstimator )
+  {
+
+    if( getLogLevel() > 4 )
+    {
+      GEOS_LOG_RANK_0( "Well " <<getName() << " Evaluating constraint " << constraint->getName() << " value " << constraint->getConstraintValue( time_n ) << " active " <<
+                       constraint->isConstraintActive() );
+    }
+    if( constraint->isConstraintActive() )
+    {
+      setControl( static_cast< WellControls::Control >(constraint->getControl()) );    // tjb old
+      setCurrentConstraint( constraint );
+      // If a well is opened and then timestep is cut resulting in the well being shut, if the well is opened
+// the well initialization code requires control type to by synced
+      integer owner = -1;
+// Only subregion owner evaluates well control and control changes need to be broadcast to all ranks
+      if( subRegion.isLocallyOwned() )
+      {
+        owner = MpiWrapper::commRank( MPI_COMM_GEOS );
+      }
+      owner = MpiWrapper::max( owner );
+      WellControls::Control wellControl = getControl();
+      MpiWrapper::broadcast( wellControl, owner );
+      setControl( wellControl );
+#if 0
+      solveNonlinearSystem( time_n,
+                            dt,
+                            cycleNumber,
+                            domain,
+                            mesh,
+                            elemManager,
+                            subRegion,
+                            dofManager );
+#endif
+      // Store computed well quantities for this constraint
+      constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
+      if( isCompositional() )
+      {
+
+        constraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
+                                            viewKeyStruct::currentPhaseVolRateString() ) );
+        constraint->setTotalVolumeRate ( getReference< real64 >(
+                                           viewKeyStruct::currentTotalVolRateString() ));
+        constraint->setMassRate( getReference< real64 >( viewKeyStruct::currentMassRateString() ));
+      }
+      else
+      {
+        constraint->setBHP (  getReference< real64 >( viewKeyStruct::currentBHPString() ));
+        constraint->setTotalVolumeRate (  getReference< real64 >(
+                                           viewKeyStruct::currentVolRateString() ));
+      }
+      if( getLogLevel() > 4 )
+      {
+        GEOS_LOG_RANK_0( "Well " <<getName() << " aft solve Constraint rates " << constraint->getName() << " bhp " << constraint->bottomHolePressure() << " phaseVolRate " <<
+                         constraint->phaseVolumeRates() << " totalVolRate " << constraint->totalVolumeRate() << " massRate " << constraint->massRate());
+      }
+    }
+
+
+  }
+
+}
+
 } //namespace geos

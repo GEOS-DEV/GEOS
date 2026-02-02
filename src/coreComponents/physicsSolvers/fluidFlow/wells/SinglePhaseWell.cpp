@@ -69,10 +69,9 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
 
 void SinglePhaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
 {
-  WellControls::registerDataOnMesh( subRegion );
-
+ 
   setConstitutiveNames ( subRegion );
-
+  WellControls::registerDataOnMesh( subRegion );
   //DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   //ConstitutiveManager const & cm = domain.getConstitutiveManager();
   if( m_referenceFluidModelName.empty() )
@@ -104,17 +103,7 @@ void SinglePhaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
     perforationData.registerField< well::gravityCoefficient >( getName() );
   }
 
-
-  registerWrapper< real64 >( viewKeyStruct::currentBHPString() );
-
-  registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentBHPString() ).
-    setSizedFromParent( 0 ).
-    reference().resizeDimension< 0 >( 2 + isThermal() );       // dP, dT , dQ
-
-  registerWrapper< real64 >( viewKeyStruct::currentVolRateString() );
-  registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentVolRateString() ).
-    setSizedFromParent( 0 ).
-    reference().resizeDimension< 0 >( 2 + isThermal() );       // dP, dT, dQ
+  // dP, dT, dQ
   m_writeCSV=1;
   // write rates output header
   if( m_writeCSV > 0 && subRegion.isLocallyOwned())
@@ -241,9 +230,7 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
   real64 const & refGravCoef =  getReferenceGravityCoef();
 
   real64 & currentBHP =
-    getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
-  arrayView1d< real64 > const & dCurrentBHP =
-    getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentBHPString() );
+    getReference< real64 >( WellControls::viewKeyStruct::currentBHPString() );
 
   geos::internal::kernelLaunchSelectorThermalSwitch( isThermal(), [&] ( auto ISTHERMAL )
   {
@@ -254,17 +241,11 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
                                 dDens,
                                 wellElemGravCoef,
                                 &currentBHP,
-                                &dCurrentBHP,
                                 &iwelemRef,
                                 &refGravCoef] ( localIndex const )
     {
       real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
       currentBHP = pres[iwelemRef] + dens[iwelemRef][0] * diffGravCoef;
-      dCurrentBHP[DerivOffset::dP] = 1.0 + dDens[iwelemRef][0][DerivOffset::dP] *diffGravCoef;
-      if constexpr ( IS_THERMAL )
-      {
-        dCurrentBHP[DerivOffset::dT] =  dDens[iwelemRef][0][DerivOffset::dT] * diffGravCoef;
-      }
     } );
   } );
 
@@ -300,7 +281,7 @@ void SinglePhaseWell::calculateReferenceElementRates( WellElementSubRegion & sub
   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & dens = fluidSeparator.density();
 
   real64 & currentVolRate =
-    getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
+    getReference< real64 >( WellControls::viewKeyStruct::currentVolRateString() );
 
   // bring everything back to host, capture the scalars by reference
   forAll< serialPolicy >( 1, [connRate,
@@ -564,10 +545,10 @@ void SinglePhaseWell::initializeWell( DomainPartition & domain, MeshLevel & mesh
 
     calculateReferenceElementRates( subRegion );
     WellConstraintBase * constraint =  getCurrentConstraint();
-    constraint->setBHP ( getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() ));
+    constraint->setBHP ( getReference< real64 >( WellControls::viewKeyStruct::currentBHPString() ));
     constraint->setTotalVolumeRate ( getReference< real64 >(
-                                       SinglePhaseWell::viewKeyStruct::currentVolRateString() ));
-    //constraint->setMassRate( wellControls.getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentMassRateString() ));
+                                       WellControls::viewKeyStruct::currentVolRateString() ));
+    //constraint->setMassRate( wellControls.getReference< real64 >( WellControls::viewKeyStruct::currentMassRateString() ));
     // 7) Copy well / fluid dofs to "prop"_n variables
     saveState( subRegion );
   }
@@ -977,9 +958,9 @@ void SinglePhaseWell::assembleWellAccumulationTerms( real64 const & time,
       }
     } );
     // zero out current state constraint quantities
-    getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() ) = 0.0;
-    getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() )=0.0;
-    getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() )=0.0;
+    getReference< real64 >( WellControls::viewKeyStruct::currentBHPString() ) = 0.0;
+    getReference< real64 >( WellControls::viewKeyStruct::currentVolRateString() )=0.0;
+    getReference< real64 >( WellControls::viewKeyStruct::currentVolRateString() )=0.0;
   }
 }
 
@@ -1430,9 +1411,9 @@ void SinglePhaseWell::printRates( real64 const & time_n,
   integer const useSurfaceCond =  useSurfaceConditions();
 
   real64 const & currentBHP =
-    getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
+    getReference< real64 >( WellControls::viewKeyStruct::currentBHPString() );
   real64 const & currentTotalVolRate =
-    getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() );
+    getReference< real64 >( WellControls::viewKeyStruct::currentVolRateString() );
 
   // bring everything back to host, capture the scalars by reference
   forAll< serialPolicy >( 1, [&useSurfaceCond,
@@ -1460,67 +1441,6 @@ void SinglePhaseWell::printRates( real64 const & time_n,
   } );
 }
 
-bool SinglePhaseWell::evaluateConstraints( real64 const & time_n,
-                                           WellElementSubRegion & subRegion )
-{
-
-  // create list of all constraints to process
-  std::vector< WellConstraintBase * > constraintList;
-  if( isProducer() )
-  {
-    constraintList =  getProdRateConstraints();
-    // Solve minimum bhp constraint first
-    constraintList.insert( constraintList.begin(), getMinBHPConstraint() );
-  }
-  else
-  {
-    constraintList = getInjRateConstraints();
-    // Solve maximum bhp constraint first;
-    constraintList.insert( constraintList.begin(), getMaxBHPConstraint() );
-  }
-  // Get current constraint
-  WellConstraintBase *  limitingConstraint = nullptr;
-  for( auto & constraint : constraintList )
-  {
-    if( constraint->getName() == getCurrentConstraint()->getName())
-    {
-      limitingConstraint =  constraint;
-      // tjb. this is likely not needed. set in update state
-      constraint->setBHP ( getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() ));
-      constraint->setTotalVolumeRate ( getReference< real64 >(
-                                         SinglePhaseWell::viewKeyStruct::currentVolRateString() ));
-
-      GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
-                         " Well " << subRegion.getName() << " Limiting Constraint " << limitingConstraint->getName() << " "  << limitingConstraint->bottomHolePressure() << " "   <<
-                         limitingConstraint->totalVolumeRate() );
-    }
-  }
-
-  constraintList.erase( std::find( constraintList.begin(), constraintList.end(), limitingConstraint ) );
-
-  // Check current against other constraints
-  for( auto & constraint : constraintList )
-  {
-
-    if( limitingConstraint->getName() != constraint->getName())
-    {
-      // limitingConstraint->getName() << std::endl;
-      if( constraint->checkViolation( *limitingConstraint, time_n ) )
-      {
-        setControl( static_cast< WellControls::Control >(constraint->getControl()) );      // tjb old
-        setCurrentConstraint( constraint );
-        GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
-                           " Well " << subRegion.getName() << " New Limiting Constraint " << constraint->getName() << " "  << constraint->getConstraintValue( time_n )  );
-      }
-    }
-  }
-  GEOS_LOG_RANK_IF ( getLogLevel() > 4 && subRegion.isLocallyOwned(),
-                     " Well " << subRegion.getName() << " Limiting Constraint " << limitingConstraint->getName() << " "  << limitingConstraint->bottomHolePressure() << " " <<
-                     limitingConstraint->phaseVolumeRates() << " " <<
-                     limitingConstraint->totalVolumeRate() << " " << limitingConstraint->massRate());
-
-  return true;
-}
 
 
 }// namespace geos

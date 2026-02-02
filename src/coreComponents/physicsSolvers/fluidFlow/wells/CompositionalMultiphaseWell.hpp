@@ -75,6 +75,8 @@ public:
 
 
   virtual void registerWellDataOnMesh( WellElementSubRegion & subRegion ) override;
+
+  virtual bool isCompositional() const override { return true; }
   /**
    * @defgroup WellManager Interface Functions
    *
@@ -88,37 +90,9 @@ public:
    *   @param mesh the mesh level
    *   @param subRegion the well subRegion
    */
-  virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n )override;
+  virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) override;
 
-  /**
-   * @brief Function to evaluate well constraints after applying the solution update
-   * @param time_n the time at the beginning of the time step
-   * @param subRegion the well subRegion
-   * @return true if all constraints are satisfied, false otherwise
-   */
-  virtual bool evaluateConstraints( real64 const & time_n,
-                                    WellElementSubRegion & subRegion ) override;
 
-  bool evaluateConstraints( real64 const & time_n,
-                            real64 const & dt,
-                            integer const cycleNumber,
-                            integer const coupledIterationNumber,
-                            DomainPartition & domain,
-                            MeshLevel & mesh,
-                            ElementRegionManager & elemManager,
-                            WellElementSubRegion & subRegion,
-                            DofManager const & dofManager );
-
-  void  solveConstraint( WellConstraintBase *constraint,
-                         real64 const & time_n,
-                         real64 const & dt,
-                         integer const cycleNumber,
-                         integer const coupledIterationNumber,
-                         DomainPartition & domain,
-                         MeshLevel & mesh,
-                         ElementRegionManager & elemManager,
-                         WellElementSubRegion & subRegion,
-                         DofManager const & dofManager );
   /**
    * @copydoc WellControls::assembleWellAccumulationTerms()
    */
@@ -183,7 +157,7 @@ public:
                                   NonlinearSolverParameters const & nonlinearSolverParameters,
                                   WellElementSubRegion const & subRegion,
                                   DofManager const & dofManager,
-                                  arrayView1d< real64 const > const & localRhs )override;
+                                  arrayView1d< real64 const > const & localRhs ) override;
 
 
   virtual real64
@@ -247,13 +221,13 @@ public:
   virtual void implicitStepSetup( real64 const & time_n,
                                   real64 const & GEOS_UNUSED_PARAM( dt ),
                                   ElementRegionManager & elemManager,
-                                  WellElementSubRegion & subRegion )override;
+                                  WellElementSubRegion & subRegion ) override;
 
   virtual void
   implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         WellElementSubRegion const & subRegion ) override;
-  virtual void initializeWellPostInitialConditionsPreSubGroups( WellElementSubRegion & subRegion )override;
+  virtual void initializeWellPostInitialConditionsPreSubGroups( WellElementSubRegion & subRegion ) override;
 
   virtual void printRates( real64 const & time_n,
                            real64 const & dt,
@@ -366,17 +340,7 @@ public:
 
     static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseBase::viewKeyStruct::allowLocalCompDensChoppingString(); }
 
-    // control data (not registered on the mesh)
 
-    static constexpr char const * massDensityString() { return "massDensity";}
-
-    static constexpr char const * currentBHPString() { return "currentBHP"; }
-
-    static constexpr char const * currentPhaseVolRateString() { return "currentPhaseVolumetricRate"; }
-
-    static constexpr char const * currentTotalVolRateString() { return "currentTotalVolumetricRate"; }
-
-    static constexpr char const * currentMassRateString() { return "currentMassRate"; }
 
   } viewKeysCompMultiphaseWell;
 
@@ -389,7 +353,7 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   void saveState( WellElementSubRegion & subRegion );
-  virtual void postRestartInitialization( )override;
+  virtual void postRestartInitialization( ) override;
 
   /**
    * @brief Checks fluild model compatibility and validity

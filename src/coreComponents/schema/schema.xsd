@@ -6027,6 +6027,8 @@ When set to `all` output both convergence & iteration information to a csv.-->
  - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
  - If the flag is set to 0, we only allow well-to-reservoir flow at the perforations.-->
 		<xsd:attribute name="enableCrossflow" type="integer" default="1" />
+		<!--estimateWellSolution => Flag to esitmate well solution prior to coupled reservoir and well solve.-->
+		<xsd:attribute name="estimateWellSolution" type="integer" default="0" />
 		<!--initialPressureCoefficient => Tuning coefficient for the initial well pressure of rate-controlled wells: 
  - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) 
  - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) -->
@@ -6075,6 +6077,10 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="InjectionMassRateConstraintType">
+		<!--constraintActive => Flag to enable constraint. Currently only supported for injectors: 
+ - If the flag is set to 1, constraint included in boundary condition selection. 
+ - If the flag is set to 0, constraint excluded from boundary condition selection.-->
+		<xsd:attribute name="constraintActive" type="integer" default="1" />
 		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
 -->
 		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
@@ -6088,6 +6094,10 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="InjectionPhaseVolumeRateConstraintType">
+		<!--constraintActive => Flag to enable constraint. Currently only supported for injectors: 
+ - If the flag is set to 1, constraint included in boundary condition selection. 
+ - If the flag is set to 0, constraint excluded from boundary condition selection.-->
+		<xsd:attribute name="constraintActive" type="integer" default="1" />
 		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
 -->
 		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
@@ -6103,6 +6113,10 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="InjectionVolumeRateConstraintType">
+		<!--constraintActive => Flag to enable constraint. Currently only supported for injectors: 
+ - If the flag is set to 1, constraint included in boundary condition selection. 
+ - If the flag is set to 0, constraint excluded from boundary condition selection.-->
+		<xsd:attribute name="constraintActive" type="integer" default="1" />
 		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
 -->
 		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
@@ -6116,6 +6130,10 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MaximumBHPConstraintType">
+		<!--constraintActive => Flag to enable constraint. Currently only supported for injectors: 
+ - If the flag is set to 1, constraint included in boundary condition selection. 
+ - If the flag is set to 0, constraint excluded from boundary condition selection.-->
+		<xsd:attribute name="constraintActive" type="integer" default="1" />
 		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
 -->
 		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
@@ -6127,6 +6145,10 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="MinimumBHPConstraintType">
+		<!--constraintActive => Flag to enable constraint. Currently only supported for injectors: 
+ - If the flag is set to 1, constraint included in boundary condition selection. 
+ - If the flag is set to 0, constraint excluded from boundary condition selection.-->
+		<xsd:attribute name="constraintActive" type="integer" default="1" />
 		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
 -->
 		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
@@ -6138,6 +6160,10 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ProductionLiquidRateConstraintType">
+		<!--constraintActive => Flag to enable constraint. Currently only supported for injectors: 
+ - If the flag is set to 1, constraint included in boundary condition selection. 
+ - If the flag is set to 0, constraint excluded from boundary condition selection.-->
+		<xsd:attribute name="constraintActive" type="integer" default="1" />
 		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
 -->
 		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
@@ -6149,6 +6175,10 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ProductionMassRateConstraintType">
+		<!--constraintActive => Flag to enable constraint. Currently only supported for injectors: 
+ - If the flag is set to 1, constraint included in boundary condition selection. 
+ - If the flag is set to 0, constraint excluded from boundary condition selection.-->
+		<xsd:attribute name="constraintActive" type="integer" default="1" />
 		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
 -->
 		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
@@ -6158,6 +6188,10 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ProductionPhaseVolumeRateConstraintType">
+		<!--constraintActive => Flag to enable constraint. Currently only supported for injectors: 
+ - If the flag is set to 1, constraint included in boundary condition selection. 
+ - If the flag is set to 0, constraint excluded from boundary condition selection.-->
+		<xsd:attribute name="constraintActive" type="integer" default="1" />
 		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
 -->
 		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
@@ -6169,6 +6203,10 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ProductionVolumeRateConstraintType">
+		<!--constraintActive => Flag to enable constraint. Currently only supported for injectors: 
+ - If the flag is set to 1, constraint included in boundary condition selection. 
+ - If the flag is set to 0, constraint excluded from boundary condition selection.-->
+		<xsd:attribute name="constraintActive" type="integer" default="1" />
 		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
 -->
 		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
@@ -6212,6 +6250,8 @@ See note on referenceReservoirRegion for reservoir condition options-->
  - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
  - If the flag is set to 0, we only allow well-to-reservoir flow at the perforations.-->
 		<xsd:attribute name="enableCrossflow" type="integer" default="1" />
+		<!--estimateWellSolution => Flag to esitmate well solution prior to coupled reservoir and well solve.-->
+		<xsd:attribute name="estimateWellSolution" type="integer" default="0" />
 		<!--initialPressureCoefficient => Tuning coefficient for the initial well pressure of rate-controlled wells: 
  - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) 
  - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) -->

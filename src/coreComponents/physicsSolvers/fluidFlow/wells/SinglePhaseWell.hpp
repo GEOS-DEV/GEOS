@@ -95,14 +95,8 @@ public:
   virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n )override;
 
   virtual void initializeWellPostInitialConditionsPreSubGroups( WellElementSubRegion & subRegion )override;
-  /**
-   * @brief Function to evaluate well constraints after applying the solution update
-   * @param time_n the time at the beginning of the time step
-   * @param subRegion the well subRegion
-   * @return true if all constraints are satisfied, false otherwise
-   */
-  virtual bool evaluateConstraints( real64 const & time_n,
-                                    WellElementSubRegion & subRegion ) override;
+
+  virtual bool isCompositional() const override { return false; }
   /**
    * @copydoc WellControls::assembleWellAccumulationTerms()
    */
@@ -293,11 +287,6 @@ public:
   {
     static constexpr char const * dofFieldString() { return "wellVars"; }
 
-    // control data (not registered on the mesh)
-    static constexpr char const * currentBHPString() { return "currentBHP"; }
-    static constexpr char const * dCurrentBHPString() { return "dCurrentBHP"; }
-    static constexpr char const * currentVolRateString() { return "currentVolumetricRate"; }
-    static constexpr char const * dCurrentVolRateString() { return "dCurrentVolRate"; }
   };
 
 protected:
