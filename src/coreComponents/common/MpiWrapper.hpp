@@ -871,6 +871,7 @@ struct MpiTypeImpl< T, std::enable_if_t< std::is_enum< T >::value > >
   static MPI_Datatype get() { return MpiTypeImpl< std::underlying_type_t< T > >::get(); }
 };
 
+//
 template<>
 struct MpiTypeImpl< bool * >
 {
@@ -881,12 +882,23 @@ struct MpiTypeImpl< bool * >
   }
 };
 
+//
+template< typename T >
+struct MpiTypeImpl< T*, std::enable_if_t< !std::is_void_v<T> > >
+{
+  static MPI_Datatype get() 
+  { 
+    return MpiTypeImpl< T >::get();
+  }
+};
+
 
 template< typename T >
 MPI_Datatype getMpiType()
 {
   return MpiTypeImpl< T >::get();
 }
+
 
 template< typename FIRST, typename SECOND >
 MPI_Datatype getMpiPairType()

@@ -19,26 +19,44 @@
 
 #include "LogHistory.hpp"
 #include "common/format/EnumStrings.hpp"
+#include "common/format/LogPart.hpp"
 #include "common/format/table/TableData.hpp"
 #include "common/format/table/TableLayout.hpp"
 #include "common/format/table/TableTypes.hpp"
+#include "common/logger/MsgType.hpp"
 #include <functional>
+#include <string>
 #include <utility>
 
 namespace geos
 {
 
+std::string extractAfterLastOccurrence( string const & str, char delimiter )
+{
+  size_t pos = str.find_last_of( delimiter );
+
+  if( pos == std::string::npos )
+  {
+    return "";
+  }
+
+  return str.substr( pos + 1 );
+}
+
 void LogHistory::notifyMsg( LogPart::Type logPartName, DiagnosticMsg const & msgType )
 {
-  MsgStatistics::LocationKey locationKey = {msgType.m_file , msgType.m_line};
-  auto & stats = m_messageCounts
-                   .get_inserted( logPartName )
-                   .get_inserted( msgType.m_type )
-                   .get_inserted( locationKey );
+  MsgStatistics::LocationKey locationKey;
+  std::strcpy( locationKey.first.data(), extractAfterLastOccurrence( msgType.m_file, '/' ).c_str() );
+  locationKey.second = msgType.m_line;
 
+  auto & stats = m_messageCounts.get_inserted( std::make_tuple( logPartName, msgType.m_type, locationKey ));
+  stats.locationKey = locationKey;
   stats.count++;
-  // retirer
-  stats.totalCount++;
+}
+
+void LogHistory::insertBlanckReport( LogPart::Type logPartName, MsgType msgType, MsgStatistics::LocationKey locationKey )
+{
+  m_messageCounts.get_inserted( std::make_tuple( logPartName, msgType, locationKey ));
 }
 
 template<>
@@ -53,24 +71,22 @@ string TableTextFormatter::toString< LogHistory >( LogHistory const & messageCou
   }
 
   TableData data;
-  for( auto const & [ logPartName, msgTypesStatistics ] : messageCounts.getMessageCounts() )
+  stdMap< LogPart::Type, stdMap< MsgType, int > > countsByLogPart;
+  for( auto const & [ key, stats ] : messageCounts.getMessageCounts() )
+  {
+
+    auto [logPartType, msgType, locationKey] = key;
+    countsByLogPart.get_inserted( logPartType ).get_inserted( msgType )++;
+  }
+
+  for( const auto & [logPart, msgTypes] : countsByLogPart )
   {
     stdVector< TableData::CellData > row;
     row.emplace_back( TableData::CellData{CellType::Value,
-                                          EnumStrings< LogPart::Type >::toString( logPartName )} );
-    for( size_t msgTypeIdx = (size_t) MsgType::Error; msgTypeIdx != (size_t)MsgType::Undefined; msgTypeIdx++ )
+                                          EnumStrings< LogPart::Type >::toString( logPart )} );
+    for( const auto & [msgType, count] : msgTypes )
     {
-      MsgType const currentType = (MsgType) msgTypeIdx;
-      int totalCount = 0;
-      auto itStatistics =  msgTypesStatistics.find( currentType );
-      if( itStatistics != msgTypesStatistics.end())
-      {
-        for( auto const & stats : itStatistics->second )
-        {
-          totalCount += stats.second.totalCount;
-        }
-      }
-      row.emplace_back( TableData::CellData{CellType::Value, std::to_string( totalCount )} );
+      row.emplace_back( TableData::CellData{CellType::Value, std::to_string( count )} );
     }
     data.addRow( row );
   }

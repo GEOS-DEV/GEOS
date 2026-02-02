@@ -151,6 +151,13 @@ public:
   {return loggerMsgReportData;}
 
   /**
+   * @brief Gets the current logger report data.
+   * @return The current log part as a string.
+   */
+  LogHistory & getLoggerReportData()
+  {return loggerMsgReportData;}
+
+  /**
    * @brief Gets the current log part.
    * @return The current log part as a string.
    */

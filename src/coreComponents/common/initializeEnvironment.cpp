@@ -14,6 +14,12 @@
  */
 
 #include "initializeEnvironment.hpp"
+#include "common/DataTypes.hpp"
+#include "common/StdContainerWrappers.hpp"
+#include "common/logger/MsgType.hpp"
+#include "dataRepository/BufferOps.hpp"
+#include "dataRepository/BufferOps_inline.hpp"
+
 
 #include "TimingMacros.hpp"
 #include "Path.hpp"
@@ -31,6 +37,7 @@
 #include <umpire/ResourceManager.hpp>
 #include <umpire/Allocator.hpp>
 #include <umpire/strategy/AllocationStrategy.hpp>
+#include <unordered_map>
 #include <unordered_set>
 #include "umpire/util/MemoryResourceTraits.hpp"
 #include "umpire/util/Platform.hpp"
@@ -334,42 +341,18 @@ void setupEnvironment( int argc, char * argv[] )
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-std::string extractAfterLastOccurrence( string const & str, char delimiter )
+
+template< typename T >
+stdVector< T > unpack( buffer_unit_type * local_buffer_cpy, localIndex packedSize )
 {
-  size_t pos = str.find_last_of( delimiter );
-
-  if( pos == std::string::npos )
-  {
-    return "";
-  }
-
-  return str.substr( pos + 1 );
-}
-
-void cleanupEnvironment()
-{
-  MemoryLogging::getInstance().memoryStatsReport();
-  /// ------------------------------------------------------------------------------------------------------ ///
-  LogHistory const & logHistory =  ErrorLogger::global().getLoggerReportData();
-  stdVector< size_t > localAllocations;
-  std::hash< std::string > hash;
-  for( auto const & [logPartType, msgs] :  logHistory.getMessageCounts())
-  {
-    for( auto const & [msgType, stats] : msgs )
-    {
-      for( auto const & [location, stat] : stats )
-      {
-        string hashString = extractAfterLastOccurrence( location.first, '/' ) + std::to_string( location.second );
-        localAllocations.push_back( hash( hashString ));
-      }
-    }
-  }
-
   integer const numRanks = MpiWrapper::commSize( MPI_COMM_GEOS );
-  integer const numValues = localAllocations.size();
+  integer const numValues = packedSize;
+  
+  // Allows to know how much data each rank will send
   stdVector< integer > recvCounts;
+  // Displacments vector for global alloc
   stdVector< integer > displs;
-  stdVector< size_t > globalAllocations;
+  stdVector< buffer_unit_type > globalAllocations;
 
   if( MpiWrapper::commRank() == 0 )
   {
@@ -377,7 +360,6 @@ void cleanupEnvironment()
     displs.resize( numRanks );
   }
 
-  // Allows to know how much data each rank will send
   MpiWrapper::gather( &numValues, 1, recvCounts.data(), 1, 0, MPI_COMM_GEOS );
 
 
@@ -393,7 +375,7 @@ void cleanupEnvironment()
   }
 
   // Gather all locationKey into globalAllocations
-  MpiWrapper::gatherv( localAllocations.data(),
+  MpiWrapper::gatherv( local_buffer_cpy,
                        numValues,
                        globalAllocations.data(),
                        recvCounts.data(),
@@ -402,12 +384,73 @@ void cleanupEnvironment()
                        MPI_COMM_GEOS );
 
   if( MpiWrapper::commRank() == 0 )
-  { // Keep unique locationKey
-    std::unordered_set< size_t > setGlobalAllocations ( globalAllocations.begin(), globalAllocations.end());
+  {
+    stdVector< T > m_receiveBufferPtr;
+    //TODO CHANGE IT
+    m_receiveBufferPtr.resize( 4 );
+    buffer_unit_type const * local_dest_buffer = globalAllocations.data();
+
+    int const totalIntegers = globalAllocations.size() / sizeof( T );
+    m_receiveBufferPtr.resize( totalIntegers );
+
+    for( int i = 0; i < totalIntegers; ++i )
+    {
+      bufferOps::Unpack( local_dest_buffer, m_receiveBufferPtr[i] );
+    }
+    return m_receiveBufferPtr;
+  }
+  else
+  {
+    return {};
+  }
+
+}
+
+void cleanupEnvironment()
+{
+  MemoryLogging::getInstance().memoryStatsReport();
+  /// ------------------------------------------------------------------------------------------------------ ///
+  LogHistory const & logHistory = ErrorLogger::global().getLoggerReportData();
+
+  buffer_unit_type * local_buffer_logPart = new buffer_unit_type[ sizeof(LogPart::Type) ]();
+  buffer_unit_type * local_buffer_logPart_cpy = local_buffer_logPart;
+  localIndex packedSize_logPart = 0;
+
+  buffer_unit_type * local_buffer_msgtype = new buffer_unit_type[ sizeof(MsgType) ]();
+  buffer_unit_type * local_buffer_msgtype_cpy = local_buffer_msgtype;
+  localIndex packedSize_msgtype = 0;
+
+  buffer_unit_type * local_buffer_pair = new buffer_unit_type[ sizeof(MsgStatistics::LocationKey) ]();
+  buffer_unit_type * local_buffer_pair_cpy = local_buffer_pair;
+  localIndex packedSize_pair = 0;
+
+
+
+  for( auto const & [key, stats] : logHistory.getMessageCounts() )
+  {
+    // Décomposer la clé (tuple)
+    auto const & [logPartType, msgType, locationKey] = key;
+
+    packedSize_logPart += bufferOps::Pack< true >( local_buffer_logPart, logPartType );
+    packedSize_msgtype += bufferOps::Pack< true >( local_buffer_msgtype, msgType );
+    packedSize_pair += bufferOps::Pack< true >( local_buffer_pair, locationKey );
+  }
+
+  stdVector< LogPart::Type > testLogPart = unpack< LogPart::Type >( local_buffer_logPart_cpy, packedSize_logPart );
+  stdVector< MsgType > testMsgType = unpack< MsgType >( local_buffer_msgtype_cpy, packedSize_msgtype );
+  stdVector< MsgStatistics::LocationKey > testPair = unpack< MsgStatistics::LocationKey >( local_buffer_pair_cpy, packedSize_pair );
+
+  if( MpiWrapper::commRank() == 0 )
+  {
+    LogHistory & history = ErrorLogger::global().getLoggerReportData();
+    for( size_t i = 0; i<testPair.size(); i++ )
+    {
+      history.insertBlanckReport( testLogPart[i], testMsgType[i], testPair[i] );
+    }
+
     TableTextFormatter tableReportFormatter;
     GEOS_LOG( tableReportFormatter.toString< LogHistory >( GEOS_GLOBAL_LOGGER.getLoggerReportData()));
   }
-
   LvArray::system::resetSignalHandling();
   finalizeLogger();
   finalizeCaliper();

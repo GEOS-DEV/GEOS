@@ -25,6 +25,7 @@
 #include "common/format/table/TableFormatter.hpp"
 #include "DiagnosticMessage.hpp"
 #include "common/logger/MsgType.hpp"
+#include <string>
 
 
 namespace geos
@@ -36,13 +37,11 @@ namespace geos
 struct MsgStatistics
 {
   /// Key identifying the source location
-  using LocationKey = std::pair< string, integer >;
+  using LocationKey = std::pair< std::array< char, 200 >, integer >;
   /// Source code location
   LocationKey locationKey;
   /// Number of occurrences on the current rank
   integer count;
-  /// Total number of occurrences across all ranks
-  integer totalCount;
 };
 
 
@@ -68,13 +67,45 @@ public:
   auto const & getMessageCounts() const
   { return m_messageCounts; }
 
+  void insertBlanckReport(LogPart::Type logPartName, MsgType msgType, MsgStatistics::LocationKey locationKey );
+
 private:
+  struct LocationKeyHash
+  {
+    std::size_t operator()( std::tuple< LogPart::Type, MsgType, MsgStatistics::LocationKey > const & key ) const noexcept
+    {
+      auto const & [logPartType, msgType, locationKey] = key;
+
+      std::size_t h1 = std::hash< LogPart::Type >{} (logPartType);
+
+      std::size_t h2 = std::hash< MsgType >{} (msgType);
+
+      std::string str( std::begin( locationKey.first ), std::end( locationKey.first ));
+      std::size_t h3 = std::hash< std::string >{} (str);
+      std::size_t h4 = std::hash< int >{} (locationKey.second);
+
+      return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3);
+    }
+  };
+  struct LocationKeyEqual
+  {
+    bool operator()( const std::tuple< LogPart::Type, MsgType, MsgStatistics::LocationKey > & lhs,
+                     const std::tuple< LogPart::Type, MsgType, MsgStatistics::LocationKey > & rhs ) const
+    {
+      return std::get< 0 >( lhs ) == std::get< 0 >( rhs ) &&
+             std::get< 1 >( lhs ) == std::get< 1 >( rhs ) &&
+             std::get< 2 >( lhs ).first == std::get< 2 >( rhs ).first &&
+             std::get< 2 >( lhs ).second == std::get< 2 >( rhs ).second;
+    }
+  };
+
   /**
    * @brief Hierarchical storage of message statistics
    * Structure: LogPart -> MsgType -> SourceLocation -> Statistics
    */
-  stdMap< LogPart::Type, stdMap< MsgType, stdMap< MsgStatistics::LocationKey, MsgStatistics > > > m_messageCounts;
-
+  stdUnorderedMap< std::tuple< LogPart::Type, MsgType, MsgStatistics::LocationKey >,
+                   MsgStatistics,
+                   LocationKeyHash, LocationKeyEqual >m_messageCounts;
 };
 
 /**

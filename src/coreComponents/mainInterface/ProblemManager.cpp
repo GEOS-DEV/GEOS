@@ -180,8 +180,8 @@ void ProblemManager::problemSetup()
   if( MpiWrapper::commRank() != 1 )
   {
     GEOS_WARNING( "plouf" );
-    GEOS_WARNING( "plouf" );
-    GEOS_WARNING( "plouf" );
+    // GEOS_WARNING( "plouf" );
+    // GEOS_WARNING( "plouf" );
   }
   generateMesh();
   meshGenerationLog.end();
