@@ -973,7 +973,8 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                               { contact::incrementalBubbleDisplacement::key(),
                                 contact::totalBubbleDisplacement::key() } );
 
-    fieldsToBeSync.addElementFields( { contact::dispJump::key(),
+    fieldsToBeSync.addElementFields( { contact::traction::key(),
+                                       contact::dispJump::key(),
                                        contact::deltaDispJump::key() },
                                      { getUniqueFractureRegionName() } );
 
