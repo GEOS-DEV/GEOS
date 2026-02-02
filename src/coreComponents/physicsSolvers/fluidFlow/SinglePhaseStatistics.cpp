@@ -67,7 +67,6 @@ void SinglePhaseStatistics::registerDataOnMesh( Group & meshBodies )
         setRestartFlags( RestartFlags::NO_WRITE );
       region.excludeWrappersFromPacking( { viewKeyStruct::regionStatisticsString() } );
 
-      // write output header
       if( m_writeCSV > 0 && MpiWrapper::commRank() == 0 )
       {
         TableLayout tableLayout( {
