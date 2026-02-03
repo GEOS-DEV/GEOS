@@ -57,11 +57,16 @@ protected:
    * @brief Constructor for the class performing the thermal conductivity updates
    * @param effectiveConductivity the array of cell-wise effective conductivities in the subregion
    */
-  SinglePhaseThermalConductivityBaseUpdate( arrayView3d< real64 > const & effectiveConductivity,
+  SinglePhaseThermalConductivityBaseUpdate( arrayView3d< real64 > const & referenceThermalConductivity,
+                                            arrayView3d< real64 > const & effectiveConductivity,
                                             arrayView3d< real64 > const & dEffectiveConductivity_dT )
-    : m_effectiveConductivity( effectiveConductivity ),
+    : m_referenceThermalConductivity( referenceThermalConductivity ),
+    m_effectiveConductivity( effectiveConductivity ),
     m_dEffectiveConductivity_dT( dEffectiveConductivity_dT )
   {}
+
+  /// View on the cell-wise reference conductivities
+  arrayView3d< real64 > m_referenceThermalConductivity;
 
   /// View on the cell-wise effective conductivities
   arrayView3d< real64 > m_effectiveConductivity;
@@ -146,6 +151,9 @@ public:
   arrayView3d< real64 const > dEffectiveConductivity_dT() const { return m_dEffectiveConductivity_dT; }
 
 protected:
+
+  /// cell-wise reference conductivities in the subregion
+  array3d< real64 > m_referenceThermalConductivity;
 
   /// cell-wise effective conductivities in the subregion
   array3d< real64 > m_effectiveConductivity;

@@ -1,0 +1,205 @@
+<?xml version="1.0"?>
+<Problem>
+  <Solvers>
+    <SinglePhaseReservoir
+      name="RESERVOIR.SOLVER"
+      flowSolverName="FLOW.SOLVER"
+      wellSolverName="WELL.SOLVER"
+      logLevel="1"
+      initialDt="86400"
+      targetRegions="{ RESERVOIR, WELL }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        maxAllowedResidualNorm="1e12"
+        newtonMaxIter="25" />
+      <LinearSolverParameters
+        solverType="fgmres"
+        preconditionerType="mgr"
+        krylovTol="1e-4"
+        krylovAdaptiveTol="1"
+        krylovWeakestTol="1e-4"
+        logLevel="1" />
+    </SinglePhaseReservoir>
+
+    <SinglePhaseFVM
+      name="FLOW.SOLVER"
+      discretization="FLUID.TPFA"
+      targetRegions="{ RESERVOIR }"
+      temperature="380.15"
+      isThermal="1"
+      logLevel="2" />
+    <SinglePhaseWell
+      name="WELL.SOLVER"
+      logLevel="1"
+      isThermal="1"
+      targetRegions="{ WELL }">
+      <WellControls
+        name="WELL.CONTROL"
+        type="injector"
+        control="totalVolRate"
+        referenceElevation="-200"
+        useSurfaceConditions="1"
+        surfacePressure="101325.0"
+        surfaceTemperature="283.15"
+        injectionTemperature="293.15"
+        initialPressureCoefficient="0"
+        injectionStream="{1.0}"
+        targetBHP="1e10"
+        enableCrossflow="0"
+        targetTotalRateTableName="RATE" />
+    </SinglePhaseWell>
+  </Solvers>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="FLUID.TPFA" />
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <Mesh>
+    <VTKMesh
+      name="GLOBAL"
+      file="mesh_1d.vtr"
+      fieldNamesInGEOS="{ THERMAL.COND_referenceThermalConductivity }"
+      fieldsToImport="{ CONDUCTIVITY }"
+      logLevel="5">
+      <InternalWell
+        name="well.INJECTOR"
+        wellRegionName="WELL"
+        wellControlsName="WELL.CONTROL"
+        polylineNodeCoords="{
+          { 6440.37, 0.0, -200 },
+          { 6440.37, 0.0, -300 }
+        }"
+        polylineSegmentConn="{ { 0, 1 } }"
+        radius="0.19"
+        numElementsPerSegment="1">
+        <Perforation
+          name="WELL.PERF.1"
+          distanceFromHead="75.0" />
+      </InternalWell>
+    </VTKMesh>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="RESERVOIR"
+      cellBlocks="{ hexahedra }"
+      materialList="{ FLUID, ROCK, THERMAL.COND  }" />
+    <WellElementRegion
+      name="WELL" materialList="{ FLUID }" />
+  </ElementRegions>
+
+  <Constitutive>
+    <ThermalCompressibleSinglePhaseFluid
+      name="FLUID"
+      defaultDensity="1032.26544679"
+      defaultViscosity="0.0002634"
+      referencePressure="40810068.4183"
+      referenceDensity="1032.26544679"
+      compressibility="0.00037130e-5"
+      referenceViscosity="0.0002634"
+      referenceTemperature="380.15"
+      thermalExpansionCoeff="3e-4"
+      viscosibility="0.0"
+      specificHeatCapacity="4180.0"
+      referenceInternalEnergy="0.001" />
+
+    <NullModel
+      name="NULL.SOLID" />
+
+    <SinglePhaseThermalConductivity
+      name="THERMAL.COND"
+      defaultThermalConductivityComponents="{ 0.68337, 0.68337, 0.68337 }"
+      thermalConductivityGradientComponents="{ -1.2e-5, -1.2e-5, -1.5e-5 }" />
+
+    <SolidInternalEnergy
+      name="ROCK.ENERGY"
+      referenceVolumetricHeatCapacity="2.07e6"
+      referenceTemperature="273.0"
+      referenceInternalEnergy="0.0" />
+
+    <CompressibleSolidConstantPermeability
+      name="ROCK"
+      solidModelName="NULL.SOLID"
+      porosityModelName="ROCK.POROSITY"
+      permeabilityModelName="ROCK.PERMEABILITY"
+      solidInternalEnergyModelName="ROCK.ENERGY" />
+
+    <PressurePorosity
+      name="ROCK.POROSITY"
+      defaultReferencePorosity="0.3"
+      referencePressure="40800000.0000"
+      compressibility="4.0950e-14" />
+
+    <ConstantPermeability
+      name="ROCK.PERMEABILITY"
+      permeabilityComponents="{ 9.869233e-14, 9.869233e-14, 9.869233e-14}" />
+
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="INITIAL.PRESSURE"
+      setNames="{ all }"
+      objectPath="ElementRegions/RESERVOIR"
+      fieldName="pressure"
+      scale="169.12e5"
+      initialCondition="1" />
+    <FieldSpecification
+      name="INITIAL.TEMPERATURE"
+      setNames="{ all }"
+      objectPath="ElementRegions/RESERVOIR"
+      fieldName="temperature"
+      scale="380.15"
+      initialCondition="1" />
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="RATE"
+      interpolation="lower"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 2592000, 86400000}"
+      values="{ 0.0, 2.911949431, 2.911949431 }" />
+
+  </Functions>
+
+  <Tasks>
+    <SinglePhaseStatistics
+      name="STATISTICS"
+      flowSolverName="FLOW.SOLVER"
+      logLevel="1"
+      writeCSV="1" />
+  </Tasks>
+
+  <Outputs>
+    <VTK
+      name="VTK" />
+    <Restart
+      name="RESTART"/>      
+  </Outputs>
+
+  <Events maxTime="9504000">
+    <PeriodicEvent
+      name="SOLVER.APPLICATION"
+      target="/Solvers/RESERVOIR.SOLVER"
+      maxEventDt="864000" />
+    <PeriodicEvent
+      name="STATISTICS"
+      target="/Tasks/STATISTICS"
+      targetExactTimestep="1"
+      timeFrequency="864000" />
+    <PeriodicEvent
+      name="VTK"
+      target="/Outputs/VTK"
+      targetExactTimestep="1"
+      timeFrequency="864000" />
+    <PeriodicEvent
+      name="RESTART"
+      timeFrequency="1728000"
+      targetExactTimestep="1"
+      target="/Outputs/RESTART" />
+  </Events>
+</Problem>

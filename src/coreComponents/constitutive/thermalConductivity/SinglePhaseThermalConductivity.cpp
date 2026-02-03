@@ -46,11 +46,30 @@ SinglePhaseThermalConductivity::SinglePhaseThermalConductivity( string const & n
     setDescription( "The reference temperature at which the conductivity components are equal to the default values" );
 }
 
+void SinglePhaseThermalConductivity::allocateConstitutiveData( Group & parent, localIndex const numPts )
+{
+  SinglePhaseThermalConductivityBase::allocateConstitutiveData( parent, numPts );
+
+  integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
+
+  arrayView3d< real64 > referenceThermalConductivity = m_referenceThermalConductivity.toView();
+
+  forAll< parallelDevicePolicy<> >( parent.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    for( localIndex q = 0; q < numQuad; ++q )
+    {
+      referenceThermalConductivity[ei][q][0] =  m_defaultThermalConductivityComponents[0];
+      referenceThermalConductivity[ei][q][1] =  m_defaultThermalConductivityComponents[1];
+      referenceThermalConductivity[ei][q][2] =  m_defaultThermalConductivityComponents[2];
+    }
+  } );
+}
+
 void SinglePhaseThermalConductivity::initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity ) const
 {
+  arrayView3d< real64 const > referenceThermalConductivity = m_referenceThermalConductivity.toViewConst();
   arrayView3d< real64 > dEffectiveConductivity_dT = m_dEffectiveConductivity_dT.toView();
   arrayView3d< real64 > effectiveConductivity = m_effectiveConductivity.toView();
-  R1Tensor const defaultThermalConductivityComponents = m_defaultThermalConductivityComponents;
   R1Tensor const thermalConductivityGradientComponents = m_thermalConductivityGradientComponents;
 
   forAll< parallelDevicePolicy<> >( initialPorosity.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const ei )
@@ -58,9 +77,9 @@ void SinglePhaseThermalConductivity::initializeRockFluidState( arrayView2d< real
     // NOTE: enforcing 1 quadrature point
     for( localIndex q = 0; q < 1; ++q )
     {
-      effectiveConductivity[ei][q][0] = defaultThermalConductivityComponents[0];
-      effectiveConductivity[ei][q][1] = defaultThermalConductivityComponents[1];
-      effectiveConductivity[ei][q][2] = defaultThermalConductivityComponents[2];
+      effectiveConductivity[ei][q][0] = referenceThermalConductivity[ei][q][0];
+      effectiveConductivity[ei][q][1] = referenceThermalConductivity[ei][q][1];
+      effectiveConductivity[ei][q][2] = referenceThermalConductivity[ei][q][2];
 
       dEffectiveConductivity_dT[ei][q][0] = thermalConductivityGradientComponents[0];
       dEffectiveConductivity_dT[ei][q][1] = thermalConductivityGradientComponents[1];
@@ -71,9 +90,9 @@ void SinglePhaseThermalConductivity::initializeRockFluidState( arrayView2d< real
 
 void SinglePhaseThermalConductivity::updateFromTemperature( arrayView1d< real64 const > const & temperature ) const
 {
+  arrayView3d< real64 const > referenceThermalConductivity = m_referenceThermalConductivity.toViewConst();
   arrayView3d< real64 > dEffectiveConductivity_dT = m_dEffectiveConductivity_dT.toView();
   arrayView3d< real64 > effectiveConductivity = m_effectiveConductivity.toView();
-  R1Tensor const defaultThermalConductivityComponents = m_defaultThermalConductivityComponents;
   R1Tensor const thermalConductivityGradientComponents = m_thermalConductivityGradientComponents;
   real64 const referenceTemperature = m_referenceTemperature;
 
@@ -84,9 +103,9 @@ void SinglePhaseThermalConductivity::updateFromTemperature( arrayView1d< real64 
 
       real64 const deltaTemperature = temperature[ei] - referenceTemperature;
 
-      effectiveConductivity[ei][q][0] = defaultThermalConductivityComponents[0] + thermalConductivityGradientComponents[0] * deltaTemperature;
-      effectiveConductivity[ei][q][1] = defaultThermalConductivityComponents[1] + thermalConductivityGradientComponents[1] * deltaTemperature;
-      effectiveConductivity[ei][q][2] = defaultThermalConductivityComponents[2] + thermalConductivityGradientComponents[2] * deltaTemperature;
+      effectiveConductivity[ei][q][0] = referenceThermalConductivity[ei][q][0] + thermalConductivityGradientComponents[0] * deltaTemperature;
+      effectiveConductivity[ei][q][1] = referenceThermalConductivity[ei][q][1] + thermalConductivityGradientComponents[1] * deltaTemperature;
+      effectiveConductivity[ei][q][2] = referenceThermalConductivity[ei][q][2] + thermalConductivityGradientComponents[2] * deltaTemperature;
 
       for( localIndex i=0; i<=2; i++ )
       {
