@@ -61,7 +61,7 @@ decks = [
     TestDeck(
         name="thermal_compressible_single_phase_wells_1d",
         description='Thermal well test (1D, thermal, 1 wells)',
-        partitions=((1, 1, 1)),
+        partitions=((1, 1, 1),),
         restart_step=2,
         check_step=0,
         restartcheck_params=RestartcheckParameters(**restartcheck_params))
