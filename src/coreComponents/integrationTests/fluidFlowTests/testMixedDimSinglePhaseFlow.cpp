@@ -45,7 +45,8 @@ protected:
     oss << R"xml(<?xml version="1.0" ?>
 <Problem>
   <Mesh>
-    <VTKMesh name="mesh1" file=")xml" << meshFile << R"xml(" nodesetNames=")xml" << nodeSetNames << R"xml(" />
+    <VTKMesh name="mesh1" file=")xml" << meshFile << R"xml(" nodesetNames=")xml" << nodeSetNames <<
+    R"xml(" />
   </Mesh>
 
   <Geometry>
@@ -121,8 +122,10 @@ protected:
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames=")xml" << nodeSetNames << R"xml(" objectPath="faceManager" scale="1" />
-    <FieldSpecification name="frac" initialCondition="1" setNames=")xml" << nodeSetNames << R"xml(" objectPath="faceManager" fieldName="ruptureState" scale="1" />
+    <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames=")xml" << nodeSetNames <<
+    R"xml(" objectPath="faceManager" scale="1" />
+    <FieldSpecification name="frac" initialCondition="1" setNames=")xml" << nodeSetNames <<
+    R"xml(" objectPath="faceManager" fieldName="ruptureState" scale="1" />
     <FieldSpecification name="initialP" fieldName="pressure" initialCondition="1" setNames="{ all }" objectPath="ElementRegions" scale="1.5"/>
     <FieldSpecification name="initialPf" fieldName="pressure" initialCondition="1" setNames="{ all }" objectPath="ElementRegions/Fracture/faceElementSubRegion" scale="2.0"/>
     <FieldSpecification name="inletP" fieldName="pressure" setNames="{ xnegFace }" objectPath="faceManager" scale="2.0"/>
@@ -205,12 +208,12 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
 
         arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
         arrayView2d< real64 const > const center = subRegion.getElementCenter();
-        
-        for ( localIndex k = 0; k < subRegion.size(); ++k )
+
+        for( localIndex k = 0; k < subRegion.size(); ++k )
         {
           real64 numericalPressure = pressure[k];
           real64 exactPressure = 0.0;
-          if ( runSolver )
+          if( runSolver )
           {
             real64 const x = center[k][0];
             exactPressure = 2.0 * ( 1.0 - x ) + 1.0 * x;
@@ -236,10 +239,10 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_mesh_hex_DFN_1.vtu",
       "fractured_mesh_hex_DFN_12.vtu",
       "fractured_mesh_hex_DFN_123.vtu"
-    ),
+      ),
     ::testing::Bool()
-  )
-);
+    )
+  );
 
 int main( int argc, char * argv[] )
 {
