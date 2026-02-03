@@ -31,6 +31,9 @@ constexpr real64 relative_tolerance = 1.0e-6; // exact up to the order of defaul
 
 CommandLineOptions g_commandLineOptions;
 
+// This test is parametrized with std::tuple<std::string, bool> where the first argument is the mesh file name
+// and the second argument indicates whether to run the flowSolver or not to isolate testing of the surface generation and initalization
+// from the flow solver itself for mixed-dimensional single phase flow problems
 class MixedDimSinglePhaseFlowTest : public ::testing::TestWithParam< std::tuple< std::string, bool > >
 {
 protected:
