@@ -188,13 +188,14 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
 
       mesh.getElemManager().forElementSubRegions( [&]( ElementSubRegionBase & subRegion )
       {
-        string const & regionName = subRegion.getParent().getName();
-        if( regionName != "Region" && regionName != "Fracture" )
+        bool const isMatrixCell = dynamic_cast< CellElementSubRegion const * >( &subRegion );
+        bool const isFractureCell = dynamic_cast< FaceElementSubRegion const * >( &subRegion );
+        if( !isMatrixCell && !isFractureCell )
         {
           return;
         }
 
-        real64 const exactPressure = ( regionName == "Region" ) ? 1.5 : 2.0;
+        real64 const exactPressure = isMatrixCell ? 1.5 : 2.0;
         arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
         
         for ( localIndex k = 0; k < subRegion.size(); ++k )
