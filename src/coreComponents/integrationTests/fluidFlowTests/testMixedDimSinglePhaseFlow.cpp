@@ -27,7 +27,7 @@
 
 using namespace geos;
 
-constexpr real64 relative_tolerance = 1.0e-6; // Because MPa range is used
+constexpr real64 relative_tolerance = 1.0e-6; // exact up to the order of defaultAperture="1.0e-7"
 
 CommandLineOptions g_commandLineOptions;
 
@@ -53,14 +53,14 @@ protected:
     <Box name="xposFace" xMin="{  0.99, -0.01, -0.01 }" xMax="{  1.01,  1.01,  1.01 }"/>
     </Geometry>
 
-  <Solvers>
+  <Solvers gravityVector="{0.0, 0.0, 0.0}">
     <SinglePhaseFVM
       name="flowSolver"
       targetRegions="{ Region, Fracture }"
       discretization="tpfa"
       logLevel="1">
-      <NonlinearSolverParameters newtonTol="1.0e-6" newtonMaxIter="20"/>
-      <LinearSolverParameters solverType="gmres" preconditionerType="amg" krylovTol="1.0e-10"/>
+      <NonlinearSolverParameters newtonTol="1.0e-6" newtonMaxIter="50"/>
+      <LinearSolverParameters solverType="gmres" preconditionerType="amg" krylovTol="1.0e-14"/>    
     </SinglePhaseFVM>
     <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="10.0e9" logLevel="1"/>
   </Solvers>
@@ -73,17 +73,19 @@ protected:
 
   <ElementRegions>
     <CellElementRegion name="Region" cellBlocks="{ * }" materialList="{ rockMatrix, water }"/>
-    <SurfaceElementRegion name="Fracture" faceBlock="faceElementSubRegion" materialList="{ fractureMaterial, water }" defaultAperture="1.0e-5"/>
+    <SurfaceElementRegion name="Fracture" faceBlock="faceElementSubRegion" materialList="{ fractureMaterial, water }" defaultAperture="1.0e-7"/>
   </ElementRegions>
 
   <Constitutive>
   
     <CompressibleSinglePhaseFluid
       name="water"
-      defaultDensity="1000"
-      defaultViscosity="0.001"
-      referencePressure="0.0"
-      compressibility="0.0"
+      defaultDensity="1.0" 
+      defaultViscosity="1.0"
+      referenceDensity="1.0" 
+      referenceViscosity="1.0"
+      referencePressure="0.0" 
+      compressibility="0.0" 
       viscosibility="0.0"/>
 
     <CompressibleSolidConstantPermeability
@@ -98,21 +100,21 @@ protected:
       porosityModelName="fracPorosity"
       permeabilityModelName="fracPerm"/>      
 
-    <ConstantPermeability name="rockPerm" permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>
-    <ConstantPermeability name="fracPerm" permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>      
+    <ConstantPermeability name="rockPerm" permeabilityComponents="{ 1.0, 1.0, 1.0 }"/>
+    <ConstantPermeability name="fracPerm" permeabilityComponents="{ 1.0, 1.0, 1.0 }"/>      
 
     <NullModel
       name="nullSolid"/>
 
     <PressurePorosity
       name="rockPorosity"
-      defaultReferencePorosity="0.05"
+      defaultReferencePorosity="0.1"
       referencePressure="0.0"
       compressibility="0.0"/>
 
     <PressurePorosity
       name="fracPorosity"
-      defaultReferencePorosity="1.0"
+      defaultReferencePorosity="0.1"
       referencePressure="0.0"
       compressibility="0.0"/>      
 
@@ -121,10 +123,10 @@ protected:
   <FieldSpecifications>
     <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames=")xml" << nodeSetNames << R"xml(" objectPath="faceManager" scale="1" />
     <FieldSpecification name="frac" initialCondition="1" setNames=")xml" << nodeSetNames << R"xml(" objectPath="faceManager" fieldName="ruptureState" scale="1" />
-    <FieldSpecification name="initialP" fieldName="pressure" initialCondition="1" setNames="{ all }" objectPath="ElementRegions" scale="15.0e6"/>
-    <FieldSpecification name="initialPf" fieldName="pressure" initialCondition="1" setNames="{ all }" objectPath="ElementRegions/Fracture/faceElementSubRegion" scale="20.0e6"/>
-    <FieldSpecification name="inletP" fieldName="pressure" setNames="{ xnegFace }" objectPath="faceManager" scale="20.0e6"/>
-    <FieldSpecification name="outletP" fieldName="pressure" setNames="{ xposFace }" objectPath="faceManager" scale="10.0e6"/>
+    <FieldSpecification name="initialP" fieldName="pressure" initialCondition="1" setNames="{ all }" objectPath="ElementRegions" scale="1.5"/>
+    <FieldSpecification name="initialPf" fieldName="pressure" initialCondition="1" setNames="{ all }" objectPath="ElementRegions/Fracture/faceElementSubRegion" scale="2.0"/>
+    <FieldSpecification name="inletP" fieldName="pressure" setNames="{ xnegFace }" objectPath="faceManager" scale="2.0"/>
+    <FieldSpecification name="outletP" fieldName="pressure" setNames="{ xposFace }" objectPath="faceManager" scale="1.0"/>
   </FieldSpecifications>
   <Tasks>
     <DynamicFieldSpecification name="apply_fracture_updates" fieldSpecificationNames="{initialPf}"/>
@@ -135,7 +137,7 @@ protected:
   </Outputs>
   <Events minTime="-1.0" maxTime="1.0">
     <SoloEvent name="preFracture" target="/Solvers/SurfaceGen" targetTime="-1.0" beginTime="-1.0" />
-    <SoloEvent name="TriggerFractureUpdate" target="/Tasks/apply_fracture_updates" targetTime="-1.0" beginTime="-1.0"/>  
+    <SoloEvent name="TriggerFractureUpdate" target="/Tasks/apply_fracture_updates" targetTime="-1.0" beginTime="-1.0"/>    
     <PeriodicEvent name="outputsM" timeFrequency="1.0" target="/Outputs/vtkOutputM"/>
     <PeriodicEvent name="outputsF" timeFrequency="1.0" target="/Outputs/vtkOutputF"/>
     <PeriodicEvent name="solverApplications" target="/Solvers/flowSolver" forceDt="1.0"/>
@@ -192,12 +194,13 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
           return;
         }
 
-        real64 const expectedPressure = ( regionName == "Region" ) ? 15.0e6 : 20.0e6;
+        real64 const exactPressure = ( regionName == "Region" ) ? 1.5 : 2.0;
         arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
         
         for ( localIndex k = 0; k < subRegion.size(); ++k )
         {
-          ASSERT_NEAR( pressure[k], expectedPressure, 1.0e-5 );
+          real64 const numericalPressure = pressure[k];
+          EXPECT_NEAR( std::fabs( numericalPressure - exactPressure ) / exactPressure, 0.0, relative_tolerance ) << "Element " << k << " incorrect pressure.";
         }
       } );
     }
@@ -217,10 +220,10 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
         for ( localIndex k = 0; k < subRegion.size(); ++k )
         {
           real64 const x = center[k][0];
-          real64 const exactPressure = 20.0e6 * ( 1.0 - x ) + 15.0e6 * x;
-          real64 const numericalPressure = 20.0e6 * ( 1.0 - x ) + 15.0e6 * x;
-
-          EXPECT_NEAR( std::fabs( numericalPressure - exactPressure ) / exactPressure, 0.0, relative_tolerance ) << "Element " << k << " incorrect pressure.";
+          real64 const exactPressure = 2.0 * ( 1.0 - x ) + 1.0 * x;
+          real64 const numericalPressure = pressure[k];
+          real64 const relativeError = std::fabs( numericalPressure - exactPressure ) / exactPressure;
+          EXPECT_NEAR( relativeError, 0.0, relative_tolerance ) << "Element " << k << " inexact pressure.";
         }
       } );
     }
