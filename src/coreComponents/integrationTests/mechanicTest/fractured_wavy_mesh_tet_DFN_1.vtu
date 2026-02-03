@@ -7,10 +7,7 @@
           AQAAAACAAAD4CgAAKQAAAA==eJxjZIAARhw0pQCXudQyfxQMbjAa/6NgFIyCUTAKRsEoGCwAAIMIAA0=
         </DataArray>
       </PointData>
-      <CellData Scalars="material_id">
-        <DataArray type="Int32" Name="material_id" format="binary" RangeMin="1" RangeMax="2">
-          AQAAAACAAAC8HAAALgAAAA==eJzt0KEBADAMw7Cs/x9dOpYDKiBo4kkyn1dM0frr2j9fAQAAAAAAuGoBOhYHSg==
-        </DataArray>
+      <CellData>
       </CellData>
       <Points>
         <DataArray type="Float64" Name="Points" NumberOfComponents="3" format="binary" RangeMin="0" RangeMax="1.7320508075688772">
