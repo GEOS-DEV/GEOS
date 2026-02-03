@@ -196,9 +196,9 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
 
       mesh.getElemManager().forElementSubRegions( [&]( ElementSubRegionBase & subRegion )
       {
-        bool const isCell = dynamic_cast< CellElementSubRegion const * >( &subRegion );
-        bool const isFracture = dynamic_cast< FaceElementSubRegion const * >( &subRegion );
-        if( !isCell && !isFracture )
+        bool const isMatrixCell = dynamic_cast< CellElementSubRegion const * >( &subRegion );
+        bool const isFractureCell = dynamic_cast< FaceElementSubRegion const * >( &subRegion );
+        if( !isMatrixCell && !isFractureCell )
         {
           return;
         }
@@ -217,7 +217,7 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
           }
           else
           {
-            exactPressure = isCell ? 1.5 : 2.0;
+            exactPressure = isMatrixCell ? 1.5 : 2.0;
           }
 
           real64 const relativeError = std::fabs( numericalPressure - exactPressure ) / exactPressure;
