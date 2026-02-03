@@ -5,7 +5,8 @@ set( gtest_geosx_tests
      testTransmissibility.cpp
      testImmiscibleMultiphaseFlow.cpp
      testSinglePhaseMFDPolyhedral.cpp
-     testSinglePhaseReactiveTransport.cpp )
+     testSinglePhaseReactiveTransport.cpp
+     testMixedDimSinglePhaseFlow.cpp )
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
@@ -64,7 +65,13 @@ foreach(test ${gtest_geosx_tests})
                 ${CMAKE_CURRENT_SOURCE_DIR}/hex_pyr_tet_nested_mixed.vtu
                 $<TARGET_FILE_DIR:${test_name}>
     )
-                     
+    add_custom_command(
+        TARGET ${test_name} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_CURRENT_SOURCE_DIR}/../mechanicTest/fractured_mesh_tet_DFN_12.vtu
+                $<TARGET_FILE_DIR:${test_name}>
+    )
+
 endforeach()
 
 # For some reason, BLT is not setting CUDA language for these source files
