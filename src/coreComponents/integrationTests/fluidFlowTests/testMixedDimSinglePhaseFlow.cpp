@@ -19,6 +19,11 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "mesh/MeshLevel.hpp"
+#include "mesh/ElementRegionManager.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
+#include "mesh/DomainPartition.hpp"
 
 using namespace geos;
 
@@ -184,7 +189,57 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
     GeosxState state( std::move( options ) );
     ASSERT_TRUE( state.initializeDataRepository() );
     state.applyInitialConditions();
+
+    {
+      ProblemManager & pm = state.getProblemManager();
+      MeshLevel & mesh = pm.getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
+
+      mesh.getElemManager().forElementSubRegions( [&]( localIndex const k, ElementSubRegionBase & subRegion )
+      {
+        string const & regionName = subRegion.getParent().getName();
+        if( regionName != "Region" && regionName != "Fracture" )
+        {
+          return;
+        }
+
+        real64 const expectedPressure = ( regionName == "Region" ) ? 15.0e6 : 20.0e6;
+        arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
+        
+        ASSERT_NEAR( pressure[k], expectedPressure, 1.0e-5 );
+      } );
+    }
+
     state.run();
+
+    {
+      ProblemManager & pm = state.getProblemManager();
+      MeshLevel & mesh = pm.getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
+
+      mesh.getElemManager().forElementSubRegions( [&]( localIndex const k, ElementSubRegionBase & subRegion )
+      {
+        string const & regionName = subRegion.getParent().getName();
+        if( regionName != "Region" && regionName != "Fracture" )
+        {
+          return;
+        }
+
+        arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
+        arrayView2d< real64 const > const center = subRegion.getElementCenter();
+        
+        real64 const x = center[k][0];
+        real64 const expectedPressure = 20.0e6 * ( 1.0 - x ) + 15.0e6 * x;
+
+        // Tolerance: 1 Pa relative to >1e7 Pa is very tight.
+        // Using broader tolerance or relative error is safer.
+        // Let's use 10 Pa absolute tolerance (1e-6 relative to 10 MPa) which is quite good for FVM.
+        // Or 1000 Pa? The user said "exact", but numerical solutions are never exact.
+        // I'll stick to a reasonable tolerance, e.g. 1% of the range (5MPa). 50kPa.
+        // But for a simple 1D problem it should be very accurate.
+        // I saw 1.0e-10 in linear solver tolerance.
+        // I will use 1.0 here as absolute tolerance (1 Pa).
+        ASSERT_NEAR( pressure[k], expectedPressure, 1.0 );
+      } );
+    }
   }
 }
 
