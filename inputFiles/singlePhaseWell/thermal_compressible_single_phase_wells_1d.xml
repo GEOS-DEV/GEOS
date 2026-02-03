@@ -112,7 +112,8 @@
     <SinglePhaseThermalConductivity
       name="THERMAL.COND"
       defaultThermalConductivityComponents="{ 0.68337, 0.68337, 0.68337 }"
-      thermalConductivityGradientComponents="{ -1.2e-5, -1.2e-5, -1.5e-5 }" />
+      thermalConductivityGradientComponents="{ -1.2e-5, -1.2e-5, -1.5e-5 }"
+      referenceTemperature="380.15" />
 
     <SolidInternalEnergy
       name="ROCK.ENERGY"
