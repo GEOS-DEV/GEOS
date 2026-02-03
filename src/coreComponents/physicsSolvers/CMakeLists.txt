@@ -24,16 +24,18 @@ Contains:
 # Specify solver headers
 #
 set( physicsSolversBase_headers
+     DynamicFieldSpecifcation.hpp
+     FieldStatisticsBase.hpp 
      LinearSolverParameters.hpp
      NonlinearSolverParameters.hpp
      PhysicsSolverBase.hpp
      PhysicsSolverBaseKernels.hpp
-     SolverStatistics.hpp
-     FieldStatisticsBase.hpp )
+     SolverStatistics.hpp )
 #
 # Specify solver sources
 #
 set( physicsSolversBase_sources
+     DynamicFieldSpecifcation.cpp
      LinearSolverParameters.cpp
      NonlinearSolverParameters.cpp
      PhysicsSolverBase.cpp
