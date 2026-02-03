@@ -18,7 +18,7 @@ DynamicFieldSpecification::DynamicFieldSpecification( const string & name,
 {
 
   registerWrapper( viewKeyStruct::fieldSpecificationNamesString(), &m_fieldSpecificationNames ).
-    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "Array containing the field specifications to apply" );
 
@@ -34,12 +34,12 @@ void DynamicFieldSpecification::postInputInitialization()
 
 bool
 DynamicFieldSpecification::
-  execute( real64 const time_n,
-           real64 const dt,
-           integer const cycleNumber,
-           integer const eventCounter,
-           real64 const eventProgress,
-           DomainPartition & domain )
+execute( real64 const time_n,
+         real64 const dt,
+         integer const cycleNumber,
+         integer const eventCounter,
+         real64 const eventProgress,
+         DomainPartition & domain )
 {
 
   FieldSpecificationManager & fsm = FieldSpecificationManager::getInstance();
@@ -68,9 +68,9 @@ DynamicFieldSpecification::
                                                     SortedArrayView< localIndex const > const & targetObject,
                                                     Group & targetGroup,
                                                     string const fieldName )
-            {
-              bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, fieldName );
-            } );
+              {
+                bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, fieldName );
+              } );
           }
         }
       }
