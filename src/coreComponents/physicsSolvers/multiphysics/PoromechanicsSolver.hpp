@@ -114,11 +114,6 @@ public:
   {
     Base::postInputInitialization();
 
-    GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
-                   GEOS_FMT( "{} {}: The attribute `{}` of the flow solver must be thermal since the poromechanics solver is thermal",
-                             this->getCatalogName(), this->getName(), this->flowSolver()->getName() ),
-                   InputError );
-
     GEOS_THROW_IF( this->solidMechanicsSolver()->timeIntegrationOption() != SolidMechanicsLagrangianFEM::TimeIntegrationOption::QuasiStatic,
                    GEOS_FMT( "{} {}: The attribute `{}` of solid mechanics solver `{}` must be `{}`",
                              this->getCatalogName(), this->getName(),
@@ -151,6 +146,11 @@ public:
   virtual void initializePreSubGroups() override
   {
     Base::initializePreSubGroups();
+
+    GEOS_THROW_IF( this->m_isThermal && !this->flowSolver()->isThermal(),
+                   GEOS_FMT( "{} {}: The attribute `{}` of the flow solver must be thermal since the poromechanics solver is thermal",
+                             this->getCatalogName(), this->getName(), this->flowSolver()->getName() ),
+                   InputError );
 
     GEOS_THROW_IF( m_stabilizationType == stabilization::StabilizationType::Local,
                    this->getWrapperDataContext( viewKeyStruct::stabilizationTypeString() ) <<
