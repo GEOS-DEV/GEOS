@@ -27,6 +27,8 @@
 
 using namespace geos;
 
+constexpr real64 relative_tolerance = 1.0e-6; // Because MPa range is used
+
 CommandLineOptions g_commandLineOptions;
 
 class MixedDimSinglePhaseFlowTest : public ::testing::TestWithParam< std::string >
@@ -97,7 +99,7 @@ protected:
       permeabilityModelName="fracPerm"/>      
 
     <ConstantPermeability name="rockPerm" permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>
-    <ConstantPermeability name="fracPerm" permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>      
+    <ConstantPermeability name="fracPerm" permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>      
 
     <NullModel
       name="nullSolid"/>
@@ -152,21 +154,9 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
   std::string xmlPath = testBinaryDir + "/test_mixed_dim_single_phase_flow.xml";
 
   std::string nodeSetNames = "{ f1_node_set }";
-  if( meshFileName.find( "_DFN_2.vtu" ) != std::string::npos )
-  {
-    nodeSetNames = "{ f2_node_set }";
-  }
-  else if( meshFileName.find( "_DFN_12.vtu" ) != std::string::npos )
+  if( meshFileName.find( "_DFN_12.vtu" ) != std::string::npos )
   {
     nodeSetNames = "{ f1_node_set, f2_node_set }";
-  }
-  else if( meshFileName.find( "_DFN_13.vtu" ) != std::string::npos )
-  {
-    nodeSetNames = "{ f1_node_set, f3_node_set }";
-  }
-  else if( meshFileName.find( "_DFN_23.vtu" ) != std::string::npos )
-  {
-    nodeSetNames = "{ f2_node_set, f3_node_set }";
   }
   else if( meshFileName.find( "_DFN_123.vtu" ) != std::string::npos )
   {
@@ -221,28 +211,16 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
       mesh.getElemManager().forElementSubRegions( [&]( ElementSubRegionBase & subRegion )
       {
         string const & regionName = subRegion.getParent().getName();
-        if( regionName != "Region" && regionName != "Fracture" )
-        {
-          return;
-        }
-
         arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
         arrayView2d< real64 const > const center = subRegion.getElementCenter();
         
         for ( localIndex k = 0; k < subRegion.size(); ++k )
         {
           real64 const x = center[k][0];
-          real64 const expectedPressure = 20.0e6 * ( 1.0 - x ) + 15.0e6 * x;
+          real64 const exactPressure = 20.0e6 * ( 1.0 - x ) + 15.0e6 * x;
+          real64 const numericalPressure = 20.0e6 * ( 1.0 - x ) + 15.0e6 * x;
 
-          // Tolerance: 1 Pa relative to >1e7 Pa is very tight.
-          // Using broader tolerance or relative error is safer.
-          // Let's use 10 Pa absolute tolerance (1e-6 relative to 10 MPa) which is quite good for FVM.
-          // Or 1000 Pa? The user said "exact", but numerical solutions are never exact.
-          // I'll stick to a reasonable tolerance, e.g. 1% of the range (5MPa). 50kPa.
-          // But for a simple 1D problem it should be very accurate.
-          // I saw 1.0e-10 in linear solver tolerance.
-          // I will use 1.0 here as absolute tolerance (1 Pa).
-          ASSERT_NEAR( pressure[k], expectedPressure, 1.0 );
+          EXPECT_NEAR( std::fabs( numericalPressure - exactPressure ) / exactPressure, 0.0, relative_tolerance ) << "Element " << k << " incorrect pressure.";
         }
       } );
     }
@@ -253,7 +231,9 @@ INSTANTIATE_TEST_SUITE_P(
   MixedDimFlowCases,
   MixedDimSinglePhaseFlowTest,
   ::testing::Values(
-    "fractured_mesh_hex_DFN_12.vtu"
+    "fractured_mesh_hex_DFN_1.vtu",
+    "fractured_mesh_hex_DFN_12.vtu",
+    "fractured_mesh_hex_DFN_123.vtu"
   )
 );
 
