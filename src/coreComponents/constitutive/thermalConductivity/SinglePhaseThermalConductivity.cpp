@@ -53,14 +53,15 @@ void SinglePhaseThermalConductivity::allocateConstitutiveData( Group & parent, l
   integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
 
   arrayView3d< real64 > referenceThermalConductivity = m_referenceThermalConductivity.toView();
+  R1Tensor const defaultThermalConductivityComponents = m_defaultThermalConductivityComponents;
 
   forAll< parallelDevicePolicy<> >( parent.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
   {
     for( localIndex q = 0; q < numQuad; ++q )
     {
-      referenceThermalConductivity[ei][q][0] =  m_defaultThermalConductivityComponents[0];
-      referenceThermalConductivity[ei][q][1] =  m_defaultThermalConductivityComponents[1];
-      referenceThermalConductivity[ei][q][2] =  m_defaultThermalConductivityComponents[2];
+      referenceThermalConductivity[ei][q][0] = defaultThermalConductivityComponents[0];
+      referenceThermalConductivity[ei][q][1] = defaultThermalConductivityComponents[1];
+      referenceThermalConductivity[ei][q][2] = defaultThermalConductivityComponents[2];
     }
   } );
 }
