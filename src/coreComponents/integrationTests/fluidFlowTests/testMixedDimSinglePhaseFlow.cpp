@@ -19,6 +19,11 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
 #include "codingUtilities/Utilities.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "mesh/MeshLevel.hpp"
+#include "mesh/ElementRegionManager.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
+#include "mesh/DomainPartition.hpp"
 
 using namespace geos;
 
