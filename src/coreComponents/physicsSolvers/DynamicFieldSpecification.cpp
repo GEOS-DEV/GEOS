@@ -1,9 +1,16 @@
-
-
 #include "DynamicFieldSpecification.hpp"
+#include "events/tasks/TasksManager.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/FieldSpecificationBase.hpp"
+#include "common/FieldSpecificationOps.hpp"
+#include "mesh/DomainPartition.hpp"
+#include "mesh/MeshBody.hpp"
+#include "mesh/MeshLevel.hpp"
 
 namespace geos
 {
+using namespace dataRepository;
+
 DynamicFieldSpecification::DynamicFieldSpecification( const string & name,
                                                       Group * const parent ):
   TaskBase( name, parent ),
@@ -40,15 +47,27 @@ execute( real64 const time_n,
 
     FieldSpecificationBase const & fs = fsm.getGroup< FieldSpecificationBase >( fsName );
 
-    fs.apply< dataRepository::Group >( mesh,
-                                       [&]( FieldSpecificationBase const & bc,
-                                            string const &,
-                                            SortedArrayView< localIndex const > const & targetObject,
-                                            Group & targetGroup,
-                                            string const fieldName )
+    for( auto & meshBodyPair : domain.getMeshBodies().getSubGroups() )
+    {
+      if( MeshBody * const meshBody = dynamic_cast< MeshBody * >( meshBodyPair.second ) )
       {
-        bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, fieldName );
-      } );
+        for( auto & meshLevelPair : meshBody->getMeshLevels().getSubGroups() )
+        {
+          if( MeshLevel * const meshLevel = dynamic_cast< MeshLevel * >( meshLevelPair.second ) )
+          {
+            fs.apply< dataRepository::Group >( *meshLevel,
+                                               [&]( FieldSpecificationBase const & bc,
+                                                    string const &,
+                                                    SortedArrayView< localIndex const > const & targetObject,
+                                                    Group & targetGroup,
+                                                    string const fieldName )
+              {
+                bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, fieldName );
+              } );
+          }
+        }
+      }
+    }
   }
 
 
