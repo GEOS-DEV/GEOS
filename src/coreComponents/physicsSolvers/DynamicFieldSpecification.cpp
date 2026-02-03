@@ -12,7 +12,7 @@ DynamicFieldSpecification::DynamicFieldSpecification( const string & name,
 
   registerWrapper( viewKeyStruct::fieldSpecificationNamesString(), &m_fieldSpecificationNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "Array containing the field specifications to apply" );
 
 }
