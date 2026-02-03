@@ -1850,6 +1850,11 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
                                         const map< localIndex, int > & faceLocations,
                                         const map< std::pair< CellElementSubRegion const *, localIndex >, int > & elemLocations )
 {
+  std::cout << "SurfaceGenerator Statistics: Splitting node " << nodeID
+            << ". Node duplicates: 1"
+            << ". Associated Faces (before split): " << faceLocations.size()
+            << ". Associated Edges (before split): " << edgeLocations.size() << std::endl;
+
   int const rank = MpiWrapper::commRank( MPI_COMM_WORLD );
 
   array2d< real64, nodes::REFERENCE_POSITION_PERM > const & X = nodeManager.referencePosition();
