@@ -200,7 +200,8 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
         for ( localIndex k = 0; k < subRegion.size(); ++k )
         {
           real64 const numericalPressure = pressure[k];
-          EXPECT_NEAR( std::fabs( numericalPressure - exactPressure ) / exactPressure, 0.0, relative_tolerance ) << "Element " << k << " incorrect pressure.";
+          real64 const relativeError = std::fabs( numericalPressure - exactPressure ) / exactPressure;
+          EXPECT_NEAR( relativeError, 0.0, relative_tolerance ) << "Element " << k << " inexact pressure.";
         }
       } );
     }
