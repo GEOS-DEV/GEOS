@@ -27,7 +27,7 @@
 #include "physicsSolvers/solidMechanics/contact/kernels/SolidMechanicsContactFaceBubbleKernels.hpp"
 #include "physicsSolvers/solidMechanics/contact/LogLevelsInfo.hpp"
 #include "physicsSolvers/LogLevelsInfo.hpp"
-
+#include "finiteElement/FiniteElementDiscretization.hpp"
 #include "constitutive/contact/FrictionSelector.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 
@@ -43,9 +43,6 @@ SolidMechanicsLagrangeContactBubbleStab::SolidMechanicsLagrangeContactBubbleStab
                                                                                   Group * const parent ):
   ContactSolverBase( name, parent )
 {
-  m_faceTypeToFiniteElements.insert( {"Quadrilateral", std::make_unique< finiteElement::H1_QuadrilateralFace_Lagrange1_GaussLegendre2 >()} );
-  m_faceTypeToFiniteElements.insert( {"Triangle", std::make_unique< finiteElement::H1_TriangleFace_Lagrange1_Gauss1 >()} );
-
   LinearSolverParameters & linSolParams = m_linearSolverParameters.get();
   linSolParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::lagrangianContactMechanicsBubbleStab;
   linSolParams.mgr.separateComponents = true;
@@ -134,6 +131,54 @@ void SolidMechanicsLagrangeContactBubbleStab::registerDataOnMesh( Group & meshBo
   } );
 }
 
+void SolidMechanicsLagrangeContactBubbleStab::initializePostInitialConditionsPreSubGroups()
+{
+  ContactSolverBase::initializePostInitialConditionsPreSubGroups();
+
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  validateTetrahedralQuadrature( domain.getMeshBodies() );
+}
+
+void SolidMechanicsLagrangeContactBubbleStab::validateTetrahedralQuadrature( Group & meshBodies )
+{
+  string const discretizationName = getDiscretizationName();
+
+  NumericalMethodsManager const & numericalMethodManager =
+    this->getGroupByPath< DomainPartition >( "/Problem/domain" ).getNumericalMethodManager();
+  FiniteElementDiscretizationManager const & feDiscretizationManager =
+    numericalMethodManager.getFiniteElementDiscretizationManager();
+  FiniteElementDiscretization const & feDiscretization =
+    feDiscretizationManager.getGroup< FiniteElementDiscretization >( discretizationName );
+
+
+  integer const useHighOrderQuadrature =
+    feDiscretization.getReference< integer >( "useHighOrderQuadratureRule" );
+
+  bool hasTetrahedra = false;
+  forDiscretizationOnMeshTargets( meshBodies, [&]( string const &,
+                                                   MeshLevel const & mesh,
+                                                   string_array const & regionNames )
+  {
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    elemManager.forElementRegions< CellElementRegion >( regionNames, [&]( localIndex const,
+                                                                          CellElementRegion const & region )
+    {
+      region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
+      {
+        if( subRegion.getElementType() == ElementType::Tetrahedron )
+        {
+          hasTetrahedra = true;
+        }
+      } );
+    } );
+  } );
+
+  GEOS_ERROR_IF( hasTetrahedra && useHighOrderQuadrature != 1,
+                 GEOS_FMT( "{}: Tetrahedral meshes require useHighOrderQuadratureRule=\"1\" for correct integration of bubble contributions. "
+                           "Please add this attribute to your FiniteElements/{} XML block.",
+                           getName(), discretizationName ) );
+}
+
 void SolidMechanicsLagrangeContactBubbleStab::setupDofs( DomainPartition const & domain,
                                                          DofManager & dofManager ) const
 {
@@ -190,6 +235,29 @@ void SolidMechanicsLagrangeContactBubbleStab::setupDofs( DomainPartition const &
                           contact::totalBubbleDisplacement::key(),
                           DofManager::Connector::Elem,
                           meshTargets );
+}
+
+void SolidMechanicsLagrangeContactBubbleStab::postInputInitialization()
+{
+  ContactSolverBase::postInputInitialization();
+
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteElementDiscretizationManager const & feDiscretizationManager =
+    numericalMethodManager.getFiniteElementDiscretizationManager();
+  FiniteElementDiscretization const & feDiscretization =
+    feDiscretizationManager.getGroup< FiniteElementDiscretization >( getDiscretizationName() );
+
+  m_faceTypeToFiniteElements.insert( {"Quadrilateral", feDiscretization.factory( ElementType::Quadrilateral )} );
+  m_faceTypeToFiniteElements.insert( {"Triangle", feDiscretization.factory( ElementType::Triangle )} );
+
+  GEOS_LOG_RANK_0( GEOS_FMT( "{} using finite element discretization {}:",
+                             getName(), getDiscretizationName() ) );
+  for( auto const & [name, fePtr] : m_faceTypeToFiniteElements )
+  {
+    GEOS_LOG_RANK_0( GEOS_FMT( "  {} face elements: {} quadrature points",
+                               name, fePtr->getNumQuadraturePoints() ) );
+  }
 }
 
 void SolidMechanicsLagrangeContactBubbleStab::setupSystem( DomainPartition & domain,
