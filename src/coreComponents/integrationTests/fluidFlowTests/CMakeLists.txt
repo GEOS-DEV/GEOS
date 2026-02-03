@@ -68,9 +68,21 @@ foreach(test ${gtest_geosx_tests})
     add_custom_command(
         TARGET ${test_name} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                ${CMAKE_CURRENT_SOURCE_DIR}/../mechanicTest/fractured_mesh_tet_DFN_12.vtu
+                ${CMAKE_CURRENT_SOURCE_DIR}/../mechanicTest/fractured_mesh_hex_DFN_1.vtu
                 $<TARGET_FILE_DIR:${test_name}>
     )
+    add_custom_command(
+        TARGET ${test_name} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_CURRENT_SOURCE_DIR}/../mechanicTest/fractured_mesh_hex_DFN_12.vtu
+                $<TARGET_FILE_DIR:${test_name}>
+    )
+    add_custom_command(
+        TARGET ${test_name} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_CURRENT_SOURCE_DIR}/../mechanicTest/fractured_mesh_hex_DFN_123.vtu
+                $<TARGET_FILE_DIR:${test_name}>
+    )        
 
 endforeach()
 

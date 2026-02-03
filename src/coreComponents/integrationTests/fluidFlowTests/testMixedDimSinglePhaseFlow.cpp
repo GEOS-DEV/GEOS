@@ -17,6 +17,7 @@
 #include <sstream>
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
+#include "mainInterface/initialization.hpp"
 #include "codingUtilities/Utilities.hpp"
 
 using namespace geos;
@@ -191,7 +192,7 @@ INSTANTIATE_TEST_SUITE_P(
   MixedDimFlowCases,
   MixedDimSinglePhaseFlowTest,
   ::testing::Values(
-    "fractured_mesh_tet_DFN_12.vtu"
+    "fractured_mesh_hex_DFN_12.vtu"
   )
 );
 
