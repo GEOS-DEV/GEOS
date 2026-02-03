@@ -41,6 +41,7 @@ DynamicFieldSpecification::
            real64 const eventProgress,
            DomainPartition & domain )
 {
+  GEOS_UNUSED_VAR( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
 
   FieldSpecificationManager & fsm = FieldSpecificationManager::getInstance();
 
