@@ -31,7 +31,7 @@ constexpr real64 relative_tolerance = 1.0e-6; // exact up to the order of defaul
 
 CommandLineOptions g_commandLineOptions;
 
-class MixedDimSinglePhaseFlowTest : public ::testing::TestWithParam< std::string >
+class MixedDimSinglePhaseFlowTest : public ::testing::TestWithParam< std::tuple< std::string, bool > >
 {
 protected:
   void SetUp() override
@@ -39,7 +39,7 @@ protected:
     testBinaryDir = TEST_BINARY_DIR;
   }
 
-  std::string generateXmlInput( std::string const & meshFile, std::string const & nodeSetNames )
+  std::string generateXmlInput( std::string const & meshFile, std::string const & nodeSetNames, bool const runSolver )
   {
     std::ostringstream oss;
     oss << R"xml(<?xml version="1.0" ?>
@@ -140,8 +140,13 @@ protected:
     <SoloEvent name="TriggerFractureUpdate" target="/Tasks/apply_fracture_updates" targetTime="-1.0" beginTime="-1.0"/>    
     <PeriodicEvent name="outputsM" timeFrequency="1.0" target="/Outputs/vtkOutputM"/>
     <PeriodicEvent name="outputsF" timeFrequency="1.0" target="/Outputs/vtkOutputF"/>
-    <PeriodicEvent name="solverApplications" target="/Solvers/flowSolver" forceDt="1.0"/>
-  </Events>
+)xml";
+    if( runSolver )
+    {
+      oss << R"xml(  <PeriodicEvent name="solverApplications" target="/Solvers/flowSolver" forceDt="1.0"/>
+)xml";
+    }
+    oss << R"xml(  </Events>
 </Problem>
 )xml";
     return oss.str();
@@ -152,7 +157,8 @@ protected:
 
 TEST_P( MixedDimSinglePhaseFlowTest, Run )
 {
-  std::string const & meshFileName = GetParam();
+  std::string const & meshFileName = std::get< 0 >( GetParam() );
+  bool const runSolver = std::get< 1 >( GetParam() );
   std::string xmlPath = testBinaryDir + "/test_mixed_dim_single_phase_flow.xml";
 
   std::string nodeSetNames = "{ f1_node_set }";
@@ -165,7 +171,7 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
     nodeSetNames = "{ f1_node_set, f2_node_set, f3_node_set }";
   }
 
-  std::string xmlContent = generateXmlInput( meshFileName, nodeSetNames );
+  std::string xmlContent = generateXmlInput( meshFileName, nodeSetNames, runSolver );
 
   {
     std::ofstream ofs( xmlPath );
@@ -182,31 +188,6 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
     ASSERT_TRUE( state.initializeDataRepository() );
     state.applyInitialConditions();
 
-    {
-      ProblemManager & pm = state.getProblemManager();
-      MeshLevel & mesh = pm.getDomainPartition().getMeshBody( 0 ).getBaseDiscretization();
-
-      mesh.getElemManager().forElementSubRegions( [&]( ElementSubRegionBase & subRegion )
-      {
-        bool const isMatrixCell = dynamic_cast< CellElementSubRegion const * >( &subRegion );
-        bool const isFractureCell = dynamic_cast< FaceElementSubRegion const * >( &subRegion );
-        if( !isMatrixCell && !isFractureCell )
-        {
-          return;
-        }
-
-        real64 const exactPressure = isMatrixCell ? 1.5 : 2.0;
-        arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
-        
-        for ( localIndex k = 0; k < subRegion.size(); ++k )
-        {
-          real64 const numericalPressure = pressure[k];
-          real64 const relativeError = std::fabs( numericalPressure - exactPressure ) / exactPressure;
-          EXPECT_NEAR( relativeError, 0.0, relative_tolerance ) << "Element " << k << " inexact pressure.";
-        }
-      } );
-    }
-
     state.run();
 
     {
@@ -215,15 +196,30 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
 
       mesh.getElemManager().forElementSubRegions( [&]( ElementSubRegionBase & subRegion )
       {
-        string const & regionName = subRegion.getParent().getName();
+        bool const isCell = dynamic_cast< CellElementSubRegion const * >( &subRegion );
+        bool const isFracture = dynamic_cast< FaceElementSubRegion const * >( &subRegion );
+        if( !isCell && !isFracture )
+        {
+          return;
+        }
+
         arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
         arrayView2d< real64 const > const center = subRegion.getElementCenter();
         
         for ( localIndex k = 0; k < subRegion.size(); ++k )
         {
-          real64 const x = center[k][0];
-          real64 const exactPressure = 2.0 * ( 1.0 - x ) + 1.0 * x;
-          real64 const numericalPressure = pressure[k];
+          real64 numericalPressure = pressure[k];
+          real64 exactPressure = 0.0;
+          if ( runSolver )
+          {
+            real64 const x = center[k][0];
+            exactPressure = 2.0 * ( 1.0 - x ) + 1.0 * x;
+          }
+          else
+          {
+            exactPressure = isCell ? 1.5 : 2.0;
+          }
+
           real64 const relativeError = std::fabs( numericalPressure - exactPressure ) / exactPressure;
           EXPECT_NEAR( relativeError, 0.0, relative_tolerance ) << "Element " << k << " inexact pressure.";
         }
@@ -235,10 +231,13 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
 INSTANTIATE_TEST_SUITE_P(
   MixedDimFlowCases,
   MixedDimSinglePhaseFlowTest,
-  ::testing::Values(
-    "fractured_mesh_hex_DFN_1.vtu",
-    "fractured_mesh_hex_DFN_12.vtu",
-    "fractured_mesh_hex_DFN_123.vtu"
+  ::testing::Combine(
+    ::testing::Values(
+      "fractured_mesh_hex_DFN_1.vtu",
+      "fractured_mesh_hex_DFN_12.vtu",
+      "fractured_mesh_hex_DFN_123.vtu"
+    ),
+    ::testing::Bool()
   )
 );
 
