@@ -200,7 +200,7 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
         real64 const expectedPressure = ( regionName == "Region" ) ? 15.0e6 : 20.0e6;
         arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
         
-        for ( localIndex k = 0; k < subRegion.numElements(); ++k )
+        for ( localIndex k = 0; k < subRegion.size(); ++k )
         {
           ASSERT_NEAR( pressure[k], expectedPressure, 1.0e-5 );
         }
@@ -224,7 +224,7 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
         arrayView1d< real64 const > const pressure = subRegion.getField< fields::flow::pressure >();
         arrayView2d< real64 const > const center = subRegion.getElementCenter();
         
-        for ( localIndex k = 0; k < subRegion.numElements(); ++k )
+        for ( localIndex k = 0; k < subRegion.size(); ++k )
         {
           real64 const x = center[k][0];
           real64 const expectedPressure = 20.0e6 * ( 1.0 - x ) + 15.0e6 * x;
