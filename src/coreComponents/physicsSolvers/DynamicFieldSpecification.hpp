@@ -36,7 +36,7 @@ public:
    * @param[in] parent the parent group of the task
    */
   DynamicFieldSpecification( const string & name,
-                               Group * const parent );
+                             Group * const parent );
 
   /// Destructor for the class
   ~DynamicFieldSpecification() override;
@@ -75,7 +75,7 @@ private:
 
   void postInputInitialization() override;
 
-  stdVector<string> m_fieldSpecificationNames;
+  stdVector< string > m_fieldSpecificationNames;
 };
 
 

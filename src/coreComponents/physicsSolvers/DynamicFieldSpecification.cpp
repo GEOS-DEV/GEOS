@@ -24,15 +24,22 @@ DynamicFieldSpecification::DynamicFieldSpecification( const string & name,
 
 }
 
+DynamicFieldSpecification::~DynamicFieldSpecification() = default;
+
+void DynamicFieldSpecification::postInputInitialization()
+{
+  TaskBase::postInputInitialization();
+}
+
 
 bool
 DynamicFieldSpecification::
-execute( real64 const time_n,
-         real64 const dt,
-         integer const cycleNumber,
-         integer const eventCounter,
-         real64 const eventProgress,
-         DomainPartition & domain )
+  execute( real64 const time_n,
+           real64 const dt,
+           integer const cycleNumber,
+           integer const eventCounter,
+           real64 const eventProgress,
+           DomainPartition & domain )
 {
 
   FieldSpecificationManager & fsm = FieldSpecificationManager::getInstance();
@@ -61,9 +68,9 @@ execute( real64 const time_n,
                                                     SortedArrayView< localIndex const > const & targetObject,
                                                     Group & targetGroup,
                                                     string const fieldName )
-              {
-                bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, fieldName );
-              } );
+            {
+              bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, fieldName );
+            } );
           }
         }
       }
