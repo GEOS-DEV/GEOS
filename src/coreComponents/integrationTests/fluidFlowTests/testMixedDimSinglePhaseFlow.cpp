@@ -222,7 +222,6 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
           {
             exactPressure = isMatrixCell ? 1.5 : 2.0;
           }
-
           real64 const relativeError = std::fabs( numericalPressure - exactPressure ) / exactPressure;
           EXPECT_NEAR( relativeError, 0.0, relative_tolerance ) << "Element " << k << " inexact pressure.";
         }
