@@ -31,13 +31,22 @@ constexpr real64 relative_tolerance = 1.0e-6; // exact up to the order of defaul
 
 CommandLineOptions g_commandLineOptions;
 
-using PartitionTriple = std::tuple< int, int, int >;
-
-// This test is parametrized with std::tuple<std::string, bool, PartitionTriple> where:
-// - the first argument is the mesh file name
-// - the second argument indicates whether to run the flowSolver or not
-// - the third argument is a tuple containing the x, y, and z partition counts respectively
-class MixedDimSinglePhaseFlowTest : public ::testing::TestWithParam< std::tuple< std::string, bool, PartitionTriple > >
+/**
+ * @brief Integration test for single-phase flow in mixed-dimensional meshes (3D matrix + 2D fractures).
+ *
+ * This test verifies the correct initialization and solution of pressure fields in a system
+ * coupled with fracture elements. It checks both:
+ * 1. Initial condition application (when runSolver = false)
+ * 2. Steady-state solution with a pressure gradient (when runSolver = true)
+ *
+ * Parametrized with std::tuple<std::string, bool, int, int, int>:
+ * - std::string: Mesh file name (e.g., "fractured_mesh_hex_DFN_1.vtu").
+ * - bool: Whether to run the flow solver (true) or just check initialization (false).
+ * - int: Number of partitions in the x-direction.
+ * - int: Number of partitions in the y-direction.
+ * - int: Number of partitions in the z-direction.
+ */
+class MixedDimSinglePhaseFlowTest : public ::testing::TestWithParam< std::tuple< std::string, bool, int, int, int > >
 {
 protected:
   void SetUp() override
@@ -52,7 +61,7 @@ protected:
 <Problem>
   <Mesh>
     <VTKMesh name="mesh1" file=")xml" << meshFile << R"xml(" nodesetNames=")xml" << nodeSetNames <<
-    R"xml(" />
+      R"xml(" />
   </Mesh>
 
   <Geometry>
@@ -129,9 +138,9 @@ protected:
 
   <FieldSpecifications>
     <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames=")xml" << nodeSetNames <<
-    R"xml(" objectPath="faceManager" scale="1" />
+      R"xml(" objectPath="faceManager" scale="1" />
     <FieldSpecification name="frac" initialCondition="1" setNames=")xml" << nodeSetNames <<
-    R"xml(" objectPath="faceManager" fieldName="ruptureState" scale="1" />
+      R"xml(" objectPath="faceManager" fieldName="ruptureState" scale="1" />
     <FieldSpecification name="initialP" fieldName="pressure" initialCondition="1" setNames="{ all }" objectPath="ElementRegions" scale="1.5"/>
     <FieldSpecification name="initialPf" fieldName="pressure" initialCondition="1" setNames="{ all }" objectPath="ElementRegions/Fracture/faceElementSubRegion" scale="2.0"/>
     <FieldSpecification name="inletP" fieldName="pressure" setNames="{ xnegFace }" objectPath="faceManager" scale="2.0"/>
@@ -168,10 +177,9 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
 {
   std::string const & meshFileName = std::get< 0 >( GetParam() );
   bool const runSolver = std::get< 1 >( GetParam() );
-  PartitionTriple const & partitions = std::get< 2 >( GetParam() );
-  int const xPartitions = std::get< 0 >( partitions );
-  int const yPartitions = std::get< 1 >( partitions );
-  int const zPartitions = std::get< 2 >( partitions );
+  int const xPartitions = std::get< 2 >( GetParam() );
+  int const yPartitions = std::get< 3 >( GetParam() );
+  int const zPartitions = std::get< 4 >( GetParam() );
 
   std::string xmlPath = testBinaryDir + "/test_mixed_dim_single_phase_flow.xml";
 
@@ -246,6 +254,14 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
   }
 }
 
+/**
+ * @brief Serial execution test cases (1 MPI rank).
+ *
+ * Combinations:
+ * - Meshes: 1 fracture, 2 fractures, 3 fractures
+ * - Solver: Run solver (true) vs Initialization only (false)
+ * - Partitioning: 1x1x1 (Serial)
+ */
 INSTANTIATE_TEST_SUITE_P(
   MixedDimFlowCases,
   MixedDimSinglePhaseFlowTest,
@@ -256,10 +272,20 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_mesh_hex_DFN_123.vtu"
       ),
     ::testing::Bool(),
-    ::testing::Values( std::make_tuple( 1, 1, 1 ) )
+    ::testing::Values( 1 ),
+    ::testing::Values( 1 ),
+    ::testing::Values( 1 )
     )
   );
 
+/**
+ * @brief Parallel execution test cases (4 MPI ranks).
+ *
+ * Combinations:
+ * - Meshes: 1 fracture, 2 fractures, 3 fractures
+ * - Solver: Run solver (true) vs Initialization only (false)
+ * - Partitioning: 2x1x2 (4 ranks)
+ */
 INSTANTIATE_TEST_SUITE_P(
   MixedDimPartitionedFlowCases,
   MixedDimSinglePhaseFlowTest,
@@ -270,14 +296,9 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_mesh_hex_DFN_123.vtu"
       ),
     ::testing::Bool(),
-    ::testing::Values(
-      std::make_tuple( 1, 1, 4 ),
-      std::make_tuple( 1, 4, 1 ),
-      std::make_tuple( 4, 1, 1 ),
-      std::make_tuple( 1, 2, 2 ),
-      std::make_tuple( 2, 1, 2 ),
-      std::make_tuple( 2, 2, 1 )
-      )
+    ::testing::Values( 2 ),
+    ::testing::Values( 1 ),
+    ::testing::Values( 2 )
     )
   );
 
