@@ -98,11 +98,10 @@ public:
     m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::blockGaussSeidel;
     m_levelGlobalSmootherIters[1] = 1;
 
-    m_levelFRelaxType[2]          = MGRFRelaxationType::jacobi;
-    m_levelFRelaxIters[2]         = 1;
-    m_levelInterpType[2]          = MGRInterpolationType::injection; // Injection
-    m_levelRestrictType[2]        = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[2]    = MGRCoarseGridMethod::cprLikeBlockDiag; // Non-Galerkin Quasi-IMPES CPR
+    m_levelFRelaxType[2]          = MGRFRelaxationType::none;
+    m_levelInterpType[2]          = MGRInterpolationType::injection;
+    m_levelRestrictType[2]        = MGRRestrictionType::partialColLumped; // True-IMPES for thermal
+    m_levelCoarseGridMethod[2]    = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[2]  = MGRGlobalSmootherType::ilu0;
     m_levelGlobalSmootherIters[2] = 1;
   }
