@@ -31,11 +31,13 @@ constexpr real64 relative_tolerance = 1.0e-6; // exact up to the order of defaul
 
 CommandLineOptions g_commandLineOptions;
 
-// This test is parametrized with std::tuple<std::string, bool, int, int, int> where:
+using PartitionTriple = std::tuple< int, int, int >;
+
+// This test is parametrized with std::tuple<std::string, bool, PartitionTriple> where:
 // - the first argument is the mesh file name
 // - the second argument indicates whether to run the flowSolver or not
-// - the third, fourth, and fifth arguments are the x, y, and z partition counts respectively
-class MixedDimSinglePhaseFlowTest : public ::testing::TestWithParam< std::tuple< std::string, bool, int, int, int > >
+// - the third argument is a tuple containing the x, y, and z partition counts respectively
+class MixedDimSinglePhaseFlowTest : public ::testing::TestWithParam< std::tuple< std::string, bool, PartitionTriple > >
 {
 protected:
   void SetUp() override
@@ -166,9 +168,10 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
 {
   std::string const & meshFileName = std::get< 0 >( GetParam() );
   bool const runSolver = std::get< 1 >( GetParam() );
-  int const xPartitions = std::get< 2 >( GetParam() );
-  int const yPartitions = std::get< 3 >( GetParam() );
-  int const zPartitions = std::get< 4 >( GetParam() );
+  PartitionTriple const & partitions = std::get< 2 >( GetParam() );
+  int const xPartitions = std::get< 0 >( partitions );
+  int const yPartitions = std::get< 1 >( partitions );
+  int const zPartitions = std::get< 2 >( partitions );
 
   std::string xmlPath = testBinaryDir + "/test_mixed_dim_single_phase_flow.xml";
 
@@ -253,9 +256,7 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_mesh_hex_DFN_123.vtu"
       ),
     ::testing::Bool(),
-    ::testing::Values( 1 ),
-    ::testing::Values( 1 ),
-    ::testing::Values( 1 )
+    ::testing::Values( std::make_tuple( 1, 1, 1 ) )
     )
   );
 
@@ -269,9 +270,14 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_mesh_hex_DFN_123.vtu"
       ),
     ::testing::Bool(),
-    ::testing::Values( 2 ),
-    ::testing::Values( 1 ),
-    ::testing::Values( 2 )
+    ::testing::Values(
+      std::make_tuple( 1, 1, 4 ),
+      std::make_tuple( 1, 4, 1 ),
+      std::make_tuple( 4, 1, 1 ),
+      std::make_tuple( 1, 2, 2 ),
+      std::make_tuple( 2, 1, 2 ),
+      std::make_tuple( 2, 2, 1 )
+      )
     )
   );
 
