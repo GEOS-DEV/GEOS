@@ -204,7 +204,7 @@ exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm )
   // https://gitlab.kitware.com/vtk/vtk/-/blob/1f0e4b2d0be7cd328795131642b5bf7984f681c1/Parallel/DIY/vtkDIYGhostUtilities.txx#L300
   // It makes some simplifications (e.g. just one input dataset per rank).
 
-  using BlockType = std::map< int, vtkBoundingBox >;
+  using BlockType = stdMap< int, vtkBoundingBox >;
 
   diy::mpi::communicator comm( mpiComm );
   diy::Master master( comm, 1, -1,

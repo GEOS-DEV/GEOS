@@ -130,6 +130,21 @@ public:
              m_dViscosity[k][q][DerivOffset::dP] );
   }
 
+  GEOS_HOST_DEVICE
+  GEOS_FORCE_INLINE
+  virtual void update( localIndex const k,
+                       localIndex const q,
+                       real64 const pressure,
+                       real64 const GEOS_UNUSED_PARAM( temperature ),
+                       arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & GEOS_UNUSED_PARAM( logPrimaryConcentration ) ) const override
+  {
+    compute( pressure,
+             m_density[k][q],
+             m_dDensity[k][q][DerivOffset::dP],
+             m_viscosity[k][q],
+             m_dViscosity[k][q][DerivOffset::dP] );
+  }
+
 private:
 
   /// Relationship between the fluid density and pressure

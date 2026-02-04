@@ -29,8 +29,6 @@ set( fluidFlowSolvers_headers
      ImmiscibleMultiphaseFlow.hpp
      ImmiscibleMultiphaseFlowFields.hpp
      LogLevelsInfo.hpp
-     ReactiveCompositionalMultiphaseOBL.hpp
-     ReactiveCompositionalMultiphaseOBLFields.hpp
      SourceFluxStatistics.hpp
      SinglePhaseBase.hpp
      SinglePhaseBaseFields.hpp
@@ -69,6 +67,7 @@ set( fluidFlowSolvers_headers
      kernels/compositional/AquiferBCKernel.hpp
      kernels/compositional/PPUPhaseFlux.hpp
      kernels/compositional/C1PPUPhaseFlux.hpp
+     kernels/compositional/CapillaryPressureInversionKernel.hpp
      kernels/compositional/CapillaryPressureUpdateKernel.hpp
      kernels/compositional/CFLKernel.hpp
      kernels/compositional/CompositionalMultiphaseHybridFVMKernels.hpp
@@ -91,7 +90,6 @@ set( fluidFlowSolvers_headers
      kernels/compositional/PotGrad.hpp
      kernels/compositional/PPUPhaseFlux.hpp
      kernels/compositional/PropertyKernelBase.hpp
-     kernels/compositional/ReactiveCompositionalMultiphaseOBLKernels.hpp
      kernels/compositional/RelativePermeabilityUpdateKernel.hpp
      kernels/compositional/ResidualNormKernel.hpp
      kernels/compositional/SolidInternalEnergyUpdateKernel.hpp
@@ -132,7 +130,6 @@ set( fluidFlowSolvers_sources
      CompositionalMultiphaseStatistics.cpp
      CompositionalMultiphaseHybridFVM.cpp
      ImmiscibleMultiphaseFlow.cpp
-     ReactiveCompositionalMultiphaseOBL.cpp
      FlowSolverBase.cpp
      SinglePhaseBase.cpp
      SinglePhaseStatistics.cpp
@@ -145,6 +142,7 @@ set( fluidFlowSolvers_sources
      kernels/compositional/AquiferBCKernel.cpp
      kernels/compositional/CFLKernel.cpp
      kernels/compositional/FluxComputeKernelBase.cpp
+     kernels/compositional/CompositionalMultiphaseHybridFVMKernelsInstantiations.cpp     
      wells/CompositionalMultiphaseWell.cpp
      wells/kernels/CompositionalMultiphaseWellKernels.cpp
      wells/SinglePhaseWell.cpp
@@ -154,23 +152,15 @@ set( fluidFlowSolvers_sources
      proppantTransport/ProppantTransport.cpp
      proppantTransport/ProppantTransportKernels.cpp )
 
-set( dependencyList ${parallelDeps} physicsSolversBase )
-
-geos_decorate_link_dependencies( LIST decoratedDependencies DEPENDENCIES ${dependencyList} )
-
-
-
-
+# Remove the old generator-based hybrid flux/dirichlet kernels and switch to macro approach
 file( READ "${CMAKE_CURRENT_LIST_DIR}/kernelSpecs.json" kernelSpecs )
 set( kernelTemplateFileList "" )
 
-list( APPEND kernelTemplateFileList
-      SinglePhaseHybridFVMKernels.cpp.template
-      CompositionalMultiphaseHybridFVMKernels_upwinding.cpp.template
-      CompositionalMultiphaseHybridFVMKernels_assembly.cpp.template
-      CompositionalMultiphaseHybridFVMKernels_flux.cpp.template
-      ReactiveCompositionalMultiphaseOBLKernels.cpp.template )
-
+# Keep only the templates that are unrelated to hybrid flux/dirichlet
+if( ENABLE_HPCREACT AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../constitutive/HPCReact/CMakeLists.txt" )
+  list( APPEND kernelTemplateFileList
+        ReactiveCompositionalMultiphaseOBLKernels.cpp.template )
+endif()
 
 foreach( kernelTemplateFile ${kernelTemplateFileList} )
   get_filename_component( jsonKey ${kernelTemplateFile} NAME_WE )
@@ -179,10 +169,34 @@ foreach( kernelTemplateFile ${kernelTemplateFileList} )
                    KEY ${jsonKey}
                    HEADERS headerFiles
                    SOURCES sourceFiles )
-
-list(APPEND fluidFlowSolvers_headers ${headerFiles})
-list(APPEND fluidFlowSolvers_sources ${sourceFiles})
+  list(APPEND fluidFlowSolvers_headers ${headerFiles})
+  list(APPEND fluidFlowSolvers_sources ${sourceFiles})
 endforeach()
+
+# Conditionally add reactive transport files when HPCReact is available
+if( ENABLE_HPCREACT AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../constitutive/HPCReact/CMakeLists.txt" )
+  list( APPEND fluidFlowSolvers_headers
+       ReactiveCompositionalMultiphaseOBL.hpp
+       ReactiveCompositionalMultiphaseOBLFields.hpp
+       kernels/singlePhase/reactive/AccumulationKernels.hpp
+       kernels/singlePhase/reactive/DirichletFluxComputeKernel.hpp
+       kernels/singlePhase/reactive/FluidUpdateKernel.hpp
+       kernels/singlePhase/reactive/FluxComputeKernel.hpp
+       kernels/singlePhase/reactive/KernelLaunchSelectors.hpp
+       kernels/singlePhase/reactive/ReactionUpdateKernel.hpp
+       kernels/singlePhase/reactive/ResidualNormKernel.hpp
+       kernels/singlePhase/reactive/SourceFluxComputeKernel.hpp
+       kernels/singlePhase/reactive/ThermalAccumulationKernels.hpp
+       kernels/singlePhase/reactive/ThermalDirichletFluxComputeKernel.hpp
+       kernels/singlePhase/reactive/ThermalFluxComputeKernel.hpp
+       kernels/singlePhase/reactive/ThermalSourceFluxComputeKernel.hpp
+       kernels/compositional/ReactiveCompositionalMultiphaseOBLKernels.hpp
+       SinglePhaseReactiveTransport.hpp )
+  
+  list( APPEND fluidFlowSolvers_sources
+       ReactiveCompositionalMultiphaseOBL.cpp
+       SinglePhaseReactiveTransport.cpp )
+endif()
 
 # TODO: The two kernels below have non-matching file names and JSON keys.
 #       Either fix them to follow pattern, or come up with another mechanism.
@@ -214,6 +228,9 @@ blt_add_library( NAME       fluidFlowSolvers
                  OBJECT     ${GEOS_BUILD_OBJ_LIBS}
                  SHARED     ${GEOS_BUILD_SHARED_LIBS}
                )
+
+# Always enable the manual instantiation compile flag
+target_compile_definitions( fluidFlowSolvers PUBLIC GEOS_ENABLE_MANUAL_HYBRID_FVM_INST )
 
 target_include_directories( fluidFlowSolvers PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 

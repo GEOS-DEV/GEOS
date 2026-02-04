@@ -64,13 +64,11 @@ TEST( testTable, tableEmptyRow )
                                   "CoordZ",
                                   "Prev\nelement",
                                   "Next\nelement"} );
-
   TableData tableData;
   tableData.addRow( "value1", "[30.21543]", "3.0", 54, 0 );
   tableData.addRow( "", " ", "", "", "" );
   tableData.addRow( "Duis fringilla, ligula sed porta fringilla, ligula wisi commodo felis,ut adipiscing felis dui in enim.", "[30.21543]", "30.45465142",
                     787442, 10 );
-
   TableTextFormatter const tableText( tableLayout );
   EXPECT_EQ( tableText.toString( tableData ),
              "\n"

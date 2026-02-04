@@ -6,6 +6,62 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
+PR #3940 (2026-01-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3940-15307-53de7ba.tar.gz>
+=====================
+Fix the transimissibility calculated between a cell and a surface element
+
+PR #3926 (2026-01-26) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3926-15289-1f676c0.tar.gz>
+=====================
+MultiPhase Poromechanics ALM solver and a test with curved fractures
+
+PR #3634 (2025-12-31) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3634-15105-6ab70ef.tar.gz>
+=====================
+Add singlephase reactive transport solver integrated with HPCReact 
+
+PR #3795 (2025-12-19) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3795-15047-606f4ac.tar.gz>
+=====================
+Addition of multiphase initialisation
+
+PR #3925 (2025-12-18) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3925-15032-d307303.tar.gz>
+=====================
+Add traction update for ALM solver and a test with curved fractures
+
+PR #3829 (2025-11-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3829-14878-fdcd94e.tar.gz>
+=====================
+Fix validation of average region stat needed by option
+
+PR #3522 (2025-11-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3522-14736-f07298f.tar.gz>
+=====================
+Single Phase Poromechanics Conforming Fractures
+
+PR #3765 (2025-10-30) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3765-14543-498692f.tar.gz>
+=====================
+Adding boundary fields to handle Dirichlet conditions in compositional MFD.
+
+PR #3849 (2025-10-23) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3849-14514-aaaf0f9.tar.gz>
+=====================
+Add multiphase contact with wells
+
+PR #3880 (2025-10-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3880-14441-1132122.tar.gz>
+=====================
+Fix a bug introduced in #3485: mass that is used in accumulation term was not updated with porosity change after mechanics leading to always converged sequential outer loop.
+
+PR #3299 (2025-10-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3299-14426-6c93a0d.tar.gz>
+=====================
+Add co2 injection into gas with SW EoS and k-value flash.
+
+PR #3279 (2025-10-24) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3279-14414-db55426.tar.gz>
+=====================
+Output cell-wise average of each stress and strain component.
+
+PR #3851 (2025-10-13) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3851-14171-9d950d6.tar.gz>
+=====================
+Enable `FullyImplicit` for `SinglePhaseReservoirPoromechanicsConformingFractures`.
+
+PR #3808 (2025-10-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3808-14160-03c20b2.tar.gz>
+=====================
+Add errorSetMode for the FiedSpecification.
+
 PR #3193 (2025-10-10) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3193-14118-8ee1c34.tar.gz>
 =====================
 Enable geothermal gradient in HydrostaticEquilibrium for single-phase flow.
@@ -81,7 +137,6 @@ Add hydrofrac verification cases for leak-off.
 PR #3587 (2025-09-08) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3587-13389-99ac8e4.tar.gz>
 =====================
 Perforation status option. Updates for schema changes and well quantities not being compute if well is closed
-
 PR #3788 (2025-09-07) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3788-13372-e0a1d67.tar.gz>
 =====================
 Updating txt files for class09_pb3_hystRelperm.

@@ -1133,15 +1133,15 @@ m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1,
  
    // Step 1: count individual source flux boundary conditions
  
-   std::map< string, localIndex > bcNameToBcId;
+   stdMap< string, localIndex > bcNameToBcId;
    localIndex bcCounter = 0;
  
-   fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
-   {
-     // collect all the bc names to idx
-     bcNameToBcId[bc.getName()] = bcCounter;
-     bcCounter++;
-   } );
+  fsManager.forSubGroups< SourceFluxBoundaryCondition >( [&] ( SourceFluxBoundaryCondition const & bc )
+  {
+    // collect all the bc names to idx
+    bcNameToBcId.insert( {bc.getName(), bcCounter} );
+    bcCounter++;
+  } );
  
    if( bcCounter == 0 )
    {
@@ -1358,10 +1358,8 @@ m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1,
      physicsSolverBaseKernels::L2ResidualNormHelper::computeGlobalNorm( localResidualNorm[0], localResidualNormalizer[0], residualNorm );
    }
  
-   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-   {
-     std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), residualNorm );
-   }
+  GEOS_LOG_LEVEL_RANK_0_NLR( logInfo::ResidualNorm, GEOS_FMT( "        ( R{} ) = ( {:4.2e} )",
+                                                              coupledSolverAttributePrefix(), residualNorm ))
  
    return residualNorm;
  }

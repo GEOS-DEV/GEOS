@@ -57,7 +57,7 @@ namespace
  */
 colperm_t const & getColPermType( LinearSolverParameters::Direct::ColPerm const & value )
 {
-  static std::map< LinearSolverParameters::Direct::ColPerm, colperm_t > const optionMap =
+  static stdMap< LinearSolverParameters::Direct::ColPerm, colperm_t > const optionMap =
   {
     { LinearSolverParameters::Direct::ColPerm::none, NATURAL },
     { LinearSolverParameters::Direct::ColPerm::MMD_AtplusA, MMD_AT_PLUS_A },
@@ -78,7 +78,7 @@ colperm_t const & getColPermType( LinearSolverParameters::Direct::ColPerm const 
  */
 rowperm_t const & getRowPermType( LinearSolverParameters::Direct::RowPerm const & value )
 {
-  static std::map< LinearSolverParameters::Direct::RowPerm, rowperm_t > const optionMap =
+  static stdMap< LinearSolverParameters::Direct::RowPerm, rowperm_t > const optionMap =
   {
     { LinearSolverParameters::Direct::RowPerm::none, NOROWPERM },
     { LinearSolverParameters::Direct::RowPerm::mc64, LargeDiag_MC64 },
@@ -386,7 +386,6 @@ real64 SuperLUDist< LAI >::estimateConditionNumberBasic() const
   {
     real64 const * const R = m_data->scalePerm.R;
     real64 const * const C = m_data->scalePerm.C;
-    int_t const * const perm_c = m_data->scalePerm.perm_c;
 
     real64 minU = std::numeric_limits< real64 >::lowest();
     real64 maxU = std::numeric_limits< real64 >::max();
@@ -395,7 +394,7 @@ real64 SuperLUDist< LAI >::estimateConditionNumberBasic() const
 
     for( int_t i = 0; i < m_data->mat.nrow; ++i )
     {
-      real64 const u = std::abs( diagU[perm_c[i]] / C[i] );
+      real64 const u = std::abs( diagU[m_data->scalePerm.perm_c[i]] / C[i] );
       minU = std::min( u, minU );
       maxU = std::max( u, maxU );
       real64 const l = std::abs( 1.0 / R[i] );

@@ -136,7 +136,6 @@ public:
 
   struct viewKeyStruct : CapillaryPressureBase::viewKeyStruct
   {
-    static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
     static constexpr char const * phaseCapPressureExponentInvString() { return "phaseCapPressureExponentInv"; }
     static constexpr char const * phaseEntryPressureString() { return "phaseEntryPressure"; }
     static constexpr char const * capPressureEpsilonString() { return "capPressureEpsilon"; }
@@ -147,7 +146,6 @@ protected:
 
   virtual void postInputInitialization() override;
 
-  array1d< real64 > m_phaseMinVolumeFraction;
   array1d< real64 > m_phaseCapPressureExponentInv;
   array1d< real64 > m_phaseEntryPressure;
 

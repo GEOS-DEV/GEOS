@@ -63,6 +63,9 @@ TableCapillaryPressure::TableCapillaryPressure( std::string const & name,
                     string( viewKeyStruct::wettingNonWettingCapPresTableNameString() ) +
                     " to specify the table names" );
 
+  getWrapperBase( viewKeyStruct::phaseMinVolumeFractionString() )
+    .setInputFlag( InputFlags::FALSE );
+
   registerWrapper( viewKeyStruct::capPresWrappersString(), &m_capPresKernelWrappers ).
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
@@ -80,7 +83,10 @@ void TableCapillaryPressure::postInputInitialization()
   GEOS_THROW_IF( numPhases != 2 && numPhases != 3,
                  GEOS_FMT( "{}: the expected number of fluid phases is either two, or three",
                            getFullName() ),
-                 InputError );
+                 InputError, getDataContext() );
+
+  // Populate the minimum phase volumes
+  m_phaseMinVolumeFraction.resize( numPhases );
 
   if( numPhases == 2 )
   {
@@ -88,7 +94,7 @@ void TableCapillaryPressure::postInputInitialization()
                    GEOS_FMT( "{}: for a two-phase flow simulation, we must use {} to specify the capillary pressure table for the pair (wetting phase, non-wetting phase)",
                              getFullName(),
                              viewKeyStruct::wettingNonWettingCapPresTableNameString() ),
-                   InputError );
+                   InputError, getDataContext() );
   }
   else if( numPhases == 3 )
   {
@@ -99,7 +105,7 @@ void TableCapillaryPressure::postInputInitialization()
                              getFullName(),
                              viewKeyStruct::wettingIntermediateCapPresTableNameString(),
                              viewKeyStruct::nonWettingIntermediateCapPresTableNameString()  ),
-                   InputError );
+                   InputError, getDataContext() );
   }
 }
 
@@ -129,7 +135,7 @@ void TableCapillaryPressure::initializePreSubGroups()
                    GEOS_FMT( "{}: the table function named {} could not be found",
                              getFullName(),
                              m_wettingIntermediateCapPresTableName ),
-                   InputError );
+                   InputError, getDataContext() );
     TableFunction const & capPresTableWI = functionManager.getGroup< TableFunction >( m_wettingIntermediateCapPresTableName );
     TableCapillaryPressureHelpers::validateCapillaryPressureTable( capPresTableWI, getFullName(), false );
 
@@ -137,7 +143,7 @@ void TableCapillaryPressure::initializePreSubGroups()
                    GEOS_FMT( "{}: the table function named {} could not be found",
                              getFullName(),
                              m_nonWettingIntermediateCapPresTableName ),
-                   InputError );
+                   InputError, getDataContext() );
     TableFunction const & capPresTableNWI = functionManager.getGroup< TableFunction >( m_nonWettingIntermediateCapPresTableName );
     TableCapillaryPressureHelpers::validateCapillaryPressureTable( capPresTableNWI, getFullName(), true );
   }
@@ -173,7 +179,7 @@ void TableCapillaryPressure::createAllTableKernelWrappers()
     std::reverse( satVec.begin(), satVec.end() );
 
 
-    auto inverseTable = std::make_shared< TableFunction >( "inverseJFunc", this );
+    auto inverseTable = std::make_shared< TableFunction >( "inverseCapPres", this );
 
     real64_array invPcVec( pcVec.size() );
     real64_array invSatVec( satVec.size() );
@@ -193,6 +199,8 @@ void TableCapillaryPressure::createAllTableKernelWrappers()
     m_inverseCapPresWrappers.emplace_back( inverseTable->createKernelWrapper() );
     m_inverseTables.emplace_back( std::move( inverseTable ) );
 
+    // Populate the end-points from the tables
+    TableCapillaryPressureHelpers::populateMinPhaseVolumeFraction( m_phaseOrder.toSliceConst(), capPresTable, m_phaseMinVolumeFraction );
   }
   else if( numPhases == 3 )
   {
@@ -202,6 +210,9 @@ void TableCapillaryPressure::createAllTableKernelWrappers()
     TableFunction const & capPresTableNWI = functionManager.getGroup< TableFunction >( m_nonWettingIntermediateCapPresTableName );
     m_capPresKernelWrappers.emplace_back( capPresTableNWI.createKernelWrapper() );
     m_inverseCapPresWrappers.emplace_back( capPresTableNWI.createKernelWrapper() );
+
+    // Populate the end-points from the tables
+    TableCapillaryPressureHelpers::populateMinPhaseVolumeFraction( m_phaseOrder.toSliceConst(), capPresTableWI, capPresTableNWI, m_phaseMinVolumeFraction );
   }
 }
 

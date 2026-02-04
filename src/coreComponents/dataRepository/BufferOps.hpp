@@ -660,16 +660,6 @@ typename std::enable_if< is_map_packable_by_index< MAP_TYPE >, localIndex >::typ
 Unpack( buffer_unit_type const * & buffer, MAP_TYPE & map, T_INDICES const & unpackIndices );
 
 //------------------------------------------------------------------------------
-template< bool DO_PACKING, typename T_FIRST, typename T_SECOND >
-localIndex
-Pack( buffer_unit_type * & buffer, std::pair< T_FIRST, T_SECOND > const & var );
-
-//------------------------------------------------------------------------------
-template< typename T_FIRST, typename T_SECOND >
-localIndex
-Unpack( buffer_unit_type const * & buffer, std::pair< T_FIRST, T_SECOND > & var );
-
-//------------------------------------------------------------------------------
 template< bool DO_PACKING, typename T >
 localIndex
 Pack( buffer_unit_type * & buffer,
