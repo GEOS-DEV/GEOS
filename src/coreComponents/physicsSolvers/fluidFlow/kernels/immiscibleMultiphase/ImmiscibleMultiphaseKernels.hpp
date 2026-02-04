@@ -164,7 +164,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
           converged = 0;
           bool damping = true;
           bool bisection = false;
-          bool lineSearch = false;
+          // bool lineSearch = false;
           bool newton_path = false;
 
           // Local newton loop:
@@ -483,8 +483,8 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
           // While loop (newton loop)
           int iter = 0;
           int div = 0;
-          int ext_iter0 = 0;
-          int ext_iter1 = 0;
+          // int ext_iter0 = 0;
+          // int ext_iter1 = 0;
           real64 next_Pc_int = 0.0;
           real64 old_Pc_int = 0.0;
           real64 old_residual = 0.0;
@@ -701,8 +701,8 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                 real64 dGravHead_dP[2][2]{};
 
                 real64 capGrad[2]{};
-                real64 capPresIC[2][2]{};
-                real64 jFMultiplier[2][2]{};
+                // real64 capPresIC[2][2]{};
+                // real64 jFMultiplier[2][2]{};
                 real64 dCapGrad_dP[2][2]{};
                 real64 dCapGrad_dS[2][2]{};
 
@@ -809,7 +809,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
                     dGravHead_dP[ip][ke] += signTix[ke] * dTransHat_dP[ix] * dGravHead_dTrans;
 
-                    real64 constexpr eps = 1e-18;
+                    // real64 constexpr eps = 1e-18;
                     real64 dCapPres_dS = dCapPres1_dPhaseVolFrac[0][0][ip][ip];
 
                     if( ke == 1 && ix == 0 )
@@ -869,7 +869,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
                 /// Three Forces Flux Contribution: 1- Viscous 2- Gravitational 3- Capillary
                 constexpr int sign[2] = {1, -1};
-                real64 constexpr eps = 0.0;
+                // real64 constexpr eps = 0.0;
 
                 // loop over phases
                 for( integer ip = 0; ip < 2; ++ip )
@@ -2196,7 +2196,7 @@ public:
 
         real64 capGrad[numEqn]{};
         // real64 capPresIC[numEqn][2]{};
-        real64 jFMultiplier[numEqn][2]{};
+        // real64 jFMultiplier[numEqn][2]{};
         real64 dCapGrad_dP[numEqn][2]{};
         real64 dCapGrad_dS[numEqn][2]{};
 
@@ -2216,7 +2216,7 @@ public:
         real64 gravCoefHat[numEqn]{};
 
         real64 uT = 0;
-        real64 total_mobility = 0;
+        // real64 total_mobility = 0;
         real64 duT_dP[numEqn]{};
         real64 duT_dS[numEqn]{};
 
@@ -2236,7 +2236,7 @@ public:
 
         stdVector< real64 > saturations = {m_phaseVolFrac[seri[0]][sesri[0]][sei[0]][0], m_phaseVolFrac[seri[1]][sesri[1]][sei[1]][0] };
         stdVector< real64 > pressures = {m_pres[seri[0]][sesri[0]][sei[0]], m_pres[seri[1]][sesri[1]][sei[1]] };
-        bool isJfunction = 0;
+        // bool isJfunction = 0;
 
         // loop over phases
         for( integer ip = 0; ip < m_numPhases; ++ip )
@@ -2507,12 +2507,12 @@ public:
 
           // clear working arrays
           real64 halfFluxVal[numEqn][2]{};
-          real64 dhalfFlux1_dP[numEqn][2]{};
-          real64 dhalfFlux1_dS[numEqn][2]{};
-          real64 dhalfFlux2_dP[numEqn][2]{};
-          real64 dhalfFlux2_dS[numEqn][2]{};
-          real64 dhalfFlux_duT[numEqn][2]{};
-          real64 dhalfFlux_dpc[numEqn][2]{};
+          // real64 dhalfFlux1_dP[numEqn][2]{};
+          // real64 dhalfFlux1_dS[numEqn][2]{};
+          // real64 dhalfFlux2_dP[numEqn][2]{};
+          // real64 dhalfFlux2_dS[numEqn][2]{};
+          // real64 dhalfFlux_duT[numEqn][2]{};
+          // real64 dhalfFlux_dpc[numEqn][2]{};
 
 
           // stdVector< real64 > JFMultipliers = {jFMultiplier[0][0], jFMultiplier[0][1]};

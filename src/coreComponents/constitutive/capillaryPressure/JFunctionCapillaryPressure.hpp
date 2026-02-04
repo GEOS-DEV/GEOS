@@ -271,6 +271,7 @@ JFunctionCapillaryPressure::KernelWrapper::
   integer const ipOil   = m_phaseOrder[PT::OIL];
   integer const ipGas   = m_phaseOrder[PT::GAS];
 
+  GEOS_UNUSED_VAR( ipOil );
   // apply multiplier
   real64 capPresWater_J = phaseCapPres[ipWater] / jFuncMultiplier[0];
   // std::cout << GEOS_FMT( "        JM_2 = ( {:4.2e} )", jFuncMultiplier[0] );

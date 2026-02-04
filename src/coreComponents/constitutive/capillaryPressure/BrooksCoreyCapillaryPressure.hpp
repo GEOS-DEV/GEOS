@@ -196,6 +196,8 @@ BrooksCoreyCapillaryPressureUpdate::
   // compute first gas-oil capillary pressure as a function of gas-phase vol fraction
   integer const ip_gas = m_phaseOrder[CapillaryPressureBase::PhaseType::GAS];
   integer const ip_oil = m_phaseOrder[CapillaryPressureBase::PhaseType::OIL];
+
+  GEOS_UNUSED_VAR( ip_gas );
   if( ip_oil >= 0 )
   {
     real64 const volFracScaled = (phaseVolFraction[ip_oil] - m_phaseMinVolumeFraction[ip_oil]) * volFracScaleInv;

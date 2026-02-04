@@ -199,6 +199,8 @@ TableCapillaryPressure::KernelWrapper::
   integer const ipOil   = m_phaseOrder[PT::OIL];
   integer const ipGas   = m_phaseOrder[PT::GAS];
 
+  GEOS_UNUSED_VAR( ipOil );
+
   // put capillary pressure on the wetting phase
   real64 capPresWater = phaseCapPres[ipWater];
   array1d<real64> input(1);

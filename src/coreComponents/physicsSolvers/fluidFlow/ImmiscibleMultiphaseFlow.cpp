@@ -215,7 +215,7 @@
    // ***** Create FaceElements *****
    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                 MeshLevel & meshLevel,
-                                                                string_array const & regionNames )
+                                                                string_array const & GEOS_UNUSED_PARAM( regionNames ))
    {
  
      FaceManager const & faceManager = meshLevel.getFaceManager();
@@ -617,7 +617,7 @@ m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1,
    m_interfaceRegionByConnector.clear();
    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( std::string const &,
                                                                 MeshLevel & meshLevel,
-                                                                string_array const & regionNames )
+                                                                string_array const & GEOS_UNUSED_PARAM( regionNames ))
    {
      // Access the face manager and retrieve the face set group for the current mesh level
      FaceManager const & faceManager = meshLevel.getFaceManager();
