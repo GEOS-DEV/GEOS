@@ -141,13 +141,14 @@ private:
 
   void assembleForceResidualDerivativeWrtPressure( string const & meshName,
                                                    MeshLevel const & mesh,
-                                                   arrayView1d< string const > const & regionNames,
+                                                   string_array const & regionNames,
                                                    DofManager const & dofManager,
                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                    arrayView1d< real64 > const & localRhs );
 
-  void assembleFluidMassResidualDerivativeWrtDisplacement( MeshLevel const & mesh,
-                                                           arrayView1d< string const > const & regionNames,
+  void assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
+                                                           MeshLevel const & mesh,
+                                                           string_array const & regionNames,
                                                            DofManager const & dofManager,
                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                            arrayView1d< real64 > const & localRhs );
@@ -171,6 +172,62 @@ private:
   void addTransmissibilityCouplingPattern( DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            SparsityPatternView< globalIndex > const & pattern ) const;
+
+  /**
+   * @Brief add the nnz induced by the pressure-force coupling (Aup, Abp)
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param rowLenghts the nnz in each row
+   */
+  void addPressureForceCouplingNNZ( DomainPartition const & domain,
+                                    DofManager const & dofManager,
+                                    arrayView1d< localIndex > const & rowLengths ) const;
+
+  /**
+   * @Brief add the sparsity pattern induced by the pressure-force coupling (Aup, Abp)
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern
+   */
+  void addPressureForceCouplingPattern( DomainPartition const & domain,
+                                        DofManager const & dofManager,
+                                        SparsityPatternView< globalIndex > const & pattern ) const;
+
+  /**
+   * @Brief add the nnz induced by the matrix pressure-bubble coupling (Abp_matrix)
+   * This handles the contribution of matrix cell pressure on bubble DOFs.
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param rowLengths the nnz in each row
+   */
+  void addMatrixPressureBubbleCouplingNNZ( DomainPartition const & domain,
+                                           DofManager const & dofManager,
+                                           arrayView1d< localIndex > const & rowLengths ) const;
+
+  /**
+   * @Brief add the sparsity pattern induced by the matrix pressure-bubble coupling
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param pattern the sparsity pattern
+   */
+  void addMatrixPressureBubbleCouplingPattern( DomainPartition const & domain,
+                                                DofManager const & dofManager,
+                                                SparsityPatternView< globalIndex > const & pattern ) const;
+
+  /**
+   * @Brief assemble the contribution of matrix cell pressure on bubble DOFs
+   * with full Jacobian for fully-implicit coupling.
+   * @param dt the time step size
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the local system matrix
+   * @param localRhs the local system right-hand side vector
+   */
+  void assembleMatrixPressureBubbleContribution( real64 const dt,
+                                                  DomainPartition & domain,
+                                                  DofManager const & dofManager,
+                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                  arrayView1d< real64 > const & localRhs );
 
   /**
    * @brief Set up the Dflux_dApertureMatrix object
