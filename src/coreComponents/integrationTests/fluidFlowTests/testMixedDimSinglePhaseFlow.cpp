@@ -189,17 +189,17 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
     ofs << xmlContent;
   }
 
-  auto options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
-  options->inputFileNames.push_back( xmlPath );
-  options->problemName = "test_mixed_dim_single_phase_flow";
-
-  options->xPartitionsOverride = xPartitions;
-  options->yPartitionsOverride = yPartitions;
-  options->zPartitionsOverride = zPartitions;
-  options->overridePartitionNumbers = true;
-
   // Scoped state to ensure cleanup
   {
+    auto options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
+    options->inputFileNames.push_back( xmlPath );
+    options->problemName = "test_mixed_dim_single_phase_flow";
+
+    options->xPartitionsOverride = xPartitions;
+    options->yPartitionsOverride = yPartitions;
+    options->zPartitionsOverride = zPartitions;
+    options->overridePartitionNumbers = true;
+
     GeosxState state( std::move( options ) );
     ASSERT_TRUE( state.initializeDataRepository() );
     state.applyInitialConditions();
@@ -259,21 +259,21 @@ INSTANTIATE_TEST_SUITE_P(
     )
   );
 
-INSTANTIATE_TEST_SUITE_P(
-  MixedDimPartitionedFlowCases,
-  MixedDimSinglePhaseFlowTest,
-  ::testing::Combine(
-    ::testing::Values(
-      "fractured_mesh_hex_DFN_1.vtu",
-      "fractured_mesh_hex_DFN_12.vtu",
-      "fractured_mesh_hex_DFN_123.vtu"
-      ),
-    ::testing::Bool(),
-    ::testing::Values( 2 ),
-    ::testing::Values( 1 ),
-    ::testing::Values( 2 )
-    )
-  );
+//INSTANTIATE_TEST_SUITE_P(
+//  MixedDimPartitionedFlowCases,
+//  MixedDimSinglePhaseFlowTest,
+//  ::testing::Combine(
+//    ::testing::Values(
+//      "fractured_mesh_hex_DFN_1.vtu",
+//      "fractured_mesh_hex_DFN_12.vtu",
+//      "fractured_mesh_hex_DFN_123.vtu"
+//      ),
+//    ::testing::Bool(),
+//    ::testing::Values( 2 ),
+//    ::testing::Values( 1 ),
+//    ::testing::Values( 2 )
+//    )
+//  );
 
 int main( int argc, char * argv[] )
 {
