@@ -55,11 +55,14 @@ void SolidModelDiscretizationOpsFullTensor::BTDB( BASIS_GRADIENT const & gradN,
                                                   real64 (& elementStiffness)[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3] )
 {
   real64 B[9][NUM_SUPPORT_POINTS * 3] = { {0} };
-  
-  for (int a = 0; a < NUM_SUPPORT_POINTS; ++a) {
-    for (int i = 0; i < 3; ++i) {
+
+  for( int a = 0; a < NUM_SUPPORT_POINTS; ++a )
+  {
+    for( int i = 0; i < 3; ++i )
+    {
       int col = 3 * a + i;
-      for (int j = 0; j < 3; ++j) {
+      for( int j = 0; j < 3; ++j )
+      {
         int row = 3 * i + j;
         B[row][col] = gradN[a][j];
       }
@@ -69,10 +72,10 @@ void SolidModelDiscretizationOpsFullTensor::BTDB( BASIS_GRADIENT const & gradN,
   real64 DB[9][NUM_SUPPORT_POINTS * 3];
   real64 elmat[NUM_SUPPORT_POINTS * 3][NUM_SUPPORT_POINTS * 3];
 
-  LvArray::tensorOps::Rij_eq_AikBkj<9, NUM_SUPPORT_POINTS * 3, 9>(DB, m_c, B);
-  LvArray::tensorOps::Rij_eq_AkiBkj<NUM_SUPPORT_POINTS * 3, NUM_SUPPORT_POINTS * 3, 9>(elmat, B, DB);
-  LvArray::tensorOps::scale<NUM_SUPPORT_POINTS * 3, NUM_SUPPORT_POINTS * 3>(elmat, detJxW);
-  LvArray::tensorOps::add<NUM_SUPPORT_POINTS * 3, NUM_SUPPORT_POINTS * 3>(elementStiffness, elmat);
+  LvArray::tensorOps::Rij_eq_AikBkj< 9, NUM_SUPPORT_POINTS * 3, 9 >( DB, m_c, B );
+  LvArray::tensorOps::Rij_eq_AkiBkj< NUM_SUPPORT_POINTS * 3, NUM_SUPPORT_POINTS * 3, 9 >( elmat, B, DB );
+  LvArray::tensorOps::scale< NUM_SUPPORT_POINTS * 3, NUM_SUPPORT_POINTS * 3 >( elmat, detJxW );
+  LvArray::tensorOps::add< NUM_SUPPORT_POINTS * 3, NUM_SUPPORT_POINTS * 3 >( elementStiffness, elmat );
 }
 
 } // namespace constitutive

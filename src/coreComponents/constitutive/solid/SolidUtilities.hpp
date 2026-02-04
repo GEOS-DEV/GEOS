@@ -184,10 +184,10 @@ struct SolidUtilities
   {
     real64 firstPiolaStress[3][3] = {};
     real64 stiffness[9][9] = {};
-    solid.finiteStrainUpdate(0, 0, elasticDeformGrad, firstPiolaStress, stiffness);
+    solid.finiteStrainUpdate( 0, 0, elasticDeformGrad, firstPiolaStress, stiffness );
 
     real64 stiffnessFD[9][9] = {};
-    SolidUtilities::computeFiniteStrainFiniteDifferenceStiffness(solid, k, q, elasticDeformGrad, stiffnessFD);
+    SolidUtilities::computeFiniteStrainFiniteDifferenceStiffness( solid, k, q, elasticDeformGrad, stiffnessFD );
 
     real64 error = 0;
     real64 norm = 0;
@@ -201,8 +201,8 @@ struct SolidUtilities
         norm += pow( stiffness[i][j], 2.0 );
       }
     }
-    error = sqrt(error);
-    norm = sqrt(norm);
+    error = sqrt( error );
+    norm = sqrt( norm );
     rerr = error / norm;
 
     if( print )
@@ -212,12 +212,12 @@ struct SolidUtilities
         for( localIndex j = 0; j < 9; ++j )
         {
           // printf( "[%12.5e vs %12.5e] ", stiffnessFD[i][j], stiffness[i][j] );
-          printf( "%12.5e ", fabs(stiffnessFD[i][j] - stiffness[i][j]) );
+          printf( "%12.5e ", fabs( stiffnessFD[i][j] - stiffness[i][j] ) );
         }
         printf( "\n" );
       }
 
-      printf("Abs err = %12.5e, Rel err = %12.5e\n", error, rerr);
+      printf( "Abs err = %12.5e, Rel err = %12.5e\n", error, rerr );
     }
 
     return (rerr < 1e-3);
@@ -250,8 +250,10 @@ struct SolidUtilities
   {
     real64 eps = 1e-7;
     real64 F[3][3] = {};
-    for (int i = 0; i < 3; ++i) {
-      for (int j = 0; j < 3; ++j) {
+    for( int i = 0; i < 3; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
         F[i][j] = elasticDeformGrad[i][j];
       }
     }
@@ -262,29 +264,33 @@ struct SolidUtilities
     real64 eigenVectors[3][3] = {};
     real64 eigenVectorsT[3][3] = {};
 
-    for (int i = 0; i < 3; ++i) {
-      for (int j = 0; j < 3; ++j) {
+    for( int i = 0; i < 3; ++i )
+    {
+      for( int j = 0; j < 3; ++j )
+      {
         // plus
         real64 P_plus[3][3] = {};
         F[i][j] += eps;
-        LvArray::tensorOps::invert<3>(fInv, F);
+        LvArray::tensorOps::invert< 3 >( fInv, F );
 
-        solid.computeLogElasticStrain(F, totalElasticStrain, eigenValues, eigenVectors, eigenVectorsT);
-        solid.finiteStrainUpdate_StressOnly(k, q, totalElasticStrain, fInv, P_plus);
+        solid.computeLogElasticStrain( F, totalElasticStrain, eigenValues, eigenVectors, eigenVectorsT );
+        solid.finiteStrainUpdate_StressOnly( k, q, totalElasticStrain, fInv, P_plus );
         F[i][j] -= eps;
 
         // minus
         real64 P_minus[3][3] = {};
         F[i][j] -= eps;
-        LvArray::tensorOps::invert<3>(fInv, F);
+        LvArray::tensorOps::invert< 3 >( fInv, F );
 
-        solid.computeLogElasticStrain(F, totalElasticStrain, eigenValues, eigenVectors, eigenVectorsT);
-        solid.finiteStrainUpdate_StressOnly(k, q, totalElasticStrain, fInv, P_minus);
+        solid.computeLogElasticStrain( F, totalElasticStrain, eigenValues, eigenVectors, eigenVectorsT );
+        solid.finiteStrainUpdate_StressOnly( k, q, totalElasticStrain, fInv, P_minus );
         F[i][j] += eps;
 
         int col = 3 * i + j;
-        for (int m = 0; m < 3; ++m) {
-          for (int n = 0; n < 3; ++n) {
+        for( int m = 0; m < 3; ++m )
+        {
+          for( int n = 0; n < 3; ++n )
+          {
             // row major flattening
             int row = 3 * m + n;
             stiffnessFD[row][col] = (P_plus[m][n] - P_minus[m][n]) / (2 * eps);

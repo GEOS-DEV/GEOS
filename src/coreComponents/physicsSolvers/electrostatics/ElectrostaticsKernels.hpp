@@ -50,11 +50,11 @@ namespace geos
  * the test and trial spaces are specified as `1` when specifying the base
  * class.
  */
-template<typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE>
-class ElectrostaticsKernel : public finiteElement::ImplicitKernelBase<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, 1, 1>
+template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
+class ElectrostaticsKernel : public finiteElement::ImplicitKernelBase< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, 1, 1 >
 {
 public:
-  using Base = finiteElement::ImplicitKernelBase<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, 1, 1>;
+  using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, 1, 1 >;
 
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
@@ -74,17 +74,17 @@ public:
    * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param fieldName The name of the primary field
    */
-  ElectrostaticsKernel(NodeManager const& nodeManager, EdgeManager const& edgeManager,
-                       FaceManager const& faceManager, localIndex const targetRegionIndex,
-                       SUBREGION_TYPE const& elementSubRegion, FE_TYPE const& finiteElementSpace,
-                       CONSTITUTIVE_TYPE& inputConstitutiveType, arrayView1d<globalIndex const> const inputDofNumber,
-                       globalIndex const rankOffset, CRSMatrixView<real64, globalIndex const> const inputMatrix,
-                       arrayView1d<real64> const inputRhs, real64 const inputDt, string const fieldName)
-  :
-  Base(nodeManager, edgeManager, faceManager, targetRegionIndex, elementSubRegion, finiteElementSpace,
-       inputConstitutiveType, inputDofNumber, rankOffset, inputMatrix, inputRhs, inputDt),
-  m_X(nodeManager.referencePosition()),
-  m_potential(nodeManager.template getReference<array1d<real64>>(fieldName))
+  ElectrostaticsKernel( NodeManager const & nodeManager, EdgeManager const & edgeManager,
+                        FaceManager const & faceManager, localIndex const targetRegionIndex,
+                        SUBREGION_TYPE const & elementSubRegion, FE_TYPE const & finiteElementSpace,
+                        CONSTITUTIVE_TYPE & inputConstitutiveType, arrayView1d< globalIndex const > const inputDofNumber,
+                        globalIndex const rankOffset, CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                        arrayView1d< real64 > const inputRhs, real64 const inputDt, string const fieldName )
+    :
+    Base( nodeManager, edgeManager, faceManager, targetRegionIndex, elementSubRegion, finiteElementSpace,
+          inputConstitutiveType, inputDofNumber, rankOffset, inputMatrix, inputRhs, inputDt ),
+    m_X( nodeManager.referencePosition()),
+    m_potential( nodeManager.template getReference< array1d< real64 > >( fieldName ))
   {}
 
   /**
@@ -95,10 +95,10 @@ public:
    */
   struct StackVariables : Base::StackVariables
   {
-  public:
+public:
     GEOS_HOST_DEVICE
     StackVariables()
-    : Base::StackVariables(), xLocal(), primaryField_local{0.0} {}
+      : Base::StackVariables(), xLocal(), primaryField_local{ 0.0 } {}
 
 #if !defined(CALC_FEM_SHAPE_IN_KERNEL)
     int xLocal;
@@ -118,17 +118,17 @@ public:
    * stack storage.
    */
   GEOS_HOST_DEVICE
-  inline void setup(localIndex const k, StackVariables& stack) const
+  inline void setup( localIndex const k, StackVariables & stack ) const
   {
-    m_finiteElementSpace.template setup<FE_TYPE>(k, m_meshData, stack.feStack);
-    stack.numRows = m_finiteElementSpace.template numSupportPoints<FE_TYPE>(stack.feStack);
+    m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
+    stack.numRows = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
     stack.numCols = stack.numRows;
-    for (localIndex a = 0; a < stack.numRows; ++a)
+    for( localIndex a = 0; a < stack.numRows; ++a )
     {
-      localIndex const localNodeIndex = m_elemsToNodes(k, a);
+      localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
-      for (int i = 0; i < 3; ++i)
+      for( int i = 0; i < 3; ++i )
       {
         stack.xLocal[a][i] = m_X[localNodeIndex][i];
       }
@@ -138,25 +138,25 @@ public:
       stack.localRowDofIndex[a] = m_dofNumber[localNodeIndex];
       stack.localColDofIndex[a] = m_dofNumber[localNodeIndex];
     }
-    m_finiteElementSpace.template addGradGradStabilizationMatrix<FE_TYPE, numDofPerTrialSupportPoint>(
-      stack.feStack, stack.localJacobian);
+    m_finiteElementSpace.template addGradGradStabilizationMatrix< FE_TYPE, numDofPerTrialSupportPoint >(
+      stack.feStack, stack.localJacobian );
   }
 
   /**
    * @copydoc geos::finiteElement::ImplicitKernelBase::quadraturePointKernel
    */
   GEOS_HOST_DEVICE
-  inline void quadraturePointKernel(localIndex const k, localIndex const q, StackVariables& stack) const
+  inline void quadraturePointKernel( localIndex const k, localIndex const q, StackVariables & stack ) const
   {
-    real64 const conductivity = m_constitutiveUpdate.getConductivity(k);
+    real64 const conductivity = m_constitutiveUpdate.getConductivity( k );
     real64 dNdX[maxNumTestSupportPointsPerElem][3];
-    real64 const detJxW = m_finiteElementSpace.template getGradN<FE_TYPE>(k, q, stack.xLocal, stack.feStack, dNdX);
+    real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, stack.feStack, dNdX );
 
-    for (localIndex a = 0; a < stack.numRows; ++a)
+    for( localIndex a = 0; a < stack.numRows; ++a )
     {
-      for (localIndex b = 0; b < stack.numCols; ++b)
+      for( localIndex b = 0; b < stack.numCols; ++b )
       {
-        stack.localJacobian[a][b] += conductivity * LvArray::tensorOps::AiBi<3>(dNdX[a], dNdX[b]) * detJxW;
+        stack.localJacobian[a][b] += conductivity * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJxW;
       }
     }
   }
@@ -169,41 +169,41 @@ public:
    * global matrix/vector.
    */
   GEOS_HOST_DEVICE
-  inline real64 complete(localIndex const k, StackVariables & stack) const
+  inline real64 complete( localIndex const k, StackVariables & stack ) const
   {
-    GEOS_UNUSED_VAR(k);
+    GEOS_UNUSED_VAR( k );
     real64 maxForce = 0;
 
-    for (localIndex a = 0; a < stack.numRows; ++a)
+    for( localIndex a = 0; a < stack.numRows; ++a )
     {
-      for (localIndex b = 0; b < stack.numRows; ++b)
+      for( localIndex b = 0; b < stack.numRows; ++b )
       {
         stack.localResidual[a] += stack.localJacobian[a][b] * stack.primaryField_local[b];
       }
     }
 
-    for (localIndex a = 0; a < stack.numRows; ++a)
+    for( localIndex a = 0; a < stack.numRows; ++a )
     {
-      localIndex const dof = LvArray::integerConversion<localIndex>(stack.localRowDofIndex[a] - m_dofRankOffset);
-      if (dof < 0 || dof >= m_matrix.numRows()) continue;
-      m_matrix.template addToRowBinarySearchUnsorted<parallelDeviceAtomic>(
-        dof, stack.localColDofIndex, stack.localJacobian[a], stack.numCols);
+      localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[a] - m_dofRankOffset );
+      if( dof < 0 || dof >= m_matrix.numRows()) continue;
+      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >(
+        dof, stack.localColDofIndex, stack.localJacobian[a], stack.numCols );
 
-      RAJA::atomicAdd<parallelDeviceAtomic>(&m_rhs[dof], stack.localResidual[a]);
-      maxForce = fmax(maxForce, fabs(stack.localResidual[a]));
+      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localResidual[a] );
+      maxForce = fmax( maxForce, fabs( stack.localResidual[a] ));
     }
 
     return maxForce;
   }
 
 protected:
-  arrayView2d<real64 const, nodes::REFERENCE_POSITION_USD> const m_X;
-  arrayView1d<real64 const> const m_potential;
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
+  arrayView1d< real64 const > const m_potential;
 };
 
-using ElectrostaticsKernelFactory = finiteElement::KernelFactory<ElectrostaticsKernel, arrayView1d<globalIndex const> const,
-                                                                 globalIndex const, CRSMatrixView<real64, globalIndex const> const,
-                                                                 arrayView1d<real64> const, real64 const, string const>;
+using ElectrostaticsKernelFactory = finiteElement::KernelFactory< ElectrostaticsKernel, arrayView1d< globalIndex const > const,
+                                                                  globalIndex const, CRSMatrixView< real64, globalIndex const > const,
+                                                                  arrayView1d< real64 > const, real64 const, string const >;
 } // namespace geos
 
 #endif // GEOS_PHYSICSSOLVERS_ELECTROSTATICS_ELECTROSTATICSKERNELS_HPP_

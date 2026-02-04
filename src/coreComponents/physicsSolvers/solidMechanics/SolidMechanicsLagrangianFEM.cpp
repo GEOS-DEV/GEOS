@@ -1085,7 +1085,8 @@ void SolidMechanicsLagrangianFEM::setSparsityPattern( DomainPartition & domain,
     arrayView1d< globalIndex const > const
     dofNumber = nodeManager.getReference< globalIndex_array >( dofManager.getKey( solidMechanics::totalDisplacement::key() ) );
 
-    if (m_strainTheory == 0) {
+    if( m_strainTheory == 0 )
+    {
       finiteElement::
         fillSparsity< CellElementSubRegion,
                       solidMechanicsLagrangianFEMKernels::ImplicitSmallStrainQuasiStatic >( mesh,
@@ -1094,7 +1095,9 @@ void SolidMechanicsLagrangianFEM::setSparsityPattern( DomainPartition & domain,
                                                                                             dofNumber,
                                                                                             dofManager.rankOffset(),
                                                                                             pattern );
-    } else if (m_strainTheory == 1) {
+    }
+    else if( m_strainTheory == 1 )
+    {
       finiteElement::
         fillSparsity< CellElementSubRegion,
                       solidMechanicsLagrangianFEMKernels::ImplicitFiniteStrainQuasiStatic >( mesh,
@@ -1224,7 +1227,8 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
     {
       if( m_timeIntegrationOption == TimeIntegrationOption::QuasiStatic )
       {
-        if (m_strainTheory == 0) {
+        if( m_strainTheory == 0 )
+        {
           m_maxForce = assemblyLaunch< SolidMechanicsKernelsDispatchTypeList,
                                        solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( mesh,
                                                                                                  dofManager,
@@ -1233,16 +1237,18 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM
                                                                                                  localMatrix,
                                                                                                  localRhs,
                                                                                                  dt );
-        } else if (m_strainTheory == 1) {
+        }
+        else if( m_strainTheory == 1 )
+        {
           m_maxForce =
-              assemblyLaunch< SolidMechanicsImplicitFiniteStrainKernelsDispatchTypeList,
-                              solidMechanicsLagrangianFEMKernels::ImplicitFiniteStrainQuasiStaticFactory >( mesh,
-                                                                                                            dofManager,
-                                                                                                            regionNames,
-                                                                                                            viewKeyStruct::solidMaterialNamesString(),
-                                                                                                            localMatrix,
-                                                                                                            localRhs,
-                                                                                                            dt );
+            assemblyLaunch< SolidMechanicsImplicitFiniteStrainKernelsDispatchTypeList,
+                            solidMechanicsLagrangianFEMKernels::ImplicitFiniteStrainQuasiStaticFactory >( mesh,
+                                                                                                          dofManager,
+                                                                                                          regionNames,
+                                                                                                          viewKeyStruct::solidMaterialNamesString(),
+                                                                                                          localMatrix,
+                                                                                                          localRhs,
+                                                                                                          dt );
         }
       }
       else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )

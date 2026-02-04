@@ -27,31 +27,31 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ButlerVolmerInterface::ButlerVolmerInterface(string const& name, Group * const parent)
-:
-ConstitutiveBase(name, parent),
-m_krxn()
+ButlerVolmerInterface::ButlerVolmerInterface( string const & name, Group * const parent )
+  :
+  ConstitutiveBase( name, parent ),
+  m_reactivityCoeff()
 {
-  registerWrapper(viewKeyStruct::defaultReactivityCoefficientString(), &m_defaultKrxn).
-    setApplyDefaultValue(1.0).
-    setInputFlag(InputFlags::REQUIRED).
-    setDescription("Default BV Reactivity Coefficient");
+  registerWrapper( viewKeyStruct::defaultReactivityCoefficientString(), &m_defaultKrxn ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default BV Reactivity Coefficient" );
 
-  registerWrapper(viewKeyStruct::reactivityCoefficientString(), &m_krxn).
-    setApplyDefaultValue(-1.0). // will be overwritten
-    setPlotLevel(PlotLevel::LEVEL_0).
-    setDescription("Reactivity Coefficient Field");
+  registerWrapper( viewKeyStruct::reactivityCoefficientString(), &m_reactivityCoeff ).
+    setApplyDefaultValue( -1.0 ). // will be overwritten
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Reactivity Coefficient Field" );
 }
 
 ButlerVolmerInterface::~ButlerVolmerInterface() {}
 
 void ButlerVolmerInterface::postInputInitialization()
 {
-  this->getWrapper<array1d<real64>>(viewKeyStruct::reactivityCoefficientString()).
-    setApplyDefaultValue(m_defaultKrxn);
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::reactivityCoefficientString()).
+    setApplyDefaultValue( m_defaultKrxn );
 }
 
-REGISTER_CATALOG_ENTRY(ConstitutiveBase, ButlerVolmerInterface, string const&, Group * const)
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ButlerVolmerInterface, string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geos

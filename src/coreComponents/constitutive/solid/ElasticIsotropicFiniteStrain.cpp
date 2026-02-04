@@ -26,7 +26,7 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ElasticIsotropicFiniteStrain::ElasticIsotropicFiniteStrain(string const & name, Group * const parent)
+ElasticIsotropicFiniteStrain::ElasticIsotropicFiniteStrain( string const & name, Group * const parent )
   : ElasticIsotropic( name, parent ) {}
 
 ElasticIsotropicFiniteStrain::~ElasticIsotropicFiniteStrain()
