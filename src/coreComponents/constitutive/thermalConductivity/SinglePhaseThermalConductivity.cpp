@@ -50,20 +50,14 @@ void SinglePhaseThermalConductivity::allocateConstitutiveData( Group & parent, l
 {
   SinglePhaseThermalConductivityBase::allocateConstitutiveData( parent, numPts );
 
-  integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
+  initializeState( parent.size());
+}
 
-  arrayView3d< real64 > referenceThermalConductivity = m_referenceThermalConductivity.toView();
-  R1Tensor const defaultThermalConductivityComponents = m_defaultThermalConductivityComponents;
-
-  forAll< parallelDevicePolicy<> >( parent.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
-  {
-    for( localIndex q = 0; q < numQuad; ++q )
-    {
-      referenceThermalConductivity[ei][q][0] = defaultThermalConductivityComponents[0];
-      referenceThermalConductivity[ei][q][1] = defaultThermalConductivityComponents[1];
-      referenceThermalConductivity[ei][q][2] = defaultThermalConductivityComponents[2];
-    }
-  } );
+void SinglePhaseThermalConductivity::initializeState() const
+{
+  SinglePhaseThermalConductivityBase::initializeState();
+  localIndex const size = m_referenceThermalConductivity.size( 0 );
+  initializeState( size );
 }
 
 void SinglePhaseThermalConductivity::initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity ) const
@@ -132,6 +126,24 @@ void SinglePhaseThermalConductivity::postInputInitialization()
                            getFullName() ),
                  InputError, getDataContext() );
 
+}
+
+void SinglePhaseThermalConductivity::initializeState( localIndex const size ) const
+{
+  integer constexpr numQuad = 1; // NOTE: enforcing 1 quadrature point
+
+  arrayView3d< real64 > referenceThermalConductivity = m_referenceThermalConductivity.toView();
+  R1Tensor const defaultThermalConductivityComponents = m_defaultThermalConductivityComponents;
+
+  forAll< parallelDevicePolicy<> >( size, [=] GEOS_HOST_DEVICE ( localIndex const ei )
+  {
+    for( localIndex q = 0; q < numQuad; ++q )
+    {
+      referenceThermalConductivity[ei][q][0] = defaultThermalConductivityComponents[0];
+      referenceThermalConductivity[ei][q][1] = defaultThermalConductivityComponents[1];
+      referenceThermalConductivity[ei][q][2] = defaultThermalConductivityComponents[2];
+    }
+  } );
 }
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, SinglePhaseThermalConductivity, string const &, Group * const )

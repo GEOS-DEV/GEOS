@@ -46,6 +46,9 @@ void SinglePhaseThermalConductivityBase::allocateConstitutiveData( Group & paren
   ConstitutiveBase::allocateConstitutiveData( parent, numPts );
 }
 
+void SinglePhaseThermalConductivityBase::initializeState() const
+{}
+
 } // namespace constitutive
 
 } // namespace geos

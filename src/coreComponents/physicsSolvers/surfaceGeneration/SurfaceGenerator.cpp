@@ -28,6 +28,7 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
+#include "constitutive/thermalConductivity/SinglePhaseThermalConductivityBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/solidMechanics/kernels/SolidMechanicsLagrangianFEMKernels.hpp"
@@ -551,6 +552,14 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
       // if a permeability model exists we need to set the intial value to something meaningful
       PermeabilityBase & permModel = getConstitutiveModel< PermeabilityBase >( fractureSubRegion, permModelName );
       permModel.initializeState();
+    }
+
+    string const thermalCondModelName = getConstitutiveName< SinglePhaseThermalConductivityBase >( fractureSubRegion );
+    if( !thermalCondModelName.empty() )
+    {
+      // if a thermal conductivity model exists we need to set the intial value to something meaningful
+      SinglePhaseThermalConductivityBase & thermalCondModel = getConstitutiveModel< SinglePhaseThermalConductivityBase >( fractureSubRegion, thermalCondModelName );
+      thermalCondModel.initializeState();
     }
   } );
 

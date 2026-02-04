@@ -150,6 +150,11 @@ public:
    */
   arrayView3d< real64 const > dEffectiveConductivity_dT() const { return m_dEffectiveConductivity_dT; }
 
+  /**
+   * @brief Initialize the thermal conductivity state
+   */
+  virtual void initializeState() const;
+
 protected:
 
   /// cell-wise reference conductivities in the subregion

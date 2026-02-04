@@ -80,6 +80,8 @@ public:
 
   virtual void updateFromTemperature( arrayView1d< real64 const > const & temperature ) const override final;
 
+  virtual void initializeState() const override;
+
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = SinglePhaseThermalConductivityUpdate;
 
@@ -104,6 +106,8 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
+
+  void initializeState( localIndex const size ) const;
 
 private:
 
