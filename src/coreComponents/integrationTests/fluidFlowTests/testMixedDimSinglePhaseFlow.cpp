@@ -31,10 +31,11 @@ constexpr real64 relative_tolerance = 1.0e-6; // exact up to the order of defaul
 
 CommandLineOptions g_commandLineOptions;
 
-// This test is parametrized with std::tuple<std::string, bool> where the first argument is the mesh file name
-// and the second argument indicates whether to run the flowSolver or not to isolate testing of the surface generation and initalization
-// from the flow solver itself for mixed-dimensional single phase flow problems
-class MixedDimSinglePhaseFlowTest : public ::testing::TestWithParam< std::tuple< std::string, bool > >
+// This test is parametrized with std::tuple<std::string, bool, int, int, int> where:
+// - the first argument is the mesh file name
+// - the second argument indicates whether to run the flowSolver or not
+// - the third, fourth, and fifth arguments are the x, y, and z partition counts respectively
+class MixedDimSinglePhaseFlowTest : public ::testing::TestWithParam< std::tuple< std::string, bool, int, int, int > >
 {
 protected:
   void SetUp() override
@@ -165,6 +166,10 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
 {
   std::string const & meshFileName = std::get< 0 >( GetParam() );
   bool const runSolver = std::get< 1 >( GetParam() );
+  int const xPartitions = std::get< 2 >( GetParam() );
+  int const yPartitions = std::get< 3 >( GetParam() );
+  int const zPartitions = std::get< 4 >( GetParam() );
+
   std::string xmlPath = testBinaryDir + "/test_mixed_dim_single_phase_flow.xml";
 
   std::string nodeSetNames = "{ f1_node_set }";
@@ -187,6 +192,14 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
   auto options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
   options->inputFileNames.push_back( xmlPath );
   options->problemName = "test_mixed_dim_single_phase_flow";
+
+  if ( xPartitions * yPartitions * zPartitions > 1 )
+  {
+    options->xPartitionsOverride = xPartitions;
+    options->yPartitionsOverride = yPartitions;
+    options->zPartitionsOverride = zPartitions;
+    options->overridePartitionNumbers = true;
+  }
 
   // Scoped state to ensure cleanup
   {
@@ -233,8 +246,24 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
   }
 }
 
+//INSTANTIATE_TEST_SUITE_P(
+//  MixedDimFlowCases,
+//  MixedDimSinglePhaseFlowTest,
+//  ::testing::Combine(
+//    ::testing::Values(
+//      "fractured_mesh_hex_DFN_1.vtu",
+//      "fractured_mesh_hex_DFN_12.vtu",
+//      "fractured_mesh_hex_DFN_123.vtu"
+//      ),
+//    ::testing::Bool(),
+//    ::testing::Values( 1 ),
+//    ::testing::Values( 1 ),
+//    ::testing::Values( 1 )
+//    )
+//  );
+
 INSTANTIATE_TEST_SUITE_P(
-  MixedDimFlowCases,
+  MixedDimPartitionedFlowCases,
   MixedDimSinglePhaseFlowTest,
   ::testing::Combine(
     ::testing::Values(
@@ -242,7 +271,10 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_mesh_hex_DFN_12.vtu",
       "fractured_mesh_hex_DFN_123.vtu"
       ),
-    ::testing::Bool()
+    ::testing::Bool(),
+    ::testing::Values( 2 ),
+    ::testing::Values( 1 ),
+    ::testing::Values( 2 )
     )
   );
 
