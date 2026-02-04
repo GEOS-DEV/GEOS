@@ -360,11 +360,9 @@ INSTANTIATE_TEST_SUITE_P(
 
 int main( int argc, char * argv[] )
 {
-  MPI_Init( &argc, &argv );
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geos::basicSetup( argc, argv, false );
   int result = RUN_ALL_TESTS();
   geos::basicCleanup();
-  MPI_Finalize();
   return result;
 }
