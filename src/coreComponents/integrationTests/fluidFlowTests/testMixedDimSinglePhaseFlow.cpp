@@ -193,13 +193,10 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
   options->inputFileNames.push_back( xmlPath );
   options->problemName = "test_mixed_dim_single_phase_flow";
 
-  if ( xPartitions * yPartitions * zPartitions > 1 )
-  {
-    options->xPartitionsOverride = xPartitions;
-    options->yPartitionsOverride = yPartitions;
-    options->zPartitionsOverride = zPartitions;
-    options->overridePartitionNumbers = true;
-  }
+  options->xPartitionsOverride = xPartitions;
+  options->yPartitionsOverride = yPartitions;
+  options->zPartitionsOverride = zPartitions;
+  options->overridePartitionNumbers = true;
 
   // Scoped state to ensure cleanup
   {
