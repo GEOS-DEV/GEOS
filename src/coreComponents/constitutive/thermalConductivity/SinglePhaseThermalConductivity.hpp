@@ -82,6 +82,8 @@ public:
 
   virtual void initializeState() const override;
 
+  void initializeState( localIndex const size ) const;
+
   /// Type of kernel wrapper for in-kernel update
   using KernelWrapper = SinglePhaseThermalConductivityUpdate;
 
@@ -106,8 +108,6 @@ public:
 protected:
 
   virtual void postInputInitialization() override;
-
-  void initializeState( localIndex const size ) const;
 
 private:
 
