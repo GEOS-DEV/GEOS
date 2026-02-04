@@ -6,7 +6,6 @@
     <Electrostatics
       name="halfcell"
       discretization="FE1"
-      timeIntegrationOption="QuasiStatic"
       fieldName="potential"
       targetRegions="{Region1, Region2, SEIRegion}">
       <LinearSolverParameters

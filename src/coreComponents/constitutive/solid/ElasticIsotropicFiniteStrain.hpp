@@ -25,9 +25,11 @@
 #include "SolidModelDiscretizationOpsFullTensor.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
-namespace geos{
+namespace geos
+{
 
-namespace constitutive {
+namespace constitutive
+{
 
 /**
  * @class ElasticIsotropicFiniteStrainUpdates
@@ -45,7 +47,7 @@ public:
     arrayView3d< real64, solid::STRESS_USD > const & newStress,
     arrayView3d< real64, solid::STRESS_USD > const & oldStress,
     bool const & disableInelasticity )
-  : ElasticIsotropicUpdates(bulkModulus, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity)
+    : ElasticIsotropicUpdates( bulkModulus, shearModulus, thermalExpansionCoefficient, newStress, oldStress, disableInelasticity )
   {}
 
   /// Default copy constructor
@@ -68,80 +70,82 @@ public:
 
   // returns first Piola-Kirchhoff stress which is asymmetric
   GEOS_HOST_DEVICE
-  void finiteStrainNoStateUpdate_StressOnly(localIndex const k, localIndex const q,
-                                            real64 const (&totalElasticStrain)[6],
-                                            real64 const (&fInv)[3][3],
-                                            real64 (&firstPiolaStress)[3][3],
-                                            real64 (&kirchhoffStress)[6]
-                                           ) const;
+  void finiteStrainNoStateUpdate_StressOnly( localIndex const k, localIndex const q,
+                                             real64 const (&totalElasticStrain)[6],
+                                             real64 const (&fInv)[3][3],
+                                             real64 ( &firstPiolaStress )[3][3],
+                                             real64 ( &kirchhoffStress )[6]
+                                             ) const;
 
   GEOS_HOST_DEVICE
-  void finiteStrainUpdate_StressOnly(localIndex const k, localIndex const q,
-                                     real64 const (&totalElasticStrain)[6],
-                                     real64 const (&fInv)[3][3],
-                                     real64 (&firstPiolaStress)[3][3]
-                                    ) const;
+  void finiteStrainUpdate_StressOnly( localIndex const k, localIndex const q,
+                                      real64 const (&totalElasticStrain)[6],
+                                      real64 const (&fInv)[3][3],
+                                      real64 ( &firstPiolaStress )[3][3]
+                                      ) const;
 
   GEOS_HOST_DEVICE
-  void finiteStrainNoStateUpdate(localIndex const k, localIndex const q,
-                                 real64 const (&elasticDeformGrad)[3][3],
-                                 real64 (&firstPiolaStress)[3][3],
-                                 real64 (&kirchhoffStress)[6],
-                                 real64 (&stiffness)[9][9]) const;
+  void finiteStrainNoStateUpdate( localIndex const k, localIndex const q,
+                                  real64 const (&elasticDeformGrad)[3][3],
+                                  real64 ( &firstPiolaStress )[3][3],
+                                  real64 ( &kirchhoffStress )[6],
+                                  real64 ( &stiffness )[9][9] ) const;
 
   GEOS_HOST_DEVICE
-  void finiteStrainUpdate(localIndex const k, localIndex const q,
-                          real64 const (&elasticDeformGrad)[3][3],
-                          real64 (&firstPiolaStress)[3][3],
-                          real64 (&stiffness)[9][9]) const;
+  void finiteStrainUpdate( localIndex const k, localIndex const q,
+                           real64 const (&elasticDeformGrad)[3][3],
+                           real64 ( &firstPiolaStress )[3][3],
+                           real64 ( &stiffness )[9][9] ) const;
 
   GEOS_HOST_DEVICE
-  void finiteStrainUpdate(localIndex const k, localIndex const q,
-                          real64 const (&elasticDeformGrad)[3][3],
-                          real64 (&firstPiolaStress)[3][3],
-                          DiscretizationOps & stiffness) const;
+  void finiteStrainUpdate( localIndex const k, localIndex const q,
+                           real64 const (&elasticDeformGrad)[3][3],
+                           real64 ( &firstPiolaStress )[3][3],
+                           DiscretizationOps & stiffness ) const;
 
+  /// Compute the Hencky strain, namely ln(F), where F = I + grad(u) is the deformation gradient
   GEOS_HOST_DEVICE
-  void computeLogElasticStrain(real64 const (&elasticDeformGrad)[3][3],
-                               real64 (&elasticStrain)[6],
-                               real64 (&eigenValues)[3],
-                               real64 (&eigenVectors)[3][3],
-                               real64 (&eigenVectorsT)[3][3]) const;
+  void computeLogElasticStrain( real64 const (&elasticDeformGrad)[3][3],
+                                real64 ( &elasticStrain )[6],
+                                real64 ( &eigenValues )[3],
+                                real64 ( &eigenVectors )[3][3],
+                                real64 ( &eigenVectorsT )[3][3] ) const;
 
 private:
+  /// Compute the forth-order material tangent tensor D_m, where \delta P = D_m * \delta F
   GEOS_HOST_DEVICE
-  void computeMaterialTangentColumn(real64 const (&deltaCe)[6], real64 const (&M_hat)[6],
-                                    real64 const (&Q)[3][3], real64 const (&Q_T)[3][3],
-                                    real64 const (&dtau_dEe)[6][6], real64 const (&fInvT)[3][3],
-                                    real64 (&deltaP_mat)[3][3]) const;
+  void computeMaterialTangentColumn( real64 const (&deltaCe)[6], real64 const (&M_hat)[6],
+                                     real64 const (&Q)[3][3], real64 const (&Q_T)[3][3],
+                                     real64 const (&dtau_dEe)[6][6], real64 const (&fInvT)[3][3],
+                                     real64 ( &deltaP_mat )[3][3] ) const;
 };
 
 GEOS_HOST_DEVICE
 inline
 void ElasticIsotropicFiniteStrainUpdates::computeLogElasticStrain(
-    real64 const (&elasticDeformGrad)[3][3], real64 (&elasticStrain)[6],
-    real64 (&eigenValues)[3], real64 (&eigenVectors)[3][3], real64 (&eigenVectorsT)[3][3]) const
+  real64 const (&elasticDeformGrad)[3][3], real64 (& elasticStrain)[6],
+  real64 (& eigenValues)[3], real64 (& eigenVectors)[3][3], real64 (& eigenVectorsT)[3][3] ) const
 {
   real64 C_e[3][3] = {}; // Right Cauchy tensor
-  LvArray::tensorOps::Rij_eq_AkiAkj<3, 3>(C_e, elasticDeformGrad);
+  LvArray::tensorOps::Rij_eq_AkiAkj< 3, 3 >( C_e, elasticDeformGrad );
 
   real64 Ce_symmetric[6] = {};
-  LvArray::tensorOps::denseToSymmetric<3>(Ce_symmetric, C_e);
+  LvArray::tensorOps::denseToSymmetric< 3 >( Ce_symmetric, C_e );
 
   // initial eigen vector are stored in rows
-  LvArray::tensorOps::symEigenvectors<3>(eigenValues, eigenVectorsT, Ce_symmetric);
-  LvArray::tensorOps::transpose<3, 3>(eigenVectors, eigenVectorsT);
+  LvArray::tensorOps::symEigenvectors< 3 >( eigenValues, eigenVectorsT, Ce_symmetric );
+  LvArray::tensorOps::transpose< 3, 3 >( eigenVectors, eigenVectorsT );
 
   // matrix logarithm
-  real64 logLambda[6] = { {0} };
+  real64 logLambda[6] = {0};
   for( int i = 0; i < 3; i++ )
   {
-    logLambda[i] = 0.5 * log(eigenValues[i]);
+    logLambda[i] = 0.5 * log( eigenValues[i] );
   }
 
   // elastic strain
   // E_e = 0.5 * Q * ln(Lam) * Q^T
-  LvArray::tensorOps::Rij_eq_AikSymBklAjl<3>(elasticStrain, eigenVectors, logLambda);
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( elasticStrain, eigenVectors, logLambda );
 
   // scale shear components by 2.0 to use in small strain material model where stiffness is expressed in Voigt notation
   elasticStrain[3] *= 2.0;
@@ -152,24 +156,24 @@ void ElasticIsotropicFiniteStrainUpdates::computeLogElasticStrain(
 GEOS_HOST_DEVICE
 inline
 void ElasticIsotropicFiniteStrainUpdates::computeMaterialTangentColumn(
-    real64 const (&deltaCe)[6], real64 const (&M_hat)[6], real64 const (&Q)[3][3],
-    real64 const (&Q_T)[3][3], real64 const (&dtau_dEe)[6][6], real64 const (&fInvT)[3][3],
-    real64 (&deltaP_mat)[3][3]) const
+  real64 const (&deltaCe)[6], real64 const (&M_hat)[6], real64 const (&Q)[3][3],
+  real64 const (&Q_T)[3][3], real64 const (&dtau_dEe)[6][6], real64 const (&fInvT)[3][3],
+  real64 (& deltaP_mat)[3][3] ) const
 {
   // Q^T * deltaCe * Q
   real64 deltaCe_hat[6] = {};
-  LvArray::tensorOps::Rij_eq_AikSymBklAjl<3>(deltaCe_hat, Q_T, deltaCe);
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( deltaCe_hat, Q_T, deltaCe );
 
   // M \circ Q^T * deltaCe * Q
   real64 deltaLnCe_hat[6] = {};
-  LvArray::tensorOps::hadamardProduct<6>(deltaLnCe_hat, M_hat, deltaCe_hat);
+  LvArray::tensorOps::hadamardProduct< 6 >( deltaLnCe_hat, M_hat, deltaCe_hat );
 
   // derivative of matrix logarithm deltaEe = dEe / dFe = 1/2 * Q * (M \circ Q^T * deltaCe * Q) * Q^T
   real64 deltaLnCe[6] = {};
   real64 deltaEe[6] = {};
-  LvArray::tensorOps::Rij_eq_AikSymBklAjl<3>(deltaLnCe, Q, deltaLnCe_hat);
-  LvArray::tensorOps::copy<6>(deltaEe, deltaLnCe);
-  LvArray::tensorOps::scale<6>(deltaEe, 0.5);
+  LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( deltaLnCe, Q, deltaLnCe_hat );
+  LvArray::tensorOps::copy< 6 >( deltaEe, deltaLnCe );
+  LvArray::tensorOps::scale< 6 >( deltaEe, 0.5 );
 
   // scale shear components for stiffness in voigt notation
   deltaEe[3] *= 2.0;
@@ -179,50 +183,50 @@ void ElasticIsotropicFiniteStrainUpdates::computeMaterialTangentColumn(
   // double contraction dtau / dEe * deltaEe
   real64 dtau_voigt[6] = {};
   real64 deltaTau[3][3] = {};
-  LvArray::tensorOps::Ri_eq_AijBj<6, 6>(dtau_voigt, dtau_dEe, deltaEe);
-  LvArray::tensorOps::symmetricToDense<3>(deltaTau, dtau_voigt);
+  LvArray::tensorOps::Ri_eq_AijBj< 6, 6 >( dtau_voigt, dtau_dEe, deltaEe );
+  LvArray::tensorOps::symmetricToDense< 3 >( deltaTau, dtau_voigt );
 
   // deltaTau * F^-T
-  LvArray::tensorOps::Rij_eq_AikBkj<3, 3, 3>(deltaP_mat, deltaTau, fInvT);
+  LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( deltaP_mat, deltaTau, fInvT );
 }
 
 GEOS_HOST_DEVICE
 inline
-void ElasticIsotropicFiniteStrainUpdates::finiteStrainNoStateUpdate_StressOnly(localIndex const k, localIndex const q,
-                                                                               real64 const (&totalElasticStrain)[6],
-                                                                               real64 const (&fInv)[3][3],
-                                                                               real64 (&firstPiolaStress)[3][3],
-                                                                               real64 (&kirchhoffStress)[6]
-                                                                              ) const
+void ElasticIsotropicFiniteStrainUpdates::finiteStrainNoStateUpdate_StressOnly( localIndex const k, localIndex const q,
+                                                                                real64 const (&totalElasticStrain)[6],
+                                                                                real64 const (&fInv)[3][3],
+                                                                                real64 (& firstPiolaStress)[3][3],
+                                                                                real64 (& kirchhoffStress)[6]
+                                                                                ) const
 {
-  this->smallStrainNoStateUpdate_StressOnly(k, q, totalElasticStrain, kirchhoffStress);
+  this->smallStrainNoStateUpdate_StressOnly( k, q, totalElasticStrain, kirchhoffStress );
 
-  LvArray::tensorOps::Rij_eq_symAikBjk<3>(firstPiolaStress, kirchhoffStress, fInv);
+  LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( firstPiolaStress, kirchhoffStress, fInv );
 }
 
 GEOS_HOST_DEVICE
 inline
-void ElasticIsotropicFiniteStrainUpdates::finiteStrainUpdate_StressOnly(localIndex const k, localIndex const q,
-                                                                        real64 const (&totalElasticStrain)[6],
-                                                                        real64 const (&fInv)[3][3],
-                                                                        real64 (&firstPiolaStress)[3][3]
-                                                                       ) const
+void ElasticIsotropicFiniteStrainUpdates::finiteStrainUpdate_StressOnly( localIndex const k, localIndex const q,
+                                                                         real64 const (&totalElasticStrain)[6],
+                                                                         real64 const (&fInv)[3][3],
+                                                                         real64 (& firstPiolaStress)[3][3]
+                                                                         ) const
 {
   real64 kirchhoffStress[6] = {};
-  finiteStrainNoStateUpdate_StressOnly(k, q, totalElasticStrain, fInv, firstPiolaStress, kirchhoffStress);
+  finiteStrainNoStateUpdate_StressOnly( k, q, totalElasticStrain, fInv, firstPiolaStress, kirchhoffStress );
 
   // Can only save the symmetric kirchhoff stress right now
-  LvArray::tensorOps::copy<6>(m_oldStress[k][q], m_newStress[k][q]);
-  LvArray::tensorOps::copy<6>(m_newStress[k][q], kirchhoffStress);
+  LvArray::tensorOps::copy< 6 >( m_oldStress[k][q], m_newStress[k][q] );
+  LvArray::tensorOps::copy< 6 >( m_newStress[k][q], kirchhoffStress );
 }
 
 GEOS_HOST_DEVICE
 inline
-void ElasticIsotropicFiniteStrainUpdates::finiteStrainNoStateUpdate(localIndex const k, localIndex const q,
-                                                                   real64 const (&elasticDeformGrad)[3][3],
-                                                                   real64 (&firstPiolaStress)[3][3],
-                                                                   real64 (&kirchhoffStress)[6],
-                                                                   real64 (&stiffness)[9][9]) const
+void ElasticIsotropicFiniteStrainUpdates::finiteStrainNoStateUpdate( localIndex const k, localIndex const q,
+                                                                     real64 const (&elasticDeformGrad)[3][3],
+                                                                     real64 (& firstPiolaStress)[3][3],
+                                                                     real64 (& kirchhoffStress)[6],
+                                                                     real64 (& stiffness)[9][9] ) const
 {
   real64 fInv[3][3] = {};
   real64 fInvT[3][3] = {};
@@ -233,15 +237,15 @@ void ElasticIsotropicFiniteStrainUpdates::finiteStrainNoStateUpdate(localIndex c
   real64 eigenVectors[3][3] = {};
   real64 eigenVectorsT[3][3] = {};
 
-  LvArray::tensorOps::invert<3>(fInv, elasticDeformGrad);
-  LvArray::tensorOps::transpose<3, 3>(fInvT, fInv);
+  LvArray::tensorOps::invert< 3 >( fInv, elasticDeformGrad );
+  LvArray::tensorOps::transpose< 3, 3 >( fInvT, fInv );
 
-  computeLogElasticStrain(elasticDeformGrad, totalElasticStrain, eigenValues, eigenVectors, eigenVectorsT);
+  computeLogElasticStrain( elasticDeformGrad, totalElasticStrain, eigenValues, eigenVectors, eigenVectorsT );
 
-  finiteStrainNoStateUpdate_StressOnly(k, q, totalElasticStrain, fInv, firstPiolaStress, kirchhoffStress);
+  finiteStrainNoStateUpdate_StressOnly( k, q, totalElasticStrain, fInv, firstPiolaStress, kirchhoffStress );
 
   real64 smallStrainStiffness[6][6] = {};
-  this->getElasticStiffness(k, q, smallStrainStiffness);
+  this->getElasticStiffness( k, q, smallStrainStiffness );
 
   // derivative of log matrix: \partial ln(C_e) / \partial C_e, C_e = F^T F
   // build symmetric spectral of log matrix derivative
@@ -250,59 +254,74 @@ void ElasticIsotropicFiniteStrainUpdates::finiteStrainNoStateUpdate(localIndex c
   M_hat[1] = 1.0 / eigenValues[1];
   M_hat[2] = 1.0 / eigenValues[2];
 
-  if (abs(eigenValues[1] - eigenValues[2]) <= 1e-12) {
+  if( abs( eigenValues[1] - eigenValues[2] ) <= 1e-12 )
+  {
     M_hat[3] = 1.0 / eigenValues[1];
-  } else {
-    M_hat[3] = log(eigenValues[1] / eigenValues[2]) / (eigenValues[1] - eigenValues[2]);
+  }
+  else
+  {
+    M_hat[3] = log( eigenValues[1] / eigenValues[2] ) / (eigenValues[1] - eigenValues[2]);
   }
 
-  if (abs(eigenValues[0] - eigenValues[2]) <= 1e-12) {
+  if( abs( eigenValues[0] - eigenValues[2] ) <= 1e-12 )
+  {
     M_hat[4] = 1.0 / eigenValues[0];
-  } else {
-    M_hat[4] = log(eigenValues[0] / eigenValues[2]) / (eigenValues[0] - eigenValues[2]);
+  }
+  else
+  {
+    M_hat[4] = log( eigenValues[0] / eigenValues[2] ) / (eigenValues[0] - eigenValues[2]);
   }
 
-  if (abs(eigenValues[0] - eigenValues[1]) <= 1e-12) {
+  if( abs( eigenValues[0] - eigenValues[1] ) <= 1e-12 )
+  {
     M_hat[5] = 1.0 / eigenValues[0];
-  } else {
-    M_hat[5] = log(eigenValues[0] / eigenValues[1]) / (eigenValues[0] - eigenValues[1]);
+  }
+  else
+  {
+    M_hat[5] = log( eigenValues[0] / eigenValues[1] ) / (eigenValues[0] - eigenValues[1]);
   }
 
-  for (int i = 0; i < 3; ++i) {
-    for (int j = 0; j < 3; ++j) {
+  for( int i = 0; i < 3; ++i )
+  {
+    for( int j = 0; j < 3; ++j )
+    {
       real64 deltaFe[3][3] = {0};
       deltaFe[i][j] = 1.0;
 
       // delCe = delFe^T * Fe + Fe^T * delFe
       real64 dCe[3][3] = {0};
-      for (int l = 0; l < 3; ++l) {
+      for( int l = 0; l < 3; ++l )
+      {
         dCe[j][l] += deltaFe[i][j] * elasticDeformGrad[i][l];
         dCe[l][j] += elasticDeformGrad[i][l] * deltaFe[i][j];
       }
 
       real64 deltaCe[6] = {};
-      LvArray::tensorOps::denseToSymmetric<3>(deltaCe, dCe);
+      LvArray::tensorOps::denseToSymmetric< 3 >( deltaCe, dCe );
 
       // material tangent
       real64 deltaP_mat[3][3] = {};
-      computeMaterialTangentColumn(deltaCe, M_hat, eigenVectors, eigenVectorsT, smallStrainStiffness, fInvT, deltaP_mat);
+      computeMaterialTangentColumn( deltaCe, M_hat, eigenVectors, eigenVectorsT, smallStrainStiffness, fInvT, deltaP_mat );
 
       // geometric tangent
       real64 deltaP_geo[3][3] = {};
       real64 deltaFeT_FeInvT[3][3] = {0};
-      for (int l = 0; l < 3; ++l) {
+      for( int l = 0; l < 3; ++l )
+      {
         deltaFeT_FeInvT[j][l] += deltaFe[i][j] * fInvT[i][l];
       }
-      LvArray::tensorOps::Rij_eq_AikBkj<3, 3, 3>(deltaP_geo, firstPiolaStress, deltaFeT_FeInvT);
+      LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( deltaP_geo, firstPiolaStress, deltaFeT_FeInvT );
 
       real64 deltaP_total[3][3] = {};
-      LvArray::tensorOps::copy<3, 3>(deltaP_total, deltaP_mat);
-      LvArray::tensorOps::scaledAdd<3, 3>(deltaP_total, deltaP_geo, -1.0);
+      LvArray::tensorOps::copy< 3, 3 >( deltaP_total, deltaP_mat );
+      LvArray::tensorOps::scaledAdd< 3, 3 >( deltaP_total, deltaP_geo, -1.0 );
 
       // input results into D operator
       int col = 3 * i + j;
-      for (int m = 0; m < 3; ++m) {
-        for (int n = 0; n < 3; ++n) {
+      for( int m = 0; m < 3; ++m )
+      {
+        for( int n = 0; n < 3; ++n )
+        {
           // row major flattening
           int row = 3 * m + n;
           stiffness[row][col] = deltaP_total[m][n];
@@ -316,27 +335,27 @@ void ElasticIsotropicFiniteStrainUpdates::finiteStrainNoStateUpdate(localIndex c
 
 GEOS_HOST_DEVICE
 inline
-void ElasticIsotropicFiniteStrainUpdates::finiteStrainUpdate(localIndex const k, localIndex const q,
-                                                             real64 const (&elasticDeformGrad)[3][3],
-                                                             real64 (&firstPiolaStress)[3][3],
-                                                             real64 (&stiffness)[9][9]) const
+void ElasticIsotropicFiniteStrainUpdates::finiteStrainUpdate( localIndex const k, localIndex const q,
+                                                              real64 const (&elasticDeformGrad)[3][3],
+                                                              real64 (& firstPiolaStress)[3][3],
+                                                              real64 (& stiffness)[9][9] ) const
 {
   real64 kirchhoffStress[6] = {};
-  finiteStrainNoStateUpdate(k, q, elasticDeformGrad, firstPiolaStress, kirchhoffStress, stiffness);
+  finiteStrainNoStateUpdate( k, q, elasticDeformGrad, firstPiolaStress, kirchhoffStress, stiffness );
 
   // Can only save the symmetric kirchhoff stress right now
-  LvArray::tensorOps::copy<6>(m_oldStress[k][q], m_newStress[k][q]);
-  LvArray::tensorOps::copy<6>(m_newStress[k][q], kirchhoffStress);
+  LvArray::tensorOps::copy< 6 >( m_oldStress[k][q], m_newStress[k][q] );
+  LvArray::tensorOps::copy< 6 >( m_newStress[k][q], kirchhoffStress );
 }
 
 GEOS_HOST_DEVICE
 inline
-void ElasticIsotropicFiniteStrainUpdates::finiteStrainUpdate(localIndex const k, localIndex const q,
-                                                             real64 const (&elasticDeformGrad)[3][3],
-                                                             real64 (&firstPiolaStress)[3][3],
-                                                             DiscretizationOps & stiffness) const
+void ElasticIsotropicFiniteStrainUpdates::finiteStrainUpdate( localIndex const k, localIndex const q,
+                                                              real64 const (&elasticDeformGrad)[3][3],
+                                                              real64 (& firstPiolaStress)[3][3],
+                                                              DiscretizationOps & stiffness ) const
 {
-  finiteStrainUpdate(k, q, elasticDeformGrad, firstPiolaStress, stiffness.m_c);
+  finiteStrainUpdate( k, q, elasticDeformGrad, firstPiolaStress, stiffness.m_c );
 }
 
 /**
@@ -383,16 +402,19 @@ public:
    * @param includeState Flag whether to pass state arrays that may not be needed for "no-state" updates
    * @return An instantiation of ElasticFiniteStrainIsotropicUpdate.
    */
-  KernelWrapper createKernelUpdates(bool const includeState = true) const
+  KernelWrapper createKernelUpdates( bool const includeState = true ) const
   {
-    if (includeState) {
-      return KernelWrapper(m_bulkModulus, m_shearModulus, m_thermalExpansionCoefficient,
-                           m_newStress, m_oldStress, m_disableInelasticity);
-    } else {
-      return KernelWrapper(m_bulkModulus, m_shearModulus, m_thermalExpansionCoefficient,
-                           arrayView3d< real64, solid::STRESS_USD >(),
-                           arrayView3d< real64, solid::STRESS_USD >(),
-                           m_disableInelasticity);
+    if( includeState )
+    {
+      return KernelWrapper( m_bulkModulus, m_shearModulus, m_thermalExpansionCoefficient,
+                            m_newStress, m_oldStress, m_disableInelasticity );
+    }
+    else
+    {
+      return KernelWrapper( m_bulkModulus, m_shearModulus, m_thermalExpansionCoefficient,
+                            arrayView3d< real64, solid::STRESS_USD >(),
+                            arrayView3d< real64, solid::STRESS_USD >(),
+                            m_disableInelasticity );
     }
   }
 

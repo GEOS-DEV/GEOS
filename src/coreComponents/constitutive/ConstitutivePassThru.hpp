@@ -546,14 +546,14 @@ struct ConstitutivePassThru< CoupledSolidBase >
  * Base material model for electrochemistry.
  */
 template<>
-struct ConstitutivePassThru<ElectroChemistryBase>
+struct ConstitutivePassThru< ElectroChemistryBase >
 {
   template< typename LAMBDA >
   static
   void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
-    ConstitutivePassThruHandler<ElectroChemistryBase>::execute(constitutiveRelation,
-                                                               std::forward<LAMBDA>(lambda));
+    ConstitutivePassThruHandler< ElectroChemistryBase >::execute( constitutiveRelation,
+                                                                  std::forward< LAMBDA >( lambda ));
   }
 };
 
@@ -561,14 +561,14 @@ struct ConstitutivePassThru<ElectroChemistryBase>
  * @brief Material model for interface Butler-Volmer kinetics
  */
 template<>
-struct ConstitutivePassThru<ButlerVolmerInterface>
+struct ConstitutivePassThru< ButlerVolmerInterface >
 {
   template< typename LAMBDA >
   static
   void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
-    ConstitutivePassThruHandler<ButlerVolmerInterface>::execute(constitutiveRelation,
-                                                                std::forward<LAMBDA>(lambda));
+    ConstitutivePassThruHandler< ButlerVolmerInterface >::execute( constitutiveRelation,
+                                                                   std::forward< LAMBDA >( lambda ));
   }
 };
 

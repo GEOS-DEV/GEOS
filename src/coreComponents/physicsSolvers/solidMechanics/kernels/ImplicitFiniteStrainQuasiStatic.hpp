@@ -53,13 +53,13 @@ namespace solidMechanicsLagrangianFEMKernels
  * the test and trial spaces are specified as `3` when specifying the base
  * class.
  */
-template <typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE>
+template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
 class ImplicitFiniteStrainQuasiStatic :
-  public finiteElement::ImplicitKernelBase<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, 3, 3>
+  public finiteElement::ImplicitKernelBase< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, 3, 3 >
 {
 public:
   /// Alias for the base class;
-  using Base = finiteElement::ImplicitKernelBase<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, 3, 3>;
+  using Base = finiteElement::ImplicitKernelBase< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE, 3, 3 >;
 
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
@@ -82,12 +82,12 @@ public:
    * @copydoc geos::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param inputGravityVector The gravity vector.
    */
-  ImplicitFiniteStrainQuasiStatic(NodeManager const & nodeManager, EdgeManager const & edgeManager,
-      FaceManager const & faceManager, localIndex const targetRegionIndex,
-      SUBREGION_TYPE const & elementSubRegion, FE_TYPE const & finiteElementSpace,
-      CONSTITUTIVE_TYPE & inputConstitutiveType, arrayView1d<globalIndex const> const inputDofNumber,
-      globalIndex const rankOffset, CRSMatrixView<real64, globalIndex const> const inputMatrix,
-      arrayView1d<real64> const inputRhs, real64 const inputDt, real64 const (&inputGravityVector)[3]);
+  ImplicitFiniteStrainQuasiStatic( NodeManager const & nodeManager, EdgeManager const & edgeManager,
+                                   FaceManager const & faceManager, localIndex const targetRegionIndex,
+                                   SUBREGION_TYPE const & elementSubRegion, FE_TYPE const & finiteElementSpace,
+                                   CONSTITUTIVE_TYPE & inputConstitutiveType, arrayView1d< globalIndex const > const inputDofNumber,
+                                   globalIndex const rankOffset, CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                                   arrayView1d< real64 > const inputRhs, real64 const inputDt, real64 const (&inputGravityVector)[3] );
 
   //*****************************************************************************
   /**
@@ -99,13 +99,13 @@ public:
    */
   struct StackVariables : public Base::StackVariables
   {
-  public:
+public:
 
     /// Constructor.
     GEOS_HOST_DEVICE
     StackVariables()
-    : Base::StackVariables(),
-      xLocal(), u_local(), uhat_local(), constitutiveStiffness()
+      : Base::StackVariables(),
+                                       xLocal(), u_local(), uhat_local(), constitutiveStiffness()
     {}
 
 #if !defined(CALC_FEM_SHAPE_IN_KERNEL)
@@ -136,7 +136,7 @@ public:
    * element local stack storage.
    */
   GEOS_HOST_DEVICE
-  void setup(localIndex const k, StackVariables & stack) const;
+  void setup( localIndex const k, StackVariables & stack ) const;
 
   /**
    * @brief Internal struct to provide no-op defaults used in the inclusion
@@ -182,8 +182,8 @@ public:
    */
   template< typename STRESS_MODIFIER = NoOpFunctors >
   GEOS_HOST_DEVICE
-  void quadraturePointKernel(localIndex const k, localIndex const q, StackVariables & stack,
-                             STRESS_MODIFIER && stressModifier = NoOpFunctors{}) const;
+  void quadraturePointKernel( localIndex const k, localIndex const q, StackVariables & stack,
+                              STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const;
 
   /**
    * @copydoc geos::finiteElement::ImplicitKernelBase::complete
@@ -222,13 +222,13 @@ protected:
 
 /// The factory used to construct a ImplicitFiniteStrainQuasiStatic kernel.
 using ImplicitFiniteStrainQuasiStaticFactory =
-    finiteElement::KernelFactory< ImplicitFiniteStrainQuasiStatic,
-                                  arrayView1d< globalIndex const > const,
-                                  globalIndex,
-                                  CRSMatrixView< real64, globalIndex const > const,
-                                  arrayView1d< real64 > const,
-                                  real64 const,
-                                  real64 const (&)[3] >;
+  finiteElement::KernelFactory< ImplicitFiniteStrainQuasiStatic,
+                                arrayView1d< globalIndex const > const,
+                                globalIndex,
+                                CRSMatrixView< real64, globalIndex const > const,
+                                arrayView1d< real64 > const,
+                                real64 const,
+                                real64 const (&)[3] >;
 
 } // namespace solidMechanicsLagrangianFEMKernels
 

@@ -61,7 +61,7 @@ TEST( ElasticFiniteStrainTests, testMaterialTangentFiniteDifference )
   dataRepository::Group disc( "discretization", &rootGroup );
   disc.resize( numElem );
 
-  ElasticIsotropicFiniteStrain& constitutive_model = constitutiveManager.getConstitutiveRelation< ElasticIsotropicFiniteStrain >( "lithium" );
+  ElasticIsotropicFiniteStrain & constitutive_model = constitutiveManager.getConstitutiveRelation< ElasticIsotropicFiniteStrain >( "lithium" );
   constitutive_model.allocateConstitutiveData( disc, numQuad );
 
   // confirm allocation sizes

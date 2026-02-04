@@ -27,41 +27,41 @@ namespace geos
 namespace solidMechanicsLagrangianFEMKernels
 {
 
-template<typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE>
-ImplicitFiniteStrainQuasiStatic<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE> :: ImplicitFiniteStrainQuasiStatic(
-    NodeManager const & nodeManager, EdgeManager const & edgeManager,
-    FaceManager const & faceManager, localIndex const targetRegionIndex,
-    SUBREGION_TYPE const & elementSubRegion, FE_TYPE const & finiteElementSpace,
-    CONSTITUTIVE_TYPE & inputConstitutiveType, arrayView1d<globalIndex const> const inputDofNumber,
-    globalIndex const rankOffset, CRSMatrixView<real64, globalIndex const> const inputMatrix,
-    arrayView1d<real64> const inputRhs, real64 const inputDt, real64 const (&inputGravityVector)[3])
-  : Base(nodeManager, edgeManager, faceManager, targetRegionIndex, elementSubRegion, finiteElementSpace,
-        inputConstitutiveType, inputDofNumber, rankOffset, inputMatrix, inputRhs, inputDt),
-    m_X(nodeManager.referencePosition()),
-    m_disp(nodeManager.getField<fields::solidMechanics::totalDisplacement>()),
-    m_uhat(nodeManager.getField<fields::solidMechanics::incrementalDisplacement>()),
-    m_gravityVector{inputGravityVector[0], inputGravityVector[1], inputGravityVector[2]},
-    m_density(inputConstitutiveType.getDensity())
-  {}
+template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
+ImplicitFiniteStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > :: ImplicitFiniteStrainQuasiStatic(
+  NodeManager const & nodeManager, EdgeManager const & edgeManager,
+  FaceManager const & faceManager, localIndex const targetRegionIndex,
+  SUBREGION_TYPE const & elementSubRegion, FE_TYPE const & finiteElementSpace,
+  CONSTITUTIVE_TYPE & inputConstitutiveType, arrayView1d< globalIndex const > const inputDofNumber,
+  globalIndex const rankOffset, CRSMatrixView< real64, globalIndex const > const inputMatrix,
+  arrayView1d< real64 > const inputRhs, real64 const inputDt, real64 const (&inputGravityVector)[3] )
+  : Base( nodeManager, edgeManager, faceManager, targetRegionIndex, elementSubRegion, finiteElementSpace,
+          inputConstitutiveType, inputDofNumber, rankOffset, inputMatrix, inputRhs, inputDt ),
+  m_X( nodeManager.referencePosition()),
+  m_disp( nodeManager.getField< fields::solidMechanics::totalDisplacement >()),
+  m_uhat( nodeManager.getField< fields::solidMechanics::incrementalDisplacement >()),
+  m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
+  m_density( inputConstitutiveType.getDensity())
+{}
 
-template<typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE>
+template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void ImplicitFiniteStrainQuasiStatic<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE> :: setup(
-    localIndex const k, StackVariables& stack) const
+void ImplicitFiniteStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE > :: setup(
+  localIndex const k, StackVariables & stack ) const
 {
-  m_finiteElementSpace.template setup<FE_TYPE>(k, m_meshData, stack.feStack);
+  m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
 
-  localIndex const numSupportPoints = m_finiteElementSpace.template numSupportPoints<FE_TYPE>(stack.feStack);
+  localIndex const numSupportPoints = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
 
   stack.numRows = 3 * numSupportPoints;
   stack.numCols = stack.numRows;
 
-  for (localIndex a = 0; a < numSupportPoints; ++a)
+  for( localIndex a = 0; a < numSupportPoints; ++a )
   {
-    localIndex const localNodeIndex = m_elemsToNodes(k, a);
+    localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
-    for (int i = 0; i < numDofPerTestSupportPoint; ++i)
+    for( int i = 0; i < numDofPerTestSupportPoint; ++i )
     {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
       stack.xLocal[a][i] = m_X[localNodeIndex][i];
@@ -76,15 +76,15 @@ void ImplicitFiniteStrainQuasiStatic<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE>
   // Hanyu: not adding stabilization to the local jacobian since this is for FEM
 }
 
-template<typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE>
-template<typename STRESS_MODIFIER>
+template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
+template< typename STRESS_MODIFIER >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-void ImplicitFiniteStrainQuasiStatic<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE>::quadraturePointKernel(
-    localIndex const k, localIndex const q, StackVariables & stack, STRESS_MODIFIER && stressModifier) const
+void ImplicitFiniteStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::quadraturePointKernel(
+  localIndex const k, localIndex const q, StackVariables & stack, STRESS_MODIFIER && stressModifier ) const
 {
   real64 dNdX[numNodesPerElem][3];
-  real64 const detJxW = m_finiteElementSpace.template getGradN<FE_TYPE>(k, q, stack.xLocal, stack.feStack, dNdX);
+  real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, stack.feStack, dNdX );
 
   real64 stress[3][3] = { {0} };
   typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
@@ -93,20 +93,22 @@ void ImplicitFiniteStrainQuasiStatic<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE>
   real64 dUdX[3][3] = { {0} };
   real64 F[3][3] = { {0} };
 
-  FE_TYPE::gradient(dNdX, stack.u_local, dUdX);
-  FE_TYPE::gradient(dNdX, stack.uhat_local, dUhatdX);
+  FE_TYPE::gradient( dNdX, stack.u_local, dUdX );
+  FE_TYPE::gradient( dNdX, stack.uhat_local, dUhatdX );
 
   // calculate deformation gradient
-  LvArray::tensorOps::copy<3, 3>(F, dUdX);
-  LvArray::tensorOps::add<3, 3>(F, dUhatdX);
-  LvArray::tensorOps::addIdentity< 3 >(F, 1.0);
+  LvArray::tensorOps::copy< 3, 3 >( F, dUdX );
+  LvArray::tensorOps::add< 3, 3 >( F, dUhatdX );
+  LvArray::tensorOps::addIdentity< 3 >( F, 1.0 );
 
-  m_constitutiveUpdate.finiteStrainUpdate(k, q, F, stress, stiffness);
+  m_constitutiveUpdate.finiteStrainUpdate( k, q, F, stress, stiffness );
 
-  stressModifier(stress);
+  stressModifier( stress );
 
-  for (localIndex i = 0; i < 3; ++i) {
-    for (localIndex j = 0; j < 3; ++j) {
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    for( localIndex j = 0; j < 3; ++j )
+    {
       stress[i][j] *= -detJxW;
     }
   }
@@ -123,14 +125,14 @@ void ImplicitFiniteStrainQuasiStatic<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE>
                                    gravityForce,
                                    reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
 
-  stiffness.template BTDB<numNodesPerElem>(dNdX, -detJxW, stack.localJacobian);
+  stiffness.template BTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
 }
 
-template<typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE>
+template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
 GEOS_HOST_DEVICE
 GEOS_FORCE_INLINE
-real64 ImplicitFiniteStrainQuasiStatic<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE>::complete(
-    localIndex const k, StackVariables & stack) const
+real64 ImplicitFiniteStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::complete(
+  localIndex const k, StackVariables & stack ) const
 {
   GEOS_UNUSED_VAR( k );
   real64 maxForce = 0;
@@ -159,12 +161,12 @@ real64 ImplicitFiniteStrainQuasiStatic<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYP
   return maxForce;
 }
 
-template<typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE>
-template<typename POLICY, typename KERNEL_TYPE>
+template< typename SUBREGION_TYPE, typename CONSTITUTIVE_TYPE, typename FE_TYPE >
+template< typename POLICY, typename KERNEL_TYPE >
 GEOS_FORCE_INLINE
 real64
-ImplicitFiniteStrainQuasiStatic<SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE>::kernelLaunch(localIndex const numElems,
-                                                                                          KERNEL_TYPE const & kernelComponent)
+ImplicitFiniteStrainQuasiStatic< SUBREGION_TYPE, CONSTITUTIVE_TYPE, FE_TYPE >::kernelLaunch( localIndex const numElems,
+                                                                                             KERNEL_TYPE const & kernelComponent )
 {
   return Base::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernelComponent );
 }

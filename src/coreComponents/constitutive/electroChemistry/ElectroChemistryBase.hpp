@@ -41,9 +41,9 @@ public:
    * @brief Constructor for the class performing the electro conductivity updates
    * @param conductivity the array of cell-wise conductivities in the subregion
    */
-  ElectroChemistryBaseUpdate(arrayView1d<real64> const& conductivity)
-  :
-  m_conductivity(conductivity)
+  ElectroChemistryBaseUpdate( arrayView1d< real64 > const & conductivity )
+    :
+    m_conductivity( conductivity )
   {}
 
   /**
@@ -62,7 +62,7 @@ public:
    */
   GEOS_HOST_DEVICE
   inline
-  real64 getConductivity(localIndex const k) const
+  real64 getConductivity( localIndex const k ) const
   {
     return m_conductivity[k];
   }
@@ -70,7 +70,7 @@ public:
 protected:
 
   /// View on the cell-wise conductivities
-  arrayView1d<real64> m_conductivity;
+  arrayView1d< real64 > m_conductivity;
 };
 
 /**
@@ -99,8 +99,8 @@ public:
   /// Keys for data in this class
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
-    static constexpr char const* conductivityString() {return "conductivity";}
-    static constexpr char const* defaultConductivityString() {return "defaultConductivity";}
+    static constexpr char const * conductivityString() {return "conductivity";}
+    static constexpr char const * defaultConductivityString() {return "defaultConductivity";}
   };
 
   // virtual void allocateConstitutiveData( dataRepository::Group & parent,
@@ -109,7 +109,7 @@ public:
   using KernelWrapper = ElectroChemistryBaseUpdate;
   KernelWrapper createKernelUpdates()
   {
-    return KernelWrapper(m_conductivity);
+    return KernelWrapper( m_conductivity );
   }
 
 protected:
@@ -117,7 +117,7 @@ protected:
   /// Post-process XML input
   virtual void postInputInitialization() override;
 
-  array1d<real64> m_conductivity;
+  array1d< real64 > m_conductivity;
 
   real64 m_defaultConductivity = 1.0;
 };

@@ -27,31 +27,31 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-ElectroChemistryBase::ElectroChemistryBase(string const& name, Group * const parent)
-:
-ConstitutiveBase(name, parent),
-m_conductivity()
+ElectroChemistryBase::ElectroChemistryBase( string const & name, Group * const parent )
+  :
+  ConstitutiveBase( name, parent ),
+  m_conductivity()
 {
-  registerWrapper(viewKeyStruct::defaultConductivityString(), &m_defaultConductivity).
-    setApplyDefaultValue(1.0).
-    setInputFlag(InputFlags::REQUIRED).
-    setDescription("Default Electro Conductivity");
+  registerWrapper( viewKeyStruct::defaultConductivityString(), &m_defaultConductivity ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default Electro Conductivity" );
 
-  registerWrapper(viewKeyStruct::conductivityString(), &m_conductivity).
-    setApplyDefaultValue(-1.0). // will be overwritten
-    setPlotLevel(PlotLevel::LEVEL_0).
-    setDescription("Electro Conductivity Field");
+  registerWrapper( viewKeyStruct::conductivityString(), &m_conductivity ).
+    setApplyDefaultValue( -1.0 ). // will be overwritten
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "Electro Conductivity Field" );
 }
 
 ElectroChemistryBase::~ElectroChemistryBase() {}
 
 void ElectroChemistryBase::postInputInitialization()
 {
-  this->getWrapper<array1d<real64>>(viewKeyStruct::conductivityString()).
-    setApplyDefaultValue(m_defaultConductivity);
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::conductivityString()).
+    setApplyDefaultValue( m_defaultConductivity );
 }
 
-REGISTER_CATALOG_ENTRY(ConstitutiveBase, ElectroChemistryBase, string const&, Group * const)
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, ElectroChemistryBase, string const &, Group * const )
 } // namespace constitutive
 
 } // namespace geos

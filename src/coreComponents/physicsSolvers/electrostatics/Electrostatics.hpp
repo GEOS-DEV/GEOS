@@ -40,7 +40,7 @@ class Electrostatics : public PhysicsSolverBase
 public:
   /// The constructor needs a user-defined "name" and a parent Group (to place this instance in the
   /// tree structure of classes)
-  Electrostatics(const string& name, Group* const parent);
+  Electrostatics( const string & name, Group * const parent );
 
   /// Destructor
   virtual ~Electrostatics() override;
@@ -57,79 +57,71 @@ public:
   // virtual void initializePreSubGroups() override;
 
   /// This method ties properties with their supporting mesh
-  virtual void registerDataOnMesh(Group & meshBodies) override final;
+  virtual void registerDataOnMesh( Group & meshBodies ) override final;
 
-  virtual real64 solverStep(real64 const& time_n, real64 const& dt,
-                            integer const cycleNumber,
-                            DomainPartition& domain) override;
+  virtual real64 solverStep( real64 const & time_n, real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition & domain ) override;
 
-  virtual void implicitStepSetup(real64 const& time_n, real64 const& dt,
-                                 DomainPartition& domain) override;
+  virtual void implicitStepSetup( real64 const & time_n, real64 const & dt,
+                                  DomainPartition & domain ) override;
 
-  virtual void setupDofs(DomainPartition const& domain, DofManager& dofManager) const override;
+  virtual void setupDofs( DomainPartition const & domain, DofManager & dofManager ) const override;
 
-  virtual void setupSystem(DomainPartition& domain, DofManager& dofManager,
-                           CRSMatrix<real64, globalIndex>& localMatrix,
-                           ParallelVector& rhs, ParallelVector& solution,
-                           bool const setSparsity = false) override;
+  virtual void setupSystem( DomainPartition & domain, DofManager & dofManager,
+                            CRSMatrix< real64, globalIndex > & localMatrix,
+                            ParallelVector & rhs, ParallelVector & solution,
+                            bool const setSparsity = false ) override;
 
-  virtual void assembleSystem(real64 const time, real64 const dt,
-                              DomainPartition& domain, DofManager const& dofManager,
-                              CRSMatrixView<real64, globalIndex const> const& localMatrix,
-                              arrayView1d<real64> const& localRhs) override;
+  virtual void assembleSystem( real64 const time, real64 const dt,
+                               DomainPartition & domain, DofManager const & dofManager,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs ) override;
 
-  virtual void applyBoundaryConditions(real64 const time, real64 const dt,
-                                       DomainPartition& domain, DofManager const& dofManager,
-                                       CRSMatrixView<real64, globalIndex const> const& localMatrix,
-                                       arrayView1d<real64> const& localRhs) override;
+  virtual void applyBoundaryConditions( real64 const time, real64 const dt,
+                                        DomainPartition & domain, DofManager const & dofManager,
+                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                        arrayView1d< real64 > const & localRhs ) override;
 
   // virtual real64 calculateResidualNorm(real64 const& time_n, real64 const& dt,
   //                                      DomainPartition const& domain, DofManager const& dofManager,
   //                                      arrayView1d<real64 const> const& localRhs) override;
 
-  virtual void applySystemSolution(DofManager const& dofManager,
-                                   arrayView1d<real64 const> const& localSolution,
-                                   real64 const scalingFactor, real64 const dt,
-                                   DomainPartition& domain) override;
+  virtual void applySystemSolution( DofManager const & dofManager,
+                                    arrayView1d< real64 const > const & localSolution,
+                                    real64 const scalingFactor, real64 const dt,
+                                    DomainPartition & domain ) override;
 
-  virtual void updateState(DomainPartition& domain) override final;
+  virtual void updateState( DomainPartition & domain ) override final;
 
-  virtual void resetStateToBeginningOfStep(DomainPartition& GEOS_UNUSED_PARAM(domain)) override;
+  virtual void resetStateToBeginningOfStep( DomainPartition& GEOS_UNUSED_PARAM( domain )) override;
 
-  virtual void implicitStepComplete(real64 const& time, real64 const& dt,
-                                    DomainPartition& domain) override;
+  virtual void implicitStepComplete( real64 const & time, real64 const & dt,
+                                     DomainPartition & domain ) override;
 
-  void applyPotentialBC(real64 const time, DofManager const& dofManager, DomainPartition& domain,
-                        CRSMatrixView<real64, globalIndex const> const& localMatrix,
-                        arrayView1d<real64> const& localRhs);
+  void applyPotentialBC( real64 const time, DofManager const & dofManager, DomainPartition & domain,
+                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                         arrayView1d< real64 > const & localRhs );
 
-  void applyCurrentBC(real64 const time, DofManager const& dofManager,
-                      DomainPartition& domain, arrayView1d<real64> const& localRhs);
+  void applyCurrentBC( real64 const time, DofManager const & dofManager,
+                       DomainPartition & domain, arrayView1d< real64 > const & localRhs );
 
-  void applyButlerVolmerCurrent(DofManager const& dofManager, DomainPartition& domain,
-                                CRSMatrixView<real64, globalIndex const> const& localMatrix,
-                                arrayView1d<real64> const& localRhs);
-
-  enum class TimeIntegrationOption : integer
-  {
-    QuasiStatic,
-    ImplicitTransient
-  };
+  void applyButlerVolmerCurrent( DofManager const & dofManager, DomainPartition & domain,
+                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                 arrayView1d< real64 > const & localRhs );
 
   struct viewKeyStruct : public PhysicsSolverBase::viewKeyStruct
   {
-    static constexpr char const* timeIntegrationOption() { return "timeIntegrationOption"; }
-    static constexpr char const* fieldVarName() { return "fieldName"; }
-    static constexpr char const* electroMaterialNamesString() {return "electroMaterialNames";}
-    static constexpr char const* reactiveMaterialNamesString() {return "reactiveMaterialNames";}
-    static constexpr char const* surfaceGeneratorNameString() {return "surfaceGeneratorName";}
+    static constexpr char const * fieldVarName() { return "fieldName"; }
+    static constexpr char const * electroMaterialNamesString() {return "electroMaterialNames";}
+    static constexpr char const * reactiveMaterialNamesString() {return "reactiveMaterialNames";}
+    static constexpr char const * surfaceGeneratorNameString() {return "surfaceGeneratorName";}
   };
 
 protected:
   virtual void postInputInitialization() override;
 
   string m_fieldName;
-  TimeIntegrationOption m_timeIntegrationOption;
 
   static constexpr double F = 96485.33212;   // C/mol, Faraday's constant
   static constexpr double T = 298.15;        // K, Temperature
@@ -141,8 +133,6 @@ private:
   string m_surfaceGeneratorName;
 };
 
-ENUM_STRINGS(Electrostatics::TimeIntegrationOption,
-             "QuasiStatic", "ImplicitTransient");
 } /* namespace geos */
 
 #endif /* GEOS_PHYSICSSOLVERS_ELECTROSTATICS_HPP_ */
