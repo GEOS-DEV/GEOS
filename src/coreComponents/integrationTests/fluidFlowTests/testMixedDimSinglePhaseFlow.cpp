@@ -259,29 +259,27 @@ INSTANTIATE_TEST_SUITE_P(
     )
   );
 
-//INSTANTIATE_TEST_SUITE_P(
-//  MixedDimPartitionedFlowCases,
-//  MixedDimSinglePhaseFlowTest,
-//  ::testing::Combine(
-//    ::testing::Values(
-//      "fractured_mesh_hex_DFN_1.vtu",
-//      "fractured_mesh_hex_DFN_12.vtu",
-//      "fractured_mesh_hex_DFN_123.vtu"
-//      ),
-//    ::testing::Bool(),
-//    ::testing::Values( 2 ),
-//    ::testing::Values( 1 ),
-//    ::testing::Values( 2 )
-//    )
-//  );
+INSTANTIATE_TEST_SUITE_P(
+  MixedDimPartitionedFlowCases,
+  MixedDimSinglePhaseFlowTest,
+  ::testing::Combine(
+    ::testing::Values(
+      "fractured_mesh_hex_DFN_1.vtu",
+      "fractured_mesh_hex_DFN_12.vtu",
+      "fractured_mesh_hex_DFN_123.vtu"
+      ),
+    ::testing::Bool(),
+    ::testing::Values( 2 ),
+    ::testing::Values( 1 ),
+    ::testing::Values( 2 )
+    )
+  );
 
 int main( int argc, char * argv[] )
 {
-  MPI_Init( &argc, &argv );
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geos::basicSetup( argc, argv, false );
   int result = RUN_ALL_TESTS();
   geos::basicCleanup();
-  MPI_Finalize();
   return result;
 }
