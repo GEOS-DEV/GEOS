@@ -96,7 +96,8 @@ struct LogicError : public geos::Exception
 };
 
 /**
- * @brief Exception class used to report errors in user input.
+ * @brief Exception class used to report domain errors.
+ * Generally, the domain of a mathematical function is the subset of values that it is defined for
  */
 struct DomainError : public geos::Exception
 {
@@ -148,7 +149,7 @@ struct InputError : public geos::Exception
 };
 
 /**
- * @brief Exception class used to report errors in user input.
+ * @brief Exception class used to report errors related to the simulation
  */
 struct SimulationError : public geos::Exception
 {
