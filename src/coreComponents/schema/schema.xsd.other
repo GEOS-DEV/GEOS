@@ -3215,6 +3215,8 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="dEffectiveConductivity_dT" type="real64_array3d" />
 		<!--effectiveConductivity => Effective conductivity-->
 		<xsd:attribute name="effectiveConductivity" type="real64_array3d" />
+		<!--referenceThermalConductivity => Reference thermal conductivity-->
+		<xsd:attribute name="referenceThermalConductivity" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="SlipDependentPermeabilityType">
 		<!--dPerm_dDispJump => Derivative of rock permeability with respect to displacement jump-->
