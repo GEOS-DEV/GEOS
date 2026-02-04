@@ -90,7 +90,8 @@ struct ErrorContext
     m_priority( priority ) {};
 
   /**
-   * @brief Set the priority value of the current error context information
+   * @brief Set the priority value of the current error context information.
+   * This way the different context information will appear in descending order during the error log output.
    * @param priority the new value to asign
    * @return the reference to the corresponding error
    */
@@ -201,7 +202,7 @@ public:
   }
 
   /**
-   * @brief Add the dectection location the DiagnosticMsg
+   * @brief Add where the detection occured
    * @param detectionLocation The context where the diagnostic happoned
    * @return The instance, for builder pattern.
    */
@@ -226,7 +227,7 @@ public:
   DiagnosticMsgBuilder & setCodeLocation( std::string_view msgFile, integer msgLine );
 
   /**
-   * @brief Set the type of the error
+   * @brief Set the type of the error, (amoung one of the MsgType)
    * @param msgType The type can be error, warning or exception
    * @return Reference to the current instance for method chaining.
    */
@@ -241,17 +242,17 @@ public:
 
   /**
    * @brief Add a rank on which the error has been raised
-   * @param rank The value to add
+   * @param rank The rank value
    * @return Reference to the current instance for method chaining.
    */
   DiagnosticMsgBuilder & addRank( integer rank );
 
   /**
-   * @brief Add stack trace information about the error
-   * @param ossStackTrace stack trace information to add
+   * @brief Add the stack trace information about the error
+   * @param stacktrace stack trace information to add
    * @return Reference to the current instance for method chaining.
    */
-  DiagnosticMsgBuilder & addCallStackInfo( std::string_view ossStackTrace );
+  DiagnosticMsgBuilder & addCallStackInfo( std::string_view stacktrace );
 
   /**
    * @return Get the DiagnosticMsg
