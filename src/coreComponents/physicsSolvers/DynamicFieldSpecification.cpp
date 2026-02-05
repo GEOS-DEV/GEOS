@@ -70,7 +70,8 @@ DynamicFieldSpecification::
                                                     Group & targetGroup,
                                                     string const fieldName )
             {
-              bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, fieldName );
+              string const targetFieldName = ( fieldName == "HydrostaticEquilibrium" ) ? "pressure" : fieldName;
+              bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, targetFieldName );
             } );
           }
         }
