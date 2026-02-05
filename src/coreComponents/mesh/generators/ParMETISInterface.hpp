@@ -70,6 +70,24 @@ partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & graph,
            MPI_Comm comm,
            int const numRefinements );
 
+/**
+ * @brief Partition a mesh according to its weighted dual graph
+ * @param graph the input graph (edges of locally owned nodes)
+ * @param vertDist the parallel distribution of vertices: vertex index offset on each rank
+ * @param numParts target number of partitions
+ * @param comm the MPI communicator of processes to partition over
+ * @param numRefinements number of partition refinement iterations
+ * @param edgeWeights weights for each edge in the graph (must match graph structure)
+ * @return an array of target partitions for each element in local mesh
+ */
+array1d< pmet_idx_t >
+partition( ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & graph,
+           arrayView1d< pmet_idx_t const > const & vertDist,
+           pmet_idx_t const numParts,
+           MPI_Comm comm,
+           int const numRefinements,
+           ArrayOfArraysView< pmet_idx_t const, pmet_idx_t > const & edgeWeights );           
+
 } // namespace parmetis
 } // namespace geos
 

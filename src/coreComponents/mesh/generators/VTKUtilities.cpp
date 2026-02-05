@@ -66,6 +66,8 @@
 #include <vtkXMLRectilinearGridReader.h>
 #include <vtkXMLStructuredGridReader.h>
 #include <vtkXMLUnstructuredGridReader.h>
+#include <vtkGhostCellsGenerator.h>
+
 
 #ifdef GEOS_USE_MPI
 #include <vtkMPIController.h>
@@ -635,15 +637,47 @@ partitionByCellGraph( AllMeshes & input,
 
   switch( method )
   {
-    case PartitionMethod::parmetis:
-    {
+  case PartitionMethod::parmetis:
+  {
 #ifdef GEOS_USE_PARMETIS
-      return parmetis::partition( graph.toViewConst(), elemDist, numParts, comm, numRefinements );
-#else
-      GEOS_THROW( "GEOS must be built with ParMETIS support (ENABLE_PARMETIS=ON) to use 'parmetis' partitioning method", InputError );
-      return {};
-#endif
+    array1d< int64_t > partitions = parmetis::partition( graph.toViewConst(), elemDist, numParts, comm, numRefinements );
+    
+    // *** ADD DEBUG HERE ***
+    if( rank == lastRank )  // Only last rank has fractures initially
+    {
+      std::cout << "[Rank " << rank << "] ParMETIS returned partition for " 
+                << partitions.size() << " total elements" << std::endl;
+      std::cout << "[Rank " << rank << "]   3D cells: " << numElems << std::endl;
+      std::cout << "[Rank " << rank << "]   Fracture cells: " << localNumFracCells << std::endl;
+      
+      // Check specific fractures
+      vtkIdType fracOffset = numElems;  // Fractures start after 3D cells
+      for( auto const & [fractureName, fracture]: input.getFaceBlocks() )
+      {
+        vtkIdTypeArray const * fracGlobalIds = vtkIdTypeArray::FastDownCast( 
+            fracture->GetCellData()->GetGlobalIds() );
+        
+        for( vtkIdType i = 0; i < fracture->GetNumberOfCells(); ++i )
+        {
+          int64_t const fracGlobalId = fracGlobalIds->GetValue( i );
+          if( fracGlobalId == 9055 || fracGlobalId == 12021 )
+          {
+            int assignedRank = partitions[fracOffset + i];
+            std::cout << "[Rank " << rank << "] *** ParMETIS assigned fracture VTK_gID=" 
+                      << fracGlobalId << " (local=" << i << ") to RANK " << assignedRank << std::endl;
+          }
+        }
+        fracOffset += fracture->GetNumberOfCells();
+      }
     }
+    // *** END DEBUG ***
+    
+    return partitions;
+#else
+    GEOS_THROW( "GEOS must be built with ParMETIS support (ENABLE_PARMETIS=ON) to use 'parmetis' partitioning method", InputError );
+    return {};
+#endif
+  }
     case PartitionMethod::ptscotch:
     {
 #ifdef GEOS_USE_SCOTCH
@@ -705,6 +739,7 @@ redistributeByCellGraph( AllMeshes & input,
   // First for the main 3d mesh...
   vtkSmartPointer< vtkPartitionedDataSet > const splitMesh = splitMeshByPartition( input.getMainMesh(), numRanks, newPartitions.toViewConst() );
   vtkSmartPointer< vtkUnstructuredGrid > finalMesh = vtk::redistribute( *splitMesh, MPI_COMM_GEOS );
+
   // ... and then for the fractures.
   stdMap< string, vtkSmartPointer< vtkDataSet > > finalFractures;
   for( auto const & [fractureName, fracture]: input.getFaceBlocks() )
@@ -714,9 +749,43 @@ redistributeByCellGraph( AllMeshes & input,
     finalFractures.insert( {fractureName, finalFracMesh} );
   }
 
-  return AllMeshes( finalMesh, finalFractures );
+  // ===== AUGMENT MAIN MESH WITH FRACTURE NODES =====
+  finalMesh = addFractureNodesToRedistributedMesh( finalMesh, finalFractures, comm );
+  // =================================================
+
+  // ===== GENERATE GHOST CELLS =====
+vtkNew< vtkGhostCellsGenerator > ghostGen;
+ghostGen->SetInputData( finalMesh );
+ghostGen->SetController( vtk::getController() );
+ghostGen->SetNumberOfGhostLayers( 2 );
+ghostGen->Update();
+
+// After ghost generation:
+finalMesh = vtkUnstructuredGrid::SafeDownCast( ghostGen->GetOutput() );
+
+vtkIdType numGhostCells = 0;
+vtkUnsignedCharArray* ghostArray = vtkUnsignedCharArray::SafeDownCast(
+    finalMesh->GetCellData()->GetArray( vtkDataSetAttributes::GhostArrayName() ) );
+
+if( ghostArray )
+{
+  for( vtkIdType i = 0; i < finalMesh->GetNumberOfCells(); ++i )
+  {
+    if( ghostArray->GetValue( i ) & vtkDataSetAttributes::DUPLICATECELL )
+    {
+      numGhostCells++;
+    }
+  }
 }
 
+GEOS_LOG_RANK( GEOS_FMT( "Rank {}: {} ghost cells generated",
+                         MpiWrapper::commRank( comm ), numGhostCells ) );
+
+
+  // ================================
+
+  return AllMeshes( finalMesh, finalFractures );
+}
 
 /**
  * @brief Scatter the mesh by blocks  (no geometric information involved, assumes rank 0 has the full mesh)
@@ -1280,6 +1349,163 @@ redistributeMeshes( integer const logLevel,
   return result;
 }
 
+vtkSmartPointer< vtkUnstructuredGrid > addFractureNodesToRedistributedMesh(
+    vtkSmartPointer< vtkUnstructuredGrid > redistributedMain,
+    stdMap< string, vtkSmartPointer< vtkDataSet > > const& redistributedFractures,
+    MPI_Comm comm )
+{
+  // Collect fracture nodes that this rank has
+  std::map< vtkIdType, std::array< double, 3 > > fractureNodes;
+  
+  for( auto const & [name, fracMesh]: redistributedFractures )
+  {
+    vtkDataArray * collocatedArray = 
+        fracMesh->GetPointData()->GetArray( "collocated_nodes" );
+    
+    if( !collocatedArray )
+    {
+      GEOS_WARNING( "Fracture '" << name << "' missing collocated_nodes array" );
+      continue;
+    }
+    
+    int numComponents = collocatedArray->GetNumberOfComponents();
+    
+    for( vtkIdType ptId = 0; ptId < fracMesh->GetNumberOfPoints(); ++ptId )
+    {
+      double coords[3];
+      fracMesh->GetPoint( ptId, coords );
+      
+      for( int comp = 0; comp < numComponents; ++comp )
+      {
+        vtkIdType globalNodeId = static_cast< vtkIdType >(
+            collocatedArray->GetComponent( ptId, comp ) );
+        
+        if( globalNodeId >= 0 )
+        {
+          fractureNodes[globalNodeId] = {coords[0], coords[1], coords[2]};
+        }
+      }
+    }
+  }
+  
+  if( fractureNodes.empty() )
+  {
+    return redistributedMain;
+  }
+  
+  // Collect existing main mesh nodes
+  std::map< vtkIdType, std::array< double, 3 > > allNodes;
+  
+  vtkIdTypeArray * mainGlobalIds = vtkIdTypeArray::SafeDownCast(
+      redistributedMain->GetPointData()->GetGlobalIds() );
+  
+  if( !mainGlobalIds )
+  {
+    GEOS_ERROR( "Redistributed main mesh must have global node IDs" );
+  }
+  
+  for( vtkIdType i = 0; i < redistributedMain->GetNumberOfPoints(); ++i )
+  {
+    vtkIdType globalId = mainGlobalIds->GetValue( i );
+    double coords[3];
+    redistributedMain->GetPoint( i, coords );
+    allNodes[globalId] = {coords[0], coords[1], coords[2]};
+  }
+  
+  // Add fracture nodes (std::map automatically deduplicates by global ID)
+  vtkIdType numAdded = 0;
+  for( auto const & [globalId, coords]: fractureNodes )
+  {
+    if( allNodes.find( globalId ) == allNodes.end() )
+    {
+      allNodes[globalId] = coords;
+      numAdded++;
+    }
+  }
+  
+  if( numAdded == 0 )
+  {
+    // All fracture nodes already in main mesh
+    return redistributedMain;
+  }
+  
+  GEOS_LOG_RANK( GEOS_FMT( "Adding {} fracture nodes to main mesh", numAdded ) );
+  
+  // Create augmented mesh
+  auto augmented = vtkSmartPointer< vtkUnstructuredGrid >::New();
+  
+  vtkSmartPointer< vtkPoints > points = vtkSmartPointer< vtkPoints >::New();
+  vtkIdTypeArray * newGlobalIds = vtkIdTypeArray::New();
+  newGlobalIds->SetName( "GlobalIds" );
+  
+  std::map< vtkIdType, vtkIdType > globalToLocal;
+  
+  for( auto const & [globalId, coords]: allNodes )
+  {
+    vtkIdType localId = points->GetNumberOfPoints();
+    points->InsertNextPoint( coords[0], coords[1], coords[2] );
+    newGlobalIds->InsertNextValue( globalId );
+    globalToLocal[globalId] = localId;
+  }
+  
+  augmented->SetPoints( points );
+  augmented->GetPointData()->SetGlobalIds( newGlobalIds );
+  
+  vtkIdTypeArray* oldCellGlobalIds = vtkIdTypeArray::SafeDownCast(
+      redistributedMain->GetCellData()->GetGlobalIds() );
+  
+  vtkIdTypeArray* newCellGlobalIds = nullptr;
+  
+  if( oldCellGlobalIds )
+  {
+    newCellGlobalIds = vtkIdTypeArray::New();
+    newCellGlobalIds->SetName( "GlobalIds" );
+    newCellGlobalIds->SetNumberOfTuples( redistributedMain->GetNumberOfCells() );
+  }
+
+  // Copy cells with renumbered nodes
+  for( vtkIdType cellId = 0; cellId < redistributedMain->GetNumberOfCells(); ++cellId )
+  {
+    vtkCell * cell = redistributedMain->GetCell( cellId );
+    
+    std::vector< vtkIdType > newNodeIds;
+    for( vtkIdType i = 0; i < cell->GetNumberOfPoints(); ++i )
+    {
+      vtkIdType oldLocalId = cell->GetPointId( i );
+      vtkIdType globalId = mainGlobalIds->GetValue( oldLocalId );
+      newNodeIds.push_back( globalToLocal[globalId] );
+    }
+    
+    augmented->InsertNextCell( cell->GetCellType(), newNodeIds.size(), newNodeIds.data() );
+
+        // ===== COPY CELL GLOBAL ID =====
+    if( newCellGlobalIds )
+    {
+      newCellGlobalIds->SetValue( cellId, oldCellGlobalIds->GetValue( cellId ) );
+    }
+    // ================================
+  }
+  
+  // ===== SET CELL GLOBAL IDS ON AUGMENTED MESH =====
+  if( newCellGlobalIds )
+  {
+    augmented->GetCellData()->SetGlobalIds( newCellGlobalIds );
+  }
+  // =================================================
+  
+  // Copy all OTHER cell data arrays (not GlobalIds, we handled it separately)
+  for( int i = 0; i < redistributedMain->GetCellData()->GetNumberOfArrays(); ++i )
+  {
+    vtkDataArray* arr = redistributedMain->GetCellData()->GetArray( i );
+    
+    // Skip GlobalIds - we already set it
+    if( strcmp( arr->GetName(), "GlobalIds" ) != 0 )
+    {
+      augmented->GetCellData()->AddArray( arr );
+    }
+  }
+  return augmented;
+}
 /**
  * @brief Identify the GEOSX type of the polyhedron
  *

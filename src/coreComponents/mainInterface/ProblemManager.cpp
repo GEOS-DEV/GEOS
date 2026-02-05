@@ -719,6 +719,71 @@ void ProblemManager::generateMesh()
         /// 1. The computation of geometric quantities which is now possible for `FaceElementSubRegion`,
         // because the ghosting ensures that the neighbor cells of the fracture elements are available.
         // These neighbor cells are providing the node information to the fracture elements.
+
+
+  int const rank = MpiWrapper::commRank();
+
+ ArrayOfArraysView< localIndex const > const & toNodesRelation = subRegion.nodeList().toViewConst();
+  arrayView2d< localIndex const > const & toFacesRelation = subRegion.faceList();
+  arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+  arrayView1d< globalIndex const > const & localToGlobal = subRegion.localToGlobalMap();
+  
+  // Quick scan for invalid faces
+  localIndex numInvalidFaces = 0;
+  localIndex numInvalidOwned = 0;
+  localIndex numInvalidGhost = 0;
+  
+  for( localIndex k = 0; k < subRegion.size(); ++k )
+  {
+    if( toFacesRelation.size(1) == 0 || toFacesRelation[k][0] < 0 )
+    {
+      numInvalidFaces++;
+      if( ghostRank[k] >= 0 )
+        numInvalidGhost++;
+      else
+        numInvalidOwned++;
+    }
+  }
+  
+  // Only print if there are problems
+  if( numInvalidFaces > 0 )
+  {
+    std::cout << "\n*** [Rank " << rank << "] CRITICAL: FaceElementSubRegion '" 
+              << subRegion.getName() << "' has " << numInvalidFaces << " invalid face relations ***" << std::endl;
+    std::cout << "[Rank " << rank << "]   Total elements: " << subRegion.size() << std::endl;
+    std::cout << "[Rank " << rank << "]   Invalid: Owned=" << numInvalidOwned 
+              << ", Ghost=" << numInvalidGhost << std::endl;
+    std::cout << "[Rank " << rank << "]   toFacesRelation dims: " 
+              << toFacesRelation.size(0) << " x " << toFacesRelation.size(1) << std::endl;
+    std::cout << "[Rank " << rank << "]   faceArea size: " << faceManager.faceArea().size() << std::endl;
+    
+    // Print details of ONLY the invalid elements
+    std::cout << "[Rank " << rank << "]   Invalid elements:" << std::endl;
+    for( localIndex k = 0; k < subRegion.size(); ++k )
+    {
+      if( toFacesRelation.size(1) == 0 || toFacesRelation[k][0] < 0 )
+      {
+        bool const isGhost = (ghostRank[k] >= 0);
+        localIndex const numNodes = toNodesRelation.sizeOfArray( k );
+        
+        std::cout << "[Rank " << rank << "]     Elem " << k 
+                  << " (gID=" << localToGlobal[k] << ")"
+                  << " [" << (isGhost ? "GHOST" : "OWNED") << "]"
+                  << " faceID=" << (toFacesRelation.size(1) > 0 ? toFacesRelation[k][0] : -999)
+                  << " numNodes=" << numNodes << std::endl;
+      }
+    }
+    std::cout << std::endl;
+    
+
+  }
+  else
+  {
+    std::cout << "[Rank " << rank << "] FaceElementSubRegion '" << subRegion.getName() 
+              << "': All " << subRegion.size() << " elements have valid face relations. OK." << std::endl;
+  }
+  
+  
         subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
 
         // 2. Reorder the face map based on global numbering of neighboring cells

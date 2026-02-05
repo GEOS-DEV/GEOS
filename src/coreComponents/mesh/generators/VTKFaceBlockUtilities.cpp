@@ -426,10 +426,16 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
                                             ArrayOfArraysView< localIndex const > faceToNodes,
                                             vtk::internal::ElementToFace const & elemToFaces )
 {
-  // First, we'll only consider the boundary cells,
-  // since only boundary cells can be involved in this kind of computations.
+  int const rank = MpiWrapper::commRank();
+  std::cout << "[Rank " << rank << "] buildElem2dTo3dElemAndFaces: Processing " 
+            << faceMesh->GetNumberOfCells() << " fracture elements" << std::endl;
+
+  // First, we'll only consider the boundary cells...
   const char * const boundaryPointsName = "boundary points";
   const char * const boundaryCellsName = "boundary cells";
+
+
+
 
   auto boundaryExtractor = vtkSmartPointer< vtkGeometryFilter >::New();
   boundaryExtractor->PassThroughPointIdsOn();
@@ -453,9 +459,88 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
     ng2l.insert( { globalPtIds->GetValue( i ), i} );
   }
 
-  // Let's build the elem2d to elem3d mapping.
-  // We need to find the 3d elements (and only the 3d elements, so we can safely ignore the others).
-  // First we compute the mapping from all the boundary nodes to the 3d elements that rely on those nodes.
+
+
+
+
+
+if( rank == 6 || rank == 8 )
+{
+  std::cout << "\n[Rank " << rank << "] === FRACTURE MESH ANALYSIS ===" << std::endl;
+  
+  // Check if fracture mesh has GlobalIds
+  vtkIdTypeArray * fractureGlobalIds = vtkIdTypeArray::FastDownCast(
+    faceMesh->GetCellData()->GetGlobalIds() );
+  
+  if( fractureGlobalIds )
+  {
+    std::cout << "[Rank " << rank << "] Fracture mesh has " 
+              << faceMesh->GetNumberOfCells() << " fracture elements" << std::endl;
+    std::cout << "[Rank " << rank << "] Fracture element global ID range: "
+              << fractureGlobalIds->GetRange()[0] << " to " 
+              << fractureGlobalIds->GetRange()[1] << std::endl;
+  }
+  
+  // Check fracture mesh point global IDs
+  vtkIdTypeArray * fracturePointGlobalIds = vtkIdTypeArray::FastDownCast(
+    faceMesh->GetPointData()->GetGlobalIds() );
+  
+  if( fracturePointGlobalIds )
+  {
+    std::cout << "[Rank " << rank << "] Fracture mesh has " 
+              << faceMesh->GetNumberOfPoints() << " points" << std::endl;
+    std::cout << "[Rank " << rank << "] Fracture point global ID range: "
+              << fracturePointGlobalIds->GetRange()[0] << " to " 
+              << fracturePointGlobalIds->GetRange()[1] << std::endl;
+  }
+  
+  // Check if fracture mesh has "collocated_nodes" field
+  vtkIdTypeArray * collocNodesField = vtkIdTypeArray::FastDownCast(
+    faceMesh->GetPointData()->GetArray("collocated_nodes") );
+  
+  if( collocNodesField )
+  {
+    std::cout << "[Rank " << rank << "] Fracture mesh HAS 'collocated_nodes' field" << std::endl;
+    std::cout << "[Rank " << rank << "]   Number of components: " 
+              << collocNodesField->GetNumberOfComponents() << std::endl;
+  }
+  else
+  {
+    std::cout << "[Rank " << rank << "] Fracture mesh DOES NOT have 'collocated_nodes' field" << std::endl;
+  }
+  
+  std::cout << "[Rank " << rank << "] ===" << std::endl << std::endl;
+}
+
+
+
+
+
+if( rank == 6 )
+{
+  std::cout << "\n[Rank 6] Checking for nodes related to element gID=30279 (VTK gID=9055):" << std::endl;
+  
+  std::vector<vtkIdType> nodesToCheck = {14640, 14909, 14912, 62711, 62980, 62983};
+  
+  for( vtkIdType nodeId : nodesToCheck )
+  {
+    auto it = ng2l.find( nodeId );
+    if( it != ng2l.cend() )
+    {
+      std::cout << "[Rank 6]   Node " << nodeId << ": YES (local=" << it->second << ")" << std::endl;
+      
+      // Check if it's on boundary (in nodesToCells)
+      // Note: nodesToCells is built later, so add this check after nodesToCells is populated
+    }
+    else
+    {
+      std::cout << "[Rank 6]   Node " << nodeId << ": NO (not on this rank)" << std::endl;
+    }
+  }
+  std::cout << std::endl;
+}
+
+  // Build mapping from boundary nodes to 3d elements
   stdMap< vtkIdType, stdVector< vtkIdType > > nodesToCellsFull;
   for( vtkIdType i = 0; i < boundary->GetNumberOfCells(); ++i )
   {
@@ -473,9 +558,9 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
     }
   }
 
-  // Then we only keep the duplicated nodes. It's only for optimisation purpose.
+  // Keep only duplicated nodes (optimization)
   stdMap< vtkIdType, std::set< vtkIdType > > nodesToCells;
-  { // scope reduction
+  {
     std::set< vtkIdType > allDuplicatedNodes;
     for( std::size_t i = 0; i < collocatedNodes.size(); ++i )
     {
@@ -495,6 +580,38 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
     }
   }
 
+// Add this right after nodesToCells is populated:
+
+if( rank == 6 )
+{
+  std::cout << "\n[Rank 6] Checking if these nodes are on BOUNDARY:" << std::endl;
+  
+  std::vector<vtkIdType> nodesToCheck = {14640, 14909, 14912, 62711, 62980, 62983};
+  
+  for( vtkIdType nodeId : nodesToCheck )
+  {
+    auto it_ng2l = ng2l.find( nodeId );
+    if( it_ng2l != ng2l.cend() )
+    {
+      auto it_ntc = nodesToCells.find( nodeId );
+      if( it_ntc != nodesToCells.cend() )
+      {
+        std::cout << "[Rank 6]   Node " << nodeId 
+                  << ": local=" << it_ng2l->second 
+                  << " ON_BOUNDARY (→" << it_ntc->second.size() << " cells)" << std::endl;
+      }
+      else
+      {
+        std::cout << "[Rank 6]   Node " << nodeId 
+                  << ": local=" << it_ng2l->second 
+                  << " NOT_ON_BOUNDARY (internal)" << std::endl;
+      }
+    }
+  }
+  std::cout << std::endl;
+}
+
+
   vtkIdType const num2dElements = faceMesh->GetNumberOfCells();
 
   ArrayOfArrays< localIndex > elem2dToElem3d( num2dElements, 2 );
@@ -502,81 +619,214 @@ Elem2dTo3dInfo buildElem2dTo3dElemAndFaces( vtkSmartPointer< vtkDataSet > faceMe
   ArrayOfArrays< localIndex > elem2dToFaces( num2dElements, 2 );
   ArrayOfArrays< localIndex > elem2dToNodes( num2dElements, 10 );
 
-  // Now we loop on all the 2d elements.
-  for( int e2d = 0; e2d < num2dElements; ++e2d )
+  vtkIdTypeArray const * faceMeshGlobalIds2 = vtkIdTypeArray::FastDownCast( faceMesh->GetCellData()->GetGlobalIds() );
+  
+  std::cout << "[Rank " << rank << "] Starting to match fracture elements to 3D faces..." << std::endl;
+
+  // Loop on all 2d elements
+for( int e2d = 0; e2d < num2dElements; ++e2d )
+{
+  vtkIdType elem2dGlobalId = faceMeshGlobalIds2 ? faceMeshGlobalIds2->GetValue(e2d) : -1;
+  
+  // **DEBUG ONLY PROBLEM ELEMENTS**
+  bool debugThis = (elem2dGlobalId == 9055 || elem2dGlobalId == 12021);
+  
+  // Collect all duplicated points for this 2d element
+  vtkIdList * pointIds = faceMesh->GetCell( e2d )->GetPointIds();
+  std::size_t const elem2dNumPoints = pointIds->GetNumberOfIds();
+  
+  std::set< vtkIdType > duplicatedPointOfElem2d;
+  for( vtkIdType j = 0; j < pointIds->GetNumberOfIds(); ++j )
   {
-    // We collect all the duplicated points that are involved for each 2d element.
-    vtkIdList * pointIds = faceMesh->GetCell( e2d )->GetPointIds();
-    std::size_t const elem2dNumPoints = pointIds->GetNumberOfIds();
-    // All the duplicated points of the 2d element. Note that we lose the collocation of the duplicated nodes.
-    std::set< vtkIdType > duplicatedPointOfElem2d;
+    stdVector< vtkIdType > const & ns = collocatedNodes[ pointIds->GetId( j ) ];
+    duplicatedPointOfElem2d.insert( ns.cbegin(), ns.cend() );
+  }
+
+  // **CONSOLIDATED DEBUG OUTPUT**
+  if( debugThis )
+  {
+    std::cout << "\n[Rank " << rank << "] *** Processing VTK elem gID=" << elem2dGlobalId 
+              << " (local=" << e2d << ")" << std::endl;
+    std::cout << "[Rank " << rank << "]   VTK Point IDs: ";
     for( vtkIdType j = 0; j < pointIds->GetNumberOfIds(); ++j )
     {
-      stdVector< vtkIdType > const & ns = collocatedNodes[ pointIds->GetId( j ) ];
-      duplicatedPointOfElem2d.insert( ns.cbegin(), ns.cend() );
+      std::cout << pointIds->GetId(j) << " ";
     }
+    std::cout << std::endl;
 
-    for( vtkIdType const & gni: duplicatedPointOfElem2d )
+// Existing VTK Point → Global Node mapping debug...
+  
+  // **ADD THIS - Show what collocatedNodes array contains for these points**
+  std::cout << "[Rank " << rank << "]   CollocatedNodes mapping for this element:" << std::endl;
+  for( vtkIdType j = 0; j < pointIds->GetNumberOfIds(); ++j )
+  {
+    vtkIdType vtkPtId = pointIds->GetId(j);
+    stdVector< vtkIdType > const & collocated = collocatedNodes[vtkPtId];
+    
+    std::cout << "[Rank " << rank << "]     VTK point " << vtkPtId << " → collocated nodes: {";
+    for( auto n : collocated ) std::cout << n << " ";
+    std::cout << "}" << std::endl;
+    
+    // Check which of these collocated nodes are on this rank
+    std::cout << "[Rank " << rank << "]       ";
+    for( auto n : collocated )
     {
-      auto it = ng2l.find( gni );
-      if( it != ng2l.cend() )  // If the node is not on this rank, we want to ignore this entry.
+      auto it = ng2l.find(n);
+      std::cout << n << (it != ng2l.cend() ? "✓ " : "✗ ");
+    }
+    std::cout << std::endl;
+  }
+  
+  std::cout << "[Rank " << rank << "]   Collocated node set: ";
+  for( auto n : duplicatedPointOfElem2d ) std::cout << n << " ";
+  std::cout << " (total=" << duplicatedPointOfElem2d.size() << ")" << std::endl;    
+    
+    // **NEW DEBUG - Show VTK Point to Global Node mapping**
+    vtkIdTypeArray const * fractureMeshGlobalPtIds = vtkIdTypeArray::FastDownCast( 
+      faceMesh->GetPointData()->GetGlobalIds() );
+    
+    if( fractureMeshGlobalPtIds )
+    {
+      std::cout << "[Rank " << rank << "]   VTK Point → Global Node mapping:" << std::endl;
+      for( vtkIdType j = 0; j < pointIds->GetNumberOfIds(); ++j )
       {
-        // The node lists in `elem2dToNodes` may be in any order.
-        // Anyway, there will be a specific step to reset the appropriate order.
-        // Note that due to ghosting, there will also always be some cases where
-        // some nodes will be missing in `elem2dToNodes` _before_ the ghosting.
-        // After the ghosting, the whole information will be gathered,
-        // but a reordering step will always be compulsory.
-        elem2dToNodes.emplaceBack( e2d, it->second );
+        vtkIdType vtkPtId = pointIds->GetId(j);
+        vtkIdType globalNodeId = fractureMeshGlobalPtIds->GetValue(vtkPtId);
+        std::cout << "[Rank " << rank << "]     VTK point " << vtkPtId 
+                  << " → global node " << globalNodeId << std::endl;
       }
     }
-
-    // Here, we collect all the 3d elements that are concerned by at least one of those duplicated elements.
-    stdMap< vtkIdType, std::set< vtkIdType > > elem3dToDuplicatedNodes;
+    
+    std::cout << "[Rank " << rank << "]   Collocated node set: ";
+    for( auto n : duplicatedPointOfElem2d ) std::cout << n << " ";
+    std::cout << " (total=" << duplicatedPointOfElem2d.size() << ")" << std::endl;
+    
+    // Node status on this rank
+    std::cout << "[Rank " << rank << "]   Node status on this rank:" << std::endl;
     for( vtkIdType const & n: duplicatedPointOfElem2d )
     {
-      auto const ncs = nodesToCells.find( n );
+      auto it = ng2l.find( n );
+      auto ncs = nodesToCells.find( n );
+      
+      std::cout << "[Rank " << rank << "]     Node " << n << ": ";
+      if( it != ng2l.cend() )
+        std::cout << "local=" << it->second << " ";
+      else
+        std::cout << "NOT_ON_RANK ";
+        
       if( ncs != nodesToCells.cend() )
-      {
-        for( vtkIdType const & c: ncs->second )
-        {
-          elem3dToDuplicatedNodes.get_inserted( c ).insert( n );
-        }
-      }
+        std::cout << "ON_BOUNDARY (→" << ncs->second.size() << " cells)";
+      else
+        std::cout << "NOT_ON_BOUNDARY";
+        
+      std::cout << std::endl;
     }
-    // Last we extract which of those candidate 3d elements are the ones actually neighboring the 2d element.
-    for( auto const & e2n: elem3dToDuplicatedNodes )
+  }
+
+  // **THIS CODE MUST BE OUTSIDE debugThis - IT'S THE ACTUAL WORK!**
+  // Build elem2dToNodes (may have missing nodes before ghosting)
+  for( vtkIdType const & gni: duplicatedPointOfElem2d )
+  {
+    auto it = ng2l.find( gni );
+    if( it != ng2l.cend() )
     {
-      // If the face of the element 3d has the same number of nodes than the elem 2d, it should be a successful (the mesh is conformal).
-      if( e2n.second.size() == elem2dNumPoints )
+      elem2dToNodes.emplaceBack( e2d, it->second );
+    }
+  }
+
+  // Collect 3d elements connected to these duplicated nodes
+  stdMap< vtkIdType, std::set< vtkIdType > > elem3dToDuplicatedNodes;
+  for( vtkIdType const & n: duplicatedPointOfElem2d )
+  {
+    auto const ncs = nodesToCells.find( n );
+    if( ncs != nodesToCells.cend() )
+    {
+      for( vtkIdType const & c: ncs->second )
       {
-        // Now we know that the element 3d has a face that touches the element 2d. Let's find which one.
-        elem2dToElem3d.emplaceBack( e2d, elemToFaces.getElementIndexInCellBlock( e2n.first ) );
-        // Computing the elem2dToFaces mapping.
-        auto faces = elemToFaces[e2n.first];
-        for( int j = 0; j < faces.size( 0 ); ++j )
-        {
-          localIndex const faceIndex = faces[j];
-          auto nodes = faceToNodes[faceIndex];
-          std::set< vtkIdType > globalNodes;
-          for( auto const & n: nodes )
-          {
-            globalNodes.insert( globalPtIds->GetValue( n ) );
-          }
-          if( globalNodes == e2n.second )
-          {
-            elem2dToFaces.emplaceBack( e2d, faceIndex );
-            elem2dToCellBlock.emplaceBack( e2d, elemToFaces.getCellBlockIndex( e2n.first ) );
-            break;
-          }
-        }
+        elem3dToDuplicatedNodes.get_inserted( c ).insert( n );
       }
     }
+  }
+
+  if( debugThis )
+  {
+    std::cout << "[Rank " << rank << "]   Found " << elem3dToDuplicatedNodes.size() 
+              << " candidate 3D cells" << std::endl;
+  }
+
+  // Match fracture element to 3D face
+  for( auto const & e2n: elem3dToDuplicatedNodes )
+  {
+    if( debugThis )
+    {
+      std::cout << "[Rank " << rank << "]     Cell " << e2n.first 
+                << ": shares " << e2n.second.size() << "/" << elem2dNumPoints << " nodes";
+    }
+    
+    if( e2n.second.size() == elem2dNumPoints )
+    {
+      if( debugThis ) std::cout << " → Checking faces...";
+      
+      elem2dToElem3d.emplaceBack( e2d, elemToFaces.getElementIndexInCellBlock( e2n.first ) );
+      auto faces = elemToFaces[e2n.first];
+      
+      bool foundFace = false;
+      for( int j = 0; j < faces.size( 0 ); ++j )
+      {
+        localIndex const faceIndex = faces[j];
+        auto nodes = faceToNodes[faceIndex];
+        std::set< vtkIdType > globalNodes;
+        for( auto const & n: nodes )
+        {
+          globalNodes.insert( globalPtIds->GetValue( n ) );
+        }
+        
+        if( globalNodes == e2n.second )
+        {
+          elem2dToFaces.emplaceBack( e2d, faceIndex );
+          elem2dToCellBlock.emplaceBack( e2d, elemToFaces.getCellBlockIndex( e2n.first ) );
+          foundFace = true;
+          if( debugThis ) std::cout << " MATCH! face=" << faceIndex;
+          break;
+        }
+      }
+      
+      if( !foundFace && debugThis ) std::cout << " NO_MATCH";
+    }
+    
+    if( debugThis ) std::cout << std::endl;
+  }
+  
+  if( debugThis && elem2dToFaces.sizeOfArray(e2d) == 0 )
+  {
+    std::cout << "[Rank " << rank << "]   *** FAILED TO MATCH - NO FACE ASSIGNED!\n" << std::endl;
+  }
+  
+} // End of for loop over 2d elements
+  // Summary
+  std::cout << "[Rank " << rank << "] buildElem2dTo3dElemAndFaces: Completed" << std::endl;
+  
+  localIndex numEmpty = 0;
+  for( localIndex i = 0; i < elem2dToFaces.size(); ++i )
+  {
+    if( elem2dToFaces.sizeOfArray(i) == 0 )
+    {
+      numEmpty++;
+      vtkIdType gID = faceMeshGlobalIds2 ? faceMeshGlobalIds2->GetValue(i) : -1;
+      std::cout << "[Rank " << rank << "]   *** Element local=" << i 
+                << " VTK_gID=" << gID << " has NO faces assigned!" << std::endl;
+    }
+  }
+  
+  if( numEmpty > 0 )
+  {
+    std::cout << "[Rank " << rank << "]   Total elements with no faces: " << numEmpty << std::endl;
   }
 
   auto cellRelation = ToCellRelation< ArrayOfArrays< localIndex > >( std::move( elem2dToCellBlock ), std::move( elem2dToElem3d ) );
   return Elem2dTo3dInfo( std::move( cellRelation ), std::move( elem2dToFaces ), std::move( elem2dToNodes ) );
 }
+
 
 
 /**

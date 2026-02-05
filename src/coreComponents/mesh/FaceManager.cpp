@@ -148,6 +148,43 @@ void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlock
 {
   GEOS_MARK_FUNCTION;
 
+
+  // === DEBUG: Check if FaceElementSubRegion already has face mappings ===
+  int const rank = MpiWrapper::commRank();
+  elemRegionManager.forElementRegionsComplete< SurfaceElementRegion >( [&]( localIndex GEOS_UNUSED_PARAM( er ),
+                                                                            SurfaceElementRegion const & region )
+  {
+    if( region.subRegionType() == SurfaceElementRegion::SurfaceSubRegionType::faceElement )
+    {
+      FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
+      arrayView2d< localIndex const > const & elem2dToFaces = subRegion.faceList().toViewConst();
+      arrayView1d< globalIndex const > const & localToGlobal = subRegion.localToGlobalMap();
+      
+      std::cout << "[Rank " << rank << "] BEFORE connect2dElems: FaceElementSubRegion has " 
+                << elem2dToFaces.size(0) << " elements" << std::endl;
+      std::cout << "[Rank " << rank << "]   Face list dimensions: " 
+                << elem2dToFaces.size(0) << " x " << elem2dToFaces.size(1) << std::endl;
+      
+      // Check our problem elements
+      for( localIndex ei = 0; ei < elem2dToFaces.size(0); ++ei )
+      {
+        globalIndex const gID = localToGlobal[ei];
+        if( gID == 30279 || gID == 33245 )
+        {
+          std::cout << "[Rank " << rank << "]   *** Element gID=" << gID 
+                    << " (local=" << ei << ") faces: ";
+          for( localIndex f = 0; f < elem2dToFaces.size(1); ++f )
+          {
+            std::cout << elem2dToFaces[ei][f] << " ";
+          }
+          std::cout << std::endl;
+        }
+      }
+    }
+  });
+  // === END DEBUG ===
+
+
   if( isBaseMeshLevel )
   {
     resize( cellBlockManager.numFaces() );

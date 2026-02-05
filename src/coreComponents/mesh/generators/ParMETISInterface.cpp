@@ -126,5 +126,108 @@ partition( ArrayOfArraysView< idx_t const, idx_t > const & graph,
   return part;
 }
 
+array1d< idx_t >
+partition( ArrayOfArraysView< idx_t const, idx_t > const & graph,
+           arrayView1d< idx_t const > const & vertDist,
+           idx_t const numParts,
+           MPI_Comm comm,
+           int const numRefinements,
+           ArrayOfArraysView< idx_t const, idx_t > const & edgeWeights )
+{
+  int const rank = MpiWrapper::commRank( comm );
+  
+  // DEBUG OUTPUT
+  if( rank == MpiWrapper::commSize( comm ) - 1 )
+  {
+    std::cout << "[ParMETIS] Using EDGE-WEIGHTED partition" << std::endl;
+    std::cout << "[ParMETIS]   Graph size: " << graph.size() << std::endl;
+    std::cout << "[ParMETIS]   Edge weights size: " << edgeWeights.size() << std::endl;
+    
+    // Count heavy edges
+    localIndex numHeavy = 0;
+    for( localIndex i = 0; i < edgeWeights.size(); ++i )
+    {
+      for( localIndex j = 0; j < edgeWeights.sizeOfArray(i); ++j )
+      {
+        if( edgeWeights[i][j] > 1 )
+        {
+          numHeavy++;
+        }
+      }
+    }
+    std::cout << "[ParMETIS]   Heavy edges (weight > 1): " << numHeavy << std::endl;
+  }
+
+  array1d< idx_t > part( graph.size() );
+  
+  if( numParts == 1 )
+  {
+    return part;
+  }
+
+  // Verify edge weights match graph structure
+  GEOS_ASSERT_EQ( edgeWeights.size(), graph.size() );
+  for( localIndex i = 0; i < graph.size(); ++i )
+  {
+    GEOS_ASSERT_EQ( edgeWeights.sizeOfArray(i), graph.sizeOfArray(i) );
+  }
+
+  // Flatten edge weights into contiguous array for ParMETIS
+  localIndex totalEdges = 0;
+  for( localIndex i = 0; i < graph.size(); ++i )
+  {
+    totalEdges += graph.sizeOfArray(i);
+  }
+  
+  array1d< idx_t > flatEdgeWeights( totalEdges );
+  localIndex offset = 0;
+  for( localIndex i = 0; i < edgeWeights.size(); ++i )
+  {
+    for( localIndex j = 0; j < edgeWeights.sizeOfArray(i); ++j )
+    {
+      flatEdgeWeights[offset++] = edgeWeights[i][j];
+    }
+  }
+
+  // Compute tpwgts parameters (target partition weights)
+  array1d< real_t > tpwgts( numParts );
+  tpwgts.setValues< serialPolicy >( 1.0f / static_cast< real_t >( numParts ) );
+
+  // Set ParMETIS parameters
+  idx_t wgtflag = 1;  // Changed from 0 to 1 to indicate edge weights present!
+  idx_t numflag = 0;
+  idx_t ncon = 1;
+  idx_t npart = numParts;
+  idx_t options[4] = { 1, 0, 2022, PARMETIS_PSR_UNCOUPLED };
+  idx_t edgecut = 0;
+  real_t ubvec = 1.05;
+
+  // Call ParMETIS with edge weights
+  GEOS_PARMETIS_CHECK( ParMETIS_V3_PartKway( const_cast< idx_t * >( vertDist.data() ),
+                                             const_cast< idx_t * >( graph.getOffsets() ),
+                                             const_cast< idx_t * >( graph.getValues() ),
+                                             nullptr,  // vwgt (vertex weights - not used)
+                                             flatEdgeWeights.data(),  // adjwgt (EDGE WEIGHTS!)
+                                             &wgtflag,
+                                             &numflag, &ncon, &npart, tpwgts.data(),
+                                             &ubvec, options, &edgecut, part.data(), &comm ) );
+
+  // Refinement iterations
+  for( int iter = 0; iter < numRefinements; ++iter )
+  {
+    GEOS_PARMETIS_CHECK( ParMETIS_V3_RefineKway( const_cast< idx_t * >( vertDist.data() ),
+                                                 const_cast< idx_t * >( graph.getOffsets() ),
+                                                 const_cast< idx_t * >( graph.getValues() ),
+                                                 nullptr,  // vwgt
+                                                 flatEdgeWeights.data(),  // adjwgt
+                                                 &wgtflag,
+                                                 &numflag, &ncon, &npart, tpwgts.data(),
+                                                 &ubvec, options, &edgecut, part.data(), &comm ) );
+  }
+
+  return part;
+}
+
+
 } // namespace parmetis
 } // namespace geos

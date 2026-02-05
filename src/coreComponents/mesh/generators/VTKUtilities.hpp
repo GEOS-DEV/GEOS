@@ -27,6 +27,7 @@
 #include <vtkDataSet.h>
 #include <vtkMultiProcessController.h>
 #include <vtkSmartPointer.h>
+#include <vtkUnstructuredGrid.h>
 
 #include <numeric>
 #include <unordered_set>
@@ -242,6 +243,24 @@ void importRegularField( stdVector< vtkIdType > const & cellIds,
  */
 void importRegularField( vtkDataArray * vtkArray,
                          dataRepository::WrapperBase & wrapper );
+
+/**
+ * @brief Augments a redistributed main mesh with nodes from redistributed fractures.
+ * 
+ * After redistribution, the main mesh may not contain all the nodes that are
+ * referenced by fracture elements (via their collocated_nodes array). This function
+ * adds those missing fracture nodes to the main mesh so that subsequent operations
+ * (like cellBlockManager.buildMaps()) have access to all required nodes.
+ * 
+ * @param redistributedMain The redistributed main 3D mesh
+ * @param redistributedFractures Map of redistributed fracture meshes
+ * @param comm MPI communicator
+ * @return Augmented main mesh with fracture nodes added
+ */
+vtkSmartPointer< vtkUnstructuredGrid > addFractureNodesToRedistributedMesh(
+    vtkSmartPointer< vtkUnstructuredGrid > redistributedMain,
+    stdMap< string, vtkSmartPointer< vtkDataSet > > const& redistributedFractures,
+    MPI_Comm comm );
 
 
 } // namespace vtk
