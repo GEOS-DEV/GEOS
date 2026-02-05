@@ -307,21 +307,7 @@ INSTANTIATE_TEST_SUITE_P(
 int main( int argc, char * argv[] )
 {
   ::testing::InitGoogleTest( &argc, argv );
-
-  // Filter out non\-option positional args left by ctest (e.g., test name).
-  std::vector< char * > geosArgv;
-  geosArgv.reserve( argc );
-  geosArgv.push_back( argv[0] );
-  for( int i = 1; i < argc; ++i )
-  {
-    if( argv[i] != nullptr && argv[i][0] == '-' )
-    {
-      geosArgv.push_back( argv[i] );
-    }
-  }
-  int geosArgc = static_cast< int >( geosArgv.size() );
-
-  g_commandLineOptions = *geos::basicSetup( geosArgc, geosArgv.data(), false );
+  g_commandLineOptions = *geos::basicSetup( argc, argv, false );
   int result = RUN_ALL_TESTS();
   geos::basicCleanup();
   return result;
