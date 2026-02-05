@@ -868,13 +868,24 @@ void ProblemManager::generateMeshLevel( MeshLevel & meshLevel,
   {
     subRegion.setupRelatedObjectsInRelations( meshLevel );
     // TODO calling calculateElementGeometricQuantities for `FaceElementSubRegion` here is not very accurate:
-    // `FaceElementSubRegion` has no node and therefore needs the nodes positions from the neighbor elements
-    // in order to compute the geometric quantities.
-    // And this point of the process, the ghosting has not been done and some elements of the `FaceElementSubRegion`
-    // can have no neighbor. We still call it only to compute element centers to be used for well perforation computations.
-    if( isBaseMeshLevel ) // && !dynamicCast< FaceElementSubRegion * >( &subRegion ) )
+    // `FaceElementSubRegion` has no node and therefore needs the nodes positions from neighboring elements
+    // to compute geometric quantities.
+    // At this stage, ghosting has not yet been performed and some `FaceElementSubRegion` elements
+    // may not have neighbors.
+    if( isBaseMeshLevel )
     {
-      subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+      FaceElementSubRegion * fractureSubRegion = dynamic_cast< FaceElementSubRegion * >( &subRegion );
+      if( fractureSubRegion != nullptr )
+      {
+        // Fracture case: only calculate element centers (for well perforation)
+        // We CAN'T calculate areas/volumes yet (requires face mapping from ghosting)
+        fractureSubRegion->calculateElementCentersOnly( nodeManager );
+      }
+      else
+      {
+        // Regular cell elements: compute full geometry
+        subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+      }
     }
     subRegion.setMaxGlobalIndex();
   } );
