@@ -75,6 +75,13 @@ private:
 
   void postInputInitialization() override;
 
+  /**
+   * @brief Return the target field name.
+   * @param[in] fieldName Name of the field specification.
+   * @return Name of the target field being updated.
+   */
+  string getTargetFieldName( string const & fieldName ) const;
+
   stdVector< string > m_fieldSpecificationNames;
 };
 

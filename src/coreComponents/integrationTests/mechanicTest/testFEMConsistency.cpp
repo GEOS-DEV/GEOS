@@ -41,14 +41,14 @@ CommandLineOptions g_commandLineOptions;
 /**
  * @brief This integration test verifies the consistency of the Finite Element Method (FEM) implementation
  *        in GEOS for solid mechanics problems involving fractures.
- * 
+ *
  * The test performs the following steps:
  * 1. Generates an XML input file for a given mesh and stress boundary conditions.
  * 2. Runs the simulation using the SolidMechanicsAugmentedLagrangianContact solver.
  * 3. Verifies that the computed stress on fracture faces matches the expected traction derived from
  *    the applied stress field.
  * 4. Verifies that the stress in the volume elements matches the applied stress boundary conditions.
- * 
+ *
  * The test is parameterized to run on various mesh types (hex, tet, wavy) and fracture configurations.
  */
 class ConsistencyTest : public ::testing::TestWithParam< std::tuple< std::string, real64, real64, real64 > >
@@ -332,14 +332,14 @@ TEST_P( ConsistencyTest, Run )
 
 /**
  * @brief Instantiation of the ConsistencyTest suite with various mesh files and stress states.
- * 
+ *
  * The parameters are:
  * 1. Mesh file name (std::string): The VTK mesh file containing the geometry and fractures.
  *    The meshes include Hex and Tet elements, and variations with flat and wavy fractures (DFN).
  * 2. s_xx (real64): Applied stress component XX.
  * 3. s_yy (real64): Applied stress component YY.
  * 4. s_zz (real64): Applied stress component ZZ.
- * 
+ *
  * The test cases cover:
  * - Hexahedral meshes with different fracture networks (DFN 1, 2, 3, and combinations).
  * - Tetrahedral meshes with different fracture networks.
