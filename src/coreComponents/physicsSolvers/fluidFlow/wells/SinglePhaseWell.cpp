@@ -153,8 +153,6 @@ string SinglePhaseWell::resElementDofName() const
 
 void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
                                                real64 const & GEOS_UNUSED_PARAM( dt ),
-                                               Group & GEOS_UNUSED_PARAM( meshBodies ),
-                                               MeshBody & GEOS_UNUSED_PARAM( meshBody ),
                                                WellElementSubRegion const & subRegion )
 {
   WellControls & wellControls = getWellControls( subRegion );
@@ -1213,7 +1211,7 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
         getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
       fluid.saveConvergedState();
 
-      validateWellConstraints( time, dt, meshBodies, meshBody, subRegion );
+      validateWellConstraints( time, dt, subRegion );
 
       updateSubRegionState( subRegion );
     } );

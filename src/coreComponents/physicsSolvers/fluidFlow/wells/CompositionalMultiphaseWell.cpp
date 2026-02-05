@@ -157,7 +157,6 @@ void CompositionalMultiphaseWell::postInputInitialization()
 void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
 {
   WellSolverBase::registerDataOnMesh( meshBodies );
-  GEOS_LOG_RANK_0( " --------> CompositionalMultiphaseWell::registerDataOnMesh" );
 
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
@@ -361,7 +360,6 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 void CompositionalMultiphaseWell::validateWellControlsForFluid( WellControls const & wellControls,
                                                                 MultiFluidBase const & fluid ) const
 {
-  GEOS_LOG_RANK_0( " --------> CompositionalMultiphaseWell::validateWellControlsForFluid" );
   if( wellControls.useSurfaceConditions() )
   {
     try
@@ -383,7 +381,6 @@ void CompositionalMultiphaseWell::validateWellControlsForFluid( WellControls con
 void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition const & domain ) const
 {
   GEOS_MARK_FUNCTION;
-  GEOS_LOG_RANK_0( " --------> CompositionalMultiphaseWell::validateConstitutiveModels" );
 
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
   CompositionalMultiphaseBase const & flowSolver = getFlowSolver( *this );
@@ -413,7 +410,6 @@ void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition co
 void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion const & subRegion ) const
 {
   WellControls const & wellControls = getWellControls( subRegion );
-  GEOS_LOG_RANK_0( " --------> CompositionalMultiphaseWell::validateInjectionStreams" );
 
   // check well injection stream for injectors
   if( wellControls.isInjector())
@@ -451,12 +447,9 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
 
 void CompositionalMultiphaseWell::validateWellConstraints( real64 const & time_n,
                                                            real64 const & GEOS_UNUSED_PARAM( dt ),
-                                                           Group &, // TODO: remove ?
-                                                           MeshBody &, // TODO: remove ?
                                                            WellElementSubRegion const & subRegion )
 {
-  GEOS_LOG_RANK_0( GEOS_FMT( " ---------------------> CompositionalMultiphaseWell::validateWellConstraints\n{}", LvArray::system::stackTrace( true ) ) );
-  WellControls & wellControls = getWellControls( subRegion );
+ WellControls & wellControls = getWellControls( subRegion );
 
   string_view refRegionName = wellControls.referenceReservoirRegion();
   bool const useSegmentValues = refRegionName.empty();
@@ -532,7 +525,6 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
 {
   WellSolverBase::initializePostSubGroups();
 
-  GEOS_LOG_RANK_0( " --------> CompositionalMultiphaseWell::initializePostSubGroups" );
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   validateConstitutiveModels( domain );
@@ -551,14 +543,12 @@ void CompositionalMultiphaseWell::initializePostSubGroups()
 
 void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
 {
-  GEOS_LOG_RANK_0( " --------> CompositionalMultiphaseWell::mmSIMULAParavie" );
   WellSolverBase::initializePostInitialConditionsPreSubGroups();
   createSeparator();
 }
 
 void CompositionalMultiphaseWell::postRestartInitialization()
 {
-  GEOS_LOG_RANK_0( " --------> CompositionalMultiphaseWell::postRestartInitialization" );
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -689,7 +679,6 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 {
   GEOS_MARK_FUNCTION;
 
-  GEOS_LOG_RANK_0( GEOS_FMT( " ---------------------> CompositionalMultiphaseWell::updateVolRatesForConstraint\n{}", LvArray::system::stackTrace( true ) ) );
   // the rank that owns the reference well element is responsible for the calculations below.
   if( !subRegion.isLocallyOwned() )
   {
@@ -933,8 +922,6 @@ void CompositionalMultiphaseWell::precomputeFlashConditions( real64 const time_n
       if( !m_reservoirStatsAggregator->isComputed( time_n, stats ) )
         m_reservoirStatsAggregator->computeRegionsStatistics( time_n );
 
-      GEOS_LOG( GEOS_FMT( "Accessing {}: {} Pa / {} Pa / {} Pa", stats.getPath(), stats.m_minPressure, stats.m_averagePressure, stats.m_maxPressure ));
-
       GEOS_WARNING_IF( stats.m_averagePressure <= 0.0,
                        GEOS_FMT( "No region average quantities computed in reference region '{}'.",
                                  wellControls.referenceReservoirRegion() ),
@@ -1110,7 +1097,6 @@ real64 CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion &
 void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain, real64 const & time_n )
 {
   GEOS_MARK_FUNCTION;
-  GEOS_LOG_RANK_0( " --------> CompositionalMultiphaseWell::initializeWells" );
 
   integer const numComp = m_numComponents;
   integer const numPhase = m_numPhases;

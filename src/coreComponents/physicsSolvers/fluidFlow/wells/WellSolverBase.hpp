@@ -321,8 +321,6 @@ protected:
    */
   virtual void validateWellConstraints( real64 const & time_n,
                                         real64 const & dt,
-                                        Group & meshBodies,
-                                        MeshBody & meshBody,
                                         WellElementSubRegion const & subRegion ) = 0;
 
   virtual void printRates( real64 const & time_n,
