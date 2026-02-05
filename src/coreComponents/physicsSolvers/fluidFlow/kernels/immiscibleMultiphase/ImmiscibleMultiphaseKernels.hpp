@@ -75,7 +75,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                           stdVector< real64 > trappedSats2, stdVector< real64 > transHat, stdVector< real64 > dTransHat_dP, stdVector< real64 > gravCoefHat, stdVector< real64 > gravCoef,
                           stdVector< real64 >  cellCenterDuT, stdVector< real64 > cellCenterDens, stdVector< real64 > cellCenterDens_dP,
                           std::vector< RelativePermeabilityBase * > relPerms, std::vector< CapillaryPressureBase * > capPressures,
-                          std::vector< TwoPhaseImmiscibleFluid * > fluids, std::vector< real64 > &phi, std::vector< real64 > &grad_phi_P, std::vector< real64 > &grad_phi_S, bool &converged )
+                          std::vector< TwoPhaseImmiscibleFluid * > fluids, std::vector< real64 > & phi, std::vector< real64 > & grad_phi_P, std::vector< real64 > & grad_phi_S, bool & converged )
 {
 
   // getting wrappers:
@@ -204,8 +204,8 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
           real64 density2[2]{};
           real64 dDens_dP2[2][2]{};
 
-          density2[0] =  cellCenterDens[0];  
-          density2[1] =  cellCenterDens[1];         
+          density2[0] =  cellCenterDens[0];
+          density2[1] =  cellCenterDens[1];
 
           dDens_dP2[0][0] = cellCenterDens_dP[0];
           dDens_dP2[0][1] = cellCenterDens_dP[1];
@@ -452,18 +452,18 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
           real64 dhalfFlux_dpc[2][2]{};
 
           //new
-        real64 fluxVal[2]{};
-        real64 dFlux_dP[2][2]{};
-        real64 dFlux_dS[2][2]{};
+          real64 fluxVal[2]{};
+          real64 dFlux_dP[2][2]{};
+          real64 dFlux_dS[2][2]{};
 
-        real64 duT_dP[2]{};
-        real64 duT_dS[2]{};
+          real64 duT_dP[2]{};
+          real64 duT_dS[2]{};
 
-        duT_dP[0] = cellCenterDuT[0];
-        duT_dP[1] = cellCenterDuT[1];
+          duT_dP[0] = cellCenterDuT[0];
+          duT_dP[1] = cellCenterDuT[1];
 
-        duT_dS[0] = cellCenterDuT[2];
-        duT_dS[1] = cellCenterDuT[3];
+          duT_dS[0] = cellCenterDuT[2];
+          duT_dS[1] = cellCenterDuT[3];
 
           // initial guess:
 
@@ -488,19 +488,21 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
           real64 next_Pc_int = 0.0;
           real64 old_Pc_int = 0.0;
           real64 old_residual = 0.0;
-          
-          if (bisection) { 
+
+          if( bisection )
+          {
             Pc_int = fmax( Pc1_max, Pc2_max );
             next_Pc_int = fmin( Pc1_min, Pc2_min );
           }
 
-          if (newton_path){ 
+          if( newton_path )
+          {
             Pc_int = fmax( Pc1_max, Pc2_max );
-             Pc_int = 2.0e5;
-             next_Pc_int = (fmax( Pc1_max, Pc2_max ) - fmin( Pc1_min, Pc2_min )) / (max_iter - 1);
-             next_Pc_int = (2.0e5 - 5.0e4) / (max_iter - 1);
+            Pc_int = 2.0e5;
+            next_Pc_int = (fmax( Pc1_max, Pc2_max ) - fmin( Pc1_min, Pc2_min )) / (max_iter - 1);
+            next_Pc_int = (2.0e5 - 5.0e4) / (max_iter - 1);
           }
-  
+
           real64 Pc_int_iterate = Pc_int;
 
           while( iter < max_iter )
@@ -538,9 +540,9 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
             // truncate the capillary pressure iterate (ensures the inverse will compute a saturation bounded between 0 and 1):
 
             Pc_int = fmin( fmax( Pc1_max, Pc2_max ), fmax( Pc_int, fmin( Pc1_min, Pc2_min ) ));
-            
-            faceCapPres1[0][0][0] = fmin( Pc1_max, fmax( Pc_int, Pc1_min));
-            faceCapPres2[0][0][0] = fmin( Pc2_max, fmax( Pc_int, Pc2_min));
+
+            faceCapPres1[0][0][0] = fmin( Pc1_max, fmax( Pc_int, Pc1_min ));
+            faceCapPres2[0][0][0] = fmin( Pc2_max, fmax( Pc_int, Pc2_min ));
 
             // Compute the inverse:
 
@@ -565,8 +567,8 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
             else
             {
               capPresWrapper1.computeInv( facePhaseVolFrac1[0],
-                                       faceCapPres1[0][0],
-                                       dfacePhaseVolFrac_dCapPres1[0][0] );
+                                          faceCapPres1[0][0],
+                                          dfacePhaseVolFrac_dCapPres1[0][0] );
               facePhaseVolFrac1[0][0] = fmin( 1.0, fmax( facePhaseVolFrac1[0][0], 0.0 ));
               facePhaseVolFrac1[0][1] = fmin( 1.0, fmax( facePhaseVolFrac1[0][1], 0.0 ));
               //get derivatives:
@@ -597,8 +599,8 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
             {
               // evaluating cell-center Pc:
               capPresWrapper2.computeInv( facePhaseVolFrac2[0],
-                                       faceCapPres2[0][0],
-                                       dfacePhaseVolFrac_dCapPres2[0][0] );
+                                          faceCapPres2[0][0],
+                                          dfacePhaseVolFrac_dCapPres2[0][0] );
               facePhaseVolFrac2[0][0] = fmin( 1.0, fmax( facePhaseVolFrac2[0][0], 0.0 ));
               facePhaseVolFrac2[0][1] = fmin( 1.0, fmax( facePhaseVolFrac2[0][1], 0.0 ));
 
@@ -608,7 +610,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                                        faceCapPres2[0][0],
                                        dCapPres2_dfacePhaseVolFrac[0][0] );
             }
-            
+
             // compute relative permeability for both faces:
 
             using T7 = std::decay_t< decltype(castedRelPerm1) >;
@@ -831,9 +833,9 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
                   // *** upwinding ***
                   // compute potential gradient
-                  real64 potGrad = presGrad[ip] - gravHead[ip];
+//                  real64 potGrad = presGrad[ip] - gravHead[ip];
 
-                  potGrad += capGrad[ip];
+//                  potGrad += capGrad[ip];
 
                   // choose upstream cell
                   constexpr int sign[2] = {1, -1};
@@ -948,7 +950,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                                    sign[ix] * sign[ip] * mobility[0] * mobility[1] / total_mobility * (dCapGrad_dP[1][ke] - dCapGrad_dP[0][ke]);
 
                     real64 dC_dS_term1 = sign[ix] * sign[ip] * (dMob_dS[0][ke] * mobility[1] * mobility[1] + dMob_dS[1][ke] * mobility[0] * mobility[0]) / (total_mobility * total_mobility) *
-                                   (capGrad[1] -capGrad[0]);
+                                         (capGrad[1] -capGrad[0]);
 
                     real64 dC_dS_term2 = sign[ix] * sign[ip] * (mobility[0] * mobility[1]) / total_mobility;
 
@@ -959,12 +961,15 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                       dC1_dS[ip][ke] = dC_dS_term1 + dC_dS_term2 * dC_dS_term3;
                       dhalfFlux1_dP[ip][ke] -= dC_dP;
                       dhalfFlux1_dS[ip][ke] -= dC1_dS[ip][ke];
-                      if (std::fabs(facePhaseVolFrac1[0][0] - 1.0) > 1e-8){
+                      if( std::fabs( facePhaseVolFrac1[0][0] - 1.0 ) > 1e-8 )
+                      {
                         dC1_dpc[ip][ke] =  dC1_dS[ip][ke] * dfacePhaseVolFrac_dCapPres1[0][0][0][0];
-                      } else {
+                      }
+                      else
+                      {
                         dC1_dpc[ip][ke] = dC_dS_term1 * dfacePhaseVolFrac_dCapPres1[0][0][0][0];
                       }
-                      
+
                       // GEOS_UNUSED_VAR( dC1_dpc[ip][ke] );
                     }
                     else
@@ -972,9 +977,12 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                       dC2_dS[ip][ke] = dC_dS_term1 + dC_dS_term2 * dC_dS_term3;
                       dhalfFlux2_dP[ip][ke] -= dC_dP;
                       dhalfFlux2_dS[ip][ke] -= dC2_dS[ip][ke];
-                      if (std::fabs(facePhaseVolFrac2[0][0] - 1.0) > 1e-8){
+                      if( std::fabs( facePhaseVolFrac2[0][0] - 1.0 ) > 1e-8 )
+                      {
                         dC2_dpc[ip][ke] =  dC2_dS[ip][ke] * dfacePhaseVolFrac_dCapPres2[0][0][0][0];
-                      } else {
+                      }
+                      else
+                      {
                         dC2_dpc[ip][ke] = dC_dS_term1 * dfacePhaseVolFrac_dCapPres2[0][0][0][0];
                       }
                       // GEOS_UNUSED_VAR( dC2_dpc[ip][ke] );
@@ -1040,7 +1048,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                 }
                 else
                 {
-                  if( std::fabs( halfFluxVal[ip][0] ) < 1e-20 )                                                 
+                  if( std::fabs( halfFluxVal[ip][0] ) < 1e-20 )
                   {
                     k_up_0_check[ip] = k_up_0_b;
                   }
@@ -1107,7 +1115,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
             if( std::fabs( local_residual ) < tol )
             {
               // if( std::fabs( dhalfFlux_dpc[0][0] - dhalfFlux_dpc[0][1] ) <eps2 ) {
-              // std::cout << "**********************ZeroJacobian*******************" << std::endl;                
+              // std::cout << "**********************ZeroJacobian*******************" << std::endl;
               // }
               converged = 1;
               break; // Converged
@@ -1129,9 +1137,9 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
               }
               else if( div > 1 )
               {
-              local_jacobian = 0.0;
-              std::cout << "**********************Diverged*******************" << std::endl;
-              iter = max_iter;
+                local_jacobian = 0.0;
+                std::cout << "**********************Diverged*******************" << std::endl;
+                iter = max_iter;
               }
             }
             else
@@ -1141,46 +1149,55 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
               if( std::fabs( local_residual ) < tol )
               {
-              // if( std::fabs( dhalfFlux_dpc[0][0] - dhalfFlux_dpc[0][1] ) < eps2 ) {
-              // std::cout << "**********************ZeroJacobian*******************" << std::endl;                
-              // }
-                converged = 1;  
+                // if( std::fabs( dhalfFlux_dpc[0][0] - dhalfFlux_dpc[0][1] ) < eps2 ) {
+                // std::cout << "**********************ZeroJacobian*******************" << std::endl;
+                // }
+                converged = 1;
                 break; // Converged
               }
 
               // Damping option:
-              if (damping) {
-                real64 max_dpc = fmax( fabs(dCapPres1_dfacePhaseVolFrac[0][0][0][0]), fabs(dCapPres2_dfacePhaseVolFrac[0][0][0][0]));
-  
-                  real64 sign = std::copysign(1.0, deltaPc);
-  
-                  deltaPc = fmin( fabs(deltaPc), max_dpc * 0.2 );
-                  deltaPc *= sign;
-  
-                }
+              if( damping )
+              {
+                real64 max_dpc = fmax( fabs( dCapPres1_dfacePhaseVolFrac[0][0][0][0] ), fabs( dCapPres2_dfacePhaseVolFrac[0][0][0][0] ));
 
-                if (bisection && iter < 7){
-                  if ( iter == 0 ){
+                real64 sign = std::copysign( 1.0, deltaPc );
+
+                deltaPc = fmin( fabs( deltaPc ), max_dpc * 0.2 );
+                deltaPc *= sign;
+
+              }
+
+              if( bisection && iter < 7 )
+              {
+                if( iter == 0 )
+                {
 
                   old_Pc_int = Pc_int;
                   Pc_int = next_Pc_int;
                   old_residual = local_residual;
 
-                  } else if (old_residual * local_residual < 0.0 ) { 
-                  
+                }
+                else if( old_residual * local_residual < 0.0 )
+                {
+
                   Pc_int = (next_Pc_int + old_Pc_int) / 2.0;
                   old_residual = local_residual;
                   old_Pc_int = next_Pc_int;
                   next_Pc_int = Pc_int;
 
-                  } else if (old_residual * local_residual > 0.0 ) {
-                  
+                }
+                else if( old_residual * local_residual > 0.0 )
+                {
+
                   Pc_int = old_Pc_int;
                   old_residual = local_residual;
                   old_Pc_int = next_Pc_int;
                   next_Pc_int = Pc_int;
 
-                  } else {
+                }
+                else
+                {
 
                   Pc_int = old_Pc_int;
                   old_residual = local_residual;
@@ -1189,15 +1206,19 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
                 }
 
-                } else if (newton_path){
-                  Pc_int -= next_Pc_int;
+              }
+              else if( newton_path )
+              {
+                Pc_int -= next_Pc_int;
 
-                } else {
+              }
+              else
+              {
 
-                  Pc_int -= deltaPc;
+                Pc_int -= deltaPc;
 
-                }
-              
+              }
+
 
               // truncate the updated capillary pressure (extended capillary pressure condition) for reporting/plotting:
 
@@ -1205,7 +1226,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
               real64 faceCapPres2_plot = fmin( Pc2_max, fmax( Pc_int, Pc2_min ));
               faceCapPres1_plot = fmin( Pc2_max, fmax( faceCapPres1_plot, Pc2_min ));
               faceCapPres2_plot = fmin( Pc1_max, fmax( faceCapPres2_plot, Pc1_min ));
-              
+
               // Write data to the file
               outFile << GEOS_FMT( "{:10.10e}", local_jacobian );
               outFile << GEOS_FMT( ",{:10.10e}", local_residual );
@@ -1238,7 +1259,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
             }
 
-            
+
           } // while loop
 
           if( converged )
@@ -1266,11 +1287,13 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
             fluxVal[0] = halfFluxVal[0][0] * density2[0];
             fluxVal[1] = halfFluxVal[1][0] * density2[1];
 
-          } else {
+          }
+          else
+          {
             std::cout << "**********************Diverged*******************" << std::endl;
 
           }
-          
+
           phi[0] = fluxVal[0];
           phi[1] = fluxVal[1];
 
@@ -1342,7 +1365,7 @@ public:
                               fields::cappres::phaseCapPressure,
                               fields::cappres::dPhaseCapPressure_dPhaseVolFraction
                               >;
-                              // ,fields::cappres::jFuncMultiplier >;
+  // ,fields::cappres::jFuncMultiplier >;
 
 
   using PermeabilityAccessors =
@@ -2085,8 +2108,8 @@ public:
   FluxComputeInterfaceConditionKernel( integer const numPhases,
                                        globalIndex const rankOffset,
                                        STENCILWRAPPER const & stencilWrapper,
-                                      //  CAPPRESWRAPPER const & capPressureWrapper,
-                                      //  RELPERMWRAPPER const & relPermWrapper,
+                                       //  CAPPRESWRAPPER const & capPressureWrapper,
+                                       //  RELPERMWRAPPER const & relPermWrapper,
                                        DofNumberAccessor const & dofNumberAccessor,
                                        ImmiscibleMultiphaseFlowAccessors const & multiPhaseFlowAccessors,
                                        MultiphaseFluidAccessors const & fluidAccessors,
@@ -2103,9 +2126,9 @@ public:
                                                                           constitutive::CapillaryPressureBase *,
                                                                           constitutive::TwoPhaseImmiscibleFluid * >, 2 > > const & interfaceConstitutivePairs,
                                        unordered_map< localIndex, localIndex > const & interfaceRegionByConnector,
-                                      //  std::tuple< constitutive::RelativePermeabilityBase *,
-                                      //              constitutive::CapillaryPressureBase *,
-                                      //              constitutive::TwoPhaseImmiscibleFluid * > const & interfaceConstitutivePairs_temp,
+                                       //  std::tuple< constitutive::RelativePermeabilityBase *,
+                                       //              constitutive::CapillaryPressureBase *,
+                                       //              constitutive::TwoPhaseImmiscibleFluid * > const & interfaceConstitutivePairs_temp,
                                        localIndex const GEOS_UNUSED_PARAM( domainSize ) )
     : Base( numPhases,
             rankOffset,
@@ -2145,12 +2168,13 @@ public:
                     FUNC && kernelOp = NoOpFunc{} ) const
   {
 
-     bool connectorHasInterfaceConditionQ = false;
-     bool anyInterfaceConditionsQ = not m_interfaceConstitutivePairs.empty();
-     if (anyInterfaceConditionsQ) {
-         connectorHasInterfaceConditionQ =
-             m_interfaceRegionByConnector.find(iconn) != m_interfaceRegionByConnector.end();
-     }
+    bool connectorHasInterfaceConditionQ = false;
+    bool anyInterfaceConditionsQ = not m_interfaceConstitutivePairs.empty();
+    if( anyInterfaceConditionsQ )
+    {
+      connectorHasInterfaceConditionQ =
+        m_interfaceRegionByConnector.find( iconn ) != m_interfaceRegionByConnector.end();
+    }
 
 
 
@@ -2470,8 +2494,9 @@ public:
 
 
         // this determines whether the local solver is needed becuase of heterogeneous capillary pressure regions
-        // bool notOnInterface = std::fabs( jFMultiplier[0][0] - jFMultiplier[0][1] ) < 1  && std::fabs( jFMultiplier[1][0] - jFMultiplier[1][1] ) < 1;
-       bool notOnInterface = !connectorHasInterfaceConditionQ;
+        // bool notOnInterface = std::fabs( jFMultiplier[0][0] - jFMultiplier[0][1] ) < 1  && std::fabs( jFMultiplier[1][0] -
+        // jFMultiplier[1][1] ) < 1;
+        bool notOnInterface = !connectorHasInterfaceConditionQ;
         if( notOnInterface )
         {
           for( integer ip = 0; ip < 2; ++ip )
@@ -2526,47 +2551,50 @@ public:
           stdVector< real64 > cellCenterDuTdS = {duT_dP[0], duT_dP[1], duT_dS[0], duT_dS[1]};
           stdVector< real64 > cellCenterDens = {density2[0], density2[1]};
           stdVector< real64 > cellCenterDens_dP = {dDens_dP2[0][0], dDens_dP2[0][1], dDens_dP2[1][0], dDens_dP2[1][1]};
-          // std::vector< RelativePermeabilityBase * > relPerms = {std::get< 0 >( m_interfaceConstitutivePairs_temp ), std::get< 0 >( m_interfaceConstitutivePairs_temp )};
-          // std::vector< CapillaryPressureBase * > capPressures = {std::get< 1 >( m_interfaceConstitutivePairs_temp ), std::get< 1 >( m_interfaceConstitutivePairs_temp )};
-          // std::vector< TwoPhaseImmiscibleFluid * > fluids = {std::get< 2 >( m_interfaceConstitutivePairs_temp ), std::get< 2 >( m_interfaceConstitutivePairs_temp )};
+          // std::vector< RelativePermeabilityBase * > relPerms = {std::get< 0 >( m_interfaceConstitutivePairs_temp ), std::get< 0 >(
+          // m_interfaceConstitutivePairs_temp )};
+          // std::vector< CapillaryPressureBase * > capPressures = {std::get< 1 >( m_interfaceConstitutivePairs_temp ), std::get< 1 >(
+          // m_interfaceConstitutivePairs_temp )};
+          // std::vector< TwoPhaseImmiscibleFluid * > fluids = {std::get< 2 >( m_interfaceConstitutivePairs_temp ), std::get< 2 >(
+          // m_interfaceConstitutivePairs_temp )};
 
           // auto const & pairArray = m_interfaceConstitutivePairs[0];
-          localIndex const surfaceRegionIndex = m_interfaceRegionByConnector.at(iconn);
-auto const & pairArray = m_interfaceConstitutivePairs[surfaceRegionIndex];
+          localIndex const surfaceRegionIndex = m_interfaceRegionByConnector.at( iconn );
+          auto const & pairArray = m_interfaceConstitutivePairs[surfaceRegionIndex];
 
-std::vector< constitutive::RelativePermeabilityBase * > relPerms = {
-  std::get<0>( pairArray[0] ),
-  std::get<0>( pairArray[1] )
-};
+          std::vector< constitutive::RelativePermeabilityBase * > relPerms = {
+            std::get< 0 >( pairArray[0] ),
+            std::get< 0 >( pairArray[1] )
+          };
 
-std::vector< constitutive::CapillaryPressureBase * > capPressures = {
-  std::get<1>( pairArray[0] ),
-  std::get<1>( pairArray[1] )
-};
+          std::vector< constitutive::CapillaryPressureBase * > capPressures = {
+            std::get< 1 >( pairArray[0] ),
+            std::get< 1 >( pairArray[1] )
+          };
 
-std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
-  std::get<2>( pairArray[0] ),
-  std::get<2>( pairArray[1] )
-};
+          std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
+            std::get< 2 >( pairArray[0] ),
+            std::get< 2 >( pairArray[1] )
+          };
 
           stdVector< real64 > phi = {halfFluxVal[0][0], halfFluxVal[0][1]};
           stdVector< real64 > grad_phi_P = {0.0, 0.0, 0.0, 0.0};
           stdVector< real64 > grad_phi_S = {0.0, 0.0, 0.0, 0.0};
 
-          local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, transHats, dTransHats_dP, gravCoefHats, gravCoefs, 
-            cellCenterDuTdS, cellCenterDens, cellCenterDens_dP, relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged );
-          
+          local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, transHats, dTransHats_dP, gravCoefHats, gravCoefs,
+                        cellCenterDuTdS, cellCenterDens, cellCenterDens_dP, relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged );
 
-             fluxVal[0] = phi[0];
-             fluxVal[1] = phi[1];
-             dFlux_dP[0][0] = grad_phi_P[0];
-             dFlux_dP[0][1] = grad_phi_P[1];
-             dFlux_dP[1][0] = grad_phi_P[2];
-             dFlux_dP[1][1] = grad_phi_P[3];
-             dFlux_dS[0][0] = grad_phi_S[0];
-             dFlux_dS[0][1] = grad_phi_S[1];
-             dFlux_dS[1][0] = grad_phi_S[2];
-             dFlux_dS[1][1] = grad_phi_S[3];
+
+          fluxVal[0] = phi[0];
+          fluxVal[1] = phi[1];
+          dFlux_dP[0][0] = grad_phi_P[0];
+          dFlux_dP[0][1] = grad_phi_P[1];
+          dFlux_dP[1][0] = grad_phi_P[2];
+          dFlux_dP[1][1] = grad_phi_P[3];
+          dFlux_dS[0][0] = grad_phi_S[0];
+          dFlux_dS[0][1] = grad_phi_S[1];
+          dFlux_dS[1][0] = grad_phi_S[2];
+          dFlux_dS[1][1] = grad_phi_S[3];
 
           // Global residual and jacobian update:
           for( integer ip = 0; ip < m_numPhases; ++ip )
@@ -2701,16 +2729,16 @@ public:
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
-                  //  CAPPRESWRAPPER const & capPresWrapper,
-                  //  RELPERMWRAPPER const & relPermWrapper,
+                   //  CAPPRESWRAPPER const & capPresWrapper,
+                   //  RELPERMWRAPPER const & relPermWrapper,
                    string_array const & interfaceFaceSetNames,
                    stdVector< std::array< std::tuple< constitutive::RelativePermeabilityBase *,
                                                       constitutive::CapillaryPressureBase *,
                                                       constitutive::TwoPhaseImmiscibleFluid * >, 2 > > const & interfaceConstitutivePairs,
                    unordered_map< localIndex, localIndex > const & interfaceRegionByConnector,
-                  //  std::tuple< constitutive::RelativePermeabilityBase *,
-                  //              constitutive::CapillaryPressureBase *,
-                  //              constitutive::TwoPhaseImmiscibleFluid * > const & interfaceConstitutivePairs_temp,
+                   //  std::tuple< constitutive::RelativePermeabilityBase *,
+                   //              constitutive::CapillaryPressureBase *,
+                   //              constitutive::TwoPhaseImmiscibleFluid * > const & interfaceConstitutivePairs_temp,
                    ElementSubRegionBase const & subRegion,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -2724,7 +2752,7 @@ public:
     dofNumberAccessor.setName( solverName + "/accessors/" + dofKey );
 
     // using kernelType = FluxComputeInterfaceConditionKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER, CAPPRESWRAPPER, RELPERMWRAPPER >;
-        using kernelType = FluxComputeInterfaceConditionKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
+    using kernelType = FluxComputeInterfaceConditionKernel< NUM_EQN, NUM_DOF, STENCILWRAPPER >;
     typename kernelType::ImmiscibleMultiphaseFlowAccessors flowAccessors( elemManager, solverName );
     typename kernelType::MultiphaseFluidAccessors fluidAccessors( elemManager, solverName );
     typename kernelType::CapPressureAccessors capPressureAccessors( elemManager, solverName );
@@ -2733,7 +2761,8 @@ public:
     // kernelType kernel( numPhases, rankOffset, stencilWrapper, capPresWrapper, relPermWrapper, dofNumberAccessor,
     //                    flowAccessors, fluidAccessors, capPressureAccessors, permAccessors,
     //                    dt, localMatrix, localRhs, hasCapPressure, useTotalMassEquation,
-    //                    checkPhasePresenceInGravity, interfaceFaceSetNames, interfaceConstitutivePairs, interfaceRegionByConnector, interfaceConstitutivePairs_temp, domainSize );
+    //                    checkPhasePresenceInGravity, interfaceFaceSetNames, interfaceConstitutivePairs, interfaceRegionByConnector,
+    // interfaceConstitutivePairs_temp, domainSize );
     kernelType kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor,
                        flowAccessors, fluidAccessors, capPressureAccessors, permAccessors,
                        dt, localMatrix, localRhs, hasCapPressure, useTotalMassEquation,

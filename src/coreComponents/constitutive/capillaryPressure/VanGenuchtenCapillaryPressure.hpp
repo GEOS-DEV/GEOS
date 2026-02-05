@@ -56,11 +56,11 @@ public:
   void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                 arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
                 arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;
-  
+
   GEOS_HOST_DEVICE
   void computeInv( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
-                arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;              
+                   arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+                   arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;
 
   GEOS_HOST_DEVICE
   virtual void update( localIndex const k,
@@ -198,8 +198,8 @@ GEOS_HOST_DEVICE
 inline void
 VanGenuchtenCapillaryPressureUpdate::
   computeInv( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-           arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
-           arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const
+              arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+              arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const
 {
   LvArray::forValuesInSlice( dPhaseCapPres_dPhaseVolFrac, []( real64 & val ){ val = 0.0; } );
 

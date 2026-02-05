@@ -26,11 +26,11 @@
 #include "constitutive/fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlow.hpp"
-#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
+#include "integrationTests/fluidFlowTests/testCompFlowUtils.hpp"
 #include "constitutive/unitTests/FluidModelTest.hpp"
 #include "constitutive/unitTests/FluidModelTest_impl.hpp"
 #include "common/initializeEnvironment.hpp"
-#include "unitTests/constitutiveTests/constitutiveTestHelpers.hpp"
+#include "constitutive/relativePermeability/unitTests/constitutiveTestHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 
@@ -481,7 +481,7 @@ RelativePermeabilityBase & makeBrooksCoreyRelPerm( string const & name, Group & 
 class ImmiscibleInterfaceConditionsTest : public FluidModelTest< TwoPhaseImmiscibleFluid, 2 >
 {
 public:
-  ImmiscibleInterfaceConditionsTest(): state( std::make_unique< CommandLineOptions >( g_commandLineOptions )), 
+  ImmiscibleInterfaceConditionsTest(): state( std::make_unique< CommandLineOptions >( g_commandLineOptions )),
   m_parent( "TestParentGroup", m_node )
 
   {}
@@ -547,8 +547,8 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalNonlinearSolverConvergence )
   stdVector< real64 > gravCoefs = {465.97500000000002, 515.02499999999998};
 
 
-  stdVector< real64 > phi = {0.0, 0.0};
-  stdVector< real64 > grad_phi = {0.0, 0.0, 0.0, 0.0};
+  std::vector< real64 > phi = {0.0, 0.0};
+  std::vector< real64 > grad_phi = {0.0, 0.0, 0.0, 0.0};
 
   std::ofstream outFile( "local_solver_results.csv" );
 
@@ -586,9 +586,18 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalNonlinearSolverConvergence )
 
               auto t0 = std::chrono::high_resolution_clock::now();
 
+    // Define missing arguments for the updated signature
+    stdVector< real64 > cellCenterDuT = { 0.0, 0.0 };
+    stdVector< real64 > cellCenterDens = { 0.0, 0.0 };
+    stdVector< real64 > cellCenterDens_dP = { 0.0, 0.0 };
+    std::vector< real64 > grad_phi_P = { 0.0, 0.0 };
+    std::vector< real64 > grad_phi_S = { 0.0, 0.0 };
+    bool converged;
+
 // Call the GEOS local solver
     geos::immiscibleMultiphaseKernels::local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, transHats, dTransHats_dP, gravCoefHats, gravCoefs,
-      relPerms, capPressures, fluids, phi, grad_phi );
+      cellCenterDuT, cellCenterDens, cellCenterDens_dP,
+      relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged );
 
 auto t1 = std::chrono::high_resolution_clock::now();
 std::chrono::duration<double> elapsed = t1 - t0;
@@ -600,17 +609,17 @@ std::cout << "Local solver time: " << elapsed.count() << " s" << std::endl;
                   outFile << GEOS_FMT( ",{:10.10e}", saturations[1] );
                   outFile << GEOS_FMT( ",{:10.10e}", phi[0] );
                   outFile << GEOS_FMT( ",{:10.10e}", phi[1] );
-                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi[0] );
-                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi[1] );
-                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi[2] );
-                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi[3] );
+                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi_P[0] );
+                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi_P[1] );
+                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi_S[0] );
+                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi_S[1] );
                   outFile << std::endl;
                   phi[0] = 0;
                   phi[1] = 0;
-                  grad_phi[0] = 0;
-                  grad_phi[1] = 0;
-                  grad_phi[2] = 0;
-                  grad_phi[3] = 0;
+                  grad_phi_P[0] = 0;
+                  grad_phi_P[1] = 0;
+                  grad_phi_S[0] = 0;
+                  grad_phi_S[1] = 0;
 
 //   }
 // }
