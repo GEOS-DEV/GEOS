@@ -39,14 +39,12 @@ CommandLineOptions g_commandLineOptions;
  * 1. Initial condition application (when runSolver = false)
  * 2. Steady-state solution with a pressure gradient (when runSolver = true)
  *
- * Parametrized with std::tuple<std::string, bool, int, int, int>:
+ * Parametrized with std::tuple<std::string, bool, std::tuple<int, int, int>>:
  * - std::string: Mesh file name (e.g., "fractured_mesh_hex_DFN_1.vtu").
  * - bool: Whether to run the flow solver (true) or just check initialization (false).
- * - int: Number of partitions in the x-direction.
- * - int: Number of partitions in the y-direction.
- * - int: Number of partitions in the z-direction.
+ * - tuple<int, int, int>: Number of partitions in the x, y, z directions.
  */
-class MixedDimSinglePhaseFlowTest : public ::testing::TestWithParam< std::tuple< std::string, bool, int, int, int > >
+class MixedDimSinglePhaseFlowTest : public ::testing::TestWithParam< std::tuple< std::string, bool, std::tuple< int, int, int > > >
 {
 protected:
   void SetUp() override
@@ -177,9 +175,10 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
 {
   std::string const & meshFileName = std::get< 0 >( GetParam() );
   bool const runSolver = std::get< 1 >( GetParam() );
-  int const xPartitions = std::get< 2 >( GetParam() );
-  int const yPartitions = std::get< 3 >( GetParam() );
-  int const zPartitions = std::get< 4 >( GetParam() );
+  std::tuple< int, int, int > const & partitions = std::get< 2 >( GetParam() );
+  int const xPartitions = std::get< 0 >( partitions );
+  int const yPartitions = std::get< 1 >( partitions );
+  int const zPartitions = std::get< 2 >( partitions );
 
   std::string xmlPath = testBinaryDir + "/test_mixed_dim_single_phase_flow.xml";
 
@@ -272,9 +271,7 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_mesh_hex_DFN_123.vtu"
       ),
     ::testing::Bool(),
-    ::testing::Values( 1 ),
-    ::testing::Values( 1 ),
-    ::testing::Values( 1 )
+    ::testing::Values( std::make_tuple( 1, 1, 1 ) )
     )
   );
 
@@ -296,9 +293,14 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_mesh_hex_DFN_123.vtu"
       ),
     ::testing::Bool(),
-    ::testing::Values( 2 ),
-    ::testing::Values( 1 ),
-    ::testing::Values( 2 )
+    ::testing::Values(
+      std::make_tuple( 1, 1, 4 ),
+      std::make_tuple( 1, 2, 2 ),
+      std::make_tuple( 1, 4, 1 ),
+      std::make_tuple( 2, 1, 2 ),
+      std::make_tuple( 2, 2, 1 ),
+      std::make_tuple( 4, 1, 1 )
+      )
     )
   );
 
