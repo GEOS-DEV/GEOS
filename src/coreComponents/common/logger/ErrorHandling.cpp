@@ -92,7 +92,7 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addContextInfoImpl( ErrorContext &&
   auto lowerBoundPos = std::lower_bound( m_errorMsg.m_contextsInfo.begin(), m_errorMsg.m_contextsInfo.end(),
                                          ctxInfo.m_priority,
                                          []( ErrorContext const & ctx, integer priority )
-    { return ctx.m_priority >= priority; } );
+  { return ctx.m_priority >= priority; } );
   m_errorMsg.m_contextsInfo.insert( lowerBoundPos, std::move( ctxInfo ) );
   return *this;
 }
@@ -140,19 +140,22 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addSignal( integer const sig, bool 
     errorMsg = "Floating point error encountered: \n";
 
     if( std::fetestexcept( FE_DIVBYZERO ) )
-      errorMsg += "- Division by zero operation.\n";
+      errorMsg += "\n- Division by zero operation.";
 
     if( std::fetestexcept( FE_INVALID ) )
-      errorMsg += "- Domain error occurred in an earlier floating-point operation.\n";
+      errorMsg += "\n- Domain error occurred in an earlier floating-point operation.";
 
     if( std::fetestexcept( FE_OVERFLOW ) )
-      errorMsg += "- The result of the earlier floating-point operation was too large to be representable.\n";
+      errorMsg += "\n- The result of the earlier floating-point operation was too large to be representable.";
 
     if( std::fetestexcept( FE_UNDERFLOW ) )
-      errorMsg += "- The result of the earlier floating-point operation was subnormal with a loss of precision.\n";
+      errorMsg += "\n- The result of the earlier floating-point operation was subnormal with a loss of precision.";
 
     if( std::fetestexcept( FE_INEXACT ) )
-      errorMsg += "- Inexact result.\n";
+      errorMsg += "\n- Inexact result.";
+
+    if( !std::fetestexcept( FE_ALL_EXCEPT ) )
+      errorMsg += "\nUnknown reason.";
   }
   else
   {
@@ -375,8 +378,8 @@ void ErrorLogger::writeToYamlStream( DiagnosticMsg & errMsg )
       // Sort contextual information by decreasing priority
       std::sort( contextInfo.begin(), contextInfo.end(),
                  []( const ErrorContext & a, const ErrorContext & b ) {
-          return a.m_priority > b.m_priority;
-        } );
+        return a.m_priority > b.m_priority;
+      } );
       // Additional informations about the context of the error and priority information of each context
       yamlFile << g_level1Next << "contexts:\n";
       for( ErrorContext const & ctxInfo : contextInfo )
