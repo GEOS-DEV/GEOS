@@ -281,7 +281,7 @@ INSTANTIATE_TEST_SUITE_P(
  * Combinations:
  * - Meshes: 1 fracture, 2 fractures, 3 fractures
  * - Solver: Run solver (true) vs Initialization only (false)
- * - Partitioning: 2x1x2 (4 ranks)
+ * - Partitioning: 1x1x4, 1x2x2, 1x4x1, 2x1x2, 2x2x1, 4x1x1 (4 ranks)
  */
 INSTANTIATE_TEST_SUITE_P(
   MixedDimPartitionedFlowCases,
