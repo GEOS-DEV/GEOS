@@ -137,7 +137,7 @@ DiagnosticMsgBuilder & DiagnosticMsgBuilder::addSignal( integer const sig, bool 
   std::string errorMsg;
   if( sig == SIGFPE )
   {
-    errorMsg = "Floating point error encountered: \n";
+    errorMsg = "Floating point error encountered:";
 
     if( std::fetestexcept( FE_DIVBYZERO ) )
       errorMsg += "\n- Division by zero operation.";
