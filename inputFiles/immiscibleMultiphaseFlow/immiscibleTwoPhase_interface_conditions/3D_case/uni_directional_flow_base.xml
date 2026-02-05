@@ -10,17 +10,18 @@
       discretization="TPFA"
       temperature="300"
       initialDt="0.001"
-      targetRegions="{ region_left, region_right }"
-      interfaceFaceSetNames = "{ Interface }">
+      targetRegions="{ region_left, region_right }">
+      <!-- interfaceFaceSetNames = "{ Interface }"> -->
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="20"
         maxTimeStepCuts="20"
-	maxSubSteps="2000"/>
-      <LinearSolverParameters
+	      maxSubSteps="2000"/>
+<!--       <LinearSolverParameters
         solverType="direct"
         directParallel="0"  
-        logLevel="0"/>
+        logLevel="0"/> -->
+      <LinearSolverParameters solverType="gmres" preconditionerType="amg" krylovTol="1.0e-10" logLevel="1"/>        
     </ImmiscibleMultiphaseFlow>  
   </Solvers>
   <!-- SPHINX_SOLVER_END -->
