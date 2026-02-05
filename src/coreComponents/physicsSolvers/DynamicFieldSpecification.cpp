@@ -70,7 +70,7 @@ DynamicFieldSpecification::
                                                     Group & targetGroup,
                                                     string const fieldName )
             {
-              string const targetFieldName = getTargetFieldName(fieldName);
+              string const targetFieldName = getTargetFieldName( fieldName );
               bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, targetFieldName );
             } );
           }
