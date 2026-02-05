@@ -64,42 +64,41 @@ foreach(test ${gtest_geosx_tests})
                 ${CMAKE_CURRENT_SOURCE_DIR}/hex_pyr_tet_nested_mixed.vtu
                 $<TARGET_FILE_DIR:${test_name}>
     )
-    add_custom_command(
-        TARGET ${test_name} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                ${CMAKE_CURRENT_SOURCE_DIR}/../mechanicTest/fractured_mesh_tet_DFN_12.vtu
-                $<TARGET_FILE_DIR:${test_name}>
-    )
 
 endforeach()
 
 # Special handling for testMixedDimSinglePhaseFlow which requires 4 MPI tasks
-set( test "testMixedDimSinglePhaseFlow.cpp" )
-get_filename_component( test_name ${test} NAME_WE )
+if( ENABLE_MPI )
+    set( test "testMixedDimSinglePhaseFlow.cpp" )
+    # The MixedDimPartitionedFlowCases suite requires 4 ranks (e.g., 1x1x4 partitioning)
+    set( nranks 4 )
 
-blt_add_executable( NAME ${test_name}
-                    SOURCES ${test}
-                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
-                    DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
+    get_filename_component( test_name ${test} NAME_WE )
 
-geos_add_test( NAME ${test_name}
-               COMMAND ${test_name}
-               NUM_MPI_TASKS 4 )
+    blt_add_executable( NAME ${test_name}
+                        SOURCES ${test}
+                        OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                        DEPENDS_ON ${decoratedDependencies} ${tplDependencyList} )
 
-set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
-target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
+    geos_add_test( NAME ${test_name}
+                   COMMAND ${test_name} -x ${nranks}
+                   NUM_MPI_TASKS ${nranks} )
 
-# Copy necessary mesh files for testMixedDimSinglePhaseFlow
-foreach( mesh IN ITEMS "fractured_mesh_hex_DFN_1.vtu"
-                       "fractured_mesh_hex_DFN_12.vtu"
-                       "fractured_mesh_hex_DFN_123.vtu" )
-  add_custom_command(
-      TARGET ${test_name} POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy_if_different
-              ${CMAKE_CURRENT_SOURCE_DIR}/../mechanicTest/${mesh}
-              $<TARGET_FILE_DIR:${test_name}>
-  )
-endforeach()
+    set_tests_properties(${test_name} PROPERTIES ENVIRONMENT "TEST_BINARY_DIR=$<TARGET_FILE_DIR:${test_name}>")
+    target_compile_definitions(${test_name} PRIVATE TEST_BINARY_DIR=\"$<TARGET_FILE_DIR:${test_name}>\")
+
+    # Copy necessary mesh files for testMixedDimSinglePhaseFlow
+    foreach( mesh IN ITEMS "fractured_mesh_hex_DFN_1.vtu"
+                           "fractured_mesh_hex_DFN_12.vtu"
+                           "fractured_mesh_hex_DFN_123.vtu" )
+      add_custom_command(
+          TARGET ${test_name} POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                  ${CMAKE_CURRENT_SOURCE_DIR}/../mechanicTest/${mesh}
+                  $<TARGET_FILE_DIR:${test_name}>
+      )
+    endforeach()
+endif()
 
 # For some reason, BLT is not setting CUDA language for these source files
 if ( ENABLE_CUDA )
