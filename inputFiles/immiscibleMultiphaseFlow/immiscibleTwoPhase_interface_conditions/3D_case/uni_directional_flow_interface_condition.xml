@@ -14,7 +14,7 @@
       yCoords="{ 0, 6 }"
       zCoords="{ 0, 5, 10 }"
       nx="{ 40 }"
-      ny="{ 24 }"
+      ny="{ 1 }"
       nz="{ 40, 40 }"
       cellBlockNames="{ cb_left, cb_right }"/>
   </Mesh>
