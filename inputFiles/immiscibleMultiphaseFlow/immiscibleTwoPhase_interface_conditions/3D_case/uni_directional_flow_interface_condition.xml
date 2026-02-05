@@ -13,9 +13,9 @@
       xCoords="{ 0, 10 }"
       yCoords="{ 0, 6 }"
       zCoords="{ 0, 5, 10 }"
-      nx="{ 10 }"
-      ny="{ 6 }"
-      nz="{ 10, 10 }"
+      nx="{ 20 }"
+      ny="{ 12 }"
+      nz="{ 20, 20 }"
       cellBlockNames="{ cb_left, cb_right }"/>
   </Mesh>
   <!-- SPHINX_MESH_END -->

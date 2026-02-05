@@ -13,15 +13,20 @@
       targetRegions="{ region_left, region_right }">
       <!-- interfaceFaceSetNames = "{ Interface }"> -->
       <NonlinearSolverParameters
-        newtonTol="1.0e-5"
+        newtonTol="1e-4"
         newtonMaxIter="20"
-        maxTimeStepCuts="20"
-	      maxSubSteps="2000"/>
+        maxTimeStepCuts="50"
+        maxSubSteps="100"
+        lineSearchAction="None"
+        timeStepDecreaseFactor="0.9"
+        timeStepIncreaseFactor="1.5" 
+        timeStepDecreaseIterLimit="0.8"
+        timeStepIncreaseIterLimit="0.6"/>
 <!--       <LinearSolverParameters
         solverType="direct"
         directParallel="0"  
         logLevel="0"/> -->
-      <LinearSolverParameters solverType="gmres" preconditionerType="amg" krylovTol="1.0e-10" logLevel="1"/>        
+      <LinearSolverParameters solverType="gmres" preconditionerType="amg" krylovTol="1.0e-7" logLevel="1"/>        
     </ImmiscibleMultiphaseFlow>  
   </Solvers>
   <!-- SPHINX_SOLVER_END -->
