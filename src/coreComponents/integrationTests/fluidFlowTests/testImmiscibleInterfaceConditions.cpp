@@ -47,7 +47,7 @@ CommandLineOptions g_commandLineOptions;
 
 TwoPhaseImmiscibleFluid * makeTwoPhaseImmiscibleFluid( TwoPhaseImmiscibleFluid & fluid )
 {
-  
+
   FunctionManager & functionManager = FunctionManager::getInstance();
 
   // 1D table with linear interpolation
@@ -56,44 +56,44 @@ TwoPhaseImmiscibleFluid * makeTwoPhaseImmiscibleFluid( TwoPhaseImmiscibleFluid &
 
   real64_array densityCoordPhase0;
   // fill( densityCoordPhase0, Feed< Naxis >{ 0.22, 0.3, 0.5, 0.6, 0.8, 1.0 } );
-  for (auto v : {0.0})
-    densityCoordPhase0.emplace_back(v);
+  for( auto v : {0.0} )
+    densityCoordPhase0.emplace_back( v );
   real64_array densityValuesPhase0;
   // fill( densityValuesPhase0, Feed< Naxis >{ 0.00603, 0.04224, 0.04224, 0.22423, 0.31311, 0.40203 } );
-  for (auto v : {1000.0})
-  densityValuesPhase0.emplace_back(v);
+  for( auto v : {1000.0} )
+    densityValuesPhase0.emplace_back( v );
 
   real64_array densityCoordPhase1;
   // fill( densityCoordPhase1, Feed< Naxis >{ 1.22, 1.3, 1.5, 1.6, 1.8, 2.0 } );
-  for (auto v : {0.0})
-    densityCoordPhase1.emplace_back(v);
+  for( auto v : {0.0} )
+    densityCoordPhase1.emplace_back( v );
   real64_array densityValuesPhase1;
   // fill( densityValuesPhase1, Feed< Naxis >{ 0.00603, 0.04224, 0.04224, 0.22423, 0.31311, 0.40203 } );
-  for (auto v : {100.0})
-  densityValuesPhase1.emplace_back(v);
+  for( auto v : {100.0} )
+    densityValuesPhase1.emplace_back( v );
 
   real64_array viscosityCoordPhase0;
   // fill( viscosityCoordPhase0, Feed< Naxis >{ 0.22, 0.3, 0.5, 0.6, 0.8, 1.0 } );
-  for (auto v : {0.0})
-  viscosityCoordPhase0.emplace_back(v);
+  for( auto v : {0.0} )
+    viscosityCoordPhase0.emplace_back( v );
   real64_array viscosityValuesPhase0;
   // fill( viscosityValuesPhase0, Feed< Naxis >{ 40203, 31311, 22423, 15011, 4224, 603 } );
-  for (auto v : {0.001})
-  viscosityValuesPhase0.emplace_back(v);
+  for( auto v : {0.001} )
+    viscosityValuesPhase0.emplace_back( v );
 
   real64_array viscosityCoordPhase1;
   // fill( viscosityCoordPhase1, Feed< NaxisSingle >{ 0.22 } );
-  for (auto v : {0.0})
-  viscosityCoordPhase1.emplace_back(v);
+  for( auto v : {0.0} )
+    viscosityCoordPhase1.emplace_back( v );
 
   real64_array viscosityValuesPhase1;
   // fill( viscosityValuesPhase1, Feed< NaxisSingle >{ 45 } );
-  for (auto v : {0.001})
-  viscosityValuesPhase1.emplace_back(v);
+  for( auto v : {0.001} )
+    viscosityValuesPhase1.emplace_back( v );
 
   TableFunction & table_density0 = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "densityTablePhase0" ) );
-  array1d<real64_array> coords_density0;
-  coords_density0.emplace_back(densityCoordPhase0);
+  array1d< real64_array > coords_density0;
+  coords_density0.emplace_back( densityCoordPhase0 );
   table_density0.setTableCoordinates( coords_density0, { units::Dimensionless } );
   table_density0.setTableValues( densityValuesPhase0, units::Dimensionless );
   table_density0.reInitializeFunction();
@@ -101,8 +101,8 @@ TwoPhaseImmiscibleFluid * makeTwoPhaseImmiscibleFluid( TwoPhaseImmiscibleFluid &
   table_density0.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   TableFunction & table_density1 = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "densityTablePhase1" ) );
-  array1d<real64_array> coords_density1;
-  coords_density1.emplace_back(densityCoordPhase1);
+  array1d< real64_array > coords_density1;
+  coords_density1.emplace_back( densityCoordPhase1 );
   table_density1.setTableCoordinates( coords_density1, { units::Dimensionless } );
   table_density1.setTableValues( densityValuesPhase1, units::Dimensionless );
   table_density1.reInitializeFunction();
@@ -110,8 +110,8 @@ TwoPhaseImmiscibleFluid * makeTwoPhaseImmiscibleFluid( TwoPhaseImmiscibleFluid &
   table_density1.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   TableFunction & table_viscosity0 = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "viscosityTablePhase0" ) );
-  array1d<real64_array> coords_viscosity0;
-  coords_viscosity0.emplace_back(viscosityCoordPhase0);
+  array1d< real64_array > coords_viscosity0;
+  coords_viscosity0.emplace_back( viscosityCoordPhase0 );
   table_viscosity0.setTableCoordinates( coords_viscosity0, { units::Dimensionless } );
   table_viscosity0.setTableValues( viscosityValuesPhase0, units::Dimensionless );
   table_viscosity0.reInitializeFunction();
@@ -119,8 +119,8 @@ TwoPhaseImmiscibleFluid * makeTwoPhaseImmiscibleFluid( TwoPhaseImmiscibleFluid &
   table_viscosity0.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
   TableFunction & table_viscosity1 = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "viscosityTablePhase1" ) );
-  array1d<real64_array> coords_viscosity1;
-  coords_viscosity1.emplace_back(viscosityCoordPhase1);
+  array1d< real64_array > coords_viscosity1;
+  coords_viscosity1.emplace_back( viscosityCoordPhase1 );
   table_viscosity1.setTableCoordinates( coords_viscosity1, { units::Dimensionless } );
   table_viscosity1.setTableValues( viscosityValuesPhase1, units::Dimensionless );
   table_viscosity1.reInitializeFunction();
@@ -482,7 +482,7 @@ class ImmiscibleInterfaceConditionsTest : public FluidModelTest< TwoPhaseImmisci
 {
 public:
   ImmiscibleInterfaceConditionsTest(): state( std::make_unique< CommandLineOptions >( g_commandLineOptions )),
-  m_parent( "TestParentGroup", m_node )
+    m_parent( "TestParentGroup", m_node )
 
   {}
 
@@ -510,9 +510,9 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalNonlinearSolverConvergence )
   // using Base = FluidModelTest< TwoPhaseImmiscibleFluid, 2 >;
   createFluid( "fluid", [this]( TwoPhaseImmiscibleFluid & fluid ){
     makeTwoPhaseImmiscibleFluid( fluid );
- 
-  // getting constitutive models:
-    RelativePermeabilityBase & relPerm = makeBrooksCoreyRelPerm( "relPerm" , this->m_parent);
+
+    // getting constitutive models:
+    RelativePermeabilityBase & relPerm = makeBrooksCoreyRelPerm( "relPerm", this->m_parent );
     RelativePermeabilityBase * relPermPtr = &relPerm;
     // CapillaryPressureBase & capPressure0 =  makeJFunctionCapPressureTwoPhase( "capPressure0", this->m_parent );
     // CapillaryPressureBase * capPressurePtr0 = &capPressure0;
@@ -527,64 +527,64 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalNonlinearSolverConvergence )
 
     // CapillaryPressureBase & capPressure1 =  makeBrooksCoreyCapPressureTwoPhase2( "capPressure1", this->m_parent );
     // CapillaryPressureBase * capPressurePtr1 = &capPressure1;
-    
-  std::vector< RelativePermeabilityBase * > relPerms = {relPermPtr, relPermPtr};
-  std::vector< CapillaryPressureBase * > capPressures = {capPressurePtr0, capPressurePtr1};
-  std::vector< TwoPhaseImmiscibleFluid * > fluids = { &fluid, &fluid };
+
+    std::vector< RelativePermeabilityBase * > relPerms = {relPermPtr, relPermPtr};
+    std::vector< CapillaryPressureBase * > capPressures = {capPressurePtr0, capPressurePtr1};
+    std::vector< TwoPhaseImmiscibleFluid * > fluids = { &fluid, &fluid };
     // real64 uT = 3.2864545889999906e-05;
-  
-  // real64 uT = -3.3e-5;
- real64 uT = 1e-17;
+
+    // real64 uT = -3.3e-5;
+    real64 uT = 1e-17;
 // real64 uT = 1e-7;
-  stdVector< real64 > saturations = {0.2, 0.4};
-  stdVector< real64 > trappedSats1 = {phase0MinSat1, phase1MinSat1};
-  stdVector< real64 > trappedSats2 = {phase0MinSat2, phase1MinSat2};
-  stdVector< real64 > pressures = {1e7, 1e7};
-  stdVector< real64 > JFMultipliers = {45016.662822296035, 30011.108548197357};
-  stdVector< real64 > transHats = {1.9738466000000002e-12, 4.4411548500000007e-12};
-  stdVector< real64 > dTransHats_dP = {0.0, 0.0};
-  stdVector< real64 > gravCoefHats = {490.5, 490.5};
-  stdVector< real64 > gravCoefs = {465.97500000000002, 515.02499999999998};
+    stdVector< real64 > saturations = {0.2, 0.4};
+    stdVector< real64 > trappedSats1 = {phase0MinSat1, phase1MinSat1};
+    stdVector< real64 > trappedSats2 = {phase0MinSat2, phase1MinSat2};
+    stdVector< real64 > pressures = {1e7, 1e7};
+    stdVector< real64 > JFMultipliers = {45016.662822296035, 30011.108548197357};
+    stdVector< real64 > transHats = {1.9738466000000002e-12, 4.4411548500000007e-12};
+    stdVector< real64 > dTransHats_dP = {0.0, 0.0};
+    stdVector< real64 > gravCoefHats = {490.5, 490.5};
+    stdVector< real64 > gravCoefs = {465.97500000000002, 515.02499999999998};
 
 
-  std::vector< real64 > phi = {0.0, 0.0};
-  std::vector< real64 > grad_phi = {0.0, 0.0, 0.0, 0.0};
+    std::vector< real64 > phi = {0.0, 0.0};
+    std::vector< real64 > grad_phi = {0.0, 0.0, 0.0, 0.0};
 
-  std::ofstream outFile( "local_solver_results.csv" );
+    std::ofstream outFile( "local_solver_results.csv" );
 
 
-          // Write data to the file
-          outFile << "Si";
-          outFile << ",";
-          outFile << "Sj";
-          outFile << ",";
-          outFile << "Fw_alpha";
-          outFile << ",";
-          outFile << "Fn_alpha";
-          outFile << ",";
-          outFile << "Residual_initial";
-          outFile << ",";
-          outFile << "Pc_int";
-          outFile << ",";
-          outFile << "Residual";
-          outFile << ",";
-          outFile << "newton";
-          outFile << std::endl;
+    // Write data to the file
+    outFile << "Si";
+    outFile << ",";
+    outFile << "Sj";
+    outFile << ",";
+    outFile << "Fw_alpha";
+    outFile << ",";
+    outFile << "Fn_alpha";
+    outFile << ",";
+    outFile << "Residual_initial";
+    outFile << ",";
+    outFile << "Pc_int";
+    outFile << ",";
+    outFile << "Residual";
+    outFile << ",";
+    outFile << "newton";
+    outFile << std::endl;
 
-          real64 const start_sat = 0.0;
-          real64 const end_sat   = 1.0;
-          real64 const dS        = 1e-2;
-              real64 Si = 0.0;
-               real64 Sj = 0.9;
-          
-          // for( real64 Si = start_sat; Si <= end_sat + 1e-8; Si += dS )
-          // {
-          //   for( real64 Sj = start_sat; Sj <= end_sat + 1e-8; Sj += dS )
-          //   {
-              saturations[0] = Si;
-              saturations[1] = Sj;
+    real64 const start_sat = 0.0;
+    real64 const end_sat   = 1.0;
+    real64 const dS        = 1e-2;
+    real64 Si = 0.0;
+    real64 Sj = 0.9;
 
-              auto t0 = std::chrono::high_resolution_clock::now();
+    // for( real64 Si = start_sat; Si <= end_sat + 1e-8; Si += dS )
+    // {
+    //   for( real64 Sj = start_sat; Sj <= end_sat + 1e-8; Sj += dS )
+    //   {
+    saturations[0] = Si;
+    saturations[1] = Sj;
+
+    auto t0 = std::chrono::high_resolution_clock::now();
 
     // Define missing arguments for the updated signature
     stdVector< real64 > cellCenterDuT = { 0.0, 0.0 };
@@ -594,39 +594,39 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalNonlinearSolverConvergence )
     std::vector< real64 > grad_phi_S = { 0.0, 0.0 };
     bool converged;
 
-// Call the GEOS local solver
+    // Call the GEOS local solver
     geos::immiscibleMultiphaseKernels::local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, transHats, dTransHats_dP, gravCoefHats, gravCoefs,
-      cellCenterDuT, cellCenterDens, cellCenterDens_dP,
-      relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged );
+                                                     cellCenterDuT, cellCenterDens, cellCenterDens_dP,
+                                                     relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged );
 
-auto t1 = std::chrono::high_resolution_clock::now();
-std::chrono::duration<double> elapsed = t1 - t0;
-std::cout << "Local solver time: " << elapsed.count() << " s" << std::endl;
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration< double > elapsed = t1 - t0;
+    std::cout << "Local solver time: " << elapsed.count() << " s" << std::endl;
 
 
-                  // Write data to the file
-                  outFile << GEOS_FMT( "{:10.10e}", saturations[0] );
-                  outFile << GEOS_FMT( ",{:10.10e}", saturations[1] );
-                  outFile << GEOS_FMT( ",{:10.10e}", phi[0] );
-                  outFile << GEOS_FMT( ",{:10.10e}", phi[1] );
-                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi_P[0] );
-                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi_P[1] );
-                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi_S[0] );
-                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi_S[1] );
-                  outFile << std::endl;
-                  phi[0] = 0;
-                  phi[1] = 0;
-                  grad_phi_P[0] = 0;
-                  grad_phi_P[1] = 0;
-                  grad_phi_S[0] = 0;
-                  grad_phi_S[1] = 0;
+    // Write data to the file
+    outFile << GEOS_FMT( "{:10.10e}", saturations[0] );
+    outFile << GEOS_FMT( ",{:10.10e}", saturations[1] );
+    outFile << GEOS_FMT( ",{:10.10e}", phi[0] );
+    outFile << GEOS_FMT( ",{:10.10e}", phi[1] );
+    outFile << GEOS_FMT( ",{:10.10e}", grad_phi_P[0] );
+    outFile << GEOS_FMT( ",{:10.10e}", grad_phi_P[1] );
+    outFile << GEOS_FMT( ",{:10.10e}", grad_phi_S[0] );
+    outFile << GEOS_FMT( ",{:10.10e}", grad_phi_S[1] );
+    outFile << std::endl;
+    phi[0] = 0;
+    phi[1] = 0;
+    grad_phi_P[0] = 0;
+    grad_phi_P[1] = 0;
+    grad_phi_S[0] = 0;
+    grad_phi_S[1] = 0;
 
 //   }
 // }
 
-  outFile.close();
+    outFile.close();
 
-} );
+  } );
 }
 
 int main( int argc, char * *argv )
