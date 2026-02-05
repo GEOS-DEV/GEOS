@@ -6,12 +6,12 @@
    gravityVector="{ 0.0, 0.0, 9.81 }">
     <ImmiscibleMultiphaseFlow
       name="FlowSolver"
-      logLevel="2"
+      logLevel="1"
       discretization="TPFA"
       temperature="300"
       initialDt="0.001"
-      targetRegions="{ region_left, region_right }">
-      <!-- interfaceFaceSetNames = "{ Interface }"> -->
+      targetRegions="{ region_left, region_right }"
+      interfaceFaceSetNames = "{ Interface }">
       <NonlinearSolverParameters
         newtonTol="1e-4"
         newtonMaxIter="20"
