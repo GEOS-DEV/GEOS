@@ -6,10 +6,6 @@ This file is designed to track changes to the integrated test baselines.
 Any developer who updates the baseline ID in the .integrated_tests.yaml file is expected to create an entry in this file with the pull request number, date, and their justification for rebaselining.
 These notes should be in reverse-chronological order, and use the following time format: (YYYY-MM-DD).
 
-PR #3963 (2026-02-04) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3963-15420-6d2cfd2.tar.gz>
-=====================
-Resolves a segmentation fault on macOS (ARM64)
-
 PR #3940 (2026-01-27) <https://storage.googleapis.com/geosx/integratedTests/baseline_integratedTests-pr3940-15307-53de7ba.tar.gz>
 =====================
 Fix the transimissibility calculated between a cell and a surface element
