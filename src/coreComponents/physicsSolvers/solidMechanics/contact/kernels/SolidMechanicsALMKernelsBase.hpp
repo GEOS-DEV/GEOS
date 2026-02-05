@@ -151,7 +151,7 @@ struct UpdateStateKernel
         // When normal traction is very small, check if cohesion allows stick state
         // before deciding to transition to slip (fix for high cohesion materials)
         real64 dLimitTau_dTraction = 0.0;
-        real64 const limitTau = contactWrapper.computeLimitTangentialTractionNorm( 0.0, dLimitTau_dTraction );
+        real64 const limitTau = contactWrapper.computeLimitTangentialTractionNorm( localTractionNew[ 0 ], dLimitTau_dTraction );
         real64 const currentTau = LvArray::math::sqrt( localTractionNew[1] * localTractionNew[1] +
                                                         localTractionNew[2] * localTractionNew[2] );
 
