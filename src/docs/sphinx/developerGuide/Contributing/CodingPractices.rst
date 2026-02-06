@@ -216,6 +216,28 @@ Avoid Undesired Mutability
 
 Also, **mark methods const if the method is not designed to modify** the object state.  
 
+Use of ``mutable``
+------------------
+
+``mutable`` **keyword usage is to avoid, excepted for specific patterns.**
+
+Acceptable uses:
+
+- **Thread synchronization primitives** (``std::mutex``, ``std::atomic`` for counters),
+- **Caching** when it preserves logical constness, is thread-safe and clearly documented.
+
+Avoid ``mutable`` for:
+
+- Working around design issues (consider redesigning instead, i.e. splitting data structures),
+- GPU-accessible data (creates host/device LvArray synchronization issues).
+
+.. dropdown:: Why mutable is discouraged?
+  :icon: info
+
+  - **Breaks const methods contract:** Makes reasoning about code harder
+  - **Thread-safety confusion:** ``const`` methods may not be thread-safe
+  - **GPU incompatibility:** Can cause memory coherence issues with LvArray views
+
 Constexpr for Compile-Time Constants
 ------------------------------------
 
