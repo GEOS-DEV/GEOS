@@ -131,9 +131,9 @@ protected:
   </Tasks>  
   <Outputs>
   </Outputs>
-  <Events minTime="-1.0e11" maxTime="1.0">
-     <SoloEvent name="preFracture" target="/Solvers/SurfaceGen" targetTime="-1.0e11" beginTime="-1.0e11"/> 
-    <SoloEvent name="ELASTICITY.PRE.INIT.STEP" targetTime="-1.0e11" beginTime="-1.0e11" target="/Tasks/ELASTICITY.PRE.INIT.STEP"/>
+  <Events minTime="0.0" maxTime="1.0">
+     <SoloEvent name="preFracture" target="/Solvers/SurfaceGen" targetTime="0.0" beginTime="0.0"/> 
+    <SoloEvent name="ELASTICITY.PRE.INIT.STEP" targetTime="0.0" beginTime="0.0" target="/Tasks/ELASTICITY.PRE.INIT.STEP"/>
     <PeriodicEvent name="solverApplications" target="/Solvers/mechSolver" forceDt="1.0"/>
   </Events>
 </Problem>
