@@ -3614,7 +3614,7 @@ bool CompositionalMultiphaseWell::evaluateConstraints( real64 const & time_n,
         // this is related to WHP option which introduces a new BHP constraint
         limitingConstraint = wellControls.getMinBHPConstraint();
       }
-      else if( !constraintList.empty() )
+      else if( limitingConstraint == nullptr  )
       {
         limitingConstraint = constraintList[0];
       }
@@ -3801,7 +3801,7 @@ void CompositionalMultiphaseWell::solveConstraint( WellConstraintBase *constrain
     {
       GEOS_LOG_RANK_0( "Well " << wellControls.getName() << " Evaluating constraint " << constraint->getName() << " value " << constraint->getConstraintValue( time_n ) << " active " <<
                        constraint->isConstraintActive() );
-    }
+     }
     if( constraint->isConstraintActive() )
     {
       wellControls.setControl( static_cast< WellControls::Control >(constraint->getControl()) );     // tjb old
