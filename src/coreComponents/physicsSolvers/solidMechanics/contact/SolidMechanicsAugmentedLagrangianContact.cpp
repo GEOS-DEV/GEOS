@@ -888,8 +888,6 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
     SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( getUniqueFractureRegionName() );
     FaceElementSubRegion const & subRegion = region.getUniqueSubRegion< FaceElementSubRegion >();
 
-    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
-
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
     arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
@@ -1455,8 +1453,6 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
 
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
-    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
-
     array1d< localIndex > keys( subRegion.size());
     array1d< localIndex > vals( subRegion.size());
     array1d< localIndex > quadList;
@@ -1859,7 +1855,6 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingSparsityPattern( Domai
       for( int k=0; k<2; ++k )
       {
         localIndex const kf = elemsToFaces[kfe][k];
-        localIndex const kf_other = elemsToFaces[kfe][(1+k)%2];
 
         // working arrays
         stackArray1d< globalIndex, maxNumDispFaceDof > eqnRowIndicesDisp ( numDispDof );
