@@ -132,7 +132,7 @@ protected:
   <Outputs>
   </Outputs>
   <Events minTime="-1.0e11" maxTime="1.0">
-     <SoloEvent name="preFracture" target="/Solvers/SurfaceGen"/> 
+     <SoloEvent name="preFracture" target="/Solvers/SurfaceGen" targetTime="-1.0e11" beginTime="-1.0e11"/> 
     <SoloEvent name="ELASTICITY.PRE.INIT.STEP" targetTime="-1.0e11" beginTime="-1.0e11" target="/Tasks/ELASTICITY.PRE.INIT.STEP"/>
     <PeriodicEvent name="solverApplications" target="/Solvers/mechSolver" forceDt="1.0"/>
   </Events>
