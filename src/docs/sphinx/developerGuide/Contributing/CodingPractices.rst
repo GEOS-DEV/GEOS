@@ -334,7 +334,7 @@ Speed Optimization Rules
 
 - **Hoist Loop Invariants**, move computations that don't change during iterations outside the loop.
 - When it does not critically affect the code architecture and clarity, **fuse multiple related kernels to reduce memory traffic and launch overhead** (i.e., statistics kernels process all physics field at once).  
-- **Optimize Memory Access for Cache and Coalescing**. Access memory sequentially and ensure coalesced access, especially on GPUs.
+- **Optimize Memory Access for Cache and Coalescing**. Access memory sequentially and ensure coalesced access, especially on GPUs (`Memory Coalescing<https://en.wikipedia.org/wiki/Coalescing_(computer_science)>`_).
 - **Minimize Host-Device Transfers**. Keep data on the appropriate memory space and minimize transfers.
 
 General Architecture
