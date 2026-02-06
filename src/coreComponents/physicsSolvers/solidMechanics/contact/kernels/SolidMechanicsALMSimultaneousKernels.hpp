@@ -308,7 +308,8 @@ public:
     LvArray::tensorOps::Rij_eq_AikBkj< 3, numBdofs, 3 >( matDRtAtb, stack.localPenalty,
                                                          matRRtAtb );
 
-    real64 const fac = 1.0 / m_faceArea[k];
+    real64 const area = m_faceArea[k];
+    real64 const fac = ( area > 1.0e-30 ) ? 1.0 / area : 0.0;
     LvArray::tensorOps::scale< 3, numUdofs >( matDRtAtu, fac );
     LvArray::tensorOps::scale< 3, numBdofs >( matDRtAtb, fac );
 

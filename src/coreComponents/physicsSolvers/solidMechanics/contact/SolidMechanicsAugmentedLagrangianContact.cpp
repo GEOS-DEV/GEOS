@@ -38,6 +38,9 @@
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "mesh/DomainPartition.hpp"
 
+#include <iostream>
+#include <cmath>
+
 namespace geos
 {
 
@@ -465,6 +468,70 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
 
   GEOS_UNUSED_VAR( time );
 
+//  auto checkBubbleRhs = [&]( std::string const & stage )
+//  {
+//    // Move localRhs to host for checking (move() is const-qualified, so this is safe)
+//    localRhs.move( hostMemorySpace, false );
+//    
+//    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & /*meshName*/,
+//                                                                  MeshLevel & mesh,
+//                                                                  string_array const & )
+//    {
+//      FaceManager const & faceManager = mesh.getFaceManager();
+//      string const & bubbleDofKey = dofManager.getKey( contact::totalBubbleDisplacement::key() );
+//      if( !faceManager.hasWrapper( bubbleDofKey ) )
+//        return;
+//
+//      arrayView1d< globalIndex const > const bubbleDofNumber = faceManager.getReference< globalIndex_array >( bubbleDofKey );
+//      auto const & fGhost = faceManager.ghostRank();
+//      globalIndex const rankOffset = dofManager.rankOffset();
+//      localIndex const localRhsSize = localRhs.size();
+//
+//      for( localIndex k = 0; k < faceManager.size(); ++k )
+//      {
+//         if( fGhost[k] < 0 )
+//         {
+//           globalIndex const dof = bubbleDofNumber[k];
+//           
+//           // Skip faces without valid DOF assignment
+//           if( dof == -1 )
+//           {
+//             continue;
+//           }
+//           
+//           localIndex const localRow = dof - rankOffset;
+//           
+//           // Check bounds
+//           if( localRow < 0 || localRow + 2 >= localRhsSize )
+//           {
+//             std::cout << "Rank " << MpiWrapper::commRank( MPI_COMM_GEOS )
+//                       << ": Out of bounds bubble RHS at " << stage
+//                       << ", Face " << k
+//                       << ", dof " << dof
+//                       << ", rankOffset " << rankOffset
+//                       << ", localRow " << localRow
+//                       << ", localRhsSize " << localRhsSize << std::endl;
+//             continue;
+//           }
+//           
+//           for( int d=0; d<3; ++d )
+//           {
+//             if( !std::isfinite( localRhs[localRow+d] ) )
+//             {
+//               std::cout << "Rank " << MpiWrapper::commRank( MPI_COMM_GEOS )
+//                         << ": Bad bubble RHS at " << stage
+//                         << ", Face " << k << ", Comp " << d
+//                         << ", dof " << dof << ", localRow " << localRow
+//                         << ", Val " << localRhs[localRow+d] << std::endl;
+//             }
+//           }
+//         }
+//      }
+//    });
+//  };
+
+//  checkBubbleRhs("Start");
+
   // Loop for assembling contributes from interface elements (Aut*eps^-1*Atu and Aub*eps^-1*Abu)
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel & mesh,
@@ -595,6 +662,8 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
 
   } );
 
+//  checkBubbleRhs("After ALM");
+
   // Loop for assembling contributes of bubble elements (Abb, Abu, Aub)
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
@@ -633,6 +702,8 @@ void SolidMechanicsAugmentedLagrangianContact::assembleContact( real64 const tim
     GEOS_UNUSED_VAR( maxTraction );
 
   } );
+
+//  checkBubbleRhs("After Bubble");
 
 }
 
@@ -828,19 +899,16 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
                                       GEOS_HOST_DEVICE ( localIndex const kfe )
     {
 
-      if( ghostRank[kfe] < 0 )
+      for( int kk=0; kk<2; ++kk )
       {
-        for( int kk=0; kk<2; ++kk )
+        localIndex const k = elemsToFaces[kfe][kk];
+        if( fGhost[k] < 0 )
         {
-          localIndex const k = elemsToFaces[kfe][kk];
           localIndex const localRow = LvArray::integerConversion< localIndex >( bubbleDofNumber[k] - rankOffset );
-          if( fGhost[k] < 0 )
-          {
 
-            for( localIndex i = 0; i < 3; ++i )
-            {
-              localSum += localRhs[localRow + i] * localRhs[localRow + i];
-            }
+          for( localIndex i = 0; i < 3; ++i )
+          {
+            localSum += localRhs[localRow + i] * localRhs[localRow + i];
           }
         }
       }
@@ -913,6 +981,22 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                                scalingFactor );
 
 
+  // Synchronize bubble displacements before computing displacement jump
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+  {
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addFields( FieldLocation::Face,
+                              { contact::incrementalBubbleDisplacement::key(),
+                                contact::totalBubbleDisplacement::key() } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
+  } );
+  
   // Loop for updating the displacement jump
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel & mesh,
@@ -969,12 +1053,7 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
   {
     FieldIdentifiers fieldsToBeSync;
 
-    fieldsToBeSync.addFields( FieldLocation::Face,
-                              { contact::incrementalBubbleDisplacement::key(),
-                                contact::totalBubbleDisplacement::key() } );
-
-    fieldsToBeSync.addElementFields( { contact::traction::key(),
-                                       contact::dispJump::key(),
+    fieldsToBeSync.addElementFields( { contact::dispJump::key(),
                                        contact::deltaDispJump::key() },
                                      { getUniqueFractureRegionName() } );
 
@@ -983,6 +1062,28 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                                                          domain.getNeighbors(),
                                                          true );
   } );
+  
+//  // Print solution vector for debugging
+//    {
+//      array1d< real64 > hostSolution( localSolution.size() );
+//      hostSolution.template setValues< parallelDevicePolicy<> >( localSolution );
+//
+//      // Synchronize to output nicely ordered by rank
+//      MPI_Barrier( MPI_COMM_GEOS );
+//      for( int r = 0; r < MpiWrapper::commSize( MPI_COMM_GEOS ); ++r )
+//      {
+//        if( r == MpiWrapper::commRank( MPI_COMM_GEOS ) )
+//        {
+//          std::cout << "----- Rank " << r << " Solution Vector -----" << std::endl;
+//          for( localIndex i = 0; i < hostSolution.size(); ++i )
+//          {
+//            std::cout << "Sol[" << i << "] = " << hostSolution[i] << std::endl;
+//          }
+//          std::cout << "-----------------------------------" << std::endl;
+//        }
+//        MPI_Barrier( MPI_COMM_GEOS );
+//      }
+//    }
 
 }
 
@@ -1160,7 +1261,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
       ElementRegionManager & elemManager = mesh.getElemManager();
 
       elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                  FaceElementSubRegion & subRegion )
+                                                                                FaceElementSubRegion & subRegion )
       {
 
         arrayView2d< real64 > const traction_new_v = traction_new.toView();
@@ -1182,7 +1283,7 @@ bool SolidMechanicsAugmentedLagrangianContact::updateConfiguration( DomainPartit
       ElementRegionManager & elemManager = mesh.getElemManager();
 
       elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                  FaceElementSubRegion & subRegion )
+                                                                                FaceElementSubRegion & subRegion )
       {
 
         string const & frictionLawName = subRegion.template getReference< string >( viewKeyStruct::frictionLawNameString() );
@@ -1354,6 +1455,8 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
 
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
 
+    arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
+
     array1d< localIndex > keys( subRegion.size());
     array1d< localIndex > vals( subRegion.size());
     array1d< localIndex > quadList;
@@ -1457,6 +1560,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
     {
 
       arrayView2d< localIndex const > const elemsToFaces = cellElementSubRegion.faceList().toViewConst();
+      arrayView1d< integer const > const ghostRank = cellElementSubRegion.ghostRank();
 
       RAJA::ReduceSum< ReducePolicy< parallelDevicePolicy<> >, localIndex > nBubElems_r( 0 );
 
@@ -1476,10 +1580,11 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
                                         [ = ]
                                         GEOS_HOST_DEVICE ( localIndex const kfe )
       {
+        bool const isGhost = ( ghostRank[kfe] >= 0 );
         for( int i=0; i < elemsToFaces.size( 1 ); ++i )
         {
           perms_v[kfe*elemsToFaces.size( 1 )+i] = kfe*elemsToFaces.size( 1 )+i;
-          if( faceIdList_v.contains( elemsToFaces[kfe][i] ))
+          if( !isGhost && faceIdList_v.contains( elemsToFaces[kfe][i] ))
           {
             keys_v[kfe*elemsToFaces.size( 1 )+i] = 0;
             vals_v[kfe*elemsToFaces.size( 1 )+i] = kfe;
@@ -1628,7 +1733,7 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingNumNonzeros( DomainPar
         {
           for( localIndex i=0; i<3; ++i )
           {
-            rowLengths[localRow + i] += numDispDof;
+            rowLengths[localRow + i] += 2 * numDispDof;
           }
         }
 
@@ -1641,7 +1746,7 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingNumNonzeros( DomainPar
           {
             for( int d=0; d<3; ++d )
             {
-              rowLengths[localDispRow + d] += 3;
+              rowLengths[localDispRow + d] += 6;
             }
           }
         }
@@ -1768,34 +1873,38 @@ void SolidMechanicsAugmentedLagrangianContact::addCouplingSparsityPattern( Domai
           dofColIndicesBubble[idof] = bubbleDofNumber[kf] + idof;
         }
 
-        for( localIndex a=0; a<numNodesPerFace; ++a )
+        for( int kSide = 0; kSide < 2; ++kSide )
         {
-          const localIndex & node = faceToNodeMap( kf_other, a );
-          for( localIndex idof = 0; idof < 3; ++idof )
+          localIndex const kfSide = elemsToFaces[kfe][(k+kSide)%2];
+          for( localIndex a=0; a<numNodesPerFace; ++a )
           {
-            eqnRowIndicesDisp[3*a + idof] = dispDofNumber[node] + idof - rankOffset;
-            dofColIndicesDisp[3*a + idof] = dispDofNumber[node] + idof;
-          }
-        }
-
-        for( localIndex i = 0; i < eqnRowIndicesDisp.size(); ++i )
-        {
-          if( eqnRowIndicesDisp[i] >= 0 && eqnRowIndicesDisp[i] < pattern.numRows() )
-          {
-            for( localIndex j = 0; j < dofColIndicesBubble.size(); ++j )
+            const localIndex & node = faceToNodeMap( kfSide, a );
+            for( localIndex idof = 0; idof < 3; ++idof )
             {
-              pattern.insertNonZero( eqnRowIndicesDisp[i], dofColIndicesBubble[j] );
+              eqnRowIndicesDisp[3*a + idof] = dispDofNumber[node] + idof - rankOffset;
+              dofColIndicesDisp[3*a + idof] = dispDofNumber[node] + idof;
             }
           }
-        }
 
-        for( localIndex i = 0; i < eqnRowIndicesBubble.size(); ++i )
-        {
-          if( eqnRowIndicesBubble[i] >= 0 && eqnRowIndicesBubble[i] < pattern.numRows() )
+          for( localIndex i = 0; i < eqnRowIndicesDisp.size(); ++i )
           {
-            for( localIndex j=0; j < dofColIndicesDisp.size(); ++j )
+            if( eqnRowIndicesDisp[i] >= 0 && eqnRowIndicesDisp[i] < pattern.numRows() )
             {
-              pattern.insertNonZero( eqnRowIndicesBubble[i], dofColIndicesDisp[j] );
+              for( localIndex j = 0; j < dofColIndicesBubble.size(); ++j )
+              {
+                pattern.insertNonZero( eqnRowIndicesDisp[i], dofColIndicesBubble[j] );
+              }
+            }
+          }
+
+          for( localIndex i = 0; i < eqnRowIndicesBubble.size(); ++i )
+          {
+            if( eqnRowIndicesBubble[i] >= 0 && eqnRowIndicesBubble[i] < pattern.numRows() )
+            {
+              for( localIndex j=0; j < dofColIndicesDisp.size(); ++j )
+              {
+                pattern.insertNonZero( eqnRowIndicesBubble[i], dofColIndicesDisp[j] );
+              }
             }
           }
         }
@@ -1924,7 +2033,8 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
               // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
               for( localIndex j = 0; j < 3; ++j )
               {
-                stiffDiagApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+                real64 const len = (boxSize[j] > 1.0e-20) ? boxSize[j] : 1.0;
+                stiffDiagApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( len*len );
               }
 
               averageYoungModulus += 0.5*E;
@@ -1936,7 +2046,9 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
             real64 invStiffApprox[ 3 ][ 3 ] = { { 0 } };
             for( localIndex j = 0; j < 3; ++j )
             {
-              invStiffApprox[ j ][ j ] = ( stiffDiagApprox[ 0 ][ j ] + stiffDiagApprox[ 1 ][ j ] ) / ( stiffDiagApprox[ 0 ][ j ] * stiffDiagApprox[ 1 ][ j ] );
+              real64 const denom = ( stiffDiagApprox[ 0 ][ j ] * stiffDiagApprox[ 1 ][ j ] );
+              real64 const val = ( std::abs(denom) > 1.0e-30 ) ? ( stiffDiagApprox[ 0 ][ j ] + stiffDiagApprox[ 1 ][ j ] ) / denom : 0.0;
+              invStiffApprox[ j ][ j ] = val;
             }
 
             // Rotate in the local reference system, computing R^T * (invK) * R
@@ -1946,15 +2058,17 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
             LvArray::tensorOps::Rij_eq_AikBkj< 3, 3, 3 >( rotatedInvStiffApprox, temp, faceRotationMatrix[ kfe ] );
             LvArray::tensorOps::scale< 3, 3 >( rotatedInvStiffApprox, area );
 
+            real64 const avgLen = ( averageBoxSize0 > 1.0e-20 ) ? averageBoxSize0 : 1.0;
+
             // Finally, compute tolerances for the given fracture element
             normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus * m_tolJumpDispNFac;
             slidingTolerance[kfe] = sqrt( pow( rotatedInvStiffApprox[ 1 ][ 1 ], 2 ) +
                                           pow( rotatedInvStiffApprox[ 2 ][ 2 ], 2 )) * averageYoungModulus * m_tolJumpDispTFac;
-            normalTractionTolerance[kfe] = m_tolNormalTracFac * (averageConstrainedModulus / averageBoxSize0) *
+            normalTractionTolerance[kfe] = m_tolNormalTracFac * (averageConstrainedModulus / avgLen) *
                                            (normalDisplacementTolerance[kfe]);
 
-            iterativePenalty[kfe][0] = m_iterPenaltyNFac*averageConstrainedModulus/(averageBoxSize0);
-            iterativePenalty[kfe][1] = m_iterPenaltyTFac*averageConstrainedModulus/(averageBoxSize0);
+            iterativePenalty[kfe][0] = m_iterPenaltyNFac*averageConstrainedModulus/(avgLen);
+            iterativePenalty[kfe][1] = m_iterPenaltyTFac*averageConstrainedModulus/(avgLen);
           }
         } );
       }
