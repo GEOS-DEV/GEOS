@@ -443,5 +443,7 @@ Magic values
 
 **Avoid magic values**:
 
-- **arbitrary values should not be written more than once**, define constants, consider using or extending ``PhysicsConstants.hpp`` / ``Units.hpp``,
 - **Prefer to let appear the calculus of constants** rather than writing its value directly without explaination (constexpr has no runtime cost).
+- **arbitrary values should not be written more than once**, define constants, consider using or extending ``PhysicsConstants.hpp`` / ``Units.hpp``,
+
+For rules regarding GEOS-specific constants, unit handling, and data repository practices, see :ref:`CodeGeosFeatures`.
