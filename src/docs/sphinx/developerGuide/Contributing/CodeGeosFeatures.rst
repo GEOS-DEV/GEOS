@@ -162,7 +162,9 @@ Code Coverage
 ^^^^^^^^^^^^^
 
 **Code coverage should never decrease.** New code contributions must maintain or improve overall code coverage.
-Use code-cov to report untested code paths.
+Use Codecov to report untested code paths.
+
+Currently, Codecov does not cover integrated tests execution but they should be taken into account, especially for minor physical kernel changes.
 
 Integrated Tests & Examples  
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
