@@ -316,6 +316,8 @@ bool StatsAggregator::computeRegionsStatistics( real64 const timeRequest )
   GEOS_MARK_FUNCTION;
 
   GEOS_LOG_RANK_0( GEOS_FMT( "Computing for {} at stack:{}", m_ownerDataContext.toString(), LvArray::system::stackTrace( true ) ));
+  m_warnings.clear();
+
   // computation of sub region stats
   forRegionStatistics( [&, timeRequest] ( MeshLevel & mesh, RegionStatistics & meshRegionsStats )
   {
