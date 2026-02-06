@@ -20,7 +20,6 @@
 
 #include "common/DataLayouts.hpp"
 #include "common/TimingMacros.hpp"
-#include "common/logger/Logger.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -231,26 +230,30 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
 
   } );
 
-
-  meshLevel.getElemManager().forElementRegions< WellElementRegion >( [&]( WellElementRegion & region ){
-    TableData dataPerforation;
-    TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table", region.getName()),
-                                          { "Perforation no.", "Coordinates", "Well element no.", "Cell region", "Cell sub-region", "Cell ID"  } );
-    region.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion ){
+  meshLevel.getElemManager().forElementRegions< WellElementRegion >( [&]( WellElementRegion const & region ){
+    region.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const & subRegion ){
+      TableData dataPerforation;
+      TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table", region.getName()),
+                                            { "Perforation no.", "Well element no.", "Coordinates",
+                                              "Cell region", "Cell sub-region", "Cell ID"  } );
       for( globalIndex iperf = 0; iperf < subRegion.getPerforationData()->getNumPerforationsGlobal(); ++iperf )
       {
-        if( subRegion.getGlobalIndex() != -1 )
+        if( subRegion.getReservoirElementID() != -1 )
         {
-          arrayView2d< real64 > const perfLocation = subRegion.getPerforationData()->getLocation();
+          arrayView2d< const real64 > const perfLocation = subRegion.getPerforationData()->getLocation();
           dataPerforation.addRow( iperf,
-                                  perfLocation[iperf],
                                   subRegion.getPerforationData()->getWellElements()[iperf],
+                                  perfLocation[iperf],
                                   subRegion.getRegionName(),
-                                  subRegion.getSubRegionName(), subRegion.getGlobalIndex());
+                                  subRegion.getSubRegionName(), subRegion.getReservoirElementID());
+
         }
       }
-      TableTextFormatter formatter( layoutPerforation );
-      GEOS_LOG_RANK_0( formatter.toString( dataPerforation ));
+      if( dataPerforation.getCellsData().size() > 0 )
+      {
+        TableTextFormatter const formatter( layoutPerforation );
+        GEOS_LOG( formatter.toString( dataPerforation ));
+      }
     } );
   } );
 

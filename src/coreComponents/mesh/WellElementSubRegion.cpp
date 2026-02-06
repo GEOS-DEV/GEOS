@@ -33,7 +33,10 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   m_topWellElementIndex( -1 ),
   m_perforationData( groupKeyStruct::perforationDataString(), this ),
   m_topRank( -1 ),
-  m_searchDepth( 10 )
+  m_searchDepth( 10 ),
+  m_reservoirElementID(-1),
+  m_regionName( "" ),
+  m_subRegionName( "" )
 {
   m_elementType = ElementType::Line;
 
@@ -556,7 +559,7 @@ bool WellElementSubRegion::searchLocalElements( MeshLevel const & mesh,
           if( resElemFound )
           {
             esrMatched = esr;
-            m_perfoGlobalIndex = giMatched;
+            m_reservoirElementID = giMatched;
             m_regionName = region.getName();
             m_subRegionName = subRegion.getName();
             GEOS_LOG( GEOS_FMT( "    found {}/{}/{}", region.getName(), subRegion.getName(), giMatched ) );

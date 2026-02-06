@@ -385,26 +385,22 @@ public:
   array1d< globalIndex > const & getGlobalElementIndex() const { return m_globalElementIndex; }
 
   /**
- * @return The global index perfo ??
- */
-  globalIndex getGlobalIndex() const
-  {
-    return m_perfoGlobalIndex;
-  }
+   * @return The reservoir element that contains the perforation
+   */
+  globalIndex getReservoirElementID() const
+  { return m_reservoirElementID; }
+
   /**
- * @return todo
- */
+   * @return The region name containing the reservoir element
+   */
   string getSubRegionName() const
-  {
-    return m_subRegionName;
-  }
+  { return m_subRegionName; }
+
   /**
- * @return todo
- */
+   * @return The sub region name containing the reservoir element
+   */
   string getRegionName() const
-  {
-    return m_regionName;
-  }
+  { return m_regionName; }
 
 private:
 
@@ -485,24 +481,24 @@ private:
   void updateNodeManagerNodeToElementMap( MeshLevel & mesh );
 
   /**
- * @brief Search for the reservoir element that contains the well element.
+   * @brief Search for the reservoir element that contains the well element.
           To do that, loop over the reservoir elements that are in the neighborhood of (erInit,esrInit,eiInit)
- * @param[in] meshLevel the mesh object (single level only)
- * @param[in] location the location of that we are trying to match with a reservoir element
- * @param[in] targetRegionIndex the target region index for the reservoir element
- * @param[inout] esrMatched the subregion index of the reservoir element that contains "location", if any
- * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
- * @param[inout] giMatched the element global index of the reservoir element that contains "location", if any
- */
-bool searchLocalElements( MeshLevel const & mesh,
-                          real64 const (&location)[3],
-                          localIndex const & searchDepth,
-                          localIndex const & targetRegionIndex,
-                          localIndex & esrMatched,
-                          localIndex & eiMatched,
-                          globalIndex & giMatched,
-                          real64 const geomTol );
-  
+   * @param[in] meshLevel the mesh object (single level only)
+   * @param[in] location the location of that we are trying to match with a reservoir element
+   * @param[in] targetRegionIndex the target region index for the reservoir element
+   * @param[inout] esrMatched the subregion index of the reservoir element that contains "location", if any
+   * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
+   * @param[inout] giMatched the element global index of the reservoir element that contains "location", if any
+   */
+  bool searchLocalElements( MeshLevel const & mesh,
+                            real64 const (&location)[3],
+                            localIndex const & searchDepth,
+                            localIndex const & targetRegionIndex,
+                            localIndex & esrMatched,
+                            localIndex & eiMatched,
+                            globalIndex & giMatched,
+                            real64 const geomTol );
+
 
   /**
    * @brief Pack element-to-node and element-to-face maps
@@ -566,11 +562,14 @@ bool searchLocalElements( MeshLevel const & mesh,
   /// Number of  segment per rank
   array1d< localIndex > m_elementPerRank;
 
-  globalIndex m_perfoGlobalIndex = -1;
+  /// The reservoir element that contains the perforation
+  globalIndex m_reservoirElementID;
+  /// the target region name for the reservoir element
   string m_regionName;
+  /// the target sub region name for the reservoir element
   string m_subRegionName;
 
-  
+
 };
 
 } /* namespace geos */
