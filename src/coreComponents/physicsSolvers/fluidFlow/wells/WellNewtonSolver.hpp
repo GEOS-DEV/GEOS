@@ -113,7 +113,9 @@ public:
    */
   void generateMeshTargetsFromTargetRegions( Group const & meshBodies );
 
+
   /**
+   *
    * @brief Getter for system matrix
    * @return a reference to linear system matrix of this solver
    */
@@ -173,6 +175,14 @@ public:
    */
   CRSMatrixView< real64 const, globalIndex const > getLocalMatrix() const { return m_localMatrix.toViewConst(); }
 
+
+  template< typename T >
+  void  setupSystem( T & well, DomainPartition & domain,
+                     std::string const & meshBodyName,
+                     MeshLevel const & meshLevel,
+                     WellElementRegion & wellElementRegion,
+                     bool const setSparsity =true );
+
   template< typename T >
   bool
   solveNonlinearSystem( T & well, real64 const & time_n,
@@ -181,8 +191,7 @@ public:
                         DomainPartition & domain,
                         MeshLevel & mesh,
                         ElementRegionManager & elemManager,
-                        WellElementSubRegion & subRegion,
-                        DofManager const & dofManager );
+                        WellElementSubRegion & subRegion );
 
 
   /**
@@ -206,13 +215,7 @@ public:
    * @note While the function is virtual, the base class implementation should be
    *       sufficient for most single-physics solvers.
    */
-  virtual void
-  setupSystem( DomainPartition & domain,
-               DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
-               ParallelVector & rhs,
-               ParallelVector & solution,
-               bool const setSparsity = true );
+
 
   /**
    * @brief Set the sparsity pattern of the linear system matrix
@@ -530,6 +533,7 @@ public:
   bool isoThermalEstimatorEnabled() const { return m_enableIsoThermalEstimator; }
 
   bool getNumActiveCoupledIterations() const { return m_activeCoupledIterations; }
+
 protected:
 
   virtual void postInputInitialization() override;
@@ -623,14 +627,58 @@ private:
 };
 
 template< typename T >
+void WellNewtonSolver::setupSystem( T & well, DomainPartition & domain,
+                                    std::string const & meshBodyName,
+                                    MeshLevel const & meshLevel,
+                                    WellElementRegion & wellElementRegion,
+                                    bool const setSparsity )
+{
+  GEOS_MARK_FUNCTION;
+
+  map< std::pair< string, string >, string_array > meshTargets;
+  string_array regions;
+
+  meshTargets.clear();
+  regions.clear();
+  regions.emplace_back( wellElementRegion.getName() );
+  auto const key = std::make_pair( meshBodyName, meshLevel.getName() );
+  meshTargets[key] = std::move( regions );
+
+  m_dofManager.setDomain( domain );
+  m_dofManager.addField( well.wellElementDofName(),
+                         FieldLocation::Elem,
+                         well.numDofPerWellElement(),
+                         meshTargets );
+
+  m_dofManager.addCoupling( well.wellElementDofName(),
+                            well.wellElementDofName(),
+                            DofManager::Connector::Node );
+
+  m_dofManager.reorderByRank();
+  if( setSparsity )
+  {
+    SparsityPattern< globalIndex > pattern;
+    setSparsityPattern( domain, m_dofManager, m_localMatrix, pattern );
+    m_localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+  }
+  m_localMatrix.setName( this->getName() + "/matrix" );
+
+  m_rhs.setName( this->getName() + "/rhs" );
+  m_rhs.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
+
+  m_solution.setName( this->getName() + "/solution" );
+  m_solution.create( m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
+}
+
+
+template< typename T >
 bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
                                              real64 const & stepDt,
                                              integer const cycleNumber,
                                              DomainPartition & domain,
                                              MeshLevel & mesh,
                                              ElementRegionManager & elemManager,
-                                             WellElementSubRegion & subRegion,
-                                             DofManager const & dofManager )
+                                             WellElementSubRegion & subRegion )
 {
   integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
   integer dtAttempt = m_nonlinearSolverParameters.m_numTimeStepAttempts;
@@ -666,20 +714,21 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
       arrayView1d< real64 > const localRhs = m_rhs.open();
 
 // call assemble to fill the matrix and the rhs
-      well.assembleWellSystem( time_n,
-                               stepDt,
-                               elemManager,
-                               subRegion,
-                               dofManager,
-                               m_localMatrix.toViewConstSizes(),
-                               localRhs );
+      well.assembleSystem( time_n,
+                           stepDt,
+                           cycleNumber,
+                           elemManager,
+                           subRegion,
+                           m_dofManager,
+                           m_localMatrix.toViewConstSizes(),
+                           localRhs );
 
 // apply boundary conditions to system
       well.applyWellBoundaryConditions( time_n,
                                         stepDt,
                                         elemManager,
                                         subRegion,
-                                        dofManager,
+                                        m_dofManager,
                                         localRhs,
                                         m_localMatrix.toViewConstSizes() );
 
@@ -694,14 +743,14 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
       }
     }
 
-    well.outputSingleWellDebug( time_n, stepDt, 0, newtonIter, 0,
-                                mesh, subRegion, dofManager, m_localMatrix.toViewConstSizes(), m_rhs.values()  );
+    // well.outputSingleWellDebug( time_n, stepDt, 0, newtonIter, 0,
+    //                             mesh, subRegion, dofManager, m_localMatrix.toViewConstSizes(), m_rhs.values()  );
     real64 residualNorm = 0;
     {
       Timer timer( m_timers.get_inserted( "convergence check" ) );
 
 // get residual norm
-      residualNorm = well.calculateWellResidualNorm( time_n, stepDt, subRegion, dofManager, m_rhs.values() );
+      residualNorm = well.calculateWellResidualNorm( time_n, stepDt, m_nonlinearSolverParameters, subRegion, m_dofManager, m_rhs.values() );
       if( m_nonlinearSolverParameters.getLogLevel() > 4 )
         GEOS_LOG_LEVEL_RANK_0( logInfo::Convergence,
                                GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
@@ -749,7 +798,7 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
 
 // Compose parallel LA matrix/rhs out of local LA matrix/rhs
 //
-        m_matrix.create( m_localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOS );
+        m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOS );
       }
 
 // Output the linear system matrix/rhs for debugging purposes
@@ -758,7 +807,7 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
 
       debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
 // Solve the linear system
-      solveLinearSystem( dofManager, m_matrix, m_rhs, m_solution );
+      solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
 // Increment the solver statistics for reporting purposes
       getIterationStats().updateNonlinearIteration( m_linearSolverResult.numIterations );
@@ -772,12 +821,12 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
       Timer timer( m_timers.get_inserted( "apply solution" ) );
 
 // Compute the scaling factor for the Newton update
-      scaleFactor = well.scalingForWellSystemSolution( subRegion, dofManager, m_solution.values() );
+      scaleFactor = well.scalingForWellSystemSolution( subRegion, m_dofManager, m_solution.values() );
       if( m_nonlinearSolverParameters.getLogLevel() > 4 )
         GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
                                GEOS_FMT( "        {}: Global solution scaling factor = {}", getName(), scaleFactor ) );
 
-      if( !well.checkWellSystemSolution( subRegion, dofManager, m_solution.values(), scaleFactor ) )
+      if( !well.checkWellSystemSolution( subRegion, m_dofManager, m_solution.values(), scaleFactor ) )
       {
 // TODO try chopping (similar to line search)
         if( m_nonlinearSolverParameters.getLogLevel() > 4 )
@@ -786,7 +835,7 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
       }
 
 // apply the system solution to the fields/variables
-      well.applyWellSystemSolution( dofManager, m_solution.values(), scaleFactor, stepDt, domain, mesh, subRegion );
+      well.applyWellSystemSolution( m_dofManager, m_solution.values(), scaleFactor, stepDt, domain, mesh, subRegion );
     }
 
     {

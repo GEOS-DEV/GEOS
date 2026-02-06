@@ -253,35 +253,6 @@ void WellNewtonSolver::setupDofs( DomainPartition const & GEOS_UNUSED_PARAM( dom
   GEOS_ERROR( "WellNewtonSolver::setupDofs called!. Should be overridden." );
 }
 
-void WellNewtonSolver::setupSystem( DomainPartition & domain,
-                                    DofManager & dofManager,
-                                    CRSMatrix< real64, globalIndex > & localMatrix,
-                                    ParallelVector & rhs,
-                                    ParallelVector & solution,
-                                    bool const setSparsity )
-{
-  GEOS_MARK_FUNCTION;
-
-  dofManager.setDomain( domain );
-
-  setupDofs( domain, dofManager );
-  dofManager.reorderByRank();
-
-  if( setSparsity )
-  {
-    SparsityPattern< globalIndex > pattern;
-    setSparsityPattern( domain, dofManager, localMatrix, pattern );
-    localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  }
-  localMatrix.setName( this->getName() + "/matrix" );
-
-  rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-
-  solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOS );
-}
-
 void WellNewtonSolver::setSparsityPattern( DomainPartition & GEOS_UNUSED_PARAM( domain ),
                                            DofManager & dofManager,
                                            CRSMatrix< real64, globalIndex > & GEOS_UNUSED_PARAM( localMatrix ),

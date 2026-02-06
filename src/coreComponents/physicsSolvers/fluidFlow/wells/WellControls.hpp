@@ -235,6 +235,15 @@ public:
                         ElementRegionManager & elemManager,
                         WellElementSubRegion & subRegion,
                         DofManager const & dofManager );
+
+  void assembleSystem( real64 const & time_n,
+                       real64 const & dt,
+                       integer const cycleNumber,
+                       ElementRegionManager & elemManager,
+                       WellElementSubRegion & subRegion,
+                       DofManager const & dofManager,
+                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                       arrayView1d< real64 > const & localRhs );
   /**
    * @brief assembles the accumulation term for an individual well
    * @param time_n time at the beginning of the time step
@@ -759,6 +768,19 @@ public:
 
   virtual string resElementDofName() const = 0;
 
+  /**
+   * @brief getter for the number of degrees of freedom per well element
+   * @return the number of dofs
+   */
+  localIndex numDofPerWellElement() const { return m_numDofPerWellElement; }
+
+  /**
+   * @brief getter for the number of degrees of freedom per mesh element
+   * @return the number of dofs
+   */
+  localIndex numDofPerResElement() const { return m_numDofPerResElement; }
+
+
   virtual localIndex numFluidComponents() const = 0;
 
   virtual localIndex numFluidPhases() const = 0;
@@ -897,6 +919,7 @@ public:
    */
   bool isoThermalEstimatorEnabled() const { return m_enableIsoThermalEstimator; }
 
+  void setupWellDofs( DomainPartition & domain, WellElementRegion & wellElementRegion, string const & meshBodyName, MeshLevel const & meshLevel );
   WellNewtonSolver & getWellNewtonSolver() { return m_wellNewtonSolver; }
 
   void selectWellConstraint( real64 const & time_n,
@@ -908,7 +931,6 @@ public:
                              ElementRegionManager & elemManager,
                              WellElementSubRegion & subRegion,
                              DofManager const & dofManager );
-
 
 protected:
 
@@ -1020,6 +1042,13 @@ protected:
   bool m_thermalEffectsEnabled;
 
   WellNewtonSolver m_wellNewtonSolver;
+
+
+  /// @brief  Well DofManager
+  /// @details This DofManager is used to store the DOF numbers for the estimator
+  /// @note This DofManager is used in the assembly of the estimators linear system
+  DofManager m_estimatorDoFManager;
+  bool m_dofManagerInitialized;
 };
 
 

@@ -155,7 +155,7 @@ void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion &
 
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
-   setConstitutiveNames ( subRegion );
+  setConstitutiveNames ( subRegion );
   if( m_referenceFluidModelName.empty() )
   {
     m_referenceFluidModelName = getConstitutiveName< MultiFluidBase >( subRegion );
@@ -176,7 +176,7 @@ void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion &
 
 
   WellControls::registerWellDataOnMesh( subRegion );
- 
+
 
 
   string const & fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
@@ -1622,19 +1622,18 @@ CompositionalMultiphaseWell::scalingForWellSystemSolution( WellElementSubRegion 
 
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
 
-  real64 scalingFactor = 1.0;
   real64 maxDeltaPres = 0.0, maxDeltaCompDens = 0.0, maxDeltaTemp = 0.0;
   real64 minPresScalingFactor = 1.0, minCompDensScalingFactor = 1.0, minTempScalingFactor = 1.0;
 
-  scalingForLocalSystemSolution( subRegion,
-                                 dofManager,
-                                 maxDeltaPres,
-                                 maxDeltaCompDens,
-                                 maxDeltaTemp,
-                                 minPresScalingFactor,
-                                 minCompDensScalingFactor,
-                                 minTempScalingFactor,
-                                 localSolution );
+  real64 scalingFactor =scalingForLocalSystemSolution( subRegion,
+                                                       dofManager,
+                                                       maxDeltaPres,
+                                                       maxDeltaCompDens,
+                                                       maxDeltaTemp,
+                                                       minPresScalingFactor,
+                                                       minCompDensScalingFactor,
+                                                       minTempScalingFactor,
+                                                       localSolution );
   string const massUnit = m_useMass ? "kg/m3" : "mol/m3";
   GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
                          GEOS_FMT( "        {}: Max well pressure change: {} Pa (before scaling)",
@@ -1872,7 +1871,7 @@ CompositionalMultiphaseWell::applyWellBoundaryConditions( real64 const time_n,
   //  ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
   //  getLogLevel() >= 1;     // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
 
-  if( isWellOpen( ) )
+  if( !isWellOpen( ) )
   {
     return;
   }

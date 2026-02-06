@@ -49,7 +49,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_surfacePres( -1.0 ),
   m_surfaceTemp( -1.0 ),
   m_isCrossflowEnabled( 1 ),
-  m_initialPressureCoefficient( 0.1 ),
+  m_initialPressureCoefficient( 0.5 ),
   m_currentConstraint( nullptr ),
   m_wellStatus( WellControls::Status::OPEN ),
   m_wellOpen( false ),
@@ -58,7 +58,9 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_estimateSolution( 0 ),
   m_enableIsoThermalEstimator( 0 ),
   /// Nonlinear solver parameters
-  m_wellNewtonSolver( viewKeyStruct::wellNewtonSolverString(), this )
+  m_wellNewtonSolver( viewKeyStruct::wellNewtonSolverString(), this ),
+  m_estimatorDoFManager( name ),
+  m_dofManagerInitialized( false )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
@@ -844,7 +846,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
       // this is related to WHP option which introduces a new BHP constraint
       limitingConstraint = getMinBHPConstraint();
     }
-    else if( !constraintList.empty() )
+    else if( limitingConstraint == nullptr )
     {
       limitingConstraint = constraintList[0];
     }
@@ -912,7 +914,7 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
                         subRegion,
                         dofManager );
       // tjb. this is likely not needed. set in update state
-      constraint->setBHP ( getReference< real64 >(  viewKeyStruct::currentBHPString() ));
+      constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
       if( isCompositional())
       {
         constraint->setPhaseVolumeRates ( getReference< array1d< real64 > >(
@@ -958,6 +960,19 @@ bool WellControls::evaluateConstraints( real64 const & time_n,
 
   return true;
 }
+
+void WellControls::setupWellDofs( DomainPartition & domain, WellElementRegion & wellElementRegion,
+                                  string const & meshBodyName, MeshLevel const & meshLevel )
+{
+  if( !m_dofManagerInitialized )
+  {
+    m_dofManagerInitialized=true;
+    m_wellNewtonSolver.setupSystem( *this, domain, meshBodyName, meshLevel, wellElementRegion );
+
+  }
+}
+
+
 void WellControls::solveConstraint( WellConstraintBase *constraint,
                                     real64 const & time_n,
                                     real64 const & dt,
@@ -1001,16 +1016,15 @@ void WellControls::solveConstraint( WellConstraintBase *constraint,
       WellControls::Control wellControl = getControl();
       MpiWrapper::broadcast( wellControl, owner );
       setControl( wellControl );
-#if 0
-      solveNonlinearSystem( time_n,
-                            dt,
-                            cycleNumber,
-                            domain,
-                            mesh,
-                            elemManager,
-                            subRegion,
-                            dofManager );
-#endif
+
+      m_wellNewtonSolver.solveNonlinearSystem( *this, time_n,
+                                               dt,
+                                               cycleNumber,
+                                               domain,
+                                               mesh,
+                                               elemManager,
+                                               subRegion );
+
       // Store computed well quantities for this constraint
       constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
       if( isCompositional() )
@@ -1024,8 +1038,8 @@ void WellControls::solveConstraint( WellConstraintBase *constraint,
       }
       else
       {
-        constraint->setBHP (  getReference< real64 >( viewKeyStruct::currentBHPString() ));
-        constraint->setTotalVolumeRate (  getReference< real64 >(
+        constraint->setBHP ( getReference< real64 >( viewKeyStruct::currentBHPString() ));
+        constraint->setTotalVolumeRate ( getReference< real64 >(
                                            viewKeyStruct::currentVolRateString() ));
       }
       if( getLogLevel() > 4 )
@@ -1040,4 +1054,24 @@ void WellControls::solveConstraint( WellConstraintBase *constraint,
 
 }
 
+void
+WellControls::assembleSystem( real64 const & time_n,
+                              real64 const & dt,
+                              integer const cycleNumber,
+                              ElementRegionManager & elemManager,
+                              WellElementSubRegion & subRegion,
+                              DofManager const & dofManager,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs )
+{
+  GEOS_UNUSED_VAR( cycleNumber );
+  assembleWellAccumulationTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+
+  assembleWellConstraintTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+
+  assembleWellPressureRelations( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+  computeWellPerforationRates( time_n, dt, elemManager, subRegion );
+  assembleWellFluxTerms( time_n, dt, subRegion, dofManager, localMatrix.toViewConstSizes(), localRhs );
+
+}
 } //namespace geos

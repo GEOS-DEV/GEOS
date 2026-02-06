@@ -129,9 +129,22 @@ public:
   WellControls & getWell( WellElementSubRegion const & subRegion );
 
   /**
-   * @brief get the name of DOF defined on well elements
-   * @return name of the DOF field used by derived solver type
+   * @brief Get a well solver for a given well element sub-region
+   * @param wellControlsName name of well
+   * @return a reference to the well solver
    */
+  WellControls & getWell( std::string const & wellControlsName );
+
+  /**
+   * @brief Get a well solver for a given well element sub-region
+   * @param wellControlsName name of well
+   * @return a reference to the well solver
+   */
+  WellControls const & getWell( std::string const & wellControlsName ) const;
+/**
+ * @brief get the name of DOF defined on well elements
+ * @return name of the DOF field used by derived solver type
+ */
   string wellElementDofName() const;
 
   struct viewKeyStruct : PhysicsSolverBase::viewKeyStruct

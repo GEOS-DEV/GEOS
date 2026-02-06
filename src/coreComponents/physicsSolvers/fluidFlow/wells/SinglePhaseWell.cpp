@@ -69,7 +69,7 @@ SinglePhaseWell::SinglePhaseWell( const string & name,
 
 void SinglePhaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
 {
- 
+
   setConstitutiveNames ( subRegion );
   WellControls::registerDataOnMesh( subRegion );
   //DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -232,22 +232,19 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
   real64 & currentBHP =
     getReference< real64 >( WellControls::viewKeyStruct::currentBHPString() );
 
-  geos::internal::kernelLaunchSelectorThermalSwitch( isThermal(), [&] ( auto ISTHERMAL )
+  // bring everything back to host, capture the scalars by reference
+  forAll< serialPolicy >( 1, [pres,
+                              dens,
+                              dDens,
+                              wellElemGravCoef,
+                              &currentBHP,
+                              &iwelemRef,
+                              &refGravCoef] ( localIndex const )
   {
-    integer constexpr IS_THERMAL = ISTHERMAL();
-    // bring everything back to host, capture the scalars by reference
-    forAll< serialPolicy >( 1, [pres,
-                                dens,
-                                dDens,
-                                wellElemGravCoef,
-                                &currentBHP,
-                                &iwelemRef,
-                                &refGravCoef] ( localIndex const )
-    {
-      real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
-      currentBHP = pres[iwelemRef] + dens[iwelemRef][0] * diffGravCoef;
-    } );
+    real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
+    currentBHP = pres[iwelemRef] + dens[iwelemRef][0] * diffGravCoef;
   } );
+
 
   GEOS_LOG_LEVEL_BY_RANK( logInfo::WellControl,
                           GEOS_FMT( "{}: The BHP (at the specified reference elevation) = {} Pa",
