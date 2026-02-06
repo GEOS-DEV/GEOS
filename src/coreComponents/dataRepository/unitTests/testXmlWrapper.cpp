@@ -387,7 +387,9 @@ TEST( testXmlWrapper, testGroupNamesFormats )
     {
       EXPECT_NO_THROW( xmlWrapper::stringToInputVariable( groupName, input.m_valueToTest, input.m_regex ) )
         << "Parsing input '"<< input.m_valueToTest
-        << "' with regex '" << input.m_regex.m_regexStr << "' didn't throw an InputError as expected.";;
+        << "' with regex '" << input.m_regex.m_regexStr << "' didn't throw an InputError as expected.";
+      string_view stringTrimed = stringutilities::trimSpaces( input.m_valueToTest );
+      EXPECT_STREQ( groupName.c_str(), std::string{stringTrimed}.c_str()  );
     }
   }
   {
