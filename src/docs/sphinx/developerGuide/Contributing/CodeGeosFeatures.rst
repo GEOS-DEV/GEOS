@@ -25,7 +25,7 @@ Documentation
 Wrapper Documentation (User-Oriented)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-All data repository wrappers must be documented with ``setDescription()``.
+**All data repository wrappers must be documented** with ``setDescription()``. When units are known, they must be documented too.
 As much as possible, valid values rules should be provided, and default values should be provided with ``setApplyDefaultValue()``.
 
 .. dropdown:: Example: Wrapper documentation
