@@ -2151,11 +2151,10 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
     m_reservoirStatsAggregator->setDirty(); // TODO: is it useful? are timestep cut properly managed for this call?
 
   Group & meshBodies = domain.getMeshBodies();
-  forDiscretizationOnMeshTargets ( meshBodies, [&] ( string const & meshBodyName,
+  forDiscretizationOnMeshTargets ( meshBodies, [&] ( string const &,
                                                      MeshLevel & mesh,
                                                      string_array const & regionNames )
   {
-    MeshBody & meshBody = domain.getMeshBody( meshBodyName );
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
@@ -2205,7 +2204,7 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
         MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
         fluid.saveConvergedState();
 
-        validateWellConstraints( time_n, dt, meshBodies, meshBody, subRegion );
+        validateWellConstraints( time_n, dt, subRegion );
 
         updateSubRegionState( subRegion );
       }

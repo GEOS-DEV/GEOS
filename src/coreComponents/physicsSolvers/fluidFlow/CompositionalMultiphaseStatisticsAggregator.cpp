@@ -315,7 +315,6 @@ bool StatsAggregator::computeRegionsStatistics( real64 const timeRequest )
 {
   GEOS_MARK_FUNCTION;
 
-  GEOS_LOG_RANK_0( GEOS_FMT( "Computing for {} at stack:{}", m_ownerDataContext.toString(), LvArray::system::stackTrace( true ) ));
   m_warnings.clear();
 
   // computation of sub region stats
@@ -331,7 +330,6 @@ bool StatsAggregator::computeRegionsStatistics( real64 const timeRequest )
       {
         initStats( subRegionStats, timeRequest );
         computeSubRegionRankStats( subRegion, subRegionStats );
-        GEOS_LOG_RANK_0( GEOS_FMT( "Computed {}: {} Pa / {} Pa / {} Pa", subRegionStats.getPath(), subRegionStats.m_minPressure, subRegionStats.m_averagePressure, subRegionStats.m_maxPressure ));
       } );
     } );
   } );
@@ -355,20 +353,16 @@ bool StatsAggregator::computeRegionsStatistics( real64 const timeRequest )
 
         mpiAggregateStats( subRegionStats );
         postAggregateStats( subRegionStats );
-        GEOS_LOG_RANK_0( GEOS_FMT( "Aggregated {}: {} Pa / {} Pa / {} Pa", subRegionStats.getPath(), subRegionStats.m_minPressure, subRegionStats.m_averagePressure, subRegionStats.m_maxPressure ));
       } );
 
       aggregateStats( meshRegionsStats, regionStats );
 
       mpiAggregateStats( regionStats );
       postAggregateStats( regionStats );
-      GEOS_LOG_RANK_0( GEOS_FMT( "Aggregated {}: {} Pa / {} Pa / {} Pa", regionStats.getPath(), regionStats.m_minPressure, regionStats.m_averagePressure, regionStats.m_maxPressure ));
     } );
 
     mpiAggregateStats( meshRegionsStats );
     postAggregateStats( meshRegionsStats );
-    GEOS_LOG_RANK_0( GEOS_FMT( "Aggregated {}: {} Pa / {} Pa / {} Pa",
-                               meshRegionsStats.getPath(), meshRegionsStats.m_minPressure, meshRegionsStats.m_averagePressure, meshRegionsStats.m_maxPressure ));
   } );
 
   m_regionStatsState.m_isDirty = false;

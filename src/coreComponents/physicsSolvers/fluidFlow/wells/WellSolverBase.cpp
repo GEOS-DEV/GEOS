@@ -154,11 +154,10 @@ void WellSolverBase::initializePostSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   FunctionManager & functionManager = FunctionManager::getInstance();
   Group & meshBodies = domain.getMeshBodies();
-  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const & meshBodyName,
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                                     MeshLevel & mesh,
                                                     string_array const & regionNames )
   {
-    MeshBody & meshBody = domain.getMeshBody( meshBodyName );
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,
                                                               [&]( localIndex const,
