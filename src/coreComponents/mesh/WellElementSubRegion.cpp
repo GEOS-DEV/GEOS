@@ -377,107 +377,6 @@ void initializeLocalSearch( MeshLevel const & mesh,
   // note that this reservoir element does not necessarily contains "location"
   eiInit  = ret.second;
 }
-
-/**
- * @brief Search for the reservoir element that contains the well element.
-          To do that, loop over the reservoir elements that are in the neighborhood of (erInit,esrInit,eiInit)
- * @param[in] meshLevel the mesh object (single level only)
- * @param[in] location the location of that we are trying to match with a reservoir element
- * @param[in] targetRegionIndex the target region index for the reservoir element
- * @param[inout] esrMatched the subregion index of the reservoir element that contains "location", if any
- * @param[inout] eiMatched the element index of the reservoir element that contains "location", if any
- * @param[inout] giMatched the element global index of the reservoir element that contains "location", if any
- */
-bool searchLocalElements( MeshLevel const & mesh,
-                          real64 const (&location)[3],
-                          localIndex const & searchDepth,
-                          localIndex const & targetRegionIndex,
-                          localIndex & esrMatched,
-                          localIndex & eiMatched,
-                          globalIndex & giMatched,
-                          real64 const geomTol )
-{
-  ElementRegionBase const & region = mesh.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
-
-  bool resElemFound = false;
-  for( localIndex esr = 0; esr < region.numSubRegions(); ++esr )
-  {
-    ElementSubRegionBase const & subRegionBase = region.getSubRegion( esr );
-    region.applyLambdaToContainer< CellElementSubRegion, SurfaceElementSubRegion >( subRegionBase, [&]( auto const & subRegion )
-    {
-      GEOS_LOG_RANK_0( GEOS_FMT( "  searching well connections with region/subregion: {}/{}", region.getName(), subRegion.getName() ) );
-
-      // first, we search for the reservoir element that is the *closest* from the center of well element
-      // note that this reservoir element does not necessarily contain the center of the well element
-      // this "init" reservoir element will be used later to find the reservoir element that
-      // contains the well element
-      localIndex eiInit = -1;
-
-      initializeLocalSearch( mesh, location, targetRegionIndex, esr, eiInit );
-
-      if( eiInit < 0 ) // nothing found, skip the rest
-        return;
-
-      // loop over the reservoir elements that are in the neighborhood of (esrInit,eiInit)
-      // search locally, starting from the location of the previous perforation
-      // the assumption here is that perforations have been entered in order of depth
-
-      SortedArray< localIndex >  nodes;
-      SortedArray< globalIndex > elements;
-
-      // here is how the search is done:
-      //   1 - We check if "location" is within the "init" reservoir element defined by (erInit,esrMatched,eiMatched)
-      //   2 - If yes, stop
-      //     - If not, a) collect the nodes of the reservoir element defined by (erInit,esrMatched,eiMatched)
-      //               b) use these nodes to grab the neighbors of (erInit,esrMatched,eiMatched)
-      //               c) check if "location" is within the neighbors. If not, grab the neighbors of the neighbors, and so
-      // on...
-
-      // collect the nodes of the current element
-      // they will be used to access the neighbors and check if they contain the perforation
-      collectElementNodes( subRegion, eiInit, nodes );
-
-      // if no match is found, enlarge the neighborhood m_searchDepth'th times
-      for( localIndex d = 0; d < searchDepth; ++d )
-      {
-        localIndex nNodes = nodes.size();
-
-        // search the reservoir elements that can be accessed from the set "nodes"
-        // stop if a reservoir element containing the perforation is found
-        // if not, enlarge the set "nodes"
-
-        resElemFound =
-          visitNeighborElements< TYPEOFREF( subRegion ) >( mesh,
-                                                           location,
-                                                           nodes,
-                                                           elements,
-                                                           targetRegionIndex,
-                                                           esr,
-                                                           eiMatched,
-                                                           giMatched,
-                                                           geomTol );
-
-        if( resElemFound || nNodes == nodes.size())
-        {
-          if( resElemFound )
-          {
-            esrMatched = esr;
-            GEOS_LOG( GEOS_FMT( "    found {}/{}/{}", region.getName(), subRegion.getName(), giMatched ) );
-          }
-          return;
-        }
-      }
-    } );
-
-    if( resElemFound )
-    {
-      break;
-    }
-  }
-
-  return resElemFound;
-}
-
 }
 
 void WellElementSubRegion::generate( MeshLevel & mesh,
@@ -583,12 +482,106 @@ void WellElementSubRegion::generate( MeshLevel & mesh,
 }
 
 
+bool WellElementSubRegion::searchLocalElements( MeshLevel const & mesh,
+                                                real64 const (&location)[3],
+                                                localIndex const & searchDepth,
+                                                localIndex const & targetRegionIndex,
+                                                localIndex & esrMatched,
+                                                localIndex & eiMatched,
+                                                globalIndex & giMatched,
+                                                real64 const geomTol )
+{
+  ElementRegionBase const & region = mesh.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
+
+  bool resElemFound = false;
+  for( localIndex esr = 0; esr < region.numSubRegions(); ++esr )
+  {
+    ElementSubRegionBase const & subRegionBase = region.getSubRegion( esr );
+    region.applyLambdaToContainer< CellElementSubRegion, SurfaceElementSubRegion >( subRegionBase, [&]( auto const & subRegion )
+    {
+      GEOS_LOG_RANK_0( GEOS_FMT( "  searching well connections with region/subregion: {}/{}", region.getName(), subRegion.getName() ) );
+
+      // first, we search for the reservoir element that is the *closest* from the center of well element
+      // note that this reservoir element does not necessarily contain the center of the well element
+      // this "init" reservoir element will be used later to find the reservoir element that
+      // contains the well element
+      localIndex eiInit = -1;
+
+      initializeLocalSearch( mesh, location, targetRegionIndex, esr, eiInit );
+
+      if( eiInit < 0 ) // nothing found, skip the rest
+        return;
+
+      // loop over the reservoir elements that are in the neighborhood of (esrInit,eiInit)
+      // search locally, starting from the location of the previous perforation
+      // the assumption here is that perforations have been entered in order of depth
+
+      SortedArray< localIndex >  nodes;
+      SortedArray< globalIndex > elements;
+
+      // here is how the search is done:
+      //   1 - We check if "location" is within the "init" reservoir element defined by (erInit,esrMatched,eiMatched)
+      //   2 - If yes, stop
+      //     - If not, a) collect the nodes of the reservoir element defined by (erInit,esrMatched,eiMatched)
+      //               b) use these nodes to grab the neighbors of (erInit,esrMatched,eiMatched)
+      //               c) check if "location" is within the neighbors. If not, grab the neighbors of the neighbors, and so
+      // on...
+
+      // collect the nodes of the current element
+      // they will be used to access the neighbors and check if they contain the perforation
+      collectElementNodes( subRegion, eiInit, nodes );
+
+      // if no match is found, enlarge the neighborhood m_searchDepth'th times
+      for( localIndex d = 0; d < searchDepth; ++d )
+      {
+        localIndex nNodes = nodes.size();
+
+        // search the reservoir elements that can be accessed from the set "nodes"
+        // stop if a reservoir element containing the perforation is found
+        // if not, enlarge the set "nodes"
+
+        resElemFound =
+          visitNeighborElements< TYPEOFREF( subRegion ) >( mesh,
+                                                           location,
+                                                           nodes,
+                                                           elements,
+                                                           targetRegionIndex,
+                                                           esr,
+                                                           eiMatched,
+                                                           giMatched,
+                                                           geomTol );
+
+        if( resElemFound || nNodes == nodes.size())
+        {
+          if( resElemFound )
+          {
+            esrMatched = esr;
+            m_perfoGlobalIndex = giMatched;
+            m_regionName = region.getName();
+            m_subRegionName = subRegion.getName();
+            GEOS_LOG( GEOS_FMT( "    found {}/{}/{}", region.getName(), subRegion.getName(), giMatched ) );
+          }
+          return;
+        }
+      }
+    } );
+
+    if( resElemFound )
+    {
+      break;
+    }
+  }
+
+  return resElemFound;
+}
+
+
 void WellElementSubRegion::assignUnownedElementsInReservoir( MeshLevel & mesh,
                                                              LineBlockABC const & lineBlock,
                                                              SortedArray< globalIndex > const & unownedElems,
                                                              SortedArray< globalIndex > & localElems,
                                                              arrayView1d< integer > & elemStatusGlobal,
-                                                             real64 const geomTol ) const
+                                                             real64 const geomTol )
 {
   ElementRegionManager const & elemManager = mesh.getElemManager();
   // get the well and reservoir element coordinates

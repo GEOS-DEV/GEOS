@@ -20,6 +20,9 @@
 
 #include "common/DataLayouts.hpp"
 #include "common/TimingMacros.hpp"
+#include "common/logger/Logger.hpp"
+#include "mesh/WellElementRegion.hpp"
+#include "mesh/WellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "SurfaceElementRegion.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -226,6 +229,29 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
                    ", subregion " << subRegion.getDataContext(),
                    getDataContext() );
 
+  } );
+
+
+  meshLevel.getElemManager().forElementRegions< WellElementRegion >( [&]( WellElementRegion & region ){
+    TableData dataPerforation;
+    TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table", region.getName()),
+                                          { "Perforation no.", "Coordinates", "Well element no.", "Cell region", "Cell sub-region", "Cell ID"  } );
+    region.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion ){
+      for( globalIndex iperf = 0; iperf < subRegion.getPerforationData()->getNumPerforationsGlobal(); ++iperf )
+      {
+        if( subRegion.getGlobalIndex() != -1 )
+        {
+          arrayView2d< real64 > const perfLocation = subRegion.getPerforationData()->getLocation();
+          dataPerforation.addRow( iperf,
+                                  perfLocation[iperf],
+                                  subRegion.getPerforationData()->getWellElements()[iperf],
+                                  subRegion.getRegionName(),
+                                  subRegion.getSubRegionName(), subRegion.getGlobalIndex());
+        }
+      }
+      TableTextFormatter formatter( layoutPerforation );
+      GEOS_LOG_RANK_0( formatter.toString( dataPerforation ));
+    } );
   } );
 
   // communicate to rebuild global node info since we modified global ordering
