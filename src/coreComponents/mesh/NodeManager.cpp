@@ -61,6 +61,7 @@ NodeManager::NodeManager( string const & name,
 
 void NodeManager::resize( localIndex const newSize )
 {
+  GEOS_MARK_FUNCTION;
   m_toFacesRelation.resize( newSize, 2 * getFaceMapOverallocation() );
   m_toEdgesRelation.resize( newSize, 2 * getEdgeMapOverallocation() );
   m_toElements.m_toElementRegion.resize( newSize, 2 * getElemMapOverAllocation() );

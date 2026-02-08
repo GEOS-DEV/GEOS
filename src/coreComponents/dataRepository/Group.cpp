@@ -85,6 +85,9 @@ void Group::deregisterWrapper( string const & name )
 
 void Group::resize( indexType const newSize )
 {
+  GEOS_MARK_FUNCTION
+
+  GEOS_MARK_BEGIN( "resize this group");
   forWrappers( [newSize] ( WrapperBase & wrapper )
   {
     if( wrapper.sizedFromParent() == 1 )
@@ -92,7 +95,9 @@ void Group::resize( indexType const newSize )
       wrapper.resize( newSize );
     }
   } );
+  GEOS_MARK_END("resize this group");
 
+  GEOS_MARK_BEGIN( "resize subgroups");
   forSubGroups( [newSize] ( Group & subGroup )
   {
     if( subGroup.sizedFromParent() == 1 )
@@ -100,6 +105,7 @@ void Group::resize( indexType const newSize )
       subGroup.resize( newSize );
     }
   } );
+  GEOS_MARK_END("resize subgroups");
 
   m_size = newSize;
   if( m_size > m_capacity )
@@ -122,7 +128,7 @@ void Group::reserve( indexType const newSize )
   {
     if( subGroup.sizedFromParent() == 1 )
     {
-      subGroup.resize( newSize );
+      subGroup.reserve( newSize );
     }
   } );
 

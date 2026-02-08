@@ -171,6 +171,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
                                                     ArrayOfArraysView< localIndex const >  const & originalFaceToEdgeMap,
                                                     localIndex const faceIndices[2] )
 {
+  GEOS_MARK_FUNCTION;
   localIndex const kfe = this->addToSurfaceMesh( faceManager, faceIndices );
 
   FaceElementSubRegion & subRegion = this->getUniqueSubRegion< FaceElementSubRegion >();

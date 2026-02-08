@@ -94,6 +94,9 @@ public:
 
   ///@}
 
+
+  virtual void reserve( localIndex const newSize ) override;
+
   /**
    * @brief Resize the EdgeManager object and all it members.
    * @details the size of the EdgeMananager is the number of edges
