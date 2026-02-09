@@ -1107,9 +1107,6 @@ merge2D3DCellsAndRedistribute( vtkSmartPointer< vtkDataSet > redistributed3D,
 
   // All-gather global IDs to all ranks
   array1d< int64_t > allGlobalIds( totalCells );
-  //MPI_Allgatherv( localGlobalIds.data(), static_cast< int >( local3DCells ), MPI_INT64_T,
-  //                allGlobalIds.data(), cellCounts.data(), offsets.data(), MPI_INT64_T,
-  //                comm );
   MpiWrapper::allgatherv( localGlobalIds.data(), static_cast< int >( local3DCells ),
                           allGlobalIds.data(), cellCounts.data(), offsets.data(),
                           comm );
