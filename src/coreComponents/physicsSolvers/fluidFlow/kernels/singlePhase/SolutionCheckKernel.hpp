@@ -60,7 +60,7 @@ struct SolutionCheckKernel
         localIndex const lid = dofNumber[ei] - rankOffset;
         real64 const newPres = pres[ei] + scalingFactor * localSolution[lid];
 
-        if( newPres < 0.0 )
+        if( newPres <= 0.0 )
         {
           minNegPres.min( newPres );
           negPressureIds.collectElement( atomicPolicy{}, { ei, newPres } );
