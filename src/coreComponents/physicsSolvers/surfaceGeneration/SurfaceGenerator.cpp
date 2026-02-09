@@ -672,6 +672,10 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
         }
 //       std::cout<<" done."<<std::endl;
       }
+      
+      SurfaceElementRegion & fractureElementRegion = elementManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+      fractureElementRegion.updateSets( faceManager );
+
     }
 
 #ifdef GEOS_USE_MPI

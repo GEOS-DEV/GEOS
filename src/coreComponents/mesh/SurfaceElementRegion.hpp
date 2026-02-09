@@ -123,6 +123,8 @@ public:
                                 ArrayOfArraysView< localIndex const > const & originalFaceToEdges,
                                 localIndex const faceIndices[2] );
 
+  void updateSets( FaceManager const & faceManager );
+
   ///@}
 
 

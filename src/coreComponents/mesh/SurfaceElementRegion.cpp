@@ -89,6 +89,7 @@ void SurfaceElementRegion::initializePreSubGroups()
 localIndex SurfaceElementRegion::addToSurfaceMesh( FaceManager const * const faceManager,
                                                    localIndex const faceIndices[2] )
 {
+  GEOS_MARK_FUNCTION;
   localIndex rval = -1;
   arrayView2d< localIndex const > const faceToElementRegion = faceManager->elementRegionList();
   arrayView2d< localIndex const > const faceToElementSubRegion = faceManager->elementSubRegionList();
@@ -191,6 +192,7 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
     connectedEdges.insert( originalFaceToEdgeMap( faceIndex, a ) );
   }
 
+
   // Fill the connectivity between FaceElement entries. This is essentially a copy of the
   // edgesToFaces map, but with differing offsets.
   for( auto const & edge : connectedEdges )
@@ -214,14 +216,26 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
     subRegion.m_recalculateConnectionsFor2dFaces.insert( connectorIndex );
   }
 
+
   subRegion.calculateSingleElementGeometricQuantities( kfe, faceManager->faceArea() );
 
+  return kfe;
+}
+
+void SurfaceElementRegion::updateSets( FaceManager const & faceManager )
+{
+  GEOS_MARK_FUNCTION;
   // update the sets
+  FaceElementSubRegion & subRegion = this->getUniqueSubRegion< FaceElementSubRegion >();
   FaceElementSubRegion::FaceMapType const & faceMap = subRegion.faceList();
-  for( auto const & setIter : faceManager->sets().wrappers() )
+
+  // loop over all sets in the faceManaager and if the face is in the set, add the face element to the corresponding set in the subregion
+  for( auto const & setIter : faceManager.sets().wrappers() )
   {
-    SortedArrayView< localIndex const > const & faceSet = faceManager->sets().getReference< SortedArray< localIndex > >( setIter.first );
+
+    SortedArrayView< localIndex const > const & faceSet = faceManager.sets().getReference< SortedArray< localIndex > >( setIter.first );
     SortedArray< localIndex > & faceElementSet = subRegion.sets().registerWrapper< SortedArray< localIndex > >( setIter.first ).reference();
+
     for( localIndex a = 0; a < faceMap.size( 0 ); ++a )
     {
       if( faceSet.count( faceMap[a][0] ) )
@@ -230,8 +244,6 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
       }
     }
   }
-
-  return kfe;
 }
 
 
