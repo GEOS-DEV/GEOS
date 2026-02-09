@@ -216,6 +216,7 @@ TEST_P( ConsistencyTest, Run )
 
     fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
+      auto const & fractureTraction = subRegion.getField< fields::contact::traction >();
       auto const & faces = subRegion.faceList();
       localIndex n_facets = faces.size();
       for( localIndex k=0; k < n_facets; ++k )
@@ -305,6 +306,31 @@ TEST_P( ConsistencyTest, Run )
         real64 const norm_te = std::sqrt( std::pow( te_x, 2 ) + std::pow( te_y, 2 ) + std::pow( te_z, 2 ) );
         real64 const err = ( norm_te > 1.0e-16 ) ? err_abs / norm_te : err_abs;
         EXPECT_LT( err, relative_tolerance ) << "Element " << k << " failed. t_sim=(" << ts_x << ", " << ts_y << ", " << ts_z << ") t_exact=(" << te_x << ", " << te_y << ", " << te_z << ")";
+
+        // Verify fracture traction
+        real64 tf_n = fractureTraction( k, 0 );
+        real64 tf_t1 = fractureTraction( k, 1 );
+        real64 tf_t2 = fractureTraction( k, 2 );
+
+        // Project exact traction onto normal
+        real64 te_n = te_x * nx + te_y * ny + te_z * nz;
+
+        // Project exact traction onto tangential plane
+        real64 te_tang_x = te_x - te_n * nx;
+        real64 te_tang_y = te_y - te_n * ny;
+        real64 te_tang_z = te_z - te_n * nz;
+        real64 te_tang_mag = std::sqrt( te_tang_x*te_tang_x + te_tang_y*te_tang_y + te_tang_z*te_tang_z );
+
+        real64 tf_tang_mag = std::sqrt( tf_t1*tf_t1 + tf_t2*tf_t2 );
+
+        real64 const err_n = std::fabs( tf_n - te_n );
+        real64 const err_t = std::fabs( tf_tang_mag - te_tang_mag );
+
+        real64 const rel_err_n = ( norm_te > 1.0e-16 ) ? err_n / norm_te : err_n;
+        real64 const rel_err_t = ( norm_te > 1.0e-16 ) ? err_t / norm_te : err_t;
+
+        EXPECT_LT( rel_err_n, relative_tolerance ) << "Element " << k << " failed normal traction check. tf_n=" << tf_n << " te_n=" << te_n;
+        EXPECT_LT( rel_err_t, relative_tolerance ) << "Element " << k << " failed tangential traction check. tf_t=" << tf_tang_mag << " te_t=" << te_tang_mag;
       }
     } );
 
