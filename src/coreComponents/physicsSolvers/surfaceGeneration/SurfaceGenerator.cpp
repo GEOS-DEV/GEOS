@@ -939,6 +939,26 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   }
 
+  // Log statistics about the mesh splitting operation
+  if( rval > 0 )
+  {
+    // Get the fracture subregion to count new fracture elements
+    SurfaceElementRegion const & fractureRegion = elementManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
+    FaceElementSubRegion const & fractureSubRegion = fractureRegion.getUniqueSubRegion< FaceElementSubRegion >();
+
+    localIndex const localNumFractureElements = fractureSubRegion.size();
+
+    // Gather global statistics across all MPI ranks
+    localIndex const globalNumFractureElements = MpiWrapper::sum( localNumFractureElements );
+    localIndex const globalNumSplits = MpiWrapper::sum( static_cast< localIndex >( rval ) );
+
+    GEOS_LOG_RANK_0( GEOS_FMT( "SurfaceGenerator: Mesh splitting completed.\n"
+                               "  Number of nodes split (this step):     {:>8}\n"
+                               "  Total number of fracture elements:     {:>8}",
+                               globalNumSplits,
+                               globalNumFractureElements ) );
+  }
+
   return rval;
 }
 
