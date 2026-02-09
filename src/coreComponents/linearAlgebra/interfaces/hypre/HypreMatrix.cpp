@@ -704,7 +704,7 @@ void HypreMatrix::multiplyP1tAP2( HypreMatrix const & P1,
   HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRMatrixRAPKT( P1.unwrapped(),
                                                                  m_parcsr_mat,
                                                                  P2.unwrapped(),
-                                                                 0 );
+                                                                 0, 1 );
 
   dst.parCSRtoIJ( dst_parcsr );
 }
