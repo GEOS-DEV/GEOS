@@ -474,7 +474,8 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
   {
     SpatialPartition & partition = dynamicCast< SpatialPartition & >( domain.getReference< PartitionBase >( dataRepository::keys::partitionManager ) );
     int const tileColor=partition.getColor();
-    int const numTileColors=partition.numColor();
+    int const numTileColorsLocal=partition.numColor();
+    int const numTileColors = MpiWrapper::allReduce( numTileColorsLocal, MpiWrapper::Reduction::Max );
 
     rval = separationDriver( domain,
                              meshLevel,
@@ -940,7 +941,8 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   }
 
   // Log statistics about the mesh splitting operation
-  if( rval > 0 )
+  int const globalRval = MpiWrapper::allReduce( rval, MpiWrapper::Reduction::Max );
+  if( globalRval > 0 )
   {
     // Get the fracture subregion to count new fracture elements
     SurfaceElementRegion const & fractureRegion = elementManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName );
