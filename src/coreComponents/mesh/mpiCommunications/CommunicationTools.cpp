@@ -928,9 +928,9 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
 
   removeUnusedNeighbors( nodeManager, edgeManager, faceManager, elemManager, neighbors );
 
-  nodeManager.compressRelationMaps();
-  edgeManager.compressRelationMaps();
-  faceManager.compressRelationMaps();
+  // nodeManager.compressRelationMaps();
+  // edgeManager.compressRelationMaps();
+  // faceManager.compressRelationMaps();
 }
 
 void CommunicationTools::synchronizePackSendRecvSizes( string_array const & fieldNames,

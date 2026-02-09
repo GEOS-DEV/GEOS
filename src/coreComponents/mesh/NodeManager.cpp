@@ -81,11 +81,25 @@ void NodeManager::reserve( localIndex const newSize )
 void NodeManager::resize( localIndex const newSize )
 {
   GEOS_MARK_FUNCTION;
+  GEOS_MARK_BEGIN( "NodeManager::resize::m_toFacesRelation::m_toFacesRelation" );
   m_toFacesRelation.resize( newSize, 2 * getFaceMapOverallocation() );
+  GEOS_MARK_END( "NodeManager::resize::m_toFacesRelation::m_toFacesRelation" );
+
+  GEOS_MARK_BEGIN( "NodeManager::resize::m_toFacesRelation::m_toEdgesRelation" );
   m_toEdgesRelation.resize( newSize, 2 * getEdgeMapOverallocation() );
+  GEOS_MARK_END( "NodeManager::resize::m_toFacesRelation::m_toEdgesRelation" );
+
+  GEOS_MARK_BEGIN( "NodeManager::resize::m_toFacesRelation::m_toElements.m_toElementRegion" );
   m_toElements.m_toElementRegion.resize( newSize, 2 * getElemMapOverAllocation() );
+  GEOS_MARK_END( "NodeManager::resize::m_toFacesRelation::m_toElements.m_toElementRegion" );
+
+  GEOS_MARK_BEGIN( "NodeManager::resize::m_toFacesRelation::m_toElements.m_toElementSubRegion" );
   m_toElements.m_toElementSubRegion.resize( newSize, 2 * getElemMapOverAllocation() );
+  GEOS_MARK_END( "NodeManager::resize::m_toFacesRelation::m_toElements.m_toElementSubRegion" );
+
+  GEOS_MARK_BEGIN( "NodeManager::resize::m_toFacesRelation::m_toElements.m_toElementIndex" );
   m_toElements.m_toElementIndex.resize( newSize, 2 * getElemMapOverAllocation() );
+  GEOS_MARK_END( "NodeManager::resize::m_toFacesRelation::m_toElements.m_toElementIndex" );
   ObjectManagerBase::resize( newSize );
 }
 

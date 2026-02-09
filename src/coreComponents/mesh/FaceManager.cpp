@@ -81,8 +81,8 @@ void FaceManager::reserve( localIndex const newSize )
 void FaceManager::resize( localIndex const newSize )
 {
   GEOS_MARK_FUNCTION;
-  // m_toNodesRelation.resize( newSize, 2 * nodeMapOverallocation() );
-  // m_toEdgesRelation.resize( newSize, 2 * edgeMapOverallocation() );
+  m_toNodesRelation.resize( newSize, 2 * nodeMapOverallocation() );
+  m_toEdgesRelation.resize( newSize, 2 * edgeMapOverallocation() );
   ObjectManagerBase::resize( newSize );
 }
 
