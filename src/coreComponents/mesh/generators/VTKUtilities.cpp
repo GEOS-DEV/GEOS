@@ -1713,8 +1713,8 @@ redistributeMeshes( integer const logLevel,
 
       GEOS_LOG_RANK_0( "------------------------------------------------" );
       GEOS_LOG_RANK_0( "|Total | " << std::setw( 9 ) << sum3D << " | "
-                                 << std::setw( 9 ) << sum2D << " | "
-                                 << std::setw( 13 ) << (sum3D + sum2D) << " |" );
+                                   << std::setw( 9 ) << sum2D << " | "
+                                   << std::setw( 13 ) << (sum3D + sum2D) << " |" );
       GEOS_LOG_RANK_0( "------------------------------------------------" );
     }
   }
