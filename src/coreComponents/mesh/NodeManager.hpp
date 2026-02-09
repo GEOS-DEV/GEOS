@@ -98,6 +98,9 @@ public:
 
   ///@}
 
+
+  virtual void reserve( localIndex const newSize ) override;
+
   /**
    * @brief Resize the NodeManager, and all its member vectors that relate nodes to faces, to edges, and to elements.
    * @details the size of the NodeManager is the number of nodes
