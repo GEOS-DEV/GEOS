@@ -243,7 +243,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
             phaseMinHistoricalVolFraction2[0][1] = phaseMinHistVolFrac2[1];
           }
           else
-
+          {
             phaseMaxHistoricalVolFraction2[0][0] = saturations[1];
             phaseMaxHistoricalVolFraction2[0][1] = 1.0 - saturations[1];
             phaseMinHistoricalVolFraction2[0][0] = saturations[1];
