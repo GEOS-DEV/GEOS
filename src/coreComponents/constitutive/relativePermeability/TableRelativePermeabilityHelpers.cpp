@@ -81,7 +81,7 @@ TableRelativePermeabilityHelpers::validateRelativePermeabilityTable( TableFuncti
     if( isZero( relPerm[i-1] ) && !isZero( relPerm[i] ) )
     {
       phaseMinVolFrac = phaseVolFrac[i-1];
-      phaseRelPermMinEndPoint = 0.;
+      phaseRelPermMinEndPoint = relPerm[i-1];
 
     }
   }

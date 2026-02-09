@@ -26,11 +26,11 @@
 #include "constitutive/fluid/twophaseimmisciblefluid/TwoPhaseImmiscibleFluid.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
 #include "physicsSolvers/fluidFlow/ImmiscibleMultiphaseFlow.hpp"
-#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
+#include "integrationTests/fluidFlowTests/testCompFlowUtils.hpp"
 #include "constitutive/unitTests/FluidModelTest.hpp"
 #include "constitutive/unitTests/FluidModelTest_impl.hpp"
 #include "common/initializeEnvironment.hpp"
-#include "unitTests/constitutiveTests/constitutiveTestHelpers.hpp"
+#include "constitutive/relativePermeability/unitTests/constitutiveTestHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureFields.hpp"
 
@@ -417,7 +417,7 @@ CapillaryPressureBase & makeBrooksCoreyCapPressureTwoPhase1( string const & name
 
   array1d< real64 > & phaseEntryPressure = capPressure.getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseEntryPressureString() );
   phaseEntryPressure.resize( 2 );
-  phaseEntryPressure[0] = 0.75e5; phaseEntryPressure[1] = 0;
+  phaseEntryPressure[0] = 4.0e3; phaseEntryPressure[1] = 0;
 
   real64 & capPressureEpsilon = capPressure.getReference< real64 >( BrooksCoreyCapillaryPressure::viewKeyStruct::capPressureEpsilonString() );
   capPressureEpsilon = 1.0e-8;
@@ -445,7 +445,7 @@ CapillaryPressureBase & makeBrooksCoreyCapPressureTwoPhase2( string const & name
 
   array1d< real64 > & phaseEntryPressure = capPressure.getReference< array1d< real64 > >( BrooksCoreyCapillaryPressure::viewKeyStruct::phaseEntryPressureString() );
   phaseEntryPressure.resize( 2 );
-  phaseEntryPressure[0] = 0.5e5; phaseEntryPressure[1] = 0;
+  phaseEntryPressure[0] = 2.0e3; phaseEntryPressure[1] = 0;
 
   real64 & capPressureEpsilon = capPressure.getReference< real64 >( BrooksCoreyCapillaryPressure::viewKeyStruct::capPressureEpsilonString() );
   capPressureEpsilon = 1e-8;
@@ -533,22 +533,30 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalNonlinearSolverConvergence )
   std::vector< TwoPhaseImmiscibleFluid * > fluids = { &fluid, &fluid };
     // real64 uT = 3.2864545889999906e-05;
   
-  // real64 uT = -3.3e-5;
- real64 uT = 1e-17;
+   real64 uT = 3.3e-2;
 // real64 uT = 1e-7;
   stdVector< real64 > saturations = {0.2, 0.4};
   stdVector< real64 > trappedSats1 = {phase0MinSat1, phase1MinSat1};
   stdVector< real64 > trappedSats2 = {phase0MinSat2, phase1MinSat2};
   stdVector< real64 > pressures = {1e7, 1e7};
   stdVector< real64 > JFMultipliers = {45016.662822296035, 30011.108548197357};
+  stdVector< fields::cappres::ModeIndexType > modes = {static_cast<fields::cappres::ModeIndexType>(0), static_cast<fields::cappres::ModeIndexType>(0)};
   stdVector< real64 > transHats = {1.9738466000000002e-12, 4.4411548500000007e-12};
   stdVector< real64 > dTransHats_dP = {0.0, 0.0};
   stdVector< real64 > gravCoefHats = {490.5, 490.5};
   stdVector< real64 > gravCoefs = {465.97500000000002, 515.02499999999998};
-
+  stdVector< real64 > cellCenterDuT = {0.0, 0.0, 0.0, 0.0}; // duT_dP[0], duT_dP[1], duT_dS[0], duT_dS[1]
+  stdVector< real64 > cellCenterDens = {1000.0, 800.0}; // density for each phase
+  stdVector< real64 > cellCenterDens_dP = {0.0, 0.0, 0.0, 0.0}; // dDens_dP[0][0], dDens_dP[0][1], dDens_dP[1][0], dDens_dP[1][1]
+  stdVector< real64 > phaseMaxHistVolFrac1 = {0.0, 0.0};
+  stdVector< real64 > phaseMinHistVolFrac1 = {0.0, 0.0};
+  stdVector< real64 > phaseMaxHistVolFrac2 = {0.0, 0.0};
+  stdVector< real64 > phaseMinHistVolFrac2 = {0.0, 0.0};
 
   stdVector< real64 > phi = {0.0, 0.0};
-  stdVector< real64 > grad_phi = {0.0, 0.0, 0.0, 0.0};
+  stdVector< real64 > grad_phi_P = {0.0, 0.0, 0.0, 0.0};
+  stdVector< real64 > grad_phi_S = {0.0, 0.0, 0.0, 0.0};
+  bool converged = false;
 
   std::ofstream outFile( "local_solver_results.csv" );
 
@@ -574,51 +582,130 @@ TEST_F( ImmiscibleInterfaceConditionsTest, LocalNonlinearSolverConvergence )
           real64 const start_sat = 0.0;
           real64 const end_sat   = 1.0;
           real64 const dS        = 1e-2;
-              real64 Si = 0.0;
-               real64 Sj = 0.9;
+              // real64 Si = 0.0;
+              //  real64 Sj = 0.9;
           
-          // for( real64 Si = start_sat; Si <= end_sat + 1e-8; Si += dS )
-          // {
-          //   for( real64 Sj = start_sat; Sj <= end_sat + 1e-8; Sj += dS )
-          //   {
+          for( real64 Si = start_sat; Si <= end_sat + 1e-8; Si += dS )
+          {
+            for( real64 Sj = start_sat; Sj <= end_sat + 1e-8; Sj += dS )
+            {
               saturations[0] = Si;
               saturations[1] = Sj;
 
               auto t0 = std::chrono::high_resolution_clock::now();
 
 // Call the GEOS local solver
-    geos::immiscibleMultiphaseKernels::local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, transHats, dTransHats_dP, gravCoefHats, gravCoefs,
-      relPerms, capPressures, fluids, phi, grad_phi );
+    geos::immiscibleMultiphaseKernels::local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, modes, transHats, dTransHats_dP, gravCoefHats, gravCoefs,
+      cellCenterDuT, cellCenterDens, cellCenterDens_dP, relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged,
+      phaseMaxHistVolFrac1, phaseMinHistVolFrac1, phaseMaxHistVolFrac2, phaseMinHistVolFrac2 );
 
 auto t1 = std::chrono::high_resolution_clock::now();
 std::chrono::duration<double> elapsed = t1 - t0;
-std::cout << "Local solver time: " << elapsed.count() << " s" << std::endl;
-
+// std::cout << "Local solver time: " << elapsed.count() << " s" << std::endl;
+EXPECT_TRUE( converged ) << "Local solver diverged for saturations Si=" << Si << ", Sj=" << Sj;
 
                   // Write data to the file
                   outFile << GEOS_FMT( "{:10.10e}", saturations[0] );
                   outFile << GEOS_FMT( ",{:10.10e}", saturations[1] );
                   outFile << GEOS_FMT( ",{:10.10e}", phi[0] );
                   outFile << GEOS_FMT( ",{:10.10e}", phi[1] );
-                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi[0] );
-                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi[1] );
-                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi[2] );
-                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi[3] );
+                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi_P[0] );
+                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi_P[1] );
+                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi_P[2] );
+                  outFile << GEOS_FMT( ",{:10.10e}", grad_phi_P[3] );
                   outFile << std::endl;
                   phi[0] = 0;
                   phi[1] = 0;
-                  grad_phi[0] = 0;
-                  grad_phi[1] = 0;
-                  grad_phi[2] = 0;
-                  grad_phi[3] = 0;
+                  grad_phi_P[0] = 0;
+                  grad_phi_P[1] = 0;
+                  grad_phi_P[2] = 0;
+                  grad_phi_P[3] = 0;
+                  grad_phi_S[0] = 0;
+                  grad_phi_S[1] = 0;
+                  grad_phi_S[2] = 0;
+                  grad_phi_S[3] = 0;
 
-//   }
-// }
+  }
+}
 
   outFile.close();
 
 } );
 }
+
+TEST_F( ImmiscibleInterfaceConditionsTest, LocalSolverResults )
+{
+
+  // using Base = FluidModelTest< TwoPhaseImmiscibleFluid, 2 >;
+  createFluid( "fluid", [this]( TwoPhaseImmiscibleFluid & fluid ){
+    makeTwoPhaseImmiscibleFluid( fluid );
+ 
+  // getting constitutive models:
+    RelativePermeabilityBase & relPerm = makeBrooksCoreyRelPerm( "relPerm" , this->m_parent);
+    RelativePermeabilityBase * relPermPtr = &relPerm;
+
+    CapillaryPressureBase & capPressure0 =  makeBrooksCoreyCapPressureTwoPhase1( "capPressure0", this->m_parent );
+    CapillaryPressureBase * capPressurePtr0 = &capPressure0;
+
+    CapillaryPressureBase & capPressure1 =  makeBrooksCoreyCapPressureTwoPhase2( "capPressure1", this->m_parent );
+    CapillaryPressureBase * capPressurePtr1 = &capPressure1;
+    
+  std::vector< RelativePermeabilityBase * > relPerms = {relPermPtr, relPermPtr};
+  std::vector< CapillaryPressureBase * > capPressures = {capPressurePtr0, capPressurePtr1};
+  std::vector< TwoPhaseImmiscibleFluid * > fluids = { &fluid, &fluid };
+  
+   real64 uT = 0.000001889581158;
+
+  stdVector< real64 > saturations = {0.6, 0.3};
+  stdVector< real64 > trappedSats1 = {phase0MinSat1, phase1MinSat1};
+  stdVector< real64 > trappedSats2 = {phase0MinSat2, phase1MinSat2};
+  stdVector< real64 > pressures = {1e7, 1e7};
+  stdVector< real64 > JFMultipliers = {45016.662822296035, 30011.108548197357};
+  stdVector< fields::cappres::ModeIndexType > modes = {static_cast<fields::cappres::ModeIndexType>(0), static_cast<fields::cappres::ModeIndexType>(0)};
+  stdVector< real64 > transHats = {2.0e-12, 8.0e-12};
+  stdVector< real64 > dTransHats_dP = {0.0, 0.0};
+  stdVector< real64 > gravCoefHats = {49.05, 49.05};
+  stdVector< real64 > gravCoefs = {46.5975, 51.5025};
+  stdVector< real64 > cellCenterDuT = {8.32E-10, -8.32E-10, 0.0000063429744518, -0.0000012971521486}; // duT_dP[0], duT_dP[1], duT_dS[0], duT_dS[1]
+  stdVector< real64 > cellCenterDens = {1000.0, 100.0}; // density for each phase
+  stdVector< real64 > cellCenterDens_dP = {0.0, 0.0, 0.0, 0.0}; // dDens_dP[0][0], dDens_dP[0][1], dDens_dP[1][0], dDens_dP[1][1]
+  stdVector< real64 > phaseMaxHistVolFrac1 = {0.0, 0.0};
+  stdVector< real64 > phaseMinHistVolFrac1 = {0.0, 0.0};
+  stdVector< real64 > phaseMaxHistVolFrac2 = {0.0, 0.0};
+  stdVector< real64 > phaseMinHistVolFrac2 = {0.0, 0.0};
+
+  stdVector< real64 > phi = {0.0, 0.0};
+  stdVector< real64 > grad_phi_P = {0.0, 0.0, 0.0, 0.0};
+  stdVector< real64 > grad_phi_S = {0.0, 0.0, 0.0, 0.0};
+  bool converged = false;
+
+
+
+// Call the GEOS local solver
+    geos::immiscibleMultiphaseKernels::local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, modes, transHats, dTransHats_dP, gravCoefHats, gravCoefs,
+      cellCenterDuT, cellCenterDens, cellCenterDens_dP, relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged,
+      phaseMaxHistVolFrac1, phaseMinHistVolFrac1, phaseMaxHistVolFrac2, phaseMinHistVolFrac2 );
+
+  real64 const tolerance_eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
+  real64 const tol = 1e-4;
+  real64 const abs_tolerance = tolerance_eps * tol;
+
+  EXPECT_NEAR( phi[0], 1.676451024635667e-03, abs_tolerance );
+  EXPECT_NEAR( phi[1], 2.131301333609180e-05, abs_tolerance );
+  EXPECT_NEAR( grad_phi_P[0], 5.760000000000000e-07, abs_tolerance );
+  EXPECT_NEAR( grad_phi_P[1], -5.760000000000000e-07, abs_tolerance );
+  EXPECT_NEAR( grad_phi_P[2], 2.560000000000001e-08, abs_tolerance );
+  EXPECT_NEAR( grad_phi_P[3], -2.560000000000001e-08, abs_tolerance );
+  EXPECT_NEAR( grad_phi_S[0], 7.268012258072125e-03, abs_tolerance );
+  EXPECT_NEAR( grad_phi_S[1], -8.980284105794445e-04, abs_tolerance );
+  EXPECT_NEAR( grad_phi_S[2], -9.250378062747074e-05, abs_tolerance );
+  EXPECT_NEAR( grad_phi_S[3], -3.991237380353088e-05, abs_tolerance );
+
+
+} );
+}
+
+
 
 int main( int argc, char * *argv )
 {

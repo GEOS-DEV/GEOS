@@ -27,12 +27,14 @@ set( constitutive_headers
      ConstitutivePassThruHandler.hpp
      ExponentialRelation.hpp
      NullModel.hpp
+     KilloughHysteresis.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/CapillaryPressureBase.hpp
      capillaryPressure/CapillaryPressureFields.hpp
      capillaryPressure/InverseCapillaryPressure.hpp
      capillaryPressure/JFunctionCapillaryPressure.hpp
      capillaryPressure/TableCapillaryPressure.hpp
+     capillaryPressure/TableCapillaryPressureHysteresis.hpp
      capillaryPressure/TableCapillaryPressureHelpers.hpp
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      capillaryPressure/CapillaryPressureSelector.hpp
@@ -226,11 +228,13 @@ set( constitutive_sources
      ConstitutiveBase.cpp
      ConstitutiveManager.cpp
      NullModel.cpp
+     KilloughHysteresis.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/CapillaryPressureBase.cpp
      capillaryPressure/InverseCapillaryPressure.cpp
      capillaryPressure/JFunctionCapillaryPressure.cpp
      capillaryPressure/TableCapillaryPressure.cpp
+     capillaryPressure/TableCapillaryPressureHysteresis.cpp
      capillaryPressure/TableCapillaryPressureHelpers.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      contact/BartonBandis.cpp

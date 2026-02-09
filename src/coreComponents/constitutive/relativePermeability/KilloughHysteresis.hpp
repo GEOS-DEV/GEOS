@@ -137,18 +137,8 @@ public:
                                m_extremumPhaseVolFraction ),
                      InputError );
 
-      GEOS_THROW_IF( m_criticalImbibitionValue < 0 || m_criticalImbibitionValue > 1,
-                     GEOS_FMT( "KilloughHysteresis: the critical imbibition relative permeability is equal to {} but must be between 0 an 1",
-                               m_criticalImbibitionValue ),
-                     InputError );
-      GEOS_THROW_IF( m_criticalDrainageValue < 0 || m_criticalDrainageValue > 1,
-                     GEOS_FMT( "KilloughHysteresis: the critical drainage relative permeability is equal to {} but must be between 0 an 1",
-                               m_criticalDrainageValue ),
-                     InputError );
-      GEOS_THROW_IF( m_extremumValue < 0 || m_extremumValue > 1,
-                     GEOS_FMT( "KilloughHysteresis: the extremum relative permeability is equal to {} but must be between 0 an 1",
-                               m_extremumValue ),
-                     InputError );
+      // Note: value validation removed because this struct is used for both relative permeability (0-1 range)
+      // and capillary pressure (can be in Pa or other units, typically >> 1). The value range depends on the application.
 
       m_isWetting = m_criticalDrainagePhaseVolFraction > m_extremumPhaseVolFraction;
 

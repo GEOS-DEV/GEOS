@@ -424,8 +424,8 @@ SurfaceElementStencilWrapper::
       weight[connectionIndex][0] = value;
       weight[connectionIndex][1] = -value;
 
-      real64 const dt0 = m_weights[iconn][0] * dCoeff_dVar[er0][esr0][ei0][0][0];
-      real64 const dt1 = m_weights[iconn][1] * dCoeff_dVar[er1][esr1][ei1][0][0];
+      real64 const dt0 = m_weights[iconn][k[0]] * dCoeff_dVar[er0][esr0][ei0][0][0];
+      real64 const dt1 = m_weights[iconn][k[1]] * dCoeff_dVar[er1][esr1][ei1][0][0];
 
       real64 dHarmonic[2];
       dHarmonic[0] = ( dt0 * t1 * sumOfTrans - dt0 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );

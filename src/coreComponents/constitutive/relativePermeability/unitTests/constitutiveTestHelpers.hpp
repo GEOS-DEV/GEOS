@@ -32,7 +32,7 @@ namespace geos
 {
 namespace testing
 {
-void fillArray( array1d< real64_array > & arr, std::initializer_list< real64 > const & input_list )
+void fill_array( array1d< real64_array > & arr, std::initializer_list< real64 > const & input_list )
 {
   arr.resize( 1 );
   arr[0].resize( input_list.size());
@@ -42,7 +42,7 @@ void fillArray( array1d< real64_array > & arr, std::initializer_list< real64 > c
 
 }
 
-void fillArray( real64_array & arr, std::initializer_list< real64 > const & input_list )
+void fill_array( real64_array & arr, std::initializer_list< real64 > const & input_list )
 {
   arr.resize( input_list.size());
   int j = 0;

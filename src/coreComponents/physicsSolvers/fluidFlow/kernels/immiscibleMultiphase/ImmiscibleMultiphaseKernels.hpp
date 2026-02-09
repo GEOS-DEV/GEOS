@@ -33,6 +33,7 @@
  #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
  #include "constitutive/capillaryPressure/JFunctionCapillaryPressure.hpp"
  #include "constitutive/capillaryPressure/TableCapillaryPressure.hpp"
+ #include "constitutive/capillaryPressure/TableCapillaryPressureHysteresis.hpp"
  #include "constitutive/permeability/PermeabilityBase.hpp"
  #include "constitutive/permeability/PermeabilityFields.hpp"
  #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
@@ -72,10 +73,12 @@ using namespace constitutive;
 GEOS_HOST_DEVICE
 inline
 static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector< real64 > pressures, stdVector< real64 > JFMultipliers, stdVector< real64 > trappedSats1,
-                          stdVector< real64 > trappedSats2, stdVector< real64 > transHat, stdVector< real64 > dTransHat_dP, stdVector< real64 > gravCoefHat, stdVector< real64 > gravCoef,
+                          stdVector< real64 > trappedSats2, stdVector< fields::cappres::ModeIndexType> modes, stdVector< real64 > transHat, stdVector< real64 > dTransHat_dP, stdVector< real64 > gravCoefHat, stdVector< real64 > gravCoef,
                           stdVector< real64 >  cellCenterDuT, stdVector< real64 > cellCenterDens, stdVector< real64 > cellCenterDens_dP,
                           std::vector< RelativePermeabilityBase * > relPerms, std::vector< CapillaryPressureBase * > capPressures,
-                          std::vector< TwoPhaseImmiscibleFluid * > fluids, std::vector< real64 > &phi, std::vector< real64 > &grad_phi_P, std::vector< real64 > &grad_phi_S, bool &converged )
+                          std::vector< TwoPhaseImmiscibleFluid * > fluids, std::vector< real64 > &phi, std::vector< real64 > &grad_phi_P, std::vector< real64 > &grad_phi_S, bool &converged,
+                          stdVector< real64 > const & phaseMaxHistVolFrac1, stdVector< real64 > const & phaseMinHistVolFrac1,
+                          stdVector< real64 > const & phaseMaxHistVolFrac2, stdVector< real64 > const & phaseMinHistVolFrac2 )
 {
 
   // getting wrappers:
@@ -102,7 +105,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
           auto fluidWrapper1 = fluids[0]->createKernelWrapper();
           auto fluidWrapper2 = fluids[1]->createKernelWrapper();
 
-          // Create an output file stream object (ofstream) for analyzing the local solver's performance
+
           std::ofstream outFile( "iterations2.csv" );
 
 
@@ -149,14 +152,28 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
           outFile << ",";
           outFile << "Cn_beta";
           outFile << ",";
-          outFile << "Pc1_ip0";
+          outFile << "transHats0";
           outFile << ",";
-          outFile << "Pc1_ip1";
+          outFile << "transHats1";
           outFile << ",";
-          outFile << "S_alpha";
+          outFile << "gravCoefHats";
           outFile << ",";
-          outFile << "S_beta";
+          outFile << "gravCoef0";
+          outFile << ",";
+          outFile << "gravCoef1";
+          outFile << ",";
+          outFile << "uT";
+          outFile << ",";
+          outFile << "duT_dP0";
+          outFile << ",";
+          outFile << "duT_dS0";  
+          outFile << ",";
+          outFile << "duT_dP1";
+          outFile << ",";
+          outFile << "duT_dS1";                           
           outFile << std::endl;
+
+
 
           // nonlinear solver's parameters
           real64 tol = 1.0e-9;
@@ -175,7 +192,9 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
           StackArray< real64, 3, 2, constitutive::cappres::LAYOUT_CAPPRES > capPres1( 1, 1, 2 );
           StackArray< real64, 4, 4, constitutive::cappres::LAYOUT_CAPPRES_DS > dPhaseVolFrac_dCapPres1( 1, 1, 2, 2 );
           StackArray< real64, 4, 4, constitutive::cappres::LAYOUT_CAPPRES_DS > dCapPres1_dPhaseVolFrac( 1, 1, 2, 2 );
+          StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > trappedVolFrac1( 1, 1, 2 );
           StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > facePhaseVolFrac1( 1, 2 );
+          StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > faceTrappedVolFrac1( 1, 1, 2 );
           StackArray< real64, 3, 2, constitutive::cappres::LAYOUT_CAPPRES > faceCapPres1( 1, 1, 2 );
           StackArray< real64, 4, 4, constitutive::cappres::LAYOUT_CAPPRES_DS > dfacePhaseVolFrac_dCapPres1( 1, 1, 2, 2 );
           StackArray< real64, 4, 4, constitutive::cappres::LAYOUT_CAPPRES_DS > dCapPres1_dfacePhaseVolFrac( 1, 1, 2, 2 );
@@ -183,12 +202,67 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
           StackArray< real64, 3, 2, constitutive::cappres::LAYOUT_CAPPRES > capPres2( 1, 1, 2 );
           StackArray< real64, 4, 4, constitutive::cappres::LAYOUT_CAPPRES_DS > dPhaseVolFrac_dCapPres2( 1, 1, 2, 2 );
           StackArray< real64, 4, 4, constitutive::cappres::LAYOUT_CAPPRES_DS > dCapPres2_dPhaseVolFrac( 1, 1, 2, 2 );
+          StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > trappedVolFrac2( 1, 1, 2 );
           StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > facePhaseVolFrac2( 1, 2 );
+          StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > faceTrappedVolFrac2( 1, 1, 2 );
           StackArray< real64, 3, 2, constitutive::cappres::LAYOUT_CAPPRES > faceCapPres2( 1, 1, 2 );
           StackArray< real64, 4, 4, constitutive::cappres::LAYOUT_CAPPRES_DS > dfacePhaseVolFrac_dCapPres2( 1, 1, 2, 2 );
           StackArray< real64, 4, 4, constitutive::cappres::LAYOUT_CAPPRES_DS > dCapPres2_dfacePhaseVolFrac( 1, 1, 2, 2 );
           StackArray< real64, 1, 2 > JFunc1( 2 );
           StackArray< real64, 1, 2 > JFunc2( 2 );
+
+          
+          StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > phaseMaxHistoricalVolFraction1( 1, 2 );
+          StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > phaseMinHistoricalVolFraction1( 1, 2 );
+          StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > phaseMaxHistoricalVolFraction2( 1, 2 );
+          StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > phaseMinHistoricalVolFraction2( 1, 2 );
+
+          if( phaseMaxHistVolFrac1.size() >= 2 && phaseMaxHistVolFrac1[0] >= 0.0 )
+          {
+
+            phaseMaxHistoricalVolFraction1[0][0] = phaseMaxHistVolFrac1[0];
+            phaseMaxHistoricalVolFraction1[0][1] = phaseMaxHistVolFrac1[1];
+            phaseMinHistoricalVolFraction1[0][0] = phaseMinHistVolFrac1[0];
+            phaseMinHistoricalVolFraction1[0][1] = phaseMinHistVolFrac1[1];
+          }
+          else
+          {
+
+            phaseMaxHistoricalVolFraction1[0][0] = saturations[0];
+            phaseMaxHistoricalVolFraction1[0][1] = 1.0 - saturations[0];
+            phaseMinHistoricalVolFraction1[0][0] = saturations[0];
+            phaseMinHistoricalVolFraction1[0][1] = 1.0 - saturations[0];
+          }
+          
+          if( phaseMaxHistVolFrac2.size() >= 2 && phaseMaxHistVolFrac2[0] >= 0.0 )
+          {
+
+            phaseMaxHistoricalVolFraction2[0][0] = phaseMaxHistVolFrac2[0];
+            phaseMaxHistoricalVolFraction2[0][1] = phaseMaxHistVolFrac2[1];
+            phaseMinHistoricalVolFraction2[0][0] = phaseMinHistVolFrac2[0];
+            phaseMinHistoricalVolFraction2[0][1] = phaseMinHistVolFrac2[1];
+          }
+          else
+
+            phaseMaxHistoricalVolFraction2[0][0] = saturations[1];
+            phaseMaxHistoricalVolFraction2[0][1] = 1.0 - saturations[1];
+            phaseMinHistoricalVolFraction2[0][0] = saturations[1];
+            phaseMinHistoricalVolFraction2[0][1] = 1.0 - saturations[1];
+          }
+
+          // compute relative permeability for both cell centers:
+
+          trappedVolFrac1[0][0][0] = trappedSats1[0];
+          trappedVolFrac1[0][0][1] = trappedSats1[1];
+
+          trappedVolFrac2[0][0][0] = trappedSats2[0];
+          trappedVolFrac2[0][0][1] = trappedSats2[1];
+
+          faceTrappedVolFrac1[0][0][0] = trappedSats1[0];
+          faceTrappedVolFrac1[0][0][1] = trappedSats1[1];
+
+          faceTrappedVolFrac2[0][0][0] = trappedSats2[0];
+          faceTrappedVolFrac2[0][0][1] = trappedSats2[1];
 
           phaseVolFrac1[0][0] = saturations[0];
           phaseVolFrac1[0][1] = 1.0 - saturations[0];
@@ -238,6 +312,74 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
             Pc1_max = faceCapPres1[0][0][0];
 
           }
+          else if constexpr (std::is_same_v< T1, TableCapillaryPressureHysteresis >) {
+            capPresWrapper1.compute( phaseVolFrac1[0],
+                                     phaseMaxHistoricalVolFraction1[0],
+                                     phaseMinHistoricalVolFraction1[0],
+                                     trappedVolFrac1[0][0],
+                                     capPres1[0][0],
+                                     dCapPres1_dPhaseVolFrac[0][0],
+                                     modes[0] );   
+
+            
+            facePhaseVolFrac1[0][1] = 0.0;
+            facePhaseVolFrac1[0][0] = 1.0;
+            capPresWrapper1.compute( facePhaseVolFrac1[0],
+                                     phaseMaxHistoricalVolFraction1[0],
+                                     phaseMinHistoricalVolFraction1[0],
+                                     faceTrappedVolFrac1[0][0],
+                                     faceCapPres1[0][0],
+                                     dCapPres1_dfacePhaseVolFrac[0][0],
+                                     modes[0] );    
+            Pc1_min = faceCapPres1[0][0][0];
+            
+            facePhaseVolFrac1[0][1] = 1.0;
+            facePhaseVolFrac1[0][0] = 0.0;
+            capPresWrapper1.compute( facePhaseVolFrac1[0],
+                                     phaseMaxHistoricalVolFraction1[0],
+                                     phaseMinHistoricalVolFraction1[0],
+                                     faceTrappedVolFrac1[0][0],
+                                     faceCapPres1[0][0],
+                                     dCapPres1_dfacePhaseVolFrac[0][0],
+                                     modes[0] );      
+            Pc1_max = faceCapPres1[0][0][0];
+            
+            // For hysteresis models, also evaluate at historical saturation range endpoints
+            // to ensure we capture the full range of the current curve
+            if (phaseMinHistoricalVolFraction1[0][0] >= 0.0 && phaseMaxHistoricalVolFraction1[0][0] >= 0.0) {
+              // Evaluate at min historical saturation
+              real64 const S_min_hist = phaseMinHistoricalVolFraction1[0][0];
+              if (S_min_hist > 0.0 && S_min_hist < 1.0) {
+                facePhaseVolFrac1[0][0] = S_min_hist;
+                facePhaseVolFrac1[0][1] = 1.0 - S_min_hist;
+                capPresWrapper1.compute( facePhaseVolFrac1[0],
+                                         phaseMaxHistoricalVolFraction1[0],
+                                         phaseMinHistoricalVolFraction1[0],
+                                         faceTrappedVolFrac1[0][0],
+                                         faceCapPres1[0][0],
+                                         dCapPres1_dfacePhaseVolFrac[0][0],
+                                         modes[0] );
+                Pc1_min = LvArray::math::min(Pc1_min, faceCapPres1[0][0][0]);
+                Pc1_max = LvArray::math::max(Pc1_max, faceCapPres1[0][0][0]);
+              }
+              
+              // Evaluate at max historical saturation
+              real64 const S_max_hist = phaseMaxHistoricalVolFraction1[0][0];
+              if (S_max_hist > 0.0 && S_max_hist < 1.0) {
+                facePhaseVolFrac1[0][0] = S_max_hist;
+                facePhaseVolFrac1[0][1] = 1.0 - S_max_hist;
+                capPresWrapper1.compute( facePhaseVolFrac1[0],
+                                         phaseMaxHistoricalVolFraction1[0],
+                                         phaseMinHistoricalVolFraction1[0],
+                                         faceTrappedVolFrac1[0][0],
+                                         faceCapPres1[0][0],
+                                         dCapPres1_dfacePhaseVolFrac[0][0],
+                                         modes[0] );
+                Pc1_min = LvArray::math::min(Pc1_min, faceCapPres1[0][0][0]);
+                Pc1_max = LvArray::math::max(Pc1_max, faceCapPres1[0][0][0]);
+              }
+            }
+          }
           else
           {
             capPresWrapper1.compute( phaseVolFrac1[0],
@@ -285,6 +427,74 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
             Pc2_max = faceCapPres2[0][0][0];
 
           }
+          else if constexpr (std::is_same_v< T2, TableCapillaryPressureHysteresis >) {
+            capPresWrapper2.compute( phaseVolFrac2[0],
+                                     phaseMaxHistoricalVolFraction2[0],
+                                     phaseMinHistoricalVolFraction2[0],
+                                     trappedVolFrac2[0][0],
+                                     capPres2[0][0],
+                                     dCapPres2_dPhaseVolFrac[0][0],
+                                     modes[1] );                         
+
+            
+            facePhaseVolFrac2[0][1] = 0.0;
+            facePhaseVolFrac2[0][0] = 1.0;
+            capPresWrapper2.compute( facePhaseVolFrac2[0],
+                                     phaseMaxHistoricalVolFraction2[0],
+                                     phaseMinHistoricalVolFraction2[0],
+                                     faceTrappedVolFrac2[0][0],
+                                     faceCapPres2[0][0],
+                                     dCapPres2_dfacePhaseVolFrac[0][0],
+                                     modes[1] );  
+            Pc2_min = faceCapPres2[0][0][0];
+            
+            facePhaseVolFrac2[0][1] = 1.0;
+            facePhaseVolFrac2[0][0] = 0.0;
+            capPresWrapper2.compute( facePhaseVolFrac2[0],
+                                     phaseMaxHistoricalVolFraction2[0],
+                                     phaseMinHistoricalVolFraction2[0],
+                                     faceTrappedVolFrac2[0][0],
+                                     faceCapPres2[0][0],
+                                     dCapPres2_dfacePhaseVolFrac[0][0],
+                                     modes[1] );      
+            Pc2_max = faceCapPres2[0][0][0];
+            
+            // For hysteresis models, also evaluate at historical saturation range endpoints
+            // to ensure we capture the full range of the current curve
+            if (phaseMinHistoricalVolFraction2[0][0] >= 0.0 && phaseMaxHistoricalVolFraction2[0][0] >= 0.0) {
+              // Evaluate at min historical saturation
+              real64 const S_min_hist = phaseMinHistoricalVolFraction2[0][0];
+              if (S_min_hist > 0.0 && S_min_hist < 1.0) {
+                facePhaseVolFrac2[0][0] = S_min_hist;
+                facePhaseVolFrac2[0][1] = 1.0 - S_min_hist;
+                capPresWrapper2.compute( facePhaseVolFrac2[0],
+                                         phaseMaxHistoricalVolFraction2[0],
+                                         phaseMinHistoricalVolFraction2[0],
+                                         faceTrappedVolFrac2[0][0],
+                                         faceCapPres2[0][0],
+                                         dCapPres2_dfacePhaseVolFrac[0][0],
+                                         modes[1] );
+                Pc2_min = LvArray::math::min(Pc2_min, faceCapPres2[0][0][0]);
+                Pc2_max = LvArray::math::max(Pc2_max, faceCapPres2[0][0][0]);
+              }
+              
+              // Evaluate at max historical saturation
+              real64 const S_max_hist = phaseMaxHistoricalVolFraction2[0][0];
+              if (S_max_hist > 0.0 && S_max_hist < 1.0) {
+                facePhaseVolFrac2[0][0] = S_max_hist;
+                facePhaseVolFrac2[0][1] = 1.0 - S_max_hist;
+                capPresWrapper2.compute( facePhaseVolFrac2[0],
+                                         phaseMaxHistoricalVolFraction2[0],
+                                         phaseMinHistoricalVolFraction2[0],
+                                         faceTrappedVolFrac2[0][0],
+                                         faceCapPres2[0][0],
+                                         dCapPres2_dfacePhaseVolFrac[0][0],
+                                         modes[1] );
+                Pc2_min = LvArray::math::min(Pc2_min, faceCapPres2[0][0][0]);
+                Pc2_max = LvArray::math::max(Pc2_max, faceCapPres2[0][0][0]);
+              }
+            }
+          }
           else
           {
             // evaluating cell-center Pc:
@@ -311,37 +521,16 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
           // Use of the relative permeability kernel wrapper
 
-          StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > faceTrappedVolFrac1( 1, 1, 2 );
+
           StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > faceRelPerm1( 1, 1, 2 );
           StackArray< real64, 4, 4, constitutive::relperm::LAYOUT_RELPERM_DS > dfacePhaseRelPerm1_dPhaseVolFrac( 1, 1, 2, 2 );
-          StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > trappedVolFrac1( 1, 1, 2 );
           StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > relPerm1( 1, 1, 2 );
           StackArray< real64, 4, 4, constitutive::relperm::LAYOUT_RELPERM_DS > dPhaseRelPerm1_dPhaseVolFrac( 1, 1, 2, 2 );
-          StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > faceTrappedVolFrac2( 1, 1, 2 );
           StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > faceRelPerm2( 1, 1, 2 );
           StackArray< real64, 4, 4, constitutive::relperm::LAYOUT_RELPERM_DS > dfacePhaseRelPerm2_dPhaseVolFrac( 1, 1, 2, 2 );
-          StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > trappedVolFrac2( 1, 1, 2 );
           StackArray< real64, 3, 2, constitutive::relperm::LAYOUT_RELPERM > relPerm2( 1, 1, 2 );
           StackArray< real64, 4, 4, constitutive::relperm::LAYOUT_RELPERM_DS > dPhaseRelPerm2_dPhaseVolFrac( 1, 1, 2, 2 );
 
-          StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > phaseMaxHistoricalVolFraction1( 1, 2 );
-          StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > phaseMinHistoricalVolFraction1( 1, 2 );
-          StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > phaseMaxHistoricalVolFraction2( 1, 2 );
-          StackArray< real64, 2, 2, immiscibleFlow::LAYOUT_PHASE > phaseMinHistoricalVolFraction2( 1, 2 );
-
-          // compute relative permeability for both cell centers:
-
-          trappedVolFrac1[0][0][0] = trappedSats1[0];
-          trappedVolFrac1[0][0][1] = trappedSats1[1];
-
-          trappedVolFrac2[0][0][0] = trappedSats2[0];
-          trappedVolFrac2[0][0][1] = trappedSats2[1];
-
-          faceTrappedVolFrac1[0][0][0] = trappedSats1[0];
-          faceTrappedVolFrac1[0][0][1] = trappedSats1[1];
-
-          faceTrappedVolFrac2[0][0][0] = trappedSats2[0];
-          faceTrappedVolFrac2[0][0][1] = trappedSats2[1];
 
           using T5 = std::decay_t< decltype(castedRelPerm1) >;
           if constexpr (std::is_same_v< T5, constitutive::TableRelativePermeabilityHysteresis >) {
@@ -562,6 +751,25 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                                        dCapPres1_dfacePhaseVolFrac[0][0] );
 
             }
+            else if constexpr (std::is_same_v< T3, TableCapillaryPressureHysteresis >) {
+              capPresWrapper1.computeInv( facePhaseVolFrac1[0],
+                phaseMaxHistoricalVolFraction1[0],
+                phaseMinHistoricalVolFraction1[0],
+                faceTrappedVolFrac1[0][0],
+                faceCapPres1[0][0],
+                dCapPres1_dfacePhaseVolFrac[0][0],
+                modes[0] );   
+              facePhaseVolFrac1[0][0] = fmin( 1.0, fmax( facePhaseVolFrac1[0][0], 0.0 ));
+              facePhaseVolFrac1[0][1] = fmin( 1.0, fmax( facePhaseVolFrac1[0][1], 0.0 ));
+              capPresWrapper1.compute( facePhaseVolFrac1[0],
+                                       phaseMaxHistoricalVolFraction1[0],
+                                       phaseMinHistoricalVolFraction1[0],
+                                       faceTrappedVolFrac1[0][0],
+                                       faceCapPres1[0][0],
+                                       dCapPres1_dfacePhaseVolFrac[0][0],
+                                       modes[0] );      
+
+            }
             else
             {
               capPresWrapper1.computeInv( facePhaseVolFrac1[0],
@@ -591,6 +799,25 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
                                        JFunc2.toSliceConst(),
                                        faceCapPres2[0][0],
                                        dCapPres2_dfacePhaseVolFrac[0][0] );
+
+            }
+            else if constexpr (std::is_same_v< T4, TableCapillaryPressureHysteresis >) {
+              capPresWrapper2.computeInv( facePhaseVolFrac2[0],
+                phaseMaxHistoricalVolFraction2[0],
+                phaseMinHistoricalVolFraction2[0],
+                faceTrappedVolFrac2[0][0],
+                faceCapPres2[0][0],
+                dCapPres2_dfacePhaseVolFrac[0][0],
+                modes[1] );     
+              facePhaseVolFrac2[0][0] = fmin( 1.0, fmax( facePhaseVolFrac2[0][0], 0.0 ));
+              facePhaseVolFrac2[0][1] = fmin( 1.0, fmax( facePhaseVolFrac2[0][1], 0.0 ));
+              capPresWrapper2.compute( facePhaseVolFrac2[0],
+                                       phaseMaxHistoricalVolFraction2[0],
+                                       phaseMinHistoricalVolFraction2[0],
+                                       faceTrappedVolFrac2[0][0],
+                                       faceCapPres2[0][0],
+                                       dCapPres2_dfacePhaseVolFrac[0][0],
+                                       modes[1] );      
 
             }
             else
@@ -1079,7 +1306,8 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
             } // while check for BJ PPU
 
-            real64 constexpr eps2 = 1.0e-18;
+            real64 constexpr eps2 = 4.9304e-32;
+            // real64 constexpr eps2 = 0.0;
             // newton update
             dhalfFlux_dpc[0][0] = dhalfFlux1_dS[0][1]*dfacePhaseVolFrac_dCapPres1[0][0][0][0];
             real64 dhalfFlux_dpc00 = dV1_dpc[0][1] - dG1_dpc[0][1] - dC1_dpc[0][1];
@@ -1110,6 +1338,38 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
               // std::cout << "**********************ZeroJacobian*******************" << std::endl;                
               // }
               converged = 1;
+              outFile << GEOS_FMT( "{:10.10e}", local_jacobian );
+              outFile << GEOS_FMT( ",{:10.10e}", local_residual );
+              outFile << GEOS_FMT( ",{:10.10e}", halfFluxVal[0][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", halfFluxVal[0][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", Pc_int_iterate );
+              outFile << GEOS_FMT( ",{:10.10e}", faceCapPres1[0][0][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", faceCapPres2[0][0][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", halfFluxVal[1][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", halfFluxVal[1][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", viscous[0][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", viscous[1][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", viscous[0][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", viscous[1][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", bouyancy[0][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", bouyancy[1][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", bouyancy[0][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", bouyancy[1][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", capillarity[0][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", capillarity[1][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", capillarity[0][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", capillarity[1][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", transHat[0] );
+              outFile << GEOS_FMT( ",{:10.10e}", transHat[1] );
+              outFile << GEOS_FMT( ",{:10.10e}", gravCoefHat[0] );
+              outFile << GEOS_FMT( ",{:10.10e}", gravCoef[0] );
+              outFile << GEOS_FMT( ",{:10.10e}", gravCoef[1] );
+              outFile << GEOS_FMT( ",{:10.10e}", uT );
+              outFile << GEOS_FMT( ",{:10.10e}", duT_dP[0] );
+              outFile << GEOS_FMT( ",{:10.10e}", duT_dS[0] );
+              outFile << GEOS_FMT( ",{:10.10e}", duT_dP[1] );
+              outFile << GEOS_FMT( ",{:10.10e}", duT_dS[1] );                                          
+              outFile << std::endl;
               break; // Converged
             }
             // converged = 0;
@@ -1130,7 +1390,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
               else if( div > 1 )
               {
               local_jacobian = 0.0;
-              std::cout << "**********************Diverged*******************" << std::endl;
+
               iter = max_iter;
               }
             }
@@ -1141,10 +1401,40 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
 
               if( std::fabs( local_residual ) < tol )
               {
-              // if( std::fabs( dhalfFlux_dpc[0][0] - dhalfFlux_dpc[0][1] ) < eps2 ) {
-              // std::cout << "**********************ZeroJacobian*******************" << std::endl;                
-              // }
+
                 converged = 1;  
+              outFile << GEOS_FMT( "{:10.10e}", local_jacobian );
+              outFile << GEOS_FMT( ",{:10.10e}", local_residual );
+              outFile << GEOS_FMT( ",{:10.10e}", halfFluxVal[0][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", halfFluxVal[0][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", Pc_int_iterate );
+              outFile << GEOS_FMT( ",{:10.10e}", faceCapPres1[0][0][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", faceCapPres2[0][0][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", halfFluxVal[1][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", halfFluxVal[1][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", viscous[0][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", viscous[1][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", viscous[0][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", viscous[1][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", bouyancy[0][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", bouyancy[1][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", bouyancy[0][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", bouyancy[1][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", capillarity[0][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", capillarity[1][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", capillarity[0][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", capillarity[1][1] );
+              outFile << GEOS_FMT( ",{:10.10e}", transHat[0] );
+              outFile << GEOS_FMT( ",{:10.10e}", transHat[1] );
+              outFile << GEOS_FMT( ",{:10.10e}", gravCoefHat[0] );
+              outFile << GEOS_FMT( ",{:10.10e}", gravCoef[0] );
+              outFile << GEOS_FMT( ",{:10.10e}", gravCoef[1] );
+              outFile << GEOS_FMT( ",{:10.10e}", uT );
+              outFile << GEOS_FMT( ",{:10.10e}", duT_dP[0] );
+              outFile << GEOS_FMT( ",{:10.10e}", duT_dS[0] );
+              outFile << GEOS_FMT( ",{:10.10e}", duT_dP[1] );
+              outFile << GEOS_FMT( ",{:10.10e}", duT_dS[1] );     
+              outFile << std::endl;
                 break; // Converged
               }
 
@@ -1154,7 +1444,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
   
                   real64 sign = std::copysign(1.0, deltaPc);
   
-                  deltaPc = fmin( fabs(deltaPc), max_dpc * 0.2 );
+                  deltaPc = fmin( fabs(deltaPc), max_dpc * 0.1 );
                   deltaPc *= sign;
   
                 }
@@ -1228,24 +1518,33 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
               outFile << GEOS_FMT( ",{:10.10e}", capillarity[1][0] );
               outFile << GEOS_FMT( ",{:10.10e}", capillarity[0][1] );
               outFile << GEOS_FMT( ",{:10.10e}", capillarity[1][1] );
-              outFile << GEOS_FMT( ",{:10.10e}", capPres1[0][0][0] );
-              outFile << GEOS_FMT( ",{:10.10e}", capPres1[0][0][1] );
-              outFile << GEOS_FMT( ",{:10.10e}", facePhaseVolFrac1[0][0] );
-              outFile << GEOS_FMT( ",{:10.10e}", facePhaseVolFrac2[0][0] );
+              outFile << GEOS_FMT( ",{:10.10e}", transHat[0] );
+              outFile << GEOS_FMT( ",{:10.10e}", transHat[1] );
+              outFile << GEOS_FMT( ",{:10.10e}", gravCoefHat[0] );
+              outFile << GEOS_FMT( ",{:10.10e}", gravCoef[0] );
+              outFile << GEOS_FMT( ",{:10.10e}", gravCoef[1] );
+              outFile << GEOS_FMT( ",{:10.10e}", uT );
+              outFile << GEOS_FMT( ",{:10.10e}", duT_dP[0] );
+              outFile << GEOS_FMT( ",{:10.10e}", duT_dS[0] );
+              outFile << GEOS_FMT( ",{:10.10e}", duT_dP[1] );
+              outFile << GEOS_FMT( ",{:10.10e}", duT_dS[1] );  
               outFile << std::endl;
 
               iter++;
 
             }
 
-            
+
           } // while loop
+
+
 
           if( converged )
           {
 
             // Global derivatives:
-            real64 constexpr eps3 = 1.0e-18;
+            real64 constexpr eps3 = 4.9304e-32;
+            // real64 constexpr eps3 = 0.0;
 
             real64 const dPc_int_dS1 =(-1.0) * (dhalfFlux1_dS[0][0] +  dhalfFlux_duT[0][0] * duT_dS[0] - dhalfFlux_duT[0][1] * duT_dS[0]) / (dhalfFlux_dpc[0][0] - dhalfFlux_dpc[0][1] + eps3);
             real64 const dPc_int_dS2 =(-1.0) * (dhalfFlux_duT[0][0] * duT_dS[1] - dhalfFlux2_dS[0][0] - dhalfFlux_duT[0][1] * duT_dS[1]) / (dhalfFlux_dpc[0][0] - dhalfFlux_dpc[0][1] + eps3);
@@ -1267,7 +1566,8 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
             fluxVal[1] = halfFluxVal[1][0] * density2[1];
 
           } else {
-            std::cout << "**********************Diverged*******************" << std::endl;
+
+             std::cout << "**********************Diverged*******************" << std::endl;
 
           }
           
@@ -1284,8 +1584,7 @@ static void local_solver( real64 uT, stdVector< real64 > saturations, stdVector<
           grad_phi_S[2] = dFlux_dS[1][0];
           grad_phi_S[3] = dFlux_dS[1][1];
 
-          converged = 1;
-          GEOS_UNUSED_VAR( converged );
+
 // Close the file after writing
           outFile.close();
 
@@ -1338,7 +1637,7 @@ public:
                               fields::twophaseimmisciblefluid::dPhaseViscosity >;
 
   using CapPressureAccessors =
-    StencilMaterialAccessors< BrooksCoreyCapillaryPressure,
+    StencilMaterialAccessors< CapillaryPressureBase,
                               fields::cappres::phaseCapPressure,
                               fields::cappres::dPhaseCapPressure_dPhaseVolFraction
                               >;
@@ -1867,6 +2166,16 @@ public:
           // compute the flux and derivatives using upstream cell mobility
           fluxVal[ip] = mobility[ip] * potGrad;  // F = M * DPhi
 
+          // DEBUG: Print flux computation for regular kernel
+          printf( "REGULAR_KERNEL_FLUX: iconn=%d, ip=%d, mobility[%d]=%.10e, potGrad=%.10e, fluxVal[%d]=%.10e\n",
+                  static_cast<int>(iconn),
+                  static_cast<int>(ip),
+                  static_cast<int>(ip),
+                  mobility[ip],
+                  potGrad,
+                  static_cast<int>(ip),
+                  fluxVal[ip] );
+
           for( integer ke = 0; ke < 2; ++ke )
           {
             dFlux_dP[ip][ke] *= mobility[ip];    // dF/dP = { M [ T + dT/dP1 * (P1 - P2) - drho/dP1 * T g (z1 - z2) - dT/dP1 * rho g (z1 -
@@ -1890,6 +2199,15 @@ public:
           }
 
           // populate local flux vector and derivatives
+          printf( "REGULAR_KERNEL_ACCUM: iconn=%d, ip=%d, k[0]=%d, k[1]=%d, fluxVal[%d]=%.10e, dt=%.10e, adding=%.10e\n",
+                  static_cast<int>(iconn),
+                  static_cast<int>(ip),
+                  static_cast<int>(k[0]),
+                  static_cast<int>(k[1]),
+                  static_cast<int>(ip),
+                  fluxVal[ip],
+                  m_dt,
+                  m_dt * fluxVal[ip] );
           stack.localFlux[k[0]*numEqn + ip] += m_dt * fluxVal[ip];
           stack.localFlux[k[1]*numEqn + ip] -= m_dt * fluxVal[ip];
 
@@ -2517,8 +2835,10 @@ public:
 
           // stdVector< real64 > JFMultipliers = {jFMultiplier[0][0], jFMultiplier[0][1]};
           stdVector< real64 > JFMultipliers = {0.0, 0.0};
+          // trappedSats will be extracted from models below and passed to local_solver
           stdVector< real64 > trappedSats1 = {0.0, 0.0};
           stdVector< real64 > trappedSats2 = {0.0, 0.0};
+          stdVector< fields::cappres::ModeIndexType> modes = {static_cast<fields::cappres::ModeIndexType>(0), static_cast<fields::cappres::ModeIndexType>(0)};
           stdVector< real64 > transHats = {transHat[0], transHat[1]};
           stdVector< real64 > dTransHats_dP = {dTransHat_dP[0], dTransHat_dP[1]};
           stdVector< real64 > gravCoefHats = {gravCoefHat[0], gravCoefHat[1]};
@@ -2549,12 +2869,119 @@ std::vector< constitutive::TwoPhaseImmiscibleFluid * > fluids = {
   std::get<2>( pairArray[1] )
 };
 
+          // Extract historical volume fractions, trapped saturations, and mode from TableCapillaryPressureHysteresis models
+          // Initialize with sentinel values to indicate they haven't been set
+          // Use -1.0 as a sentinel value (invalid for saturations which are 0-1)
+          stdVector< real64 > phaseMaxHistoricalVolFraction1 = {-1.0, -1.0};
+          stdVector< real64 > phaseMinHistoricalVolFraction1 = {-1.0, -1.0};
+          stdVector< real64 > phaseMaxHistoricalVolFraction2 = {-1.0, -1.0};
+          stdVector< real64 > phaseMinHistoricalVolFraction2 = {-1.0, -1.0};
+          
+          // Trapped saturations are available in all capillary pressure models (via base class),
+          // but we only extract them when using hysteresis models since they're most meaningful there
+          // Initialize with sentinel values to indicate they haven't been set
+          stdVector< real64 > trappedSats1_extracted = {-1.0, -1.0};
+          stdVector< real64 > trappedSats2_extracted = {-1.0, -1.0};
+          
+          for( integer ke = 0; ke < 2; ++ke )
+          {
+            constitutive::TableCapillaryPressureHysteresis * capPresHyst = 
+              dynamic_cast<constitutive::TableCapillaryPressureHysteresis *>(capPressures[ke]);
+            
+            if( capPresHyst != nullptr )
+            {
+              // Get the mode for this cell
+              auto const & modeArray = capPresHyst->getField< fields::cappres::mode >().reference();
+              if( sei[ke] < static_cast<localIndex>(modeArray.size()) )
+              {
+                modes[ke] = static_cast<fields::cappres::ModeIndexType>(modeArray[sei[ke]]);
+              }
+              
+              // Get historical volume fractions for this cell
+              auto const & maxHistArray = capPresHyst->getField< fields::cappres::phaseMaxHistoricalVolFraction >().reference();
+              auto const & minHistArray = capPresHyst->getField< fields::cappres::phaseMinHistoricalVolFraction >().reference();
+              
+              if( sei[ke] < static_cast<localIndex>(maxHistArray.size(0)) && m_numPhases > 0 )
+              {
+                for( integer ip = 0; ip < m_numPhases; ++ip )
+                {
+                  if( ke == 0 )
+                  {
+                    phaseMaxHistoricalVolFraction1[ip] = maxHistArray[sei[ke]][ip];
+                    phaseMinHistoricalVolFraction1[ip] = minHistArray[sei[ke]][ip];
+                  }
+                  else
+                  {
+                    phaseMaxHistoricalVolFraction2[ip] = maxHistArray[sei[ke]][ip];
+                    phaseMinHistoricalVolFraction2[ip] = minHistArray[sei[ke]][ip];
+                  }
+                }
+              }
+              
+              // Get trapped volume fractions for this cell
+              // Note: phaseTrappedVolFraction is available in all capillary pressure models (via base class)
+              auto const & trappedArray = capPresHyst->getField< fields::cappres::phaseTrappedVolFraction >().reference();
+              
+              if( sei[ke] < static_cast<localIndex>(trappedArray.size(0)) && m_numPhases > 0 )
+              {
+                for( integer ip = 0; ip < m_numPhases; ++ip )
+                {
+                  if( ke == 0 )
+                  {
+                    trappedSats1_extracted[ip] = trappedArray[sei[ke]][0][ip]; // [element][subregion][phase]
+                  }
+                  else
+                  {
+                    trappedSats2_extracted[ip] = trappedArray[sei[ke]][0][ip];
+                  }
+                }
+              }
+            }
+            else
+            {
+              // For non-hysteresis models, we can still try to get trapped saturations if available
+              // but they're typically not meaningful for non-hysteresis models
+              // We'll extract them anyway in case they were set (e.g., for consistency)
+              auto const & trappedArray = capPressures[ke]->getField< fields::cappres::phaseTrappedVolFraction >().reference();
+              
+              if( sei[ke] < static_cast<localIndex>(trappedArray.size(0)) && m_numPhases > 0 )
+              {
+                for( integer ip = 0; ip < m_numPhases; ++ip )
+                {
+                  if( ke == 0 )
+                  {
+                    trappedSats1_extracted[ip] = trappedArray[sei[ke]][0][ip];
+                  }
+                  else
+                  {
+                    trappedSats2_extracted[ip] = trappedArray[sei[ke]][0][ip];
+                  }
+                }
+              }
+            }
+          }
+
           stdVector< real64 > phi = {halfFluxVal[0][0], halfFluxVal[0][1]};
           stdVector< real64 > grad_phi_P = {0.0, 0.0, 0.0, 0.0};
           stdVector< real64 > grad_phi_S = {0.0, 0.0, 0.0, 0.0};
 
-          local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, transHats, dTransHats_dP, gravCoefHats, gravCoefs, 
-            cellCenterDuTdS, cellCenterDens, cellCenterDens_dP, relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged );
+          // // Debug: print if local_solver is being called
+          // printf( "DEBUG: local_solver called for iconn=%d, connectorHasInterfaceConditionQ=%d\n", 
+          //         static_cast<int>(iconn), static_cast<int>(connectorHasInterfaceConditionQ) );
+
+          // Use extracted trapped saturations if available, otherwise use defaults
+          if( trappedSats1_extracted[0] >= 0.0 )
+          {
+            trappedSats1 = trappedSats1_extracted;
+          }
+          if( trappedSats2_extracted[0] >= 0.0 )
+          {
+            trappedSats2 = trappedSats2_extracted;
+          }
+          
+          local_solver( uT, saturations, pressures, JFMultipliers, trappedSats1, trappedSats2, modes, transHats, dTransHats_dP, gravCoefHats, gravCoefs, 
+            cellCenterDuTdS, cellCenterDens, cellCenterDens_dP, relPerms, capPressures, fluids, phi, grad_phi_P, grad_phi_S, converged,
+            phaseMaxHistoricalVolFraction1, phaseMinHistoricalVolFraction1, phaseMaxHistoricalVolFraction2, phaseMinHistoricalVolFraction2 );
           
 
              fluxVal[0] = phi[0];

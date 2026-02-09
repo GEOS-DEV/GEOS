@@ -237,24 +237,73 @@
        }
  
        FaceElementSubRegion const & faceSubRegion = faceRegion.getUniqueSubRegion< FaceElementSubRegion >();
-       FixedToManyElementRelation const & faceElementsToCells = faceSubRegion.getToCellRelation();
- 
-       std::function< std::tuple< CellElementSubRegion *, CellElementSubRegion * >(localIndex) > getSubregions = [&]( localIndex surfaceSubRegionIndex ) -> std::tuple< CellElementSubRegion *,
+      FixedToManyElementRelation const & faceElementsToCells = faceSubRegion.getToCellRelation();
+
+      // Precompute numRegions once (it's constant for all face elements)
+      localIndex const numRegions = elemManager.numRegions();
+      constexpr int MAX_REASONABLE_REGION_INDEX = 100000;
+
+      std::function< std::tuple< CellElementSubRegion *, CellElementSubRegion * >(localIndex) > getSubregions = [&]( localIndex surfaceSubRegionIndex ) -> std::tuple< CellElementSubRegion *,
                                                                                                                                                                         CellElementSubRegion * >
-       {
- 
-         int regionIdx0 = faceElementsToCells.m_toElementRegion[surfaceSubRegionIndex][0];
-         int regionIdx1 = faceElementsToCells.m_toElementRegion[surfaceSubRegionIndex][1];
-         int subRegionIdx0 = faceElementsToCells.m_toElementSubRegion[surfaceSubRegionIndex][0];
-         int subRegionIdx1 = faceElementsToCells.m_toElementSubRegion[surfaceSubRegionIndex][1];
- 
-         CellElementRegion & region0 = elemManager.getRegion< CellElementRegion >( regionIdx0 );
-         CellElementRegion & region1 = elemManager.getRegion< CellElementRegion >( regionIdx1 );
- 
-         CellElementSubRegion * subRegion0 = &region0.getSubRegion< CellElementSubRegion >( subRegionIdx0 );
-         CellElementSubRegion * subRegion1 = &region1.getSubRegion< CellElementSubRegion >( subRegionIdx1 );
-         return std::make_tuple( subRegion0, subRegion1 );
-       };
+      {
+
+        int regionIdx0 = faceElementsToCells.m_toElementRegion[surfaceSubRegionIndex][0];
+        int regionIdx1 = faceElementsToCells.m_toElementRegion[surfaceSubRegionIndex][1];
+        int subRegionIdx0 = faceElementsToCells.m_toElementSubRegion[surfaceSubRegionIndex][0];
+        int subRegionIdx1 = faceElementsToCells.m_toElementSubRegion[surfaceSubRegionIndex][1];
+
+        // Fast validation checks (ordered from cheapest to most expensive)
+        if( regionIdx0 < 0 || regionIdx1 < 0 || 
+            subRegionIdx0 < 0 || subRegionIdx1 < 0 )
+        {
+          return std::make_tuple( nullptr, nullptr );
+        }
+        
+        if( regionIdx0 > MAX_REASONABLE_REGION_INDEX || regionIdx1 > MAX_REASONABLE_REGION_INDEX )
+        {
+          return std::make_tuple( nullptr, nullptr );
+        }
+        
+        if( static_cast< localIndex >( regionIdx0 ) >= numRegions || 
+            static_cast< localIndex >( regionIdx1 ) >= numRegions )
+        {
+          return std::make_tuple( nullptr, nullptr );
+        }
+
+        // Try to get regions - they might not exist on this MPI rank even if index is in range
+        ElementRegionBase * region0BasePtr = nullptr;
+        ElementRegionBase * region1BasePtr = nullptr;
+        
+        try
+        {
+          region0BasePtr = &elemManager.getRegion< ElementRegionBase >( regionIdx0 );
+          region1BasePtr = &elemManager.getRegion< ElementRegionBase >( regionIdx1 );
+        }
+        catch( std::exception const & )
+        {
+          return std::make_tuple( nullptr, nullptr );
+        }
+        
+        // Check if they are CellElementRegion (interface conditions only apply to cell-to-cell interfaces)
+        CellElementRegion * cellRegion0 = dynamic_cast< CellElementRegion * >( region0BasePtr );
+        CellElementRegion * cellRegion1 = dynamic_cast< CellElementRegion * >( region1BasePtr );
+        
+        if( cellRegion0 == nullptr || cellRegion1 == nullptr )
+        {
+          return std::make_tuple( nullptr, nullptr );
+        }
+
+        // Validate subregion indices before accessing
+        if( static_cast< localIndex >( subRegionIdx0 ) >= cellRegion0->numSubRegions() ||
+            static_cast< localIndex >( subRegionIdx1 ) >= cellRegion1->numSubRegions() )
+        {
+          return std::make_tuple( nullptr, nullptr );
+        }
+
+        CellElementSubRegion * subRegion0 = &cellRegion0->getSubRegion< CellElementSubRegion >( subRegionIdx0 );
+        CellElementSubRegion * subRegion1 = &cellRegion1->getSubRegion< CellElementSubRegion >( subRegionIdx1 );
+        return std::make_tuple( subRegion0, subRegion1 );
+      };
  
       //  std::tuple< CellElementSubRegion *, CellElementSubRegion * > subRegionPair = getSubregions( surfaceRegionIndex );
       //  CellElementSubRegion * subRegion0 = std::get< 0 >( subRegionPair );
@@ -279,40 +328,39 @@
  
       //  m_interfaceConstitutivePairs[surfaceRegionIndex][0] = std::make_tuple( relPerm0, capPressure0, fluid0 );
       //  m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1, capPressure1, fluid1 );
- // Find a representative face element in this surface region with two adjacent cells
-localIndex fei = -1;
+ // Find a representative face element that connects two CellElementRegion objects
+// (not SurfaceElementRegion, which we don't handle for interface conditions)
+CellElementSubRegion * subRegion0 = nullptr;
+CellElementSubRegion * subRegion1 = nullptr;
+bool foundValidFei = false;
 
-// Prefer face element 0 if valid; otherwise scan
-if( faceElementsToCells.size() > 0 )
+// Single loop to find a valid face element (avoids redundant scanning)
+for( localIndex i = 0; i < faceElementsToCells.size(); ++i )
 {
-  // Check if face element 0 has two adjacent cells
-  if( faceElementsToCells.m_toElementRegion[0].size() >= 2 )
+  // Quick check: must have two adjacent cells with non-negative region indices
+  if( faceElementsToCells.m_toElementRegion[i].size() >= 2 &&
+      faceElementsToCells.m_toElementRegion[i][0] >= 0 &&
+      faceElementsToCells.m_toElementRegion[i][1] >= 0 )
   {
-    fei = 0;
-  }
-  else
-  {
-    // Scan to find the first interior face element with two neighbors
-    for( localIndex i = 1; i < faceElementsToCells.size(); ++i )
+    std::tuple< CellElementSubRegion *, CellElementSubRegion * > subRegionPair = getSubregions( i );
+    CellElementSubRegion * testSubRegion0 = std::get< 0 >( subRegionPair );
+    CellElementSubRegion * testSubRegion1 = std::get< 1 >( subRegionPair );
+    
+    if( testSubRegion0 != nullptr && testSubRegion1 != nullptr )
     {
-      if( faceElementsToCells.m_toElementRegion[i].size() >= 2 )
-      {
-        fei = i;
-        break;
-      }
+      subRegion0 = testSubRegion0;
+      subRegion1 = testSubRegion1;
+      foundValidFei = true;
+      break;
     }
   }
 }
 
-// If no valid face element, skip this surface region
-if( fei < 0 )
+// If no valid face element connecting two CellElementRegion objects, skip this surface region
+if( !foundValidFei )
 {
   continue;
 }
-
-std::tuple< CellElementSubRegion *, CellElementSubRegion * > subRegionPair = getSubregions( fei );
-CellElementSubRegion * subRegion0 = std::get< 0 >( subRegionPair );
-CellElementSubRegion * subRegion1 = std::get< 1 >( subRegionPair );
 
 // get constitutives by type and name: relPerms, capPressures, Fluids (three pointers)
 std::string & relPermName0 = subRegion0->getReference< std::string >( viewKeyStruct::relPermNamesString());
@@ -548,19 +596,20 @@ m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1,
      // - This step depends on porosity and permeability
      if( m_hasCapPressure )
      {
-       // initialized porosity
-       arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
- 
-       string const & permName = subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() );
-       PermeabilityBase const & permeabilityMaterial = getConstitutiveModel< PermeabilityBase >( subRegion, permName );
-       // initialized permeability
-       arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
- 
-       string const & capPressureName = subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() );
-       CapillaryPressureBase const & capPressureMaterial =
-         getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
-       capPressureMaterial.initializeRockState( porosity, permeability ); // this needs to happen before calling updateCapPressureModel
-       updateCapPressureModel( subRegion );
+      // initialized porosity
+      arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
+
+      string const & permName = subRegion.template getReference< string >( viewKeyStruct::permeabilityNamesString() );
+      PermeabilityBase const & permeabilityMaterial = getConstitutiveModel< PermeabilityBase >( subRegion, permName );
+      // initialized permeability
+      arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
+
+      string const & capPressureName = subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() );
+      CapillaryPressureBase const & capPressureMaterial =
+        getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
+      capPressureMaterial.initializeRockState( porosity, permeability ); // this needs to happen before calling updateCapPressureModel
+      capPressureMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac );
+      updateCapPressureModel( subRegion );
      }
  
      // 4.5 Update the phase mobility
@@ -777,59 +826,42 @@ m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1,
                                                                  MeshLevel & mesh,
                                                                  string_array const & regionNames )
    {
-     if( m_hasCapPressure )
-     {
-       mesh.getElemManager().forElementSubRegions( regionNames,
+    if( m_hasCapPressure )
+    {
+      // Get the first subregion to pass to the kernel factory (only used for domainSize, not for filtering connections)
+      ElementSubRegionBase const * firstSubRegion = nullptr;
+      mesh.getElemManager().forElementSubRegions( regionNames,
                                                    [&]( localIndex const,
-                                                        ElementSubRegionBase & subRegion ) // Check if you need this.
-       {
-        //  // Capillary pressure wrapper
-        //  string const & cappresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
-        //  BrooksCoreyCapillaryPressure & capPressure = getConstitutiveModel< BrooksCoreyCapillaryPressure >( subRegion, cappresName );
-        //  CapillaryPressureBase * capPressure1 = &getConstitutiveModel< CapillaryPressureBase >( subRegion, cappresName );
-        //  BrooksCoreyCapillaryPressure::KernelWrapper capPresWrapper = capPressure.createKernelWrapper();
- 
-        //  // Relative permeability wrapper
-        //  string const & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
-        //  BrooksCoreyRelativePermeability & relPerm = getConstitutiveModel< BrooksCoreyRelativePermeability >( subRegion, relPermName );
-        //  RelativePermeabilityBase  * relPerm1 = &getConstitutiveModel< RelativePermeabilityBase >( subRegion, relPermName );
-        //  BrooksCoreyRelativePermeability::KernelWrapper relPermWrapper = relPerm.createKernelWrapper();
- 
-        //  // fluid
-        //  string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-        //  TwoPhaseImmiscibleFluid * fluid = &getConstitutiveModel< TwoPhaseImmiscibleFluid >( subRegion, fluidName );
- 
-        //  // m_interfaceConstitutivePairs[0][0] = std::make_tuple( relPerm1, capPressure1, fluid );
-        //  // m_interfaceConstitutivePairs[0][1] = std::make_tuple( relPerm1, capPressure1, fluid );
- 
-        //  auto interfaceConstitutivePairs_temp = std::make_tuple( relPerm1, capPressure1, fluid );
- 
-         fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
-         {
-           typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
-           immiscibleMultiphaseKernels::
-             FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                                                                  dofManager.rankOffset(),
-                                                                                  dofKey,
-                                                                                  m_hasCapPressure,
-                                                                                  m_useTotalMassEquation,
-                                                                                  m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
-                                                                                  getName(),
-                                                                                  mesh.getElemManager(),
-                                                                                  stencilWrapper,
-                                                                                  // capPresWrapper,
-                                                                                  // relPermWrapper,
-                                                                                  m_interfaceFaceSetNames,
-                                                                                  m_interfaceConstitutivePairs,
-                                                                                  m_interfaceRegionByConnector,
-                                                                                  // interfaceConstitutivePairs_temp,
-                                                                                  subRegion,
-                                                                                  dt,
-                                                                                  localMatrix.toViewConstSizes(),
-                                                                                  localRhs.toView() );
-         } );
-       } );
-     }
+                                                        ElementSubRegionBase const & subRegion )
+      {
+        if( firstSubRegion == nullptr )
+        {
+          firstSubRegion = &subRegion;
+        }
+      } );
+
+      fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+      {
+        typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+        immiscibleMultiphaseKernels::
+          FluxComputeKernelFactory::createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                                               dofManager.rankOffset(),
+                                                                               dofKey,
+                                                                               m_hasCapPressure,
+                                                                               m_useTotalMassEquation,
+                                                                               m_gravityDensityScheme == GravityDensityScheme::PhasePresence,
+                                                                               getName(),
+                                                                               mesh.getElemManager(),
+                                                                               stencilWrapper,
+                                                                               m_interfaceFaceSetNames,
+                                                                               m_interfaceConstitutivePairs,
+                                                                               m_interfaceRegionByConnector,
+                                                                               *firstSubRegion,
+                                                                               dt,
+                                                                               localMatrix.toViewConstSizes(),
+                                                                               localRhs.toView() );
+      } );
+    }
      else
      {
        fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
@@ -1509,17 +1541,18 @@ m_interfaceConstitutivePairs[surfaceRegionIndex][1] = std::make_tuple( relPerm1,
        // note: this is needed when the capillary pressure depends on porosity and permeability (Leverett J-function for instance)
        if( m_hasCapPressure )
        {
-         arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
- 
-         string const & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
-         PermeabilityBase const & permeabilityMaterial =
-           getConstitutiveModel< PermeabilityBase >( subRegion, permName );
-         arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
- 
-         string const & capPressName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
-         CapillaryPressureBase const & capPressureMaterial =
-           getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressName );
-         capPressureMaterial.saveConvergedRockState( porosity, permeability );
+        arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
+
+        string const & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
+        PermeabilityBase const & permeabilityMaterial =
+          getConstitutiveModel< PermeabilityBase >( subRegion, permName );
+        arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
+
+        string const & capPressName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
+        CapillaryPressureBase const & capPressureMaterial =
+          getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressName );
+        capPressureMaterial.saveConvergedRockState( porosity, permeability );
+        capPressureMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac );
        }
      } );
    } );

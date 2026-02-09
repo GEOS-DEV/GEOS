@@ -13,7 +13,9 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "common/MpiWrapper.hpp"
+#include "RelpermDriver.hpp"
+
+//#include "common/MpiWrapper.hpp"
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
@@ -110,7 +112,7 @@ bool RelpermDriver::execute( const geos::real64 GEOS_UNUSED_PARAM( time_n ),
 {
   // this code only makes sense in serial
 
-  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "RelpermDriver should only be run in serial", std::runtime_error );
+  //GEOS_THROW_IF( MpiWrapper::commRank() > 0, "RelpermDriver should only be run in serial", std::runtime_error );
 
 
   ConstitutiveManager
