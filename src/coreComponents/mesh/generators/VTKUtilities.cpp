@@ -821,7 +821,384 @@ scatterByBlock( vtkDataSet & mesh )
   return result;
 }
 
+/**
+ * @brief Separate 2D and 3D cells from a mesh
+ *
+ * Extracts cells by topological dimension into separate unstructured grids while
+ * maintaining mappings to original cell indices. 1D and 0D cells are ignored.
+ *
+ * @param[in] mesh Input mesh containing cells of mixed dimensions
+ * @param[out] cells3D Unstructured grid containing only 3D volumetric cells
+ * @param[out] cells2D Unstructured grid containing only 2D surface cells
+ * @param[out] cells3DToOriginal Index mapping from extracted 3D cells to original mesh
+ * @param[out] cells2DToOriginal Index mapping from extracted 2D cells to original mesh
+ *
+ * @note The output grids are deep copies and independent of the input mesh
+ */
+static void separateCellsByDimension( vtkDataSet & mesh,
+                                      vtkSmartPointer< vtkUnstructuredGrid > & cells3D,
+                                      vtkSmartPointer< vtkUnstructuredGrid > & cells2D,
+                                      array1d< vtkIdType > & cells3DToOriginal,
+                                      array1d< vtkIdType > & cells2DToOriginal )
+{
+  GEOS_MARK_FUNCTION;
 
+  vtkIdType const numCells = mesh.GetNumberOfCells();
+
+  vtkNew< vtkIdList > indices3D;
+  vtkNew< vtkIdList > indices2D;
+
+  // Classify cells by dimension
+  for( vtkIdType i = 0; i < numCells; ++i )
+  {
+    int const cellDim = mesh.GetCell( i )->GetCellDimension();
+    if( cellDim == 3 )
+    {
+      indices3D->InsertNextId( i );
+    }
+    else if( cellDim == 2 )
+    {
+      indices2D->InsertNextId( i );
+    }
+    // Note: 1D edges and 0D vertices are intentionally ignored
+  }
+
+  GEOS_LOG_RANK_0( GEOS_FMT( "Separating mesh: {} 3D cells, {} 2D cells (from {} total)",
+                             indices3D->GetNumberOfIds(),
+                             indices2D->GetNumberOfIds(),
+                             numCells ) );
+
+  // Extract and deep-copy 3D cells
+  vtkNew< vtkExtractCells > extractor3D;
+  extractor3D->SetInputDataObject( &mesh );
+  extractor3D->SetExtractAllCells( false );
+  extractor3D->SetCellList( indices3D );
+  extractor3D->Update();
+
+  cells3D = vtkSmartPointer< vtkUnstructuredGrid >::New();
+  cells3D->DeepCopy( extractor3D->GetOutput() );
+
+  // Store index mapping for 3D cells
+  cells3DToOriginal.resize( indices3D->GetNumberOfIds() );
+  for( vtkIdType i = 0; i < indices3D->GetNumberOfIds(); ++i )
+  {
+    cells3DToOriginal[i] = indices3D->GetId( i );
+  }
+
+  // Extract and deep-copy 2D cells
+  vtkNew< vtkExtractCells > extractor2D;
+  extractor2D->SetInputDataObject( &mesh );
+  extractor2D->SetExtractAllCells( false );
+  extractor2D->SetCellList( indices2D );
+  extractor2D->Update();
+
+  cells2D = vtkSmartPointer< vtkUnstructuredGrid >::New();
+  cells2D->DeepCopy( extractor2D->GetOutput() );
+
+  // Store index mapping for 2D cells
+  cells2DToOriginal.resize( indices2D->GetNumberOfIds() );
+  for( vtkIdType i = 0; i < indices2D->GetNumberOfIds(); ++i )
+  {
+    cells2DToOriginal[i] = indices2D->GetId( i );
+  }
+}
+
+/**
+ * @brief Build mapping from 2D cells to their neighboring 3D cells using global cell IDs
+ * @param[in] mesh Original mesh containing both 2D and 3D cells with global IDs
+ * @param[in] cells2DToOriginal Mapping from local 2D indices to original mesh indices
+ * @param[in] cells3DToOriginal Mapping from local 3D indices to original mesh indices
+ * @return ArrayOfArrays mapping each 2D cell index to global IDs of neighboring 3D cells
+ */
+static ArrayOfArrays< vtkIdType, int64_t >
+build2DTo3DNeighbors( vtkDataSet & mesh,
+                      arrayView1d< vtkIdType const > cells2DToOriginal,
+                      arrayView1d< vtkIdType const > cells3DToOriginal )
+{
+  GEOS_MARK_FUNCTION;
+
+  // Retrieve global cell ID array
+  vtkDataArray * globalCellIds = mesh.GetCellData()->GetGlobalIds();
+  GEOS_ERROR_IF( globalCellIds == nullptr,
+                 "Global cell IDs must be present in mesh for 2D-3D neighbor mapping" );
+
+
+// Build reverse lookup: original mesh index -> global cell ID (3D cells only)
+  stdUnorderedMap< vtkIdType, int64_t > original3DToGlobalId;
+  original3DToGlobalId.reserve( cells3DToOriginal.size() );
+
+  for( localIndex i = 0; i < cells3DToOriginal.size(); ++i )
+  {
+    vtkIdType const origIdx = cells3DToOriginal[i];
+    int64_t const globalId = static_cast< int64_t >( globalCellIds->GetTuple1( origIdx ) );
+    original3DToGlobalId.emplace( origIdx, globalId ); // ← FIXED
+  }
+
+  ArrayOfArrays< vtkIdType, int64_t > neighbors2Dto3D;
+  neighbors2Dto3D.reserve( cells2DToOriginal.size() );
+
+  // Topology statistics
+  localIndex numStandalone = 0;
+  localIndex numBoundary = 0;       // 1 neighbor
+  localIndex numInternal = 0;       // 2 neighbors
+  localIndex numJunction = 0;       // >2 neighbors
+
+  // Build neighbor list for each 2D cell
+  for( localIndex i = 0; i < cells2DToOriginal.size(); ++i )
+  {
+    vtkIdType const origIdx2D = cells2DToOriginal[i];
+    vtkCell * cell2D = mesh.GetCell( origIdx2D );
+    vtkIdList * pointIds2D = cell2D->GetPointIds();
+
+    // Find all cells sharing ALL nodes with this 2D cell (exact face match)
+    vtkNew< vtkIdList > neighborCells;
+    mesh.GetCellNeighbors( origIdx2D, pointIds2D, neighborCells );
+
+    // Filter for 3D neighbors and retrieve their global IDs
+    array1d< int64_t > neighbor3DGlobalIds;
+    neighbor3DGlobalIds.reserve( neighborCells->GetNumberOfIds() );
+
+    for( vtkIdType n = 0; n < neighborCells->GetNumberOfIds(); ++n )
+    {
+      vtkIdType const neighborIdx = neighborCells->GetId( n );
+
+      // Only consider 3D cells
+      if( mesh.GetCell( neighborIdx )->GetCellDimension() == 3 )
+      {
+        auto it = original3DToGlobalId.find( neighborIdx );
+        GEOS_ERROR_IF( it == original3DToGlobalId.end(),
+                       GEOS_FMT( "3D neighbor at index {} not found in 3D cell mapping", neighborIdx ) );
+
+        neighbor3DGlobalIds.emplace_back( it->second );
+      }
+    }
+
+    // Update topology statistics
+    localIndex const numNeighbors = neighbor3DGlobalIds.size();
+    switch( numNeighbors )
+    {
+      case 0:  numStandalone++; break;
+      case 1:  numBoundary++;   break;
+      case 2:  numInternal++;   break;
+      default: numJunction++;   break;
+    }
+
+    neighbors2Dto3D.appendArray( neighbor3DGlobalIds.begin(), neighbor3DGlobalIds.end() );
+  }
+
+  // Print diagnostic summary
+  GEOS_LOG_RANK_0( "\n2D-to-3D Neighbor Topology " );
+  GEOS_LOG_RANK_0( GEOS_FMT( " Total 2D cells:           {}", cells2DToOriginal.size() ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( " Standalone (0 neighbors): {}", numStandalone ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( " Boundary   (1 neighbor):  {}", numBoundary ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( " Internal   (2 neighbors): {}", numInternal ) );
+  GEOS_LOG_RANK_0( GEOS_FMT( " Junction   (>2 neighbors):{}", numJunction ) );
+
+  // Standalone 2D cells indicate mesh topology errors
+  GEOS_ERROR_IF( numStandalone > 0,
+                 GEOS_FMT( "{} orphaned 2D cells detected with no 3D neighbors. "
+                           "These may be artifacts or detached surfaces. "
+                           "Please clean the mesh or verify the geometry.", numStandalone ) );
+
+  return neighbors2Dto3D;
+}
+
+/**
+ * @brief Assign partition ownership for 2D cells based on their 3D neighbor locations
+ *
+ * Uses a deterministic tie-breaking rule (minimum global ID) to assign 2D cells that
+ * have multiple 3D neighbors (e.g., internal fractures).
+ *
+ * @param[in] neighbors2Dto3D Neighbor map from build2DTo3DNeighbors()
+ * @param[in] globalIdTo3DPartition Complete map of 3D cell global ID -> rank assignment
+ * @param[in] comm MPI communicator (unused, kept for API consistency)
+ * @return Partition (rank) assignment for each 2D cell
+ */
+static array1d< int64_t >
+assign2DCellsTo3DPartitions( ArrayOfArrays< vtkIdType, int64_t > const & neighbors2Dto3D,
+                             stdUnorderedMap< int64_t, int64_t > const & globalIdTo3DPartition )
+{
+  GEOS_MARK_FUNCTION;
+
+  array1d< int64_t > partitions2D( neighbors2Dto3D.size() );
+
+  for( localIndex i = 0; i < neighbors2Dto3D.size(); ++i )
+  {
+    auto neighbors = neighbors2Dto3D[i];
+
+    GEOS_ASSERT_MSG( neighbors.size() > 0,
+                     "2D cell should have at least one neighbor (enforced by build2DTo3DNeighbors)" );
+
+    // Deterministic tie-breaking: choose neighbor with minimum global ID
+    int64_t minGlobalId = neighbors[0];
+    for( localIndex n = 1; n < neighbors.size(); ++n )
+    {
+      if( neighbors[n] < minGlobalId )
+      {
+        minGlobalId = neighbors[n];
+      }
+    }
+
+    // Look up partition assignment from the complete 3D partition map
+    auto it = globalIdTo3DPartition.find( minGlobalId );
+    GEOS_ERROR_IF( it == globalIdTo3DPartition.end(),
+                   GEOS_FMT( "3D neighbor with global ID {} not found in partition map", minGlobalId ) );
+
+    partitions2D[i] = it->second;
+  }
+
+  return partitions2D;
+}
+
+/**
+ * @brief Merge 2D surface cells with redistributed 3D volume cells
+ *
+ * This function completes the 2D/3D redistribution workflow:
+ * 1. Builds a global 3D partition map (globalID -> rank)
+ * 2. Assigns 2D cells to ranks based on their 3D neighbor locations (rank 0 only)
+ * 3. Redistributes 2D cells to appropriate ranks
+ * 4. Merges local 2D and 3D cells on each rank into a unified mesh
+ *
+ * @param[in] redistributed3D Already partitioned 3D cells with global IDs
+ * @param[in] cells2D 2D boundary cells (still on rank 0 or original distribution)
+ * @param[in] neighbors2Dto3D Pre-computed 2D-to-3D neighbor mapping
+ * @param[in] redistributedFractures Already partitioned fracture meshes (pass-through)
+ * @param[in] comm MPI communicator
+ * @return Complete AllMeshes object with merged main mesh and fractures
+ */
+static AllMeshes
+merge2D3DCellsAndRedistribute( vtkSmartPointer< vtkDataSet > redistributed3D,
+                               vtkSmartPointer< vtkUnstructuredGrid > cells2D,
+                               ArrayOfArrays< vtkIdType, int64_t > const & neighbors2Dto3D,
+                               stdMap< string, vtkSmartPointer< vtkDataSet > > const & redistributedFractures,
+                               MPI_Comm const comm )
+{
+  GEOS_MARK_FUNCTION;
+
+  int const rank = MpiWrapper::commRank( comm );
+  int const numRanks = MpiWrapper::commSize( comm );
+
+  // Step 1: Build complete 3D partition map (all ranks participate)
+  vtkDataArray * redistributed3DGlobalIds = redistributed3D->GetCellData()->GetGlobalIds();
+  GEOS_ERROR_IF( redistributed3DGlobalIds == nullptr,
+                 "Global cell IDs required in redistributed 3D mesh for 2D cell assignment" );
+
+  vtkIdType const local3DCells = redistributed3D->GetNumberOfCells();
+
+  // Gather counts from all ranks
+  array1d< int > cellCounts;
+  MpiWrapper::allGather( static_cast< int >( local3DCells ), cellCounts, comm );
+
+  // Compute offsets
+  array1d< int > offsets( numRanks );
+  int totalCells = 0;
+  for( int r = 0; r < numRanks; ++r )
+  {
+    offsets[r] = totalCells;
+    totalCells += cellCounts[r];
+  }
+
+  // Gather local global IDs
+  array1d< int64_t > localGlobalIds( local3DCells );
+  for( vtkIdType i = 0; i < local3DCells; ++i )
+  {
+    localGlobalIds[i] = static_cast< int64_t >( redistributed3DGlobalIds->GetTuple1( i ) );
+  }
+
+  // All-gather global IDs to all ranks
+  array1d< int64_t > allGlobalIds( totalCells );
+  //MPI_Allgatherv( localGlobalIds.data(), static_cast< int >( local3DCells ), MPI_INT64_T,
+  //                allGlobalIds.data(), cellCounts.data(), offsets.data(), MPI_INT64_T,
+  //                comm );
+  MpiWrapper::allgatherv( localGlobalIds.data(), static_cast< int >( local3DCells ),
+                          allGlobalIds.data(), cellCounts.data(), offsets.data(),
+                          comm );
+
+// Build complete partition map: global cell ID -> owning rank
+  stdUnorderedMap< int64_t, int64_t > complete3DPartitionMap;
+  complete3DPartitionMap.reserve( totalCells );
+
+  for( int r = 0; r < numRanks; ++r )
+  {
+    for( int i = 0; i < cellCounts[r]; ++i )
+    {
+      int64_t const globalId = allGlobalIds[offsets[r] + i];
+      complete3DPartitionMap.emplace( globalId, r ); // ← FIXED
+    }
+  }
+
+  // Step 2: Rank 0 assigns 2D partitions and splits the mesh
+  vtkSmartPointer< vtkPartitionedDataSet > split2DCells = vtkSmartPointer< vtkPartitionedDataSet >::New();
+  vtkIdType expected2DCells = 0;
+
+  if( rank == 0 )
+  {
+    vtkIdType const numCells2D = cells2D->GetNumberOfCells();
+    expected2DCells = numCells2D;
+
+    GEOS_LOG_RANK_0( GEOS_FMT( "Assigning {} 2D cells to partitions", numCells2D ) );
+
+    // Use the helper function instead of inlining
+    array1d< int64_t > partitions2D = assign2DCellsTo3DPartitions(
+      neighbors2Dto3D,
+      complete3DPartitionMap );
+
+    split2DCells = splitMeshByPartition( cells2D, numRanks, partitions2D.toViewConst() );
+  }
+  else
+  {
+    // Non-root ranks: create empty partitioned dataset with correct structure
+    // Required for vtk::redistribute to work correctly
+    split2DCells->SetNumberOfPartitions( numRanks );
+    for( int r = 0; r < numRanks; ++r )
+    {
+      vtkNew< vtkUnstructuredGrid > emptyPart;
+      split2DCells->SetPartition( r, emptyPart );
+    }
+  }
+
+  // Step 3: Redistribute 2D cells to target ranks
+  vtkSmartPointer< vtkUnstructuredGrid > local2DCells = vtk::redistribute( *split2DCells, comm );
+
+  // Conservation check: verify no 2D cells were lost during redistribution
+  vtkIdType const total2DCells = MpiWrapper::sum( local2DCells->GetNumberOfCells(), comm );
+  MpiWrapper::broadcast( expected2DCells, 0, comm );
+
+  GEOS_ERROR_IF( total2DCells != expected2DCells,
+                 GEOS_FMT( "2D cell redistribution failed: expected {} cells, got {} cells",
+                           expected2DCells, total2DCells ) );
+
+
+  // Step 4: Merge local 3D and 2D cells on each rank
+  vtkSmartPointer< vtkUnstructuredGrid > mergedMesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
+
+  if( local2DCells->GetNumberOfCells() > 0 )
+  {
+    // Merge 3D and 2D cells using VTK append filter
+    vtkNew< vtkAppendFilter > appendFilter;
+    appendFilter->AddInputData( redistributed3D );
+    appendFilter->AddInputData( local2DCells );
+    appendFilter->MergePointsOn();  // Ensures shared nodes are not duplicated
+    appendFilter->Update();
+
+    mergedMesh->DeepCopy( appendFilter->GetOutput() );
+
+    //GEOS_LOG_RANK( GEOS_FMT( "Rank merged {} 3D cells + {} 2D cells = {} total",
+    //                         redistributed3D->GetNumberOfCells(),
+    //                         local2DCells->GetNumberOfCells(),
+    //                         mergedMesh->GetNumberOfCells() ) );
+  }
+  else
+  {
+    mergedMesh->DeepCopy( redistributed3D );
+
+    //GEOS_LOG_RANK( GEOS_FMT( "Rank has {} 3D cells only (no 2D cells)",
+    //                         redistributed3D->GetNumberOfCells() ) );
+
+  }
+
+  return AllMeshes( mergedMesh, redistributedFractures );
+}
 
 vtkSmartPointer< vtkUnstructuredGrid >
 threshold( vtkDataSet & mesh,
@@ -1321,9 +1698,9 @@ redistributeMeshes( integer const logLevel,
 
     if( rank == 0 )
     {
-      GEOS_LOG_RANK_0( "\n----------------------------------------------" );
-      GEOS_LOG_RANK_0( "| Rk |  3D Cells |  2D Cells | Total (Main)  |" );
-      GEOS_LOG_RANK_0( "----------------------------------------------" );
+      GEOS_LOG_RANK_0( "\n------------------------------------------------" );
+      GEOS_LOG_RANK_0( "| Rk   |  3D Cells | 2D Cells  |  Total (Main) |" );
+      GEOS_LOG_RANK_0( "------------------------------------------------" );
 
       vtkIdType sum2D = 0, sum3D = 0;
       for( int r = 0; r < numRanks; ++r )
@@ -1331,17 +1708,17 @@ redistributeMeshes( integer const logLevel,
         sum2D += all2D[r];
         sum3D += all3D[r];
 
-        GEOS_LOG_RANK_0( "| " << std::setw( 2 ) << r << " | "
+        GEOS_LOG_RANK_0( "| " << std::setw( 4 ) << r << " | "
                               << std::setw( 9 ) << all3D[r] << " | "
                               << std::setw( 9 ) << all2D[r] << " | "
                               << std::setw( 13 ) << (all3D[r] + all2D[r]) << " |" );
       }
 
-      GEOS_LOG_RANK_0( "----------------------------------------------" );
-      GEOS_LOG_RANK_0( "|Tot | " << std::setw( 9 ) << sum3D << " | "
+      GEOS_LOG_RANK_0( "------------------------------------------------" );
+      GEOS_LOG_RANK_0( "|Total | " << std::setw( 9 ) << sum3D << " | "
                                  << std::setw( 9 ) << sum2D << " | "
                                  << std::setw( 13 ) << (sum3D + sum2D) << " |" );
-      GEOS_LOG_RANK_0( "----------------------------------------------" );
+      GEOS_LOG_RANK_0( "------------------------------------------------" );
     }
   }
 
@@ -1362,362 +1739,6 @@ redistributeMeshes( integer const logLevel,
 
   return finalResult;
 }
-
-
-/**
- * @brief Separate 2D and 3D cells from a mesh
- * @param[in] mesh The input mesh containing both 2D and 3D cells
- * @param[out] cells3D VTK grid containing only 3D cells
- * @param[out] cells2D VTK grid containing only 2D cells
- * @param[out] cells3DToOriginal Mapping from 3D cell local index to original mesh index
- * @param[out] cells2DToOriginal Mapping from 2D cell local index to original mesh index
- */
-void separateCellsByDimension( vtkDataSet & mesh,
-                               vtkSmartPointer< vtkUnstructuredGrid > & cells3D,
-                               vtkSmartPointer< vtkUnstructuredGrid > & cells2D,
-                               array1d< vtkIdType > & cells3DToOriginal,
-                               array1d< vtkIdType > & cells2DToOriginal )
-{
-  GEOS_MARK_FUNCTION;
-
-  vtkIdType const numCells = mesh.GetNumberOfCells();
-
-  vtkNew< vtkIdList > indices3D;
-  vtkNew< vtkIdList > indices2D;
-
-  // Classify cells by dimension
-  for( vtkIdType i = 0; i < numCells; ++i )
-  {
-    int const cellDim = mesh.GetCell( i )->GetCellDimension();
-    if( cellDim == 3 )
-    {
-      indices3D->InsertNextId( i );
-    }
-    else if( cellDim == 2 )
-    {
-      indices2D->InsertNextId( i );
-    }
-    // Note: 1D and 0D cells are ignored
-  }
-
-  // Extract 3D cells
-  vtkNew< vtkExtractCells > extractor3D;
-  extractor3D->SetInputDataObject( &mesh );
-  extractor3D->SetExtractAllCells( false );
-  extractor3D->SetCellList( indices3D );
-  extractor3D->Update();
-
-  cells3D = vtkSmartPointer< vtkUnstructuredGrid >::New();
-  cells3D->DeepCopy( extractor3D->GetOutput() );
-
-  // Store mapping for 3D cells
-  cells3DToOriginal.resize( indices3D->GetNumberOfIds() );
-  for( vtkIdType i = 0; i < indices3D->GetNumberOfIds(); ++i )
-  {
-    cells3DToOriginal[i] = indices3D->GetId( i );
-  }
-
-  // Extract 2D cells
-  vtkNew< vtkExtractCells > extractor2D;
-  extractor2D->SetInputDataObject( &mesh );
-  extractor2D->SetExtractAllCells( false );
-  extractor2D->SetCellList( indices2D );
-  extractor2D->Update();
-
-  cells2D = vtkSmartPointer< vtkUnstructuredGrid >::New();
-  cells2D->DeepCopy( extractor2D->GetOutput() );
-
-  // Store mapping for 2D cells
-  cells2DToOriginal.resize( indices2D->GetNumberOfIds() );
-  for( vtkIdType i = 0; i < indices2D->GetNumberOfIds(); ++i )
-  {
-    cells2DToOriginal[i] = indices2D->GetId( i );
-  }
-}
-
-ArrayOfArrays< vtkIdType, int64_t >
-build2DTo3DNeighbors( vtkDataSet & mesh,
-                      arrayView1d< vtkIdType const > cells2DToOriginal,
-                      arrayView1d< vtkIdType const > cells3DToOriginal )
-{
-  GEOS_MARK_FUNCTION;
-
-  // Get the global cell ID array
-  vtkDataArray * globalCellIds = mesh.GetCellData()->GetGlobalIds();
-
-  GEOS_ERROR_IF( globalCellIds == nullptr,
-                 "Global cell IDs must be present in the mesh. " );
-
-  // Build mapping: original mesh index -> global cell ID (for 3D cells only)
-  std::unordered_map< vtkIdType, int64_t > original3DToGlobalId;
-  for( localIndex i = 0; i < cells3DToOriginal.size(); ++i )
-  {
-    vtkIdType origIdx = cells3DToOriginal[i];
-    int64_t globalId = static_cast< int64_t >( globalCellIds->GetTuple1( origIdx ) );
-    original3DToGlobalId[origIdx] = globalId;
-  }
-
-  ArrayOfArrays< vtkIdType, int64_t > neighbors2Dto3D;
-
-  // Statistics
-  localIndex numStandalone = 0;
-  localIndex numWith1Neighbor = 0;
-  localIndex numWith2Neighbors = 0;
-  localIndex numWithMoreNeighbors = 0;
-
-  for( localIndex i = 0; i < cells2DToOriginal.size(); ++i )
-  {
-    vtkIdType const origIdx2D = cells2DToOriginal[i];
-    vtkCell * cell2D = mesh.GetCell( origIdx2D );
-    vtkIdList * pointIds2D = cell2D->GetPointIds();
-
-    // Use VTK's GetCellNeighbors to find cells that share ALL points with this 2D cell
-    vtkNew< vtkIdList > neighborCells;
-    mesh.GetCellNeighbors( origIdx2D, pointIds2D, neighborCells );
-
-    // Filter for 3D neighbors only and get their global IDs
-    array1d< int64_t > neighbor3DGlobalIds;
-
-    for( vtkIdType n = 0; n < neighborCells->GetNumberOfIds(); ++n )
-    {
-      vtkIdType neighborIdx = neighborCells->GetId( n );
-
-      // Only consider 3D cells
-      if( mesh.GetCell( neighborIdx )->GetCellDimension() == 3 )
-      {
-        auto it = original3DToGlobalId.find( neighborIdx );
-        if( it != original3DToGlobalId.end() )
-        {
-          neighbor3DGlobalIds.emplace_back( it->second );
-        }
-        else
-        {
-          GEOS_WARNING( GEOS_FMT( "Found 3D neighbor (original index {}) not in cells3DToOriginal mapping", neighborIdx ) );
-        }
-      }
-    }
-
-    // Update statistics
-    localIndex numNeighbors = neighbor3DGlobalIds.size();
-    if( numNeighbors == 0 )
-    {
-      numStandalone++;
-    }
-    else if( numNeighbors == 1 )
-    {
-      numWith1Neighbor++;
-    }
-    else if( numNeighbors == 2 )
-    {
-      numWith2Neighbors++;
-    }
-    else
-    {
-      numWithMoreNeighbors++;
-    }
-
-    neighbors2Dto3D.appendArray( neighbor3DGlobalIds.begin(), neighbor3DGlobalIds.end() );
-  }
-
-  // Print summary statistics
-  GEOS_LOG_RANK_0( "\n2D-to-3D Neighbor Analysis" );
-  GEOS_LOG_RANK_0( "  Total 2D cells:           " << cells2DToOriginal.size() );
-  GEOS_LOG_RANK_0( "  Standalone (0 neighbors): " << numStandalone );
-  GEOS_LOG_RANK_0( "  Boundary (1 neighbor):    " << numWith1Neighbor );
-  GEOS_LOG_RANK_0( "  Internal (2 neighbors):   " << numWith2Neighbors );
-  GEOS_LOG_RANK_0( "  Junction (>2 neighbors):  " << numWithMoreNeighbors );
-
-  GEOS_WARNING_IF( numStandalone > 0, GEOS_FMT( " {} standalone 2D cells found (will be assigned to rank 0)", numStandalone ) );
-
-  return neighbors2Dto3D;
-}
-
-array1d< int64_t >
-assign2DCellsTo3DPartitions( ArrayOfArrays< vtkIdType, int64_t > const & neighbors2Dto3D,
-                             std::unordered_map< int64_t, int64_t > const & globalIdTo3DPartition,
-                             MPI_Comm const comm )
-{
-  GEOS_MARK_FUNCTION;
-
-  int const rank = MpiWrapper::commRank( comm );
-
-  array1d< int64_t > partitions2D( neighbors2Dto3D.size() );
-
-  for( localIndex i = 0; i < neighbors2Dto3D.size(); ++i )
-  {
-    auto neighbors = neighbors2Dto3D[i];  // Global IDs of 3D neighbors
-
-    if( neighbors.size() == 0 )
-    {
-      // No 3D neighbor - standalone 2D surface, assign to current rank
-      GEOS_WARNING( GEOS_FMT( "2D cell {} has no 3D neighbors, assigning to rank {}", i, rank ));
-      partitions2D[i] = rank;
-      continue;
-    }
-
-    // Find the 3D neighbor with the LOWEST global ID (deterministic choice)
-    int64_t minGlobalId = neighbors[0];
-
-    for( localIndex n = 1; n < neighbors.size(); ++n )
-    {
-      if( neighbors[n] < minGlobalId )
-      {
-        minGlobalId = neighbors[n];
-      }
-    }
-
-    // Look up partition of the chosen neighbor
-    auto it = globalIdTo3DPartition.find( minGlobalId );
-
-    if( it != globalIdTo3DPartition.end() )
-    {
-      partitions2D[i] = it->second;
-    }
-    else
-    {
-      GEOS_ERROR( "Could not find partition for 3D neighbor with global ID " << minGlobalId );
-    }
-  }
-
-  return partitions2D;
-}
-
-AllMeshes
-merge2D3DCellsAndRedistribute( vtkSmartPointer< vtkDataSet > redistributed3D,
-                               vtkSmartPointer< vtkUnstructuredGrid > cells2D,
-                               ArrayOfArrays< vtkIdType, int64_t > const & neighbors2Dto3D,
-                               stdMap< string, vtkSmartPointer< vtkDataSet > > const & redistributedFractures,
-                               MPI_Comm const comm )
-{
-  GEOS_MARK_FUNCTION;
-
-  int const rank = MpiWrapper::commRank( comm );
-  int const numRanks = MpiWrapper::commSize( comm );
-
-  // Step 1: Build complete 3D partition map (all ranks participate)
-  vtkDataArray * redistributed3DGlobalIds = redistributed3D->GetCellData()->GetGlobalIds();
-  GEOS_ERROR_IF( redistributed3DGlobalIds == nullptr,
-                 "Global cell IDs required in redistributed 3D mesh" );
-
-  vtkIdType local3DCells = redistributed3D->GetNumberOfCells();
-
-  std::unordered_map< int64_t, int64_t > complete3DPartitionMap;
-
-  array1d< int > cellCounts;
-  MpiWrapper::allGather( static_cast< int >(local3DCells), cellCounts, comm );
-
-  int totalCells = 0;
-  array1d< int > offsets( numRanks );
-  for( int r = 0; r < numRanks; ++r )
-  {
-    offsets[r] = totalCells;
-    totalCells += cellCounts[r];
-  }
-
-  array1d< int64_t > localGlobalIds( local3DCells );
-  for( vtkIdType i = 0; i < local3DCells; ++i )
-  {
-    localGlobalIds[i] = static_cast< int64_t >( redistributed3DGlobalIds->GetTuple1( i ) );
-  }
-
-  array1d< int64_t > allGlobalIds( totalCells );
-
-  MPI_Allgatherv( localGlobalIds.data(), local3DCells, MPI_INT64_T,
-                  allGlobalIds.data(), cellCounts.data(), offsets.data(), MPI_INT64_T,
-                  comm );
-
-  for( int r = 0; r < numRanks; ++r )
-  {
-    for( int i = 0; i < cellCounts[r]; ++i )
-    {
-      int64_t globalId = allGlobalIds[offsets[r] + i];
-      complete3DPartitionMap[globalId] = r;
-    }
-  }
-
-  // Step 2: Rank 0 assigns 2D partitions and splits
-  vtkSmartPointer< vtkPartitionedDataSet > split2DCells = vtkSmartPointer< vtkPartitionedDataSet >::New();
-  vtkIdType expected2DCells = 0;
-
-  if( rank == 0 )
-  {
-    vtkIdType const numCells2D = cells2D->GetNumberOfCells();
-    expected2DCells = numCells2D;
-    array1d< int64_t > partitions2D( numCells2D );
-
-    for( localIndex i = 0; i < numCells2D; ++i )
-    {
-      auto neighbors = neighbors2Dto3D[i];
-
-      if( neighbors.size() > 0 )
-      {
-        int64_t minGlobalId = neighbors[0];
-        for( localIndex n = 1; n < neighbors.size(); ++n )
-        {
-          if( neighbors[n] < minGlobalId )
-            minGlobalId = neighbors[n];
-        }
-
-        auto it = complete3DPartitionMap.find( minGlobalId );
-        if( it != complete3DPartitionMap.end() )
-        {
-          partitions2D[i] = it->second;
-        }
-        else
-        {
-          GEOS_ERROR( "Could not find partition for 3D neighbor with global ID " << minGlobalId );
-        }
-      }
-      else
-      {
-        partitions2D[i] = 0;
-      }
-    }
-
-    split2DCells = splitMeshByPartition( cells2D, numRanks, partitions2D.toViewConst() );
-  }
-  else
-  {
-    // Other ranks: create properly initialized empty partitioned dataset
-    split2DCells->SetNumberOfPartitions( numRanks );
-    for( int r = 0; r < numRanks; ++r )
-    {
-      vtkNew< vtkUnstructuredGrid > emptyPart;
-      split2DCells->SetPartition( r, emptyPart );
-    }
-  }
-
-  // Step 3: Redistribute 2D cells
-  vtkSmartPointer< vtkUnstructuredGrid > local2DCells = vtk::redistribute( *split2DCells, comm );
-
-  // Validate redistribution succeeded
-  vtkIdType total2DCells = MpiWrapper::sum( local2DCells->GetNumberOfCells(), comm );
-  MpiWrapper::broadcast( expected2DCells, 0, comm );
-  GEOS_ERROR_IF( total2DCells != expected2DCells,
-                 "2D cell redistribution lost cells: expected " << expected2DCells
-                                                                << ", got " << total2DCells );
-
-  // Step 4: All ranks merge local 3D cells with received 2D cells
-  vtkSmartPointer< vtkUnstructuredGrid > mergedMesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
-
-  if( local2DCells->GetNumberOfCells() > 0 )
-  {
-    vtkNew< vtkAppendFilter > appendFilter;
-    appendFilter->AddInputData( redistributed3D );
-    appendFilter->AddInputData( local2DCells );
-    appendFilter->MergePointsOn();
-    appendFilter->Update();
-
-    mergedMesh->DeepCopy( appendFilter->GetOutput() );
-  }
-  else
-  {
-    mergedMesh->DeepCopy( redistributed3D );
-  }
-
-  return AllMeshes( mergedMesh, redistributedFractures );
-}
-
 
 /**
  * @brief Identify the GEOSX type of the polyhedron
