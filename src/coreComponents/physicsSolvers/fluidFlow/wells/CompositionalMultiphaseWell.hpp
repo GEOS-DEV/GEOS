@@ -75,8 +75,6 @@ public:
 
 
   virtual void registerWellDataOnMesh( WellElementSubRegion & subRegion ) override;
-
-  virtual bool isCompositional() const override { return true; }
   /**
    * @defgroup WellManager Interface Functions
    *
@@ -91,6 +89,10 @@ public:
    *   @param subRegion the well subRegion
    */
   virtual void initializeWell( DomainPartition & domain, MeshLevel & mesh, WellElementSubRegion & subRegion, real64 const & time_n ) override;
+
+  virtual void initializeWellPostInitialConditionsPreSubGroups( WellElementSubRegion & subRegion ) override;
+
+  virtual bool isCompositional() const override { return true; }
 
 
   /**
@@ -227,7 +229,6 @@ public:
   implicitStepComplete( real64 const & time,
                         real64 const & dt,
                         WellElementSubRegion const & subRegion ) override;
-  virtual void initializeWellPostInitialConditionsPreSubGroups( WellElementSubRegion & subRegion ) override;
 
   virtual void printRates( real64 const & time_n,
                            real64 const & dt,

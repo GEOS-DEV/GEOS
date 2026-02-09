@@ -219,6 +219,8 @@ public:
                            real64 const & dt,
                            WellElementSubRegion const & subRegion ) override;
 
+  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
+
   /**@}*/
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
@@ -270,8 +272,6 @@ public:
    * @param elemManager the element region manager
    * @param subRegion the well subRegion containing the well elements and their associated fields
    */
-  virtual real64 updateSubRegionState( ElementRegionManager const & elemManager, WellElementSubRegion & subRegion ) override;
-
   /*
    * @brief apply a special treatment to the wells that are shut
 
