@@ -76,7 +76,8 @@ struct ConstraintCheckKernel
     {
       if( ghostRank[k] < 0 )
       {
-        contactWrapper.constraintCheck( dispJump[k],
+        contactWrapper.constraintCheck( k,
+                                        dispJump[k],
                                         deltaDispJump[k],
                                         traction[k],
                                         fractureState[k],
@@ -130,7 +131,8 @@ struct UpdateStateKernel
 
       real64 localPenalty[3][3]{};
       real64 localTractionNew[3]{};
-      contactWrapper.updateTraction( oldDispJump[k],
+      contactWrapper.updateTraction( k,
+                                     oldDispJump[k],
                                      dispJump[k],
                                      penalty[k],
                                      traction[k],

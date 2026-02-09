@@ -35,26 +35,43 @@ CoulombFriction::CoulombFriction( string const & name, Group * const parent ):
     setDescription( "Value of the shear elastic stiffness. Units of Pressure/length" );
 
   registerWrapper( viewKeyStruct::cohesionString(), &m_cohesion ).
-    setApplyDefaultValue( -1 ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Cohesion" );
+    setApplyDefaultValue( 1e6 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setRegisteringObjects( this->getName() ).
+    setDescription( "Cohesion for each cell" );
 
   registerWrapper( viewKeyStruct::frictionCoefficientString(), &m_frictionCoefficient ).
-    setApplyDefaultValue( -1 ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Friction coefficient" );
+    setApplyDefaultValue( 0.4 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setRegisteringObjects( this->getName() ).
+    setDescription( "Friction coefficient for each cell" );
 
   registerWrapper( viewKeyStruct::elasticSlipString(), &m_elasticSlip ).
     setApplyDefaultValue( 0.0 ).
     setDescription( "Elastic Slip" );
+
+  registerWrapper( viewKeyStruct::defaultCohesionString(), &m_defaultCohesion ).
+    setApplyDefaultValue( 1e6 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default cohesion value" );
+
+  registerWrapper( viewKeyStruct::defaultFrictionCoefficientString(), &m_defaultFrictionCoefficient ).
+    setApplyDefaultValue( 0.4 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Default friction coefficient value" );
 }
 
 void CoulombFriction::postInputInitialization()
 {
-  GEOS_THROW_IF( m_frictionCoefficient < 0.0,
-                 getFullName() << ": The provided friction coefficient is less than zero. Value: " << m_frictionCoefficient,
+  GEOS_THROW_IF( m_defaultFrictionCoefficient < 0.0,
+                 getFullName() << ": The provided default friction coefficient is less than zero. Value: " << m_defaultFrictionCoefficient,
                  InputError, getDataContext() );
 
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::cohesionString() ).
+    setApplyDefaultValue( m_defaultCohesion );
+
+  this->getWrapper< array1d< real64 > >( viewKeyStruct::frictionCoefficientString() ).
+    setApplyDefaultValue( m_defaultFrictionCoefficient );
 }
 
 void CoulombFriction::allocateConstitutiveData( Group & parent, localIndex const numPts )
@@ -68,8 +85,8 @@ CoulombFrictionUpdates CoulombFriction::createKernelUpdates() const
 {
   return CoulombFrictionUpdates( m_displacementJumpThreshold,
                                  m_shearStiffness,
-                                 m_cohesion,
-                                 m_frictionCoefficient,
+                                 m_cohesion.toViewConst(),
+                                 m_frictionCoefficient.toViewConst(),
                                  m_elasticSlip );
 }
 

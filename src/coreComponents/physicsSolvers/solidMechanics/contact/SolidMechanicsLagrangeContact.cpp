@@ -1589,7 +1589,7 @@ void SolidMechanicsLagrangeContact::
                 }
 
                 real64 dLimitTau_dNormalTraction = 0;
-                real64 const limitTau = frictionWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
+                real64 const limitTau = frictionWrapper.computeLimitTangentialTractionNorm( kfe, traction[kfe][0],
                                                                                             dLimitTau_dNormalTraction );
 
                 real64 sliding[ 2 ] = { dispJump[kfe][1] - previousDispJump[kfe][1], dispJump[kfe][2] - previousDispJump[kfe][2] };
@@ -2297,7 +2297,7 @@ bool SolidMechanicsLagrangeContact::updateConfiguration( DomainPartition & domai
 
               real64 dLimitTangentialTractionNorm_dTraction = 0.0;
               real64 const limitTau =
-                frictionWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
+                frictionWrapper.computeLimitTangentialTractionNorm( kfe, traction[kfe][0],
                                                                     dLimitTangentialTractionNorm_dTraction );
 
               // store to use in acceleration when enabled
