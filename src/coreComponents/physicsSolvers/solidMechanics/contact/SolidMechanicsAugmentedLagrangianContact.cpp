@@ -416,6 +416,12 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     fieldsToBeSync.addElementFields( { contact::iterativePenalty::key() },
                                      { getUniqueFractureRegionName() } );
 
+    // Synchronize bubble displacement fields to ensure ghost values are initialized
+    // This prevents race conditions when computing residuals in parallel
+    fieldsToBeSync.addFields( FieldLocation::Face,
+                             { contact::incrementalBubbleDisplacement::key(),
+                               contact::totalBubbleDisplacement::key() } );
+
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
@@ -913,6 +919,26 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                                scalingFactor );
 
 
+  // Synchronize bubble displacements before computing displacement jump
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+  {
+    FieldIdentifiers fieldsToBeSync;
+    
+    fieldsToBeSync.addElementFields( { contact::iterativePenalty::key() },
+                                     { getUniqueFractureRegionName() } );
+    
+    fieldsToBeSync.addFields( FieldLocation::Face,
+                              { contact::incrementalBubbleDisplacement::key(),
+                                contact::totalBubbleDisplacement::key() } );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
+  } );
+  
   // Loop for updating the displacement jump
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel & mesh,
@@ -969,12 +995,7 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
   {
     FieldIdentifiers fieldsToBeSync;
 
-    fieldsToBeSync.addFields( FieldLocation::Face,
-                              { contact::incrementalBubbleDisplacement::key(),
-                                contact::totalBubbleDisplacement::key() } );
-
-    fieldsToBeSync.addElementFields( { contact::traction::key(),
-                                       contact::dispJump::key(),
+    fieldsToBeSync.addElementFields( { contact::dispJump::key(),
                                        contact::deltaDispJump::key() },
                                      { getUniqueFractureRegionName() } );
 
@@ -1516,7 +1537,16 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       {
         bubbleElemsList_v[k] = keys_v[k];
       } );
-      cellElementSubRegion.setBubbleElementsList( bubbleElemsList.toViewConst());
+      
+      // Get reference to the persistent storage and copy data to avoid dangling pointers
+      array1d< localIndex > & bubbleCellsStorage =
+        cellElementSubRegion.getReference< array1d< localIndex > >( CellElementSubRegion::viewKeyStruct::bubbleCellsString() );
+      bubbleCellsStorage.resize( nBubElems );
+      arrayView1d< localIndex > const bubbleCellsStorage_v = bubbleCellsStorage.toView();
+      forAll< parallelDevicePolicy<> >( nBubElems, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        bubbleCellsStorage_v[k] = bubbleElemsList_v[k];
+      } );
 
       forAll< parallelDevicePolicy<> >( n_max, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
       {
@@ -1536,7 +1566,17 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         faceElemsList_v[k][0] = elemsToFaces[kfe][keys_v[k]];
         faceElemsList_v[k][1] = keys_v[k];
       } );
-      cellElementSubRegion.setFaceElementsList( faceElemsList.toViewConst());
+      
+      // Get reference to the persistent storage and copy data to avoid dangling pointers
+      array2d< localIndex > & faceElemsStorage =
+        cellElementSubRegion.getReference< array2d< localIndex > >( CellElementSubRegion::viewKeyStruct::toFaceElementsString() );
+      faceElemsStorage.resize( nBubElems, 2 );
+      arrayView2d< localIndex > const faceElemsStorage_v = faceElemsStorage.toView();
+      forAll< parallelDevicePolicy<> >( nBubElems, [ = ] GEOS_HOST_DEVICE ( localIndex const k )
+      {
+        faceElemsStorage_v[k][0] = faceElemsList_v[k][0];
+        faceElemsStorage_v[k][1] = faceElemsList_v[k][1];
+      } );
 
     } );
 

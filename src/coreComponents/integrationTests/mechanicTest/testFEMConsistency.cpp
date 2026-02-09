@@ -127,13 +127,15 @@ protected:
       R"xml("/>
   </FieldSpecifications>
   <Tasks>
-    <SolidMechanicsAugmentedLagrangianContactInitialization name="ELASTICITY.PRE.INIT.STEP" solidSolverName="mechSolver" logLevel="1"/>
+    <SolidMechanicsAugmentedLagrangianContactInitialization name="ELASTICITY.PRE.SPLIT.STEP" solidSolverName="mechSolver" logLevel="1"/>
+    <SolidMechanicsAugmentedLagrangianContactInitialization name="ELASTICITY.POST.SPLIT.STEP" solidSolverName="mechSolver" logLevel="1"/>
   </Tasks>  
   <Outputs>
   </Outputs>
   <Events minTime="0.0" maxTime="1.0">
-     <SoloEvent name="preFracture" target="/Solvers/SurfaceGen" targetTime="0.0" beginTime="0.0"/> 
-    <SoloEvent name="ELASTICITY.PRE.INIT.STEP" targetTime="0.0" beginTime="0.0" target="/Tasks/ELASTICITY.PRE.INIT.STEP"/>
+    <SoloEvent name="ELASTICITY.PRE.SPLIT.STEP" targetTime="0.0" beginTime="0.0" target="/Tasks/ELASTICITY.PRE.SPLIT.STEP"/>
+    <SoloEvent name="preFracture" target="/Solvers/SurfaceGen" targetTime="0.0" beginTime="0.0"/> 
+    <SoloEvent name="ELASTICITY.POST.SPLIT.STEP" targetTime="0.0" beginTime="0.0" target="/Tasks/ELASTICITY.POST.SPLIT.STEP"/>
     <PeriodicEvent name="solverApplications" target="/Solvers/mechSolver" forceDt="1.0"/>
   </Events>
 </Problem>
