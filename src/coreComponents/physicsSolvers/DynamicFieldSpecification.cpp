@@ -70,7 +70,8 @@ DynamicFieldSpecification::
                                                     Group & targetGroup,
                                                     string const fieldName )
             {
-              bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, fieldName );
+              string const targetFieldName = getTargetFieldName( fieldName );
+              bc.applyFieldValue< FieldSpecificationEqual >( targetObject, 0.0, targetGroup, targetFieldName );
             } );
           }
         }
@@ -80,6 +81,17 @@ DynamicFieldSpecification::
 
 
   return false;
+}
+
+string DynamicFieldSpecification::getTargetFieldName( string const & fieldName ) const
+{
+  // HydrostaticEquilibrium is defined programatically a field specification, but it isn’t actually a field itself.
+  // Instead, it updates the pressure field, which is the target field being modified.
+  if( fieldName == "HydrostaticEquilibrium" )
+  {
+    return "pressure";
+  }
+  return fieldName;
 }
 
 

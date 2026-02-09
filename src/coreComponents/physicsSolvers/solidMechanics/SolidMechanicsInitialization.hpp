@@ -60,6 +60,7 @@ private:
   {
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
     constexpr static char const * solidMechanicsStatisticsNameString() { return "solidMechanicsStatisticsName"; }
+    constexpr static char const * resetDisplacementsString() { return "reset_displacements"; }
   };
 
   void postInputInitialization() override;
@@ -71,6 +72,8 @@ private:
   SolidMechanicsStatistics * m_solidMechanicsStatistics;
 
   SolidMechanicsStateReset m_solidMechanicsStateResetTask;
+
+  integer m_resetDisplacements;
 };
 
 }

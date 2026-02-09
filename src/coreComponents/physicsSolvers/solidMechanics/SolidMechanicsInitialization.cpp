@@ -53,6 +53,11 @@ SolidMechanicsInitialization< SOLID_SOLVER >::SolidMechanicsInitialization( cons
     setApplyDefaultValue( "" ).
     setDescription( "Name of the solid mechanics statistics task" );
 
+  registerWrapper( viewKeyStruct::resetDisplacementsString(), &m_resetDisplacements ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1 ).
+    setDescription( "Flag to reset displacements (1: reset, 0: do not reset)" );
+
   addLogLevel< logInfo::SolverInitialization >();
 }
 
@@ -106,7 +111,10 @@ bool SolidMechanicsInitialization< SOLID_SOLVER >::execute( real64 const time_n,
                                    getName(), time_n, m_solidSolverName ) );
 
   m_solidSolver->setStressInitialization( true );
-  m_solidMechanicsStateResetTask.execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
+  if( m_resetDisplacements )
+  {
+    m_solidMechanicsStateResetTask.execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
+  }
   m_solidSolver->execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::SolverInitialization,
@@ -118,9 +126,11 @@ bool SolidMechanicsInitialization< SOLID_SOLVER >::execute( real64 const time_n,
   {
     m_solidMechanicsStatistics->execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
   }
-
-  m_solidMechanicsStateResetTask.execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
-
+  
+  if (m_resetDisplacements){
+    m_solidMechanicsStateResetTask.execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
+  }
+  
   return false;
 }
 

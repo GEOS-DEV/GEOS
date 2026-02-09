@@ -41,14 +41,14 @@ CommandLineOptions g_commandLineOptions;
 /**
  * @brief This integration test verifies the consistency of the Finite Element Method (FEM) implementation
  *        in GEOS for solid mechanics problems involving fractures.
- * 
+ *
  * The test performs the following steps:
  * 1. Generates an XML input file for a given mesh and stress boundary conditions.
  * 2. Runs the simulation using the SolidMechanicsAugmentedLagrangianContact solver.
  * 3. Verifies that the computed stress on fracture faces matches the expected traction derived from
  *    the applied stress field.
  * 4. Verifies that the stress in the volume elements matches the applied stress boundary conditions.
- * 
+ *
  * The test is parameterized to run on various mesh types (hex, tet, wavy) and fracture configurations.
  */
 class ConsistencyTest : public ::testing::TestWithParam< std::tuple< std::string, real64, real64, real64 > >
@@ -127,13 +127,15 @@ protected:
       R"xml("/>
   </FieldSpecifications>
   <Tasks>
-    <SolidMechanicsAugmentedLagrangianContactInitialization name="ELASTICITY.PRE.INIT.STEP" solidSolverName="mechSolver" logLevel="1"/>
+    <SolidMechanicsAugmentedLagrangianContactInitialization name="ELASTICITY.PRE.SPLIT.STEP" solidSolverName="mechSolver" logLevel="1"/>
+    <SolidMechanicsAugmentedLagrangianContactInitialization name="ELASTICITY.POST.SPLIT.STEP" solidSolverName="mechSolver" logLevel="1"/>
   </Tasks>  
   <Outputs>
   </Outputs>
-  <Events minTime="-1.0e11" maxTime="1.0">
-     <SoloEvent name="preFracture" target="/Solvers/SurfaceGen"/> 
-    <SoloEvent name="ELASTICITY.PRE.INIT.STEP" targetTime="-1.0e11" beginTime="-1.0e11" target="/Tasks/ELASTICITY.PRE.INIT.STEP"/>
+  <Events minTime="0.0" maxTime="1.0">
+    <SoloEvent name="ELASTICITY.PRE.SPLIT.STEP" targetTime="0.0" beginTime="0.0" target="/Tasks/ELASTICITY.PRE.SPLIT.STEP"/>
+    <SoloEvent name="preFracture" target="/Solvers/SurfaceGen" targetTime="0.0" beginTime="0.0"/> 
+    <SoloEvent name="ELASTICITY.POST.SPLIT.STEP" targetTime="0.0" beginTime="0.0" target="/Tasks/ELASTICITY.PRE.SPLIT.STEP"/>
     <PeriodicEvent name="solverApplications" target="/Solvers/mechSolver" forceDt="1.0"/>
   </Events>
 </Problem>
@@ -214,95 +216,151 @@ TEST_P( ConsistencyTest, Run )
 
     fractureRegion.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
+      auto const & fractureTraction = subRegion.getField< fields::contact::traction >();
+      auto const & rotationMatrix = subRegion.getField< fields::contact::rotationMatrix >();
       auto const & faces = subRegion.faceList();
-      localIndex n_facets = faces.size();
-      for( localIndex k=0; k < n_facets; ++k )
+      localIndex const numFractureElements = subRegion.size();
+
+      // ===================================================================================
+      // Test 1: Verify traction from volume element stress matches expected applied stress
+      // This iterates over all faces adjacent to fracture elements (2 per fracture element)
+      // ===================================================================================
+      localIndex const numFaces = faces.size( 1 );  // Number of faces per fracture element (typically 2)
+      for( localIndex k = 0; k < numFractureElements; ++k )
       {
-        // Each fracture element corresponds to a set of faces (usually 2 for split)
-        localIndex f = faces[0][k];
-
-        // Compute Geometric Normal
-        auto const & fnodes = faceNodes[f];
-        if( fnodes.size() < 3 )
-          continue;
-
-        real64 nx = 0.0;
-        real64 ny = 0.0;
-        real64 nz = 0.0;
-
-        if( fnodes.size() == 3 )
+        for( localIndex faceIdx = 0; faceIdx < numFaces; ++faceIdx )
         {
-          real64 p0[3] = { nodePos[fnodes[0]][0], nodePos[fnodes[0]][1], nodePos[fnodes[0]][2] };
-          real64 p1[3] = { nodePos[fnodes[1]][0], nodePos[fnodes[1]][1], nodePos[fnodes[1]][2] };
-          real64 p2[3] = { nodePos[fnodes[2]][0], nodePos[fnodes[2]][1], nodePos[fnodes[2]][2] };
+          localIndex f = faces( k, faceIdx );
 
-          real64 v1[3] = { p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2] };
-          real64 v2[3] = { p2[0]-p0[0], p2[1]-p0[1], p2[2]-p0[2] };
+          // Compute Geometric Normal
+          auto const & fnodes = faceNodes[f];
+          if( fnodes.size() < 3 )
+            continue;
 
-          nx = v1[1]*v2[2] - v1[2]*v2[1];
-          ny = v1[2]*v2[0] - v1[0]*v2[2];
-          nz = v1[0]*v2[1] - v1[1]*v2[0];
+          real64 nx = 0.0;
+          real64 ny = 0.0;
+          real64 nz = 0.0;
+
+          if( fnodes.size() == 3 )
+          {
+            real64 p0[3] = { nodePos[fnodes[0]][0], nodePos[fnodes[0]][1], nodePos[fnodes[0]][2] };
+            real64 p1[3] = { nodePos[fnodes[1]][0], nodePos[fnodes[1]][1], nodePos[fnodes[1]][2] };
+            real64 p2[3] = { nodePos[fnodes[2]][0], nodePos[fnodes[2]][1], nodePos[fnodes[2]][2] };
+
+            real64 v1[3] = { p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2] };
+            real64 v2[3] = { p2[0]-p0[0], p2[1]-p0[1], p2[2]-p0[2] };
+
+            nx = v1[1]*v2[2] - v1[2]*v2[1];
+            ny = v1[2]*v2[0] - v1[0]*v2[2];
+            nz = v1[0]*v2[1] - v1[1]*v2[0];
+          }
+          else
+          {
+            real64 p0[3] = { nodePos[fnodes[0]][0], nodePos[fnodes[0]][1], nodePos[fnodes[0]][2] };
+            real64 p1[3] = { nodePos[fnodes[1]][0], nodePos[fnodes[1]][1], nodePos[fnodes[1]][2] };
+            real64 p2[3] = { nodePos[fnodes[2]][0], nodePos[fnodes[2]][1], nodePos[fnodes[2]][2] };
+            real64 p3[3] = { nodePos[fnodes[3]][0], nodePos[fnodes[3]][1], nodePos[fnodes[3]][2] };
+
+            real64 v1[3] = { p2[0]-p0[0], p2[1]-p0[1], p2[2]-p0[2] };
+            real64 v2[3] = { p3[0]-p1[0], p3[1]-p1[1], p3[2]-p1[2] };
+
+            nx = v1[1]*v2[2] - v1[2]*v2[1];
+            ny = v1[2]*v2[0] - v1[0]*v2[2];
+            nz = v1[0]*v2[1] - v1[1]*v2[0];
+          }
+
+          real64 norm = std::sqrt( nx*nx + ny*ny + nz*nz );
+          nx /= norm; ny /= norm; nz /= norm;
+
+          // Get neighbor cell
+          localIndex neigh = 0;
+          localIndex c = faceToCell[f][0];
+          if( c == static_cast< localIndex >(-1) )
+          {
+            c = faceToCell[f][1];
+            neigh = 1;
+          }
+
+          localIndex er = faceToRegion[f][neigh];
+          localIndex esr = faceToSubRegion[f][neigh];
+
+          ElementRegionBase & region = elemManager.getRegion( er );
+          ElementSubRegionBase & cellSubRegion = region.getSubRegion( esr );
+
+          // Get average stress from cell subregion
+          auto const & avgStress = cellSubRegion.getField< fields::solidMechanics::averageStress >();
+
+          // averageStress is array2d (element, component)
+          // Components: XX, YY, ZZ, YZ, XZ, XY
+          real64 sig_xx = avgStress( c, 0 );
+          real64 sig_yy = avgStress( c, 1 );
+          real64 sig_zz = avgStress( c, 2 );
+          real64 sig_yz = avgStress( c, 3 );
+          real64 sig_xz = avgStress( c, 4 );
+          real64 sig_xy = avgStress( c, 5 );
+
+          // Compute t_sim = sigma * n
+          real64 ts_x = sig_xx * nx + sig_xy * ny + sig_xz * nz;
+          real64 ts_y = sig_xy * nx + sig_yy * ny + sig_yz * nz;
+          real64 ts_z = sig_xz * nx + sig_yz * ny + sig_zz * nz;
+
+          // Compute t_exact = S_input * n
+          real64 te_x = s_xx * nx;
+          real64 te_y = s_yy * ny;
+          real64 te_z = s_zz * nz;
+
+          // Compare (allow slightly larger relative_tolerance due to numerical precision of stress field)
+          real64 const err_abs = std::sqrt( std::pow( ts_x - te_x, 2 ) + std::pow( ts_y - te_y, 2 ) + std::pow( ts_z - te_z, 2 ) );
+          real64 const norm_te = std::sqrt( std::pow( te_x, 2 ) + std::pow( te_y, 2 ) + std::pow( te_z, 2 ) );
+          real64 const err = ( norm_te > 1.0e-16 ) ? err_abs / norm_te : err_abs;
+          EXPECT_LT( err, relative_tolerance ) << "Fracture element " << k << " face " << faceIdx
+                                               << " failed. t_sim=(" << ts_x << ", " << ts_y << ", " << ts_z
+                                               << ") t_exact=(" << te_x << ", " << te_y << ", " << te_z << ")";
         }
-        else
-        {
-          real64 p0[3] = { nodePos[fnodes[0]][0], nodePos[fnodes[0]][1], nodePos[fnodes[0]][2] };
-          real64 p1[3] = { nodePos[fnodes[1]][0], nodePos[fnodes[1]][1], nodePos[fnodes[1]][2] };
-          real64 p2[3] = { nodePos[fnodes[2]][0], nodePos[fnodes[2]][1], nodePos[fnodes[2]][2] };
-          real64 p3[3] = { nodePos[fnodes[3]][0], nodePos[fnodes[3]][1], nodePos[fnodes[3]][2] };
+      }
 
-          real64 v1[3] = { p2[0]-p0[0], p2[1]-p0[1], p2[2]-p0[2] };
-          real64 v2[3] = { p3[0]-p1[0], p3[1]-p1[1], p3[2]-p1[2] };
+      // ===================================================================================
+      // Test 2: Verify fracture traction field matches expected traction
+      // This iterates only over fracture elements (not faces)
+      // ===================================================================================
+      for( localIndex k = 0; k < numFractureElements; ++k )
+      {
+        // Get the fracture element's normal from the rotation matrix
+        // The rotation matrix columns are: [normal, tangent1, tangent2]
+        // So the normal is the first column: R[:,0]
+        real64 nx = rotationMatrix( k, 0, 0 );
+        real64 ny = rotationMatrix( k, 1, 0 );
+        real64 nz = rotationMatrix( k, 2, 0 );
 
-          nx = v1[1]*v2[2] - v1[2]*v2[1];
-          ny = v1[2]*v2[0] - v1[0]*v2[2];
-          nz = v1[0]*v2[1] - v1[1]*v2[0];
-        }
-
-        real64 norm = std::sqrt( nx*nx + ny*ny + nz*nz );
-        nx /= norm; ny /= norm; nz /= norm;
-
-        // Get neighbor cell
-        localIndex neigh = 0;
-        localIndex c = faceToCell[f][0];
-        if( c == static_cast< localIndex >(-1) )
-        {
-          c = faceToCell[f][1];
-          neigh = 1;
-        }
-
-        localIndex er = faceToRegion[f][neigh];
-        localIndex esr = faceToSubRegion[f][neigh];
-
-        ElementRegionBase & region = elemManager.getRegion( er );
-        ElementSubRegionBase & cellSubRegion = region.getSubRegion( esr );
-
-        // Get average stress from cell subregion
-        auto const & avgStress = cellSubRegion.getField< fields::solidMechanics::averageStress >();
-
-        // averageStress is array2d (element, component)
-        // Components: XX, YY, ZZ, YZ, XZ, XY
-        real64 sig_xx = avgStress( c, 0 );
-        real64 sig_yy = avgStress( c, 1 );
-        real64 sig_zz = avgStress( c, 2 );
-        real64 sig_yz = avgStress( c, 3 );
-        real64 sig_xz = avgStress( c, 4 );
-        real64 sig_xy = avgStress( c, 5 );       // Warning: check Voigt order in SolidMechanicsLagrangianFEM
-
-        // Compute t_sim = sigma * n
-        real64 ts_x = sig_xx * nx + sig_xy * ny + sig_xz * nz;
-        real64 ts_y = sig_xy * nx + sig_yy * ny + sig_yz * nz;         // Note symmetry
-        real64 ts_z = sig_xz * nx + sig_yz * ny + sig_zz * nz;
-
-        // Compute t_exact = S_input * n
+        // Compute t_exact = S_input * n (in global coordinates)
         real64 te_x = s_xx * nx;
         real64 te_y = s_yy * ny;
         real64 te_z = s_zz * nz;
 
-        // Compare (allow slightly larger relative_tolerance due to numerical precision of stress field)
-        real64 const err_abs = std::sqrt( std::pow( ts_x - te_x, 2 ) + std::pow( ts_y - te_y, 2 ) + std::pow( ts_z - te_z, 2 ) );
-        real64 const norm_te = std::sqrt( std::pow( te_x, 2 ) + std::pow( te_y, 2 ) + std::pow( te_z, 2 ) );
-        real64 const err = ( norm_te > 1.0e-16 ) ? err_abs / norm_te : err_abs;
-        EXPECT_LT( err, relative_tolerance ) << "Element " << k << " failed. t_sim=(" << ts_x << ", " << ts_y << ", " << ts_z << ") t_exact=(" << te_x << ", " << te_y << ", " << te_z << ")";
+        // Project exact traction onto normal (should match tf_n)
+        real64 te_n = te_x * nx + te_y * ny + te_z * nz;
+
+        // Project exact traction onto tangential plane
+        real64 te_tang_x = te_x - te_n * nx;
+        real64 te_tang_y = te_y - te_n * ny;
+        real64 te_tang_z = te_z - te_n * nz;
+        real64 te_tang_mag = std::sqrt( te_tang_x*te_tang_x + te_tang_y*te_tang_y + te_tang_z*te_tang_z );
+
+        // Get fracture traction from contact solver (in local coordinates: normal, tangent1, tangent2)
+        real64 tf_n = fractureTraction( k, 0 );
+        real64 tf_t1 = fractureTraction( k, 1 );
+        real64 tf_t2 = fractureTraction( k, 2 );
+        real64 tf_tang_mag = std::sqrt( tf_t1*tf_t1 + tf_t2*tf_t2 );
+
+        real64 const norm_te = std::sqrt( te_x*te_x + te_y*te_y + te_z*te_z );
+        real64 const err_n = std::fabs( tf_n - te_n );
+        real64 const err_t = std::fabs( tf_tang_mag - te_tang_mag );
+
+        real64 const rel_err_n = ( norm_te > 1.0e-16 ) ? err_n / norm_te : err_n;
+        real64 const rel_err_t = ( norm_te > 1.0e-16 ) ? err_t / norm_te : err_t;
+
+        EXPECT_LT( rel_err_n, relative_tolerance ) << "Fracture element " << k << " failed normal traction check. tf_n=" << tf_n << " te_n=" << te_n;
+        EXPECT_LT( rel_err_t, relative_tolerance ) << "Fracture element " << k << " failed tangential traction check. tf_t=" << tf_tang_mag << " te_t=" << te_tang_mag;
       }
     } );
 
@@ -332,14 +390,14 @@ TEST_P( ConsistencyTest, Run )
 
 /**
  * @brief Instantiation of the ConsistencyTest suite with various mesh files and stress states.
- * 
+ *
  * The parameters are:
  * 1. Mesh file name (std::string): The VTK mesh file containing the geometry and fractures.
  *    The meshes include Hex and Tet elements, and variations with flat and wavy fractures (DFN).
  * 2. s_xx (real64): Applied stress component XX.
  * 3. s_yy (real64): Applied stress component YY.
  * 4. s_zz (real64): Applied stress component ZZ.
- * 
+ *
  * The test cases cover:
  * - Hexahedral meshes with different fracture networks (DFN 1, 2, 3, and combinations).
  * - Tetrahedral meshes with different fracture networks.
