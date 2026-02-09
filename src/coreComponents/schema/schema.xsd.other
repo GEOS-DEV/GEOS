@@ -526,7 +526,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--fractureStencil => (no description available)-->
 		<xsd:attribute name="fractureStencil" type="geos_SurfaceElementStencil" />
 		<!--targetRegions => List of regions to build the stencil for-->
-		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-geos_internal_StdVectorWrapper_lt_string_cm_-std_allocator_lt_string-_gt__cm_-true_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
+		<xsd:attribute name="targetRegions" type="geos_mapBase_lt_string_cm_-geos_internal_StdVectorWrapper_lt_string_cm_-std_allocator_lt_string-_gt__cm_-false_gt__cm_-std_integral_constant_lt_bool_cm_-true_gt_-_gt_" />
 	</xsd:complexType>
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -559,8 +559,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="ParameterType" />
 	<xsd:complexType name="SolversType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-<<<<<<< HEAD
-=======
 			<xsd:element name="AcousticDG" type="AcousticDGType" />
 			<xsd:element name="AcousticElasticSEM" type="AcousticElasticSEMType" />
 			<xsd:element name="AcousticFirstOrderSEM" type="AcousticFirstOrderSEMType" />
@@ -571,6 +569,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="CompositionalMultiphaseReservoir" type="CompositionalMultiphaseReservoirType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanics" type="CompositionalMultiphaseReservoirPoromechanicsType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsConformingFractures" type="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesType" />
+			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALM" type="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
 			<xsd:element name="ElasticFirstOrderSEM" type="ElasticFirstOrderSEMType" />
 			<xsd:element name="ElasticSEM" type="ElasticSEMType" />
@@ -585,6 +584,7 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="MultiphasePoromechanics" type="MultiphasePoromechanicsType" />
 			<xsd:element name="MultiphasePoromechanicsConformingFractures" type="MultiphasePoromechanicsConformingFracturesType" />
+			<xsd:element name="MultiphasePoromechanicsConformingFracturesALM" type="MultiphasePoromechanicsConformingFracturesALMType" />
 			<xsd:element name="MultiphasePoromechanicsReservoir" type="MultiphasePoromechanicsReservoirType" />
 			<xsd:element name="OneWayCoupledFractureFlowContactMechanics" type="OneWayCoupledFractureFlowContactMechanicsType" />
 			<xsd:element name="PhaseFieldDamageFEM" type="PhaseFieldDamageFEMType" />
@@ -608,7 +608,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="SinglePhaseReservoirPoromechanicsConformingFractures" type="SinglePhaseReservoirPoromechanicsConformingFracturesType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanicsConformingFracturesALM" type="SinglePhaseReservoirPoromechanicsConformingFracturesALMType" />
 			<xsd:element name="SinglePhaseWell" type="SinglePhaseWellType" />
->>>>>>> develop
 			<xsd:element name="SolidMechanicsAugmentedLagrangianContact" type="SolidMechanicsAugmentedLagrangianContactType" />
 			<xsd:element name="SolidMechanicsEmbeddedFractures" type="SolidMechanicsEmbeddedFracturesType" />
 			<xsd:element name="SolidMechanicsLagrangeContact" type="SolidMechanicsLagrangeContactType" />
@@ -617,8 +616,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="SolidMechanics_MPM" type="SolidMechanics_MPMType" />
 		</xsd:choice>
 	</xsd:complexType>
-<<<<<<< HEAD
-=======
 	<xsd:complexType name="AcousticDGType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -858,6 +855,17 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--numTimestepsSinceLastDtCut => (no description available)-->
 		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
 	</xsd:complexType>
+	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="groupNameRef" />
+		<!--numTimestepsSinceLastDtCut => (no description available)-->
+		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
+	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1084,6 +1092,17 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiphasePoromechanicsConformingFracturesType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="SolverStatistics" type="SolverStatisticsType" />
+		</xsd:choice>
+		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
+		<xsd:attribute name="discretization" type="groupNameRef" />
+		<!--numTimestepsSinceLastDtCut => (no description available)-->
+		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
+	</xsd:complexType>
+	<xsd:complexType name="MultiphasePoromechanicsConformingFracturesALMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
@@ -1334,7 +1353,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--numTimestepsSinceLastDtCut => (no description available)-->
 		<xsd:attribute name="numTimestepsSinceLastDtCut" type="integer" />
 	</xsd:complexType>
->>>>>>> develop
 	<xsd:complexType name="SolidMechanicsAugmentedLagrangianContactType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1724,21 +1742,18 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-<<<<<<< HEAD
-=======
 			<xsd:element name="CellToCellDataCollection" type="CellToCellDataCollectionType" />
+			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMInitialization" type="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMInitializationType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitialization" type="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitializationType" />
 			<xsd:element name="CompositionalMultiphaseReservoirPoromechanicsInitialization" type="CompositionalMultiphaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="CompositionalMultiphaseStatistics" type="CompositionalMultiphaseStatisticsType" />
 			<xsd:element name="HydrofractureInitialization" type="HydrofractureInitializationType" />
+			<xsd:element name="MultiphasePoromechanicsConformingFracturesALMInitialization" type="MultiphasePoromechanicsConformingFracturesALMInitializationType" />
 			<xsd:element name="MultiphasePoromechanicsConformingFracturesInitialization" type="MultiphasePoromechanicsConformingFracturesInitializationType" />
 			<xsd:element name="MultiphasePoromechanicsInitialization" type="MultiphasePoromechanicsInitializationType" />
->>>>>>> develop
 			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
 			<xsd:element name="RelpermDriver" type="RelpermDriverType" />
-<<<<<<< HEAD
-=======
 			<xsd:element name="SinglePhasePoromechanicsConformingFracturesALMInitialization" type="SinglePhasePoromechanicsConformingFracturesALMInitializationType" />
 			<xsd:element name="SinglePhasePoromechanicsConformingFracturesInitialization" type="SinglePhasePoromechanicsConformingFracturesInitializationType" />
 			<xsd:element name="SinglePhasePoromechanicsEmbeddedFracturesInitialization" type="SinglePhasePoromechanicsEmbeddedFracturesInitializationType" />
@@ -1747,14 +1762,11 @@ A field can represent a physical variable. (pressure, temperature, global compos
 			<xsd:element name="SinglePhaseReservoirPoromechanicsConformingFracturesInitialization" type="SinglePhaseReservoirPoromechanicsConformingFracturesInitializationType" />
 			<xsd:element name="SinglePhaseReservoirPoromechanicsInitialization" type="SinglePhaseReservoirPoromechanicsInitializationType" />
 			<xsd:element name="SinglePhaseStatistics" type="SinglePhaseStatisticsType" />
->>>>>>> develop
 			<xsd:element name="SolidMechanicsStateReset" type="SolidMechanicsStateResetType" />
 			<xsd:element name="SolidMechanicsStatistics" type="SolidMechanicsStatisticsType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
 	</xsd:complexType>
-<<<<<<< HEAD
-=======
 	<xsd:complexType name="CellToCellDataCollectionType">
 		<!--cellAGlobalId => (no description available)-->
 		<xsd:attribute name="cellAGlobalId" type="globalIndex_array" />
@@ -1765,18 +1777,17 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		<!--transmissibilityBA => (no description available)-->
 		<xsd:attribute name="transmissibilityBA" type="real64_array" />
 	</xsd:complexType>
+	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesALMInitializationType" />
 	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsConformingFracturesInitializationType" />
 	<xsd:complexType name="CompositionalMultiphaseReservoirPoromechanicsInitializationType" />
 	<xsd:complexType name="CompositionalMultiphaseStatisticsType" />
 	<xsd:complexType name="HydrofractureInitializationType" />
+	<xsd:complexType name="MultiphasePoromechanicsConformingFracturesALMInitializationType" />
 	<xsd:complexType name="MultiphasePoromechanicsConformingFracturesInitializationType" />
 	<xsd:complexType name="MultiphasePoromechanicsInitializationType" />
->>>>>>> develop
 	<xsd:complexType name="PVTDriverType" />
 	<xsd:complexType name="PackCollectionType" />
 	<xsd:complexType name="RelpermDriverType" />
-<<<<<<< HEAD
-=======
 	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesALMInitializationType" />
 	<xsd:complexType name="SinglePhasePoromechanicsConformingFracturesInitializationType" />
 	<xsd:complexType name="SinglePhasePoromechanicsEmbeddedFracturesInitializationType" />
@@ -1785,7 +1796,6 @@ A field can represent a physical variable. (pressure, temperature, global compos
 	<xsd:complexType name="SinglePhaseReservoirPoromechanicsConformingFracturesInitializationType" />
 	<xsd:complexType name="SinglePhaseReservoirPoromechanicsInitializationType" />
 	<xsd:complexType name="SinglePhaseStatisticsType" />
->>>>>>> develop
 	<xsd:complexType name="SolidMechanicsStateResetType" />
 	<xsd:complexType name="SolidMechanicsStatisticsType" />
 	<xsd:complexType name="TriaxialDriverType" />
@@ -1823,9 +1833,13 @@ A field can represent a physical variable. (pressure, temperature, global compos
 		</xsd:choice>
 		<!--Neighbors => (no description available)-->
 <<<<<<< HEAD
+<<<<<<< HEAD
 		<xsd:attribute name="Neighbors" type="geos_internal_StdVectorWrapper_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt__cm_-false_gt_" />
 =======
 		<xsd:attribute name="Neighbors" type="geos_internal_StdVectorWrapper_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt__cm_-true_gt_" />
+=======
+		<xsd:attribute name="Neighbors" type="geos_internal_StdVectorWrapper_lt_geos_NeighborCommunicator_cm_-std_allocator_lt_geos_NeighborCommunicator_gt__cm_-false_gt_" />
+>>>>>>> develop
 		<!--partitionManager => (no description available)-->
 		<xsd:attribute name="partitionManager" type="geos_PartitionBase" />
 >>>>>>> develop

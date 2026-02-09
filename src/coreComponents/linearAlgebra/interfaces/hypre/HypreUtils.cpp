@@ -125,7 +125,7 @@ HYPRE_Int SuperLUDistSolve( HYPRE_Solver solver,
 {
   GEOS_UNUSED_VAR( A );
 #if defined(GEOS_USE_SUPERLU_DIST)
-  return hypre_SLUDistSolve( solver, b, x );
+  return hypre_SLUDistSolve( solver, A, b, x );
 #else
   GEOS_UNUSED_VAR( solver );
   GEOS_UNUSED_VAR( b );
