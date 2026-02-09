@@ -128,7 +128,7 @@ private:
   array1d< TableFunction::KernelWrapper > m_capPresKernelWrappers;
   array1d< TableFunction::KernelWrapper > m_inverseCapPresWrappers;
 
-  std::vector< std::shared_ptr<TableFunction> > m_inverseTables;
+  std::vector< std::shared_ptr< TableFunction > > m_inverseTables;
 
 };
 
@@ -204,7 +204,7 @@ TableCapillaryPressure::KernelWrapper::
 
   // put capillary pressure on the wetting phase
   real64 capPresWater = phaseCapPres[ipWater];
-  array1d<real64> input(1);
+  array1d< real64 > input( 1 );
   input[0] = capPresWater;
   auto inputSlice = input.toSliceConst();
 
@@ -212,9 +212,9 @@ TableCapillaryPressure::KernelWrapper::
     m_capPresKernelWrappers[0].compute( &(phaseCapPres)[ipWater],
                                         &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
   phaseVolFraction[ipWater] =
-          m_inverseCapPresWrappers[0].compute( inputSlice,
-                                            &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );                                 
-          phaseVolFraction[ipGas] = 1.0 - phaseVolFraction[ipWater];                                      
+    m_inverseCapPresWrappers[0].compute( inputSlice,
+                                         &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
+  phaseVolFraction[ipGas] = 1.0 - phaseVolFraction[ipWater];
 
 }
 

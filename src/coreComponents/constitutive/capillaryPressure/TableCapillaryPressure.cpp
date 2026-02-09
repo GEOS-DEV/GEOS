@@ -72,7 +72,7 @@ TableCapillaryPressure::TableCapillaryPressure( std::string const & name,
 
   registerWrapper( viewKeyStruct::inverseCapPresWrappersString(), &m_inverseCapPresWrappers ).
     setSizedFromParent( 0 ).
-    setRestartFlags( RestartFlags::NO_WRITE );  
+    setRestartFlags( RestartFlags::NO_WRITE );
 }
 
 void TableCapillaryPressure::postInputInitialization()
