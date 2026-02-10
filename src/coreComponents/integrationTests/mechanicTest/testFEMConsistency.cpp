@@ -31,6 +31,7 @@
 #include "mesh/FaceManager.hpp"
 #include "constitutive/solid/SolidFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "common/MpiWrapper.hpp"
 
 using namespace geos;
 
@@ -194,10 +195,12 @@ TEST_P( ConsistencyTest, Run )
 
   std::string xmlContent = generateXmlInput( meshFileName, nodeSetNames, s_xx, s_yy, s_zz );
 
+  if( MpiWrapper::commRank() == 0 )
   {
     std::ofstream ofs( xmlPath );
     ofs << xmlContent;
   }
+  MpiWrapper::barrier();
 
   auto options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
   options->inputFileNames.push_back( xmlPath );
