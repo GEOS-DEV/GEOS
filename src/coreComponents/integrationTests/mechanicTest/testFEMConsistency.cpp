@@ -142,7 +142,7 @@ protected:
   <Events minTime="0.0" maxTime="1.0">
     <SoloEvent name="ELASTICITY.PRE.SPLIT.STEP" targetTime="0.0" beginTime="0.0" target="/Tasks/ELASTICITY.PRE.SPLIT.STEP"/>
     <SoloEvent name="preFracture" target="/Solvers/SurfaceGen" targetTime="0.0" beginTime="0.0"/> 
-    <SoloEvent name="ELASTICITY.POST.SPLIT.STEP" targetTime="0.0" beginTime="0.0" target="/Tasks/ELASTICITY.POST.SPLIT.STEP"/>
+    <SoloEvent name="ELASTICITY.POST.SPLIT.STEP" targetTime="0.0" beginTime="0.0" target="/Tasks/ELASTICITY.PRE.SPLIT.STEP"/>
     <PeriodicEvent name="solverApplications" target="/Solvers/mechSolver" forceDt="1.0"/>
   </Events>
 </Problem>
@@ -164,18 +164,10 @@ TEST_P( ConsistencyTest, Run )
   int const xPartitions = std::get< 0 >( partitions );
   int const yPartitions = std::get< 1 >( partitions );
   int const zPartitions = std::get< 2 >( partitions );
-  std::string xmlPath = testBinaryDir + "/test_fem_consistency.xml";
+  std::string xmlPath = testBinaryDir + "/test_fem_consistency_" + meshFileName + ".xml";
 
   std::string nodeSetNames = "{ f1_node_set }";
-  if( meshFileName.find( "_DFN_2.vtu" ) != std::string::npos )
-  {
-    nodeSetNames = "{ f2_node_set }";
-  }
-  else if( meshFileName.find( "_DFN_3.vtu" ) != std::string::npos )
-  {
-    nodeSetNames = "{ f3_node_set }";
-  }
-  else if( meshFileName.find( "_DFN_123.vtu" ) != std::string::npos )
+  if( meshFileName.find( "_DFN_123.vtu" ) != std::string::npos )
   {
     nodeSetNames = "{ f1_node_set, f2_node_set, f3_node_set }";
   }
@@ -190,6 +182,14 @@ TEST_P( ConsistencyTest, Run )
   else if( meshFileName.find( "_DFN_23.vtu" ) != std::string::npos )
   {
     nodeSetNames = "{ f2_node_set, f3_node_set }";
+  }
+  else if( meshFileName.find( "_DFN_2.vtu" ) != std::string::npos )
+  {
+    nodeSetNames = "{ f2_node_set }";
+  }
+  else if( meshFileName.find( "_DFN_3.vtu" ) != std::string::npos )
+  {
+    nodeSetNames = "{ f3_node_set }";
   }
 
   std::string xmlContent = generateXmlInput( meshFileName, nodeSetNames, s_xx, s_yy, s_zz );
