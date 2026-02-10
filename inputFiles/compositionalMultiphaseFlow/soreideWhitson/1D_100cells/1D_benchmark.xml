@@ -51,7 +51,7 @@
         useMass="0">
         <InjectionPhaseVolumeRateConstraint
           name="inj"
-          phaseName="oil"/>
+          phaseName="water"/>
         <MaximumBHPConstraint
           name="maxbhp"
           targetBHP="4.5e7"
@@ -214,7 +214,7 @@
 
     <CompositionalTwoPhaseFluidPhillipsBrine
       name="FLUID"
-      phaseNames="{ oil, gas }"
+      phaseNames="{ water, gas }"
       equationsOfState="{ SoreideWhitson, PengRobinson }"
       componentNames="{ CH4, CO2, H2O }"
       componentMolarWeight="{ 1.60425e-02, 4.40095e-02, 1.80153e-02 }"
