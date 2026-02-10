@@ -917,11 +917,6 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
 
   dofManager.addVectorToField( localSolution,
                                contact::totalBubbleDisplacement::key(),
-                               contact::totalBubbleDisplacement::key(),
-                               scalingFactor );
-
-  dofManager.addVectorToField( localSolution,
-                               contact::totalBubbleDisplacement::key(),
                                contact::incrementalBubbleDisplacement::key(),
                                scalingFactor );
 
@@ -1918,7 +1913,7 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
             real64 stiffDiagApprox[ 2 ][ 3 ];
             real64 averageYoungModulus = 0.0;
             real64 averageConstrainedModulus = 0.0;
-            real64 averageBoxSize0 = 0.0;
+            real64 averageCharLength = 0.0;
 
             for( localIndex i = 0; i < 2; ++i )
             {
@@ -1929,33 +1924,6 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
 
               real64 const volume = elemVolume[er][esr][ei];
 
-              // Get the "element to node" map for the specific region/subregion
-              NodeMapViewType const & cellElemsToNodes = elemToNodeView[er][esr];
-              localIndex const numNodesPerElem = cellElemsToNodes.size( 1 );
-
-              // Compute the box size
-              real64 maxSize[3];
-              real64 minSize[3];
-              for( localIndex j = 0; j < 3; ++j )
-              {
-                maxSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
-                minSize[j] = nodePosition[cellElemsToNodes[ei][0]][j];
-              }
-              for( localIndex a = 1; a < numNodesPerElem; ++a )
-              {
-                for( localIndex j = 0; j < 3; ++j )
-                {
-                  maxSize[j] = fmax( maxSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
-                  minSize[j] = fmin( minSize[j], nodePosition[cellElemsToNodes[ei][a]][j] );
-                }
-              }
-
-              real64 boxSize[3];
-              for( localIndex j = 0; j < 3; ++j )
-              {
-                boxSize[j] = maxSize[j] - minSize[j];
-              }
-
               // Get linear elastic isotropic constitutive parameters for the element
               real64 const K = bulkModulus[er][esr][ei];
               real64 const G = shearModulus[er][esr][ei];
@@ -1963,15 +1931,17 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
               real64 const nu = ( 3.0 * K - 2.0 * G ) / ( 2.0 * ( 3.0 * K + G ) );
               real64 const M = K + 4.0 / 3.0 * G;
 
+              real64 const charLength = pow( volume, 1.0 / 3.0 );
+
               // Combine E and nu to obtain a stiffness approximation (like it was an hexahedron)
               for( localIndex j = 0; j < 3; ++j )
               {
-                stiffDiagApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * volume / ( boxSize[j]*boxSize[j] );
+                stiffDiagApprox[ i ][ j ] = E / ( ( 1.0 + nu )*( 1.0 - 2.0*nu ) ) * 4.0 / 9.0 * ( 2.0 - 3.0 * nu ) * charLength;
               }
 
               averageYoungModulus += 0.5*E;
               averageConstrainedModulus += 0.5*M;
-              averageBoxSize0 += 0.5*boxSize[0];
+              averageCharLength += 0.5*charLength;
             }
 
             // Average the stiffness and compute the inverse
@@ -1992,11 +1962,11 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
             normalDisplacementTolerance[kfe] = rotatedInvStiffApprox[ 0 ][ 0 ] * averageYoungModulus * m_tolJumpDispNFac;
             slidingTolerance[kfe] = sqrt( pow( rotatedInvStiffApprox[ 1 ][ 1 ], 2 ) +
                                           pow( rotatedInvStiffApprox[ 2 ][ 2 ], 2 )) * averageYoungModulus * m_tolJumpDispTFac;
-            normalTractionTolerance[kfe] = m_tolNormalTracFac * (averageConstrainedModulus / averageBoxSize0) *
+            normalTractionTolerance[kfe] = m_tolNormalTracFac * (averageConstrainedModulus / averageCharLength) *
                                            (normalDisplacementTolerance[kfe]);
 
-            iterativePenalty[kfe][0] = m_iterPenaltyNFac*averageConstrainedModulus/(averageBoxSize0);
-            iterativePenalty[kfe][1] = m_iterPenaltyTFac*averageConstrainedModulus/(averageBoxSize0);
+            iterativePenalty[kfe][0] = m_iterPenaltyNFac*averageConstrainedModulus/(averageCharLength);
+            iterativePenalty[kfe][1] = m_iterPenaltyTFac*averageConstrainedModulus/(averageCharLength);
           }
         } );
       }

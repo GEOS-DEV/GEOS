@@ -488,8 +488,8 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
 
     rval += localRval;
 
-    // if the mesh has been modified, we mark this mesh body as modified
-    if( MpiWrapper::max( localRval ) > 0 )
+    // if the mesh has been modified on ANY rank, we mark this mesh body as modified on ALL ranks
+    if( MpiWrapper::allReduce( localRval, MpiWrapper::Reduction::Max ) > 0 )
     {
       modifiedMeshBodies.insert( meshBodyName );
     }
