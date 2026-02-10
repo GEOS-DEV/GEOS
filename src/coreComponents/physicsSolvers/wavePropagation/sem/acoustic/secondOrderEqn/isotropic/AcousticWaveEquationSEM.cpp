@@ -380,11 +380,11 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
     ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
 
     // mass matrix to be computed in this function
-    auto & mass = nodeManager.getField< acousticfields::AcousticMassVector >();
+    arrayView1d< real32 > const mass = nodeManager.getField< acousticfields::AcousticMassVector >();
     mass.zero();
 
     /// damping matrix to be computed for each dof in the boundary of the mesh
-    auto & damping = nodeManager.getField< acousticfields::DampingVector >();
+    arrayView1d< real32 > const damping = nodeManager.getField< acousticfields::DampingVector >();
     damping.zero();
 
     /// get array of indicators: 1 if face is on the free surface; 0 otherwise
@@ -1254,18 +1254,18 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
-  auto & mass = nodeManager.getField< acousticfields::AcousticMassVector >();
-  auto & damping = nodeManager.getField< acousticfields::DampingVector >();
+  arrayView1d<real32> const mass = nodeManager.getField< acousticfields::AcousticMassVector >();
+  arrayView1d<real32> const damping = nodeManager.getField< acousticfields::DampingVector >();
 
-  auto & p_nm1 = nodeManager.getField< acousticfields::Pressure_nm1 >();
-  auto & p_n = nodeManager.getField< acousticfields::Pressure_n >();
-  auto & p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
+  arrayView1d<real32> const p_nm1 = nodeManager.getField< acousticfields::Pressure_nm1 >();
+  arrayView1d<real32> const p_n = nodeManager.getField< acousticfields::Pressure_n >();
+  arrayView1d<real32> const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
 
   arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
 
   arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getField< acousticfields::AcousticFreeSurfaceNodeIndicator >();
-  auto & stiffnessVector = nodeManager.getField< acousticfields::StiffnessVector >();
-  auto & rhs = nodeManager.getField< acousticfields::ForcingRHS >();
+  arrayView1d< real32 > const stiffnessVector = nodeManager.getField< acousticfields::StiffnessVector >();
+  arrayView1d< real32 > const rhs = nodeManager.getField< acousticfields::ForcingRHS >();
 
   auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
@@ -1405,8 +1405,8 @@ void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
-  auto & p_n = nodeManager.getField< acousticfields::Pressure_n >();
-  auto & p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
+  arrayView1d<real32> const p_n = nodeManager.getField< acousticfields::Pressure_n >();
+  arrayView1d<real32> const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
 
   arrayView1d< real32 > const stiffnessVector = nodeManager.getField< acousticfields::StiffnessVector >();
   arrayView1d< real32 > const rhs = nodeManager.getField< acousticfields::ForcingRHS >();
