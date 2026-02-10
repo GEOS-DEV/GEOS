@@ -253,6 +253,32 @@ void SolidMechanicsAugmentedLagrangianContact::setupSystem( DomainPartition & do
 
   GEOS_MARK_FUNCTION;
 
+  // Recompute geometric quantities (face normals, areas) after mesh topology changes.
+  // This is critical for distorted/non-axis-aligned meshes and after fracture events.
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                string_array const & )
+  {
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    FaceManager & faceManager = mesh.getFaceManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    // Recompute face geometry (normals and areas)
+    faceManager.computeGeometry( nodeManager );
+
+    // Recompute element geometry for volume elements (centers and volumes)
+    elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+    {
+      subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+    } );
+
+    // Recompute element geometry for face elements (uses updated face areas)
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
+    {
+      subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+    } );
+  } );
+
   // Create the lists of interface elements that have same type.
   createFaceTypeList( domain );
 
@@ -884,6 +910,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
     }
 
     MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOS );
+    
   } );
 
   real64 const bubbleResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
@@ -908,6 +935,34 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
 {
 
   GEOS_MARK_FUNCTION;
+  
+  // Print solution vector components (DEBUG: for prefracture/postfracture analysis)
+  // File: SolidMechanicsAugmentedLagrangianContact.cpp - Method: applySystemSolution
+  {
+    GEOS_LOG_RANK_0( "========== DETAILED SOLUTION BREAKDOWN (AugmentedLagrangianContact) ==========" );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Solver: {}", getName() ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Local solution vector size: {}", localSolution.size() ) );
+    GEOS_LOG_RANK_0( GEOS_FMT( "Scaling factor: {}", scalingFactor ) );
+    
+    // Extract and print nodal displacement DOFs
+    string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
+    GEOS_LOG_RANK_0( GEOS_FMT( "\n--- NODAL DISPLACEMENT DOFs (key: '{}') ---", dispDofKey ) );
+    
+    // Extract and print bubble displacement DOFs
+    string const bubbleDofKey = dofManager.getKey( contact::totalBubbleDisplacement::key() );
+    GEOS_LOG_RANK_0( GEOS_FMT( "\n--- BUBBLE DISPLACEMENT DOFs (key: '{}') ---", bubbleDofKey ) );
+    
+    // Print sample values from local solution (scaled and unscaled)
+    localIndex const numToPrint = std::min( localIndex(30), localSolution.size() );
+    GEOS_LOG_RANK_0( GEOS_FMT( "\nLocal solution entries (first {}):", numToPrint ) );
+    for( localIndex i = 0; i < numToPrint; ++i )
+    {
+      real64 const scaledValue = localSolution[i] * scalingFactor;
+      GEOS_LOG_RANK_0( GEOS_FMT( "  localSolution[{}] = {:.12e} (scaled: {:.12e})",
+                                 i, localSolution[i], scaledValue ) );
+    }
+    GEOS_LOG_RANK_0( "=========================================================================\n" );
+  }
 
   SolidMechanicsLagrangianFEM::applySystemSolution( dofManager,
                                                     localSolution,
