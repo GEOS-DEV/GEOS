@@ -100,7 +100,7 @@ protected:
       targetRegions="{ Region, Fracture }" 
       logLevel="1">
       <NonlinearSolverParameters newtonTol="1.0e-5" newtonMaxIter="20" logLevel="1"/>
-      <LinearSolverParameters solverType="gmres" preconditionerType="amg" krylovTol="1.0e-10" logLevel="1"/>
+      <LinearSolverParameters directParallel="0"/>
     </SolidMechanicsAugmentedLagrangianContact>
     <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="10.0e9"/>
   </Solvers>

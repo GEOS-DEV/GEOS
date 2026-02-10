@@ -74,7 +74,7 @@ protected:
       discretization="tpfa"
       logLevel="1">
       <NonlinearSolverParameters newtonTol="1.0e-6" newtonMaxIter="20"/>
-      <LinearSolverParameters solverType="gmres" preconditionerType="amg" krylovTol="1.0e-10"/>    
+      <LinearSolverParameters directParallel="0"/>    
     </SinglePhaseFVM>
     <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="10.0e9" logLevel="1"/>
   </Solvers>
