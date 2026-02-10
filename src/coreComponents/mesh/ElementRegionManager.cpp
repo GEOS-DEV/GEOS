@@ -20,6 +20,7 @@
 
 #include "common/DataLayouts.hpp"
 #include "common/TimingMacros.hpp"
+#include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -230,22 +231,29 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
 
   } );
 
-  meshLevel.getElemManager().forElementRegions< WellElementRegion >( [&]( WellElementRegion const & region ){
-    region.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const & subRegion ){
+  meshLevel.getElemManager().forElementRegions< WellElementRegion >( [&]( WellElementRegion const & wellRegion ){
+    wellRegion.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const & wellSubRegion ){
       TableData dataPerforation;
-      TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table", region.getName()),
+      TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table", wellRegion.getName()),
                                             { "Perforation no.", "Well element no.", "Coordinates",
                                               "Cell region", "Cell sub-region", "Cell ID"  } );
-      for( globalIndex iperf = 0; iperf < subRegion.getPerforationData()->getNumPerforationsGlobal(); ++iperf )
+      for( globalIndex iperf = 0; iperf < wellSubRegion.getPerforationData()->getNumPerforationsGlobal(); ++iperf )
       {
-        if( subRegion.getReservoirElementID() != -1 )
+        globalIndex cellId = wellSubRegion.getPerforationData()->getReservoirElementGlobalIndex()[iperf];
+        if( cellId != -1 )
         {
-          arrayView2d< const real64 > const perfLocation = subRegion.getPerforationData()->getLocation();
+          localIndex targetRegionIndex = wellSubRegion.getPerforationData()->getMeshElements().m_toElementRegion[iperf];
+          localIndex targetSubRegionIndex = wellSubRegion.getPerforationData()->getMeshElements().m_toElementSubRegion[iperf];
+          ElementRegionBase const & region = meshLevel.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
+          ElementSubRegionBase const & subRegion = region.getSubRegion< ElementSubRegionBase >( targetSubRegionIndex );
+
+          arrayView2d< const real64 > const perfLocation = wellSubRegion.getPerforationData()->getLocation();
           dataPerforation.addRow( iperf,
-                                  subRegion.getPerforationData()->getWellElements()[iperf],
+                                  wellSubRegion.getPerforationData()->getWellElements()[iperf],
                                   perfLocation[iperf],
-                                  subRegion.getRegionName(),
-                                  subRegion.getSubRegionName(), subRegion.getReservoirElementID());
+                                  region.getName(),
+                                  subRegion.getName(),
+                                  cellId );
 
         }
       }
