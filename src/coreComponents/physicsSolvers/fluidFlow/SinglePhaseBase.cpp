@@ -162,11 +162,11 @@ void SinglePhaseBase::validateConstitutiveModels( DomainPartition & domain ) con
       constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
       {
         string const fluidModelName = castedFluid.getCatalogName();
-        GEOS_THROW_IF( m_isThermal && (fluidModelName != "ThermalCompressibleSinglePhaseFluid"),
+        GEOS_THROW_IF( m_isThermal && ((fluidModelName != "ThermalCompressibleSinglePhaseFluid") && (fluidModelName != "ReactiveThermalCompressibleSinglePhaseFluid")),
                        GEOS_FMT( "SingleFluidBase {}: the thermal option is enabled in the solver, but the fluid model {} is not for thermal fluid",
                                  getDataContext(), fluid.getDataContext() ),
                        InputError, getDataContext(), fluid.getDataContext() );
-        GEOS_THROW_IF( !m_isThermal && (fluidModelName == "ThermalCompressibleSinglePhaseFluid"),
+        GEOS_THROW_IF( !m_isThermal && ((fluidModelName == "ThermalCompressibleSinglePhaseFluid") || (fluidModelName == "ReactiveThermalCompressibleSinglePhaseFluid")),
                        GEOS_FMT( "SingleFluidBase {}: the fluid model is for thermal fluid {}, but the solver option is incompatible with the fluid model",
                                  getDataContext(), fluid.getDataContext() ),
                        InputError, getDataContext(), fluid.getDataContext() );
@@ -579,7 +579,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium( DomainPartition & domain )
       GEOS_THROW_IF( !equilHasConverged,
                      getCatalogName() << " " << getDataContext() <<
                      ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "!",
-                     std::runtime_error, getDataContext() );
+                     geos::RuntimeError, getDataContext() );
     } );
 
     // Step 3.4: create hydrostatic pressure table

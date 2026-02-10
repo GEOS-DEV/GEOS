@@ -308,7 +308,7 @@ struct ComputeTimeStep
     }
     while (counter < 10 && numberIter < nIterMax);
 
-    GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", std::runtime_error );
+    GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", RuntimeError );
 
     real64 dt = 1.99/sqrt( LvArray::math::abs( lambdaNew ));
 
