@@ -579,7 +579,6 @@ TEST_F( CompositionalMultiphaseReservoirSolverTest, openTopDownPerfCheck )
   testOpenTopDownPerfCheck( *solver, domain,
                             [&] ( real64 time )
   {
-    WellManager * wellSolverBase = solver->wellSolver();
     WellManager & wellSolver = *solver->wellSolver();
     wellSolver.forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const & meshBodyName,
                                                                             MeshLevel & meshLevel,
