@@ -126,7 +126,9 @@ protected:
                                                                                               auto & subRegion )
         {
           // update mass after porosity change due to mechanics solve
-          this->flowSolver()->updateMass( subRegion );
+          GEOS_LOG_RANK("------ START ---------------------------------------------------");
+          this->flowSolver()->updateCompAmount( subRegion );
+          GEOS_LOG_RANK("------ END   ---------------------------------------------------");
         } );
       } );
     }
