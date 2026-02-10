@@ -940,23 +940,6 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                                                          domain.getNeighbors(),
                                                          true );
   } );
-
-  // Synchronize bubble displacements before computing displacement jump
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                MeshLevel & mesh,
-                                                                string_array const & )
-  {
-    FieldIdentifiers fieldsToBeSync;
-    
-    fieldsToBeSync.addFields( FieldLocation::Face,
-                              { contact::incrementalBubbleDisplacement::key(),
-                                contact::totalBubbleDisplacement::key() } );
-
-    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                         mesh,
-                                                         domain.getNeighbors(),
-                                                         true );
-  } );
   
   // Loop for updating the displacement jump
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
