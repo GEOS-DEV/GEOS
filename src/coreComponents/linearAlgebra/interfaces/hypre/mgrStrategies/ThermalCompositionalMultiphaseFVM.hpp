@@ -77,8 +77,8 @@ public:
 
     m_levelFRelaxType[1]          = MGRFRelaxationType::none;
     m_levelInterpType[1]          = MGRInterpolationType::injection;
-    m_levelRestrictType[1]        = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1]    = MGRCoarseGridMethod::cprLikeBlockDiag; // Non-Galerkin Quasi-IMPES CPR
+    m_levelRestrictType[1]        = MGRRestrictionType::partialColLumped; // True-IMPES for thermal
+    m_levelCoarseGridMethod[1]    = MGRCoarseGridMethod::galerkin;
     m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::ilu0;
     m_levelGlobalSmootherIters[1] = 1;
   }
