@@ -467,8 +467,9 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                                      DomainPartition & domain )
 {
   int rval = 0;
+  std::set< string > modifiedMeshBodies;
 
-  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                                 MeshLevel & meshLevel,
                                                                 string_array const & )
   {
@@ -477,7 +478,7 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
     int const numTileColorsLocal=partition.numColor();
     int const numTileColors = MpiWrapper::allReduce( numTileColorsLocal, MpiWrapper::Reduction::Max );
 
-    rval = separationDriver( domain,
+    int const localRval = separationDriver( domain,
                              meshLevel,
                              domain.getNeighbors(),
                              tileColor,
@@ -485,13 +486,29 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
                              0,
                              time_n + dt );
 
-    // if the mesh has been modified, this mesh level should increment its timestamp
-    if( MpiWrapper::max( rval ) > 0 )
+    rval += localRval;
+
+    // if the mesh has been modified, we mark this mesh body as modified
+    if( MpiWrapper::max( localRval ) > 0 )
     {
-      meshLevel.modified();
+      modifiedMeshBodies.insert( meshBodyName );
     }
 
   } );
+
+  for( auto const & bodyName : modifiedMeshBodies )
+  {
+    MeshBody & meshBody = domain.getMeshBodies().getGroup< MeshBody >( bodyName );
+    dataRepository::Group & levels = meshBody.getMeshLevels();
+    for( auto const & levelName : levels.getSubGroupsNames() )
+    {
+      if( levels.hasGroup< MeshLevel >( levelName ) )
+      {
+        MeshLevel & level = levels.getGroup< MeshLevel >( levelName );
+        level.modified();
+      }
+    }
+  }
 
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
 
