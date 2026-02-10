@@ -114,7 +114,7 @@ protected:
   </ElementRegions>
   <Constitutive>
     <ElasticIsotropic name="rock" defaultDensity="2500" defaultYoungModulus="10e9" defaultPoissonRatio="0.2"/>
-    <Coulomb name="fractureContact" cohesion="1.0e20" frictionCoefficient="0.0"/>
+    <Coulomb name="fractureContact" cohesion="1.0e10" frictionCoefficient="0.5"/>
   </Constitutive>
   <FieldSpecifications>
     <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames=")xml" << nodeSetNames <<
