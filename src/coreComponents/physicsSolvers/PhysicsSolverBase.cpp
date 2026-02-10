@@ -1123,6 +1123,31 @@ bool PhysicsSolverBase::solveNonlinearSystem( real64 const & time_n,
       // Solve the linear system
       solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
+      // Print solution vector after linear solve (DEBUG: for prefracture/postfracture analysis)
+      // File: PhysicsSolverBase.cpp - Method: solveNonlinearSystem (after linear solve)
+      {
+        GEOS_LOG_RANK_0( "========== SOLUTION VECTOR AFTER LINEAR SOLVE ==========" );
+        GEOS_LOG_RANK_0( GEOS_FMT( "Solver: {}", getName() ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( "Time: {}, Cycle: {}, Newton Iteration: {}", time_n, cycleNumber, newtonIter ) );
+        GEOS_LOG_RANK_0( GEOS_FMT( "Global solution vector size: {}", m_solution.globalSize() ) );
+        
+        // Print local solution values
+        arrayView1d< real64 const > const localSolution = m_solution.values();
+        GEOS_LOG_RANK_0( GEOS_FMT( "Local solution size: {}", localSolution.size() ) );
+        
+        // Print first few entries for inspection
+        localIndex const numToPrint = std::min( localIndex(20), localSolution.size() );
+        for( localIndex i = 0; i < numToPrint; ++i )
+        {
+          GEOS_LOG_RANK_0( GEOS_FMT( "  solution[{}] = {:.12e}", i, localSolution[i] ) );
+        }
+        if( localSolution.size() > numToPrint )
+        {
+          GEOS_LOG_RANK_0( "  ..." );
+        }
+        GEOS_LOG_RANK_0( "========================================================" );
+      }
+
       // Increment the solver statistics for reporting purposes
       getIterationStats().updateNonlinearIteration( m_linearSolverResult.numIterations );
 
