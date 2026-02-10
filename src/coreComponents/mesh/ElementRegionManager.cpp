@@ -19,7 +19,12 @@
 #include "ElementRegionManager.hpp"
 
 #include "common/DataLayouts.hpp"
+#include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
+#include "common/StdContainerWrappers.hpp"
 #include "common/TimingMacros.hpp"
+#include "common/logger/Logger.hpp"
+#include "dataRepository/BufferOps.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
@@ -32,6 +37,8 @@
 #include "schema/schemaUtilities.hpp"
 #include "mesh/generators/LineBlockABC.hpp"
 #include "mesh/CellElementRegionSelector.hpp"
+#include "dataRepository/BufferOps.hpp"
+#include "dataRepository/BufferOps_inline.hpp"
 
 
 namespace geos
@@ -231,38 +238,59 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
 
   } );
 
-  meshLevel.getElemManager().forElementRegions< WellElementRegion >( [&]( WellElementRegion const & wellRegion ){
-    wellRegion.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const & wellSubRegion ){
-      TableData dataPerforation;
-      TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table", wellRegion.getName()),
-                                            { "Perforation no.", "Well element no.", "Coordinates",
-                                              "Cell region", "Cell sub-region", "Cell ID"  } );
-      for( globalIndex iperf = 0; iperf < wellSubRegion.getPerforationData()->getNumPerforationsGlobal(); ++iperf )
-      {
-        globalIndex cellId = wellSubRegion.getPerforationData()->getReservoirElementGlobalIndex()[iperf];
-        if( cellId != -1 )
-        {
-          localIndex targetRegionIndex = wellSubRegion.getPerforationData()->getMeshElements().m_toElementRegion[iperf];
-          localIndex targetSubRegionIndex = wellSubRegion.getPerforationData()->getMeshElements().m_toElementSubRegion[iperf];
-          ElementRegionBase const & region = meshLevel.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
-          ElementSubRegionBase const & subRegion = region.getSubRegion< ElementSubRegionBase >( targetSubRegionIndex );
+  forElementRegions< WellElementRegion >( [&]( WellElementRegion const & wellRegion ){
 
-          arrayView2d< const real64 > const perfLocation = wellSubRegion.getPerforationData()->getLocation();
+    WellElementSubRegion const &
+    wellSubRegion = wellRegion.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                      .getGroup< WellElementSubRegion >( wellRegion.getSubRegionName() );
+    TableData dataPerforation;
+    TableLayout const layoutPerforation ( GEOS_FMT( "Well '{}' Perforation Table", wellRegion.getWellGeneratorName()),
+                                          { "Perforation no.", "Well element no.", "Coordinates",
+                                            "Cell region", "Cell sub-region", "Cell ID"  } );
+    for( globalIndex iperf = 0; iperf < wellSubRegion.getPerforationData()->getNumPerforationsGlobal(); ++iperf )
+    {
+      globalIndex const cellId = wellSubRegion.getPerforationData()->getReservoirElementGlobalIndex()[iperf];
+      if( cellId != -1 )
+      {
+        auto const & meshElems = wellSubRegion.getPerforationData()->getMeshElements();
+        localIndex const targetRegionIndex = meshElems.m_toElementRegion[iperf];
+        localIndex const targetSubRegionIndex = meshElems.m_toElementSubRegion[iperf];
+        ElementRegionBase const & region = meshLevel.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
+        ElementSubRegionBase const & subRegion = region.getSubRegion< ElementSubRegionBase >( targetSubRegionIndex );
+
+        arrayView2d< const real64 > const perfLocation = wellSubRegion.getPerforationData()->getLocation();
+
+        string regionString( region.getName() );
+
+        //stdVector< buffer_unit_type > rcvBuffer;
+        //stdVector< string > destBuffer;
+        //buffer_unit_type * bRegion = new buffer_unit_type[ sizeof(regionString.size()) ]();
+        //bufferOps::Pack< true >( bRegion, regionString );
+
+        stdVector< string > rcvRegionBuffer;
+        MpiWrapper::gather( &region.getName(), 1, rcvRegionBuffer.data(), 1, 0, MPI_COMM_GEOS );
+        // buffer_unit_type const * localDestBuffer = rcvBuffer.data();
+        // bufferOps::Unpack( localDestBuffer, destBuffer[0] );
+
+        if( MpiWrapper::commRank() == 0 )
+        {
+          std::cout << "size buffer region "<< rcvRegionBuffer.size()<< " id "<< rcvRegionBuffer[0]<< std::endl;
           dataPerforation.addRow( iperf,
                                   wellSubRegion.getPerforationData()->getWellElements()[iperf],
                                   perfLocation[iperf],
                                   region.getName(),
                                   subRegion.getName(),
                                   cellId );
-
         }
+
       }
-      if( dataPerforation.getCellsData().size() > 0 )
-      {
-        TableTextFormatter const formatter( layoutPerforation );
-        GEOS_LOG( formatter.toString( dataPerforation ));
-      }
-    } );
+    }
+    if( dataPerforation.getCellsData().size() > 0 )
+    {
+      TableTextFormatter const formatter( layoutPerforation );
+      GEOS_LOG_RANK_0( formatter.toString( dataPerforation ));
+    }
+
   } );
 
   // communicate to rebuild global node info since we modified global ordering
