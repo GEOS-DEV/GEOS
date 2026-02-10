@@ -99,6 +99,13 @@ public:
   ///@}
 
   /**
+   * @brief Reserve the size of the NodeManager and all its member arrays that relate nodes to faces, to edges, and to elements.
+   * @details the size of the NodeManager is the number of nodes
+   * @param[in] newsize the new size of the NodeManager
+   */
+  virtual void reserve( localIndex const newSize ) override;
+
+  /**
    * @brief Resize the NodeManager, and all its member vectors that relate nodes to faces, to edges, and to elements.
    * @details the size of the NodeManager is the number of nodes
    * @param[in] newsize the new size of the NodeManager

@@ -106,6 +106,13 @@ public:
   ///@}
 
   /**
+   * @brief Extend base class reserve method reserving m_toNodesRelation, m_toEdgesRelation member containers.
+   * @details the \p newSize of this FaceManager is the number of faces it will contain
+   * @param[in] newsize new size the FaceManager.
+   */
+  virtual void reserve( localIndex const newSize ) override;
+
+  /**
    * @brief Extend base class resize method resizing  m_toNodesRelation, m_toEdgesRelation member containers.
    * @details the \p newSize of this FaceManager is the number of faces it will contain
    * @param[in] newsize new size the FaceManager.
