@@ -772,7 +772,7 @@ redistributeBySuperCellGraph(
           {
             if( invalidNeighborCount < maxErrorsToLog )
             {
-              GEOS_LOG_RANK( GEOS_FMT("❌ Invalid neighbor: super-cell {} → neighbor {} (valid range: [0, {}))",
+              GEOS_LOG_RANK( GEOS_FMT(" Invalid neighbor: super-cell {} → neighbor {} (valid range: [0, {}))",
                                       i, neighborIdx, totalGlobalSuperCells) );
             }
             invalidNeighborCount++;
@@ -823,7 +823,7 @@ redistributeBySuperCellGraph(
         {
           if( invalidWeightCount < maxErrorsToLog )
           {
-            GEOS_LOG_RANK( GEOS_FMT("❌ Invalid weight: super-cell {} has weight {}", i, superVertexWeights[i]) );
+            GEOS_LOG_RANK( GEOS_FMT(" Invalid weight: super-cell {} has weight {}", i, superVertexWeights[i]) );
           }
           invalidWeightCount++;
         }
@@ -841,94 +841,6 @@ redistributeBySuperCellGraph(
       GEOS_LOG_RANK_0( GEOS_FMT("Vertex weight range: [{}, {}]", globalMinWeight, globalMaxWeight) );
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // MEMORY SAFETY: Verify ArrayOfArrays pointers before ParMETIS
-    // ═══════════════════════════════════════════════════════════════════════
-
-    {
-      // Use toViewConst() to access protected members
-      auto graphView = superCellGraph.toViewConst();
-      
-      pmet_idx_t const * xadj = graphView.getOffsets();
-      pmet_idx_t const * adjncy = graphView.getValues();
-      pmet_idx_t const * vwgt = superVertexWeights.data();
-      pmet_idx_t const * vtxdist = superElemDist.data();
-
-      pmet_idx_t const localNodes = LvArray::integerConversion< pmet_idx_t >( superCellGraph.size() );
-      pmet_idx_t const localEdges = LvArray::integerConversion< pmet_idx_t >( superCellGraph.valueCapacity() );
-
-      GEOS_LOG_RANK( "ParMETIS input verification:" );
-      GEOS_LOG_RANK( GEOS_FMT("  Local nodes:  {}", localNodes) );
-      GEOS_LOG_RANK( GEOS_FMT("  Local edges:  {}", localEdges) );
-      GEOS_LOG_RANK( GEOS_FMT("  xadj ptr:     {}", static_cast< void const * >( xadj )) );
-      GEOS_LOG_RANK( GEOS_FMT("  adjncy ptr:   {}", static_cast< void const * >( adjncy )) );
-      GEOS_LOG_RANK( GEOS_FMT("  vwgt ptr:     {}", static_cast< void const * >( vwgt )) );
-      GEOS_LOG_RANK( GEOS_FMT("  vtxdist ptr:  {}", static_cast< void const * >( vtxdist )) );
-
-      // Verify pointers are non-null
-      GEOS_ERROR_IF( xadj == nullptr, "Rank " << rank << ": xadj pointer is null!" );
-      GEOS_ERROR_IF( adjncy == nullptr && localEdges > 0, 
-                     "Rank " << rank << ": adjncy pointer is null but graph has " << localEdges << " edges!" );
-      GEOS_ERROR_IF( vwgt == nullptr, "Rank " << rank << ": vwgt pointer is null!" );
-      GEOS_ERROR_IF( vtxdist == nullptr, "Rank " << rank << ": vtxdist pointer is null!" );
-
-      // Verify CSR format
-      GEOS_LOG_RANK( GEOS_FMT("  xadj[0] = {} (must be 0)", xadj[0]) );
-      GEOS_LOG_RANK( GEOS_FMT("  xadj[{}] = {} (must equal {})", localNodes, xadj[localNodes], localEdges) );
-
-      GEOS_ERROR_IF( xadj[0] != 0, 
-                     "Rank " << rank << ": Invalid CSR format - xadj[0] = " << xadj[0] << " (must be 0)" );
-      GEOS_ERROR_IF( xadj[localNodes] != localEdges,
-                     "Rank " << rank << ": Invalid CSR format - xadj[" << localNodes << "] = " 
-                     << xadj[localNodes] << " but expected " << localEdges );
-
-      // Verify vtxdist
-      GEOS_LOG_RANK( GEOS_FMT("  vtxdist[{}] = {}", rank, vtxdist[rank]) );
-      GEOS_LOG_RANK( GEOS_FMT("  vtxdist[{}] = {}", rank+1, vtxdist[rank+1]) );
-      
-      pmet_idx_t const expectedLocalNodes = vtxdist[rank+1] - vtxdist[rank];
-      GEOS_ERROR_IF( expectedLocalNodes != localNodes,
-                     "Rank " << rank << ": vtxdist mismatch - expected " 
-                     << expectedLocalNodes << " nodes, have " << localNodes );
-
-      // Sample adjacency data
-      if( localEdges > 0 )
-      {
-        GEOS_LOG_RANK( GEOS_FMT("  adjncy[0] = {}", adjncy[0]) );
-        if( localEdges > 1 )
-        {
-          GEOS_LOG_RANK( GEOS_FMT("  adjncy[1] = {}", adjncy[1]) );
-        }
-        
-        // Verify first neighbor is in valid range
-        pmet_idx_t const totalGlobalNodes = vtxdist[numRanks];
-        if( adjncy[0] < 0 || adjncy[0] >= totalGlobalNodes )
-        {
-          GEOS_ERROR( "Rank " << rank << ": adjncy[0] = " << adjncy[0] 
-                      << " is out of range [0, " << totalGlobalNodes << ")" );
-        }
-      }
-
-      // Verify first weight
-      if( localNodes > 0 )
-      {
-        GEOS_LOG_RANK( GEOS_FMT("  vwgt[0] = {}", vwgt[0]) );
-        GEOS_ERROR_IF( vwgt[0] <= 0, 
-                       "Rank " << rank << ": vwgt[0] = " << vwgt[0] << " is invalid (must be > 0)" );
-      }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // Synchronize before ParMETIS call
-    // ═══════════════════════════════════════════════════════════════════════
-
-    MpiWrapper::barrier( comm );
-    GEOS_LOG_RANK_0( "All ranks ready - calling ParMETIS_V3_PartKway..." );
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // Call ParMETIS
-    // ═══════════════════════════════════════════════════════════════════════
-
     superCellPartitioning = parmetis::partitionWeighted(
       superCellGraph.toViewConst(),
       superVertexWeights.toViewConst(),
@@ -938,7 +850,7 @@ redistributeBySuperCellGraph(
       numRefinementIterations
     );
 
-    GEOS_LOG_RANK_0( "✅ ParMETIS completed successfully!" );
+    GEOS_LOG_RANK_0( "ParMETIS completed successfully!" );
   }
   else
   {
@@ -946,8 +858,6 @@ redistributeBySuperCellGraph(
                          EnumStrings< PartitionMethod >::toString( method ) ) ); 
   }
 
-  GEOS_LOG_RANK( GEOS_FMT("Received super-cell partitioning with {} entries", 
-                          superCellPartitioning.size()) );
 
   // -----------------------------------------------------------------------
   // Step 7: Build mapping from SuperCellId to local super-cell index (FIXED)
@@ -1018,7 +928,7 @@ for( vtkIdType scId : uniqueSuperCellIds )
 {
   if( superCellIdToLocalIdx.find( scId ) == superCellIdToLocalIdx.end() )
   {
-    GEOS_LOG_RANK( GEOS_FMT("❌ SuperCellId {} is in mesh but NOT in mapping!", scId) );
+    GEOS_LOG_RANK( GEOS_FMT(" SuperCellId {} is in mesh but NOT in mapping!", scId) );
   }
 }
 
@@ -1077,8 +987,6 @@ for( auto const & [scId, ranks] : superCellToRanks )
   GEOS_ERROR_IF( globalSplitCount > 0,
                  GEOS_FMT("{} super-cells were split across ranks!", globalSplitCount) );
   
-  GEOS_LOG_RANK_0( "✅ Verification passed: All super-cells kept intact" );
-
   // -----------------------------------------------------------------------
   // Step 10: Redistribute mesh according to cell partitioning
   // -----------------------------------------------------------------------
@@ -1535,7 +1443,7 @@ merge2D3DCellsAndRedistribute( vtkSmartPointer< vtkDataSet > redistributed3D,
   }
   else
   {
-    GEOS_LOG_RANK( "  ❌ GlobalIds array is NULL!" );
+    GEOS_LOG_RANK( "   GlobalIds array is NULL!" );
   }
 
   // -----------------------------------------------------------------------
@@ -1630,7 +1538,6 @@ merge2D3DCellsAndRedistribute( vtkSmartPointer< vtkDataSet > redistributed3D,
   // -----------------------------------------------------------------------
   // Step 3: Redistribute fracture elements
   // -----------------------------------------------------------------------
-  
   stdMap< string, vtkSmartPointer< vtkDataSet > > redistributedFractures;
 
   for( string const & fractureName : fractureNames )
@@ -1703,66 +1610,15 @@ merge2D3DCellsAndRedistribute( vtkSmartPointer< vtkDataSet > redistributed3D,
           }
           else
           {
-            GEOS_WARNING( "Fracture '" << fractureName << "' element " << i 
-                         << " has no 3D neighbors - assigning to rank 0" );
-            partitionsFracture[i] = 0;
+            GEOS_ERROR( "Fracture '" << fractureName << "' element " << i << " has no 3D neighbors" );
+            //partitionsFracture[i] = 0;
           }
         }
-        
-#ifdef GEOS_DEBUG
-        // Debug: Verify fracture assignment (only in debug builds)
-        {
-          stdMap< int64_t, localIndex > fracturesPerRank;
-          for( localIndex i = 0; i < numFractureCells; ++i )
-          {
-            fracturesPerRank.get_inserted( partitionsFracture[i] )++;
-          }
-          
-          GEOS_LOG_RANK_0( GEOS_FMT( "\nFracture '{}' assignment:", fractureName ) );
-          for( int r = 0; r < numRanks; ++r )
-          {
-            GEOS_LOG_RANK_0( GEOS_FMT( "  Rank {}: {} elements", r, fracturesPerRank[r] ));
-          }
-          
-          // Detailed check for first few fractures
-          localIndex const maxDetailedChecks = 3;
-          for( localIndex i = 0; i < std::min( numFractureCells, maxDetailedChecks ); ++i )
-          {
-            auto neighbors3D = neighbors[i];
-            int64_t assignedRank = partitionsFracture[i];
-            
-            GEOS_LOG_RANK_0( GEOS_FMT( "  Fracture {}: assigned to rank {}, neighbors: ", i, assignedRank ));
-            
-            stdVector< int64_t > neighborRanks;
-            for( localIndex n = 0; n < neighbors3D.size(); ++n )
-            {
-              auto it = complete3DPartitionMap.find( neighbors3D[n] );
-              if( it != complete3DPartitionMap.end() )
-              {
-                neighborRanks.push_back( it->second );
-              }
-            }
-            
-            // Verify assigned rank owns at least one neighbor
-            bool foundMatch = false;
-            for( int64_t r : neighborRanks )
-            {
-              if( r == assignedRank )
-              {
-                foundMatch = true;
-                break;
-              }
-            }
-            
-            GEOS_ERROR_IF( !foundMatch && neighbors3D.size() > 0,
-                           "Fracture element " << i << " assigned to rank " << assignedRank 
-                           << " but no neighbors on that rank!" );
-          }
-        }
-#endif
         
         splitFracture = splitMeshByPartition( unpartitionedFracture, numRanks, 
                                              partitionsFracture.toViewConst() );
+
+                                         
       }
     }
     else
@@ -1796,7 +1652,6 @@ merge2D3DCellsAndRedistribute( vtkSmartPointer< vtkDataSet > redistributed3D,
   // -----------------------------------------------------------------------
   // Step 4: Merge local 3D and 2D cells on each rank
   // -----------------------------------------------------------------------
-  
   vtkSmartPointer< vtkUnstructuredGrid > mergedMesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
 
   if( local2DCells->GetNumberOfCells() > 0 )
