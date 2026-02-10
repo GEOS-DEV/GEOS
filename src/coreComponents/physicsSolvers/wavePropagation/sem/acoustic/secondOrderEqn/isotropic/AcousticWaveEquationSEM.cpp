@@ -530,6 +530,7 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
     {
       p[a] = (real64)rand()/(real64) RAND_MAX;
     }
+    p.registerTouch(LvArray::MemorySpace::host);
 
     //Step 1: Normalize randomized pressure
     real64 normP= 0.0;
