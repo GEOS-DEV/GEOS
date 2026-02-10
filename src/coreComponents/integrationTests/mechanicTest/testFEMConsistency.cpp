@@ -14,7 +14,7 @@
 #include <gtest/gtest.h>
 #include <fstream>
 #include <tuple>
-#include <limits>
+#include <limits>git
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
@@ -50,8 +50,15 @@ CommandLineOptions g_commandLineOptions;
  * 4. Verifies that the stress in the volume elements matches the applied stress boundary conditions.
  *
  * The test is parameterized to run on various mesh types (hex, tet, wavy) and fracture configurations.
+ *
+ * Parametrized with std::tuple<std::string, real64, real64, real64, std::tuple<int, int, int>>:
+ * - std::string: Mesh file name (e.g., "fractured_mesh_hex_DFN_1.vtu").
+ * - real64: Applied stress component XX (s_xx).
+ * - real64: Applied stress component YY (s_yy).
+ * - real64: Applied stress component ZZ (s_zz).
+ * - tuple<int, int, int>: Number of partitions in the x, y, z directions.
  */
-class ConsistencyTest : public ::testing::TestWithParam< std::tuple< std::string, real64, real64, real64 > >
+class ConsistencyTest : public ::testing::TestWithParam< std::tuple< std::string, real64, real64, real64, std::tuple< int, int, int > > >
 {
 protected:
   void SetUp() override
@@ -153,6 +160,10 @@ TEST_P( ConsistencyTest, Run )
   real64 const s_xx = std::get< 1 >( params );
   real64 const s_yy = std::get< 2 >( params );
   real64 const s_zz = std::get< 3 >( params );
+  std::tuple< int, int, int > const & partitions = std::get< 4 >( params );
+  int const xPartitions = std::get< 0 >( partitions );
+  int const yPartitions = std::get< 1 >( partitions );
+  int const zPartitions = std::get< 2 >( partitions );
   std::string xmlPath = testBinaryDir + "/test_fem_consistency.xml";
 
   std::string nodeSetNames = "{ f1_node_set }";
@@ -191,6 +202,11 @@ TEST_P( ConsistencyTest, Run )
   auto options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
   options->inputFileNames.push_back( xmlPath );
   options->problemName = "test_fem_consistency";
+
+  options->xPartitionsOverride = xPartitions;
+  options->yPartitionsOverride = yPartitions;
+  options->zPartitionsOverride = zPartitions;
+  options->overridePartitionNumbers = true;
 
   // Scoped state to ensure cleanup
   {
@@ -389,7 +405,7 @@ TEST_P( ConsistencyTest, Run )
 }
 
 /**
- * @brief Instantiation of the ConsistencyTest suite with various mesh files and stress states.
+ * @brief Serial execution test cases (1 MPI rank).
  *
  * The parameters are:
  * 1. Mesh file name (std::string): The VTK mesh file containing the geometry and fractures.
@@ -397,6 +413,7 @@ TEST_P( ConsistencyTest, Run )
  * 2. s_xx (real64): Applied stress component XX.
  * 3. s_yy (real64): Applied stress component YY.
  * 4. s_zz (real64): Applied stress component ZZ.
+ * 5. Partitioning (tuple<int, int, int>): Number of partitions in x, y, z directions.
  *
  * The test cases cover:
  * - Hexahedral meshes with different fracture networks (DFN 1, 2, 3, and combinations).
@@ -407,41 +424,81 @@ TEST_P( ConsistencyTest, Run )
 INSTANTIATE_TEST_SUITE_P(
   FractureStressCases,
   ConsistencyTest,
-  ::testing::Values(
-    // Mesh, s_xx, s_yy, s_zz  (Triaxial)
-    // Hex meshes
-    std::make_tuple( "fractured_mesh_hex_DFN_1.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_mesh_hex_DFN_2.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_mesh_hex_DFN_3.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_mesh_hex_DFN_12.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_mesh_hex_DFN_13.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_mesh_hex_DFN_123.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+  ::testing::Combine(
+    ::testing::Values(
+      // Hex meshes
+      "fractured_mesh_hex_DFN_1.vtu",
+      "fractured_mesh_hex_DFN_2.vtu",
+      "fractured_mesh_hex_DFN_3.vtu",
+      "fractured_mesh_hex_DFN_12.vtu",
+      "fractured_mesh_hex_DFN_13.vtu",
+      "fractured_mesh_hex_DFN_123.vtu",
 
-    // Tet meshes
-    std::make_tuple( "fractured_mesh_tet_DFN_1.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_mesh_tet_DFN_2.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_mesh_tet_DFN_3.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_mesh_tet_DFN_12.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_mesh_tet_DFN_13.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_mesh_tet_DFN_123.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+      // Tet meshes
+      "fractured_mesh_tet_DFN_1.vtu",
+      "fractured_mesh_tet_DFN_2.vtu",
+      "fractured_mesh_tet_DFN_3.vtu",
+      "fractured_mesh_tet_DFN_12.vtu",
+      "fractured_mesh_tet_DFN_13.vtu",
+      "fractured_mesh_tet_DFN_123.vtu",
 
-    // Wavy Hex meshes
-    std::make_tuple( "fractured_wavy_mesh_hex_DFN_1.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_wavy_mesh_hex_DFN_2.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_wavy_mesh_hex_DFN_3.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_wavy_mesh_hex_DFN_12.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_wavy_mesh_hex_DFN_13.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_wavy_mesh_hex_DFN_23.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_wavy_mesh_hex_DFN_123.vtu", -1.0e7, -0.5e7, -2.0e7 ),
+      // Wavy Hex meshes
+      "fractured_wavy_mesh_hex_DFN_1.vtu",
+      "fractured_wavy_mesh_hex_DFN_2.vtu",
+      "fractured_wavy_mesh_hex_DFN_3.vtu",
+      "fractured_wavy_mesh_hex_DFN_12.vtu",
+      "fractured_wavy_mesh_hex_DFN_13.vtu",
+      "fractured_wavy_mesh_hex_DFN_23.vtu",
+      "fractured_wavy_mesh_hex_DFN_123.vtu",
 
-    // Wavy Tet meshes
-    std::make_tuple( "fractured_wavy_mesh_tet_DFN_1.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_wavy_mesh_tet_DFN_2.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_wavy_mesh_tet_DFN_3.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_wavy_mesh_tet_DFN_12.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_wavy_mesh_tet_DFN_13.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_wavy_mesh_tet_DFN_23.vtu", -1.0e7, -0.5e7, -2.0e7 ),
-    std::make_tuple( "fractured_wavy_mesh_tet_DFN_123.vtu", -1.0e7, -0.5e7, -2.0e7 )
+      // Wavy Tet meshes
+      "fractured_wavy_mesh_tet_DFN_1.vtu",
+      "fractured_wavy_mesh_tet_DFN_2.vtu",
+      "fractured_wavy_mesh_tet_DFN_3.vtu",
+      "fractured_wavy_mesh_tet_DFN_12.vtu",
+      "fractured_wavy_mesh_tet_DFN_13.vtu",
+      "fractured_wavy_mesh_tet_DFN_23.vtu",
+      "fractured_wavy_mesh_tet_DFN_123.vtu"
+      ),
+    ::testing::Values( -1.0e7 ),     // s_xx
+    ::testing::Values( -0.5e7 ),     // s_yy
+    ::testing::Values( -2.0e7 ),     // s_zz
+    ::testing::Values( std::make_tuple( 1, 1, 1 ) )  // Serial partitioning
+    )
+  );
+
+/**
+ * @brief Parallel execution test cases (4 MPI ranks).
+ *
+ * The parameters are:
+ * 1. Mesh file name (std::string): The VTK mesh file containing the geometry and fractures.
+ * 2. s_xx (real64): Applied stress component XX.
+ * 3. s_yy (real64): Applied stress component YY.
+ * 4. s_zz (real64): Applied stress component ZZ.
+ * 5. Partitioning (tuple<int, int, int>): Number of partitions in x, y, z directions.
+ *
+ * The test cases cover a subset of meshes with various partitioning schemes for 4 ranks.
+ */
+INSTANTIATE_TEST_SUITE_P(
+  FractureStressCasesPartitioned,
+  ConsistencyTest,
+  ::testing::Combine(
+    ::testing::Values(
+      "fractured_mesh_hex_DFN_1.vtu",
+      "fractured_mesh_hex_DFN_12.vtu",
+      "fractured_mesh_hex_DFN_123.vtu"
+      ),
+    ::testing::Values( -1.0e7 ),     // s_xx
+    ::testing::Values( -0.5e7 ),     // s_yy
+    ::testing::Values( -2.0e7 ),     // s_zz
+    ::testing::Values(
+      std::make_tuple( 1, 1, 4 ),
+      std::make_tuple( 1, 2, 2 ),
+      std::make_tuple( 1, 4, 1 ),
+      std::make_tuple( 2, 1, 2 ),
+      std::make_tuple( 2, 2, 1 ),
+      std::make_tuple( 4, 1, 1 )
+      )
     )
   );
 
