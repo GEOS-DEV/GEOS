@@ -6206,6 +6206,9 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
 		<!--massRate => Maximum mass rate (kg/s)-->
 		<xsd:attribute name="massRate" type="real64" default="0" />
+		<!--value => Constraint value. 
+-->
+		<xsd:attribute name="value" type="groupNameRef" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -6221,6 +6224,9 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="phaseName" type="groupNameRef" default="" />
 		<!--phaseRate => Phase rate,  (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s]) -->
 		<xsd:attribute name="phaseRate" type="real64" default="0" />
+		<!--value => Constraint value. 
+-->
+		<xsd:attribute name="value" type="groupNameRef" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -6232,6 +6238,9 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
 		<!--injectionTemperature => Temperature of the injection stream [K]-->
 		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
+		<!--value => Constraint value. 
+-->
+		<xsd:attribute name="value" type="groupNameRef" default="0" />
 		<!--volumeRate => Volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])-->
 		<xsd:attribute name="volumeRate" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -6245,6 +6254,9 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
 		<!--targetBHP => Minimun bottom-hole production pressure [Pa]-->
 		<xsd:attribute name="targetBHP" type="real64" default="0" />
+		<!--value => Constraint value. 
+-->
+		<xsd:attribute name="value" type="groupNameRef" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -6256,6 +6268,9 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
 		<!--targetBHP => Minimun bottom-hole production pressure [Pa]-->
 		<xsd:attribute name="targetBHP" type="real64" default="0" />
+		<!--value => Constraint value. 
+-->
+		<xsd:attribute name="value" type="groupNameRef" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -6267,6 +6282,9 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="liquidRate" type="real64" default="0" />
 		<!--phaseNames => List of fluid phase names defining the liquid-->
 		<xsd:attribute name="phaseNames" type="groupNameRef_array" use="required" />
+		<!--value => Constraint value. 
+-->
+		<xsd:attribute name="value" type="groupNameRef" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -6276,6 +6294,9 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
 		<!--massRate => Maximum mass rate (kg/s)-->
 		<xsd:attribute name="massRate" type="real64" default="0" />
+		<!--value => Constraint value. 
+-->
+		<xsd:attribute name="value" type="groupNameRef" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -6287,6 +6308,9 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<xsd:attribute name="phaseName" type="groupNameRef" default="" />
 		<!--phaseRate => Phase rate,  (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s]) -->
 		<xsd:attribute name="phaseRate" type="real64" default="0" />
+		<!--value => Constraint value. 
+-->
+		<xsd:attribute name="value" type="groupNameRef" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="groupName" use="required" />
 	</xsd:complexType>
@@ -6294,6 +6318,9 @@ See note on referenceReservoirRegion for reservoir condition options-->
 		<!--constraintScheduleTableName => Name of the well constraint schedule table when the constraint value  is a time dependent function. 
 -->
 		<xsd:attribute name="constraintScheduleTableName" type="groupNameRef" default="" />
+		<!--value => Constraint value. 
+-->
+		<xsd:attribute name="value" type="groupNameRef" default="0" />
 		<!--volumeRate => Volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])-->
 		<xsd:attribute name="volumeRate" type="real64" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
