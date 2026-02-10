@@ -48,9 +48,22 @@ EdgeManager::EdgeManager( string const & name,
                                 viewKeyStruct::elementListString() } );
 }
 
+
+void EdgeManager::reserve( localIndex const newSize )
+{
+  GEOS_MARK_FUNCTION;
+//  localIndex const oldSize = size();
+  ObjectManagerBase::reserve( newSize );
+  m_toFacesRelation.reserveValues( newSize * 2 * faceMapOverallocation() );
+}
+
+
 void EdgeManager::resize( localIndex const newSize )
 {
+  GEOS_MARK_FUNCTION;
+  GEOS_MARK_BEGIN( "m_toFacesRelation.resize" );
   m_toFacesRelation.resize( newSize, 2 * faceMapOverallocation() );
+  GEOS_MARK_END( "m_toFacesRelation.resize" );
   ObjectManagerBase::resize( newSize );
 }
 

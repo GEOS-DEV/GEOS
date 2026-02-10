@@ -928,6 +928,7 @@ void synchronizeTopologyChange( MeshLevel * const mesh,
                                 ModifiedObjectLists & receivedObjects,
                                 int mpiCommOrder )
 {
+  GEOS_MARK_FUNCTION;
 
   NodeManager & nodeManager = mesh->getNodeManager();
   EdgeManager & edgeManager = mesh->getEdgeManager();

@@ -241,7 +241,29 @@ numElementsFromByteSize( localIndex const byteSize )
 template< typename T >
 std::enable_if_t< traits::HasMemberFunction_reserve< T > >
 reserve( T & value, localIndex const newCapacity )
-{ value.reserve( newCapacity ); }
+{ 
+  value.reserve( newCapacity );
+  if constexpr ( traits::HasMemberFunction_reserveValues< T const > )
+  {
+    localIndex const oldCapacity = value.size();
+    double const oldValueCapacity = value.valueCapacity();
+    localIndex const newValueCapacity = oldValueCapacity * newCapacity / oldCapacity;
+    value.reserveValues( newValueCapacity );
+  }
+}
+
+template< typename T,
+          int NDIM,
+          typename PERMUTATION >
+void reserve( Array< T, NDIM, PERMUTATION > & value, localIndex newCapacity )
+{
+  localIndex const * const dims = value.dims();
+  for( int i=1; i<NDIM; ++i )
+  {
+    newCapacity *= dims[ i ];
+  }
+  value.reserve( newCapacity );
+}
 
 template< typename T >
 std::enable_if_t< !traits::HasMemberFunction_reserve< T > >

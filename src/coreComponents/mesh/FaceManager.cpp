@@ -69,8 +69,18 @@ FaceManager::FaceManager( string const & name, Group * const parent ):
 
 }
 
+
+void FaceManager::reserve( localIndex const newSize )
+{
+  GEOS_MARK_FUNCTION;
+  ObjectManagerBase::reserve( newSize );
+  m_toNodesRelation.reserveValues( newSize * 2 * nodeMapOverallocation() );
+  m_toEdgesRelation.reserveValues( newSize * 2 * edgeMapOverallocation() );
+}
+
 void FaceManager::resize( localIndex const newSize )
 {
+  GEOS_MARK_FUNCTION;
   m_toNodesRelation.resize( newSize, 2 * nodeMapOverallocation() );
   m_toEdgesRelation.resize( newSize, 2 * edgeMapOverallocation() );
   ObjectManagerBase::resize( newSize );
