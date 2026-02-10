@@ -293,7 +293,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const cycleNumbe
 
   GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ),
                  getDataContext() << ": Too many steps compared to array size",
-                 std::runtime_error, getDataContext() );
+                 geos::RuntimeError, getDataContext() );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsAccessible[isrc] == 1 )
@@ -555,7 +555,7 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
     }
     while (counter < 10 && numberIter < nIterMax);
 
-    GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", std::runtime_error );
+    GEOS_THROW_IF( numberIter> nIterMax, "Power Iteration algorithm does not converge", geos::RuntimeError );
 
     // We use 1.99 instead of 2 to have a 5% margin error
     real64 dt = 1.99/sqrt( LvArray::math::abs( lambdaNew ));

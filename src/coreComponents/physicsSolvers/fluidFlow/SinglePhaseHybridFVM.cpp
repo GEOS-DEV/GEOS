@@ -141,7 +141,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
     GEOS_THROW_IF_LE_MSG( minVal.get(), 0.0,
                           getCatalogName() << " " << getDataContext() <<
                           "The transmissibility multipliers used in SinglePhaseHybridFVM must strictly larger than 0.0",
-                          std::runtime_error );
+                          geos::RuntimeError );
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
