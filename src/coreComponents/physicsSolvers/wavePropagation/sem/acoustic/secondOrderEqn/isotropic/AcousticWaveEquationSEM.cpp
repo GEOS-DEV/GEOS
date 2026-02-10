@@ -530,7 +530,7 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
     {
       p[a] = (real64)rand()/(real64) RAND_MAX;
     }
-    p.registerTouch(LvArray::MemorySpace::host);
+    p.registerTouch( LvArray::MemorySpace::host );
 
     //Step 1: Normalize randomized pressure
     real64 normP= 0.0;
@@ -1255,12 +1255,12 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
-  arrayView1d<real32> const mass = nodeManager.getField< acousticfields::AcousticMassVector >();
-  arrayView1d<real32> const damping = nodeManager.getField< acousticfields::DampingVector >();
+  arrayView1d< real32 > const mass = nodeManager.getField< acousticfields::AcousticMassVector >();
+  arrayView1d< real32 > const damping = nodeManager.getField< acousticfields::DampingVector >();
 
-  arrayView1d<real32> const p_nm1 = nodeManager.getField< acousticfields::Pressure_nm1 >();
-  arrayView1d<real32> const p_n = nodeManager.getField< acousticfields::Pressure_n >();
-  arrayView1d<real32> const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
+  arrayView1d< real32 > const p_nm1 = nodeManager.getField< acousticfields::Pressure_nm1 >();
+  arrayView1d< real32 > const p_n = nodeManager.getField< acousticfields::Pressure_n >();
+  arrayView1d< real32 > const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
 
   arrayView1d< real32 > const taperCoeff = nodeManager.getField< fields::taperCoeff >();
 
@@ -1406,8 +1406,8 @@ void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
-  arrayView1d<real32> const p_n = nodeManager.getField< acousticfields::Pressure_n >();
-  arrayView1d<real32> const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
+  arrayView1d< real32 > const p_n = nodeManager.getField< acousticfields::Pressure_n >();
+  arrayView1d< real32 > const p_np1 = nodeManager.getField< acousticfields::Pressure_np1 >();
 
   arrayView1d< real32 > const stiffnessVector = nodeManager.getField< acousticfields::StiffnessVector >();
   arrayView1d< real32 > const rhs = nodeManager.getField< acousticfields::ForcingRHS >();
