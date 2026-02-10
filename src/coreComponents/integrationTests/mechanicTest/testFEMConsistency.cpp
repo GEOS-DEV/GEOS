@@ -14,7 +14,7 @@
 #include <gtest/gtest.h>
 #include <fstream>
 #include <tuple>
-#include <limits>git
+#include <limits>
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/initialization.hpp"
@@ -440,25 +440,7 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_mesh_tet_DFN_3.vtu",
       "fractured_mesh_tet_DFN_12.vtu",
       "fractured_mesh_tet_DFN_13.vtu",
-      "fractured_mesh_tet_DFN_123.vtu",
-
-      // Wavy Hex meshes
-      "fractured_wavy_mesh_hex_DFN_1.vtu",
-      "fractured_wavy_mesh_hex_DFN_2.vtu",
-      "fractured_wavy_mesh_hex_DFN_3.vtu",
-      "fractured_wavy_mesh_hex_DFN_12.vtu",
-      "fractured_wavy_mesh_hex_DFN_13.vtu",
-      "fractured_wavy_mesh_hex_DFN_23.vtu",
-      "fractured_wavy_mesh_hex_DFN_123.vtu",
-
-      // Wavy Tet meshes
-      "fractured_wavy_mesh_tet_DFN_1.vtu",
-      "fractured_wavy_mesh_tet_DFN_2.vtu",
-      "fractured_wavy_mesh_tet_DFN_3.vtu",
-      "fractured_wavy_mesh_tet_DFN_12.vtu",
-      "fractured_wavy_mesh_tet_DFN_13.vtu",
-      "fractured_wavy_mesh_tet_DFN_23.vtu",
-      "fractured_wavy_mesh_tet_DFN_123.vtu"
+      "fractured_mesh_tet_DFN_123.vtu"
       ),
     ::testing::Values( -1.0e7 ),     // s_xx
     ::testing::Values( -0.5e7 ),     // s_yy
@@ -484,9 +466,23 @@ INSTANTIATE_TEST_SUITE_P(
   ConsistencyTest,
   ::testing::Combine(
     ::testing::Values(
-      "fractured_mesh_hex_DFN_1.vtu",
-      "fractured_mesh_hex_DFN_12.vtu",
-      "fractured_mesh_hex_DFN_123.vtu"
+      // Wavy Hex meshes
+      "fractured_wavy_mesh_hex_DFN_1.vtu",
+      "fractured_wavy_mesh_hex_DFN_2.vtu",
+      "fractured_wavy_mesh_hex_DFN_3.vtu",
+      "fractured_wavy_mesh_hex_DFN_12.vtu",
+      "fractured_wavy_mesh_hex_DFN_13.vtu",
+      "fractured_wavy_mesh_hex_DFN_23.vtu",
+      "fractured_wavy_mesh_hex_DFN_123.vtu",
+
+      // Wavy Tet meshes
+      "fractured_wavy_mesh_tet_DFN_1.vtu",
+      "fractured_wavy_mesh_tet_DFN_2.vtu",
+      "fractured_wavy_mesh_tet_DFN_3.vtu",
+      "fractured_wavy_mesh_tet_DFN_12.vtu",
+      "fractured_wavy_mesh_tet_DFN_13.vtu",
+      "fractured_wavy_mesh_tet_DFN_23.vtu",
+      "fractured_wavy_mesh_tet_DFN_123.vtu"
       ),
     ::testing::Values( -1.0e7 ),     // s_xx
     ::testing::Values( -0.5e7 ),     // s_yy
