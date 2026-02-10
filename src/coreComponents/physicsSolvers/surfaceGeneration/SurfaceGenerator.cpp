@@ -985,7 +985,6 @@ bool SurfaceGenerator::processNode( const localIndex nodeID,
   bool didSplit = false;
   bool fracturePlaneFlag = true;
 
-  if( nodesToRupturedFaces[nodeID].size() > 0 )
   {
     std::set< localIndex > facialRupturePath;
     map< localIndex, int > edgeLocations;
