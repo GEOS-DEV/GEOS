@@ -134,8 +134,8 @@ void WellManager::registerDataOnMesh( Group & meshBodies )
 
       WellControls & well =  getWellControls( subRegion );
       //well.setFlowSolverName( flowSolver.getName() );
-      well.registerWellDataOnMesh( subRegion );
       well.setThermal( isThermal() );
+      well.registerWellDataOnMesh( subRegion );
       m_numFluidPhases = well.numFluidPhases();
       m_numFluidComponents = well.numFluidComponents();
 

@@ -82,6 +82,11 @@ WellConstraintBase::WellConstraintBase( string const & name, Group * const paren
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the well constraint schedule table when the constraint value  is a time dependent function. \n" );
 
+  registerWrapper( viewKeyStruct::constraintValueString(), &m_constraintValue ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Constraint value. \n" );
+
 }
 
 

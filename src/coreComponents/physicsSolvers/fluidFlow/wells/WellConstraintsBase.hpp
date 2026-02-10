@@ -180,7 +180,7 @@ public:
     static constexpr char const * constraintScheduleTableNameString() { return "constraintScheduleTableName"; }
 
     /// String key for the well constraint value
-    static constexpr char const * constraintValueString() { return "constraintValue"; }
+    static constexpr char const * constraintValueString() { return "value"; }
 
 
   }
