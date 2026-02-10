@@ -934,10 +934,6 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
       GEOS_LOG_RANK_0( GEOS_FMT( "  localSolution[{}] = {:.12e} (scaled: {:.12e})",
                                  i, localSolution[i], scaledValue ) );
     }
-    if( localSolution.size() > numToPrint )
-    {
-      GEOS_LOG_RANK_0( "  ..." );
-    }
     GEOS_LOG_RANK_0( "=========================================================================\n" );
   }
 
