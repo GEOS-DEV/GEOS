@@ -779,27 +779,18 @@ integer ObjectManagerBase::splitObject( localIndex const indexToSplit,
   // if the object index has a zero sized childIndices entry, then this object can be split into two
   // new objects
 
-  GEOS_MARK_BEGIN( "Checking capacity for split" );
   if( size()+1 > capacity() )
-  { 
-    std::cout<< "ObjectManagerBase::splitObject(): capacity exceeded. Current size = " << size() << " current capacity = " << capacity() << std::endl;
+  {
     reserve( static_cast< localIndex >( size() * m_overAllocationFactor ) );
-    std::cout<< "done" << std::endl;
-
   }
-  GEOS_MARK_END("Checking capacity for split");
 
-  GEOS_MARK_BEGIN( "Resizing for split" );
   // the new indices are tacked on to the end of the arrays
   newIndex = size();
   this->resize( newIndex + 1 );
-  GEOS_MARK_END("Resizing for split");
 
-  GEOS_MARK_BEGIN( "Copying fields for split" );
   // copy the fields
   copyObject( indexToSplit, newIndex );
-  GEOS_MARK_END("Copying fields for split");
-  
+
   if( this->hasField< fields::parentIndex >() )
   {
     arrayView1d< localIndex > const & parentIndex = this->getField< fields::parentIndex >();

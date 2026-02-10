@@ -49,8 +49,6 @@ using namespace fields;
 static localIndex GetOtherFaceEdge( const map< localIndex, std::pair< localIndex, localIndex > > & localFacesToEdges,
                                     const localIndex thisFace, const localIndex thisEdge )
 {
-  GEOS_MARK_FUNCTION;
-
   localIndex nextEdge = LOCALINDEX_MAX;
 
   const std::pair< localIndex, localIndex > & faceToEdges = stlMapLookup( localFacesToEdges, thisFace );
@@ -573,7 +571,6 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 {
   GEOS_MARK_FUNCTION;
 
-  GEOS_MARK_BEGIN("SurfaceGenerator::separationDriver: Setup");
   m_faceElemsRupturedThisSolve.clear();
   NodeManager & nodeManager = mesh.getNodeManager();
   EdgeManager & edgeManager = mesh.getEdgeManager();
@@ -639,9 +636,6 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
   array1d< integer > const & isNodeGhost = nodeManager.ghostRank();
 
-  GEOS_MARK_END("SurfaceGenerator::separationDriver: Setup");
-
-  GEOS_MARK_BEGIN("SurfaceGenerator::separationDriver: Color loop");
   for( int color=0; color<numTileColors; ++color )
   {
     ModifiedObjectLists modifiedObjects;
@@ -650,7 +644,6 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
       std::cout<<"Processing color "<<color<<" out of "<<numTileColors<<std::endl;
       for( localIndex a=0; a<nodeManager.size(); ++a )
       {
-//       std::cout<<"Processing node "<<a<<"...";
         int didSplit = 0;
         if( isNodeGhost[a]<0 &&
             nodeToElementMap.sizeOfArray( a )>1 )
@@ -671,7 +664,6 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
             --a;
           }
         }
-//       std::cout<<" done."<<std::endl;
       }
       
       SurfaceElementRegion & fractureElementRegion = elementManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
@@ -683,17 +675,10 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
     modifiedObjects.clearNewFromModified();
 
-    GEOS_MARK_BEGIN("SurfaceGenerator::separationDriver: barrier before comm");
-    MpiWrapper::barrier();
-    GEOS_MARK_END("SurfaceGenerator::separationDriver: barrier before comm");
-
-
     // 1) Assign new global indices to the new objects
-    GEOS_MARK_BEGIN("SurfaceGenerator::separationDriver: assign new global indices");
     CommunicationTools::assignNewGlobalIndices( nodeManager, modifiedObjects.newNodes );
     CommunicationTools::assignNewGlobalIndices( edgeManager, modifiedObjects.newEdges );
     CommunicationTools::assignNewGlobalIndices( faceManager, modifiedObjects.newFaces );
-    GEOS_MARK_END("SurfaceGenerator::separationDriver: assign new global indices");
 //    CommunicationTools::getInstance().AssignNewGlobalIndices( elementManager, modifiedObjects.newElements );
 
     ModifiedObjectLists receivedObjects;
@@ -756,10 +741,8 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
     } );
     MpiWrapper::barrier();
   }
-  GEOS_MARK_END("SurfaceGenerator::separationDriver: Color loop");
 
 
-  GEOS_MARK_BEGIN("SurfaceGenerator::separationDriver: post color loop"); 
   real64 ruptureRate = calculateRuptureRate( elementManager.getRegion< SurfaceElementRegion >( this->m_fractureRegionName ) );
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::RuptureRate, GEOS_FMT( "Rupture rate = {}", ruptureRate ) );
@@ -792,7 +775,6 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 //    nodeManager.elementSubRegionList().registerTouch( hostMemorySpace );
 
   }
-  GEOS_MARK_END("SurfaceGenerator::separationDriver: post color loop");
 
   // Log statistics about the mesh splitting operation
   int const globalRval = MpiWrapper::allReduce( rval, MpiWrapper::Reduction::Max );

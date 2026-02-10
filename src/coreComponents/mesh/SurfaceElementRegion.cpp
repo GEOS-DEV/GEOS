@@ -192,7 +192,6 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
     connectedEdges.insert( originalFaceToEdgeMap( faceIndex, a ) );
   }
 
-
   // Fill the connectivity between FaceElement entries. This is essentially a copy of the
   // edgesToFaces map, but with differing offsets.
   for( auto const & edge : connectedEdges )
@@ -215,7 +214,6 @@ localIndex SurfaceElementRegion::addToFractureMesh( real64 const time_np1,
     // And fill the list of connectors that will need stencil modifications
     subRegion.m_recalculateConnectionsFor2dFaces.insert( connectorIndex );
   }
-
 
   subRegion.calculateSingleElementGeometricQuantities( kfe, faceManager->faceArea() );
 
