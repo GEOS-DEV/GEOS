@@ -31,10 +31,13 @@
 #include <numeric>
 #include <unordered_set>
 
+
 namespace geos
 {
 namespace vtk
 {
+
+class CollocatedNodes;
 
 /**
  * @brief Choice of advanced mesh partitioner
@@ -242,6 +245,22 @@ void importRegularField( stdVector< vtkIdType > const & cellIds,
  */
 void importRegularField( vtkDataArray * vtkArray,
                          dataRepository::WrapperBase & wrapper );
+
+/**
+ * @brief Find 3D cells whose faces exactly match a fracture element.
+ *
+ * A 3D cell matches if it has a face that shares all nodes with the fracture element,
+ * accounting for collocated nodes at split interfaces.
+ *
+ * @param fractureNodeIds Local node IDs of the fracture element
+ * @param collocatedNodes Mapping from local node ID to all collocated global IDs
+ * @param nodesToCells Reverse map from global node ID to cells containing that node
+ * @return Global IDs of matching 3D cells (typically 0-2 neighbors for fractures)
+ */
+stdVector< vtkIdType > findMatchingCellsForFractureElement(
+  vtkIdList * fractureNodeIds,
+  CollocatedNodes const & collocatedNodes,
+  stdMap< vtkIdType, std::set< vtkIdType > > const & nodesToCells );
 
 
 } // namespace vtk
