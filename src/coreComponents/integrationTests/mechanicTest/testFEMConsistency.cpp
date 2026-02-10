@@ -114,7 +114,7 @@ protected:
   </ElementRegions>
   <Constitutive>
     <ElasticIsotropic name="rock" defaultDensity="2500" defaultYoungModulus="10e9" defaultPoissonRatio="0.2"/>
-    <Coulomb name="fractureContact" cohesion="1.0e20" frictionCoefficient="0.0"/>
+    <Coulomb name="fractureContact" cohesion="1.0e10" frictionCoefficient="0.5"/>
   </Constitutive>
   <FieldSpecifications>
     <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames=")xml" << nodeSetNames <<
@@ -142,7 +142,7 @@ protected:
   <Events minTime="0.0" maxTime="1.0">
     <SoloEvent name="ELASTICITY.PRE.SPLIT.STEP" targetTime="0.0" beginTime="0.0" target="/Tasks/ELASTICITY.PRE.SPLIT.STEP"/>
     <SoloEvent name="preFracture" target="/Solvers/SurfaceGen" targetTime="0.0" beginTime="0.0"/> 
-    <SoloEvent name="ELASTICITY.POST.SPLIT.STEP" targetTime="0.0" beginTime="0.0" target="/Tasks/ELASTICITY.PRE.SPLIT.STEP"/>
+    <SoloEvent name="ELASTICITY.POST.SPLIT.STEP" targetTime="0.0" beginTime="0.0" target="/Tasks/ELASTICITY.POST.SPLIT.STEP"/>
     <PeriodicEvent name="solverApplications" target="/Solvers/mechSolver" forceDt="1.0"/>
   </Events>
 </Problem>

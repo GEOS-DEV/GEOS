@@ -10,7 +10,7 @@
       >
       <NonlinearSolverParameters
         newtonTol="1.0e-3"
-        maxAllowedResidualNorm="1e20"
+        maxAllowedResidualNorm="1e10"
         newtonMaxIter="8" />
       <LinearSolverParameters
         directParallel="0" />
@@ -18,36 +18,75 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      logLevel="0"
+      logLevel="1"
       targetRegions="{ Region2 }"
       initialRockToughness="1e60"
       mpiCommOrder="1" />
   </Solvers>
 
   <Mesh>
-    <!-- <VTKMesh
+    <VTKMesh
       name="cube8"
       file="cube_8.vtu"
-      partitionRefinement="0"/> -->
+      partitionRefinement="0"/>
 
-    <InternalMesh
+    <!-- <InternalMesh
       name="mesh1"
       elementTypes="{ C3D8 }"
       xCoords="{ -1, 1 }"
       yCoords="{ -1, 1 }"
       zCoords="{ -1, 1 }"
       nx="{ 2 }"
-      ny="{ 100 }"
-      nz="{ 100 }"
-      cellBlockNames="{ 3_hexahedra }"/>
+      ny="{ 2 }"
+      nz="{ 2 }"
+      cellBlockNames="{ 3_hexahedra }"/> -->
   </Mesh>
 
   <Geometry>
     <Box
       name="fracPlaneX"
-      xMin="{ -0.001, -1.1e3, -1.1e3 }"
-      xMax="{ 0.001, 1.1e3, 1.1e3 }"/>
+      xMin="{ -0.1, -1e3, -1e3 }"
+      xMax="{ 0.1, 1e3, 1e3 }"/>
 
+    <Box
+      name="fracPlaneY"
+      xMin="{ -1e3, -0.1, -1e3 }"
+      xMax="{ 1e3, 0.1, 1e3 }"/>
+
+    <Box
+      name="fracPlaneZ"
+      xMin="{ -1e3, -1e3, -0.1 }"
+      xMax="{ 1e3, 1e3, 0.1 }"/>
+
+    <Box
+      name="xneg"
+      xMin="{ -1e3, -1e3, -1e3 }"
+      xMax="{ -0.9, 1e3, 1e3 }"/>
+
+    <Box
+      name="xpos"
+      xMin="{ 0.9, -1e3, -1e3 }"
+      xMax="{ 1e3, 1e3, 1e3 }"/>
+
+    <Box
+      name="zneg"
+      xMin="{ -1e3, -1e3, -1e3 }"
+      xMax="{ 1e3, 1e3, -0.9 }"/>
+
+    <Box  
+      name="zpos"
+      xMin="{ -1e3, -1e3, 0.9 }"
+      xMax="{ 1e3, 1e3, 1e3 }"/>
+
+    <Box
+      name="yneg"
+      xMin="{ -1e3, -1e3, -1e3 }"
+      xMax="{ 1e3, -0.9, 1e3 }"/>
+
+    <Box
+      name="ypos"
+      xMin="{ -1e3, 0.9, -1e3 }"
+      xMax="{ 1e3, 1e3, 1e3 }"/>
   </Geometry>
 
   <Events
@@ -121,7 +160,7 @@
     <FieldSpecification
       name="frac"
       initialCondition="1"
-      setNames="{ fracPlaneX }"
+      setNames="{ fracPlaneX, fracPlaneY, fracPlaneZ }"
       objectPath="faceManager"
       fieldName="ruptureState"
       scale="1"/>

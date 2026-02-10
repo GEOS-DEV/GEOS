@@ -94,7 +94,12 @@ public:
 
   ///@}
 
-
+  /**
+   * @brief Reserve the EdgeManager object and all it members.
+   * @details the size of the EdgeMananager is the number of edges
+   * in the domain.
+   * @param[in] newSize the new number of edges.
+   */
   virtual void reserve( localIndex const newSize ) override;
 
   /**
