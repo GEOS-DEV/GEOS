@@ -394,7 +394,7 @@ bool TriaxialDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 {
   // this code only makes sense in serial
 
-  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "Triaxial Driver should only be run in serial", std::runtime_error );
+  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "Triaxial Driver should only be run in serial", geos::RuntimeError );
 
   // get the solid out of the constitutive manager.
   // for the moment it is of type SolidBase.
@@ -560,7 +560,7 @@ void TriaxialDriver::compareWithBaseline()
   {
     for( integer col=0; col < m_table.size( 1 ); ++col )
     {
-      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", geos::RuntimeError );
       file >> value;
 
       if( col < ITER ) // only compare "real" data columns
@@ -568,7 +568,7 @@ void TriaxialDriver::compareWithBaseline()
         error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
         GEOS_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
                                                                                            << " (row " << row+10 << " with header)"
-                                                                                           << " and column " << col+1, std::runtime_error );
+                                                                                           << " and column " << col+1, geos::RuntimeError );
       }
     }
   }
@@ -576,7 +576,7 @@ void TriaxialDriver::compareWithBaseline()
   // check we actually reached the end of the baseline file
 
   file >> value;
-  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", geos::RuntimeError );
 
   // success
 
