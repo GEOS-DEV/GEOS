@@ -31,6 +31,7 @@
 #include "mesh/FaceManager.hpp"
 #include "constitutive/solid/SolidFields.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsFields.hpp"
+#include "common/MpiWrapper.hpp"
 
 using namespace geos;
 
@@ -99,7 +100,7 @@ protected:
       targetRegions="{ Region, Fracture }" 
       logLevel="1">
       <NonlinearSolverParameters newtonTol="1.0e-5" newtonMaxIter="20" logLevel="1"/>
-      <LinearSolverParameters solverType="gmres" preconditionerType="amg" krylovTol="1.0e-10" logLevel="1"/>
+      <LinearSolverParameters directParallel="0"/>
     </SolidMechanicsAugmentedLagrangianContact>
     <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="10.0e9"/>
   </Solvers>
@@ -164,18 +165,10 @@ TEST_P( ConsistencyTest, Run )
   int const xPartitions = std::get< 0 >( partitions );
   int const yPartitions = std::get< 1 >( partitions );
   int const zPartitions = std::get< 2 >( partitions );
-  std::string xmlPath = testBinaryDir + "/test_fem_consistency.xml";
+  std::string xmlPath = testBinaryDir + "/test_fem_consistency_" + meshFileName + ".xml";
 
   std::string nodeSetNames = "{ f1_node_set }";
-  if( meshFileName.find( "_DFN_2.vtu" ) != std::string::npos )
-  {
-    nodeSetNames = "{ f2_node_set }";
-  }
-  else if( meshFileName.find( "_DFN_3.vtu" ) != std::string::npos )
-  {
-    nodeSetNames = "{ f3_node_set }";
-  }
-  else if( meshFileName.find( "_DFN_123.vtu" ) != std::string::npos )
+  if( meshFileName.find( "_DFN_123.vtu" ) != std::string::npos )
   {
     nodeSetNames = "{ f1_node_set, f2_node_set, f3_node_set }";
   }
@@ -191,13 +184,23 @@ TEST_P( ConsistencyTest, Run )
   {
     nodeSetNames = "{ f2_node_set, f3_node_set }";
   }
+  else if( meshFileName.find( "_DFN_2.vtu" ) != std::string::npos )
+  {
+    nodeSetNames = "{ f2_node_set }";
+  }
+  else if( meshFileName.find( "_DFN_3.vtu" ) != std::string::npos )
+  {
+    nodeSetNames = "{ f3_node_set }";
+  }
 
   std::string xmlContent = generateXmlInput( meshFileName, nodeSetNames, s_xx, s_yy, s_zz );
 
+  if( MpiWrapper::commRank() == 0 )
   {
     std::ofstream ofs( xmlPath );
     ofs << xmlContent;
   }
+  MpiWrapper::barrier();
 
   auto options = std::make_unique< CommandLineOptions >( g_commandLineOptions );
   options->inputFileNames.push_back( xmlPath );
