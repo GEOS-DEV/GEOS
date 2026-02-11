@@ -30,19 +30,19 @@ namespace surfaceGenerationKernelsHelpers
 GEOS_HOST_DEVICE
 inline void computeNodalForce( real64 const ( &stress) [ 6 ],
                                real64 const ( &dNdX) [ 3 ],
-                               real64 const detJ,
+                               real64 const detJxW,
                                real64 ( & force ) [ 3 ] )
 {
 
   force[ 0 ] -= ( stress[ 0 ] * dNdX[ 0 ] +
                   stress[ 5 ] * dNdX[ 1 ] +
-                  stress[ 4 ] * dNdX[ 2 ] ) * detJ;
+                  stress[ 4 ] * dNdX[ 2 ] ) * detJxW;
   force[ 1 ] -= ( stress[ 5 ] * dNdX[ 0 ] +
                   stress[ 1 ] * dNdX[ 1 ] +
-                  stress[ 3 ] * dNdX[ 2 ] ) * detJ;
+                  stress[ 3 ] * dNdX[ 2 ] ) * detJxW;
   force[ 2 ] -= ( stress[ 4 ] * dNdX[ 0 ] +
                   stress[ 3 ] * dNdX[ 1 ] +
-                  stress[ 2 ] * dNdX[ 2 ] ) * detJ;
+                  stress[ 2 ] * dNdX[ 2 ] ) * detJxW;
 }
 
 GEOS_HOST_DEVICE

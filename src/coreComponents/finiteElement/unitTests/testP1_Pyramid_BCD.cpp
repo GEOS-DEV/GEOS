@@ -43,7 +43,7 @@ void testKernelDriver()
 
   array2d< real64 > VDM_inv;
   VDM_inv.resize( numNodes, numNodes );
-  VDM_inv = Pk_Pyramid_BCD< 1 >::computeVanderMondeMatrixInverse( );
+  VDM_inv = Pk_Pyramid_BCD_impl< 1 >::computeVanderMondeMatrixInverse( );
 
   arrayView2d< real64 const > const & VDM_inv_view = VDM_inv;
 
@@ -53,7 +53,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      Pk_Pyramid_BCD< 1 >::calcN( q, VDM_inv_view, N );
+      Pk_Pyramid_BCD_impl< 1 >::calcN( q, VDM_inv_view, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         if( fabs( N[a] )<1e-9 )
@@ -85,7 +85,7 @@ void testKernelDriver()
   //Test on mass matrix
   array2d< real64 > MtestArray( numNodes, numNodes );
   arrayView2d< real64 > const & Mtest = MtestArray;
-  Pk_Pyramid_BCD< 1 >::computeMassTerm( VDM_inv_view, [=] GEOS_HOST_DEVICE ( const localIndex i, const localIndex j, const real64 Mij )
+  Pk_Pyramid_BCD_impl< 1 >::computeMassTerm( VDM_inv_view, [=] GEOS_HOST_DEVICE ( const localIndex i, const localIndex j, const real64 Mij )
   {
     Mtest[i][j] = Mij;
   } );
@@ -172,7 +172,7 @@ void testKernelDriver()
   real64 gradNtest[numNodes][3];
   for( localIndex i = 0; i < numNodes; ++i )
   {
-    Pk_Pyramid_BCD< 1 >::calcGradN( coords[i], VDM_inv_view, gradNtest );
+    Pk_Pyramid_BCD_impl< 1 >::calcGradN( coords[i], VDM_inv_view, gradNtest );
     EXPECT_FLOAT_EQ( gradNtest[0][0], gradPhi1test[i][0] );
     EXPECT_FLOAT_EQ( gradNtest[1][0], gradPhi2test[i][0] );
     EXPECT_FLOAT_EQ( gradNtest[2][0], gradPhi3test[i][0] );
@@ -195,7 +195,7 @@ void testKernelDriver()
   //Test on stiffness matrix
   array2d< real64 > RtestArray( numNodes, numNodes );
   arrayView2d< real64 > const & Rtest = RtestArray;
-  Pk_Pyramid_BCD< 1 >::computeStiffnessTerm( VDM_inv_view, [=] GEOS_HOST_DEVICE ( const localIndex i, const localIndex j, const real64 Rij )
+  Pk_Pyramid_BCD_impl< 1 >::computeStiffnessTerm( VDM_inv_view, [=] GEOS_HOST_DEVICE ( const localIndex i, const localIndex j, const real64 Rij )
   {
     Rtest[i][j] = Rij;  // Initialize the mass term
   } );

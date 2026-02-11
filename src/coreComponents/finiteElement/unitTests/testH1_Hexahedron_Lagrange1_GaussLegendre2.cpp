@@ -60,7 +60,7 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 N[numNodes] = {0};
-      H1_Hexahedron_Lagrange1_GaussLegendre2::calcN( q, N );
+      H1_Hexahedron_Lagrange1_GaussLegendre2_impl::calcN( q, N );
       for( localIndex a=0; a<numNodes; ++a )
       {
         viewN( q, a ) = N[a];
@@ -75,9 +75,9 @@ void testKernelDriver()
     for( localIndex q=0; q<numQuadraturePoints; ++q )
     {
       real64 dNdX[numNodes][3] = {{0}};
-      viewDetJ[q] = H1_Hexahedron_Lagrange1_GaussLegendre2::calcGradN( q,
-                                                                       xCoords,
-                                                                       dNdX );
+      viewDetJ[q] = H1_Hexahedron_Lagrange1_GaussLegendre2_impl::calcGradN( q,
+                                                                            xCoords,
+                                                                            dNdX );
 
 
       for( localIndex a=0; a<numNodes; ++a )

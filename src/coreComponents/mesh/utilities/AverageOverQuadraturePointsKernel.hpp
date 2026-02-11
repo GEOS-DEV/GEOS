@@ -57,12 +57,12 @@ public:
     m_X( nodeManager.referencePosition() ),
     m_elementVolume( elementSubRegion.getElementVolume() )
   {
-    finiteElement::FiniteElementBase::
-      initialize< FE_TYPE >( nodeManager,
-                             edgeManager,
-                             faceManager,
-                             elementSubRegion,
-                             m_meshData );
+    FE_TYPE:: template
+    initialize< FE_TYPE >( nodeManager,
+                           edgeManager,
+                           faceManager,
+                           elementSubRegion,
+                           m_meshData );
   }
 
   //*****************************************************************************
