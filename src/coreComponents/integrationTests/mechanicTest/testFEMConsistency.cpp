@@ -484,7 +484,7 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_mesh_tet_DFN_3.vtu",
       "fractured_mesh_tet_DFN_12.vtu",
       "fractured_mesh_tet_DFN_13.vtu",
-      "fractured_mesh_tet_DFN_123.vtu"
+      "fractured_mesh_tet_DFN_123.vtu",
                       
       // Wavy Hex meshes (same toplogy but different geometry)
       "fractured_wavy_mesh_hex_DFN_1.vtu",
