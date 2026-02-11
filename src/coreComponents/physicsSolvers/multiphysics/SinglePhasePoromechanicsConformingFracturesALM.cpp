@@ -912,13 +912,11 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
       // Accumulation derivative w.r.t. nodal displacement
       // dR_accum/du = density * unitNormal^T * Atu = density * area * dAperturedU
       // (dAperturedU already has 1/area factor, so multiply by area to cancel it)
-      // Note: The ALM Atu matrix has opposite sign convention compared to LM's dAper/dU,
-      // so we need to negate the result to match the LM sign convention.
       if( isFractureOpen )
       {
         for( localIndex j = 0; j < numUdofs; ++j )
         {
-          dRdU( j ) = -density[kfe][0] * dAperturedU( kfe, j ) * area[kfe];
+          dRdU( j ) = density[kfe][0] * dAperturedU( kfe, j ) * area[kfe];
         }
 
         localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
@@ -965,11 +963,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
         }
 
         // dR_flux/du = dR_flux/dAper * dAper/du (pre-computed for element kfe2)
-        // Note: Negate to match LM sign convention (ALM Atu has opposite sign)
         stackArray1d< real64, maxNumUdofs > dRdU2( maxNumUdofs );
         for( localIndex j = 0; j < numUdofs2; ++j )
         {
-          dRdU2( j ) = -dR_dAper * dAperturedU( kfe2, j );
+          dRdU2( j ) = dR_dAper * dAperturedU( kfe2, j );
         }
 
         localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
@@ -999,13 +996,12 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
       // Accumulation derivative w.r.t. bubble displacement
       // dR_accum/db = density * unitNormal^T * Atb = density * area * dAperturedB
       // (dAperturedB already has 1/area factor, so multiply by area to cancel it)
-      // Note: Negate to match LM sign convention (ALM Atb has opposite sign)
       if( isFractureOpen )
       {
         real64 dRdB[numBdofs];
         for( localIndex j = 0; j < numBdofs; ++j )
         {
-          dRdB[j] = -density[kfe][0] * dAperturedB( kfe, j ) * area[kfe];
+          dRdB[j] = density[kfe][0] * dAperturedB( kfe, j ) * area[kfe];
         }
 
         localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
@@ -1041,11 +1037,10 @@ assembleFluidMassResidualDerivativeWrtDisplacement( string const & meshName,
         }
 
         // dR_flux/db = dR_flux/dAper * dAper/db (pre-computed for element kfe2)
-        // Note: Negate to match LM sign convention (ALM Atb has opposite sign)
         real64 dRdB2[numBdofs];
         for( localIndex j = 0; j < numBdofs; ++j )
         {
-          dRdB2[j] = -dR_dAper * dAperturedB( kfe2, j );
+          dRdB2[j] = dR_dAper * dAperturedB( kfe2, j );
         }
 
         localIndex const localRow = LvArray::integerConversion< localIndex >( elemDOF[0] - rankOffset );
@@ -1222,7 +1217,7 @@ assembleMatrixPressureBubbleContribution( real64 const dt,
 
     real64 maxResidual = finiteElement::regionBasedKernelApplication
                          < parallelDevicePolicy<>,
-                           constitutive::PorousSolid< constitutive::ElasticIsotropic, constitutive::ConstantPermeability >,
+                           constitutive::PorousSolidBase,
                            CellElementSubRegion >( mesh,
                                                    poromechanicsRegionNames,
                                                    this->solidMechanicsSolver()->getDiscretizationName(),

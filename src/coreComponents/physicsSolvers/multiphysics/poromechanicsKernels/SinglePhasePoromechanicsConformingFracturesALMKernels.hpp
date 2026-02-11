@@ -474,19 +474,16 @@ public:
     }
 
     // Compute Jacobian for pressure equation w.r.t. displacement:
-    // dR_p/du = density * unitNormal^T * Atu
+    // dR_p/du = density * unitNormal^T * Atu = density * area * dAperture/dU
     // This is: dRpdU[j] = sum_i( unitNormal[i] * Atu[i][j] ) * density
     // Use Ri_eq_AjiBj for transpose: R[i] = sum_j(A[j][i] * B[j])
-    // Note: The ALM Atu matrix has opposite sign convention compared to LM's dAper/dU,
-    // so we negate the result to match the LM sign convention.
     LvArray::tensorOps::Ri_eq_AjiBj< numUdofs, 3 >( stack.dRpdU, stack.localAtu, stack.unitNormal );
-    LvArray::tensorOps::scale< numUdofs >( stack.dRpdU, -m_density[k] );
+    LvArray::tensorOps::scale< numUdofs >( stack.dRpdU, m_density[k] );
 
     // Compute Jacobian for pressure equation w.r.t. bubble displacement:
     // dR_p/db = density * unitNormal^T * Atb
-    // Note: Same sign convention fix as for displacement.
     LvArray::tensorOps::Ri_eq_AjiBj< numBdofs, 3 >( stack.dRpdB, stack.localAtb, stack.unitNormal );
-    LvArray::tensorOps::scale< numBdofs >( stack.dRpdB, -m_density[k] );
+    LvArray::tensorOps::scale< numBdofs >( stack.dRpdB, m_density[k] );
 
     // Assemble into matrix
     localIndex const localRow = LvArray::integerConversion< localIndex >( stack.pressureRowIndex );
@@ -546,10 +543,10 @@ using AssembleFluidMassResidualDerivativeWrtDisplacementFactory =
  * d(aperture)/du = (1/area) * unitNormal^T * Atu
  * d(aperture)/db = (1/area) * unitNormal^T * Atb
  *
- * IMPORTANT: The ALM Atu/Atb matrices have opposite sign convention compared to the LM
- * dAper/dU formulas. When using these pre-computed values, they must be negated to match
- * the LM sign convention. The assembly in assembleFluidMassResidualDerivativeWrtDisplacement
- * handles this negation.
+ * The Atu/Atb matrices encode the sign convention directly: face 0 gets -N*detJ
+ * and face 1 gets +N*detJ. This means (1/area) * Atu^T * unitNormal already gives
+ * the correct dAperture/dU matching the LM convention (negative for face 0 nodes,
+ * positive for face 1 nodes).
  */
 template< typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
