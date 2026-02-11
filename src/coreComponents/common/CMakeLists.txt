@@ -38,6 +38,7 @@ set( common_headers
      GEOS_RAJA_Interface.hpp
      GeosxMacros.hpp
      MemoryInfos.hpp
+     logger/GeosExceptions.hpp
      logger/Logger.hpp
      logger/ErrorHandling.hpp
      logger/ExternalErrorHandler.hpp
@@ -75,6 +76,7 @@ set( common_sources
      format/table/TableData.cpp
      format/LogPart.cpp
      format/StringUtilities.cpp
+     logger/GeosExceptions.cpp
      logger/Logger.cpp
      logger/ErrorHandling.cpp
      logger/ExternalErrorHandler.cpp

@@ -697,7 +697,7 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
     GEOS_THROW_IF( !foundTarget,
                    "Could not find the specified path start.\n"<<
                    "Specified path is " << path,
-                   std::domain_error );
+                   geos::DomainError );
   }
 
   string::size_type currentPosition;
