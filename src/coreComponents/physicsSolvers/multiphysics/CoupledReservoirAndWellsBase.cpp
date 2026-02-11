@@ -157,7 +157,7 @@ bool validateWellPerforations( PhysicsSolverBase const * const reservoirSolver,
   GEOS_THROW_IF( !badPerforation.first.empty(),
                  GEOS_FMT( "The well {} has a connection to the region {} which is not targeted by the flow solver",
                            badPerforation.first, badPerforation.second ),
-                 std::runtime_error, wellSolver->getDataContext() );
+                 geos::RuntimeError, wellSolver->getDataContext() );
   return hasBadPerforations == 0;
 }
 

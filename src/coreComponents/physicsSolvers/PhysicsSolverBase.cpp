@@ -1172,7 +1172,7 @@ real64 PhysicsSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n
                                         integer const GEOS_UNUSED_PARAM( cycleNumber ),
                                         DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
-  GEOS_THROW( "PhysicsSolverBase::ExplicitStep called!. Should be overridden.", std::runtime_error );
+  GEOS_THROW( "PhysicsSolverBase::ExplicitStep called!. Should be overridden.", geos::RuntimeError );
   return 0;
 }
 

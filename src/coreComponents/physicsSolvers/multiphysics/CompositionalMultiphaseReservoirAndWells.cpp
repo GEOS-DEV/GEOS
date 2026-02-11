@@ -292,7 +292,7 @@ assembleCouplingTerms( real64 const time_n,
 
   GEOS_THROW_IF( !Base::m_isWellTransmissibilityComputed,
                  "The well transmissibility has not been computed yet",
-                 std::runtime_error, Base::getDataContext());
+                 geos::RuntimeError, Base::getDataContext());
 
   BitFlags< isothermalCompositionalMultiphaseBaseKernels::KernelFlags > kernelFlags;
   if( Base::wellSolver()->useTotalMassEquation() )

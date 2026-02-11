@@ -1392,7 +1392,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium( DomainPartition
                        "hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n" <<
                        "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n" <<
                        "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
-                       std::runtime_error, getDataContext() );
+                       geos::RuntimeError, getDataContext() );
 
         if( singlePhaseInitialisation )
         {

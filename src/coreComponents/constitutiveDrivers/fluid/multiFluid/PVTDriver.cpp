@@ -202,7 +202,7 @@ bool PVTDriver::execute( real64 const GEOS_UNUSED_PARAM( time_n ),
 {
   // this code only makes sense in serial
 
-  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "PVTDriver should only be run in serial", std::runtime_error );
+  GEOS_THROW_IF( MpiWrapper::commRank() > 0, "PVTDriver should only be run in serial", geos::RuntimeError );
 
   // get the fluid out of the constitutive manager.
   // for the moment it is of type MultiFluidBase.
@@ -367,21 +367,21 @@ void PVTDriver::compareWithBaseline()
   {
     for( integer col=0; col < m_table.size( 1 ); ++col )
     {
-      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", std::runtime_error );
+      GEOS_THROW_IF( file.eof(), "Baseline file appears shorter than internal results", geos::RuntimeError );
       file >> value;
 
       real64 const error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
       GEOS_THROW_IF( error > MultiFluidConstants::baselineTolerance,
                      GEOS_FMT( "Results do not match baseline ({} vs {}) at data row {} (row {} with header) and column {}",
                                m_table[row][col], value, row+1, row+headerRows, col+1 ),
-                     std::runtime_error );
+                     geos::RuntimeError );
     }
   }
 
   // check we actually reached the end of the baseline file
 
   file >> value;
-  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", std::runtime_error );
+  GEOS_THROW_IF( !file.eof(), "Baseline file appears longer than internal results", geos::RuntimeError );
 
   // success
 

@@ -298,7 +298,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
       sortFaceNodes( X, elemCenter[er][esr][ei], facesToNodes[faceIndex] );
     } catch( std::runtime_error const & e )
     {
-      ErrorLogger::global().currentErrorMsg()
+      ErrorLogger::global().modifyCurrentExceptionMessage()
         .addToMsg( getDataContext().toString() + ": " + e.what() )
         .addContextInfo( getDataContext().getContextInfo().setPriority( 1 ) );
       throw std::runtime_error( getDataContext().toString() + ": " + e.what() );
@@ -314,7 +314,7 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
   GEOS_THROW_IF_GT_MSG( numFaceNodes, MAX_FACE_NODES,
                         GEOS_FMT( "The number of maximum nodes allocated per cell face has been reached "
                                   "at position {}.", elementCenter ),
-                        std::runtime_error );
+                        geos::RuntimeError );
 
   localIndex const firstNodeIndex = faceNodes[0];
 
