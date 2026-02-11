@@ -148,7 +148,7 @@ SuperCellInfo tagCellsWithSuperCellIds(
 
   std::map< vtkIdType, vtkIdType > cellToSuperCell;
   std::set< vtkIdType > visited;
-  vtkIdType nextSuperCellId = 0;
+  vtkIdType nextSuperCellId = numLocalCells;
 
   // DFS to find connected component
   std::function< void(vtkIdType, vtkIdType, std::vector< vtkIdType > &) > dfs =
@@ -244,7 +244,7 @@ if( visited.count( cell ) )
   GEOS_LOG_RANK( "Tagged " << numLocalCells 
                          << " cells with SuperCellIds" );
 
-// -----------------------------------------------------------------------
+  // -----------------------------------------------------------------------
   // Step 5: Report statistics
   // -----------------------------------------------------------------------
 
