@@ -1897,9 +1897,6 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
       elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
 
-    // Get the coordinates for all nodes
-    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodePosition = nodeManager.referencePosition();
-
     // Bulk modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
       elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( fields::solid::bulkModulus::key() );
