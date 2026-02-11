@@ -1884,7 +1884,6 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
                                                                 string_array const & )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
-    NodeManager const & nodeManager = mesh.getNodeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     // Get the "face to element" map (valid for the entire mesh)
@@ -1907,7 +1906,6 @@ void SolidMechanicsAugmentedLagrangianContact::computeTolerances( DomainPartitio
     using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
     ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
       elemManager.constructViewAccessor< CellElementSubRegion::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
-    ElementRegionManager::ElementViewConst< NodeMapViewType > const elemToNodeView = elemToNode.toNestedViewConst();
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
