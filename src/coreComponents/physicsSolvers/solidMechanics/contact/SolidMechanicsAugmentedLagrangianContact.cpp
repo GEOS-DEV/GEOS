@@ -936,39 +936,16 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
 
   GEOS_MARK_FUNCTION;
   
-  // Print solution vector components (DEBUG: for prefracture/postfracture analysis)
-  // File: SolidMechanicsAugmentedLagrangianContact.cpp - Method: applySystemSolution
-  {
-    GEOS_LOG_RANK_0( "========== DETAILED SOLUTION BREAKDOWN (AugmentedLagrangianContact) ==========" );
-    GEOS_LOG_RANK_0( GEOS_FMT( "Solver: {}", getName() ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "Local solution vector size: {}", localSolution.size() ) );
-    GEOS_LOG_RANK_0( GEOS_FMT( "Scaling factor: {}", scalingFactor ) );
-    
-    // Extract and print nodal displacement DOFs
-    string const dispDofKey = dofManager.getKey( solidMechanics::totalDisplacement::key() );
-    GEOS_LOG_RANK_0( GEOS_FMT( "\n--- NODAL DISPLACEMENT DOFs (key: '{}') ---", dispDofKey ) );
-    
-    // Extract and print bubble displacement DOFs
-    string const bubbleDofKey = dofManager.getKey( contact::totalBubbleDisplacement::key() );
-    GEOS_LOG_RANK_0( GEOS_FMT( "\n--- BUBBLE DISPLACEMENT DOFs (key: '{}') ---", bubbleDofKey ) );
-    
-    // Print sample values from local solution (scaled and unscaled)
-    localIndex const numToPrint = std::min( localIndex(30), localSolution.size() );
-    GEOS_LOG_RANK_0( GEOS_FMT( "\nLocal solution entries (first {}):", numToPrint ) );
-    for( localIndex i = 0; i < numToPrint; ++i )
-    {
-      real64 const scaledValue = localSolution[i] * scalingFactor;
-      GEOS_LOG_RANK_0( GEOS_FMT( "  localSolution[{}] = {:.12e} (scaled: {:.12e})",
-                                 i, localSolution[i], scaledValue ) );
-    }
-    GEOS_LOG_RANK_0( "=========================================================================\n" );
-  }
-
   SolidMechanicsLagrangianFEM::applySystemSolution( dofManager,
                                                     localSolution,
                                                     scalingFactor,
                                                     dt,
                                                     domain );
+
+  dofManager.addVectorToField( localSolution,
+                               contact::totalBubbleDisplacement::key(),
+                               contact::totalBubbleDisplacement::key(),
+                               scalingFactor );
 
   dofManager.addVectorToField( localSolution,
                                contact::totalBubbleDisplacement::key(),
