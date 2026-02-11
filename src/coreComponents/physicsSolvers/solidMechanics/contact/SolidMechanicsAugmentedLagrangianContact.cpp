@@ -455,8 +455,8 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepSetup( real64 const &
     // Synchronize bubble displacement fields to ensure ghost values are initialized
     // This prevents race conditions when computing residuals in parallel
     fieldsToBeSync.addFields( FieldLocation::Face,
-                             { contact::incrementalBubbleDisplacement::key(),
-                               contact::totalBubbleDisplacement::key() } );
+                              { contact::incrementalBubbleDisplacement::key(),
+                                contact::totalBubbleDisplacement::key() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
@@ -910,7 +910,7 @@ real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 c
     }
 
     MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOS );
-    
+
   } );
 
   real64 const bubbleResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
@@ -935,7 +935,7 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
 {
 
   GEOS_MARK_FUNCTION;
-  
+
   SolidMechanicsLagrangianFEM::applySystemSolution( dofManager,
                                                     localSolution,
                                                     scalingFactor,
@@ -967,7 +967,7 @@ void SolidMechanicsAugmentedLagrangianContact::applySystemSolution( DofManager c
                                                          domain.getNeighbors(),
                                                          true );
   } );
-  
+
   // Loop for updating the displacement jump
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const & meshName,
                                                                 MeshLevel & mesh,
@@ -1566,7 +1566,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
       {
         bubbleElemsList_v[k] = keys_v[k];
       } );
-      
+
       // Get reference to the persistent storage and copy data to avoid dangling pointers
       array1d< localIndex > & bubbleCellsStorage =
         cellElementSubRegion.getReference< array1d< localIndex > >( CellElementSubRegion::viewKeyStruct::bubbleCellsString() );
@@ -1595,7 +1595,7 @@ void SolidMechanicsAugmentedLagrangianContact::createBubbleCellList( DomainParti
         faceElemsList_v[k][0] = elemsToFaces[kfe][keys_v[k]];
         faceElemsList_v[k][1] = keys_v[k];
       } );
-      
+
       // Get reference to the persistent storage and copy data to avoid dangling pointers
       array2d< localIndex > & faceElemsStorage =
         cellElementSubRegion.getReference< array2d< localIndex > >( CellElementSubRegion::viewKeyStruct::toFaceElementsString() );

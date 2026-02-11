@@ -482,12 +482,12 @@ real64 SurfaceGenerator::solverStep( real64 const & time_n,
     int const numTileColors = MpiWrapper::allReduce( numTileColorsLocal, MpiWrapper::Reduction::Max );
 
     int const localRval = separationDriver( domain,
-                             meshLevel,
-                             domain.getNeighbors(),
-                             tileColor,
-                             numTileColors,
-                             0,
-                             time_n + dt );
+                                            meshLevel,
+                                            domain.getNeighbors(),
+                                            tileColor,
+                                            numTileColors,
+                                            0,
+                                            time_n + dt );
 
     rval += localRval;
 
@@ -682,7 +682,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
           }
         }
       }
-      
+
       SurfaceElementRegion & fractureElementRegion = elementManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
       fractureElementRegion.updateSets( faceManager );
 

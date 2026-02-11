@@ -241,7 +241,7 @@ numElementsFromByteSize( localIndex const byteSize )
 template< typename T >
 std::enable_if_t< traits::HasMemberFunction_reserve< T > >
 reserve( T & value, localIndex const newCapacity )
-{ 
+{
   value.reserve( newCapacity );
   if constexpr ( traits::HasMemberFunction_reserveValues< T const > )
   {

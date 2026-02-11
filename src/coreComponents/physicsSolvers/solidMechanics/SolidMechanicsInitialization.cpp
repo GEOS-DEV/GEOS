@@ -126,11 +126,12 @@ bool SolidMechanicsInitialization< SOLID_SOLVER >::execute( real64 const time_n,
   {
     m_solidMechanicsStatistics->execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
   }
-  
-  if (m_resetDisplacements){
+
+  if( m_resetDisplacements )
+  {
     m_solidMechanicsStateResetTask.execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
   }
-  
+
   return false;
 }
 

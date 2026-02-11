@@ -66,7 +66,7 @@ void NodeManager::reserve( localIndex const newSize )
 
   m_toEdgesRelation.reserve( newSize );
   m_toEdgesRelation.reserveValues( newSize * 2 * getEdgeMapOverallocation() );
-  
+
   m_toElements.m_toElementRegion.reserve( newSize );
   m_toElements.m_toElementRegion.reserveValues( newSize * 2 * getElemMapOverAllocation() );
 
