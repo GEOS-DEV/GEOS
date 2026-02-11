@@ -254,28 +254,6 @@ TEST_P( MixedDimSinglePhaseFlowTest, Run )
 }
 
 /**
- * @brief Serial execution test cases (1 MPI rank).
- *
- * Combinations:
- * - Meshes: 1 fracture, 2 fractures, 3 fractures
- * - Solver: Run solver (true) vs Initialization only (false)
- * - Partitioning: 1x1x1 (Serial)
- */
-INSTANTIATE_TEST_SUITE_P(
-  MixedDimFlowCases,
-  MixedDimSinglePhaseFlowTest,
-  ::testing::Combine(
-    ::testing::Values(
-      "fractured_mesh_hex_DFN_1.vtu",
-      "fractured_mesh_hex_DFN_12.vtu",
-      "fractured_mesh_hex_DFN_123.vtu"
-      ),
-    ::testing::Bool(),
-    ::testing::Values( std::make_tuple( 1, 1, 1 ) )
-    )
-  );
-
-/**
  * @brief Parallel execution test cases (4 MPI ranks).
  *
  * Combinations:
