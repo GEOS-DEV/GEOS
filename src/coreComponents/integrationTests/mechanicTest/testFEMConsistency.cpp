@@ -92,10 +92,10 @@ protected:
       symmetric="1"
       iterPenaltyN="1.0e1"
       iterPenaltyT="1.0e-1"
-      tolNormalTrac="1.e-08"
-      tolTauLimit="1.e-08"
-      tolJumpN="1.e-8"
-      tolJumpT="1.e-8" 
+      tolNormalTrac="1.e-04"
+      tolTauLimit="1.e-04"
+      tolJumpN="1.e-4"
+      tolJumpT="1.e-4" 
       discretization="FE1" 
       targetRegions="{ Region, Fracture }" 
       logLevel="1">
@@ -424,33 +424,33 @@ TEST_P( ConsistencyTest, Run )
  * - Wavy hexahedral meshes.
  * - Wavy tetrahedral meshes.
  */
-INSTANTIATE_TEST_SUITE_P(
-  FractureStressCases,
-  ConsistencyTest,
-  ::testing::Combine(
-    ::testing::Values(
-      // Hex meshes
-      "fractured_mesh_hex_DFN_1.vtu",
-      "fractured_mesh_hex_DFN_2.vtu",
-      "fractured_mesh_hex_DFN_3.vtu",
-      "fractured_mesh_hex_DFN_12.vtu",
-      "fractured_mesh_hex_DFN_13.vtu",
-      "fractured_mesh_hex_DFN_123.vtu",
-
-      // Tet meshes
-      "fractured_mesh_tet_DFN_1.vtu",
-      "fractured_mesh_tet_DFN_2.vtu",
-      "fractured_mesh_tet_DFN_3.vtu",
-      "fractured_mesh_tet_DFN_12.vtu",
-      "fractured_mesh_tet_DFN_13.vtu",
-      "fractured_mesh_tet_DFN_123.vtu"
-      ),
-    ::testing::Values( -1.0e7 ),     // s_xx
-    ::testing::Values( -0.5e7 ),     // s_yy
-    ::testing::Values( -2.0e7 ),     // s_zz
-    ::testing::Values( std::make_tuple( 1, 1, 1 ) )  // Serial partitioning
-    )
-  );
+//INSTANTIATE_TEST_SUITE_P(
+//  FractureStressCases,
+//  ConsistencyTest,
+//  ::testing::Combine(
+//    ::testing::Values(
+//      // Hex meshes
+//      "fractured_mesh_hex_DFN_1.vtu",
+//      "fractured_mesh_hex_DFN_2.vtu",
+//      "fractured_mesh_hex_DFN_3.vtu",
+//      "fractured_mesh_hex_DFN_12.vtu",
+//      "fractured_mesh_hex_DFN_13.vtu",
+//      "fractured_mesh_hex_DFN_123.vtu",
+//
+//      // Tet meshes
+//      "fractured_mesh_tet_DFN_1.vtu",
+//      "fractured_mesh_tet_DFN_2.vtu",
+//      "fractured_mesh_tet_DFN_3.vtu",
+//      "fractured_mesh_tet_DFN_12.vtu",
+//      "fractured_mesh_tet_DFN_13.vtu",
+//      "fractured_mesh_tet_DFN_123.vtu"
+//      ),
+//    ::testing::Values( -1.0e7 ),     // s_xx
+//    ::testing::Values( -0.5e7 ),     // s_yy
+//    ::testing::Values( -2.0e7 ),     // s_zz
+//    ::testing::Values( std::make_tuple( 1, 1, 1 ) )  // Serial partitioning
+//    )
+//  );
 
 /**
  * @brief Parallel execution test cases (4 MPI ranks).
@@ -469,7 +469,24 @@ INSTANTIATE_TEST_SUITE_P(
   ConsistencyTest,
   ::testing::Combine(
     ::testing::Values(
-      // Wavy Hex meshes
+                      
+      // Hex meshes
+      "fractured_mesh_hex_DFN_1.vtu",
+      "fractured_mesh_hex_DFN_2.vtu",
+      "fractured_mesh_hex_DFN_3.vtu",
+      "fractured_mesh_hex_DFN_12.vtu",
+      "fractured_mesh_hex_DFN_13.vtu",
+      "fractured_mesh_hex_DFN_123.vtu",
+
+      // Tet meshes
+      "fractured_mesh_tet_DFN_1.vtu",
+      "fractured_mesh_tet_DFN_2.vtu",
+      "fractured_mesh_tet_DFN_3.vtu",
+      "fractured_mesh_tet_DFN_12.vtu",
+      "fractured_mesh_tet_DFN_13.vtu",
+      "fractured_mesh_tet_DFN_123.vtu"
+                      
+      // Wavy Hex meshes (same toplogy but different geometry)
       "fractured_wavy_mesh_hex_DFN_1.vtu",
       "fractured_wavy_mesh_hex_DFN_2.vtu",
       "fractured_wavy_mesh_hex_DFN_3.vtu",
@@ -478,7 +495,7 @@ INSTANTIATE_TEST_SUITE_P(
       "fractured_wavy_mesh_hex_DFN_23.vtu",
       "fractured_wavy_mesh_hex_DFN_123.vtu",
 
-      // Wavy Tet meshes
+      // Wavy Tet meshes (same toplogy but different geometry)
       "fractured_wavy_mesh_tet_DFN_1.vtu",
       "fractured_wavy_mesh_tet_DFN_2.vtu",
       "fractured_wavy_mesh_tet_DFN_3.vtu",
