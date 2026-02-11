@@ -251,7 +251,7 @@ void CompositionalMultiphaseWell::registerWellDataOnMesh( WellElementSubRegion &
   registerWrapper< real64 >( viewKeyStruct::massDensityString() );
 
   registerWrapper< real64 >( viewKeyStruct::currentMassRateString() );
-  m_writeCSV=1;
+
   // write rates output header
   // the rank that owns the reference well element is responsible
   if( m_writeCSV > 0 && subRegion.isLocallyOwned() )
