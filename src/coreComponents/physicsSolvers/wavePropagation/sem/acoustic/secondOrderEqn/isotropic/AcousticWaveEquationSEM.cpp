@@ -37,8 +37,47 @@
 #include "physicsSolvers/wavePropagation/shared/PrecomputeSourcesAndReceiversKernel.hpp"
 #include "physicsSolvers/wavePropagation/LogLevelsInfo.hpp"
 
+#include "common/MpiWrapper.hpp"
+
+#include <cmath>
+
 namespace geos
 {
+
+namespace
+{
+
+struct ApplyFreeSurfaceBCKernel
+{
+  template< typename POLICY >
+  static void launch( SortedArrayView< localIndex const > const & targetSet,
+                      ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                      arrayView1d< localIndex > const & freeSurfaceFaceIndicator,
+                      arrayView1d< localIndex > const & freeSurfaceNodeIndicator,
+                      arrayView1d< real32 > const & p_np1,
+                      arrayView1d< real32 > const & p_n,
+                      arrayView1d< real32 > const & p_nm1,
+                      real32 const & value )
+  {
+    forAll< POLICY >( targetSet.size(), [=] GEOS_HOST_DEVICE ( localIndex const i )
+    {
+      localIndex const kf = targetSet[i];
+      freeSurfaceFaceIndicator[kf] = 1;
+      localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+      for( localIndex a = 0; a < numNodes; ++a )
+      {
+        localIndex const dof = faceToNodeMap( kf, a );
+        freeSurfaceNodeIndicator[dof] = 1;
+        p_np1[dof] = value;
+        p_n[dof]   = value;
+        p_nm1[dof] = value;
+      }
+    } );
+  }
+};
+
+
+}
 
 using namespace dataRepository;
 using namespace fields;
@@ -396,6 +435,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                                              damping );
       } );
     } );
+
     // Here we compute the timeStep only one time (beginning of the simulation).
     if( m_timestepStabilityLimit==1 )
     {
@@ -490,6 +530,7 @@ real64 AcousticWaveEquationSEM::computeTimeStep( real64 & dtOut )
     {
       p[a] = (real64)rand()/(real64) RAND_MAX;
     }
+    p.registerTouch( LvArray::MemorySpace::host );
 
     //Step 1: Normalize randomized pressure
     real64 normP= 0.0;
@@ -606,24 +647,15 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 time, DomainPartition &
 
     if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
     {
-      real64 const value = bc.getScale();
-
-      for( localIndex i = 0; i < targetSet.size(); ++i )
-      {
-        localIndex const kf = targetSet[ i ];
-        freeSurfaceFaceIndicator[kf] = 1;
-
-        localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
-        for( localIndex a=0; a < numNodes; ++a )
-        {
-          localIndex const dof = faceToNodeMap( kf, a );
-          freeSurfaceNodeIndicator[dof] = 1;
-
-          p_np1[dof] = value;
-          p_n[dof]   = value;
-          p_nm1[dof] = value;
-        }
-      }
+      real32 const value = static_cast< real32 >( bc.getScale() );
+      ApplyFreeSurfaceBCKernel::launch< EXEC_POLICY >( targetSet,
+                                                       faceToNodeMap,
+                                                       freeSurfaceFaceIndicator,
+                                                       freeSurfaceNodeIndicator,
+                                                       p_np1,
+                                                       p_n,
+                                                       p_nm1,
+                                                       value );
     }
     else
     {
@@ -1223,8 +1255,8 @@ void AcousticWaveEquationSEM::computeUnknowns( real64 const & time_n,
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
-  arrayView1d< real32 const > const mass = nodeManager.getField< acousticfields::AcousticMassVector >();
-  arrayView1d< real32 const > const damping = nodeManager.getField< acousticfields::DampingVector >();
+  arrayView1d< real32 > const mass = nodeManager.getField< acousticfields::AcousticMassVector >();
+  arrayView1d< real32 > const damping = nodeManager.getField< acousticfields::DampingVector >();
 
   arrayView1d< real32 > const p_nm1 = nodeManager.getField< acousticfields::Pressure_nm1 >();
   arrayView1d< real32 > const p_n = nodeManager.getField< acousticfields::Pressure_n >();
@@ -1402,10 +1434,12 @@ void AcousticWaveEquationSEM::synchronizeUnknowns( real64 const & time_n,
                                 mesh,
                                 domain.getNeighbors(),
                                 true );
-  /// compute the seismic traces since last step.
+
+  // compute the seismic traces since last step.
   arrayView2d< real32 > const pReceivers = m_pressureNp1AtReceivers.toView();
 
   computeAllSeismoTraces( time_n, dt, p_np1, p_n, pReceivers );
+
   incrementIndexSeismoTrace( time_n );
 
   if( m_usePML )
