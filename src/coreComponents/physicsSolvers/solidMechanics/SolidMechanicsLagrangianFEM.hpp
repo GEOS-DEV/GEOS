@@ -289,6 +289,8 @@ public:
 protected:
   virtual void postInputInitialization() override;
 
+  void initializeMass( MeshLevel & mesh, CellElementSubRegion & subRegion );
+
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;

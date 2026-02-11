@@ -139,6 +139,11 @@ blt_add_executable( NAME geosx
                                ${extraComponentsLinkList}
                                ${externalComponentsLinkList} )
 
+if(APPLE)
+  target_link_options(geosx PRIVATE "-Wl,-export_dynamic")
+endif()
+
+
 # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
 if( ${ENABLE_HYPRE_DEVICE} STREQUAL "CUDA"  )
   set_target_properties( geosx PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS TRUE )
@@ -220,8 +225,8 @@ install( FILES ${CMAKE_BINARY_DIR}/schema.xsd
 ################################
 # Add python environment setup
 ################################
-#message(WARNING "Temporarily changing the geosPythonBranch to cusini/remove-relative-paths")
-#set(GEOS_PYTHON_PACKAGES_BRANCH "cusini/remove-relative-paths" CACHE STRING "" FORCE)
+message(WARNING "Temporarily changing the geosPythonBranch to feature/remove-dndx-detj")
+set(GEOS_PYTHON_PACKAGES_BRANCH "feature/remove-dndx-detj" CACHE STRING "" FORCE)
 
 
 if ( Python3_EXECUTABLE )
