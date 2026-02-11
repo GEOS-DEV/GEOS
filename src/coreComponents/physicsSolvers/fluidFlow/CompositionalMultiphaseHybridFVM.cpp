@@ -182,7 +182,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     GEOS_THROW_IF( minVal.get() <= 0.0,
                    getCatalogName() << " " << getDataContext() <<
                    ": the transmissibility multipliers used in SinglePhaseHybridFVM must be strictly larger than 0.0",
-                   std::runtime_error );
+                   geos::RuntimeError );
 
     // Initialize face-based constitutive property arrays to zero to prevent uninitialized memory usage on GPU
     arrayView2d< real64, compflow::USD_PHASE > facePhaseMob = faceManager.getField< flow::facePhaseMobility >();

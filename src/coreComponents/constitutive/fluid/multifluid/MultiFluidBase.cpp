@@ -41,7 +41,7 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
 
   registerWrapper( viewKeyStruct::componentMolarWeightString(), &m_componentMolarWeight ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Component molar weights" );
+    setDescription( "Component molar weights [kg/mol]" );
 
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).

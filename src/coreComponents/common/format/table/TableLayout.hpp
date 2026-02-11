@@ -20,10 +20,8 @@
 #ifndef GEOS_COMMON_FORMAT_TABLE_TABLELAYOUT_HPP
 #define GEOS_COMMON_FORMAT_TABLE_TABLELAYOUT_HPP
 
-#include "common/DataTypes.hpp"
 #include "TableTypes.hpp"
 #include <variant>
-#include "common/logger/Logger.hpp"
 
 
 namespace geos
