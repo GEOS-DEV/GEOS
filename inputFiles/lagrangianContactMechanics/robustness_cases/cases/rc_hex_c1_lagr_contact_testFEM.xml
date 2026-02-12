@@ -1,0 +1,75 @@
+<?xml version="1.0" ?>
+<Problem>
+  <Mesh>
+    <VTKMesh name="mesh1" file="../meshes/fractured_wavy_mesh_hex_DFN_123.vtu" nodesetNames="{ f1_node_set, f2_node_set, f3_node_set }" partitionMethod="parmetis"/>
+  </Mesh>
+  <Geometry>
+    <Box name="xnegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  0.01,  1.01,  1.01 }"/>
+    <Box name="xposFace" xMin="{  0.99, -0.01, -0.01 }" xMax="{  1.01,  1.01,  1.01 }"/>
+    <Box name="ynegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  0.01,  1.01 }"/>
+    <Box name="yposFace" xMin="{ -0.01,  0.99, -0.01 }" xMax="{  1.01,  1.01,  1.01 }"/>
+    <Box name="znegFace" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  1.01,  0.01 }"/>
+    <Box name="zposFace" xMin="{ -0.01, -0.01,  0.99 }" xMax="{  1.01,  1.01,  1.01 }"/>
+    <Box name="fracture" xMin="{ -0.01, -0.01, -0.01 }" xMax="{  1.01,  1.01,  1.01 }"/>
+  </Geometry>
+  <Solvers gravityVector="{0.0, 0.0, 0.0}">
+    <SolidMechanicsAugmentedLagrangianContact 
+      name="mechSolver"
+      simultaneous="1"
+      symmetric="1"
+      iterPenaltyN="1.0e1"
+      iterPenaltyT="1.0e-1"
+      tolNormalTrac="1.e-03"
+      tolTauLimit="1.e-03"
+      tolJumpN="1.e-3"
+      tolJumpT="1.e-3" 
+      discretization="FE1" 
+      targetRegions="{ Region, Fracture }" 
+      logLevel="1">
+      <NonlinearSolverParameters newtonTol="1.0e-5" newtonMaxIter="20" logLevel="1"/>
+      <LinearSolverParameters directParallel="0"/>
+    </SolidMechanicsAugmentedLagrangianContact>
+    <SurfaceGenerator name="SurfaceGen" targetRegions="{ Region, Fracture }" fractureRegion="Fracture" initialRockToughness="10.0e9"/>
+  </Solvers>
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace name="FE1" order="1" useHighOrderQuadratureRule="1" />
+    </FiniteElements>
+  </NumericalMethods>
+  <ElementRegions>
+    <CellElementRegion name="Region" cellBlocks="{ * }" materialList="{ rock }"/>
+    <SurfaceElementRegion name="Fracture" defaultAperture="1.0e-4" faceBlock="faceElementSubRegion" materialList="{ fractureContact }"/>
+  </ElementRegions>
+  <Constitutive>
+    <ElasticIsotropic name="rock" defaultDensity="2500" defaultYoungModulus="10e9" defaultPoissonRatio="0.2"/>
+    <Coulomb name="fractureContact" cohesion="1.0e10" frictionCoefficient="0.5"/>
+  </Constitutive>
+  <FieldSpecifications>
+    <FieldSpecification name="separableFace" fieldName="isFaceSeparable" initialCondition="1" setNames="{ f1_node_set, f2_node_set, f3_node_set }" objectPath="faceManager" scale="1" />
+    <FieldSpecification name="frac" initialCondition="1" setNames="{ f1_node_set, f2_node_set, f3_node_set }" objectPath="faceManager" fieldName="ruptureState" scale="1" />
+    
+    <FieldSpecification name="xneg_disp" component="0" setNames="{ xnegFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="0.0"/>
+    <FieldSpecification name="yneg_disp" component="1" setNames="{ ynegFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="0.0"/>
+    <FieldSpecification name="zneg_disp" component="2" setNames="{ znegFace }" objectPath="nodeManager" fieldName="totalDisplacement" scale="0.0"/>
+    
+    <Traction name="xpos_traction" setNames="{ xposFace }" objectPath="faceManager" tractionType="normal" scale="-1.0e7"/>
+    <Traction name="ypos_traction" setNames="{ yposFace }" objectPath="faceManager" tractionType="normal" scale="-0.5e7"/>
+    <Traction name="zpos_traction" setNames="{ zposFace }" objectPath="faceManager" tractionType="normal" scale="-2.0e7"/>
+  </FieldSpecifications>
+  <Tasks>
+    <SolidMechanicsAugmentedLagrangianContactInitialization name="ELASTICITY.PRE.SPLIT.STEP" solidSolverName="mechSolver" logLevel="1" reset_displacements = "0"/>
+    <SolidMechanicsAugmentedLagrangianContactInitialization name="ELASTICITY.POST.SPLIT.STEP" solidSolverName="mechSolver" logLevel="1" reset_displacements = "0"/>
+  </Tasks>  
+  <Outputs>
+    <VTK name="vtkOutputM" outputRegionType="cell" />
+    <VTK name="vtkOutputF" outputRegionType="surface"/>
+  </Outputs>
+  <Events minTime="0.0" maxTime="1.0">
+    <SoloEvent name="ELASTICITY.PRE.SPLIT.STEP" targetTime="0.0" beginTime="0.0" target="/Tasks/ELASTICITY.PRE.SPLIT.STEP"/>
+    <SoloEvent name="preFracture" target="/Solvers/SurfaceGen" targetTime="0.0" beginTime="0.0"/> 
+    <SoloEvent name="ELASTICITY.POST.SPLIT.STEP" targetTime="0.0" beginTime="0.0" target="/Tasks/ELASTICITY.POST.SPLIT.STEP"/>
+    <PeriodicEvent name="solverApplications" target="/Solvers/mechSolver" forceDt="1.0"/>
+    <PeriodicEvent name="outputsM" timeFrequency="1.0" target="/Outputs/vtkOutputM"/>
+    <PeriodicEvent name="outputsF" timeFrequency="1.0" target="/Outputs/vtkOutputF"/>
+  </Events>
+</Problem>

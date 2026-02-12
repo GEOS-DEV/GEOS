@@ -817,7 +817,6 @@ void SolidMechanicsAugmentedLagrangianContact::implicitStepComplete( real64 cons
     } );
   } );
 
-  synchronizeFractureState( domain );
 }
 
 real64 SolidMechanicsAugmentedLagrangianContact::calculateResidualNorm( real64 const & time,
@@ -2009,7 +2008,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
   {
-    FaceManager const & faceManager = mesh.getFaceManager();
+    FaceManager & faceManager = mesh.getFaceManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     // Get the "face to element" map (valid for the entire mesh)
@@ -2017,6 +2016,8 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
     arrayView2d< localIndex const > const faceToElemRegion = faceToElem.m_toElementRegion;
     arrayView2d< localIndex const > const faceToElemSubRegion = faceToElem.m_toElementSubRegion;
     arrayView2d< localIndex const > const faceToElemIndex = faceToElem.m_toElementIndex;
+
+    arrayView2d< real64 > totalBubbleDisplacement = faceManager.getField< contact::totalBubbleDisplacement >();
 
     // Get stress accessor
     ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, cells::RANK2_TENSOR_USD > > const avgElementStress =
@@ -2030,6 +2031,8 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         arrayView3d< real64 const > const faceRotationMatrix = subRegion.getField< contact::rotationMatrix >().toViewConst();
         arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList().toViewConst();
         arrayView2d< real64 > const traction = subRegion.getField< contact::traction >();
+        arrayView2d< real64 > const dispJump = subRegion.getField< contact::dispJump >();
+        arrayView2d< real64 const > const iterativePenalty = subRegion.getField< contact::iterativePenalty >().toViewConst();
         arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
         // Get friction law parameters for Coulomb check
@@ -2112,6 +2115,38 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
               // Store the traction
               LvArray::tensorOps::copy< 3 >( traction[kfe], tLocal );
 
+              // Update displacement jump based on penalty stiffness
+              real64 const kn = iterativePenalty[kfe][0];
+              real64 const kt = iterativePenalty[kfe][1];
+              real64 dJump[3] = { 0.0, 0.0, 0.0 };
+
+              if( kn > 1.0e-14 )
+              {
+                dJump[0] = tLocal[0] / kn;
+              }
+              if( kt > 1.0e-14 )
+              {
+                dJump[1] = tLocal[1] / kt;
+                dJump[2] = tLocal[2] / kt;
+              }
+
+              dispJump[kfe][0] = dJump[0];
+              dispJump[kfe][1] = dJump[1];
+              dispJump[kfe][2] = dJump[2];
+
+              // Compute Global Bubble Displacement: b_global = R * [u]_local
+              real64 bGlobal[3];
+              LvArray::tensorOps::Ri_eq_AijBj< 3, 3 >( bGlobal, faceRotationMatrix[kfe], dJump );
+
+              // Store to totalBubbleDisplacement for both faces
+              for( localIndex faceIdx = 0; faceIdx < 2; ++faceIdx )
+              {
+                localIndex const faceIndex = elemsToFaces( kfe, faceIdx );
+                totalBubbleDisplacement[faceIndex][0] = bGlobal[0];
+                totalBubbleDisplacement[faceIndex][1] = bGlobal[1];
+                totalBubbleDisplacement[faceIndex][2] = bGlobal[2];
+              }
+
               // Check Coulomb friction consistency if parameters are available
               if( hasCoulombParams )
               {
@@ -2173,14 +2208,19 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
     } );
   } );
 
-  // Synchronize the traction field
+  // Synchronize the traction, displacement jump, and bubble displacement fields
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                                 MeshLevel & mesh,
                                                                 string_array const & )
   {
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addElementFields( { contact::traction::key() },
+    fieldsToBeSync.addElementFields( { contact::traction::key(),
+                                       contact::dispJump::key() },
                                      { getUniqueFractureRegionName() } );
+
+    fieldsToBeSync.addFields( FieldLocation::Face,
+                              { contact::totalBubbleDisplacement::key() } );
+
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
