@@ -148,7 +148,7 @@ struct UpdateStateKernel
       }
       else if( LvArray::math::abs( localTractionNew[ 0 ] ) < normalTractionTolerance[k] )
       {
-        // When normal traction is very small, check if cohesion allows stick state
+        // When normal traction is lower than normalTractionTolerance, check if cohesion allows stick state
         // before deciding to transition to slip (fix for high cohesion materials)
         real64 dLimitTau_dTraction = 0.0;
         real64 const limitTau = contactWrapper.computeLimitTangentialTractionNorm( localTractionNew[ 0 ], dLimitTau_dTraction );
@@ -158,7 +158,6 @@ struct UpdateStateKernel
         if( currentTau > limitTau )
         {
           // Tangential traction exceeds cohesion limit: transition to slip
-          LvArray::tensorOps::fill< 3 >( localTractionNew, 0.0 );
           fractureState[k] = fields::contact::FractureState::Slip;
         }
         // else: cohesion allows stick state, keep traction as computed by updateTraction()
