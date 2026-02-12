@@ -2041,10 +2041,10 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         real64 frictionCoefficient = 0.0;
         bool hasCoulombParams = false;
 
-        if( frictionLaw.hasWrapper( "cohesion" ) && frictionLaw.hasWrapper( "frictionCoefficient" ) )
+        if( frictionLaw.hasWrapper( CoulombFriction::viewKeyStruct::cohesionString() ) && frictionLaw.hasWrapper( CoulombFriction::viewKeyStruct::frictionCoefficientString() ) )
         {
-          cohesion = frictionLaw.getReference< real64 >( "cohesion" );
-          frictionCoefficient = frictionLaw.getReference< real64 >( "frictionCoefficient" );
+          cohesion = frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::cohesionString() );
+          frictionCoefficient = frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::frictionCoefficientString() );
           hasCoulombParams = true;
         }
 
@@ -2054,14 +2054,16 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
           {
             // Each fracture element has two adjacent faces (one on each side of the fracture)
             // We compute traction from each side and average them
-            real64 tGlobalAvg[3] = { 0.0, 0.0, 0.0 };
-            real64 avgSigma[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-            integer numValidCells = 0;
+            real64 tGlobalAvg[3]{};
+            real64 avgSigma[6]{};
+            integer numValidCells{};
 
             // Use the fracture element's normal from the rotation matrix (first column)
             real64 const nx = faceRotationMatrix( kfe, 0, 0 );
             real64 const ny = faceRotationMatrix( kfe, 1, 0 );
             real64 const nz = faceRotationMatrix( kfe, 2, 0 );
+
+            real64 const n[3]{ faceRotationMatrix(kfe, 0, 0), faceRotationMatrix(kfe, 1, 0), faceRotationMatrix(kfe, 2, 0) };
 
             // Loop over both faces of the fracture element
             for( localIndex faceIdx = 0; faceIdx < 2; ++faceIdx )
@@ -2079,26 +2081,11 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                 continue;
               }
 
-              // Get the stress tensor components (Voigt notation: XX, YY, ZZ, YZ, XZ, XY)
-              real64 const sig_xx = avgStress[er][esr]( ei, 0 );
-              real64 const sig_yy = avgStress[er][esr]( ei, 1 );
-              real64 const sig_zz = avgStress[er][esr]( ei, 2 );
-              real64 const sig_yz = avgStress[er][esr]( ei, 3 );
-              real64 const sig_xz = avgStress[er][esr]( ei, 4 );
-              real64 const sig_xy = avgStress[er][esr]( ei, 5 );
-
               // Accumulate stress for averaging (for warning message)
-              avgSigma[0] += sig_xx;
-              avgSigma[1] += sig_yy;
-              avgSigma[2] += sig_zz;
-              avgSigma[3] += sig_yz;
-              avgSigma[4] += sig_xz;
-              avgSigma[5] += sig_xy;
+              LvArray::tensorOps::add< 6 >( avgSigma, avgStress[er][esr][ei] );
 
               // Compute traction in global coordinates: t = sigma * n
-              tGlobalAvg[0] += sig_xx * nx + sig_xy * ny + sig_xz * nz;
-              tGlobalAvg[1] += sig_xy * nx + sig_yy * ny + sig_yz * nz;
-              tGlobalAvg[2] += sig_xz * nx + sig_yz * ny + sig_zz * nz;
+              LvArray::tensorOps::Ri_add_symAijBj<3>( tGlobalAvg, avgStress[er][esr][ei], n );
 
               ++numValidCells;
             }
@@ -2107,13 +2094,8 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
             if( numValidCells > 0 )
             {
               real64 const invNumCells = 1.0 / static_cast< real64 >( numValidCells );
-              tGlobalAvg[0] *= invNumCells;
-              tGlobalAvg[1] *= invNumCells;
-              tGlobalAvg[2] *= invNumCells;
-              for( int i = 0; i < 6; ++i )
-              {
-                avgSigma[i] *= invNumCells;
-              }
+              LvArray::tensorOps::scale< 3 >( tGlobalAvg, invNumCells );
+              LvArray::tensorOps::scale< 6 >( avgSigma, invNumCells );
 
               // Rotate averaged traction to local coordinate system: t_local = R^T * t_global
               real64 tLocal[3];
