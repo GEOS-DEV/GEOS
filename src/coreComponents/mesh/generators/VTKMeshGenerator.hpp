@@ -114,7 +114,7 @@ private:
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
-    constexpr static char const * partitionFractureWeightString() { return "  partitionFractureWeight"; }
+    constexpr static char const * partitionFractureWeightString() { return "partitionFractureWeight"; }
     constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
     constexpr static char const * dataSourceString() { return "dataSourceName"; }
   };
