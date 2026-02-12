@@ -14,7 +14,7 @@
  */
 
 /**
- * @file SinglePhasePoromechanicsConformingFractures.hpp
+ * @file SinglePhasePoromechanicsConformingFracturesALM.hpp
  */
 
 #ifndef GEOS_LINEARALGEBRA_INTERFACES_HYPREMGRSINGLEPHASEPOROMECHANICSCONFORMINGFRACTURESALM_HPP_
@@ -32,23 +32,25 @@ namespace mgr
 {
 
 /**
- * @brief SinglePhasePoromechanicsConformingFractures strategy.
+ * @brief SinglePhasePoromechanicsConformingFracturesALM strategy.
+ *
+ * Labels assigned by DofManager (PoromechanicsSolver::setupDofs calls
+ * solidMechanicsSolver first, then flowSolver):
  *
  * dofLabel: 0 = displacement, x-component
  * dofLabel: 1 = displacement, y-component
  * dofLabel: 2 = displacement, z-component
- * dofLabel: 3 = displacement bubble function, x-component
- * dofLabel: 4 = displacement bubble function, y-component
- * dofLabel: 5 = displacement bubble function, z-component
+ * dofLabel: 3 = bubble displacement, x-component
+ * dofLabel: 4 = bubble displacement, y-component
+ * dofLabel: 5 = bubble displacement, z-component
  * dofLabel: 6 = pressure (cell elem + fracture elems)
-
  *
  * Ingredients:
- * 1. Level 1: F-points displacement (3,4,5), C-points pressure (0,1,2,6)
- * 2. Level 2: F-points displacement (0,1,2), C-points pressure (6)
- * 2. F-points smoother: BoomerAMG, single V-cycle
- * 3. C-points coarse-grid/Schur complement solver: BoomerAMG
- * 4. Global smoother: none
+ * 1. Level 0: F-points bubble (3,4,5), C-points displacement+pressure (0,1,2,6)
+ * 2. Level 1: F-points displacement (0,1,2), C-points pressure (6)
+ * 3. F-points smoother at Level 1: BoomerAMG, single V-cycle
+ * 4. C-points coarse-grid/Schur complement solver: BoomerAMG
+ * 5. Global smoother: none
  */
 class SinglePhasePoromechanicsConformingFracturesALM : public MGRStrategyBase< 2 >
 {
@@ -61,32 +63,33 @@ public:
     : MGRStrategyBase( 7 )
   {
 
-    // we keep u and p
+    // Level 0: keep displacement (0,1,2) + pressure (6), eliminate bubble (3,4,5)
     m_labels[0].push_back( 0 );
     m_labels[0].push_back( 1 );
     m_labels[0].push_back( 2 );
     m_labels[0].push_back( 6 );
-    // we keep p
+    // Level 1: keep pressure (6), eliminate displacement (0,1,2)
     m_labels[1].push_back( 6 );
 
     setupLabels();
 
-    // Level 0
+    // Level 0: eliminate bubble DOFs (3,4,5), keep displacement (0,1,2) + pressure (6)
     m_levelFRelaxType[0]          = MGRFRelaxationType::l1jacobi;
     m_levelFRelaxIters[0]         = 1;
     m_levelGlobalSmootherType[0]  = MGRGlobalSmootherType::none;
     m_levelGlobalSmootherIters[0] = 0;
-    m_levelInterpType[0]          = MGRInterpolationType::blockJacobi;
+    m_levelInterpType[0]          = MGRInterpolationType::injection;
     m_levelRestrictType[0]        = MGRRestrictionType::injection;
     m_levelCoarseGridMethod[0]    = MGRCoarseGridMethod::galerkin;
 
     // Level 1
-    m_levelFRelaxType[1]         = MGRFRelaxationType::amgVCycle;
-    m_levelFRelaxIters[1]        = 1;
-    m_levelGlobalSmootherType[1] = MGRGlobalSmootherType::none;
-    m_levelInterpType[1]         = MGRInterpolationType::jacobi;
-    m_levelRestrictType[1]       = MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1]   = MGRCoarseGridMethod::nonGalerkin;
+    m_levelFRelaxType[1]          = MGRFRelaxationType::amgVCycle;
+    m_levelFRelaxIters[1]         = 1;
+    m_levelGlobalSmootherType[1]  = MGRGlobalSmootherType::ilu0;
+    m_levelGlobalSmootherIters[1] = 1;
+    m_levelInterpType[1]          = MGRInterpolationType::jacobi;
+    m_levelRestrictType[1]        = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[1]    = MGRCoarseGridMethod::nonGalerkin;
 
   }
 
@@ -95,21 +98,23 @@ public:
    * @param precond preconditioner wrapper
    * @param mgrData auxiliary MGR data
    */
-  void setup( LinearSolverParameters::MGR const & mgrParams,
+  void setup( LinearSolverParameters::MGR const &,
               HyprePrecWrapper & precond,
               HypreMGRData & mgrData )
   {
     setReduction( precond, mgrData );
 
     // Configure the BoomerAMG solver used as F-relaxation for the second level
-    // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.mechSolver.ptr ) );
-    // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.mechSolver.ptr, 0.0 ) );
-    // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.mechSolver.ptr, 1 ) );
-    // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( mgrData.mechSolver.ptr, 1.0 ) );
-    // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( mgrData.mechSolver.ptr, 0.6 ) );
-    // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.mechSolver.ptr, 0 ) );
-    // GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.mechSolver.ptr, 3 ) );
-    setDisplacementAMG(mgrData.mechSolver, mgrParams.separateComponents);
+    // Note: we do NOT use setDisplacementAMG() here because HYPRE_MGRSetFSolverAtLevel
+    // transfers ownership of the solver to MGR. MGR will destroy it during HYPRE_MGRDestroy.
+    // Setting mechSolver.destroy would cause a double-free in HyprePreconditioner::clear().
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.mechSolver.ptr ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.mechSolver.ptr, 0.0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.mechSolver.ptr, 1 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( mgrData.mechSolver.ptr, 1.0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetStrongThreshold( mgrData.mechSolver.ptr, 0.6 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.mechSolver.ptr, 0 ) );
+    GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( mgrData.mechSolver.ptr, 3 ) );
 
 #if GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_CUDA || GEOS_USE_HYPRE_DEVICE == GEOS_USE_HYPRE_HIP
     GEOS_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.mechSolver.ptr, hypre::getAMGCoarseningType( LinearSolverParameters::AMG::CoarseningType::PMIS ) ) );
