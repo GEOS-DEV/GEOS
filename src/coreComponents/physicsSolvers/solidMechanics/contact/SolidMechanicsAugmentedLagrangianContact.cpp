@@ -2077,6 +2077,17 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                 continue;
               }
 
+              // Check principal stress components in 3D elements adjecent to the fracture element.
+              // If the maximun principal stress is tensile, issue an error. Principal stresses are
+              // sorted in ascending order
+              real64 principalStresses[3];
+              LvArray::tensorOps::symEigenvalues< 3 >( principalStresses, avgElementStress[er][esr][ei] );
+              GEOS_ERROR_IF( principalStresses[2] > 0.0,
+                             GEOS_FMT(
+                               "ERROR: Maximum principal stress is tensile in element adjacent to fracture element {}"
+                               "connected to face {}. Principal stresses (sorted): ({:.6e}, {:.6e}, {:.6e})",
+                               kfe, faceIdx, principalStresses[0], principalStresses[1], principalStresses[2] ) );
+
               // Accumulate stress for averaging (for warning message)
               LvArray::tensorOps::add< 6 >( avgSigma, avgElementStress[er][esr][ei] );
 
