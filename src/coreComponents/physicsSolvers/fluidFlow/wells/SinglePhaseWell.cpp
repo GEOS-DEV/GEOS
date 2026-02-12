@@ -1438,6 +1438,30 @@ void SinglePhaseWell::printRates( real64 const & time_n,
   } );
 }
 
+bool SinglePhaseWell::solveWHPConstraint( real64 const & time_n,
+                                          real64 const & dt,
+                                          integer const cycleNumber,
+                                          integer const coupledIterationNumber,
+                                          DomainPartition & domain,
+                                          MeshLevel & mesh,
+                                          ElementRegionManager & elemManager,
+                                          WellElementSubRegion & subRegion,
+                                          DofManager const & dofManager )
+{
+  GEOS_UNUSED_VAR( time_n );
+  GEOS_UNUSED_VAR( dt );
+  GEOS_UNUSED_VAR( cycleNumber );
+  GEOS_UNUSED_VAR( coupledIterationNumber );
+  GEOS_UNUSED_VAR( domain );
+  GEOS_UNUSED_VAR( mesh );
+  GEOS_UNUSED_VAR( elemManager );
+  GEOS_UNUSED_VAR( subRegion );
+  GEOS_UNUSED_VAR( dofManager );
+
+  GEOS_ERROR( "SinglePhaseWell::solveWHPConstraint(WHP constraint option not implemented for SinglePhaseWell." );
+  return false;
+
+}
 
 
 }// namespace geos

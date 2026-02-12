@@ -92,6 +92,13 @@ integer CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::getWaterP
 }
 
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+integer CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::getPhaseIndex( const std::string & phaseName ) const
+{
+  integer const phaseIndex = findPhaseIndex( phaseName );
+  return m_phaseOrder.size() > phaseIndex ? m_phaseOrder[phaseIndex] : -1;
+}
+
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 string CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::catalogName()
 {
   return GEOS_FMT( "Compositional{}Fluid{}",
@@ -285,7 +292,21 @@ array1d< integer > CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >
   }
   return phaseTypes;
 }
+template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
+integer CompositionalMultiphaseFluid< FLASH, PHASE1, PHASE2, PHASE3 >::findPhaseIndex( string names ) const
+{
+  auto const nameContainer = stringutilities::tokenize( names, ",", true, false );
 
+  for( integer ip = 0; ip < numFluidPhases(); ++ip )
+  {
+    std::string const phaseName = stringutilities::toLower( m_phaseNames[ip] );
+    if( std::find( nameContainer.begin(), nameContainer.end(), phaseName ) != nameContainer.end())
+    {
+      return ip;
+    }
+  }
+  return -1;
+}
 // Create the fluid models
 template< typename FLASH, typename PHASE1, typename PHASE2, typename PHASE3 >
 std::unique_ptr< compositional::ModelParameters >

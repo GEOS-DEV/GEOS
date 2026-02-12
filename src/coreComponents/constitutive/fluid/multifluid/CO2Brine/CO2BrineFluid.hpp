@@ -149,6 +149,8 @@ private:
 
   virtual integer getWaterPhaseIndex() const override final;
 
+  virtual integer getPhaseIndex( const std::string & phaseName ) const override final;
+
   /**
    * @copydoc MultiFluidBase::checkTablesParameters( real64 pressure, real64 temperature )
    */

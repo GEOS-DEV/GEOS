@@ -190,7 +190,7 @@ void WellManager::implicitStepSetup( real64 const & time_n,
     ;
   } );
 
-  forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const & ,
+  forDiscretizationOnMeshTargets ( domain.getMeshBodies(), [&] ( string const &,
                                                                  MeshLevel & mesh,
                                                                  string_array const & regionNames )
   {

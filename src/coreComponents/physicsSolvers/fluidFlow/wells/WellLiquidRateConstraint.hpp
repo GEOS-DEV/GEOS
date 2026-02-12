@@ -136,24 +136,16 @@ public:
 
   virtual bool checkViolation( WellConstraintBase const & currentConstraint, real64 const & currentTime ) const override;
 
+  /**
+   * @brief Validate Liquid type is consistent with fluidmodel
+   */
+  template< typename T >
+  void  validateLiquidType( T const & fluidModel );
+
 protected:
 
   virtual void postInputInitialization() override;
 
-  template< typename T >
-  void  validateLiquidType( T const & fluidModel )
-  {
-    m_phaseIndices.resize( m_phaseNames.size());
-    for( size_t ip =0; ip<m_phaseNames.size(); ip++ )
-    {
-      integer phaseIndex = fluidModel.getPhaseIndex( m_phaseNames[ip] );
-      GEOS_THROW_IF( phaseIndex == -1,
-                     "LiquidProductionConstraint " <<  viewKeyStruct::liquidRateString()    <<
-                     ": Invalid Liquid type for simulation fluid model " << m_phaseNames[ip],
-                     InputError );
-      m_phaseIndices[ip]=phaseIndex;
-    }
-  }
 protected:
 
   /// Name of the targeted phase
@@ -163,7 +155,20 @@ protected:
 
 };
 
-
+template< typename T >
+void LiquidRateConstraint::validateLiquidType( T const & fluidModel )
+{
+  m_phaseIndices.resize( m_phaseNames.size());
+  for( size_t ip =0; ip<m_phaseNames.size(); ip++ )
+  {
+    integer phaseIndex = fluidModel.getPhaseIndex( m_phaseNames[ip] );
+    GEOS_THROW_IF( phaseIndex == -1,
+                   "LiquidProductionConstraint " <<  viewKeyStruct::liquidRateString()    <<
+                   ": Invalid Liquid type for simulation fluid model " << m_phaseNames[ip],
+                   InputError );
+    m_phaseIndices[ip]=phaseIndex;
+  }
+}
 
 } //namespace geos
 

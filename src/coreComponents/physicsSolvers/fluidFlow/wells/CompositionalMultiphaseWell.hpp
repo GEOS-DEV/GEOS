@@ -384,6 +384,15 @@ protected:
 
 
 
+  virtual bool solveWHPConstraint( real64 const & time_n,
+                                   real64 const & dt,
+                                   integer const cycleNumber,
+                                   integer const coupledIterationNumber,
+                                   DomainPartition & domain,
+                                   MeshLevel & mesh,
+                                   ElementRegionManager & elemManager,
+                                   WellElementSubRegion & subRegion,
+                                   DofManager const & dofManager )override;
 private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
