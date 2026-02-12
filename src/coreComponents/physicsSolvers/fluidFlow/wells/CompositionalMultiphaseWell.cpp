@@ -353,7 +353,7 @@ void CompositionalMultiphaseWell::validateWellControlsForFluid( WellControls con
     } catch( SimulationError const & ex )
     {
       string const errorMsg = GEOS_FMT( "{}: wrong surface pressure / temperature.\n", getDataContext() );
-      ErrorLogger::global().currentErrorMsg()
+      ErrorLogger::global().modifyCurrentExceptionMessage()
         .addToMsg( errorMsg )
         .addContextInfo( getDataContext().getContextInfo().setPriority( 1 ) );
       throw SimulationError( ex, errorMsg );
@@ -1376,17 +1376,9 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
 {
   GEOS_MARK_FUNCTION;
 
-  integer numNorm = 1;     // mass balance
-  array1d< real64 > localResidualNorm;
-  array1d< real64 > localResidualNormalizer;
-
-  if( isThermal() )
-  {
-    numNorm = 2;     // mass balance and energy balance
-  }
-  localResidualNorm.resize( numNorm );
-  localResidualNormalizer.resize( numNorm );
-
+  integer const numNorm = isThermal() ? 2 : 1;     // mass balance and energy balance for thermal
+  array1d< real64 > localResidualNorm( numNorm );
+  array1d< real64 > localResidualNormalizer( numNorm );
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
@@ -1412,7 +1404,15 @@ CompositionalMultiphaseWell::calculateResidualNorm( real64 const & time_n,
 
       // step 1: compute the norm in the subRegion
 
-      if( isThermal() )
+      if( !wellControls.isWellOpen() )
+      {
+        for( integer i = 0; i < numNorm; ++i )
+        {
+          localResidualNorm[i] = 0.0;
+          localResidualNormalizer[i] = m_nonlinearSolverParameters.m_minNormalizer;
+        }
+      }
+      else if( isThermal() )
       {
         real64 subRegionResidualNorm[2]{};
 
