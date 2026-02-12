@@ -2037,16 +2037,17 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
         FrictionBase const & frictionLaw = getConstitutiveModel< FrictionBase >( subRegion, frictionLawName );
 
         // Try to get Coulomb parameters if available
-        real64 cohesion = 0.0;
-        real64 frictionCoefficient = 0.0;
-        bool hasCoulombParams = false;
+        bool const hasCoulombParams =
+          frictionLaw.hasWrapper( CoulombFriction::viewKeyStruct::cohesionString() ) &&
+          frictionLaw.hasWrapper( CoulombFriction::viewKeyStruct::frictionCoefficientString() );
 
-        if( frictionLaw.hasWrapper( CoulombFriction::viewKeyStruct::cohesionString() ) && frictionLaw.hasWrapper( CoulombFriction::viewKeyStruct::frictionCoefficientString() ) )
-        {
-          cohesion = frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::cohesionString() );
-          frictionCoefficient = frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::frictionCoefficientString() );
-          hasCoulombParams = true;
-        }
+        real64 const cohesion = hasCoulombParams
+          ? frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::cohesionString() )
+          : 0.0;
+
+        real64 const frictionCoefficient = hasCoulombParams
+          ? frictionLaw.getReference< real64 >( CoulombFriction::viewKeyStruct::frictionCoefficientString() )
+          : 0.0;
 
         forAll< parallelHostPolicy >( subRegion.size(), [=, &avgElementStress] ( localIndex const kfe )
         {
@@ -2084,14 +2085,14 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
               LvArray::tensorOps::symEigenvalues< 3 >( principalStresses, avgElementStress[er][esr][ei] );
               GEOS_ERROR_IF( principalStresses[2] > 0.0,
                              GEOS_FMT(
-                               "ERROR: Maximum principal stress is tensile in element adjacent to fracture element {}"
+                               "ERROR: Maximum principal stress is tensile in element adjacent to fracture element {} "
                                "connected to face {}. Principal stresses (sorted): ({:.6e}, {:.6e}, {:.6e})",
                                kfe, faceIdx, principalStresses[0], principalStresses[1], principalStresses[2] ) );
 
               // Accumulate stress for averaging (for warning message)
               LvArray::tensorOps::add< 6 >( avgSigma, avgElementStress[er][esr][ei] );
 
-              // Compute traction in global coordinates: t = sigma * n
+              // Compute and accumulate traction in global coordinates: t = sigma * n
               LvArray::tensorOps::Ri_add_symAijBj< 3 >( tGlobalAvg, avgElementStress[er][esr][ei], n );
 
               ++numValidCells;
