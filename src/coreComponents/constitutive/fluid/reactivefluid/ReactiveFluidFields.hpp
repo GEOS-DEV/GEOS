@@ -71,7 +71,7 @@ DECLARE_FIELD( dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentra
                "dPrimarySpeciesAggregateConcentration_dLogPrimarySpeciesConcentrations",
                array4dLayoutSpecies_dC,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Deivatives of primarySpeciesAggregateConcentration w.r.t log primary species concentration" );
 
@@ -79,7 +79,7 @@ DECLARE_FIELD( dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesCon
                "dPrimarySpeciesMobileAggregateConcentration_dLogPrimarySpeciesConcentrations",
                array4dLayoutSpecies_dC,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Deivatives of primarySpeciesMobileAggregateConcentration w.r.t log primary species concentration" );
 
@@ -87,7 +87,7 @@ DECLARE_FIELD( secondarySpeciesConcentration,
                "secondarySpeciesConcentration",
                array3dLayoutSpecies,
                1e-16,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
                "secondarySpeciesConcentration" );
 
@@ -95,7 +95,7 @@ DECLARE_FIELD( kineticReactionRates,
                "kineticReactionRates",
                array3dLayoutSpecies,
                0,
-               NOPLOT,
+               LEVEL_0,
                WRITE_AND_READ,
                "kineticReactionRates" );
 
@@ -111,7 +111,7 @@ DECLARE_FIELD( dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations,
                "dAggregateSpeciesRates_dLogPrimarySpeciesConcentrations",
                array4dLayoutSpecies_dC,
                0,
-               LEVEL_0,
+               NOPLOT,
                WRITE_AND_READ,
                "Deivatives of aggregate concentration rates w.r.t log primary species concentration" );
 }
