@@ -107,6 +107,33 @@ protected:
       GEOS_ERROR( GEOS_FMT( "{}: MGR strategy is not implemented for {}", this->getName(), this->getCatalogName()));
   }
 
+  virtual void mapSolutionBetweenSolvers( DomainPartition & domain, integer const solverType ) override
+  {
+    GEOS_MARK_FUNCTION;
+
+    Base::mapSolutionBetweenSolvers( domain, solverType );
+
+    /// After the solid mechanics solver
+    if( solverType == static_cast< integer >( Base::SolverType::SolidMechanics )
+        && !this->m_performStressInitialization ) // do not update during poromechanics initialization
+    {
+      this->template forDiscretizationOnMeshTargets<>( domain.getMeshBodies(), [&]( string const &,
+                                                                                    MeshLevel & mesh,
+                                                                                    string_array const & regionNames )
+      {
+
+        mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                              auto & subRegion )
+        {
+          // update mass after porosity change due to mechanics solve
+          GEOS_LOG_RANK("------ START ---------------------------------------------------");
+          this->flowSolver()->updateCompAmount( subRegion );
+          GEOS_LOG_RANK("------ END   ---------------------------------------------------");
+        } );
+      } );
+    }
+  }
+
   /**
    * @brief Helper function to recompute the bulk density
    * @param[in] subRegion the element subRegion

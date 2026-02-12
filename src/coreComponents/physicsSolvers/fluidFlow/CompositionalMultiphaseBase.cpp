@@ -780,6 +780,7 @@ void CompositionalMultiphaseBase::updateCompAmount( ElementSubRegionBase & subRe
 
   arrayView2d< real64, compflow::USD_COMP > const compAmount = subRegion.getField< flow::compAmount >();
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+    arrayView1d< real64 const > const deltaVolume = subRegion.getField< fields::flow::deltaVolume >();
   string const & solidName = subRegion.template getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
   arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
@@ -799,7 +800,7 @@ void CompositionalMultiphaseBase::updateCompAmount( ElementSubRegionBase & subRe
       for( integer ic = 0; ic < numComp; ++ic )
       {
         // m = phi*V*z_c*rho_T
-        compAmount[ei][ic] = porosity[ei][0] * volume[ei] * compFrac[ei][ic] * totalDens[ei][0];
+        compAmount[ei][ic] = porosity[ei][0] * (volume[ei]+deltaVolume[ei]) * compFrac[ei][ic] * totalDens[ei][0];
       }
     } );
   }
@@ -811,7 +812,11 @@ void CompositionalMultiphaseBase::updateCompAmount( ElementSubRegionBase & subRe
     {
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        compAmount[ei][ic] = porosity[ei][0] * volume[ei] * compDens[ei][ic];
+        compAmount[ei][ic] = porosity[ei][0] * (volume[ei]+deltaVolume[ei]) * compDens[ei][ic];
+        GEOS_LOG_RANK(GEOS_FMT("Attempted Correction @{}/{} : {} -> {} ", ei, ic, 
+            porosity[ei][0]*volume[ei]* compDens[ei][ic], 
+            porosity[ei][0]*deltaVolume[ei]* compDens[ei][ic]
+           ));
       }
     } );
   }
