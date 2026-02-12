@@ -1893,15 +1893,13 @@ CompositionalMultiphaseWell::applyWellSystemSolution( DofManager const & dofMana
 
   }
 
-#if 1
   // if component density chopping is allowed, some component densities may be negative after the update
   // these negative component densities are set to zero in this function
   if( m_allowCompDensChopping )
   {
     chopNegativeDensities( subRegion );
   }
-#endif
-  std::cout << getTargetRegionNames()[0] << " Well after applyWellSystemSolution: " << std::endl;
+
   // synchronize
   FieldIdentifiers fieldsToBeSync;
   if( isThermal() )
