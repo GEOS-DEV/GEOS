@@ -624,18 +624,6 @@ for( vtkIdType i = 0; i < meshCellGlobalIds->GetNumberOfTuples(); ++i )
     l2g[i] = faceMeshCellGlobalIds->GetValue( i ) + cellGlobalOffset;
   }
 
-// === DEBUG ===
-int const rank = MpiWrapper::commRank();
-if( rank == 4 || rank == 8 )
-{
-  std::cout << "[Rank " << rank << "] === buildLocalToGlobal DEBUG ===" << std::endl;
-  std::cout << "[Rank " << rank << "]   maxLocalCellId = " << maxLocalCellId << std::endl;
-  std::cout << "[Rank " << rank << "]   maxGlobalCellId (global max) = " << maxGlobalCellId << std::endl;
-  std::cout << "[Rank " << rank << "]   cellGlobalOffset = " << cellGlobalOffset << std::endl;
-  std::cout << "[Rank " << rank << "]   numCells (fracture elems) = " << numCells << std::endl;
-}
-// === END DEBUG ===
-  
   return l2g;
 }
 

@@ -167,6 +167,7 @@ redistributeMeshes( integer const logLevel,
                     MPI_Comm const comm,
                     PartitionMethod const method,
                     int const partitionRefinement,
+                    int const partitionFractureWeight,
                     int const useGlobalIds,
                     string const & structuredIndexAttributeName,
                     int const numPartZ );

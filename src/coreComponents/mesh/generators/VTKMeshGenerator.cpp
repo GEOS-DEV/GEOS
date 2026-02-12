@@ -82,6 +82,10 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Method (library) used to partition the mesh" );
 
+  registerWrapper( viewKeyStruct::partitionFractureWeightString(), &m_partitionFractureWeight ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Additional weight to fracture-connected super-cells during partitioning" );
+
   registerWrapper( viewKeyStruct::useGlobalIdsString(), &m_useGlobalIds ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
@@ -208,6 +212,7 @@ void VTKMeshGenerator::fillCellBlockManager( CellBlockManager & cellBlockManager
                                                                   comm,
                                                                   m_partitionMethod,
                                                                   m_partitionRefinement,
+                                                                  m_partitionFractureWeight,
                                                                   m_useGlobalIds,
                                                                   m_structuredIndexAttributeName,
                                                                   numPartZ );

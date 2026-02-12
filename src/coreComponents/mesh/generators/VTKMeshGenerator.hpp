@@ -114,6 +114,7 @@ private:
     constexpr static char const * nodesetNamesString() { return "nodesetNames"; }
     constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
     constexpr static char const * partitionMethodString() { return "partitionMethod"; }
+    constexpr static char const * partitionFractureWeightString() { return "  partitionFractureWeight"; }
     constexpr static char const * useGlobalIdsString() { return "useGlobalIds"; }
     constexpr static char const * dataSourceString() { return "dataSourceName"; }
   };
@@ -160,6 +161,9 @@ private:
 
   /// Number of graph partitioning refinement iterations
   integer m_partitionRefinement = 0;
+
+  /// Additional weight to fracture-connected super-cells during partitioning
+  integer m_partitionFractureWeight = 0;
 
   /// Whether global id arrays should be used, if available
   integer m_useGlobalIds = 0;
