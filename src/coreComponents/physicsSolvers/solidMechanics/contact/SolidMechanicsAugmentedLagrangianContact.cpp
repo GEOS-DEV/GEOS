@@ -2019,7 +2019,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
     arrayView2d< localIndex const > const faceToElemIndex = faceToElem.m_toElementIndex;
 
     // Get stress accessor
-    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, cells::RANK2_TENSOR_USD > > const avgStress =
+    ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, cells::RANK2_TENSOR_USD > > const avgElementStress =
       elemManager.constructViewAccessor< array2d< real64, cells::RANK2_TENSOR_PERM >,
                                          arrayView2d< real64 const, cells::RANK2_TENSOR_USD > >( solidMechanics::averageStress::key() );
 
@@ -2048,7 +2048,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
           hasCoulombParams = true;
         }
 
-        forAll< parallelHostPolicy >( subRegion.size(), [=, &avgStress] ( localIndex const kfe )
+        forAll< parallelHostPolicy >( subRegion.size(), [=, &avgElementStress] ( localIndex const kfe )
         {
           if( ghostRank[kfe] < 0 )
           {
@@ -2059,11 +2059,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
             integer numValidCells{};
 
             // Use the fracture element's normal from the rotation matrix (first column)
-            real64 const nx = faceRotationMatrix( kfe, 0, 0 );
-            real64 const ny = faceRotationMatrix( kfe, 1, 0 );
-            real64 const nz = faceRotationMatrix( kfe, 2, 0 );
-
-            real64 const n[3]{ faceRotationMatrix(kfe, 0, 0), faceRotationMatrix(kfe, 1, 0), faceRotationMatrix(kfe, 2, 0) };
+            real64 const n[3]{ faceRotationMatrix( kfe, 0, 0 ), faceRotationMatrix( kfe, 1, 0 ), faceRotationMatrix( kfe, 2, 0 ) };
 
             // Loop over both faces of the fracture element
             for( localIndex faceIdx = 0; faceIdx < 2; ++faceIdx )
@@ -2076,16 +2072,16 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
               localIndex const ei = faceToElemIndex( faceIndex, 0 );
 
               // Skip if no valid stress data available
-              if( avgStress[er].empty() || avgStress[er][esr].empty() )
+              if( avgElementStress[er].empty() || avgElementStress[er][esr].empty() )
               {
                 continue;
               }
 
               // Accumulate stress for averaging (for warning message)
-              LvArray::tensorOps::add< 6 >( avgSigma, avgStress[er][esr][ei] );
+              LvArray::tensorOps::add< 6 >( avgSigma, avgElementStress[er][esr][ei] );
 
               // Compute traction in global coordinates: t = sigma * n
-              LvArray::tensorOps::Ri_add_symAijBj<3>( tGlobalAvg, avgStress[er][esr][ei], n );
+              LvArray::tensorOps::Ri_add_symAijBj< 3 >( tGlobalAvg, avgElementStress[er][esr][ei], n );
 
               ++numValidCells;
             }
@@ -2102,15 +2098,13 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
               LvArray::tensorOps::Ri_eq_AjiBj< 3, 3 >( tLocal, faceRotationMatrix[kfe], tGlobalAvg );
 
               // Store the traction
-              traction[kfe][0] = tLocal[0];
-              traction[kfe][1] = tLocal[1];
-              traction[kfe][2] = tLocal[2];
+              LvArray::tensorOps::copy< 3 >( traction[kfe], tLocal );
 
               // Check Coulomb friction consistency if parameters are available
               if( hasCoulombParams )
               {
                 real64 const normalTraction = tLocal[0];  // Negative for compression
-                real64 const tangentialTraction = std::sqrt( tLocal[1] * tLocal[1] + tLocal[2] * tLocal[2] );
+                real64 const tangentialTraction = LvArray::math::sqrt( tLocal[1] * tLocal[1] + tLocal[2] * tLocal[2] );
 
                 // Coulomb criterion: |tau| <= cohesion - mu * sigma_n (sigma_n < 0 for compression)
                 // For open fracture (sigma_n > 0): no traction should be applied
@@ -2125,7 +2119,7 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                   isInvalid = true;
                   reason = "tensile normal traction (fracture should be open)";
                 }
-                else if( tangentialTraction > tauLimit + 1.0e-10 * std::fabs( tauLimit ) )
+                else if( tangentialTraction > tauLimit + 1.0e-10 * LvArray::math::abs( tauLimit ) )
                 {
                   // Tangential traction exceeds Coulomb limit
                   isInvalid = true;
@@ -2135,12 +2129,8 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                 if( isInvalid )
                 {
                   // Get tangent vectors from rotation matrix
-                  real64 const t1x = faceRotationMatrix( kfe, 0, 1 );
-                  real64 const t1y = faceRotationMatrix( kfe, 1, 1 );
-                  real64 const t1z = faceRotationMatrix( kfe, 2, 1 );
-                  real64 const t2x = faceRotationMatrix( kfe, 0, 2 );
-                  real64 const t2y = faceRotationMatrix( kfe, 1, 2 );
-                  real64 const t2z = faceRotationMatrix( kfe, 2, 2 );
+                  real64 const t1[3]{ faceRotationMatrix( kfe, 0, 1 ), faceRotationMatrix( kfe, 1, 1 ), faceRotationMatrix( kfe, 2, 1 ) };
+                  real64 const t2[3]{ faceRotationMatrix( kfe, 0, 2 ), faceRotationMatrix( kfe, 1, 2 ), faceRotationMatrix( kfe, 2, 2 ) };
 
                   GEOS_LOG_RANK( GEOS_FMT( "WARNING: Stress state inconsistent with Coulomb friction law at fracture element {}.\n"
                                            "  Reason: {}\n"
@@ -2155,9 +2145,9 @@ void SolidMechanicsAugmentedLagrangianContact::initializeTractionFromAdjacentCel
                                            "  Coulomb check: |tau| = {:.6e}, tau_limit = {:.6e}",
                                            kfe, reason,
                                            cohesion, frictionCoefficient,
-                                           nx, ny, nz,
-                                           t1x, t1y, t1z,
-                                           t2x, t2y, t2z,
+                                           n[0], n[1], n[2],
+                                           t1[0], t1[1], t1[2],
+                                           t2[0], t2[1], t2[2],
                                            numValidCells,
                                            avgSigma[0], avgSigma[1], avgSigma[2], avgSigma[3], avgSigma[4], avgSigma[5],
                                            tLocal[0], tLocal[1], tLocal[2],
