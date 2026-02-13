@@ -25,6 +25,11 @@
 namespace geos
 {
 
+class EquilibriumInitialCondition;
+class FunctionManager;
+class FlowSolverBase;
+class ElementSubRegionBase;
+
 
 class DynamicFieldSpecification : public TaskBase
 {
@@ -71,6 +76,7 @@ private:
   struct viewKeyStruct
   {
     constexpr static char const * fieldSpecificationNamesString() { return "fieldSpecificationNames"; }
+    constexpr static char const * solverNameString() { return "solverName"; }
   };
 
   void postInputInitialization() override;
@@ -82,7 +88,36 @@ private:
    */
   string getTargetFieldName( string const & fieldName ) const;
 
+  /**
+   * @brief Apply temperature and component fraction fields for HydrostaticEquilibrium.
+   * @param[in] equilIC The EquilibriumInitialCondition (HydrostaticEquilibrium) to apply.
+   * @param[in] targetSet The set of indices to apply the fields to.
+   * @param[in,out] targetGroup The group containing the fields to update.
+   * @param[in] functionManager The function manager containing the table functions.
+   *
+   * For compositional multiphase flow, HydrostaticEquilibrium sets pressure, temperature,
+   * and component fractions. This function handles the temperature and component fraction
+   * fields using the elevation-based tables specified in the EquilibriumInitialCondition.
+   */
+  void applyEquilibriumInitialConditionFields( EquilibriumInitialCondition const & equilIC,
+                                               SortedArrayView< localIndex const > const & targetSet,
+                                               dataRepository::Group & targetGroup,
+                                               FunctionManager & functionManager );
+
+  /**
+   * @brief Initialize the fluid state for a subregion using the flow solver.
+   * @param[in] domain The domain partition.
+   * @param[in,out] subRegion The element subregion to initialize.
+   *
+   * This function is called after applying the HydrostaticEquilibrium fields to properly
+   * initialize all the derived compositional variables (component densities, phase fractions, etc.).
+   */
+  void initializeSubRegionFluidState( DomainPartition & domain, ElementSubRegionBase & subRegion );
+
   stdVector< string > m_fieldSpecificationNames;
+
+  /// Name of the flow solver to use for fluid state initialization
+  string m_solverName;
 };
 
 

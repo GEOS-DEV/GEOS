@@ -10,6 +10,10 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/TableFunction.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseFields.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/multifluid/MultiFluidSelector.hpp"
 
 namespace geos
 {
@@ -18,13 +22,19 @@ using namespace dataRepository;
 DynamicFieldSpecification::DynamicFieldSpecification( const string & name,
                                                       Group * const parent ):
   TaskBase( name, parent ),
-  m_fieldSpecificationNames()
+  m_fieldSpecificationNames(),
+  m_solverName()
 {
 
   registerWrapper( viewKeyStruct::fieldSpecificationNamesString(), &m_fieldSpecificationNames ).
     setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
     setInputFlag( dataRepository::InputFlags::REQUIRED ).
     setDescription( "Array containing the field specifications to apply" );
+
+  registerWrapper( viewKeyStruct::solverNameString(), &m_solverName ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Name of the flow solver to use for fluid state initialization (required for compositional flow)" );
 
 }
 
@@ -71,25 +81,29 @@ DynamicFieldSpecification::
         {
           if( MeshLevel * const meshLevel = dynamic_cast< MeshLevel * >( meshLevelPair.second ) )
           {
-            fs.apply< dataRepository::Group >( *meshLevel,
-                                               [&]( FieldSpecificationBase const & bc,
-                                                    string const &,
-                                                    SortedArrayView< localIndex const > const & targetSet,
-                                                    Group & targetGroup,
-                                                    string const fieldName )
+            fs.apply< ElementSubRegionBase >( *meshLevel,
+                                              [&]( FieldSpecificationBase const & bc,
+                                                   string const &,
+                                                   SortedArrayView< localIndex const > const & targetSet,
+                                                   ElementSubRegionBase & subRegion,
+                                                   string const fieldName )
             {
               // For HydrostaticEquilibrium, we need special handling since:
               // 1. Pressure requires complex hydrostatic computation with phase-dependent interpolation
               // 2. Temperature and globalCompFraction can be applied directly from elevation tables
+              // 3. After setting these fields, we need to initialize derived quantities (component densities, etc.)
               if( equilIC != nullptr )
               {
-                applyEquilibriumInitialConditionFields( *equilIC, targetSet, targetGroup, functionManager );
+                applyEquilibriumInitialConditionFields( *equilIC, targetSet, subRegion, functionManager );
+
+                // Initialize the fluid state to compute derived quantities (component densities, phase fractions, etc.)
+                initializeSubRegionFluidState( domain, subRegion );
               }
               else
               {
                 // For regular field specifications, apply the field value normally
                 string const targetFieldName = getTargetFieldName( fieldName );
-                bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, targetGroup, targetFieldName );
+                bc.applyFieldValue< FieldSpecificationEqual >( targetSet, 0.0, subRegion, targetFieldName );
               }
             } );
           }
@@ -218,6 +232,77 @@ void DynamicFieldSpecification::applyEquilibriumInitialConditionFields( Equilibr
       } );
     }
   }
+}
+
+
+void DynamicFieldSpecification::initializeSubRegionFluidState( DomainPartition & domain, ElementSubRegionBase & subRegion )
+{
+  GEOS_UNUSED_VAR( domain );
+
+  // For compositional flow, we need to compute component densities from component fractions
+  // Check if this is a compositional flow subregion by looking for the required fields
+  if( !subRegion.hasWrapper( "globalCompFraction" ) || !subRegion.hasWrapper( "globalCompDensity" ) )
+  {
+    return;  // Not a compositional flow subregion
+  }
+
+  // Check if the fluid model is available
+  if( !subRegion.hasWrapper( FlowSolverBase::viewKeyStruct::fluidNamesString() ) )
+  {
+    return;  // No fluid model associated
+  }
+
+  // Get the fluid model
+  string const & fluidName = subRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
+
+  if( !subRegion.hasGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() ) )
+  {
+    return;
+  }
+
+  dataRepository::Group & constitutiveModels =
+    subRegion.getGroup( ElementSubRegionBase::groupKeyStruct::constitutiveModelsString() );
+
+  if( !constitutiveModels.hasGroup( fluidName ) )
+  {
+    return;
+  }
+
+  constitutive::MultiFluidBase & fluid =
+    constitutiveModels.getGroup< constitutive::MultiFluidBase >( fluidName );
+
+  // Get the pressure, temperature, and composition fields
+  arrayView1d< real64 const > const pres = subRegion.getField< fields::flow::pressure >();
+  arrayView1d< real64 const > const temp = subRegion.getField< fields::flow::temperature >();
+  arrayView2d< real64 const > const compFrac = subRegion.getReference< array2d< real64 > >( "globalCompFraction" );
+  arrayView2d< real64 > const compDens = subRegion.getReference< array2d< real64 > >( "globalCompDensity" );
+
+  integer const numComp = compFrac.size( 1 );
+
+  // Use constitutiveUpdatePassThru to properly update the fluid model
+  constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
+  {
+    using FluidType = TYPEOFREF( castedFluid );
+    typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+
+    // Update fluid properties for each element
+    // Flow elements typically use 1 quadrature point
+    forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
+    {
+      fluidWrapper.update( ei, 0, pres[ei], temp[ei], compFrac[ei] );
+    } );
+  } );
+
+  // Now compute component densities from total density and component fractions
+  arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > const totalDens = fluid.totalDensity();
+
+  forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const ei )
+  {
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      compDens[ei][ic] = totalDens[ei][0] * compFrac[ei][ic];
+    }
+  } );
 }
 
 
