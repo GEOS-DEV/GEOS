@@ -58,19 +58,19 @@ void SourceFluxStatsAggregator::postInputInitialization()
       m_fluxNames.emplace_back( string( sourceFlux.getName() ) );
     } );
     GEOS_WARNING_IF( m_fluxNames.empty(),
-                     GEOS_FMT( "{}: No {} was found in {}.",
-                               getDataContext(), SourceFluxBoundaryCondition::catalogName(),
-                               fsManager.getDataContext() ),
-                     getDataContext(), fsManager.getDataContext() );
+                     GEOS_FMT( "No {} was found in {}.",
+                               SourceFluxBoundaryCondition::catalogName(), fsManager.getName() ),
+                     getDataContext(), fsManager.getDataContext(), getDataContext() );
   }
   else
   {
     for( string const & fluxName : m_fluxNames )
     {
       GEOS_ERROR_IF( !fsManager.hasGroup< SourceFluxBoundaryCondition >( fluxName ),
-                     GEOS_FMT( "{}: No {} named {} was found in {}.",
-                               getDataContext(), SourceFluxBoundaryCondition::catalogName(),
-                               fluxName, fsManager.getDataContext() ), getDataContext() );
+                     GEOS_FMT( "No {} named {} was found in {}.",
+                               SourceFluxBoundaryCondition::catalogName(),
+                               fluxName, fsManager.getName() ),
+                     getDataContext(), fsManager.getDataContext(), getDataContext()  );
     }
   }
 
