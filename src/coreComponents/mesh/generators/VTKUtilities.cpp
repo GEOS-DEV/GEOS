@@ -2190,6 +2190,7 @@ redistributeMeshes( integer const GEOS_UNUSED_PARAM( logLevel ),
                                    fractureNeighbors[fractureName].size(), fractureName ));
       }
     }
+    mesh = nullptr;  // Free the original mesh
   }
 
   MpiWrapper::barrier( comm );
@@ -2253,6 +2254,8 @@ redistributeMeshes( integer const GEOS_UNUSED_PARAM( logLevel ),
   {
     redistributed3D = cells3D;
   }
+  // Free the original 3D mesh.
+  cells3D = nullptr;
 
   // Refine partitioning based on mesh characteristics
   if( partitionRefinement > 0 )
