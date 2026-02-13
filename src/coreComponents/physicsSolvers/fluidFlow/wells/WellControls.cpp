@@ -271,7 +271,6 @@ void WellControls::postInputInitialization()
                  "The flag to select surface/reservoir conditions must be equal to 0 or 1",
                  InputError, getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) );
 
- 
 
 
   // 6.2) Check incoherent information
@@ -295,7 +294,7 @@ void WellControls::postInputInitialization()
                  InputError, getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) );
 
 
- 
+
   // 12) Create the time-dependent well status table
   if( m_statusTableName.empty())
   {

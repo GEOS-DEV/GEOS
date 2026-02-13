@@ -1359,71 +1359,71 @@ CompositionalMultiphaseWell::calculateLocalWellResidualNorm( real64 const & time
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
-   
-      // step 1: compute the norm in the subRegion
 
-      if( !isWellOpen() )
-      {
-        for( integer i = 0; i < numNorm; ++i )
-        {
-          localResidualNorm[i] = 0.0;
-          localResidualNormalizer[i] =  nonlinearSolverParameters.m_minNormalizer;
-        }
-      }
-      else if( isThermal() )
-      {
-        real64 subRegionResidualNorm[2]{};
+  // step 1: compute the norm in the subRegion
 
-      thermalCompositionalMultiphaseWellKernels::ResidualNormKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                   rankOffset,
-                                                   wellDofKey,
-                                                   localRhs,
-                                                   subRegion,
-                                                   fluid,
-                                                   *this,
-                                                   time_n,
-                                                   dt,
-                                                   nonlinearSolverParameters.m_minNormalizer,
-                                                   subRegionResidualNorm );
-      // step 2: reduction across meshBodies/regions/subRegions
-
-      for( integer i=0; i<numNorm; i++ )
-      {
-        if( subRegionResidualNorm[i] > localResidualNorm[i] )
-        {
-          localResidualNorm[i] = subRegionResidualNorm[i];
-        }
-      }
-
-    }
-    else
+  if( !isWellOpen() )
+  {
+    for( integer i = 0; i < numNorm; ++i )
     {
-      real64 subRegionResidualNorm[1]{};
-      compositionalMultiphaseWellKernels::ResidualNormKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                   m_numDofPerWellElement,
-                                                   rankOffset,
-                                                   wellDofKey,
-                                                   localRhs,
-                                                   subRegion,
-                                                   fluid,
-                                                   *this,
-                                                   time_n,
-                                                   dt,
-                                                   nonlinearSolverParameters.m_minNormalizer,
-                                                   subRegionResidualNorm );
+      localResidualNorm[i] = 0.0;
+      localResidualNormalizer[i] =  nonlinearSolverParameters.m_minNormalizer;
+    }
+  }
+  else if( isThermal() )
+  {
+    real64 subRegionResidualNorm[2]{};
 
+    thermalCompositionalMultiphaseWellKernels::ResidualNormKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                 rankOffset,
+                                                 wellDofKey,
+                                                 localRhs,
+                                                 subRegion,
+                                                 fluid,
+                                                 *this,
+                                                 time_n,
+                                                 dt,
+                                                 nonlinearSolverParameters.m_minNormalizer,
+                                                 subRegionResidualNorm );
+    // step 2: reduction across meshBodies/regions/subRegions
 
-
-      // step 2: reduction across meshBodies/regions/subRegions
-
-      if( subRegionResidualNorm[0] > localResidualNorm[0] )
+    for( integer i=0; i<numNorm; i++ )
+    {
+      if( subRegionResidualNorm[i] > localResidualNorm[i] )
       {
-        localResidualNorm[0] = subRegionResidualNorm[0];
+        localResidualNorm[i] = subRegionResidualNorm[i];
       }
     }
- 
+
+  }
+  else
+  {
+    real64 subRegionResidualNorm[1]{};
+    compositionalMultiphaseWellKernels::ResidualNormKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                 m_numDofPerWellElement,
+                                                 rankOffset,
+                                                 wellDofKey,
+                                                 localRhs,
+                                                 subRegion,
+                                                 fluid,
+                                                 *this,
+                                                 time_n,
+                                                 dt,
+                                                 nonlinearSolverParameters.m_minNormalizer,
+                                                 subRegionResidualNorm );
+
+
+
+    // step 2: reduction across meshBodies/regions/subRegions
+
+    if( subRegionResidualNorm[0] > localResidualNorm[0] )
+    {
+      localResidualNorm[0] = subRegionResidualNorm[0];
+    }
+  }
+
   return localResidualNorm;
 
 }

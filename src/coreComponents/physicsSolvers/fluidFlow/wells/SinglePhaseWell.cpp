@@ -155,7 +155,7 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
       auto const pos = std::find( targetRegionsNames.begin(), targetRegionsNames.end(), regionName );
       GEOS_ERROR_IF( pos == targetRegionsNames.end(),
                      GEOS_FMT( "Region {} is not a target of the reservoir solver and cannot be used for referenceReservoirRegion in WellControl {}.",
-                               regionName,  getName() ),
+                               regionName, getName() ),
                      getDataContext() );
 
     }
@@ -344,11 +344,11 @@ void SinglePhaseWell::updateSeparator( ElementRegionManager const & elemManager,
 
       SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >(
         SinglePhaseStatistics::regionStatisticsName() );
- 
+
       GEOS_ERROR_IF( stats.averagePressure <= 0.0,
                      GEOS_FMT(
                        "No region average quantities computed.  WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
-                        getName(), getReferenceReservoirRegion() ),
+                       getName(), getReferenceReservoirRegion() ),
                      getDataContext());
       setRegionAveragePressure( stats.averagePressure );
       setRegionAverageTemperature( stats.averageTemperature );
