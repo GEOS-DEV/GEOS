@@ -256,8 +256,7 @@ void WellControls::postInputInitialization()
   // When the simulation starts from a restart file, we don't want to use the inputControl,
   // because the control may have switched in the simulation that generated the restart
   GEOS_THROW_IF( m_inputControl == Control::UNINITIALIZED,
-                 getWrapperDataContext( viewKeyStruct::inputControlString() ) <<
-                 ": Input well control cannot be uninitialized",
+                 "Input well control cannot be uninitialized",
                  InputError, getWrapperDataContext( viewKeyStruct::inputControlString() ) );
 
   if( m_currentControl == Control::UNINITIALIZED )
@@ -266,41 +265,37 @@ void WellControls::postInputInitialization()
   }
 
 
+
   // 3) check the flag for surface / reservoir conditions
   GEOS_THROW_IF( m_useSurfaceConditions != 0 && m_useSurfaceConditions != 1,
-                 getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) << ": The flag to select surface/reservoir conditions must be equal to 0 or 1",
+                 "The flag to select surface/reservoir conditions must be equal to 0 or 1",
                  InputError, getWrapperDataContext( viewKeyStruct::useSurfaceConditionsString() ) );
 
-  // tjb add more constraint validation
-  // 1) liquid rate - phase names consistent with fluild model
-  // 2) at least one bhp and one rate constraint defined
-  // 3) constraint type and well type compatibility
+ 
 
-  //GEOS_THROW_IF( ((m_targetMassRate > 0.0 &&  m_useSurfaceConditions==0)),
-  //               "WellControls " << getDataContext() << ": Option only valid if useSurfaceConditions set to 1",
-  //               InputError );
-
-
-  // 8) Make sure that the initial pressure coefficient is positive
-  GEOS_THROW_IF( m_initialPressureCoefficient < 0,
-                 getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) <<
-                 ": This tuning coefficient is negative",
-                 InputError );
 
   // 6.2) Check incoherent information
 
   // An injector must be controlled by TotalVolRate
   GEOS_THROW_IF( (isInjector() && (m_inputControl == Control::PHASEVOLRATE)),
-                 "WellControls " << getDataContext() << ": You have to control an injector with "
-                                 << EnumStrings< Control >::toString( Control::TOTALVOLRATE ),
+                 "You have to control an injector with "
+                 << EnumStrings< Control >::toString( Control::TOTALVOLRATE ),
                  InputError, getDataContext() );
 
   // An injector must be controlled by TotalVolRate
   GEOS_THROW_IF( (isProducer() && (m_inputControl == Control::MASSRATE)),
-                 "WellControls " << getDataContext() << ": You have to control an injector with "
-                                 << EnumStrings< Control >::toString( Control::MASSRATE ),
+                 "You have to control an injector with "
+                 << EnumStrings< Control >::toString( Control::MASSRATE ),
                  InputError, getDataContext() );
 
+  // 8) Make sure that the initial pressure coefficient is positive
+  GEOS_THROW_IF( m_initialPressureCoefficient < 0,
+                 getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) <<
+                 ": This tuning coefficient is negative",
+                 InputError, getWrapperDataContext( viewKeyStruct::initialPressureCoefficientString() ) );
+
+
+ 
   // 12) Create the time-dependent well status table
   if( m_statusTableName.empty())
   {
@@ -319,8 +314,8 @@ void WellControls::postInputInitialization()
     m_statusTable = &(functionManager.getGroup< TableFunction const >( m_statusTableName ));
 
     GEOS_THROW_IF( m_statusTable->getInterpolationMethod() != TableFunction::InterpolationType::Lower,
-                   "WellControls " << getDataContext() << ": The interpolation method for the time-dependent status table "
-                                   << m_statusTable->getName() << " should be TableFunction::InterpolationType::Lower",
+                   "The interpolation method for the time-dependent status table "
+                   << m_statusTable->getName() << " should be TableFunction::InterpolationType::Lower",
                    InputError, getDataContext() );
   }
 

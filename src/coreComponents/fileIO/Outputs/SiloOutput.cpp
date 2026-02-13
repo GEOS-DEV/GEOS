@@ -97,23 +97,22 @@ void SiloOutput::postInputInitialization()
   string const onlyPlotSpecifiedFieldNamesString = viewKeysStruct::onlyPlotSpecifiedFieldNames;
 
   GEOS_THROW_IF( ( m_onlyPlotSpecifiedFieldNames != 0 ) && m_fieldNames.empty(),
-                 GEOS_FMT( "{} `{}`: the flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
-                           catalogName(), getDataContext(),
+                 GEOS_FMT( "The flag `{}` is different from zero, but `{}` is empty, which is inconsistent",
                            onlyPlotSpecifiedFieldNamesString, fieldNamesString ),
                  InputError, getDataContext() );
 
   GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames != 0 ),
                       GEOS_FMT(
-                        "{} `{}`: found {} fields to plot in `{}`. These fields will be output regardless"
+                        "`{}`: found {} fields to plot in `{}`. These fields will be output regardless"
                         " of the `plotLevel` specified by the user. No other field will be output.",
-                        catalogName(), getDataContext(),
+                        getDataContext(),
                         std::to_string( m_fieldNames.size() ), fieldNamesString ) );
 
   GEOS_LOG_RANK_0_IF( !m_fieldNames.empty() && ( m_onlyPlotSpecifiedFieldNames == 0 ),
                       GEOS_FMT(
-                        "{} `{}`: found {} fields to plot in `{}`, in addition to all fields with "
+                        "`{}`: found {} fields to plot in `{}`, in addition to all fields with "
                         "`plotLevel` smaller or equal to {}.",
-                        catalogName(), getDataContext(), std::to_string( m_fieldNames.size() ),
+                        getDataContext(), std::to_string( m_fieldNames.size() ),
                         fieldNamesString, m_plotLevel ) );
 }
 
