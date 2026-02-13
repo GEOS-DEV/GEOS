@@ -1276,7 +1276,7 @@ merge2D3DCellsAndRedistribute( vtkSmartPointer< vtkDataSet > redistributed3D,
                           allGlobalIds.data(), cellCounts.data(), offsets.data(),
                           comm );
 
-  // Build complete partition map: global cell ID → owning rank
+  // Build complete partition map: global cell ID -> owning rank
   stdUnorderedMap< int64_t, int64_t > complete3DPartitionMap;
   complete3DPartitionMap.reserve( totalCells );
 
@@ -1486,7 +1486,7 @@ stdVector< vtkIdType > findMatchingCellsForFractureElement(
     fractureCollocatedNodes.insert( ns.begin(), ns.end() );
   }
 
-  // Build map: candidate cellId → set of its nodes that match fracture's collocated nodes
+  // Build map: candidate cellId -> set of its nodes that match fracture's collocated nodes
   std::unordered_map< vtkIdType, std::unordered_set< vtkIdType > > cellToMatchedNodes;
   cellToMatchedNodes.reserve( fractureCollocatedNodes.size() );
 
@@ -1578,7 +1578,7 @@ buildFractureTo3DNeighbors( vtkSmartPointer< vtkDataSet > fractureMesh,
 
   GEOS_LOG_RANK( "Building fracture-to-3D neighbor mapping..." );
 
-  // Build mapping: original mesh index → global cell ID (3D cells only)
+  // Build mapping: original mesh index -> global cell ID (3D cells only)
   std::unordered_map< vtkIdType, int64_t > original3DToGlobalId;
   original3DToGlobalId.reserve( cells3DToOriginal.size() );
 
@@ -2052,7 +2052,7 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
  *
  * This function implements a multi-stage redistribution workflow:
  * 1. Separates 2D (surfaces/fractures) and 3D (volumes) cells
- * 2. Builds neighbor connectivity (2D→3D, fracture→3D)
+ * 2. Builds neighbor connectivity (2D->3D, fracture->3D)
  * 3. Tags super-cells (groups that must stay together) if fractures present
  * 4. Redistributes 3D mesh (with super-cell constraints if present, else standard/structured)
  * 5. Assigns 2D/fractures to ranks based on 3D neighbor ownership
@@ -2060,7 +2060,7 @@ ensureNoEmptyRank( vtkSmartPointer< vtkDataSet > mesh,
  *
  * @param logLevel Logging verbosity level
  * @param loadedMesh Input mesh (may contain mixed 2D/3D cells)
- * @param namesToFractures Map of fracture name → fracture mesh (must be on rank 0)
+ * @param namesToFractures Map of fracture name -> fracture mesh (must be on rank 0)
  * @param comm MPI communicator
  * @param method Partitioning algorithm (parmetis/ptscotch)
  * @param partitionRefinement Number of refinement iterations
@@ -2203,7 +2203,7 @@ redistributeMeshes( integer const GEOS_UNUSED_PARAM( logLevel ),
 
   if( rank == 0 && !fractureNames.empty() )
   {
-    superCellInfo = tagCellsWithSuperCellIds( cells3D, fractureNeighbors, comm );
+    superCellInfo = tagCellsWithSuperCellIds( cells3D, fractureNeighbors, partitionFractureWeight,comm );
 
     vtkIdTypeArray * scArray =
       vtkIdTypeArray::SafeDownCast( cells3D->GetCellData()->GetArray( "SuperCellId" ) );

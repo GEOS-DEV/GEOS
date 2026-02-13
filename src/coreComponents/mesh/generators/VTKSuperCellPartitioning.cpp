@@ -41,6 +41,7 @@
 #include <vtkPartitionedDataSet.h>
 #include <vtkExtractCells.h>
 
+#include <unordered_set>
 
 
 namespace geos
@@ -52,9 +53,22 @@ namespace vtk
 // =============================================================================================
 // SECTION 1: SUPER-CELL IDENTIFICATION (rank 0 only)
 // =============================================================================================
+pmet_idx_t computeSuperCellWeight( vtkIdType numCells, integer fractureWeight )
+{
+  if( numCells > 1 )
+  {
+    return numCells + fractureWeight;  // Fracture super-cell
+  }
+  else
+  {
+    return numCells;  // Regular cell (weight = 1)
+  }
+}
+
 SuperCellInfo tagCellsWithSuperCellIds(
   vtkSmartPointer< vtkUnstructuredGrid > cells3D,
   stdMap< string, ArrayOfArrays< vtkIdType, int64_t > > const & fractureNeighbors,
+  integer fractureWeight,
   MPI_Comm comm )
 {
   int const rank = MpiWrapper::commRank( comm );
@@ -131,11 +145,13 @@ SuperCellInfo tagCellsWithSuperCellIds(
   {
     if( visited.count( cell ) )
       return;
-
+    // Mark this cell as visited
     visited.insert( cell );
+    // Assign this cell to the current super-cell
     cellToSuperCell[cell] = superCellId;
     component.push_back( cell );
 
+    // Recursively visit all neighbors
     if( fractureGraph.count( cell ) )
     {
       for( vtkIdType neighbor : fractureGraph.at( cell ) )
@@ -173,7 +189,7 @@ SuperCellInfo tagCellsWithSuperCellIds(
   for( auto const & [scId, members] : superCellComponents )
   {
     info.superCellToOriginalCells[scId] = members;
-    info.vertexWeights[scId] = members.size();
+    info.vertexWeights[scId] = computeSuperCellWeight( members.size(), fractureWeight );
 
     if( members.size() > 1 )
     {
@@ -270,7 +286,7 @@ SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > m
 
   GEOS_ERROR_IF( !globalIds, "Mesh missing global IDs" );
 
-  // Build map: super-cell ID → vector of cell global IDs
+  // Build map: super-cell ID -> vector of cell global IDs
   std::map< vtkIdType, std::vector< vtkIdType > > localSuperCells;
 
   for( vtkIdType i = 0; i < mesh->GetNumberOfCells(); ++i )
@@ -280,25 +296,17 @@ SuperCellInfo reconstructSuperCellInfo( vtkSmartPointer< vtkUnstructuredGrid > m
     localSuperCells[scId].push_back( globalId );
   }
 
-  // Populate SuperCellInfo
-  for( auto const & [scId, cells] : localSuperCells )
-  {
-    info.superCellToOriginalCells[scId] = cells;
-    //info.vertexWeights[scId] = cells.size();
+// Populate SuperCellInfo
+for( auto const & [scId, cells] : localSuperCells )
+{
+  info.superCellToOriginalCells[scId] = cells;
+  info.vertexWeights[scId] = computeSuperCellWeight( cells.size(), fractureWeight );
 
-    // Apply same weighting strategy as initial tagging
-    if( cells.size() > 1 )
-    {
-      // Fracture super-cell: weight = 10x
-      info.vertexWeights[scId] = cells.size() + fractureWeight;
-      info.atomicSuperCells.insert( scId );
-    }
-    else
-    {
-      // Regular cell: weight = 1
-      info.vertexWeights[scId] = cells.size();    // = 1
-    }
+  if( cells.size() > 1 )
+  {
+    info.atomicSuperCells.insert( scId );
   }
+}
 
   return info;
 }
@@ -319,209 +327,214 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
   vtkSmartPointer< vtkPartitionedDataSet > partitionedMesh =
     vtkSmartPointer< vtkPartitionedDataSet >::New();
 
-  // Only rank 0 has the mesh and does the partitioning
   if( rank == 0 )
   {
-    // Get SuperCellId array
     vtkIdTypeArray * superCellIdArray =
       vtkIdTypeArray::SafeDownCast( cells3D->GetCellData()->GetArray( "SuperCellId" ) );
 
-    if( !superCellIdArray )
+    GEOS_ERROR_IF( !superCellIdArray, "SuperCellId array not found" );
+
+    vtkIdType numCells = cells3D->GetNumberOfCells();
+
+    // Build super-cell metadata
+    std::map< vtkIdType, std::vector< vtkIdType > > superCellToLocalCells;
+
+    for( vtkIdType i = 0; i < numCells; ++i )
     {
-      GEOS_LOG_RANK_0( "No SuperCellId array found - using simple redistribution" );
-      // Fall back: just split evenly by cell index
-      vtkIdType numCells = cells3D->GetNumberOfCells();
+      vtkIdType scId = superCellIdArray->GetValue( i );
+      superCellToLocalCells[scId].push_back( i );
+    }
 
-      partitionedMesh->SetNumberOfPartitions( numRanks );
+    vtkIdType numSuperCells = superCellToLocalCells.size();
+    GEOS_LOG_RANK_0( GEOS_FMT( "Redistributing {} super-cells ({} total cells) across {} ranks",
+                               numSuperCells, numCells, numRanks ));
 
-      for( int r = 0; r < numRanks; ++r )
+    // -----------------------------------------------------------------------
+    // Step 1: Pre-compute ALL cell centroids in one pass
+    // -----------------------------------------------------------------------
+    std::vector< std::array< double, 3 > > allCellCentroids( numCells );
+    vtkPoints * meshPoints = cells3D->GetPoints();
+
+    for( vtkIdType cellIdx = 0; cellIdx < numCells; ++cellIdx )
+    {
+      vtkIdType npts;
+      const vtkIdType * pts;
+      cells3D->GetCellPoints( cellIdx, npts, pts );
+
+      double centroid[3] = {0.0, 0.0, 0.0};
+      for( vtkIdType i = 0; i < npts; ++i )
       {
-        vtkNew< vtkIdList > cellsForRank;
-        for( vtkIdType i = 0; i < numCells; ++i )
-        {
-          if( i % numRanks == r )
-          {
-            cellsForRank->InsertNextId( i );
-          }
-        }
+        double pt[3];
+        meshPoints->GetPoint( pts[i], pt );
+        centroid[0] += pt[0];
+        centroid[1] += pt[1];
+        centroid[2] += pt[2];
+      }
 
-        vtkNew< vtkExtractCells > extractor;
-        extractor->SetInputData( cells3D );
-        extractor->SetCellList( cellsForRank );
-        extractor->Update();
+      allCellCentroids[cellIdx][0] = centroid[0] / npts;
+      allCellCentroids[cellIdx][1] = centroid[1] / npts;
+      allCellCentroids[cellIdx][2] = centroid[2] / npts;
+    }
 
-        vtkSmartPointer< vtkUnstructuredGrid > partition =
-          vtkUnstructuredGrid::SafeDownCast( extractor->GetOutput() );
-        partitionedMesh->SetPartition( r, partition );
+    // -----------------------------------------------------------------------
+    // Step 2: Compute super-cell centroids from pre-computed values
+    // -----------------------------------------------------------------------
+    struct SuperCellPartitionInfo
+    {
+      vtkIdType scId;
+      std::array< double, 3 > centroid;
+      std::vector< vtkIdType > cellIndices;
+    };
+
+    std::vector< SuperCellPartitionInfo > superCells;
+    superCells.reserve( numSuperCells );
+
+    for( auto const & [scId, cellIndices] : superCellToLocalCells )
+    {
+      std::array< double, 3 > centroid = {0.0, 0.0, 0.0};
+
+      // Fast: just sum pre-computed cell centroids
+      for( vtkIdType cellIdx : cellIndices )
+      {
+        centroid[0] += allCellCentroids[cellIdx][0];
+        centroid[1] += allCellCentroids[cellIdx][1];
+        centroid[2] += allCellCentroids[cellIdx][2];
+      }
+
+      // Average across cells in super-cell
+      centroid[0] /= cellIndices.size();
+      centroid[1] /= cellIndices.size();
+      centroid[2] /= cellIndices.size();
+
+      superCells.push_back( SuperCellPartitionInfo{ scId, centroid, cellIndices } );
+    }
+
+    // Free cell centroids (no longer needed)
+    allCellCentroids.clear();
+    allCellCentroids.shrink_to_fit();
+
+    // -----------------------------------------------------------------------
+    // Step 3: Find bounding box for Morton code normalization
+    // -----------------------------------------------------------------------
+    double minCoord[3] = {std::numeric_limits< double >::max(),
+                          std::numeric_limits< double >::max(),
+                          std::numeric_limits< double >::max()};
+    double maxCoord[3] = {std::numeric_limits< double >::lowest(),
+                          std::numeric_limits< double >::lowest(),
+                          std::numeric_limits< double >::lowest()};
+
+    for( auto const & sc : superCells )
+    {
+      for( int d = 0; d < 3; ++d )
+      {
+        minCoord[d] = std::min( minCoord[d], sc.centroid[d] );
+        maxCoord[d] = std::max( maxCoord[d], sc.centroid[d] );
       }
     }
-    else
+
+    GEOS_LOG_RANK_0( GEOS_FMT( "Bounding box: X=[{:.3f}, {:.3f}], Y=[{:.3f}, {:.3f}], Z=[{:.3f}, {:.3f}]",
+                               minCoord[0], maxCoord[0], minCoord[1], maxCoord[1], minCoord[2], maxCoord[2] ));
+
+    // -----------------------------------------------------------------------
+    // Step 4: Sort by Morton algorith to ensure spatial locality
+    // -----------------------------------------------------------------------
+auto computeMorton = []( std::array< double, 3 > const & centroid,
+                             double bounds_min[3],
+                             double bounds_max[3] ) -> uint64_t 
+{
+  // Normalize coordinates to [0, 1]
+  auto normalize = [&]( double val, int dim ) -> uint32_t
+  {
+    double range = bounds_max[dim] - bounds_min[dim]; 
+    if( range < 1e-10 )
+      return 0;
+    double norm = (val - bounds_min[dim]) / range;
+    norm = std::max( 0.0, std::min( 1.0, norm ) );
+    return static_cast< uint32_t >( norm * ((1u << 21) - 1) ); // 21 bits per dimension
+  };
+
+  uint32_t x = normalize( centroid[0], 0 );
+  uint32_t y = normalize( centroid[1], 1 );
+  uint32_t z = normalize( centroid[2], 2 );
+
+  // Interleave bits (Morton encoding)
+  uint64_t code = 0;
+  for( int i = 0; i < 21; ++i )
+  {
+    code |= ((x & (1u << i)) ? (1ull << (3*i)) : 0);
+    code |= ((y & (1u << i)) ? (1ull << (3*i + 1)) : 0);
+    code |= ((z & (1u << i)) ? (1ull << (3*i + 2)) : 0);
+  }
+  return code;
+};
+
+
+    // Sort by Morton
+    std::sort( superCells.begin(), superCells.end(),
+               [&]( SuperCellPartitionInfo const & a, SuperCellPartitionInfo const & b )
     {
-      // Build super-cell metadata
-      std::map< vtkIdType, std::vector< vtkIdType > > superCellToLocalCells;
-      vtkIdType numCells = cells3D->GetNumberOfCells();
+      return computeMorton( a.centroid, minCoord, maxCoord ) <
+             computeMorton( b.centroid, minCoord, maxCoord );
+    } );
+
+    GEOS_LOG_RANK_0( "Super-cells sorted by spatial locality (Z-order curve)" );
+
+    // -----------------------------------------------------------------------
+    // Step 5: Assign sorted super-cells to ranks in contiguous blocks
+    // -----------------------------------------------------------------------
+    array1d< int64_t > cellPartitions( numCells );
+    std::vector< vtkIdType > cellsPerRank( numRanks, 0 );
+
+    vtkIdType superCellsPerRank = (numSuperCells + numRanks - 1) / numRanks;
+
+    for( vtkIdType scIdx = 0; scIdx < numSuperCells; ++scIdx )
+    {
+      int targetRank = std::min( static_cast< int >(scIdx / superCellsPerRank), numRanks - 1 );
+
+      // All cells in this super-cell go to the same rank
+      for( vtkIdType cellIdx : superCells[scIdx].cellIndices )
+      {
+        cellPartitions[cellIdx] = targetRank;
+        cellsPerRank[targetRank]++;
+      }
+    }
+
+     // -----------------------------------------------------------------------
+    // Step 6: Build partitions
+    // -----------------------------------------------------------------------
+     partitionedMesh->SetNumberOfPartitions( numRanks );
+
+    for( int r = 0; r < numRanks; ++r )
+    {
+      vtkNew< vtkIdList > cellsForRank;
 
       for( vtkIdType i = 0; i < numCells; ++i )
       {
-        vtkIdType scId = superCellIdArray->GetValue( i );
-        superCellToLocalCells[scId].push_back( i );
-      }
-
-      vtkIdType numSuperCells = superCellToLocalCells.size();
-      GEOS_LOG_RANK_0( GEOS_FMT( "Redistributing {} super-cells ({} total cells) across {} ranks",
-                                 numSuperCells, numCells, numRanks ));
-
-      // Compute centroid for each super-cell
-      struct SuperCellPartitionInfo
-      {
-        vtkIdType scId;
-        std::array< double, 3 > centroid;
-        std::vector< vtkIdType > cellIndices;
-      };
-
-      std::vector< SuperCellPartitionInfo > superCells;
-      superCells.reserve( numSuperCells );
-
-      for( auto const & [scId, cellIndices] : superCellToLocalCells )
-      {
-        // Compute centroid of this super-cell
-        std::array< double, 3 > centroid = {0.0, 0.0, 0.0};
-        vtkIdType totalPoints = 0;
-
-        for( vtkIdType cellIdx : cellIndices )
+        if( cellPartitions[i] == r )
         {
-          vtkCell * cell = cells3D->GetCell( cellIdx );
-          vtkPoints * points = cell->GetPoints();
-          vtkIdType nPts = points->GetNumberOfPoints();
-
-          for( vtkIdType p = 0; p < nPts; ++p )
-          {
-            double pt[3];
-            points->GetPoint( p, pt );
-            centroid[0] += pt[0];
-            centroid[1] += pt[1];
-            centroid[2] += pt[2];
-            totalPoints++;
-          }
-        }
-
-        if( totalPoints > 0 )
-        {
-          centroid[0] /= totalPoints;
-          centroid[1] /= totalPoints;
-          centroid[2] /= totalPoints;
-        }
-
-        superCells.push_back( SuperCellPartitionInfo{ scId, centroid, cellIndices } );
-      }
-
-      // Sort super-cells spatially using Z-order (Morton) curve
-      // This provides good spatial locality in 3D
-      auto computeMortonCode = []( std::array< double, 3 > const & centroid,
-                                   double minCoord[3],
-                                   double maxCoord[3] ) -> uint64_t
-      {
-        // Normalize coordinates to [0, 1]
-        auto normalize = [&]( double val, int dim ) -> uint32_t
-        {
-          double range = maxCoord[dim] - minCoord[dim];
-          if( range < 1e-10 )
-            return 0;
-          double norm = (val - minCoord[dim]) / range;
-          norm = std::max( 0.0, std::min( 1.0, norm ) );
-          return static_cast< uint32_t >( norm * ((1u << 21) - 1) ); // 21 bits per dimension
-        };
-
-        uint32_t x = normalize( centroid[0], 0 );
-        uint32_t y = normalize( centroid[1], 1 );
-        uint32_t z = normalize( centroid[2], 2 );
-
-        // Interleave bits (Morton encoding)
-        uint64_t code = 0;
-        for( int i = 0; i < 21; ++i )
-        {
-          code |= ((x & (1u << i)) ? (1ull << (3*i)) : 0);
-          code |= ((y & (1u << i)) ? (1ull << (3*i + 1)) : 0);
-          code |= ((z & (1u << i)) ? (1ull << (3*i + 2)) : 0);
-        }
-        return code;
-      };
-
-      // Find bounding box
-      double minCoord[3] = {std::numeric_limits< double >::max(),
-                            std::numeric_limits< double >::max(),
-                            std::numeric_limits< double >::max()};
-      double maxCoord[3] = {std::numeric_limits< double >::lowest(),
-                            std::numeric_limits< double >::lowest(),
-                            std::numeric_limits< double >::lowest()};
-
-      for( auto const & sc : superCells )
-      {
-        for( int d = 0; d < 3; ++d )
-        {
-          minCoord[d] = std::min( minCoord[d], sc.centroid[d] );
-          maxCoord[d] = std::max( maxCoord[d], sc.centroid[d] );
+          cellsForRank->InsertNextId( i );
         }
       }
 
-      GEOS_LOG_RANK_0( GEOS_FMT( "Bounding box: X=[{:.3f}, {:.3f}], Y=[{:.3f}, {:.3f}], Z=[{:.3f}, {:.3f}]",
-                                 minCoord[0], maxCoord[0], minCoord[1], maxCoord[1], minCoord[2], maxCoord[2] ));
-
-      // Sort by Morton code for spatial locality
-      std::sort( superCells.begin(), superCells.end(),
-                 [&]( SuperCellPartitionInfo const & a, SuperCellPartitionInfo const & b )
+      if( cellsForRank->GetNumberOfIds() == 0 )
       {
-        return computeMortonCode( a.centroid, minCoord, maxCoord ) <
-        computeMortonCode( b.centroid, minCoord, maxCoord );
-      } );
-
-      GEOS_LOG_RANK_0( "Super-cells sorted by spatial locality (Z-order curve)" );
-
-      // Assign sorted super-cells to ranks in contiguous blocks
-      array1d< int64_t > cellPartitions( numCells );
-      std::vector< int > cellsPerRank( numRanks, 0 );
-
-      vtkIdType superCellsPerRank = (numSuperCells + numRanks - 1) / numRanks;
-
-      for( vtkIdType scIdx = 0; scIdx < numSuperCells; ++scIdx )
-      {
-        int targetRank = std::min( static_cast< int >(scIdx / superCellsPerRank), numRanks - 1 );
-
-        // All cells in this super-cell go to the same rank
-        for( vtkIdType cellIdx : superCells[scIdx].cellIndices )
-        {
-          cellPartitions[cellIdx] = targetRank;
-          cellsPerRank[targetRank]++;
-        }
+        vtkNew< vtkUnstructuredGrid > emptyPart;
+        partitionedMesh->SetPartition( r, emptyPart );
+        continue;
       }
 
+      vtkNew< vtkExtractCells > extractor;
+      extractor->SetInputData( cells3D );
+      extractor->SetCellList( cellsForRank );
+      extractor->Update();
 
-      // Build partitioned dataset - extract cells for each rank
-      partitionedMesh->SetNumberOfPartitions( numRanks );
+      vtkSmartPointer< vtkUnstructuredGrid > partition =
+        vtkUnstructuredGrid::SafeDownCast( extractor->GetOutput() );
 
-      for( int r = 0; r < numRanks; ++r )
-      {
-        vtkNew< vtkIdList > cellsForRank;
-
-        for( vtkIdType i = 0; i < numCells; ++i )
-        {
-          if( cellPartitions[i] == r )
-          {
-            cellsForRank->InsertNextId( i );
-          }
-        }
-
-        vtkNew< vtkExtractCells > extractor;
-        extractor->SetInputData( cells3D );
-        extractor->SetCellList( cellsForRank );
-        extractor->Update();
-
-        vtkSmartPointer< vtkUnstructuredGrid > partition =
-          vtkUnstructuredGrid::SafeDownCast( extractor->GetOutput() );
-        partitionedMesh->SetPartition( r, partition );
-      }
+      partitionedMesh->SetPartition( r, partition );
     }
-  }
+
+  }  
   else
   {
     // Other ranks: create empty partitioned dataset
@@ -534,11 +547,16 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
   }
 
 
+  // -----------------------------------------------------------------------
+  // Step 7: Redistribute using VTK
+  // -----------------------------------------------------------------------
   vtkSmartPointer< vtkDataSet > result = vtk::redistribute( *partitionedMesh, comm );
 
   partitionedMesh = nullptr;
   if( rank == 0 )
+  {
     cells3D = nullptr;
+  }
 
   vtkIdType localCells = result->GetNumberOfCells();
 
@@ -548,15 +566,12 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
     vtkIdTypeArray * resultSuperCellIdArray =
       vtkIdTypeArray::SafeDownCast( result->GetCellData()->GetArray( "SuperCellId" ) );
 
-    if( !resultSuperCellIdArray )
-    {
-      GEOS_ERROR( "SuperCellId array was lost during redistribution!" );
-    }
+    GEOS_ERROR_IF( !resultSuperCellIdArray,
+                   GEOS_FMT( "Rank {}: SuperCellId array lost during redistribution", rank ) );
   }
 
   return result;
 }
-
 
 
 // =============================================================================================
@@ -859,11 +874,8 @@ buildSuperCellGraph(
         for( localIndex j = 0; j < neighbors.size(); ++j )
         {
           pmet_idx_t neighborIdx = neighbors[j];
-          if( neighbors.size() > 0 )
-          {
             localMinNeighbor = std::min( localMinNeighbor, neighborIdx );
             localMaxNeighbor = std::max( localMaxNeighbor, neighborIdx );
-          }
         }
       }
 
@@ -1073,7 +1085,7 @@ buildSuperCellGraph(
           {
             localIndex localDstIdx = dst - myStart;
 
-            // Add REVERSE edge: dst → src
+            // Add REVERSE edge: dst -> src
             if( neighborSets[localDstIdx].insert( src ).second )
             {
               reverseEdgesAdded++;
@@ -1090,7 +1102,7 @@ buildSuperCellGraph(
 
 
     // -----------------------------------------------------------------------
-    // Step 7: NOW build ArrayOfArrays from SYMMETRIZED neighborSets
+    // Step 7: Build ArrayOfArrays from SYMMETRIZED neighborSets
     // -----------------------------------------------------------------------
 
     // Recompute total edges after symmetrization
@@ -1205,290 +1217,160 @@ void validateSuperCellGraph(
 
   GEOS_LOG_RANK_0( "Running graph integrity checks..." );
 
-  localIndex numErrors = 0;
-  localIndex numWarnings = 0;
+  pmet_idx_t myStart = superElemDist[rank];
+  pmet_idx_t myEnd = superElemDist[rank + 1];
 
   // -----------------------------------------------------------------------
   // Check 1: No self-loops
   // -----------------------------------------------------------------------
-  localIndex selfLoops = 0;
-  for( localIndex i = 0; i < superGraph.size(); ++i )
   {
-    pmet_idx_t myGlobalId = superElemDist[rank] + i;
-
-    for( localIndex j = 0; j < superGraph.sizeOfArray( i ); ++j )
+    for( localIndex i = 0; i < superGraph.size(); ++i )
     {
-      if( superGraph[i][j] == myGlobalId )
+      pmet_idx_t myGlobalId = myStart + i;
+
+      for( localIndex j = 0; j < superGraph.sizeOfArray( i ); ++j )
       {
-        selfLoops++;
-        if( selfLoops <= 3 )
-        {
-          GEOS_LOG( "Rank " << rank << ": ERROR: Super-cell " << i
-                            << " has self-loop (neighbor = " << myGlobalId << ")" );
-        }
+        GEOS_ERROR_IF( superGraph[i][j] == myGlobalId,
+                       GEOS_FMT( "Rank {}: Super-cell {} (global {}) has self-loop",
+                                 rank, i, myGlobalId ) );
       }
     }
-  }
-  if( selfLoops > 0 )
-  {
-    GEOS_LOG( "Rank " << rank << ": Found " << selfLoops << " self-loops!" );
-    numErrors += selfLoops;
   }
 
   // -----------------------------------------------------------------------
   // Check 2: All neighbors in valid global range
   // -----------------------------------------------------------------------
-  localIndex outOfRange = 0;
-  pmet_idx_t globalMin = 0;
-  pmet_idx_t globalMax = superElemDist[numRanks] - 1;
-
-  for( localIndex i = 0; i < superGraph.size(); ++i )
   {
-    for( localIndex j = 0; j < superGraph.sizeOfArray( i ); ++j )
+    pmet_idx_t globalMin = 0;
+    pmet_idx_t globalMax = superElemDist[numRanks] - 1;
+
+    for( localIndex i = 0; i < superGraph.size(); ++i )
     {
-      pmet_idx_t neighbor = superGraph[i][j];
-
-      if( neighbor < globalMin || neighbor > globalMax )
+      for( localIndex j = 0; j < superGraph.sizeOfArray( i ); ++j )
       {
-        outOfRange++;
-        if( outOfRange <= 3 )
-        {
-          GEOS_LOG( "Rank " << rank << ": ERROR: Super-cell " << i
-                            << " has out-of-range neighbor " << neighbor
-                            << " (valid: [" << globalMin << ", " << globalMax << "])" );
-        }
-      }
-    }
-  }
-  if( outOfRange > 0 )
-  {
-    GEOS_LOG( "Rank " << rank << ": Found " << outOfRange << " out-of-range neighbors!" );
-    numErrors += outOfRange;
-  }
+        pmet_idx_t neighbor = superGraph[i][j];
 
-  // -----------------------------------------------------------------------
-  // Check 3: Duplicate edges
-  // -----------------------------------------------------------------------
-  localIndex duplicates = 0;
-  for( localIndex i = 0; i < superGraph.size(); ++i )
-  {
-    std::set< pmet_idx_t > uniqueNeighbors;
-
-    for( localIndex j = 0; j < superGraph.sizeOfArray( i ); ++j )
-    {
-      pmet_idx_t neighbor = superGraph[i][j];
-
-      if( !uniqueNeighbors.insert( neighbor ).second )
-      {
-        duplicates++;
-        if( duplicates <= 3 )
-        {
-          GEOS_LOG( "Rank " << rank << ": WARNING: Super-cell " << i
-                            << " has duplicate neighbor " << neighbor );
-        }
-      }
-    }
-  }
-  if( duplicates > 0 )
-  {
-    GEOS_LOG( "Rank " << rank << ": Found " << duplicates << " duplicate edges!" );
-    numWarnings += duplicates;
-  }
-
-  // -----------------------------------------------------------------------
-  // Check 4: Isolated vertices (no neighbors)
-  // -----------------------------------------------------------------------
-  localIndex isolated = 0;
-  std::vector< localIndex > isolatedIndices;
-
-  for( localIndex i = 0; i < superGraph.size(); ++i )
-  {
-    if( superGraph.sizeOfArray( i ) == 0 )
-    {
-      isolated++;
-      isolatedIndices.push_back( i );
-
-      if( isolated <= 3 )
-      {
-        GEOS_LOG( "Rank " << rank << ": WARNING: Super-cell " << i
-                          << " (global " << (superElemDist[rank] + i)
-                          << ") has no neighbors (isolated)" );
+        GEOS_ERROR_IF( neighbor < globalMin || neighbor > globalMax,
+                       GEOS_FMT( "Rank {}: Super-cell {} has out-of-range neighbor {} (valid: [{}, {}])",
+                                 rank, i, neighbor, globalMin, globalMax ) );
       }
     }
   }
 
-  if( isolated > 0 )
-  {
-    GEOS_LOG( "Rank " << rank << ": Found " << isolated << " isolated vertices" );
-    numWarnings += isolated;
-  }
   // -----------------------------------------------------------------------
-  // Check 5: Verify weights match graph size
+  // Check 3: No duplicate edges
   // -----------------------------------------------------------------------
-  if( !vertexWeights.empty() )
   {
-    if( vertexWeights.size() != superGraph.size() )
+    for( localIndex i = 0; i < superGraph.size(); ++i )
     {
-      GEOS_LOG( "Rank " << rank << ": ERROR: Vertex weights size ("
-                        << vertexWeights.size() << ") != graph size ("
-                        << superGraph.size() << ")" );
-      numErrors++;
-    }
+      std::set< pmet_idx_t > uniqueNeighbors;
 
-    // Check for zero or negative weights
-    localIndex badWeights = 0;
-    for( localIndex i = 0; i < vertexWeights.size(); ++i )
-    {
-      if( vertexWeights[i] <= 0 )
+      for( localIndex j = 0; j < superGraph.sizeOfArray( i ); ++j )
       {
-        badWeights++;
-        if( badWeights <= 3 )
-        {
-          GEOS_LOG( "Rank " << rank << ": ERROR: Super-cell " << i
-                            << " has invalid weight " << vertexWeights[i] );
-        }
+        pmet_idx_t neighbor = superGraph[i][j];
+
+        GEOS_ERROR_IF( !uniqueNeighbors.insert( neighbor ).second,
+                       GEOS_FMT( "Rank {}: Super-cell {} has duplicate neighbor {}",
+                                 rank, i, neighbor ) );
       }
     }
-    if( badWeights > 0 )
-    {
-      GEOS_LOG( "Rank " << rank << ": Found " << badWeights << " invalid weights!" );
-      numErrors += badWeights;
-    }
   }
 
-
   // -----------------------------------------------------------------------
-  // Check 6: Graph symmetry (REQUIRED by ParMETIS/METIS)
+  // Check 4: Isolated vertices
   // -----------------------------------------------------------------------
-  GEOS_LOG_RANK_0( "Checking graph symmetry..." );
-
-  // Build global edge list (i → j)
-  std::set< std::pair< pmet_idx_t, pmet_idx_t > > localEdges;
-
-  pmet_idx_t myStart = superElemDist[rank];
-
-  for( localIndex i = 0; i < superGraph.size(); ++i )
   {
-    pmet_idx_t globalI = myStart + i;
-    auto neighbors = superGraph[i];
+    localIndex isolated = 0;
 
-    for( localIndex j = 0; j < neighbors.size(); ++j )
+    for( localIndex i = 0; i < superGraph.size(); ++i )
     {
-      pmet_idx_t globalJ = neighbors[j];
-      localEdges.insert( {globalI, globalJ} );
-    }
-  }
-
-  // Gather all edges on rank 0
-  int localEdgeCount = static_cast< int >( localEdges.size() );
-  std::vector< int > edgeCounts( numRanks );
-  MPI_Gather( &localEdgeCount, 1, MPI_INT,
-              edgeCounts.data(), 1, MPI_INT, 0, comm );
-
-  int asymmetricCount = 0;
-
-  if( rank == 0 )
-  {
-    std::vector< int > displsEdge( numRanks + 1, 0 );
-    for( int r = 0; r < numRanks; ++r )
-    {
-      displsEdge[r+1] = displsEdge[r] + edgeCounts[r];
-    }
-
-    int totalEdges = displsEdge[numRanks];
-    std::vector< pmet_idx_t > allEdgesI( totalEdges );
-    std::vector< pmet_idx_t > allEdgesJ( totalEdges );
-
-    // Copy local edges
-    int offset = 0;
-    for( auto const & [i, j] : localEdges )
-    {
-      allEdgesI[offset] = i;
-      allEdgesJ[offset] = j;
-      offset++;
-    }
-
-    // Gather from other ranks
-    MPI_Gatherv( MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
-                 allEdgesI.data(), edgeCounts.data(), displsEdge.data(),
-                 MPI_LONG_LONG_INT, 0, comm );
-    MPI_Gatherv( MPI_IN_PLACE, 0, MPI_DATATYPE_NULL,
-                 allEdgesJ.data(), edgeCounts.data(), displsEdge.data(),
-                 MPI_LONG_LONG_INT, 0, comm );
-
-    // Check symmetry
-    std::set< std::pair< pmet_idx_t, pmet_idx_t > > allEdges;
-    for( int e = 0; e < totalEdges; ++e )
-    {
-      allEdges.insert( {allEdgesI[e], allEdgesJ[e]} );
-    }
-
-    for( auto const & [i, j] : allEdges )
-    {
-      // Check if reverse edge exists
-      if( allEdges.find( {j, i} ) == allEdges.end() )
+      if( superGraph.sizeOfArray( i ) == 0 )
       {
-        asymmetricCount++;
-        if( asymmetricCount <= 5 )
+        isolated++;
+        if( isolated <= 5 )
         {
-          GEOS_LOG_RANK_0( "  ASYMMETRIC: Edge (" << i << " → " << j
-                                                  << ") exists but reverse (" << j << " → " << i << ") doesn't" );
+          pmet_idx_t globalId = myStart + i;
+          GEOS_LOG_RANK( GEOS_FMT( "WARNING: Super-cell {} (global {}) has no neighbors (isolated)",
+                                   i, globalId ) );
         }
       }
     }
 
-    if( asymmetricCount > 0 )
+    if( isolated > 0 )
     {
-      GEOS_LOG_RANK_0( " Graph has " << asymmetricCount
-                                     << " asymmetric edges (will be symmetrized before ParMETIS)" );
-      numWarnings += asymmetricCount;
-    }
-    else
-    {
-      GEOS_LOG_RANK_0( "Graph is symmetric (" << allEdges.size() << " edges checked)" );
+      GEOS_WARNING( GEOS_FMT( "Found {} isolated vertices ", isolated ) );
     }
   }
-  else
-  {
-    // Other ranks send their edges
-    std::vector< pmet_idx_t > sendI, sendJ;
-    for( auto const & [i, j] : localEdges )
-    {
-      sendI.push_back( i );
-      sendJ.push_back( j );
-    }
-
-    MPI_Gatherv( sendI.data(), localEdgeCount, MPI_LONG_LONG_INT,
-                 nullptr, nullptr, nullptr, MPI_LONG_LONG_INT, 0, comm );
-    MPI_Gatherv( sendJ.data(), localEdgeCount, MPI_LONG_LONG_INT,
-                 nullptr, nullptr, nullptr, MPI_LONG_LONG_INT, 0, comm );
-  }
-
-  MPI_Barrier( comm );
 
   // -----------------------------------------------------------------------
-  // Global summary
+  // Check 5: Verify weights
   // -----------------------------------------------------------------------
-  long long globalErrors = 0;
-  long long globalWarnings = 0;
-  long long localErr = numErrors;
-  long long localWarn = numWarnings;
-
-  MPI_Allreduce( &localErr, &globalErrors, 1, MPI_LONG_LONG_INT, MPI_SUM, comm );
-  MPI_Allreduce( &localWarn, &globalWarnings, 1, MPI_LONG_LONG_INT, MPI_SUM, comm );
-
-  GEOS_THROW_IF( globalErrors > 0,
-                 GEOS_FMT( "Graph has integrity errors - cannot proceed with partitioning (total errors: {})",
-                           globalErrors ), InputError );
-  if( globalWarnings > 0 )
   {
-    GEOS_LOG_RANK_0( "\n GRAPH INTEGRITY CHECK PASSED WITH WARNINGS" );
-    GEOS_LOG_RANK_0( "   Total warnings: " << globalWarnings );
-    if( asymmetricCount > 0 )
+    if( !vertexWeights.empty() )
     {
-      GEOS_LOG_RANK_0( "   (Graph will be symmetrized automatically)" );
+      GEOS_ERROR_IF( vertexWeights.size() != superGraph.size(),
+                     GEOS_FMT( "Rank {}: Vertex weights size ({}) != graph size ({})",
+                               rank, vertexWeights.size(), superGraph.size() ) );
+
+      for( localIndex i = 0; i < vertexWeights.size(); ++i )
+      {
+        GEOS_ERROR_IF( vertexWeights[i] <= 0,
+                       GEOS_FMT( "Rank {}: Super-cell {} has invalid weight {}",
+                                 rank, i, vertexWeights[i] ) );
+      }
     }
   }
+
+  // -----------------------------------------------------------------------
+  // Check 6: Graph symmetry (local edges only)
+  // -----------------------------------------------------------------------
+  GEOS_LOG_RANK_0( "Checking local graph symmetry..." );
+
+  {
+    std::unordered_set< uint64_t > localOutgoingNeighbors;
+    
+    // Build edge set
+    for( localIndex i = 0; i < superGraph.size(); ++i )
+    {
+      pmet_idx_t globalI = myStart + i;
+      auto neighbors = superGraph[i];
+
+      for( localIndex j = 0; j < neighbors.size(); ++j )
+      {
+        pmet_idx_t globalJ = neighbors[j];
+        
+        if( globalJ >= myStart && globalJ < myEnd )
+        {
+          uint64_t edgeKey = (static_cast< uint64_t >( globalI ) << 32) | 
+                             static_cast< uint64_t >( globalJ );
+          localOutgoingNeighbors.insert( edgeKey );
+        }
+      }
+    }
+
+    // Verify symmetry
+    for( localIndex i = 0; i < superGraph.size(); ++i )
+    {
+      pmet_idx_t globalI = myStart + i;
+      auto neighbors = superGraph[i];
+
+      for( localIndex j = 0; j < neighbors.size(); ++j )
+      {
+        pmet_idx_t globalJ = neighbors[j];
+        
+        if( globalJ >= myStart && globalJ < myEnd )
+        {
+          uint64_t reverseKey = (static_cast< uint64_t >( globalJ ) << 32) | 
+                                static_cast< uint64_t >( globalI );
+          
+          GEOS_ERROR_IF( localOutgoingNeighbors.find( reverseKey ) == localOutgoingNeighbors.end(),
+                         GEOS_FMT( "Rank {}: Asymmetric edge ({} -> {}) - reverse edge missing",
+                                   rank, globalI, globalJ ) );
+        }
+      }
+    }
+  }
+
 }
 
 // =============================================================================================
@@ -1508,7 +1390,6 @@ unpackSuperCellPartitioning(
   // -----------------------------------------------------------------------
   // Step 1: Get super-cell ID array
   // -----------------------------------------------------------------------
-
   vtkIdTypeArray * superCellIdArray =
     vtkIdTypeArray::SafeDownCast( cells3D->GetCellData()->GetArray( "SuperCellId" ) );
 
@@ -1523,7 +1404,6 @@ unpackSuperCellPartitioning(
   // -----------------------------------------------------------------------
   // Step 2: Create partitioning array for original cells
   // -----------------------------------------------------------------------
-
   array1d< int64_t > cellPartitioning( cells3D->GetNumberOfCells() );
 
   // For each original cell, look up its super-cell and assign the same partition
@@ -1547,12 +1427,9 @@ unpackSuperCellPartitioning(
     cellPartitioning[i] = targetRank;
   }
 
-  //GEOS_LOG_RANK( "Assigned partitions to " << cells3D->GetNumberOfCells() << " cells" );
-
   // -----------------------------------------------------------------------
   // Step 3: Verify - All cells in same super-cell go to same rank
   // -----------------------------------------------------------------------
-
   stdMap< vtkIdType, std::set< int64_t > > superCellToRanks;
 
   vtkIdType const numCells2 = cells3D->GetNumberOfCells();
@@ -1587,7 +1464,6 @@ unpackSuperCellPartitioning(
   // -----------------------------------------------------------------------
   // Step 4: Global statistics
   // -----------------------------------------------------------------------
-
   vtkIdType totalSplitSuperCells = MpiWrapper::sum( numSplitSuperCells, comm );
 
   if( totalSplitSuperCells > 0 )
