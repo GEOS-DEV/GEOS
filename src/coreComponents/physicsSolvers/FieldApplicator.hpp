@@ -87,6 +87,7 @@ private:
   {
     constexpr static char const * fieldSpecificationNamesString() { return "fieldSpecificationNames"; }
     constexpr static char const * solverNameString() { return "solverName"; }
+    constexpr static char const * targetRegionsString() { return "targetRegions"; }
   };
 
   void postInputInitialization() override;
@@ -130,6 +131,9 @@ private:
 
   /// Name of the flow solver to use for fluid state initialization
   string m_solverName;
+
+  /// Target regions to apply field specifications to (optional filter)
+  stdVector< string > m_targetRegions;
 };
 
 

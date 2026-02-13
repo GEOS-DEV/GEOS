@@ -38,7 +38,8 @@ FieldApplicator::FieldApplicator( const string & name,
                                   Group * const parent ):
   TaskBase( name, parent ),
   m_fieldSpecificationNames(),
-  m_solverName()
+  m_solverName(),
+  m_targetRegions()
 {
 
   registerWrapper( viewKeyStruct::fieldSpecificationNamesString(), &m_fieldSpecificationNames ).
@@ -50,6 +51,11 @@ FieldApplicator::FieldApplicator( const string & name,
     setRTTypeName( rtTypes::CustomTypes::groupNameRef ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setDescription( "Name of the flow solver to use for fluid state initialization (required for compositional flow)" );
+
+  registerWrapper( viewKeyStruct::targetRegionsString(), &m_targetRegions ).
+    setRTTypeName( rtTypes::CustomTypes::groupNameRefArray ).
+    setInputFlag( dataRepository::InputFlags::OPTIONAL ).
+    setDescription( "Target element regions to apply field specifications to. If empty, applies to all regions." );
 
 }
 
@@ -103,6 +109,25 @@ FieldApplicator::
                                                    ElementSubRegionBase & subRegion,
                                                    string const fieldName )
             {
+              // If targetRegions is specified, only apply to matching regions
+              if( !m_targetRegions.empty() )
+              {
+                string const & regionName = subRegion.getParent().getName();
+                bool isTargetRegion = false;
+                for( string const & targetRegion : m_targetRegions )
+                {
+                  if( regionName == targetRegion )
+                  {
+                    isTargetRegion = true;
+                    break;
+                  }
+                }
+                if( !isTargetRegion )
+                {
+                  return;  // Skip this subregion
+                }
+              }
+
               // For HydrostaticEquilibrium, we need special handling since:
               // 1. Pressure requires complex hydrostatic computation with phase-dependent interpolation
               // 2. Temperature and globalCompFraction can be applied directly from elevation tables
@@ -150,6 +175,9 @@ void FieldApplicator::applyEquilibriumInitialConditionFields( EquilibriumInitial
 {
   // For HydrostaticEquilibrium, we need to set pressure, temperature, and globalCompFraction fields
   // using the elevation-based tables.
+
+  GEOS_LOG_RANK_0( GEOS_FMT( "FieldApplicator: Applying {} to {} elements in subregion {}",
+                              equilIC.getName(), targetSet.size(), targetGroup.getName() ) );
 
   // Get element center coordinates for elevation lookup
   if( !targetGroup.hasWrapper( ElementSubRegionBase::viewKeyStruct::elementCenterString() ) )
