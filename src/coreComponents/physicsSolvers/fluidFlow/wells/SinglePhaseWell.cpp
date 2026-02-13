@@ -155,7 +155,7 @@ void SinglePhaseWell::validateWellConstraints( real64 const & time_n,
       auto const pos = std::find( targetRegionsNames.begin(), targetRegionsNames.end(), regionName );
       GEOS_ERROR_IF( pos == targetRegionsNames.end(),
                      GEOS_FMT( "Region {} is not a target of the reservoir solver and cannot be used for referenceReservoirRegion in WellControl {}.",
-                               regionName, wellControls.getName() ),
+                               regionName,  getName() ),
                      getDataContext() );
 
     }
@@ -336,23 +336,22 @@ void SinglePhaseWell::updateSeparator( ElementRegionManager const & elemManager,
   {
     if( !getReferenceReservoirRegion().empty() )
     {
-      ElementRegionBase const & region = elemManager.getRegion( wellControls.referenceReservoirRegion() );
+      ElementRegionBase const & region = elemManager.getRegion( getReferenceReservoirRegion() );
       GEOS_ERROR_IF ( !region.hasWrapper( SinglePhaseStatistics::regionStatisticsName()),
                       GEOS_FMT( "WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
-                                wellControls.getName(), wellControls.referenceReservoirRegion() ),
+                                getName(), getReferenceReservoirRegion() ),
                       getDataContext() );
 
       SinglePhaseStatistics::RegionStatistics const & stats = region.getReference< SinglePhaseStatistics::RegionStatistics >(
         SinglePhaseStatistics::regionStatisticsName() );
-      setRegionAveragePressure( stats.averagePressure );
-      setRegionAverageTemperature( stats.averageTemperature );
+ 
       GEOS_ERROR_IF( stats.averagePressure <= 0.0,
                      GEOS_FMT(
                        "No region average quantities computed.  WellControl {} referenceReservoirRegion field requires SinglePhaseStatistics to be configured for region {} ",
-                       wellControls.getName(), wellControls.referenceReservoirRegion() ),
+                        getName(), getReferenceReservoirRegion() ),
                      getDataContext());
-      wellControls.setRegionAveragePressure( stats.averagePressure );
-      wellControls.setRegionAverageTemperature( stats.averageTemperature );
+      setRegionAveragePressure( stats.averagePressure );
+      setRegionAverageTemperature( stats.averageTemperature );
     }
     // use region conditions
     flashPressure =        getRegionAveragePressure();
