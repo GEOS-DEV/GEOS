@@ -25,7 +25,8 @@ namespace geos
 using namespace dataRepository;
 
 SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, Group * const parent ):
-  FieldSpecificationBase( name, parent )
+  FieldSpecificationBase( name, parent ),
+  m_injectionTemperature( -1.0 )
 {
   getWrapper< string >( FieldSpecificationBase::viewKeyStruct::fieldNameString() ).
     setInputFlag( InputFlags::FALSE );
@@ -41,6 +42,13 @@ SourceFluxBoundaryCondition::SourceFluxBoundaryCondition( string const & name, G
   getWrapper< real64 >( FieldSpecificationBase::viewKeyStruct::scaleString() ).
     setDescription( GEOS_FMT( "Multiplier of the {0} value. If no {0} is provided, this value is used directly.",
                               FieldSpecificationBase::viewKeyStruct::functionNameString() ) );
+
+  registerWrapper( viewKeyStruct::injectionTemperatureString(), &m_injectionTemperature ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Temperature (in K) of the injected fluid. "
+                    "When set, the energy equation receives a source term equal to the mass rate times the enthalpy "
+                    "evaluated at the injection temperature and cell pressure. "
+                    "If not set (default), no energy contribution is added for injectors." );
 }
 
 REGISTER_CATALOG_ENTRY( FieldSpecificationBase, SourceFluxBoundaryCondition, string const &, Group * const )

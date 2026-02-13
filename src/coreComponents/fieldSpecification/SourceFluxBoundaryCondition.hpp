@@ -56,6 +56,26 @@ public:
     return SourceFluxBoundaryCondition::catalogName();
   }
 
+  /**
+   * @brief Get the injection temperature
+   * @return the injection temperature in K, or -1 if not set
+   */
+  real64 getInjectionTemperature() const { return m_injectionTemperature; }
+
+  /**
+   * @brief View keys
+   */
+  struct viewKeyStruct : public FieldSpecificationBase::viewKeyStruct
+  {
+    /// @return The key for injection temperature
+    constexpr static char const * injectionTemperatureString() { return "injectionTemperature"; }
+  };
+
+private:
+
+  /// Injection temperature in K. A negative value means not set.
+  real64 m_injectionTemperature;
+
 };
 
 } /* namespace geos */

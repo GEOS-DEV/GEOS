@@ -1082,6 +1082,10 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
 
         arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const enthalpy = fluid.enthalpy();
         arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const dEnthalpy = fluid.dEnthalpy();
+
+        real64 const injectionTemperature = fs.getInjectionTemperature();
+        arrayView1d< real64 const > const temperature = subRegion.template getField< flow::temperature >();
+
         forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
                                                              targetSet,
                                                              rankOffset,
@@ -1089,6 +1093,8 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                              dofNumber,
                                                              enthalpy,
                                                              dEnthalpy,
+                                                             temperature,
+                                                             injectionTemperature,
                                                              rhsContributionArrayView,
                                                              localRhs,
                                                              localMatrix,
@@ -1107,12 +1113,13 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor; // scale the contribution by the sizeScalingFactor here!
           localRhs[massRowIndex] += rhsValue;
           massProd += rhsValue;
-          //add the value to the energy balance equation if the flux is positive (i.e., it's a producer)
+
+          globalIndex const pressureDofIndex    = dofNumber[ei] - rankOffset;
+          globalIndex const temperatureDofIndex = pressureDofIndex + 1;
+
           if( rhsContributionArrayView[a] > 0.0 )
           {
-            globalIndex const pressureDofIndex    = dofNumber[ei] - rankOffset;
-            globalIndex const temperatureDofIndex = pressureDofIndex + 1;
-
+            // Producer: energy leaves at cell conditions (h(T_cell, P_cell))
             localRhs[energyRowIndex] += enthalpy[ei][0] * rhsValue;
 
             globalIndex dofIndices[2]{pressureDofIndex, temperatureDofIndex};
@@ -1122,6 +1129,25 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
                                                            dofIndices,
                                                            jacobian,
                                                            2 );
+          }
+          else if( injectionTemperature > 0.0 )
+          {
+            // Injector with specified injection temperature:
+            // energy enters at injection conditions h(T_inj, P_cell)
+            // Linearized: h_inj = h(T_cell, P_cell) + dh/dT * (T_inj - T_cell)
+            real64 const enthalpyInj = enthalpy[ei][0] + dEnthalpy[ei][0][DerivOffset::dT] * ( injectionTemperature - temperature[ei] );
+
+            localRhs[energyRowIndex] += enthalpyInj * rhsValue;
+
+            // Jacobian: d(h_inj * rhsValue)/dP = rhsValue * dh/dP (T_inj does not depend on P, but h linearization base does)
+            // Jacobian: d(h_inj * rhsValue)/dT ≈ 0 (h_inj is evaluated at fixed T_inj, not at T_cell)
+            globalIndex dofIndices[1]{pressureDofIndex};
+            real64 jacobian[1]{rhsValue * dEnthalpy[ei][0][DerivOffset::dP]};
+
+            localMatrix.template addToRow< serialAtomic >( energyRowIndex,
+                                                           dofIndices,
+                                                           jacobian,
+                                                           1 );
           }
         } );
       }
@@ -1293,6 +1319,9 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
   real64 scalingFactor = 1.0;
   real64 maxDeltaPres = 0.0;
+  real64 maxDeltaTemp = 0.0;
+
+  integer const isThermal = m_isThermal;
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -1312,6 +1341,23 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
 
       scalingFactor = std::min( scalingFactor, subRegionData.first );
       maxDeltaPres  = std::max( maxDeltaPres, subRegionData.second );
+
+      if( isThermal )
+      {
+        RAJA::ReduceMax< ReducePolicy< parallelDevicePolicy<> >, real64 > subRegionMaxDeltaTemp( 0.0 );
+
+        forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOS_HOST_DEVICE ( localIndex const ei )
+        {
+          if( ghostRank[ei] < 0 && dofNumber[ei] >= 0 )
+          {
+            localIndex const lid = dofNumber[ei] - rankOffset;
+            real64 const absTempChange = LvArray::math::abs( localSolution[lid + 1] );
+            subRegionMaxDeltaTemp.max( absTempChange );
+          }
+        } );
+
+        maxDeltaTemp = std::max( maxDeltaTemp, subRegionMaxDeltaTemp.get() );
+      }
     } );
   } );
 
@@ -1320,6 +1366,13 @@ real64 SinglePhaseBase::scalingForSystemSolution( DomainPartition & domain,
 
   GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max pressure change = {} Pa (before scaling)",
                                                       getName(), fmt::format( "{:.{}f}", maxDeltaPres, 3 ) ) );
+
+  if( isThermal )
+  {
+    maxDeltaTemp = MpiWrapper::max( maxDeltaTemp );
+    GEOS_LOG_LEVEL_RANK_0( logInfo::Solution, GEOS_FMT( "        {}: Max temperature change = {} K (before scaling)",
+                                                        getName(), fmt::format( "{:.{}f}", maxDeltaTemp, 3 ) ) );
+  }
 
   return scalingFactor;
 }
