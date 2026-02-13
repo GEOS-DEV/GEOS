@@ -22,6 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/Span.hpp"
+#include "common/StdContainerWrappers.hpp"
 #include "common/TypesHelpers.hpp"
 
 #include <numeric>
@@ -330,6 +331,11 @@ public:
    * @return The number of MPI ranks on the current node.
    */
   static int nodeCommSize();
+
+  template< template< class > class CONTAINER = stdVector >
+  void static gatherStringSet( CONTAINER< string > const & strSet,
+                               CONTAINER< string > & result,
+                               MPI_Comm MPI_PARAM( comm ));
 
   /**
    * @brief Strongly typed wrapper around MPI_Allgather.

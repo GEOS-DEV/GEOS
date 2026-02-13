@@ -14,10 +14,12 @@
  */
 
 #include <map>
+#include <set>
 #include <vector>
 
 #include "ElementRegionManager.hpp"
 
+#include "codingUtilities/RTTypes.hpp"
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
@@ -238,6 +240,9 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
 
   } );
 
+  int rank = MpiWrapper::commRank();
+  // int size = MpiWrapper::commSize();
+
   forElementRegions< WellElementRegion >( [&]( WellElementRegion const & wellRegion ){
 
     WellElementSubRegion const &
@@ -258,28 +263,46 @@ void ElementRegionManager::generateWells( CellBlockManagerABC const & cellBlockM
         ElementRegionBase const & region = meshLevel.getElemManager().getRegion< ElementRegionBase >( targetRegionIndex );
         ElementSubRegionBase const & subRegion = region.getSubRegion< ElementSubRegionBase >( targetSubRegionIndex );
 
-        arrayView2d< const real64 > const perfLocation = wellSubRegion.getPerforationData()->getLocation();
+        arrayView2d< const real64 > perfLocation = wellSubRegion.getPerforationData()->getLocation();
 
-        string regionString( region.getName() );
+        stdVector< string > setRegionName( {region.getName()} );
+        stdVector< string > resultRegionName;
+        stdVector< string > setSubRegionName( {subRegion.getName()} );
+        stdVector< string > resultSubRegionName;
+        MpiWrapper::gatherStringSet< stdVector >( setRegionName, resultRegionName, MPI_COMM_WORLD );
+        MpiWrapper::gatherStringSet< stdVector >( setSubRegionName, resultSubRegionName, MPI_COMM_WORLD );
+        array1d< globalIndex > rcvPerfo;
+        rcvPerfo.resize( 3 );
 
-        //stdVector< buffer_unit_type > rcvBuffer;
-        //stdVector< string > destBuffer;
-        //buffer_unit_type * bRegion = new buffer_unit_type[ sizeof(regionString.size()) ]();
-        //bufferOps::Pack< true >( bRegion, regionString );
-
-        stdVector< string > rcvRegionBuffer;
-        MpiWrapper::gather( &region.getName(), 1, rcvRegionBuffer.data(), 1, 0, MPI_COMM_GEOS );
-        // buffer_unit_type const * localDestBuffer = rcvBuffer.data();
-        // bufferOps::Unpack( localDestBuffer, destBuffer[0] );
-
-        if( MpiWrapper::commRank() == 0 )
+        if( rank == 0 )
         {
-          std::cout << "size buffer region "<< rcvRegionBuffer.size()<< " id "<< rcvRegionBuffer[0]<< std::endl;
+          if( perfLocation.empty())
+          {
+            MpiWrapper::recv( rcvPerfo, MPI_ANY_SOURCE, 123, MPI_COMM_WORLD, MPI_STATUS_IGNORE );
+          }
+          else
+          {
+            LvArray::forValuesInSlice( perfLocation.toSlice(), [&]( real64 const & v ){rcvPerfo.emplace_back( v ); } );
+          }
+        }
+        else
+        {
+          if( !perfLocation.empty())
+          {
+            MpiWrapper::send( perfLocation.data(), 3, 0, 123, MPI_COMM_WORLD );
+          }
+        }
+
+
+        if( rank == 0 )
+        {
+          std::cout << "destBuffer "<< rcvPerfo[0]<< " "<<rcvPerfo[1]<< " "<<rcvPerfo[2]<< std::endl;
+          std::cout << "regionNmae "<< resultRegionName[0] << std::endl;
           dataPerforation.addRow( iperf,
                                   wellSubRegion.getPerforationData()->getWellElements()[iperf],
                                   perfLocation[iperf],
-                                  region.getName(),
-                                  subRegion.getName(),
+                                  resultRegionName[0],
+                                  setSubRegionName[0],
                                   cellId );
         }
 
