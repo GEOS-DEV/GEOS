@@ -192,11 +192,11 @@ public:
 
     GEOS_THROW_IF( m_bulkModulus[k] <= 0,
                    GEOS_FMT( "{}: the rock bulk modulus {} must be strictly positive", getFullName(), k ),
-                   InputError, getDataContext() );
+                   InputError );
 
     GEOS_THROW_IF_GT_MSG( m_bulkModulus[k], m_grainBulkModulus[k],
                           GEOS_FMT( "{}: the rock bulk modulus {} cannot be greater than the grain bulk modulus {}", getFullName(), k ),
-                          InputError, getDataContext() );
+                          InputError );
 
     m_biotCoefficient[k] =  1.0 - bulkModulus / m_grainBulkModulus[k];
   }
