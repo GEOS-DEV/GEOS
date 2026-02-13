@@ -21,6 +21,7 @@
 #define GEOS_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONAL_SOLUTIONCHECKKERNEL_HPP
 
 #include "physicsSolvers/fluidFlow/kernels/compositional/SolutionScalingAndCheckingKernelBase.hpp"
+#include "physicsSolvers/fluidFlow/kernels/SolutionCheckKernelsHelpers.hpp"
 
 namespace geos
 {
@@ -71,7 +72,9 @@ public:
                        integer const numComp,
                        string const dofKey,
                        ElementSubRegionBase const & subRegion,
-                       arrayView1d< real64 const > const localSolution )
+                       arrayView1d< real64 const > const localSolution,
+                       ElementsReporterCollector const & negPressureIds,
+                       ElementsReporterCollector const & negDensityIds )
     : Base( rankOffset,
             numComp,
             dofKey,
@@ -84,44 +87,55 @@ public:
     m_allowCompDensChopping( allowCompDensChopping ),
     m_allowNegativePressure( allowNegativePressure ),
     m_scalingFactor( scalingFactor ),
-    m_scalingType( scalingType )
+    m_scalingType( scalingType ),
+    m_negPressureIds( negPressureIds ),
+    m_negDensityIds( negDensityIds )
   {}
+
+  /**
+   * @struct KernelStats
+   * @brief Kernel variables located on the stack
+   */
+  struct KernelStats : public Base::StackVariables
+  {
+    GEOS_HOST_DEVICE
+    KernelStats():
+      Base::StackVariables()
+    {}
+
+    KernelStats( real64 _localMinVal,
+                 real64 _localNegMinPres,
+                 real64 _localMinNegDens,
+                 real64 _localMinNegTotalDens,
+                 integer _localNumNegTotalDens )
+      :
+      Base::StackVariables( _localMinVal ),
+      localMinNegPres( _localNegMinPres ),
+      localMinNegDens( _localMinNegDens ),
+      localMinNegTotalDens( _localMinNegTotalDens ),
+      localNumNegTotalDens( _localNumNegTotalDens )
+    { }
+
+    real64 localMinNegPres;
+    real64 localMinNegDens;
+    real64 localMinNegTotalDens;
+
+    localIndex localNumNegTotalDens; // Can only be 0 or 1 in each kernel
+  };
 
   /**
    * @struct StackVariables
    * @brief Kernel variables located on the stack
    */
-  struct StackVariables : public Base::StackVariables
+  struct StackVariables : public KernelStats
   {
     GEOS_HOST_DEVICE
-    StackVariables()
+    StackVariables():
+      KernelStats()
     { }
 
-    StackVariables( real64 _localMinVal,
-                    real64 _localMinPres,
-                    real64 _localMinDens,
-                    real64 _localMinTotalDens,
-                    integer _localNumNegPressures,
-                    integer _localNumNegDens,
-                    integer _localNumNegTotalDens )
-      :
-      Base::StackVariables( _localMinVal ),
-      localMinPres( _localMinPres ),
-      localMinDens( _localMinDens ),
-      localMinTotalDens( _localMinTotalDens ),
-      localNumNegPressures( _localNumNegPressures ),
-      localNumNegDens( _localNumNegDens ),
-      localNumNegTotalDens( _localNumNegTotalDens )
-    { }
-
-    real64 localMinPres;
-    real64 localMinDens;
-    real64 localMinTotalDens;
-
-    integer localNumNegPressures;
-    integer localNumNegDens;
-    integer localNumNegTotalDens;
-
+    localIndex localNumNegPres;
+    localIndex localNumNegDens;
   };
 
   /**
@@ -132,19 +146,20 @@ public:
    * @param[inout] kernelComponent the kernel component providing access to the compute function
    */
   template< typename POLICY, typename KERNEL_TYPE >
-  static StackVariables
+  static KernelStats
   launch( localIndex const numElems,
           KERNEL_TYPE const & kernelComponent )
   {
-    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > globalMinVal( 1 );
+    using reducePolicy = ReducePolicy< POLICY >;
+    using atomicPolicy = AtomicPolicy< POLICY >;
 
-    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minPres( 0.0 );
-    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minDens( 0.0 );
-    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minTotalDens( 0.0 );
+    RAJA::ReduceMin< reducePolicy, integer > globalMinVal( 1 );
 
-    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegPressures( 0 );
-    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegDens( 0 );
-    RAJA::ReduceSum< ReducePolicy< POLICY >, integer > numNegTotalDens( 0 );
+    RAJA::ReduceMin< reducePolicy, real64 > minPres( 0.0 );
+    RAJA::ReduceMin< reducePolicy, real64 > minDens( 0.0 );
+    RAJA::ReduceMin< reducePolicy, real64 > minTotalDens( 0.0 );
+
+    RAJA::ReduceSum< reducePolicy, localIndex > numNegTotalDens( 0 );
 
     forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
@@ -153,28 +168,30 @@ public:
         return;
       }
 
-      StackVariables stack;
+      StackVariables stack{};
       kernelComponent.setup( ei, stack );
       kernelComponent.compute( ei, stack );
 
       globalMinVal.min( stack.localMinVal );
 
-      minPres.min( stack.localMinPres );
-      minDens.min( stack.localMinDens );
-      minTotalDens.min( stack.localMinTotalDens );
+      minPres.min( stack.localMinNegPres );
+      minDens.min( stack.localMinNegDens );
+      minTotalDens.min( stack.localMinNegTotalDens );
 
-      numNegPressures += stack.localNumNegPressures;
-      numNegDens += stack.localNumNegDens;
+      if( stack.localNumNegPres > 0 )
+        kernelComponent.m_negPressureIds.collectElement( atomicPolicy{}, { ei, stack.localMinNegPres } );
+
+      if( stack.localNumNegDens > 0 )
+        kernelComponent.m_negDensityIds.collectElement( atomicPolicy{}, { ei, stack.localMinNegDens } );
+
       numNegTotalDens += stack.localNumNegTotalDens;
     } );
 
-    return StackVariables( globalMinVal.get(),
-                           minPres.get(),
-                           minDens.get(),
-                           minTotalDens.get(),
-                           numNegPressures.get(),
-                           numNegDens.get(),
-                           numNegTotalDens.get() );
+    return KernelStats( globalMinVal.get(),
+                        minPres.get(),
+                        minDens.get(),
+                        minTotalDens.get(),
+                        numNegTotalDens.get() );
   }
 
   GEOS_HOST_DEVICE
@@ -183,11 +200,11 @@ public:
   {
     Base::setup( ei, stack );
 
-    stack.localMinPres = 0.0;
-    stack.localMinDens = 0.0;
-    stack.localMinTotalDens = 0.0;
+    stack.localMinNegPres = 0.0;
+    stack.localMinNegDens = 0.0;
+    stack.localMinNegTotalDens = 0.0;
 
-    stack.localNumNegPressures = 0;
+    stack.localNumNegPres = 0;
     stack.localNumNegDens = 0;
     stack.localNumNegTotalDens = 0;
   }
@@ -220,15 +237,15 @@ public:
     bool const localScaling = m_scalingType == compositionalMultiphaseUtilities::ScalingType::Local;
 
     real64 const newPres = m_pressure[ei] + (localScaling ? m_pressureScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow];
-    if( newPres < 0 )
+    if( newPres <= 0.0 )
     {
+      stack.localNumNegPres = 1;
+
       if( !m_allowNegativePressure )
-      {
         stack.localMinVal = 0;
-      }
-      stack.localNumNegPressures += 1;
-      if( newPres < stack.localMinPres )
-        stack.localMinPres = newPres;
+
+      if( newPres < stack.localMinNegPres )
+        stack.localMinNegPres = newPres;
     }
 
     // if component density chopping is not allowed, the time step fails if a component density is negative
@@ -239,12 +256,13 @@ public:
       for( integer ic = 0; ic < m_numComp; ++ic )
       {
         real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow + ic + 1];
-        if( newDens < 0 )
+        if( newDens <= 0.0 )
         {
+          stack.localNumNegDens = 1;
           stack.localMinVal = 0;
-          stack.localNumNegDens += 1;
-          if( newDens < stack.localMinDens )
-            stack.localMinDens = newDens;
+
+          if( newDens < stack.localMinNegDens )
+            stack.localMinNegDens = newDens;
         }
       }
     }
@@ -256,12 +274,13 @@ public:
         real64 const newDens = m_compDens[ei][ic] + (localScaling ? m_compDensScalingFactor[ei] : m_scalingFactor) * m_localSolution[stack.localRow + ic + 1];
         totalDens += ( newDens > 0.0 ) ? newDens : 0.0;
       }
-      if( totalDens < 0 )
+      if( totalDens <= 0.0 )
       {
+        stack.localNumNegTotalDens = 1;
         stack.localMinVal = 0;
-        stack.localNumNegTotalDens += 1;
-        if( totalDens < stack.localMinTotalDens )
-          stack.localMinTotalDens = totalDens;
+
+        if( totalDens < stack.localMinNegTotalDens )
+          stack.localMinNegTotalDens = totalDens;
       }
     }
 
@@ -281,6 +300,10 @@ protected:
 
   /// scaling type (global or local)
   compositionalMultiphaseUtilities::ScalingType const m_scalingType;
+
+  ElementsReporterCollector const m_negPressureIds;
+
+  ElementsReporterCollector const m_negDensityIds;
 
 };
 
@@ -303,7 +326,7 @@ public:
    * @param[in] localSolution the Newton update
    */
   template< typename POLICY >
-  static SolutionCheckKernel::StackVariables
+  static SolutionCheckKernel::KernelStats
   createAndLaunch( integer const allowCompDensChopping,
                    integer const allowNegativePressure,
                    compositionalMultiphaseUtilities::ScalingType const scalingType,
@@ -316,11 +339,13 @@ public:
                    integer const numComp,
                    string const dofKey,
                    ElementSubRegionBase & subRegion,
-                   arrayView1d< real64 const > const localSolution )
+                   arrayView1d< real64 const > const localSolution,
+                   ElementsReporterCollector const & negPressureIds,
+                   ElementsReporterCollector const & negDensityIds )
   {
     SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor,
                                 pressure, compDens, pressureScalingFactor, compDensScalingFactor, rankOffset,
-                                numComp, dofKey, subRegion, localSolution );
+                                numComp, dofKey, subRegion, localSolution, negPressureIds, negDensityIds );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 
