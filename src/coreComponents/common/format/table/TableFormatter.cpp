@@ -157,7 +157,6 @@ string TableCSVFormatter::headerToString() const
 
 string TableCSVFormatter::dataToString( TableData const & tableData ) const
 {
-
   RowsCellInput const rowsValues( tableData.getCellsData() );
   string result;
   size_t total_size = 0;
@@ -314,14 +313,14 @@ void TableTextFormatter::populateTitleCellsLayout( PreparedTableLayout const & t
     // the title row consists in a row of cells merging with the last cell containing the title text
     headerCellsLayout.emplace_back() = {
       stdVector< TableLayout::CellLayout >( nbVisibleColumns,
-                                            TableLayout::CellLayout( CellType::MergeNext ) ),   // cells
+                                            TableLayout::CellLayout( CellType::MergeNext ) ),  // cells
       titleInput.getHeight(), // sublinesCount
     };
     headerCellsLayout.back().cells.back() = titleInput;
 
     headerCellsLayout.emplace_back() = {
       stdVector< TableLayout::CellLayout >( nbVisibleColumns,
-                                            TableLayout::CellLayout( CellType::Separator ) ),   // cells
+                                            TableLayout::CellLayout( CellType::Separator ) ),  // cells
       1, // sublinesCount
     };
   }
