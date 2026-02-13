@@ -55,11 +55,10 @@ void ContactSolverBase::postInputInitialization()
   SolidMechanicsLagrangianFEM::postInputInitialization();
 
   GEOS_THROW_IF( m_timeIntegrationOption != TimeIntegrationOption::QuasiStatic,
-                 GEOS_FMT( "{} {}: The attribute `{}` must be `{}`",
-                           this->getCatalogName(), this->getName(),
+                 GEOS_FMT( "The attribute `{}` must be `{}`",
                            viewKeyStruct::timeIntegrationOptionString(),
                            EnumStrings< TimeIntegrationOption >::toString( TimeIntegrationOption::QuasiStatic ) ),
-                 InputError );
+                 InputError, getDataContext() );
 }
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
@@ -136,9 +135,8 @@ void ContactSolverBase::setFractureRegions( dataRepository::Group const & meshBo
 
   // TODO remove once multiple regions are fully supported
   GEOS_THROW_IF( m_fractureRegionNames.size() > 1,
-                 GEOS_FMT( "{} {}: The number of fracture regions can not be more than one",
-                           this->getCatalogName(), this->getName() ),
-                 InputError );
+                 "The number of fracture regions can not be more than one",
+                 InputError, getDataContext() );
 }
 
 void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
@@ -233,7 +231,7 @@ real64 ContactSolverBase::explicitStep( real64 const & GEOS_UNUSED_PARAM( time_n
                                         DomainPartition & GEOS_UNUSED_PARAM( domain ) )
 {
   GEOS_MARK_FUNCTION;
-  GEOS_ERROR( getDataContext() << ": ExplicitStep non available for contact solvers." );
+  GEOS_ERROR( "ExplicitStep non available for contact solvers.", getDataContext() );
   return dt;
 }
 

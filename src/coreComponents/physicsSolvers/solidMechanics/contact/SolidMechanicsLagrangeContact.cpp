@@ -920,7 +920,7 @@ SolidMechanicsLagrangeContact::createPreconditioner( DomainPartition & domain ) 
     }
     else
     {
-      GEOS_ERROR( "SolidMechanicsLagrangeContact::CreatePreconditioner leadingBlockApproximation option " << leadingBlockApproximation << " not supported" );
+      GEOS_ERROR( "SolidMechanicsLagrangeContact::CreatePreconditioner leadingBlockApproximation option " << leadingBlockApproximation << " not supported", getDataContext());
     }
 
     // Preconditioner for the leading block: tracPrecond
@@ -1315,8 +1315,9 @@ void SolidMechanicsLagrangeContact::computeFaceNodalArea( localIndex const kf0,
   }
   else
   {
-    GEOS_ERROR( "SolidMechanicsLagrangeContact " << getDataContext() << ": face with " << numNodesPerFace <<
-                " nodes. Only triangles and quadrilaterals and PEBI prisms up to 11 sides are supported." );
+    GEOS_ERROR( "Face with " << numNodesPerFace <<
+                " nodes. Only triangles and quadrilaterals and PEBI prisms up to 11 sides are supported.",
+                getDataContext() );
   }
 }
 
@@ -1823,8 +1824,7 @@ void SolidMechanicsLagrangeContact::assembleStabilization( MeshLevel const & mes
             realNodes++;
           }
         }
-        GEOS_ERROR_IF( realNodes != 2,
-                       getDataContext() << ": An edge shared by two fracture elements must have 2 nodes.",
+        GEOS_ERROR_IF( realNodes != 2, "An edge shared by two fracture elements must have 2 nodes.",
                        getDataContext() );
         edge.resize( realNodes );
 

@@ -1433,7 +1433,7 @@ void SolidMechanicsAugmentedLagrangianContact::createFaceTypeList( DomainPartiti
       }
       else
       {
-        GEOS_ERROR( "SolidMechanicsAugmentedLagrangianContact:: invalid face type" );
+        GEOS_ERROR( "SolidMechanicsAugmentedLagrangianContact:: invalid face type", getDataContext() );
       }
     } );
 
