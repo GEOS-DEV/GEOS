@@ -97,15 +97,15 @@ BlackOilFluidBase::BlackOilFluidBase( string const & name,
 void BlackOilFluidBase::fillWaterData( array1d< array1d< real64 > > const & tableValues )
 {
   GEOS_THROW_IF_NE_MSG( tableValues.size(), 1,
-                        getFullName() << ": the water table must contain one line and only one",
-                        InputError );
+                        "the water table must contain one line and only one",
+                        InputError, getDataContext()  );
   GEOS_THROW_IF_NE_MSG( tableValues[0].size(), 4,
-                        getFullName() << ": four columns (pressure, formation volume factor, compressibility, and viscosity) are expected for water",
-                        InputError );
+                        "four columns (pressure, formation volume factor, compressibility, and viscosity) are expected for water",
+                        InputError, getDataContext()  );
 
   GEOS_THROW_IF( m_waterParams.referencePressure > 0.0 || m_waterParams.formationVolFactor > 0.0 ||
                  m_waterParams.compressibility > 0.0 || m_waterParams.viscosity > 0.0,
-                 getFullName() << ": input is redundant (user provided both water data and a water pvt file)",
+                 "input is redundant (user provided both water data and a water pvt file)",
                  InputError, getDataContext() );
 
   m_waterParams.referencePressure = tableValues[0][0];
@@ -127,8 +127,8 @@ void BlackOilFluidBase::fillHydrocarbonData( integer const ip,
   for( localIndex i = 0; i < tableValues.size(); ++i )
   {
     GEOS_THROW_IF_NE_MSG( tableValues[i].size(), 3,
-                          getFullName() << ": three columns (pressure, formation volume factor, and viscosity) are expected for oil and gas",
-                          InputError );
+                          "three columns (pressure, formation volume factor, and viscosity) are expected for oil and gas",
+                          InputError, getDataContext()  );
 
     pressureCoords[0][i] = tableValues[i][0];
     formationVolFactor[i] = tableValues[i][1];
@@ -190,16 +190,15 @@ void BlackOilFluidBase::postInputInitialization()
 
   // Number of components should be at least equal to number of phases
   GEOS_THROW_IF_LT_MSG( numFluidComponents(), numFluidPhases(),
-                        GEOS_FMT( "{}: {} number of components ({}) must be at least number of phases ({})",
-                                  getFullName(), viewKeyStruct::componentNamesString(),
+                        GEOS_FMT( "number of components ({}) must be at least number of phases ({})",
                                   numFluidComponents(), numFluidPhases() ),
-                        InputError );
+                        InputError, getWrapperDataContext( viewKeyStruct::componentNamesString()), getDataContext()  );
 
   auto const checkInputSize = [&]( auto const & array, auto const & attribute )
   {
     GEOS_THROW_IF_NE_MSG( LvArray::integerConversion< size_t >( array.size()), m_phaseNames.size(),
-                          GEOS_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid number of values in attribute '{}'", attribute ),
+                          InputError, getDataContext()  );
   };
   checkInputSize( m_surfacePhaseMassDensity, viewKeyStruct::surfacePhaseMassDensitiesString() );
   checkInputSize( m_componentMolarWeight, viewKeyStruct::componentMolarWeightString() );
@@ -283,7 +282,7 @@ void BlackOilFluidBase::checkTablesParameters( real64 const pressure,
 void BlackOilFluidBase::createAllKernelWrappers()
 {
   GEOS_THROW_IF( m_hydrocarbonPhaseOrder.size() != 1 && m_hydrocarbonPhaseOrder.size() != 2,
-                 GEOS_FMT( "{}: the number of hydrocarbon phases must be 1 (oil) or 2 (oil+gas)", getFullName() ),
+                 "the number of hydrocarbon phases must be 1 (oil) or 2 (oil+gas)",
                  InputError, getDataContext() );
 
   if( m_formationVolFactorTableKernels.empty() && m_viscosityTableKernels.empty() )
@@ -303,18 +302,18 @@ void BlackOilFluidBase::validateTable( TableFunction const & table,
 {
   arrayView1d< real64 const > const property = table.getValues();
   GEOS_THROW_IF_NE_MSG( table.getInterpolationMethod(), TableFunction::InterpolationType::Linear,
-                        GEOS_FMT( "{}: in table '{}' interpolation method must be linear", getFullName(), table.getName() ),
-                        InputError );
+                        GEOS_FMT( "in table '{}' interpolation method must be linear", table.getName() ),
+                        InputError, getDataContext()  );
   GEOS_THROW_IF_LT_MSG( property.size(), 2,
-                        GEOS_FMT( "{}: table '{}' must contain at least two values", getFullName(), table.getName() ),
-                        InputError );
+                        GEOS_FMT( "table '{}' must contain at least two values", table.getName() ),
+                        InputError, getDataContext()  );
 
   // we don't check the first interval, as the first value may be used to specify surface conditions
   // we only issue a warning here, as we still want to allow this configuration
   for( localIndex i = 3; i < property.size(); ++i )
   {
     GEOS_THROW_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
-                   GEOS_FMT( "{}: in table '{}', viscosity values must be monotone", getFullName(), table.getName() ),
+                   GEOS_FMT( "in table '{}', viscosity values must be monotone", table.getName() ),
                    InputError, getDataContext() );
   }
 
@@ -336,8 +335,8 @@ void BlackOilFluidBase::validateWaterParams() const
   auto const checkPositiveValue = [&]( real64 const value, auto const & attribute )
   {
     GEOS_THROW_IF_LE_MSG( value, 0.0,
-                          GEOS_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
-                          InputError );
+                          GEOS_FMT( "invalid value of attribute '{}'", attribute ),
+                          InputError, getDataContext()  );
   };
   checkPositiveValue( m_waterParams.referencePressure, viewKeyStruct::waterRefPressureString() );
   checkPositiveValue( m_waterParams.formationVolFactor, viewKeyStruct::waterFormationVolumeFactorString() );
