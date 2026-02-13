@@ -1668,6 +1668,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                                               localSolution,
                                                                               negPresCollector,
                                                                               negDensCollector,
+                                                                              negTotalDensCollector,
                                                                               temperatureOffset ) :
                                  isothermalCompositionalMultiphaseBaseKernels::
                                    SolutionCheckKernelFactory::
@@ -1685,7 +1686,8 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
                                                                               subRegion,
                                                                               localSolution,
                                                                               negPresCollector,
-                                                                              negDensCollector );
+                                                                              negDensCollector,
+                                                                              negTotalDensCollector );
 
       localCheck = std::min( localCheck, subRegionData.localMinVal );
 

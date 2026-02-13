@@ -624,6 +624,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition & do
                                                      subRegion,
                                                      localSolution,
                                                      ElementsReporterCollector::disabled(),
+                                                     ElementsReporterCollector::disabled(),
                                                      ElementsReporterCollector::disabled() );
 
       localCheck = std::min( localCheck, subRegionData.localMinVal );

@@ -74,7 +74,8 @@ public:
                        ElementSubRegionBase const & subRegion,
                        arrayView1d< real64 const > const localSolution,
                        ElementsReporterCollector const & negPressureIds,
-                       ElementsReporterCollector const & negDensityIds )
+                       ElementsReporterCollector const & negDensityIds,
+                       ElementsReporterCollector const & negTotalDensityIds )
     : Base( rankOffset,
             numComp,
             dofKey,
@@ -89,7 +90,8 @@ public:
     m_scalingFactor( scalingFactor ),
     m_scalingType( scalingType ),
     m_negPressureIds( negPressureIds ),
-    m_negDensityIds( negDensityIds )
+    m_negDensityIds( negDensityIds ),
+    m_negTotalDensityIds( negTotalDensityIds )
   {}
 
   /**
@@ -112,15 +114,12 @@ public:
       Base::StackVariables( _localMinVal ),
       localMinNegPres( _localNegMinPres ),
       localMinNegDens( _localMinNegDens ),
-      localMinNegTotalDens( _localMinNegTotalDens ),
-      localNumNegTotalDens( _localNumNegTotalDens )
+      localMinNegTotalDens( _localMinNegTotalDens )
     { }
 
     real64 localMinNegPres;
     real64 localMinNegDens;
     real64 localMinNegTotalDens;
-
-    localIndex localNumNegTotalDens; // Can only be 0 or 1 in each kernel
   };
 
   /**
@@ -134,8 +133,9 @@ public:
       KernelStats()
     { }
 
-    localIndex localNumNegPres;
-    localIndex localNumNegDens;
+    localIndex localNumNegPres; // 0 or 1
+    localIndex localNumNegDens; // 0 -> num comp
+    localIndex localNumNegTotalDens; // 0 or 1
   };
 
   /**
@@ -158,8 +158,6 @@ public:
     RAJA::ReduceMin< reducePolicy, real64 > minPres( 0.0 );
     RAJA::ReduceMin< reducePolicy, real64 > minDens( 0.0 );
     RAJA::ReduceMin< reducePolicy, real64 > minTotalDens( 0.0 );
-
-    RAJA::ReduceSum< reducePolicy, localIndex > numNegTotalDens( 0 );
 
     forAll< POLICY >( numElems, [=] GEOS_HOST_DEVICE ( localIndex const ei )
     {
@@ -184,7 +182,8 @@ public:
       if( stack.localNumNegDens > 0 )
         kernelComponent.m_negDensityIds.collectElement( atomicPolicy{}, { ei, stack.localMinNegDens } );
 
-      numNegTotalDens += stack.localNumNegTotalDens;
+      if( stack.localNumNegTotalDens > 0 )
+        kernelComponent.m_negDensityIds.collectElement( atomicPolicy{}, { ei, stack.localNumNegTotalDens } );
     } );
 
     return KernelStats( globalMinVal.get(),
