@@ -86,9 +86,9 @@ void ConstantViscosity::Parameters::postInputInitializationImpl( MultiFluidBase 
     }
   }
   GEOS_THROW_IF_NE_MSG( m_constantPhaseViscosity.size(), numPhase,
-                        GEOS_FMT( "{}: invalid number of values in attribute '{}'", fluid->getFullName(),
+                        GEOS_FMT( "invalid number of values in attribute '{}'",
                                   viewKeyStruct::constantPhaseViscosityString() ),
-                        InputError );
+                        InputError, fluid->getDataContext() );
 }
 
 } // end namespace compositional

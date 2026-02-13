@@ -293,8 +293,8 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   }
   else
   {
-    GEOS_ERROR( getWrapperDataContext( viewKeyStruct::strainTheoryString() ) <<
-                ": Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain" );
+    GEOS_ERROR( "Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain",
+                getWrapperDataContext( viewKeyStruct::strainTheoryString() ) );
   }
 
   return rval;
@@ -611,7 +611,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
-      GEOS_ERROR_IF_LT_MSG( component, 0, getDataContext() << ": Component index required for displacement BC " << bc.getDataContext() );
+      GEOS_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC ",
+                            getDataContext(), bc.getDataContext() );
 
       forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                               [=] GEOS_DEVICE ( localIndex const i )
@@ -624,7 +625,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                     SortedArrayView< localIndex const > const & targetSet )
     {
       integer const component = bc.getComponent();
-      GEOS_ERROR_IF_LT_MSG( component, 0, getDataContext() << ": Component index required for displacement BC " << bc.getDataContext() );
+      GEOS_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC ",
+                            getDataContext(), bc.getDataContext() );
 
       forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                               [=] GEOS_DEVICE ( localIndex const i )
@@ -746,17 +748,17 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
     {
       char const bcLogMessage[] =
         "\nWarning!"
-        "\n{} {}: There is no displacement boundary condition applied to this problem in the {} direction. \n"
+        "\nThere is no displacement boundary condition applied to this problem in the {} direction. \n"
         "The problem may be ill-posed.\n";
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[0] == 0, // target set is empty
-                       GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'x' ), getDataContext() );
+                       GEOS_FMT( bcLogMessage, 'x' ),
+                       getDataContext() );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[1] == 0, // target set is empty
-                       GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'y' ), getDataContext() );
+                       GEOS_FMT( bcLogMessage, 'y' ),
+                       getDataContext() );
       GEOS_WARNING_IF( isDisplacementBCAppliedGlobal[2] == 0, // target set is empty
-                       GEOS_FMT( bcLogMessage,
-                                 getCatalogName(), getDataContext(), 'z' ), getDataContext() );
+                       GEOS_FMT( bcLogMessage, 'z' ),
+                       getDataContext() );
     }
   }
 

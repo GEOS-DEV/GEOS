@@ -143,7 +143,7 @@ void InternalMeshGenerator::postInputInitialization()
     }
     if( failFlag )
     {
-      GEOS_ERROR( getDataContext() << ": vertex/element mismatch.\n" << generalMeshErrorAdvice );
+      GEOS_ERROR( "vertex/element mismatch.\n" << generalMeshErrorAdvice, getDataContext()  );
     }
 
     // If specified, check to make sure bias values have the correct length
@@ -156,7 +156,7 @@ void InternalMeshGenerator::postInputInitialization()
     }
     if( failFlag )
     {
-      GEOS_ERROR( getDataContext() << ": element/bias mismatch.\n" << generalMeshErrorAdvice );
+      GEOS_ERROR( "element/bias mismatch.\n" << generalMeshErrorAdvice, getDataContext()  );
     }
   }
 
@@ -170,8 +170,8 @@ void InternalMeshGenerator::postInputInitialization()
     }
     else
     {
-      GEOS_ERROR( getDataContext() << ": InternalMeshGenerator: The number of element types is inconsistent" <<
-                  " with the number of total cell blocks.\n" << generalMeshErrorAdvice );
+      GEOS_ERROR( "InternalMeshGenerator: The number of element types is inconsistent" <<
+                  " with the number of total cell blocks.\n" << generalMeshErrorAdvice, getDataContext()  );
     }
   }
 
@@ -206,7 +206,7 @@ void InternalMeshGenerator::postInputInitialization()
       }
       else
       {
-        GEOS_ERROR( getDataContext() << ": Incorrect number of regionLayout entries specified." );
+        GEOS_ERROR( "Incorrect number of regionLayout entries specified.", getDataContext()  );
       }
     }
   }
