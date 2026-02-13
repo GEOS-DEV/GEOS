@@ -726,7 +726,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition & d
 
       minTempScalingFactor = MpiWrapper::min( minTempScalingFactor );
       GEOS_LOG_LEVEL_RANK_0( logInfo::Solution,
-                             GEOS_FMT( "        {}: Max temperature change = {:.3f} K (before scaling) at cell maxRegionDeltaTempLoc {}",
+                             GEOS_FMT( "        {}: Max temperature change = {:.3f} K (before scaling) at cell {}",
                                        getName(), globalMaxDeltaTemp.first, globalMaxDeltaTemp.second ) );
     }
 

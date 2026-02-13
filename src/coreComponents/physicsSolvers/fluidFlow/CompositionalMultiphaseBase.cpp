@@ -1891,45 +1891,188 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
 
       integer const fluidComponentId = fs.getComponent();
       integer const numFluidComponents = m_numComponents;
+      integer const numPhases = m_numPhases;
+      integer const numDofPerCell = m_numDofPerCell;
       integer const useTotalMassEquation = m_useTotalMassEquation;
-      forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
-                                                           targetSet,
-                                                           rankOffset,
-                                                           ghostRank,
-                                                           fluidComponentId,
-                                                           numFluidComponents,
-                                                           useTotalMassEquation,
-                                                           dofNumber,
-                                                           rhsContributionArrayView,
-                                                           localRhs,
-                                                           massProd] GEOS_HOST_DEVICE ( localIndex const a )
-      {
-        // we need to filter out ghosts here, because targetSet may contain them
-        localIndex const ei = targetSet[a];
-        if( ghostRank[ei] >= 0 )
-        {
-          return;
-        }
+      integer const isThermal = m_isThermal;
+      real64 const injectionTemperature = fs.getInjectionTemperature();
 
-        real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor;   // scale the contribution by the sizeScalingFactor here!
-        massProd += rhsValue;
-        if( useTotalMassEquation > 0 )
+      if( isThermal && injectionTemperature > 0.0 )
+      {
+        string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
+        MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+
+        using Deriv = constitutive::multifluid::DerivativeOffset;
+        arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const phaseEnthalpy = fluid.phaseEnthalpy();
+        arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > const dPhaseEnthalpy = fluid.dPhaseEnthalpy();
+        arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > const phaseMassDensity = fluid.phaseMassDensity();
+        arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+          subRegion.template getField< flow::phaseVolumeFraction >();
+        arrayView1d< real64 const > const temperature = subRegion.template getField< flow::temperature >();
+
+        forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
+                                                             targetSet,
+                                                             rankOffset,
+                                                             ghostRank,
+                                                             fluidComponentId,
+                                                             numFluidComponents,
+                                                             numPhases,
+                                                             numDofPerCell,
+                                                             useTotalMassEquation,
+                                                             injectionTemperature,
+                                                             phaseEnthalpy,
+                                                             dPhaseEnthalpy,
+                                                             phaseMassDensity,
+                                                             phaseVolFrac,
+                                                             temperature,
+                                                             dofNumber,
+                                                             rhsContributionArrayView,
+                                                             localRhs,
+                                                             localMatrix,
+                                                             massProd] GEOS_HOST_DEVICE ( localIndex const a )
         {
-          // for all "fluid components", we add the value to the total mass balance equation
-          globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
-          localRhs[totalMassBalanceRow] += rhsValue;
-          if( fluidComponentId < numFluidComponents - 1 )
+          localIndex const ei = targetSet[a];
+          if( ghostRank[ei] >= 0 )
           {
-            globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1;   // component mass bal equations are shifted
+            return;
+          }
+
+          real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor;
+          massProd += rhsValue;
+
+          // Step 1: add to mass balance equations (same as non-thermal)
+          if( useTotalMassEquation > 0 )
+          {
+            globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
+            localRhs[totalMassBalanceRow] += rhsValue;
+            if( fluidComponentId < numFluidComponents - 1 )
+            {
+              globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1;
+              localRhs[compMassBalanceRow] += rhsValue;
+            }
+          }
+          else
+          {
+            globalIndex const compMassBalanceRow = dofNumber[ei] - rankOffset + fluidComponentId;
             localRhs[compMassBalanceRow] += rhsValue;
           }
-        }
-        else
+
+          // Step 2: add to energy balance equation for injectors
+          if( rhsContributionArrayView[a] < 0.0 )
+          {
+            // Compute mass-weighted mixture enthalpy at cell conditions
+            real64 mixEnthalpy = 0.0;
+            real64 dMixEnthalpy_dP = 0.0;
+            real64 dMixEnthalpy_dT = 0.0;
+            real64 totalMassDensity = 0.0;
+            for( integer ip = 0; ip < numPhases; ++ip )
+            {
+              real64 const massDensContrib = phaseVolFrac[ei][ip] * phaseMassDensity[ei][0][ip];
+              totalMassDensity += massDensContrib;
+              mixEnthalpy += massDensContrib * phaseEnthalpy[ei][0][ip];
+              dMixEnthalpy_dP += massDensContrib * dPhaseEnthalpy[ei][0][ip][Deriv::dP];
+              dMixEnthalpy_dT += massDensContrib * dPhaseEnthalpy[ei][0][ip][Deriv::dT];
+            }
+            if( totalMassDensity > 0.0 )
+            {
+              mixEnthalpy /= totalMassDensity;
+              dMixEnthalpy_dP /= totalMassDensity;
+              dMixEnthalpy_dT /= totalMassDensity;
+            }
+
+            // Linearize: h_inj = h(T_cell, P_cell) + dh/dT * (T_inj - T_cell)
+            real64 const enthalpyInj = mixEnthalpy + dMixEnthalpy_dT * ( injectionTemperature - temperature[ei] );
+
+            // Energy equation is the last equation: dofNumber[ei] + numDofPerCell - 1
+            globalIndex const energyRowIndex = dofNumber[ei] + numDofPerCell - 1 - rankOffset;
+            localRhs[energyRowIndex] += enthalpyInj * rhsValue;
+
+            // Jacobian: d(h_inj * rhsValue)/dP = rhsValue * dh/dP
+            globalIndex const pressureDofIndex = dofNumber[ei] - rankOffset;
+            globalIndex dofIndices[1]{pressureDofIndex};
+            real64 jacobian[1]{rhsValue * dMixEnthalpy_dP};
+
+            localMatrix.template addToRow< serialAtomic >( energyRowIndex,
+                                                           dofIndices,
+                                                           jacobian,
+                                                           1 );
+          }
+          else if( rhsContributionArrayView[a] > 0.0 )
+          {
+            // Producer: energy leaves at cell conditions
+            real64 mixEnthalpy = 0.0;
+            real64 dMixEnthalpy_dP = 0.0;
+            real64 dMixEnthalpy_dT = 0.0;
+            real64 totalMassDensity = 0.0;
+            for( integer ip = 0; ip < numPhases; ++ip )
+            {
+              real64 const massDensContrib = phaseVolFrac[ei][ip] * phaseMassDensity[ei][0][ip];
+              totalMassDensity += massDensContrib;
+              mixEnthalpy += massDensContrib * phaseEnthalpy[ei][0][ip];
+              dMixEnthalpy_dP += massDensContrib * dPhaseEnthalpy[ei][0][ip][Deriv::dP];
+              dMixEnthalpy_dT += massDensContrib * dPhaseEnthalpy[ei][0][ip][Deriv::dT];
+            }
+            if( totalMassDensity > 0.0 )
+            {
+              mixEnthalpy /= totalMassDensity;
+              dMixEnthalpy_dP /= totalMassDensity;
+              dMixEnthalpy_dT /= totalMassDensity;
+            }
+
+            globalIndex const energyRowIndex = dofNumber[ei] + numDofPerCell - 1 - rankOffset;
+            localRhs[energyRowIndex] += mixEnthalpy * rhsValue;
+
+            globalIndex const pressureDofIndex = dofNumber[ei] - rankOffset;
+            globalIndex const temperatureDofIndex = pressureDofIndex + numDofPerCell - 1;
+            globalIndex dofIndices[2]{pressureDofIndex, temperatureDofIndex};
+            real64 jacobian[2]{rhsValue * dMixEnthalpy_dP, rhsValue * dMixEnthalpy_dT};
+
+            localMatrix.template addToRow< serialAtomic >( energyRowIndex,
+                                                           dofIndices,
+                                                           jacobian,
+                                                           2 );
+          }
+        } );
+      }
+      else
+      {
+        forAll< parallelDevicePolicy<> >( targetSet.size(), [sizeScalingFactor,
+                                                             targetSet,
+                                                             rankOffset,
+                                                             ghostRank,
+                                                             fluidComponentId,
+                                                             numFluidComponents,
+                                                             useTotalMassEquation,
+                                                             dofNumber,
+                                                             rhsContributionArrayView,
+                                                             localRhs,
+                                                             massProd] GEOS_HOST_DEVICE ( localIndex const a )
         {
-          globalIndex const compMassBalanceRow = dofNumber[ei] - rankOffset + fluidComponentId;
-          localRhs[compMassBalanceRow] += rhsValue;
-        }
-      } );
+          localIndex const ei = targetSet[a];
+          if( ghostRank[ei] >= 0 )
+          {
+            return;
+          }
+
+          real64 const rhsValue = rhsContributionArrayView[a] / sizeScalingFactor;
+          massProd += rhsValue;
+          if( useTotalMassEquation > 0 )
+          {
+            globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
+            localRhs[totalMassBalanceRow] += rhsValue;
+            if( fluidComponentId < numFluidComponents - 1 )
+            {
+              globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1;
+              localRhs[compMassBalanceRow] += rhsValue;
+            }
+          }
+          else
+          {
+            globalIndex const compMassBalanceRow = dofNumber[ei] - rankOffset + fluidComponentId;
+            localRhs[compMassBalanceRow] += rhsValue;
+          }
+        } );
+      }
 
       SourceFluxStatsAggregator::forAllFluxStatWrappers( subRegion, fs.getName(),
                                                          [&]( SourceFluxStatsAggregator::WrappedStats & wrapper )
