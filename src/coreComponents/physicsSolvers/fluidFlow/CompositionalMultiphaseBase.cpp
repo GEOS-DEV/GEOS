@@ -971,6 +971,16 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       {
         chopNegativeDensities( subRegion );
       }
+
+      // IMPORTANT: After computing compDens (the primary variables for ComponentDensities formulation),
+      // we must update the fluid state to ensure all fluid properties are consistent with compDens.
+      // This is crucial because:
+      // 1. updateFluidModel was called with compFrac to get totalDens
+      // 2. We then computed compDens = totalDens * compFrac
+      // 3. Now we need to recompute compFrac from compDens and update all fluid properties
+      // 4. Otherwise, the fluid properties will be inconsistent with the primary variables,
+      //    leading to huge residuals on the first implicit step.
+      updateFluidState( subRegion );
     }
   } );
 
@@ -1061,6 +1071,12 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       // TODO: compute the phase velocities here
       //dispersionMaterial.saveConvergedVelocitySate( phaseVelovity );
     }
+
+    // CRITICAL: Save the converged state to initialize the "_n" variables (compAmount_n, etc.)
+    // This is necessary for the first time step to compute the correct accumulation term.
+    // The accumulation is (compAmount - compAmount_n), and compAmount_n must be initialized
+    // to the initial state, otherwise the residual will be huge.
+    saveConvergedState( subRegion );
 
   } );
 }
