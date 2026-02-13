@@ -135,8 +135,8 @@ void CompositionalMultiphaseFVM::postInputInitialization()
 
     if( m_dbcParams.useDBC ) // z_c formulation is not compatible with DBC
     {
-      GEOS_ERROR( GEOS_FMT( "{}: '{}' is not compatible with {}",
-                            getDataContext(), formulationName, viewKeyStruct::useDBCString() ) );
+      GEOS_ERROR( GEOS_FMT( " '{}' is not compatible", formulationName ),
+                  getWrapperDataContext( viewKeyStruct::useDBCString() ) );
     }
 
     DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -147,10 +147,9 @@ void CompositionalMultiphaseFVM::postInputInitialization()
     if( upwindingParams.upwindingScheme == UpwindingScheme::C1PPU ||
         upwindingParams.upwindingScheme == UpwindingScheme::IHU )
     {
-      GEOS_ERROR( GEOS_FMT( "{}: {} is not available for {}",
-                            getDataContext(),
+      GEOS_ERROR( GEOS_FMT( "{} is not available for {}",
                             EnumStrings< UpwindingScheme >::toString( upwindingParams.upwindingScheme ),
-                            formulationName ) );
+                            formulationName ), getDataContext() );
     }
   }
 }
@@ -190,9 +189,10 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
   if( m_scalingType == ScalingType::Local &&
       m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None )
   {
-    GEOS_ERROR( GEOS_FMT( "{}: line search is not supported for {} = {}",
-                          getName(), viewKeyStruct::scalingTypeString(),
-                          EnumStrings< ScalingType >::toString( ScalingType::Local )) );
+    GEOS_ERROR( GEOS_FMT( "line search is not supported for {} = {}",
+                          viewKeyStruct::scalingTypeString(),
+                          EnumStrings< ScalingType >::toString( ScalingType::Local )),
+                getDataContext());
   }
 
   m_linearSolverParameters.get().mgr.strategy = m_isThermal
@@ -206,8 +206,7 @@ void CompositionalMultiphaseFVM::initializePreSubGroups()
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
   GEOS_ERROR_IF( fluxApprox.upwindingParams().upwindingScheme == UpwindingScheme::HU2PH && m_numPhases != 2,
-                 GEOS_FMT( "{}: upwinding scheme {} only supports 2-phase flow",
-                           getDataContext(),
+                 GEOS_FMT( "upwinding scheme {} only supports 2-phase flow",
                            EnumStrings< UpwindingScheme >::toString( UpwindingScheme::HU2PH )),
                  getDataContext() );
 }
@@ -1273,9 +1272,7 @@ void CompositionalMultiphaseFVM::applyFaceDirichletBC( real64 const time_n,
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
     bool const bcConsistent = validateFaceDirichletBC( domain, time_n + dt );
-    GEOS_ERROR_IF( !bcConsistent,
-                   GEOS_FMT( "{}: inconsistent boundary conditions", getDataContext() ),
-                   getDataContext() );
+    GEOS_ERROR_IF( !bcConsistent, "inconsistent boundary conditions", getDataContext() );
   }
 
   using namespace isothermalCompositionalMultiphaseFVMKernels;

@@ -103,29 +103,24 @@ void PVTDriver::postInputInitialization()
 {
   // Validate some inputs
   GEOS_ERROR_IF( m_outputMassDensity != 0 && m_outputMassDensity != 1,
-                 getWrapperDataContext( viewKeyStruct::outputMassDensityString() ) <<
-                 ": option can be either 0 (false) or 1 (true)",
+                 "Option can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::outputMassDensityString() ) );
 
   GEOS_ERROR_IF( m_outputCompressibility != 0 && m_outputCompressibility != 1,
-                 getWrapperDataContext( viewKeyStruct::outputCompressibilityString() ) <<
-                 ": option can be either 0 (false) or 1 (true)",
+                 "Option can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::outputCompressibilityString() ) );
 
   GEOS_ERROR_IF( m_outputPhaseComposition != 0 && m_outputPhaseComposition != 1,
-                 getWrapperDataContext( viewKeyStruct::outputPhaseCompositionString() ) <<
-                 ": option can be either 0 (false) or 1 (true)",
+                 "Option can be either 0 (false) or 1 (true)",
                  getWrapperDataContext( viewKeyStruct::outputPhaseCompositionString() ) );
 
   GEOS_WARNING_IF( m_precision < minPrecision,
-                   GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
-                             getWrapperDataContext( viewKeyStruct::precisionString() ),
+                   GEOS_FMT( "option should be between {} and {}. A value of {} will be used.",
                              minPrecision, maxPrecision, minPrecision ),
                    getWrapperDataContext( viewKeyStruct::precisionString() ));
 
   GEOS_WARNING_IF( maxPrecision < m_precision,
-                   GEOS_FMT( "{}: option should be between {} and {}. A value of {} will be used.",
-                             getWrapperDataContext( viewKeyStruct::precisionString() ),
+                   GEOS_FMT( "option should be between {} and {}. A value of {} will be used.",
                              minPrecision, maxPrecision, maxPrecision ),
                    getWrapperDataContext( viewKeyStruct::precisionString() ) );
 
