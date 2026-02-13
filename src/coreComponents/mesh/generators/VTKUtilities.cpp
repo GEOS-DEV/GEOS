@@ -1576,8 +1576,6 @@ buildFractureTo3DNeighbors( vtkSmartPointer< vtkDataSet > fractureMesh,
   GEOS_ERROR_IF( globalCellIds == nullptr, "Original mesh must have GlobalIds for cells" );
   GEOS_ERROR_IF( globalNodeIds == nullptr, "Original mesh must have GlobalIds for points" );
 
-  GEOS_LOG_RANK( "Building fracture-to-3D neighbor mapping..." );
-
   // Build mapping: original mesh index -> global cell ID (3D cells only)
   std::unordered_map< vtkIdType, int64_t > original3DToGlobalId;
   original3DToGlobalId.reserve( cells3DToOriginal.size() );
@@ -1588,8 +1586,6 @@ buildFractureTo3DNeighbors( vtkSmartPointer< vtkDataSet > fractureMesh,
     int64_t const globalId = static_cast< int64_t >( globalCellIds->GetTuple1( origIdx ) );
     original3DToGlobalId.emplace( origIdx, globalId );
   }
-
-  GEOS_LOG_RANK( GEOS_FMT( "  Built {} 3D cell mappings", original3DToGlobalId.size() ) );
 
   // Build node-to-cell connectivity for 3D cells
   stdMap< vtkIdType, std::set< vtkIdType > > nodeToOriginalCells;
@@ -1608,22 +1604,12 @@ buildFractureTo3DNeighbors( vtkSmartPointer< vtkDataSet > fractureMesh,
     }
   }
 
-  GEOS_LOG_RANK( GEOS_FMT( "  Built node-to-cell map with {} nodes", nodeToOriginalCells.size() ) );
-
   // Build collocated nodes wrapper for fracture mesh
-  GEOS_LOG_RANK( GEOS_FMT( "  Creating CollocatedNodes for {} fracture points",
-                           fractureMesh->GetNumberOfPoints() ) );
-
   CollocatedNodes collocatedNodesObj( "fracture", fractureMesh, false );  // Skip MPI check for local operation
-
-  GEOS_LOG_RANK( GEOS_FMT( "  CollocatedNodes ready with {} entries", collocatedNodesObj.size() ) );
 
   // Build fracture-to-3D neighbor mapping
   ArrayOfArrays< vtkIdType, int64_t > result;
   result.reserve( numFractureElems );
-
-  localIndex numOrphanedFractures = 0;
-  localIndex const maxWarnings = 5;
 
   for( vtkIdType fracElemId = 0; fracElemId < numFractureElems; ++fracElemId )
   {
@@ -1649,28 +1635,12 @@ buildFractureTo3DNeighbors( vtkSmartPointer< vtkDataSet > fractureMesh,
       }
     }
 
-    // Warn about orphaned fractures (limited output)
-    if( neighbor3DGlobalIds.empty() )
-    {
-      if( numOrphanedFractures < maxWarnings )
-      {
-        GEOS_WARNING( GEOS_FMT( "Fracture element {} has no 3D neighbors", fracElemId ) );
-      }
-      numOrphanedFractures++;
-    }
+    // Error on orphaned fractures
+    GEOS_ERROR_IF( neighbor3DGlobalIds.empty(),
+                   GEOS_FMT( "Fracture element {} has no 3D neighbors", fracElemId ) );
 
     result.appendArray( neighbor3DGlobalIds.begin(), neighbor3DGlobalIds.end() );
   }
-
-  // Summary of orphaned fractures
-  if( numOrphanedFractures > maxWarnings )
-  {
-    GEOS_WARNING( GEOS_FMT( "... and {} more orphaned fracture elements (suppressed)",
-                            numOrphanedFractures - maxWarnings ) );
-  }
-
-  GEOS_LOG_RANK( GEOS_FMT( "Finished building fracture neighbors: {} fractures, {} orphaned",
-                           numFractureElems, numOrphanedFractures ) );
 
   return result;
 }
@@ -2203,7 +2173,7 @@ redistributeMeshes( integer const GEOS_UNUSED_PARAM( logLevel ),
 
   if( rank == 0 && !fractureNames.empty() )
   {
-    superCellInfo = tagCellsWithSuperCellIds( cells3D, fractureNeighbors, partitionFractureWeight,comm );
+    superCellInfo = tagCellsWithSuperCellIds( cells3D, fractureNeighbors, partitionFractureWeight );
 
     vtkIdTypeArray * scArray =
       vtkIdTypeArray::SafeDownCast( cells3D->GetCellData()->GetArray( "SuperCellId" ) );

@@ -73,14 +73,12 @@ struct SuperCellInfo
  * @param cells3D The 3D volumetric cells (modified in-place to add SuperCellId array)
  * @param fractureNeighbors Map of fracture name to neighbor mapping (fracture element -> 3D cell neighbors)
  * @param fractureWeight Additional weight applied to fracture super-cells for load balancing
- * @param comm MPI communicator
  * @return Super-cell metadata for partitioning
  */
 SuperCellInfo tagCellsWithSuperCellIds(
   vtkSmartPointer< vtkUnstructuredGrid > cells3D,
   stdMap< string, ArrayOfArrays< vtkIdType, int64_t > > const & fractureNeighbors,
-  integer fractureWeight,
-  MPI_Comm comm );
+  integer fractureWeight );
 
 /**
  * @brief Reconstruct super-cell info from the SuperCellId array
