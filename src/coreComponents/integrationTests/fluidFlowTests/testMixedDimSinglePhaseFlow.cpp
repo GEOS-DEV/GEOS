@@ -145,7 +145,7 @@ protected:
     <FieldSpecification name="outletP" fieldName="pressure" setNames="{ xposFace }" objectPath="faceManager" scale="1.0"/>
   </FieldSpecifications>
   <Tasks>
-    <NewElementFieldInitializer name="apply_fracture_updates" fieldSpecificationNames="{initialPf}"/>
+    <FieldApplicator name="apply_fracture_updates" fieldSpecificationNames="{initialPf}"/>
   </Tasks> 
   <Outputs>
     <VTK name="vtkOutputM" fieldNames="{ pressure }" outputRegionType="cell" onlyPlotSpecifiedFieldNames="1"/>

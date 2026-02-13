@@ -1,4 +1,19 @@
-#include "NewElementFieldInitializer.hpp"
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2016-2024 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2024 TotalEnergies
+ * Copyright (c) 2018-2024 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2023-2024 Chevron
+ * Copyright (c) 2019-     GEOS/GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+#include "FieldApplicator.hpp"
 #include "events/tasks/TasksManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "fieldSpecification/FieldSpecificationBase.hpp"
@@ -19,8 +34,8 @@ namespace geos
 {
 using namespace dataRepository;
 
-NewElementFieldInitializer::NewElementFieldInitializer( const string & name,
-                                                        Group * const parent ):
+FieldApplicator::FieldApplicator( const string & name,
+                                  Group * const parent ):
   TaskBase( name, parent ),
   m_fieldSpecificationNames(),
   m_solverName()
@@ -38,16 +53,16 @@ NewElementFieldInitializer::NewElementFieldInitializer( const string & name,
 
 }
 
-NewElementFieldInitializer::~NewElementFieldInitializer() = default;
+FieldApplicator::~FieldApplicator() = default;
 
-void NewElementFieldInitializer::postInputInitialization()
+void FieldApplicator::postInputInitialization()
 {
   TaskBase::postInputInitialization();
 }
 
 
 bool
-NewElementFieldInitializer::
+FieldApplicator::
   execute( real64 const time_n,
            real64 const dt,
            integer const cycleNumber,
@@ -116,7 +131,7 @@ NewElementFieldInitializer::
   return false;
 }
 
-string NewElementFieldInitializer::getTargetFieldName( string const & fieldName ) const
+string FieldApplicator::getTargetFieldName( string const & fieldName ) const
 {
   // HydrostaticEquilibrium is defined programatically a field specification, but it isn't actually a field itself.
   // Instead, it updates the pressure field, which is the target field being modified.
@@ -128,10 +143,10 @@ string NewElementFieldInitializer::getTargetFieldName( string const & fieldName 
 }
 
 
-void NewElementFieldInitializer::applyEquilibriumInitialConditionFields( EquilibriumInitialCondition const & equilIC,
-                                                                         SortedArrayView< localIndex const > const & targetSet,
-                                                                         dataRepository::Group & targetGroup,
-                                                                         FunctionManager & functionManager )
+void FieldApplicator::applyEquilibriumInitialConditionFields( EquilibriumInitialCondition const & equilIC,
+                                                              SortedArrayView< localIndex const > const & targetSet,
+                                                              dataRepository::Group & targetGroup,
+                                                              FunctionManager & functionManager )
 {
   // For HydrostaticEquilibrium, we need to set pressure, temperature, and globalCompFraction fields
   // using the elevation-based tables.
@@ -235,7 +250,7 @@ void NewElementFieldInitializer::applyEquilibriumInitialConditionFields( Equilib
 }
 
 
-void NewElementFieldInitializer::initializeSubRegionFluidState( DomainPartition & domain, ElementSubRegionBase & subRegion )
+void FieldApplicator::initializeSubRegionFluidState( DomainPartition & domain, ElementSubRegionBase & subRegion )
 {
   GEOS_UNUSED_VAR( domain );
 
@@ -306,7 +321,7 @@ void NewElementFieldInitializer::initializeSubRegionFluidState( DomainPartition 
 }
 
 
-REGISTER_CATALOG_ENTRY( TaskBase, NewElementFieldInitializer, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( TaskBase, FieldApplicator, string const &, Group * const )
 
 
 } // namespace geos

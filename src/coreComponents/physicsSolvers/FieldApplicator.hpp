@@ -14,11 +14,11 @@
  */
 
 /**
- * @file NewElementFieldInitializer.hpp
+ * @file FieldApplicator.hpp
  */
 
-#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_NEWELEMENTFIELDINITIALIZER_HPP_
-#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_NEWELEMENTFIELDINITIALIZER_HPP_
+#ifndef SRC_CORECOMPONENTS_PHYSICSSOLVERS_FIELDAPPLICATOR_HPP_
+#define SRC_CORECOMPONENTS_PHYSICSSOLVERS_FIELDAPPLICATOR_HPP_
 
 #include "events/tasks/TaskBase.hpp"
 
@@ -32,8 +32,8 @@ class ElementSubRegionBase;
 
 
 /**
- * @class NewElementFieldInitializer
- * @brief Task to initialize fields on newly created elements (e.g., from SurfaceGenerator).
+ * @class FieldApplicator
+ * @brief Task to apply field specifications to elements during runtime.
  *
  * This task applies field specifications to elements that are created dynamically during
  * the simulation, such as fracture elements created by the SurfaceGenerator. It handles
@@ -41,25 +41,25 @@ class ElementSubRegionBase;
  * for compositional flow, including the computation of derived quantities like component
  * densities.
  */
-class NewElementFieldInitializer : public TaskBase
+class FieldApplicator : public TaskBase
 {
 public:
 
   /**
-   * @brief Constructor for the initialization class
+   * @brief Constructor for the FieldApplicator class
    * @param[in] name the name of the task coming from the xml
    * @param[in] parent the parent group of the task
    */
-  NewElementFieldInitializer( const string & name,
-                              Group * const parent );
+  FieldApplicator( const string & name,
+                   Group * const parent );
 
   /// Destructor for the class
-  ~NewElementFieldInitializer() override;
+  ~FieldApplicator() override;
 
   /// Accessor for the catalog name
   static string catalogName()
   {
-    return "NewElementFieldInitializer";
+    return "FieldApplicator";
   }
 
   /**
@@ -98,6 +98,7 @@ private:
    */
   string getTargetFieldName( string const & fieldName ) const;
 
+
   /**
    * @brief Apply pressure, temperature and component fraction fields for HydrostaticEquilibrium.
    * @param[in] equilIC The EquilibriumInitialCondition (HydrostaticEquilibrium) to apply.
@@ -134,4 +135,4 @@ private:
 
 } /* namespace geos */
 
-#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_NEWELEMENTFIELDINITIALIZER_HPP_ */
+#endif /* SRC_CORECOMPONENTS_PHYSICSSOLVERS_FIELDAPPLICATOR_HPP_ */
