@@ -73,8 +73,6 @@ void SinglePhaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
 
   setConstitutiveNames ( subRegion );
 
-  //DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  //ConstitutiveManager const & cm = domain.getConstitutiveManager();
   if( m_referenceFluidModelName.empty() )
   {
     m_referenceFluidModelName = getConstitutiveName< SingleFluidBase >( subRegion );
@@ -104,18 +102,9 @@ void SinglePhaseWell::registerWellDataOnMesh( WellElementSubRegion & subRegion )
     perforationData.registerField< well::gravityCoefficient >( getName() );
   }
 
-
   registerWrapper< real64 >( viewKeyStruct::currentBHPString() );
-
-  registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentBHPString() ).
-    setSizedFromParent( 0 ).
-    reference().resizeDimension< 0 >( 2 + isThermal() );       // dP, dT , dQ
-
   registerWrapper< real64 >( viewKeyStruct::currentVolRateString() );
-  registerWrapper< array1d< real64 > >( viewKeyStruct::dCurrentVolRateString() ).
-    setSizedFromParent( 0 ).
-    reference().resizeDimension< 0 >( 2 + isThermal() );       // dP, dT, dQ
-  m_writeCSV=1;
+
   // write rates output header
   if( m_writeCSV > 0 && subRegion.isLocallyOwned())
   {
@@ -218,7 +207,6 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
     return;
   }
 
-
   localIndex const iwelemRef = subRegion.getTopWellElementIndex();
 
   // subRegion data
@@ -235,42 +223,25 @@ void SinglePhaseWell::updateBHPForConstraint( WellElementSubRegion & subRegion )
   arrayView2d< real64 const, constitutive::singlefluid::USD_FLUID > const & dens = fluid.density();
   arrayView3d< real64 const, constitutive::singlefluid::USD_FLUID_DER > const & dDens = fluid.dDensity();
 
-  // control data
-
-  string const wellControlsName =  getName();
   real64 const & refGravCoef =  getReferenceGravityCoef();
+  real64 & currentBHP = getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
 
-  real64 & currentBHP =
-    getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentBHPString() );
-  arrayView1d< real64 > const & dCurrentBHP =
-    getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::dCurrentBHPString() );
-
-  geos::internal::kernelLaunchSelectorThermalSwitch( isThermal(), [&] ( auto ISTHERMAL )
+  // bring everything back to host, capture the scalars by reference
+  forAll< serialPolicy >( 1, [pres,
+                              dens,
+                              dDens,
+                              wellElemGravCoef,
+                              &currentBHP,
+                              &iwelemRef,
+                              &refGravCoef] ( localIndex const )
   {
-    integer constexpr IS_THERMAL = ISTHERMAL();
-    // bring everything back to host, capture the scalars by reference
-    forAll< serialPolicy >( 1, [pres,
-                                dens,
-                                dDens,
-                                wellElemGravCoef,
-                                &currentBHP,
-                                &dCurrentBHP,
-                                &iwelemRef,
-                                &refGravCoef] ( localIndex const )
-    {
-      real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
-      currentBHP = pres[iwelemRef] + dens[iwelemRef][0] * diffGravCoef;
-      dCurrentBHP[DerivOffset::dP] = 1.0 + dDens[iwelemRef][0][DerivOffset::dP] *diffGravCoef;
-      if constexpr ( IS_THERMAL )
-      {
-        dCurrentBHP[DerivOffset::dT] =  dDens[iwelemRef][0][DerivOffset::dT] * diffGravCoef;
-      }
-    } );
+    real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
+    currentBHP = pres[iwelemRef] + dens[iwelemRef][0] * diffGravCoef;
   } );
 
   GEOS_LOG_LEVEL_BY_RANK( logInfo::WellControl,
                           GEOS_FMT( "{}: The BHP (at the specified reference elevation) = {} Pa",
-                                    wellControlsName, currentBHP ) );
+                                    getName(), currentBHP ) );
 
 }
 
@@ -290,10 +261,6 @@ void SinglePhaseWell::calculateReferenceElementRates( WellElementSubRegion & sub
 
   arrayView1d< real64 const > const & connRate =
     subRegion.getField< well::connectionRate >();
-
-
-  // control data
-
 
   // fluid data
   constitutive::SingleFluidBase & fluidSeparator =   getSingleFluidSeparator();
@@ -456,7 +423,6 @@ real64 SinglePhaseWell::updateSubRegionState( ElementRegionManager const & elemM
     calculateReferenceElementRates( subRegion );
     // update the current BHP
     updateBHPForConstraint( subRegion );
-
 
   }
   return 0.0; // change in phasevolume fraction doesnt apply
@@ -684,7 +650,6 @@ void SinglePhaseWell::assembleWellConstraintTerms( real64 const & time_n,
     return;
   }
   {
-    // tjb wellControls.forSubGroups< BHPConstraint, MassConstraint, VolumeRateConstraint >( [&]( auto & constraint )
     forSubGroups< BHPConstraint, InjectionConstraint< VolumeRateConstraint >, ProductionConstraint< VolumeRateConstraint > >( [&]( auto & constraint )
     {
       if( constraint.getName() == getCurrentConstraint()->getName())
@@ -868,8 +833,6 @@ void SinglePhaseWell::assembleWellAccumulationTerms( real64 const & time,
     getReference< real64 >( SinglePhaseWell::viewKeyStruct::currentVolRateString() )=0.0;
   }
 }
-
-
 
 void SinglePhaseWell::computeWellPerforationRates( real64 const & time_n,
                                                    real64 const & GEOS_UNUSED_PARAM( dt ),
