@@ -141,7 +141,7 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
           GEOS_ERROR_IF_NE_MSG( num2dElements, 0, "Could not determine the element type of the fracture \"" << getName() << "\"." );
           return ElementType::Hexahedron;
         default:
-          GEOS_ERROR( "Unsupported type of elements during the face element sub region creation." );
+          GEOS_ERROR( "Unsupported type of elements during the face element sub region creation.", getDataContext() );
           return {};
       }
     };
@@ -161,7 +161,7 @@ void FaceElementSubRegion::copyFromCellBlock( FaceBlockABC const & faceBlock )
       // If we have found that the input face block contains 2d elements of different types,
       // we inform the used that the situation may be at risk.
       // (We're storing the face block in a homogeneous container while it's actually heterogeneous).
-      GEOS_WARNING( "Heterogeneous face element sub region found and stored as homogeneous. Use at your own risk." );
+      GEOS_WARNING( "Heterogeneous face element sub region found and stored as homogeneous. Use at your own risk.", getDataContext() );
     }
 
     auto const it = std::max_element( sizes.cbegin(), sizes.cend() );
@@ -1220,13 +1220,13 @@ void FaceElementSubRegion::fixNeighboringFacesNormals( FaceManager & faceManager
       // (i.e., towards the fracture element).
       if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f0], f0e0vector ) < 0.0 )
       {
-        GEOS_WARNING( GEOS_FMT( "For fracture element {}, I had to flip the normal nf0 of face {}", kfe, f0 ) );
+        GEOS_WARNING( GEOS_FMT( "For fracture element {}, I had to flip the normal nf0 of face {}", kfe, f0 ), getDataContext() );
         LvArray::tensorOps::scale< 3 >( faceNormal[f0], -1.0 );
         std::reverse( faceToNodes[f0].begin(), faceToNodes[f0].end() );
       }
       if( LvArray::tensorOps::AiBi< 3 >( faceNormal[f1], f1e1vector ) < 0.0 )
       {
-        GEOS_WARNING( GEOS_FMT( "For fracture element {}, I had to flip the normal nf1 of face {}", kfe, f1 ) );
+        GEOS_WARNING( GEOS_FMT( "For fracture element {}, I had to flip the normal nf1 of face {}", kfe, f1 ), getDataContext() );
         LvArray::tensorOps::scale< 3 >( faceNormal[f1], -1.0 );
         std::reverse( faceToNodes[f1].begin(), faceToNodes[f1].end() );
       }

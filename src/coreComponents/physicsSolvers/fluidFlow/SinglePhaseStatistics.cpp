@@ -260,7 +260,8 @@ void SinglePhaseStatistics::computeRegionStatistics( real64 const time,
     {
       stats.averagePressure = 0.0;
       stats.averageTemperature = 0.0;
-      GEOS_WARNING( GEOS_FMT( "{}, {}: Cannot compute average pressure & temperature because region pore volume is zero.", getName(), regionNames[i] ) );
+      GEOS_WARNING( GEOS_FMT( "{}: Cannot compute average pressure & temperature because region pore volume is zero.", regionNames[i] ),
+                    getDataContext() );
     }
 
     string_view massUnit = units::getSymbol( m_solver->getMassUnit() );

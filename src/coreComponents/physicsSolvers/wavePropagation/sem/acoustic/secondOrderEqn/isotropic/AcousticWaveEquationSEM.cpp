@@ -260,7 +260,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & baseM
                                                                                                 CellElementSubRegion & elementSubRegion )
   {
     GEOS_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                   getDataContext() << ": Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
+                   "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8), using the SEM formulation",
                    InputError, getDataContext() );
 
     arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
@@ -331,7 +331,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const cycleNumbe
   arrayView2d< real32 const > const sourceValue   = m_sourceValue.toViewConst();
 
   GEOS_THROW_IF( cycleNumber > sourceValue.size( 0 ),
-                 getDataContext() << ": Too many steps compared to array size",
+                 "Too many steps compared to array size",
                  geos::RuntimeError, getDataContext() );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOS_HOST_DEVICE ( localIndex const isrc )
   {
@@ -1071,12 +1071,12 @@ real64 AcousticWaveEquationSEM::explicitStepForward( real64 const & time_n,
 
         std::ofstream wf( fileName, std::ios::out | std::ios::binary );
         GEOS_THROW_IF( !wf,
-                       getDataContext() << ": Could not open file "<< fileName << " for writing",
+                       "Could not open file "<< fileName << " for writing",
                        InputError, getDataContext() );
         wf.write( (char *)&p_n[0], p_n.size()*sizeof( real32 ) );
         wf.close( );
         GEOS_THROW_IF( !wf.good(),
-                       getDataContext() << ": An error occured while writing "<< fileName,
+                       "An error occured while writing "<< fileName,
                        InputError, getDataContext() );
       }
 
@@ -1138,8 +1138,7 @@ real64 AcousticWaveEquationSEM::explicitStepBackward( real64 const & time_n,
         int const rank = MpiWrapper::commRank( MPI_COMM_GEOS );
         std::string fileName = GEOS_FMT( "lifo/rank_{:05}/pressure_forward_{:06}_{:08}.dat", rank, m_shotIndex, cycleNumber );
         std::ifstream wf( fileName, std::ios::in | std::ios::binary );
-        GEOS_THROW_IF( !wf,
-                       getDataContext() << ": Could not open file "<< fileName << " for reading",
+        GEOS_THROW_IF( !wf, "Could not open file "<< fileName << " for reading",
                        InputError, getDataContext() );
 
         p_forward.move( LvArray::MemorySpace::host, true );
