@@ -118,7 +118,6 @@ redistributeBySuperCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > cells3D,
  * @param baseGraph The original cell-to-cell adjacency graph
  * @param baseElemDist Element distribution for base graph (numRanks+1 array)
  * @param info Super-cell metadata
- * @param localStart Global index offset for this rank's cells (unused, for compatibility)
  * @param comm MPI communicator
  * @return Pair of (super-cell graph, super-cell vertex weights)
  */
@@ -128,7 +127,6 @@ buildSuperCellGraph(
   ArrayOfArrays< pmet_idx_t, pmet_idx_t > const & baseGraph,
   arrayView1d< pmet_idx_t const > const & baseElemDist,
   SuperCellInfo const & info,
-  globalIndex const localStart,
   MPI_Comm comm );
 
 /**

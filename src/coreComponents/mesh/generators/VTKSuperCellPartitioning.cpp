@@ -562,7 +562,6 @@ buildSuperCellGraph(
   ArrayOfArrays< pmet_idx_t, pmet_idx_t > const & baseGraph,
   arrayView1d< pmet_idx_t const > const & baseElemDist,
   SuperCellInfo const & info,
-  globalIndex const GEOS_UNUSED_PARAM( localStart ),
   MPI_Comm comm )
 {
   int const rank = MpiWrapper::commRank( comm );
@@ -612,9 +611,7 @@ buildSuperCellGraph(
   // -----------------------------------------------------------------------
   array1d< pmet_idx_t > superElemDist( numRanks + 1 );
   pmet_idx_t localSuperCellCount = numLocalSuperCells;
-
-  MPI_Allgather( &localSuperCellCount, 1, MPI_LONG_LONG_INT,
-                 superElemDist.data(), 1, MPI_LONG_LONG_INT, comm );
+  MpiWrapper::allgather( &localSuperCellCount, 1, superElemDist.data(), 1, comm );
 
   pmet_idx_t temp = superElemDist[0];
   superElemDist[0] = 0;
@@ -673,7 +670,8 @@ buildSuperCellGraph(
     // Gather counts from all ranks
     int localCount = sendGlobalIds.size();
     std::vector< int > allCounts( numRanks );
-    MPI_Allgather( &localCount, 1, MPI_INT, allCounts.data(), 1, MPI_INT, comm );
+    MpiWrapper::allgather( &localCount, 1, allCounts.data(), 1, comm );
+
 
     std::vector< int > displs( numRanks + 1, 0 );
     for( int r = 0; r < numRanks; ++r )
@@ -687,13 +685,13 @@ buildSuperCellGraph(
       std::vector< vtkIdType > allSuperCellIds( totalMappings );
 
       // All-gather the mappings
-      MPI_Allgatherv( sendGlobalIds.data(), localCount, MPI_LONG_LONG_INT,
-                      allGlobalIds.data(), allCounts.data(), displs.data(),
-                      MPI_LONG_LONG_INT, comm );
+      MpiWrapper::allgatherv( sendGlobalIds.data(), localCount,
+                              allGlobalIds.data(), allCounts.data(), displs.data(),
+                              comm );
 
-      MPI_Allgatherv( sendSuperCellIds.data(), localCount, MPI_LONG_LONG_INT,
-                      allSuperCellIds.data(), allCounts.data(), displs.data(),
-                      MPI_LONG_LONG_INT, comm );
+      MpiWrapper::allgatherv( sendSuperCellIds.data(), localCount,
+                              allSuperCellIds.data(), allCounts.data(), displs.data(),
+                              comm );
 
       // Build GLOBAL map (includes cells from ALL ranks)
       globalCellIdToSuperCellId.reserve( totalMappings );
@@ -718,7 +716,7 @@ buildSuperCellGraph(
 
   int localSCCount = sendSCIds.size();
   std::vector< int > allSCCounts( numRanks );
-  MPI_Allgather( &localSCCount, 1, MPI_INT, allSCCounts.data(), 1, MPI_INT, comm );
+  MpiWrapper::allgather( &localSCCount, 1, allSCCounts.data(), 1, comm );
 
   std::vector< int > scDispls( numRanks + 1, 0 );
   for( int r = 0; r < numRanks; ++r )
@@ -730,13 +728,13 @@ buildSuperCellGraph(
   std::vector< vtkIdType > allSCIds( totalSCMappings );
   std::vector< pmet_idx_t > allSCGlobalIndices( totalSCMappings );
 
-  MPI_Allgatherv( sendSCIds.data(), localSCCount, MPI_LONG_LONG_INT,
-                  allSCIds.data(), allSCCounts.data(), scDispls.data(),
-                  MPI_LONG_LONG_INT, comm );
+  MpiWrapper::allgatherv( sendSCIds.data(), localSCCount,
+                          allSCIds.data(), allSCCounts.data(), scDispls.data(),
+                          comm );
 
-  MPI_Allgatherv( sendSCGlobalIndices.data(), localSCCount, MPI_LONG_LONG_INT,
-                  allSCGlobalIndices.data(), allSCCounts.data(), scDispls.data(),
-                  MPI_LONG_LONG_INT, comm );
+  MpiWrapper::allgatherv( sendSCGlobalIndices.data(), localSCCount,
+                          allSCGlobalIndices.data(), allSCCounts.data(), scDispls.data(),
+                          comm );
 
   // Add ALL super-cell mappings to our local map
   for( int i = 0; i < totalSCMappings; ++i )
@@ -799,8 +797,8 @@ buildSuperCellGraph(
 
       int translatorLocalCount = numLocalCells;
       std::vector< int > translatorCounts( numRanks );
-      MPI_Allgather( &translatorLocalCount, 1, MPI_INT,
-                     translatorCounts.data(), 1, MPI_INT, comm );
+      MpiWrapper::allgather( &translatorLocalCount, 1,
+                             translatorCounts.data(), 1, comm );
 
       std::vector< int > translatorDispls( numRanks + 1, 0 );
       for( int r = 0; r < numRanks; ++r )
@@ -815,13 +813,13 @@ buildSuperCellGraph(
         std::vector< pmet_idx_t > allParmetisIndices( translatorTotalMappings );
         std::vector< vtkIdType > allVtkIds( translatorTotalMappings );
 
-        MPI_Allgatherv( sendParmetisIndices.data(), translatorLocalCount, MPI_LONG_LONG_INT,
-                        allParmetisIndices.data(), translatorCounts.data(),
-                        translatorDispls.data(), MPI_LONG_LONG_INT, comm );
+        MpiWrapper::allgatherv( sendParmetisIndices.data(), translatorLocalCount,
+                                allParmetisIndices.data(), translatorCounts.data(),
+                                translatorDispls.data(), comm );
 
-        MPI_Allgatherv( sendVtkIds.data(), translatorLocalCount, MPI_LONG_LONG_INT,
-                        allVtkIds.data(), translatorCounts.data(),
-                        translatorDispls.data(), MPI_LONG_LONG_INT, comm );
+        MpiWrapper::allgatherv( sendVtkIds.data(), translatorLocalCount,
+                                allVtkIds.data(), translatorCounts.data(),
+                                translatorDispls.data(), comm );
 
         parmetisToVtkId.reserve( translatorTotalMappings );
         vtkToParmetisId.reserve( translatorTotalMappings );
@@ -1026,7 +1024,7 @@ buildSuperCellGraph(
       // Gather edge counts
       int localEdgeCount = static_cast< int >( localSrc.size() );
       std::vector< int > edgeCountsSymm( numRanks );
-      MPI_Allgather( &localEdgeCount, 1, MPI_INT, edgeCountsSymm.data(), 1, MPI_INT, comm );
+      MpiWrapper::allgather( &localEdgeCount, 1, edgeCountsSymm.data(), 1, comm );
 
       std::vector< int > displsSymm( numRanks + 1, 0 );
       for( int r = 0; r < numRanks; ++r )
@@ -1042,12 +1040,12 @@ buildSuperCellGraph(
         std::vector< pmet_idx_t > allDstNodes( totalEdgesSymm );
 
         // Gather ALL edges from ALL ranks
-        MPI_Allgatherv( localSrc.data(), localEdgeCount, MPI_LONG_LONG_INT,
-                        allSrcNodes.data(), edgeCountsSymm.data(), displsSymm.data(),
-                        MPI_LONG_LONG_INT, comm );
-        MPI_Allgatherv( localDst.data(), localEdgeCount, MPI_LONG_LONG_INT,
-                        allDstNodes.data(), edgeCountsSymm.data(), displsSymm.data(),
-                        MPI_LONG_LONG_INT, comm );
+        MpiWrapper::allgatherv( localSrc.data(), localEdgeCount,
+                                allSrcNodes.data(), edgeCountsSymm.data(), displsSymm.data(),
+                                comm );
+        MpiWrapper::allgatherv( localDst.data(), localEdgeCount,
+                                allDstNodes.data(), edgeCountsSymm.data(), displsSymm.data(),
+                                comm );
 
         // Pass 2: Add REVERSE edges to neighborSets
         // For each edge (A -> B), ensure edge (B -> A) exists on rank owning B

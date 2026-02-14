@@ -690,7 +690,6 @@ redistributeBySuperCellGraph(
   // -----------------------------------------------------------------------
   // Step 2: Reconstruct super-cell info on all ranks (from SuperCellId array)
   // -----------------------------------------------------------------------
-
   SuperCellInfo localSuperCellInfo = reconstructSuperCellInfo( ugrid, fractureWeight );
 
   // -----------------------------------------------------------------------
@@ -701,7 +700,6 @@ redistributeBySuperCellGraph(
     baseCellGraph,
     baseElemDist,
     localSuperCellInfo,
-    baseElemDist[rank],
     comm
     );
 
@@ -793,7 +791,6 @@ redistributeBySuperCellGraph(
   // -----------------------------------------------------------------------
   // Step 8: Unpack super-cell partitioning to individual cells
   // -----------------------------------------------------------------------
-
   array1d< int64_t > cellPartitioning = unpackSuperCellPartitioning(
     ugrid,
     superCellPartitioning,
@@ -822,7 +819,6 @@ redistributeBySuperCellGraph(
   // -----------------------------------------------------------------------
   // Step 10: Redistribute mesh according to cell partitioning
   // -----------------------------------------------------------------------
-
   // Split mesh according to partitioning
   vtkSmartPointer< vtkPartitionedDataSet > splitMesh =
     splitMeshByPartition( ugrid, numRanks, cellPartitioning.toViewConst() );
@@ -833,7 +829,6 @@ redistributeBySuperCellGraph(
   // -----------------------------------------------------------------------
 // Step 11: Report final distribution statistics
 // -----------------------------------------------------------------------
-
   array1d< vtkIdType > cellsPerRank;
   vtkIdType const localCells = redistributed->GetNumberOfCells();
   MpiWrapper::allGather( localCells, cellsPerRank, comm );
