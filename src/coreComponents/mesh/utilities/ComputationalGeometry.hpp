@@ -245,14 +245,17 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
 
   GEOS_ERROR_IF_LT( numberOfPoints, 2 );
 
-  real64 current[ 3 ], next[ 3 ], crossProduct[ 3 ];
+  real64 current[ 3 ], next[ 3 ], origin[ 3 ], crossProduct[ 3 ];
 
   LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ numberOfPoints - 1 ] ] );
+  LvArray::tensorOps::copy< 3>( origin, points[ pointsIndices[ 0 ]] );
 
-  for( localIndex a=0; a<numberOfPoints; ++a )
+  for( localIndex a=1; a<numberOfPoints; ++a )
   {
     LvArray::tensorOps::copy< 3 >( current, next );
+    LvArray::tensorOps::scaledAdd<3>(current, origin, -1.);
     LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ a ] ] );
+    LvArray::tensorOps::scaledAdd<3>(next, origin, -1.);
 
     LvArray::tensorOps::crossProduct( crossProduct, current, next );
 
