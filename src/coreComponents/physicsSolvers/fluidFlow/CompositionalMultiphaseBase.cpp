@@ -1988,8 +1988,8 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
             localRhs[energyRowIndex] += enthalpyInj * rhsValue;
 
             // Jacobian: d(h_inj * rhsValue)/dP = rhsValue * dh/dP
-            globalIndex const pressureDofIndex = dofNumber[ei] - rankOffset;
-            globalIndex dofIndices[1]{pressureDofIndex};
+            globalIndex const pressureColIndex = dofNumber[ei];
+            globalIndex dofIndices[1]{pressureColIndex};
             real64 jacobian[1]{rhsValue * dMixEnthalpy_dP};
 
             localMatrix.template addToRow< serialAtomic >( energyRowIndex,
@@ -2022,9 +2022,9 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
             globalIndex const energyRowIndex = dofNumber[ei] + numDofPerCell - 1 - rankOffset;
             localRhs[energyRowIndex] += mixEnthalpy * rhsValue;
 
-            globalIndex const pressureDofIndex = dofNumber[ei] - rankOffset;
-            globalIndex const temperatureDofIndex = pressureDofIndex + numDofPerCell - 1;
-            globalIndex dofIndices[2]{pressureDofIndex, temperatureDofIndex};
+            globalIndex const pressureColIndex = dofNumber[ei];
+            globalIndex const temperatureColIndex = pressureColIndex + numDofPerCell - 1;
+            globalIndex dofIndices[2]{pressureColIndex, temperatureColIndex};
             real64 jacobian[2]{rhsValue * dMixEnthalpy_dP, rhsValue * dMixEnthalpy_dT};
 
             localMatrix.template addToRow< serialAtomic >( energyRowIndex,

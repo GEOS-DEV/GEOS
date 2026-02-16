@@ -1114,15 +1114,15 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
           localRhs[massRowIndex] += rhsValue;
           massProd += rhsValue;
 
-          globalIndex const pressureDofIndex    = dofNumber[ei] - rankOffset;
-          globalIndex const temperatureDofIndex = pressureDofIndex + 1;
+          globalIndex const pressureColIndex    = dofNumber[ei];
+          globalIndex const temperatureColIndex = pressureColIndex + 1;
 
           if( rhsContributionArrayView[a] > 0.0 )
           {
             // Producer: energy leaves at cell conditions (h(T_cell, P_cell))
             localRhs[energyRowIndex] += enthalpy[ei][0] * rhsValue;
 
-            globalIndex dofIndices[2]{pressureDofIndex, temperatureDofIndex};
+            globalIndex dofIndices[2]{pressureColIndex, temperatureColIndex};
             real64 jacobian[2]{rhsValue * dEnthalpy[ei][0][DerivOffset::dP], rhsValue * dEnthalpy[ei][0][DerivOffset::dT]};
 
             localMatrix.template addToRow< serialAtomic >( energyRowIndex,
@@ -1141,7 +1141,7 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
 
             // Jacobian: d(h_inj * rhsValue)/dP = rhsValue * dh/dP (T_inj does not depend on P, but h linearization base does)
             // Jacobian: d(h_inj * rhsValue)/dT ≈ 0 (h_inj is evaluated at fixed T_inj, not at T_cell)
-            globalIndex dofIndices[1]{pressureDofIndex};
+            globalIndex dofIndices[1]{pressureColIndex};
             real64 jacobian[1]{rhsValue * dEnthalpy[ei][0][DerivOffset::dP]};
 
             localMatrix.template addToRow< serialAtomic >( energyRowIndex,
