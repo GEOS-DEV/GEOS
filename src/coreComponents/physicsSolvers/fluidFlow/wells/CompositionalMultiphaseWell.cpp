@@ -1615,11 +1615,12 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
   string const wellDofKey = dofManager.getKey( wellElementDofName() );
   integer localCheck = 1;
   real64 minPres = 0.0, minDens = 0.0, minTotalDens = 0.0;
-  integer numNegTotalDens = 0;
   ElementsReporterBuffer rankNegPressureIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
                                              isLogLevelActive< logInfo::SolutionDetails >( getLogLevel() ) ? 16 : 0 };
   ElementsReporterBuffer rankNegDensityIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ),
                                             isLogLevelActive< logInfo::SolutionDetails >( this->getLogLevel() ) ? 16 : 0 };
+  // output only total density sum, not cell details
+  ElementsReporterBuffer rankTotalNegDensityIds{ isLogLevelActive< logInfo::Solution >( getLogLevel() ), 0 };
 
   forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                                MeshLevel & mesh,
@@ -1644,6 +1645,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
       auto const & cellLocalToGlobalIds = subRegion.localToGlobalMap();
       auto const negPresCollector = rankNegPressureIds.createCollector( cellLocalToGlobalIds );
       auto const negDensCollector = rankNegDensityIds.createCollector( cellLocalToGlobalIds );
+      auto const negTotalDensCollector = rankNegDensityIds.createCollector( cellLocalToGlobalIds );
 
       // check that pressure and component densities are non-negative
       // for thermal, check that temperature is above 273.15 K
@@ -1694,14 +1696,12 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
       minPres  = std::min( minPres, subRegionData.localMinNegPres );
       minDens = std::min( minDens, subRegionData.localMinNegDens );
       minTotalDens = std::min( minTotalDens, subRegionData.localMinNegTotalDens );
-      numNegTotalDens += subRegionData.localNumNegTotalDens;
     } );
   } );
 
   minPres  = MpiWrapper::min( minPres );
   minDens = MpiWrapper::min( minDens );
   minTotalDens = MpiWrapper::min( minTotalDens );
-  numNegTotalDens = MpiWrapper::sum( numNegTotalDens );
 
   rankNegPressureIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
                                                         "negative pressure", minPres, units::Unit::Pressure );
@@ -1709,12 +1709,8 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition & domain,
   units::Unit const massUnit = m_useMass ? units::Unit::Density : units::Unit::MolarDensity;
   rankNegDensityIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
                                                        "negative component density", minDens, massUnit );
-  if( numNegTotalDens > 0 )
-  {
-    GEOS_LOG_LEVEL_RANK_0( logInfo::SolutionDetails,
-                           GEOS_FMT( "        {}: Number of negative total density values: {}, minimum value: {} {}",
-                                     getName(), numNegTotalDens, fmt::format( "{:.{}f}", minTotalDens, 3 ), units::getSymbol( massUnit ) ) );
-  }
+  rankTotalNegDensityIds.createOutput().outputTooLowValues( GEOS_FMT( "        {}: ", getName() ),
+                                                       "negative components total density", minTotalDens, massUnit );
 
   return MpiWrapper::min( localCheck );
 }

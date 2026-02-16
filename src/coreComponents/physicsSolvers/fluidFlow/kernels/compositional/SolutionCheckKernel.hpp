@@ -106,13 +106,12 @@ public:
     {}
 
     KernelStats( real64 _localMinVal,
-                 real64 _localNegMinPres,
+                 real64 _localMinNegPres,
                  real64 _localMinNegDens,
-                 real64 _localMinNegTotalDens,
-                 integer _localNumNegTotalDens )
+                 real64 _localMinNegTotalDens )
       :
       Base::StackVariables( _localMinVal ),
-      localMinNegPres( _localNegMinPres ),
+      localMinNegPres( _localMinNegPres ),
       localMinNegDens( _localMinNegDens ),
       localMinNegTotalDens( _localMinNegTotalDens )
     { }
@@ -183,14 +182,13 @@ public:
         kernelComponent.m_negDensityIds.collectElement( atomicPolicy{}, { ei, stack.localMinNegDens } );
 
       if( stack.localNumNegTotalDens > 0 )
-        kernelComponent.m_negDensityIds.collectElement( atomicPolicy{}, { ei, stack.localNumNegTotalDens } );
+        kernelComponent.m_negDensityIds.collectElement( atomicPolicy{}, { ei, stack.localMinNegTotalDens } );
     } );
 
     return KernelStats( globalMinVal.get(),
                         minPres.get(),
                         minDens.get(),
-                        minTotalDens.get(),
-                        numNegTotalDens.get() );
+                        minTotalDens.get() );
   }
 
   GEOS_HOST_DEVICE
@@ -304,6 +302,8 @@ protected:
 
   ElementsReporterCollector const m_negDensityIds;
 
+  ElementsReporterCollector const m_negTotalDensityIds;
+
 };
 
 /**
@@ -340,11 +340,13 @@ public:
                    ElementSubRegionBase & subRegion,
                    arrayView1d< real64 const > const localSolution,
                    ElementsReporterCollector const & negPressureIds,
-                   ElementsReporterCollector const & negDensityIds )
+                   ElementsReporterCollector const & negDensityIds,
+                   ElementsReporterCollector const & negTotalDensityIds )
   {
     SolutionCheckKernel kernel( allowCompDensChopping, allowNegativePressure, scalingType, scalingFactor,
                                 pressure, compDens, pressureScalingFactor, compDensScalingFactor, rankOffset,
-                                numComp, dofKey, subRegion, localSolution, negPressureIds, negDensityIds );
+                                numComp, dofKey, subRegion, localSolution, negPressureIds, negDensityIds, 
+                                negTotalDensityIds );
     return SolutionCheckKernel::launch< POLICY >( subRegion.size(), kernel );
   }
 
