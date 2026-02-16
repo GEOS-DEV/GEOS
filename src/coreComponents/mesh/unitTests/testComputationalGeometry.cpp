@@ -99,12 +99,9 @@ TEST( testComputationalGeometry, checkHighAspectRatio)
   points(2,1) = 1.e6 + yb;
   points(2,2) = 1.e6 + zb;
 
-  // std::cout << "Check length " << a << " " << std::sqrt(c*c + dz*dz) << std::endl;
-
   real64 faceCenter[ 3 ], faceNormal[ 3 ];
   real64 faceCenterOld[ 3 ], faceNormalOld[ 3 ];
   auto faceArea = computationalGeometry::centroid_3DPolygon(indices.toSliceConst(), points.toViewConst(), faceCenter, faceNormal, TOL);
-  auto faceAreaOld = computationalGeometry::centroid_3DPolygon_Old(indices.toSliceConst(), points.toViewConst(), faceCenterOld, faceNormalOld, TOL);
 
   constexpr real64 EXPECTED_AREA = 0.5*std::sqrt(LvArray::math::square(xa*yb-ya*xb) + 
                                                     LvArray::math::square(ya*zb-za*yb) +
@@ -113,15 +110,6 @@ TEST( testComputationalGeometry, checkHighAspectRatio)
   constexpr real64 EXPECTED_CENTER[3] = { 1.e6 + (xa+xb)/3 , 1.e6 + (ya+yb)/3. , 1.e6 + (za+zb)/3};
 
   constexpr real64 EXPECTED_NORMAL[3] = { (ya*zb-za*yb)/2/EXPECTED_AREA, (za*xb-xa*zb)/2/EXPECTED_AREA, (xa*yb-ya*xb)/2/EXPECTED_AREA};
-  std::cout << "AREA " << EXPECTED_AREA << " -- " << faceArea << "-- " << faceAreaOld << std::endl;
-  //
-  std::cout << "CENTER " << EXPECTED_CENTER[0] << " -- " << faceCenter[0] << " -- " << faceCenterOld[0]<< std::endl;
-  std::cout << "CENTER " << EXPECTED_CENTER[1] << " -- " << faceCenter[1] << " -- " << faceCenterOld[1]<< std::endl;
-  std::cout << "CENTER " << EXPECTED_CENTER[2] << " -- " << faceCenter[2] << " -- " << faceCenterOld[2]<< std::endl;
-  //
-  std::cout << "NORMAL " << EXPECTED_NORMAL[0] << " -- " << faceNormal[0] << " -- " << faceNormalOld[0] <<std::endl;
-  std::cout << "NORMAL " << EXPECTED_NORMAL[1] << " -- " << faceNormal[1] << " -- " << faceNormalOld[1] <<std::endl;
-  std::cout << "NORMAL " << EXPECTED_NORMAL[2] << " -- " << faceNormal[2] << " -- " << faceNormalOld[2] <<std::endl;
 
   EXPECT_LT( abs(faceArea - EXPECTED_AREA), 1e-6); 
   EXPECT_LT( abs(faceNormal[0]-EXPECTED_NORMAL[0]), 1e-6);

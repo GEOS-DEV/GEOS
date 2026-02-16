@@ -214,65 +214,6 @@ real64 computeDiameter( POINT_COORDS_TYPE points,
   return LvArray::math::sqrt< real64 >( diameter );
 }
 
-template< typename CENTER_TYPE, typename NORMAL_TYPE >
-GEOS_HOST_DEVICE
-GEOS_FORCE_INLINE
-real64 centroid_3DPolygon_Old( arraySlice1d< localIndex const > const pointsIndices,
-                           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & points,
-                           CENTER_TYPE && center,
-                           NORMAL_TYPE && normal,
-                           real64 const areaTolerance = 0.0 )
-{
-  real64 area = 0.0;
-  LvArray::tensorOps::fill< 3 >( center, 0 );
-  LvArray::tensorOps::fill< 3 >( normal, 0 );
-
-  localIndex const numberOfPoints = pointsIndices.size();
-
-  std::cout << " Entering old impl \n";
-  GEOS_ERROR_IF_LT( numberOfPoints, 2 );
-
-  real64 current[ 3 ], next[ 3 ], crossProduct[ 3 ];
-
-  LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ numberOfPoints - 1 ] ] );
-
-  for( localIndex a=0; a<numberOfPoints; a++ )
-  {
-    LvArray::tensorOps::copy< 3 >( current, next );
-  std::cout << "next[init-00] :: " << next[0] << " " << next[1] << " " << next[2] << std::endl;
-    LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ a ] ] );
-  std::cout << "next[init-00] :: " << next[0] << " " << next[1] << " " << next[2] << std::endl;
-
-    LvArray::tensorOps::crossProduct( crossProduct, current, next );
-
-    LvArray::tensorOps::add< 3 >( normal, crossProduct );
-    LvArray::tensorOps::add< 3 >( center, next );
-  }
-
-  area = LvArray::tensorOps::l2Norm< 3 >( normal );
-  LvArray::tensorOps::scale< 3 >( center, 1.0 / numberOfPoints );
-
-  if( area > areaTolerance )
-  {
-    LvArray::tensorOps::normalize< 3 >( normal );
-    area *= 0.5;
-  }
-  else if( area < -areaTolerance )
-  {
-    for( localIndex a=0; a<numberOfPoints; ++a )
-    {
-      GEOS_LOG_RANK( "Points: " << points[ pointsIndices[ a ] ] << " " << pointsIndices[ a ] );
-    }
-    GEOS_ERROR( "Negative area found : " << area );
-  }
-  else
-  {
-    return 0.0;
-  }
-
-  return area;
-}
-
 /**
  * @brief Calculate the centroid of a convex 3D polygon as well as the normal. 
  * @tparam CENTER_TYPE The type of @p center.
@@ -307,24 +248,16 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   real64 current[ 3 ], next[ 3 ], origin[ 3 ], crossProduct[ 3 ];
 
   LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ numberOfPoints - 1 ] ] );
-  std::cout << "next[init] :: " << next[0] << " " << next[1] << " " << next[2] << std::endl;
   LvArray::tensorOps::copy< 3>( origin, points[ pointsIndices[ 0 ]] );
-  std::cout << "origin[init] :: " << origin[0] << " " << origin[1] << " " << origin[2] << std::endl;
 
   for( localIndex a=0; a<numberOfPoints; )
   {
-    std::cout << "-----\n\t iter : " << a << std::endl;
     LvArray::tensorOps::copy< 3 >( current, points[ pointsIndices[ a++ ]] );
     LvArray::tensorOps::scaledAdd<3>(current, origin, -1.);
-    std::cout << "current :: " << current[0] << " " << current[1] << " " << current[2] << std::endl;
     LvArray::tensorOps::copy< 3 >( next, points[ pointsIndices[ a % numberOfPoints ] ] );
-  // GEOS_LOG_RANK(GEOS_FMT("next: {}, {}, {}", next[0], next[1], next[2]));
     LvArray::tensorOps::scaledAdd<3>(next, origin, -1.);
-    std::cout << "next :: " << next[0] << " " << next[1] << " " << next[2] << std::endl;
 
     LvArray::tensorOps::crossProduct( crossProduct, current, next );
-    // GEOS_LOG_RANK(GEOS_FMT("crossProduct: {}", crossProduct));
-    std::cout << "CrossProduct :: " << crossProduct[0] << " " << crossProduct[1] << " " << crossProduct[2] << std::endl;
 
     LvArray::tensorOps::add< 3 >( normal, crossProduct );
     LvArray::tensorOps::add< 3 >( center, next );
