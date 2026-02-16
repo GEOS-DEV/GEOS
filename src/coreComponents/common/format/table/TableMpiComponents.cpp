@@ -146,6 +146,9 @@ void TableTextMpiOutput::outputTableDataToRank0( std::ostream & tableOutput,
                        0, MPI_COMM_GEOS );
   if( status.m_isMasterRank )
   {
+    // master rank status
+    status.m_hasContent = !dataCellsLayout.empty();
+
     for( integer rankId = 1; rankId < ranksCount; ++rankId )
     {
       if( ranksStrsSizes[rankId] > 0 )
