@@ -433,8 +433,8 @@ public:
                                     localIndex const iwelem )
     {
       // For injector top element (global index == 0), the well energy equation
-      // is replaced by a Dirichlet BC (T = T_inj), so we must NOT assemble
-      // the well-side energy flux. However, we MUST still assemble the
+      // is replaced by a Dirichlet BC (T = T_inj), so we must not assemble
+      // the well-side energy flux. However, we still assemble the
       // reservoir-side energy flux so the reservoir cell receives the correct
       // enthalpy from the injected mass.
       bool const isTopInjectorElement = !m_isProducer && m_globalWellElementIndex[iwelem] == 0;

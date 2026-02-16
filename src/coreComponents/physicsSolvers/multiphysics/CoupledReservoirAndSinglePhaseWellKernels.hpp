@@ -367,8 +367,8 @@ public:
                                     localIndex const iwelem )
     {
       // For injector top element (global index == 0), the well energy equation
-      // is replaced by a Dirichlet BC (T = T_inj), so we must NOT assemble
-      // the well-side energy flux. However, we MUST still assemble the
+      // is replaced by a Dirichlet BC (T = T_inj), so we must not assemble
+      // the well-side energy flux. However, we still assemble the
       // reservoir-side energy flux so the reservoir cell receives the correct
       // enthalpy from the injected mass.
       bool const isTopInjectorElement = !m_isProducer && m_globalWellElementIndex[iwelem] == 0;
@@ -380,7 +380,7 @@ public:
       stackArray2d< real64, 2*2 * resNumDOF > localPerfJacobian( 2, 2 * resNumDOF );
 
 
-      // equantion offsets - note res and well have different equation lineups
+      // equation offsets - note res and well have different equation lineups
       eqnRowIndices[TAG::RES  ] = LvArray::integerConversion< localIndex >( resOffset - m_rankOffset )  + 1;
       eqnRowIndices[TAG::WELL ] = LvArray::integerConversion< localIndex >( wellElemOffset - m_rankOffset ) + WJ_ROFFSET::ENERGYBAL;
 
