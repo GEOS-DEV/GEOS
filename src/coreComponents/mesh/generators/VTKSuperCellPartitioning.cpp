@@ -897,9 +897,8 @@ buildSuperCellGraph(
   }
 
   // -----------------------------------------------------------------------
-  // Step 8: Statistics and validation
+  // Step 8: Statistics
   // -----------------------------------------------------------------------
-
   localIndex totalSuperEdges = 0;
   for( localIndex i = 0; i < superGraph.size(); ++i )
   {
@@ -926,44 +925,9 @@ buildSuperCellGraph(
   GEOS_LOG_RANK_0( GEOS_FMT( "  Super-graph edges:     {:>10L}", globalSuperEdges ) );
   GEOS_LOG_RANK_0( GEOS_FMT( "  Base graph nodes:      {:>10L}", globalBaseCells ) );
   GEOS_LOG_RANK_0( GEOS_FMT( "  Base graph edges:      {:>10L}", globalBaseEdges ) );
-  GEOS_LOG_RANK_0( GEOS_FMT( "  Node reduction:        {:>10L} cells", globalBaseCells - globalSuperCells ) );
-
-  // Validation
-  pmet_idx_t minNeighbor = std::numeric_limits< pmet_idx_t >::max();
-  pmet_idx_t maxNeighbor = 0;
-  localIndex outOfRangeCount = 0;
-
-  for( localIndex i = 0; i < superGraph.size(); ++i )
-  {
-    auto neighbors = superGraph[i];
-    for( localIndex j = 0; j < neighbors.size(); ++j )
-    {
-      pmet_idx_t neighborIdx = neighbors[j];
-
-      if( neighbors.size() > 0 )
-      {
-        minNeighbor = std::min( minNeighbor, neighborIdx );
-        maxNeighbor = std::max( maxNeighbor, neighborIdx );
-      }
-
-      if( neighborIdx < 0 || neighborIdx >= globalSuperCells )
-      {
-        outOfRangeCount++;
-        if( outOfRangeCount <= 3 )
-        {
-          GEOS_LOG_RANK( GEOS_FMT( "ERROR: Super-cell {} has out-of-range neighbor {} (valid range: [0, {}))",
-                                   i, neighborIdx, globalSuperCells ) );
-        }
-      }
-    }
-  }
-
-  vtkIdType globalOutOfRange = MpiWrapper::sum(
-    static_cast< vtkIdType >(outOfRangeCount), comm );
-  GEOS_ERROR_IF( globalOutOfRange > 0,
-                 GEOS_FMT( "Super-cell graph has {} out-of-range neighbor indices!",
-                           globalOutOfRange ) );
-
+  GEOS_LOG_RANK_0( GEOS_FMT( "  Node reduction:        {:>10L} cells ({:.1f}%)",
+                           globalBaseCells - globalSuperCells,
+                           100.0 * (globalBaseCells - globalSuperCells) / globalBaseCells ) );
   return std::make_pair( std::move( superGraph ), std::move( superVertexWeights ) );
 }
 
@@ -1056,11 +1020,7 @@ void validateSuperCellGraph(
         }
       }
     }
-
-    if( isolated > 0 )
-    {
-      GEOS_WARNING( GEOS_FMT( "Found {} isolated vertices ", isolated ) );
-    }
+    GEOS_WARNING_IF( isolated > 0, GEOS_FMT( "Found {} isolated vertices ", isolated ) );
   }
 
   // -----------------------------------------------------------------------
@@ -1155,94 +1115,60 @@ unpackSuperCellPartitioning(
     vtkIdTypeArray::SafeDownCast( cells3D->GetCellData()->GetArray( "SuperCellId" ) );
 
   GEOS_ERROR_IF( superCellIdArray == nullptr,
-                 "Rank " << rank << ": SuperCellId array not found" );
+                 GEOS_FMT( "Rank {}: SuperCellId array not found", rank ) );
 
   GEOS_ERROR_IF( static_cast< size_t >(superPartitioning.size()) != superCellIdToLocalIdx.size(),
-                 "Rank " << rank << ": Super-cell partitioning size ("
-                         << superPartitioning.size() << ") doesn't match number of local super-cells ("
-                         << superCellIdToLocalIdx.size() << ")" );
+                 GEOS_FMT( "Rank {}: Super-cell partitioning size ({}) doesn't match number of local super-cells ({})",
+                           rank, superPartitioning.size(), superCellIdToLocalIdx.size() ) );
 
   // -----------------------------------------------------------------------
-  // Step 2: Create partitioning array for original cells
+  // Step 2: Assign cells to ranks based on super-cell partitioning
   // -----------------------------------------------------------------------
-  array1d< int64_t > cellPartitioning( cells3D->GetNumberOfCells() );
+  vtkIdType const numCells = cells3D->GetNumberOfCells();
+  array1d< int64_t > cellPartitioning( numCells );
 
-  // For each original cell, look up its super-cell and assign the same partition
-  for( vtkIdType i = 0; i < cells3D->GetNumberOfCells(); ++i )
+  for( vtkIdType i = 0; i < numCells; ++i )
   {
     vtkIdType superCellId = superCellIdArray->GetValue( i );
-
     auto it = superCellIdToLocalIdx.find( superCellId );
+
     GEOS_ERROR_IF( it == superCellIdToLocalIdx.end(),
-                   "Rank " << rank << ": Cell " << i
-                           << " has super-cell ID " << superCellId
-                           << " which is not in local super-cell map" );
+                   GEOS_FMT( "Rank {}: Cell {} has unknown super-cell ID {}",
+                             rank, i, superCellId ) );
 
-    localIndex superIdx = it->second;
-
-    GEOS_ERROR_IF( superIdx >= superPartitioning.size(),
-                   "Rank " << rank << ": Super-cell index " << superIdx
-                           << " out of range [0, " << superPartitioning.size() << ")" );
-
-    int64_t targetRank = superPartitioning[superIdx];
-    cellPartitioning[i] = targetRank;
+    cellPartitioning[i] = superPartitioning[it->second];
   }
 
   // -----------------------------------------------------------------------
-  // Step 3: Verify - All cells in same super-cell go to same rank
+  // Step 3: Validate that super-cells weren't split
   // -----------------------------------------------------------------------
   stdMap< vtkIdType, std::set< int64_t > > superCellToRanks;
 
-  vtkIdType const numCells2 = cells3D->GetNumberOfCells();
-  for( vtkIdType i = 0; i < numCells2; ++i )
+  for( vtkIdType i = 0; i < numCells; ++i )  // ← Reuse numCells (no redeclaration)
   {
     vtkIdType const scId = superCellIdArray->GetValue( i );
-    int64_t const targetRank = cellPartitioning[i];
-
-    superCellToRanks.get_inserted( scId ).insert( targetRank );
+    superCellToRanks.get_inserted( scId ).insert( cellPartitioning[i] );
   }
 
-  // Check for splits
   vtkIdType numSplitSuperCells = 0;
-
   for( auto const & [superCellId, ranks] : superCellToRanks )
   {
     if( ranks.size() > 1 )
     {
-      GEOS_ERROR( "Rank " << rank << ": Super-cell " << superCellId
-                          << " was split across " << ranks.size() << " ranks: {"
-                          << stringutilities::join( std::vector< int64_t >( ranks.begin(), ranks.end()), ", " )
-                          << "}" );
       ++numSplitSuperCells;
     }
   }
 
-  GEOS_ERROR_IF( numSplitSuperCells > 0,
-                 "Rank " << rank << ": " << numSplitSuperCells
-                         << " super-cells were incorrectly split!" );
-
-
-  // -----------------------------------------------------------------------
-  // Step 4: Global statistics
-  // -----------------------------------------------------------------------
   vtkIdType totalSplitSuperCells = MpiWrapper::sum( numSplitSuperCells, comm );
 
-  if( totalSplitSuperCells > 0 )
-  {
-    GEOS_ERROR( totalSplitSuperCells << " super-cells were split globally!" );
-  }
+  GEOS_ERROR_IF( totalSplitSuperCells > 0,
+                 GEOS_FMT( "Partitioning failed: {:L} super-cells were split across ranks!",
+                           totalSplitSuperCells ) );
 
-  // Count cells going to each rank
-  std::map< int64_t, vtkIdType > cellsPerRank;
-  for( vtkIdType i = 0; i < cellPartitioning.size(); ++i )
-  {
-    cellsPerRank[cellPartitioning[i]]++;
-  }
+  GEOS_LOG_RANK_0( "Super-cell partitioning validated successfully" );
 
   return cellPartitioning;
 }
 
-
 } // namespace vtk
-
 } // namespace geos
