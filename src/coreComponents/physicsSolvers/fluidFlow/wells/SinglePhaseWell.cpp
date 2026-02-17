@@ -1445,8 +1445,7 @@ bool SinglePhaseWell::solveWHPConstraint( real64 const & time_n,
                                           DomainPartition & domain,
                                           MeshLevel & mesh,
                                           ElementRegionManager & elemManager,
-                                          WellElementSubRegion & subRegion,
-                                          DofManager const & dofManager )
+                                          WellElementSubRegion & subRegion )
 {
   GEOS_UNUSED_VAR( time_n );
   GEOS_UNUSED_VAR( dt );
@@ -1456,7 +1455,7 @@ bool SinglePhaseWell::solveWHPConstraint( real64 const & time_n,
   GEOS_UNUSED_VAR( mesh );
   GEOS_UNUSED_VAR( elemManager );
   GEOS_UNUSED_VAR( subRegion );
-  GEOS_UNUSED_VAR( dofManager );
+
 
   GEOS_ERROR( "SinglePhaseWell::solveWHPConstraint(WHP constraint option not implemented for SinglePhaseWell." );
   return false;

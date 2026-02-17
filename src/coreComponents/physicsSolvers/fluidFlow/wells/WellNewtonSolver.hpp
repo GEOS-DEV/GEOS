@@ -846,6 +846,7 @@ bool WellNewtonSolver::solveNonlinearSystem( T & well, real64 const & time_n,
     }
 
   }
+  std::cout << "WellSolverBase::solveNewtonSystem completed with isNewtonConverged = " << isNewtonConverged << std::endl;
   return isNewtonConverged;
 }
 

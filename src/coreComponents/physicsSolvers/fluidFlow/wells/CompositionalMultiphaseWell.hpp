@@ -391,8 +391,7 @@ protected:
                                    DomainPartition & domain,
                                    MeshLevel & mesh,
                                    ElementRegionManager & elemManager,
-                                   WellElementSubRegion & subRegion,
-                                   DofManager const & dofManager )override;
+                                   WellElementSubRegion & subRegion )override;
 private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

@@ -760,7 +760,14 @@ public:
    */
   WellControls::Status getWellStatus () const { return m_wellStatus; }
 
-
+  /**
+   * @brief getter for presence of production WHP constraint
+   * @return True if constraint exists
+   */
+  bool hasMinimumWHPConstraint() const
+  {
+    return static_cast< bool >(m_minWHPConstraint);
+  }
 
   ///@}
 
@@ -954,8 +961,7 @@ public:
                                    DomainPartition & domain,
                                    MeshLevel & mesh,
                                    ElementRegionManager & elemManager,
-                                   WellElementSubRegion & subRegion,
-                                   DofManager const & dofManager ) = 0;
+                                   WellElementSubRegion & subRegion ) = 0;
 
 protected:
 

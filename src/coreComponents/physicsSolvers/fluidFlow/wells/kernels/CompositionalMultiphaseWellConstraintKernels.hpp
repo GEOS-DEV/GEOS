@@ -277,6 +277,7 @@ struct ConstraintHelper
     for( integer ip= 0; ip < phaseIndices.size(); ++ip )
     {
       controlEqn += currentPhaseVolRate[phaseIndices[ip]];
+      std::cout << "Phase " << phaseIndices[ip] << " currentPhaseVolRate: " << currentPhaseVolRate[phaseIndices[ip]] <<  " " << controlEqn << " " << targetPhaseRate << std::endl;
     }
 
     // setup Jacobian terms

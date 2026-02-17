@@ -296,8 +296,7 @@ public:
                                    DomainPartition & domain,
                                    MeshLevel & mesh,
                                    ElementRegionManager & elemManager,
-                                   WellElementSubRegion & subRegion,
-                                   DofManager const & dofManager )override;
+                                   WellElementSubRegion & subRegion )override;
 protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override;

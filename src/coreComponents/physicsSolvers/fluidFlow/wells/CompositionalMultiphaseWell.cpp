@@ -413,15 +413,27 @@ void CompositionalMultiphaseWell::initializeWellPostInitialConditionsPreSubGroup
   constitutive::MultiFluidBase & fluid = subRegion.getConstitutiveModel< constitutive::MultiFluidBase >( fluidName );
   fluid.setMassFlag( m_useMass );
   createSeparator( subRegion );
+
+  // Wellhead pressure constraints
+  if( hasMinimumWHPConstraint())
+  {
+    createMinBHPConstraintForWHP();
+    createMaxLiquidConstraintForWHP();
+  }
+
 }
 void CompositionalMultiphaseWell::postRestartInitialization( )
 {
-
   // setup fluid separator
   constitutive::MultiFluidBase & fluidSeparator =   getMultiFluidSeparator();
   fluidSeparator.allocateConstitutiveData( *this, 1 );
   fluidSeparator.resize( 1 );
-
+  // Wellhead pressure constraints
+  if( hasMinimumWHPConstraint())
+  {
+    createMinBHPConstraintForWHP();
+    createMaxLiquidConstraintForWHP();
+  }
 }
 
 void CompositionalMultiphaseWell::createSeparator( WellElementSubRegion & subRegion )
@@ -977,7 +989,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
         forSubGroups< MinimumBHPConstraint, ProductionConstraint< VolumeRateConstraint >, ProductionConstraint< MassRateConstraint >,
                       ProductionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
         {
-          if( constraint.getControl() == inputControl )
+          if( constraint.getControl() == inputControl && constraint.isConstraintActive())
           {
             setCurrentConstraint( &constraint );
             setControl( static_cast< WellControls::Control >(inputControl) );  // tjb old
@@ -991,7 +1003,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
         forSubGroups< MaximumBHPConstraint, InjectionConstraint< VolumeRateConstraint >, InjectionConstraint< MassRateConstraint >,
                       InjectionConstraint< PhaseVolumeRateConstraint > >( [&]( auto & constraint )
         {
-          if( constraint.getControl() == inputControl )
+          if( constraint.getControl() == inputControl && constraint.isConstraintActive())
           {
             setCurrentConstraint( &constraint );
             setControl( static_cast< WellControls::Control >(inputControl) );   // tjb old
@@ -1116,7 +1128,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
                                                                              auto
                                                                              & constraint )
         {
-          if( ConstraintTypeId( getControl()) == constraint.getControl()  )
+          if( ConstraintTypeId( getControl()) == constraint.getControl() && constraint.isConstraintActive() )
           {
             setCurrentConstraint( &constraint );
           }
@@ -1129,7 +1141,7 @@ void CompositionalMultiphaseWell::initializeWell( DomainPartition & domain, Mesh
                                                                                                                                                                                           &
                                                                                                                                                                                           constraint )
         {
-          if( ConstraintTypeId( getControl()) == constraint.getControl()  )
+          if( ConstraintTypeId( getControl()) == constraint.getControl() && constraint.isConstraintActive() )
           {
             setCurrentConstraint( &constraint );
           }
@@ -2093,6 +2105,7 @@ void CompositionalMultiphaseWell::assembleWellConstraintTerms( real64 const & ti
       // Need to use name since there could be multiple constraints of the same type
       if( constraint.getName() ==  getCurrentConstraint()->getName())
       {
+        std::cout << "Assembling constraint: " << constraint.getName() << std::endl;
         // found limiting constraint
         constitutive::MultiFluidBase & fluidSeparator =   getMultiFluidSeparator();
         integer isThermal = fluidSeparator.isThermal();
@@ -2456,8 +2469,7 @@ bool CompositionalMultiphaseWell::solveWHPConstraint( real64 const & time_n,
                                                       DomainPartition & domain,
                                                       MeshLevel & mesh,
                                                       ElementRegionManager & elemManager,
-                                                      WellElementSubRegion & subRegion,
-                                                      DofManager const & dofManager )
+                                                      WellElementSubRegion & subRegion )
 {
   bool whpLimiting = false;
 
