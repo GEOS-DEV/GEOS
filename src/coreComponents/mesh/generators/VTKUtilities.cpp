@@ -851,7 +851,9 @@ static void separateCellsByDimension( vtkDataSet & mesh,
   // Classify cells by dimension
   for( vtkIdType i = 0; i < numCells; ++i )
   {
-    int const cellDim = mesh.GetCell( i )->GetCellDimension();
+    unsigned char const cellType = mesh.GetCellType( i );
+    int const cellDim = vtkCellTypes::GetDimension( cellType );
+
     if( cellDim == 3 )
     {
       indices3D->InsertNextId( i );
@@ -931,7 +933,7 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
   {
     vtkIdType const origIdx = cells3DToOriginal[i];
     int64_t const globalId = static_cast< int64_t >( globalCellIds->GetTuple1( origIdx ) );
-    original3DToGlobalId.emplace( origIdx, globalId ); // ← FIXED
+    original3DToGlobalId.emplace( origIdx, globalId );
   }
 
   ArrayOfArrays< vtkIdType, int64_t > neighbors2Dto3D;
@@ -943,15 +945,17 @@ build2DTo3DNeighbors( vtkDataSet & mesh,
   localIndex numInternal = 0;       // 2 neighbors
   localIndex numJunction = 0;       // >2 neighbors
 
+  vtkNew< vtkIdList > neighborCells;
+  vtkNew< vtkIdList > pointIds2D;
+
   // Build neighbor list for each 2D cell
   for( localIndex i = 0; i < cells2DToOriginal.size(); ++i )
   {
     vtkIdType const origIdx2D = cells2DToOriginal[i];
-    vtkCell * cell2D = mesh.GetCell( origIdx2D );
-    vtkIdList * pointIds2D = cell2D->GetPointIds();
+    mesh.GetCellPoints( origIdx2D, pointIds2D );
 
     // Find all cells sharing ALL nodes with this 2D cell (exact face match)
-    vtkNew< vtkIdList > neighborCells;
+    neighborCells->Reset();
     mesh.GetCellNeighbors( origIdx2D, pointIds2D, neighborCells );
 
     // Filter for 3D neighbors and retrieve their global IDs
@@ -1616,9 +1620,6 @@ redistributeMeshes( integer const logLevel,
     neighbors2Dto3D.resize( 0, 0 );
   }
 
-  GEOS_LOG_RANK_0( GEOS_FMT( "Separated main mesh into {} 3D cells and {} 2D cells", cells3D->GetNumberOfCells(), cells2D->GetNumberOfCells()  ));
-
-
   // Step 2: Redistribute the 3D cells (+ fractures if using a presplit mesh from meshDoctor)
   // Determine if redistribution is required (check 3D cells)
   vtkIdType const minCellsOnAnyRank = MpiWrapper::min( cells3D->GetNumberOfCells(), comm );
@@ -1671,7 +1672,8 @@ redistributeMeshes( integer const logLevel,
     comm
     );
 
-  // Step 4: Diagnostics
+  // Step 4: Final logging
+  if( logLevel >= 5 )
   {
     int const rank = MpiWrapper::commRank( comm );
     int const numRanks = MpiWrapper::commSize( comm );
@@ -1682,7 +1684,8 @@ redistributeMeshes( integer const logLevel,
     vtkSmartPointer< vtkDataSet > finalMesh = finalResult.getMainMesh();
     for( vtkIdType i = 0; i < finalMesh->GetNumberOfCells(); ++i )
     {
-      int dim = finalMesh->GetCell( i )->GetCellDimension();
+      unsigned char const cellType = finalMesh->GetCellType( i );
+      int const dim = vtkCellTypes::GetDimension( cellType );
       if( dim == 2 )
         local2DCells++;
       else if( dim == 3 )
@@ -1696,8 +1699,8 @@ redistributeMeshes( integer const logLevel,
     if( rank == 0 )
     {
       GEOS_LOG_RANK_0( "\n------------------------------------------------" );
-      GEOS_LOG_RANK_0( "| Rk   |  3D Cells | 2D Cells  |  Total (Main) |" );
-      GEOS_LOG_RANK_0( "------------------------------------------------" );
+      GEOS_LOG_RANK_0( "| Rank | 3D Cells  | 2D Cells  | Total (Main)  |" );
+      GEOS_LOG_RANK_0( "|------|-----------|-----------|---------------|" );
 
       vtkIdType sum2D = 0, sum3D = 0;
       for( int r = 0; r < numRanks; ++r )
@@ -1705,32 +1708,14 @@ redistributeMeshes( integer const logLevel,
         sum2D += all2D[r];
         sum3D += all3D[r];
 
-        GEOS_LOG_RANK_0( "| " << std::setw( 4 ) << r << " | "
-                              << std::setw( 9 ) << all3D[r] << " | "
-                              << std::setw( 9 ) << all2D[r] << " | "
-                              << std::setw( 13 ) << (all3D[r] + all2D[r]) << " |" );
+        GEOS_LOG_RANK_0( GEOS_FMT( "| {:>4} | {:9} | {:9} | {:13} |",
+                                   r, all3D[r], all2D[r], all3D[r] + all2D[r] ) );
       }
 
+      GEOS_LOG_RANK_0( "|------|-----------|-----------|---------------|" );
+      GEOS_LOG_RANK_0( GEOS_FMT( "|Total | {:9} | {:9} | {:13} |",
+                                 sum3D, sum2D, sum3D + sum2D ) );
       GEOS_LOG_RANK_0( "------------------------------------------------" );
-      GEOS_LOG_RANK_0( "|Total | " << std::setw( 9 ) << sum3D << " | "
-                                   << std::setw( 9 ) << sum2D << " | "
-                                   << std::setw( 13 ) << (sum3D + sum2D) << " |" );
-      GEOS_LOG_RANK_0( "------------------------------------------------" );
-    }
-  }
-
-  // Step 5: Final logging
-  {
-    string const pattern = "{}: {}";
-    stdVector< string > messages;
-    messages.push_back( GEOS_FMT( pattern, "Local mesh size", finalResult.getMainMesh()->GetNumberOfCells() ) );
-    for( auto const & [faceName, faceMesh]: finalResult.getFaceBlocks() )
-    {
-      messages.push_back( GEOS_FMT( pattern, faceName, faceMesh->GetNumberOfCells() ) );
-    }
-    if( logLevel >= 5 )
-    {
-      GEOS_LOG_RANK( stringutilities::join( messages, ", " ) );
     }
   }
 
