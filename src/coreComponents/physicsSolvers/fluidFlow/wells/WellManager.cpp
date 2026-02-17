@@ -766,7 +766,7 @@ WellManager::calculateResidualNorm( real64 const & time_n,
       WellControls & wellControls = getWellControls( subRegion );
 
       // step 1: compute the norm in the subRegion
-      if( true )     // tjb wellControls.isWellOpen( ) )
+      if( wellControls.isWellOpen( ) )
       {
         wellResidalNorm = wellControls.calculateLocalWellResidualNorm( time_n,
                                                                        dt,
