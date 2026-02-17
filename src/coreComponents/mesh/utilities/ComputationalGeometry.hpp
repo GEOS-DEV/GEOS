@@ -282,6 +282,12 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   }
   else
   {
+    for( localIndex a=0; a<numberOfPoints; ++a )
+    {
+      GEOS_LOG_RANK( "Points: " << points[ pointsIndices[ a ] ] << " " << pointsIndices[ a ] );
+    }
+    GEOS_WARNING( "Null area found : " << area );
+
     return 0.0;
   }
 
